@@ -1,4 +1,7 @@
 #define UPX_VERSION_HEX         0x035f00        /* 03.95.00 */
+#define UPX_VERSION_MAJOR       3
+#define UPX_VERSION_MINOR       95
+#define UPX_VERSION_PATCH       0
 #define UPX_VERSION_STRING      "3.95"
 #define UPX_VERSION_STRING4     "3.95"
 #define UPX_VERSION_DATE        "May 13th 2017"

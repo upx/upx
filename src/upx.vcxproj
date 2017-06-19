@@ -1,0 +1,283 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FF660AB9-D2DF-4F39-A1F8-72A8A1C63430}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>$(MSBuildProjectName)</RootNamespace>
+    <ProjectName>upx</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v141_xp</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v141_xp</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)build\</OutDir>
+    <IntDir>$(SolutionDir)\build\obj\$(Platform)-$(Configuration)\</IntDir>
+    <GenerateManifest>false</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WINVER=0x0501;_WIN32_WINNT=0x0501;NTDDI_VERSION=0x05010000;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DiagnosticsFormat>Caret</DiagnosticsFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)lzma-sdk;$(ProjectDir)ucl\include;$(ProjectDir)zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>ucl_x86.lib;zlib_x86.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Version>5.01</Version>
+      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
+      <AdditionalLibraryDirectories>$(ProjectDir)ucl;$(ProjectDir)zlib</AdditionalLibraryDirectories>
+      <AdditionalOptions>/NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
+      <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WINVER=0x0502;_WIN32_WINNT=0x0502;NTDDI_VERSION=0x05020000;WIN32;_WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DiagnosticsFormat>Caret</DiagnosticsFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)lzma-sdk;$(ProjectDir)ucl\include;$(ProjectDir)zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>ucl_x64.lib;zlib_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Version>5.02</Version>
+      <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
+      <AdditionalLibraryDirectories>$(ProjectDir)ucl;$(ProjectDir)zlib</AdditionalLibraryDirectories>
+      <AdditionalOptions>/NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
+      <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PreprocessorDefinitions>WINVER=0x0501;_WIN32_WINNT=0x0501;NTDDI_VERSION=0x05010000;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DiagnosticsFormat>Caret</DiagnosticsFormat>
+      <StringPooling>true</StringPooling>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)lzma-sdk;$(ProjectDir)ucl\include;$(ProjectDir)zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>None</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>ucl_x86.lib;zlib_x86.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Version>5.01</Version>
+      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
+      <AdditionalLibraryDirectories>$(ProjectDir)ucl;$(ProjectDir)zlib</AdditionalLibraryDirectories>
+      <AdditionalOptions>/NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
+      <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PreprocessorDefinitions>WINVER=0x0502;_WIN32_WINNT=0x0502;NTDDI_VERSION=0x05020000;WIN32;_WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DiagnosticsFormat>Caret</DiagnosticsFormat>
+      <StringPooling>true</StringPooling>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir)lzma-sdk;$(ProjectDir)ucl\include;$(ProjectDir)zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat>None</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>ucl_x64.lib;zlib_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Version>5.02</Version>
+      <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
+      <AdditionalLibraryDirectories>$(ProjectDir)ucl;$(ProjectDir)zlib</AdditionalLibraryDirectories>
+      <AdditionalOptions>/NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
+      <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="c_file.cpp" />
+    <ClCompile Include="c_init.cpp" />
+    <ClCompile Include="c_none.cpp" />
+    <ClCompile Include="c_screen.cpp" />
+    <ClCompile Include="compress.cpp" />
+    <ClCompile Include="compress_lzma.cpp" />
+    <ClCompile Include="compress_ucl.cpp" />
+    <ClCompile Include="compress_zlib.cpp" />
+    <ClCompile Include="except.cpp" />
+    <ClCompile Include="file.cpp" />
+    <ClCompile Include="filter.cpp" />
+    <ClCompile Include="filteri.cpp" />
+    <ClCompile Include="help.cpp" />
+    <ClCompile Include="lefile.cpp" />
+    <ClCompile Include="linker.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mem.cpp" />
+    <ClCompile Include="msg.cpp" />
+    <ClCompile Include="p_armpe.cpp" />
+    <ClCompile Include="p_com.cpp" />
+    <ClCompile Include="p_djgpp2.cpp" />
+    <ClCompile Include="p_exe.cpp" />
+    <ClCompile Include="p_lx_elf.cpp" />
+    <ClCompile Include="p_lx_exc.cpp" />
+    <ClCompile Include="p_lx_interp.cpp" />
+    <ClCompile Include="p_lx_sh.cpp" />
+    <ClCompile Include="p_mach.cpp" />
+    <ClCompile Include="p_ps1.cpp" />
+    <ClCompile Include="p_sys.cpp" />
+    <ClCompile Include="p_tmt.cpp" />
+    <ClCompile Include="p_tos.cpp" />
+    <ClCompile Include="p_unix.cpp" />
+    <ClCompile Include="p_vmlinx.cpp" />
+    <ClCompile Include="p_vmlinz.cpp" />
+    <ClCompile Include="p_w32pe.cpp" />
+    <ClCompile Include="p_w64pep.cpp" />
+    <ClCompile Include="p_wcle.cpp" />
+    <ClCompile Include="packer.cpp" />
+    <ClCompile Include="packer_c.cpp" />
+    <ClCompile Include="packer_f.cpp" />
+    <ClCompile Include="packhead.cpp" />
+    <ClCompile Include="packmast.cpp" />
+    <ClCompile Include="pefile.cpp" />
+    <ClCompile Include="s_djgpp2.cpp" />
+    <ClCompile Include="s_object.cpp" />
+    <ClCompile Include="s_vcsa.cpp" />
+    <ClCompile Include="s_win32.cpp" />
+    <ClCompile Include="snprintf.cpp" />
+    <ClCompile Include="stdcxx.cpp" />
+    <ClCompile Include="ui.cpp" />
+    <ClCompile Include="util.cpp" />
+    <ClCompile Include="work.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bele.h" />
+    <ClInclude Include="bele_policy.h" />
+    <ClInclude Include="bptr.h" />
+    <ClInclude Include="compress.h" />
+    <ClInclude Include="conf.h" />
+    <ClInclude Include="console.h" />
+    <ClInclude Include="except.h" />
+    <ClInclude Include="file.h" />
+    <ClInclude Include="filter.h" />
+    <ClInclude Include="lefile.h" />
+    <ClInclude Include="linker.h" />
+    <ClInclude Include="mem.h" />
+    <ClInclude Include="miniacc.h" />
+    <ClInclude Include="options.h" />
+    <ClInclude Include="p_armpe.h" />
+    <ClInclude Include="p_com.h" />
+    <ClInclude Include="p_djgpp2.h" />
+    <ClInclude Include="p_elf.h" />
+    <ClInclude Include="p_elf_enum.h" />
+    <ClInclude Include="p_exe.h" />
+    <ClInclude Include="p_lx_elf.h" />
+    <ClInclude Include="p_lx_exc.h" />
+    <ClInclude Include="p_lx_interp.h" />
+    <ClInclude Include="p_lx_sh.h" />
+    <ClInclude Include="p_mach.h" />
+    <ClInclude Include="p_mach_enum.h" />
+    <ClInclude Include="p_ps1.h" />
+    <ClInclude Include="p_sys.h" />
+    <ClInclude Include="p_tmt.h" />
+    <ClInclude Include="p_tos.h" />
+    <ClInclude Include="p_unix.h" />
+    <ClInclude Include="p_vmlinx.h" />
+    <ClInclude Include="p_vmlinz.h" />
+    <ClInclude Include="p_w32pe.h" />
+    <ClInclude Include="p_w64pep.h" />
+    <ClInclude Include="p_wcle.h" />
+    <ClInclude Include="packer.h" />
+    <ClInclude Include="packmast.h" />
+    <ClInclude Include="pefile.h" />
+    <ClInclude Include="screen.h" />
+    <ClInclude Include="snprintf.h" />
+    <ClInclude Include="stdcxx.h" />
+    <ClInclude Include="ui.h" />
+    <ClInclude Include="util.h" />
+    <ClInclude Include="version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="upx.exe.manifest" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

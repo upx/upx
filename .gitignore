@@ -1,6 +1,7 @@
 /.bzr*
 /.hg*
 /.vscode*
+/.vs*
 /Makevars.global*
 /build*
 /maint*
@@ -28,6 +29,7 @@ doc/*.tex
 src/compress_nrv*
 src/*.mft
 src/*.rc
+src/*.vcxproj.user
 
 src/*.d
 src/*.exe
@@ -56,3 +58,6 @@ src/stub/tools/armpe/armpe_tester.out
 src/stub/tools/sstrip/amd64-linux-sstrip
 src/stub/tools/sstrip/i386-linux-sstrip
 src/stub/tools/sstrip/sstrip
+
+src/ucl/*
+src/zlib/*
