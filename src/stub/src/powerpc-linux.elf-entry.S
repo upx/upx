@@ -38,6 +38,13 @@ sz_b_info= 12
   sz_cpr= 4
   b_method= 8
 
+szElf32_Ehdr= 13*4
+p_memsz= 5*4
+
+e_type= 16
+  ET_EXEC= 2
+  ET_DYN= 3
+
 PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
@@ -57,10 +64,13 @@ __NR_write = 4
 __NR_exit  = 1
 __NR_mmap  = 90
 __NR_munmap = 91
+__NR_mprotect = 125
 
   section ELFMAINX
+sz_pack2= -4+ _start
 _start: .globl _start
-        call main  // must be exactly 1 instruction; link_register= &decompress
+        call main  // link_register= &f_exp  (&decompress)
+f_exp:
 
 /* Returns 0 on success; non-zero on failure. */
 decompress:  // (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint method)
@@ -147,77 +157,119 @@ die:
         li a0,127
         li 0,__NR_exit; sc
 
-zfind:
-        lwz r0,0(a0); addi a0,a0,4
-        cmpi cr7,r0,0; bne+ cr7,zfind
-        ret
+r_exp=   31
+r_PMASK= 30
+r_ADRU=  29
+r_LENU=  28
+r_BINFO= 27
+r_auxv=  26
+r_slide= 25
+r_FLD=   24
+r_ADRM=  23
+r_LENM=  22
 
         /* Decompress the rest of this loader, and jump to it. */
 unfold:
-        mflr r30  // LrUNF
-        lwz r24,-2*4(r31)  // sz_pack2
-        lwz r26,LOBINFO - LrUNF(r30)  // O_BINFO
-        lwz r23,LLENU - LrUNF(r30)
-        addi r24,r24,2*4
-        sub r24,r31,r24  // ADRU
+        mflr r_FLD  // LrFLD
+        la  r_ADRU,sz_pack2 - f_exp(r_exp)  // &sz_pack2
+        lwz r0,0(r_ADRU)  // sz_pack2
+        lwz r_BINFO,LOBINFO - LrFLD(r_FLD)  // O_BINFO
+        sub r_ADRU,r_ADRU,r0  // ADRU == &Elf32_Ehdr of stub
 
-        la a0,SZ_FRAME+32*4(sp)
-        call zfind  // a0= envp
-        call zfind  // a0= &Elf32_auxv
-        mr r28,a0  // save for folded code
+        lhz r0,e_type(r_ADRU)
+        cmplwi r0,ET_DYN; beq pie
 
-// set a1= actual page size in Elf32_auxv_t
-AT_NULL= 0  // <elf.h>
-AT_PAGESZ= 6
-a_type= 0
-a_val= 4
-sz_auxv= 2*4
-1:
-        lwz r0,a_type(a0)
-        lwz a1,a_val(a0); addi a0,a0,sz_auxv
-        cmpi cr0,r0,AT_PAGESZ; beq- 2f
-        cmpi cr0,r0,AT_NULL; bne+ 1b
-        li a1,PAGE_SIZE  // not found; use default
-2:
-        mr r27,a1  // save for folded code
+//  section ELF_EXEC  // ET_EXEC; addresses do not change
+        lwz r_LENU,p_memsz + szElf32_Ehdr(r_ADRU)  // PT_LOAD[0 {.text}].p_memsz
+          li a5,0  // off_t
+        sub r_LENU,r_LENU,r_PMASK  // begin round_up(PAGE_SIZE, r_LENU)
+          li a4,-1  // fd; cater to *BSD for MAP_ANON
+        addi r_LENU,r_LENU,-1
+          li a3,MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED
+        and r_LENU,r_LENU,r_PMASK
+          li a2,PROT_READ | PROT_WRITE
+        lwz a1,sz_unc + LBINFO - LrFLD(r_FLD)  // space to unfold fold_begin
+        add a0,r_ADRU,r_LENU  // append to this stub
+        add r_LENU,r_LENU,a1  // unmap more, eventually
+        mr t4,a0  // save address being allocated
+        li r0,__NR_mmap; sc; cmpl cr0,t4,a0; bne msg_SELinux
+        li r_slide,0
+
+        b fold
+
+//  section ELF_DYN  // -pie ET_DYN; stub is where user code will be
+pie:
+// Allocate and copy stub (and fold_begin) to adjacent lower pages.
+// VDSO might also intrude; move down to avoid it.
+AT_SYSINFO= 32  // VDSO table
+AT_SYSINFO_EHDR= 33  // Elf32_Ehdr for VDSO
+        mr r_slide,r_ADRU  // dynbase
+        lwz r_LENM,p_memsz + szElf32_Ehdr(r_ADRU)  // PT_LOAD[0 {.text}].p_memsz
+        lwz r0,sz_unc + LBINFO - LrFLD(r_FLD)
+        add r_LENU,r0,r_LENM
+
+        mr a1,r_LENU  // total size needed
+        sub r_ADRM,r_ADRU,a1  // below this stub
+        and r_ADRM,r_ADRM,r_PMASK  // lower to page boundary
+        mr a0,r_auxv
+0:
+        lwz a3,a_type(a0); lwz a5,a_val(a0); la a0,sz_auxv(a0)
+        cmpli cr7,a3,AT_NULL; beq- cr7,5f  // end of auxv
+        subi   a3,a3,AT_SYSINFO
+        cmpli cr7,a3,AT_SYSINFO_EHDR - AT_SYSINFO; bgt+ cr7,0b
+        sub  a3,a5,r_ADRM  // offset
+        cmplw cr7,a3,a1; bge+ cr7,0b  // no conflict
+        sub a3,a3,a1  // alas, non-CMP cr0 is signed
+        add r_ADRM,r_ADRM,a3  // move down
+        and r_ADRM,r_ADRM,r_PMASK  // to page boundary
+        b 0b
+5:
+        mr a0,r_ADRM  // desired address
 
         li a5,0  // off_t
         li a4,-1  // fd; cater to *BSD for MAP_ANON
-        li     a3,MAP_PRIVATE | MAP_ANONYMOUS
-        li     a2,PROT_READ | PROT_WRITE | PROT_EXEC  // 'fold' will execute here
-        lwz    a1,LLENM - LrUNF(r30)
-li a1,2*4096  // FIXME: .sz_unc
-        lwz    a0,LADRM - LrUNF(r30)
-        li     r0,__NR_mmap
-        mr     t4,a0  // save address being allocated
-        sc
-        cmpl cr0,t4,a0; bne msg_SELinux
-        lwz r0,LLENM - LrUNF(r30)
-        li r22,0  // slide= 0
-        cmpl cr0,r0,r27; ble L80  // only 1 page; no move required
+        li a3,MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED
+        li a2,PROT_READ | PROT_WRITE
+        li r0,__NR_mmap; sc; cmpl cr0,a0,r_ADRM; bne msg_SELinux
 
-        sub r22,a0,r24  // (ADRM - ADRU) == relocation amount
-        add r31,r31,r22  // update &decompress
-        add r24,r24,r22  // update ADRU
-        addi r0,r0,7  // roundup (8, )
-          addi a1,a1,-4  // prepare for lwu
-        srwi r0,r0,3  // number of 8-byte chunks
+        sub r0,r_ADRM,r_ADRU  // (ADRM - ADRU) == relocation amount
+        add r_exp,r_exp,r0  // relocate &f_exp
+
+        mr a3,r_LENM  // length to move
+        addi a3,a3,7  // roundup (8, )
+          addi a1,r_ADRU,-4  // prepare for lwu
+        srwi a3,a3,3  // number of 8-byte chunks
           addi a0,a0,-4  // prepare for stwu
-        mtctr r0
+        mtctr a3
 0:
-        lwz t1,4(a1); lwzu t2,2*4(a1)
-        stw t1,4(a0); stwu t2,2*4(a0); bdnz 0b
-L80:
-        mtctr r31  // &decompress
-        lwz r0,sz_unc     + LBINFO - LrUNF(r30)
-        lbz meth,b_method + LBINFO - LrUNF(r30)
+        lwz a2,4(a1); lwzu a3,2*4(a1)
+        stw a2,4(a0); stwu a3,2*4(a0); bdnz 0b
+        mr r_ADRU,r_ADRM  // relocate
+
+//  section ELFufold
+fold:
+        mr dst,a0  // fold_begin.unc
+        mr r23,a0
+        mtctr r_exp  // &decompress
+        lwz r0,sz_unc     + LBINFO - LrFLD(r_FLD)
+        lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         la ldst,SZ_FRAME+31*4(sp)  // &slot on stack
         stw  r0,SZ_FRAME+31*4(sp)  // lzma uses for EOF
-        mr dst,t4
-        mtlr t4  // &continuation at unfolded code
-        lwz lsrc,sz_cpr  + LBINFO - LrUNF(r30)
-        la src,sz_b_info + LBINFO - LrUNF(r30)
-        bctr  // goto decompress; continue at unfolded code on mmap'ed page
+        lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
+        la src,sz_b_info + LBINFO - LrFLD(r_FLD)
+        bctrl  // decompress it
+
+        srwi r0,r_PMASK,9
+        sth r0,2(r23)  // get_page_mask: li r3,PAGE_MASK>>9;  2: BIG_ENDIAN
+
+        li a2,PROT_EXEC | PROT_READ
+        mr a1,r_LENU  // length
+        mr a0,r_ADRU  // base
+        li r0,__NR_mprotect; sc
+
+        addi r0,r23,4*4  // jmp over get_page_mask()
+        mtctr r0
+        bctr
 
 // Example code at entrypoint of C-language subroutine:
 //      mflr    r0  # r0= return address
@@ -231,13 +283,37 @@ L80:
 //      addi    sp,sp,96  # de-allocate local frame
 //      blr  # goto return address
 
+zfind:
+        lwz r0,0(a0); addi a0,a0,4
+        cmpi cr7,r0,0; bne+ cr7,zfind
+        ret
+
 main:
-////    teq r0,r0  // debugging
-        stwu r1,-(SZ_FRAME+32*4)(sp)  // allocate space (keeping 0 mod 16), save r1
+        stwu r1,-(SZ_FRAME+32*4)(sp)  // allocate space (keeping 0 mod 16), chain r1
         stmw r2,  SZ_FRAME+2*4-4(sp) // save registers r2 thru r31
-        mflr r31  // &decompress
+        mflr r_exp  // &f_exp (decompress)
+
+        la a0,SZ_FRAME+32*4(sp)
+        call zfind  // a0= envp
+        call zfind  // a0= &Elf32_auxv
+        mr r_auxv,a0  // save for folded code
+
+// set r_PMASK by finding actual page size in Elf32_auxv_t
+AT_NULL= 0  // <elf.h>
+AT_PAGESZ= 6
+a_type= 0
+a_val= 4
+sz_auxv= 2*4
+1:
+        lwz r0,a_type(a0); lwz a1,a_val(a0); addi a0,a0,sz_auxv
+        cmpi cr7,r0,AT_PAGESZ; beq- cr7,2f
+        cmpi cr0,r0,AT_NULL;   bne+ cr0,1b
+        li a1,PAGE_SIZE  // not found; use default
+2:
+        neg r_PMASK,a1  // save for folded code
+
         call unfold
-LrUNF:
+LrFLD:
 LADRM:
         .long ADRM
 LLENM:

@@ -35,7 +35,7 @@
 
 #include "include/linux.h"
 void *mmap(void *, size_t, int, int, int, off_t);
-#if defined(__i386__) || defined(__mips__) //{
+#if defined(__i386__) || defined(__mips__) || defined(__powerpc__) //{
 #  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
         MAP_PRIVATE|MAP_ANONYMOUS|(flgs),-1,0)
 #else  //}{
@@ -90,9 +90,9 @@ ssize_t write(int, void const *, size_t);
 #elif defined(__mips__)  /*}{*/
 #define DPRINTF(fmt, args...) ({ \
     char const *r_fmt; \
-    asm(".set noreorder; bal 0f; move %0,$31; .set reorder; \
+    asm(".set noreorder; bal L%=j; move %0,$31; .set reorder; \
         .asciz \"" fmt "\"; .balign 4; \
-      0: " \
+      L%=j: " \
 /*out*/ : "=r"(r_fmt) \
 /* in*/ : \
 /*und*/ : "ra"); \
@@ -251,17 +251,22 @@ xread(Extent *x, char *buf, size_t count)
 // util
 **************************************************************************/
 
-#if 0  //{  save space
+#if !DEBUG  //{ save space
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
 #define ERR_LAB /*empty*/
+
+extern void my_bkpt(int, ...);
 
 static void __attribute__ ((__noreturn__))
 err_exit(int a)
 {
     DPRINTF("err_exit %%x\\n", a);
     (void)a;  // debugging convenience
+#if defined(__powerpc__)  //{
+    my_bkpt(a);
+#endif  //}
     exit(127);
 }
 #endif  //}
@@ -292,12 +297,12 @@ static void
 unpackExtent(
     Extent *const xi,  // input
     Extent *const xo,  // output
-    f_expand *const f_decompress,
+    f_expand *const f_exp,
     f_unfilter *f_unf
 )
 {
     DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n",
-        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_decompress, f_unf);
+        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_exp, f_unf);
     while (xo->size) {
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
@@ -328,8 +333,14 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             nrv_uint out_len = h.sz_unc;  // EOF for lzma
-            int const j = (*f_decompress)((unsigned char *)xi->buf, h.sz_cpr,
-                (unsigned char *)xo->buf, &out_len, *(int *)(void *)&h.b_method );
+            int const j = (*f_exp)((unsigned char *)xi->buf, h.sz_cpr,
+                (unsigned char *)xo->buf, &out_len,
+#if defined(__i386__) //{
+                *(int *)(void *)&h.b_method
+#else
+                h.b_method
+#endif
+                );
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
             // Skip Ehdr+Phdrs: separate 1st block, not filtered
@@ -453,6 +464,34 @@ make_hatch_mips(
     }
     return hatch;
 }
+#elif defined(__powerpc__)  /*}{*/
+static void *
+make_hatch_ppc32(
+    Elf32_Phdr const *const phdr,
+    unsigned const reloc,
+    unsigned const frag_mask)
+{
+    unsigned *hatch = 0;
+    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        // Try page fragmentation just beyond .text .
+        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
+                &&  (2*4)<=(frag_mask & -(int)hatch) ) ) // space left on page
+        // Try Elf32_Ehdr.e_ident[8..15] .  warning: 'const' cast away
+        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
+                (phdr->p_offset==0) )
+        )
+        {
+            hatch[0]= 0x44000002;  // sc
+            hatch[1]= 0x4e800020;  // blr
+        }
+        else {
+            hatch = 0;
+        }
+    }
+    return hatch;
+}
 #endif  /*}*/
 
 static void
@@ -522,6 +561,21 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
         ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
 
 
+#if defined(__powerpc__)  //{
+extern
+size_t get_page_mask(void);  // variable page size AT_PAGESZ; see *-fold.S
+#elif defined(__mips__)  //}{
+size_t get_page_mask(void)  // FIXME: need to re-write at runtime
+{
+    asm("   li $2,0 - 0x1000; \
+            jr $31; \
+              sll $2,$2,9");
+    return 0;  // FIXME
+}
+#else  //}{  // FIXME for __mips__
+size_t get_page_mask(void) { return PAGE_MASK; }  // compile-time constant
+#endif  //}
+
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
@@ -531,13 +585,14 @@ __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     char **const p_brk
-#if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
-    , unsigned const page_mask
-#else  /*}{*/
-#define page_mask PAGE_MASK
-#endif  /*}*/
+#if defined (__mips__)  //{
+    , size_t const page_mask
+#endif  //}
 )
 {
+#if !defined(__mips__)  //{
+    size_t const page_mask = get_page_mask();
+#endif  //}
     size_t lo= ~0, hi= 0, szlo= 0;
     char *addr;
     DPRINTF("xfind_pages  %%x  %%p  %%d  %%p\\n", mflags, phdr, phnum, p_brk);
@@ -581,29 +636,27 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
-    Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf)
+    Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf
+#if defined(__mips__)  //{
+    , size_t const page_mask
+#endif  //}
+)
 {
+#if defined(__mips__)  //{
+    unsigned const frag_mask = ~page_mask;
+#else  //}{
+    unsigned const frag_mask = ~get_page_mask();
+#endif  //}
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (void const *)ehdr);
-#if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
-    unsigned frag_mask = ~PAGE_MASK;
-    {
-        Elf32_auxv_t const *const av_pgsz = auxv_find(av, AT_PAGESZ);
-        if (av_pgsz) {
-            frag_mask = av_pgsz->a_un.a_val -1;
-        }
-    }
-#else  /*}{*/
-    unsigned const frag_mask = ~PAGE_MASK;
-#endif  /*}*/
     char *v_brk;
 
     unsigned const reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
          phdr, ehdr->e_phnum, &v_brk
-#if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
-        , ~frag_mask
-#endif  /*}*/
-        );
+#if defined(__mips__)  //{
+         , page_mask
+#endif  //}
+         );
 
     DPRINTF("do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)  av=%%p  reloc=%%p/%%p  f_unf=%%p\\n",
         fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), av, p_reloc, *p_reloc, f_unf);
@@ -675,6 +728,11 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
             if (0!=hatch) {
                 auxv_up(av, AT_NULL, (unsigned)hatch);
             }
+#elif defined(__powerpc__)  /*}{*/
+            void *const hatch = make_hatch_ppc32(phdr, reloc, frag_mask);
+            if (0!=hatch) {
+                auxv_up(av, AT_NULL, (unsigned)hatch);
+            }
 #endif  /*}*/
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
@@ -732,22 +790,47 @@ void *upx_main(  // returns entry address
     size_t const sz_compressed,  // total length
     Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Elf32_auxv_t *const av,
-    f_expand *const f_decompress,
-    f_unfilter *const f_unf
+    f_expand *const f_exp,
+    f_unfilter *const f_unf,
+    size_t page_mask
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
     Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Elf32_auxv_t *const av,
-    f_expand *const f_decompress,
-    f_unfilter *const f_unf
+    f_expand *const f_exp,
+    f_unfilter *const f_unf,
+    size_t page_mask
 )
-#else  /*}{ !__mips__ */
+
+#elif defined(__powerpc__) //}{
+// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2,
+//      f_exp a3, f_unf a4, Elf32_auxv_t *a5, dynbase a6)
+void *upx_main(  // returns entry address
+    struct b_info const *const bi,  // 1st block header
+    size_t const sz_compressed,  // total length
+    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
+    Elf32_auxv_t *const av,
+    f_expand *const f_exp,
+    f_unfilter *const f_unf,
+    unsigned dynbase
+) __asm__("upx_main");
+void *upx_main(  // returns entry address
+    struct b_info const *const bi,  // 1st block header
+    size_t const sz_compressed,  // total length
+    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
+    Elf32_auxv_t *const av,
+    f_expand *const f_exp,
+    f_unfilter *const f_unf,
+    unsigned dynbase
+)
+
+#else  /*}{ !__mips__ && !__powerpc__ */
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
-    f_expand *const f_decompress,
+    f_expand *const f_exp,
     f_unfilter * /*const*/ f_unfilter,
     Extent xo,
     Extent xi,
@@ -756,7 +839,7 @@ void *upx_main(
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
-    f_expand *const f_decompress,
+    f_expand *const f_exp,
     f_unfilter * /*const*/ f_unf,
     Extent xo,  // {sz_unc, ehdr}    for ELF headers
     Extent xi,  // {sz_cpr, &b_info} for ELF headers
@@ -764,44 +847,46 @@ void *upx_main(
 )
 #endif  /*}*/
 {
-#if !defined(__mips__)  /*{*/
+#if defined(__i386__)  //{
+    f_unf = (0xeb != *(unsigned char *)f_exp)  // 2-byte jmp around unfilter
+        ? 0
+        : (f_unfilter *)(2+ (long)f_exp);
+#endif  //}
+
+#if !defined(__mips__) && !defined(__powerpc__)  /*{*/
     Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR+OVERHEAD]
+    // sizeof(Ehdr+Phdrs),   compressed; including b_info header
+    size_t const sz_first = xi.size;
 #endif  /*}*/
 
+#if defined(__powerpc__)  //{
+    size_t const sz_first = sizeof(*bi) + bi->sz_cpr;
+    Extent xo, xi;
+    xo.buf = (char *)ehdr;           xo.size = bi->sz_unc;
+    xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
+#endif  //}
+
 #if defined(__mips__)  /*{*/
-    unsigned dynbase = 0;
+    unsigned const dynbase = 0;  // FIXME
     Extent xo, xi, xj;
-    xo.buf  = (char *)ehdr;
-    xo.size = bi->sz_unc;
+    xo.buf  = (char *)ehdr;          xo.size = bi->sz_unc;
     xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
     xj.buf = CONST_CAST(char *, bi); xj.size = sz_compressed;
-
-    DPRINTF("upx_main av=%%p  szc=%%x  f_dec=%%p  f_unf=%%p  "
-            "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  dynbase=%%x\\n",
-        av, sz_compressed, f_decompress, f_unf, &xo, xo.size, xo.buf,
-        &xi, xi.size, xi.buf, dynbase);
-
-    // ehdr = Uncompress Ehdr and Phdrs
-    unpackExtent(&xj, &xo, f_decompress, 0);  // never filtered?
-
-#else  //}{ !__mips__
-    // sizeof(Ehdr+Phdrs),   compressed; including b_info header
-    size_t const sz_pckhdrs = xi.size;
-
-#if defined(__i386__)  //{
-    f_unf = (0xeb != *(unsigned char *)f_decompress)  // 2-byte jmp around unfilter
-        ? 0
-        : (f_unfilter *)(2+ (long)f_decompress);
 #endif  //}
-    DPRINTF("upx_main av=%%p  szc=%%x  f_dec=%%p  f_unf=%%p  "
+
+    DPRINTF("upx_main av=%%p  szc=%%x  f_exp=%%p  f_unf=%%p  "
             "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  dynbase=%%x\\n",
-        av, sz_compressed, f_decompress, f_unf, &xo, xo.size, xo.buf,
+        av, sz_compressed, f_exp, f_unf, &xo, xo.size, xo.buf,
         &xi, xi.size, xi.buf, dynbase);
 
+#if defined(__mips__)  //{
+    // ehdr = Uncompress Ehdr and Phdrs
+    unpackExtent(&xj, &xo, f_exp, 0);
+#else  //}{ !defined(__mips__)
     // Uncompress Ehdr and Phdrs.
-    unpackExtent(&xi, &xo, f_decompress, 0);
+    unpackExtent(&xi, &xo, f_exp, 0);
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.
-    xi.buf  -= sz_pckhdrs;
+    xi.buf  -= sz_first;
     xi.size  = sz_compressed;
 #endif  // !__mips__ }
 
@@ -827,7 +912,11 @@ void *upx_main(
     }
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    Elf32_Addr entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf);
+    Elf32_Addr entry = do_xmap((int)f_exp, ehdr, &xi, av, &reloc, f_unf
+#if defined(__mips__)  //{
+        , page_mask
+#endif
+        );
     DPRINTF("upx_main2  entry=%%p  reloc=%%p\\n", entry, reloc);
     auxv_up(av, AT_ENTRY , entry);
 
@@ -843,7 +932,11 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0);
+        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0
+#if defined(__mips__)  //{
+            , page_mask
+#endif  //}
+        );
         auxv_up(av, AT_BASE, reloc);  // uClibc and musl
         close(fdi);
         break;

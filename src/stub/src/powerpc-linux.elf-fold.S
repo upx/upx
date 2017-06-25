@@ -57,36 +57,36 @@ OVERHEAD= 2048
 // http://refspecs.linuxfoundation.org/elf/elfspec_ppc.pdf  p.3-17 (pdf p.33)
 // SZ_LINKA= (2 + max(0, #params - 8))*4  // (sp,lr, arg9,arg10, ... )
 SZ_LINKA= (2 + 2)*4  // (sp,pc, arg9,arg10,... ) and 16-byte aligned
-  ARG9= 2*4
-  ARG10= 3*4
 SZ_FRAME= SZ_LINKA
 
-/* In:
-   r31= &decompress; also 2*4+ (char *)&(#bytes which preceed &-8(r31)
-   r30= reserved for &this page
-   r29= reserved for &our_Elf32_Ehdr
-   r28= &Elf32_auxv_t
-   r27= actual page size (4K or 64K)
-   r26= o_binfo
+// In:
+r_exp=   31  // f_exp == &decompress()
+r_PMASK= 30  // PAGE_MASK
+r_ADRU=  29  // &base to unmap
+r_LENU=  28  // length to unmap
+r_BINFO= 27
+r_auxv=  26
+r_slide= 25
+//r_FLD=   24
+//r_ADRM=  23
+//r_LENM=  22
 
-   r24= ADRU
-   r23= LENU
-   r22= slide
+//   r29= reserved for &our_Elf32_Ehdr
 
-   r21= &f_unf
-*/
-#define av_lo  r28
-#define adru   r24
-#define lenu   r23
-
-#define r_fd   r20
-#define av_hi  r19
-#define av_len r18
-#define cblk   r17
-#define pag    r16
+r_unf=  21  // f_unf == &unfilter()
+r_fd=   20
+av_hi=  19
+av_len= 18
+cblk=   17
+pag=    16
 
 fold_begin:
-////    teq r0,r0  // debugging
+get_page_mask: .globl get_page_mask
+        li r3,0 -0x1000>>9  // modified by elf-entry.S
+        slwi r3,r3,9
+        blr
+        nop
+
         call L90
 L90b:
 #include "arch/powerpc/32/bxx.S"
@@ -94,20 +94,20 @@ L90a:
         .asciz "   =/proc/self/exe"
         .balign 4
 L90:
-        mflr r21  // L90b = &ppcbxx: f_unfilter
+        mflr r_unf  // L90b = &ppcbxx: f_unfilter
 // open /proc/self/exe
         li a1,O_RDONLY
-        la a0,4+ L90a - L90b(r21)  // "/proc/self/exe"
+        la a0,4+ L90a - L90b(r_unf)  // "/proc/self/exe"
         call open; movr r_fd,a0
 // slide {<<stuff>>,argc,argv,0,env,0,auxv} down with maximum room before strings
         la a1,-4(sp)  // src ready for lwzu
         la sp,-(4+ PATH_MAX)(sp)
         la a0,-4(sp)  // dst ready for stwu
-        la av_lo,-4(av_lo)  // &end ready for lwzu
+        la r_auxv,-4(r_auxv)  // &end ready for lwzu
 0: // copy upto auxv
-        lwzu r0,4(a1); cmplw cr7,a1,av_lo
+        lwzu r0,4(a1); cmplw cr7,a1,r_auxv
         stwu r0,4(a0); blt cr7,0b
-        la  av_lo,8(a0)  // new &auxv
+        la  r_auxv,8(a0)  // new &auxv
         stwu r0,4(a0)  // new  env_terminator
 0: // copy auxv
         lwz  r0,4(a1); cmpli cr7,r0,AT_NULL
@@ -115,19 +115,19 @@ L90:
         lwzu r0,2*4(a1)
         stwu r0,2*4(a0); bne cr7,0b
         la av_hi,4(a0)  // tmp end of auxv
-        subf av_len,av_lo,av_hi  // length of auxv
+        subf av_len,r_auxv,av_hi  // length of auxv
 
-        lwz  r0,L90a - L90b(r21)  // "    ="
+        lwz  r0,L90a - L90b(r_unf)  // "    ="
         la cblk,4(a1)  // original &strings
         stwu r0,4(a0)
         la  r14,4(a0)  // buffer
 // readlink("/proc/self/exe", buffer, -1+ PATH_MAX)
         li a2,-1+ PATH_MAX
         movr a1,r14  // buffer
-        la a0,4+ L90a - L90b(r21)  //     "/proc/self/exe"
+        la a0,4+ L90a - L90b(r_unf)  //     "/proc/self/exe"
         call readlink; la a2,-4(r14)  // a0= len; a2= buffer
         cmpwi a0,0; bgt 0f  // success
-        la a2,L90a - L90b(r21)  // "   =/proc/self/exe"
+        la a2,L90a - L90b(r_unf)  // "   =/proc/self/exe"
         li a0,L90  - (4+ L90a)  // round_up(4, strlen("/proc/self/exe"))
 0:
         addi a0,a0,4  // len += strlen("   =");
@@ -139,7 +139,7 @@ L90:
 0: // slide path up
         lbzu r0,-1(a1)
         stbu r0,-1(a0); bdnz 0b
-        stw a0,-2*4(av_lo)  // &"   =<<path>>" for env
+        stw a0,-2*4(r_auxv)  // &"   =<<path>>" for env
 
         clrrwi a0,a0,2  // word align
         xor r0,sp,a1  // parity of length
@@ -149,60 +149,62 @@ L90:
 
 // slide the rest of the stack up
         movr a1,av_hi
-        sub av_lo,a0,av_len
+        sub r_auxv,a0,av_len
 0:
         lwzu r0,-4(a1); cmpl cr7,a1,sp
         stwu r0,-4(a0); bgt+ cr7,0b
         movr sp,a0
 
-        li r0,0
-r_reloc= 32 - 1  # use a slot in register save area
-        la a7,SZ_FRAME+r_reloc*4(sp)  // &reloc
-        stw r22,0(a7)  // reloc === slide
-        sub r0,r0,r27  // -pagesize == pagemask
-        mr a7,r27  // pagesize
-        mr a6,av_lo  // &Elf32_auxv_t
-        mr a5,r21  // &f_unf
-          and r30,a5,r0  // r30= &this_page
-        mr a4,r31  // &decompress: f_expand
-
         stwu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
-        lwz a1,-2*4(r31)  // sz_pack2 == #bytes which preceed -2*4(r31)
-        subf r29,a1,r31  // 2*4+ (char *)&our_Elf32_Ehdr
-        addi r29,r29,-2*4  // &our_Elf32_Ehdr
-          stw r29,ARG9(sp)  // reloc
+        lwz a1,-2*4(r_exp)  // sz_pack2 == #bytes which preceed -2*4(r_exp)
 
-        add a0,r29,r26  // &b_info
-        sub a1,a1,r26  // total_size
+        add a0,r_ADRU,r_BINFO  // &b_info
+        sub a1,a1,r_BINFO  // total_size
         la  a2,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
-        lwz a3,sz_unc(a0)  // sz_elf_headers
-
+        mr  a3,r_auxv  // &Elf32_auxv_t
+        mr  a4,r_exp  // &decompress: f_expand
+        mr  a5,r_unf  // &f_unf
+        mr  a6,r_slide  // reloc; slide; dynbase
         call upx_main  // Out: a0= entry
-// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, sz_ehdr a3,
-//      f_exp a4, f_unf a5, Elf32_auxv_t *a6, page_size a7, reloc ARG9)
-        la  sp,SZ_FRAME+OVERHEAD(sp)  // deallocate this frame
-        mr r31,a0  // save &entry
+// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, ELf32_auxv_t *a3,
+//      f_exp a4, f_unf a5, dynbase a6)
 
-// map the first page of /proc/self/exe
+        la  sp,SZ_FRAME+OVERHEAD(sp)  // deallocate this frame
+        mr r_exp,a0  // save &entry
+
+// first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)
         li a5,0  // offset
         movr a4,r_fd
         li a3,MAP_PRIVATE
         li a2,PROT_READ
-        movr a1,r27  // PAGE_SIZE
+        neg a1,r_PMASK  // PAGE_SIZE
         li a0,0  // kernel chooses where
         call mmap
 // close /proc/self/exe
         movr a0,r_fd
         call close
 
-        movr a0,adru
-        movr a1,lenu
-        call munmap  // unmap compressed program; /proc/self/exe disappears
+AT_NULL= 0  // <elf.h>
+a_type= 0
+a_val= 4
+sz_auxv= 2*4
 
-        mtlr r31  // entry address
-        lmw r2,SZ_FRAME+2*4-4(sp) // restore registers r2 thru r31
+// find the escape hatch in auxv[{AT_NULL}].a_val
+        mr a0,r_auxv
+0:
+        lwz r0,a_type(a0); lwz a1,a_val(a0); addi a0,a0,sz_auxv
+        cmpli cr7,r0,AT_NULL; bne+ cr7,0b
+        mtctr a1  // escape hatch
+
+        mr a0,r_ADRU
+        mr a1,r_LENU
+        li r0,SYS_munmap
+        mtlr r_exp  // entry address
+
+        lmw a2,SZ_FRAME+(a2 - r2 + 2)*4 - 4(sp) // restore registers a2 thru r31
         la sp, SZ_FRAME+32*4(sp)  // deallocate outer frame
-        ret  // enter /lib/ld.so.1
+
+        bctr
 
 SYS_exit=  1
 SYS_fork=  2
@@ -230,6 +232,8 @@ exit: .globl exit
         li r0,SYS_exit;        b 5f
 readlink: .globl readlink
         li r0,SYS_readlink; 5: b 5f
+write: .globl write
+        li r0,SYS_write;    5: b 5f
 read: .globl read
         li r0,SYS_read;     5: b 5f
 open: .globl open
@@ -243,4 +247,7 @@ munmap: .globl munmap
 brk: .globl brk
         li r0,SYS_brk;      5: b sysgo
 
+my_bkpt: .globl my_bkpt
+        teq r0,r0
+        blr
 /* vim:set ts=8 sw=8 et: */
