@@ -58,12 +58,11 @@ OVERHEAD= 2048
 
 /* In:
    r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)
-   r28= &Elf64_auxv_t
-   r27= actual page size
    r26= o_binfo
-   sp/ SZ_FRAME,regsav(r1-31),&eof_src,argc,argv,0,env,0,auxv,0,chars
+   sp/ {SZ_FRAME},regsav(r1-31),&eof_src,argc,argv,0,env,0,auxv,0,chars
 */
 fold_begin:
+////    teq r0,r0  // debugging
         call L90
 #include "arch/powerpc/64le/bxx.S"
 
@@ -75,14 +74,14 @@ zfind:
 L90:
         la sp,SZ_FRAME(sp)  // trim save area used by decompressor
         mflr a5  // &ppcbxx: f_unfilter
-        ld a6,SZ_FRAME(sp)  // sp from regsav at execve
+        ld a6,0(sp)  // &argc;  sp from regsav at execve
         call zfind  // a6= &env
         call zfind  // a6= &Elf64_auxv; r0= 0
 r_reloc= 32 - 1  # use a slot in register save area
-        la a7,SZ_FRAME+r_reloc*8(sp)  // &reloc
+        la a7,r_reloc*8(sp)  // &reloc
         std r0,0(a7)  // reloc= 0
 
-        la sp,-OVERHEAD(sp)  // -SZ_FRAME + &Elf64_Ehdr temporary space
+        la sp,-(SZ_FRAME+OVERHEAD)(sp)  // -SZ_FRAME + &Elf64_Ehdr temporary space
         lwz a1,-2*4(r31)  // sz_pack2 == #bytes which preceed -2*4(r31)
         clrrdi r30,a5,16  // r30= &this_page
         subf r29,a1,r31  // 2*4+ (char *)&our_Elf64_Ehdr
@@ -97,7 +96,6 @@ r_reloc= 32 - 1  # use a slot in register save area
         std a4,3*8(sp); la a4,3*8(sp)  // use tmp.xlc
         std a5,4*8(sp); la a5,4*8(sp)  // use tmp.ld
 #endif  //}
-teq r0,r0
         call upx_main
         // a0=entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, sz_ehdr a3,
         // f_decomp a4, f_unf a5, Elf64_auxv_t *a6, void *a7=p_reloc)
@@ -116,7 +114,11 @@ teq r0,r0
 
 /* Restore Save Area     */
 rest:
+// BIG_ENDIAN uses r2 (TOC) that was set above.
+// LITTLE_ENDIAN does not use TOC here.
+#if !BIG_ENDIAN  //{
         ld   2, 2*8-8+SZ_FRAME+OVERHEAD(sp)
+#endif  //}
         ld   3, 3*8-8+SZ_FRAME+OVERHEAD(sp)
         ld   4, 4*8-8+SZ_FRAME+OVERHEAD(sp)
         ld   5, 5*8-8+SZ_FRAME+OVERHEAD(sp)
