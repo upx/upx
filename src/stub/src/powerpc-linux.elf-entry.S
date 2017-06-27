@@ -29,21 +29,28 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW= 4  // Number of Bytes Per Word
 #include "arch/powerpc/32/macros.S"
 #include "arch/powerpc/32/ppc_regs.h"
-SZ_FRAME= (2 + 2)*4  // (sp,LR, 2 slots)  0 mod 16
+SZ_FRAME= (2 + 2)*NBPW  // (sp,LR, 2 slots)  0 mod 16
 
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
   b_method= 8
 
-szElf32_Ehdr= 13*4
-p_memsz= 5*4
+szElf32_Ehdr= 13*NBPW
+p_memsz= 5*NBPW
 
 e_type= 16
   ET_EXEC= 2
   ET_DYN= 3
+
+AT_NULL= 0  // <elf.h>
+AT_PAGESZ= 6
+a_type= 0
+a_val= NBPW
+sz_auxv= 2*NBPW
 
 PROT_READ=  1
 PROT_WRITE= 2
@@ -143,7 +150,7 @@ cfl_ret:
 msg_SELinux:
         call L72
 L70:
-        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
+        .asciz "mmap failed.\n"
 L71:
         // IDENTSTR goes here
 
@@ -236,14 +243,14 @@ AT_SYSINFO_EHDR= 33  // Elf32_Ehdr for VDSO
         add r_exp,r_exp,r0  // relocate &f_exp
 
         mr a3,r_LENM  // length to move
-        addi a3,a3,7  // roundup (8, )
-          addi a1,r_ADRU,-4  // prepare for lwu
+        addi a3,a3,-1+ 2*NBPW  // roundup (8, )
+          addi a1,r_ADRU,-NBPW  // prepare for lwu
         srwi a3,a3,3  // number of 8-byte chunks
-          addi a0,a0,-4  // prepare for stwu
+          addi a0,a0,-NBPW  // prepare for stwu
         mtctr a3
 0:
-        lwz a2,4(a1); lwzu a3,2*4(a1)
-        stw a2,4(a0); stwu a3,2*4(a0); bdnz 0b
+        lwz a2,NBPW(a1); lwzu a3,2*NBPW(a1)
+        stw a2,NBPW(a0); stwu a3,2*NBPW(a0); bdnz 0b
         mr r_ADRU,r_ADRM  // relocate
 
 //  section ELFufold
@@ -253,8 +260,8 @@ fold:
         mtctr r_exp  // &decompress
         lwz r0,sz_unc     + LBINFO - LrFLD(r_FLD)
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
-        la ldst,SZ_FRAME+31*4(sp)  // &slot on stack
-        stw  r0,SZ_FRAME+31*4(sp)  // lzma uses for EOF
+        la ldst,SZ_FRAME+31*NBPW(sp)  // &slot on stack
+        stw  r0,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
         lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
         la src,sz_b_info + LBINFO - LrFLD(r_FLD)
         bctrl  // decompress it
@@ -267,7 +274,7 @@ fold:
         mr a0,r_ADRU  // base
         li r0,__NR_mprotect; sc
 
-        addi r0,r23,4*4  // jmp over get_page_mask()
+        addi r0,r23,4*NBPW  // jmp over get_page_mask()
         mtctr r0
         bctr
 
@@ -284,26 +291,21 @@ fold:
 //      blr  # goto return address
 
 zfind:
-        lwz r0,0(a0); addi a0,a0,4
+        lwz r0,0(a0); addi a0,a0,NBPW
         cmpi cr7,r0,0; bne+ cr7,zfind
         ret
 
 main:
-        stwu r1,-(SZ_FRAME+32*4)(sp)  // allocate space (keeping 0 mod 16), chain r1
-        stmw r2,  SZ_FRAME+2*4-4(sp) // save registers r2 thru r31
+        stwu r1,-(SZ_FRAME+32*NBPW)(sp)  // allocate space (keeping 0 mod 16), chain r1
+        stmw r2,  SZ_FRAME+ 2*NBPW - NBPW(sp) // save registers r2 thru r31
         mflr r_exp  // &f_exp (decompress)
 
-        la a0,SZ_FRAME+32*4(sp)
+        la a0,SZ_FRAME+32*NBPW(sp)  // &argc
         call zfind  // a0= envp
         call zfind  // a0= &Elf32_auxv
         mr r_auxv,a0  // save for folded code
 
 // set r_PMASK by finding actual page size in Elf32_auxv_t
-AT_NULL= 0  // <elf.h>
-AT_PAGESZ= 6
-a_type= 0
-a_val= 4
-sz_auxv= 2*4
 1:
         lwz r0,a_type(a0); lwz a1,a_val(a0); addi a0,a0,sz_auxv
         cmpi cr7,r0,AT_PAGESZ; beq- cr7,2f

@@ -29,8 +29,10 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW= 4  // Number of Bytes Per Word
 #include "arch/powerpc/32/macros.S"
 #include "arch/powerpc/32/ppc_regs.h"
+
 PATH_MAX= 4096  // /usr/include/linux/limits.h
 
 szElf32_Ehdr= 0x34
@@ -55,10 +57,11 @@ O_RDONLY=       0
 OVERHEAD= 2048
 
 // http://refspecs.linuxfoundation.org/elf/elfspec_ppc.pdf  p.3-17 (pdf p.33)
-// SZ_LINKA= (2 + max(0, #params - 8))*4  // (sp,lr, arg9,arg10, ... )
-SZ_LINKA= (2 + 2)*4  // (sp,pc, arg9,arg10,... ) and 16-byte aligned
+// SZ_LINKA= (2 + max(0, #params - 8))*NBPW  // (sp,lr, arg9,arg10, ... )
+SZ_LINKA= (2 + 2)*NBPW  // (sp,pc, arg9,arg10,... ) and 16-byte aligned
 SZ_FRAME= SZ_LINKA
 
+sz_pack2_f_exp= -4 -4  // 4 bytes and one Instruction before r_exp
 // In:
 r_exp=   31  // f_exp == &decompress()
 r_PMASK= 30  // PAGE_MASK
@@ -91,46 +94,47 @@ get_page_mask: .globl get_page_mask
 L90b:
 #include "arch/powerpc/32/bxx.S"
 L90a:
+L_PFX= 4  // strlen("   =")
         .asciz "   =/proc/self/exe"
         .balign 4
 L90:
         mflr r_unf  // L90b = &ppcbxx: f_unfilter
 // open /proc/self/exe
         li a1,O_RDONLY
-        la a0,4+ L90a - L90b(r_unf)  // "/proc/self/exe"
+        la a0,L_PFX+ L90a - L90b(r_unf)  // "/proc/self/exe"
         call open; movr r_fd,a0
 // slide {<<stuff>>,argc,argv,0,env,0,auxv} down with maximum room before strings
-        la a1,-4(sp)  // src ready for lwzu
-        la sp,-(4+ PATH_MAX)(sp)
-        la a0,-4(sp)  // dst ready for stwu
-        la r_auxv,-4(r_auxv)  // &end ready for lwzu
+        la a1,-NBPW(sp)  // src ready for lwzu
+        la sp,-(-NBPW & (-1+ NBPW + (L_PFX + PATH_MAX)))(sp)
+        la a0,-NBPW(sp)  // dst ready for stwu
+        la r_auxv,-NBPW(r_auxv)  // &end ready for lwzu
 0: // copy upto auxv
-        lwzu r0,4(a1); cmplw cr7,a1,r_auxv
-        stwu r0,4(a0); blt cr7,0b
-        la  r_auxv,8(a0)  // new &auxv
-        stwu r0,4(a0)  // new  env_terminator
+        lwzu r0,NBPW(a1); cmplw cr7,a1,r_auxv
+        stwu r0,NBPW(a0); blt cr7,0b
+        la  r_auxv,2*NBPW(a0)  // new &auxv
+        stwu r0,NBPW(a0)  // new  env_terminator
 0: // copy auxv
-        lwz  r0,4(a1); cmpli cr7,r0,AT_NULL
-        stw  r0,4(a0)
-        lwzu r0,2*4(a1)
-        stwu r0,2*4(a0); bne cr7,0b
-        la av_hi,4(a0)  // tmp end of auxv
+        lwz  r0,NBPW(a1); cmplwi cr7,r0,AT_NULL
+        stw  r0,NBPW(a0)
+        lwzu r0,2*NBPW(a1)
+        stwu r0,2*NBPW(a0); bne cr7,0b
+        la av_hi,NBPW(a0)  // tmp end of auxv
         subf av_len,r_auxv,av_hi  // length of auxv
 
         lwz  r0,L90a - L90b(r_unf)  // "    ="
-        la cblk,4(a1)  // original &strings
-        stwu r0,4(a0)
-        la  r14,4(a0)  // buffer
+        la cblk,NBPW(a1)  // original &strings
+        stwu r0,NBPW(a0)
+        la  r14,L_PFX(a0)  // buffer
 // readlink("/proc/self/exe", buffer, -1+ PATH_MAX)
         li a2,-1+ PATH_MAX
         movr a1,r14  // buffer
-        la a0,4+ L90a - L90b(r_unf)  //     "/proc/self/exe"
-        call readlink; la a2,-4(r14)  // a0= len; a2= buffer
+        la a0,L_PFX+ L90a - L90b(r_unf)  //     "/proc/self/exe"
+        call readlink; la a2,-L_PFX(r14)  // a0= len; a2= buffer
         cmpwi a0,0; bgt 0f  // success
         la a2,L90a - L90b(r_unf)  // "   =/proc/self/exe"
-        li a0,L90  - (4+ L90a)  // round_up(4, strlen("/proc/self/exe"))
+        li a0,L90  - (NBPW+ L90a)  // round_up(NBPW, strlen("/proc/self/exe"))
 0:
-        addi a0,a0,4  // len += strlen("   =");
+        addi a0,a0,L_PFX  // len += strlen("   =");
         add a1,a2,a0  // beyond end of path
         mtctr a0
         movr a0,cblk  // old &strings
@@ -139,24 +143,24 @@ L90:
 0: // slide path up
         lbzu r0,-1(a1)
         stbu r0,-1(a0); bdnz 0b
-        stw a0,-2*4(r_auxv)  // &"   =<<path>>" for env
+        stw a0,-2*NBPW(r_auxv)  // &"   =<<path>>" for env
 
         clrrwi a0,a0,2  // word align
         xor r0,sp,a1  // parity of length
         xor r0,r0,a0  // length vs destination
-        rlwinm r0,r0,0,29,29  // andi r0,r0,1<<(31-29)
+        clrlwi r0,r0,-3+ 8*NBPW  // keep bottom 3 bits
         sub a0,a0,r0
 
 // slide the rest of the stack up
         movr a1,av_hi
         sub r_auxv,a0,av_len
 0:
-        lwzu r0,-4(a1); cmpl cr7,a1,sp
-        stwu r0,-4(a0); bgt+ cr7,0b
+        lwzu r0,-NBPW(a1); cmplw cr7,a1,sp
+        stwu r0,-NBPW(a0); bgt+ cr7,0b
         movr sp,a0
 
         stwu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
-        lwz a1,-2*4(r_exp)  // sz_pack2 == #bytes which preceed -2*4(r_exp)
+        lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which preceed -2*NBPW(r_exp)
 
         add a0,r_ADRU,r_BINFO  // &b_info
         sub a1,a1,r_BINFO  // total_size
@@ -186,14 +190,14 @@ L90:
 
 AT_NULL= 0  // <elf.h>
 a_type= 0
-a_val= 4
-sz_auxv= 2*4
+a_val= NBPW
+sz_auxv= 2*NBPW
 
 // find the escape hatch in auxv[{AT_NULL}].a_val
         mr a0,r_auxv
 0:
         lwz r0,a_type(a0); lwz a1,a_val(a0); addi a0,a0,sz_auxv
-        cmpli cr7,r0,AT_NULL; bne+ cr7,0b
+        cmplwi cr7,r0,AT_NULL; bne+ cr7,0b
         mtctr a1  // escape hatch
 
         mr a0,r_ADRU
@@ -201,10 +205,10 @@ sz_auxv= 2*4
         li r0,SYS_munmap
         mtlr r_exp  // entry address
 
-        lmw a2,SZ_FRAME+(a2 - r2 + 2)*4 - 4(sp) // restore registers a2 thru r31
-        la sp, SZ_FRAME+32*4(sp)  // deallocate outer frame
+        lmw a2,SZ_FRAME+(a2 - r2 + 2)*NBPW - NBPW(sp) // restore registers a2 thru r31
+        la sp, SZ_FRAME+32*NBPW(sp)  // deallocate outer frame
 
-        bctr
+        bctr  // goto escape hatch
 
 SYS_exit=  1
 SYS_fork=  2
