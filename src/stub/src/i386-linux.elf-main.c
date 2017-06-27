@@ -915,7 +915,7 @@ void *upx_main(
     Elf32_Addr entry = do_xmap((int)f_exp, ehdr, &xi, av, &reloc, f_unf
 #if defined(__mips__)  //{
         , page_mask
-#endif
+#endif  //}
         );
     DPRINTF("upx_main2  entry=%%p  reloc=%%p\\n", entry, reloc);
     auxv_up(av, AT_ENTRY , entry);
