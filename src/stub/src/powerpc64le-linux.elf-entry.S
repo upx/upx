@@ -277,7 +277,7 @@ fold:
         lwz r0,sz_unc     + LBINFO - LrFLD(r_FLD)
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         la ldst,SZ_FRAME+31*NBPW(sp)  // &slot on stack
-        stw  r0,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
+        std  r0,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
         lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
         la src,sz_b_info + LBINFO - LrFLD(r_FLD)
         bctrl  // decompress it
@@ -296,7 +296,7 @@ zfind:
         ret
 
 main:
-  teq r0,r0  // debugging
+////  teq r0,r0  // debugging
         stdu r1,-(SZ_FRAME + 32*NBPW)(sp)  // allocate space (keeping 0 mod 16), save r1
 //      stmd r2,SZ_FRAME+(-1+  2)*NBPW(sp) // save registers r2 thru r31
         std   2,SZ_FRAME+(-1+  2)*NBPW(sp)

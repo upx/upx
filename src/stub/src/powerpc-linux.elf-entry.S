@@ -316,12 +316,6 @@ main:
 
         call unfold
 LrFLD:
-LADRM:
-        .long ADRM
-LLENM:
-        .long LENM
-LLENU:
-        .long LENU
 LOBINFO:
         .long O_BINFO
 LBINFO:

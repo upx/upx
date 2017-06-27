@@ -80,7 +80,7 @@ r_slide= 25
 //r_ADRM=  23
 //r_LENM=  22
 
-//   r29= reserved for &our_Elf32_Ehdr
+//   r29= reserved for &our_Elf64_Ehdr
 
 //   sp/ {SZ_FRAME},regsav(r1-31),&eof_src,argc,argv,0,env,0,auxv,0,chars
 
@@ -92,7 +92,7 @@ cblk=   17
 pag=    16
 
 fold_begin:
-    teq r0,r0  // debugging
+////    teq r0,r0  // debugging
         call L90
 L90b:
 #include "arch/powerpc/64le/bxx.S"
@@ -124,7 +124,6 @@ L90:
         la av_hi,NBPW(a0)  // tmp end of auxv
         subf av_len,r_auxv,av_hi  // length of auxv
 
-    teq r0,r0
         lwz  r0,L90a - L90b(r_unf)  // "    ="
         la cblk,NBPW(a1)  // original &strings
         stwu r0,NBPW(a0)
@@ -163,29 +162,28 @@ L90:
         stdu r0,-NBPW(a0); bgt+ cr7,0b
         movr sp,a0
 
-r_reloc= 32 - 1  # use a slot in register save area
-        la a7,r_reloc*NBPW(sp)  // &reloc
-        li r0,0; std r0,0(a7)  // reloc= 0
+r_reloc= 32 - 1  # used slot in register save area
+        la a6,SZ_FRAME+r_reloc*NBPW(sp)  // &reloc [adjacent to argc]
+        std r_ADRU,0(a6)  // elfbase
 
         stdu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
-        lwz a1,-2*4(r_exp)  // sz_pack2 == #bytes which preceed -2*NBPW(r_exp)
+        lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which preceed -2*NBPW(r_exp)
 
         add a0,r_ADRU,r_BINFO  // &b_info
         sub a1,a1,r_BINFO  // total_size
-        la  a2,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
-        mr  a3,r_auxv  // &Elf32_auxv_t
+        la  a2,SZ_FRAME(sp)  // &Elf64_Ehdr temporary space
+        mr  a3,r_auxv  // &Elf64_auxv_t
         mr  a4,r_exp  // &decompress: f_expand
         mr  a5,r_unf  // &f_unf
-        mr  a6,r_slide  // reloc; slide; dynbase
 #if BIG_ENDIAN  //{  setup indirection for entry to f_exp and f_unf
         std a4,3*NBPW(sp); la a4,3*NBPW(sp)  // use tmp.xlc
         std a5,4*NBPW(sp); la a5,4*NBPW(sp)  // use tmp.ld
 #endif  //}
         call upx_main  // Out: a0= entry
-// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, ELf32_auxv_t *a3,
-//      f_exp a4, f_unf a5, dynbase a6, p_reloc a7)
+// entry= upx_main(b_info *a0, total_size a1, Elf_Ehdr *a2, Elf64_auxv_t *a3,
+//      f_exp a4, f_unf a5, p_reloc a6)
 #if BIG_ENDIAN  //{
-        ld r0,SZ_FRAME+OVERHEAD +r_reloc*NBPW(sp)  // reloc for ET_DYN
+        ld r0,SZ_FRAME+OVERHEAD +SZ_FRAME+r_reloc*NBPW(sp)  // reloc for ET_DYN
         ld r2,NBPW(r3); add r2,r2,r0  // toc
         ld r3,   0(r3); add r3,r3,r0  // .func
 #endif  //}
@@ -222,14 +220,12 @@ sz_auxv= 2*NBPW
         li r0,SYS_munmap
         mtlr r_exp  // entry address
 
-//      lmw a2,SZ_FRAME+(a2 - r2 + 2)*NBPW - NBPW(sp) // restore registers a2 thru r31
-// BIG_ENDIAN uses r2 (TOC) that was set above.
-// LITTLE_ENDIAN does not use TOC here.
-#if !BIG_ENDIAN  //{
-        ld   2,SZ_FRAME + (-1+  2)*NBPW(sp)
-#endif  //}
-        ld  3,SZ_FRAME + (-1+  3)*NBPW(sp)
-        ld  4,SZ_FRAME + (-1+  4)*NBPW(sp)
+//    BIG_ENDIAN: r2 (TOC) already is live (set after return from upx_main)
+// LITTLE_ENDIAN: r2 never is touched
+//      ld   2,SZ_FRAME + (-1+  2)*NBPW(sp)
+// r3,r4 are a0,a1 which are parameters to munmap()
+//      ld  3,SZ_FRAME + (-1+  3)*NBPW(sp)
+//      ld  4,SZ_FRAME + (-1+  4)*NBPW(sp)
         ld  5,SZ_FRAME + (-1+  5)*NBPW(sp)
         ld  6,SZ_FRAME + (-1+  6)*NBPW(sp)
         ld  7,SZ_FRAME + (-1+  7)*NBPW(sp)

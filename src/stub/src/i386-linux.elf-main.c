@@ -290,7 +290,7 @@ typedef void f_unfilter(
 );
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
-          nrv_byte *, nrv_uint *, unsigned );
+          nrv_byte *, size_t *, unsigned );
 
 
 static void
@@ -332,7 +332,7 @@ ERR_LAB
         //   assert(h.sz_cpr > 0 && h.sz_cpr <= blocksize);
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
-            nrv_uint out_len = h.sz_unc;  // EOF for lzma
+            size_t out_len = h.sz_unc;  // EOF for lzma
             int const j = (*f_exp)((unsigned char *)xi->buf, h.sz_cpr,
                 (unsigned char *)xo->buf, &out_len,
 #if defined(__i386__) //{
@@ -366,7 +366,7 @@ ERR_LAB
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it; remembered in AT_NULL.d_val
 static void *
-make_hatch_x86(Elf32_Phdr const *const phdr, unsigned const reloc)
+make_hatch_x86(Elf32_Phdr const *const phdr, ptrdiff_t reloc)
 {
     unsigned *hatch = 0;
     DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,0);
@@ -405,7 +405,7 @@ extern unsigned get_sys_munmap(void);
 static void *
 make_hatch_arm(
     Elf32_Phdr const *const phdr,
-    unsigned const reloc
+    ptrdiff_t reloc
 )
 {
     unsigned const sys_munmap = get_sys_munmap();
@@ -442,7 +442,7 @@ make_hatch_arm(
 static void *
 make_hatch_mips(
     Elf32_Phdr const *const phdr,
-    unsigned const reloc,
+    ptrdiff_t reloc,
     unsigned const frag_mask)
 {
     unsigned *hatch = 0;
@@ -468,7 +468,7 @@ make_hatch_mips(
 static void *
 make_hatch_ppc32(
     Elf32_Phdr const *const phdr,
-    unsigned const reloc,
+    ptrdiff_t reloc,
     unsigned const frag_mask)
 {
     unsigned *hatch = 0;
@@ -579,7 +579,7 @@ size_t get_page_mask(void) { return PAGE_MASK; }  // compile-time constant
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
-static unsigned long  // returns relocation constant
+static ptrdiff_t // returns relocation constant
 #if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
 #endif  /*}*/
@@ -630,7 +630,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
         //munmap(szlo + addr, hi - szlo);
     }
     *p_brk = hi + addr;  // the logical value of brk(0)
-    return (unsigned long)addr - lo;
+    return (ptrdiff_t)addr - lo;
 }
 
 
@@ -651,7 +651,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
         (void const *)ehdr);
     char *v_brk;
 
-    unsigned const reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
+    ptrdiff_t reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
          phdr, ehdr->e_phnum, &v_brk
 #if defined(__mips__)  //{
          , page_mask
@@ -805,8 +805,6 @@ void *upx_main(  // returns entry address
 )
 
 #elif defined(__powerpc__) //}{
-// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2,
-//      f_exp a3, f_unf a4, Elf32_auxv_t *a5, dynbase a6)
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length

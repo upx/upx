@@ -576,8 +576,6 @@ void PackLinuxElf32::defineSymbols(Filter const *ft)
     lsize = /*getLoaderSize()*/  64 * 1024;  // XXX: upper bound; avoid circularity
     upx_uint32_t       lo_va_stub = get_te32(&elfout.phdr[0].p_vaddr);
     upx_uint32_t adrm;
-    unsigned lenm;
-    unsigned lenu;
     len += (7&-lsize) + lsize;
     upx_uint32_t my_page_size = 4096u;
     upx_uint32_t my_page_mask = -my_page_size;
@@ -590,21 +588,11 @@ void PackLinuxElf32::defineSymbols(Filter const *ft)
         set_te32(&elfout.phdr[0].p_paddr, lo_va_user);
                lo_va_stub      = lo_va_user;
         adrm = getbrk(phdri, e_phnum) - lo_va_user;
-        lenm = my_page_size + len;
-        lenu = my_page_size + len;
     }
     else {
         adrm = len;
-        lenm = my_page_size;
-        lenu = my_page_size + len;
     }
     adrm = my_page_mask & (~my_page_mask + adrm);  // round up to page boundary
-
-    if (Elf32_Ehdr::EM_PPC == e_machine) {
-        linker->defineSymbol("LENU", lenu);  // len  for unmap
-        linker->defineSymbol("LENM", lenm);  // len  for map
-        linker->defineSymbol("ADRM", adrm);  // offset from &Elf32_Ehdr
-    }
 
     //linker->dumpSymbols();  // debug
 }
