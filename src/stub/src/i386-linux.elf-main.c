@@ -658,8 +658,10 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #endif  //}
          );
 
-    DPRINTF("do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)  av=%%p  reloc=%%p/%%p  f_unf=%%p\\n",
-        fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), av, p_reloc, *p_reloc, f_unf);
+    DPRINTF("do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)\\n"
+          "  av=%%p  page_mask=%%p  reloc=%%p/%%p  f_unf=%%p\\n",
+        fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0),
+        av, page_mask, p_reloc, *p_reloc, f_unf);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -792,7 +794,7 @@ void *upx_main(  // returns entry address
     Elf32_auxv_t *const av,
     f_expand *const f_exp,
     f_unfilter *const f_unf,
-    size_t page_mask
+    size_t const page_mask
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
@@ -801,7 +803,7 @@ void *upx_main(  // returns entry address
     Elf32_auxv_t *const av,
     f_expand *const f_exp,
     f_unfilter *const f_unf,
-    size_t page_mask
+    size_t const page_mask
 )
 
 #elif defined(__powerpc__) //}{

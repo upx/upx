@@ -3233,8 +3233,8 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
         adrc = adrm;
         adru = lo_va_stub;
         adrx = lo_va_stub + hlen;
-        lenm = page_size;
-        lenu = page_size + len;
+        lenm = 2*page_size;
+        lenu = 2*page_size + len;
         cntc = 0;
     }
     adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
