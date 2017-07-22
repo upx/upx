@@ -36,7 +36,7 @@ lzma_d_c%.S : tc_list = method-lzma powerpc64-linux.elf default
 lzma_d_c%.S : tc_bfdname = elf64-powerpc
 
 c := tc.method-lzma.gcc
-$c = /usr/bin/powerpc64-linux-gnu-gcc
+$c = powerpc64-linux-gcc-4.9.2
 $c += -fPIC
 $c += -fomit-frame-pointer
 $c += -fno-unit-at-a-time
