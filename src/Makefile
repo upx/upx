@@ -163,11 +163,11 @@ endif
 
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
-CLANG_FORMAT_FILES += linker.cpp linker.h packhead.cpp packmast.cpp
+CLANG_FORMAT_FILES += linker.cpp linker.h packhead.cpp packmast.cpp packmast.h
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += snprintf.cpp
 CLANG_FORMAT_FILES += stdcxx.cpp stdcxx.h
-CLANG_FORMAT_FILES += ui.cpp ui.h util.h
+CLANG_FORMAT_FILES += ui.cpp ui.h util.cpp util.h work.cpp
 clang-format:
 	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))
 .PHONY: clang-format

@@ -833,7 +833,7 @@ void ElfLinkerPpc64le::relocate1(const Relocation *rel, upx_byte *location, upx_
 }
 
 void ElfLinkerPpc64::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
-                                 const char *type) {
+                               const char *type) {
     if (!strcmp(type, "R_PPC64_ADDR32")) {
         set_be32(location, get_be32(location) + value);
         return;
@@ -855,9 +855,9 @@ void ElfLinkerPpc64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
     value -= rel->section->offset + rel->offset;
 
     if (strncmp(type, "14", 2) == 0) // for "14" and "14S"
-        set_be16(2+ location, get_be16(2+ location) + value);
+        set_be16(2 + location, get_be16(2 + location) + value);
     else if (strncmp(type, "24", 2) == 0) // for "24" and "24S"
-        set_be24(1+ location, get_be24(1+ location) + value);
+        set_be24(1 + location, get_be24(1 + location) + value);
     else
         super::relocate1(rel, location, value, type);
 }
