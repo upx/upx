@@ -203,7 +203,7 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
     // update checksum of uncompressed data
     ph.u_adler = upx_adler32(i_ptr, ph.u_len, ph.u_adler);
 
-    // set compression paramters
+    // set compression parameters
     upx_compress_config_t cconf; cconf.reset();
     if (cconf_parm)
         cconf = *cconf_parm;

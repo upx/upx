@@ -30,7 +30,7 @@
 #include "ppc_regs.h"
 // http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi.html#STACK
 SZ_LINK= 6*8  // (sp,cr,lr, xx,yy,zz) save area per calling convention
-SZ_PSAV= 8*8  // for spilling a0-a7 if necesary
+SZ_PSAV= 8*8  // for spilling a0-a7 if necessary
 retaddr = 2*8  // lr === pc
 
 #define section .section

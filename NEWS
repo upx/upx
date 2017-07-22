@@ -113,7 +113,7 @@ Changes in 2.93 beta (08 Mar 2007):
     you have to explicitly use '--lzma' even for '--ultra-brute' here
     because runtime decompression is about 30 times slower than NRV -
     which is really noticeable on old machines.
-  * dos/exe: fixed a rarely occuring bug in relocation handling
+  * dos/exe: fixed a rarely occurring bug in relocation handling
   * win32/pe & arm/pe: better icon compression handling
 
 Changes in 2.92 beta (23 Jan 2007):

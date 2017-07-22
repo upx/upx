@@ -66,7 +66,7 @@ uncompress:
 
 SZ_DLINE=128  # size of data cache line in Apple G5
 
-/* register assingments for NRV algorithms */
+/* register assignments for NRV algorithms */
 #define  hibit r0  /* holds 0x80000000 during decompress */
 
 #define src  a0

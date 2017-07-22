@@ -167,7 +167,7 @@ r_reloc= 32 - 1  # used slot in register save area
         std r_ADRU,0(a6)  // elfbase
 
         stdu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
-        lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which preceed -2*NBPW(r_exp)
+        lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which precede -2*NBPW(r_exp)
 
         add a0,r_ADRU,r_BINFO  // &b_info
         sub a1,a1,r_BINFO  // total_size

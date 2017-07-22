@@ -112,7 +112,7 @@ protected:
         LE32  extra_heap_alloc;
         char  reserved[12];
         LE32  versioninfo;
-        LE32  unkown;
+        LE32  unknown;
         // 0xC0
         LE16  device_id;
         LE16  ddk_version;

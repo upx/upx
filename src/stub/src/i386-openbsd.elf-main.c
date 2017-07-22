@@ -373,7 +373,7 @@ umax(unsigned a, unsigned b)
 // of lowering the segment limit on %cs as an implementation of "no-execute
 // .data".  Thus OpenBSD 3.9 puts a gap of 0x20000000 (512 MiB) between the
 // origins of .text and .data in each module.  So, mapping ET_DYN must "level"
-// the excursion in .text and .data of anything which preceeded it,
+// the excursion in .text and .data of anything which preceded it,
 // then add the new PT_LOAD.
 
 static unsigned long  // returns relocation constant

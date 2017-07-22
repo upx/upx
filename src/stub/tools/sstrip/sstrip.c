@@ -346,7 +346,7 @@ static int readelfheaderident(int fd, Elf32_Ehdr *ehdr)
         do_reverse_endian = 0;
     }
 #else
-#error unkown endianness
+#error unknown endianness
 #endif
     else {
         err("Unsupported endianness");

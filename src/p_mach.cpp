@@ -1785,7 +1785,7 @@ int PackMachBase<T>::canUnpack()
 
             overlay_offset = 0;
             // The first non-zero word scanning backwards from __LINKEDIT.fileoff
-            // is the total length of compressed data which preceeds it
+            // is the total length of compressed data which precedes it
             //(distance to l_info), so that's another method.
             fi->seek(offLINK - 0x1000, SEEK_SET);
             fi->readx(buf, 0x1000);

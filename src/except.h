@@ -129,7 +129,7 @@ public:
 
 
 /*************************************************************************
-// application execptions
+// application exceptions
 **************************************************************************/
 
 class OverlayException : public Exception

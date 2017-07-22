@@ -160,7 +160,7 @@ L90:
         movr sp,a0
 
         stwu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
-        lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which preceed -2*NBPW(r_exp)
+        lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which precede -2*NBPW(r_exp)
 
         add a0,r_ADRU,r_BINFO  // &b_info
         sub a1,a1,r_BINFO  // total_size
