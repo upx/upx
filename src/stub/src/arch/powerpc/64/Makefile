@@ -1,1 +1,3 @@
-#include ../64le/Makefile
+# convenience Makefile
+default %:
+	$(MAKE) -C ../../../.. $@

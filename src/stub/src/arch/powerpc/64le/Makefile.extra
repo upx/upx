@@ -1,6 +1,5 @@
-# How to transform from source code in src/stub/src/c/lzma_d_c.c
-# to the pieces for use in UPX runtime decompression stub.
-#
+# build lzma_d_cf.S and lzma_d_cs.S
+
 MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
@@ -37,7 +36,7 @@ lzma_d_c%.S : tc_bfdname = elf64-powerpcle
 
 c := tc.method-lzma.gcc
 $c  = $(tc.powerpc64le-linux.elf.gcc)
-$c += -mcpu=405 -fPIC
+$c += -fPIC
 $c += -fomit-frame-pointer
 $c += -fno-unit-at-a-time
 $c += -ffunction-sections

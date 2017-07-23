@@ -1,3 +1,5 @@
+# build lzma_d_cf.S and lzma_d_cs.S
+
 MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
@@ -33,8 +35,8 @@ lzma_d_c%.S : tc_list = method-lzma powerpc-linux.elf default
 lzma_d_c%.S : tc_bfdname = elf32-powerpc
 
 c := tc.method-lzma.gcc
-$c  = $(tc.powerpc-linux.elf.gcc)
-$c += -mcpu=405 -fPIC
+$c  = $(tc.powerpc-linux.elf.gcc) -mcpu=405
+$c += -fPIC
 $c += -fomit-frame-pointer
 $c += -fno-unit-at-a-time
 $c += -ffunction-sections
