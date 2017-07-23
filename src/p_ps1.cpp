@@ -160,7 +160,7 @@ void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsign
 
     if (src && dst)
     {
-        unsigned char *cpr_bh = new unsigned char[sz_cbh];
+        unsigned char *cpr_bh = New(unsigned char, sz_cbh);
 
         memset(cpr_bh, 0, sizeof(bh));
         ps1_exe_chb_t * p = (ps1_exe_chb_t * )cpr_bh;
@@ -189,7 +189,7 @@ bool PackPs1::getBkupHeader(unsigned char *p, unsigned char *dst)
 
     if (src && (src->id == '1' && src->len < SZ_IH_BKUP) && dst)
     {
-        unsigned char *unc_bh = new unsigned char[MemBuffer::getSizeForUncompression(SZ_IH_BKUP)];
+        unsigned char *unc_bh = New(unsigned char, MemBuffer::getSizeForUncompression(SZ_IH_BKUP));
 
         unsigned sz_bh = SZ_IH_BKUP;
         int r = upx_decompress((const unsigned char *)&src->ih_bkup, src->len,
@@ -338,7 +338,7 @@ void PackPs1::buildLoader(const Filter *)
         if (M_IS_LZMA(ph.method) && buildPart2)
         {
             sz_lcpr = MemBuffer::getSizeForCompression(sz_lunc);
-            unsigned char *cprLoader = new unsigned char[sz_lcpr];
+            unsigned char *cprLoader = New(unsigned char, sz_lcpr);
             int r = upx_compress(getLoader(), sz_lunc, cprLoader, &sz_lcpr,
                                  NULL, M_NRV2B_8, 10, NULL, NULL );
             if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
