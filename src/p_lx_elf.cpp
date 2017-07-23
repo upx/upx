@@ -1131,7 +1131,7 @@ PackLinuxElf64::buildLinuxLoader(
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
     }
-#if 1  //{  debugging only
+#if 0  //{  debugging only
     if (M_IS_LZMA(ph.method)) {
         ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
         unsigned char *tmp = New(unsigned char, tmp_len);
