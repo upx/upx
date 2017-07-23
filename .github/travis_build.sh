@@ -57,6 +57,7 @@ if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
     extra_subdirs+=( src/stub/src/arch/m68k/m68020 )
     extra_subdirs+=( src/stub/src/arch/mips/r3000 )
     extra_subdirs+=( src/stub/src/arch/powerpc/32 )
+    extra_subdirs+=( src/stub/src/arch/powerpc/64 )
     extra_subdirs+=( src/stub/src/arch/powerpc/64le )
     make -C src/stub maintainer-clean
     for d in ${extra_subdirs[@]}; do

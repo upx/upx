@@ -15,7 +15,7 @@ git ls-files --full-name -z | perl -0 -n -e '
     else { print; }
 ' | LC_ALL=C sort -z | xargs -0r perl -n -e '
     #print("$ARGV\n");
-    if (m,[\x00\x01\x02\xfe\xff],) { print "ERROR: binary file detected $ARGV: $_"; exit(1); }
+    if (m,[\x00\x01\x02\x7f\xfe\xff],) { print "ERROR: binary file detected $ARGV: $_"; exit(1); }
     if (m,[\r\x1a],) { print "ERROR: DOS EOL detected $ARGV: $_"; exit(1); }
     if (m,([ \t]+)$,) {
         # allow exactly two trailing spaces for GitHub flavoured Markdown in .md files

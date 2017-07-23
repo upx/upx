@@ -2,6 +2,7 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 sudo: false
+dist: precise
 language: cpp
 
 notifications: { email: { on_success: never, on_failure: change } }

@@ -13,12 +13,15 @@ find . \
     -type d -name 'tmp*' -prune -o \
     -type f -iname '*.bat' -prune -o \
     -type f -iname '*.exe' -prune -o \
+    -type f -iname '*.o' -prune -o \
+    -type f -iname '*.obj' -prune -o \
+    -type f -iname '*.out' -prune -o \
     -type f -iname '*.pdf' -prune -o \
     -type f -iname '*.swp' -prune -o \
     -type f -print0 | \
 LC_ALL=C sort -z | xargs -0r perl -n -e '
     #print("$ARGV\n");
-    if (m,[\x00\x01\x02\xfe\xff],) { print "ERROR: binary file detected $ARGV: $_"; exit(1); }
+    if (m,[\x00\x01\x02\x7f\xfe\xff],) { print "ERROR: binary file detected $ARGV: $_"; exit(1); }
     if (m,[\r\x1a],) { print "ERROR: DOS EOL detected $ARGV: $_"; exit(1); }
     if (m,([ \t]+)$,) {
         # allow exactly two trailing spaces for GitHub flavoured Markdown in .md files
