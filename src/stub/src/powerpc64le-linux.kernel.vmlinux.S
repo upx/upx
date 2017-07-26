@@ -30,6 +30,10 @@
 ;  <jreiser@users.sourceforge.net>
 */
 
+#ifndef BIG_ENDIAN  //{
+#define BIG_ENDIAN 0
+#endif  //}
+
 #include "arch/powerpc/64le/macros.S"
 #include "arch/powerpc/64le/ppc_regs.h"
 

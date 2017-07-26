@@ -29,9 +29,9 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#ifndef BIG_ENDIAN
+#ifndef BIG_ENDIAN  //{
 #define BIG_ENDIAN 0
-#endif
+#endif  //}
 
 NBPW= 8  // Number of Bytes Per Word
 #include "arch/powerpc/64le/macros.S"
@@ -98,10 +98,6 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 #define bits a6
 #define disp a7
 
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN 0
-#endif
-
   section NRV2E
 #include "arch/powerpc/64le/nrv2e_d.S"
 
@@ -112,11 +108,11 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 #include "arch/powerpc/64le/nrv2b_d.S"
 
 // lzma decoder is pre-assembled and endian-dependent
-#if BIG_ENDIAN
+#if BIG_ENDIAN  //{
 #include "arch/powerpc/64/lzma_d.S"
-#else
+#else  //}{
 #include "arch/powerpc/64le/lzma_d.S"
-#endif
+#endif  //}
 
   section NRV_TAIL
 eof_nrv:
@@ -277,7 +273,7 @@ fold:
         lwz r0,sz_unc     + LBINFO - LrFLD(r_FLD)
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         la ldst,SZ_FRAME+31*NBPW(sp)  // &slot on stack
-        std  r0,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
+        std  r0,SZ_FRAME+31*NBPW(sp)  // lzma uses lo32() for EOF
         lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
         la src,sz_b_info + LBINFO - LrFLD(r_FLD)
         bctrl  // decompress it
@@ -297,7 +293,7 @@ zfind:
 
 main:
 ////  teq r0,r0  // debugging
-        stdu r1,-(SZ_FRAME + 32*NBPW)(sp)  // allocate space (keeping 0 mod 16), save r1
+        stdu r1,-(SZ_FRAME + 32*NBPW)(sp)  // FR_00  allocate space (keeping 0 mod 16), save r1
 //      stmd r2,SZ_FRAME+(-1+  2)*NBPW(sp) // save registers r2 thru r31
         std   2,SZ_FRAME+(-1+  2)*NBPW(sp)
         std   3,SZ_FRAME+(-1+  3)*NBPW(sp)

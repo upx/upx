@@ -26,6 +26,10 @@
  *
  */
 
+#ifndef BIG_ENDIAN  //{
+#define BIG_ENDIAN 1  /* Apple on PowerPC* is BIG_ENDIAN */
+#endif  //}
+
 #include "arch/powerpc/64le/macros.S"
 #include "arch/powerpc/64le/ppc_regs.h"
 LINKAREA= 6*8

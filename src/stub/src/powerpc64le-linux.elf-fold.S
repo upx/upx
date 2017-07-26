@@ -108,7 +108,7 @@ L90:
         call open; movr r_fd,a0
 // slide {<<stuff>>,argc,argv,0,env,0,auxv} down with maximum room before strings
         la a1,-NBPW(sp)  // src ready for ldu
-        la sp,-(-NBPW & (-1+ NBPW + (L_PFX + PATH_MAX)))(sp)
+        la sp,-(-NBPW & (-1+ NBPW + (L_PFX + PATH_MAX)))(sp)  // FR_02
         la a0,-NBPW(sp)  // dst ready for stdu
         la r_auxv,-NBPW(r_auxv)  // &end ready for ldu
 0: // copy upto auxv
@@ -160,13 +160,13 @@ L90:
 0:
         ldu  r0,-NBPW(a1); cmpld cr7,a1,sp
         stdu r0,-NBPW(a0); bgt+ cr7,0b
-        movr sp,a0
+        movr sp,a0  // FR_02
 
 r_reloc= 32 - 1  # used slot in register save area
         la a6,SZ_FRAME+r_reloc*NBPW(sp)  // &reloc [adjacent to argc]
         std r_ADRU,0(a6)  // elfbase
 
-        stdu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
+        stdu sp,-(SZ_FRAME+OVERHEAD)(sp)  // FR_01  allocate this frame
         lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which precede -2*NBPW(r_exp)
 
         add a0,r_ADRU,r_BINFO  // &b_info
@@ -188,7 +188,7 @@ r_reloc= 32 - 1  # used slot in register save area
         ld r3,   0(r3); add r3,r3,r0  // .func
 #endif  //}
 
-        la  sp,SZ_FRAME+OVERHEAD(sp)  // deallocate this frame
+        la  sp,SZ_FRAME+OVERHEAD(sp)  // FR_01  deallocate this frame
         mr r_exp,a0  // save &entry
 
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)
@@ -253,7 +253,7 @@ sz_auxv= 2*NBPW
         ld 29,SZ_FRAME + (-1+ 29)*NBPW(sp)
         ld 30,SZ_FRAME + (-1+ 30)*NBPW(sp)
         ld 31,SZ_FRAME + (-1+ 31)*NBPW(sp)
-        la sp,SZ_FRAME +      32 *NBPW(sp)  // deallocate outer frame
+        la sp,SZ_FRAME +      32 *NBPW(sp)  // FR_00  deallocate outer frame
 
         bctr  // goto escape hatch
 SYS_exit=  1

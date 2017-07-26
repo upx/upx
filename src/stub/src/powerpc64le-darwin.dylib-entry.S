@@ -1,5 +1,5 @@
 /*
- *  powerpc64le-darwin.dylib-entry.S -- program entry point & decompress (PowerPC32 dylib)
+ *  powerpc64le-darwin.dylib-entry.S -- program entry point & decompress (PowerPC64 dylib)
  *
  *  This file is part of the UPX executable compressor.
  *
@@ -25,6 +25,10 @@
  *  <jreiser@users.sourceforge.net>
  *
  */
+
+#ifndef BIG_ENDIAN  //{
+#define BIG_ENDIAN 1  /* Apple on PowerPC* is BIG_ENDIAN */
+#endif  //}
 
 #include "arch/powerpc/64le/macros.S"
 #include "arch/powerpc/64le/ppc_regs.h"
