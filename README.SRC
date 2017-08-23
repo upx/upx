@@ -61,6 +61,10 @@ Prerequisites
 
   - first of all you need to build the UCL compression library
     http://www.oberhumer.com/opensource/ucl/
+    Use "CC=gcc -std=gnu89" especially with gcc-6.3 and gcc-7.1.
+    To build for native aarch64 (64-bit ARM) the files config.guess
+    and config.sub must be updated according to the recipe at
+    https://www.gnu.org/software/gettext/manual/html_node/config_002eguess.html
 
 
 Tools needed to build/modify the UPX sources
