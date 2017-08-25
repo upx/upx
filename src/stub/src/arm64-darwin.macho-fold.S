@@ -99,11 +99,11 @@ f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
         t2   .req w3
 
 #ifndef FILTER_ID  /*{*/
-#define FILTER_ID 0x50  /* little-endian */
+#define FILTER_ID 0x52  /* little-endian */
 #endif  /*}*/
         and fid,fid,#0xff
         cmp fid,#FILTER_ID  // last use of fid
-        bne unf_ret  // no-op if not filter 0x50
+        bne unf_ret  // no-op if not filter 0x52
 
         lsr len,len,#2  // word count
         cbz ptr,unf_ret  // no-op if ptr is NULL

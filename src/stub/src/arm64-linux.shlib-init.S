@@ -201,7 +201,7 @@ f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
         fid  .req w3
 
 #ifndef FILTER_ID  /*{*/
-#define FILTER_ID 0x50  /* little-endian */
+#define FILTER_ID 0x52  /* little-endian */
 #endif  /*}*/
         and fid,fid,#0xff
         cmp fid,#FILTER_ID  // last use of fid

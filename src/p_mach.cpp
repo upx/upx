@@ -223,7 +223,7 @@ int const *PackMachARMEL::getFilters() const
 
 int const *PackMachARM64EL::getFilters() const
 {
-    static const int filters[] = { 0x51, FT_END };
+    static const int filters[] = { 0x52, FT_END };
     return filters;
 }
 
