@@ -126,6 +126,8 @@
         SHT_GNU_LIBLIST = 0x6ffffff7    /* Prelink library list */
 
         , SHT_LOOS = 0x60000000  /* LOcal OS; SHT_ANDROID_REL{,A} is +1, +2 */
+        , SHT_LOPROC = 0x70000000/* Start of processor-specific */
+        , SHT_ARM_ATTRIBUTES = (SHT_LOPROC + 3) /* ARM attributes section.  */
     };
 
     enum { // sh_flags

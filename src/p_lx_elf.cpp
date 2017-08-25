@@ -3302,6 +3302,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
                 unsigned const flags = get_te32(&shdr->sh_flags);
                 if (((Elf32_Shdr::SHT_STRTAB  == type) && (Elf32_Shdr::SHF_ALLOC & flags))
                 ||  ((Elf32_Shdr::SHT_DYNAMIC == type) && (Elf32_Shdr::SHF_ALLOC & flags))
+                ||  ((Elf32_Shdr::SHT_ARM_ATTRIBUTES == type))
                 ||  (  ((1+ Elf32_Shdr::SHT_LOOS) <= type)  // SHT_ANDROID_REL
                     && ((2+ Elf32_Shdr::SHT_LOOS) >= type)) // SHT_ANDROID_RELA
                 ) {
@@ -3315,14 +3316,25 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
                 }
             }
             if (k && fo) {
-                set_te32(&ehdri.e_shoff, fpad4(fo));
+                unsigned const new_shoff = fpad4(fo);
+                unsigned xtra_off = ((1+ k) * sizeof(*shdri)) + new_shoff;  // 1+: shdr_undef
+                set_te32(&ehdri.e_shoff, new_shoff);
                 set_te16(&ehdri.e_shentsize, sizeof(*shdri));
                 set_te16(&ehdri.e_shnum, 1+ k);
                 Elf32_Shdr shdr_undef; memset(&shdr_undef, 0, sizeof(shdr_undef));
                 fo->write(&shdr_undef, sizeof(shdr_undef));
 
+                unsigned arm_attr_offset = 0;
+                unsigned arm_attr_size = 0;
                 for (unsigned j = 0; j < k; ++j) { // forward .sh_link
                     Elf32_Shdr *const sptr = j + (Elf32_Shdr *)(void *)snew;
+                    // work-around for https://bugs.launchpad.net/bugs/1712938
+                    if (Elf32_Shdr::SHT_ARM_ATTRIBUTES == get_te32(&sptr->sh_type)) {
+                        arm_attr_offset = get_te32(&sptr->sh_offset);
+                        arm_attr_size   = get_te32(&sptr->sh_size);
+                        set_te32(&sptr->sh_offset, xtra_off);
+                        xtra_off += get_te32(&sptr->sh_size);
+                    }
                     unsigned sh_offset = get_te32(&sptr->sh_offset);
                     if (xct_off <= sh_offset) {
                         set_te32(&sptr->sh_offset, so_slide + sh_offset);
@@ -3332,6 +3344,9 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
                     set_te16(&sptr->sh_info, smap[sptr->sh_info]);  // ?
                 }
                 fo->write(snew, k * sizeof(*shdri));
+                if (arm_attr_offset) {
+                    fo->write(&file_image[arm_attr_offset], arm_attr_size);
+                }
             }
         }
     }
@@ -3420,6 +3435,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
                 unsigned const flags = get_te32(&shdr->sh_flags);
                 if (((Elf64_Shdr::SHT_STRTAB  == type) && (Elf64_Shdr::SHF_ALLOC & flags))
                 ||  ((Elf64_Shdr::SHT_DYNAMIC == type) && (Elf64_Shdr::SHF_ALLOC & flags))
+                ||  ((Elf64_Shdr::SHT_ARM_ATTRIBUTES == type))
                 ||  (  ((1+ Elf64_Shdr::SHT_LOOS) <= type)  // SHT_ANDROID_REL
                     && ((2+ Elf64_Shdr::SHT_LOOS) >= type)) // SHT_ANDROID_RELA
                 ) {
@@ -3433,14 +3449,25 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
                 }
             }
             if (k && fo) {
-                set_te64(&ehdri.e_shoff, fpad8(fo));
+                unsigned long const new_shoff = fpad8(fo);
+                unsigned long xtra_off = ((1+ k) * sizeof(*shdri)) + new_shoff;  // 1+: shdr_undef
+                set_te64(&ehdri.e_shoff, new_shoff);
                 set_te16(&ehdri.e_shentsize, sizeof(*shdri));
                 set_te16(&ehdri.e_shnum, 1+ k);
                 Elf64_Shdr shdr_undef; memset(&shdr_undef, 0, sizeof(shdr_undef));
                 fo->write(&shdr_undef, sizeof(shdr_undef));
 
+                unsigned long arm_attr_offset = 0;
+                unsigned long arm_attr_size = 0;
                 for (unsigned j = 0; j < k; ++j) { // forward .sh_link
                     Elf64_Shdr *const sptr = j + (Elf64_Shdr *)(void *)snew;
+                    // work-around for https://bugs.launchpad.net/bugs/1712938
+                    if (Elf64_Shdr::SHT_ARM_ATTRIBUTES == get_te32(&sptr->sh_type)) {
+                        arm_attr_offset = get_te64(&sptr->sh_offset);
+                        arm_attr_size   = get_te64(&sptr->sh_size);
+                        set_te64(&sptr->sh_offset, xtra_off);
+                        xtra_off += get_te64(&sptr->sh_size);
+                    }
                     upx_uint64_t sh_offset = get_te64(&sptr->sh_offset);
                     if (xct_off <= sh_offset) {
                         set_te64(&sptr->sh_offset, so_slide + sh_offset);
@@ -3450,6 +3477,9 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
                     set_te16(&sptr->sh_info, smap[sptr->sh_info]);  // ?
                 }
                 fo->write(snew, k * sizeof(*shdri));
+                if (arm_attr_offset) {
+                    fo->write(&file_image[arm_attr_offset], arm_attr_size);
+                }
             }
         }
     }
