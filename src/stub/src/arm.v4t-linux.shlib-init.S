@@ -114,7 +114,7 @@ _=-1+_  // one less word on stack
 //D_INFO:
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
-//  .long offset(escape_hatch)
+//  .long offset(escape_hatch)  // override with round_up(2, PT_LOAD[0]{.p_memsz + .p_vaddr})
 //  .long offset({l_info; p_info; b_info; compressed data})
 
 #define DEBUG 0
@@ -137,14 +137,13 @@ here:
 // reloc DT_INIT  for step 12
         ldr tmp,[esi,#1*4]; add tmp,ecx; str tmp,[SP(o_uinit)]
         ldr edi,[esi,#3*4]; add edi,ecx  // &l_info; also destination for decompress
-// reloc &hatch (thumb mode)  for step 10
-        ldr tmp,[esi,#2*4]; add tmp,ecx
         mov esi,#sz_l_info+sz_p_info
         add esi,edi  // &b_info
 
-        push_ tmp
+        sub sp,#3*4  // 3 slots of space
+        _=1+_  // &escape_hatch (step 10)
 o_hatch=_   // 10
-        sub sp,#2*4; _=2+_  // param space: munmap temp pages  step 9
+        _=2+_  // param space: munmap temp pages (step 9)
 p_unmap=_  // 12
 
         push_ lr
@@ -332,8 +331,11 @@ _=-5+_  // 22
 
 // Place the escape hatch
         pop  {arg1,arg2}  // addr, len
+        mov tmp,#1
         push {arg1,arg2}
         add edi,arg1,arg2  // ldr edi,[SP(o_hatch)]
+        add edi,#1
+        bic edi,tmp  // round_up(2, .p_memsz + .p_vaddr)
         ldr tmp,hatch  // the 2 instructions
         str tmp,[edi]
         add edi,#1  // thumb mode
