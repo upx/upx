@@ -326,6 +326,13 @@ do_xmap(
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     } else
     if (PT_LOAD==phdr->p_type) {
+        if (xi && !phdr->p_offset /*&& ET_EXEC==ehdr->e_type*/) { // 1st PT_LOAD
+            // ? Compressed PT_INTERP must not overwrite values from compressed a.out?
+            auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc + ehdr->e_phoff);
+            auxv_up(av, AT_PHNUM, ehdr->e_phnum);
+            auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
+            //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
+        }
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
@@ -425,16 +432,10 @@ upx_main(  // returns entry address
 #elif defined(__powerpc64__)  //}{
     Elf64_Addr const reloc = *p_reloc;
 #endif  //}
-    // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
-    auxv_up(av, AT_PHDR , reloc + ehdr->e_phoff);
-    auxv_up(av, AT_PHNUM,         ehdr->e_phnum);
-    //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
-    //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
-
     DPRINTF("upx_main1  .e_entry=%%p  *p_reloc=%%p\\n", ehdr->e_entry, *p_reloc);
     Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
     unsigned const orig_e_type = ehdr->e_type;
-    if (ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -pie /*FIXME: and not pre-linked*/
+    if (0 && ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -pie /*FIXME: and not pre-linked*/
         // Unpacked must start at same place as packed, so that brk(0) works.
         ehdr->e_type = ET_EXEC;
         auxv_up(av, AT_ENTRY, ehdr->e_entry += reloc);
@@ -446,13 +447,9 @@ upx_main(  // returns entry address
     }
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    // ET_EXEC: kernel must honor .p_vaddr, so do_xmap sets *p_reloc = 0;
-    // ET_DYN: We relocated the tmp copy of *phdr, and changed to ET_EXEC above!
     Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_exp, f_unf, p_reloc);
-    DPRINTF("upx_main2  entry=%%p  *p_reloc=%%p", entry, *p_reloc);
-    if (ET_DYN!=orig_e_type) {
-        auxv_up(av, AT_ENTRY , entry);
-    }
+    DPRINTF("upx_main2  entry=%%p  *p_reloc=%%p\\n", entry, *p_reloc);
+    auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     phdr = (Elf64_Phdr *)(1+ ehdr);
@@ -501,8 +498,8 @@ write(int fd, char const *ptr, size_t len)
     return a0;
 }
 #else //}{
-static int
-write(int fd, char const *ptr, size_t len)
+ssize_t
+write(int fd, void const *ptr, size_t len)
 {
     register  int        sys asm("r0") = __NR_write;
     register  int         a0 asm("r3") = fd;

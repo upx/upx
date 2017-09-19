@@ -658,10 +658,13 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #endif  //}
          );
 
+#if DEBUG &&!defined(__mips__)  //{
+    size_t const page_mask = 0;
+#endif  //}
     DPRINTF("do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)\\n"
-          "  av=%%p  page_mask=%%p  reloc=%%p/%%p  f_unf=%%p\\n",
+          "  av=%%p  page_mask=%%p  reloc=%%p  p_reloc=%%p/%%p  f_unf=%%p\\n",
         fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0),
-        av, page_mask, p_reloc, *p_reloc, f_unf);
+        av, page_mask, reloc, p_reloc, *p_reloc, f_unf);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -672,6 +675,13 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
          &&  phdr->p_memsz
 #endif  /*}*/
                           ) {
+        if (xi && !phdr->p_offset /*&& ET_EXEC==ehdr->e_type*/) { // 1st PT_LOAD
+            // ? Compressed PT_INTERP must not overwrite values from compressed a.out?
+            auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc + ehdr->e_phoff);
+            auxv_up(av, AT_PHNUM, ehdr->e_phnum);
+            auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
+            //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
+        }
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
@@ -890,17 +900,11 @@ void *upx_main(
     xi.size  = sz_compressed;
 #endif  // !__mips__ }
 
-    // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
     Elf32_Addr reloc = dynbase;
-    auxv_up(av, AT_PHDR,  ehdr->e_phoff + reloc);
-    auxv_up(av, AT_PHNUM, ehdr->e_phnum);
-    auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
-    //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
-
     DPRINTF("upx_main1  .e_entry=%%p  reloc=%%p\\n", ehdr->e_entry, reloc);
     Elf32_Phdr *phdr = (Elf32_Phdr *)(1+ ehdr);
     unsigned const orig_e_type = ehdr->e_type;
-    if (ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -pie /*FIXME: and not pre-linked*/
+    if (0 && ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -pie /*FIXME: and not pre-linked*/
         // Unpacked must start at same place as packed, so that brk(0) works.
         ehdr->e_type = ET_EXEC;
         auxv_up(av, AT_ENTRY, ehdr->e_entry += reloc);
