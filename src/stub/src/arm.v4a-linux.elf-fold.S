@@ -67,7 +67,6 @@ PATH_MAX= 4096
 SP_fd= 3*4
 /* In:
    r11= &f_exp
-    r3= MFLG
     sp/ LENX,ADRX, dynbase,%fd, ADRU,LENU, f_exp,%entry, argc,argv,0,env,0,auxv
         (ADRX,LENX) = extent of compressed program (after moving)
         (ADRU,LENU) = params for final munmap()
@@ -78,10 +77,6 @@ fold_begin:
         mov r0,sp  @ current stack pointer (extra clue)
         stmdb sp!,{TRACE_REGS}; mov r0,#0x10; bl trace
 #endif  //}
-        ldr r2,mflg_here
-        orr r2,r2,r3  @ modify the instruction
-        str r2,mflg_here
-
         ldmia sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
         mov r1,sp  @ src (argv)
         sub sp,sp,#PATH_MAX
@@ -403,14 +398,13 @@ __clear_cache:
 
         .globl mmap
 mmap:
-        str r5,[sp,#-4]!; ldr r5,[sp,#4+4]
-        str r4,[sp,#-4]!; ldr r4,[sp,#4+4]
+        stmdb sp!,{r4,r5,lr}
+        ldr r5,[sp,#4*4]
+        ldr r4,[sp,#3*4]
         mov r5,r5,lsr #12  @ convert to page number
 mmap_do:
         do_sys __NR_mmap2
-        ldr r4,[sp],#4
-        ldr r5,[sp],#4
-        ret
+        ldmia sp!,{r4,r5,pc}
 
 get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
 #if defined(ARMEL_DARWIN)  /*{*/
@@ -425,12 +419,11 @@ get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
         ret
 
 mmap_privanon: .globl mmap_privanon
-        str r5,[sp,#-4]!; mov r5,#0  @ offset= 0
-        str r4,[sp,#-4]!; mvn r4,#0  @ fd= -1
-mflg_here:  // The next instruction is re-written once.
-        orr r3,r3,#0  @ flags |= MAP_{PRIVATE|ANON}  [QNX vs Linux]
-        b mmap_do
-
+        stmdb sp!,{r4,r5,lr}
+        mov r5,#0  @ offset= 0
+        mvn r4,#0  @ fd= -1
+        adr lr, mmap_do
+        b fold_begin -2*4  // fix r3 for QNX vs Linux
 
 #if 1|DEBUG  /*{*/
 

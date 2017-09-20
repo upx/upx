@@ -152,6 +152,7 @@ unfold:  // in: r11= &f_exp; lr= &O_BINFO
         add r6,r6,r9  @ ADRX= O_BINFO + new_base
         sub r0,lr,r7  @ &eof - &Elf_Ehdr
         add r10,r8,r0  @ .sz_unc + sizeof(this_stub) == LENU
+        add r10,r10,#2*4  @ 2-instr subr for mflg
         ldr r3,[r11, #mflg - f_exp]  // MAP_{PRIVATE|ANON}
         sub r11,r11,r7  @ offset(f_exp)
         add r11,r11,r9  @ new f_exp
@@ -188,6 +189,11 @@ cop2:  // overrun OK: dst is page aligned, fold_begin follows src
 
 // decompress fold_begin and jump to it
         ldr r6,[sp],#4  @ MFLG
+        ldr r0,mflg_subr
+        ldr r1,mflg_subr+4
+        orr r0,r0,r6
+        str r0,[r12],#4
+        str r1,[r12],#4
         ldr r5,[lr],#4  @ sz_unc
         ldr r1,[lr],#4  @ 2nd arg: .sz_cpr
         ldr r4,[lr],#4  @ b_method
@@ -200,6 +206,10 @@ cop2:  // overrun OK: dst is page aligned, fold_begin follows src
 #endif  /*}*/
         mov lr,pc; mov pc,r11  // decompress folded code [arm.v4a lacks 'blx']
         ldmia sp!,{r1,r2,r3,pc}  // toss 5th arg and dstlen; goto unfolded
+
+mflg_subr:
+        orr r3,r3,#0
+        ret
 
 #if DEBUG  /*{*/
 TRACE_BUFLEN=512
