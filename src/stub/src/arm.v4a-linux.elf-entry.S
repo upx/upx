@@ -146,13 +146,21 @@ unfold:  // in: r11= &f_exp; lr= &O_BINFO
           addeq r9,r9,r7  @ brk(0)
         add r9,r9,#PAGE_SIZE
         sub r9,r9,#1
-        mov r9,r9,lsr #PAGE_SHIFT
-        mov r9,r9,lsl #PAGE_SHIFT  @ ADRU
         ldr r8,[lr]  @ {fold_begin}.sz_unc
-        add r6,r6,r9  @ ADRX= O_BINFO + new_base
         sub r0,lr,r7  @ &eof - &Elf_Ehdr
         add r10,r8,r0  @ .sz_unc + sizeof(this_stub) == LENU
         add r10,r10,#2*4  @ 2-instr subr for mflg
+
+        sub r0,sp,#8<<20  @ allow 8MB stack (qemu ET_DYN puts below Elf_Ehdr)
+        cmp r0,#0xf7<<24  @ qemu wants for itself 0xf7000000 and above
+          movhs r0,#0xf7<<24  @ min(0xf7000000, sp - 8M)
+        sub r0,r0,r10  @ LENU must fit
+        cmp r9,r0
+          movhs r9,r0  @ move below
+
+        mov r9,r9,lsr #PAGE_SHIFT  @ round down
+        mov r9,r9,lsl #PAGE_SHIFT  @ new ADRU
+        add r6,r6,r9  @ ADRX= O_BINFO + new_base(==ADRU)
         ldr r3,[r11, #mflg - f_exp]  // MAP_{PRIVATE|ANON}
         sub r11,r11,r7  @ offset(f_exp)
         add r11,r11,r9  @ new f_exp
