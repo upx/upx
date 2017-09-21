@@ -15,7 +15,7 @@ source "$argv0dir/travis_init.sh" || exit 1
 set -x # debug
 
 if [[ $BM_X == rebuild-stubs ]]; then exit 0; fi
-# save space
+# save space and do not deploy debug builds
 if [[ $BM_B =~ (^|\+)coverage($|\+) ]]; then exit 0; fi
 if [[ $BM_B =~ (^|\+)debug($|\+) ]]; then exit 0; fi
 if [[ $BM_B =~ (^|\+)sanitize($|\+) ]]; then exit 0; fi
@@ -99,6 +99,7 @@ else
         [[ $cpu == amd64 ]] && os=win64
     fi
     d=$cpu-$os
+    unset cpu os
 fi
 d=$d-$BM_C-$BM_B
 
@@ -115,6 +116,7 @@ for exeext in .exe .out; do
         cp -p -i $f  $d/upx-git-${rev:0:12}$exeext
         sha256sum -b $d/upx-git-${rev:0:12}$exeext
     fi
+    unset f
 done
 
 # /***********************************************************************
