@@ -23,9 +23,10 @@ s="$s"' AccessModifierOffset: -4, '
 #s="$s"' AllowShortFunctionsOnASingleLine: None, '
 s="$s"' AlwaysBreakTemplateDeclarations: true, '
 s="$s"' ColumnLimit: 100, '
+####s="$s"' FixNamespaceComments: false, '                  # added in llvm-5.0
 s="$s"' IndentWidth: 4, '
-s="$s"' SortIncludes: false, '
-s="$s"' SpaceAfterCStyleCast: true, '
+s="$s"' SortIncludes: false, '                          # added in llvm-3.8
+s="$s"' SpaceAfterCStyleCast: true, '                   # added in llvm-3.6
 s="$s"' Standard: Cpp03, '
 CLANG_FORMAT_STYLE='-style={'"$s"' }'
 
