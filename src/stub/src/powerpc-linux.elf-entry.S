@@ -217,6 +217,11 @@ AT_SYSINFO_EHDR= 33  // Elf32_Ehdr for VDSO
 
         mr a1,r_LENU  // total size needed
         sub r_ADRM,r_ADRU,a1  // below this stub
+        lis r0,8<<(20-16); sub r0,sp,r0  // growth limit 8MiB stack
+        sub r0,r0,r_LENU  // fit below
+        cmpl cr7,r_ADRM,r0; blt 1f
+        mr       r_ADRM,r0  // move below the stack
+1:
         and r_ADRM,r_ADRM,r_PMASK  // lower to page boundary
         mr a0,r_auxv
 0:
