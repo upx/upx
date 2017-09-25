@@ -321,7 +321,7 @@ o_super= -20*8  // HOLE
         mov arg6,#0
         mov arg5,#-1  // cater to *BSD for fd of MAP_ANON
         mov arg4,#MAP_PRIVATE|MAP_ANONYMOUS
-        mov arg3,#PROT_READ|PROT_WRITE|PROT_EXEC
+        mov arg3,#PROT_READ|PROT_WRITE  // some OS prohibit PROT_WRITE && PROT_EXEC
         str arg2,[fp,#p_unmap+1*8]  // length to unmap
         mov arg1,#0  // any addr
         do_sys __NR_mmap64; cmn x0,#4096; bcc 0f; brk #0; 0:
