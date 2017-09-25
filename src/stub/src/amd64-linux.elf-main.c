@@ -144,6 +144,8 @@ unpackExtent(
     f_unfilter *f_unf
 )
 {
+    DPRINTF("unpackExtent xi=(%%p %%p)  xo=(%%p %%p)  f_exp=%%p  f_unf=%%p\\n",
+        xi->size, xi->buf, xo->size, xo->buf, f_exp, f_unf);
     while (xo->size) {
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
@@ -235,6 +237,7 @@ make_hatch_ppc64(
 static void
 upx_bzero(char *p, size_t len)
 {
+    DPRINTF("bzero %%x  %%x\\n", p, len);
     if (len) do {
         *p++= 0;
     } while (--len);
@@ -279,6 +282,9 @@ auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
 static Elf64_Addr // returns relocation constant
 xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
     char **const p_brk
+#if defined(__powerpc64__)
+    , size_t const PAGE_MASK
+#endif
 )
 {
     size_t lo= ~0, hi= 0, szlo= 0;
@@ -312,14 +318,21 @@ do_xmap(
     f_expand *const f_exp,
     f_unfilter *const f_unf,
     Elf64_Addr *p_reloc
+#if defined(__powerpc64__)
+    , size_t const PAGE_MASK
+#endif
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
     char *v_brk;
     Elf64_Addr const reloc = xfind_pages(
-        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
-    DPRINTF("do_xmap reloc=%%p", reloc);
+        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk
+#if defined(__powerpc64__)
+        , PAGE_MASK
+#endif
+    );
+    DPRINTF("do_xmap reloc=%%p\\n", reloc);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -410,11 +423,12 @@ upx_main(  // returns entry address
     Elf64_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Elf64_auxv_t *const av,
     f_expand *const f_exp,
-    f_unfilter *const f_unf,
+    f_unfilter *const f_unf
 #if defined(__x86_64)  //{
-    Elf64_Addr reloc  // In: &Elf64_Ehdr for stub
+    , Elf64_Addr reloc  // In: &Elf64_Ehdr for stub
 #elif defined(__powerpc64__)  //}{
-    Elf64_Addr *p_reloc  // In: &Elf64_Ehdr for stub; Out: 'slide' for PT_INTERP
+    , Elf64_Addr *p_reloc  // In: &Elf64_Ehdr for stub; Out: 'slide' for PT_INTERP
+    , size_t const PAGE_MASK
 #endif  //}
 )
 {
@@ -447,7 +461,11 @@ upx_main(  // returns entry address
     }
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_exp, f_unf, p_reloc);
+    Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_exp, f_unf, p_reloc
+#if defined(__powerpc64__)
+       , PAGE_MASK
+#endif
+    );
     DPRINTF("upx_main2  entry=%%p  *p_reloc=%%p\\n", entry, *p_reloc);
     auxv_up(av, AT_ENTRY , entry);
 
@@ -466,7 +484,11 @@ ERR_LAB
         }
         // We expect PT_INTERP to be ET_DYN at 0.
         // Thus do_xmap will set *p_reloc = slide.
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, p_reloc);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, p_reloc
+#if defined(__powerpc64__)
+            , PAGE_MASK
+#endif
+        );
         auxv_up(av, AT_BASE, *p_reloc);  // musl
         close(fdi);
     }

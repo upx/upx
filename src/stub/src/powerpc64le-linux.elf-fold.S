@@ -175,13 +175,15 @@ r_reloc= 32 - 1  # used slot in register save area
         mr  a3,r_auxv  // &Elf64_auxv_t
         mr  a4,r_exp  // &decompress: f_expand
         mr  a5,r_unf  // &f_unf
+        mr  a7,r_PMASK  // page_mask
 #if BIG_ENDIAN  //{  setup indirection for entry to f_exp and f_unf
         std a4,3*NBPW(sp); la a4,3*NBPW(sp)  // use tmp.xlc
         std a5,4*NBPW(sp); la a5,4*NBPW(sp)  // use tmp.ld
 #endif  //}
         call upx_main  // Out: a0= entry
 // entry= upx_main(b_info *a0, total_size a1, Elf_Ehdr *a2, Elf64_auxv_t *a3,
-//      f_exp a4, f_unf a5, p_reloc a6)
+//      f_exp a4, f_unf a5, p_reloc a6, page_mask a7)
+        teq r0,r0
 #if BIG_ENDIAN  //{
         ld r0,SZ_FRAME+OVERHEAD +SZ_FRAME+r_reloc*NBPW(sp)  // reloc for ET_DYN
         ld r2,NBPW(r3); add r2,r2,r0  // toc
