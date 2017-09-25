@@ -3018,7 +3018,6 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const *ft)
         }
     }
     unsigned lo_va_stub = get_te32(&elfout.phdr[0].p_vaddr);
-    unsigned adrc = 0;  // init: pacify c++-analyzer
     unsigned adrm = 0;  // init: pacify c++-analyzer
 
     is_big = true;  // kernel disallows mapping below 0x8000.
@@ -3028,17 +3027,14 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const *ft)
         set_te32(&elfout.phdr[0].p_vaddr, lo_va_user);
         set_te32(&elfout.phdr[0].p_paddr, lo_va_user);
                               lo_va_stub    = lo_va_user;
-        adrc = lo_va_stub;
         adrm = getbrk(phdri, e_phnum);
     }
-    adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
     adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
     adrm += page_size;  // Try: hole so that kernel does not extend the brk(0)
     linker->defineSymbol("ADRM", adrm);  // addr for map
 
     linker->defineSymbol("CPR0", 4+ linker->getSymbolOffset("cpr0"));
     linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
-    ACC_UNUSED(adrc);
 
 #define MAP_PRIVATE      2     /* UNIX standard */
 #define MAP_FIXED     0x10     /* UNIX standard */
@@ -3075,7 +3071,6 @@ void PackLinuxElf64arm::defineSymbols(Filter const *ft)
         }
     }
     upx_uint64_t lo_va_stub = get_te64(&elfout.phdr[0].p_vaddr);
-    upx_uint64_t adrc = 0;  // init: pacify c++-analyzer
     upx_uint64_t adrm = 0;  // init: pacify c++-analyzer
 
     is_big = true;  // kernel disallows mapping below 0x8000.
@@ -3085,17 +3080,14 @@ void PackLinuxElf64arm::defineSymbols(Filter const *ft)
         set_te64(&elfout.phdr[0].p_vaddr, lo_va_user);
         set_te64(&elfout.phdr[0].p_paddr, lo_va_user);
                               lo_va_stub    = lo_va_user;
-        adrc = lo_va_stub;
         adrm = getbrk(phdri, e_phnum);
     }
-    adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
     adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
     adrm += page_size;  // Try: hole so that kernel does not extend the brk(0)
     linker->defineSymbol("ADRM", adrm);  // addr for map
 
     linker->defineSymbol("CPR0", 4+ linker->getSymbolOffset("cpr0"));
     linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
-    ACC_UNUSED(adrc);
 
 #define MAP_PRIVATE      2     /* UNIX standard */
 #define MAP_FIXED     0x10     /* UNIX standard */
@@ -3134,7 +3126,6 @@ void PackLinuxElf32mipseb::defineSymbols(Filter const *ft)
     unsigned adrm;
     unsigned adru;
     unsigned adrx;
-    unsigned cntc;
     unsigned lenm;
     unsigned lenu;
     len += (7&-lsize) + lsize;
@@ -3151,7 +3142,6 @@ void PackLinuxElf32mipseb::defineSymbols(Filter const *ft)
         adrx = adru + hlen;
         lenm = page_size + len;
         lenu = page_size + len;
-        cntc = len >> 3;  // over-estimate; corrected at runtime
     }
     else {
         adrm = lo_va_stub + len;
@@ -3160,18 +3150,11 @@ void PackLinuxElf32mipseb::defineSymbols(Filter const *ft)
         adrx = lo_va_stub + hlen;
         lenm = page_size;
         lenu = page_size + len;
-        cntc = 0;
     }
     adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
     adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
 
     linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
-
-    // For actual moving, we need the true count, which depends on sz_pack2
-    // and is not yet known.  So the runtime stub detects "no move"
-    // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
-    //linker->defineSymbol("CNTC", cntc);  // count  for copy
-    ACC_UNUSED(cntc);
 
     linker->defineSymbol("ADRC", adrc);  // addr for copy
     linker->defineSymbol("LENU", lenu);  // len  for unmap
@@ -3209,7 +3192,6 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
     unsigned adrm;
     unsigned adru;
     unsigned adrx;
-    unsigned cntc;
     unsigned lenm;
     unsigned lenu;
     len += (7&-lsize) + lsize;
@@ -3226,7 +3208,6 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
         adrx = adru + hlen;
         lenm = page_size + len;
         lenu = page_size + len;
-        cntc = len >> 3;  // over-estimate; corrected at runtime
     }
     else {
         adrm = lo_va_stub + len;
@@ -3235,18 +3216,11 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
         adrx = lo_va_stub + hlen;
         lenm = 2*page_size;
         lenu = 2*page_size + len;
-        cntc = 0;
     }
     adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
     adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
 
     linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
-
-    // For actual moving, we need the true count, which depends on sz_pack2
-    // and is not yet known.  So the runtime stub detects "no move"
-    // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
-    //linker->defineSymbol("CNTC", cntc);  // count  for copy
-    ACC_UNUSED(cntc);
 
     linker->defineSymbol("ADRC", adrc);  // addr for copy
     linker->defineSymbol("LENU", lenu);  // len  for unmap
