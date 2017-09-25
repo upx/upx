@@ -213,8 +213,8 @@ top_unf:
         ldr w2,[ptr,x1,lsl #2]
         ubfx w3,w2,#26,#5
         cmp w3,#5; bne tst_unf  // not unconditional branch
-        sub w2,w2,w1  // word displ; hi 0b.00101 preserves bit 31
-        ubfm w2,w3,#26,#5
+        sub w3,w2,w1  // word displ
+        bfi w2,w3,#0,#26  // change displacement
         str w2,[ptr,x1,lsl #2]
 tst_unf:
         cbnz x1,top_unf
@@ -351,6 +351,10 @@ o_super= -20*8  // HOLE
         POP1(rsi)   // &supervise
         PUSH1(rdi)  // &copied
         bl movsl_subr  // copy supervisor
+
+        ldp arg1,arg2,[fp,#p_unmap+0*8]
+        mov arg3,#PROT_READ|PROT_EXEC  // some OS prohibit PROT_WRITE && PROT_EXEC
+        do_sys __NR_mprotect; cmn x0,#4096; bcc 0f; brk #0; 0:
 
         POP1(lr); br lr  // goto copied supervisor
 
