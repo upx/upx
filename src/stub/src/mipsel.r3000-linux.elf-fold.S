@@ -74,7 +74,7 @@ BAL=0x04110000
 /* In:
     s7= &decompress
 
-    s5= sz_pack2
+    s5= total_size
 
     s3= ADRU
     s2= LENU
@@ -136,8 +136,7 @@ AT_PAGESZ= 6
         move t0,s7  # &f_decompress
         move a3,s4  # new &auxv[0]
         move a2,sp  # &Elf32_Ehdr tmp space
-        andi tmp,s1,~PAGE_MASK # O_BINFO  # FIXME
-        subu a1,s5,tmp  # total_size
+        move a1,s5  # total_size
 
 /* We need a position-independent call of upx_main, which is external.
    "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.

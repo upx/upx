@@ -70,6 +70,7 @@ __NR_Linux = 4000
 __NR_write = 4+ __NR_Linux
 __NR_exit  = 1+ __NR_Linux
 __NR_mmap  = 90+ __NR_Linux
+__NR_mprotect = 125+ __NR_Linux
 __NR_cacheflush = 147+ __NR_Linux
 
 /* asm/cachectl.h */
@@ -273,7 +274,7 @@ die:
    PT_LOAD, which is the only way that linux allows to set the brk() for the
    uncompressed program.  [This is a significant kernel misfeature.]
 */
-unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
+unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2; s4= &Elf32_Ehdr
 
 /* Get some pages.  If small, then get 1 page located just after the end
    of the first PT_LOAD of the compressed program.  This will still be below
@@ -288,53 +289,77 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
 
         addiu sp,sp,-sp_frame
         lw a0,adrm - decompressor(s7)
-        li a2, PROT_READ | PROT_WRITE | PROT_EXEC
+        li a2, PROT_READ | PROT_WRITE
         lw a1,lenm - decompressor(s7)
         li a3, MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         sw zero,a4_sys(sp)  //; sw zero,a5_sys(sp)  // MAP_ANON ==> ignore offset
         li v0,__NR_mmap; syscall; bnez a3,err_syscall
         move s0,v0  // ADRM: &new page(s); &dst for unfold, or &copy of PT_LOAD[0]
 
-        lw a0,adrc - decompressor(s7)
         lw s3,adru - decompressor(s7)  // for unmap in fold
         lw s2,lenu - decompressor(s7)  // for unmap in fold
         lw s1,adrx - decompressor(s7)  // for upx_main
 
-        beq s0,a0,L80  // no copy
-          subu t0,s0,a0  // (ADRM - ADRC) == relocation amount
-        subu s4,s6,s7  // &b_info(fold) - &decompress; >= sizeof(decompress)
-        addu a2,s4,s5  //  + sz_pack2; length to copy
-        addu s7,s7,t0  // update &decompress
+// Copy compressed data if needed.
+        lw a0,adrc - decompressor(s7)  // where to copy f_exp
+          lw t0,-4(s6)  // O_BINFO
+            move a1,s0  // dst
+        sub s5,s5,t0  // sz_pack2 - O_BINFO; ~= total_size compressed
+        beq a0,s0,L78  // not needed
+          add a0,s4,t0  // &b_info for upx_main
+        move a2,s5  // total_size
+        bal memcpy
+          move s1,a1  // new adrx
+L78:
 
-        move a1,s0
-        // memcpy(dst=a1, src=a0, len=round_up(a2, 8))
-move_up:
-        lw t0, 0(a0); addiu a1,a1, 8
-        lw t1, 4(a0); addiu a2,a2,-8
-        sw t0,-8(a1); addiu a0,a0, 8
-        bgtz a2,move_up
-          sw t1,-4(a1)
-        move s0,a1  // &dst for unfolding
+// Decompress the folded part of this stub, using original decompressor.
+        lw t0,sz_unc(s6); move a3,sp; sw t0,0(sp)  // &dst_len
+        move a2,a1  // &dst
+        lw a1,sz_cpr(s6)  // src_len
+        addiu a0,s6,sz_b_info
+        jalr s7  // decompress(src, srclen, dst, &dstlen /*, method*/)
+          move s4,a2  // &dst
 
-        move a0,s7  // moved &decompressor
-        // a1 already == &end of moved decompressor
+// Copy decompressor if needed.
+        lw t0,0(sp)  // dst_len
+          lw a0,adrc - decompressor(s7)  // where to copy f_exp
+            add a1,t0,s4  // a1= last of unfolded
+        beq a0,s0,L80  // no copy f_exp
+          subu a2,s6,s7  // &b_info(fold) - &decompress; >= sizeof(decompress)
+        move a0,s7  // src= &decompress
+        bal memcpy
+          move s7,a1  // new &f_exp
+        move a0,s7  // new &f_exp
+        // a1= last of unfolded, or last of copy
         li a2,ICACHE|DCACHE
         li v0,__NR_cacheflush
         syscall  // moved decompressor
 L80:
-// Decompress the folded part of this stub, then execute it.
-        lw t0,sz_unc(s6); move a3,sp; sw t0,0(sp)  // &dst_len
-        move a2,s0  // &dst
-        lw a1,sz_cpr(s6)  // src_len
-        addiu a0,s6,sz_b_info
-        jr s7  // decompress(src, srclen, dst, &dstlen /*, method*/)
-          move ra,a2  // return to decompressed code
+        move a0,s0  // new page
+        sub a1,a1,s0  // len
+        li a2,PROT_READ|PROT_EXEC
+        li v0,__NR_mprotect
+        syscall
+
+        jr s4  // unfold
+          nop
+
+memcpy:
+        lw t0, 0(a0); addiu a1,a1, 8
+        lw t1, 4(a0); addiu a2,a2,-8
+        sw t0,-8(a1); addiu a0,a0, 8
+        bgtz a2,memcpy
+          sw t1,-4(a1)
+        jr ra
+          nop
 
 err_syscall:
         b err_syscall
           nop
 main:
-        lw s5,sz_pack2 - decompressor(s7)  // length before stub
+        lw s5,  sz_pack2 - decompressor(s7)  // length before stub
+          la s4,sz_pack2 - decompressor(s7)
+        sub s4,s4,s5  // &Elf32_Ehdr
         bal unfold
           addiu s6,ra,4  // &b_info for folded_loader
         .long O_BINFO
