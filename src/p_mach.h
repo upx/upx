@@ -764,7 +764,7 @@ public:
     // called by the generic pack()
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
-    virtual void pack3(OutputFile *, Filter &) /*= 0*/;  // append loader
+    virtual off_t pack3(OutputFile *, Filter &) /*= 0*/;  // append loader
     virtual void pack4(OutputFile *, Filter &) /*= 0*/;  // append PackHeader
 
     virtual void pack4dylib(OutputFile *, Filter &, Addr init_address);
@@ -987,7 +987,7 @@ public:
     virtual const char *getName() const { return "dylib/ppc32"; }
     virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.dylib"; }
 protected:
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
 };
 
@@ -1002,7 +1002,7 @@ public:
     virtual const char *getName() const { return "dylib/ppc64le"; }
     virtual const char *getFullName(const options_t *) const { return "powerpc64le-darwin.dylib"; }
 protected:
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
 };
 
@@ -1069,7 +1069,7 @@ public:
     virtual const char *getName() const { return "dylib/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-darwin.dylib"; }
 protected:
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
 };
 
@@ -1137,7 +1137,7 @@ public:
     virtual const char *getName() const { return "dylib/amd64"; }
     virtual const char *getFullName(const options_t *) const { return "amd64-darwin.dylib"; }
 protected:
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
 };
 

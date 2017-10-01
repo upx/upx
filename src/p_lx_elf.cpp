@@ -77,20 +77,20 @@ up4(unsigned x)
     return ~3u & (3+ x);
 }
 
-static unsigned
+static off_t
 fpad4(OutputFile *fo)
 {
-    unsigned len = fo->st_size();
+    off_t len = fo->st_size();
     unsigned d = 3u & (0 - len);
     unsigned zero = 0;
     fo->write(&zero, d);
     return d + len;
 }
 
-static unsigned
+static off_t
 fpad8(OutputFile *fo)
 {
-    unsigned len = fo->st_size();
+    off_t len = fo->st_size();
     unsigned d = 7u & (0 - len);
     upx_uint64_t zero = 0;
     fo->write(&zero, d);
@@ -286,7 +286,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     }
 }
 
-void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
+off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
 {
     unsigned disp;
     unsigned const zero = 0;
@@ -325,13 +325,15 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     set_te16(&linfo.l_lsize, up4(  // MATCH03: up4
     get_te16(&linfo.l_lsize) + len - sz_pack2a));
 
-    len = fpad4(fo);  // MATCH03
-    ACC_UNUSED(len);
+    return fpad4(fo);  // MATCH03
 }
 
-void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
+off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 {
-    super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    off_t flen = super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    unsigned v_hole = sz_pack2 + lsize;
+    set_te32(&elfout.phdr[0].p_filesz, v_hole);
+    set_te32(&elfout.phdr[0].p_memsz,  v_hole);
     // Then compressed gaps (including debuginfo.)
     unsigned total_in = 0, total_out = 0;
     for (unsigned k = 0; k < e_phnum; ++k) {
@@ -347,10 +349,16 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
     b_info hdr; memset(&hdr, 0, sizeof(hdr));
     set_le32(&hdr.sz_cpr, UPX_MAGIC_LE32);
     fo->write(&hdr, sizeof(hdr));
-    fpad4(fo);
+    flen = fpad4(fo);
 
-    set_te32(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
-    set_te32(&elfout.phdr[0].p_memsz,  sz_pack2 + lsize);
+    v_hole = page_mask & (~page_mask + v_hole + get_te32(&elfout.phdr[0].p_vaddr));
+    if (0==xct_off) { // not shared library; adjust PT_LOAD
+        set_te32(&elfout.phdr[1].p_vaddr, v_hole);
+        elfout.phdr[1].p_paddr = elfout.phdr[1].p_vaddr;
+        elfout.phdr[1].p_offset = 0;
+        set_te32(&elfout.phdr[1].p_memsz, getbrk(phdri, e_phnum) - v_hole);
+        set_te32(&elfout.phdr[1].p_flags, Elf32_Phdr::PF_W|Elf32_Phdr::PF_R);
+    }
     if (0!=xct_off) {  // shared library
         Elf32_Phdr *phdr = phdri;
         unsigned off = fo->st_size();
@@ -412,17 +420,18 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             va_init |= (Elf32_Ehdr::EM_ARM==e_machine);  // THUMB mode
             unsigned word; set_te32(&word, va_init);
             fo->rewrite(&word, sizeof(word));
-            fo->seek(0, SEEK_END);
+            flen = fo->seek(0, SEEK_END);
         }
         ehdri.e_shnum = 0;
         ehdri.e_shoff = 0;
         ehdri.e_shstrndx = 0;
     }
+    return flen;
 }
 
-void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
+off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 {
-    super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    unsigned flen = super::pack3(fo, ft);  // loader follows compressed PT_LOADs
     // Then compressed gaps (including debuginfo.)
     unsigned total_in = 0, total_out = 0;
     for (unsigned k = 0; k < e_phnum; ++k) {
@@ -438,7 +447,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
     b_info hdr; memset(&hdr, 0, sizeof(hdr));
     set_le32(&hdr.sz_cpr, UPX_MAGIC_LE32);
     fo->write(&hdr, sizeof(hdr));
-    fpad4(fo);
+    flen = fpad4(fo);
 
     set_te64(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
     set_te64(&elfout.phdr[0].p_memsz,  sz_pack2 + lsize);
@@ -510,12 +519,13 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             fo->seek(off_init, SEEK_SET);
             upx_uint64_t word; set_te64(&word, va_init);
             fo->rewrite(&word, sizeof(word));
-            fo->seek(0, SEEK_END);
+            flen = fo->seek(0, SEEK_END);
         }
         ehdri.e_shnum = 0;
         ehdri.e_shoff = 0;
         ehdri.e_shstrndx = 0;
     }
+    return flen;
 }
 
 void
@@ -1005,13 +1015,6 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
 
     addLoader("IDENTSTR", NULL);
     addLoader("LEXEC020", NULL);
-    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
-        addLoader("LEXECDYN", NULL);
-    }
-    else {
-        addLoader("LEXECEXE", NULL);
-    }
-    addLoader("LEXEC025", NULL);
     addLoader("FOLDEXEC", NULL);
 }
 
@@ -2083,15 +2086,16 @@ PackLinuxElf32::generateElfHdr(
     // Info for OS kernel to set the brk()
     if (brka) {
         // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
-        unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
+        h2->phdr[0].p_paddr = phdri[0].p_paddr;
+        h2->phdr[0].p_vaddr = phdri[0].p_vaddr;
+        unsigned const brkb = page_mask & (~page_mask +
+            get_te32(&h2->phdr[0].p_vaddr) + get_te32(&h2->phdr[0].p_memsz));
         set_te32(&h2->phdr[1].p_type, PT_LOAD32);  // be sure
-        set_te32(&h2->phdr[1].p_offset, ~page_mask & brkb);
+        h2->phdr[1].p_offset = 0;
         set_te32(&h2->phdr[1].p_vaddr, brkb);
         set_te32(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
-        h2->phdr[1].p_memsz =  0;
-        if (ARM_is_QNX())
-            set_te32(&h2->phdr[1].p_memsz, 1);  // 0==.p_memsz invalid on QNX 6.3.0
+        set_te32(&h2->phdr[1].p_memsz, brka - brkb);
         set_te32(&h2->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
@@ -2273,7 +2277,8 @@ PackOpenBSDElf32x86::generateElfHdr(
     set_te32(&h3->phdr[1].p_vaddr, brkb);
     set_te32(&h3->phdr[1].p_paddr, brkb);
     h3->phdr[1].p_filesz = 0;
-    h3->phdr[1].p_memsz =  0;
+    // Too many kernels have bugs when 0==.p_memsz
+    set_te32(&h3->phdr[1].p_memsz, 1);
     set_te32(&h3->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
 
     if (ph.format==getFormat()) {
@@ -2361,7 +2366,8 @@ PackLinuxElf64::generateElfHdr(
         set_te64(&h2->phdr[1].p_vaddr, brkb);
         set_te64(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
-        h2->phdr[1].p_memsz =  0;
+        // Too many Linux kernels have bugs when 0==.p_memsz
+        set_te64(&h2->phdr[1].p_memsz, 1);
         set_te32(&h2->phdr[1].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {

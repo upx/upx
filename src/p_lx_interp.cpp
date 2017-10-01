@@ -135,7 +135,7 @@ int PackLinuxElf32x86interp::pack2(OutputFile *fo, Filter &ft)
 #undef PAGE_MASK
 #define PAGE_MASK (~0u<<12)
 
-void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
+off_t PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
 {
     unsigned base = getbase(phdri, ehdri.e_phnum);
     unsigned sz = PAGE_MASK & (~PAGE_MASK + elfout.phdr[0].p_filesz);
@@ -191,6 +191,7 @@ void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
     else {
         updateLoader(fo);
     }
+    return fo->getBytesWritten();
 }
 
 

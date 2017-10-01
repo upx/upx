@@ -66,26 +66,31 @@ O_RDONLY=       0
 // are uncompressed.
 
 // enter:
-// %ebp= f_expand
-// %esp/ LENX,ADRX,slide,fd,LENU,ADRU,entry,argc,argv,0,envp,0,auxv,0,strings
-//      (LENU,ADRU) = params for final munmap()
-//      (LENX,ADRX) = extent of compressed program (after moving)
+// eax:ADRX; ebx:free; ecx:LENX; edx:&unfold
+// ebp:f_exp; esi:free; edi:elfaddr
+// esp/ ADRU,LENU,fd,entry,argc,argv,0,envp,0,auxv,0,strings
+//      (ADRU,LENU) = params for final munmap()
+//      (ADRX,LENX) = extent of compressed program (after moving)
 
 fold_begin:
 ////    int3  // DEBUG
+        push edi  // elfaddr
+        push ecx  // LENX
+        push eax  // ADRX
+
         mov esi,esp; sub esp,PATH_MAX
-        mov edi,esp; push 8; pop ecx; rep movsd  // copy LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+        mov edi,esp; push 8; pop ecx; rep movsd  // copy ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 
         push ebp  // f_exp
-        mov ebp,esp  // frame: f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
-F_fd= 4*4  // frame offset to fd
+        mov ebp,esp  // frame: f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
+F_fd= 6*4  // frame offset to fd
 0:
         lodsd; test %eax,%eax; stosd; jne 0b  // argv
-        push edi  // &new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+        push edi  // &new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
         stosd  // space for new_env[0]
 0:
         lodsd; test %eax,%eax; stosd; jne 0b  // env
-        push edi  // &old_auxv,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+        push edi  // &old_auxv,&new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 0:
         lodsd; test %eax,%eax; stosd; movsd; jne 0b  // auxv
 
@@ -94,18 +99,14 @@ F_fd= 4*4  // frame offset to fd
         mov ecx,5*2; rep stosd  // 5 extra slots of AT_IGNORE
         dec eax; stosd; stosd  // 0, AT_NULL
         sub [-2*4 + ebp],edi  // -len_aux
-        push edi  // P_07  &new_aux[N],-len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
-        push esi  // &strings,&new_aux[N],-len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,fd,entry,argc
+        push edi  // P_07  &new_aux[N],-len_aux,&new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
+        push esi  // &strings,&new_aux[N],-len_aux,&new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,fd,entry,argc
 
         call 1f
 0:
         .asciz "/proc/self/exe"
 1:
-        pop ebx  // path
-        sub ecx,ecx  // O_RDONLY
-        push __NR_open; pop eax; int 0x80
-        mov [F_fd + ebp],eax  // fd for later mmap
-
+        pop ebx  // path (because 'readlink' wants the name, not the fd)
         mov edx,-5*2*4 -1+ PATH_MAX  // buflen
         mov ecx,edi  // buffer
         // mov ebx,ebx  // name
@@ -117,7 +118,7 @@ F_fd= 4*4  // frame offset to fd
         xchg ecx,eax  // ecx= byte count
 
    std
-        pop edi; dec edi  // abuts old strings; &new_aux[N],-len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+        pop edi; dec edi  // abuts old strings; &new_aux[N],-len_aux,&new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
         mov al,0; stosb  // terminate
         rep movsb  // slide up
         mov eax, 0+ ('='<<24)|(' '<<16)|(' '<<8)|(' '<<0)  # env var name
@@ -125,7 +126,7 @@ F_fd= 4*4  // frame offset to fd
         mov eax,[-1*4 + ebp]; mov [eax],edi  // new_env[0]
         and edi,~3  // word align
 
-        pop esi  // P_07  &new_aux[N]; -len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+        pop esi  // P_07  &new_aux[N]; -len_aux,&new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 // Final sp must be 0 mod 8.  There are now 10 words below argc.
         mov ecx,esi  // last
         sub ecx,esp  // length of moved block
@@ -134,7 +135,7 @@ F_fd= 4*4  // frame offset to fd
         and eax,4
         sub edi,eax  // align &new_aux[last]
 
-        pop edx  // -len_aux; &new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+        pop edx  // -len_aux; &new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
           add edx,edi  // edx= &final_aux[0]
 
         scasd  // edi -= 4
@@ -152,16 +153,16 @@ F_fd= 4*4  // frame offset to fd
 
         pop eax  // toss &new_env[0]
         pop ebp  // f_exp
-// stack is back to original state: LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+// stack is back to original state: ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 
-        pop esi  // LENX: sz_cpr
         pop eax  // ADRX: &b_info
-        pop ecx  // slide
+        pop esi  // LENX: total_size
+        pop ecx  // elfaddr
 #define OVERHEAD 2048
 #define MAX_ELF_HDR 512
         sub esp, MAX_ELF_HDR + OVERHEAD  // alloca
         mov edx, esp  // &tmp
-        push ecx  // slide (9th arg)
+        push ecx  // elfaddr (9th arg)
         mov ebx, [   eax]  // length of uncompressed ELF headers
         mov ecx, [4+ eax]  // length of   compressed ELF headers
         add ecx, szb_info
@@ -176,15 +177,20 @@ F_fd= 4*4  // frame offset to fd
         mov esi,eax  // save entry
         mov edx,edi  // save auxv
         mov edi,esp
-        mov ecx,((8 +1)*4 + MAX_ELF_HDR + OVERHEAD) >>2  // 8 params, slide, un-alloca
+        mov ecx,((8 +1)*4 + MAX_ELF_HDR + OVERHEAD) >>2  // 8 params, elfaddr, un-alloca
         xor eax,eax  // 0
         rep stosd  // clear frame on exit
         mov esp,edi  // end of frame
 
-        mov [3*4 + esp],esi  // entry
+        pop eax  // ADRU
+        pop ecx  // LENU
         pop edi  // fd
+        pop ebx  // space
+        push esi  // entry
+        push ecx  // LENU
+        push eax  // ADRU
         push edx  // auxv
-        push edi  // fd, auxv, LENU, ADRU, entry, argc
+        push edi  // fd, auxv, ADRU, LENU, entry, argc
 
         sub ebp,ebp  // 0 block in file
         // edi has fd
@@ -205,8 +211,8 @@ L60:
         scasd  // a_type
         jne L60  // not AT_NULL
 // edi now points at [AT_NULL]a_un.a_ptr which contains result of make_hatch()
-        pop ecx  // LENU
         pop ebx  // ADRU
+        pop ecx  // LENU
 
         push eax
         push eax
