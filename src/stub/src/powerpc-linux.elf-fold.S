@@ -61,27 +61,22 @@ OVERHEAD= 2048
 SZ_LINKA= (2 + 2)*NBPW  // (sp,pc, arg9,arg10,... ) and 16-byte aligned
 SZ_FRAME= SZ_LINKA
 
-sz_pack2_f_exp= -4 -4  // 4 bytes and one Instruction before r_exp
 // In:
-r_exp=   31  // f_exp == &decompress()
+r_exp=   31  // f_exp == &decompress
 r_PMASK= 30  // PAGE_MASK
 r_ADRU=  29  // &base to unmap
 r_LENU=  28  // length to unmap
-r_BINFO= 27
+r_fd=    27  // open fd of /proc/self/exe
 r_auxv=  26
-r_slide= 25
-//r_FLD=   24
-//r_ADRM=  23
-//r_LENM=  22
-
-//   r29= reserved for &our_Elf32_Ehdr
-
-r_unf=  21  // f_unf == &unfilter()
-r_fd=   20
-av_hi=  19
-av_len= 18
-cblk=   17
-pag=    16
+r_elf=   25  // original &Elf32_Ehdr of stub
+r_ADRX=  24  // compressed input
+r_LENX=  23  // total size
+// Local:
+r_unf=   22  // f_unf == &unfilter()
+av_hi=   21
+av_len=  20
+cblk=    19
+r_buf=   18
 
 fold_begin:
 get_page_mask: .globl get_page_mask
@@ -99,10 +94,6 @@ L_PFX= 4  // strlen("   =")
         .balign 4
 L90:
         mflr r_unf  // L90b = &ppcbxx: f_unfilter
-// open /proc/self/exe
-        li a1,O_RDONLY
-        la a0,L_PFX+ L90a - L90b(r_unf)  // "/proc/self/exe"
-        call open; movr r_fd,a0
 // slide {<<stuff>>,argc,argv,0,env,0,auxv} down with maximum room before strings
         la a1,-NBPW(sp)  // src ready for lwzu
         la sp,-(-NBPW & (-1+ NBPW + (L_PFX + PATH_MAX)))(sp)
@@ -124,12 +115,12 @@ L90:
         lwz  r0,L90a - L90b(r_unf)  // "    ="
         la cblk,NBPW(a1)  // original &strings
         stwu r0,NBPW(a0)
-        la  r14,L_PFX(a0)  // buffer
+        la  r_buf,L_PFX(a0)  // buffer
 // readlink("/proc/self/exe", buffer, -1+ PATH_MAX)
         li a2,-1+ PATH_MAX
-        movr a1,r14  // buffer
+        movr a1,r_buf  // buffer
         la a0,L_PFX+ L90a - L90b(r_unf)  //     "/proc/self/exe"
-        call readlink; la a2,-L_PFX(r14)  // a0= len; a2= buffer
+        call readlink; la a2,-L_PFX(r_buf)  // a0= len; a2= buffer
         cmpwi a0,0; bgt 0f  // success
         la a2,L90a - L90b(r_unf)  // "   =/proc/self/exe"
         li a0,L90  - (NBPW+ L90a)  // round_up(NBPW, strlen("/proc/self/exe"))
@@ -160,18 +151,16 @@ L90:
         movr sp,a0
 
         stwu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
-        lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which precede -2*NBPW(r_exp)
-
-        add a0,r_ADRU,r_BINFO  // &b_info
-        sub a1,a1,r_BINFO  // total_size
-        la  a2,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
-        mr  a3,r_auxv  // &Elf32_auxv_t
-        mr  a4,r_exp  // &decompress: f_expand
-        mr  a5,r_unf  // &f_unf
-        mr  a6,r_slide  // reloc; slide; dynbase
+        mr a0,r_ADRX  // &b_info
+        mr a1,r_LENX  // total_size
+        la a2,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
+        mr a3,r_auxv  // &Elf32_auxv_t
+        mr a4,r_exp  // &decompress: f_expand
+        mr a5,r_unf  // &f_unf
+        mr a6,r_elf  // elfaddr
         call upx_main  // Out: a0= entry
 // entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, ELf32_auxv_t *a3,
-//      f_exp a4, f_unf a5, dynbase a6)
+//      f_exp a4, f_unf a5, elfaddr a6)
 
         la  sp,SZ_FRAME+OVERHEAD(sp)  // deallocate this frame
         mr r_exp,a0  // save &entry
