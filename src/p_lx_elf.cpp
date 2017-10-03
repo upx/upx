@@ -3572,6 +3572,9 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
+    if ((MAX_ELF_HDR - sizeof(Elf64_Ehdr))/sizeof(Elf64_Phdr) < u_phnum) {
+        throwCantUnpack("bad compressed e_phnum");
+    }
 
     // Packed ET_EXE has no PT_DYNAMIC.
     // Packed ET_DYN has original PT_DYNAMIC for info needed by rtld.
@@ -4196,6 +4199,9 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
+    if ((MAX_ELF_HDR - sizeof(Elf32_Ehdr))/sizeof(Elf32_Phdr) < u_phnum) {
+        throwCantUnpack("bad compressed e_phnum");
+    }
 
     // Packed ET_EXE has no PT_DYNAMIC.
     // Packed ET_DYN has original PT_DYNAMIC for info needed by rtld.
