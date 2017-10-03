@@ -245,8 +245,15 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         sz_phdrs = 0;
         return;
     }
+    if (0==e_phnum) throwCantUnpack("0==e_phnum");
     e_phoff = get_te32(&ehdri.e_phoff);
+    if ((unsigned long)file_size < ((unsigned long)e_phoff + e_phnum * sizeof(Elf32_Phdr))) {
+        throwCantUnpack("bad e_phoff");
+    }
     e_shoff = get_te32(&ehdri.e_shoff);
+    if ((unsigned long)file_size < ((unsigned long)e_shoff + e_shnum * sizeof(Elf32_Shdr))) {
+        throwCantUnpack("bad e_shoff");
+    }
     sz_phdrs = e_phnum * e_phentsize;
 
     if (f && Elf32_Ehdr::ET_DYN!=e_type) {
@@ -661,8 +668,15 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         sz_phdrs = 0;
         return;
     }
+    if (0==e_phnum) throwCantUnpack("0==e_phnum");
     e_phoff = get_te64(&ehdri.e_phoff);
+    if ((unsigned long)file_size < (e_phoff + e_phnum * sizeof(Elf64_Phdr))) {
+        throwCantUnpack("bad e_phoff");
+    }
     e_shoff = get_te64(&ehdri.e_shoff);
+    if ((unsigned long)file_size < (e_shoff + e_shnum * sizeof(Elf64_Shdr))) {
+        throwCantUnpack("bad e_shoff");
+    }
     sz_phdrs = e_phnum * e_phentsize;
 
     if (f && Elf64_Ehdr::ET_DYN!=e_type) {
@@ -3490,6 +3504,9 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 
 void PackLinuxElf64::unpack(OutputFile *fo)
 {
+    if (e_phoff != sizeof(Elf64_Ehdr)) {// Phdrs not contiguous with Ehdr
+        throwCantUnpack("bad e_phoff");
+    }
     unsigned const c_phnum = get_te16(&ehdri.e_phnum);
     upx_uint64_t old_data_off = 0;
     upx_uint64_t old_data_len = 0;
@@ -4110,6 +4127,9 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
 
 void PackLinuxElf32::unpack(OutputFile *fo)
 {
+    if (e_phoff != sizeof(Elf32_Ehdr)) {// Phdrs not contiguous with Ehdr
+        throwCantUnpack("bad e_phoff");
+    }
     unsigned const c_phnum = get_te16(&ehdri.e_phnum);
     unsigned old_data_off = 0;
     unsigned old_data_len = 0;
