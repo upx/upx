@@ -66,11 +66,10 @@ __NR_brk=      12
 __NR_exit= 60
 __NR_readlink= 89
 
-/* In:
-    cld
-    %rbp= &decompress
-    %rsp= &{LENX,ADRX,LENU,ADRU,slide,argc,argv...,0,env...,0,auxv...,0...,strings}
-*/
+// IN:
+// %rbp= f_exp; %r14= ADRX; %r15= LENX;
+// rsp/ elfaddr,fd,ADRU,LENU,%entry,  argc,argv,0,envp,0,auxv,0,strings
+
 fold_begin:
 ////    int3  // DEBUG only
         call L90  # push &L90a
@@ -80,11 +79,13 @@ L90b:
 #include "arch/amd64/bxx.S"
 L90:
         pop %rbx  # L90a
+        push %r14  // ADRX
+        push %r15  // LENX
         lea L90b - L90a(%rbx),%rax; push %rax  # &amdbxx: f_unfilter
         mov %rsp,%rsi
         sub $PATH_MAX,%rsp
         push %rsp; pop %rdi
-        push $7; pop %rcx; rep movsq  # f_unfilter,LENX,ADRX,LENU,ADRU,slide,argc
+        push $9; pop %rcx; rep movsq  # f_unfilter,LENX,ADRX,elfaddr,fd,ADRU,LENU,%entry,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
         movq %rdi,%r14  # remember &new_env[0]
@@ -98,17 +99,16 @@ L90:
         mov %rsi,%r13  # beginning of strings
         sub %r15,%r12  # -length of auxv
 
-        push $ __NR_readlink
         movl $-1+ PATH_MAX,%arg3l # buflen
         push %rdi; pop %arg2  #buffer
         push %rbx; pop %arg1  # "/proc/self/exe"
-        pop %rax; syscall; testl %eax,%eax; jns 0f
+        push $ __NR_readlink; pop %rax; syscall; testl %eax,%eax; jns 0f
 // readlink() failed. Set the result equal to the argument.
         push %rbx; pop %arg2  # result= "/proc/self/exe"
         push $-1+ (L90b - L90a); pop %rax
 0:
         xchg %eax,%ecx  # %ecx= byte count
-        std
+     std
         lea -1(%r13),%rdi  # dst last byte
         movb $0,%al; stosb  # terminate
         lea -1(%arg2,%rcx),%rsi  # src last byte
@@ -129,49 +129,42 @@ L90:
         lea -8(%r15),%rsi  # &last qword of old auxv
         shr   $3,%rcx; rep movsq
         lea 8(%rdi),%rsp
-        cld
+     cld
 
         lea (%r14,%r12),%arg4  # &new Elf64_auxv
         pop %arg6  # f_unfilter
         pop %arg2  # LENX
         pop %arg1  # ADRX
-        mov 2*8(%rsp),%rax  // slide
 
+        pop %rax  # elfaddr
         subq $ OVERHEAD,%rsp
+        push %rax  #elfaddr
+
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
         movq %rbp,%arg5  # &decompress: f_expand
-        pushq %rax  // reloc
         call upx_main  # Out: %rax= entry
 /* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6,
-                Elf64_Addr reloc )
+                Elf64_Addr elfaddr )
 */
-        push %rax; pop %rbp  # entry
-        popq %rdx  # reloc
-        addq $OVERHEAD,%rsp
+        addq $1*8+OVERHEAD,%rsp  # toss elfaddr, too
+        movq %rax,3*8(%rsp)  # entry
+        pop %rbx  # fd
 
-        push $__NR_open
-        sub %arg2l,%arg2l  # O_RDONLY
-        push %rbx; pop %arg1  # "/proc/self/exe"
-        pop %rax; syscall; xchg %eax,%ebx  # %ebx= fd
-
-        push $__NR_mmap
+// Map 1 page of /proc/self/exe so that it does not disappear.
         sub %arg6l,%arg6l  # 0 offset
-        mov %ebx,%arg5l
+        mov %ebx,%arg5l  # fd
         push $MAP_PRIVATE; pop %sys4  # BEWARE:  %sys4
         push $PROT_READ; pop %arg3
         mov $PAGE_SIZE,%arg2l
         push $0; pop %arg1
-        pop %rax; syscall
+        push $__NR_mmap; pop %rax; syscall
 
-        push $__NR_close
         mov %ebx,%edi  # fd
-        pop %rax; syscall
+        push $__NR_close; pop %rax; syscall
 
-        pop %arg2  # LENU
         pop %arg1  # ADRU
-        pop %rcx   # slide [unused]
-        push %rbp  # &entry
+        pop %arg2  # LENU
         push $ __NR_munmap; pop %rax
         jmp *-8(%r14)  # goto: syscall; ret
 
