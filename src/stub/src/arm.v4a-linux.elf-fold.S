@@ -58,42 +58,53 @@ PATH_MAX= 4096
 #define TRACE_REGS r0-r12,r14,r15
 #endif  /*}*/
 
-@@ control just falls through, after this part and compiled C code
-@@ are uncompressed.
-
 #define OVERHEAD 2048
 #define MAX_ELF_HDR 512
 
+mflg_subr:  @ for handling QNX vs Linux
+        orr r3,r3,#0  @ re-written to MAP_PRIVATE|MAP_ANONYMOUS
+        ret
+
 SP_fd= 3*4
 /* In:
-   r11= &f_exp
-    sp/ LENX,ADRX, dynbase,%fd, ADRU,LENU, f_exp,%entry, argc,argv,0,env,0,auxv
+   r4= LENX
+   r5= ADRX
+new sp/            elfaddr,fd, ADRU,LENU, f_exp,%entry, argc,argv,0,envp,0,auxv
         (ADRX,LENX) = extent of compressed program (after moving)
         (ADRU,LENU) = params for final munmap()
 */
-fold_begin:
+fold_begin:  // enter here
 #if DEBUG  //{
 #define TRACE_REGS r0-r12,r14,r15
         mov r0,sp  @ current stack pointer (extra clue)
         stmdb sp!,{TRACE_REGS}; mov r0,#0x10; bl trace
 #endif  //}
-        ldmia sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
+        ldmia sp!,{      r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
         mov r1,sp  @ src (argv)
         sub sp,sp,#PATH_MAX
         mov r0,sp  @ dst
         stmdb sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
-        mov r11,r10  @ restore f_exp
+F_LENX=    0*4
+F_ADRX=    1*4
+F_elfaddr= 2*4
+F_fd=      3*4
+F_ADRU=    4*4
+F_LENU=    5*4
+F_f_exp=   6*4
+  F_e_auxv=  F_f_exp
+F_entry=   7*4
+
 0: // copy argv down
         ldr r3,[r1],#4; cmp r3,#0
         str r3,[r0],#4; bne 0b
-
      mov r4,r0  @ &new_env[0]
         str r3,[r0],#4  @ space for new_env[0]
+
 0: // copy env down
         ldr r3,[r1],#4; cmp r3,#0
         str r3,[r0],#4; bne 0b
-
      mov r5,r1  @ &orig_auxv[0]
+
 0: // copy auxv down
         ldmia r1!,{r2,r3}; cmp r2,#0
         stmia r0!,{r2,r3}; bne 0b
@@ -132,27 +143,22 @@ link_ok:
         sub r3,r0,r6  @ &new_auxv[end] - &orig_auxv[end]
         add r3,r3,r5  @ &new_auxv[0] = delta +  &orig_auxv[0]
         mov r1,r9  @ &down_auxv[end]
-        str r0,[sp,#6*4]  @ replace f_exp with &new_auxv[end]
+        ldr r5,[sp,#F_f_exp]  @ save f_exp
+        str r0,[sp,#F_e_auxv]  @ replace f_exp with &new_auxv[end]
 0:
         ldr r2,[r1,#-4]!; cmp r1,sp
         str r2,[r0,#-4]!; bne 0b
         mov sp,r0
-
-// open /proc/self/exe to keep it from disappearing
-        adr r0,proc_self_exe
-        mov r1,#O_RDONLY
-        bl open  @ no error check: cannot recover
-        str r0,[sp,#SP_fd]  @ fd
 
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x12; bl trace
 #endif  //}
 
 /* Construct arglist for upx_main */
-        mov r5,r11  @ f_exp
-        ldmia sp!,{r9,r10,r11}  @ LENX, ADRX, dynbase
+        @ldr r5,[sp,#F_f_exp]
+        ldmia sp!,{r4,r10,r11}  @ LENX, ADRX, elfaddr
+F_delta= 3*4
         sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
-        mov r4,r9  @ total size of compressed data
         ldr r9,[r10,#sz_cpr]  @ xi.size  of ELF headers
         mov r8,sp  @ xo.ptr
         ldr r7,[r10,#sz_unc]  @ xo.size
@@ -166,26 +172,29 @@ link_ok:
         stmdb sp!,{TRACE_REGS}; mov r0,#0x13; bl trace
 #endif  //}
 // r0=av; r1=sz_cpr; r2=f_decompress; r3=f_unfilter;
-// xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}, dynbase
+// xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}, elfaddr
         bl upx_main
         add sp,sp,#(9-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x14; bl trace
 #endif  //}
-        str r0,[sp,#4*4]  @ entry address
+        str r0,[sp,#F_entry - F_delta]  @ entry address
 
 // Map 1 page of /proc/self/exe so that it does not disappear
         mov r5,#0  @ SEEK_SET
-        ldr r4,[sp]  @ fd
+        ldr r4,[sp,#F_fd - F_delta]!  @ fd
         mov r3,#MAP_PRIVATE
         mov r2,#PROT_READ
         mov r1,#PAGE_SIZE
         mov r0,#0  @ any address
         bl mmap  @ no error check: cannot recover
-        ldr r0,[sp],#4  @ fd
+        ldr r0,[sp],#4  @ F_fd
         bl close
 
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#0x15; bl trace
+#endif  //}
         ldmia sp!,{r0,r1,r2, lr}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type], entry
         // crumb is unused: replaced by mapping /proc/self/exe into a free page
 
@@ -205,6 +214,7 @@ link_ok:
         mov r10,#0
         mov r11,#0
 
+#if DEBUG  //{
 /* Heuristic cache flush: sweep contiguous range to force collisions and evictions. */
         sub r12,sp,#(1<<19)  @ limit: 1/2 MB more
 sweep:
@@ -214,6 +224,7 @@ sweep:
         cmp r12,sp; blo sweep
 
         add sp,sp,#(1<<19)  @ pop stack
+#endif  //}
 
 #if defined(ARMEL_DARWIN)  /*{*/
         mov r7,#0
@@ -423,7 +434,7 @@ mmap_privanon: .globl mmap_privanon
         mov r5,#0  @ offset= 0
         mvn r4,#0  @ fd= -1
         adr lr, mmap_do
-        b fold_begin -2*4  // fix r3 for QNX vs Linux
+        b mflg_subr // fix r3 for QNX vs Linux
 
 #if 1|DEBUG  /*{*/
 

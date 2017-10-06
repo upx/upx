@@ -51,14 +51,21 @@ PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
 
+MAP_ANONYMOUS= 0x20
 MAP_FIXED=     0x10
+MAP_PRIVATE=   0x02
+
+O_RDONLY=       0
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
 __NR_exit =      1 + __NR_SYSCALL_BASE
+__NR_open =      5 + __NR_SYSCALL_BASE
+
 __NR_write =     4 + __NR_SYSCALL_BASE
 __NR_mmap64 = 0xc0 + __NR_SYSCALL_BASE
+__NR_mprotect= 125 + __NR_SYSCALL_BASE
 
 __ARM_NR_BASE  = 0xf0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
@@ -78,13 +85,20 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
         //.long sz_pack2  // placed there by ::pack3()
   section ELFMAINX
 start_params:
-        .long ADRM  // dst  for map
-        .long LENF  // end_decompress - (start_params -4)
-        .long CPR0  //           cpr0 - (start_params -4)
+sz_pack2= . - 4
 mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
 ////    nop; bkpt
+        sub sp,sp,#6*4
+F_elfaddr= 0*4
+F_fd=      1*4
+F_ADRU=    2*4
+F_LENU=    3*4
+F_f_exp=   4*4
+F_entry=   5*4
+  F_mflg=    F_entry
+
         bl main  // lr= &f_exp
 f_exp:
 #define LINUX_ARM_CACHEFLUSH 1
@@ -107,117 +121,79 @@ f_exp:
 
   section ELFMAINY
 end_decompress: .globl end_decompress
-
-msg_SELinux:
-        mov r2,#L71 - L70  // length
-        adr r1,L70  // message text
-        mov r0,#2  // fd stderr
-#if defined(ARMEL_EABI4)  /*{*/
-        mov r7,#__NR_write
-        swi 0
-#else  /*}{*/
-        swi __NR_write
-#endif  /*}*/
-die:
-        mov r0,#127
-#if defined(ARMEL_EABI4)  /*{*/
-        mov r7,#__NR_exit
-        swi 0
-#else  /*}{*/
-        swi __NR_exit
-#endif  /*}*/
-L70:
-        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
-L71:
         /* IDENTSTR goes here */
 
 section ELFMAINZ
-unfold:  // in: r11= &f_exp; lr= &O_BINFO
+unfold:  // in: r3= mflg; lr= &O_BINFO
+        str r3,[sp,#F_mflg]
+        mvn r10,r6; add r10,r10,#1  @ "neg r10,r6": -elfaddr
+        add r6,lr,#4  @ &b_info of folded code
+        add r14,r6,r10  @ offset(b_info)
+
+// Reserve space for input file and unfolded stub
+        ldr r1,[r6,#sz_unc]
+        mov r5,#0  @ offset
+        mov r4,#-1  @ fd
+        @r3= mflg  @ MAP_PRIVATE|MAP_ANONYMOUS or MAP_PRIVANON
+        mov r2,#PROT_READ|PROT_WRITE
+        add r1,r1,r14  @ length= .sz_unc + offset(b_info)
+        mov r0,#0  @ kernel chooses addr
+        str r1,[sp,#F_LENU]  @ length to munmap
+        do_sys7t __NR_mmap64
+        str r0,[sp,#F_ADRU]  @ addr to munmap
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#1; bl trace
 #endif  /*}*/
-        add r0,r11,#-4 + start_params - f_exp
-        ldr r5,[r0]  @ sz_pack2; LENX
-        ldr r6,[lr],#4  @ O_BINFO
-        sub r7,r0,r5  @ &Elf_Ehdr  dynbase
-        ldrh r0,[r7,#e_type]
-        ldr r9,[r7,#p_vaddr + sz_Elf32_Phdr + sz_Elf32_Ehdr]  @ PT_LOAD[1].p_vaddr
-        cmp r0,#ET_DYN
-          addeq r9,r9,r7  @ brk(0)
-        add r9,r9,#PAGE_SIZE
-        sub r9,r9,#1
-        ldr r8,[lr]  @ {fold_begin}.sz_unc
-        sub r0,lr,r7  @ &eof - &Elf_Ehdr
-        add r10,r8,r0  @ .sz_unc + sizeof(this_stub) == LENU
-        add r10,r10,#2*4  @ 2-instr subr for mflg
 
-        sub r0,sp,#8<<20  @ allow 8MB stack (qemu ET_DYN puts below Elf_Ehdr)
-        cmp r0,#0xf7<<24  @ qemu wants for itself 0xf7000000 and above
-          movhs r0,#0xf7<<24  @ min(0xf7000000, sp - 8M)
-        sub r0,r0,r10  @ LENU must fit
-        cmp r9,r0
-          movhs r9,r0  @ move below
+// Duplicate the input data
+        ldr r1,[r6,#sz_cpr]
+        @mov r5,#0
+        ldr r4,[sp,#F_fd]
+        mov r3,#MAP_PRIVATE|MAP_FIXED
+        @mov r2,#PROT_READ|PROT_WRITE
+        add r1,r1,r14  @ length= .sz_cpr + offset(b_info)
+        @mov r0,r0  @ same address
+        do_sys7t __NR_mmap64
+        add r10,r0,r10  @ relocation amount= (new - old)
 
-        mov r9,r9,lsr #PAGE_SHIFT  @ round down
-        mov r9,r9,lsl #PAGE_SHIFT  @ new ADRU
-        add r6,r6,r9  @ ADRX= O_BINFO + new_base(==ADRU)
-        ldr r3,[r11, #mflg - f_exp]  // MAP_{PRIVATE|ANON}
-        sub r11,r11,r7  @ offset(f_exp)
-        add r11,r11,r9  @ new f_exp
-        stmdb sp!,{r3,r5,r6,r7,r8,r9,r10,r11,r12}
-        // MFLG, LENX,ADRX, dynbase,%fd, ADRU,LENU, f_exp,%entry
-
-// alloc new pages via mmap
-        mov r5,#0  // offset
-        mvn r4,#0  // fd= -1; cater to *BSD for fd when MAP_ANON
-        orr r3,r3,#MAP_FIXED
-        mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
-        mov r1,r10  @ LENU
-        mov r0,r9  @ ADRU
-#if defined(ARMEL_EABI4)  /*{*/
-        mov r7,#__NR_mmap64
-        swi 0
-#else  /*}{*/
-        swi __NR_mmap64
-#endif  /*}*/
+// Unfold
+        ldr r3,[r6,#sz_unc]; str r3,[sp,#-4]!  @ P_01
+        mov r3,sp  @ &sz_unc
+        add r2,r6,r10  @ dst= reloc(&b_info)
+        ldr r1,[r6,#sz_cpr]  @ srclen
+        add r0,r6,#3*4  @ src
+        mov r4,r2  @ copy of dst
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#2; bl trace
 #endif  /*}*/
-        cmn r0,#4096
-        bcs msg_SELinux
+        mov lr,pc; ldr pc,[sp,#4+ F_f_exp]  @ call f_exp  [ARMv4 lacks blx]
+        ldr r3,[sp],#4  @ P_01  sz_unc
 
-// copy to new pages
-        ldr r2,[sp,#3*4]  @ dynbase
-        sub r1,r1,r8  @ omit {fold_begin}.sz_unc
-        add r12,r0,r1  @ end dst
-        add r1, r2,r1  @ end src
-cop2:  // overrun OK: dst is page aligned, fold_begin follows src
-        ldmia r2!,{r3,r4,r5,r6,r7,r8,r9,r10}; cmp r2,r1
-        stmia r0!,{r3,r4,r5,r6,r7,r8,r9,r10}; blo cop2
+        ldrb r1,[sp,#F_mflg]  @ mflg
+        strb r1,[r4]  @ change "orr r3,r3,#0" at mflg_subr
 
-// decompress fold_begin and jump to it
-        ldr r6,[sp],#4  @ MFLG
-        ldr r0,mflg_subr
-        ldr r1,mflg_subr+4
-        orr r0,r0,r6
-        str r0,[r12],#4
-        str r1,[r12],#4
-        ldr r5,[lr],#4  @ sz_unc
-        ldr r1,[lr],#4  @ 2nd arg: .sz_cpr
-        ldr r4,[lr],#4  @ b_method
-        stmdb sp!,{r4,r5,r6,r12}  @ 5th arg, dstlen, MFLG, retaddr
-        add r3,sp,#1*4  @ 4th arg: &dstlen  (used by lzma)
-        mov r2,r12  @ 3rd arg: dst
-        mov r0,lr  @ 1st arg: &payload
+// PROT_EXEC
+        ldr r0,[sp,#F_f_exp]
+          add r1,r3,r6   @ old last needed
+        add r0,r0,r10  @ reloc(f_exp)
+          add r1,r1,r10  @ new last needed
+        str r0,[sp,#F_f_exp]  @ new f_exp
+        mov r0,r0,lsr #PAGE_SHIFT  @ round down
+          mov r2,#PROT_EXEC|PROT_READ
+        mov r0,r0, lsl #PAGE_SHIFT
+          sub r1,r1,r0  @ length
+        do_sys7t __NR_mprotect
+
+// Use the copy
+        ldr r1,[r6,#-4]  @ O_BINFO
+        ldr r0,[sp,#F_ADRU]
+        sub r4,r9,r1  @ LENX= sz_pack2 - O_BINFO
+        add r5,r0,r1  @ ADRX= new Elf32_Ehdr + O_BINFO
+        add r6,r6,#2*4  @ past mflg_subr
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
-        mov lr,pc; mov pc,r11  // decompress folded code [arm.v4a lacks 'blx']
-        ldmia sp!,{r1,r2,r3,pc}  // toss 5th arg and dstlen; goto unfolded
-
-mflg_subr:
-        orr r3,r3,#0
-        ret
+        add pc,r6,r10  @ goto reloc(unfold)
 
 #if DEBUG  /*{*/
 TRACE_BUFLEN=512
@@ -271,8 +247,25 @@ hex:
         .ascii "0123456789abcdef"
 #endif  /*}*/
 
-main:
-        mov r11,lr  // r11= &f_exp
+proc_self_exe:
+        .asciz "/proc/self/exe"
+        .balign 4
+
+main:  // IN: lr= &f_exp
+        ldr r0,[lr,#sz_pack2 - f_exp]  @ sz_pack2
+        add r6, lr,#sz_pack2 - f_exp  @ &sz_pack2
+        str lr,[sp,#F_f_exp]
+        sub r6,r6,r0  @ elfaddr= &Elf_Ehdr of this program
+        str r6,[sp,#F_elfaddr]
+        mov r9,r0  @ save sz_pack2
+
+// Open /proc/self/exe
+        adr r0,proc_self_exe
+        mov r1,#O_RDONLY
+        do_sys7t __NR_open
+        str r0,[sp,#F_fd]
+
+        ldr r3,[lr,#mflg - f_exp]
         call unfold
 o_binfo:
         .long O_BINFO  // .int4 offset of b_info for text
