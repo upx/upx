@@ -37,6 +37,26 @@
 /* Stack pointer */
 #define sp 1
 SZ_FRAME= 6*8 + 8*8  // (sp,cr,lr, xx,yy,zz) + spill area for a0-a7
+#if BIG_ENDIAN && (8 == 8)  //{
+F_TOC= SZ_FRAME  // where is the fake TOC
+SZ_FRAME= SZ_FRAME + 2*2*8  // space for 2 [short] TOC entries
+#endif  //}
+
+// http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi.html#REG
+// r0        Volatile register used in function prologs
+// r1        Stack frame pointer
+// r2        TOC pointer
+// r3        Volatile parameter and return value register
+// r4-r10    Volatile registers used for function parameters
+// r11       Volatile register used in calls by pointer and as an
+//             environment pointer for languages which require one
+// r12       Volatile register used for exception handling and glink code
+// r13       Reserved for use as system thread ID
+// r14-r31   Nonvolatile registers used for local variables
+//
+// CR0-CR1   Volatile condition code register fields (CR0 '.' int; CR1 '.' floating)
+// CR2-CR4   Nonvolatile condition code register fields
+// CR5-CR7   Volatile condition code register fields
 
 /* Subroutine arguments; not saved by callee */
 #define a0 3
@@ -49,7 +69,6 @@ SZ_FRAME= 6*8 + 8*8  // (sp,cr,lr, xx,yy,zz) + spill area for a0-a7
 #define a7 10
 
 /* Scratch (temporary) registers; not saved by callee */
-//#define t0  0  /* BEWARE: OVERLAPS r0 */
 #define t1 11
 #define t2 12
 #define t3 13

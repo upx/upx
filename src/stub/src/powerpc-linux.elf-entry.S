@@ -203,6 +203,7 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
         mr r_LENU,a1
         call mmapRW0
         mr r_ADRU,a0
+
 //Duplicate the input data.
         lwz r0,sz_cpr + LBINFO - LrFLD(r_FLD)  // sz_cpr of fold
         sub a1,r_LENU,r_szuf  // - sz_unc of fold
@@ -220,7 +221,7 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
         and r_ADRM,r_FLD,r_PMASK  // base for PROT_EXEC
         sub r_LENM,r_LENM,r_ADRM  // length for PROT_EXEC
 
-        // The new f_exp has PROT_WRITE, so use the old f_exp to decompress.
+// The new f_exp has PROT_WRITE, so use the old f_exp to decompress.
         mtctr r_exp; add r_exp,r_exp,r_relo  // use old f_exp; r_exp= new &f_exp
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         stw  r_szuf,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
@@ -229,19 +230,24 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
         lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
         bctrl  // decompress it
 
-        srwi r0,r_PMASK,9
-        sth r0,2(r_FLD)  // get_page_mask: li r3,PAGE_MASK>>9;  2: BIG_ENDIAN
+// Generate code to compute PAGE_MASK.
+        lwz r0,0(r_FLD)  // "li r3,PAGE_MASK>>9"
+        srwi a0,r_PMASK,9
+        insrwi r0,a0,16,16  // replace the immediate constant
+        stw r0,0(r_FLD)  // get_page_mask: li r3,PAGE_MASK>>9
 
+// PROT_EXEC
         li a2,PROT_EXEC|PROT_READ
         mr a1,r_LENM  // length
         mr a0,r_ADRM  // base
         li r0,__NR_mprotect; sc
 
+// Use the unfolded code
         lwz r_LENX, sz_pack2 - f_exp(r_exp)
         add r_ADRX,r_elf,r_obinf  // old compressed data
         add r_ADRX,r_ADRX,r_relo  // new compressed data
 
-        addi r0,r_FLD,4*NBPW  // jmp over get_page_mask()
+        addi r0,r_FLD,4*4  // jmp over get_page_mask()
         mtctr r0
         bctr
 

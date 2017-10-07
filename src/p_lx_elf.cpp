@@ -351,8 +351,8 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
     fo->write(&hdr, sizeof(hdr));
     flen = fpad4(fo);
 
-    v_hole = page_mask & (~page_mask + v_hole + get_te32(&elfout.phdr[0].p_vaddr));
     if (0==xct_off) { // not shared library; adjust PT_LOAD
+        v_hole = page_mask & (~page_mask + v_hole + get_te32(&elfout.phdr[0].p_vaddr));
         set_te32(&elfout.phdr[1].p_vaddr, v_hole);
         elfout.phdr[1].p_paddr = elfout.phdr[1].p_vaddr;
         elfout.phdr[1].p_offset = 0;
@@ -432,6 +432,9 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 {
     unsigned flen = super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    unsigned v_hole = sz_pack2 + lsize;
+    set_te64(&elfout.phdr[0].p_filesz, v_hole);
+    set_te64(&elfout.phdr[0].p_memsz,  v_hole);
     // Then compressed gaps (including debuginfo.)
     unsigned total_in = 0, total_out = 0;
     for (unsigned k = 0; k < e_phnum; ++k) {
@@ -451,6 +454,23 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 
     set_te64(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
     set_te64(&elfout.phdr[0].p_memsz,  sz_pack2 + lsize);
+    if (0==xct_off) { // not shared library; adjust PT_LOAD
+        // On amd64: (2<<20)==.p_align, but Linux uses 4KiB pages.
+        // This allows [vvar], [vdso], etc to sneak into the gap
+        // between end_text and data, which we wish to prevent
+        // because the expanded program will use that space.
+        // So: pretend 4KiB pages.
+        upx_uint64_t const pm = (Elf32_Ehdr::EM_X86_64==e_machine)
+            ? ((~(upx_uint64_t)0)<<12)
+            : page_mask;
+        v_hole = pm & (~pm + v_hole + get_te64(&elfout.phdr[0].p_vaddr));
+        set_te64(&elfout.phdr[1].p_vaddr, v_hole);
+        set_te64(&elfout.phdr[1].p_align, -pm);
+        elfout.phdr[1].p_paddr = elfout.phdr[1].p_vaddr;
+        elfout.phdr[1].p_offset = 0;
+        set_te64(&elfout.phdr[1].p_memsz, getbrk(phdri, e_phnum) - v_hole);
+        set_te32(&elfout.phdr[1].p_flags, Elf32_Phdr::PF_W|Elf32_Phdr::PF_R);
+    }
     if (0!=xct_off) {  // shared library
         Elf64_Phdr *phdr = phdri;
         unsigned off = fo->st_size();
@@ -2038,10 +2058,21 @@ PackLinuxElf32::generateElfHdr(
     // Info for OS kernel to set the brk()
     if (brka) {
         // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
-        h2->phdr[0].p_paddr = phdri[0].p_paddr;
-        h2->phdr[0].p_vaddr = phdri[0].p_vaddr;
+        upx_uint32_t lo_va_user = ~0u;  // infinity
+        upx_uint32_t memsz(0);
+        for (int j= e_phnum; --j>=0; ) {
+            if (PT_LOAD32 == get_te32(&phdri[j].p_type)) {
+                upx_uint32_t const vaddr = get_te32(&phdri[j].p_vaddr);
+                lo_va_user = umin(lo_va_user, vaddr);
+                if (vaddr == lo_va_user) {
+                    memsz = get_te32(&phdri[j].p_memsz);
+                }
+            }
+        }
+        set_te32(&h2->phdr[0].p_paddr, lo_va_user);
+        set_te32(&h2->phdr[0].p_vaddr, lo_va_user);
         unsigned const brkb = page_mask & (~page_mask +
-            get_te32(&h2->phdr[0].p_vaddr) + get_te32(&h2->phdr[0].p_memsz));
+            get_te32(&h2->phdr[0].p_vaddr) + memsz);
         set_te32(&h2->phdr[1].p_type, PT_LOAD32);  // be sure
         h2->phdr[1].p_offset = 0;
         set_te32(&h2->phdr[1].p_vaddr, brkb);
@@ -2300,26 +2331,20 @@ PackLinuxElf64::generateElfHdr(
     // Info for OS kernel to set the brk()
     if (brka) {
         // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
-        unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
-        set_te32(&h2->phdr[1].p_type, PT_LOAD64);  // be sure
-
-        // Invoking by ld-linux-x86_64-2.21 complains if (filesize < .p_offset),
-        // which can happen with good compression of a stripped executable
-        // and large .p_align.  However (0==.p_filesz) so ld-linux has a bug.
-        // Try to evade the bug by reducing .p_align.  The alignment is forced
-        // anyway by phdr[0].p_align and constant offset from phdr[0].p_vaddr.
-        // However, somebody might complain because (.p_vaddr - .p_offset)
-        // is divisible only by phdr[1].p_align, and not by phdr[0].p_align.
-        if (get_te16(&elfout.ehdr.e_machine) != Elf64_Ehdr::EM_PPC64) {
-            set_te64(&h2->phdr[1].p_align, 0x1000);
+        upx_uint64_t lo_va_user(~(upx_uint64_t)0);  // infinity
+        for (int j= e_phnum; --j>=0; ) {
+            if (PT_LOAD64 == get_te32(&phdri[j].p_type)) {
+                upx_uint64_t const vaddr = get_te64(&phdri[j].p_vaddr);
+                lo_va_user = umin64(lo_va_user, vaddr);
+            }
         }
-        set_te64(&h2->phdr[1].p_offset, (-1+ get_te64(&h2->phdr[1].p_align)) & brkb);
-
-        set_te64(&h2->phdr[1].p_vaddr, brkb);
-        set_te64(&h2->phdr[1].p_paddr, brkb);
+        set_te64(&h2->phdr[0].p_paddr, lo_va_user);
+        set_te64(&h2->phdr[0].p_vaddr, lo_va_user);
+        set_te32(&h2->phdr[1].p_type, PT_LOAD64);  // be sure
+        h2->phdr[1].p_offset = 0;
         h2->phdr[1].p_filesz = 0;
-        // Too many Linux kernels have bugs when 0==.p_memsz
-        set_te64(&h2->phdr[1].p_memsz, 1);
+        // .p_memsz = brka;  temporary until sz_pack2
+        set_te64(&h2->phdr[1].p_memsz, brka);
         set_te32(&h2->phdr[1].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {

@@ -78,13 +78,13 @@ av_len=  20
 cblk=    19
 r_buf=   18
 
-fold_begin:
 get_page_mask: .globl get_page_mask
         li r3,0 -0x1000>>9  // modified by elf-entry.S
         slwi r3,r3,9
         blr
         nop
 
+fold_begin:
         call L90
 L90b:
 #include "arch/powerpc/32/bxx.S"
@@ -223,6 +223,8 @@ no_fail:
 
 exit: .globl exit
         li r0,SYS_exit;        b 5f
+brk: .globl brk
+        li r0,SYS_brk;      5: b 5f
 readlink: .globl readlink
         li r0,SYS_readlink; 5: b 5f
 write: .globl write
@@ -236,9 +238,7 @@ close: .globl close
 mprotect: .globl mprotect
         li r0,SYS_mprotect; 5: b 5f
 munmap: .globl munmap
-        li r0,SYS_munmap;   5: b 5f
-brk: .globl brk
-        li r0,SYS_brk;      5: b sysgo
+        li r0,SYS_munmap;   5: b sysgo
 
 my_bkpt: .globl my_bkpt
         teq r0,r0

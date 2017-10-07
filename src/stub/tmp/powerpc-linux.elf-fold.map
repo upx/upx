@@ -13,17 +13,17 @@ TARGET(elf32-powerpc)
  *(.text)
  .text          0x0000000000100080      0x250 tmp/powerpc-linux.elf-fold.o
                 0x0000000000100080                get_page_mask
-                0x00000000001002b8                munmap
-                0x0000000000100288                readlink
+                0x00000000001002c0                munmap
+                0x0000000000100290                readlink
                 0x000000000010026c                mmap
-                0x0000000000100290                write
-                0x0000000000100298                read
+                0x0000000000100298                write
+                0x00000000001002a0                read
                 0x00000000001002c8                my_bkpt
                 0x0000000000100280                exit
-                0x00000000001002c0                brk
-                0x00000000001002a0                open
-                0x00000000001002b0                mprotect
-                0x00000000001002a8                close
+                0x0000000000100288                brk
+                0x00000000001002a8                open
+                0x00000000001002b8                mprotect
+                0x00000000001002b0                close
  .text          0x00000000001002d0      0xd78 tmp/powerpc-linux.elf-main.o
                 0x0000000000100e40                upx_main
  *(.data)

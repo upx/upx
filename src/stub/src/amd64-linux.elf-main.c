@@ -281,31 +281,39 @@ auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
 // won't place the first piece in a way that leaves no room for the rest.
 static Elf64_Addr // returns relocation constant
 xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
-    char **const p_brk
+    Elf64_Addr *const p_brk
+    , Elf64_Addr const elfaddr
 #if defined(__powerpc64__)
     , size_t const PAGE_MASK
 #endif
 )
 {
-    size_t lo= ~0, hi= 0, szlo= 0;
-    char *addr;
+    Elf64_Addr lo= ~0, hi= 0, addr= 0;
     mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
+    DPRINTF("xfind_pages  %%x  %%p  %%d  %%p  %%p\\n", mflags, phdr, phnum, elfaddr, p_brk);
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
         if (phdr->p_vaddr < lo) {
             lo = phdr->p_vaddr;
-            szlo = phdr->p_filesz;
         }
         if (hi < (phdr->p_memsz + phdr->p_vaddr)) {
             hi =  phdr->p_memsz + phdr->p_vaddr;
         }
     }
-    szlo += ~PAGE_MASK & lo;  // page fragment on lo edge
-    lo   -= ~PAGE_MASK & lo;  // round down to page boundary
-    hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
-    szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
+    lo -= ~PAGE_MASK & lo;  // round down to page boundary
+    hi  =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
+    if (MAP_FIXED & mflags) {
+        addr = lo;
+    }
+    else if (0==lo) { // -pie ET_DYN
+        addr = elfaddr;
+        if (addr) {
+            mflags |= MAP_FIXED;
+        }
+    }
+    DPRINTF("  addr=%%p  lo=%%p  hi=%%p\\n", addr, lo, hi);
+    addr = (Elf64_Addr)mmap((void *)addr, hi, PROT_NONE, mflags, -1, 0);
+    DPRINTF("  addr=%%p\\n", addr);
     *p_brk = hi + addr;  // the logical value of brk(0)
-    //mprotect(szlo + addr, hi - szlo, PROT_NONE);  // no access, but keep the frames!
     return (Elf64_Addr)(addr - lo);
 }
 
@@ -325,9 +333,10 @@ do_xmap(
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
-    char *v_brk;
+    Elf64_Addr v_brk;
     Elf64_Addr const reloc = xfind_pages(
         ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk
+        , *p_reloc
 #if defined(__powerpc64__)
         , PAGE_MASK
 #endif
@@ -446,7 +455,8 @@ upx_main(  // returns entry address
 #elif defined(__powerpc64__)  //}{
     Elf64_Addr const reloc = *p_reloc;
 #endif  //}
-    DPRINTF("upx_main1  .e_entry=%%p  *p_reloc=%%p\\n", ehdr->e_entry, *p_reloc);
+    DPRINTF("upx_main1  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p\\n",
+        ehdr->e_entry, p_reloc, *p_reloc);
     Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
     unsigned const orig_e_type = ehdr->e_type;
     if (0 && ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -pie /*FIXME: and not pre-linked*/
@@ -484,6 +494,7 @@ ERR_LAB
         }
         // We expect PT_INTERP to be ET_DYN at 0.
         // Thus do_xmap will set *p_reloc = slide.
+        *p_reloc = 0;  // kernel picks where PT_INTERP goes
         entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, p_reloc
 #if defined(__powerpc64__)
             , PAGE_MASK

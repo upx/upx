@@ -138,9 +138,9 @@ L90:
 
         pop %rax  # elfaddr
         subq $ OVERHEAD,%rsp
-        push %rax  #elfaddr
-
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
+        push %rax  # elfaddr  7th arg
+
         movq %rbp,%arg5  # &decompress: f_expand
         call upx_main  # Out: %rax= entry
 /* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,

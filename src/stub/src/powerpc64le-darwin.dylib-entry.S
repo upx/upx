@@ -29,6 +29,7 @@
 #ifndef BIG_ENDIAN  //{
 #define BIG_ENDIAN 1  /* Apple on PowerPC* is BIG_ENDIAN */
 #endif  //}
+NBPW= 8  // Number of Bytes Per Word
 
 #include "arch/powerpc/64le/macros.S"
 #include "arch/powerpc/64le/ppc_regs.h"

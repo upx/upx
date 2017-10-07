@@ -580,7 +580,7 @@ __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     Elf32_Addr *const p_brk
-    , Elf32_Addr elfaddr
+    , Elf32_Addr const elfaddr
 #if defined (__mips__)  //{
     , size_t const page_mask
 #endif  //}

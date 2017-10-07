@@ -60,6 +60,22 @@ O_RDONLY=       0
 
 OVERHEAD= 2048
 
+// http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi.html#REG
+// r0        Volatile register used in function prologs
+// r1        Stack frame pointer
+// r2        TOC pointer
+// r3        Volatile parameter and return value register
+// r4-r10    Volatile registers used for function parameters
+// r11       Volatile register used in calls by pointer and as an
+//             environment pointer for languages which require one
+// r12       Volatile register used for exception handling and glink code
+// r13       Reserved for use as system thread ID
+// r14-r31   Nonvolatile registers used for local variables
+//
+// CR0-CR1   Volatile condition code register fields (CR0 '.' int; CR1 '.' floating)
+// CR2-CR4   Nonvolatile condition code register fields
+// CR5-CR7   Volatile condition code register fields
+
 // http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi.html#STACK
 //SZ_LINK= 6*8  // (sp,cr,lr, tmp.xlc,tmp.ld,save.toc)
 //SZ_PSAV= 8*8  // for arg9, arg10, ...; and for spilling a0-a7 if necessary
@@ -67,29 +83,28 @@ OVERHEAD= 2048
 // It shall be doubleword aligned, and shall be at least 8 doublewords in length.
 //SZ_FRAME= SZ_LINK + SZ_PSAV  // in ppc_regs.h
 
-sz_pack2_f_exp= -4 -4  // 4 bytes and one Instruction before r_exp
 // In:
-r_exp=   31  // f_exp == &decompress()
+r_exp=   31  // f_exp == &decompress
 r_PMASK= 30  // PAGE_MASK
 r_ADRU=  29  // &base to unmap
 r_LENU=  28  // length to unmap
-r_BINFO= 27
+r_fd=    27  // open fd of /proc/self/exe
 r_auxv=  26
-r_slide= 25
-//r_FLD=   24
-//r_ADRM=  23
-//r_LENM=  22
+r_elfa=  25  // original &Elf64_Ehdr of stub
+r_ADRX=  24  // compressed input
+r_LENX=  23  // total size
+// Local:
+r_unf=   22  // f_unf == &unfilter()
+av_hi=   21
+av_len=  20
+cblk=    19
+r_buf=   18
 
-//   r29= reserved for &our_Elf64_Ehdr
-
-//   sp/ {SZ_FRAME},regsav(r1-31),&eof_src,argc,argv,0,env,0,auxv,0,chars
-
-r_unf=  21  // f_unf == &unfilter()
-r_fd=   20
-av_hi=  19
-av_len= 18
-cblk=   17
-pag=    16
+get_page_mask: .globl get_page_mask
+        li r3,0 -0x1000>>9  // modified by elf-entry.S
+        sldi r3,r3,9
+        blr
+        nop
 
 fold_begin:
 ////    teq r0,r0  // debugging
@@ -102,10 +117,6 @@ L_PFX= 4  // strlen("   =")
         .balign 4
 L90:
         mflr r_unf  // L90b = &ppcbxx: f_unfilter
-// open /proc/self/exe
-        li a1,O_RDONLY
-        la a0,L_PFX+ L90a - L90b(r_unf)  // "/proc/self/exe"
-        call open; movr r_fd,a0
 // slide {<<stuff>>,argc,argv,0,env,0,auxv} down with maximum room before strings
         la a1,-NBPW(sp)  // src ready for ldu
         la sp,-(-NBPW & (-1+ NBPW + (L_PFX + PATH_MAX)))(sp)  // FR_02
@@ -127,12 +138,12 @@ L90:
         lwz  r0,L90a - L90b(r_unf)  // "    ="
         la cblk,NBPW(a1)  // original &strings
         stwu r0,NBPW(a0)
-        la  r14,L_PFX(a0)  // buffer
+        la  r_buf,L_PFX(a0)  // buffer
 // readlink("/proc/self/exe", buffer, -1+ PATH_MAX)
         li a2,-1+ PATH_MAX
-        movr a1,r14  // buffer
+        movr a1,r_buf  // buffer
         la a0,L_PFX+ L90a - L90b(r_unf)  //     "/proc/self/exe"
-        call readlink; la a2,-L_PFX(r14)  // a0= len; a2= buffer
+        call readlink; la a2,-L_PFX(r_buf)  // a0= len; a2= buffer
         cmpdi a0,0; bgt 0f  // success
         la a2,L90a - L90b(r_unf)  // "   =/proc/self/exe"
         li a0,L90  - (NBPW+ L90a)  // round_up(NBPW, strlen("/proc/self/exe"))
@@ -163,35 +174,39 @@ L90:
         movr sp,a0  // FR_02
 
 r_reloc= 32 - 1  # used slot in register save area
-        la a6,SZ_FRAME+r_reloc*NBPW(sp)  // &reloc [adjacent to argc]
-        std r_ADRU,0(a6)  // elfbase
+        la a6,SZ_FRAME + r_reloc*NBPW(sp)  // &reloc [adjacent to argc]
+        std r_elfa,0(a6)  // elfaddr
 
         stdu sp,-(SZ_FRAME+OVERHEAD)(sp)  // FR_01  allocate this frame
-        lwz a1,sz_pack2_f_exp(r_exp)  // sz_pack2 == #bytes which precede -2*NBPW(r_exp)
+        mr a0,r_ADRX  // &b_info
+        mr a1,r_LENX  // total_size
+        la a2,SZ_FRAME(sp)  // &Elf64_Ehdr temporary space
+        mr a3,r_auxv  // &Elf64_auxv_t
+        mr a4,r_exp  // &decompress: f_expand
+        mr a5,r_unf  // &f_unf
+#if BIG_ENDIAN  //{ annoying TOC
+        li r0,0
 
-        add a0,r_ADRU,r_BINFO  // &b_info
-        sub a1,a1,r_BINFO  // total_size
-        la  a2,SZ_FRAME(sp)  // &Elf64_Ehdr temporary space
-        mr  a3,r_auxv  // &Elf64_auxv_t
-        mr  a4,r_exp  // &decompress: f_expand
-        mr  a5,r_unf  // &f_unf
-        mr  a7,r_PMASK  // page_mask
-#if BIG_ENDIAN  //{  setup indirection for entry to f_exp and f_unf
-        std a4,3*NBPW(sp); la a4,3*NBPW(sp)  // use tmp.xlc
-        std a5,4*NBPW(sp); la a5,4*NBPW(sp)  // use tmp.ld
+        std a4,F_TOC +    0 + 0*2*NBPW(sp)
+        la  a4,F_TOC +    0 + 0*2*NBPW(sp)
+        std r0,F_TOC + NBPW + 0*2*NBPW(sp)
+
+        std a5,F_TOC +    0 + 1*2*NBPW(sp)
+        la  a5,F_TOC +    0 + 1*2*NBPW(sp)
+        std r0,F_TOC + NBPW + 1*2*NBPW(sp)
 #endif  //}
+        mr a7,r_PMASK  // PAGE_MASK
         call upx_main  // Out: a0= entry
-// entry= upx_main(b_info *a0, total_size a1, Elf_Ehdr *a2, Elf64_auxv_t *a3,
-//      f_exp a4, f_unf a5, p_reloc a6, page_mask a7)
-        teq r0,r0
-#if BIG_ENDIAN  //{
-        ld r0,SZ_FRAME+OVERHEAD +SZ_FRAME+r_reloc*NBPW(sp)  // reloc for ET_DYN
-        ld r2,NBPW(r3); add r2,r2,r0  // toc
-        ld r3,   0(r3); add r3,r3,r0  // .func
-#endif  //}
-
+// entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, ELf32_auxv_t *a3,
+//      f_exp a4, f_unf a5, elfaddr &a6, page_mask a7)
+    teq r0,r0
         la  sp,SZ_FRAME+OVERHEAD(sp)  // FR_01  deallocate this frame
-        mr r_exp,a0  // save &entry
+#if BIG_ENDIAN  //{ annoying TOC
+        ld r0, SZ_FRAME + r_reloc*NBPW(sp)  // reloc for ET_DYN
+        ld r2,NBPW(r3); add r2,r2,r0  // toc
+        ld r3,   0(r3); add r3,r3,r0  // .func   NOTE: r3 === a0
+#endif  //}
+        mr r_exp,a0  // save &entry (.entry when BIG_ENDIAN)
 
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)
         li a5,0  // offset
@@ -258,6 +273,7 @@ sz_auxv= 2*NBPW
         la sp,SZ_FRAME +      32 *NBPW(sp)  // FR_00  deallocate outer frame
 
         bctr  // goto escape hatch
+
 SYS_exit=  1
 SYS_fork=  2
 SYS_read=  3
@@ -271,29 +287,37 @@ SYS_munmap=    91
 SYS_mprotect= 125
 SYS_readlink=  85
 
-exit: .globl exit
-        li 0,SYS_exit; 0: b 0f
-readlink: .globl readlink
-        li 0,SYS_readlink; 0: b 0f
-brk: .globl brk
-        li 0,SYS_brk; 0: b 0f
-close: .globl close
-        li 0,SYS_close; 0: b 0f
-open: .globl open
-        li 0,SYS_open; 0: b 0f
-munmap: .globl munmap
-        li 0,SYS_munmap; 0: b 0f
-mprotect: .globl mprotect
-        li 0,SYS_mprotect; 0: b 0f
-read: .globl read
-        li 0,SYS_read; 0: b 0f
 mmap: .globl mmap
-        li 0,SYS_mmap; 0:
+        clrldi  a4,a4,32  // truncate fd to 32 bits; kernel is picky?
+        li 0,SYS_mmap
 sysgo:
         sc
         bns+ no_fail  // 'bns': branch if No Summary[Overflow]
         li a0,-1  // failure; IGNORE errno
 no_fail:
         ret
+
+exit: .globl exit
+        li r0,SYS_exit;        b 5f
+brk: .globl brk
+        li r0,SYS_brk;      5: b 5f
+readlink: .globl readlink
+        li r0,SYS_readlink; 5: b 5f
+//write: .globl write
+//        li r0,SYS_write;    5: b 5f
+read: .globl read
+        li r0,SYS_read;     5: b 5f
+open: .globl open
+        li r0,SYS_open;     5: b 5f
+close: .globl close
+        li r0,SYS_close;    5: b 5f
+mprotect: .globl mprotect
+        li r0,SYS_mprotect; 5: b 5f
+munmap: .globl munmap
+        li r0,SYS_munmap;   5: b sysgo
+
+my_bkpt: .globl my_bkpt
+        teq r0,r0
+        blr
 
 /* vim:set ts=8 sw=8 et: */
