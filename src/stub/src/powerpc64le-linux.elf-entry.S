@@ -42,13 +42,6 @@ sz_b_info= 12
   sz_cpr= 4
   b_method= 8
 
-szElf64_Ehdr= 16 + 2*2 + 4 + 3*NBPW + 4 + 6*2
-p_memsz= 2*4 + 4*NBPW
-
-e_type= 16
-  ET_EXEC= 2
-  ET_DYN= 3
-
 AT_NULL= 0  // <elf.h>
 AT_PAGESZ= 6
 a_type= 0
@@ -225,17 +218,17 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
         add a1,a1,r0  // + sz_cpr of fold; a1 <= .st_size
         call mmapRW0
         sub r_relo,a0,r_elfa  // relocation amount
+        mtctr r_exp; add r_exp,r_exp,r_relo  // use old f_exp; r_exp= new &f_exp
 
 // Decompress from old folded code, overwriting new copy of folded code.
         lwz r_obinf,       LOBINFO - LrFLD(r_FLD)  // O_BINFO
-        la src,sz_b_info + LBINFO - LrFLD(r_FLD)  // old folded code
+        la src,sz_b_info +  LBINFO - LrFLD(r_FLD)  // old folded code
         add r_FLD,r_FLD,r_relo  // dst for unfolding;  use copied data
         add r_LENM,r_FLD,r_szuf  // + sz_unc = last of unfolded
-        and r_ADRM,r_FLD,r_PMASK  // base for PROT_EXEC
+        and r_ADRM,r_exp,r_PMASK  // base for PROT_EXEC
         sub r_LENM,r_LENM,r_ADRM  // length for PROT_EXEC
 
 // The new f_exp has PROT_WRITE, so use the old f_exp to decompress.
-        mtctr r_exp; add r_exp,r_exp,r_relo  // use old f_exp; r_exp= new &f_exp
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         std  r_szuf,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
         la ldst,SZ_FRAME+31*NBPW(sp)  // &slot on stack

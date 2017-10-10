@@ -62,6 +62,16 @@
 /*out*/ : "=r"(r_fmt) ); \
     dprintf(r_fmt, args); \
 })
+#elif defined(__aarch64__) //{
+#define DPRINTF(fmt, args...) ({ \
+    char const *r_fmt; \
+    asm("bl 0f; .string \"" fmt "\"; .balign 4; 0: mov %0,x30" \
+/*out*/ : "=r"(r_fmt) \
+/* in*/ : \
+/*und*/ : "x30"); \
+    dprintf(r_fmt, args); \
+})
+
 #endif  //}
 
 static int dprintf(char const *fmt, ...); // forward
@@ -179,7 +189,7 @@ ERR_LAB
                 (unsigned char *)xo->buf, &out_len,
 #if defined(__x86_64)  //{
                     *(int *)(void *)&h.b_method
-#elif defined(__powerpc64__) //}{
+#elif defined(__powerpc64__) || defined(__aarch64__) //}{
                     h.b_method
 #endif  //}
                 );
@@ -208,7 +218,8 @@ static void *
 make_hatch_ppc64(
     Elf64_Phdr const *const phdr,
     Elf64_Addr reloc,
-    unsigned const frag_mask)
+    unsigned const frag_mask
+)
 {
     unsigned *hatch = 0;
     DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
@@ -231,9 +242,46 @@ make_hatch_ppc64(
     }
     return hatch;
 }
+#elif defined(__aarch64__)  //{
+static void *
+make_hatch_arm64(
+    Elf64_Phdr const *const phdr,
+    uint64_t const reloc,
+    unsigned const frag_mask
+)
+{
+    unsigned *hatch = 0;
+    //DPRINTF((STR_make_hatch(),phdr,reloc));
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        // The format of the 'if' is
+        //  if ( ( (hatch = loc1), test_loc1 )
+        //  ||   ( (hatch = loc2), test_loc2 ) ) {
+        //      action
+        //  }
+        // which uses the comma to save bytes when test_locj involves locj
+        // and the action is the same when either test succeeds.
+
+        // Try page fragmentation just beyond .text .
+        if ( ( (hatch = (void *)(~3ul & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
+                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
+                &&  (2*4)<=(frag_mask & -(int)(uint64_t)hatch) ) ) // space left on page
+        // Try Elf64_Ehdr.e_ident[8..15] .  warning: 'const' cast away
+        ||   ( (hatch = (void *)(&((Elf64_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
+                (phdr->p_offset==0)
+        )
+        ) {
+            hatch[0]= 0xd4000001;  // svc #0
+            hatch[1]= 0xd65f03c0;  // ret (jmp *lr)
+        }
+        else {
+            hatch = 0;
+        }
+    }
+    return hatch;
+}
 #endif  //}
 
-#if defined(__powerpc64__)  /*{*/
+#if defined(__powerpc64__) || defined(__aarch64__)  //{ bzero
 static void
 upx_bzero(char *p, size_t len)
 {
@@ -245,7 +293,7 @@ upx_bzero(char *p, size_t len)
 #define bzero upx_bzero
 #else  //}{
 #define bzero(a,b)  __builtin_memset(a,0,b)
-#endif  /*}*/
+#endif  //}
 
 static void
 auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
@@ -283,7 +331,7 @@ static Elf64_Addr // returns relocation constant
 xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
     Elf64_Addr *const p_brk
     , Elf64_Addr const elfaddr
-#if defined(__powerpc64__)
+#if defined(__powerpc64__) || defined(__aarch64__)
     , size_t const PAGE_MASK
 #endif
 )
@@ -326,7 +374,7 @@ do_xmap(
     f_expand *const f_exp,
     f_unfilter *const f_unf,
     Elf64_Addr *p_reloc
-#if defined(__powerpc64__)
+#if defined(__powerpc64__) || defined(__aarch64__)
     , size_t const PAGE_MASK
 #endif
 )
@@ -337,7 +385,7 @@ do_xmap(
     Elf64_Addr const reloc = xfind_pages(
         ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk
         , *p_reloc
-#if defined(__powerpc64__)
+#if defined(__powerpc64__) || defined(__aarch64__)
         , PAGE_MASK
 #endif
     );
@@ -392,6 +440,12 @@ do_xmap(
             if (0!=hatch) {
                 auxv_up(av, AT_NULL, (size_t)hatch);
             }
+#elif defined(__aarch64__)  //}{
+            void *const hatch = make_hatch_arm64(phdr, reloc, ~PAGE_MASK);
+            if (0!=hatch) {
+                auxv_up(av, AT_NULL, (size_t)hatch);
+            }
+
 #endif  //}
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
@@ -434,9 +488,12 @@ upx_main(  // returns entry address
     f_expand *const f_exp,
     f_unfilter *const f_unf
 #if defined(__x86_64)  //{
-    , Elf64_Addr reloc  // In: &Elf64_Ehdr for stub
+    , Elf64_Addr elfaddr  // In: &Elf64_Ehdr for stub
 #elif defined(__powerpc64__)  //}{
     , Elf64_Addr *p_reloc  // In: &Elf64_Ehdr for stub; Out: 'slide' for PT_INTERP
+    , size_t const PAGE_MASK
+#elif defined(__aarch64__) //}{
+    , Elf64_Addr elfaddr
     , size_t const PAGE_MASK
 #endif  //}
 )
@@ -444,35 +501,22 @@ upx_main(  // returns entry address
     Extent xo, xi1, xi2;
     xo.buf  = (char *)ehdr;
     xo.size = bi->sz_unc;
-    xi2.buf = CONST_CAST(char *, bi); xi2.size = sz_compressed;
+    xi2.buf = CONST_CAST(char *, bi); xi2.size = bi->sz_cpr;
     xi1.buf = CONST_CAST(char *, bi); xi1.size = sz_compressed;
 
     // ehdr = Uncompress Ehdr and Phdrs
     unpackExtent(&xi2, &xo, f_exp, 0);  // never filtered?
 
-#if defined(__x86_64)  //{
-    Elf64_Addr *const p_reloc = &reloc;
-#elif defined(__powerpc64__)  //}{
-    Elf64_Addr const reloc = *p_reloc;
+#if defined(__x86_64) || defined(__aarch64__)  //{
+    Elf64_Addr *const p_reloc = &elfaddr;
 #endif  //}
     DPRINTF("upx_main1  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p\\n",
         ehdr->e_entry, p_reloc, *p_reloc);
     Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
-    unsigned const orig_e_type = ehdr->e_type;
-    if (0 && ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -pie /*FIXME: and not pre-linked*/
-        // Unpacked must start at same place as packed, so that brk(0) works.
-        ehdr->e_type = ET_EXEC;
-        auxv_up(av, AT_ENTRY, ehdr->e_entry += reloc);
-        unsigned j;
-        for (j=0; j < ehdr->e_phnum; ++phdr, ++j) {
-            phdr->p_vaddr += reloc;
-            phdr->p_paddr += reloc;
-        }
-    }
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
     Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_exp, f_unf, p_reloc
-#if defined(__powerpc64__)
+#if defined(__powerpc64__) || defined(__aarch64__)
        , PAGE_MASK
 #endif
     );
@@ -496,7 +540,7 @@ ERR_LAB
         // Thus do_xmap will set *p_reloc = slide.
         *p_reloc = 0;  // kernel picks where PT_INTERP goes
         entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, p_reloc
-#if defined(__powerpc64__)
+#if defined(__powerpc64__) || defined(__aarch64__)
             , PAGE_MASK
 #endif
         );
@@ -547,36 +591,6 @@ write(int fd, void const *ptr, size_t len)
 }
 #endif  //}
 #endif  //}
-
-#if defined(__i386__)  /*{*/
-#define PIC_STRING(value, var) \
-    __asm__ __volatile__ ( \
-        "call 0f; .asciz \"" value "\"; \
-      0: pop %0;" : "=r"(var) : \
-    )
-#elif defined(__arm__)  /*}{*/
-#define PIC_STRING(value, var) \
-    __asm__ __volatile__ ( \
-        "mov %0,pc; b 0f; \
-        .asciz \"" value "\"; .balign 4; \
-      0: " : "=r"(var) \
-    )
-#elif defined(__mips__)  /*}{*/
-#define PIC_STRING(value, var) \
-    __asm__ __volatile__ ( \
-        ".set noreorder; bal 0f; move %0,$31; .set reorder; \
-        .asciz \"" value "\"; .balign 4; \
-      0: " \
-        : "=r"(var) : : "ra" \
-    )
-#elif defined(__powerpc__) || defined(__powerpc64__)  /*}{*/
-#define PIC_STRING(value,var) \
-    __asm__ ( \
-        "bl 0f; .asciz \"" value "\"; .balign 4; \
-      0: mflr %0" \
-        : "=r"(var) : \
-    )
-#endif  /*}*/
 
 static int
 unsimal(unsigned x, char *ptr, int n)

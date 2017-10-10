@@ -21,10 +21,9 @@ Linker script and memory map
                 0x000000000010023e                mprotect
                 0x0000000000100232                close
  *fill*         0x000000000010024a        0x2 00
- .text          0x000000000010024c      0x5d5 tmp/amd64-linux.elf-main.o
+ .text          0x000000000010024c      0x5d8 tmp/amd64-linux.elf-main.o
                 0x00000000001006e0                upx_main
  *(.data)
- *fill*         0x0000000000100821        0x3 00
  .data          0x0000000000100824        0x0 tmp/amd64-linux.elf-fold.o
  .data          0x0000000000100824        0x0 tmp/amd64-linux.elf-main.o
 
