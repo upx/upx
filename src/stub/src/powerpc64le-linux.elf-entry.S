@@ -230,8 +230,8 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
 
 // The new f_exp has PROT_WRITE, so use the old f_exp to decompress.
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
-        std  r_szuf,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
-        la ldst,SZ_FRAME+31*NBPW(sp)  // &slot on stack
+        std r_szuf,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
+        la ldst,   SZ_FRAME+31*NBPW(sp)  // &slot on stack
         mr dst,r_FLD  // dst for unfolding
         lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
         bctrl  // decompress it
