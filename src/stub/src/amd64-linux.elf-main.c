@@ -213,7 +213,35 @@ ERR_LAB
     }
 }
 
-#if defined(__powerpc64__)  //{
+#if defined(__x86_64__)  //{
+static void *
+make_hatch_x86_64(
+    Elf64_Phdr const *const phdr,
+    Elf64_Addr reloc,
+    unsigned const frag_mask
+)
+{
+    unsigned *hatch = 0;
+    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        // Try page fragmentation just beyond .text .
+        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
+                &&  (1*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
+        // Try Elf64_Ehdr.e_ident[12..15] .  warning: 'const' cast away
+        ||   ( (hatch = (void *)(&((Elf64_Ehdr *)phdr->p_vaddr + reloc)->e_ident[12])),
+                (phdr->p_offset==0) )
+        )
+        {
+            hatch[0] = 0x90c3050f;  // syscall; ret; nop
+        }
+        else {
+            hatch = 0;
+        }
+    }
+    return hatch;
+}
+#elif defined(__powerpc64__)  //}{
 static void *
 make_hatch_ppc64(
     Elf64_Phdr const *const phdr,
@@ -430,23 +458,15 @@ do_xmap(
         }
         if (xi) {
 #if defined(__x86_64)  //{
-            if (0==phdr->p_offset) {
-                Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)addr;
-                *(int *)&ehdr->e_ident[12] = 0x90c3050f;  // syscall; ret; nop
-                auxv_up(av, AT_NULL, (uint64_t)&ehdr->e_ident[12]);
-            }
+            void *const hatch = make_hatch_x86_64(phdr, reloc, ~PAGE_MASK);
 #elif defined(__powerpc64__)  //}{
             void *const hatch = make_hatch_ppc64(phdr, reloc, ~PAGE_MASK);
-            if (0!=hatch) {
-                auxv_up(av, AT_NULL, (size_t)hatch);
-            }
 #elif defined(__aarch64__)  //}{
             void *const hatch = make_hatch_arm64(phdr, reloc, ~PAGE_MASK);
+#endif  //}
             if (0!=hatch) {
                 auxv_up(av, AT_NULL, (size_t)hatch);
             }
-
-#endif  //}
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
 ERR_LAB
