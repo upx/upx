@@ -73,24 +73,25 @@ get_page_size:
 fold_begin:
 ////    brk #0  // DEBUG
 
-// In:  sp/ argc,argv,...
-xfexp  .req x28
-xPMASK .req x27
+// In:  sp/ PMASK,fd,ADRU,LENU, argc,argv,...
+//lr   .req x30
+wLENX  .req w29
+xADRX  .req x28
+
+wLENU  .req w27
+  xLENU  .req x27
 xADRU  .req x26
-wLENU  .req w25
-wfd    .req w24
-xauxv  .req x23
-xelfa  .req x22
-xADRM  .req x21
-  xADRX  .req xADRM
-wLENM  .req w20
-  wLENX  .req wLENM
-xLENM  .req x20
-  xLENX  .req xLENM
-xFOLD  .req x19  // unused
-  xauxe  .req xFOLD  // past new auxv
-xrelo  .req x17
-wobinf .req w16
+
+xelfa  .req x25
+xfexp  .req x24
+xauxe  .req x23  // past new auxv
+xauxv  .req x22
+
+wfd    .req w21
+  xfd    .req x21
+xPMASK .req x20
+
+        POP4(xPMASK,xfd, xADRU,xLENU)
 
         ldr x7,[sp,#0]  // argc
         mov x0,sp  // current stack pointer

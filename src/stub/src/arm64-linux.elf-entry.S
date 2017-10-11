@@ -86,24 +86,34 @@ __NR_write    = 0x40  //  64
 #define TRACE(arg) /*empty*/
 #endif  //}
 
+//lr   .req x30
+wLENU  .req w29
+  xLENU  .req x29
+xADRU  .req x28
+wfd    .req w27
+  xfd    .req x27
+xPMASK .req x26
+  // The above 4 registers are passed on stack to unfolded code.
 
-xfexp  .req x28
-xPMASK .req x27
-xADRU  .req x26
-wLENU  .req w25
-wfd    .req w24
-xauxv  .req x23
-xelfa  .req x22
-xADRM  .req x21
-  xADRX  .req xADRM
-wLENM  .req w20
+xelfa  .req x25
+xfexp  .req x24
+  // xPMASK, xlefa, xfexp still are used here.
+
+wLENM  .req w29  // overlaps wLENU
+  xLENM  .req x29
   wLENX  .req wLENM
-xLENM  .req x20
-  xLENX  .req xLENM
-xFOLD  .req x19
-wszuf  .req w18
-xrelo  .req x17
-wobinf .req w16
+xADRM  .req x28  // overlaps xADRU
+  xADRX  .req xADRM
+wobinf .req w27  // overlaps wfd
+
+xrelo  .req x23
+xauxv  .req x22
+wszuf  .req w21
+  xszuf  .req x21
+xFOLD  .req x20
+
+// http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055b/IHI0055B_aapcs64.pdf
+// x18 is CLOBBERED: "The platform register"
 
 wmeth  .req w4
 xmeth  .req x4
@@ -178,22 +188,23 @@ unfold:
         ldr w0,  [xfexp,#sz_pack2 - f_exp]
         add xelfa,xfexp,#sz_pack2 - f_exp
         sub xelfa,xelfa,x0  // &Elf64_Ehdr of stub
-        ldr w0,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // sz_unc of fold
+        ldr wszuf,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // sz_unc of fold
         sub x1,xFOLD,xelfa // offset(FOLD)
         mov w4,#-1  // fd
-        mov wszuf,w0  // save sz_unc of fold
         mov w3,#MAP_PRIVATE|MAP_ANONYMOUS
-        add x1,x1,x0; mov wLENU,w1  // length needed
+        add x1,x1,wszuf,uxtw  // length needed
         mov x0,#0  // kernel chooses addr
-        call mmapRW0; mov xADRU,x0
+        call mmapRW0
+          PUSH2(x0,x1)  // ADRU, LENU
 
 // Duplicate the input data.
         ldr w8,[xFOLD,#sz_cpr + LBINFO - LxFOLD]  // sz_cpr of fold
         sub x1,xFOLD,xelfa  // offset(FOLD)
         mov w4,wfd  // from file
         mov w3,#MAP_PRIVATE|MAP_FIXED
+          PUSH2(xPMASK,xfd)
         add x1,x1,x8  // + sz_cpr of fold; x1 <= .st_size
-        call mmapRW0
+        call mmapRW0  // IN: x0= ADRU;  OUT: x0= ADRU
         sub xrelo,x0,xelfa  // relocation amount
         mov x8,xfexp; add xfexp,xfexp,xrelo  // use old f_exp; xfexp= new &f_exp
 
@@ -207,7 +218,7 @@ unfold:
 
 // The new f_exp has PROT_WRITE, so use the old f_exp to decompress
         ldrb wmeth,[xFOLD,#b_method + LBINFO - LxFOLD]
-        PUSH1(xmeth)  // lzma uses for EOF
+        PUSH1(xszuf)  // lzma uses for EOF
         mov ldst,sp  // &slot on stack
         mov dst,xFOLD  // dst for unfolding
         ldr lsrc,[xFOLD,#sz_cpr + LBINFO - LxFOLD]
@@ -231,8 +242,8 @@ unfold:
 
 // Use the unfolded code
         ldr wLENX,[xfexp,#sz_pack2 - f_exp]
-        add xADRX,xelfa,wobinf,uxtw  // old compressed data
-        add xADRX,xADRX,xrelo  // new compressed data
+        add xADRX,xelfa,wobinf,uxtw  // old compressed &b_info
+        add xADRX,xADRX,xrelo  // new compressed &b_info
 
         add x0,xFOLD,#4*4  // jmp over get_page_mask()
         jr x0
