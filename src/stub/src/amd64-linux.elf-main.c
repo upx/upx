@@ -510,8 +510,8 @@ upx_main(  // returns entry address
 #if defined(__x86_64) || defined(__aarch64__)  //{
     Elf64_Addr *const p_reloc = &elfaddr;
 #endif  //}
-    DPRINTF("upx_main1  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p\\n",
-        ehdr->e_entry, p_reloc, *p_reloc);
+    DPRINTF("upx_main1  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p  PAGE_MASK=%%p\\n",
+        ehdr->e_entry, p_reloc, *p_reloc, PAGE_MASK);
     Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
 
     // De-compress Ehdr again into actual position, then de-compress the rest.

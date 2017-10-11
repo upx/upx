@@ -215,6 +215,7 @@ unfold:
         add xLENM,xFOLD,wszuf,uxtw  // + sz_unc = last of unfolded
         and xADRM,xfexp,xPMASK  // base for PROT_EXEC
         sub xLENM,xLENM,xADRM  // length for PROT_EXEC
+    TRACE(#1)
 
 // The new f_exp has PROT_WRITE, so use the old f_exp to decompress
         ldrb wmeth,[xFOLD,#b_method + LBINFO - LxFOLD]
@@ -238,6 +239,7 @@ unfold:
         mov w2,#PROT_EXEC|PROT_READ
         mov w1,wLENM  // length
         mov x0,xADRM  // base
+    TRACE(#2)
         do_sys __NR_mprotect
 
 // Use the unfolded code

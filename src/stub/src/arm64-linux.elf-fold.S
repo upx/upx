@@ -57,6 +57,11 @@ PATH_MAX= 4096
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
 #endif  /*}*/
+#if DEBUG  //{
+#define TRACE(arg) stp lr,x0,[sp,#-2*8]!; mov x0,arg; bl trace; ldr lr,[sp],#2*8
+#else  //}{
+#define TRACE(arg) /*empty*/
+#endif  //}
 
 //@ control just falls through, after this part and compiled C code
 //@ are uncompressed.
@@ -175,12 +180,11 @@ xPMASK .req x20
         mov w1,wLENU
         ldr x2,[xauxe,#NBPW - sz_auxv]  // Elf64_auxv_t[AT_NULL@.a_type].a_val
         mov w8,#__NR_munmap
-#if DEBUG  /*{*/
+#if DEBUG  //{
         ldr w3,[x4,#0]  // 1st instr
         ldr w4,[x4,#4]  // 2nd instr
-#define TRACE_REGS r0-r12,r14,r15
-        stmdb sp!,{TRACE_REGS}; mov r0,#4; bl trace
-#endif  /*}*/
+        TRACE(4)
+#endif  //}
 
         br x2  // goto escape hatch
 
@@ -221,57 +225,99 @@ tst_unf:
 unfret:
         ret
 
-#if DEBUG  /*{*/
-TRACE_BUFLEN=512
-trace:
-        str lr,[sp,#(-1+ 15)*NBPW]  // return pc; [remember: sp is not stored]
-        mov r4,sp  // &saved_r0
+#if DEBUG  //{
+TRACE_BUFLEN=1024
+trace:  // preserves condition code (thank you, CBNZ) [if write() does!]
+        stp  x0, x1,[sp,#-32*8]!
+        stp  x2, x3,[sp,# 2*8]
+        stp  x4, x5,[sp,# 4*8]
+        stp  x6, x7,[sp,# 6*8]
+        stp  x8, x9,[sp,# 8*8]
+        stp x10,x11,[sp,#10*8]
+        stp x12,x13,[sp,#12*8]
+        stp x14,x15,[sp,#14*8]
+        stp x16,x17,[sp,#16*8]
+        stp x18,x19,[sp,#18*8]
+        stp x20,x21,[sp,#20*8]
+        stp x22,x23,[sp,#22*8]
+        stp x24,x25,[sp,#24*8]
+        stp x26,x27,[sp,#26*8]
+        stp x28,x29,[sp,#28*8]
+        add  x1,lr,#4  // u_pc
+        add  x2,sp,     #32*8 + 2*8  // u_sp
+        stp  x1, x2,[sp,#30*8]
+
+        ldr x1,[sp,#(1+ 32)*8]  // x1= u_x0
+        str x1,[sp]  // u_x0
+
+        mov x4,sp  // &u_x0
         sub sp,sp,#TRACE_BUFLEN
-        mov r2,sp  // output string
+        mov x2,sp  // output string
 
-        mov r1,#'\n'; bl trace_hex  // In: r0 as label
-        mov r1,#'>';  strb r1,[r2],#1
+        mov w1,#'\n'; bl trace_hex  // In: r0 as label
+        mov w1,#'>';  strb w1,[x2],#1
 
-        mov r5,#6  // rows to print
+        mov w5,#10  // nrows to print
 L600:  // each row
-        sub r0,r4,#TRACE_BUFLEN
-        sub r0,r0,sp
-        mov r0,r0,lsr #2; mov r1,#'\n'; bl trace_hex  // which block of 8
+        add x1,sp,#TRACE_BUFLEN
+        sub x0,x4,x1
+        lsr x0,x0,#3; mov w1,#'\n'; bl trace_hex2  // which block of 4
 
-        mov r6,#4  // words per row
+        mov w6,#4  // 64-bit words per row
 L610:  // each word
-        ldr r0,[r4],#NBPW; mov r1,#' '; bl trace_hex  // next word
-        subs r6,r6,#1; bgt L610
+        ldr x0,[x4],#8; mov w1,#(' '<<8)|' '; bl trace_hex  // next word
+        sub w6,w6,#1; cbnz w6,L610
 
-        subs r5,r5,#1; bgt L600
+        sub w5,w5,#1; cbnz w5,L600
 
-        mov r0,#'\n'; strb r0,[r2],#1
-        sub r2,r2,sp  // count
-        mov r1,sp  // buf
-        mov r0,#2  // FD_STDERR
-#if defined(ARMEL_EABI4)  /*{*/
-        mov r7,#__NR_write
-        swi 0
-#else  /*}{*/
-        swi __NR_write
-#endif  /*}*/
+        mov w0,#'\n'; strb w0,[x2],#1
+        mov x1,sp  // buf
+        sub x2,x2,x1  // count
+        mov w0,#2  // FD_STDERR
+        do_sys __NR_write
         add sp,sp,#TRACE_BUFLEN
-        ldmia sp!,{TRACE_REGS}
 
-trace_hex:  // In: r0=val, r1=punctuation before, r2=ptr; Uses: r3, ip
-        strb r1,[r2],#1  // punctuation
-        mov r3,#4*(2*NBPW -1)  // shift count
-        adr ip,hex
+        ldp x16,x17,[sp,#16*8]
+        ldp x18,x19,[sp,#18*8]
+        ldp x20,x21,[sp,#20*8]
+        ldp x22,x23,[sp,#22*8]
+        ldp x24,x25,[sp,#24*8]
+        ldp x26,x27,[sp,#26*8]
+        ldp x28,x29,[sp,#28*8]
+        ldp x30, x0,[sp,#30*8]
+        sub  lr, lr,#4  // our lr
+
+        ldp x14,x15,[sp,#14*8]
+        ldp x12,x13,[sp,#12*8]
+        ldp x10,x11,[sp,#10*8]
+        ldp  x8, x9,[sp,# 8*8]
+        ldp  x6, x7,[sp,# 6*8]
+        ldp  x4, x5,[sp,# 4*8]
+        ldp  x2, x3,[sp,# 2*8]
+        ldp  x0, x1,[sp],#32*8
+        ret
+
+trace_hex2:
+        mov w3,#2; b trace_hexwid
+trace_hex:  // In: x0=value, w1=punctuation before, x2=ptr; Uses: w3, x8
+        mov w3,#16  // ndigits
+trace_hexwid:  // In: x0= value; w1= punctuation; x2= ptr; w3= number of low-order digits
+        strb w1,[x2],#1; lsr w1,w1,#8; cbnz w1,trace_hexwid  // prefix punctuation
+        adr x8,hex
 L620:
-        mov r1,r0,lsr r3
-        and r1,r1,#0xf
-        ldrb r1,[ip, r1]
-        strb r1,[r2],#1
-        subs r3,r3,#4; bge L620
+        sub w3,w3,#1  // number of less-significant digits
+        lsl w1,w3,#2  // 4 bits per hex digit
+        lsr x1,x0,x1  // right justify this digit
+        and x1,x1,#0xf
+        ldrb w1,[x8, x1]
+        strb w1,[x2],#1
+        sub w1,w3,#8; cbnz w1,0f; mov w1,#'_'; strb w1,[x2],#1  // 8-digit readability
+0:
+        cbnz w3,L620
         ret
 hex:
         .ascii "0123456789abcdef"
-#endif  /*}*/
+#endif  //}
         .unreq ptr
         .unreq len
         .unreq cto
