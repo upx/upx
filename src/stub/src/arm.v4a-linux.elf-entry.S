@@ -169,8 +169,10 @@ unfold:  // in: r3= mflg; lr= &O_BINFO
         mov lr,pc; ldr pc,[sp,#4+ F_f_exp]  @ call f_exp  [ARMv4 lacks blx]
         ldr r3,[sp],#4  @ P_01  sz_unc
 
-        ldrb r1,[sp,#F_mflg]  @ mflg
-        strb r1,[r4]  @ change "orr r3,r3,#0" at mflg_subr
+        ldr r1,[sp,#F_mflg]  @ mflg
+        ldr r0,[r4]  @ "orr r3,r3,#0" at mflg_subr
+        orr r0,r0,r1  @ change the 8-bit immediate
+        str r0,[r4]
 
 // PROT_EXEC
         ldr r0,[sp,#F_f_exp]
