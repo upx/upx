@@ -27,6 +27,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW=  4
 #include "arch/mips/r3000/macros.ash"
 #include "arch/mips/r3000/bits.ash"
 
@@ -68,48 +69,72 @@ PATHSIZE=4096
 OVERHEAD=2048
 MAX_ELF_HDR=512
 
-#define sp_frame 0x20
-BAL=0x04110000
+MAP_PRIVATE=  0x002
+MAP_ANONYMOUS=0x800  # not same as i386
+PROT_READ= 1
+
+get_page_mask:
+        li v0,0  // modified to PAGE_MASK >> 9
+        jr ra
+          sll v0,v0,9
+        nop
+
+sp_frame= 0x20
+F_PMASK= 4*NBPW
+F_fd=    5*NBPW
+F_ADRU=  6*NBPW
+F_LENU=  7*NBPW
+  // The above 4 registers are passed on stack to unfolded code.
+a4_sys=  4*NBPW
+a5_sys=  5*NBPW
+
+// C-language offers 8 register args; syscall offers only 4
+#define a4  t0
+#define a5  t1
+
+//ra             31
+#define r_fexp   30  /* s8 */
+//sp             29  /* hardware */
+#define r_PMASK  28  /* gp */
+//k1             27  /* trashed by syscall */
+//k0             26  /* trashed by syscall */
+//t9, jp         25  /* trashed by syscall ? */
+//t8             24  /* trashed by syscall ? */
+//s7 AVAIL       23  /* s7 */
+#define r_auxv   22  /* s6 */
+#define r_elfa   21  /* s5 */
+#define r_auxe   20  /* s4 */
+#define r_LENU   19  /* s3 */
+#define r_ADRU   18  /* s2 */
+#define r_LENX   17  /* s1 */
+#define r_ADRX   16  /* s0 */
 
 /* In:
-    s7= &decompress
-
-    s5= total_size
-
-    s3= ADRU
-    s2= LENU
-    s1= ADRX
-
-    sp= -sp_frame + &{argc,argv...,0,env...,0,auxv...,0,0,strings}
+    r_ADRX,r_LENX,r_elfa,r_auxv,r_PMASK,r_fexp
+    sp= -sp_frame{%,%,%,%,PMASK,fd,ADRU,LENU}, {argc,argv...,0,env...,0,auxv...,0,0,strings}
 */
 fold_begin:
-        addiu v0,sp,sp_frame  # &argc
-        addiu sp,-(4+ 4+ PATHSIZE - sp_frame)  # alloca: new envp[0], "   =", buffer
-        move v1,sp
-L10:  # copy argc,argv
-        lw tmp,0(v0); addiu v0,4
-        sw tmp,0(v1); addiu v1,4
-        bnez tmp,L10  # stop when v0= &env[0]
-          move s0,v1  # new &env[0]
-        addiu v1,4  # leave space for new env[0]
-L20:  # copy env
-        lw tmp,0(v0); addiu v0,4
-        sw tmp,0(v1); addiu v1,4
-        bnez tmp,L20  # stop when v0= &auxv[0]
-          move s4,v1  # new &auxv[0]
-L30:  # copy auxv
-        lw tmp,0(v0); lw t0,4(v0); addiu v0,sz_auxv
-        sw tmp,0(v1); sw t0,4(v1); addiu v1,sz_auxv
-AT_PAGESZ= 6
-        addiu tmp,tmp,-AT_PAGESZ  # alter tmp
-        bnez  tmp,0f
-          addiu tmp,tmp,AT_PAGESZ  # restore tmp
-        negu s8,t0  # -PAGE_SIZE
-0:
-        bnez tmp,L30  # AT_NULL: stop when v0= &auxv[N]
-          move s6,v1  # new &auxv[N]
+////    break
+        lw $r_ADRU,F_ADRU(sp)
+        lw $r_LENU,F_LENU(sp)
+        move v0,sp
+        addiu sp,(~0<<4)&-(NBPW+ 4+ PATHSIZE - sp_frame)  # alloca: new envp[0], "   =", buffer
 
-        sw v1,0(s0)  # new env[0]
+        move v1,sp
+L10:  # copy until auxv
+        lw tmp,0(v0); addiu v0,NBPW
+        sw tmp,0(v1); addiu v1,NBPW
+        bne v0,$r_auxv,L10
+          addiu t1,v1,-NBPW  // new envp goes here
+        sw zero,(v1); addiu v1,NBPW  // new terminator for envp
+        move $r_auxv,v1  // new auxv
+L30:  // copy auxv
+        lw tmp,0(v0); lw t0,NBPW(v0); addiu v0,sz_auxv
+        sw tmp,0(v1); sw t0,NBPW(v1); addiu v1,sz_auxv
+        bnez tmp,L30  # AT_NULL: stop when v0= &auxv[N]
+          move $r_auxe,v1  // end of new auxv
+
+        sw v1,0(t1)  # new env var
         li tmp,' '
         sb tmp,0(v1)  # endian neutral!
         sb tmp,1(v1)
@@ -131,13 +156,15 @@ AT_PAGESZ= 6
         sb $0,(tmp)  # null terminate the path
 0:
         addiu sp,-MAX_ELF_HDR  # alloca
-        move t2,s8  # page_mask
+        move t3,$r_PMASK  # page_mask
+        move t2,$r_elfa  # &Elf32_Ehdr of stub
         move t1,zero  # &f_unfilter
-        move t0,s7  # &f_decompress
-        move a3,s4  # new &auxv[0]
+        move t0,$r_fexp  # &f_decompress
+        move a3,$r_auxv  # new &auxv[0]
         move a2,sp  # &Elf32_Ehdr tmp space
-        move a1,s5  # total_size
+        move a1,$r_LENX  # total_size
 
+BAL=0x04110000
 /* We need a position-independent call of upx_main, which is external.
    "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.
    ".long BAL + upx_main" then changing R_MIPS_32 to R_MIPS_PC16
@@ -152,29 +179,46 @@ AT_PAGESZ= 6
         subu v0,ra,v0
         addiu v0,v0,%lo(upx_main)
         jalr v0
-          move a0,s1
+          move a0,$r_ADRX
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Elf32_Auxv_t *a3,
-        f_decompr t0, f_unfilter t1, page_mask t2 )
+        f_decompr t0, f_unfilter t1, Elf32_Ehdr &t2, page_mask t3 )
 */
-        move jp,v0  # &entry
+        addiu sp,MAX_ELF_HDR  # un-alloca
+        move $r_fexp,v0  # &entry
+
+// Map 1 page of /proc/self/exe so that munmap does not remove all references
+        lw   a4,F_fd(sp)
+        move a5,$0  // offset
+          sw a4,a4_sys(sp)
+          sw a5,a5_sys(sp)
+        li   a3,MAP_PRIVATE
+        li   a2,PROT_READ
+        neg  a1,$r_PMASK  // PAGE_SIZE
+        move a0,$0  // addr
+        li v0,__NR_mmap; syscall
+
+        lw a0,a4_sys(sp)  // fd
+        li v0,__NR_close; syscall
+        addiu sp,sp,sp_frame
+
 /* Workaround suspected glibc bug: elf/rtld.c assumes uninit local is zero.
    2007-11-24 openembedded.org mipsel-linux 2.6.12.6/glibc 2.3.2
 */
-        addiu tmp, sp, MAX_ELF_HDR  # result of un-alloca
+        move tmp,sp
         addiu sp, -300  # estimated stack bound of upx_main and below
 0:
-        addiu sp,4
+        addiu sp,NBPW
         bne sp,tmp,0b
-          sw $0,-4(sp)
+          sw $0,-NBPW(sp)
 
-        lw tmp,-sz_auxv+ a_val(s6)
-          move a1,s2  # LENU
+        lw tmp,-sz_auxv+ a_val($r_auxe)  // last .a_val
+          move a1,$r_LENU
         beqz tmp,L40  # could not make escape hatch
-          move a0,s3  # ADRU
-        jr tmp  # goto munmap escape hatch: [syscall; jr jp; nop]
+          move a0,$r_ADRU
+        jr tmp  # goto munmap escape hatch: [syscall; jr $r_fexp; nop]
           li v0,__NR_munmap
 L40:
-        jr jp  # omit munmap
+        jr $r_fexp  # omit munmap
           nop
 
 #if 0  /*{ replaced by macros in include/linux.h because of 'bal' vs gcc */
@@ -204,24 +248,18 @@ munmap: .globl munmap
 mprotect: .globl mprotect
         b sysgo; li v0,__NR_mprotect
 
-#define a4_sys 0x10
-#define a5_sys 0x14
-
-MAP_PRIVATE=  0x002
-MAP_ANONYMOUS=0x800  # not same as i386
-
 mmap_privanon: .globl mmap_privanon
         ori a3,a3,MAP_PRIVATE|MAP_ANONYMOUS
         li t0,-1  # fd
         li t1,0   # offset
 mmap: .globl mmap
         addiu sp,sp,-sp_frame
-        sw t0,a4_sys(sp)
-        sw t1,a5_sys(sp)
+        sw a4,a4_sys(sp)
+        sw a5,a5_sys(sp)
         li v0,__NR_mmap
         syscall
         b sysret
-          addiu sp,sp, sp_frame
+          addiu sp,sp,sp_frame
 #endif  /*}*/
 
 /* vim:set ts=8 sw=8 et: */

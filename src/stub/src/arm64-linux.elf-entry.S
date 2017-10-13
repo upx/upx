@@ -97,7 +97,7 @@ xPMASK .req x26
 
 xelfa  .req x25
 xfexp  .req x24
-  // xPMASK, xlefa, xfexp still are used here.
+  // xPMASK, xelfa, xfexp still are used here.
 
 wLENM  .req w29  // overlaps wLENU
   xLENM  .req x29

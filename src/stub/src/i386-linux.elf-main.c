@@ -456,7 +456,9 @@ make_hatch_mips(
         )
         {
             hatch[0]= 0x0000000c;  // syscall
-            hatch[1]= 0x03200008;  // jr $25  # $25 === $t9 === jp
+#define RS(r) ((037&(r))<<21)
+#define JR 010
+            hatch[1]= RS(30)|JR;  // jr $30  # s8
             hatch[2]= 0x00000000;  //   nop
         }
         else {
@@ -800,6 +802,7 @@ void *upx_main(  // returns entry address
     Elf32_auxv_t *const av,
     f_expand *const f_exp,
     f_unfilter *const f_unf,
+    Elf32_Addr const elfaddr,
     size_t const page_mask
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
@@ -809,6 +812,7 @@ void *upx_main(  // returns entry address
     Elf32_auxv_t *const av,
     f_expand *const f_exp,
     f_unfilter *const f_unf,
+    Elf32_Addr const elfaddr,
     size_t const page_mask
 )
 
@@ -873,7 +877,6 @@ void *upx_main(
 #endif  //}
 
 #if defined(__mips__)  /*{*/
-    Elf32_Addr const elfaddr = 0;  // FIXME
     Extent xo, xi, xj;
     xo.buf  = (char *)ehdr;          xo.size = bi->sz_unc;
     xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
