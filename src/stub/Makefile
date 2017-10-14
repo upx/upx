@@ -1484,7 +1484,7 @@ powerpc64-linux.elf%.h : tc_bfdname = elf64-powerpc
 
 tc.powerpc64-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mbig-endian -nostdinc -MMD -MT $@
 tc.powerpc64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
-tc.powerpc64-linux.elf.gcc += -mno-longcall
+tc.powerpc64-linux.elf.gcc += -mno-longcall -mno-toc
 tc.powerpc64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 tc.powerpc64-linux.elf.ld      = powerpc64-linux-ld-2.25 -b $(tc_bfdname)

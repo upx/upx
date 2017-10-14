@@ -51,7 +51,7 @@ protected:
 
     virtual void pack1(OutputFile *, Filter &) = 0;  // generate executable header
     virtual int  pack2(OutputFile *, Filter &) = 0;  // append compressed data
-    virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
+    virtual off_t pack3(OutputFile *, Filter &) = 0;  // append loader
     //virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
 
     virtual void generateElfHdr(
@@ -119,7 +119,7 @@ protected:
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
 
@@ -243,7 +243,7 @@ protected:
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
 
@@ -404,7 +404,6 @@ public:
     virtual const int *getFilters() const;
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    //virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void buildLoader(const Filter *);
     virtual Linker* newLinker() const;
     virtual void defineSymbols(Filter const *);
@@ -422,7 +421,6 @@ public:
     virtual const int *getFilters() const;
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    //virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void buildLoader(const Filter *);
     virtual Linker* newLinker() const;
     virtual void defineSymbols(Filter const *);

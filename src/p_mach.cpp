@@ -1015,7 +1015,7 @@ void PackDylibPPC64LE::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 }
 
 template <class T>
-void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
+off_t PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
     upx_uint64_t const zero = 0;
@@ -1038,14 +1038,14 @@ void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
     threado_setPC(entryVMA= len + segTEXT.vmaddr);  /* entry address */
     super::pack3(fo, ft);
     fo->write(&zero, 7& (0u-len));  // FIXME: align(4) ?
-    segTEXT.vmsize = len = fo->getBytesWritten();
+    return segTEXT.vmsize = len = fo->getBytesWritten();
 }
 
-void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
+off_t PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
     upx_uint32_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
+    off_t len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
 
@@ -1060,16 +1060,17 @@ void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 
     unsigned const save_sz_mach_headers(sz_mach_headers);
     sz_mach_headers = 0;
-    super::pack3(fo, ft);
+    len = super::pack3(fo, ft);
     sz_mach_headers = save_sz_mach_headers;
+    return len;
 }
 
-void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
+off_t PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
     TE64 disp64;
     upx_uint64_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
+    off_t len = fo->getBytesWritten();
     fo->write(&zero, 7& (0u-len));
     len += (7& (0u-len)) + sizeof(disp64) + 4*sizeof(disp);
 
@@ -1087,15 +1088,16 @@ void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 
     unsigned const save_sz_mach_headers(sz_mach_headers);
     sz_mach_headers = 0;
-    super::pack3(fo, ft);
+    len = super::pack3(fo, ft);
     sz_mach_headers = save_sz_mach_headers;
+    return len;
 }
 
-void PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
+off_t PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
     upx_uint32_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
+    off_t len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
 
@@ -1110,15 +1112,16 @@ void PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 
     unsigned const save_sz_mach_headers(sz_mach_headers);
     sz_mach_headers = 0;
-    super::pack3(fo, ft);
+    len = super::pack3(fo, ft);
     sz_mach_headers = save_sz_mach_headers;
+    return len;
 }
 
-void PackDylibPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
+off_t PackDylibPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE64 disp;
     upx_uint64_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
+    off_t len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
 
@@ -1133,8 +1136,9 @@ void PackDylibPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
 
     unsigned const save_sz_mach_headers(sz_mach_headers);
     sz_mach_headers = 0;
-    super::pack3(fo, ft);
+    len = super::pack3(fo, ft);
     sz_mach_headers = save_sz_mach_headers;
+    return len;
 }
 
 // Determine length of gap between PT_LOAD phdri[k] and closest PT_LOAD

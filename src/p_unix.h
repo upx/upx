@@ -55,7 +55,7 @@ protected:
     // called by the generic pack()
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
 
     virtual void patchLoader() = 0;

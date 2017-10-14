@@ -55,7 +55,7 @@ public:
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
-    virtual void pack3(OutputFile *, Filter &);  // build loader
+    virtual off_t pack3(OutputFile *, Filter &);  // build loader
 };
 
 

@@ -161,11 +161,10 @@ PackLinuxI386sh::pack1(OutputFile *fo, Filter &)
     generateElfHdr(fo, stub_i386_linux_elf_shell_fold, 0x08048000);
 }
 
-void
+off_t
 PackLinuxI386sh::pack3(OutputFile *fo, Filter &ft)
 {
-    super::pack3(fo,ft);
-    elfout.phdr[0].p_filesz = fo->getBytesWritten();
+    return elfout.phdr[0].p_filesz = super::pack3(fo,ft);
 }
 
 /* vim:set ts=4 sw=4 et: */

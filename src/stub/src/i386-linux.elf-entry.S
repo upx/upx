@@ -40,6 +40,7 @@
 **************************************************************************/
 
 section LEXEC000
+sz_pack2 = -4+ _start
 _start: .globl _start
 ////    nop; int3  // DEBUG
         push eax  // space for entry address
@@ -63,6 +64,7 @@ _start: .globl _start
 */
         call main  // push address of decompress subroutine
 decompress:
+f_exp:  // synonym
 
 // /*************************************************************************
 // // C callable decompressor
@@ -128,23 +130,30 @@ section LEXEC017
 
 section LEXEC020
 
-#define PAGE_SHIFT 12
-#define PAGE_SIZE ( 1 << PAGE_SHIFT)
-#define PAGE_MASK (~0 << PAGE_SHIFT)
+PAGE_SHIFT= 12
+PAGE_SIZE= ( 1 << PAGE_SHIFT)
+PAGE_MASK= (~0 << PAGE_SHIFT)
 
-#define MAP_FIXED     0x10
-#define MAP_PRIVATE   0x02
-#define MAP_ANONYMOUS 0x20
-#define PROT_READ      1
-#define PROT_WRITE     2
-#define PROT_EXEC      4
-#define __NR_mmap     90
-#define __NR_mprotect 125
-#define szElf32_Ehdr 0x34
-#define p_memsz  5*4
+MAP_FIXED=     0x10
+MAP_PRIVATE=   0x02
+MAP_ANONYMOUS= 0x20
 
-#define __NR_write 4
-#define __NR_exit  1
+PROT_READ=      1
+PROT_WRITE=     2
+PROT_EXEC=      4
+
+__NR_exit=  1
+__NR_write= 4
+__NR_open=  5
+__NR_mmap=      90
+__NR_mprotect= 125
+
+szElf32_Ehdr= 0x34
+p_memsz=  5*4
+
+sz_unc= 0
+sz_cpr= 4
+
 EINVAL= 22
 
 #define pushsbli .byte 0x6a,  /* push sign-extended byte to long immediate*/
@@ -164,165 +173,87 @@ die:
         push __NR_exit; pop eax; int 0x80
 
 // Decompress the rest of this loader, and jump to it
-unfold:
-        lea edx, [ebp - (4+ decompress - _start)]  // 4: sizeof(int)
-        mov edi, [edx]  // total length of compressed data
-        sub edx, edi    // %edx= &Elf32_Ehdr of this program
-        pop esi; lodsd; push eax  // O_BINFO
-        mov eax, edx    // %eax= &Elf32_Ehdr of this program
-// esi= &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
+unfold:  // IN: ebp= f_exp;  esp/ &O_BINFO
+        pop esi; lodsd  // skip O_BINFO; esi= &compressed fold_elf86
+        lea edi,[sz_pack2 - f_exp + ebp]
+        sub edi,[edi]  // edi= &Elf32_Ehdr of this program
 
-section LEXECEXE  // in: eax= roundup(PAGE_SIZE, hi(.text))
-// Linux requires PF_W in order to create .bss (implied by .p_filesz!=.p_memsz),
-// but strict SELinux (or PaX, grSecurity) forbids PF_W with PF_X.
-// So first PT_LOAD must be PF_R|PF_X only, and .p_memsz==.p_filesz.
-// So we must round up here, instead of pre-rounding .p_memsz.
-        add eax, [p_memsz + szElf32_Ehdr + eax]  // address after .text
-        add eax,   PAGE_SIZE -1
-        and eax, 0-PAGE_SIZE
+// Open /proc/self/exe
+        call 0f; .asciz "/proc/self/exe"; 0: pop ebx  // path
+        sub ecx,ecx  // O_RDONLY
+        push __NR_open; pop eax; int 0x80; push eax  // P_31  fd
 
-        pop ecx  // O_BINFO
-        push edx  // ADRU
-        push edx  // space for LENU
-        push edx  // space for fd
-        push 0  // slide
-        add ecx,edx  // O_BINFO + &Elf32_Ehdr
-        push ecx  // ADRX
-        push edi  // LENX
-
-// mmap for {fold_begin}
+// Reserve space for input file and unfolded stub
         push 0  // offset
-        push -1  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
-        push MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
-        push PROT_READ | PROT_WRITE
-        push [esi]  // length {fold_begin}.sz_unc
-        push eax  // destination
-        mov ebx, esp  // address of parameter vector for __NR_mmap
-        push __NR_mmap; pop eax; int 0x80  // changes only %eax; %edx is live
-        cmp eax,[ebx]; jne msg_SELinux  // not the expected address (includes error)
+          mov edx,esi
+        push -1  // fd
+          sub edx,edi  // offset(dst) of unfold
+        push MAP_PRIVATE|MAP_ANONYMOUS
+          add edx,[esi]  // + sz_unc
+        push PROT_READ|PROT_WRITE
+        push edx  // len
+        push 0 // kernel chooses addr
+        call mmap
+        pop ecx; push ecx  // P_31 fd
+        push edx  // P_23  LENU
+        push eax  // P_24  ADRU
+
+// Duplicate the input data.
+          mov edx,esi
+        push 0 // offset
+          sub edx,edi  // offset(dst) of unfold
+        push ecx  // fd
+          add edx,[esi + sz_cpr]  // edx <= .st_size
+        PUSH MAP_PRIVATE|MAP_FIXED  // at reserved addr eax by previous mmap
+        push PROT_READ|PROT_WRITE
+        push edx  // len
+        push eax  // addr
+        call mmap  // another copy of this program
+
+// Remember new f_exp region for PROT_EXEC.
+        mov edx,eax  // copy ADRU
+        sub eax,edi  // relocation amount
+        add eax,esi  // dst for unfolding
+        mov ecx,eax
+        push eax  // P_20 dst
+        add ecx,[esi]  // + sz_unc; last of unfolded
+        mov eax,ebp  // old f_exp
+        sub eax,edi  // offset(f_exp)
+        add eax,edx  // new f_exp
+        and eax,PAGE_MASK  // base to protect
+        sub ecx,eax  // length to protect
+        pop edx; push edx  // P_20 dst
+        push ecx; push eax  // P_21  save for PROT_EXEC
+// Unfold
+        lodsd; push eax; mov ebx,esp  // sz_unc
+        lodsd; xchg ecx,eax  // sz_cpr
+        lodsd; push eax  // b_method
+        push ebx  // &sz_unc
+        push edx  // dst
+        push ecx  // sz_cpr
+        push esi  // src
+        call ebp  // decompress
         add esp,6*4
-        mov ecx,[esi]  // .sz_unc
-        add ecx,eax  // + new fold_begin
-        sub ecx,edx  // - &Elf32_Ehdr
-        mov [4*4 + esp],ecx  // LENU
-        xchg eax,edx  // edx= new fold_begin
-        push ebp  // P_12  old f_exp  (also new f_exp)
-
-section LEXECDYN
-// VDSO might interfere with our desired placement; move down to avoid it
-//  edx= &Elf32_Ehdr this ET_DYN (stub and compressed data)
-//  esi= &b_info of fold_begin
-//  edi= sz_pack2
-//  esp/ O_BINFO,%entry,argc,...
-        add edi,[esi]  // sz_pack2 + {fold_begin}.sz_unc
-        add edi,offset eof  // + sizeof(this_stub)
-        push edx; push edi  // P_03
-        mov ecx,edx  // hi_va of desired placement
-        sub edx,edi  // tentative placement
-        and edx,-PAGE_SIZE  // on page boundary
-        mov edi,ecx  // hi_va
-        sub edi,edx  // length in whole pages
-
-        mov ecx,[4*4+ esp]  // argc
-        push esi  // P_05
-        lea esi,[esp + 4*ecx + (3+3+1)*4]  // &env
-1:
-        lodsd; test eax,eax; jne 1b  // skip env
-2:
-        lodsd; test eax,eax; je 5f  // AT_NULL; done with auxv
-AT_SYSINFO= 32
-AT_SYSINFO_EHDR=33
-        subb al,AT_SYSINFO
-        cmpb al,AT_SYSINFO_EHDR - AT_SYSINFO
-        lodsd
-        ja 2b  // not AT_SYSINFO*
-        sub eax,edx  // offset
-        sub eax,edi  // length
-        jnb 2b  // no conflict with the pages we will map
-        add edx,eax  // move down
-        and edx,-PAGE_SIZE  // to page boundary
-        jmp 2b
-5:
-        pop esi  // P_05
-        mov eax,edx  // placement
-        pop edi; pop edx  // P_03
-
-// mmap new pages
-        push 0  // offset
-        push -1  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
-        push MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
-        push PROT_READ | PROT_WRITE
-        push edi  // length
-        push eax  // destination
-        mov ebx, esp  // address of parameter vector for __NR_mmap
-0:
-        push __NR_mmap; pop eax; int 0x80  // changes only %eax; %edx is live
-        sub ecx,ecx; cmp [ebx],ecx; je 7f  // "any address" always succeeds
-        cmp eax,[ebx]; je 7f  // success
-          mov [ebx],ecx  // any addr
-          mov [word ptr 3*4 + ebx], MAP_PRIVATE | MAP_ANONYMOUS  // not MAP_FIXED
-        cmp eax,-EINVAL; je 0b
-        jmp msg_SELinux
-7:
-        add esp,6*4
-        pop ecx  // O_BINFO
-        push eax  // ADRU
-        push edi  // LENU
-        push 0  // space for fd at fold_begin
-        push edx  // &Elf32_Ehdr ('slide' if ET_DYN)
-        add ecx,eax; push ecx  // ADRX
-        xchg eax, edx  // %edx= new page; %eax= &Elf32_Ehdr of this program
-        xchg eax, ebx  // %ebx= &Elf32_Ehdr of this program
-
-// Copy to new pages
-        push ebp  // P_11  old f_exp
-        sub edi,[esi]  // - {fold_begin}.sz_unc
-        lea ecx,[3+ edi]  // len; 3: decompressor overrun on x86*
-        push edi; mov edi,edx  // dst
-        push esi; mov esi,ebx  // src
-          sub ebp,ebx  // reloc &f_exp
-          add ebp,edx
-          mov ebx,edx  // reloc &Elf32_Ehdr
-        shr ecx,2; rep movsd
-
-        mov edx,edi  // new &fold_begin
-        pop esi
-        pop edi
-        pop eax  // P_11
-        sub edi,offset eof  // edi= sz_pack2
-        push edi  // LENX
-        push eax  // P_12  old f_exp (has PROT_EXEC)
-
-section LEXEC025  // entry edx= new fold_begin; esi= &{fold_begin}.b_info
-        push edx  // P_10  &retaddr= fold_begin
-        lodsd  // eax= {fold_begin}.sz_unc
-        push eax; push edx  // P_13  params for mprotect
-        push eax  // {fold_begin}.sz_unc  (maximum dstlen for lzma)
-        mov ecx,esp  // save &dstlen
-        push eax  // space for 5th param
-        push ecx  // &dstlen
-        push edx  // &dst
-        lodsd
-        push eax  // {fold_begin}.sz_cpr  (srclen)
-        lodsd     // last 4 bytes of b_info
-        mov [4*3 + esp],eax
-        push esi  // &compressed_data
-        call [9*4 + esp]  // old_f_exp(&src, srclen, &dst, &dstlen, b_info.misc)
-        add esp, 0+(5+1)*4  // args to decompress
-
-        pop ebx; pop ecx  // P_13  fold_begin, .sz_unc
-        sub ebx,ebp  // extend down to new f_exp
-        add ecx,ebx  // len(fold_begin) + len(new f_exp)
-        mov ebx,ebp  // start at new f_exp
-        mov eax,ebx  // base
-        and eax,~PAGE_MASK  // fragment on low end
-        sub ebx,eax  // round down to page boundary
-        add ecx,eax  // increase length
-
-        push PROT_READ | PROT_EXEC; pop edx
+// PROT_EXEC
+        pop ebx; pop ecx  // P_21
+        push PROT_EXEC|PROT_READ; pop edx
         push __NR_mprotect; pop eax; int 0x80
+// Use the copy
+        pop edx  // P_20 &unfold
+        pop eax; push eax  // P_24  ADRU
+        sub ebp,edi  // - old_base
+        add ebp,eax  // new f_exp
+        add eax,[-4*4 + esi]  // + O_BINFO = ADRX
+        mov ecx,[sz_pack2 - f_exp + ebp]  // LENX(==sz_pack2)
+// eax:ADRX; ebx:free; ecx:LENX; edx:&unfold
+// ebp:f_exp; esi:&old_b_info(fold); edi:dynbase
+        jmp edx  // esp/ ADRU,LENU,fd,entry,argc,argv,0,...
 
-        ret 4*1  // P_10 jmp; P_12 toss
+mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
+        lea ebx,[4+esp]
+        push __NR_mmap; pop eax; int 0x80
+        cmp eax,PAGE_MASK; jl 0f; hlt; 0:
+        ret 6*4
 
 main:
         pop ebp  // &decompress

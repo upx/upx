@@ -29,8 +29,43 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW= 4
 #include "arch/mips/r3000/macros.ash"
 #include "arch/mips/r3000/bits.ash"
+
+sp_frame= 0x20
+  // These are local temporaries.
+F_ADRM=  2*NBPW
+F_LENM=  3*NBPW
+
+  // These are passed on stack to unfolded code.
+F_PMASK= 4*NBPW
+F_fd=    5*NBPW
+F_ADRU=  6*NBPW
+F_LENU=  7*NBPW
+  // r_PMASK still is used here
+
+// C-language uses 8 args in registers
+a5=        9
+a4=        8
+
+//ra             31
+#define r_fexp   30  /* s8 */
+//sp             29  /* hardware */
+#define r_PMASK  28  /* gp */
+//k1             27  /* trashed by syscall */
+//k0             26  /* trashed by syscall */
+//t9, jp         25  /* trashed by syscall ? */
+//t8             24  /* trashed by syscall ? */
+#define r_fd     23  /* s7 */
+#define r_auxv   22  /* s6 */
+#define r_elfa   21  /* s5 */
+#define r_FOLD   20  /* s4 */
+#define r_szuf   19  /* s3 */
+#define r_relo   18  /* s2 */
+#define r_LENX   17  /* s1 */
+#define r_ADRX   16  /* s0 */
+#define r_LENU   r_LENX
 
         .set mips1
         .set noreorder
@@ -53,6 +88,14 @@ sz_b_info= 12
   b_cto8=  10
   b_unused=11
 
+AT_NULL= 0  // <elf.h>
+AT_PAGESZ= 6
+a_type= 0
+a_val=  NBPW
+sz_auxv= 2*NBPW
+
+O_RDONLY= 0
+
 PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
@@ -61,16 +104,20 @@ MAP_PRIVATE=        2
 MAP_FIXED=       0x10
 MAP_ANONYMOUS=  0x800
 
+PAGE_SHIFT= 12  // default only
+PAGE_SIZE = -(~0<<PAGE_SHIFT)
+
 M_NRV2B_LE32=2  // ../conf.h
 M_NRV2D_LE32=5
 M_NRV2E_LE32=8
 
 /* These from /usr/include/asm/unistd.h */
 __NR_Linux = 4000
-__NR_write = 4+ __NR_Linux
-__NR_exit  = 1+ __NR_Linux
-__NR_mmap  = 90+ __NR_Linux
+__NR_exit     =   1+ __NR_Linux
+__NR_mmap     =  90+ __NR_Linux
 __NR_mprotect = 125+ __NR_Linux
+__NR_open     =   5+ __NR_Linux
+__NR_write    =   4+ __NR_Linux
 __NR_cacheflush = 147+ __NR_Linux
 
 /* asm/cachectl.h */
@@ -81,19 +128,15 @@ DCACHE= 1<<1
 
   section ELFMAINX
 sz_pack2 = . - 4
-adrm:   .long ADRM
-lenm:   .long LENM
-adru:   .long ADRU
-adrc:   .long ADRC
-lenu:   .long LENU
-adrx:   .long ADRX
+
 _start: .globl _start
 ////    break  # debug only
         bal main
-          addiu s7,ra, decompressor - 0f  // s7= &decompress
+          addiu $r_fexp,ra, f_exp - 0f
 0:
 
 /* Returns 0 on success; non-zero on failure. */
+f_exp:  // alternate name
 decompressor:  // (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdstlen, uint method)
 #define lxsrc    a0
 #define lxsrclen a1
@@ -102,8 +145,11 @@ decompressor:  // (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdst
 
 #undef src  /* bits.ash */
 #define src     lxsrc
+#define lsrc    lxsrclen
 #undef dst  /* bits.ash */
 #define dst     lxdst
+#define ldst    lxdstlen
+#define meth     a4
 
         UCL_init    32,1,0
         decomp_done = eof
@@ -187,8 +233,7 @@ lxlzma_retval   = lxlzma_srcdone
         lw a0,lxlzma_dst(sp)
         lw a1,lxlzma_dstdone(sp)
         li a2,ICACHE|DCACHE
-        li v0,__NR_cacheflush
-        syscall
+        li v0,__NR_cacheflush; syscall
 
         lw v0,lxlzma_retval(sp)  # return value from decompression
 
@@ -237,8 +282,7 @@ eof:
         subu a1,lxdst,v1  // actual length generated
           sw a1,(lxdstlen)
         li a2,ICACHE|DCACHE
-        li v0,__NR_cacheflush
-        syscall
+        li v0,__NR_cacheflush; syscall
 
         lw v0,0(sp)
         jr ra
@@ -258,111 +302,131 @@ L71:
   section ELFMAINZ
 L72:
         li a0,2  // fd stderr
-        li v0,__NR_write
-        syscall
+        li v0,__NR_write; syscall
 die:
         li a0,127
-        li v0,__NR_exit
-        syscall
+        li v0,__NR_exit; syscall
 
-/* Decompress the rest of this loader, and jump to it.
-   Map a page to hold the decompressed bytes.  Logically this could
-   be done by setting .p_memsz for our first PT_LOAD.  But as of 2005-11-09,
-   linux 2.6.14 only does ".bss expansion" on the PT_LOAD that describes the
-   highest address.  [I regard this as a bug, and it makes the kernel's
-   fs/binfmt_elf.c complicated, buggy, and insecure.]  For us, that is the 2nd
-   PT_LOAD, which is the only way that linux allows to set the brk() for the
-   uncompressed program.  [This is a significant kernel misfeature.]
-*/
-unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2; s4= &Elf32_Ehdr
-
-/* Get some pages.  If small, then get 1 page located just after the end
-   of the first PT_LOAD of the compressed program.  This will still be below
-   all of the uncompressed program.  If large (>=3 MiB uncompressed), then enough
-   to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
-   the brk() of the _un_compressed program.  The address and length are pre-
-   calculated by PackLinuxElf64amd::defineSymbols().
-*/
-#define a4_sys 0x10
-#define a5_sys 0x14
-#define sp_frame 0x20
-
+unfold:  // IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD,ra= "/proc/self/exe"
         addiu sp,sp,-sp_frame
-        lw a0,adrm - decompressor(s7)
-        li a2, PROT_READ | PROT_WRITE
-        lw a1,lenm - decompressor(s7)
-        li a3, MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
-        sw zero,a4_sys(sp)  //; sw zero,a5_sys(sp)  // MAP_ANON ==> ignore offset
-        li v0,__NR_mmap; syscall; bnez a3,err_syscall
-        move s0,v0  // ADRM: &new page(s); &dst for unfold, or &copy of PT_LOAD[0]
+        sw $r_PMASK,F_PMASK(sp)
 
-        lw s3,adru - decompressor(s7)  // for unmap in fold
-        lw s2,lenu - decompressor(s7)  // for unmap in fold
-        lw s1,adrx - decompressor(s7)  // for upx_main
+// Open /proc/self/exe
+        move a0,ra
+        li a1,O_RDONLY
+        li v0,__NR_open; syscall; sw v0,F_fd(sp)
 
-// Copy compressed data if needed.
-        lw a0,adrc - decompressor(s7)  // where to copy f_exp
-          lw t0,-4(s6)  // O_BINFO
-            move a1,s0  // dst
-        sub s5,s5,t0  // sz_pack2 - O_BINFO; ~= total_size compressed
-        beq a0,s0,L78  // not needed
-          add a0,s4,t0  // &b_info for upx_main
-        move a2,s5  // total_size
-        bal memcpy
-          move s1,a1  // new adrx
-L78:
+// Reserve enough space to decompress the folded code onto $r_FOLD.
+        lw v0,                  sz_pack2 - f_exp($r_fexp)  // length before stub
+          addiu $r_elfa,$r_fexp,sz_pack2 - f_exp
+          li a4,-1
+        lw $r_szuf,sz_unc($r_FOLD)  // sz_unc of fold
+          li a3,MAP_PRIVATE|MAP_ANONYMOUS
+        sub $r_elfa,$r_elfa,v0  // $r_elfa= &Elf32_Ehdr of this stub
+          li a0,0  // kenrel chooses addr
+        sub v0,$r_FOLD,$r_elfa  // offset(fold)
+        add a1,$r_szuf,v0  // length needed
+        sw a1,F_LENU(sp)
+        bal mmapRW0
+          move $r_LENU,a1
+        sw v0,F_ADRU(sp)
 
-// Decompress the folded part of this stub, using original decompressor.
-        lw t0,sz_unc(s6); move a3,sp; sw t0,0(sp)  // &dst_len
-        move a2,a1  // &dst
-        lw a1,sz_cpr(s6)  // src_len
-        addiu a0,s6,sz_b_info
-        jalr s7  // decompress(src, srclen, dst, &dstlen /*, method*/)
-          move s4,a2  // &dst
+// Duplicate the input data
+        lw v0,sz_cpr($r_FOLD)  // sz_cpr of fold
+        sub a1,$r_LENU,$r_szuf  // - sz_unc of fold
+        lw a4,F_fd(sp)  // from file
+        li a3,MAP_PRIVATE|MAP_FIXED  // at reserved addr a0 by previous map
+        add a1,a1,v0  // + sz_cpr of fold; a1 <= .st_size
+        bal mmapRW0
+          lw a0,F_ADRU(sp)
+        sub $r_relo, v0,$r_elfa  // relocation amount
+        move ra,$r_fexp; add $r_fexp,$r_fexp,$r_relo  // use old f_exp; $r_fexp= new &f_exp
 
-// Copy decompressor if needed.
-        lw t0,0(sp)  // dst_len
-          lw a0,adrc - decompressor(s7)  // where to copy f_exp
-            add a1,t0,s4  // a1= last of unfolded
-        beq a0,s0,L80  // no copy f_exp
-          subu a2,s6,s7  // &b_info(fold) - &decompress; >= sizeof(decompress)
-        move a0,s7  // src= &decompress
-        bal memcpy
-          move s7,a1  // new &f_exp
-        move a0,s7  // new &f_exp
-        // a1= last of unfolded, or last of copy
-        li a2,ICACHE|DCACHE
-        li v0,__NR_cacheflush
-        syscall  // moved decompressor
-L80:
-        move a0,s0  // new page
-        sub a1,a1,s0  // len
-        li a2,PROT_READ|PROT_EXEC
-        li v0,__NR_mprotect
-        syscall
+// Decompress from old folded code, overwriting new copy of folded code
+        lw $r_ADRX,   -4($r_FOLD)  // O_BINFO
+        addiu src,$r_FOLD,sz_b_info  // a0  old folded code
+        add $r_FOLD,$r_FOLD,$r_relo  // dst for unfoding;  use copied data
+        add t1, $r_FOLD, $r_szuf  // + sz_unc = last of unfolded
+        and t0,$r_fexp,$r_PMASK  // base for PROT_EXEC
+        sw  t0,F_ADRM(sp)
+        sub t1,t1,t0  // length for PROT_EXEC
+        sw  t1,F_LENM(sp)
 
-        jr s4  // unfold
-          nop
+// The new f_exp has PROT_WRITE, so use the old f_exp to decompress.
+        lb meth,b_method($r_FOLD)
+        sw $r_szuf,0(sp)  // lzma uses for EOF
+        move dst,$r_FOLD  // a2  dst for unfolding
+        lw lsrc,sz_cpr($r_FOLD)  // a1
+        jalr ra  // decompress it
+          move ldst,sp  // a3  &slot on stack
 
-memcpy:
-        lw t0, 0(a0); addiu a1,a1, 8
-        lw t1, 4(a0); addiu a2,a2,-8
-        sw t0,-8(a1); addiu a0,a0, 8
-        bgtz a2,memcpy
-          sw t1,-4(a1)
+// Generate code to compute PAGE_MASK.
+        lw v0,0($r_FOLD)  // "li v0,0"
+        srl v1,$r_PMASK,9
+        andi v1,v1,0xffff  // 0xffff is NOT sign-extended
+        or v0,v0,v1  // replace immediate constant
+        sw v0,0($r_FOLD)
+
+// PROT_EXEC
+        li a2,PROT_EXEC|PROT_READ
+        lw a1,F_LENM(sp)  // length
+        lw a0,F_ADRM(sp)  // base
+        li v0,__NR_mprotect; syscall
+
+// Use the unfolded code
+        addi ra,$r_FOLD,4*4  // jmp over get_page_mask()
+        lw  $r_LENX,sz_pack2 - f_exp($r_fexp)
+        add $r_ADRX,$r_elfa,$r_ADRX  // old compressed data
         jr ra
-          nop
+          add $r_ADRX,$r_ADRX,$r_relo  // new compressed data
 
-err_syscall:
-        b err_syscall
+mmapRW0:
+        li a5,0  // offset
+mmapRW:
+        li a2,PROT_WRITE|PROT_READ
+mmap:
+        addiu sp,sp,-sp_frame
+a4_sys=  4*NBPW  // temporary for syscall
+a5_sys=  5*NBPW  // temporary for syscall
+        sw a4,a4_sys(sp)
+        sw a5,a5_sys(sp)
+        li v0,__NR_mmap; syscall
+        bnez a3,mmap_bad
           nop
+        jr ra
+          addiu sp,sp, sp_frame
+mmap_bad:
+        break
+
+zfind:  // result in $r_auxv
+        lw v1,(a0); addiu a0,a0,NBPW
+        bnez v1,zfind
+          move $r_auxv,a0
+        jr ra
+          li t0,AT_PAGESZ  // prepare early
+
 main:
-        lw s5,  sz_pack2 - decompressor(s7)  // length before stub
-          la s4,sz_pack2 - decompressor(s7)
-        sub s4,s4,s5  // &Elf32_Ehdr
+        bal zfind
+          move a0,sp
+        bal zfind
+          move a0,$r_auxv
+
+// set $r_PMASK by finding actual page size in Elf32_auxv_t
+1:
+        lw  v1,a_type(a0)
+          addiu a0,a0,sz_auxv
+        beq v1,t0,2f  // AT_PAGESZ
+          lw v0,a_val - sz_auxv(a0)
+        bnez v1,1b  // AT_NULL
+          li v0,PAGE_SIZE
+2:
+        sub $r_PMASK,zero,v0
         bal unfold
-          addiu s6,ra,4  // &b_info for folded_loader
+          addiu $r_FOLD,ra,LrFLD - 0f  // &b_info for folded loader
+0:
+        .asciz "/proc/self/exe"; .balign 4
         .long O_BINFO
+LrFLD:
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
 /*__XTHEENDX__*/

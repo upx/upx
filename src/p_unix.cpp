@@ -246,7 +246,7 @@ PackUnix::patchLoaderChecksum()
     set_te32(&lp->l_checksum, upx_adler32(ptr, lsize));
 }
 
-void PackUnix::pack3(OutputFile *fo, Filter &ft)
+off_t PackUnix::pack3(OutputFile *fo, Filter &ft)
 {
     if (0==linker) {
         // If no filter, then linker is not constructed by side effect
@@ -259,6 +259,7 @@ void PackUnix::pack3(OutputFile *fo, Filter &ft)
     updateLoader(fo);
     patchLoaderChecksum();
     fo->write(p, lsize);
+    return fo->getBytesWritten();
 }
 
 void PackUnix::pack4(OutputFile *fo, Filter &)
