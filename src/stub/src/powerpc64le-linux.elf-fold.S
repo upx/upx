@@ -199,12 +199,16 @@ r_reloc= 32 - 1  # used slot in register save area
         call upx_main  // Out: a0= entry
 // entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, ELf32_auxv_t *a3,
 //      f_exp a4, f_unf a5, elfaddr &a6, page_mask a7)
-    teq r0,r0
         la  sp,SZ_FRAME+OVERHEAD(sp)  // FR_01  deallocate this frame
 #if BIG_ENDIAN  //{ annoying TOC
+// Sometimes the "entry TOC" is not a TOC, particularly with musl.
+        andi. r0,a0,7; bne cr0,noTOC  // align(TOC) < 8;  [heuristic]
+        lwz r0,0(a0); cmplwi r0,0; bne noTOC  // 4GiB <= .func;  an instruction?
+
         ld r0, SZ_FRAME + r_reloc*NBPW(sp)  // reloc for ET_DYN
         ld r2,NBPW(r3); add r2,r2,r0  // toc
         ld r3,   0(r3); add r3,r3,r0  // .func   NOTE: r3 === a0
+noTOC:
 #endif  //}
         mr r_exp,a0  // save &entry (.entry when BIG_ENDIAN)
 
