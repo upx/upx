@@ -34,6 +34,7 @@
 #endif
 
 NBPW= 8  //Number of Bytes Per Word
+#define USE_TOC 1
 #include "arch/powerpc/64le/macros.S"
 #include "arch/powerpc/64le/ppc_regs.h"
 
@@ -81,7 +82,6 @@ OVERHEAD= 2048
 //SZ_PSAV= 8*8  // for arg9, arg10, ...; and for spilling a0-a7 if necessary
 // The parameter save area shall be allocated by the caller.
 // It shall be doubleword aligned, and shall be at least 8 doublewords in length.
-//SZ_FRAME= SZ_LINK + SZ_PSAV  // in ppc_regs.h
 
 // In:
 r_exp=   31  // f_exp == &decompress
@@ -184,7 +184,7 @@ r_reloc= 32 - 1  # used slot in register save area
         mr a3,r_auxv  // &Elf64_auxv_t
         mr a4,r_exp  // &decompress: f_expand
         mr a5,r_unf  // &f_unf
-#if BIG_ENDIAN  //{ annoying TOC
+#if USE_TOC  //{
         li r0,0
 
         std a4,F_TOC +    0 + 0*2*NBPW(sp)
@@ -200,7 +200,7 @@ r_reloc= 32 - 1  # used slot in register save area
 // entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, ELf32_auxv_t *a3,
 //      f_exp a4, f_unf a5, elfaddr &a6, page_mask a7)
         la  sp,SZ_FRAME+OVERHEAD(sp)  // FR_01  deallocate this frame
-#if BIG_ENDIAN  //{ annoying TOC
+#if USE_TOC  //{
 // Sometimes the "entry TOC" is not a TOC, particularly with musl.
         andi. r0,a0,7; bne cr0,noTOC  // align(TOC) < 8;  [heuristic]
         lwz r0,0(a0); cmplwi r0,0; bne noTOC  // 4GiB <= .func;  an instruction?

@@ -36,11 +36,9 @@
 
 /* Stack pointer */
 #define sp 1
-SZ_FRAME= 6*8 + 8*8  // (sp,cr,lr, xx,yy,zz) + spill area for a0-a7
-#if BIG_ENDIAN && (8 == 8)  //{
-F_TOC= SZ_FRAME  // where is the fake TOC
+SZ_FRAME= 6*8 + 8*8  // (sp,cr,lr, tmp.xlc,tmp.ld,save.toc) + spill area for a0-a7
+F_TOC=    SZ_FRAME  // where is the fake TOC
 SZ_FRAME= SZ_FRAME + 2*2*8  // space for 2 [short] TOC entries
-#endif  //}
 
 // http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi.html#REG
 // r0        Volatile register used in function prologs
