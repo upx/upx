@@ -880,7 +880,7 @@ void *upx_main(
     Extent xo, xi, xj;
     xo.buf  = (char *)ehdr;          xo.size = bi->sz_unc;
     xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
-    xj.buf = CONST_CAST(char *, bi); xj.size = sz_compressed;
+    xj.buf = CONST_CAST(char *, bi); xj.size = sizeof(*bi) + bi->sz_cpr;
 #endif  //}
 
     DPRINTF("upx_main av=%%p  szc=%%x  f_exp=%%p  f_unf=%%p  "

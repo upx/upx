@@ -8,7 +8,7 @@ Linker script and memory map
 
                 0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x00000000001000bc      0x7ac
+.text           0x00000000001000bc      0x7b0
  *(.text)
  .text          0x00000000001000bc      0x18e tmp/amd64-linux.elf-fold.o
                 0x000000000010023a                munmap
@@ -21,20 +21,20 @@ Linker script and memory map
                 0x000000000010023e                mprotect
                 0x0000000000100232                close
  *fill*         0x000000000010024a        0x2 00
- .text          0x000000000010024c      0x619 tmp/amd64-linux.elf-main.o
+ .text          0x000000000010024c      0x61d tmp/amd64-linux.elf-main.o
                 0x0000000000100721                upx_main
  *(.data)
- *fill*         0x0000000000100865        0x3 00
- .data          0x0000000000100868        0x0 tmp/amd64-linux.elf-fold.o
- .data          0x0000000000100868        0x0 tmp/amd64-linux.elf-main.o
+ *fill*         0x0000000000100869        0x3 00
+ .data          0x000000000010086c        0x0 tmp/amd64-linux.elf-fold.o
+ .data          0x000000000010086c        0x0 tmp/amd64-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000100868        0x0
- .bss           0x0000000000100868        0x0 tmp/amd64-linux.elf-fold.o
- .bss           0x0000000000100868        0x0 tmp/amd64-linux.elf-main.o
+.bss            0x000000000010086c        0x0
+ .bss           0x000000000010086c        0x0 tmp/amd64-linux.elf-fold.o
+ .bss           0x000000000010086c        0x0 tmp/amd64-linux.elf-main.o
 
-.rela.dyn       0x0000000000100868        0x0
+.rela.dyn       0x0000000000100870        0x0
  .rela.text     0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-main.o

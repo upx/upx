@@ -11,19 +11,19 @@ TARGET(elf64-powerpcle)
 
 .text           0x00000000001000bc      0xa3c
  *(.text)
- .text          0x00000000001000bc      0x2c0 tmp/powerpc64le-linux.elf-fold.o
+ .text          0x00000000001000bc      0x2bc tmp/powerpc64le-linux.elf-fold.o
                 0x00000000001000bc                get_page_mask
-                0x000000000010031c                mmap
-                0x0000000000100334                exit
-                0x000000000010033c                brk
-                0x0000000000100344                readlink
-                0x000000000010034c                read
-                0x0000000000100354                open
-                0x000000000010035c                close
-                0x0000000000100364                mprotect
-                0x000000000010036c                munmap
-                0x0000000000100374                my_bkpt
- .text          0x000000000010037c      0x77c tmp/powerpc64le-linux.elf-main.o
+                0x0000000000100318                mmap
+                0x0000000000100330                exit
+                0x0000000000100338                brk
+                0x0000000000100340                readlink
+                0x0000000000100348                read
+                0x0000000000100350                open
+                0x0000000000100358                close
+                0x0000000000100360                mprotect
+                0x0000000000100368                munmap
+                0x0000000000100370                my_bkpt
+ .text          0x0000000000100378      0x780 tmp/powerpc64le-linux.elf-main.o
  *(.data)
  .data          0x0000000000100af8        0x0 tmp/powerpc64le-linux.elf-fold.o
  .data          0x0000000000100af8        0x0 tmp/powerpc64le-linux.elf-main.o

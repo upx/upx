@@ -102,6 +102,8 @@ typedef struct {
 static void
 xread(Extent *x, char *buf, size_t count)
 {
+    DPRINTF("xread x.size=%%x  x.buf=%%p  buf=%%p  count=%%x\\n",
+        x->size, x->buf, buf, count);
     char *p=x->buf, *q=buf;
     size_t j;
     if (x->size < count) {
@@ -112,6 +114,7 @@ xread(Extent *x, char *buf, size_t count)
     }
     x->buf  += count;
     x->size -= count;
+    DPRINTF("xread done\\n",0);
 }
 
 
@@ -154,15 +157,17 @@ unpackExtent(
     f_unfilter *f_unf
 )
 {
-    DPRINTF("unpackExtent xi=(%%p %%p)  xo=(%%p %%p)  f_exp=%%p  f_unf=%%p\\n",
-        xi->size, xi->buf, xo->size, xo->buf, f_exp, f_unf);
     while (xo->size) {
+        DPRINTF("unpackExtent xi=(%%p %%p)  xo=(%%p %%p)  f_exp=%%p  f_unf=%%p\\n",
+            xi->size, xi->buf, xo->size, xo->buf, f_exp, f_unf);
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
         //   compressible and is stored in its uncompressed form.
 
         // Read and check block sizes.
         xread(xi, (char *)&h, sizeof(h));
+        DPRINTF("h.sz_unc=%%x  h.sz_cpr=%%x  h.b_method=%%x\\n",
+            h.sz_unc, h.sz_cpr, h.b_method);
         if (h.sz_unc == 0) {                     // uncompressed size 0 -> EOF
             if (h.sz_cpr != UPX_MAGIC_LE32)      // h.sz_cpr must be h->magic
                 err_exit(2);
@@ -521,7 +526,7 @@ upx_main(  // returns entry address
     Extent xo, xi1, xi2;
     xo.buf  = (char *)ehdr;
     xo.size = bi->sz_unc;
-    xi2.buf = CONST_CAST(char *, bi); xi2.size = bi->sz_cpr;
+    xi2.buf = CONST_CAST(char *, bi); xi2.size = bi->sz_cpr + sizeof(*bi);
     xi1.buf = CONST_CAST(char *, bi); xi1.size = sz_compressed;
 
     // ehdr = Uncompress Ehdr and Phdrs
