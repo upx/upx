@@ -475,7 +475,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             : page_mask;
         v_hole = pm & (~pm + v_hole + get_te64(&elfout.phdr[0].p_vaddr));
         set_te64(&elfout.phdr[1].p_vaddr, v_hole);
-        set_te64(&elfout.phdr[1].p_align, -pm);
+        set_te64(&elfout.phdr[1].p_align, ((upx_uint64_t)0) - pm);
         elfout.phdr[1].p_paddr = elfout.phdr[1].p_vaddr;
         elfout.phdr[1].p_offset = 0;
         set_te64(&elfout.phdr[1].p_memsz, getbrk(phdri, e_phnum) - v_hole);
