@@ -219,9 +219,15 @@ die:
         syscall
 
 // Decompress the rest of this loader, and jump to it.
-unfold:  // IN: rbp= &f_exp; rsp/ &O_BINFO,fd,%entry
-        pop %rsi  // &O_BINFO
-        lodsl; movl %eax,%r14d // O_BINFO
+unfold:  // IN: rbp= &f_exp; rsp/ &proc_self_exe,%entry
+        pop %arg1  // &proc_self_exe
+        sub %arg2l,%arg2l  // O_RDONLY
+        push $__NR_open; pop %rax
+        syscall
+        push %rax  // save fd
+
+        lea -4+ FOLD - proc_self_exe(%arg1),%rsi  // &O_BINFO | is_ptinterp
+        lodsl; and $~1,%eax; movl %eax,%r14d  // O_BINFO
         push %rsi; pop %rbx  // &b_info of folded decompressor
         lodsl; xchg %eax,%edx;         add %rbx,%rdx  // .sz_unc; last of unfolded
         lodsl; xchg %eax,%r13d; lodsl; add %rsi,%r13  // .sz_cpr; last of   folded
@@ -291,18 +297,13 @@ unfold:  // IN: rbp= &f_exp; rsp/ &O_BINFO,fd,%entry
 // rsp/ elfaddr,fd,ADRU,LENU,%entry
         jmp *%r13
 
-proc_self_exe:
-        .asciz "/proc/self/exe"
-
 main:
         pop %rbp  // &f_exp
-        lea proc_self_exe(%rip),%arg1
-        sub %arg2l,%arg2l  // O_RDONLY
-        push $__NR_open; pop %rax
-        syscall
-        push %rax  // save fd
         call unfold
+proc_self_exe:
+        .asciz "/proc/self/exe"
         .long O_BINFO  // offset of b_info for .text
+FOLD:
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
 /*__XTHEENDX__*/

@@ -67,25 +67,22 @@ __NR_exit= 60
 __NR_readlink= 89
 
 // IN:
-// %rbp= f_exp; %r14= ADRX; %r15= LENX;
+// %rbx= &O_BINFO; %rbp= f_exp; %r14= ADRX; %r15= LENX;
 // rsp/ elfaddr,fd,ADRU,LENU,%entry,  argc,argv,0,envp,0,auxv,0,strings
 
 fold_begin:
 ////    int3  // DEBUG only
-        call L90  # push &L90a
-L90a:
-        .asciz "/proc/self/exe"
-L90b:
+        call L90
 #include "arch/amd64/bxx.S"
 L90:
-        pop %rbx  # L90a
+        pop %rax  # &f_unf
         push %r14  // ADRX
         push %r15  // LENX
-        lea L90b - L90a(%rbx),%rax; push %rax  # &amdbxx: f_unfilter
+        push %rax  # &amdbxx: f_unf
         mov %rsp,%rsi
         sub $PATH_MAX,%rsp
         push %rsp; pop %rdi
-        push $9; pop %rcx; rep movsq  # f_unfilter,LENX,ADRX,elfaddr,fd,ADRU,LENU,%entry,argc
+        push $9; pop %rcx; rep movsq  # f_unf,LENX,ADRX,elfaddr,fd,ADRU,LENU,%entry,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
         movq %rdi,%r14  # remember &new_env[0]
@@ -101,11 +98,11 @@ L90:
 
         movl $-1+ PATH_MAX,%arg3l # buflen
         push %rdi; pop %arg2  #buffer
-        push %rbx; pop %arg1  # "/proc/self/exe"
+        lea -4-15(%rbx),%arg1 # "/proc/self/exe"
         push $ __NR_readlink; pop %rax; syscall; testl %eax,%eax; jns 0f
 // readlink() failed. Set the result equal to the argument.
-        push %rbx; pop %arg2  # result= "/proc/self/exe"
-        push $-1+ (L90b - L90a); pop %rax
+        push %arg1; pop %arg2  # result= "/proc/self/exe"
+        push $15; pop %rax  # 1+ strlen( )
 0:
         xchg %eax,%ecx  # %ecx= byte count
      std
@@ -132,7 +129,8 @@ L90:
      cld
 
         lea (%r14,%r12),%arg4  # &new Elf64_auxv
-        pop %arg6  # f_unfilter
+        movl -4(%rbx),%eax; and $1,%eax; add %rax,%arg4  # is_ptinterp
+        pop %arg6  # f_unf
         pop %arg2  # LENX
         pop %arg1  # ADRX
 
@@ -144,7 +142,7 @@ L90:
         movq %rbp,%arg5  # &decompress: f_expand
         call upx_main  # Out: %rax= entry
 /* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
-                Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6,
+                Elf32_Auxv_t *arg4, f_decompr arg5, f_unf arg6,
                 Elf64_Addr elfaddr )
 */
         addq $1*8+OVERHEAD,%rsp  # toss elfaddr, too

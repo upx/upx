@@ -331,8 +331,9 @@ upx_bzero(char *p, size_t len)
 static void
 auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
 {
-    if (!av)
+    if (!av || (1& (size_t)av)) { // none, or inhibited for PT_INTERP
         return;
+    }
     DPRINTF("\\nauxv_up %%d  %%p\\n", type, value);
     for (;; ++av) {
         DPRINTF("  %%d  %%p\\n", av->a_type, av->a_un.a_val);
@@ -470,7 +471,7 @@ do_xmap(
             void *const hatch = make_hatch_arm64(phdr, reloc, ~PAGE_MASK);
 #endif  //}
             if (0!=hatch) {
-                auxv_up(av, AT_NULL, (size_t)hatch);
+                auxv_up((Elf64_auxv_t *)(~1 & (size_t)av), AT_NULL, (size_t)hatch);
             }
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
