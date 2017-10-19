@@ -405,7 +405,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             }
             // Compute new offset of &DT_INIT.d_val.
             if (/*0==jni_onload_sym &&*/ phdr->PT_DYNAMIC==type) {
-                off_init = so_slide + ioff;
+                off_init = ioff + ((xct_off < ioff) ? so_slide : 0);
                 fi->seek(ioff, SEEK_SET);
                 fi->read(ibuf, len);
                 Elf32_Dyn *dyn = (Elf32_Dyn *)(void *)ibuf;
@@ -421,7 +421,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             }
             if (xct_off < ioff)
                 set_te32(&phdr->p_offset, so_slide + ioff);
-        }
+        }  // end each Phdr
         if (off_init) {  // change DT_INIT.d_val
             fo->seek(off_init, SEEK_SET);
             va_init |= (Elf32_Ehdr::EM_ARM==e_machine);  // THUMB mode
@@ -528,7 +528,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             }
             // Compute new offset of &DT_INIT.d_val.
             if (phdr->PT_DYNAMIC==type) {
-                off_init = so_slide + ioff;
+                off_init = ioff + ((xct_off < ioff) ? so_slide : 0);
                 fi->seek(ioff, SEEK_SET);
                 fi->read(ibuf, len);
                 Elf64_Dyn *dyn = (Elf64_Dyn *)(void *)ibuf;
@@ -544,7 +544,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             }
             if (xct_off < ioff)
                 set_te64(&phdr->p_offset, so_slide + ioff);
-        }
+        }  // end each Phdr
         if (off_init) {  // change DT_INIT.d_val
             fo->seek(off_init, SEEK_SET);
             upx_uint64_t word; set_te64(&word, va_init);
@@ -1353,10 +1353,18 @@ static const
 #include "stub/mipsel.r3000-linux.elf-entry.h"
 static const
 #include "stub/mipsel.r3000-linux.elf-fold.h"
+static const
+#include "stub/mipsel.r3000-linux.shlib-init.h"
 
 void
 PackLinuxElf32mipsel::buildLoader(Filter const *ft)
 {
+    if (0!=xct_off) {  // shared library
+        buildLinuxLoader(
+            stub_mipsel_r3000_linux_shlib_init, sizeof(stub_mipsel_r3000_linux_shlib_init),
+            NULL,                        0,                                 ft );
+        return;
+    }
     buildLinuxLoader(
         stub_mipsel_r3000_linux_elf_entry, sizeof(stub_mipsel_r3000_linux_elf_entry),
         stub_mipsel_r3000_linux_elf_fold,  sizeof(stub_mipsel_r3000_linux_elf_fold), ft);
@@ -1366,10 +1374,18 @@ static const
 #include "stub/mips.r3000-linux.elf-entry.h"
 static const
 #include "stub/mips.r3000-linux.elf-fold.h"
+static const
+#include "stub/mips.r3000-linux.shlib-init.h"
 
 void
 PackLinuxElf32mipseb::buildLoader(Filter const *ft)
 {
+    if (0!=xct_off) {  // shared library
+        buildLinuxLoader(
+            stub_mips_r3000_linux_shlib_init, sizeof(stub_mips_r3000_linux_shlib_init),
+            NULL,                        0,                                 ft );
+        return;
+    }
     buildLinuxLoader(
         stub_mips_r3000_linux_elf_entry, sizeof(stub_mips_r3000_linux_elf_entry),
         stub_mips_r3000_linux_elf_fold,  sizeof(stub_mips_r3000_linux_elf_fold), ft);
@@ -1710,17 +1726,32 @@ bool PackLinuxElf32::canPack()
 
         if (/*jni_onload_sym ||*/ elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
             if (this->e_machine!=Elf32_Ehdr::EM_386
+            &&  this->e_machine!=Elf32_Ehdr::EM_MIPS
             &&  this->e_machine!=Elf32_Ehdr::EM_ARM)
-                goto abandon;  // need stub: EM_MIPS EM_PPC
+                goto abandon;  // need stub: EM_PPC
             if (elf_has_dynamic(Elf32_Dyn::DT_TEXTREL)) {
                 throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
             }
             Elf32_Shdr const *shdr = shdri;
             xct_va = ~0u;
-            for (int j= e_shnum; --j>=0; ++shdr) {
-                if (Elf32_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
-                    xct_va = umin(xct_va, get_te32(&shdr->sh_addr));
+            if (e_shnum) {
+                for (int j= e_shnum; --j>=0; ++shdr) {
+                    if (Elf32_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
+                        xct_va = umin(xct_va, get_te32(&shdr->sh_addr));
+                    }
+                }
+            }
+            else { // no Sections; use heuristics
+                unsigned const strsz  = elf_unsigned_dynamic(Elf32_Dyn::DT_STRSZ);
+                unsigned const strtab = elf_unsigned_dynamic(Elf32_Dyn::DT_STRTAB);
+                unsigned const relsz  = elf_unsigned_dynamic(Elf32_Dyn::DT_RELSZ);
+                unsigned const rel    = elf_unsigned_dynamic(Elf32_Dyn::DT_REL);
+                unsigned const init   = elf_unsigned_dynamic(Elf32_Dyn::DT_INIT);
+                if ((init == (relsz + rel   ) && rel    == (strsz + strtab))
+                ||  (init == (strsz + strtab) && strtab == (relsz + rel   ))
+                ) {
+                    xct_va = init;
                 }
             }
             // Rely on 0==elf_unsigned_dynamic(tag) if no such tag.
