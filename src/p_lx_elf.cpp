@@ -1635,6 +1635,7 @@ bool PackLinuxElf32::canPack()
                 throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
                 return false;
             }
+            hatch_off = get_te32(&phdr->p_memsz);
         }
         if (phdr->PT_NOTE == p_type) {
             unsigned const x = get_te32(&phdr->p_memsz);
@@ -1769,17 +1770,6 @@ bool PackLinuxElf32::canPack()
                 throwCantPack("DT_ tag above stub");
                 goto abandon;
             }
-            shdr= shdri;
-            for (int j= e_shnum; --j>=0; ++shdr) {
-                unsigned const sh_addr = get_te32(&shdr->sh_addr);
-                if ( sh_addr==va_gash
-                ||  (sh_addr==va_hash && 0==va_gash) ) {
-                    shdr= &shdri[get_te32(&shdr->sh_link)];  // the associated SHT_SYMTAB
-                    hatch_off = (char *)&ehdri.e_ident[12] - (char *)&ehdri;
-                    break;
-                }
-            }
-            ACC_UNUSED(shdr);
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -1848,7 +1838,7 @@ PackLinuxElf64::canPack()
                 throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
                 return false;
             }
-            hatch_off = phdr->p_memsz;
+            hatch_off = get_te64(&phdr->p_memsz);
             break;
         }
     }
@@ -1940,16 +1930,6 @@ PackLinuxElf64::canPack()
                 throwCantPack("DT_ tag above stub");
                 goto abandon;
             }
-            for ((shdr= shdri), (j= e_shnum); --j>=0; ++shdr) {
-                upx_uint64_t const sh_addr = get_te64(&shdr->sh_addr);
-                if ( sh_addr==va_gash
-                ||  (sh_addr==va_hash && 0==va_gash) ) {
-                    shdr= &shdri[get_te32(&shdr->sh_link)];  // the associated SHT_SYMTAB
-                    //hatch_off = (char *)&ehdri.e_ident[11] - (char *)&ehdri;
-                    break;
-                }
-            }
-            ACC_UNUSED(shdr);
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }

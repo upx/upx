@@ -29,6 +29,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW= 4
 #ifndef BIG_ENDIAN //{
 #define BIG_ENDIAN 0
 #endif  //}
@@ -41,17 +42,8 @@
         .set noat
         .altmacro
 
-#deifne PUSH1(a)           addiu sp,sp,-1*4; sw a,0(sp)
-#define PUSH4(a,b,c,d)     addiu sp,sp,-4*4; sw a,0(sp); sw b,1*4(sp); sw c,2*4(sp); sw d,3*4(sp)
-#define PUSH6(a,b,c,d,e,f) addiu sp,sp,-6*4; sw a,0(sp); sw b,1*4(sp); sw c,2*4(sp); sw d,3*4(sp); sw e,4*4(sp); sw f,5*4(sp)
-#define POP1(a)           lw a,0*4(sp);                                                                       addiu sp,sp,1*4
-#define POP2(a,b)         lw a,0*4(sp); lw b,1*4(sp);                                                         addiu sp,sp,2*4
-#define POP3(a,b,c)       lw a,0*4(sp); lw b,1*4(sp); lw c,2*4(sp);                                           addiu sp,sp,3*4
-#define POP5(a,b,c,d,e)   lw a,0*4(sp); lw b,1*4(sp); lw c,2*4(sp); lw d,3*4(sp); lw e,4*4(sp);               addiu sp,sp,5*4
-#define POP6(a,b,c,d,e,f) lw a,0*4(sp); lw b,1*4(sp); lw c,2*4(sp); lw d,3*4(sp); lw e,4*4(sp); lw f,5*4(sp); addiu sp,sp,6*4
-
-sz_Elf32_Ehdr = 13*4
-sz_Elf32_Phdr =  8*4
+sz_Elf32_Ehdr = 13*NBPW
+sz_Elf32_Phdr =  8*NBPW
 
 sz_b_info= 12
   sz_unc= 0
@@ -64,13 +56,18 @@ PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
 
-MAP_PRIVATE= 2
-MAP_FIXED=     0x10
-MAP_ANONYMOUS= 0x20
+MAP_PRIVATE=       2
+MAP_FIXED=     0x010
+MAP_ANONYMOUS= 0x800  // ugh!!!
 
 PAGE_SHIFT= 12
 PAGE_MASK=  (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
+
+a_type = 0*NBPW
+a_val  = 1*NBPW
+AT_NULL=   0
+AT_PAGESZ= 6
 
 __NR_Linux = 4000
 __NR_exit     =   1+ __NR_Linux
@@ -78,7 +75,7 @@ __NR_write    =   4+ __NR_Linux
 __NR_mmap64   =  90+ __NR_Linux
 __NR_munmap   =  91+ __NR_Linux
 __NR_mprotect = 125+ __NR_Linux
-__NR_cacheflush = 147 + __NR_Linux
+__NR_cacheflush = 147+ __NR_Linux
 
 /* asm/cachectl.h */
 ICACHE= 1<<0
@@ -101,27 +98,63 @@ DCACHE= 1<<1
 #define esi a1
 #define edx a2
 #define ta3 a3
-#define eax $8 /* a4 */
-#define ecx $9 /* a5 */
+#define eax $8 /* a4 t0 */
+#define ecx $9 /* a5 t1 */
 
-#define lr ra
+#define UNFILTER 0  /* no unfilter for MIPS */
+
+N_SLOTS= 0
+sp_frame = 24 * NBPW
+.macro slot symbol, n
+  .ifnb n
+    N_SLOTS = \n + N_SLOTS
+  .else
+    N_SLOTS =  1 + N_SLOTS
+  .endif
+  \symbol= sp_frame - N_SLOTS*NBPW
+.endm
 
   section ELFMAINX
-y_reloc= . - 4*4  //  .long offset(.)  // detect relocation
-u_dtini= . - 3*4  //  .long offset(user DT_INIT)
-e_hatch= . - 2*4  //  .long offset(escape_hatch)
-pb_info= . - 1*4  //  .long offset({p_info; b_info; compressed data})
+y_reloc= . - 4*NBPW  //  .long offset(.)  // detect relocation
+u_dtini= . - 3*NBPW  //  .long offset(user DT_INIT)
+e_hatch= . - 2*NBPW  //  .long offset(escape_hatch)
+pb_info= . - 1*NBPW  //  .long offset({p_info; b_info; compressed data})
 
-_start: .globl _start
-    break  // for debugging
-        PUSH6(arg1,arg2,arg3,fp,lr,ecx)
-o_uinit= 5*4  // slot
-        bltzal $0,9f  # ra= &9f; no branch (condition is false!)
-          li v0,%lo(9f)
-9:
-        subu v0,ra,v0
-        addiu v0,v0,%lo(main)
-        jalr v0  // ra= &f_decompress
+  slot f_my_ra
+  slot f_fp
+  slot f_uinit
+  slot f_envp
+  slot f_argv
+  slot f_argc
+
+_start: .globl _start  // IN: jp= &_start; arg1= argc; arg2= argv; arg3= envp
+////    break  // for debugging
+        addiu sp,sp,-sp_frame
+        sw   ra,f_my_ra(sp)
+        sw arg3,f_envp(sp)
+        sw arg2,f_argv(sp)
+        sw arg1,f_argc(sp)
+
+// Calculate PAGE_MASK
+0:  // Advance envp to auxp
+        lw v0,(arg3)
+        bnez v0,0b
+          addiu arg3,arg3,NBPW
+0:  // Find AT_PAGESZ
+        lw v0,a_type(arg3)
+        li v1,1<<PAGE_SHIFT  // default value
+        beqz v0,5f  // AT_NULL
+          addiu v0,v0,-AT_PAGESZ
+        bnez v0,0b
+          addiu arg3,arg3,2*NBPW
+        lw v1,-2*NBPW + a_val(arg3)
+5:  // v1= PAGE_SIZE
+          li v0,%lo(_start)
+        sw fp,f_fp(sp)
+          subu jp,jp,v0
+        negu fp,v1  // PAGE_MASK
+          addiu jp,jp,%lo(main)  // jp= &main
+        jalr jp  // ra= &f_decompress
           nop
 e_start:
 
@@ -172,12 +205,12 @@ struct CLzmaDecoderState {
 LZMA_BASE_NUM = 1846
 LZMA_LIT_NUM  =  768
 
-lxlzma_szframe  = 12*4
-lxlzma_sv_pc    = 11*4
-lxlzma_sv_sp    = 10*4
-lxlzma_dst      =  9*4
-lxlzma_dstdone  =  8*4
-lxlzma_srcdone  =  7*4
+lxlzma_szframe  = 12*NBPW
+lxlzma_sv_pc    = 11*NBPW
+lxlzma_sv_sp    = 10*NBPW
+lxlzma_dst      =  9*NBPW
+lxlzma_dstdone  =  8*NBPW
+lxlzma_srcdone  =  7*NBPW
 lxlzma_retval   = lxlzma_srcdone
 
 #define a4 t0
@@ -284,18 +317,18 @@ end_decompress: .globl end_decompress
         /* IDENTSTR goes here */
 
   section ELFMAINZ
-.macro push reg
-        addiu sp,sp,-4
-        sw \reg,0(sp)
-.endm
-.macro pop reg
-        lw \reg,0(sp)
-        addiu sp,sp,4
+.macro lodslu  // eax= *esi++;  # 4 bytes unaligned, native endian
+  .if BIG_ENDIAN
+        lwl eax,0(esi)  // hi bytes
+        lwr eax,3(esi)  // lo bytes
+  .else  // LITTLE_ENDIAN
+        lwr eax,0(esi)  // lo bytes
+        lwl eax,3(esi)  // hi bytes
+  .endif
+        addiu esi,esi,NBPW
 .endm
 
-#define lodslu bal get4u; nop
-
-main:
+main:  // IN: ra= &e_start; jp= &main; fp= PAGE_MASK
 //  1. allocate temporary pages
 //  2. copy to temporary pages:
 //       fragment of page below dst; compressed src;
@@ -311,205 +344,243 @@ main:
 // 11. unmap temporary pages
 // 12. goto user DT_INIT
 
-        addiu ecx,lr,y_reloc - e_start
-        lw eax,y_reloc - e_start(lr); subu ecx,ecx,eax; //sw ecx,o_reloc(fp)
-        lw eax,u_dtini - e_start(lr); addu eax,ecx,eax;   sw eax,o_uinit(fp)  // reloc DT_INIT  for step 12
-        lw eax,e_hatch - e_start(lr); addu eax,ecx,eax; push eax               // reloc &hatch   for step 10
-o_hatch= -1*4
-        lw eax,pb_info - e_start(lr); addu edi,ecx,eax  // &l_info; also destination for decompress
+          subu jp,jp,ra  // length(f_exp)
+        la ecx,y_reloc - e_start(ra)
+          srl jp,jp,2  // n_words(f_exp)
+        lw eax,y_reloc - e_start(ra); subu ecx,ecx,eax  // &Elf32_Ehdr of this
+        lw eax,u_dtini - e_start(ra); addu eax,ecx,eax;   sw eax,f_uinit(sp)  // reloc DT_INIT  for step 12
+  slot f_hatch
+        lw eax,e_hatch - e_start(ra); addu eax,ecx,eax;   sw eax,f_hatch(sp)  // reloc &hatch   for step 10
+        lw eax,pb_info - e_start(ra); addu edi,ecx,eax  // &l_info; also destination for decompress
         addiu esi,edi,sz_l_info + sz_p_info  // &b_info
 
-        addiu sp,sp,-2*4  // param space: munmap temp pages  step 9
-p_unmap= -3*4
+  slot p_unmap, 2
 
-        lw eax,sz_cpr(esi); addiu esi,esi,3*4
+        lw eax,sz_cpr(esi); addiu esi,esi,3*NBPW
         addu esi,esi,eax  // skip unpack helper block
 
         lodslu  // eax=dstlen
-        sll ecx,edi,(32-PAGE_SHIFT)
-        srl ecx,ecx,(32-PAGE_SHIFT)  // ecx= w_fragment
-        addu eax,eax,ecx; push eax  // params: mprotect restored pages  step 8
-        subu edi,edi,ecx; push edi
-p_mprot= -5*4
+        and v0,edi,fp  // dst page
+        subu ecx,edi,v0  // ecx= w_fragment below dst
+  slot p_mprot,2
+        addu eax,eax,ecx; sw eax,1*NBPW + p_mprot(sp)  // length to protect  step 8
+        subu edi,edi,ecx; sw edi,0*NBPW + p_mprot(sp)  // base to protect
         subu eax,eax,ecx  // dstlen
         addu edi,edi,ecx  // dst
-        push ecx  // w_fragment
-o_wfrag= -6*4
+  slot f_wfrag
+        srl ecx,ecx,2
+        sh  ecx,f_wfrag(sp)  // w_fragment
+f_wexpf= 2+ f_wfrag
+          sh  jp,f_wexpf(sp)
+  slot o_dstlen
+        sw eax,o_dstlen(sp)
 
-        addiu sp,sp,-4  // FIXME
-o_unflt= -7*4
-
-        lb ta3,b_method-4+1(esi); push ta3  // ftid
-        lb ta3,b_method-4+2(esi); push ta3  // cto8
-        push eax  // dstlen  also for unfilter  step 7
-        push edi  // dst    param for unfilter  step 7
-p_unflt= -11*4
-
+#if UNFILTER  //{
+  slot f_unflt
+  slot p_unflt,5
+        sw edi,0*NBPW + p_unflt(sp)  // dst    param for unfilter  step 7
+        sw eax,1*NBPW + p_unflt(sp)  // dstlen  also for unfilter  step 7
+        lb ta3,b_method-4+1(esi)
+        sw ta3,2*NBPW + p_unflt(sp)  // ftid
+        lb ta3,b_method-4+2(esi)
+        sw ta3,3*NBPW + p_unflt(sp)  // cto8
+#endif  //} UNFILTER
         lodslu; move ecx,eax  // ecx= srclen
-        lodslu; push eax  // method,filter,cto,junk
-        push lr  // &decompress
-o_uncpr= -13*4
-        addiu ta3,fp,p_unflt+1*4  // &dstlen
-        PUSH4(esi,ecx,edi,ta3)  // src, srclen, dst, &dstlen;  arglist ready for decompress  step 6
-p_uncpr= -17*4
+#if UNFILTER  //{
+        lodslu; sw eax,4*NBPW + p_unflt(sp) // method,filter,cto,junk
+#else  //}{
+        addiu esi,esi,NBPW  // esi= &compressed
+#endif  //} UNFILTER
+
+  slot f_expf
+         sw ra,f_expf(sp)
+
+        la ta3,o_dstlen(sp)  // &dstlen
+  slot p_uncpr,4
+        sw esi,0*NBPW + p_uncpr(sp)  // src; arglist ready for decompress  step 6
+        sw ecx,1*NBPW + p_uncpr(sp)  // srclen
+        sw edi,2*NBPW + p_uncpr(sp)  // dst
+        sw ta3,3*NBPW + p_uncpr(sp)  // &dstlen
 
         andi ta3,esi,3  // length of prefix alignment
         addi ecx,ecx,3  // allow  suffix alignment
         add ecx,ecx,ta3  // prefix increases byte length
         srl ecx,ecx,2
-        lw ta3,o_wfrag(fp); add edx,ta3,ecx  // w_srclen + w_frag
-        bal wlen_subr
-          lw ta3,o_uncpr(fp)
-        bal wlen_subr
-          lw ta3,o_unflt(fp)
+        lh ta3,f_wfrag(sp); add edx,ta3,ecx  // w_srclen + w_frag
+        lh ta3,f_wexpf(sp); add edx,ta3,edx  // + n_words(f_exp)
 
+#if UNFILTER  //{
+        bal wlen_subr  // edx += n_words (f_unf)
+          lw ta3,f_unflt(sp)
+#endif  //} UNFILTER
+
+  slot f_super
         bal L220
+          sw ra,f_super(sp)
 supervise:
         // Allocate pages for result of decompressing.
         // These replace the compressed source and the following hole.
-        li arg5,-1  // cater to *BSD for fd of MAP_ANON
         li arg4,MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED
-        li arg3,PROT_READ|PROT_WRITE
-        lw arg2,p_mprot+4(fp)  // dstlen
-        lw arg1,p_mprot  (fp)  // dst
-        move arg6,arg1  // required result
-        do_sys __NR_mmap64; subu ta3,v0,arg6; beqz ta3,0f; break; 0:
+        lw arg2,1*NBPW+p_mprot(sp)  // dstlen
+        bal mmapARW
+          lw arg1,0*NBPW+p_mprot(sp)  // dst
 
         // Restore fragment of page below dst
-        lw ecx,o_wfrag(fp)
-        //move edi,r0  // NOP: edi==r0
+        lh ecx,f_wfrag(sp)
+        move edi,v0  // page_mask & dst
         bal movsl
-          lw esi,p_unmap(fp)
+          lw esi,p_unmap(sp)
 
-        POP5(arg1,arg2,arg3,arg4,eax)
-        jalr eax  // decompress
-          nop
-        addiu sp,sp,4  // toss arg5
+        lw jp,f_expf(sp)
+        lw arg4,3*NBPW + p_uncpr(sp)
+        lw arg3,2*NBPW + p_uncpr(sp)
+        lw arg2,1*NBPW + p_uncpr(sp)
+        jalr jp  // decompress
+          lw arg1,0*NBPW + p_uncpr(sp)
 
         bal L620
+          lw eax,f_hatch(sp)
 //hatch:
-        do_sys __NR_munmap
-        POP5(arg1,arg3,arg3,fp,lr)
-        jalr ra
-          nop
+//  IN: v0= __NR_munmap; arg1= addr; arg2= len
+//  IN: t0= argc; t1= argv; arg3= envp; jp= user DT_INIT; ra= ret.addr
+        syscall
+        move arg2,t1  // argv
+        jr jp  // goto user DT_INIT
+          move arg1,t0  // argc
 
 L620:  // Implant escape hatch at end of .text
-        lw eax,o_hatch(fp)
-        POP2(arg1,arg2)
-        sw arg1,0(eax)
-        sw arg2,4(eax)
+        lw v0,0*NBPW(ra); sw v0,0*NBPW(eax)
+        lw v0,1*NBPW(ra); sw v0,1*NBPW(eax)
+        lw v0,2*NBPW(ra); sw v0,2*NBPW(eax)
+        lw v0,3*NBPW(ra); sw v0,3*NBPW(eax)
 
+#if UNFILTER  //{
 //p_unflt
-        POP6(arg1,arg2,arg3,arg4,eax,ecx)  // ecx=w_fragment [toss]
+        lw arg4,3*NBPW + p_unflt(sp)
+        lw arg3,2*NBPW + p_unflt(sp)
         beqz arg4,0f  // 0==ftid ==> no filter
-          nop
-        jalr eax  // unfilter
-          nop
+          lw jp,4*NBPW + p_unflt(sp)
+        lw arg2,1*NBPW + p_unflt(sp)
+        jalr jp  // unfilter
+          lw arg1,0*NBPW + p_unflt(sp)
 0:
+#endif  //} UNFILTER
+
 //p_mprot
-        lw arg1,0*4(sp)  // lo(dst)
-        lw arg2,1*4(sp)  // len
+        lw arg1,0*NBPW + p_mprot(sp)  // dst
+        lw arg2,1*NBPW + p_mprot(sp)  // len
         li arg3,0
-        addu  arg2,arg2,arg1  // hi(dst)
-        addiu arg2,arg2,2*4  // len(hatch)
+        addu  arg2,arg2,arg1  // last(dst)
+        addiu arg2,arg2,2*NBPW  // len(hatch)
         do_sys __NR_cacheflush
 
-        POP2(arg1,arg2)
+        lw arg1,0*NBPW + p_mprot(sp)
+        lw arg2,1*NBPW + p_mprot(sp)
         li arg3,PROT_READ|PROT_EXEC
         do_sys __NR_mprotect
 
 //p_unmap
-        POP3(arg1,arg2,arg3)
-        jr arg3  // goto hatch
+        lw t8,f_hatch(sp)
+        lw arg2,1*NBPW + p_unmap(sp)
+        lw arg1,0*NBPW + p_unmap(sp)
+          lw ra, f_my_ra(sp)
+          lw fp,    f_fp(sp)
+          lw jp, f_uinit(sp)
+          lw arg3,f_envp(sp)
+          lw t1,  f_argv(sp)
+          lw t0,  f_argc(sp)
+          addiu sp,sp,sp_frame
+        jr t8  // goto hatch
+          li v0,__NR_munmap
 
+// Called by 'supervise', so must be before L220
 movsl_subr:
-        lw ecx,-4(esi)  // 'bal <over>' instruction word
+        lw ecx,-2*NBPW(esi)  // 'bal <over>' instruction word
         sll ecx,ecx,16
-        srl ecx,ecx,16  // displ
-        addiu ecx,ecx,-1  // displ includes delay slot
-// FALL THROUGH to the part of 'movsl' that trims to a multiple of 4 words.
+        srl ecx,ecx,16  // word displ
+        b movsl
+          addiu ecx,ecx,-1  // displ includes delay slot
+
 9:
-        lw v0,0*4(esi); addiu esi,esi,1*4
-        sw v0,0*4(edi); addiu edi,edi,1*4
+        lw v0,0*NBPW(esi); addiu esi,esi,1*NBPW
+        sw v0,0*NBPW(edi); addiu edi,edi,1*NBPW
         addiu ecx,ecx,-1
-movsl:  // edi= 4-byte aligned dst; esi= 4-byte aligned src; ecx= word count
-        andi ta3,ecx,3; bnez ta3,4+ 9b  //; nop  # same instr at 9b: and 7f:
-7:
-        lw v0,0*4(esi); lw v1,1*4(esi); lw t0,2*4(esi); lw t1,3*4(esi)
-        sw v0,0*4(edi); sw v1,1*4(edi); sw t0,2*4(edi); sw t1,3*4(edi)
-        addiu ecx,ecx,-4
-          addiu esi,esi,4*4
-        bnez ecx,7b
-          addiu edi,edi,4*4
+movsl:  // edi= 4-byte aligned dst; esi= 4-byte aligned src; ecx= *WORD* count
+        andi ta3,ecx,3; bnez ta3,4+ 9b  //; nop  # same instr at 9b: and 9f:
 9:
+        lw v0,0*NBPW(esi); lw v1,1*NBPW(esi); lw t8,2*NBPW(esi); lw t9,3*NBPW(esi)
+        sw v0,0*NBPW(edi); sw v1,1*NBPW(edi); sw t8,2*NBPW(edi); sw t9,3*NBPW(edi)
+        addiu ecx,ecx,-4
+          addiu esi,esi,4*NBPW
+        bnez ecx,9b
+          addiu edi,edi,4*NBPW
         jr ra; nop
 
+mmapARW:
+        li v0,-1; addiu sp,sp,-6*NBPW
+        sw v0,  4*NBPW(sp)  // arg4: fd; cater to *BSD for MAP_ANON
+        sw zero,5*NBPW(sp)  // arg6: off_t>>12
+        li arg3,PROT_READ|PROT_WRITE
+        do_sys __NR_mmap64; beqz a3,0f; nop; break; 0:
+        jr ra; addiu sp,sp,6*NBPW
+
 L220:
-        addiu sp,sp,-1*4; sw ra,0(sp)  // PUSH1(ra)
-o_super= -18*4
-        move ta3,lr
+        move ta3,ra
         bal wlen_subr  // wlen_supervise
           nop
-        sll arg2,edx,2  // convert to bytes
 
         // Allocate pages to hold temporary copy.
-        li arg5,-1  // cater to *BSD for fd of MAP_ANON
+        sll arg2,edx,2  // convert to bytes
         li arg4,MAP_PRIVATE|MAP_ANONYMOUS
-        li arg3,PROT_READ|PROT_WRITE|PROT_EXEC
-        sw arg2,p_unmap+1*4(fp)  // length to unmap
-        li arg1,0  // any addr
-        do_sys __NR_mmap64; beqz r_esys,0f; break; 0:
-        sw v0,p_unmap+0*4(fp)  // address to unmap
+        sw arg2,1*NBPW + p_unmap(sp)  // length to unmap
+        bal mmapARW
+          li arg1,0  // any addr
+        sw v0,0*NBPW + p_unmap(sp)  // address to unmap
 
-        lw esi,p_mprot(fp)
-        //move edi,r0  // edi= dst  NOP: edi==r0
+        lw esi,0*NBPW + p_mprot(sp)
+        move edi,v0  // edi= dst
         bal movsl  // copy the fragment
-          lw ecx,o_wfrag(fp)  // w_fragment
+          lh ecx,f_wfrag(sp)  // w_fragment
 
-        lw esi,p_uncpr+0*4(fp)  // src
-        lw ecx,p_uncpr+1*4(fp)  // len
+        lw esi,0*NBPW + p_uncpr(sp)  // src
+        lw ecx,1*NBPW + p_uncpr(sp)  // len
         andi ta3,esi,3  // length of prefix alignment
         subu esi,esi,ta3  // down to word aligned
         addu ecx,ecx,ta3  // prefix increases byte length
-        addu ta3,ta3,edi // skip prefix at destination
-        sw ta3,p_uncpr+0*4(fp)  // dst
+        addu ta3,edi,ta3  // skip prefix at destination
+        sw ta3,0*NBPW + p_uncpr(sp)  // dst
         addi ecx,ecx,3  // round up to full words
         bal movsl  // copy all aligned words that contain compressed data
           srl ecx,ecx,2
 
         move edx,edi  // lo(dst) of copied code
 
-        lw esi,o_uncpr(fp)
-        bal movsl_subr  // copy decompressor
-          sw edi,o_uncpr(fp)
+        lh ecx,f_wexpf(sp)  // n_words
+        lw esi,f_expf(sp)
+        bal movsl  // copy decompressor
+          sw edi,f_expf(sp)
 
-        lw esi,o_unflt(fp)
+#if UNFILTER  //{
+        lw esi,f_unflt(sp)
         bal movsl_subr  // copy unfilter
-          sw edi,o_unflt(fp)
+          sw edi,f_unflt(sp)
+#endif  //} UNFILTER
 
-        POP2(esi,edi)  // &supervise, &copied
+        lw esi,f_super(sp)
         bal movsl_subr  // copy supervisor
-          nop
+          sw edi,f_super(sp)
 
-        move arg2,edi  // hi(dst) of copied code
-        move arg1,edx  // lo(dst) of copied code
+        move arg2,edi  //  &last of copied code
+        move arg1,edx  // &first of copied code
         li arg3,0
         do_sys __NR_cacheflush
 
-        POP1(ra)
-        jr ra
+        lw jp,f_super(sp)
+        jr jp
           nop
 
-get4u:
-        lb eax,0(esi)
-        lb ta3,1(esi); sll ta3,ta3,1*8; or eax,eax,ta3
-        lb ta3,2(esi); sll ta3,ta3,2*8; or eax,eax,ta3
-        lb ta3,3(esi); sll ta3,ta3,3*8; or eax,eax,ta3
-        jr ra
-          addiu esi,esi,4
-
 wlen_subr:  // edx+= nwords of inline subr at *ta3
-        lw  ta3,-4(ta3)  // 'bal <over>' instruction word
+        lw  ta3,-2*NBPW(ta3)  // 'bal <over>' instruction word
         sll ta3,ta3,16
         srl ta3,ta3,16
         addiu ta3,ta3,-1  // displ includes delay slot
