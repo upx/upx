@@ -375,6 +375,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         for (int j = e_phnum; --j>=0; ++phdr) {
             unsigned const len  = get_te32(&phdr->p_filesz);
             unsigned const ioff = get_te32(&phdr->p_offset);
+            unsigned       align= get_te32(&phdr->p_align);
             unsigned const type = get_te32(&phdr->p_type);
             if (phdr->PT_INTERP==type) {
                 // Rotate to highest position, so it can be lopped
@@ -388,11 +389,13 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             }
             if (phdr->PT_LOAD32==type) {
                 if (xct_off < ioff) {  // Slide up non-first PT_LOAD.
-                    fi->seek(ioff, SEEK_SET);
-                    fi->readx(ibuf, len);
-                    off += ~page_mask & (ioff - off);
-                    fo->seek(off, SEEK_SET);
-                    fo->write(ibuf, len);
+                    if ((1u<<12) < align) {
+                        align = 1u<<12;
+                        set_te32(&phdr->p_align, align);
+                    }
+                    off += (align-1) & (ioff - off);
+                    fi->seek(ioff, SEEK_SET); fi->readx(ibuf, len);
+                    fo->seek( off, SEEK_SET); fo->write(ibuf, len);
                     so_slide = off - ioff;
                     set_te32(&phdr->p_offset, so_slide + ioff);
                 }
