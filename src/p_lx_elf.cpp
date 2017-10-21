@@ -1638,7 +1638,7 @@ bool PackLinuxElf32::canPack()
                 throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
                 return false;
             }
-            hatch_off = get_te32(&phdr->p_memsz);
+            hatch_off = ~3u & (3+ get_te32(&phdr->p_memsz));
         }
         if (phdr->PT_NOTE == p_type) {
             unsigned const x = get_te32(&phdr->p_memsz);
@@ -1841,7 +1841,7 @@ PackLinuxElf64::canPack()
                 throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
                 return false;
             }
-            hatch_off = get_te64(&phdr->p_memsz);
+            hatch_off = ~3ul & (3+ get_te64(&phdr->p_memsz));
             break;
         }
     }
