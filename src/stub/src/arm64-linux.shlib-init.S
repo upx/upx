@@ -29,6 +29,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW= 8
 #include "arch/arm64/v8/macros.S"
 
 sz_Elf64_Ehdr = 16 + 2*2 + 4 + 3*8 + 4 + 6*2
@@ -53,6 +54,11 @@ PAGE_SHIFT= 12
 PAGE_MASK=  (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
 
+a_type = 0*NBPW
+a_val  = 1*NBPW
+AT_NULL=   0
+AT_PAGESZ= 6
+
 __NR_exit =   93
 __NR_write =  64
 __NR_mmap64   = 0xde  // 222
@@ -63,6 +69,7 @@ __ARM_NR_cacheflush =  (1<<31)  // FIXME
 
 #define arg1 x0
 #define arg2 x1
+#  define arg2w w1
 #define arg3 x2
 #define arg4 x3
 #define arg5 x4
@@ -83,7 +90,6 @@ __ARM_NR_cacheflush =  (1<<31)  // FIXME
 #define rcx x5
 
 #define lr  x30
-#define fp  x29
 
 #define src  x0
 #define len  w1
@@ -99,20 +105,49 @@ __ARM_NR_cacheflush =  (1<<31)  // FIXME
 #define tmp2w w6
 #define tmp2x x6
 
+N_SLOT= 0
+sp_frame = 30 * NBPW
+.macro slot  symbol, n
+  \symbol = N_SLOT*NBPW
+  .ifnb n
+    N_SLOT = \n + N_SLOT
+  .else
+    N_SLOT =  1 + N_SLOT
+  .endif
+.endm
+
   section ELFMAINX
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
 //  .long offset({l_info; p_info; b_info; compressed data})
 
-_start: .globl _start
-//      brk #0  // debugging
-        PUSH2(lr,x0)  // x0= placeholder for user DT_INIT
-        PUSH4(arg1,arg2,arg3,fp)
-        mov fp,sp
-o_uinit= 5*8  // pc
+  slot f_argc  // 0
+  slot f_argv  // 1
+  slot f_envp  // 2
+  slot f_uinit  // 3  user DT_INIT
+  slot f_PMASK  // 4  PAGE_MASK
+  slot f_my_ra  // 5
 
-        bl main  // push &f_decompress
+_start: .globl _start
+//    brk #0  // debugging
+        stp arg1,arg2,[sp,#f_argc - sp_frame]!  // f_argv
+        stp arg3,x0,  [sp,#f_envp]  // %f_uinit
+
+// Calculate PAGE_MASK
+0:  // Advance envp to auxp
+        ldr x3,[arg3],#NBPW; cbnz x3,0b
+
+        mov x3,#1<<PAGE_SHIFT  // default
+0:  // Find AT_PAGESZ
+        ldp x0,x1,[arg3],#2*NBPW; cbz x0,5f  // AT_NULL==.a_type; use default
+        cmp x0,#AT_PAGESZ; bne 0b
+5:  // auxp cannot be empty (must have AT_UID), so 'cmp' above sets nzvc
+        csel x1,x1,x3,eq  // x1 if found, else x3
+        neg x1,x1
+        stp x1,lr,[sp,#f_PMASK]  // f_my_ra
+
+        bl main  // ra= &f_decompress
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
 
@@ -172,28 +207,30 @@ main:
 
         add rsi,rdx,# _start - f_decompress - 4*4
                mov rcx,rsi
-        lodsl; sub rcx,rcx,rax; //str ecx,[fp,#o_reloc]
-        lodsl; add rax,rcx,rax; str rax,[fp,#o_uinit]  // reloc DT_INIT  for step 12
-        lodsl; add rax,rcx,rax; PUSH1(rax)             // reloc &hatch   for step 10
-o_hatch= -2*8  // HOLE
+        lodsl; sub rcx,rcx,rax; //str ecx,[sp,#o_reloc]
+        lodsl; add rax,rcx,rax; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
+  slot o_hatch  // 6
+        lodsl; add rax,rcx,rax; str rax,[sp,#o_hatch]  // reloc &hatch   for step 10
         lodsl; add rdi,rcx,rax  // &l_info; also destination for decompress
         add rsi,rdi,#sz_l_info + sz_p_info  // &b_info
 
-        sub sp,sp,#2*8  // param space: munmap temp pages  step 9
-p_unmap= -4*8
+  slot p_unmap,2  // 7
 
-        ldr eax,[rsi,#4]; add rsi,rsi,#3*4  // sz_cpr
+        ldr eax,[rsi,#sz_cpr]; add rsi,rsi,#sz_b_info  // sz_cpr
         add rsi,rsi,rax  // skip unpack helper block
 
+        ldr ecx,[sp,#f_PMASK]
         lodslu  // eax=dstlen
-        lsl ecx,edi,#  (32-PAGE_SHIFT)
-        lsr ecx,ecx,#2+(32-PAGE_SHIFT)  // ecx= w_fragment
-        add eax,eax,ecx,lsl #2
-        sub rdi,rdi,rcx,lsl #2
-        PUSH2(rdi,rax)  // params: mprotect restored pages  step 8
-p_mprot= -6*8
-        sub eax,eax,ecx,lsl #2  // dstlen
-        add rdi,rdi,rcx,lsl #2  // dst
+        bic ecx,edi,ecx  // ecx= fragment
+        add ecx,ecx,#3
+        bic ecx,ecx,#3  // w_frag  [can be PAGE_SIZE !]
+
+        add eax,eax,ecx  // dstlen + fragment
+        sub rdi,rdi,ecx,uxtw  // page boundary
+  slot p_mprot,2  // 9
+        stp rdi,rax,[sp,#p_mprot]  // params: mprotect restored pages  step 8
+        add rdi,rdi,ecx,uxtw  // restore dst
+        sub eax,eax,ecx  // restore dstlen
 
         bl L610
 f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
@@ -222,26 +259,30 @@ unfret:
         ret
 
 L610:
-        PUSH2(lr,rcx)  // f_unf, w_frag
-o_wfrag = -7*8
-o_unflt= -8*8
+
+        lsr ecx,ecx,#2  // w_frag
+  slot o_unflt  // 11
+  slot o_wfrag  // 12
+        stp lr,rcx,[sp,#o_unflt]  // o_wfrag
         ldrb tmp1w,[rsi,# b_method-4+1]  // ftid
         ldrb tmp2w,[rsi,# b_method-4+2]  // cto8
-        PUSH4(rdi,rax,tmp2x,tmp1x)  // dst, dstlen, cto8, ftid  for unfilter  step 7
-p_unflt= -12*8
+  slot p_unflt,4  // 13
+        stp rdi,rax,[sp,#0*NBPW + p_unflt]  // dst, dstlen
+        stp tmp2x,tmp1x,[sp,2*NBPW + p_unflt]  // cto8, ftid  for unfilter  step 7
 
         lodslu; mov ecx,eax  // ecx= srclen
         lodslu
-        PUSH2(rdx,rax)  // &decompress, {method,filter,cto,junk}
-o_uncpr= -14*8
-        add tmpx,fp,#p_unflt+1*8
-        PUSH4(rsi,rcx,rdi,tmpx)  // src,srclen,dst,&dstlen  arglist ready for decompress step 6
-p_uncpr= -18*8
+  slot o_uncpr,2  // 17
+        stp rdx,rax,[sp,#o_uncpr]  // &decompress, {method,filter,cto,junk}
+        add tmpx,sp,#1* NBPW + p_unflt  // &dstlen
+  slot p_uncpr,4  // 19
+        stp rsi,rcx, [sp,#0*NBPW + p_uncpr]  // src, srclen
+        stp rdi,tmpx,[sp,#2*NBPW + p_uncpr]  // dst, &dstlen  arglist ready for decompress  step 6
 
         add rcx,rcx,#3  // allow  suffix alignment
-        ldr tmp,[fp,#o_wfrag]; add rdx,tmpx,rcx,lsr #2  // w_srclen + w_frag
-        ldr tmpx,[fp,#o_uncpr]; bl wlen_subr
-        ldr tmpx,[fp,#o_unflt]; bl wlen_subr
+        ldr tmp,[sp,#o_wfrag]; add rdx,tmpx,rcx,lsr #2  // w_srclen + w_frag
+        ldr tmpx,[sp,#o_uncpr]; bl wlen_subr
+        ldr tmpx,[sp,#o_unflt]; bl wlen_subr
 
         bl L220
 supervise:
@@ -251,50 +292,52 @@ supervise:
         mov arg5,#-1  // cater to *BSD for fd of MAP_ANON
         mov arg4,#MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED
         mov arg3,#PROT_READ|PROT_WRITE
-        ldr arg2,[fp,#p_mprot+8]  // dstlen
-        ldr arg1,[fp,#p_mprot  ]  // dst
+        ldp arg1,arg2,[sp,#p_mprot]  // dst, dstlen
         mov x6,arg1  // required result
         do_sys __NR_mmap64; cmp x0,x6; beq 0f; brk #0; 0:
 
         // Restore fragment of page below dst
-        ldr ecx,[fp,#o_wfrag]
+        ldr ecx,[sp,#o_wfrag]
         //mov edi,r0  // NOP: edi==r0
-        ldr rsi,[fp,#p_unmap]
+        ldr rsi,[sp,#0*NBPW + p_unmap]
         bl movsl
 
 //p_uncpr
-        POP4(arg1,arg2,arg3,arg4)
-        POP1(rax)
+        ldr rax,[sp,#o_uncpr]
+        ldp arg1,arg2,[sp,#0*NBPW + p_uncpr]
+        ldp arg3,arg4,[sp,#2*NBPW + p_uncpr]
         blr rax  // decompress
 
         bl L620
-//hatch:
-        do_sys __NR_munmap  // 2 instr
-        POP4(arg1,arg2,arg3,fp)  // 2 instr
-        POP2(lr,arg4)  // 1 instr; arg4= user DT_INIT
+//hatch:  IN: lr= f_my_ra; {arg1,arg2}= p_unmap; arg3= f_envp; arg4= f_uinit
+        svc #0  // munmap(arg1,arg2)
+        ldp arg1,arg2,[sp],#sp_frame  // f_argc, f_argv
         br arg4
 
 L620:  // Implant escape hatch at end of .text
-        ldr rax,[fp,#o_hatch]
-        ldp arg1,arg2,[lr]  // 4 instr
-        stp arg1,arg2,[rax]
-        ldr arg1,[lr,#2*8]  // 2 instr
-        str arg1,[rax,#2*8]
+        ldr rax,[sp,#o_hatch]
+        ldp arg1,arg2,[lr]    // 4 instr
+        str arg1, [rax]       // 2 instr
+        str arg2w,[rax,#2*4]  // 1 instr
 
 //p_unflt
-        POP4(arg1,arg2,arg3,arg4)
-        POP1(rax)  // f_unf
+        ldr rax,[sp,#o_unflt]
+        ldp arg3,arg4,[sp,#2*NBPW + p_unflt]
+        ldp arg1,arg2,[sp,#0*NBPW + p_unflt]
         cbz arg4,0f  // 0==ftid ==> no filter
         blr rax  // unfilter
 0:
 //p_mprot
-        POP2(arg1,arg2)
+        ldp arg1,arg2,[sp,#p_mprot]  // dst, dstlen
         mov arg3,#PROT_READ|PROT_EXEC
         do_sys __NR_mprotect
 
 //p_unmap
-        POP3(arg1,arg2,lr)
-        br lr  // goto hatch
+        ldp lr,arg5,[sp,#f_my_ra]  // lr= f_my_ra; arg5= o_hatch
+        ldp arg1,arg2,[sp,#0*NBPW + p_unmap]
+          mov w8,#__NR_munmap
+          ldp arg3,arg4,[sp,#2*NBPW + f_argc]  // f_uinit
+        br arg5  // goto hatch
 
 movsl_subr:
         ldr ecx,[rsi,#-4]  // 'bl <over>' instruction word
@@ -312,8 +355,8 @@ movsl:  // rdi= 4-byte aligned dst; rsi= 4-byte aligned src; ecx= word count
         ret
 
 L220:
-        PUSH1(lr)  // &supervise
-o_super= -20*8  // HOLE
+  slot f_super  // 23
+        str lr,[sp,#f_super]
         mov tmpx,lr; bl wlen_subr  // wlen_supervise
         lsl arg2,rdx,#2  // convert to bytes
 
@@ -322,41 +365,41 @@ o_super= -20*8  // HOLE
         mov arg5,#-1  // cater to *BSD for fd of MAP_ANON
         mov arg4,#MAP_PRIVATE|MAP_ANONYMOUS
         mov arg3,#PROT_READ|PROT_WRITE  // some OS prohibit PROT_WRITE && PROT_EXEC
-        str arg2,[fp,#p_unmap+1*8]  // length to unmap
+        str arg2,[sp,#1*NBPW + p_unmap]  // length to unmap
         mov arg1,#0  // any addr
         do_sys __NR_mmap64; cmn x0,#4096; bcc 0f; brk #0; 0:
-        str x0,[fp,#p_unmap+0*8]  // address to unmap
+        str x0,[sp,#0*NBPW + p_unmap]  // address to unmap
 
-        ldr rsi,[fp,#p_mprot]
+        ldr rsi,[sp,#p_mprot]  // dst
         //mov edi,r0  // edi= dst  NOP: edi==r0
-        ldr ecx,[fp,#o_wfrag]  // w_fragment
+        ldr ecx,[sp,#o_wfrag]  // w_fragment
         bl movsl  // copy the fragment
 
-        ldr rsi,[fp,#p_uncpr]  // src
-        ldr ecx,[fp,#p_uncpr+1*8]  // len
-        str rdi,[fp,#p_uncpr]
+        ldp rsi,rcx,[sp,#p_uncpr]  // src, len
+        str rdi,    [sp,#p_uncpr]  // relocated src
         add ecx,ecx,#3; lsr ecx,ecx,#2
         bl movsl  // copy compressed data
 
         mov rdx,rdi  // lo(dst) of copied code
 
-        ldr rsi,[fp,#o_uncpr]
-        str rdi,[fp,#o_uncpr]
+        ldr rsi,[sp,#o_uncpr]
+        str rdi,[sp,#o_uncpr]
         bl movsl_subr  // copy decompressor
 
-        ldr rsi,[fp,#o_unflt]
-        str rdi,[fp,#o_unflt]
+        ldr rsi,[sp,#o_unflt]
+        str rdi,[sp,#o_unflt]
         bl movsl_subr  // copy unfilter
 
-        POP1(rsi)   // &supervise
-        PUSH1(rdi)  // &copied
+        ldr rsi,[sp,#f_super]
+        str rdi,[sp,#f_super]
         bl movsl_subr  // copy supervisor
 
-        ldp arg1,arg2,[fp,#p_unmap+0*8]
+        ldp arg1,arg2,[sp,#0*NBPW + p_unmap]  // PROT_EXEC for supervise
         mov arg3,#PROT_READ|PROT_EXEC  // some OS prohibit PROT_WRITE && PROT_EXEC
         do_sys __NR_mprotect; cmn x0,#4096; bcc 0f; brk #0; 0:
 
-        POP1(lr); br lr  // goto copied supervisor
+        ldr lr,[sp,#f_super]
+        br  lr  // goto copied supervisor
 
 wlen_subr:  // rdx+= nwords of inline subr at *tmp
         ldr tmp,[tmpx,#-4]  // 'bl <over>' instruction word
