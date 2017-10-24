@@ -106,13 +106,16 @@ __ARM_NR_cacheflush =  (1<<31)  // FIXME
 #define tmp2x x6
 
 N_SLOT= 0
-sp_frame = 30 * NBPW
+sp_frame = 24 * NBPW
 .macro slot  symbol, n
   \symbol = N_SLOT*NBPW
   .ifnb n
     N_SLOT = \n + N_SLOT
   .else
     N_SLOT =  1 + N_SLOT
+  .endif
+  .if sp_frame < N_SLOT*NBPW
+    error "too many slots"
   .endif
 .endm
 
@@ -343,13 +346,14 @@ movsl_subr:
         ldr ecx,[rsi,#-4]  // 'bl <over>' instruction word
         bic ecx,ecx,#0xff<<24  // displacment field
 movsl:  // rdi= 4-byte aligned dst; rsi= 4-byte aligned src; ecx= word count
-        tst ecx,#1; lsr ecx,ecx,#1; beq 5f
-        ldr tmp,[rsi],#4
-        str tmp,[rdi],#4
+        tbz ecx,#0,5f  // goto 5f if ecx is even
+        ldr w3,[rsi],#4
+        sub ecx,ecx,#1
+        str w3,[rdi],#4
 5:
         cbz ecx,9f
 7:
-        ldp w2,w3,[rsi],#2*4; sub  ecx,ecx,#1
+        ldp w2,w3,[rsi],#2*4; sub  ecx,ecx,#2
         stp w2,w3,[rdi],#2*4; cbnz ecx,7b
 9:
         ret
