@@ -243,7 +243,7 @@ unfold:  // IN: rbp= &f_exp; rsp/ &proc_self_exe,%entry
           push %rdi  // fd
         push %rcx  // elfaddr
 
-// Reserve space fo input file and unfolded stub.
+// Reserve space for input file and unfolded stub.
         subq %arg6,%arg6  // 0 offset
         orl $-1,%arg5l  // fd
         push $MAP_PRIVATE|MAP_ANONYMOUS; pop %sys4
