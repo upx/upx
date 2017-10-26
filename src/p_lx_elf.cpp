@@ -1774,6 +1774,10 @@ bool PackLinuxElf32::canPack()
                 goto abandon;
             }
             xct_off = elf_get_offset_from_address(xct_va);
+            if (opt->debug.debug_level) {
+                fprintf(stderr, "shlib canPack: xct_va=%#lx  xct_off=%lx\n",
+                    (long)xct_va, (long)xct_off);
+            }
             goto proceed;  // But proper packing depends on checking xct_va.
         }
         else
@@ -1934,6 +1938,10 @@ PackLinuxElf64::canPack()
                 goto abandon;
             }
             xct_off = elf_get_offset_from_address(xct_va);
+            if (opt->debug.debug_level) {
+                fprintf(stderr, "shlib canPack: xct_va=%#lx  xct_off=%lx\n",
+                    (long)xct_va, (long)xct_off);
+            }
             goto proceed;  // But proper packing depends on checking xct_va.
         }
         else
