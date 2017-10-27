@@ -276,6 +276,7 @@ sz_auxv= 2*NBPW
         ld 31,SZ_FRAME + (-1+ 31)*NBPW(sp)
         la sp,SZ_FRAME +      32 *NBPW(sp)  // FR_00  deallocate outer frame
 
+        mflr r12  // r12 must contain .e_entry (musl 1.1.6 convention 2017-04-25)
         bctr  // goto escape hatch
 
 SYS_exit=  1
