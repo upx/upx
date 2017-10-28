@@ -165,8 +165,10 @@ L90:
         clrldi r0,r0,-4+ 8*NBPW  // keep bottom 4 bits
         sub a0,a0,r0
 
-// slide the rest of the stack up
+// slide the rest of the stack up; leave room for fake TOC of .e_entry
         movr a1,av_hi
+        li r0,0; stdu r0,-NBPW(a0); stdu r0,-NBPW(a0)
+        movr av_hi,a0  // remember location
         sub r_auxv,a0,av_len
 0:
         ldu  r0,-NBPW(a1); cmpld cr7,a1,sp
@@ -202,6 +204,7 @@ r_reloc= 32 - 1  # used slot in register save area
         la  sp,SZ_FRAME+OVERHEAD(sp)  // FR_01  deallocate this frame
 #if USE_TOC  //{
 // Sometimes the "entry TOC" is not a TOC, particularly with musl.
+        movr r2,av_hi  // default fake TOC
         andi. r0,a0,7; bne cr0,noTOC  // align(TOC) < 8;  [heuristic]
         lwz r0,0(a0); cmplwi r0,0; bne noTOC  // 4GiB <= .func;  an instruction?
 
@@ -209,6 +212,7 @@ r_reloc= 32 - 1  # used slot in register save area
         ld r2,NBPW(r3); add r2,r2,r0  // toc
         ld r3,   0(r3); add r3,r3,r0  // .func   NOTE: r3 === a0
 noTOC:
+        std r3,0(av_hi)  // .func for .e_entry
 #endif  //}
         mr r_exp,a0  // save &entry (.entry when BIG_ENDIAN)
 
@@ -229,12 +233,10 @@ a_type= 0
 a_val= NBPW
 sz_auxv= 2*NBPW
 
-// find the escape hatch in auxv[{AT_NULL}].a_val
-        mr a0,r_auxv
-0:
-        ld r0,a_type(a0); ld a1,a_val(a0); addi a0,a0,sz_auxv
-        cmpldi cr7,r0,AT_NULL; bne+ cr7,0b
-        mtctr a1  // escape hatch
+        ld r0,-NBPW(av_hi)  // &hatch
+        mtctr r0
+        ld r0,0(av_hi)  // entry address
+        std r0,SZ_FRAME + (-1+ 31)*NBPW(sp)  // hatch: "movr r12,r31" for musl 1.1.16
 
         mr a0,r_ADRU
         mr a1,r_LENU
@@ -276,7 +278,6 @@ sz_auxv= 2*NBPW
         ld 31,SZ_FRAME + (-1+ 31)*NBPW(sp)
         la sp,SZ_FRAME +      32 *NBPW(sp)  // FR_00  deallocate outer frame
 
-        mflr r12  // r12 must contain .e_entry (musl 1.1.6 convention 2017-04-25)
         bctr  // goto escape hatch
 
 SYS_exit=  1

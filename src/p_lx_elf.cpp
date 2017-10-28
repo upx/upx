@@ -473,6 +473,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         upx_uint64_t const pm = (
                Elf64_Ehdr::EM_X86_64 ==e_machine
             || Elf64_Ehdr::EM_AARCH64==e_machine
+            //|| Elf64_Ehdr::EM_PPC64  ==e_machine  /* DOES NOT WORK! */
             )
             ? ((~(upx_uint64_t)0)<<12)
             : page_mask;

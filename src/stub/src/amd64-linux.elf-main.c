@@ -234,7 +234,7 @@ make_hatch_x86_64(
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
                 &&  (1*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
         // Try Elf64_Ehdr.e_ident[12..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf64_Ehdr *)phdr->p_vaddr + reloc)->e_ident[12])),
+        ||   ( (hatch = (void *)(&((Elf64_Ehdr *)(phdr->p_vaddr + reloc))->e_ident[12])),
                 (phdr->p_offset==0) )
         )
         {
@@ -247,6 +247,12 @@ make_hatch_x86_64(
     return hatch;
 }
 #elif defined(__powerpc64__)  //}{
+static unsigned
+ORRX(unsigned ra, unsigned rs, unsigned rb) // or ra,rs,rb
+{
+    return (31<<26) | ((037&(rs))<<21) | ((037&(ra))<<16) | ((037&(rb))<<11) | (444<<1) | 0;
+}
+
 static void *
 make_hatch_ppc64(
     Elf64_Phdr const *const phdr,
@@ -260,14 +266,16 @@ make_hatch_ppc64(
         // Try page fragmentation just beyond .text .
         if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  (2*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
-        // Try Elf64_Ehdr.e_ident[8..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf64_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
+                &&  (3*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
+        // Try Elf64_Phdr[1].p_paddr (2 instr) and .p_filesz (1 instr)
+        ||   ( (hatch = (void *)(&((Elf64_Phdr *)(1+  // Ehdr and Phdr are contiguous
+                ((Elf64_Ehdr *)(phdr->p_vaddr + reloc))))[1].p_paddr)),
                 (phdr->p_offset==0) )
         )
         {
             hatch[0]= 0x44000002;  // sc
-            hatch[1]= 0x4e800020;  // blr
+            hatch[1]= ORRX(12,31,31);  // movr r12,r31 ==> or r12,r31,r31
+            hatch[2]= 0x4e800020;  // blr
         }
         else {
             hatch = 0;
@@ -299,7 +307,7 @@ make_hatch_arm64(
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
                 &&  (2*4)<=(frag_mask & -(int)(uint64_t)hatch) ) ) // space left on page
         // Try Elf64_Ehdr.e_ident[8..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf64_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
+        ||   ( (hatch = (void *)(&((Elf64_Ehdr *)(phdr->p_vaddr + reloc))->e_ident[8])),
                 (phdr->p_offset==0)
         )
         ) {
