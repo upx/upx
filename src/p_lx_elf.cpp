@@ -3107,12 +3107,17 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
                 unsigned arm_attr_size = 0;
                 for (unsigned j = 0; j < k; ++j) { // forward .sh_link
                     Elf32_Shdr *const sptr = j + (Elf32_Shdr *)(void *)snew;
+                    unsigned const type = get_te32(&sptr->sh_type);
                     // work-around for https://bugs.launchpad.net/bugs/1712938
-                    if (Elf32_Shdr::SHT_ARM_ATTRIBUTES == get_te32(&sptr->sh_type)) {
+                    if (Elf32_Shdr::SHT_ARM_ATTRIBUTES == type) {
                         arm_attr_offset = get_te32(&sptr->sh_offset);
                         arm_attr_size   = get_te32(&sptr->sh_size);
                         set_te32(&sptr->sh_offset, xtra_off);
                         xtra_off += get_te32(&sptr->sh_size);
+                    }
+                    if (Elf32_Shdr::SHT_STRTAB == type) { // any SHT_STRTAB should work
+                        set_te16(&elfout.ehdr.e_shstrndx, 1+ j);  // 1+: shdr_undef
+                        set_te16(      &ehdri.e_shstrndx, 1+ j);  // 1+: shdr_undef
                     }
                     unsigned sh_offset = get_te32(&sptr->sh_offset);
                     if (xct_off <= sh_offset) {
@@ -3240,12 +3245,17 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
                 unsigned long arm_attr_size = 0;
                 for (unsigned j = 0; j < k; ++j) { // forward .sh_link
                     Elf64_Shdr *const sptr = j + (Elf64_Shdr *)(void *)snew;
+                    unsigned const type = get_te32(&sptr->sh_type);
                     // work-around for https://bugs.launchpad.net/bugs/1712938
-                    if (Elf64_Shdr::SHT_ARM_ATTRIBUTES == get_te32(&sptr->sh_type)) {
+                    if (Elf64_Shdr::SHT_ARM_ATTRIBUTES == type) {
                         arm_attr_offset = get_te64(&sptr->sh_offset);
                         arm_attr_size   = get_te64(&sptr->sh_size);
                         set_te64(&sptr->sh_offset, xtra_off);
                         xtra_off += get_te64(&sptr->sh_size);
+                    }
+                    if (Elf64_Shdr::SHT_STRTAB == type) { // any SHT_STRTAB should work
+                        set_te16(&elfout.ehdr.e_shstrndx, 1+ j);  // 1+: shdr_undef
+                        set_te16(      &ehdri.e_shstrndx, 1+ j);  // 1+: shdr_undef
                     }
                     upx_uint64_t sh_offset = get_te64(&sptr->sh_offset);
                     if (xct_off <= sh_offset) {
