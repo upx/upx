@@ -547,12 +547,49 @@ void PeFile64::processRelocs() // pass1
 // import handling
 **************************************************************************/
 
-__packed_struct(import_desc)
-    LE32  oft;      // orig first thunk
-    char  _[8];
-    LE32  dllname;
-    LE32  iat;      // import address table
-__packed_struct_end()
+//__packed_struct(import_desc)
+//    LE32  oft;      // orig first thunk
+//    char  _[8];
+//    LE32  dllname;
+//    LE32  iat;      // import address table
+//__packed_struct_end()
+
+LE32& PeFile::IDSIZE(unsigned x) {
+    if ((file_size - sizeof(import_desc)) < iddirs[x].size) {
+        char buf[52];
+        snprintf(buf,sizeof(buf),"bad import[%d].size %#x",
+            (unsigned)x, (unsigned)iddirs[x].size);
+        throwCantPack(buf);
+    }
+    return iddirs[x].size;
+}
+LE32& PeFile::IDADDR(unsigned x) {
+    if ((file_size - sizeof(import_desc)) < iddirs[x].vaddr) {
+        char buf[52];
+        snprintf(buf,sizeof(buf),"bad import[%d].vaddr %#x",
+            (unsigned)x, (unsigned)iddirs[x].vaddr);
+        throwCantPack(buf);
+    }
+    return iddirs[x].vaddr;
+}
+LE32& PeFile::ODSIZE(unsigned x) {
+    if ((file_size - sizeof(import_desc)) < oddirs[x].size) {
+        char buf[52];
+        snprintf(buf,sizeof(buf),"bad export[%d].size %#x",
+            (unsigned)x, (unsigned)oddirs[x].size);
+        throwCantPack(buf);
+    }
+    return oddirs[x].size;
+}
+LE32& PeFile::ODADDR(unsigned x) {
+    if ((file_size - sizeof(import_desc)) < oddirs[x].vaddr) {
+        char buf[52];
+        snprintf(buf,sizeof(buf),"bad export[%d].vaddr %#x",
+            (unsigned)x, (unsigned)oddirs[x].vaddr);
+        throwCantPack(buf);
+    }
+    return oddirs[x].vaddr;
+}
 
 /*
  ImportLinker: 32 and 64 bit import table building.

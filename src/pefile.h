@@ -178,10 +178,17 @@ protected:
     ddirs_t *iddirs;
     ddirs_t *oddirs;
 
-    LE32 &IDSIZE(unsigned x) { return iddirs[x].size; }
-    LE32 &IDADDR(unsigned x) { return iddirs[x].vaddr; }
-    LE32 &ODSIZE(unsigned x) { return oddirs[x].size; }
-    LE32 &ODADDR(unsigned x) { return oddirs[x].vaddr; }
+    __packed_struct(import_desc)
+    LE32  oft;      // orig first thunk
+    char  _[8];
+    LE32  dllname;
+    LE32  iat;      // import address table
+    __packed_struct_end()
+
+    LE32 &IDSIZE(unsigned x);
+    LE32 &IDADDR(unsigned x);
+    LE32 &ODSIZE(unsigned x);
+    LE32 &ODADDR(unsigned x);
 
     __packed_struct(pe_section_t)
         char    name[8];
