@@ -555,37 +555,49 @@ void PeFile64::processRelocs() // pass1
 //__packed_struct_end()
 
 LE32& PeFile::IDSIZE(unsigned x) {
-    if ((file_size - sizeof(import_desc)) < iddirs[x].size) {
-        char buf[52];
-        snprintf(buf,sizeof(buf),"bad import[%d].size %#x",
-            (unsigned)x, (unsigned)iddirs[x].size);
+    unsigned const z = iddirs[x].size + iddirs[x].vaddr;
+    if (z < iddirs[x].size  // wrap-around
+    ||  file_size < z  // overrun
+    ) {
+        char buf[60];
+        snprintf(buf,sizeof(buf),"bad import[%d]{%#x, %#x}",
+            (unsigned)x, (unsigned)iddirs[x].vaddr, (unsigned)iddirs[x].size);
         throwCantPack(buf);
     }
     return iddirs[x].size;
 }
 LE32& PeFile::IDADDR(unsigned x) {
-    if ((file_size - sizeof(import_desc)) < iddirs[x].vaddr) {
-        char buf[52];
-        snprintf(buf,sizeof(buf),"bad import[%d].vaddr %#x",
-            (unsigned)x, (unsigned)iddirs[x].vaddr);
+    unsigned const z = iddirs[x].size + iddirs[x].vaddr;
+    if (z < iddirs[x].vaddr  // wrap-around
+    ||  file_size < z  // overrun
+    ) {
+        char buf[60];
+        snprintf(buf,sizeof(buf),"bad import[%d]{%#x, %#x}",
+            (unsigned)x, (unsigned)iddirs[x].vaddr, (unsigned)iddirs[x].size);
         throwCantPack(buf);
     }
     return iddirs[x].vaddr;
 }
 LE32& PeFile::ODSIZE(unsigned x) {
-    if ((file_size - sizeof(import_desc)) < oddirs[x].size) {
-        char buf[52];
-        snprintf(buf,sizeof(buf),"bad export[%d].size %#x",
-            (unsigned)x, (unsigned)oddirs[x].size);
+    unsigned const z = oddirs[x].size + oddirs[x].vaddr;
+    if (z < oddirs[x].size  // wrap-around
+    ||  file_size < z  // overrun
+    ) {
+        char buf[60];
+        snprintf(buf,sizeof(buf),"bad export[%d]{%#x, %#x}",
+            (unsigned)x, (unsigned)oddirs[x].vaddr, (unsigned)oddirs[x].size);
         throwCantPack(buf);
     }
     return oddirs[x].size;
 }
 LE32& PeFile::ODADDR(unsigned x) {
-    if ((file_size - sizeof(import_desc)) < oddirs[x].vaddr) {
-        char buf[52];
-        snprintf(buf,sizeof(buf),"bad export[%d].vaddr %#x",
-            (unsigned)x, (unsigned)oddirs[x].vaddr);
+    unsigned const z = oddirs[x].size + oddirs[x].vaddr;
+    if (z < oddirs[x].vaddr  // wrap-around
+    ||  file_size < z  // overrun
+    ) {
+        char buf[60];
+        snprintf(buf,sizeof(buf),"bad export[%d]{%#x, %#x}",
+            (unsigned)x, (unsigned)oddirs[x].vaddr, (unsigned)oddirs[x].size);
         throwCantPack(buf);
     }
     return oddirs[x].vaddr;
