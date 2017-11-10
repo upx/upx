@@ -73,6 +73,18 @@ MemBuffer::~MemBuffer()
     this->dealloc();
 }
 
+// similar to BoundedPtr, except checks only at creation
+unsigned char *MemBuffer::subref(char const *errfmt, unsigned skip, unsigned take)
+{
+    if ((take + skip) < take  // wrap-around
+    ||  (take + skip) > b_size  // overrun
+    ) {
+        char buf[100]; snprintf(buf, sizeof(buf), errfmt, skip, take);
+        throwCantPack(buf);
+    }
+    return &b[skip];
+}
+
 void MemBuffer::dealloc()
 {
     if (b != NULL)

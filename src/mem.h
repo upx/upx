@@ -64,6 +64,11 @@ public:
     void clear(unsigned off, unsigned len)  { fill(off, len, 0); }
     void clear()                            { fill(0, b_size, 0); }
 
+    // If the entire range [skip, take+skip) is inside the buffer,
+    // then return &b[skip]; else throwCantPack(sprintf(errfmt, skip, take)).
+    // This is similar to BoundedPtr, except only checks once.
+    unsigned char *subref(char const *errfmt, unsigned skip, unsigned take);
+
 private:
     unsigned char *b;
     unsigned b_size;
