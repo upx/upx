@@ -1422,7 +1422,7 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
         return;
 
     const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
-    const upx_byte * const loadconf = ibuf.subref("bad loadconf %#x", lcaddr, 1);
+    const upx_byte * const loadconf = ibuf.subref("bad loadconf %#x", lcaddr, 4);
     soloadconf = get_le32(loadconf);
     if (soloadconf == 0)
         return;
