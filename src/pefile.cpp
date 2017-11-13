@@ -2064,6 +2064,9 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 
 void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
 {
+    if (!objs) {
+        return;
+    }
     isection = New(pe_section_t, objs);
     if (file_size < (off_t)(pe_offset + sizeof_ih + sizeof(pe_section_t)*objs)) {
         char buf[32]; snprintf(buf, sizeof(buf), "too many sections %d", objs);
@@ -2072,11 +2075,23 @@ void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
     fi->seek(pe_offset+sizeof_ih,SEEK_SET);
     fi->readx(isection,sizeof(pe_section_t)*objs);
     rvamin = isection[0].vaddr;
-    for (unsigned j=1; j < objs; ++j) { // rvamin must be the minimum
-        unsigned va = isection[j].vaddr;
-        if (va < rvamin) {
+    unsigned const rvalast = isection[-1+ objs].vsize + isection[-1+ objs].vaddr;
+    for (unsigned j=0; j < objs; ++j) { // expect: first is min, last is max
+        unsigned lo = isection[j].vaddr, hi = isection[j].vsize + lo;
+        if (hi < lo) { // this checks first and last sections, too!
             char buf[64]; snprintf(buf, sizeof(buf),
-                "bad section[%d].rva %#x < %#x", j, va, rvamin);
+                "bad section[%d] wrap-around %#x %#x", j, lo, hi - lo);
+            throwCantPack(buf);
+        }
+        if (lo < rvamin) {
+            char buf[64]; snprintf(buf, sizeof(buf),
+                "bad section .rva [%d] %#x < [0] %#x", j, lo, rvamin);
+            throwCantPack(buf);
+        }
+        if (rvalast < hi) {
+            char buf[80]; snprintf(buf, sizeof(buf),
+                "bad section .rva+.vsize  [%d] %#x > [%d] %#x", j, hi,
+                (-1+ objs), rvalast);
             throwCantPack(buf);
         }
     }
