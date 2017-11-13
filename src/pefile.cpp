@@ -2065,9 +2065,21 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
 {
     isection = New(pe_section_t, objs);
+    if (file_size < (off_t)(pe_offset + sizeof_ih + sizeof(pe_section_t)*objs)) {
+        char buf[32]; snprintf(buf, sizeof(buf), "too many sections %d", objs);
+        throwCantPack(buf);
+    }
     fi->seek(pe_offset+sizeof_ih,SEEK_SET);
     fi->readx(isection,sizeof(pe_section_t)*objs);
     rvamin = isection[0].vaddr;
+    for (unsigned j=1; j < objs; ++j) { // rvamin must be the minimum
+        unsigned va = isection[j].vaddr;
+        if (va < rvamin) {
+            char buf[64]; snprintf(buf, sizeof(buf),
+                "bad section[%d].rva %#x < %#x", j, va, rvamin);
+            throwCantPack(buf);
+        }
+    }
 
     infoHeader("[Processing %s, format %s, %d sections]", fn_basename(fi->getName()), getName(), objs);
 }
@@ -2243,6 +2255,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         allow_filter = false;
 
     const unsigned oam1 = ih.objectalign - 1;
+    if ((1+ oam1) & oam1) { // ih.objectalign is not a power of 2
+        char buf[32]; snprintf(buf, sizeof(buf), "bad alignment %#x", 1+ oam1);
+        throwCantPack(buf);
+    }
 
     // FIXME: disabled: the uncompressor would not allocate enough memory
     //objs = tryremove(IDADDR(PEDIR_RELOC),objs);
@@ -2294,6 +2310,11 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     obuf.allocForCompression(ph.u_len);
 
     // prepare packheader
+    if (ph.u_len < rvamin) { // readSectionHeaders() should have caught this
+        char buf[64]; snprintf(buf, sizeof(buf),
+            "bad PE header  ph.u_len=%#x  rvamin=%#x", ph.u_len, rvamin);
+        throwInternalError(buf);
+    }
     ph.u_len -= rvamin;
     // prepare filter
     Filter ft(ph.level);
