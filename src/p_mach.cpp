@@ -1562,7 +1562,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     for (unsigned j= 0; j < ncmds; ++j) {
         memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command),
             ((Mach_command const *)ptr)->cmdsize));
-        ptr += (unsigned) ((Mach_segment_command const *)ptr)->cmdsize;
+        ptr += (unsigned) ((Mach_command const *)ptr)->cmdsize;
         if (ptr_udiff(ptr, mhdr) > ph.u_len) {
             throwCantUnpack("cmdsize");
         }
@@ -1840,6 +1840,11 @@ bool PackMachBase<T>::canPack()
     my_cpusubtype = mhdri.cpusubtype;
 
     unsigned const sz_mhcmds = (unsigned)mhdri.sizeofcmds;
+    unsigned headway = file_size - sizeof(mhdri);
+    if (headway < sz_mhcmds) {
+        char buf[32]; snprintf(buf, sizeof(buf), "bad sizeofcmds %d", sz_mhcmds);
+        throwCantPack(buf);
+    }
     if (16384 < sz_mhcmds) { // somewhat arbitrary, but amd64-darwin.macho-upxmain.c
         throwCantPack("16384 < Mach_header.sizeofcmds");
     }
@@ -1854,6 +1859,13 @@ bool PackMachBase<T>::canPack()
     unsigned char const *ptr = (unsigned char const *)rawmseg;
     for (unsigned j= 0; j < ncmds; ++j) {
         Mach_segment_command const *segptr = (Mach_segment_command const *)ptr;
+        if (headway < ((Mach_command const *)ptr)->cmdsize) {
+            char buf[64]; snprintf(buf, sizeof(buf),
+                "bad Mach_command[%d]{%#x, %#x}", j,
+                (unsigned)segptr->cmd, (unsigned)((Mach_command const *)ptr)->cmdsize);
+            throwCantPack(buf);
+        }
+        headway -= ((Mach_command const *)ptr)->cmdsize;
         if (lc_seg == segptr->cmd) {
             msegcmd[j] = *segptr;
             if (!strcmp("__DATA", segptr->segname)) {
@@ -1871,7 +1883,7 @@ bool PackMachBase<T>::canPack()
             }
         }
         else {
-            memcpy(&msegcmd[j], ptr, 2*sizeof(unsigned)); // cmd and size
+            memcpy(&msegcmd[j], ptr, 2*sizeof(unsigned)); // cmd and cmdsize
         }
         switch (((Mach_uuid_command const *)ptr)->cmd) {
         default: break;
@@ -1891,7 +1903,7 @@ bool PackMachBase<T>::canPack()
             memcpy(&cmdSRCVER, ptr, sizeof(cmdSRCVER));
         } break;
         }
-        ptr += (unsigned) ((const Mach_segment_command *)ptr)->cmdsize;
+        ptr += (unsigned) ((Mach_command const *)ptr)->cmdsize;
     }
     if (Mach_header::MH_DYLIB==my_filetype && 0==o__mod_init_func) {
         infoWarning("missing -init function");
