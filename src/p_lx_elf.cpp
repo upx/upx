@@ -1774,6 +1774,17 @@ bool PackLinuxElf32::canPack()
                 throwCantPack("DT_ tag above stub");
                 goto abandon;
             }
+            phdr = phdri;
+            for (unsigned j= 0; j < e_phnum; ++phdr, ++j) {
+                unsigned const vaddr = get_te32(&phdr->p_vaddr);
+                if (Elf32_Phdr::PT_NOTE == get_te32(&phdr->p_type)
+                && xct_va < vaddr) {
+                    char buf[40]; snprintf(buf, sizeof(buf),
+                       "PT_NOTE %#x above stub", vaddr);
+                    throwCantPack(buf);
+                    goto abandon;
+                }
+            }
             xct_off = elf_get_offset_from_address(xct_va);
             if (opt->debug.debug_level) {
                 fprintf(stderr, "shlib canPack: xct_va=%#lx  xct_off=%lx\n",
@@ -1879,9 +1890,8 @@ PackLinuxElf64::canPack()
         if (sec_dynsym)
             sec_dynstr = get_te64(&sec_dynsym->sh_link) + shdri;
 
-        int j= e_phnum;
         phdr= phdri;
-        for (; --j>=0; ++phdr)
+        for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf64_Dyn const *)(get_te64(&phdr->p_offset) + file_image);
             break;
@@ -1918,7 +1928,7 @@ PackLinuxElf64::canPack()
             }
             Elf64_Shdr const *shdr = shdri;
             xct_va = ~0ull;
-            for (j= e_shnum; --j>=0; ++shdr) {
+            for (int j= e_shnum; --j>=0; ++shdr) {
                 if (Elf64_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
                     xct_va = umin64(xct_va, get_te64(&shdr->sh_addr));
                 }
@@ -1937,6 +1947,17 @@ PackLinuxElf64::canPack()
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERNEEDED) ) {
                 throwCantPack("DT_ tag above stub");
                 goto abandon;
+            }
+            phdr = phdri;
+            for (unsigned j= 0; j < e_phnum; ++phdr, ++j) {
+                upx_uint64_t const vaddr = get_te64(&phdr->p_vaddr);
+                if (Elf64_Phdr::PT_NOTE == get_te32(&phdr->p_type)
+                && xct_va < vaddr) {
+                    char buf[40]; snprintf(buf, sizeof(buf),
+                       "PT_NOTE %#lx above stub", (unsigned long)vaddr);
+                    throwCantPack(buf);
+                    goto abandon;
+                }
             }
             xct_off = elf_get_offset_from_address(xct_va);
             if (opt->debug.debug_level) {
