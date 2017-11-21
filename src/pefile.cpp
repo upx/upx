@@ -162,10 +162,17 @@ int PeFile::readFileHeader()
 
         if (h.mz == 'M' + 'Z'*256) // dos exe
         {
-            if (h.relocoffs >= 0x40)      // new format exe
-                pe_offset += h.nexepos;
-            else
-                pe_offset += h.p512*512+h.m512 - h.m512 ? 512 : 0;
+            unsigned const delta = (h.relocoffs >= 0x40)
+                ? h.nexepos // new format exe
+                : (h.p512*512+h.m512 - h.m512 ? 512 : 0);
+
+            if ((pe_offset + delta) < delta  // wrap-around
+            ||  (pe_offset + delta) > file_size) {
+                char buf[64]; snprintf(buf, sizeof(buf),
+                    "bad PE delta %#x at offset %#x", delta, pe_offset);
+                throwCantPack(buf);
+            }
+            pe_offset += delta;
         }
         else if (get_le32(&h) == 'P' + 'E'*256)
             break;
