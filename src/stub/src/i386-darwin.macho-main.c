@@ -30,6 +30,7 @@
  */
 
 
+#define __WORDSIZE 32
 #include "include/darwin.h"
 
 #ifndef DEBUG  /*{*/
@@ -458,10 +459,10 @@ typedef union {
 #define PROT_EXEC      4
 #define MAP_ANON_FD    -1
 
-// We have off_t as 32 bits, but syscalls consider off_t as 64 bits.
+// We have off_t_upx_stub as 32 bits, but syscalls consider off_t as 64 bits.
 // Make the top 32 bits explicit, and pass a 0.
-extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t, unsigned);
-extern ssize_t pread(int, void *, size_t, off_t, unsigned);
+extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t_upx_stub, unsigned);
+extern ssize_t pread(int, void *, size_t, off_t_upx_stub, unsigned);
 extern void bswap(void *, unsigned);
 
 DEBUG_STRCON(STR_mmap,
@@ -472,7 +473,7 @@ DEBUG_STRCON(STR_do_xmap,
 static Mach_i386_thread_state const *
 do_xmap(
     Mach_header const *const mhdr,
-    off_t const fat_offset,
+    off_t_upx_stub const fat_offset,
     Extent *const xi,
     int const fdi,
     Mach_header **mhdrpp,
@@ -505,7 +506,7 @@ do_xmap(
             unsigned const flags = MAP_FIXED | MAP_PRIVATE |
                         ((xi || 0==sc->filesize) ? MAP_ANON : 0);
             int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
-            off_t const offset = sc->fileoff + fat_offset;
+            off_t_upx_stub const offset = sc->fileoff + fat_offset;
 
             DPRINTF((STR_mmap(), addr, mlen3, prot, flags, fdm, offset));
             if (addr !=     mmap(addr, mlen3, prot, flags, fdm, offset, 0)) {
@@ -571,7 +572,7 @@ upx_main(
 )
 {
     Mach_i386_thread_state const *entry;
-    off_t fat_offset = 0;
+    off_t_upx_stub fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(unsigned char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));

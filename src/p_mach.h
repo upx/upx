@@ -29,6 +29,7 @@
 #ifndef __UPX_P_MACHO_H
 #define __UPX_P_MACHO_H 1
 
+#include "conf.h"
 
 __packed_struct(Mach_fat_header)
     BE32 magic;

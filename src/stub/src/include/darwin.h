@@ -33,9 +33,9 @@
 
 #if defined(__GNUC__)
 #  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100 + (__GNUC_PATCHLEVEL__-0))
 #  elif defined(__GNUC_MINOR__)
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100)
 #  else
 #    define ACC_CC_GNUC         (__GNUC__ * 0x10000L)
 #  endif
@@ -57,23 +57,28 @@ typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef int int32_t;
 typedef unsigned uint32_t;
-#if (ACC_CC_GNUC >= 0x020800ul)
-__extension__ typedef long long int64_t;
+#if (ACC_CC_GNUC >= 0x020800ul)  /*{*/
+#  if 64 == __WORDSIZE  /*{*/
+  typedef          long  int64_t;
+  typedef unsigned long uint64_t;
+#  else  /*}{*/
+__extension__ typedef          long long  int64_t;
 __extension__ typedef unsigned long long uint64_t;
-#elif defined(_WIN32)
+#  endif  /*}*/
+#elif defined(_WIN32)  /*}{*/
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
-#else
+#else  /*}{*/
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
-#endif
+#endif  /*}*/
 typedef size_t uintptr_t;
 
 // XXX: restrict ourselves to 4GB for off_t.  Some versions of gcc
 // have bugs in handling 64-bit integers (such as passing as argument
 // the wrong registers) and it takes more code anyway.
 // Adjust in system call wrappers, particularly mmap() and pread().
-typedef unsigned off_t;
+typedef unsigned off_t_upx_stub;
 
 // misc constants
 
@@ -91,7 +96,7 @@ int close(int);
 void exit(int) __attribute__((__noreturn__,__nothrow__));
 int mprotect(void *, size_t, int);
 extern int munmap(char *, size_t);
-int open(char const *, unsigned, unsigned);
+int open(char const *, int, ...);
 
 
 /*************************************************************************

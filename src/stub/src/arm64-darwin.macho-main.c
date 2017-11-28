@@ -33,6 +33,7 @@
 //#define SIMULATE_ON_DEBIAN_EABI4 1
 #undef  SIMULATE_ON_DEBIAN_EABI4
 
+#define __WORDSIZE 64
 #include "include/darwin.h"
 
 
@@ -315,14 +316,14 @@ typedef union {
 
 #define MAP_ANON_FD    -1
 
-extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t);
-ssize_t pread(int, void *, size_t, off_t);
+extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t_upx_stub);
+ssize_t pread(int, void *, size_t, off_t_upx_stub);
 extern void bswap(void *, unsigned);
 
 static Mach_ARM_thread_state const *
 do_xmap(
     Mach_header const *const mhdr,
-    off_t const fat_offset,
+    off_t_upx_stub const fat_offset,
     Extent *const xi,
     int const fdi,
     Mach_header **mhdrpp,
@@ -406,7 +407,7 @@ upx_main(
 )
 {
     Mach_ARM_thread_state const *entry;
-    off_t fat_offset = 0;
+    off_t_upx_stub fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(unsigned char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
