@@ -45,7 +45,8 @@
     enum { // cputype
         CPU_TYPE_I386      =          7,
         CPU_TYPE_X86_64    = 0x01000007,
-        CPU_TYPE_ARM       =         12,
+        CPU_TYPE_ARM       = 0x0000000c,
+        CPU_TYPE_ARM64     = 0x0100000c,
         CPU_TYPE_POWERPC   = 0x00000012,
         CPU_TYPE_POWERPC64 = 0x01000012,
         CPU_TYPE_POWERPC64LE = 0x01000021

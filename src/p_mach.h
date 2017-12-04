@@ -336,6 +336,7 @@ __packed_struct(Mach_source_version_command)
     Word cmd;  // LC_SOURCE_VERSION
     Word cmdsize;  // 16
     Word version;
+    Word __pad;  // to 0 mod 8
 __packed_struct_end()
 
 template <class TMachITypes>

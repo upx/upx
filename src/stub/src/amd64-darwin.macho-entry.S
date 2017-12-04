@@ -31,23 +31,99 @@
 ;
 */
 
+NBPW= 8
+
 #include "arch/amd64/macros.S"
 #include "arch/amd64/regs.h"
 
+mlc_cmd = 0
+mlc_cmdsize = 4
+
+mseg_segname = 8
+mseg_vmsize = 4+4+16+NBPW
+mseg_initprot = 4+4+16+(4*NBPW)+4
 
 /*************************************************************************
 // program entry point
 // see glibc/sysdeps/amd64/elf/start.S
 **************************************************************************/
 
+MAP_FIXED =   0x10
+MAP_PRIVATE = 0x02
+MAP_ANON =  0x1000
+PROT_READ =    1
+PROT_WRITE =   2
+PROT_EXEC =    4
+MAP_ANON_FD =  -1
+
+SYS_mmap     =0xc5
+SYS_mprotect =0x4a
+SYS_munmap   =0x49
+
+#define __c4(a,b,c,d) (((a)<<(0*8)) | ((b)<<(1*8)) | ((c)<<(2*8)) | ((d)<<(3*8)))
+#define __c8(a,b,c,d,e,f,g,h) (__c4(a,b,c,d) | (__c4(e,f,g,h) << 32))
+
   section AMD64BXX
 0:     .word 9f - 0b
 #include "arch/amd64/bxx.S"
 9:
 
+// FYI: Following the env[] vector there is another vector apple[] of strings.
+// Contents from one actual instance on MacOS 10.13 HighSierra:
+//      "executable_path=<rooted_path>"
+//      "pfz=0x7ffffff84000"
+//      "stack_guard=0x850795b0f36900c2"
+//      "malloc_entropy=0x94a87434eb9e2c1,0xf6814219485392e8"
+//      "main_stack=0x7ffeefc00000,0x800000,0x7ffeebc00000,0x4000000"
+//      "executable_file=0x1000008,0x2209ce"
+// when %rsp was 0x7ffeefbffaf0.
+
 section MACHMAINX
 _start: .globl _start
 //    int3
+        lea -2*4+_start(%rip),%rbp; movl (%rbp),%eax; sub %rax,%rbp  // &Mach_header64
+        mov mhdr_ncmds(%rbp),%r12d
+        lea sz_Mach_header64(%rbp),%rbx  // ptr
+L20:
+        cmpl $LC_SEGMENT_64,mlc_cmd(%rbx); jne L50
+        cmpl $__c4('T','E','X','T'),2+mseg_segname(%rbx); jne L40
+        sub %arg1l,%arg1l  // 0 addr
+        mov %arg1,%arg6   // 0 off_t
+        lea -1(%rdi),%arg5  // MAP_ANON_FD
+        mov $MAP_PRIVATE|MAP_ANON,%sys4l
+        mov $PROT_WRITE|PROT_READ,%arg3l
+        mov mseg_vmsize(%rbx),%arg2
+        mov $SYS_mmap,%eax; syscall
+        mov %rax,%r15  // vmaddr
+
+        movq mseg_vmsize(%rbx),%arg3
+        movq mseg_vmaddr(%rbx),%arg2
+        mov %rax,%arg1
+        call memcpy
+
+        movl mseg_initprot,%arg3l
+        movq mseg_vmsize(%rbx),%arg2
+        mov %rax,%arg1
+        mov $SYS_mprotect,%eax; syscall
+
+        sub 2*NBPW(%rsp),%r15  // reloc
+        call goto_clone
+        jmp L50
+
+goto_clone:
+        addq %r15,(%rsp)  // retaddr += reloc
+        ret
+memcpy:
+        mov %arg3,%rcx; shr $3,%rcx; rep movsq
+        ret
+
+L40:
+        movabsq $__c8('L','I','N','K','E','D','I','T'),%rcx; cmp %rcx,2+mseg_segname(%rbx); jne L50
+
+L50:
+        mov mlc_cmdsize(%rbx),%eax; add %rax,%rbx
+        sub $1,%ebp; jne L20
+
         call main  // push &decompress
 ret_main:
 

@@ -29,6 +29,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+#define __WORDSIZE 32
 #include <stdio.h>
 #include <stdlib.h>
 #include "include/darwin.h"
