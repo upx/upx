@@ -37,11 +37,20 @@ NBPW= 8
 #include "arch/amd64/regs.h"
 
 mlc_cmd = 0
+  LC_SEGMENT_64= 0x19
 mlc_cmdsize = 4
 
-mseg_segname = 8
-mseg_vmsize = 4+4+16+NBPW
-mseg_initprot = 4+4+16+(4*NBPW)+4
+sz_Mach_header64= 8*4
+  mhdr_ncmds= 4*4
+
+sz_Mach_segment= 2*4 + 16 + 4*NBPW + 4*4
+  mseg_segname=  2*4
+  mseg_vmaddr=   2*4 + 16
+  mseg_vmsize=   2*4 + 16 + NBPW
+  mseg_initprot= 2*4 + 16 + (4*NBPW) + 4
+
+  msec_addr=    2*16
+  msec_size=    2*16 + NBPW
 
 /*************************************************************************
 // program entry point
@@ -56,9 +65,10 @@ PROT_WRITE =   2
 PROT_EXEC =    4
 MAP_ANON_FD =  -1
 
-SYS_mmap     =0xc5
-SYS_mprotect =0x4a
-SYS_munmap   =0x49
+SYSBASE= 0x02000000
+SYS_mmap     =0xc5 + SYSBASE
+SYS_mprotect =0x4a + SYSBASE
+SYS_munmap   =0x49 + SYSBASE
 
 #define __c4(a,b,c,d) (((a)<<(0*8)) | ((b)<<(1*8)) | ((c)<<(2*8)) | ((d)<<(3*8)))
 #define __c8(a,b,c,d,e,f,g,h) (__c4(a,b,c,d) | (__c4(e,f,g,h) << 32))
@@ -78,52 +88,51 @@ SYS_munmap   =0x49
 //      "executable_file=0x1000008,0x2209ce"
 // when %rsp was 0x7ffeefbffaf0.
 
+// Notes:
+// Command-line debugger from Xcode: lldb foo; "process launch -s"
+
 section MACHMAINX
 _start: .globl _start
 //    int3
+#define r_cmdp rbx
+#define r_ncmds r12d
+#define r_reloc r15
         lea -2*4+_start(%rip),%rbp; movl (%rbp),%eax; sub %rax,%rbp  // &Mach_header64
-        mov mhdr_ncmds(%rbp),%r12d
-        lea sz_Mach_header64(%rbp),%rbx  // ptr
+        push %rbp  // P_01  &Mach_header64 before argc
+        mov mhdr_ncmds(%rbp),%r_ncmds
+        lea sz_Mach_header64(%rbp),%r_cmdp  // ptr
 L20:
-        cmpl $LC_SEGMENT_64,mlc_cmd(%rbx); jne L50
-        cmpl $__c4('T','E','X','T'),2+mseg_segname(%rbx); jne L40
+        cmpl $LC_SEGMENT_64,mlc_cmd(%r_cmdp); jne L50
+        cmpl $__c4('T','E','X','T'),2+mseg_segname(%r_cmdp); jne L40
         sub %arg1l,%arg1l  // 0 addr
         mov %arg1,%arg6   // 0 off_t
-        lea -1(%rdi),%arg5  // MAP_ANON_FD
+        lea -1(%arg1),%arg5  // MAP_ANON_FD
         mov $MAP_PRIVATE|MAP_ANON,%sys4l
         mov $PROT_WRITE|PROT_READ,%arg3l
-        mov mseg_vmsize(%rbx),%arg2
+        mov mseg_vmsize(%r_cmdp),%arg2
+        movl sz_unc+FOLD(%rip),%eax
+        add %rax,%arg2; mov %arg2,%r14
         mov $SYS_mmap,%eax; syscall
-        mov %rax,%r15  // vmaddr
+        mov %rax,%r_reloc  // vmaddr
+        sub %rbp,%r_reloc  // reloc
+        push %rax  // P_02
 
-        movq mseg_vmsize(%rbx),%arg3
-        movq mseg_vmaddr(%rbx),%arg2
-        mov %rax,%arg1
-        call memcpy
-
-        movl mseg_initprot,%arg3l
-        movq mseg_vmsize(%rbx),%arg2
-        mov %rax,%arg1
-        mov $SYS_mprotect,%eax; syscall
-
-        sub 2*NBPW(%rsp),%r15  // reloc
-        call goto_clone
-        jmp L50
+// Copy only compression data, not Macho headers
+        movl msec_size + sz_Mach_segment(%r_cmdp),%ecx
+        movq msec_addr + sz_Mach_segment(%r_cmdp),%rsi
+        mov %rax,%rdi
+        add $7,%ecx; shr $3,%ecx; rep movsq
+        jmp L60  // break;
 
 goto_clone:
-        addq %r15,(%rsp)  // retaddr += reloc
+        addq %r_reloc,(%rsp)  // retaddr += reloc
         ret
-memcpy:
-        mov %arg3,%rcx; shr $3,%rcx; rep movsq
-        ret
+L40:  // not TEXT
 
-L40:
-        movabsq $__c8('L','I','N','K','E','D','I','T'),%rcx; cmp %rcx,2+mseg_segname(%rbx); jne L50
-
-L50:
-        mov mlc_cmdsize(%rbx),%eax; add %rax,%rbx
-        sub $1,%ebp; jne L20
-
+L50:  // not LC_SEGMENT64
+        mov mlc_cmdsize(%r_cmdp),%eax; add %rax,%r_cmdp
+        sub $1,%r_ncmds; jne L20
+L60:
         call main  // push &decompress
 ret_main:
 
@@ -269,36 +278,32 @@ sz_b_info= 12
 
 // Decompress the rest of this loader, and jump to it.
 unfold:
-        pop %rbx  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
-        mov sz_cpr(%rbx),%ecx
-        lea              -1+ sz_b_info(%rcx,%rbx),%rsi  // &hi_byte folded original
-#if 0
-        mov sz_unc(%rbx),%edi
-#else
-        // sz_unc == 0
-        mov (%rbx),%edi
-#endif
-        lea GAP + NO_LAP -1+ sz_b_info(%rdi,%rbx),%rdi  // &hi_byte folded copy
-        std; rep movsb  // copy descending
+        pop %rsi  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_fold...}
 
-        lea GAP                            (%rbx),%arg3 // &unfolded
-        mov %rbx,%rsi  // &b_info
-        lea 1(%rdi),%arg1  // &lo_byte folded copy
-        push %arg3  // return to unfolded code
-
-        cld
-        lodsl; push %rax          // allocate slot on stack
-               movq  %rsp,%arg4   // &len_dst ==> used by lzma for EOF
-        lodsl; push %rax          // sz_cpr  XXX: 4GB
+        pop %rcx  // P_02
+        push %rdi; pop %arg3  // dst
+        push %rdi  // P_03  entry addr to folded stub
+        push %rcx  // P_04  &copied data
+        lodsl; push %rax          // P_05  allocate slot on stack
+               movq  %rsp,%arg4   // &dstlen ==> used by lzma for EOF
+        lodsl; push %rax          // P_06  sz_cpr  XXX: 4GB
         lodsl; movzbl %al,%arg5l  // b_method
-               pop %arg2          // sz_cpr
-        call *%rbp  // decompress(&src, srclen, &dst, &dstlen, b_info.misc)
-               pop %rcx  // discard len_dst
+        push %rsi; pop %arg1      // src
+               pop %arg2          // P_06  sz_cpr
+        call *%rbp  // decompress(src, srclen, dst, &dstlen, b_info.misc)
+          pop %rcx  // P_05  discard len_dst
+
+        push $PROT_EXEC|PROT_READ; pop %arg3
+        mov %r14,%arg2  // len
+        pop %arg1  // P_04  &copied data
+        mov $SYS_mprotect,%rax; syscall
+
         lea -4+ _start - ret_main(%rbp),%rbx  // &total_length for fold:
-        ret
+        ret  // P_03
 main:
         pop %rbp  // &decompress
         call unfold
+FOLD:
             // compressed fold_elf86 follows
 
 /* vim:set ts=8 sw=8 et: */

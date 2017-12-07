@@ -356,11 +356,8 @@ void PackMachI386::addStubEntrySections(Filter const *ft)
 
 void PackMachAMD64::addStubEntrySections(Filter const * /*ft*/)
 {
-    if (my_filetype==Mach_header::MH_DYLIB) {
-        addLoader("MACHMAINX", NULL);
-    }
-    else {
-        addLoader("AMD64BXX", NULL);
+    addLoader("MACHMAINX", NULL);  // different for MY_DYLIB vs MH_EXECUTE
+    if (my_filetype==Mach_header::MH_EXECUTE) {
         addLoader("MACH_UNC", NULL);
     }
    //addLoader(getDecompressorSections(), NULL);
@@ -372,10 +369,7 @@ void PackMachAMD64::addStubEntrySections(Filter const * /*ft*/)
         : NULL), NULL);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
-    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ", NULL);
-    if (my_filetype!=Mach_header::MH_EXECUTE) {
-        addLoader("FOLDEXEC", NULL);
-    }
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
 }
 
 void PackMachPPC32::addStubEntrySections(Filter const * /*ft*/)
@@ -561,6 +555,8 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 #undef PAGE_SIZE64
 #define PAGE_MASK64 (~(upx_uint64_t)0<<12)
 #define PAGE_SIZE64 ((upx_uint64_t)0-PAGE_MASK64)
+
+// Note: "readelf --segments"  ==>  "otool -hl" or "otool -hlv" etc. (Xcode on MacOS)
 
 template <class T>
 void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
@@ -954,9 +950,10 @@ off_t PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
     disp = len - sz_mach_headers;  // backward offset to start of compressed data
     fo->write(&disp, sizeof(disp));
     len += sizeof(disp);
+    segTEXT.vmsize = segLINK.vmaddr - segTEXT.vmaddr;  // must protect this much
     threado_setPC(entryVMA= len + segTEXT.vmaddr);
 
-    return segTEXT.vmsize = super::pack3(fo, ft);
+    return super::pack3(fo, ft);
 }
 
 off_t PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
@@ -1329,6 +1326,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segLINK.initprot = Mach_command::VM_PROT_READ;
     // Adjust later: .vmaddr .vmsize .fileoff .filesize
 
+    unsigned gap = 0;
     if (my_filetype == Mach_header::MH_EXECUTE) {
         unsigned cmdsize = mhdro.sizeofcmds;
         Mach_header const *const ptr0 = (Mach_header const *)stub_main;
@@ -1355,11 +1353,13 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     pos += cmdsize;
                     fo->write((char const *)ptr1, cmdsize);
 
-                    sz_mach_headers = fo->getBytesWritten();
+                    gap = 400 + threado_size();
+                    secTEXT.addr = gap + pos;
                     break;
                 }
             }
         }
+        sz_mach_headers = fo->getBytesWritten();
     }
     else if (my_filetype == Mach_header::MH_DYLIB) {
         Mach_command const *ptr = (Mach_command const *)rawmseg;
@@ -1393,13 +1393,13 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         fo->write(&linkitem, sizeof(linkitem));
         fo->write(rawmseg, mhdri.sizeofcmds);
 
-        sz_mach_headers = fo->getBytesWritten();
-        unsigned gap = secTEXT.offset - sz_mach_headers;
-        MemBuffer filler(gap);
-        memset(filler, 0, gap);
-        fo->write(filler, gap);
-        sz_mach_headers += gap;
+        gap = secTEXT.offset - sz_mach_headers;
     }
+    sz_mach_headers = fo->getBytesWritten();
+    MemBuffer filler(gap);
+    memset(filler, 0, gap);
+    fo->write(filler, gap);
+    sz_mach_headers += gap;
 
     memset((char *)&linfo, 0, sizeof(linfo));
     fo->write(&linfo, sizeof(linfo));
@@ -1971,12 +1971,13 @@ bool PackMachBase<T>::canPack()
                 fsm.segZERO.nsects = 0;
                 fsm.segZERO.flags = 0;
 
+                unsigned const slop = 400;
                 fsm.segTEXT.cmd = fsm.segZERO.cmd;
                 fsm.segTEXT.cmdsize = sizeof(Mach_segment_command)
                     + sizeof(Mach_section_command);
                 strncpy(fsm.segTEXT.segname, "__TEXT", sizeof(fsm.segTEXT.segname));
-                fsm.segTEXT.vmaddr = fsm.segZERO.vmsize;  // dummy?
-                fsm.segTEXT.vmsize = 0;
+                fsm.segTEXT.vmaddr = fsm.segZERO.vmsize;
+                fsm.segTEXT.vmsize = slop + threado_size() + sizeof(fsm);  // dummy
                 fsm.segTEXT.fileoff = 0;
                 fsm.segTEXT.filesize = fsm.segTEXT.vmsize;  // dummy
                 fsm.segTEXT.maxprot = VM_PROT_EXECUTE | VM_PROT_READ;
@@ -1986,7 +1987,7 @@ bool PackMachBase<T>::canPack()
 
                 strncpy(fsm.secTEXT.sectname, "__text", sizeof(fsm.secTEXT.sectname));
                 memcpy(fsm.secTEXT.segname, fsm.segTEXT.segname, sizeof(fsm.secTEXT.segname));
-                unsigned const d = 400 + fsm.mhdri.sizeofcmds;
+                unsigned const d = slop + fsm.mhdri.sizeofcmds;
                 fsm.secTEXT.addr = fsm.segTEXT.vmaddr + d;  // dummy
                 fsm.secTEXT.size = fsm.segTEXT.vmsize - d;  // dummy
                 fsm.secTEXT.offset = d;  // dummy
