@@ -586,6 +586,15 @@ PackLinuxElf::addStubEntrySections(Filter const *)
         addLoader("ELFMAINZe", NULL);
     }
     addLoader("+40,ELFMAINZ", NULL);
+    if (hasLoaderSection("ANDMAJNZ")) { // Android trouble with args to DT_INIT
+        if (opt->o_unix.android_shlib) {
+            addLoader("ANDMAJNZ", NULL);  // constant PAGE_SIZE
+        }
+        else {
+            addLoader("ELFMAJNZ", NULL);  // PAGE_SIZE from AT_PAGESZ
+        }
+        addLoader("ELFMAKNZ", NULL);
+    }
     if (hasLoaderSection("ELFMAINZu")) {
         addLoader("ELFMAINZu", NULL);
     }

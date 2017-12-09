@@ -136,22 +136,11 @@ _start: .globl _start
 //    brk #0  // debugging
         stp arg1,arg2,[sp,#f_argc - sp_frame]!  // f_argv
         stp arg3,x0,  [sp,#f_envp]  // %f_uinit
-
-// Calculate PAGE_MASK
-0:  // Advance envp to auxp
-        ldr x3,[arg3],#NBPW; cbnz x3,0b
-
-        mov x3,#1<<PAGE_SHIFT  // default
-0:  // Find AT_PAGESZ
-        ldp x0,x1,[arg3],#2*NBPW; cbz x0,5f  // AT_NULL==.a_type; use default
-        cmp x0,#AT_PAGESZ; bne 0b
-5:  // auxp cannot be empty (must have AT_UID), so 'cmp' above sets nzvc
-        csel x1,x1,x3,eq  // x1 if found, else x3
-        neg x1,x1
-        stp x1,lr,[sp,#f_PMASK]  // f_my_ra
+        str lr,       [sp,#f_my_ra]
 
         bl main  // ra= &f_decompress
 f_decompress:
+
 #define LINUX_ARM_CACHEFLUSH 1
 
   section NRV_HEAD
@@ -187,10 +176,27 @@ L71:
         /* IDENTSTR goes here */
 
   section ELFMAINZ
-#define lodsl ldr eax,[rsi],#4
-#define lodslu lodsl
-
 main:
+
+  section ELFMAJNZ
+// Calculate PAGE_MASK
+0:  // Advance envp to auxp
+        ldr x3,[arg3],#NBPW; cbnz x3,0b
+
+        mov x3,#1<<PAGE_SHIFT  // default
+0:  // Find AT_PAGESZ
+        ldp x0,x1,[arg3],#2*NBPW; cbz x0,5f  // AT_NULL==.a_type; use default
+        cmp x0,#AT_PAGESZ; bne 0b
+5:  // auxp cannot be empty (must have AT_UID), so 'cmp' above sets nzvc
+        csel x1,x1,x3,eq  // x1 if found, else x3
+        neg x1,x1
+
+  section ANDMAJNZ  // Android passes junk args to DT_INIT?
+        mov x1,#~0<<12  // -4096
+
+  section ELFMAKNZ
+        str x1,[sp,#f_PMASK]
+
 //  1. allocate temporary pages
 //  2. copy to temporary pages:
 //       fragment of page below dst; compressed src;
@@ -206,9 +212,12 @@ main:
 // 11. unmap temporary pages
 // 12. goto user DT_INIT
 
-        mov rdx,lr  // &f_decompress
-
+        mov     rdx,lr  //    &f_decompress
         add rsi,rdx,# _start - f_decompress - 4*4
+
+#define lodsl ldr eax,[rsi],#4
+#define lodslu lodsl
+
                mov rcx,rsi
         lodsl; sub rcx,rcx,rax; //str ecx,[sp,#o_reloc]
         lodsl; add rax,rcx,rax; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
