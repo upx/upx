@@ -69,6 +69,7 @@ SYSBASE= 0x02000000
 SYS_mmap     =0xc5 + SYSBASE
 SYS_mprotect =0x4a + SYSBASE
 SYS_munmap   =0x49 + SYSBASE
+SYS_open     =   5 + SYSBASE
 
 #define __c4(a,b,c,d) (((a)<<(0*8)) | ((b)<<(1*8)) | ((c)<<(2*8)) | ((d)<<(3*8)))
 #define __c8(a,b,c,d,e,f,g,h) (__c4(a,b,c,d) | (__c4(e,f,g,h) << 32))
@@ -91,50 +92,12 @@ SYS_munmap   =0x49 + SYSBASE
 // Notes:
 // Command-line debugger from Xcode: lldb foo; "process launch -s"
 
+//0:    .word -0b + &Mach_header64
+//0:    .word -0b + l_info
 section MACHMAINX
 _start: .globl _start
-//    int3
-#define r_cmdp rbx
-#define r_ncmds r12d
-#define r_reloc r15
-        lea -2*4+_start(%rip),%rbp; movl (%rbp),%eax; sub %rax,%rbp  // &Mach_header64
-        push %rbp  // P_01  &Mach_header64 before argc
-        mov mhdr_ncmds(%rbp),%r_ncmds
-        lea sz_Mach_header64(%rbp),%r_cmdp  // ptr
-L20:
-        cmpl $LC_SEGMENT_64,mlc_cmd(%r_cmdp); jne L50
-        cmpl $__c4('T','E','X','T'),2+mseg_segname(%r_cmdp); jne L40
-        sub %arg1l,%arg1l  // 0 addr
-        mov %arg1,%arg6   // 0 off_t
-        lea -1(%arg1),%arg5  // MAP_ANON_FD
-        mov $MAP_PRIVATE|MAP_ANON,%sys4l
-        mov $PROT_WRITE|PROT_READ,%arg3l
-        mov mseg_vmsize(%r_cmdp),%arg2
-        movl sz_unc+FOLD(%rip),%eax
-        add %rax,%arg2; mov %arg2,%r14
-        mov $SYS_mmap,%eax; syscall
-        mov %rax,%r_reloc  // vmaddr
-        sub %rbp,%r_reloc  // reloc
-        push %rax  // P_02
-
-// Copy only compression data, not Macho headers
-        movl msec_size + sz_Mach_segment(%r_cmdp),%ecx
-        movq msec_addr + sz_Mach_segment(%r_cmdp),%rsi
-        mov %rax,%rdi
-        add $7,%ecx; shr $3,%ecx; rep movsq
-        jmp L60  // break;
-
-goto_clone:
-        addq %r_reloc,(%rsp)  // retaddr += reloc
-        ret
-L40:  // not TEXT
-
-L50:  // not LC_SEGMENT64
-        mov mlc_cmdsize(%r_cmdp),%eax; add %rax,%r_cmdp
-        sub $1,%r_ncmds; jne L20
-L60:
-        call main  // push &decompress
-ret_main:
+    int3
+        call main  // push &f_exp
 
   section MACH_UNC
 /* Returns 0 on success; non-zero on failure. */
@@ -266,7 +229,8 @@ end_decompress: .globl end_decompress
         /* IDENTSTR goes here */
 
   section MACHMAINZ
-#define PAGE_SIZE ( 1<<12)
+PAGE_SIZE= ( 1<<12)
+PAGE_MASK= -PAGE_SIZE
 
 GAP= 128  // > farthest prefetch;               must match ../../p_mach.cpp
 NO_LAP= 64  // avoid overlap for folded loader; must match ../../p_mach.cpp
@@ -276,32 +240,102 @@ sz_b_info= 12
   sz_cpr= 4
   b_method= 8
 
+#define r_RELOC r12
+#define r_MHDR r12
+#define r_ADRX r14
+#define r_LENX r15
+
 // Decompress the rest of this loader, and jump to it.
 unfold:
-        pop %rsi  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_fold...}
+        pop %rbx  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_fold...}
+        pop %rdi  // P_08  fd
 
-        pop %rcx  // P_02
-        push %rdi; pop %arg3  // dst
-        push %rdi  // P_03  entry addr to folded stub
-        push %rcx  // P_04  &copied data
-        lodsl; push %rax          // P_05  allocate slot on stack
-               movq  %rsp,%arg4   // &dstlen ==> used by lzma for EOF
-        lodsl; push %rax          // P_06  sz_cpr  XXX: 4GB
-        lodsl; movzbl %al,%arg5l  // b_method
-        push %rsi; pop %arg1      // src
-               pop %arg2          // P_06  sz_cpr
-        call *%rbp  // decompress(src, srclen, dst, &dstlen, b_info.misc)
-          pop %rcx  // P_05  discard len_dst
+        mov    %rbx,%rdx
+        sub %r_MHDR,%rdx  // LENU.static
+        add  (%rbx),%edx  // + LENU.dynamic (== .sz_unc)
+        push %rdx  // LENU
+        push %rax  // %ADRU
+        push %rdi  // fd
 
-        push $PROT_EXEC|PROT_READ; pop %arg3
-        mov %r14,%arg2  // len
-        pop %arg1  // P_04  &copied data
-        mov $SYS_mprotect,%rax; syscall
+// Reserve space for input file and unfolded stub.
+        subq %arg6,%arg6  // 0 offset
+        orl $-1,%arg5l  // fd
+        push $MAP_PRIVATE|MAP_ANON; pop %sys4
+        push %rdx; pop %arg2  // len
+        push $PROT_READ|PROT_WRITE; pop %arg3
+        subl %arg1l,%arg1l  // 0; kernel chooses addr
+        mov $SYS_mmap,%eax; syscall
+        subq %r_MHDR,%r_ADRX  // offset(&l_info)
+        addq    %rax,%r_ADRX  // new &l_info
+        movq %rax,1*NBPW(%rsp)  // ADRU
 
-        lea -4+ _start - ret_main(%rbp),%rbx  // &total_length for fold:
-        ret  // P_03
+// Duplicate the input data.
+        xchgq %rax,%arg1  // same address
+        subq %arg6,%arg6  // 0 offset
+        movl (%rsp),%arg5l  // fd
+        push $MAP_PRIVATE|MAP_FIXED; pop %sys4
+        push $PROT_READ|PROT_WRITE; pop %arg3
+        movq    %rbx,%arg2
+        subq %r_MHDR,%arg2  // len
+        mov $SYS_mmap,%eax; syscall
+
+// Remember new f_exp region for PROT_EXEC.
+        movq 2*NBPW(%rsp),%rdx  // LENU
+        movq 4*NBPW(%rsp),%rcx  // &Mach_header64
+        addq %rax,%rdx  // new last of unfoded
+        subq %rcx,%rax  // new - old
+        movq %rax,%r_RELOC  // relocation constant
+        addq %rbp,%rax; push %rax  // P_10  new f_exp
+        andq $PAGE_MASK,%rax; push %rax  // P_11  address
+        subq %rax,%rdx; push %rdx  // P_12  length
+
+// Unfold
+        movq %rbx,%rsi
+        lodsl; push %rax; movq %rsp,%arg4  // P_13  .sz_unc; &dstlen
+        lea (%rbx,%r_RELOC),%arg3  // dst= new unfold
+        movq %arg3,%r13  // execute here
+        lodsl; push %rax  // P_14  tmp= .sz_cpr
+        lodsl; xchg %eax,%arg5l  // .b_method
+        movq %rsi,%arg1  // src
+        pop %arg2  // P_14  srclen
+        call *%rbp  // old f_exp
+        pop %ecx  // P_13  toss .sz_unc
+
+// PROT_EXEC
+        pop %arg2  // P_12  length
+        pop %arg1  // P_11  addr
+        pop %rbp   // P_10  new f_exp
+        push $PROT_READ|PROT_EXEC; pop %arg3
+        mov $SYS_mprotect,%eax; syscall
+
+// Use the copy.
+// %r14= ADRX; %r15= LENX;
+// rsp/ fd,ADRU,LENU,%entry,&Mach_header64
+        jmp *%r13
+
 main:
         pop %rbp  // &decompress
+
+        push %rsp; pop %rdi; xor %eax,%eax; or $~0,%ecx
+          push %rax  // %&Mach_header64
+          push %rax  // %entry
+        repne scasq  // past argv
+        repne scasq  // past envp
+        push %rdi; pop  %rsi  // &apple[0]
+L10:
+        lodsq; test %rax,%rax; je L99  // %rax= *apple++;
+        movabs $__c8('e','x','e','c','u','t','a','b'),%rcx; cmp %rcx, (%rax); jne L10
+        movabs $__c8('l','e','_','p','a','t','h','='),%rcx; cmp %rcx,8(%rax); jne L10
+        lea 16(%rax),%arg1
+        sub %arg2l,%arg2l  // O_RDONLY
+        mov $SYS_open,%eax; syscall
+        push %rax  // P_08  save fd
+L99:
+        lea -2*4 + _start(%rip),%rsi
+        mov %rsi,%r_MHDR; lodsl; sub %rax,%r_MHDR  // &Mach_header64
+        mov %rsi,%r_ADRX; lodsl; sub %rax,%r_ADRX  // &l_info
+        lea -2*4(%rax),%r_LENX  // omit words before _start
+        movq %r_MHDR,2*NBPW(%rsp)  // fd,%entry,mhdr
         call unfold
 FOLD:
             // compressed fold_elf86 follows

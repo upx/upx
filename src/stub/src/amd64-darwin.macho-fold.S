@@ -29,6 +29,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW= 8
 #include "arch/amd64/macros.S"
 
 sz_b_info= 12
@@ -41,28 +42,38 @@ sz_p_info= 12
 _start: .globl _start  # ignored, but silence "cannot find entry symbol _start" from ld
 
 
-fold_begin:  // In: %rbx= &total_length; %rbp= &decompress
+fold_begin:  // In: %rbp= &f_exp; %r14= ADRX; %r15= LENX
+// rsp/ fd,ADRU,LENU,%entry,&Mach_header64, argc,argv,0,envp,0,apple,0,strings
 //    int3
         call L90  # push &L90
 #include "arch/amd64/bxx.S"
 L90:
-        pop %arg6  # L90; &amdbxx: f_unfilter
-        movq %rbx,%arg1
-        movl (%rbx),%arg2l  // total length; offset to {l_info; p_info; b_info}
-        subq %arg2,%arg1  // &{l_info; p_ifo, b_info}
-        push $0  # default value for mhdrp
-        movl $2048,%eax
-        movl sz_unc+sz_p_info+sz_l_info(%arg1),%arg4l  // sz_mhdr
-        cmpl %eax,%arg4l; cmovb %eax,%arg4l  // at least 2KiB for /usr/lib/dyld
-        movq %rbp,%arg5  // f_decompress
+        pop %arg6  # &amdbxx: f_unfilter
+        movq %r14,%arg1  // ADRX
+        movq %r15,%arg2  // LENX
         movq %rsp,%r12  // remember for un-alloca
-        subq %arg4,%rsp  // alloca
+        movl sz_unc+sz_p_info+sz_l_info(%arg1),%arg4l  // sz_mhdr
+        movl $2048,%eax  // >= 2KiB for /usr/lib/dyld
+        cmpl  %eax,%arg4l
+        cmovb %eax,%arg4l  // sz_mhdr
+        lea 4*NBPW(%r12),%rax  // &&Mach_header64 for arg7
+        movq %rbp,%arg5  // f_decompress
+        subq %arg4,%rsp  // alloca(sz_mhdr)
         movq %rsp,%arg3  // temp char mhdr[sz_mhdr]
-        push %r12  // (arg7) mhdrpp= &mhdrp
+        push %rax  // (arg7) mhdrpp= &mhdrp
+// upx_main(&l_info,len_cpr,temp[sz_mhdr],sz_mhdr,f_exp,f_unf,mhdr **)
         call upx_main  # Out: rax= &Mach_AMD64_thread_state of dyld
         movq %r12,%rsp  // unalloca
-AMD64_ts_rip= 16*8
-        jmp *AMD64_ts_rip(%rax)  # %rsp: mhdrp, argc, argv...
+AMD64_ts_rip= 16*NBPW
+        movq AMD64_ts_rip(%rax),%rcx
+        movq %rcx,3*NBPW(%rsp)  // entry
+        push %rax; pop %rbp  // save &thread_state
+        pop %arg1  // fd
+        call close
+        pop %arg1  // ADRU
+        pop %arg2  // LENU
+        mov $SYS_munmap+SYSBASE,%eax
+        jmp *%rbp  // munmap(ADRU,LENU); ret
 
 bswap: .globl bswap
 0:
@@ -73,6 +84,8 @@ bswap: .globl bswap
         lea 4(%arg1),%arg1
         ja 0b
         ret
+
+SYSBASE= 0x02000000
 
 SYS_exit  =1
 SYS_read  =3
@@ -105,7 +118,7 @@ mmap: .globl mmap
 read: .globl read
         mov $SYS_read,%al
 
-        movzbl %al,%eax; or $0x02000000,%eax
+        movzbl %al,%eax; or $SYSBASE,%eax
         mov %rcx,%r10
         syscall  // .byte 0x0f,0x05
         jnc 0f
