@@ -62,7 +62,7 @@
 /*out*/ : "=r"(r_fmt) ); \
     dprintf(r_fmt, args); \
 })
-#elif defined(__aarch64__) //{
+#elif defined(__aarch64__) //}{
 #define DPRINTF(fmt, args...) ({ \
     char const *r_fmt; \
     asm("bl 0f; .string \"" fmt "\"; .balign 4; 0: mov %0,x30" \
