@@ -726,7 +726,6 @@ next:
         unsigned const sz_threado = threado_size();
         mhp->ncmds += 1;
         mhp->sizeofcmds += sz_threado;
-        sz_mach_headers += sz_threado;
         fo->seek(0, SEEK_SET);
         fo->rewrite(mhp, tail - (char *)mhp);
         threado_rewrite(fo);
@@ -1359,6 +1358,9 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                 }
             }
         }
+        unsigned const sz_threado = threado_size();
+        MemBuffer space(sz_threado); memset(space, 0, sz_threado);
+        fo->write(space, sz_threado);
         sz_mach_headers = fo->getBytesWritten();
     }
     else if (my_filetype == Mach_header::MH_DYLIB) {
