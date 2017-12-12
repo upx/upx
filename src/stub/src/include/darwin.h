@@ -97,6 +97,7 @@ void exit(int) __attribute__((__noreturn__,__nothrow__));
 int mprotect(void *, size_t, int);
 extern int munmap(char *, size_t);
 int open(char const *, int, ...);
+extern ssize_t write(int, char const *, size_t);
 
 
 /*************************************************************************
