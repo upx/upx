@@ -34,7 +34,7 @@
 #include "include/darwin.h"
 
 #ifndef DEBUG  /*{*/
-#define DEBUG 1
+#define DEBUG 0
 #endif  /*}*/
 
 /*************************************************************************
@@ -293,6 +293,7 @@ typedef struct {
         };
         enum e3 {
             MH_NOUNDEFS = 1
+            , MH_PIE      = 0x200000   // ASLR
         };
 
 typedef struct {
@@ -404,12 +405,17 @@ do_xmap(
     size_t reloc = 0;
     unsigned j;
 
-    DPRINTF("do_xmap  fdi=%%x  mhdr=%%p  xi=%%p(%%x %%p) f_unf=%%p\\n",
-        fdi, mhdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), f_unf);
+    DPRINTF("do_xmap  fdi=%%x  mhdr=%%p  *mhdrpp=%%p  xi=%%p(%%x %%p) f_unf=%%p\\n",
+        fdi, mhdr, (mhdrpp ? *mhdrpp : 0), xi, (xi? xi->size: 0), (xi? xi->buf: 0), f_unf);
 
     for ( j=0; j < mhdr->ncmds; ++j,
         (sc = (Mach_segment_command *)(sc->cmdsize + (unsigned char *)sc))
-    ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize!=0) {
+    ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize) {
+        if (!sc->fileoff && sc->filesize  // should be __TEXT
+        && *mhdrpp && ((*mhdrpp)->flags & MH_PIE)) {
+            reloc = (size_t)*mhdrpp - sc->vmaddr;
+            DPRINTF("reloc=%%p\\n", reloc);
+        }
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
         unsigned char  *addr = xo.buf = reloc + (unsigned char *)sc->vmaddr;
