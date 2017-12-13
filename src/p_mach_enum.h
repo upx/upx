@@ -58,7 +58,9 @@
     };
     enum { // filetype
         MH_EXECUTE = 2,
-        MH_DYLIB   = 6,
+        MH_PRELOAD = 5,     /* preloaded executable */
+        MH_DYLIB   = 6,     /* dynamically bound shared library */
+        MH_DYLINKER= 7,     /* /usr/bin/dyld */
         MH_BUNDLE  = 8      /* dynamically bound bundle file */
     };
     enum { // flags

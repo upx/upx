@@ -39,6 +39,9 @@ sz_b_info= 12
 sz_l_info= 12
 sz_p_info= 12
 
+sz_Mach_header64= 8*4
+sz_Mach_segment_command= 2*4 + 16 + 4*8 + 4*4
+
 _start: .globl _start  # ignored, but silence "cannot find entry symbol _start" from ld
 
 
@@ -63,17 +66,18 @@ L90:
         push %rax  // (arg7) mhdrpp= &mhdrp
 // upx_main(&l_info,len_cpr,temp[sz_mhdr],sz_mhdr,f_exp,f_unf,mhdr **)
         call upx_main  # Out: rax= &Mach_AMD64_thread_state of dyld
-        movq %r12,%rsp  // unalloca
+
 AMD64_ts_rip= 16*NBPW
-        movq AMD64_ts_rip(%rax),%rcx
+        movq (%rax),%rbp  // &hatch
+        movq AMD64_ts_rip(%rax),%rcx  // from temp char mhdr[] before unalloca
+        movq %r12,%rsp  // unalloca
         movq %rcx,3*NBPW(%rsp)  // entry
-        push %rax; pop %rbp  // save &thread_state
         pop %arg1  // fd
         call close
         pop %arg1  // ADRU
         pop %arg2  // LENU
         mov $SYS_munmap+SYSBASE,%eax
-        jmp *%rbp  // munmap(ADRU,LENU); ret
+        jmp *%rbp  // goto hatch: syscall.munmap(ADRU,LENU); ret
 
 bswap: .globl bswap
 0:

@@ -96,7 +96,7 @@ SYS_open     =   5 + SYSBASE
 //0:    .word -0b + l_info
 section MACHMAINX
 _start: .globl _start
-    int3
+////    int3
         call main  // push &f_exp
 
   section MACH_UNC

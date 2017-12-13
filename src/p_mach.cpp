@@ -587,7 +587,8 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         segLINK.fileoff = len;  // must be in the file
         segLINK.vmaddr =  len + segTEXT.vmaddr;
         fo->write(page, 16); len += 16;
-        segLINK.vmsize = 16;
+        // reserve convex hull of input segments
+        segLINK.vmsize -= (segLINK.vmaddr - segTEXT.vmaddr);
         segLINK.filesize = 16;
 
         // Get a writeable copy of the stub to make editing easier.
@@ -1324,6 +1325,15 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segLINK.nsects = 0;
     segLINK.initprot = Mach_command::VM_PROT_READ;
     // Adjust later: .vmaddr .vmsize .fileoff .filesize
+    uint64_t up(0);
+    unsigned const ncmds = mhdri.ncmds;
+    for (unsigned j= 0; j < ncmds; ++j) if (lc_seg == msegcmd[j].cmd) {
+        uint64_t sup = msegcmd[j].vmsize + msegcmd[j].vmaddr;
+        if (up < sup) {
+            up = sup;
+            segLINK.vmsize = sup - segLINK.vmaddr;
+        }
+    }
 
     unsigned gap = 0;
     if (my_filetype == Mach_header::MH_EXECUTE) {

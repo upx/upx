@@ -129,7 +129,7 @@ err_exit(int a)
 {
     DPRINTF("err_exit %%x\\n", a);
     (void)a;  // debugging convenience
-    exit(127);
+    exit(a);
 }
 #endif  //}
 
@@ -327,6 +327,20 @@ typedef struct {
         };
 
 typedef struct {
+    char sectname[16];
+    char segname[16];
+    uint64_t addr;   /* memory address */
+    uint64_t size;   /* size in bytes */
+    unsigned offset; /* file offset */
+    unsigned align;  /* power of 2 */
+    unsigned reloff; /* file offset of relocation entries */
+    unsigned nreloc; /* number of relocation entries */
+    unsigned flags;  /* section type and attributes */
+    unsigned reserved1;  /* for offset or index */
+    unsigned reserved2;  /* for count or sizeof */
+} Mach_section_command;
+
+typedef struct {
     uint32_t cmd;  // LC_MAIN;  MH_EXECUTE only
     uint32_t cmdsize;  // 24
     uint64_t entryoff;  // file offset of main() [expected in __TEXT]
@@ -374,9 +388,9 @@ ssize_t pread(int, void *, size_t, off_t_upx_stub);
 extern void bswap(void *, unsigned);
 
 // FIXME: must reserve convex hull of pages; must reloc PIE
-static Mach_AMD64_thread_state const *
+unsigned char * // &hatch if main; &Mach_AMD64_thread_state if dyld
 do_xmap(
-    Mach_header64 const *const mhdr,
+    Mach_header64 *const mhdr,
     off_t_upx_stub const fat_offset,
     Extent *const xi,
     int const fdi,
@@ -385,20 +399,21 @@ do_xmap(
     f_unfilter *const f_unf
 )
 {
-    Mach_segment_command const *sc = (Mach_segment_command const *)(1+ mhdr);
-    Mach_AMD64_thread_state const *entry = 0;
+    unsigned char *rv = 0;
+    Mach_segment_command *sc = (Mach_segment_command *)(1+ mhdr);
+    size_t reloc = 0;
     unsigned j;
 
     DPRINTF("do_xmap  fdi=%%x  mhdr=%%p  xi=%%p(%%x %%p) f_unf=%%p\\n",
         fdi, mhdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), f_unf);
 
     for ( j=0; j < mhdr->ncmds; ++j,
-        (sc = (Mach_segment_command const *)(sc->cmdsize + (void const *)sc))
+        (sc = (Mach_segment_command *)(sc->cmdsize + (unsigned char *)sc))
     ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize!=0) {
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
-        unsigned char  *addr = xo.buf  =        (unsigned char *)sc->vmaddr;
-        unsigned char *haddr =           sc->vmsize +                  addr;
+        unsigned char  *addr = xo.buf = reloc + (unsigned char *)sc->vmaddr;
+        unsigned char *haddr = sc->vmsize + addr;
         size_t frag = (int)(uint64_t)addr &~ PAGE_MASK;
         addr -= frag;
         mlen += frag;
@@ -407,14 +422,20 @@ do_xmap(
             // Decompressor can overrun the destination by 3 bytes.  [x86 only]
             size_t const mlen3 = mlen + (xi ? 3 : 0);
             unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
-            unsigned const flags = MAP_FIXED | MAP_PRIVATE |
+            unsigned const flags = (*mhdrpp ? MAP_FIXED : 0) | MAP_PRIVATE |
                         ((xi || 0==sc->filesize) ? MAP_ANON : 0);
             int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
             off_t_upx_stub const offset = sc->fileoff + fat_offset;
 
-            DPRINTF("mmap  addr=%%p  len=%%p  prot=%%x  flags=%%x  fd=%%d  off=%%p\\n",
-                addr, mlen3, prot, flags, fdm, offset);
-            if (addr !=     mmap(addr, mlen3, prot, flags, fdm, offset)) {
+            DPRINTF("mmap  addr=%%p  len=%%p  prot=%%x  flags=%%x  fd=%%d  off=%%p  reloc=%%p\\n",
+                addr, mlen3, prot, flags, fdm, offset, reloc);
+            unsigned char *maddr = mmap(addr, mlen3, prot, flags, fdm, offset);
+            if (!*mhdrpp) { // MH_DYLINKER
+                *mhdrpp = (Mach_header64*)(addr = maddr);
+                reloc = (size_t)addr;
+            }
+            if (addr != maddr) {
+                DPRINTF("maddr=%%p  addr=%%p\\n", maddr, addr);
                 err_exit(8);
             }
         }
@@ -423,6 +444,17 @@ do_xmap(
                 *mhdrpp = (Mach_header64 *)(void *)addr;
             }
             unpackExtent(xi, &xo, f_decompress, f_unf);
+        }
+        if (*mhdrpp && mlen && !sc->fileoff && sc->nsects) {
+            // main target __TEXT segment at beginning of file with sections (__text)
+            // Use 4 bytes of header padding for the escape hatch.
+            // fold.S could do this easier, except PROT_WRITE is missing then.
+            Mach_segment_command *segp = (Mach_segment_command *)(((char *)sc - (char *)mhdr) + addr);
+            Mach_section_command *const secp = (Mach_section_command *)(1+ segp);
+            unsigned *hatch= -1+ (unsigned *)(secp->offset + (char *)addr);
+            DPRINTF("hatch=%%p  secp=%%p  segp=%%p  mhdr=%%p\\n", hatch, secp, segp, addr);
+            *hatch = 0xc3050f90;  // nop; syscall; ret
+            rv= (unsigned char *)hatch;
         }
         /*bzero(addr, frag);*/  // fragment at lo end
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
@@ -450,13 +482,14 @@ ERR_LAB
         }
     }
     else if (LC_UNIXTHREAD==sc->cmd || LC_THREAD==sc->cmd) {
-        Mach_thread_command const *const thrc = (Mach_thread_command const *)sc;
+        Mach_thread_command *const thrc = (Mach_thread_command *)sc;
         if (AMD64_THREAD_STATE      ==thrc->flavor
         &&  AMD64_THREAD_STATE_COUNT==thrc->count ) {
-            entry = &thrc->state;
+            thrc->state.rip += reloc;
+            rv = (unsigned char *)&thrc->state;
         }
     }
-    return entry;
+    return rv;
 }
 
 
@@ -476,7 +509,8 @@ upx_main(
     Mach_header64 **const mhdrpp  // Out: *mhdrpp= &real Mach_header64
 )
 {
-    Mach_AMD64_thread_state const *entry;
+    Mach_AMD64_thread_state *ts = 0;
+    unsigned char *hatch;
     off_t_upx_stub fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(unsigned char *, 1+ (struct p_info const *)(1+ li));  // &b_info
@@ -493,7 +527,8 @@ upx_main(
     // Uncompress Macho headers
     unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?
 
-    entry = do_xmap(mhdr, fat_offset, &xi0, MAP_ANON_FD, mhdrpp, f_decompress, f_unf);
+    // Overwrite the OS-chosen address space at *mhdrpp.
+    hatch = do_xmap(mhdr, fat_offset, &xi0, MAP_ANON_FD, mhdrpp, f_decompress, f_unf);
 
   { // Map dyld dynamic loader
     Mach_load_command const *lc = (Mach_load_command const *)(1+ mhdr);
@@ -530,13 +565,15 @@ ERR_LAB
             }
         } break;
         } // switch
-        entry = do_xmap(mhdr, fat_offset, 0, fdi, 0, 0, 0);
+        Mach_header64 *dyhdr = 0;
+        ts = (Mach_AMD64_thread_state *)do_xmap(mhdr, fat_offset, 0, fdi, &dyhdr, 0, 0);
+        ts->rax = (uint64_t)hatch;
         close(fdi);
         break;
     }
   }
 
-    return entry;
+    return ts;
 }
 
 #if DEBUG  //{
