@@ -122,12 +122,49 @@ mmap: .globl mmap
 read: .globl read
         mov $SYS_read,%al
 
-        movzbl %al,%eax; or $SYSBASE,%eax
+        movzbl %al,%eax; push %rax  // save SYS_nnn for error diagnosis
+        or $SYSBASE,%eax
         mov %rcx,%r10
         syscall  // .byte 0x0f,0x05
-        jnc 0f
-        or $~0,%rax  //mov errno,eax
-0:
+        jc sysfail
+        pop %rcx  // toss SYS_nnn
         ret
+
+sysfail:  // syscall failed: write hex error code on stderr
+        mov %rax,%rdx
+        pop %rax  // SYS_nnn
+        push %rdi; push %rsi
+        push %rdx  // retval
+
+        sub $0x70,%rsp  // alloca
+        mov %rsp,%rdi  // output ptr
+        call pr_hex; movb $'=',%al; stosb
+        movq 0x70(%rsp),%rax  // retval
+        call pr_hex; movb $'\n',%al; stosb
+        mov %rdi,%rdx
+        sub %rsp,%rdx  // len
+        mov %rsp,%rsi  // ptr
+        mov $2,%edi  // FD_STDERR
+        mov $SYS_write+SYSBASE,%eax
+        syscall
+        add $0x70,%rsp
+
+        pop %rcx  // toss retval
+        pop %rsi; pop %rdi
+        or $~0,%rax  //mov errno,eax
+        ret
+
+pr_hex:
+        lea hextab(%rip),%rsi
+        mov %rax,%rdx
+        mov $16,%ecx  // char count
+1:
+        rol $4,%rdx; mov %edx,%eax; and $0xf,%eax
+        movzbl (%rsi,%rax),%eax
+        stosb; sub $1,%ecx; jnz 1b
+        ret
+
+hextab:
+        .ascii "0123456789abcdef"
 
 /* vim:set ts=8 sw=8 et: */
