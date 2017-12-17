@@ -282,7 +282,7 @@ unfold:
 // Remember new f_exp region for PROT_EXEC.
         movq 2*NBPW(%rsp),%rdx  // LENU
         movq 4*NBPW(%rsp),%rcx  // &Mach_header64
-        addq %rax,%rdx  // new last of unfoded
+        addq %rax,%rdx  // new last of unfolded
         subq %rcx,%rax  // new - old
         movq %rax,%r_RELOC  // relocation constant
         addq %rbp,%rax; push %rax  // P_10  new f_exp

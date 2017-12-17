@@ -29,8 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-//#define SIMULATE_ON_DEBIAN_EABI4 1
-#undef  SIMULATE_ON_DEBIAN_EABI4
+#define SIMULATE_ON_DEBIAN_EABI4 1
+//#undef  SIMULATE_ON_DEBIAN_EABI4
 
 #ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
   #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_DEBIAN_EABI4 */
@@ -40,6 +40,7 @@
   #define ARMEL_DARWIN 1
 #endif  /*}*/
 
+NBPW= 4
 #include "arch/arm/v5a/macros.S"
 
 #define bkpt .long 0xe1200070
@@ -60,20 +61,31 @@ MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
 
 PAGE_SHIFT= 12
-PAGE_SIZE = -(~0<<PAGE_SHIFT)
+PAGE_MASK =  (~0<<PAGE_SHIFT)
+PAGE_SIZE = -PAGE_MASK
+
+__NR_SYSCALL_BASE = 0
 
 __NR_exit =      1 + __NR_SYSCALL_BASE
 __NR_write =     4 + __NR_SYSCALL_BASE
+__NR_open  =     5 + __NR_SYSCALL_BASE
+#if defined(SIMULATE_ON_DEBIAN_EABI4)  //{
+__NR_mmap  =  0xc0 + __NR_SYSCALL_BASE
+__NR_mprotect=0x7d + __NR_SYSCALL_BASE
+#else  //}{  real Mach-o
 __NR_mmap  =   197 + __NR_SYSCALL_BASE
+__NR_mprotect = 74 + __NR_SYSCALL_BASE
+#endif  //}
 
 // DEBUG ONLY:
 __ARM_NR_BASE  = 0xf0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 
-        //.long sz_pack2  // placed there by ::pack3()
+//0:    .word 0b - &Mach_header  // backwards distance to Mach_header
+//0:    .word 0b - l_info  // backwards distance to l_info
   section MACHMAINX
 _start: .globl _start
-        sub sp,sp,#4  // space for mhdrp
+        sub sp,sp,#NBPW  // space for mhdrp
         stmdb sp!,{r0-r12,r14,r15}  // paranoia [omit sp===r13]
         bl main
 L20:
@@ -101,37 +113,135 @@ end_decompress: .globl end_decompress
 
         /* IDENTSTR goes here */
 
+r_RELOC .req r12  // same as r_MHDR
+r_MHDR  .req r12
+r_LENX  .req r11
+r_ADRX  .req r10
+r_FOLD  .req r6
+
+arg1 .req r0
+arg2 .req r1
+arg3 .req r2
+arg4 .req r3
+arg5 .req r4
+arg6 .req r5
+
+rdi .req r0
+//rsi .req r1
+rdx .req r2
+rcx .req r3
+
+rax .req r7
+rbx .req r8
+rbp .req r9
+
   section MACHMAINZ
-unfold:  // lr= &L100
-        ldr ldst,[lr,#sz_unc]
-        ldr lsrc,[lr,#sz_cpr]
-        add dst,lsrc,lr; add dst,dst,#sz_b_info
-        add src,ldst,lr; add src,src,#GAP+NO_LAP  // defend against prefetch and overlap
+unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
+        mov rbx,lr  // &b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_fold...}
+        ldr rax,[rbx,#sz_unc]  // LENU.dynamic
+        mov rdx,rbx
+        sub rdx,rdx,r_MHDR  // LENU.static
+        add rdx,rdx,rax
+        str rdx,[sp,#2*NBPW]  // LENU
 
-        mov r4,lsrc  // loop count
-movup:  // descending copy folded_loader to higher address
-        ldrb ip,[dst,#-1]!
-        subs r4,r4,#1
-        strb ip,[src,#-1]!
-        bne movup
+// Reserve space for input file and unfolded stub.
+        mov arg2,rdx  // len
+        mov arg6,#0  // offset
+        mov arg5,#-1  // FD_ANON
+        mov arg4,#MAP_PRIVATE|MAP_ANONYMOUS
+        mov arg3,#PROT_READ|PROT_WRITE
+        mov arg1,#0  // kernel chooses addr
+        do_sys __NR_mmap
+        str r0,[sp,#1*NBPW]  // ADRU
+        sub r_ADRX,r_ADRX,r_MHDR  // offset(&l_info)
+        add r_ADRX,r_ADRX,r0  // new &l_info
 
-        ldr r4,  [lr,#b_method]
-        add lr,lr,#GAP
-        PUSH {ldst}; mov ldst,sp  // LZMA needs for EOF
-        mov dst,lr  // unfolded result
-          sub r11,r5,#4+ L20 - _start  // &sz_pack2  param to unfolded loader
-        PUSH {r4}  // 5th param to decompressor
-          mov r10,lr  // DEBUG ONLY
-        blx r5  // bx r5
-          bx r10  // DEBUG ONLY
+// Duplicate the input data.
+        mov arg6,#0  // offset
+        ldr arg5,[sp,#0*NBPW]  // fd
+        mov arg4,#MAP_PRIVATE|MAP_FIXED
+        mov arg3,#PROT_READ|PROT_WRITE
+        sub arg2,rbx,r_MHDR  // len
+        // mov arg1,r0  // same address
+        do_sys __NR_mmap
+
+// Remember new f_exp region for PROT_EXEC.
+        ldr rdx,[sp,#2*NBPW]  // LENU
+        ldr rcx,[sp,#4*NBPW]  // &Mach_header
+        add rdx,rdx,rax  // new last of unfolded
+        sub r_RELOC,rax,rcx  // relocation constant = new - old
+        add rax,rax,rbp; str rbp,[sp,#-NBPW]!  // P_10  new f_exp
+        mov rax,rax,lsr #PAGE_SHIFT
+        mov rax,rax,lsl #PAGE_SHIFT
+        str rax,[sp,#-NBPW]!  // P_11 address
+        sub rdx,rdx,rax
+        str rdx,[sp,#-NBPW]!  // P_12 length
+
+// Unfold
+        ldr rax,[rbx,#sz_unc]  // dstlen
+        str rax,[sp,#-NBPW]; mov arg4,sp  // P_13  &dstlen
+        add arg3,rbx,r_RELOC  // dst= new unfold
+        mov r_FOLD,arg3  // execute here
+        ldr  rax,[rbx,#sz_cpr]  // srclen
+        ldr arg5,[rbx,#b_method]
+        add arg1,rbx,#sz_b_info  // src
+        mov arg2,rax  // srclen
+        blx rbp  // old f_exp
+        add sp,sp,#NBPW  // P_13  toss dstlen
+
+// PROT_EXEC
+        ldr arg2,[sp],#NBPW  // P_12  length
+        ldr arg1,[sp],#NBPW  // P_11  addr
+        ldr  rbp,[sp],#NBPW  // P_10  new f_exp
+        mov arg3,#PROT_READ|PROT_EXEC
+        do_sys __NR_mprotect
+
+// Use the copy.
+// r10= ADRX; r11= LENX; r9= f_exp
+// rsp/ fd,ADRU,LENU,%entry,&Mach_header
+        bx r_FOLD
+
+execp:
+        .ascii "executable_path="  // 16 bytes
+L99:
+        bkpt
 
 main:
         mov r5,lr  // &f_decompress
-        bl unfold
-L100:
-        /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
+        add r2,sp,#NBPW  // &argv[0]
+0:
+        ldr r0,[r2],#NBPW
+        cmp r0,#0; bne 0b  // past argv
+0:
+        ldr r0,[r2],#NBPW
+        cmp r0,#0; bne 0b  // past envp
+L30:
+        ldr r0,[r2],#NBPW  // r0= *apple++
+        cmp r0,#0; beq L99
+        adr r1,execp; mov r3,#16
+L40:
+        ldrb r4,[r0],#1
+        ldrb r5,[r1],#1
+        cmp r4,r5; bne L30  // mismatch ==> next apple[]
+        subs r3,r3,#1; bne L40  // not entire prefix
 
-GAP= 128  // > farthest prefetch;               must match ../../p_mach.cpp
-NO_LAP= 64  // avoid overlap for folded loader; must match ../../p_mach.cpp
+        mov arg2,#0  // O_RDONLY
+        do_sys __NR_open
+        str r5,[sp,#-5*NBPW]!  // fd,%ADRU,%LENU,%entry,%&Mach_header
+
+        adr r1,-2*4 + _start
+
+        mov r_MHDR,r1
+        ldr r0,[r1],#4
+        sub r_MHDR,r_MHDR,r0  // &Mach_header
+        str r_MHDR,[sp,#4*NBPW]
+
+        mov r_ADRX,r1
+        ldr r0,[r1],#4
+        sub r_ADRX,r_ADRX,r0  // &l_info
+
+        sub r_LENX,r0,#2*4  // omit words before _start
+        bl unfold
+          /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 /* vim:set ts=8 sw=8 et: */
