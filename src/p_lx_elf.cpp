@@ -271,13 +271,23 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         phdri= (Elf32_Phdr       *)(e_phoff + file_image);  // do not free() !!
         shdri= (Elf32_Shdr const *)(e_shoff + file_image);  // do not free() !!
         sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
-        if (sec_dynsym)
-            sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
+        if (sec_dynsym) {
+            unsigned t = get_te32(&sec_dynsym->sh_link);
+            if (e_shnum <= t)
+                throwCantPack("bad dynsym->sh_link");
+            sec_dynstr = &shdri[t];
+        }
 
         Elf32_Phdr const *phdr= phdri;
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
-            dynseg= (Elf32_Dyn const *)(get_te32(&phdr->p_offset) + file_image);
+            unsigned t = get_te32(&phdr->p_offset), s = sizeof(Elf32_Dyn) + t;
+            if (s < t || file_size < s) {
+                char msg[50]; snprintf(msg, sizeof(msg), "bad phdr[%u].p_offset",
+                    (unsigned)(phdr - phdri));
+                throwCantPack(msg);
+            }
+            dynseg= (Elf32_Dyn const *)(t + file_image);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -702,13 +712,23 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
         shdri= (Elf64_Shdr const *)(e_shoff + file_image);  // do not free() !!
         sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
-        if (sec_dynsym)
-            sec_dynstr = get_te64(&sec_dynsym->sh_link) + shdri;
+        if (sec_dynsym) {
+            unsigned t = get_te32(&sec_dynsym->sh_link);
+            if (e_shnum <= t)
+                throwCantPack("bad dynsym->sh_link");
+            sec_dynstr = &shdri[t];
+        }
 
         Elf64_Phdr const *phdr= phdri;
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
-            dynseg= (Elf64_Dyn const *)(get_te64(&phdr->p_offset) + file_image);
+            uint64_t t = get_te64(&phdr->p_offset), s = sizeof(Elf64_Dyn) + t;
+            if (s < t || (uint64_t)file_size < s) {
+                char msg[50]; snprintf(msg, sizeof(msg), "bad phdr[%u].p_offset",
+                   (unsigned)(phdr - phdri));
+                throwCantPack(msg);
+            }
+            dynseg= (Elf64_Dyn const *)(t + file_image);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
