@@ -34,7 +34,7 @@
 #include "include/darwin.h"
 
 #ifndef DEBUG  /*{*/
-#define DEBUG 0
+#define DEBUG 1
 #endif  /*}*/
 
 /*************************************************************************
@@ -118,7 +118,7 @@ xread(Extent *x, void *buf, size_t count)
 // util
 **************************************************************************/
 
-#if 1  //{  save space
+#if 0  //{  save space
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
@@ -348,6 +348,27 @@ typedef struct {
     uint64_t stacksize;  // non-default initial stack size
 } Mach_main_command;
 
+#if defined(__AARCH64EL__)  // {
+typedef struct {
+    uint64_t x0,  x1,  x2,  x3;
+    uint64_t x4,  x5,  x6,  x7;
+    uint64_t x8,  x9,  x10, x11;
+    uint64_t x12, x13, x14, x15;
+    uint64_t x16, x17, x18, x19;
+    uint64_t x20, x21, x22, x23;
+    uint64_t x24, x25, x26, x27;
+    uint64_t x28, fp,  lr,  sp;
+    uint64_t pc;
+    uint32_t cpsr;
+} Mach_thread_state;  // Mach_ARM64_thread_state
+        enum e6 {
+            THREAD_STATE = 4  // ARM64_THREAD_STATE
+        };
+        enum e7 {
+            THREAD_STATE_COUNT = sizeof(Mach_thread_state)/4
+        };
+
+#elif defined(__x86_64__)  //}{
 typedef struct {
     uint64_t rax, rbx, rcx, rdx;
     uint64_t rdi, rsi, rbp, rsp;
@@ -355,21 +376,23 @@ typedef struct {
     uint64_t r12, r13, r14, r15;
     uint64_t rip, rflags;
     uint64_t cs, fs, gs;
-} Mach_AMD64_thread_state;
+} Mach_thread_state;  // Mach_AMD64_thread_state;
+        enum e6 {
+            THREAD_STATE = 4  // AMD_THREAD_STATE
+        };
+        enum e7 {
+            THREAD_STATE_COUNT = sizeof(Mach_thread_state)/4
+        };
+
+#endif  //}
 
 typedef struct {
     unsigned cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
     unsigned cmdsize;        /* total size of this command */
     unsigned flavor;
     unsigned count;          /* sizeof(following_thread_state)/4 */
-    Mach_AMD64_thread_state state;
+    Mach_thread_state state;
 } Mach_thread_command;
-        enum e6 {
-            AMD64_THREAD_STATE = 4  // x86_THREAD_STATE64
-        };
-        enum e7 {
-            AMD64_THREAD_STATE_COUNT = sizeof(Mach_AMD64_thread_state)/4
-        };
 
 typedef union {
     unsigned offset;  /* from start of load command to string */
@@ -377,8 +400,11 @@ typedef union {
 
 #define MAP_FIXED     0x10
 #define MAP_PRIVATE   0x02
+
 #define MAP_ANON    0x1000
-//#define MAP_ANON  0x20  // x86 DEBUG ONLY
+#undef MAP_ANON         // x86 DEBUG ONLY
+#define MAP_ANON  0x20  // x86 DEBUG ONLY
+
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
@@ -457,9 +483,15 @@ do_xmap(
             // fold.S could do this easier, except PROT_WRITE is missing then.
             Mach_segment_command *segp = (Mach_segment_command *)(((char *)sc - (char *)mhdr) + addr);
             Mach_section_command *const secp = (Mach_section_command *)(1+ segp);
+#if defined(__AARCH64EL__)  //{
+            unsigned *hatch= -2+ (unsigned *)(secp->offset + (char *)addr);
+            hatch[0] = 0xd4000001;  // syscall
+            hatch[1] = 0xd65f03c0;  // ret
+#elif defined(__x86_64__)  //}{
             unsigned *hatch= -1+ (unsigned *)(secp->offset + (char *)addr);
+            hatch[0] = 0xc3050f90;  // nop; syscall; ret
+#endif  //}
             DPRINTF("hatch=%%p  secp=%%p  segp=%%p  mhdr=%%p\\n", hatch, secp, segp, addr);
-            *hatch = 0xc3050f90;  // nop; syscall; ret
             rv= (unsigned char *)hatch;
         }
         /*bzero(addr, frag);*/  // fragment at lo end
@@ -489,9 +521,13 @@ ERR_LAB
     }
     else if (LC_UNIXTHREAD==sc->cmd || LC_THREAD==sc->cmd) {
         Mach_thread_command *const thrc = (Mach_thread_command *)sc;
-        if (AMD64_THREAD_STATE      ==thrc->flavor
-        &&  AMD64_THREAD_STATE_COUNT==thrc->count ) {
+        if (THREAD_STATE      ==thrc->flavor
+        &&  THREAD_STATE_COUNT==thrc->count ) {
+#if defined(__AARCH64EL__)  // {
+            thrc->state.pc += reloc;
+#elif defined(__x86_64__)  //}{
             thrc->state.rip += reloc;
+#endif  //}
             rv = (unsigned char *)&thrc->state;
         }
     }
@@ -503,8 +539,7 @@ ERR_LAB
 // upx_main - called by our unfolded entry code
 //
 **************************************************************************/
-
-Mach_AMD64_thread_state const *
+Mach_thread_state const *
 upx_main(
     struct l_info const *const li,
     size_t volatile sz_compressed,  // total length
@@ -515,7 +550,7 @@ upx_main(
     Mach_header64 **const mhdrpp  // Out: *mhdrpp= &real Mach_header64
 )
 {
-    Mach_AMD64_thread_state *ts = 0;
+    Mach_thread_state *ts = 0;
     unsigned char *hatch;
     off_t_upx_stub fat_offset = 0;
     Extent xi, xo, xi0;
@@ -545,6 +580,7 @@ upx_main(
     ) if (LC_LOAD_DYLINKER==lc->cmd) {
         char const *const dyld_name = ((Mach_lc_str const *)(1+ lc))->offset +
             (char const *)lc;
+        DPRINTF("dyld= %%s\\n", dyld_name);
         int const fdi = open(dyld_name, O_RDONLY, 0);
         if (0 > fdi) {
             err_exit(18);
@@ -572,8 +608,12 @@ ERR_LAB
         } break;
         } // switch
         Mach_header64 *dyhdr = 0;
-        ts = (Mach_AMD64_thread_state *)do_xmap(mhdr, fat_offset, 0, fdi, &dyhdr, 0, 0);
-        ts->rax = (uint64_t)hatch;
+        ts = (Mach_thread_state *)do_xmap(mhdr, fat_offset, 0, fdi, &dyhdr, 0, 0);
+#if defined(__AARCH64EL__)  // {
+            ts->x0 = (uint64_t)hatch;
+#elif defined(__x86_64__)  //}{
+            ts->rax = (uint64_t)hatch;
+#endif  //}
         close(fdi);
         break;
     }
@@ -681,6 +721,11 @@ finish:
             buf[0] = '0';
             buf[1] = 'x';
             n+= write(2, buf, heximal(va_arg(va, int), buf, 2));
+        } break;
+        case 's': {
+            char *s0= (char *)va_arg(va, char *), *s= s0;
+            if (s) while (*s) ++s;
+            n+= write(2, s0, s - s0);
         } break;
         } // 'switch'
     }

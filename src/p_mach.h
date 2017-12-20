@@ -1207,7 +1207,6 @@ public:
     virtual const char *getName() const { return "macho/arm64"; }
     virtual const char *getFullName(const options_t *) const { return "arm64-darwin.macho"; }
 protected:
-    virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);

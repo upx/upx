@@ -29,6 +29,17 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+#define  SIMULATE_ON_DEBIAN_EABI4 1
+//#undef SIMULATE_ON_DEBIAN_EABI4
+
+#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
+  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_DEBIAN_EABI4 */
+  #define ARMEL_EABI4 1           /* SIMULATE_ON_DEBIAN_EABI4 */
+#else  /*}{ USUAL case */
+  #define DARWIN_ARM_CACHEFLUSH 1
+  #define ARMEL_DARWIN 1
+#endif  /*}*/
+
 NBPW= 8
 #include "arch/arm64/v8/macros.S"
 
@@ -46,6 +57,7 @@ PROT_EXEC=  4
 MAP_PRIVATE= 2
 MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
+FD_ANON= -1
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
@@ -58,6 +70,15 @@ __NR_open =      5 + __NR_SYSCALL_BASE
 __NR_mmap =    197 + __NR_SYSCALL_BASE
 __NR_mprotect=  74 + __NR_SYSCALL_BASE
 
+#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
+__NR_mmap     = 0xde  // 222 __GI___mmap64
+__NR_munmap   = 0xd7  // 215
+__NR_mprotect = 0xe2  // 226
+__NR_openat   = 0x38  //  56
+__NR_pread    = 0x43  //  67
+#endif  /*}*/
+FD_CWD = -100
+
 // DEBUG ONLY:
 __ARM_NR_BASE  = 0xf0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
@@ -68,22 +89,7 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 
   section MACHMAINX
 _start: .globl _start
-        sub sp,sp,#NBPW  // space for mhdrp
-        stp x0,x1,[sp,#-30*8]!  // paranoia; omit r30(lr), r31(sp)
-        stp x2,x3,[sp,#2*8]
-        stp x4,x5,[sp,#4*8]
-        stp x6,x7,[sp,#6*8]
-        stp x8,x9,[sp,#8*8]
-        stp x10,x11,[sp,#10*8]
-        stp x12,x13,[sp,#12*8]
-        stp x14,x15,[sp,#14*8]
-        stp x16,x17,[sp,#16*8]
-        stp x18,x19,[sp,#18*8]
-        stp x20,x21,[sp,#20*8]
-        stp x22,x23,[sp,#22*8]
-        stp x24,x25,[sp,#24*8]
-        stp x26,x27,[sp,#26*8]
-        stp x28,x29,[sp,#28*8]
+        mov x2,sp  // &argc
         bl main
 L20:
 f_decompress:
@@ -110,11 +116,11 @@ end_decompress: .globl end_decompress
 
         /* IDENTSTR goes here */
 
-r_RELOC .req x12  // same as r_MHDR
-r_MHDR  .req x12
-r_LENX  .req x11
-r_ADRX  .req x10
-r_FOLD  .req x6
+r_RELOC .req x23  // same as r_MHDR
+r_MHDR  .req x22
+r_LENX  .req x21
+r_ADRX  .req x20
+r_FOLD  .req x19
 
 arg1 .req x0; arg1w .req w0
 arg2 .req x1; arg2w .req w1
@@ -129,19 +135,18 @@ rdx .req x2
 rcx .req x3
 
 rax .req x7; eax .req w7
-rbx .req x8
-rbp .req x9
+rbx .req x27
+r_EXP .req x28
 
   section MACHMAINZ
 lsrc .req w1
 ldst .req w3
 ldstx .req x3
 
-unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
+unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header,HOLE
         mov rbx,lr  // &b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_fold...}
         ldr eax,[rbx,#sz_unc]  // LENU.dynamic
-        mov rdx,rbx
-        sub rdx,rdx,r_MHDR  // LENU.static
+        sub rdx,rbx,r_MHDR  // LENU.static
         add rdx,rdx,eax,uxtw
         str rdx,[sp,#2*NBPW]  // LENU
 
@@ -169,36 +174,37 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
 // Remember new f_exp region for PROT_EXEC.
         ldr rdx,[sp,#2*NBPW]  // LENU
         ldr rcx,[sp,#4*NBPW]  // &Mach_header
-        add rdx,rdx,rax  // new last of unfolded
-        sub r_RELOC,rax,rcx  // relocation constant = new - old
-        add rax,rax,rbp; str rbp,[sp,#-NBPW]!  // P_10  new f_exp
-        lsr rax,rax,#PAGE_SHIFT
-        lsl rax,rax,#PAGE_SHIFT
-        str rax,[sp,#-NBPW]!  // P_11 address
-        sub rdx,rdx,rax
-        str rdx,[sp,#-NBPW]!  // P_12 length
+        add rdx,rdx,x0  // new last of unfolded
+        sub r_RELOC,x0,rcx  // relocation constant = new - old
+        add rcx,r_EXP,r_RELOC
+        str rcx,[sp,#-4*NBPW]!  // P_10  new f_exp
+        and x0,x0,#~0<<PAGE_SHIFT
+        str x0,[sp,#1*NBPW]  // P_11  address
+        sub rdx,rdx,x0
+        str rdx,[sp,#2*NBPW]  // P_12  length
+
 // Unfold
         ldr eax,[rbx,#sz_unc]  // dstlen
-        str rax,[sp,#-NBPW]; mov arg4,sp  // P_13  &dstlen
+        add arg4,sp,#3*NBPW  // P_13  &dstlen
+        str rax,[sp,#3*NBPW]
         add arg3,rbx,r_RELOC  // dst= new unfold
         mov r_FOLD,arg3  // execute here
         ldr  eax,[rbx,#sz_cpr]  // srclen
         ldr arg5w,[rbx,#b_method]
         add arg1,rbx,#sz_b_info  // src
         mov arg2,rax  // srclen
-        blr rbp  // old f_exp
-        add sp,sp,#NBPW  // P_13  toss dstlen
+        blr r_EXP  // old f_exp; new f_exp lacks PROT_EXEC
 
 // PROT_EXEC
-        ldr arg2,[sp],#NBPW  // P_12  length
-        ldr arg1,[sp],#NBPW  // P_11  addr
-        ldr  rbp,[sp],#NBPW  // P_10  new f_exp
+        ldr  arg2,[sp, #2*NBPW]  // P_12  length
+        ldr  arg1,[sp, #1*NBPW]  // P_11  addr
+        ldr r_EXP,[sp],#4*NBPW  // P_10  new f_exp
         mov arg3w,#PROT_READ|PROT_EXEC
         do_sys __NR_mprotect
 
 // Use the copy.
-// r10= ADRX; r11= LENX; r9= f_exp
-// rsp/ fd,ADRU,LENU,%entry,&Mach_header
+// x20=r_ADRX= ADRX = &l_info; x21=r_LENX= LENX; x28=r_EXP= f_exp
+// rsp/ fd,ADRU,LENU,%entry,&Mach_header,HOLE
         br r_FOLD
 
 execp:
@@ -206,9 +212,8 @@ execp:
 L99:
         brk #0
 
-main:
-        mov x5,lr  // &f_decompress
-        add x2,sp,#NBPW  // &argv[0]
+main:  // IN: x2= &argc; lr= &f_exp
+        mov r_EXP,lr  // &f_decompress
 0:
         ldr  x0,[x2],#NBPW
         cbnz x0,0b  // past argv
@@ -226,9 +231,16 @@ L40:
         cmp w4,w5; bne L30  // mismatch ==> next apple[]
         cbnz w3,L40  // not entire prefix
 
+#ifdef SIMULATE_ON_DEBIAN_EABI4  //{
+        mov arg3,#0  // O_RDONLY
+        mov arg2,arg1
+        mov arg1w,#FD_CWD
+        do_sys __NR_openat
+#else  //}{
         mov arg2,#0  // O_RDONLY
         do_sys __NR_open
-        str x5,[sp,#-5*NBPW]!  // fd,%ADRU,%LENU,%entry,%&Mach_header
+#endif  //}
+        str x0,[sp,#-6*NBPW]!  // fd,%ADRU,%LENU,%entry,%&Mach_header,HOLE
 
         adr x1,-2*4 + _start
 

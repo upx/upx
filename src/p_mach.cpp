@@ -152,14 +152,9 @@ const int *PackMachBase<T>::getCompressionMethods(int method, int level) const
 
 const int *PackMachARMEL::getCompressionMethods(int method, int level) const
 {
+    // Un-aligned fetch does not work on 32-bit ARM, so use 8-bit methods
     return Packer::getDefaultCompressionMethods_8(method, level);
 }
-
-const int *PackMachARM64EL::getCompressionMethods(int method, int level) const
-{
-    return Packer::getDefaultCompressionMethods_8(method, level);
-}
-
 
 PackMachPPC32::PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
         Mach_header::MH_EXECUTE, Mach_thread_command::PPC_THREAD_STATE,
@@ -210,7 +205,7 @@ PackMachARMEL::PackMachARMEL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
         sizeof(Mach_ARM_thread_state)>>2, sizeof(threado))
 { }
 
-PackMachARM64EL::PackMachARM64EL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
+PackMachARM64EL::PackMachARM64EL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM64,
         Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE,
         sizeof(Mach_ARM64_thread_state)>>2, sizeof(threado))
 { }
@@ -1917,6 +1912,14 @@ bool PackMachBase<T>::canPack()
             0,
                    stub_arm_v5a_darwin_macho_entry,
                    stub_arm_v5a_darwin_macho_fold,
+                   0
+        },
+        {CPU_TYPE_ARM64, MH_EXECUTE,
+            sizeof(stub_arm64_darwin_macho_entry),
+            sizeof(stub_arm64_darwin_macho_fold),
+            0,
+                   stub_arm64_darwin_macho_entry,
+                   stub_arm64_darwin_macho_fold,
                    0
         },
         {CPU_TYPE_POWERPC, MH_EXECUTE,

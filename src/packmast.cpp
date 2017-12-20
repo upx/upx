@@ -224,6 +224,7 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     D(PackMachI386);
     D(PackMachAMD64);
     D(PackMachARMEL);
+    D(PackMachARM64EL);
 
     // 2010-03-12  omit these because PackMachBase<T>::pack4dylib (p_mach.cpp)
     // does not understand what the Darwin (Apple Mac OS X) dynamic loader

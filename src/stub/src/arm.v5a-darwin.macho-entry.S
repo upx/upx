@@ -133,7 +133,7 @@ rcx .req r3
 
 rax .req r7
 rbx .req r8
-rbp .req r9
+r_EXP .req r9
 
   section MACHMAINZ
 unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
@@ -168,13 +168,14 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
 // Remember new f_exp region for PROT_EXEC.
         ldr rdx,[sp,#2*NBPW]  // LENU
         ldr rcx,[sp,#4*NBPW]  // &Mach_header
-        add rdx,rdx,rax  // new last of unfolded
-        sub r_RELOC,rax,rcx  // relocation constant = new - old
-        add rax,rax,rbp; str rbp,[sp,#-NBPW]!  // P_10  new f_exp
-        mov rax,rax,lsr #PAGE_SHIFT
-        mov rax,rax,lsl #PAGE_SHIFT
-        str rax,[sp,#-NBPW]!  // P_11 address
-        sub rdx,rdx,rax
+        add rdx,rdx,r0  // new last of unfolded
+        sub r_RELOC,r0,rcx  // relocation constant = new - old
+        add rcx,r_EXP,r_RELOC
+        str rcx,[sp,#-NBPW]!  // P_10  new f_exp
+        mov r0,r0,lsr #PAGE_SHIFT
+        mov r0,r0,lsl #PAGE_SHIFT
+        str r0,[sp,#-NBPW]!  // P_11 address
+        sub rdx,rdx,r0
         str rdx,[sp,#-NBPW]!  // P_12 length
 
 // Unfold
@@ -186,13 +187,13 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
         ldr arg5,[rbx,#b_method]
         add arg1,rbx,#sz_b_info  // src
         mov arg2,rax  // srclen
-        blx rbp  // old f_exp
+        blx r_EXP  // old f_exp; new f_exp lacks PROT_EXEC
         add sp,sp,#NBPW  // P_13  toss dstlen
 
 // PROT_EXEC
-        ldr arg2,[sp],#NBPW  // P_12  length
-        ldr arg1,[sp],#NBPW  // P_11  addr
-        ldr  rbp,[sp],#NBPW  // P_10  new f_exp
+        ldr  arg2,[sp],#NBPW  // P_12  length
+        ldr  arg1,[sp],#NBPW  // P_11  addr
+        ldr r_EXP,[sp],#NBPW  // P_10  new f_exp
         mov arg3,#PROT_READ|PROT_EXEC
         do_sys __NR_mprotect
 
