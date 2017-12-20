@@ -72,7 +72,7 @@ LOAD tmp/amd64-darwin.macho-main.o
 .plt
  *(.plt)
 
-.text           0x0000000008048000      0xe32
+.text           0x0000000008048000      0xea3
  *(.text .stub .text.* .gnu.linkonce.t.*)
  .text          0x0000000008048000      0x157 tmp/amd64-darwin.macho-fold.o
                 0x00000000080480b8                munmap
@@ -87,17 +87,17 @@ LOAD tmp/amd64-darwin.macho-main.o
                 0x00000000080480b4                mprotect
                 0x00000000080480c0                close
  *fill*         0x0000000008048157        0x1 90909090
- .text          0x0000000008048158      0xcda tmp/amd64-darwin.macho-main.o
+ .text          0x0000000008048158      0xd4b tmp/amd64-darwin.macho-main.o
                 0x000000000804875f                do_xmap
-                0x0000000008048be3                upx_main
+                0x0000000008048c30                upx_main
  *(.text.*personality*)
  *(.gnu.warning)
 
 .fini
  *(.fini)
-                0x0000000008048e32                PROVIDE (__etext, .)
-                0x0000000008048e32                PROVIDE (_etext, .)
-                0x0000000008048e32                PROVIDE (etext, .)
+                0x0000000008048ea3                PROVIDE (__etext, .)
+                0x0000000008048ea3                PROVIDE (_etext, .)
+                0x0000000008048ea3                PROVIDE (etext, .)
 
 .rodata
  *(.rodata .rodata.* .gnu.linkonce.r.*)
@@ -113,8 +113,8 @@ LOAD tmp/amd64-darwin.macho-main.o
 
 .gcc_except_table
  *(.gcc_except_table .gcc_except_table.*)
-                0x0000000008048e32                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
-                0x0000000008049e32                . = (0x1000 DATA_SEGMENT_ALIGN 0x1000)
+                0x0000000008048ea3                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x0000000008049ea3                . = (0x1000 DATA_SEGMENT_ALIGN 0x1000)
 
 .eh_frame
  *(.eh_frame)
@@ -129,22 +129,22 @@ LOAD tmp/amd64-darwin.macho-main.o
  *(.tbss .tbss.* .gnu.linkonce.tb.*)
  *(.tcommon)
 
-.preinit_array  0x0000000008049e32        0x0
-                0x0000000008049e32                PROVIDE (__preinit_array_start, .)
+.preinit_array  0x0000000008049ea3        0x0
+                0x0000000008049ea3                PROVIDE (__preinit_array_start, .)
  *(.preinit_array)
-                0x0000000008049e32                PROVIDE (__preinit_array_end, .)
+                0x0000000008049ea3                PROVIDE (__preinit_array_end, .)
 
-.init_array     0x0000000008049e32        0x0
-                0x0000000008049e32                PROVIDE (__init_array_start, .)
+.init_array     0x0000000008049ea3        0x0
+                0x0000000008049ea3                PROVIDE (__init_array_start, .)
  *(SORT(.init_array.*))
  *(.init_array)
-                0x0000000008049e32                PROVIDE (__init_array_end, .)
+                0x0000000008049ea3                PROVIDE (__init_array_end, .)
 
-.fini_array     0x0000000008049e32        0x0
-                0x0000000008049e32                PROVIDE (__fini_array_start, .)
+.fini_array     0x0000000008049ea3        0x0
+                0x0000000008049ea3                PROVIDE (__fini_array_start, .)
  *(.fini_array)
  *(SORT(.fini_array.*))
-                0x0000000008049e32                PROVIDE (__fini_array_end, .)
+                0x0000000008049ea3                PROVIDE (__fini_array_end, .)
 
 .ctors
  *crtbegin*.o(.ctors)
@@ -170,35 +170,35 @@ LOAD tmp/amd64-darwin.macho-main.o
 
 .got
  *(.got)
-                0x0000000008049e32                . = (. DATA_SEGMENT_RELRO_END 0xc)
+                0x0000000008049ea3                . = (. DATA_SEGMENT_RELRO_END 0xc)
 
 .got.plt
  *(.got.plt)
 
-.data           0x0000000008049e34        0x0
+.data           0x0000000008049ea4        0x0
  *(.data .data.* .gnu.linkonce.d.*)
- .data          0x0000000008049e34        0x0 tmp/amd64-darwin.macho-fold.o
- .data          0x0000000008049e34        0x0 tmp/amd64-darwin.macho-main.o
+ .data          0x0000000008049ea4        0x0 tmp/amd64-darwin.macho-fold.o
+ .data          0x0000000008049ea4        0x0 tmp/amd64-darwin.macho-main.o
  *(.gnu.linkonce.d.*personality*)
 
 .data1
  *(.data1)
-                0x0000000008049e34                _edata = .
-                0x0000000008049e34                PROVIDE (edata, .)
-                0x0000000008049e34                __bss_start = .
+                0x0000000008049ea4                _edata = .
+                0x0000000008049ea4                PROVIDE (edata, .)
+                0x0000000008049ea4                __bss_start = .
 
-.bss            0x0000000008049e34        0x0
+.bss            0x0000000008049ea4        0x0
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss           0x0000000008049e34        0x0 tmp/amd64-darwin.macho-fold.o
- .bss           0x0000000008049e34        0x0 tmp/amd64-darwin.macho-main.o
+ .bss           0x0000000008049ea4        0x0 tmp/amd64-darwin.macho-fold.o
+ .bss           0x0000000008049ea4        0x0 tmp/amd64-darwin.macho-main.o
  *(COMMON)
-                0x0000000008049e34                . = ALIGN ((. != 0x0)?0x4:0x1)
-                0x0000000008049e34                . = ALIGN (0x4)
-                0x0000000008049e34                . = ALIGN (0x4)
-                0x0000000008049e34                _end = .
-                0x0000000008049e34                PROVIDE (end, .)
-                0x0000000008049e34                . = DATA_SEGMENT_END (.)
+                0x0000000008049ea4                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x0000000008049ea4                . = ALIGN (0x4)
+                0x0000000008049ea4                . = ALIGN (0x4)
+                0x0000000008049ea4                _end = .
+                0x0000000008049ea4                PROVIDE (end, .)
+                0x0000000008049ea4                . = DATA_SEGMENT_END (.)
 
 .stab
  *(.stab)

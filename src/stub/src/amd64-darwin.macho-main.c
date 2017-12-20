@@ -477,9 +477,9 @@ do_xmap(
             }
             unpackExtent(xi, &xo, f_decompress, f_unf);
         }
-        if (*mhdrpp && mlen && !sc->fileoff && sc->nsects) {
+        if (xi && mlen && !sc->fileoff && sc->nsects) {
             // main target __TEXT segment at beginning of file with sections (__text)
-            // Use 4 bytes of header padding for the escape hatch.
+            // Use upto 2 words of header padding for the escape hatch.
             // fold.S could do this easier, except PROT_WRITE is missing then.
             Mach_segment_command *segp = (Mach_segment_command *)(((char *)sc - (char *)mhdr) + addr);
             Mach_section_command *const secp = (Mach_section_command *)(1+ segp);
@@ -492,7 +492,7 @@ do_xmap(
             hatch[0] = 0xc3050f90;  // nop; syscall; ret
 #endif  //}
             DPRINTF("hatch=%%p  secp=%%p  segp=%%p  mhdr=%%p\\n", hatch, secp, segp, addr);
-            rv= (unsigned char *)hatch;
+            rv = (unsigned char *)hatch;
         }
         /*bzero(addr, frag);*/  // fragment at lo end
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
@@ -521,8 +521,10 @@ ERR_LAB
     }
     else if (LC_UNIXTHREAD==sc->cmd || LC_THREAD==sc->cmd) {
         Mach_thread_command *const thrc = (Mach_thread_command *)sc;
+        DPRINTF("thread_command= %%p\\n", sc);
         if (THREAD_STATE      ==thrc->flavor
-        &&  THREAD_STATE_COUNT==thrc->count ) {
+        /* FIXME  &&  THREAD_STATE_COUNT==thrc->count*/ ) {
+            DPRINTF("thread_state= %%p\\n", &thrc->state);
 #if defined(__AARCH64EL__)  // {
             thrc->state.pc += reloc;
 #elif defined(__x86_64__)  //}{
@@ -609,6 +611,7 @@ ERR_LAB
         } // switch
         Mach_header64 *dyhdr = 0;
         ts = (Mach_thread_state *)do_xmap(mhdr, fat_offset, 0, fdi, &dyhdr, 0, 0);
+            DPRINTF("hatch ptr= %%p\\n", ts);
 #if defined(__AARCH64EL__)  // {
             ts->x0 = (uint64_t)hatch;
 #elif defined(__x86_64__)  //}{

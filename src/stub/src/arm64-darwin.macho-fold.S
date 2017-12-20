@@ -41,7 +41,7 @@
 NBPW= 8
 #include "arch/arm64/v8/macros.S"
 
-arg1 .req x0
+arg1 .req x0; arg1w .req w0
 arg2 .req x1
 arg3 .req x2
 arg4 .req x3; arg4w .req w3
@@ -89,6 +89,7 @@ r_EXP .req x28
         mov arg5,r_EXP
         adr arg6,f_unfilter
 // upx_main(x0=&l_info, w1=len_cpr, x2=temp[sz_mhdr], w3=sz_mhdr, x4=f_exp, x5=f_unf, x6=mhdr **)
+  brk #0
         bl upx_main  // OUT: x0= &Mach_thread_state of dyld; will be in temp mhdr[]
 
 ARM64_ts_pc= 32*NBPW
@@ -173,6 +174,7 @@ __NR_pread    = 0x43  //  67
 __NR_read     = 0x3f  //  63
 __NR_write    = 0x40  //  64
 #endif  /*}*/
+FD_CWD = -100
 
         .globl exit
 exit:
@@ -189,7 +191,15 @@ write:
         .globl open
 open:
   brk #0
+#ifdef SIMULATE_ON_DEBIAN_EABI4  //{
+        mov arg3,#0  // O_RDONLY
+        mov arg2,arg1
+        mov arg1w,#FD_CWD
+        do_sys __NR_openat
+        ret
+#else  //}{
         do_sys __NR_open; ret
+#endif  //}
 
         .globl close
 close:
