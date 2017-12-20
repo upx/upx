@@ -1563,7 +1563,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command),
             ((Mach_command const *)ptr)->cmdsize));
         ptr += (unsigned) ((Mach_command const *)ptr)->cmdsize;
-        if (ptr_udiff(ptr, mhdr) > ph.u_len) {
+        if (ptr_udiff(ptr, (1+ mhdr)) > ph.u_len) {
             throwCantUnpack("cmdsize");
         }
     }
