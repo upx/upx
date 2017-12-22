@@ -34,6 +34,7 @@
 
 typedef unsigned char * Addr;
 
+#define SIMULATE_ON_LINUX_EABI4 0
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
 #endif  /*}*/
@@ -560,7 +561,7 @@ ERR_LAB
         }
         addr += mlen + frag;  /* page boundary on hi end */
         if (
-#if defined(SIMULATE_ON_DEBIAN_EABI4)  /*{*/
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
             0!=addr &&
 #endif  /*}*/
                         addr < haddr) { // need pages for .bss

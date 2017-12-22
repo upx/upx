@@ -559,7 +559,7 @@ ERR_LAB
         }
         addr += mlen + frag;  /* page boundary on hi end */
         if (
-#if defined(SIMULATE_ON_DEBIAN_EABI4)  /*{*/
+#if defined(SIMULATE_ON_LINUX_EABI4)  /*{*/
             0!=addr &&
 #endif  /*}*/
                         addr < haddr) { // need pages for .bss

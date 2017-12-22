@@ -27,18 +27,26 @@
 //  <jreiser@users.sourceforge.net>
 //
 
-//#define SIMULATE_ON_DEBIAN_EABI4 1
-#undef  SIMULATE_ON_DEBIAN_EABI4
+#define SIMULATE_ON_LINUX_EABI4 1
 
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
-  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_DEBIAN_EABI4 */
-  #define ARMEL_EABI4 1           /* SIMULATE_ON_DEBIAN_EABI4 */
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
+  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_LINUX_EABI4 */
+  #define ARMEL_EABI4 1           /* SIMULATE_ON_LINUX_EABI4 */
 #else  /*}{ USUAL case */
   #define DARWIN_ARM_CACHEFLUSH 1
   #define ARMEL_DARWIN 1
 #endif  /*}*/
 
+NBPW= 4
 #include "arch/arm/v5a/macros.S"
+
+arg1 .req r0
+arg2 .req r1
+arg3 .req r2
+arg4 .req r3
+arg5 .req r4
+arg6 .req r5
+arg7 .req r6
 
 sz_l_info = 12
 sz_p_info = 12
@@ -47,6 +55,31 @@ sz_b_info = 12
   sz_cpr= 4
   b_method= 8
 
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
+__NR_brk      =  45 + __NR_SYSCALL_BASE  // 0x2d
+__NR_close    =   6 + __NR_SYSCALL_BASE  // 0x06
+__NR_exit     =   1 + __NR_SYSCALL_BASE  //  ??
+__NR_mmap     = 192 + __NR_SYSCALL_BASE  // 0xc0
+__NR_mprotect = 125 + __NR_SYSCALL_BASE  // 0x7d
+__NR_munmap   =  91 + __NR_SYSCALL_BASE  // 0x5b
+__NR_open     =   5 + __NR_SYSCALL_BASE  //  ??
+__NR_openat   = 322 + __NR_SYSCALL_BASE  // 0x142
+__NR_pread    = 180 + __NR_SYSCALL_BASE  // 0xb4
+__NR_read     =   3 + __NR_SYSCALL_BASE  // 0x03
+__NR_write    =   4 + __NR_SYSCALL_BASE  // 0x04
+#else  //}{  native darwin usual case
+__NR_brk      =  45 + __NR_SYSCALL_BASE
+__NR_close    =   6 + __NR_SYSCALL_BASE
+__NR_exit     =   1 + __NR_SYSCALL_BASE
+__NR_mmap     = 197 + __NR_SYSCALL_BASE
+__NR_mprotect =  74 + __NR_SYSCALL_BASE
+__NR_munmap   =  73 + __NR_SYSCALL_BASE
+__NR_open     =   5 + __NR_SYSCALL_BASE
+__NR_pread    = 153 + __NR_SYSCALL_BASE
+__NR_read     =   3 + __NR_SYSCALL_BASE
+__NR_write    =   4 + __NR_SYSCALL_BASE
+#endif  /*}*/
+
 _start: .globl _start  // ignored, but silence "cannot find entry symbol _start" from ld
 
 // control just falls through, after this part and compiled C code
@@ -54,26 +87,46 @@ _start: .globl _start  // ignored, but silence "cannot find entry symbol _start"
 
 fold_begin:
 /* In:
-   r11= &sz_pack2; follows compressed program {l_info; p_info; b_info; data...}
-    r5= f_decompress
-    sp/ junk1,junk2,{15 original regs (omit sp)},junk3,original_stack...
+  r9= f_exp; r10= ADRX; r11= LENX
+  rsp/ fd,ADRU,LENU,%entry,&Mach_header
 */
-        ldr r1,[r11]  // sz_pack2
-        add r7,sp,#4*(2+(16-1))  // &junk3; will become &mhdrp
-        sub r0,r11,r1  // &{l_info; p_info; b_info}
-        ldr   r3,[r0,#sz_unc + sz_l_info + sz_p_info]  // sz_unc of Mach_header
-        cmp   r3,#(1<<13)
-        movls r3,#(1<<13)  // at least 8KiB
-        sub sp,sp,r3  // alloca
-        mov r2,sp  // Mach_header *tmp
-        adr r6,f_unfilter
-        stmdb sp!,{r5,r6,r7}
-        bl upx_main // (r0=l_info *, r1=sz_compressed, r2=Mach_header *tmp,
-                // r3=sz_mhdr, f_decompress, f_unfilter, Mach_header **)
-        ldr r0,[r0,#15*4]  // entry: ((Mach_ARM_thread_state const *)dyld)->pc
-        sub sp, r7,#4*(16-1)  // unalloca; keep 15 original registers and mhdrp
-        str r0,[r7,#-4]  // .r15= entry
-        ldmia sp!,{r0-r12,r14,r15}  // restore original registers; goto dynamic linker
+r_t0   .req r12  // scratch value
+r_LENX .req r11
+r_ADRX .req r10
+r_EXP  .req r9
+r_OSTK .req r8
+
+        ldr   arg4,[arg1,#sz_unc + sz_l_info + sz_p_info]  // sz_unc of Mach_header
+        mov        r_t0,#(1<<13)
+        cmp   arg4,r_t0
+        movlo arg4,r_t0  // at least 8KiB
+        mov r_OSTK,sp  // where to un-alloca
+        sub sp,sp,arg4  // alloca
+        mov arg3,sp  // temp[sz_mhdr]
+        mov arg2,r_LENX
+        mov arg1,r_ADRX  // &{l_info; p_info; b_info}
+
+        add arg7,r_OSTK,#4*NBPW  // & &Mach_header
+        adr arg6,f_unfilter
+        mov arg5,r_EXP
+        stmdb sp!,{arg5,arg6,arg7}  // ABI: only arg1,arg2,arg3,arg4 in registers
+// upx_main(r0=&l_info, r1=len_cpr, r2=temp[sz_mhdr], r3=sz_mhdr, r4=f_exp, r5=f_unf, r6=mhdr **)
+        bl upx_main  // OUT: r0= &Mach_thread_state of dyld; will be in temp mhdr[]
+
+ARM_ts_pc= 14*NBPW
+        ldr r_ADRX,[r0,#ARM_ts_pc]  // dyld.entry
+        ldr r_EXP, [r0,#0]  // &hatch
+        mov sp,r_OSTK  // un-alloc
+
+        ldr r0,[sp,#0*NBPW]  // fd
+        bl close
+
+        ldr r0,[sp,#1*NBPW]  // ADRU
+        ldr r1,[sp,#2*NBPW]  // LENU
+        mov r7,#__NR_munmap
+        mov lr,r_ADRX  // dyld.entry
+        add sp,sp,#4*NBPW  // leave &Mach_header
+        bx r_EXP  // goto hatch: syscall.munmap(ADRU,LENU); ret
 
 f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
         ptr  .req r0
@@ -118,25 +171,6 @@ tst_unf:
 spin: .globl spin
         ret
 
-__NR_exit  =  1 + __NR_SYSCALL_BASE
-__NR_read  =  3 + __NR_SYSCALL_BASE
-__NR_write =  4 + __NR_SYSCALL_BASE
-__NR_open  =  5 + __NR_SYSCALL_BASE
-__NR_close =  6 + __NR_SYSCALL_BASE
-__NR_brk   = 45 + __NR_SYSCALL_BASE
-
-__NR_mmap     = 197 + __NR_SYSCALL_BASE
-__NR_munmap   =  73 + __NR_SYSCALL_BASE
-__NR_mprotect =  74 + __NR_SYSCALL_BASE
-__NR_pread    = 153 + __NR_SYSCALL_BASE
-
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
-__NR_mmap     = 192 + __NR_SYSCALL_BASE  // mmap2
-__NR_munmap   =  91 + __NR_SYSCALL_BASE
-__NR_mprotect = 125 + __NR_SYSCALL_BASE
-__NR_pread    = 180 + __NR_SYSCALL_BASE
-#endif  /*}*/
-
         .globl exit
 exit:
         do_sys __NR_exit
@@ -171,7 +205,7 @@ mprotect:
 
         .globl mmap
 mmap:
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
         stmdb sp!,{r4,r5}
         ldr r5,[sp,#3*4]  // off_t
         ldr r4,[sp,#2*4]  // fd
@@ -197,7 +231,7 @@ EINVAL=22
 
         .globl pread
 pread:
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
         stmdb sp!,{r4,r5}  // EABI4 wants 64-bit off_t in even,odd register pair
         mov r4,r3  //            32-bit off_t
         mov r5,#0  // hi bits of 64-bit off_t

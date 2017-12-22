@@ -29,13 +29,12 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#define SIMULATE_ON_DEBIAN_EABI4 1
-//#undef  SIMULATE_ON_DEBIAN_EABI4
+#define SIMULATE_ON_LINUX_EABI4 1
 
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
-  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_DEBIAN_EABI4 */
-  #define ARMEL_EABI4 1           /* SIMULATE_ON_DEBIAN_EABI4 */
-#else  /*}{ usual case */
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
+  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_LINUX_EABI4 */
+  #define ARMEL_EABI4 1           /* SIMULATE_ON_LINUX_EABI4 */
+#else  /*}{ native darwin usual case */
   #define DARWIN_ARM_CACHEFLUSH 1
   #define ARMEL_DARWIN 1
 #endif  /*}*/
@@ -69,10 +68,10 @@ __NR_SYSCALL_BASE = 0
 __NR_exit =      1 + __NR_SYSCALL_BASE
 __NR_write =     4 + __NR_SYSCALL_BASE
 __NR_open  =     5 + __NR_SYSCALL_BASE
-#if defined(SIMULATE_ON_DEBIAN_EABI4)  //{
+#if SIMULATE_ON_LINUX_EABI4  //{
 __NR_mmap  =  0xc0 + __NR_SYSCALL_BASE
 __NR_mprotect=0x7d + __NR_SYSCALL_BASE
-#else  //}{  real Mach-o
+#else  //}{  native darwin usual case
 __NR_mmap  =   197 + __NR_SYSCALL_BASE
 __NR_mprotect = 74 + __NR_SYSCALL_BASE
 #endif  //}
@@ -85,8 +84,8 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 //0:    .word 0b - l_info  // backwards distance to l_info
   section MACHMAINX
 _start: .globl _start
-        sub sp,sp,#NBPW  // space for mhdrp
-        stmdb sp!,{r0-r12,r14,r15}  // paranoia [omit sp===r13]
+        mov r7,sp  // &argc
+        adr r6,-2*NBPW + _start
         bl main
 L20:
 f_decompress:
@@ -113,11 +112,20 @@ end_decompress: .globl end_decompress
 
         /* IDENTSTR goes here */
 
-r_RELOC .req r12  // same as r_MHDR
-r_MHDR  .req r12
+r_tmp   .req r12
+rax     .req r12  // clobbered by do_sys
+
 r_LENX  .req r11
 r_ADRX  .req r10
-r_FOLD  .req r6
+r_EXP   .req r9
+
+r_MHDR  .req r8
+r_RELOC .req r8
+r_FOLD  .req r8
+
+rbx     .req r7
+
+// r0,r1,r2,r3,r6,r7  used by _start+main
 
 arg1 .req r0
 arg2 .req r1
@@ -130,10 +138,6 @@ rdi .req r0
 //rsi .req r1
 rdx .req r2
 rcx .req r3
-
-rax .req r7
-rbx .req r8
-r_EXP .req r9
 
   section MACHMAINZ
 unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
@@ -180,7 +184,7 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
 
 // Unfold
         ldr rax,[rbx,#sz_unc]  // dstlen
-        str rax,[sp,#-NBPW]; mov arg4,sp  // P_13  &dstlen
+        str rax,[sp,#-NBPW]!; mov arg4,sp  // P_13  &dstlen
         add arg3,rbx,r_RELOC  // dst= new unfold
         mov r_FOLD,arg3  // execute here
         ldr  rax,[rbx,#sz_cpr]  // srclen
@@ -198,7 +202,7 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
         do_sys __NR_mprotect
 
 // Use the copy.
-// r10= ADRX; r11= LENX; r9= f_exp
+// r9= f_exp; r10= ADRX; r11= LENX
 // rsp/ fd,ADRU,LENU,%entry,&Mach_header
         bx r_FOLD
 
@@ -207,38 +211,35 @@ execp:
 L99:
         bkpt
 
-main:
-        mov r5,lr  // &f_decompress
-        add r2,sp,#NBPW  // &argv[0]
+main:  // lr= &f_exp;  r7= &argc; r6= -2*NBPW + _start
+        mov r_EXP,lr  // &f_decompress
 0:
-        ldr r0,[r2],#NBPW
+        ldr r0,[r7],#NBPW
         cmp r0,#0; bne 0b  // past argv
 0:
-        ldr r0,[r2],#NBPW
+        ldr r0,[r7],#NBPW
         cmp r0,#0; bne 0b  // past envp
 L30:
-        ldr r0,[r2],#NBPW  // r0= *apple++
+        ldr r0,[r7],#NBPW  // r0= *apple++
         cmp r0,#0; beq L99
-        adr r1,execp; mov r3,#16
+        adr r1,execp; mov r_tmp,#16
 L40:
-        ldrb r4,[r0],#1
-        ldrb r5,[r1],#1
-        cmp r4,r5; bne L30  // mismatch ==> next apple[]
-        subs r3,r3,#1; bne L40  // not entire prefix
+        ldrb r2,[r0],#1
+        ldrb r3,[r1],#1
+        cmp r2,r3; bne L30  // mismatch ==> next apple[]
+        subs r_tmp,r_tmp,#1; bne L40  // not entire prefix
 
         mov arg2,#0  // O_RDONLY
         do_sys __NR_open
-        str r5,[sp,#-5*NBPW]!  // fd,%ADRU,%LENU,%entry,%&Mach_header
+        str r0,[sp,#-5*NBPW]!  // fd,%ADRU,%LENU,%entry,%&Mach_header
 
-        adr r1,-2*4 + _start
-
-        mov r_MHDR,r1
-        ldr r0,[r1],#4
+        mov r_MHDR,r6
+        ldr r0,[r6],#4
         sub r_MHDR,r_MHDR,r0  // &Mach_header
         str r_MHDR,[sp,#4*NBPW]
 
-        mov r_ADRX,r1
-        ldr r0,[r1],#4
+        mov r_ADRX,r6
+        ldr r0,[r6],#4
         sub r_ADRX,r_ADRX,r0  // &l_info
 
         sub r_LENX,r0,#2*4  // omit words before _start

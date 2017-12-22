@@ -29,12 +29,11 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#define  SIMULATE_ON_DEBIAN_EABI4 1
-//#undef SIMULATE_ON_DEBIAN_EABI4
+#define SIMULATE_ON_LINUX_EABI4 0
 
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
-  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_DEBIAN_EABI4 */
-  #define ARMEL_EABI4 1           /* SIMULATE_ON_DEBIAN_EABI4 */
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
+  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_LINUX_EABI4 */
+  #define ARMEL_EABI4 1           /* SIMULATE_ON_LINUX_EABI4 */
 #else  /*}{ USUAL case */
   #define DARWIN_ARM_CACHEFLUSH 1
   #define ARMEL_DARWIN 1
@@ -70,7 +69,7 @@ __NR_open =      5 + __NR_SYSCALL_BASE
 __NR_mmap =    197 + __NR_SYSCALL_BASE
 __NR_mprotect=  74 + __NR_SYSCALL_BASE
 
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
 __NR_mmap     = 0xde  // 222 __GI___mmap64
 __NR_munmap   = 0xd7  // 215
 __NR_mprotect = 0xe2  // 226
@@ -231,7 +230,7 @@ L40:
         cmp w4,w5; bne L30  // mismatch ==> next apple[]
         cbnz w3,L40  // not entire prefix
 
-#ifdef SIMULATE_ON_DEBIAN_EABI4  //{
+#if SIMULATE_ON_LINUX_EABI4  //{
         mov arg3,#0  // O_RDONLY
         mov arg2,arg1
         mov arg1w,#FD_CWD

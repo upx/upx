@@ -27,12 +27,11 @@
 //  <jreiser@users.sourceforge.net>
 //
 
-#define SIMULATE_ON_DEBIAN_EABI4 1
-//#undef  SIMULATE_ON_DEBIAN_EABI4
+#define SIMULATE_ON_LINUX_EABI4 0
 
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
-  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_DEBIAN_EABI4 */
-  #define ARMEL_EABI4 1           /* SIMULATE_ON_DEBIAN_EABI4 */
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
+  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_LINUX_EABI4 */
+  #define ARMEL_EABI4 1           /* SIMULATE_ON_LINUX_EABI4 */
 #else  /*}{ USUAL case */
   #define DARWIN_ARM_CACHEFLUSH 1
   #define ARMEL_DARWIN 1
@@ -55,6 +54,32 @@ sz_b_info = 12
   sz_unc= 0
   sz_cpr= 4
   b_method= 8
+
+#if SIMULATE_ON_LINUX_EABI4  /*{*/
+__NR_brk      = 0xd6  // 214
+__NR_close    = 0x39  //  57
+__NR_exit     = 0x5d  //  93
+__NR_mmap     = 0xde  // 222 __GI___mmap64
+__NR_mprotect = 0xe2  // 226
+__NR_munmap   = 0xd7  // 215
+__NR_openat   = 0x38  //  56
+__NR_pread    = 0x43  //  67
+__NR_read     = 0x3f  //  63
+__NR_write    = 0x40  //  64
+#else  //}{  native darwin usual case
+__NR_exit  =  1
+__NR_read  =  3
+__NR_write =  4
+__NR_open  =  5
+__NR_close =  6
+__NR_brk   = 45
+
+__NR_mmap     = 197
+__NR_munmap   =  73
+__NR_mprotect =  74
+__NR_pread    = 153
+#endif  /*}*/
+FD_CWD = -100
 
 _start: .globl _start  // ignored, but silence "cannot find entry symbol _start" from ld
 
@@ -89,7 +114,6 @@ r_EXP .req x28
         mov arg5,r_EXP
         adr arg6,f_unfilter
 // upx_main(x0=&l_info, w1=len_cpr, x2=temp[sz_mhdr], w3=sz_mhdr, x4=f_exp, x5=f_unf, x6=mhdr **)
-  brk #0
         bl upx_main  // OUT: x0= &Mach_thread_state of dyld; will be in temp mhdr[]
 
 ARM64_ts_pc= 32*NBPW
@@ -151,31 +175,6 @@ unf_ret:
 spin: .globl spin
         ret
 
-__NR_exit  =  1
-__NR_read  =  3
-__NR_write =  4
-__NR_open  =  5
-__NR_close =  6
-__NR_brk   = 45
-
-__NR_mmap     = 197
-__NR_munmap   =  73
-__NR_mprotect =  74
-__NR_pread    = 153
-
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
-__NR_close    = 0x39  //  57
-__NR_exit     = 0x5d  //  93
-__NR_mmap     = 0xde  // 222 __GI___mmap64
-__NR_mprotect = 0xe2  // 226
-__NR_munmap   = 0xd7  // 215
-__NR_openat   = 0x38  //  56
-__NR_pread    = 0x43  //  67
-__NR_read     = 0x3f  //  63
-__NR_write    = 0x40  //  64
-#endif  /*}*/
-FD_CWD = -100
-
         .globl exit
 exit:
         do_sys __NR_exit
@@ -190,8 +189,7 @@ write:
 
         .globl open
 open:
-  brk #0
-#ifdef SIMULATE_ON_DEBIAN_EABI4  //{
+#if SIMULATE_ON_LINUX_EABI4  //{
         mov arg3,#0  // O_RDONLY
         mov arg2,arg1
         mov arg1w,#FD_CWD
