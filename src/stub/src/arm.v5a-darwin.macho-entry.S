@@ -176,8 +176,8 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
         sub r_RELOC,r0,rcx  // relocation constant = new - old
         add rcx,r_EXP,r_RELOC
         str rcx,[sp,#-NBPW]!  // P_10  new f_exp
-        mov r0,r0,lsr #PAGE_SHIFT
-        mov r0,r0,lsl #PAGE_SHIFT
+        mov r0,rcx,lsr #PAGE_SHIFT
+        mov r0,r0, lsl #PAGE_SHIFT  // page boundary below new f_exp
         str r0,[sp,#-NBPW]!  // P_11 address
         sub rdx,rdx,r0
         str rdx,[sp,#-NBPW]!  // P_12 length
@@ -186,13 +186,13 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
         ldr rax,[rbx,#sz_unc]  // dstlen
         str rax,[sp,#-NBPW]!; mov arg4,sp  // P_13  &dstlen
         add arg3,rbx,r_RELOC  // dst= new unfold
-        mov r_FOLD,arg3  // execute here
-        ldr  rax,[rbx,#sz_cpr]  // srclen
+        mov r_FOLD,arg3  // remember where to execute after unfold
         ldr arg5,[rbx,#b_method]
+        ldr arg2,[rbx,#sz_cpr]  // srclen
         add arg1,rbx,#sz_b_info  // src
-        mov arg2,rax  // srclen
+        str arg5,[sp,#-NBPW]!  // P_14  ABI: fifth arg goes on stack
         blx r_EXP  // old f_exp; new f_exp lacks PROT_EXEC
-        add sp,sp,#NBPW  // P_13  toss dstlen
+        add sp,sp,#2*NBPW  // P_14,P_13  toss fifth arg and dstlen
 
 // PROT_EXEC
         ldr  arg2,[sp],#NBPW  // P_12  length

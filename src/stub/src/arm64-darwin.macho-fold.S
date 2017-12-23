@@ -101,7 +101,7 @@ r_EXP .req x28
 #define t0w w9  /* scratch value */
         mov arg1,r_ADRX  // &{l_info; p_info; b_info}
         mov arg2,r_LENX
-        ldr arg4w,[arg1,#sz_unc + sz_l_info + sz_p_info]  // sz_unc of Mach_header
+        ldr arg4w,[r_ADRX,#sz_unc + sz_l_info + sz_p_info]  // sz_unc of Mach_header
         mov t0w,#(1<<13)
         cmp arg4w,t0w
         csel arg4w,arg4w,t0w,hi  // at least 8KiB

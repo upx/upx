@@ -177,7 +177,7 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header,HOLE
         sub r_RELOC,x0,rcx  // relocation constant = new - old
         add rcx,r_EXP,r_RELOC
         str rcx,[sp,#-4*NBPW]!  // P_10  new f_exp
-        and x0,x0,#~0<<PAGE_SHIFT
+        and x0,rcx,#~0<<PAGE_SHIFT  // page boundary below new f_exp
         str x0,[sp,#1*NBPW]  // P_11  address
         sub rdx,rdx,x0
         str rdx,[sp,#2*NBPW]  // P_12  length

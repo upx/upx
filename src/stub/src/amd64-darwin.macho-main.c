@@ -185,12 +185,12 @@ static void
 unpackExtent(
     Extent *const xi,  // input
     Extent *const xo,  // output
-    f_expand *const f_decompress,
+    f_expand *const f_exp,
     f_unfilter *f_unf
 )
 {
     DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n",
-        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_decompress, f_unf);
+        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_exp, f_unf);
     while (xo->size) {
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
@@ -222,7 +222,7 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             size_t out_len = h.sz_unc;  // EOF for lzma
-            int const j = (*f_decompress)(xi->buf, h.sz_cpr,
+            int const j = (*f_exp)(xi->buf, h.sz_cpr,
                 xo->buf, &out_len, h.b_method);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
@@ -314,8 +314,8 @@ typedef struct {
     unsigned cmdsize;
 } Mach_load_command;
         enum e4 {
-            LC_SEGMENT       = 0x1,
-            LC_SEGMENT_64    = 0x19,
+//            LC_SEGMENT       = 0x1,
+//            LC_SEGMENT_64    = 0x19,
             LC_THREAD        = 0x4,
             LC_UNIXTHREAD    = 0x5,
             LC_LOAD_DYLINKER = 0xe
@@ -380,6 +380,9 @@ typedef struct {
         enum e7 {
             THREAD_STATE_COUNT = sizeof(Mach_thread_state)/4
         };
+        enum e10 {
+            LC_SEGMENT       = 0x19  // LC_SEGMENT_64
+        };
 
 #elif defined(__arm__)  //}{
 typedef struct {
@@ -390,10 +393,13 @@ typedef struct {
     uint32_t cpsr;
 } Mach_thread_state;  // Mach_ARM_thead_state;
         enum e6 {
-            THREAD_STATE = 4  // ARM_THREAD_STATE
+            THREAD_STATE = 1  // ARM_THREAD_STATE
         };
         enum e7 {
             THREAD_STATE_COUNT = sizeof(Mach_thread_state)/4
+        };
+        enum e10 {
+            LC_SEGMENT       = 0x1
         };
 
 #elif defined(__x86_64__)  //}{
@@ -410,6 +416,9 @@ typedef struct {
         };
         enum e7 {
             THREAD_STATE_COUNT = sizeof(Mach_thread_state)/4
+        };
+        enum e10 {
+            LC_SEGMENT       = 0x19  // LC_SEGMENT_64
         };
 
 #endif  //}
@@ -429,14 +438,16 @@ typedef union {
 #define MAP_FIXED     0x10
 #define MAP_PRIVATE   0x02
 
-#define MAP_ANON    0x1000
-#undef MAP_ANON         // x86 DEBUG ONLY
-#define MAP_ANON  0x20  // x86 DEBUG ONLY
+#if SIMULATE_ON_LINUX_EABI4  //{
+#define MAP_ANON  0x20  /* SIMULATE_ON_LINUX_EABI4 */
+#else  //}{
+#define MAP_ANON    0x1000  /* native darwin usual case */
+#endif  //}
+#define MAP_ANON_FD    -1
 
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
-#define MAP_ANON_FD    -1
 
 extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t_upx_stub);
 ssize_t pread(int, void *, size_t, off_t_upx_stub);
@@ -450,7 +461,7 @@ do_xmap(
     Extent *const xi,
     int const fdi,
     Mach_header **mhdrpp,
-    f_expand *const f_decompress,
+    f_expand *const f_exp,
     f_unfilter *const f_unf
 )
 {
@@ -464,115 +475,124 @@ do_xmap(
 
     for ( j=0; j < mhdr->ncmds; ++j,
         (sc = (Mach_segment_command *)((sc->cmdsize>>2) + (unsigned *)sc))
-    ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize) {
-        if (!sc->fileoff && sc->filesize  // should be __TEXT
-        && *mhdrpp && ((*mhdrpp)->flags & MH_PIE)) {
-            reloc = (size_t)*mhdrpp - sc->vmaddr;
-            DPRINTF("reloc=%%p\\n", reloc);
-        }
-        Extent xo;
-        size_t mlen = xo.size = sc->filesize;
-        unsigned char  *addr = xo.buf = reloc + (unsigned char *)sc->vmaddr;
-        unsigned char *haddr = sc->vmsize + addr;
-        size_t frag = (int)(uint64_t)addr &~ PAGE_MASK;
-        addr -= frag;
-        mlen += frag;
+    ) {
+        DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x\\n", j, sc->cmd, sc->cmdsize);
+        if (LC_SEGMENT==sc->cmd && sc->vmsize) {
+            if (!sc->fileoff && sc->filesize  // should be __TEXT
+            && *mhdrpp && ((*mhdrpp)->flags & MH_PIE)) {
+                reloc = (size_t)*mhdrpp - sc->vmaddr;
+                DPRINTF("reloc=%%p\\n", reloc);
+            }
+            Extent xo;
+            size_t mlen = xo.size = sc->filesize;
+            unsigned char  *addr = xo.buf = reloc + (unsigned char *)sc->vmaddr;
+            unsigned char *haddr = sc->vmsize + addr;
+            size_t frag = (int)(uint64_t)addr &~ PAGE_MASK;
+            addr -= frag;
+            mlen += frag;
 
-        if (0!=mlen) {
-            // Decompressor can overrun the destination by 3 bytes.  [x86 only]
-            size_t const mlen3 = mlen + (xi ? 3 : 0);
-            unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
-            unsigned const flags = (*mhdrpp ? MAP_FIXED : 0) | MAP_PRIVATE |
-                        ((xi || 0==sc->filesize) ? MAP_ANON : 0);
-            int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
-            off_t_upx_stub const offset = sc->fileoff + fat_offset;
+            if (0!=mlen) {
+                // Decompressor can overrun the destination by 3 bytes.  [x86 only]
+                size_t const mlen3 = mlen + (xi ? 3 : 0);
+                unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
+                unsigned const flags = (*mhdrpp ? MAP_FIXED : 0) | MAP_PRIVATE |
+                            ((xi || 0==sc->filesize) ? MAP_ANON : 0);
+                int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
+                off_t_upx_stub const offset = sc->fileoff + fat_offset;
 
-            DPRINTF("mmap  addr=%%p  len=%%p  prot=%%x  flags=%%x  fd=%%d  off=%%p  reloc=%%p\\n",
-                addr, mlen3, prot, flags, fdm, offset, reloc);
-            unsigned *maddr = mmap(addr, mlen3, prot, flags, fdm, offset);
-            if (!*mhdrpp) { // MH_DYLINKER
-                *mhdrpp = (Mach_header*)maddr;
-                addr = (unsigned char *)maddr;
-                reloc = (size_t)addr;
+                DPRINTF("mmap  addr=%%p  len=%%p  prot=%%x  flags=%%x  fd=%%d  off=%%p  reloc=%%p\\n",
+                    addr, mlen3, prot, flags, fdm, offset, reloc);
+                unsigned *maddr = mmap(addr, mlen3, prot, flags, fdm, offset);
+                if (!*mhdrpp) { // MH_DYLINKER
+                    *mhdrpp = (Mach_header*)maddr;
+                    addr = (unsigned char *)maddr;
+                    reloc = (size_t)addr;
+                }
+                if (addr != (unsigned char *)maddr) {
+                    DPRINTF("maddr=%%p  addr=%%p\\n", maddr, addr);
+                    err_exit(8);
+                }
             }
-            if (addr != (unsigned char *)maddr) {
-                DPRINTF("maddr=%%p  addr=%%p\\n", maddr, addr);
-                err_exit(8);
+            if (xi && 0!=sc->filesize) {
+                if (0==sc->fileoff /*&& 0!=mhdrpp*/) {
+                    *mhdrpp = (Mach_header *)(void *)addr;
+                }
+                unpackExtent(xi, &xo, f_exp, f_unf);
+            }
+            DPRINTF("xi=%%p  mlen=%%p  fileoff=%%p  nsects=%%d\\n",
+                xi, mlen, sc->fileoff, sc->nsects);
+            if (xi && mlen && !sc->fileoff && sc->nsects) {
+                // main target __TEXT segment at beginning of file with sections (__text)
+                // Use upto 2 words of header padding for the escape hatch.
+                // fold.S could do this easier, except PROT_WRITE is missing then.
+                union {
+                    unsigned char  *p0;
+                    unsigned short *p1;
+                    unsigned int   *p2;
+                    unsigned long  *p3;
+                } u;
+                u.p0 = addr;
+                Mach_segment_command *segp = (Mach_segment_command *)((((char *)sc - (char *)mhdr)>>2) + u.p2);
+                Mach_section_command *const secp = (Mach_section_command *)(1+ segp);
+    #if defined(__AARCH64EL__)  //{
+                unsigned *hatch= -2+ (secp->offset>>2) + u.p2;
+                hatch[0] = 0xd4000001;  // svc #0  // syscall
+                hatch[1] = 0xd65f03c0;  // ret
+    #elif defined(__arm__)  //}{
+                unsigned *hatch= -2+ (secp->offset>>2) + u.p2;
+                hatch[0] = 0xef000000;  // svc 0x0  // syscall
+                hatch[1] = 0xe12fff1e;  // bx lr
+    #elif defined(__x86_64__)  //}{
+                unsigned *hatch= -1+ (secp->offset>>2) + u.p2;
+                hatch[0] = 0xc3050f90;  // nop; syscall; ret
+    #endif  //}
+                DPRINTF("hatch=%%p  secp=%%p  segp=%%p  mhdr=%%p\\n", hatch, secp, segp, addr);
+                rv = hatch;
+            }
+            /*bzero(addr, frag);*/  // fragment at lo end
+            frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
+            bzero(mlen+addr, frag);  // fragment at hi end
+            if (0!=mlen && 0!=mprotect(addr, mlen, sc->initprot)) {
+                err_exit(10);
+    ERR_LAB
+            }
+            addr += mlen + frag;  /* page boundary on hi end */
+            if (
+    #if SIMULATE_ON_LINUX_EABI4  /*{*/
+                0!=addr &&
+    #endif  /*}*/
+                            addr < haddr) { // need pages for .bss
+                if (0!=addr && addr != mmap(addr, haddr - addr, sc->initprot,
+                        MAP_FIXED | MAP_PRIVATE | MAP_ANON, MAP_ANON_FD, 0 ) ) {
+                    err_exit(9);
+                }
+            }
+            else if (xi) { // cleanup if decompressor overrun crosses page boundary
+                mlen = ~PAGE_MASK & (3+ mlen);
+                if (mlen<=3) { // page fragment was overrun buffer only
+                    munmap((char *)addr, mlen);
+                }
             }
         }
-        if (xi && 0!=sc->filesize) {
-            if (0==sc->fileoff /*&& 0!=mhdrpp*/) {
-                *mhdrpp = (Mach_header *)(void *)addr;
+        else if (!xi  // dyld
+        && (LC_UNIXTHREAD==sc->cmd || LC_THREAD==sc->cmd)) {
+            Mach_thread_command *const thrc = (Mach_thread_command *)sc;
+            DPRINTF("thread_command= %%p\\n", sc);
+            if (1
+            // FIXME  THREAD_STATE      ==thrc->flavor
+            //    &&  THREAD_STATE_COUNT==thrc->count
+            ) {
+                DPRINTF("thread_state= %%p  flavor=%%d  count=%%x  reloc=%%p\\n",
+                    &thrc->state, thrc->flavor, thrc->count, reloc);
+    #if defined(__AARCH64EL__)  //{
+                thrc->state.pc += reloc;
+    #elif defined(__arm__)  //}{
+                thrc->state.pc += reloc;
+    #elif defined(__x86_64__)  //}{
+                thrc->state.rip += reloc;
+    #endif  //}
+                rv = (unsigned *)&thrc->state;
             }
-            unpackExtent(xi, &xo, f_decompress, f_unf);
-        }
-        if (xi && mlen && !sc->fileoff && sc->nsects) {
-            // main target __TEXT segment at beginning of file with sections (__text)
-            // Use upto 2 words of header padding for the escape hatch.
-            // fold.S could do this easier, except PROT_WRITE is missing then.
-            union {
-                unsigned char  *p0;
-                unsigned short *p1;
-                unsigned int   *p2;
-                unsigned long  *p3;
-            } u;
-            u.p0 = addr;
-            Mach_segment_command *segp = (Mach_segment_command *)((((char *)sc - (char *)mhdr)>>2) + u.p2);
-            Mach_section_command *const secp = (Mach_section_command *)(1+ segp);
-#if defined(__AARCH64EL__)  //{
-            unsigned *hatch= -2+ (*secp->offset>>2) + u.p2);
-            hatch[0] = 0xd4000001;  // svc #0  // syscall
-            hatch[1] = 0xd65f03c0;  // ret
-#elif defined(__arm__)  //}{
-            unsigned *hatch= -2+ ((secp->offset>>2) + u.p2);
-            hatch[0] = 0xef000000;  // svc 0x0  // syscall
-            hatch[1] = 0xe12fff1e;  // bx lr
-#elif defined(__x86_64__)  //}{
-            unsigned *hatch= -1+ ((secp->offset>>2) + u.p2);
-            hatch[0] = 0xc3050f90;  // nop; syscall; ret
-#endif  //}
-            DPRINTF("hatch=%%p  secp=%%p  segp=%%p  mhdr=%%p\\n", hatch, secp, segp, addr);
-            rv = hatch;
-        }
-        /*bzero(addr, frag);*/  // fragment at lo end
-        frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
-        bzero(mlen+addr, frag);  // fragment at hi end
-        if (0!=mlen && 0!=mprotect(addr, mlen, sc->initprot)) {
-            err_exit(10);
-ERR_LAB
-        }
-        addr += mlen + frag;  /* page boundary on hi end */
-        if (
-#if SIMULATE_ON_LINUX_EABI4  /*{*/
-            0!=addr &&
-#endif  /*}*/
-                        addr < haddr) { // need pages for .bss
-            if (0!=addr && addr != mmap(addr, haddr - addr, sc->initprot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANON, MAP_ANON_FD, 0 ) ) {
-                err_exit(9);
-            }
-        }
-        else if (xi) { // cleanup if decompressor overrun crosses page boundary
-            mlen = ~PAGE_MASK & (3+ mlen);
-            if (mlen<=3) { // page fragment was overrun buffer only
-                munmap((char *)addr, mlen);
-            }
-        }
-    }
-    else if (LC_UNIXTHREAD==sc->cmd || LC_THREAD==sc->cmd) {
-        Mach_thread_command *const thrc = (Mach_thread_command *)sc;
-        DPRINTF("thread_command= %%p\\n", sc);
-        if (THREAD_STATE      ==thrc->flavor
-        /* FIXME  &&  THREAD_STATE_COUNT==thrc->count*/ ) {
-            DPRINTF("thread_state= %%p  reloc=%%p\\n", &thrc->state, reloc);
-#if defined(__AARCH64EL__)  //{
-            thrc->state.pc += reloc;
-#elif defined(__arm__)  //}{
-            thrc->state.pc += reloc;
-#elif defined(__x86_64__)  //}{
-            thrc->state.rip += reloc;
-#endif  //}
-            rv = (unsigned *)&thrc->state;
         }
     }
     DPRINTF("do_xmap= %%p\\n", rv);
@@ -590,7 +610,7 @@ upx_main(
     size_t volatile sz_compressed,  // total length
     Mach_header *const mhdr,  // temp char[sz_mhdr] for decompressing
     size_t const sz_mhdr,
-    f_expand *const f_decompress,
+    f_expand *const f_exp,
     f_unfilter *const f_unf,
     Mach_header **const mhdrpp  // Out: *mhdrpp= &real Mach_header
 )
@@ -605,16 +625,16 @@ upx_main(
     xo.size = ((struct b_info const *)(void const *)xi.buf)->sz_unc;
     xi0 = xi;
 
-    DPRINTF("upx_main szc=%%x  f_dec=%%p  f_unf=%%p  "
+    DPRINTF("upx_main szc=%%x  f_exp=%%p  f_unf=%%p  "
         "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  mhdrpp=%%p  mhdrp=%%p\\n",
-        sz_compressed, f_decompress, f_unf, &xo, xo.size, xo.buf,
+        sz_compressed, f_exp, f_unf, &xo, xo.size, xo.buf,
         &xi, xi.size, xi.buf, mhdrpp, *mhdrpp);
 
     // Uncompress Macho headers
-    unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?
+    unpackExtent(&xi, &xo, f_exp, 0);  // never filtered?
 
     // Overwrite the OS-chosen address space at *mhdrpp.
-    hatch = do_xmap(mhdr, fat_offset, &xi0, MAP_ANON_FD, mhdrpp, f_decompress, f_unf);
+    hatch = do_xmap(mhdr, fat_offset, &xi0, MAP_ANON_FD, mhdrpp, f_exp, f_unf);
 
   { // Map dyld dynamic loader
     Mach_load_command const *lc = (Mach_load_command const *)(1+ mhdr);
@@ -654,7 +674,7 @@ ERR_LAB
         } // switch
         Mach_header *dyhdr = 0;
         ts = (Mach_thread_state *)do_xmap(mhdr, fat_offset, 0, fdi, &dyhdr, 0, 0);
-            DPRINTF("hatch ptr= %%p\\n", ts);
+            DPRINTF("ts= %%p  hatch=%%p\\n", ts, hatch);
 #if defined(__AARCH64EL__)  // {
             ts->x0 = (uint64_t)hatch;
 #elif defined(__arm__)  //}{
@@ -768,10 +788,10 @@ finish:
         case 'x': {
             buf[0] = '0';
             buf[1] = 'x';
-            n+= write(2, buf, heximal(va_arg(va, int), buf, 2));
+            n+= write(2, buf, heximal(va_arg(va, unsigned int), buf, 2));
         } break;
         case 's': {
-            char *s0= (char *)va_arg(va, char *), *s= s0;
+            char *s0= (char *)va_arg(va, unsigned char *), *s= s0;
             if (s) while (*s) ++s;
             n+= write(2, s0, s - s0);
         } break;
