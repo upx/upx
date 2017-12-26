@@ -218,14 +218,14 @@ lxlzma_retval   = lxlzma_srcdone
 #define a6 t2
 
         lbu t9,0(lxsrc)  # ((lit_context_bits + lit_pos_bits)<<3) | pos_bits
-        li ta3,-2*LZMA_LIT_NUM
+        li v1,-2*LZMA_LIT_NUM
         lbu t8,1(lxsrc)  # (lit_pos_bits<<4) | lit_context_bits
         andi v0,t9,7  # pos_bits
         srl t9,t9,3  # (lit_context_bits + lit_pos_bits)
-        sllv ta3,ta3,t9
-        addiu ta3,ta3,-4 - 2*LZMA_BASE_NUM - lxlzma_szframe
-        addu sp,sp,ta3  # alloca
-                sw ta3,lxlzma_sv_sp(sp)  # dynamic frame size
+        sllv v1,v1,t9
+        addiu v1,v1,-4 - 2*LZMA_BASE_NUM - lxlzma_szframe
+        addu sp,sp,v1  # alloca
+                sw v1,lxlzma_sv_sp(sp)  # dynamic frame size
         addiu a6,sp,lxlzma_dstdone
                 sw ra, lxlzma_sv_pc(sp)
         lw    a5,0(lxdstlen)
@@ -236,8 +236,8 @@ lxlzma_retval   = lxlzma_srcdone
         addiu a1,lxsrc,2  # 2 header bytes
         addiu a0,sp,lxlzma_szframe  # &CLzamDecoderState
         sb     v0,2(a0)   # pos_bits
-        andi ta3,t8,0xf
-        sb   ta3, 0(a0)  # lit_context_bits
+        andi v1,t8,0xf
+        sb   v1, 0(a0)  # lit_context_bits
         srl  t8,t8,4
         bal lzma_decode
           sb   t8,1(a0)   # lit_pos_bits
@@ -260,15 +260,15 @@ lxlzma_retval   = lxlzma_srcdone
 
         lw v0,lxlzma_retval(sp)  # return value from decompression
 
-        lw ta3,lxlzma_sv_sp(sp)
+        lw v1,lxlzma_sv_sp(sp)
         lw ra,lxlzma_sv_pc(sp)
 /* Workaround suspected glibc bug: elf/rtld.c assumes uninit local is zero.
    2007-11-24 openembedded.org mipsel-linux 2.6.12.6/glibc 2.3.2
 */
-        subu ta3,sp,ta3  # previous sp (un_alloca)
+        subu v1,sp,v1  # previous sp (un_alloca)
 0:
         addiu sp,4
-        bne sp,ta3,0b
+        bne sp,v1,0b
           sw $0,-4(sp)
 
         jr ra
@@ -380,10 +380,10 @@ f_wexpf= 2+ f_wfrag
   slot p_unflt,5
         sw edi,0*NBPW + p_unflt(sp)  // dst    param for unfilter  step 7
         sw eax,1*NBPW + p_unflt(sp)  // dstlen  also for unfilter  step 7
-        lb ta3,b_method-4+1(esi)
-        sw ta3,2*NBPW + p_unflt(sp)  // ftid
-        lb ta3,b_method-4+2(esi)
-        sw ta3,3*NBPW + p_unflt(sp)  // cto8
+        lb v1,b_method-4+1(esi)
+        sw v1,2*NBPW + p_unflt(sp)  // ftid
+        lb v1,b_method-4+2(esi)
+        sw v1,3*NBPW + p_unflt(sp)  // cto8
 #endif  //} UNFILTER
         lodslu; move ecx,eax  // ecx= srclen
 #if UNFILTER  //{
@@ -395,19 +395,19 @@ f_wexpf= 2+ f_wfrag
   slot f_expf
          sw ra,f_expf(sp)
 
-        la ta3,o_dstlen(sp)  // &dstlen
+        la v1,o_dstlen(sp)  // &dstlen
   slot p_uncpr,4
         sw esi,0*NBPW + p_uncpr(sp)  // src; arglist ready for decompress  step 6
         sw ecx,1*NBPW + p_uncpr(sp)  // srclen
         sw edi,2*NBPW + p_uncpr(sp)  // dst
-        sw ta3,3*NBPW + p_uncpr(sp)  // &dstlen
+        sw v1,3*NBPW + p_uncpr(sp)  // &dstlen
 
-        andi ta3,esi,3  // length of prefix alignment
+        andi v1,esi,3  // length of prefix alignment
         addi ecx,ecx,3  // allow  suffix alignment
-        add ecx,ecx,ta3  // prefix increases byte length
+        add ecx,ecx,v1  // prefix increases byte length
         srl ecx,ecx,2
-        lh ta3,f_wfrag(sp); add edx,ta3,ecx  // w_srclen + w_frag
-        lh ta3,f_wexpf(sp); add edx,ta3,edx  // + n_words(f_exp)
+        lh v1,f_wfrag(sp); add edx,v1,ecx  // w_srclen + w_frag
+        lh v1,f_wexpf(sp); add edx,v1,edx  // + n_words(f_exp)
 
 #if UNFILTER  //{
         bal wlen_subr  // edx += n_words (f_unf)
@@ -506,7 +506,7 @@ movsl_subr:
         sw v0,0*NBPW(edi); addiu edi,edi,1*NBPW
         addiu ecx,ecx,-1
 movsl:  // edi= 4-byte aligned dst; esi= 4-byte aligned src; ecx= *WORD* count
-        andi ta3,ecx,3; bnez ta3,4+ 9b  //; nop  # same instr at 9b: and 9f:
+        andi v1,ecx,3; bnez v1,4+ 9b  //; nop  # same instr at 9b: and 9f:
 9:
         lw v0,0*NBPW(esi); lw v1,1*NBPW(esi); lw t8,2*NBPW(esi); lw t9,3*NBPW(esi)
         sw v0,0*NBPW(edi); sw v1,1*NBPW(edi); sw t8,2*NBPW(edi); sw t9,3*NBPW(edi)
@@ -544,11 +544,11 @@ L220:
 
         lw esi,0*NBPW + p_uncpr(sp)  // src
         lw ecx,1*NBPW + p_uncpr(sp)  // len
-        andi ta3,esi,3  // length of prefix alignment
-        subu esi,esi,ta3  // down to word aligned
-        addu ecx,ecx,ta3  // prefix increases byte length
-        addu ta3,edi,ta3  // skip prefix at destination
-        sw ta3,0*NBPW + p_uncpr(sp)  // dst
+        andi v1,esi,3  // length of prefix alignment
+        subu esi,esi,v1  // down to word aligned
+        addu ecx,ecx,v1  // prefix increases byte length
+        addu v1,edi,v1  // skip prefix at destination
+        sw v1,0*NBPW + p_uncpr(sp)  // dst
         addi ecx,ecx,3  // round up to full words
         bal movsl  // copy all aligned words that contain compressed data
           srl ecx,ecx,2
