@@ -80,7 +80,7 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 // if the write-back register is not first or last.  The actual value of sp
 // usually does not matter.  Just remember that lr (r14) and pc (r15) are stored
 // one word closer to the stack pointer because r13 has been omitted.
-#endif  //
+#endif  //}
 
         //.long sz_pack2  // placed there by ::pack3()
   section ELFMAINX
