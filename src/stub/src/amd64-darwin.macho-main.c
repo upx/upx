@@ -33,10 +33,18 @@
 #define __WORDSIZE 64
 #include "include/darwin.h"
 
-#define SIMULATE_ON_LINUX_EABI4 0
+#define SIMULATE_ON_LINUX_EABI4 1
+
+#if defined(__arm__)  //{
+#define DEBUG 1  /* __arm__ */
+#endif  //}
+
+#if defined(__aarch64__)  //{
+#define DEBUG 1  /* __aarch64__ */
+#endif  //}
 
 #ifndef DEBUG  /*{*/
-#define DEBUG 1
+#define DEBUG 0
 #endif  /*}*/
 
 /*************************************************************************
@@ -361,7 +369,7 @@ typedef struct {
     uint64_t stacksize;  // non-default initial stack size
 } Mach_main_command;
 
-#if defined(__AARCH64EL__)  // {
+#if defined(__aarch64__)  // {
 typedef struct {
     uint64_t x0,  x1,  x2,  x3;
     uint64_t x4,  x5,  x6,  x7;
@@ -534,7 +542,7 @@ do_xmap(
                 u.p0 = addr;
                 Mach_segment_command *segp = (Mach_segment_command *)((((char *)sc - (char *)mhdr)>>2) + u.p2);
                 Mach_section_command *const secp = (Mach_section_command *)(1+ segp);
-    #if defined(__AARCH64EL__)  //{
+    #if defined(__aarch64__)  //{
                 unsigned *hatch= -2+ (secp->offset>>2) + u.p2;
                 hatch[0] = 0xd4000001;  // svc #0  // syscall
                 hatch[1] = 0xd65f03c0;  // ret
@@ -584,7 +592,7 @@ do_xmap(
             ) {
                 DPRINTF("thread_state= %%p  flavor=%%d  count=%%x  reloc=%%p\\n",
                     &thrc->state, thrc->flavor, thrc->count, reloc);
-    #if defined(__AARCH64EL__)  //{
+    #if defined(__aarch64__)  //{
                 thrc->state.pc += reloc;
     #elif defined(__arm__)  //}{
                 thrc->state.pc += reloc;
@@ -675,7 +683,7 @@ ERR_LAB
         Mach_header *dyhdr = 0;
         ts = (Mach_thread_state *)do_xmap(mhdr, fat_offset, 0, fdi, &dyhdr, 0, 0);
             DPRINTF("ts= %%p  hatch=%%p\\n", ts, hatch);
-#if defined(__AARCH64EL__)  // {
+#if defined(__aarch64__)  // {
             ts->x0 = (uint64_t)hatch;
 #elif defined(__arm__)  //}{
             ts->r[0] = (uint32_t)hatch;

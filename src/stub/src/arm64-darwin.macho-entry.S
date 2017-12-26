@@ -29,7 +29,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#define SIMULATE_ON_LINUX_EABI4 0
+#define SIMULATE_ON_LINUX_EABI4 1
 
 #if SIMULATE_ON_LINUX_EABI4  /*{*/
   #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_LINUX_EABI4 */
@@ -38,6 +38,15 @@
   #define DARWIN_ARM_CACHEFLUSH 1
   #define ARMEL_DARWIN 1
 #endif  /*}*/
+
+#define DEBUG 1
+
+#ifndef DEBUG  //{
+#define DEBUG 0
+#define TRACE(arg) /*empty*/
+#else  //}{
+#define TRACE(arg) stp lr,x0,[sp,#-2*8]!; mov x0,arg; bl trace; ldp lr,x0,[sp],#2*8
+#endif  //}
 
 NBPW= 8
 #include "arch/arm64/v8/macros.S"
@@ -63,11 +72,6 @@ PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
 __NR_SYSCALL_BASE = 0
 
-__NR_exit =      1 + __NR_SYSCALL_BASE
-__NR_write =     4 + __NR_SYSCALL_BASE
-__NR_open =      5 + __NR_SYSCALL_BASE
-__NR_mmap =    197 + __NR_SYSCALL_BASE
-__NR_mprotect=  74 + __NR_SYSCALL_BASE
 
 #if SIMULATE_ON_LINUX_EABI4  /*{*/
 __NR_mmap     = 0xde  // 222 __GI___mmap64
@@ -75,7 +79,15 @@ __NR_munmap   = 0xd7  // 215
 __NR_mprotect = 0xe2  // 226
 __NR_openat   = 0x38  //  56
 __NR_pread    = 0x43  //  67
+__NR_write    = 0x40  //  64
+#else  //}{
+__NR_exit =      1 + __NR_SYSCALL_BASE
+__NR_write =     4 + __NR_SYSCALL_BASE
+__NR_open =      5 + __NR_SYSCALL_BASE
+__NR_mmap =    197 + __NR_SYSCALL_BASE
+__NR_mprotect=  74 + __NR_SYSCALL_BASE
 #endif  /*}*/
+
 FD_CWD = -100
 
 // DEBUG ONLY:
@@ -89,6 +101,7 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
   section MACHMAINX
 _start: .globl _start
         mov x2,sp  // &argc
+    TRACE(#0)
         bl main
 L20:
 f_decompress:
@@ -181,6 +194,7 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header,HOLE
         str x0,[sp,#1*NBPW]  // P_11  address
         sub rdx,rdx,x0
         str rdx,[sp,#2*NBPW]  // P_12  length
+    TRACE(#1)
 
 // Unfold
         ldr eax,[rbx,#sz_unc]  // dstlen
@@ -199,12 +213,107 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header,HOLE
         ldr  arg1,[sp, #1*NBPW]  // P_11  addr
         ldr r_EXP,[sp],#4*NBPW  // P_10  new f_exp
         mov arg3w,#PROT_READ|PROT_EXEC
+    TRACE(#2)
         do_sys __NR_mprotect
 
 // Use the copy.
 // x20=r_ADRX= ADRX = &l_info; x21=r_LENX= LENX; x28=r_EXP= f_exp
 // rsp/ fd,ADRU,LENU,%entry,&Mach_header,HOLE
         br r_FOLD
+
+#if DEBUG  //{
+TRACE_BUFLEN=1024
+trace:  // preserves condition code (thank you, CBNZ) [if write() does!]
+        stp  x0, x1,[sp,#-32*8]!
+        stp  x2, x3,[sp,# 2*8]
+        stp  x4, x5,[sp,# 4*8]
+        stp  x6, x7,[sp,# 6*8]
+        stp  x8, x9,[sp,# 8*8]
+        stp x10,x11,[sp,#10*8]
+        stp x12,x13,[sp,#12*8]
+        stp x14,x15,[sp,#14*8]
+        stp x16,x17,[sp,#16*8]
+        stp x18,x19,[sp,#18*8]
+        stp x20,x21,[sp,#20*8]
+        stp x22,x23,[sp,#22*8]
+        stp x24,x25,[sp,#24*8]
+        stp x26,x27,[sp,#26*8]
+        stp x28,x29,[sp,#28*8]
+        add  x1,lr,#4  // u_pc
+        add  x2,sp,     #32*8 + 2*8  // u_sp
+        stp  x1, x2,[sp,#30*8]
+
+        ldr x1,[sp,#(1+ 32)*8]  // x1= u_x0
+        str x1,[sp]  // u_x0
+
+        mov x4,sp  // &u_x0
+        sub sp,sp,#TRACE_BUFLEN
+        mov x2,sp  // output string
+
+        mov w1,#'\n'; bl trace_hex  // In: r0 as label
+        mov w1,#'>';  strb w1,[x2],#1
+
+        mov w5,#10  // nrows to print
+L600:  // each row
+        add x1,sp,#TRACE_BUFLEN
+        sub x0,x4,x1
+        lsr x0,x0,#3; mov w1,#'\n'; bl trace_hex2  // which block of 4
+
+        mov w6,#4  // 64-bit words per row
+L610:  // each word
+        ldr x0,[x4],#8; mov w1,#(' '<<8)|' '; bl trace_hex  // next word
+        sub w6,w6,#1; cbnz w6,L610
+
+        sub w5,w5,#1; cbnz w5,L600
+
+        mov w0,#'\n'; strb w0,[x2],#1
+        mov x1,sp  // buf
+        sub x2,x2,x1  // count
+        mov w0,#2  // FD_STDERR
+        do_sys __NR_write
+        add sp,sp,#TRACE_BUFLEN
+
+        ldp x16,x17,[sp,#16*8]
+        ldp x18,x19,[sp,#18*8]
+        ldp x20,x21,[sp,#20*8]
+        ldp x22,x23,[sp,#22*8]
+        ldp x24,x25,[sp,#24*8]
+        ldp x26,x27,[sp,#26*8]
+        ldp x28,x29,[sp,#28*8]
+        ldp x30, x0,[sp,#30*8]
+        sub  lr, lr,#4  // our lr
+
+        ldp x14,x15,[sp,#14*8]
+        ldp x12,x13,[sp,#12*8]
+        ldp x10,x11,[sp,#10*8]
+        ldp  x8, x9,[sp,# 8*8]
+        ldp  x6, x7,[sp,# 6*8]
+        ldp  x4, x5,[sp,# 4*8]
+        ldp  x2, x3,[sp,# 2*8]
+        ldp  x0, x1,[sp],#32*8
+        ret
+
+trace_hex2:
+        mov w3,#2; b trace_hexwid
+trace_hex:  // In: x0=value, w1=punctuation before, x2=ptr; Uses: w3, x8
+        mov w3,#16  // ndigits
+trace_hexwid:  // In: x0= value; w1= punctuation; x2= ptr; w3= number of low-order digits
+        strb w1,[x2],#1; lsr w1,w1,#8; cbnz w1,trace_hexwid  // prefix punctuation
+        adr x8,hex
+L620:
+        sub w3,w3,#1  // number of less-significant digits
+        lsl w1,w3,#2  // 4 bits per hex digit
+        lsr x1,x0,x1  // right justify this digit
+        and x1,x1,#0xf
+        ldrb w1,[x8, x1]
+        strb w1,[x2],#1
+        sub w1,w3,#8; cbnz w1,0f; mov w1,#'_'; strb w1,[x2],#1  // 8-digit readability
+0:
+        cbnz w3,L620
+        ret
+hex:
+        .ascii "0123456789abcdef"
+#endif  //}
 
 execp:
         .ascii "executable_path="  // 16 bytes
@@ -232,11 +341,12 @@ L40:
 
 #if SIMULATE_ON_LINUX_EABI4  //{
         mov arg3,#0  // O_RDONLY
-        mov arg2,arg1
+        mov arg2,arg1  // path
         mov arg1w,#FD_CWD
         do_sys __NR_openat
 #else  //}{
         mov arg2,#0  // O_RDONLY
+        //mov arg1,x0  // path
         do_sys __NR_open
 #endif  //}
         str x0,[sp,#-6*NBPW]!  // fd,%ADRU,%LENU,%entry,%&Mach_header,HOLE

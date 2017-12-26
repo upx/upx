@@ -28,6 +28,7 @@
 //
 
 #define SIMULATE_ON_LINUX_EABI4 1
+#define DEBUG 1
 
 #if SIMULATE_ON_LINUX_EABI4  /*{*/
   #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_LINUX_EABI4 */
@@ -36,6 +37,11 @@
   #define DARWIN_ARM_CACHEFLUSH 1
   #define ARMEL_DARWIN 1
 #endif  /*}*/
+
+#ifndef DEBUG  //{
+#define DEBUG 0
+#endif  //}
+#define TRACE_REGS r0-r12,r14,r15
 
 NBPW= 4
 #include "arch/arm/v5a/macros.S"
@@ -95,6 +101,9 @@ r_LENX .req r11
 r_ADRX .req r10
 r_EXP  .req r9
 r_OSTK .req r8
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; mov r0,#0x11; bl trace
+#endif  /*}*/
 
         ldr   arg4,[r_ADRX,#sz_unc + sz_l_info + sz_p_info]  // sz_unc of Mach_header
         mov        r_t0,#(1<<13)
@@ -110,8 +119,10 @@ r_OSTK .req r8
         adr arg6,f_unfilter
         mov arg5,r_EXP
         stmdb sp!,{arg5,arg6,arg7}  // ABI: only arg1,arg2,arg3,arg4 in registers
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; mov r0,#0x12; bl trace
+#endif  /*}*/
 // upx_main(r0=&l_info, r1=len_cpr, r2=temp[sz_mhdr], r3=sz_mhdr, r4=f_exp, r5=f_unf, r6=mhdr **)
-  bkpt
         bl upx_main  // OUT: r0= &Mach_thread_state of dyld; will be in temp mhdr[]
 
 ARM_ts_pc= 14*NBPW
@@ -127,6 +138,9 @@ ARM_ts_pc= 14*NBPW
         mov r7,#__NR_munmap
         mov lr,r_ADRX  // dyld.entry
         add sp,sp,#4*NBPW  // leave &Mach_header
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; mov r0,#0x13; bl trace
+#endif  /*}*/
         bx r_EXP  // goto hatch: syscall.munmap(ADRU,LENU); ret
 
 f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
@@ -169,6 +183,57 @@ tst_unf:
         .unreq cto
         .unreq fid
 
+#if DEBUG  /*{*/
+TRACE_BUFLEN=512
+trace:
+        str lr,[sp,#(-1+ 15)*4]  @ return pc; [remember: sp is not stored]
+        mov r4,sp  @ &saved_r0
+        sub sp,sp,#TRACE_BUFLEN
+        mov r2,sp  @ output string
+
+        mov r1,#'\n'; bl trace_hex  @ In: r0 as label
+        mov r1,#'>';  strb r1,[r2],#1
+
+        mov r5,#3  @ rows to print
+L600:  @ each row
+        sub r0,r4,#TRACE_BUFLEN
+        sub r0,r0,sp
+        mov r0,r0,lsr #2; mov r1,#'\n'; bl trace_hex  @ which block of 8
+
+        mov r6,#8  @ words per row
+L610:  @ each word
+        ldr r0,[r4],#4; mov r1,#' '; bl trace_hex  @ next word
+        subs r6,r6,#1; bgt L610
+
+        subs r5,r5,#1; bgt L600
+
+        mov r0,#'\n'; strb r0,[r2],#1
+        sub r2,r2,sp  @ count
+        mov r1,sp  @ buf
+        mov r0,#2  @ FD_STDERR
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,#__NR_write
+        swi 0
+#else  /*}{*/
+        swi __NR_write
+#endif  /*}*/
+        add sp,sp,#TRACE_BUFLEN
+        ldmia sp!,{TRACE_REGS}
+
+trace_hex:  // In: r0=val, r1=punctuation before, r2=ptr; Uses: r3, ip
+        strb r1,[r2],#1  @ punctuation
+        mov r3,#4*(8 -1)  @ shift count
+        adr ip,hex
+L620:
+        mov r1,r0,lsr r3
+        and r1,r1,#0xf
+        ldrb r1,[ip, r1]
+        strb r1,[r2],#1
+        subs r3,r3,#4; bge L620
+        ret
+hex:
+        .ascii "0123456789abcdef"
+#endif  /*}*/
 spin: .globl spin
         ret
 

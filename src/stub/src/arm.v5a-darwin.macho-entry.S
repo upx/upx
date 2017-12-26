@@ -39,6 +39,16 @@
   #define ARMEL_DARWIN 1
 #endif  /*}*/
 
+#define DEBUG 1
+
+#if DEBUG  //{
+#define TRACE_REGS r0-r12,r14,r15
+// sp (r13) is not included because the write-back might cause UNDEFINED behavior
+// if the write-back register is not first or last.  The actual value of sp
+// usually does not matter.  Just remember that lr (r14) and pc (r15) are stored
+// one word closer to the stack pointer because r13 has been omitted.
+#endif  //}
+
 NBPW= 4
 #include "arch/arm/v5a/macros.S"
 
@@ -84,6 +94,9 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 //0:    .word 0b - l_info  // backwards distance to l_info
   section MACHMAINX
 _start: .globl _start
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; mov r0,#1; bl trace
+#endif  /*}*/
         mov r7,sp  // &argc
         adr r6,-2*NBPW + _start
         bl main
@@ -141,6 +154,9 @@ rcx .req r3
 
   section MACHMAINZ
 unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; mov r0,#2; bl trace
+#endif  /*}*/
         mov rbx,lr  // &b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_fold...}
         ldr rax,[rbx,#sz_unc]  // LENU.dynamic
         mov rdx,rbx
@@ -168,6 +184,9 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
         sub arg2,rbx,r_MHDR  // len
         // mov arg1,r0  // same address
         do_sys __NR_mmap
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
+#endif  /*}*/
 
 // Remember new f_exp region for PROT_EXEC.
         ldr rdx,[sp,#2*NBPW]  // LENU
@@ -191,6 +210,9 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
         ldr arg2,[rbx,#sz_cpr]  // srclen
         add arg1,rbx,#sz_b_info  // src
         str arg5,[sp,#-NBPW]!  // P_14  ABI: fifth arg goes on stack
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; mov r0,#4; bl trace
+#endif  /*}*/
         blx r_EXP  // old f_exp; new f_exp lacks PROT_EXEC
         add sp,sp,#2*NBPW  // P_14,P_13  toss fifth arg and dstlen
 
@@ -205,6 +227,54 @@ unfold:  // lr= &b_info;  sp/ fd,%ADRU,%LENU,%entry,%&Mach_header
 // r9= f_exp; r10= ADRX; r11= LENX
 // rsp/ fd,ADRU,LENU,%entry,&Mach_header
         bx r_FOLD
+
+#if DEBUG  /*{*/
+TRACE_BUFLEN=512
+trace:
+        str lr,[sp,#(-1+ 15)*4]  @ return pc; [remember: sp is not stored]
+        mov r4,sp  @ &saved_r0
+        sub sp,sp,#TRACE_BUFLEN
+        mov r2,sp  @ output string
+
+        mov r1,#'\n'; bl trace_hex  @ In: r0 as label
+        mov r1,#'>';  strb r1,[r2],#1
+
+        mov r5,#3  @ rows to print
+L600:  @ each row
+        sub r0,r4,#TRACE_BUFLEN
+        sub r0,r0,sp
+        mov r0,r0,lsr #2; mov r1,#'\n'; bl trace_hex  @ which block of 8
+
+        mov r6,#8  @ words per row
+L610:  @ each word
+        ldr r0,[r4],#4; mov r1,#' '; bl trace_hex  @ next word
+        subs r6,r6,#1; bgt L610
+
+        subs r5,r5,#1; bgt L600
+
+        mov r0,#'\n'; strb r0,[r2],#1
+        sub r2,r2,sp  @ count
+        mov r1,sp  @ buf
+        mov r0,#2  @ FD_STDERR
+        mov r7,#__NR_write
+        swi 0
+        add sp,sp,#TRACE_BUFLEN
+        ldmia sp!,{TRACE_REGS}
+
+trace_hex:  // In: r0=val, r1=punctuation before, r2=ptr; Uses: r3, ip
+        strb r1,[r2],#1  @ punctuation
+        mov r3,#4*(8 -1)  @ shift count
+        adr ip,hex
+L620:
+        mov r1,r0,lsr r3
+        and r1,r1,#0xf
+        ldrb r1,[ip, r1]
+        strb r1,[r2],#1
+        subs r3,r3,#4; bge L620
+        ret
+hex:
+        .ascii "0123456789abcdef"
+#endif  /*}*/
 
 execp:
         .ascii "executable_path="  // 16 bytes
