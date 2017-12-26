@@ -58,7 +58,9 @@ PATH_MAX= 4096
 #define DEBUG 0
 #endif  /*}*/
 #if DEBUG  //{
-#define TRACE(arg) stp lr,x0,[sp,#-2*8]!; mov x0,arg; bl trace; ldr lr,[sp],#2*8
+#define TRACE(arg) \
+        stp lr,x0,[sp,#-2*8]!; mov x0,arg; bl trace; \
+        ldp lr,x0,[sp],#2*8
 #else  //}{
 #define TRACE(arg) /*empty*/
 #endif  //}
