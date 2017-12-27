@@ -67,36 +67,36 @@ LOAD tmp/arm64-darwin.macho-main.o
  *(.iplt)
  .iplt          0x0000000000400080        0x0 tmp/arm64-darwin.macho-fold.o
 
-.text           0x0000000000400078     0x124c
+.text           0x0000000000400078     0x1240
  *(.text.unlikely .text.*_unlikely .text.unlikely.*)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
  *(.text.hot .text.hot.*)
  *(.text .stub .text.* .gnu.linkonce.t.*)
- .text          0x0000000000400078      0x2e4 tmp/arm64-darwin.macho-fold.o
+ .text          0x0000000000400078      0x2d8 tmp/arm64-darwin.macho-fold.o
                 0x0000000000400078                _start
                 0x00000000004002ac                spin
                 0x00000000004002b0                exit
                 0x00000000004002b8                read
                 0x00000000004002c4                write
                 0x00000000004002d0                open
-                0x00000000004002e8                close
-                0x00000000004002f4                brk
-                0x0000000000400300                munmap
-                0x000000000040030c                mprotect
-                0x0000000000400318                mmap
-                0x0000000000400324                pread
-                0x0000000000400330                bswap
- .text          0x000000000040035c      0xf68 tmp/arm64-darwin.macho-main.o
-                0x0000000000400a24                do_xmap
-                0x0000000000401004                upx_main
+                0x00000000004002dc                close
+                0x00000000004002e8                brk
+                0x00000000004002f4                munmap
+                0x0000000000400300                mprotect
+                0x000000000040030c                mmap
+                0x0000000000400318                pread
+                0x0000000000400324                bswap
+ .text          0x0000000000400350      0xf68 tmp/arm64-darwin.macho-main.o
+                0x0000000000400a18                do_xmap
+                0x0000000000400ff8                upx_main
  *(.gnu.warning)
 
 .fini
  *(SORT(.fini))
-                0x00000000004012c4                PROVIDE (__etext, .)
-                0x00000000004012c4                PROVIDE (_etext, .)
-                0x00000000004012c4                PROVIDE (etext, .)
+                0x00000000004012b8                PROVIDE (__etext, .)
+                0x00000000004012b8                PROVIDE (_etext, .)
+                0x00000000004012b8                PROVIDE (etext, .)
 
 .rodata
  *(.rodata .rodata.* .gnu.linkonce.r.*)
@@ -107,9 +107,9 @@ LOAD tmp/arm64-darwin.macho-main.o
 .eh_frame_hdr
  *(.eh_frame_hdr)
 
-.eh_frame       0x00000000004012c8      0x1c8
+.eh_frame       0x00000000004012b8      0x1c8
  *(.eh_frame)
- .eh_frame      0x00000000004012c8      0x1c8 tmp/arm64-darwin.macho-main.o
+ .eh_frame      0x00000000004012b8      0x1c8 tmp/arm64-darwin.macho-main.o
                                         0x1b8 (size before relaxing)
 
 .gcc_except_table
@@ -117,8 +117,8 @@ LOAD tmp/arm64-darwin.macho-main.o
 
 .exception_ranges
  *(.exception_ranges .exception_ranges*)
-                0x0000000000401490                . = (ALIGN (0x10000) - ((0x10000 - .) & 0xffff))
-                0x0000000000411490                . = DATA_SEGMENT_ALIGN (0x10000, 0x1000)
+                0x0000000000401480                . = (ALIGN (0x10000) - ((0x10000 - .) & 0xffff))
+                0x0000000000411480                . = DATA_SEGMENT_ALIGN (0x10000, 0x1000)
 
 .eh_frame
  *(.eh_frame)
@@ -136,22 +136,22 @@ LOAD tmp/arm64-darwin.macho-main.o
  *(.tbss .tbss.* .gnu.linkonce.tb.*)
  *(.tcommon)
 
-.preinit_array  0x0000000000411490        0x0
-                0x0000000000411490                PROVIDE (__preinit_array_start, .)
+.preinit_array  0x0000000000411480        0x0
+                0x0000000000411480                PROVIDE (__preinit_array_start, .)
  *(.preinit_array)
-                0x0000000000411490                PROVIDE (__preinit_array_end, .)
+                0x0000000000411480                PROVIDE (__preinit_array_end, .)
 
-.init_array     0x0000000000411490        0x0
-                0x0000000000411490                PROVIDE (__init_array_start, .)
+.init_array     0x0000000000411480        0x0
+                0x0000000000411480                PROVIDE (__init_array_start, .)
  *(SORT(.init_array.*))
  *(.init_array)
-                0x0000000000411490                PROVIDE (__init_array_end, .)
+                0x0000000000411480                PROVIDE (__init_array_end, .)
 
-.fini_array     0x0000000000411490        0x0
-                0x0000000000411490                PROVIDE (__fini_array_start, .)
+.fini_array     0x0000000000411480        0x0
+                0x0000000000411480                PROVIDE (__fini_array_start, .)
  *(SORT(.fini_array.*))
  *(.fini_array)
-                0x0000000000411490                PROVIDE (__fini_array_end, .)
+                0x0000000000411480                PROVIDE (__fini_array_end, .)
 
 .ctors
  *crtbegin.o(.ctors)
@@ -180,43 +180,43 @@ LOAD tmp/arm64-darwin.macho-main.o
 .got
  *(.got)
  *(.igot)
-                0x0000000000411490                . = DATA_SEGMENT_RELRO_END (., 0x18)
+                0x0000000000411480                . = DATA_SEGMENT_RELRO_END (., 0x18)
 
-.got.plt        0x0000000000411490        0x0
+.got.plt        0x0000000000411480        0x0
  *(.got.plt)
  *(.igot.plt)
- .igot.plt      0x0000000000411490        0x0 tmp/arm64-darwin.macho-fold.o
+ .igot.plt      0x0000000000411480        0x0 tmp/arm64-darwin.macho-fold.o
 
-.data           0x0000000000411490        0x0
-                0x0000000000411490                PROVIDE (__data_start, .)
+.data           0x0000000000411480        0x0
+                0x0000000000411480                PROVIDE (__data_start, .)
  *(.data .data.* .gnu.linkonce.d.*)
- .data          0x0000000000411490        0x0 tmp/arm64-darwin.macho-fold.o
- .data          0x0000000000411490        0x0 tmp/arm64-darwin.macho-main.o
+ .data          0x0000000000411480        0x0 tmp/arm64-darwin.macho-fold.o
+ .data          0x0000000000411480        0x0 tmp/arm64-darwin.macho-main.o
 
 .data1
  *(.data1)
-                0x0000000000411490                _edata = .
-                0x0000000000411490                PROVIDE (edata, .)
-                0x0000000000411490                . = .
-                0x0000000000411490                __bss_start = .
-                0x0000000000411490                __bss_start__ = .
+                0x0000000000411480                _edata = .
+                0x0000000000411480                PROVIDE (edata, .)
+                0x0000000000411480                . = .
+                0x0000000000411480                __bss_start = .
+                0x0000000000411480                __bss_start__ = .
 
-.bss            0x0000000000411490        0x0
+.bss            0x0000000000411480        0x0
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss           0x0000000000411490        0x0 tmp/arm64-darwin.macho-fold.o
- .bss           0x0000000000411490        0x0 tmp/arm64-darwin.macho-main.o
+ .bss           0x0000000000411480        0x0 tmp/arm64-darwin.macho-fold.o
+ .bss           0x0000000000411480        0x0 tmp/arm64-darwin.macho-main.o
  *(COMMON)
-                0x0000000000411490                . = ALIGN ((. != 0x0)?0x8:0x1)
-                0x0000000000411490                _bss_end__ = .
-                0x0000000000411490                __bss_end__ = .
-                0x0000000000411490                . = ALIGN (0x8)
-                0x0000000000411490                . = SEGMENT_START ("ldata-segment", .)
-                0x0000000000411490                . = ALIGN (0x8)
-                0x0000000000411490                __end__ = .
-                0x0000000000411490                _end = .
-                0x0000000000411490                PROVIDE (end, .)
-                0x0000000000411490                . = DATA_SEGMENT_END (.)
+                0x0000000000411480                . = ALIGN ((. != 0x0)?0x8:0x1)
+                0x0000000000411480                _bss_end__ = .
+                0x0000000000411480                __bss_end__ = .
+                0x0000000000411480                . = ALIGN (0x8)
+                0x0000000000411480                . = SEGMENT_START ("ldata-segment", .)
+                0x0000000000411480                . = ALIGN (0x8)
+                0x0000000000411480                __end__ = .
+                0x0000000000411480                _end = .
+                0x0000000000411480                PROVIDE (end, .)
+                0x0000000000411480                . = DATA_SEGMENT_END (.)
 
 .stab
  *(.stab)

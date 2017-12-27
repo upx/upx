@@ -27,7 +27,7 @@
 //  <jreiser@users.sourceforge.net>
 //
 
-#define SIMULATE_ON_LINUX_EABI4 1
+#define SIMULATE_ON_LINUX_EABI4 0
 #define DEBUG 1
 
 #if SIMULATE_ON_LINUX_EABI4  /*{*/

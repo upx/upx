@@ -33,7 +33,7 @@
 #define __WORDSIZE 64
 #include "include/darwin.h"
 
-#define SIMULATE_ON_LINUX_EABI4 1
+#define SIMULATE_ON_LINUX_EABI4 0
 
 #if defined(__arm__)  //{
 #define DEBUG 1  /* __arm__ */

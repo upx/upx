@@ -29,7 +29,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#define SIMULATE_ON_LINUX_EABI4 1
+#define SIMULATE_ON_LINUX_EABI4 0
 
 #if SIMULATE_ON_LINUX_EABI4  /*{*/
   #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_LINUX_EABI4 */
