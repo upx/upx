@@ -34,7 +34,7 @@ NBPW= 8
 
 sz_Elf64_Phdr= 56
 sz_Elf64_Ehdr= 64
-e_phnum= 16 + 2*2 + 4 + 3*8 + 4 + 2*2
+e_phnum= 16 + 2*2 + 4 + 3*NBPW + 4 + 2*2
 
 sz_b_info= 12
   sz_unc= 0
@@ -82,8 +82,8 @@ __NR_write    = 0x40  //  64
 #endif  /*}*/
 #if DEBUG  //{
 #define TRACE(arg) \
-        stp lr,x0,[sp,#-2*8]!; mov x0,arg; bl trace; \
-        ldp lr,x0,[sp],#2*8
+        stp lr,x0,[sp,#-2*NBPW]!; mov x0,arg; bl trace; \
+        ldp lr,x0,[sp],#2*NBPW
 #else  //}{
 #define TRACE(arg) /*empty*/
 #endif  //}
@@ -255,26 +255,26 @@ unfold:
 #if DEBUG  //{
 TRACE_BUFLEN=1024
 trace:  // preserves condition code (thank you, CBNZ) [if write() does!]
-        stp  x0, x1,[sp,#-32*8]!
-        stp  x2, x3,[sp,# 2*8]
-        stp  x4, x5,[sp,# 4*8]
-        stp  x6, x7,[sp,# 6*8]
-        stp  x8, x9,[sp,# 8*8]
-        stp x10,x11,[sp,#10*8]
-        stp x12,x13,[sp,#12*8]
-        stp x14,x15,[sp,#14*8]
-        stp x16,x17,[sp,#16*8]
-        stp x18,x19,[sp,#18*8]
-        stp x20,x21,[sp,#20*8]
-        stp x22,x23,[sp,#22*8]
-        stp x24,x25,[sp,#24*8]
-        stp x26,x27,[sp,#26*8]
-        stp x28,x29,[sp,#28*8]
+        stp  x0, x1,[sp,#-32*NBPW]!
+        stp  x2, x3,[sp,# 2*NBPW]
+        stp  x4, x5,[sp,# 4*NBPW]
+        stp  x6, x7,[sp,# 6*NBPW]
+        stp  x8, x9,[sp,# 8*NBPW]
+        stp x10,x11,[sp,#10*NBPW]
+        stp x12,x13,[sp,#12*NBPW]
+        stp x14,x15,[sp,#14*NBPW]
+        stp x16,x17,[sp,#16*NBPW]
+        stp x18,x19,[sp,#18*NBPW]
+        stp x20,x21,[sp,#20*NBPW]
+        stp x22,x23,[sp,#22*NBPW]
+        stp x24,x25,[sp,#24*NBPW]
+        stp x26,x27,[sp,#26*NBPW]
+        stp x28,x29,[sp,#28*NBPW]
         add  x1,lr,#4  // u_pc
-        add  x2,sp,     #32*8 + 2*8  // u_sp
-        stp  x1, x2,[sp,#30*8]
+        add  x2,sp,     #32*NBPW + 2*NBPW  // u_sp
+        stp  x1, x2,[sp,#30*NBPW]
 
-        ldr x1,[sp,#(1+ 32)*8]  // x1= u_x0
+        ldr x1,[sp,#(1+ 32)*NBPW]  // x1= u_x0
         str x1,[sp]  // u_x0
 
         mov x4,sp  // &u_x0
@@ -304,24 +304,24 @@ L610:  // each word
         do_sys __NR_write
         add sp,sp,#TRACE_BUFLEN
 
-        ldp x16,x17,[sp,#16*8]
-        ldp x18,x19,[sp,#18*8]
-        ldp x20,x21,[sp,#20*8]
-        ldp x22,x23,[sp,#22*8]
-        ldp x24,x25,[sp,#24*8]
-        ldp x26,x27,[sp,#26*8]
-        ldp x28,x29,[sp,#28*8]
-        ldp x30, x0,[sp,#30*8]
+        ldp x16,x17,[sp,#16*NBPW]
+        ldp x18,x19,[sp,#18*NBPW]
+        ldp x20,x21,[sp,#20*NBPW]
+        ldp x22,x23,[sp,#22*NBPW]
+        ldp x24,x25,[sp,#24*NBPW]
+        ldp x26,x27,[sp,#26*NBPW]
+        ldp x28,x29,[sp,#28*NBPW]
+        ldp x30, x0,[sp,#30*NBPW]
         sub  lr, lr,#4  // our lr
 
-        ldp x14,x15,[sp,#14*8]
-        ldp x12,x13,[sp,#12*8]
-        ldp x10,x11,[sp,#10*8]
-        ldp  x8, x9,[sp,# 8*8]
-        ldp  x6, x7,[sp,# 6*8]
-        ldp  x4, x5,[sp,# 4*8]
-        ldp  x2, x3,[sp,# 2*8]
-        ldp  x0, x1,[sp],#32*8
+        ldp x14,x15,[sp,#14*NBPW]
+        ldp x12,x13,[sp,#12*NBPW]
+        ldp x10,x11,[sp,#10*NBPW]
+        ldp  x8, x9,[sp,# 8*NBPW]
+        ldp  x6, x7,[sp,# 6*NBPW]
+        ldp  x4, x5,[sp,# 4*NBPW]
+        ldp  x2, x3,[sp,# 2*NBPW]
+        ldp  x0, x1,[sp],#32*NBPW
         ret
 
 trace_hex2:

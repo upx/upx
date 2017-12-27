@@ -32,8 +32,8 @@
 NBPW= 8
 #include "arch/arm64/v8/macros.S"
 
-sz_Elf64_Ehdr = 16 + 2*2 + 4 + 3*8 + 4 + 6*2
-sz_Elf64_Phdr = 2*4 + 6*8
+sz_Elf64_Ehdr = 16 + 2*2 + 4 + 3*NBPW + 4 + 6*2
+sz_Elf64_Phdr = 2*4 + 6*NBPW
 
 sz_b_info= 12
   sz_unc= 0
