@@ -36,11 +36,11 @@
 #define SIMULATE_ON_LINUX_EABI4 0
 
 #if defined(__arm__)  //{
-#define DEBUG 1  /* __arm__ */
+#define DEBUG 0  /* __arm__ */
 #endif  //}
 
 #if defined(__aarch64__)  //{
-#define DEBUG 1  /* __aarch64__ */
+#define DEBUG 0  /* __aarch64__ */
 #endif  //}
 
 #ifndef DEBUG  /*{*/

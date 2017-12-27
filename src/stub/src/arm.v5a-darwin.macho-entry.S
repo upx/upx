@@ -39,8 +39,6 @@
   #define ARMEL_DARWIN 1
 #endif  /*}*/
 
-#define DEBUG 1
-
 #if DEBUG  //{
 #define TRACE_REGS r0-r12,r14,r15
 // sp (r13) is not included because the write-back might cause UNDEFINED behavior

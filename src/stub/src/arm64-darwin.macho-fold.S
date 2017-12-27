@@ -37,8 +37,6 @@
   #define ARMEL_DARWIN 1
 #endif  /*}*/
 
-#define DEBUG 1
-
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
 #endif  /*}*/
