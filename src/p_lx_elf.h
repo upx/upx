@@ -160,6 +160,7 @@ protected:
     Elf32_Phdr const *gnu_stack;  // propagate NX
     unsigned e_phoff;
     unsigned e_shoff;
+    unsigned sz_dynseg;  // PT_DYNAMIC.p_memsz
     unsigned so_slide;
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
@@ -283,6 +284,7 @@ protected:
     Elf64_Phdr const *gnu_stack;  // propagate NX
     upx_uint64_t e_phoff;
     upx_uint64_t e_shoff;
+    upx_uint64_t sz_dynseg;  // PT_DYNAMIC.p_memsz
     upx_uint64_t so_slide;
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs

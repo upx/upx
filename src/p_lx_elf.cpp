@@ -282,12 +282,18 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             unsigned t = get_te32(&phdr->p_offset), s = sizeof(Elf32_Dyn) + t;
-            if (s < t || file_size < s) {
-                char msg[50]; snprintf(msg, sizeof(msg), "bad phdr[%u].p_offset",
+            unsigned filesz = get_te32(&phdr->p_filesz), memsz = get_te32(&phdr->p_memsz);
+            if (s < t || file_size < s
+            ||  3 & (t | filesz | memsz)
+            ||  filesz < sizeof(Elf32_Dyn)
+            ||  memsz  < sizeof(Elf32_Dyn)
+            ||  filesz < memsz) {
+                char msg[50]; snprintf(msg, sizeof(msg), "bad PT_DYNAMIC phdr[%u]",
                     (unsigned)(phdr - phdri));
                 throwCantPack(msg);
             }
             dynseg= (Elf32_Dyn const *)(t + file_image);
+            sz_dynseg = memsz;
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -723,12 +729,18 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
             uint64_t t = get_te64(&phdr->p_offset), s = sizeof(Elf64_Dyn) + t;
-            if (s < t || (uint64_t)file_size < s) {
-                char msg[50]; snprintf(msg, sizeof(msg), "bad phdr[%u].p_offset",
+            uint64_t filesz = get_te64(&phdr->p_filesz), memsz = get_te64(&phdr->p_memsz);
+            if (s < t || (unsigned)file_size < s
+            ||  7 & (t | filesz | memsz)
+            ||  filesz < sizeof(Elf64_Dyn)
+            ||  memsz  < sizeof(Elf64_Dyn)
+            ||  filesz < memsz) {
+                char msg[50]; snprintf(msg, sizeof(msg), "bad PT_DYNAMIC phdr[%u]",
                    (unsigned)(phdr - phdri));
                 throwCantPack(msg);
             }
             dynseg= (Elf64_Dyn const *)(t + file_image);
+            sz_dynseg = memsz;
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -3784,7 +3796,8 @@ PackLinuxElf32::elf_find_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
-    for (; Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
+    for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
+            && Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
         unsigned const t= elf_get_offset_from_address(get_te32(&dynp->d_val));
         if (t) {
             return t + file_image;
@@ -3799,7 +3812,8 @@ PackLinuxElf32::elf_unsigned_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
-    for (; Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
+    for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
+            && Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
         return get_te32(&dynp->d_val);
     }
     return 0;
@@ -3835,7 +3849,8 @@ PackLinuxElf64::elf_find_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)
-    for (; Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
+    for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
+            && Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
         upx_uint64_t const t= elf_get_offset_from_address(get_te64(&dynp->d_val));
         if (t) {
             return (size_t)t + file_image;
@@ -3850,7 +3865,8 @@ PackLinuxElf64::elf_unsigned_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)
-    for (; Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
+    for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
+            && Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
         return get_te64(&dynp->d_val);
     }
     return 0;
