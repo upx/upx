@@ -119,6 +119,7 @@ L90:
 
         mov %ecx,%eax
         xor %edi,%eax
+        xor   $8,%eax
         and   $8,%eax
         sub %rax,%rdi  # keep 16-byte alignment of %rsp
 
