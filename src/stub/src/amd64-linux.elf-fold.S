@@ -27,6 +27,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW= 8
 #include "arch/amd64/macros.S"
 #include "arch/amd64/regs.h"
 
@@ -68,7 +69,7 @@ __NR_readlink= 89
 
 // IN:
 // %rbx= &O_BINFO; %rbp= f_exp; %r14= ADRX; %r15= LENX;
-// rsp/ elfaddr,fd,ADRU,LENU,%entry,  argc,argv,0,envp,0,auxv,0,strings
+// rsp/ elfaddr,fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
 
 fold_begin:
 ////    int3  // DEBUG only
@@ -82,7 +83,7 @@ L90:
         mov %rsp,%rsi
         sub $PATH_MAX,%rsp
         push %rsp; pop %rdi
-        push $9; pop %rcx; rep movsq  # f_unf,LENX,ADRX,elfaddr,fd,ADRU,LENU,%entry,argc
+        push $10; pop %rcx; rep movsq  # f_unf,LENX,ADRX,elfaddr,fd,ADRU,LENU,rdx,%entry,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
         movq %rdi,%r14  # remember &new_env[0]
@@ -145,8 +146,8 @@ L90:
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unf arg6,
                 Elf64_Addr elfaddr )
 */
-        addq $1*8+OVERHEAD,%rsp  # toss elfaddr, too
-        movq %rax,3*8(%rsp)  # entry
+        addq $1*NBPW+OVERHEAD,%rsp  # toss elfaddr, too
+        movq %rax,4*NBPW(%rsp)  # entry
         pop %rbx  # fd
 
 // Map 1 page of /proc/self/exe so that it does not disappear.
@@ -164,7 +165,7 @@ L90:
         pop %arg1  # ADRU
         pop %arg2  # LENU
         push $ __NR_munmap; pop %rax
-        jmp *-8(%r14)  # goto: syscall; ret
+        jmp *-8(%r14)  # goto: syscall; pop %rdx; ret
 
 mmap: .globl mmap
         movb $ __NR_mmap,%al

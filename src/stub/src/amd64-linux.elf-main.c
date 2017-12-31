@@ -238,7 +238,7 @@ make_hatch_x86_64(
                 (phdr->p_offset==0) )
         )
         {
-            hatch[0] = 0x90c3050f;  // syscall; ret; nop
+            hatch[0] = 0xc35a050f;  // syscall; pop %rdx; ret
         }
         else {
             hatch = 0;

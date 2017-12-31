@@ -65,11 +65,13 @@ M_NRV2D_LE32=5
 M_NRV2E_LE32=8
 
 
+// https://www.uclibc.org/docs/psABI-x86_64.pdf
   section ELFMAINX
 sz_pack2= .-4
 _start: .globl _start
 ////    nop; int3  # uncomment for debugging
         push %rax  // space for entry address
+        push %rdx  // register this function pointer with 'atexit'
         call main  // push &decompress
 
 /* Returns 0 on success; non-zero on failure. */
