@@ -281,19 +281,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         Elf32_Phdr const *phdr= phdri;
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
-            unsigned t = get_te32(&phdr->p_offset), s = sizeof(Elf32_Dyn) + t;
-            unsigned filesz = get_te32(&phdr->p_filesz), memsz = get_te32(&phdr->p_memsz);
-            if (s < t || file_size < s
-            ||  3 & (t | filesz | memsz)
-            ||  filesz < sizeof(Elf32_Dyn)
-            ||  memsz  < sizeof(Elf32_Dyn)
-            ||  filesz < memsz) {
-                char msg[50]; snprintf(msg, sizeof(msg), "bad PT_DYNAMIC phdr[%u]",
-                    (unsigned)(phdr - phdri));
-                throwCantPack(msg);
-            }
-            dynseg= (Elf32_Dyn const *)(t + file_image);
-            sz_dynseg = memsz;
+            dynseg= (Elf32_Dyn const *)(check_pt_dynamic(phdr) + file_image);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -728,19 +716,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         Elf64_Phdr const *phdr= phdri;
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
-            uint64_t t = get_te64(&phdr->p_offset), s = sizeof(Elf64_Dyn) + t;
-            uint64_t filesz = get_te64(&phdr->p_filesz), memsz = get_te64(&phdr->p_memsz);
-            if (s < t || (unsigned)file_size < s
-            ||  7 & (t | filesz | memsz)
-            ||  filesz < sizeof(Elf64_Dyn)
-            ||  memsz  < sizeof(Elf64_Dyn)
-            ||  filesz < memsz) {
-                char msg[50]; snprintf(msg, sizeof(msg), "bad PT_DYNAMIC phdr[%u]",
-                   (unsigned)(phdr - phdri));
-                throwCantPack(msg);
-            }
-            dynseg= (Elf64_Dyn const *)(t + file_image);
-            sz_dynseg = memsz;
+            dynseg= (Elf64_Dyn const *)(check_pt_dynamic(phdr) + file_image);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -1934,7 +1910,7 @@ PackLinuxElf64::canPack()
         phdr= phdri;
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
-            dynseg= (Elf64_Dyn const *)(get_te64(&phdr->p_offset) + file_image);
+            dynseg= (Elf64_Dyn const *)(check_pt_dynamic(phdr) + file_image);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -3791,6 +3767,24 @@ PackLinuxElf32::elf_has_dynamic(unsigned int key) const
     return 0;
 }
 
+unsigned  // checked .p_offset; sz_dynseg set
+PackLinuxElf32::check_pt_dynamic(Elf32_Phdr const *const phdr)
+{
+    unsigned t = get_te32(&phdr->p_offset), s = sizeof(Elf32_Dyn) + t;
+    unsigned filesz = get_te32(&phdr->p_filesz), memsz = get_te32(&phdr->p_memsz);
+    if (s < t || file_size < s
+    ||  (3 & t) || (7 & (filesz | memsz))  // .balign 4; 8==sizeof(Elf32_Dyn)
+    ||  filesz < sizeof(Elf32_Dyn)
+    ||  memsz  < sizeof(Elf32_Dyn)
+    ||  filesz < memsz) {
+        char msg[50]; snprintf(msg, sizeof(msg), "bad PT_DYNAMIC phdr[%u]",
+            (unsigned)(phdr - phdri));
+        throwCantPack(msg);
+    }
+    sz_dynseg = memsz;
+    return t;
+}
+
 void const *
 PackLinuxElf32::elf_find_dynamic(unsigned int key) const
 {
@@ -3842,6 +3836,24 @@ PackLinuxElf64::elf_has_dynamic(unsigned int key) const
         return dynp;
     }
     return 0;
+}
+
+uint64_t  // checked .p_offset; sz_dynseg set
+PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
+{
+    uint64_t t = get_te64(&phdr->p_offset), s = sizeof(Elf64_Dyn) + t;
+    uint64_t filesz = get_te64(&phdr->p_filesz), memsz = get_te64(&phdr->p_memsz);
+    if (s < t || (uint64_t)file_size < s
+    ||  (7 & t) || (0xf & (filesz | memsz))  // .balign 8; 16==sizeof(Elf64_Dyn)
+    ||  filesz < sizeof(Elf64_Dyn)
+    ||  memsz  < sizeof(Elf64_Dyn)
+    ||  filesz < memsz) {
+        char msg[50]; snprintf(msg, sizeof(msg), "bad PT_DYNAMIC phdr[%u]",
+            (unsigned)(phdr - phdri));
+        throwCantPack(msg);
+    }
+    sz_dynseg = memsz;
+    return t;
 }
 
 void const *
