@@ -157,7 +157,7 @@ protected:
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
-    Elf32_Shdr const *shdri; // from input file
+    Elf32_Shdr *shdri; // from input file
     Elf32_Phdr const *gnu_stack;  // propagate NX
     unsigned e_phoff;
     unsigned e_shoff;
@@ -282,7 +282,7 @@ protected:
 protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdri; // for  input file
-    Elf64_Shdr const *shdri; // from input file
+    Elf64_Shdr *shdri; // from input file
     Elf64_Phdr const *gnu_stack;  // propagate NX
     upx_uint64_t e_phoff;
     upx_uint64_t e_shoff;
@@ -299,7 +299,7 @@ protected:
     Elf64_Sym    const *jni_onload_sym;
     char const *shstrtab;   // via Elf64_Shdr
 
-    Elf64_Shdr const *sec_strndx;
+    Elf64_Shdr       *sec_strndx;
     Elf64_Shdr const *sec_dynsym;
     Elf64_Shdr const *sec_dynstr;
 
