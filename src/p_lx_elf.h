@@ -274,7 +274,7 @@ protected:
     Elf64_Phdr const *elf_find_ptype(unsigned type, Elf64_Phdr const *phdr0, unsigned phnum);
     Elf64_Shdr const *elf_find_section_name(char const *) const;
     Elf64_Shdr const *elf_find_section_type(unsigned) const;
-    uint64_t check_pt_dynamic(Elf64_Phdr const *);
+    upx_uint64_t check_pt_dynamic(Elf64_Phdr const *);
     void const *elf_find_dynamic(unsigned) const;
     Elf64_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;

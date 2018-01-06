@@ -1320,10 +1320,10 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segLINK.nsects = 0;
     segLINK.initprot = Mach_command::VM_PROT_READ;
     // Adjust later: .vmaddr .vmsize .fileoff .filesize
-    uint64_t up(0);
+    upx_uint64_t up(0);
     unsigned const ncmds = mhdri.ncmds;
     for (unsigned j= 0; j < ncmds; ++j) if (lc_seg == msegcmd[j].cmd) {
-        uint64_t sup = msegcmd[j].vmsize + msegcmd[j].vmaddr;
+        upx_uint64_t sup = msegcmd[j].vmsize + msegcmd[j].vmaddr;
         if (up < sup) {
             up = sup;
             segLINK.vmsize = sup - segLINK.vmaddr;

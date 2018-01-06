@@ -612,7 +612,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
 
 void PackLinuxElf::defineSymbols(Filter const *)
 {
-    linker->defineSymbol("O_BINFO", opt->o_unix.is_ptinterp | o_binfo);
+    linker->defineSymbol("O_BINFO", (!!opt->o_unix.is_ptinterp) | o_binfo);
 }
 
 void PackLinuxElf32::defineSymbols(Filter const *ft)
@@ -3930,11 +3930,11 @@ PackLinuxElf64::elf_has_dynamic(unsigned int key) const
     return 0;
 }
 
-uint64_t  // checked .p_offset; sz_dynseg set
+upx_uint64_t  // checked .p_offset; sz_dynseg set
 PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
 {
-    uint64_t t = get_te64(&phdr->p_offset), s = sizeof(Elf64_Dyn) + t;
-    uint64_t filesz = get_te64(&phdr->p_filesz), memsz = get_te64(&phdr->p_memsz);
+    upx_uint64_t t = get_te64(&phdr->p_offset), s = sizeof(Elf64_Dyn) + t;
+    upx_uint64_t filesz = get_te64(&phdr->p_filesz), memsz = get_te64(&phdr->p_memsz);
     if (s < t || (uint64_t)file_size < s
     ||  (7 & t) || (0xf & (filesz | memsz))  // .balign 8; 16==sizeof(Elf64_Dyn)
     ||  filesz < sizeof(Elf64_Dyn)
