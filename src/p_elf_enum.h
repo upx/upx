@@ -162,6 +162,9 @@
         DT_PLTREL   = 20,       /* Type of reloc in PLT */
         DT_TEXTREL  = 22,       /* Reloc might modify .text */
         DT_JMPREL   = 23,       /* Address of PLT relocs */
+        DT_INIT_ARRAY  = 25,    /* Array with addresses of init fct */
+        DT_FINI_ARRAY  = 26,    /* Array with addresses of fini fct */
+        DT_PREINIT_ARRAY  = 32, /* Array with addresses of preinit fct*/
         DT_CHECKSUM = 0x6ffffdf8,       /* Only for prelink? */
         DT_GNU_HASH = 0x6ffffef5,       /* GNU-style hash table */
         DT_VERSYM   = 0x6ffffff0,       /* version[] for each symbol */
