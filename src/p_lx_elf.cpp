@@ -608,7 +608,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
 
 void PackLinuxElf::defineSymbols(Filter const *)
 {
-    linker->defineSymbol("O_BINFO", opt->o_unix.is_ptinterp | o_binfo);
+    linker->defineSymbol("O_BINFO", (!!opt->o_unix.is_ptinterp) | o_binfo);
 }
 
 void PackLinuxElf32::defineSymbols(Filter const *ft)
