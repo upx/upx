@@ -321,6 +321,10 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
             ? jni_onload_va
             : elf_unsigned_dynamic(Elf32_Dyn::DT_INIT) );
         set_te32(&disp, firstpc_va - load_va);
+        unsigned const delta = (1<<12);
+        if (opt->o_unix.android_shlib) { // the extra page
+            set_te32(&disp, delta + firstpc_va - load_va);
+        }
         fo->write(&disp, sizeof(disp));
         len += sizeof(disp);
 
@@ -496,6 +500,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         unsigned off = fo->st_size();
         unsigned off_init = 0;  // where in file
         upx_uint64_t va_init = sz_pack2;   // virtual address
+        unsigned const delta = (1u<<12);  // for android_shlib
         so_slide = 0;
         for (int j = e_phnum; --j>=0; ++phdr) {
             upx_uint64_t const len  = get_te64(&phdr->p_filesz);
@@ -533,6 +538,11 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                     va_init += get_te64(&phdr->p_vaddr);
                     set_te64(&phdr->p_filesz, sz_pack2 + lsize);
                     set_te64(&phdr->p_memsz,  sz_pack2 + lsize);
+                    if (opt->o_unix.android_shlib) { // the extra page
+                        //va_init += delta;  // sz_pack2 already includes delta?
+                        set_te64(&phdr->p_filesz, delta + sz_pack2 + lsize);
+                        set_te64(&phdr->p_memsz,  delta + sz_pack2 + lsize);
+                    }
                 }
                 continue;  // all done with this PT_LOAD
             }
@@ -555,13 +565,28 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             if (xct_off < ioff)
                 set_te64(&phdr->p_offset, so_slide + ioff);
         }  // end each Phdr
+
         if (off_init) {  // change DT_INIT.d_val
             fo->seek(off_init, SEEK_SET);
             upx_uint64_t word; set_te64(&word, va_init);
             fo->rewrite(&word, sizeof(word));
             flen = fo->seek(0, SEEK_END);
         }
-        if (!opt->o_unix.android_shlib) {
+        if (opt->o_unix.android_shlib) {
+            // Update {DYNAMIC}.sh_offset by so_slide.
+            Elf64_Shdr *shdr = shdri;
+            for (unsigned j = 0; j < e_shnum; ++shdr, ++j) {
+                if (Elf64_Shdr::SHT_DYNAMIC == get_te32(&shdr->sh_type)) {
+                    upx_uint64_t offset = get_te64(&shdr->sh_offset);
+                    set_te64(&shdr->sh_offset, so_slide - delta + offset );
+                    fo->seek(j * sizeof(Elf64_Shdr)     - delta + xct_off, SEEK_SET);
+                    fo->rewrite(shdr, sizeof(*shdr));
+                    fo->seek(0, SEEK_END);
+                    break;
+                }
+            }
+        }
+        else { // !opt->o_unix.android_shlib)
             ehdri.e_shnum = 0;
             ehdri.e_shoff = 0;
             ehdri.e_shstrndx = 0;
@@ -2704,7 +2729,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         sz_elf_hdrs = xct_off;
         fo->write(file_image, xct_off);  // before the first SHF_EXECINSTR (typ ".plt")
         if (opt->o_unix.android_shlib) {
-            // In order to pacify the runtime linker on Android "O",
+            // In order to pacify the runtime linker on Android "O" ("Oreo"),
             // we will splice-in a 4KiB page that contains an "extra" copy
             // of the Shdr and shstrtab.
             unsigned const delta = (1u<<12);
@@ -2752,14 +2777,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                              addr = get_te64(&phdr->p_vaddr);
                     set_te64(&phdr->p_vaddr, delta + addr);
                 }
-                if (0 // physical: not yet
-                &&  0==phdr->p_offset && Elf64_Phdr::PT_LOAD==get_te32(&phdr->p_type)) {
-                    // Extend by the extra page.
-                    uint64_t size = get_te64(&phdr->p_filesz);
-                    set_te64(&phdr->p_filesz, delta + size);
-                             size = get_te64(&phdr->p_memsz);
-                    set_te64(&phdr->p_memsz, delta + size);
-                }
+                // .p_filesz,.p_memsz are updated in ::pack3
             }
             fo->rewrite(phdri, e_phnum * sizeof(Elf64_Phdr));  // adjacent to Ehdr
 
