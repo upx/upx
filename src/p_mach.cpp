@@ -1366,7 +1366,6 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         unsigned const sz_threado = threado_size();
         MemBuffer space(sz_threado); memset(space, 0, sz_threado);
         fo->write(space, sz_threado);
-        sz_mach_headers = fo->getBytesWritten();
     }
     else if (my_filetype == Mach_header::MH_DYLIB) {
         Mach_command const *ptr = (Mach_command const *)rawmseg;
@@ -1398,13 +1397,10 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         }
         memset(&linkitem, 0, sizeof(linkitem));
         fo->write(&linkitem, sizeof(linkitem));
-        fo->write(rawmseg, mhdri.sizeofcmds);
-
-        gap = secTEXT.offset - sz_mach_headers;
     }
     sz_mach_headers = fo->getBytesWritten();
-    MemBuffer filler(gap);
-    memset(filler, 0, gap);
+    gap = secTEXT.offset - sz_mach_headers;
+    MemBuffer filler(gap); filler.clear();
     fo->write(filler, gap);
     sz_mach_headers += gap;
 
