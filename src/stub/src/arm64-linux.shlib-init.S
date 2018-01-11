@@ -120,10 +120,13 @@ sp_frame = 24 * NBPW
 .endm
 
   section ELFMAINX
+//  .long distance back to first b_info
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
-//  .long offset({l_info; p_info; b_info; compressed data})
+//  .long offset(xct_off)    dst of f_exp
+_start: .globl _start
+    brk #0  // debugging
 
   slot f_argc  // 0
   slot f_argv  // 1
@@ -132,8 +135,6 @@ sp_frame = 24 * NBPW
   slot f_PMASK  // 4  PAGE_MASK
   slot f_my_ra  // 5
 
-_start: .globl _start
-//    brk #0  // debugging
         stp arg1,arg2,[sp,#f_argc - sp_frame]!  // f_argv
         stp arg3,x0,  [sp,#f_envp]  // %f_uinit
         str lr,       [sp,#f_my_ra]
@@ -213,22 +214,24 @@ main:
 // 12. goto user DT_INIT
 
         mov     rdx,lr  //    &f_decompress
-        add rsi,rdx,# _start - f_decompress - 4*4
+        add rsi,rdx,# _start - f_decompress - 5*4
 
 #define lodsl ldr eax,[rsi],#4
 #define lodslu lodsl
 
+        lodsl; mov tmp,eax  // distance back to 1st b_info
                mov rcx,rsi
         lodsl; sub rcx,rcx,rax; //str ecx,[sp,#o_reloc]
+               sub tmpx,rsi,tmpx  // &b_info
         lodsl; add rax,rcx,rax; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
   slot o_hatch  // 6
         lodsl; add rax,rcx,rax; str rax,[sp,#o_hatch]  // reloc &hatch   for step 10
-        lodsl; add rdi,rcx,rax  // &l_info; also destination for decompress
-        add rsi,rdi,#sz_l_info + sz_p_info  // &b_info
+        lodsl; add rdi,rcx,rax  // destination for decompress
+        mov rsi,tmpx  // &b_info
 
   slot p_unmap,2  // 7
 
-        ldr eax,[rsi,#sz_cpr]; add rsi,rsi,#sz_b_info  // sz_cpr
+        ldr eax,[rsi,#sz_cpr]; add rsi,rsi,#sz_b_info
         add rsi,rsi,rax  // skip unpack helper block
 
         ldr ecx,[sp,#f_PMASK]
@@ -318,6 +321,7 @@ supervise:
         ldr rax,[sp,#o_uncpr]
         ldp arg1,arg2,[sp,#0*NBPW + p_uncpr]
         ldp arg3,arg4,[sp,#2*NBPW + p_uncpr]
+    brk #0
         blr rax  // decompress
 
         bl L620
@@ -349,6 +353,7 @@ L620:  // Implant escape hatch at end of .text
         ldp arg1,arg2,[sp,#0*NBPW + p_unmap]
           mov w8,#__NR_munmap
           ldp arg3,arg4,[sp,#2*NBPW + f_argc]  // f_uinit
+    brk #0
         br arg5  // goto hatch
 
 movsl_subr:

@@ -68,6 +68,7 @@ protected:
     static unsigned gnu_hash(char const *) /*const*/;
 
 protected:
+    unsigned int const asl_delta = (1u<<12);  // --android-shlib extra page
     unsigned e_type;
     unsigned e_phnum;       /* Program header table entry count */
     unsigned e_shnum;
@@ -174,7 +175,7 @@ protected:
     Elf32_Sym    const *jni_onload_sym;
     char const *shstrtab;   // via Elf32_Shdr
 
-    Elf32_Shdr const *sec_strndx;
+    Elf32_Shdr       *sec_strndx;
     Elf32_Shdr const *sec_dynsym;
     Elf32_Shdr const *sec_dynstr;
 
