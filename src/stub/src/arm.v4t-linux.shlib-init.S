@@ -29,13 +29,14 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+NBPW= 4
 #define ARM_OLDABI 1
 #include "arch/arm/v5a/macros.S"
 
 #define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
 #define bkpt_th .short 0xde01  /* reserved instr; Linux GNU eabi breakpoint */
-sz_Elf32_Ehdr = 13*4
-sz_Elf32_Phdr =  8*4
+sz_Elf32_Ehdr = 13*NBPW
+sz_Elf32_Phdr =  8*NBPW
 
 sz_b_info= 12
   sz_unc= 0
@@ -111,36 +112,38 @@ _=-1+_  // one less word on stack
 #define lodslu bl get4u
 
   section ELFMAINX
+//  .long offset(b_info)
 //D_INFO:
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)  // override with round_up(2, PT_LOAD[0]{.p_memsz + .p_vaddr})
-//  .long offset({l_info; p_info; b_info; compressed data})
+//  .long offset(dst for f_exp)
 
-#define DEBUG 0
+#define DEBUG 1
         .code 16  //; .balign 4
 .real_start_ofELFMAINX:
         .thumb_func
 _start: .globl _start
-        nop
 #if DEBUG  //{
         bkpt_th  // for debugging
+#else  //}{
+        nop
 #endif  //}
         push {r0,r1,r2,r3,r4,r5,r6,r7,lr}
 _=9
 o_uinit= 1  // lr
         adr esi,here
-        sub esi,esi,#4*4 + 2*(4+ DEBUG)  // D_INFO
+        sub esi,#4*2 + 5*NBPW  // -NBPW + &D_INFO
 here:
-               mov ecx,esi
-        ldr eax,[esi,#0*4]; sub ecx,eax; //str ecx,[SP(o_reloc)]
+        ldr tmp,[esi,#0*NBPW]  // offset(b_info)
+                               add ecx,esi,#NBPW  // &D_INFO
+        ldr eax,[esi,#1*NBPW]; sub ecx,eax; //str ecx,[SP(o_reloc)]
 // reloc DT_INIT  for step 12
-        ldr tmp,[esi,#1*4]; add tmp,ecx; str tmp,[SP(o_uinit)]
-        ldr edi,[esi,#3*4]; add edi,ecx  // &l_info; also destination for decompress
-        mov esi,#sz_l_info+sz_p_info
-        add esi,edi  // &b_info
+        ldr eax,[esi,#2*NBPW]; add eax,ecx; str eax,[SP(o_uinit)]
+        ldr edi,[esi,#4*NBPW]; add edi,ecx  // dst for f_exp
+                               add esi,tmp,ecx  // &b_info
 
-        sub sp,#3*4  // 3 slots of space
+        sub sp,#3*NBPW  // 3 slots of space
         _=1+_  // &escape_hatch (step 10)
 o_hatch=_   // 10
         _=2+_  // param space: munmap temp pages (step 9)
@@ -290,7 +293,7 @@ L710:
 
         mov tmp,lr; sub tmp,#1; push_ tmp  // &f_decompress (ARM mode)
 o_uncpr=_  // 23
-        add tmp,SP(p_unflt)+1*4; push_ tmp  // &dstlen
+        add tmp,SP(p_unflt)+1*NBPW; push_ tmp  // &dstlen
         push_ edi  // dst
         push_ ecx  // srclen
         push_ esi  // src;  arglist ready for decompress  step 6
@@ -347,8 +350,8 @@ _=-6+_  // 15
         tst arg4,arg4; beq 0f  // 0==ftid ==> no filter
         blx eax  // f_unfilter
 0:
-        ldr arg1,[sp,#0*4]  // lo(dst)
-        ldr arg2,[sp,#1*4]  // len
+        ldr arg1,[sp,#0*NBPW]  // lo(dst)
+        ldr arg2,[sp,#1*NBPW]  // len
         add arg2,arg1  // hi(dst)
         bl x__ARM_NR_cacheflush
 
@@ -366,6 +369,7 @@ _=-3+_  // 12
         lsl r7,#16
         add r7,#__NR_munmap - ((__NR_munmap>>16)<<16)
 .endif
+    bkpt_th
         pop {arg1,arg2, pc}  // goto hatch
 _=-3+_  // 9
         .balign 4
@@ -439,7 +443,7 @@ o_super=_  // 28
         mov arg5,#0; mvn arg5,arg5  // -1; cater to *BSD for fd of MAP_ANON
         mov arg4,#MAP_PRIVATE|MAP_ANONYMOUS
         mov arg3,#PROT_READ|PROT_WRITE|PROT_EXEC
-        str arg2,[SP(p_unmap)+1*4]  // length to unmap
+        str arg2,[SP(p_unmap)+1*NBPW]  // length to unmap
         mov arg1,#0  // any addr
         thumb_sys7t __NR_mmap64; asr tmp,r0,#12; add tmp,#1; bne 0f; bkpt_th; 0:
         str r0,[SP(p_unmap)]  // address to unmap
@@ -449,14 +453,14 @@ o_super=_  // 28
         ldr ecx,[SP(o_wfrag)]  // w_fragment
         bl movsl  // copy the fragment
 
-        ldr esi,[SP(p_uncpr)+0*4]  // src
-        ldr ecx,[SP(p_uncpr)+1*4]  // len
+        ldr esi,[SP(p_uncpr)+0*NBPW]  // src
+        ldr ecx,[SP(p_uncpr)+1*NBPW]  // len
         mov tmp,#3
         and tmp,esi  // length of prefix alignment
         sub esi,tmp  // down to word aligned
         add ecx,tmp  // prefix increases byte length
         add tmp,edi // skip prefix at destination
-        str tmp,[SP(p_uncpr)+0*4]  // dst
+        str tmp,[SP(p_uncpr)+0*NBPW]  // dst
         add ecx,#3  // round up to full words
         lsr ecx,#2
         bl movsl  // copy all aligned words that contain compressed data

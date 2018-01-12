@@ -79,13 +79,14 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 #define ecx r5
 
   section ELFMAINX
+//  .long distance back to first b_info
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
-//  .long offset({p_info; b_info; compressed data})
+//  .long offset(xct_off)    dst of f_exp
 
 _start: .globl _start
-        nop  //; bkpt  // for debugging
+    bkpt //       nop  //; bkpt  // for debugging
         stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
         mov fp,sp
 o_uinit= (3+4+2)*4  // pc
@@ -176,15 +177,17 @@ main:
 // 12. goto user DT_INIT
 
         mov edx,lr  // &f_decompress
+        add esi,edx,# _start - f_decompress - 5*4
 
-        add esi,edx,# _start - f_decompress - 4*4
+        lodsl; mov tmp,eax  // distance back to 1st b_info
                mov ecx,esi
         lodsl; sub ecx,ecx,eax; //str ecx,[fp,#o_reloc]
+               sub tmp,esi,tmp  // &b_info
         lodsl; add eax,ecx,eax; str eax,[fp,#o_uinit]  // reloc DT_INIT  for step 12
         lodsl; add eax,ecx,eax; push eax               // reloc &hatch   for step 10
 o_hatch= -1*4
         lodsl; add edi,ecx,eax  // &l_info; also destination for decompress
-        add esi,edi,#sz_l_info + sz_p_info  // &b_info
+        mov esi,tmp  // &b_info
 
         sub sp,sp,#2*4  // param space: munmap temp pages  step 9
 p_unmap= -3*4
@@ -292,6 +295,7 @@ supervise:
         bl movsl
 
         ldmia sp!,{arg1,arg2,arg3,arg4, eax}
+    bkpt
         blx eax  // decompress
         add sp,sp,#4  // toss arg5
 
@@ -339,6 +343,7 @@ L620:  // Implant escape hatch at end of .text
         add r7,r7,#__NR_munmap - ((__NR_munmap>>16)<<16)
 .endif
 #endif  //}
+    bkpt
         ldmia sp!,{arg1,arg2, pc}  // goto hatch
 
 movsl_subr:

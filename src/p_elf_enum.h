@@ -212,6 +212,19 @@
 #endif
 
 
+#ifdef WANT_REL_ENUM  //{
+static unsigned ELF32_R_TYPE(unsigned x) { return 0xff & x; }
+
+    enum { // R_*_RELATIVE relocation types: Adjust by program base
+        R_386_RELATIVE =  8,
+        R_AARCH64_RELATIVE = 1027,
+        R_ARM_RELATIVE = 23,
+        R_PPC_RELATIVE = 22,
+        R_PPC64_RELATIVE = R_PPC_RELATIVE,
+        R_X86_64_RELATIVE = 8
+    };
+#endif  //}
+
 #ifdef WANT_NHDR_ENUM
 #undef WANT_NHDR_ENUM
     enum { // ELF PT_NOTE types

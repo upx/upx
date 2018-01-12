@@ -309,8 +309,8 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
     fo->write(&zero, t);
     len += t;
 
-    set_te32(&disp, 2*sizeof(disp) + len - (sz_elf_hdrs + sizeof(p_info) + sizeof(l_info)));
-    fo->write(&disp, sizeof(disp));  // .e_entry - &first_b_info
+    set_te32(&disp, sz_elf_hdrs + sizeof(p_info) + sizeof(l_info));
+    fo->write(&disp, sizeof(disp));  // offset(b_info)
     len += sizeof(disp);
     set_te32(&disp, len);  // distance back to beginning (detect dynamic reloc)
     fo->write(&disp, sizeof(disp));
@@ -2497,6 +2497,10 @@ PackLinuxElf64::generateElfHdr(
     }
 }
 
+#define WANT_REL_ENUM
+#include "p_elf_enum.h"
+#undef WANT_REL_ENUM
+
 void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 {
     fi->seek(0, SEEK_SET);
@@ -2637,6 +2641,15 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                         unsigned  r_offset = get_te32(&rel->r_offset);
                         if (xct_off <= r_offset) {
                             set_te32(&rel->r_offset, asl_delta + r_offset);
+                        }
+                        // r_offset must be in 2nd PT_LOAD; .p_vaddr was already relocated
+                        unsigned d = elf_get_offset_from_address(asl_delta + r_offset);
+                        unsigned w = get_te32(&file_image[d]);
+                        unsigned r_info = get_te32(&rel->r_info);
+                        if (xct_off <= w
+                        &&  Elf32_Ehdr::EM_ARM == e_machine
+                        &&  R_ARM_RELATIVE == ELF32_R_TYPE(r_info)) {
+                            set_te32(&file_image[d], asl_delta + w);
                         }
                     }
                     fo->seek(sh_offset, SEEK_SET);
