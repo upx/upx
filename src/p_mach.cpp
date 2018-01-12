@@ -1974,7 +1974,7 @@ bool PackMachBase<T>::canPack()
                 strncpy(fsm.segZERO.segname, "__PAGEZERO", sizeof(fsm.segZERO.segname));
                 fsm.segZERO.vmaddr = 0;
                 fsm.segZERO.vmsize = (4<<16);
-                if (8==sizeof(void *)) fsm.segZERO.vmsize <<= (32 - 18);
+                if __acc_cte(8==sizeof(void *)) fsm.segZERO.vmsize <<= (32 - 18);
                 fsm.segZERO.fileoff = 0;
                 fsm.segZERO.filesize = 0;
                 fsm.segZERO.maxprot = 0;
