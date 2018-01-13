@@ -594,7 +594,9 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
 
 void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
                                const char *type) {
-    if (strcmp(type, "R_ARM_PC24") == 0) {
+    if (!strcmp(type, "R_ARM_PC24")
+    ||  !strcmp(type, "R_ARM_CALL")
+    ||  !strcmp(type, "R_ARM_JUMP24")) {
         value -= rel->section->offset + rel->offset;
         set_be24(1 + location, get_be24(1 + location) + value / 4);
     } else if (strcmp(type, "R_ARM_ABS32") == 0) {
@@ -618,7 +620,9 @@ void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location, upx_ui
 
 void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
                                const char *type) {
-    if (strcmp(type, "R_ARM_PC24") == 0) {
+    if (!strcmp(type, "R_ARM_PC24")
+    ||  !strcmp(type, "R_ARM_CALL")
+    ||  !strcmp(type, "R_ARM_JUMP24")) {
         value -= rel->section->offset + rel->offset;
         set_le24(location, get_le24(location) + value / 4);
     } else if (strcmp(type, "R_ARM_ABS32") == 0) {

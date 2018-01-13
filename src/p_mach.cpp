@@ -1366,7 +1366,6 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         unsigned const sz_threado = threado_size();
         MemBuffer space(sz_threado); memset(space, 0, sz_threado);
         fo->write(space, sz_threado);
-        sz_mach_headers = fo->getBytesWritten();
     }
     else if (my_filetype == Mach_header::MH_DYLIB) {
         Mach_command const *ptr = (Mach_command const *)rawmseg;
@@ -1398,13 +1397,10 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         }
         memset(&linkitem, 0, sizeof(linkitem));
         fo->write(&linkitem, sizeof(linkitem));
-        fo->write(rawmseg, mhdri.sizeofcmds);
-
-        gap = secTEXT.offset - sz_mach_headers;
     }
     sz_mach_headers = fo->getBytesWritten();
-    MemBuffer filler(gap);
-    memset(filler, 0, gap);
+    gap = secTEXT.offset - sz_mach_headers;
+    MemBuffer filler(gap); filler.clear();
     fo->write(filler, gap);
     sz_mach_headers += gap;
 
@@ -1978,7 +1974,7 @@ bool PackMachBase<T>::canPack()
                 strncpy(fsm.segZERO.segname, "__PAGEZERO", sizeof(fsm.segZERO.segname));
                 fsm.segZERO.vmaddr = 0;
                 fsm.segZERO.vmsize = (4<<16);
-                if (8==sizeof(void *)) fsm.segZERO.vmsize <<= (32 - 18);
+                if __acc_cte(8==sizeof(void *)) fsm.segZERO.vmsize <<= (32 - 18);
                 fsm.segZERO.fileoff = 0;
                 fsm.segZERO.filesize = 0;
                 fsm.segZERO.maxprot = 0;

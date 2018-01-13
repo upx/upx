@@ -167,7 +167,7 @@ int PeFile::readFileHeader()
                 : (h.p512*512+h.m512 - h.m512 ? 512 : 0);
 
             if ((pe_offset + delta) < delta  // wrap-around
-            ||  (pe_offset + delta) > file_size) {
+            ||  (pe_offset + delta) > (unsigned)file_size) {
                 char buf[64]; snprintf(buf, sizeof(buf),
                     "bad PE delta %#x at offset %#x", delta, pe_offset);
                 throwCantPack(buf);
