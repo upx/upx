@@ -112,14 +112,14 @@ _=-1+_  // one less word on stack
 #define lodslu bl get4u
 
   section ELFMAINX
-//  .long offset(b_info)
+//  .long offset(b_info)  src for f_exp
 //D_INFO:
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)  // override with round_up(2, PT_LOAD[0]{.p_memsz + .p_vaddr})
 //  .long offset(dst for f_exp)
 
-#define DEBUG 1
+#define DEBUG 0
         .code 16  //; .balign 4
 .real_start_ofELFMAINX:
         .thumb_func
@@ -133,7 +133,7 @@ _start: .globl _start
 _=9
 o_uinit= 1  // lr
         adr esi,here
-        sub esi,#4*2 + 5*NBPW  // -NBPW + &D_INFO
+        sub esi,#(here - _start) + 5*NBPW  // -NBPW + &D_INFO
 here:
         ldr tmp,[esi,#0*NBPW]  // offset(b_info)
                                add ecx,esi,#NBPW  // &D_INFO
@@ -141,7 +141,7 @@ here:
 // reloc DT_INIT  for step 12
         ldr eax,[esi,#2*NBPW]; add eax,ecx; str eax,[SP(o_uinit)]
         ldr edi,[esi,#4*NBPW]; add edi,ecx  // dst for f_exp
-                               add esi,tmp,ecx  // &b_info
+                               add esi,tmp,ecx  // &b_info  src for f_exp
 
         sub sp,#3*NBPW  // 3 slots of space
         _=1+_  // &escape_hatch (step 10)
@@ -369,7 +369,6 @@ _=-3+_  // 12
         lsl r7,#16
         add r7,#__NR_munmap - ((__NR_munmap>>16)<<16)
 .endif
-    bkpt_th
         pop {arg1,arg2, pc}  // goto hatch
 _=-3+_  // 9
         .balign 4

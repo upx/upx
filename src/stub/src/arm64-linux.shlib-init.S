@@ -120,13 +120,13 @@ sp_frame = 24 * NBPW
 .endm
 
   section ELFMAINX
-//  .long distance back to first b_info
+//  .long offset(b_info)  src of f_exp
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
 //  .long offset(xct_off)    dst of f_exp
 _start: .globl _start
-    brk #0  // debugging
+//    brk #0  // debugging
 
   slot f_argc  // 0
   slot f_argv  // 1
@@ -219,15 +219,14 @@ main:
 #define lodsl ldr eax,[rsi],#4
 #define lodslu lodsl
 
-        lodsl; mov tmp,eax  // distance back to 1st b_info
+        lodsl; mov tmp,eax  // offset(b_info)
                mov rcx,rsi
         lodsl; sub rcx,rcx,rax; //str ecx,[sp,#o_reloc]
-               sub tmpx,rsi,tmpx  // &b_info
-        lodsl; add rax,rcx,rax; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
+        lodsl; add rax,rax,rcx; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
   slot o_hatch  // 6
-        lodsl; add rax,rcx,rax; str rax,[sp,#o_hatch]  // reloc &hatch   for step 10
-        lodsl; add rdi,rcx,rax  // destination for decompress
-        mov rsi,tmpx  // &b_info
+        lodsl; add rax,rax,rcx; str rax,[sp,#o_hatch]  // reloc &hatch   for step 10
+        lodsl; add rdi,rax,rcx  // destination for decompress
+               add rsi,tmpx,rcx  // &b_info  src for f_exp
 
   slot p_unmap,2  // 7
 
@@ -321,7 +320,6 @@ supervise:
         ldr rax,[sp,#o_uncpr]
         ldp arg1,arg2,[sp,#0*NBPW + p_uncpr]
         ldp arg3,arg4,[sp,#2*NBPW + p_uncpr]
-    brk #0
         blr rax  // decompress
 
         bl L620
@@ -353,7 +351,6 @@ L620:  // Implant escape hatch at end of .text
         ldp arg1,arg2,[sp,#0*NBPW + p_unmap]
           mov w8,#__NR_munmap
           ldp arg3,arg4,[sp,#2*NBPW + f_argc]  // f_uinit
-    brk #0
         br arg5  // goto hatch
 
 movsl_subr:

@@ -148,6 +148,7 @@
         DT_NULL     =  0,       /* End flag */
         DT_NEEDED   =  1,       /* Name of needed library */
         DT_PLTRELSZ =  2,       /* Size in bytes of PLT relocs */
+        DT_PLTGOT   =  3,       /* Processor defined value */
         DT_HASH     =  4,       /* Hash table of symbol names */
         DT_STRTAB   =  5,       /* String table */
         DT_SYMTAB   =  6,       /* Symbol table */
@@ -155,6 +156,7 @@
         DT_RELASZ   =  8,       /* Total size of Rela relocs */
         DT_RELAENT  =  9,       /* Size of one RELA relocation */
         DT_INIT     = 12,       /* Address of init function */
+        DT_FINI     = 13,       /* Address of termination function */
         DT_REL      = 17,       /* Relocations which contain no addend */
         DT_RELSZ   =  18,       /* Total size of Rel relocs */
         DT_RELENT   = 19,       /* Size of one Rel relocation */
@@ -213,15 +215,23 @@
 
 
 #ifdef WANT_REL_ENUM  //{
-static unsigned ELF32_R_TYPE(unsigned x) { return 0xff & x; }
+static unsigned ELF32_R_TYPE(unsigned     x) { return       0xff & x; }
+static unsigned ELF64_R_TYPE(upx_uint64_t x) { return 0xffffffff & x; }
 
-    enum { // R_*_RELATIVE relocation types: Adjust by program base
+    enum { // relocation types
         R_386_RELATIVE =  8,
         R_AARCH64_RELATIVE = 1027,
         R_ARM_RELATIVE = 23,
         R_PPC_RELATIVE = 22,
         R_PPC64_RELATIVE = R_PPC_RELATIVE,
-        R_X86_64_RELATIVE = 8
+        R_X86_64_RELATIVE = 8,
+
+        R_386_JMP_SLOT =   7,
+        R_AARCH64_JUMP_SLOT = 1026,
+        R_ARM_JUMP_SLOT = 22,
+        R_PPC_JMP_SLOT = 21,
+        R_PPC64_JMP_SLOT = R_PPC_JMP_SLOT,
+        R_X86_64_JUMP_SLOT = 7
     };
 #endif  //}
 

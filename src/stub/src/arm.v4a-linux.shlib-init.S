@@ -79,14 +79,14 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 #define ecx r5
 
   section ELFMAINX
-//  .long distance back to first b_info
+//  .long offset(b_info)    src of f_exp
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
 //  .long offset(xct_off)    dst of f_exp
 
 _start: .globl _start
-    bkpt //       nop  //; bkpt  // for debugging
+        nop  //; bkpt  // for debugging
         stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
         mov fp,sp
 o_uinit= (3+4+2)*4  // pc
@@ -295,7 +295,6 @@ supervise:
         bl movsl
 
         ldmia sp!,{arg1,arg2,arg3,arg4, eax}
-    bkpt
         blx eax  // decompress
         add sp,sp,#4  // toss arg5
 
@@ -343,7 +342,6 @@ L620:  // Implant escape hatch at end of .text
         add r7,r7,#__NR_munmap - ((__NR_munmap>>16)<<16)
 .endif
 #endif  //}
-    bkpt
         ldmia sp!,{arg1,arg2, pc}  // goto hatch
 
 movsl_subr:

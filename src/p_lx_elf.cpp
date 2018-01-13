@@ -2560,9 +2560,11 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
             Elf32_Dyn *dyn = const_cast<Elf32_Dyn *>(dynseg);
             for (; dyn->d_tag; ++dyn) {
                 unsigned d_tag = get_te32(&dyn->d_tag);
-                if (Elf32_Dyn::DT_INIT_ARRAY == d_tag
+                if (Elf32_Dyn::DT_FINI       == d_tag
                 ||  Elf32_Dyn::DT_FINI_ARRAY == d_tag
-                ||  Elf32_Dyn::DT_PREINIT_ARRAY == d_tag) {
+                ||  Elf32_Dyn::DT_INIT_ARRAY == d_tag
+                ||  Elf32_Dyn::DT_PREINIT_ARRAY == d_tag
+                ||  Elf32_Dyn::DT_PLTGOT     == d_tag) {
                     unsigned d_val = get_te32(&dyn->d_val);
                     set_te32(&dyn->d_val, asl_delta + d_val);
                 }
@@ -2646,9 +2648,11 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                         unsigned d = elf_get_offset_from_address(asl_delta + r_offset);
                         unsigned w = get_te32(&file_image[d]);
                         unsigned r_info = get_te32(&rel->r_info);
+                        unsigned r_type = ELF32_R_TYPE(r_info);
                         if (xct_off <= w
                         &&  Elf32_Ehdr::EM_ARM == e_machine
-                        &&  R_ARM_RELATIVE == ELF32_R_TYPE(r_info)) {
+                        &&  (  R_ARM_RELATIVE  == r_type
+                            || R_ARM_JUMP_SLOT == r_type)) {
                             set_te32(&file_image[d], asl_delta + w);
                         }
                     }
@@ -2862,9 +2866,11 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             Elf64_Dyn *dyn = const_cast<Elf64_Dyn *>(dynseg);
             for (; dyn->d_tag; ++dyn) {
                 uint64_t d_tag = get_te64(&dyn->d_tag);
-                if (Elf64_Dyn::DT_INIT_ARRAY == d_tag
+                if (Elf64_Dyn::DT_FINI       == d_tag
                 ||  Elf64_Dyn::DT_FINI_ARRAY == d_tag
-                ||  Elf64_Dyn::DT_PREINIT_ARRAY == d_tag) {
+                ||  Elf64_Dyn::DT_INIT_ARRAY == d_tag
+                ||  Elf64_Dyn::DT_PREINIT_ARRAY == d_tag
+                ||  Elf64_Dyn::DT_PLTGOT      == d_tag) {
                     uint64_t d_val = get_te64(&dyn->d_val);
                     set_te64(&dyn->d_val, asl_delta + d_val);
                 }
@@ -2943,6 +2949,17 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                         uint64_t r_offset = get_te64(&rel->r_offset);
                         if (xct_off <= r_offset) {
                             set_te64(&rel->r_offset, asl_delta + r_offset);
+                        }
+                        // r_offset must be in 2nd PT_LOAD; .p_vaddr was already relocated
+                        upx_uint64_t d = elf_get_offset_from_address(asl_delta + r_offset);
+                        upx_uint64_t w = get_te64(&file_image[d]);
+                        upx_uint64_t r_info = get_te32(&rel->r_info);
+                        unsigned r_type = ELF64_R_TYPE(r_info);
+                        if (xct_off <= w
+                        &&  Elf64_Ehdr::EM_AARCH64 == e_machine
+                        &&  (  R_AARCH64_RELATIVE  == r_type
+                            || R_AARCH64_JUMP_SLOT == r_type)) {
+                            set_te64(&file_image[d], asl_delta + w);
                         }
                     }
                     fo->seek(sh_offset, SEEK_SET);
