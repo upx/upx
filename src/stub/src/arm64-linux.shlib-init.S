@@ -126,7 +126,7 @@ sp_frame = 24 * NBPW
 //  .long offset(escape_hatch)
 //  .long offset(xct_off)    dst of f_exp
 _start: .globl _start
-//    brk #0  // debugging
+//  brk #0  // debugging
 
   slot f_argc  // 0
   slot f_argv  // 1

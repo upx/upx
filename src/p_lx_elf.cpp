@@ -590,13 +590,21 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             // Update {DYNAMIC}.sh_offset by so_slide.
             Elf64_Shdr *shdr = shdri;
             for (unsigned j = 0; j < e_shnum; ++shdr, ++j) {
-                if (Elf64_Shdr::SHT_DYNAMIC == get_te32(&shdr->sh_type)) {
+                unsigned sh_type = get_te32(&shdr->sh_type);
+                if (Elf64_Shdr::SHT_DYNAMIC == sh_type) {
                     upx_uint64_t offset = get_te64(&shdr->sh_offset);
                     set_te64(&shdr->sh_offset, so_slide - asl_delta + offset );
                     fo->seek(j * sizeof(Elf64_Shdr)     - asl_delta + xct_off, SEEK_SET);
                     fo->rewrite(shdr, sizeof(*shdr));
                     fo->seek(0, SEEK_END);
                     break;
+                }
+                if (Elf64_Shdr::SHT_RELA == sh_type
+                &&  n_jmp_slot
+                &&  !strcmp(".rela.plt", get_te32(&shdr->sh_name) + shstrtab)) {
+                    upx_uint64_t f_off = elf_get_offset_from_address(plt_off);
+                    fo->seek(f_off, SEEK_SET);
+                    fo->rewrite(&file_image[f_off - so_slide], n_jmp_slot * sizeof(void *));
                 }
             }
         }
@@ -2032,11 +2040,11 @@ PackLinuxElf64::canPack()
                 }
             }
             else { // no Sections; use heuristics
-                uint64_t const strsz  = elf_unsigned_dynamic(Elf64_Dyn::DT_STRSZ);
-                uint64_t const strtab = elf_unsigned_dynamic(Elf64_Dyn::DT_STRTAB);
-                uint64_t const relsz  = elf_unsigned_dynamic(Elf64_Dyn::DT_RELSZ);
-                uint64_t const rel    = elf_unsigned_dynamic(Elf64_Dyn::DT_REL);
-                uint64_t const init   = elf_unsigned_dynamic(Elf64_Dyn::DT_INIT);
+                upx_uint64_t const strsz  = elf_unsigned_dynamic(Elf64_Dyn::DT_STRSZ);
+                upx_uint64_t const strtab = elf_unsigned_dynamic(Elf64_Dyn::DT_STRTAB);
+                upx_uint64_t const relsz  = elf_unsigned_dynamic(Elf64_Dyn::DT_RELSZ);
+                upx_uint64_t const rel    = elf_unsigned_dynamic(Elf64_Dyn::DT_REL);
+                upx_uint64_t const init   = elf_unsigned_dynamic(Elf64_Dyn::DT_INIT);
                 if ((init == (relsz + rel   ) && rel    == (strsz + strtab))
                 ||  (init == (strsz + strtab) && strtab == (relsz + rel   ))
                 ) {
@@ -2865,23 +2873,23 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             // Relocate PT_DYNAMIC (in 2nd PT_LOAD)
             Elf64_Dyn *dyn = const_cast<Elf64_Dyn *>(dynseg);
             for (; dyn->d_tag; ++dyn) {
-                uint64_t d_tag = get_te64(&dyn->d_tag);
+                upx_uint64_t d_tag = get_te64(&dyn->d_tag);
                 if (Elf64_Dyn::DT_FINI       == d_tag
                 ||  Elf64_Dyn::DT_FINI_ARRAY == d_tag
                 ||  Elf64_Dyn::DT_INIT_ARRAY == d_tag
                 ||  Elf64_Dyn::DT_PREINIT_ARRAY == d_tag
                 ||  Elf64_Dyn::DT_PLTGOT      == d_tag) {
-                    uint64_t d_val = get_te64(&dyn->d_val);
+                    upx_uint64_t d_val = get_te64(&dyn->d_val);
                     set_te64(&dyn->d_val, asl_delta + d_val);
                 }
             }
 
             // Relocate dynsym (DT_SYMTAB) which is below xct_va
             Elf64_Sym *sym = const_cast<Elf64_Sym *>(dynsym);
-            uint64_t off_dynsym = get_te64(&sec_dynsym->sh_offset);
-            uint64_t sz_dynsym = get_te64(&sec_dynsym->sh_size);
+            upx_uint64_t off_dynsym = get_te64(&sec_dynsym->sh_offset);
+            upx_uint64_t sz_dynsym = get_te64(&sec_dynsym->sh_size);
             for (int j = sz_dynsym / sizeof(Elf64_Sym); --j>=0; ++sym) {
-                uint64_t symval = get_te64(&sym->st_value);
+                upx_uint64_t symval = get_te64(&sym->st_value);
                 unsigned symsec = get_te16(&sym->st_shndx);
                 if (Elf64_Sym::SHN_UNDEF != symsec
                 &&  Elf64_Sym::SHN_ABS   != symsec
@@ -2897,10 +2905,10 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             // Relocate Phdr virtual addresses, but not physical offsets and sizes
             /* Elf64_Phdr * */ phdr = phdri;
             for (int j = e_phnum; --j>=0; ++phdr) {
-                uint64_t offset = get_te64(&phdr->p_offset);
+                upx_uint64_t offset = get_te64(&phdr->p_offset);
                 if (xct_off <= offset) { // above the extra page
                     //set_te64(&phdr->p_offset, asl_delta + offset);  // physical
-                    uint64_t addr = get_te64(&phdr->p_paddr);
+                    upx_uint64_t addr = get_te64(&phdr->p_paddr);
                     set_te64(&phdr->p_paddr, asl_delta + addr);
                              addr = get_te64(&phdr->p_vaddr);
                     set_te64(&phdr->p_vaddr, asl_delta + addr);
@@ -2911,28 +2919,52 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 
             // Relocate Shdr; and Rela, Rel (below xct_off)
             Elf64_Shdr *shdr = shdri;
-            uint64_t sz_shstrtab  = get_te64(&sec_strndx->sh_size);
+            upx_uint64_t sz_shstrtab  = get_te64(&sec_strndx->sh_size);
             for (int j = e_shnum; --j>=0; ++shdr) {
                 unsigned sh_type = get_te32(&shdr->sh_type);
-                uint64_t sh_size = get_te64(&shdr->sh_size);
-                uint64_t sh_offset = get_te64(&shdr->sh_offset);
-                uint64_t sh_entsize = get_te64(&shdr->sh_entsize);
+                upx_uint64_t sh_size = get_te64(&shdr->sh_size);
+                upx_uint64_t sh_offset = get_te64(&shdr->sh_offset);
+                upx_uint64_t sh_entsize = get_te64(&shdr->sh_entsize);
                 if (xct_off <= sh_offset) {
                     set_te64(&shdr->sh_offset, asl_delta + sh_offset);
-                    uint64_t addr = get_te64(&shdr->sh_addr);
+                    upx_uint64_t addr = get_te64(&shdr->sh_addr);
                     set_te64(&shdr->sh_addr, asl_delta + addr);
                 }
-                if (Elf64_Shdr::SHT_RELA== sh_type) {
+                if (Elf64_Shdr::SHT_RELA == sh_type) {
                     if (sizeof(Elf64_Rela) != sh_entsize) {
                         char msg[50];
-                        snprintf(msg, sizeof(msg), "bad Rela.sh_entsize %lu", sh_entsize);
+                        snprintf(msg, sizeof(msg), "bad Rela.sh_entsize %lu", (long)sh_entsize);
                         throwCantPack(msg);
                     }
+                    n_jmp_slot = 0;
+                    plt_off = ~0ull;
                     Elf64_Rela *rela = (Elf64_Rela *)(sh_offset + file_image);
                     for (int k = sh_size / sh_entsize; --k >= 0; ++rela) {
-                        uint64_t r_offset = get_te64(&rela->r_offset);
+                        upx_uint64_t r_addend = get_te64(&rela->r_addend);
+                        upx_uint64_t r_offset = get_te64(&rela->r_offset);
+                        upx_uint64_t r_info   = get_te64(&rela->r_info);
+                        unsigned r_type = ELF64_R_TYPE(r_info);
                         if (xct_off <= r_offset) {
                             set_te64(&rela->r_offset, asl_delta + r_offset);
+                        }
+                        if (Elf64_Ehdr::EM_AARCH64 == e_machine) {
+                            if (R_AARCH64_RELATIVE == r_type) {
+                                if (xct_off <= r_addend) {
+                                    set_te64(&rela->r_addend, asl_delta + r_addend);
+                                }
+                            }
+                            if (R_AARCH64_JUMP_SLOT == r_type) {
+                                // .rela.plt contains offset of the "first time" target
+                                if (plt_off > (asl_delta + r_offset)) {
+                                    plt_off = (asl_delta + r_offset);
+                                }
+                                upx_uint64_t d = elf_get_offset_from_address(asl_delta + r_offset);
+                                upx_uint64_t w = get_te64(&file_image[d]);
+                                if (xct_off <= w) {
+                                    set_te64(&file_image[d], asl_delta + w);
+                                }
+                                ++n_jmp_slot;
+                            }
                         }
                     }
                     fo->seek(sh_offset, SEEK_SET);
@@ -2941,12 +2973,12 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                 if (Elf64_Shdr::SHT_REL == sh_type) {
                     if (sizeof(Elf64_Rel) != sh_entsize) {
                         char msg[50];
-                        snprintf(msg, sizeof(msg), "bad Rel.sh_entsize %lu", sh_entsize);
+                        snprintf(msg, sizeof(msg), "bad Rel.sh_entsize %lu", (long)sh_entsize);
                         throwCantPack(msg);
                     }
                     Elf64_Rel *rel = (Elf64_Rel *)(sh_offset + file_image);
                     for (int k = sh_size / sh_entsize; --k >= 0; ++rel) {
-                        uint64_t r_offset = get_te64(&rel->r_offset);
+                        upx_uint64_t r_offset = get_te64(&rel->r_offset);
                         if (xct_off <= r_offset) {
                             set_te64(&rel->r_offset, asl_delta + r_offset);
                         }

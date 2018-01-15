@@ -291,6 +291,8 @@ protected:
     upx_uint64_t so_slide;
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
+    unsigned n_jmp_slot;
+    upx_uint64_t plt_off;
     upx_uint64_t page_mask;  // AND clears the offset-within-page
 
     Elf64_Dyn    const *dynseg;   // from PT_DYNAMIC
