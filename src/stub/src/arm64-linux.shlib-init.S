@@ -120,10 +120,13 @@ sp_frame = 24 * NBPW
 .endm
 
   section ELFMAINX
+//  .long offset(b_info)  src of f_exp
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
-//  .long offset({l_info; p_info; b_info; compressed data})
+//  .long offset(xct_off)    dst of f_exp
+_start: .globl _start
+//  brk #0  // debugging
 
   slot f_argc  // 0
   slot f_argv  // 1
@@ -132,8 +135,6 @@ sp_frame = 24 * NBPW
   slot f_PMASK  // 4  PAGE_MASK
   slot f_my_ra  // 5
 
-_start: .globl _start
-//    brk #0  // debugging
         stp arg1,arg2,[sp,#f_argc - sp_frame]!  // f_argv
         stp arg3,x0,  [sp,#f_envp]  // %f_uinit
         str lr,       [sp,#f_my_ra]
@@ -213,22 +214,23 @@ main:
 // 12. goto user DT_INIT
 
         mov     rdx,lr  //    &f_decompress
-        add rsi,rdx,# _start - f_decompress - 4*4
+        add rsi,rdx,# _start - f_decompress - 5*4
 
 #define lodsl ldr eax,[rsi],#4
 #define lodslu lodsl
 
+        lodsl; mov tmp,eax  // offset(b_info)
                mov rcx,rsi
         lodsl; sub rcx,rcx,rax; //str ecx,[sp,#o_reloc]
-        lodsl; add rax,rcx,rax; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
+        lodsl; add rax,rax,rcx; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
   slot o_hatch  // 6
-        lodsl; add rax,rcx,rax; str rax,[sp,#o_hatch]  // reloc &hatch   for step 10
-        lodsl; add rdi,rcx,rax  // &l_info; also destination for decompress
-        add rsi,rdi,#sz_l_info + sz_p_info  // &b_info
+        lodsl; add rax,rax,rcx; str rax,[sp,#o_hatch]  // reloc &hatch   for step 10
+        lodsl; add rdi,rax,rcx  // destination for decompress
+               add rsi,tmpx,rcx  // &b_info  src for f_exp
 
   slot p_unmap,2  // 7
 
-        ldr eax,[rsi,#sz_cpr]; add rsi,rsi,#sz_b_info  // sz_cpr
+        ldr eax,[rsi,#sz_cpr]; add rsi,rsi,#sz_b_info
         add rsi,rsi,rax  // skip unpack helper block
 
         ldr ecx,[sp,#f_PMASK]

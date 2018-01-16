@@ -148,6 +148,7 @@
         DT_NULL     =  0,       /* End flag */
         DT_NEEDED   =  1,       /* Name of needed library */
         DT_PLTRELSZ =  2,       /* Size in bytes of PLT relocs */
+        DT_PLTGOT   =  3,       /* Processor defined value */
         DT_HASH     =  4,       /* Hash table of symbol names */
         DT_STRTAB   =  5,       /* String table */
         DT_SYMTAB   =  6,       /* Symbol table */
@@ -155,6 +156,7 @@
         DT_RELASZ   =  8,       /* Total size of Rela relocs */
         DT_RELAENT  =  9,       /* Size of one RELA relocation */
         DT_INIT     = 12,       /* Address of init function */
+        DT_FINI     = 13,       /* Address of termination function */
         DT_REL      = 17,       /* Relocations which contain no addend */
         DT_RELSZ   =  18,       /* Total size of Rel relocs */
         DT_RELENT   = 19,       /* Size of one Rel relocation */
@@ -162,6 +164,9 @@
         DT_PLTREL   = 20,       /* Type of reloc in PLT */
         DT_TEXTREL  = 22,       /* Reloc might modify .text */
         DT_JMPREL   = 23,       /* Address of PLT relocs */
+        DT_INIT_ARRAY  = 25,    /* Array with addresses of init fct */
+        DT_FINI_ARRAY  = 26,    /* Array with addresses of fini fct */
+        DT_PREINIT_ARRAY  = 32, /* Array with addresses of preinit fct*/
         DT_CHECKSUM = 0x6ffffdf8,       /* Only for prelink? */
         DT_GNU_HASH = 0x6ffffef5,       /* GNU-style hash table */
         DT_VERSYM   = 0x6ffffff0,       /* version[] for each symbol */
@@ -208,6 +213,27 @@
     };
 #endif
 
+
+#ifdef WANT_REL_ENUM  //{
+static unsigned ELF32_R_TYPE(unsigned     x) { return       0xff & x; }
+static unsigned ELF64_R_TYPE(upx_uint64_t x) { return 0xffffffff & x; }
+
+    enum { // relocation types
+        R_386_RELATIVE =  8,
+        R_AARCH64_RELATIVE = 1027,
+        R_ARM_RELATIVE = 23,
+        R_PPC_RELATIVE = 22,
+        R_PPC64_RELATIVE = R_PPC_RELATIVE,
+        R_X86_64_RELATIVE = 8,
+
+        R_386_JMP_SLOT =   7,
+        R_AARCH64_JUMP_SLOT = 1026,
+        R_ARM_JUMP_SLOT = 22,
+        R_PPC_JMP_SLOT = 21,
+        R_PPC64_JMP_SLOT = R_PPC_JMP_SLOT,
+        R_X86_64_JUMP_SLOT = 7
+    };
+#endif  //}
 
 #ifdef WANT_NHDR_ENUM
 #undef WANT_NHDR_ENUM

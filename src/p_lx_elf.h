@@ -68,6 +68,7 @@ protected:
     static unsigned gnu_hash(char const *) /*const*/;
 
 protected:
+    unsigned int const asl_delta = (1u<<12);  // --android-shlib extra page
     unsigned e_type;
     unsigned e_phnum;       /* Program header table entry count */
     unsigned e_shnum;
@@ -157,7 +158,7 @@ protected:
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
-    Elf32_Shdr const *shdri; // from input file
+    Elf32_Shdr *shdri; // from input file
     Elf32_Phdr const *gnu_stack;  // propagate NX
     unsigned e_phoff;
     unsigned e_shoff;
@@ -174,7 +175,7 @@ protected:
     Elf32_Sym    const *jni_onload_sym;
     char const *shstrtab;   // via Elf32_Shdr
 
-    Elf32_Shdr const *sec_strndx;
+    Elf32_Shdr       *sec_strndx;
     Elf32_Shdr const *sec_dynsym;
     Elf32_Shdr const *sec_dynstr;
 
@@ -282,7 +283,7 @@ protected:
 protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdri; // for  input file
-    Elf64_Shdr const *shdri; // from input file
+    Elf64_Shdr *shdri; // from input file
     Elf64_Phdr const *gnu_stack;  // propagate NX
     upx_uint64_t e_phoff;
     upx_uint64_t e_shoff;
@@ -290,6 +291,8 @@ protected:
     upx_uint64_t so_slide;
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
+    unsigned n_jmp_slot;
+    upx_uint64_t plt_off;
     upx_uint64_t page_mask;  // AND clears the offset-within-page
 
     Elf64_Dyn    const *dynseg;   // from PT_DYNAMIC
@@ -299,7 +302,7 @@ protected:
     Elf64_Sym    const *jni_onload_sym;
     char const *shstrtab;   // via Elf64_Shdr
 
-    Elf64_Shdr const *sec_strndx;
+    Elf64_Shdr       *sec_strndx;
     Elf64_Shdr const *sec_dynsym;
     Elf64_Shdr const *sec_dynstr;
 
