@@ -68,7 +68,7 @@ protected:
     static unsigned gnu_hash(char const *) /*const*/;
 
 protected:
-    unsigned int const asl_delta = (1u<<12);  // --android-shlib extra page
+    static unsigned int const asl_delta = (1u<<12);  // --android-shlib extra page
     unsigned e_type;
     unsigned e_phnum;       /* Program header table entry count */
     unsigned e_shnum;
