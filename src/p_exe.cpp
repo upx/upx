@@ -281,9 +281,13 @@ int PackExe::readFileHeader()
     if (ih.ident != 'M' + 'Z'*256 && ih.ident != 'Z' + 'M'*256)
         return 0;
     ih_exesize = ih.m512 + ih.p512*512 - (ih.m512 ? 512 : 0);
+    if (!ih_exesize) {
+        ih_exesize = file_size;
+    }
     ih_imagesize = ih_exesize - ih.headsize16*16;
     ih_overlay = file_size - ih_exesize;
-    if (ih.m512+ih.p512*512u < sizeof (ih))
+    if (file_size < (int)sizeof(ih)
+    ||  ((ih.m512 | ih.p512) && ih.m512+ih.p512*512u < sizeof (ih)))
         throwCantPack("illegal exe header");
     if (file_size < (off_t)ih_exesize || ih_imagesize <= 0 || ih_imagesize > ih_exesize)
         throwCantPack("exe header corrupted");
