@@ -438,7 +438,7 @@ protected:
     virtual unsigned processImports();
     virtual void processRelocs();
     virtual void processTls(Interval *);
-    void processTls(Reloc *, const Interval *, unsigned);
+    virtual void processTls(Reloc *, const Interval *, unsigned);
 
     __packed_struct(pe_header_t)
         // 0x0
@@ -500,7 +500,7 @@ protected:
     virtual unsigned processImports();
     virtual void processRelocs();
     virtual void processTls(Interval *);
-    void processTls(Reloc *, const Interval *, unsigned);
+    virtual void processTls(Reloc *, const Interval *, unsigned);
 
     __packed_struct(pe_header_t)
         // 0x0
