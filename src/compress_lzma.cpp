@@ -43,8 +43,6 @@
 
 void lzma_compress_config_t::reset()
 {
-    mem_clear(this, sizeof(*this));
-
     pos_bits.reset();
     lit_pos_bits.reset();
     lit_context_bits.reset();
@@ -111,11 +109,11 @@ static int prepare(lzma_compress_result_t *res,
     res->num_fast_bytes      = 64;                  // 5 .. 273
     res->match_finder_cycles = 0;
     // UPX overrides
-    res->pos_bits            = lzma_compress_config_t::pos_bits_t::default_value_c;
-    res->lit_pos_bits        = lzma_compress_config_t::lit_pos_bits_t::default_value_c;
-    res->lit_context_bits    = lzma_compress_config_t::lit_context_bits_t::default_value_c;
-    res->dict_size           = lzma_compress_config_t::dict_size_t::default_value_c;
-    res->num_fast_bytes      = lzma_compress_config_t::num_fast_bytes_t::default_value_c;
+    res->pos_bits            = lzma_compress_config_t::pos_bits_t::default_value;
+    res->lit_pos_bits        = lzma_compress_config_t::lit_pos_bits_t::default_value;
+    res->lit_context_bits    = lzma_compress_config_t::lit_context_bits_t::default_value;
+    res->dict_size           = lzma_compress_config_t::dict_size_t::default_value;
+    res->num_fast_bytes      = lzma_compress_config_t::num_fast_bytes_t::default_value;
     // method overrides
     if (method >= 0x100) {
         res->pos_bits         = (method >> 16) & 15;
@@ -200,6 +198,12 @@ static int prepare(lzma_compress_result_t *res,
             }
         }
     }
+
+    lzma_compress_config_t::pos_bits_t::assertValue(res->pos_bits);
+    lzma_compress_config_t::lit_pos_bits_t::assertValue(res->lit_pos_bits);
+    lzma_compress_config_t::lit_context_bits_t::assertValue(res->lit_context_bits);
+    lzma_compress_config_t::dict_size_t::assertValue(res->dict_size);
+    lzma_compress_config_t::num_fast_bytes_t::assertValue(res->num_fast_bytes);
 
     res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
     //printf("\nlzma_compress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs);
