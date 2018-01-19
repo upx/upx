@@ -560,13 +560,6 @@ void PeFile64::processRelocs() // pass1
 // import handling
 **************************************************************************/
 
-//__packed_struct(import_desc)
-//    LE32  oft;      // orig first thunk
-//    char  _[8];
-//    LE32  dllname;
-//    LE32  iat;      // import address table
-//__packed_struct_end()
-
 LE32& PeFile::IDSIZE(unsigned x) { return iddirs[x].size; }
 LE32& PeFile::IDADDR(unsigned x) { return iddirs[x].vaddr; }
 LE32& PeFile::ODSIZE(unsigned x) { return oddirs[x].size; }

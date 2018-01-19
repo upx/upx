@@ -46,7 +46,7 @@ int _crt0_startup_flags = _CRT0_FLAG_UNIX_SBRK;
 void options_t::reset()
 {
     options_t *o = this;
-    memset(o, 0, sizeof(*o));
+    mem_clear(o, sizeof(*o));
     o->crp.reset();
 
     o->cmd = CMD_NONE;

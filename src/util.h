@@ -50,6 +50,8 @@ bool mem_size_valid_bytes(upx_uint64_t bytes);
 int ptr_diff(const void *p1, const void *p2);
 unsigned ptr_udiff(const void *p1, const void *p2); // asserts p1 >= p2
 
+void mem_clear(void *p, size_t n);
+
 /*************************************************************************
 // misc. support functions
 **************************************************************************/

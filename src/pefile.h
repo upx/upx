@@ -179,10 +179,10 @@ protected:
     ddirs_t *oddirs;
 
     __packed_struct(import_desc)
-    LE32  oft;      // orig first thunk
-    char  _[8];
-    LE32  dllname;
-    LE32  iat;      // import address table
+        LE32  oft;      // orig first thunk
+        char  _[8];
+        LE32  dllname;
+        LE32  iat;      // import address table
     __packed_struct_end()
 
     LE32 &IDSIZE(unsigned x);

@@ -92,15 +92,6 @@ void PackArmPe::processImports2(unsigned myimport, unsigned iat_off) // pass 2
 {
     PeFile::processImports2(myimport, iat_off);
 
-__packed_struct(import_desc)
-    LE32  oft;      // orig first thunk
-    char  _[8];
-    LE32  dllname;
-    LE32  iat;      // import address table
-__packed_struct_end()
-
-    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
-
     // adjust import data
     for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)
     {

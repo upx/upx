@@ -43,7 +43,7 @@
 
 void lzma_compress_config_t::reset()
 {
-    memset(this, 0, sizeof(*this));
+    mem_clear(this, sizeof(*this));
 
     pos_bits.reset();
     lit_pos_bits.reset();

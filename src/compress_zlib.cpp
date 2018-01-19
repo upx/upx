@@ -33,7 +33,7 @@
 
 void zlib_compress_config_t::reset()
 {
-    memset(this, 0, sizeof(*this));
+    mem_clear(this, sizeof(*this));
 
     mem_level.reset();
     window_bits.reset();

@@ -47,7 +47,7 @@ Packer::Packer(InputFile *f) :
     if (fi != NULL)
         file_size = fi->st_size();
     uip = new UiPacker(this);
-    memset(&ph, 0, sizeof(ph));
+    mem_clear(&ph, sizeof(ph));
 }
 
 
@@ -665,7 +665,7 @@ unsigned Packer::getRandomId() const
 // this is called directly after the constructor from class PackMaster
 void Packer::initPackHeader()
 {
-    memset(&ph, 0, sizeof(ph));
+    mem_clear(&ph, sizeof(ph));
     ph.version = getVersion();
     ph.format = getFormat();
     ph.method = M_NONE;

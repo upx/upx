@@ -115,6 +115,12 @@ unsigned ptr_udiff(const void *p1, const void *p2) {
     return ACC_ICONV(unsigned, d);
 }
 
+void mem_clear(void *p, size_t n)
+{
+    mem_size_assert(1, n);
+    memset(p, 0, n);
+}
+
 /*************************************************************************
 // bele.h
 **************************************************************************/
