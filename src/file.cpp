@@ -140,6 +140,7 @@ int FileBase::read(void *buf, int len)
 {
     if (!isOpen() || len < 0)
         throwIOException("bad read");
+    mem_size_assert(1, len); // sanity check
     errno = 0;
     long l = acc_safe_hread(_fd, buf, len);
     if (errno)
@@ -161,6 +162,7 @@ void FileBase::write(const void *buf, int len)
 {
     if (!isOpen() || len < 0)
         throwIOException("bad write");
+    mem_size_assert(1, len); // sanity check
     errno = 0;
     long l = acc_safe_hwrite(_fd, buf, len);
     if (l != len)

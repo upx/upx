@@ -2507,7 +2507,6 @@ PackLinuxElf64::generateElfHdr(
 
 #define WANT_REL_ENUM
 #include "p_elf_enum.h"
-#undef WANT_REL_ENUM
 
 void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 {

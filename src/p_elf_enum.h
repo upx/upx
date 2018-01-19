@@ -215,9 +215,14 @@
 
 
 #ifdef WANT_REL_ENUM  //{
-static unsigned ELF32_R_TYPE(unsigned     x) { return       0xff & x; }
-static unsigned ELF64_R_TYPE(upx_uint64_t x) { return 0xffffffff & x; }
+#undef WANT_REL_ENUM
+    static inline unsigned ELF32_R_TYPE(unsigned     x) { return       0xff & x; }
+    static inline unsigned ELF64_R_TYPE(upx_uint64_t x) { return 0xffffffff & (unsigned)x; }
 
+#   undef R_PPC_RELATIVE
+#   undef R_PPC64_RELATIVE
+#   undef R_PPC_JMP_SLOT
+#   undef R_PPC64_JMP_SLOT
     enum { // relocation types
         R_386_RELATIVE =  8,
         R_AARCH64_RELATIVE = 1027,
