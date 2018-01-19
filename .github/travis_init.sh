@@ -137,13 +137,13 @@ if [[ -z $BM_CROSS ]]; then
     case $BM_C in
         clang | clang-m?? | clang-3.4-m?? | clang-[6789][0-9][0-9]-m??)
             CC="clang"; CXX="clang++" ;; # standard system compiler
-        clang-[3].[0-9]-m??)
+        clang-[345].[0-9]-m??)
             v=${BM_C:6:3}; CC="clang-$v"; CXX="clang++-$v"; SCAN_BUILD="scan-build-$v" ;;
         gcc | gcc-m?? | gcc-mx32)
             CC="gcc"; CXX="g++" ;; # standard system compiler
         gcc-[34].[0-9]-m?? | gcc-[34].[0-9]-mx32)
             v=${BM_C:4:3}; CC="gcc-$v"; CXX="g++-$v" ;;
-        gcc-[56]-m?? | gcc-[56]-mx32)
+        gcc-[567]-m?? | gcc-[567]-mx32)
             v=${BM_C:4:1}; CC="gcc-$v"; CXX="g++-$v" ;;
     esac
 fi

@@ -7,13 +7,19 @@ language: cpp
 
 notifications: { email: { on_success: never, on_failure: change } }
 
-.ubuntu_toolchain_sources: &S
+# Ubuntu 12.04 LTS "Precise"
+.ubuntu_precise_toolchain_sources: &PS
   - ubuntu-toolchain-r-test
   - llvm-toolchain-precise-3.5
   - llvm-toolchain-precise-3.6
   - llvm-toolchain-precise-3.7
   - llvm-toolchain-precise-3.8
   - llvm-toolchain-precise-3.9
+
+# Ubuntu 14.04 LTS "Trusty"
+.ubuntu_trusty_toolchain_sources: &TS
+  - ubuntu-toolchain-r-test
+  - llvm-toolchain-trusty-5.0
 
 env:
   global:
@@ -25,7 +31,6 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      sudo: required
       dist: trusty
       compiler: gcc
       env: X=rebuild-stubs
@@ -33,19 +38,19 @@ matrix:
     - os: linux
       compiler: gcc
       env: C=gcc-4.4-m32
-      addons: { apt: { sources: *S, packages: [ "g++-4.4-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.4-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.4-m64
-      addons: { apt: { sources: *S, packages: [ "g++-4.4" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.4" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.5-m32
-      addons: { apt: { sources: *S, packages: [ "g++-4.5-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.5-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.5-m64
-      addons: { apt: { sources: *S, packages: [ "g++-4.5" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.5" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.6-m32
@@ -56,21 +61,20 @@ matrix:
     - os: linux
       compiler: gcc
       env: C=gcc-4.7-m32
-      addons: { apt: { sources: *S, packages: [ "g++-4.7-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.7-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.7-m64
-      addons: { apt: { sources: *S, packages: [ "g++-4.7" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.7" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.8-m32
-      addons: { apt: { sources: *S, packages: [ "g++-4.8-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.8-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.8-m64
-      addons: { apt: { sources: *S, packages: [ "g++-4.8" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.8" ] } }
     - os: linux
-      sudo: required
       dist: trusty
       compiler: gcc
       env: C=gcc-4.8-mx32
@@ -78,47 +82,57 @@ matrix:
     - os: linux
       compiler: gcc
       env: C=gcc-4.9-m32
-      addons: { apt: { sources: *S, packages: [ "g++-4.9-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.9-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.9-m64
-      addons: { apt: { sources: *S, packages: [ "g++-4.9" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-4.9" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-5-m32
-      addons: { apt: { sources: *S, packages: [ "g++-5-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-5-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-5-m64
-      addons: { apt: { sources: *S, packages: [ "g++-5" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-5" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-6-m32
-      addons: { apt: { sources: *S, packages: [ "g++-6-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-6-m64
-      addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-6-m32 B=debug
-      addons: { apt: { sources: *S, packages: [ "g++-6-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-6-m64 B=debug
-      addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-6-m64 B=debug+sanitize
-      addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-6-m64 B=sanitize
-      addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-6-m64 B=valgrind T=valgrind
-      addons: { apt: { sources: *S, packages: [ "g++-6", valgrind ] } }
+      addons: { apt: { sources: *PS, packages: [ "g++-6", valgrind ] } }
+    - os: linux
+      dist: trusty
+      compiler: gcc
+      env: C=gcc-7-m32
+      addons: { apt: { sources: *TS, packages: [ "g++-7-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      dist: trusty
+      compiler: gcc
+      env: C=gcc-7-m64
+      addons: { apt: { sources: *TS, packages: [ "g++-7" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.4-m32
@@ -129,59 +143,69 @@ matrix:
     - os: linux
       compiler: clang
       env: C=clang-3.5-m32
-      addons: { apt: { sources: *S, packages: [ "clang-3.5", "g++-6-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.5", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.5-m64
-      addons: { apt: { sources: *S, packages: [ "clang-3.5" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.5" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.6-m32
-      addons: { apt: { sources: *S, packages: [ "clang-3.6", "g++-6-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.6", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.6-m64
-      addons: { apt: { sources: *S, packages: [ "clang-3.6" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.6" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.7-m32
-      addons: { apt: { sources: *S, packages: [ "clang-3.7", "g++-6-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.7", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.7-m64
-      addons: { apt: { sources: *S, packages: [ "clang-3.7" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.7" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.8-m32
-      addons: { apt: { sources: *S, packages: [ "clang-3.8", "g++-6-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.8", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.8-m64
-      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.8" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.9-m32
-      addons: { apt: { sources: *S, packages: [ "clang-3.9", "g++-6-multilib", "zlib1g-dev:i386" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.9", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.9-m64
-      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.9" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.9-m64 B=debug+sanitize
-      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.9" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.9-m64 B=sanitize
-      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.9" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.9-m64 B=debug+scan-build
-      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.9" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.9-m64 B=scan-build
-      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
+      addons: { apt: { sources: *PS, packages: [ "clang-3.9" ] } }
+    - os: linux
+      dist: trusty
+      compiler: clang
+      env: C=clang-5.0-m32
+      addons: { apt: { sources: *TS, packages: [ "clang-5.0", "g++-7-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      dist: trusty
+      compiler: clang
+      env: C=clang-5.0-m64
+      addons: { apt: { sources: *TS, packages: [ "clang-5.0" ] } }
     - os: linux
       compiler: gcc
       env: CROSS=arm-linux-gnueabi C=gcc-4.6 T=qemu
@@ -225,11 +249,11 @@ matrix:
       compiler: clang
       env: C=clang-802-m64
     - os: osx
-      osx_image: xcode9
+      osx_image: xcode9.2
       compiler: clang
       env: C=clang-900-m32
     - os: osx
-      osx_image: xcode9
+      osx_image: xcode9.2
       compiler: clang
       env: C=clang-900-m64
 
