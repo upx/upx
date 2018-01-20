@@ -416,15 +416,14 @@ void PeFile32::processRelocs() // pass1
     for (ic = 0; ic < xcounts[3]; ic++)
     {
         pos = fix[3][ic] + rvamin;
-        unsigned const take2 = get_le32(ibuf + pos) - ih.imagebase - rvamin;
-        set_le32(ibuf.subref("bad reloc type 3 %#x", pos, take2), take2);
+        unsigned w = get_le32(ibuf.subref("bad reloc type 3 %#x", pos, sizeof(LE32)));
+        set_le32(ibuf + pos, w - ih.imagebase - rvamin);
     }
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
     orelocs = new upx_byte [mem_size(4, rnum, 1024)];  // 1024 - safety
-    // FIXME: bad 'take' for ibuf.subref
     sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3], xcounts[3],
-                            orelocs, ibuf.subref("bad reloc 3.1 %#x", rvamin, 1) ,1, &big_relocs),
+                            orelocs, ibuf + rvamin, 1, &big_relocs),
                         orelocs);
     delete [] fix[3];
 
@@ -518,16 +517,14 @@ void PeFile64::processRelocs() // pass1
     for (ic = 0; ic < xcounts[10]; ic++)
     {
         pos = fix[10][ic] + rvamin;
-        set_le64(ibuf.subref("bad reloc 10 %#x", pos, sizeof(upx_uint64_t)),
-            get_le64(ibuf + pos) - ih.imagebase - rvamin);
+        upx_uint64_t w = get_le64(ibuf.subref("bad reloc 10 %#x", pos, sizeof(LE64)));
+        set_le64(ibuf + pos, w - ih.imagebase - rvamin);
     }
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
     orelocs = new upx_byte [mem_size(4, rnum, 1024)];  // 1024 - safety
-    // FIXME: bad 'take' for ibuf.subref
     sorelocs = ptr_diff(optimizeReloc64((upx_byte*) fix[10], xcounts[10],
-                            orelocs, ibuf.subref("bad reloc 10b %#x", rvamin, 1),
-                            1, &big_relocs),
+                            orelocs, ibuf + rvamin, 1, &big_relocs),
                         orelocs);
 
     for (ic = 15; ic; ic--)

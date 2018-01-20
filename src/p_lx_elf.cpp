@@ -2621,7 +2621,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                 unsigned sh_entsize = get_te32(&shdr->sh_entsize);
                 if (xct_off <= sh_offset) {
                     set_te32(&shdr->sh_offset, asl_delta + sh_offset);
-                    uint32_t addr = get_te32(&shdr->sh_addr);
+                    upx_uint32_t addr = get_te32(&shdr->sh_addr);
                     set_te32(&shdr->sh_addr, asl_delta + addr);
                 }
                 if (Elf32_Shdr::SHT_RELA== sh_type) {
