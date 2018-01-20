@@ -573,7 +573,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
                     if (dyn->DT_INIT==get_te64(&dyn->d_tag)) {
                         unsigned const t = (unsigned char *)&dyn->d_val -
-                                           (unsigned char *)ibuf;
+                                           (unsigned char *)&file_image[ioff];
                         off_init += t;
                         break;
                     }
