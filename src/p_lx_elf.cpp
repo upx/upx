@@ -478,6 +478,8 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 {
     unsigned flen = super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    // NOTE: PackLinuxElf::pack3  adjusted xct_off for the extra page
+
     unsigned v_hole = sz_pack2 + lsize;
     set_te64(&elfout.phdr[0].p_filesz, v_hole);
     set_te64(&elfout.phdr[0].p_memsz,  v_hole);
@@ -522,7 +524,8 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         set_te32(&elfout.phdr[1].p_flags, Elf32_Phdr::PF_W|Elf32_Phdr::PF_R);
     }
     if (0!=xct_off) {  // shared library
-        Elf64_Phdr *phdr = phdro;
+        Elf64_Phdr *phdr = (Elf64_Phdr *)lowmem.subref(
+                "bad e_phoff", e_phoff, e_phnum * sizeof(Elf64_Phdr));
         unsigned off = fo->st_size();
         unsigned off_init = 0;  // where in file
         upx_uint64_t va_init = sz_pack2;   // virtual address
@@ -592,7 +595,8 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         }
         if (opt->o_unix.android_shlib) {
             // Update {DYNAMIC}.sh_offset by so_slide.
-            Elf64_Shdr *shdr = shdro;
+            Elf64_Shdr *shdr = (Elf64_Shdr *)lowmem.subref(
+                    "bad e_shoff", xct_off - asl_delta, e_shnum * sizeof(Elf64_Shdr));
             for (unsigned j = 0; j < e_shnum; ++shdr, ++j) {
                 unsigned sh_type = get_te32(&shdr->sh_type);
                 if (Elf64_Shdr::SHT_DYNAMIC == sh_type) {
@@ -601,7 +605,6 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                     fo->seek((j * sizeof(Elf64_Shdr)) + xct_off - asl_delta, SEEK_SET);
                     fo->rewrite(shdr, sizeof(*shdr));
                     fo->seek(0, SEEK_END);
-                    break;
                 }
                 if (Elf64_Shdr::SHT_RELA == sh_type
                 &&  n_jmp_slot
@@ -677,7 +680,7 @@ void PackLinuxElf64::defineSymbols(Filter const *ft)
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
-    : super(f), phdro(NULL), phdri(NULL), shdro(NULL), shdri(NULL),
+    : super(f), phdri(NULL), shdri(NULL),
     gnu_stack(NULL), note_body(NULL),
     page_mask(~0u<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
@@ -694,13 +697,11 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
 
 PackLinuxElf32::~PackLinuxElf32()
 {
-    delete[] shdro;
-    delete[] phdro;
     delete[] note_body;
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
-    : super(f), phdro(NULL), phdri(NULL), shdro(NULL), shdri(NULL),
+    : super(f), phdri(NULL), shdri(NULL),
     gnu_stack(NULL), note_body(NULL),
     page_mask(~0ull<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
@@ -2620,7 +2621,8 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                 }
                 // .p_filesz,.p_memsz are updated in ::pack3
             }
-            fo->rewrite(phdro, e_phnum * sizeof(Elf32_Phdr));  // adjacent to Ehdr
+            // FIXME
+            fo->rewrite(phdri, e_phnum * sizeof(Elf32_Phdr));  // adjacent to Ehdr
 
             // Relocate Shdr; and Rela, Rel (below xct_off)
             Elf32_Shdr *shdr = shdri;
@@ -2872,10 +2874,12 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 
     progid = 0;  // getRandomId();  not useful, so do not clutter
     if (0!=xct_off) {  // shared library
-        phdro = new Elf64_Phdr[e_phnum];
-        memcpy(phdro, phdri, e_phnum * sizeof(Elf64_Phdr));
-        sz_elf_hdrs = sizeof(ehdri) + sz_phdrs + e_shnum * sizeof(Elf64_Shdr);
-        fo->write(file_image, xct_off);  // before the first SHF_EXECINSTR (typ ".plt")
+        sz_elf_hdrs = sizeof(ehdri) + sz_phdrs;
+        lowmem.alloc(xct_off + (!opt->o_unix.android_shlib
+            ? 0
+            : e_shnum * sizeof(Elf64_Shdr)));
+        memcpy(lowmem, file_image, xct_off);  // android omits Shdr here
+        fo->write(lowmem, xct_off);  // < SHF_EXECINSTR (typ: in .plt or .init)
         if (opt->o_unix.android_shlib) {
             // In order to pacify the runtime linker on Android "O" ("Oreo"),
             // we will splice-in a 4KiB page that contains an "extra" copy
@@ -2902,8 +2906,8 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             // Relocate dynsym (DT_SYMTAB) which is below xct_va
             upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
             upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
-            Elf64_Sym *dyntym = new Elf64_Sym[sz_dynsym / sizeof(Elf64_Sym)];
-            memcpy(dyntym, dynsym, sz_dynsym);
+            Elf64_Sym *dyntym = (Elf64_Sym *)lowmem.subref(
+                "bad dynsym", off_dynsym, sz_dynsym);
             Elf64_Sym *sym = dyntym;
             for (int j = sz_dynsym / sizeof(Elf64_Sym); --j>=0; ++sym) {
                 upx_uint64_t symval = get_te64(&sym->st_value);
@@ -2914,13 +2918,12 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                     set_te64(&sym->st_value, asl_delta + symval);
                 }
             }
-            fo->seek(off_dynsym, SEEK_SET);
-            fo->rewrite(dyntym, sz_dynsym);
 
             // Relocate Phdr virtual addresses, but not physical offsets and sizes
             unsigned char buf_notes[512]; memset(buf_notes, 0, sizeof(buf_notes));
             unsigned len_notes = 0;
-            phdr = phdro;
+            phdr = (Elf64_Phdr *)lowmem.subref(
+                "bad e_phoff", e_phoff, e_phnum * sizeof(Elf64_Phdr));
             for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
                 upx_uint64_t offset = get_te64(&phdr->p_offset);
                 if (xct_off <= offset) { // above the extra page
@@ -2945,17 +2948,14 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                 }
                 // .p_filesz,.p_memsz are updated in ::pack3
             }
-            set_te64(&ehdri.e_shoff, xct_off);
-            fo->seek(0, SEEK_SET);
-            fo->rewrite(&ehdri, sizeof(ehdri));
-            fo->rewrite(phdro, sz_phdrs);  // adjacent to Ehdr
 
             // Relocate Shdr; and Rela, Rel (below xct_off)
-            shdro = new Elf64_Shdr[e_shnum];
-            memcpy(shdro, shdri, e_shnum * sizeof(*shdro));
+            set_te64(&((Elf64_Ehdr *)&lowmem[0])->e_shoff, xct_off);
+            memcpy(&lowmem[xct_off], shdri, e_shnum * sizeof(Elf64_Ehdr));
+            Elf64_Shdr *const shdro = (Elf64_Shdr *)&lowmem[xct_off];
             Elf64_Shdr *shdr = shdro;
             upx_uint64_t sz_shstrtab  = get_te64(&sec_strndx->sh_size);
-            for (int j = e_shnum; --j>=0; ++shdr) {
+            for (unsigned j = 0; j < e_shnum; ++j, ++shdr) {
                 unsigned sh_type = get_te32(&shdr->sh_type);
                 upx_uint64_t sh_size = get_te64(&shdr->sh_size);
                 upx_uint64_t sh_offset = get_te64(&shdr->sh_offset);
@@ -2973,8 +2973,8 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                     }
                     n_jmp_slot = 0;
                     plt_off = ~0ull;
-                    Elf64_Rela *const relb = new Elf64_Rela[sh_size / sh_entsize];
-                    memcpy(relb, &file_image[sh_offset], sh_size);
+                    Elf64_Rela *const relb = (Elf64_Rela *)lowmem.subref(
+                         "bad Rela offset", sh_offset, sh_size);
                     Elf64_Rela *rela = relb;
                     for (int k = sh_size / sh_entsize; --k >= 0; ++rela) {
                         upx_uint64_t r_addend = get_te64(&rela->r_addend);
@@ -3013,7 +3013,8 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                         snprintf(msg, sizeof(msg), "bad Rel.sh_entsize %lu", (long)sh_entsize);
                         throwCantPack(msg);
                     }
-                    Elf64_Rel *rel = (Elf64_Rel *)(sh_offset + file_image);
+                    Elf64_Rel *rel = (Elf64_Rel *)lowmem.subref(
+                            "bad Rel sh_offset", sh_offset, sh_size);
                     for (int k = sh_size / sh_entsize; --k >= 0; ++rel) {
                         upx_uint64_t r_offset = get_te64(&rel->r_offset);
                         if (xct_off <= r_offset) {
@@ -3028,11 +3029,9 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                         &&  Elf64_Ehdr::EM_AARCH64 == e_machine
                         &&  (  R_AARCH64_RELATIVE  == r_type
                             || R_AARCH64_JUMP_SLOT == r_type)) {
-                            set_te64(&file_image[d], asl_delta + w);
+                            set_te64(&file_image[d], asl_delta + w);  // FIXME
                         }
                     }
-                    fo->seek(sh_offset, SEEK_SET);
-                    fo->rewrite(sh_offset + file_image, sh_size);
                 }
                 if (Elf64_Shdr::SHT_NOTE == sh_type) {
                     if (xct_off <= sh_offset) {
@@ -3046,9 +3045,12 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             set_te64(&shdro[get_te16(&ehdri.e_shstrndx)].sh_offset,
                 len_notes + e_shnum * sizeof(Elf64_Shdr) + xct_off);
 
+            // (Re-)write all changes below xct_off
+            fo->seek(0, SEEK_SET);
+            fo->rewrite(lowmem, xct_off);
+
             // New copy of Shdr
-            fo->seek(xct_off, SEEK_SET);
-            Elf64_Shdr blank; blank = shdro[0];
+            Elf64_Shdr blank; memset(&blank, 0, sizeof(blank));
             set_te64(&blank.sh_offset, xct_off);  // hint for "upx -d"
             fo->write(&blank, sizeof(blank));
             fo->write(&shdro[1], (-1+ e_shnum) * sizeof(Elf64_Shdr));
@@ -3487,8 +3489,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
-        fo->rewrite(&ehdri, sizeof(ehdri));
-        fo->rewrite(phdro, e_phnum * sizeof(*phdri));
+        fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(*phdri));
         fo->seek(sz_elf_hdrs, SEEK_SET);
         fo->rewrite(&linfo, sizeof(linfo));
 
@@ -3549,8 +3550,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
-        fo->rewrite(&ehdri, sizeof(ehdri));
-        fo->rewrite(phdro, e_phnum * sizeof(*phdro));
+        fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(Elf64_Phdr));
         fo->seek(sz_elf_hdrs, SEEK_SET);
         fo->rewrite(&linfo, sizeof(linfo));
     }
