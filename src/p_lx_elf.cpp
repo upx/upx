@@ -3044,7 +3044,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                 }
             }
             // shstrndx will move
-            set_te64(&sec_strndx->sh_offset,
+            set_te64(&shdro[get_te16(&ehdri.e_shstrndx)].sh_offset,
                 len_notes + e_shnum * sizeof(Elf64_Shdr) + xct_off);
 
             // New copy of Shdr
