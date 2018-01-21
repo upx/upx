@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -91,15 +91,6 @@ Linker* PackArmPe::newLinker() const
 void PackArmPe::processImports2(unsigned myimport, unsigned iat_off) // pass 2
 {
     PeFile::processImports2(myimport, iat_off);
-
-__packed_struct(import_desc)
-    LE32  oft;      // orig first thunk
-    char  _[8];
-    LE32  dllname;
-    LE32  iat;      // import address table
-__packed_struct_end()
-
-    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
 
     // adjust import data
     for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)

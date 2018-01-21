@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -215,9 +215,14 @@
 
 
 #ifdef WANT_REL_ENUM  //{
-static unsigned ELF32_R_TYPE(unsigned     x) { return       0xff & x; }
-static unsigned ELF64_R_TYPE(upx_uint64_t x) { return 0xffffffff & x; }
+#undef WANT_REL_ENUM
+    static inline unsigned ELF32_R_TYPE(unsigned     x) { return       0xff & x; }
+    static inline unsigned ELF64_R_TYPE(upx_uint64_t x) { return 0xffffffff & (unsigned)x; }
 
+#   undef R_PPC_RELATIVE
+#   undef R_PPC64_RELATIVE
+#   undef R_PPC_JMP_SLOT
+#   undef R_PPC64_JMP_SLOT
     enum { // relocation types
         R_386_RELATIVE =  8,
         R_AARCH64_RELATIVE = 1027,

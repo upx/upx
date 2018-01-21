@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -480,24 +480,27 @@ struct upx_callback_t
 // compression - config_t
 **************************************************************************/
 
-template <class T, T default_value, T min_value, T max_value>
+template <class T, T default_value_, T min_value_, T max_value_>
 struct OptVar
 {
     typedef T value_type;
-    static const T default_value_c = default_value;
-    static const T min_value_c = min_value;
-    static const T max_value_c = max_value;
+    static const T default_value = default_value_;
+    static const T min_value = min_value_;
+    static const T max_value = max_value_;
 
-    void assertValue() const {
+    static void assertValue(const T &v) {
         // info: this generates annoying warnings "unsigned >= 0 is always true"
-        //assert(v >= min_value_c);
-        assert(v == min_value_c || v >= min_value_c + 1);
-        assert(v <= max_value_c);
+        //assert(v >= min_value);
+        assert(v == min_value || v >= min_value + 1);
+        assert(v <= max_value);
+    }
+    void assertValue() const {
+        assertValue(v);
     }
 
     OptVar() : v(default_value), is_set(0) { }
-    OptVar& operator= (const T other) {
-        v = other; is_set += 1;
+    OptVar& operator= (const T &other) {
+        v = other; is_set = 1;
         assertValue();
         return *this;
     }
@@ -513,10 +516,10 @@ struct OptVar
 // optional assignments
 template <class T, T a, T b, T c>
 inline void oassign(OptVar<T,a,b,c> &self, const OptVar<T,a,b,c> &other) {
-    if (other.is_set) { self.v = other.v; self.is_set += 1; }
+    if (other.is_set) { self.v = other.v; self.is_set = 1; }
 }
 template <class T, T a, T b, T c>
-inline void oassign(unsigned &v, const OptVar<T,a,b,c> &other) {
+inline void oassign(T &v, const OptVar<T,a,b,c> &other) {
     if (other.is_set) { v = other.v; }
 }
 

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -594,9 +594,8 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
 
 void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
                                const char *type) {
-    if (!strcmp(type, "R_ARM_PC24")
-    ||  !strcmp(type, "R_ARM_CALL")
-    ||  !strcmp(type, "R_ARM_JUMP24")) {
+    if (!strcmp(type, "R_ARM_PC24") || !strcmp(type, "R_ARM_CALL") ||
+        !strcmp(type, "R_ARM_JUMP24")) {
         value -= rel->section->offset + rel->offset;
         set_be24(1 + location, get_be24(1 + location) + value / 4);
     } else if (strcmp(type, "R_ARM_ABS32") == 0) {
@@ -620,9 +619,8 @@ void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location, upx_ui
 
 void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
                                const char *type) {
-    if (!strcmp(type, "R_ARM_PC24")
-    ||  !strcmp(type, "R_ARM_CALL")
-    ||  !strcmp(type, "R_ARM_JUMP24")) {
+    if (!strcmp(type, "R_ARM_PC24") || !strcmp(type, "R_ARM_CALL") ||
+        !strcmp(type, "R_ARM_JUMP24")) {
         value -= rel->section->offset + rel->offset;
         set_le24(location, get_le24(location) + value / 4);
     } else if (strcmp(type, "R_ARM_ABS32") == 0) {
@@ -664,9 +662,8 @@ void ElfLinkerArm64LE::relocate1(const Relocation *rel, upx_byte *location, upx_
         value -= rel->section->offset + rel->offset;
         upx_uint32_t const m19 = ~(~0u << 19);
         upx_uint32_t w = get_le32(location);
-        set_le32(location,
-            (w & ~((3u          << 29) | ( m19                 << 5)))
-               |  ((3u & value) << 29) | ((m19 & (value >> 2)) << 5));
+        set_le32(location, (w & ~((3u << 29) | (m19 << 5))) | ((3u & value) << 29) |
+                               ((m19 & (value >> 2)) << 5));
     } else if (!strcmp(type, "ABS32")) {
         set_le32(location, get_le32(location) + value);
     } else if (!strcmp(type, "ABS64")) {

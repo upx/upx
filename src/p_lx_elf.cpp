@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
-   Copyright (C) 2000-2017 John F. Reiser
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
+   Copyright (C) 2000-2018 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -2519,7 +2519,6 @@ PackLinuxElf64::generateElfHdr(
 
 #define WANT_REL_ENUM
 #include "p_elf_enum.h"
-#undef WANT_REL_ENUM
 
 void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 {

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -164,7 +164,7 @@ int PeFile::readFileHeader()
         {
             unsigned const delta = (h.relocoffs >= 0x40)
                 ? h.nexepos // new format exe
-                : (h.p512*512+h.m512 - h.m512 ? 512 : 0);
+                : (h.p512*512+h.m512 - h.m512 ? 512 : h.nexepos);
 
             if ((pe_offset + delta) < delta  // wrap-around
             ||  (pe_offset + delta) > (unsigned)file_size) {
@@ -559,13 +559,6 @@ void PeFile64::processRelocs() // pass1
 /*************************************************************************
 // import handling
 **************************************************************************/
-
-//__packed_struct(import_desc)
-//    LE32  oft;      // orig first thunk
-//    char  _[8];
-//    LE32  dllname;
-//    LE32  iat;      // import address table
-//__packed_struct_end()
 
 LE32& PeFile::IDSIZE(unsigned x) { return iddirs[x].size; }
 LE32& PeFile::IDADDR(unsigned x) { return iddirs[x].vaddr; }
