@@ -159,6 +159,7 @@ protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Ehdr *phdro; // especially for shlib
     Elf32_Phdr *phdri; // for  input file
+    Elf32_Shdr *shdro; // especial for shlib
     Elf32_Shdr *shdri; // from input file
     Elf32_Phdr const *gnu_stack;  // propagate NX
     unsigned e_phoff;
@@ -285,6 +286,7 @@ protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdro; // especially for shlib
     Elf64_Phdr *phdri; // for  input file
+    Elf64_Shdr *shdro; // especial for shlib
     Elf64_Shdr *shdri; // from input file
     Elf64_Phdr const *gnu_stack;  // propagate NX
     upx_uint64_t e_phoff;
