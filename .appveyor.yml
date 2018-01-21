@@ -14,10 +14,8 @@ environment:
     - { C: msvc-12.0-x64, CL_VERSION: 18.00, VS_VERSION: 2013 }
     - { C: msvc-14.0-x86, CL_VERSION: 19.00, VS_VERSION: 2015 }
     - { C: msvc-14.0-x64, CL_VERSION: 19.00, VS_VERSION: 2015 }
-    - { C: msvc-15.0-x86, CL_VERSION: 19.10, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
-    - { C: msvc-15.0-x64, CL_VERSION: 19.10, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
-#   - { C: gcc-4.9-m32, T: SKIP }
-#   - { C: gcc-4.9-m64, T: SKIP }
+    - { C: msvc-14.1-x86, CL_VERSION: 19.12, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
+    - { C: msvc-14.1-x64, CL_VERSION: 19.12, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
   UPX_AUTOMATIC_BUILDS_SSL_KEY:
     secure: PZMpVeqnEYe39kK+Zu2/fnmZ6/HG6Lvls0hh9GMVU9vCWsr8xaU7kIbHBS01puUkb4bEWPILKYvSEDuhOhguDjd/P4QdXWipvV/F2GaVax0=
   UPX_AUTOMATIC_BUILDS_SSL_IV:
@@ -58,17 +56,11 @@ install:
   - if "%C%"=="msvc-12.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" amd64 )
   - if "%C%"=="msvc-14.0-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 )
   - if "%C%"=="msvc-14.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64 )
-  - if "%C%"=="msvc-15.0-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86 )
-  - if "%C%"=="msvc-15.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" amd64 )
+  - if "%C%"=="msvc-14.1-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86 )
+  - if "%C%"=="msvc-14.1-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" amd64 )
 
 build_script:
   - cd c:\projects\upx
-  - if "%C%"=="gcc-4.9-m32" set PATH=c:\cygwin\bin;%PATH%
-  - if "%C%"=="gcc-4.9-m32" bash -x ./.github/travis_build.sh
-  - if "%C%"=="gcc-4.9-m32" exit
-  - if "%C%"=="gcc-4.9-m64" set PATH=c:\cygwin\bin;%PATH%
-  - if "%C%"=="gcc-4.9-m64" bash -x ./.github/travis_build.sh
-  - if "%C%"=="gcc-4.9-m64" exit
   # setup directories following the VPATH build in travis_build.sh
   - where cl & where link
   - set BDIR=c:\projects\build\%C%\%B%
@@ -89,7 +81,7 @@ build_script:
   - set s=c:\projects\upx\src
   - cat .GITREV.txt
   - set /p GITREV=<.GITREV.txt
-  - cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DWITH_LZMA=0x443 -DUCL_NO_ASM -I%s%\lzma-sdk -Ic:\projects\deps\ucl-1.03\include -Ic:\projects\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
+  - cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DUCL_NO_ASM -I%s%\lzma-sdk -Ic:\projects\deps\ucl-1.03\include -Ic:\projects\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
 
 test_script:
   - set UPX=--no-color --no-progress

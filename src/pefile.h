@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -179,10 +179,10 @@ protected:
     ddirs_t *oddirs;
 
     __packed_struct(import_desc)
-    LE32  oft;      // orig first thunk
-    char  _[8];
-    LE32  dllname;
-    LE32  iat;      // import address table
+        LE32  oft;      // orig first thunk
+        char  _[8];
+        LE32  dllname;
+        LE32  iat;      // import address table
     __packed_struct_end()
 
     LE32 &IDSIZE(unsigned x);
@@ -438,7 +438,7 @@ protected:
     virtual unsigned processImports();
     virtual void processRelocs();
     virtual void processTls(Interval *);
-    void processTls(Reloc *, const Interval *, unsigned);
+    virtual void processTls(Reloc *, const Interval *, unsigned);
 
     __packed_struct(pe_header_t)
         // 0x0
@@ -500,7 +500,7 @@ protected:
     virtual unsigned processImports();
     virtual void processRelocs();
     virtual void processTls(Interval *);
-    void processTls(Reloc *, const Interval *, unsigned);
+    virtual void processTls(Reloc *, const Interval *, unsigned);
 
     __packed_struct(pe_header_t)
         // 0x0

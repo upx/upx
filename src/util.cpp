@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -113,6 +113,11 @@ unsigned ptr_udiff(const void *p1, const void *p2) {
     int d = ptr_diff(p1, p2);
     assert(d >= 0);
     return ACC_ICONV(unsigned, d);
+}
+
+void mem_clear(void *p, size_t n) {
+    mem_size_assert(1, n);
+    memset(p, 0, n);
 }
 
 /*************************************************************************

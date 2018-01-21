@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2017 Laszlo Molnar
+   Copyright (C) 1996-2018 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2018 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -49,6 +49,8 @@ bool mem_size_valid_bytes(upx_uint64_t bytes);
 
 int ptr_diff(const void *p1, const void *p2);
 unsigned ptr_udiff(const void *p1, const void *p2); // asserts p1 >= p2
+
+void mem_clear(void *p, size_t n);
 
 /*************************************************************************
 // misc. support functions
