@@ -2873,8 +2873,9 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
     page_mask = ~0ull<<lg2_page;
 
     progid = 0;  // getRandomId();  not useful, so do not clutter
+    sz_elf_hdrs = sizeof(ehdri) + sz_phdrs;
     if (0!=xct_off) {  // shared library
-        sz_elf_hdrs = sizeof(ehdri) + sz_phdrs;
+        sz_elf_hdrs = xct_off;
         lowmem.alloc(xct_off + (!opt->o_unix.android_shlib
             ? 0
             : e_shnum * sizeof(Elf64_Shdr)));
@@ -3295,25 +3296,24 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     uip->ui_total_passes -= !!is_shlib;  // not .data of shlib
 
     // compress extents
-    unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
+    unsigned hdr_u_len = xct_off;
 
-    unsigned total_in = xct_off - (is_shlib ? hdr_u_len : 0);
-    unsigned total_out = xct_off;
+    unsigned total_in = 0;
+    unsigned total_out = sz_elf_hdrs;
 
     uip->ui_pass = 0;
     ft.addvalue = 0;
 
     int nx = 0;
-    for (k = 0; k < e_phnum; ++k) if (PT_LOAD64==get_te32(&phdri[k].p_type)) {
+    for (k = 0; k < e_phnum; ++k)
+    if (PT_LOAD64==get_te32(&phdri[k].p_type)) {
         if (ft.id < 0x40) {
             // FIXME: ??    ft.addvalue = phdri[k].p_vaddr;
         }
         x.offset = get_te64(&phdri[k].p_offset);
         x.size   = get_te64(&phdri[k].p_filesz);
         if (0 == nx) { // 1st PT_LOAD64 must cover Ehdr at 0==p_offset
-            unsigned const delta = !is_shlib
-                ? (sizeof(Elf64_Ehdr) + sz_phdrs)  // main executable
-                : xct_off;  // shared library
+            unsigned const delta = xct_off;
             if (ft.id < 0x40) {
                 // FIXME: ??     ft.addvalue += asl_delta;
             }
@@ -3600,26 +3600,23 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         || !mem_size_valid(1, blocksize, OVERHEAD))
         throwCantUnpack("p_info corrupted");
 
-#define MAX_ELF_HDR 1024
-    union {
-        unsigned char buf[MAX_ELF_HDR];
-        //struct { Elf64_Ehdr ehdr; Elf64_Phdr phdr; } e;
-    } u;
-    Elf64_Ehdr *const ehdr = (Elf64_Ehdr *) u.buf;
-    Elf64_Phdr const *phdr = 0;
-
     ibuf.alloc(blocksize + OVERHEAD);
     b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
     fi->readx(&bhdr, szb_info);
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
     if (ph.c_len > (unsigned)file_size || ph.c_len == 0 || ph.u_len == 0
-    ||  ph.u_len > sizeof(u))
+    ||  ph.u_len > orig_file_size)
         throwCantUnpack("b_info corrupted");
     ph.filter_cto = bhdr.b_cto8;
 
+#define MAX_ELF_HDR 1024
+    MemBuffer u(ph.u_len);
+    Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)&u[0];
+    Elf64_Phdr const *phdr = 0;
+
     // Uncompress Ehdr and Phdrs.
-    if (ibuf.getSize() < ph.c_len  ||  sizeof(u) < ph.u_len)
+    if (ibuf.getSize() < ph.c_len)
         throwCompressedDataViolation();
     fi->readx(ibuf, ph.c_len);
     decompress(ibuf, (upx_byte *)ehdr, false);
@@ -3740,7 +3737,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     }
 
     // The gaps between PT_LOAD and after last PT_LOAD
-    phdr = (Elf64_Phdr *) (u.buf + sizeof(*ehdr));
+    phdr = (Elf64_Phdr *)&u[sizeof(*ehdr)];
     upx_uint64_t hi_offset(0);
     for (unsigned j = 0; j < u_phnum; ++j) {
         if (PT_LOAD64==phdr[j].p_type
@@ -3777,7 +3774,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     if (is_shlib) {  // the non-first PT_LOAD
         int n_ptload = 0;
         unsigned load_off = 0;
-        phdr = (Elf64_Phdr *) (u.buf + sizeof(*ehdr));
+        phdr = (Elf64_Phdr *)&u[sizeof(*ehdr)];
         for (unsigned j= 0; j < u_phnum; ++j, ++phdr) {
             if (PT_LOAD64==get_te32(&phdr->p_type) && 0!=n_ptload++) {
                 load_off = get_te64(&phdr->p_offset);
@@ -3792,7 +3789,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             }
         }
         // Restore DT_INIT.d_val
-        phdr = (Elf64_Phdr *) (u.buf + sizeof(*ehdr));
+        phdr = (Elf64_Phdr *)&u[sizeof(*ehdr)];
         for (unsigned j= 0; j < u_phnum; ++j, ++phdr) {
             if (phdr->PT_DYNAMIC==get_te32(&phdr->p_type)) {
                 unsigned const dyn_off = get_te64(&phdr->p_offset);
