@@ -157,6 +157,7 @@ protected:
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
+    MemBuffer lowmem;  // especially for shlib
     Elf32_Phdr *phdri; // for  input file
     Elf32_Shdr *shdri; // from input file
     Elf32_Phdr const *gnu_stack;  // propagate NX
@@ -282,6 +283,7 @@ protected:
 
 protected:
     Elf64_Ehdr  ehdri; // from input file
+    MemBuffer lowmem;  // especially for shlib
     Elf64_Phdr *phdri; // for  input file
     Elf64_Shdr *shdri; // from input file
     Elf64_Phdr const *gnu_stack;  // propagate NX
