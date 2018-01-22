@@ -610,8 +610,8 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 &&  n_jmp_slot
                 &&  !strcmp(".rela.plt", get_te32(&shdr->sh_name) + shstrtab)) {
                     upx_uint64_t f_off = elf_get_offset_from_address(plt_off);
-                    fo->seek(f_off, SEEK_SET);
-                    fo->rewrite(&file_image[f_off - so_slide], n_jmp_slot * sizeof(void *));
+                    fo->seek(so_slide + f_off, SEEK_SET);  // FIXME: assumes PT_LOAD[1]
+                    fo->rewrite(&file_image[f_off], n_jmp_slot * sizeof(void *));
                 }
             }
         }
@@ -2993,10 +2993,10 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                             }
                             if (R_AARCH64_JUMP_SLOT == r_type) {
                                 // .rela.plt contains offset of the "first time" target
-                                if (plt_off > (asl_delta + r_offset)) {
-                                    plt_off = (asl_delta + r_offset);
+                                if (plt_off > r_offset) {
+                                    plt_off = r_offset;
                                 }
-                                upx_uint64_t d = elf_get_offset_from_address(asl_delta + r_offset);
+                                upx_uint64_t d = elf_get_offset_from_address(r_offset);
                                 upx_uint64_t w = get_te64(&file_image[d]);
                                 if (xct_off <= w) {
                                     set_te64(&file_image[d], asl_delta + w);
