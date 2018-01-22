@@ -3296,10 +3296,10 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     uip->ui_total_passes -= !!is_shlib;  // not .data of shlib
 
     // compress extents
-    unsigned hdr_u_len = xct_off;
+    unsigned hdr_u_len = (is_shlib ? xct_off : (sizeof(Elf64_Ehdr) + sz_phdrs));
 
-    unsigned total_in = 0;
-    unsigned total_out = sz_elf_hdrs;
+    unsigned total_in =  (is_shlib ?           0 : xct_off);
+    unsigned total_out = (is_shlib ? sz_elf_hdrs : xct_off);
 
     uip->ui_pass = 0;
     ft.addvalue = 0;
@@ -3313,7 +3313,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         x.offset = get_te64(&phdri[k].p_offset);
         x.size   = get_te64(&phdri[k].p_filesz);
         if (0 == nx) { // 1st PT_LOAD64 must cover Ehdr at 0==p_offset
-            unsigned const delta = xct_off;
+            unsigned const delta = hdr_u_len;
             if (ft.id < 0x40) {
                 // FIXME: ??     ft.addvalue += asl_delta;
             }
