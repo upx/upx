@@ -910,6 +910,9 @@ void PackLinuxElf32::updateLoader(OutputFile * /*fo*/)
 
 void PackLinuxElf64::updateLoader(OutputFile * /*fo*/)
 {
+    if (xct_off) {
+        return;  // FIXME elfout has no values at all
+    }
     upx_uint64_t const vbase = get_te64(&elfout.phdr[0].p_vaddr);
     unsigned start = linker->getSymbolOffset("_start");
 
