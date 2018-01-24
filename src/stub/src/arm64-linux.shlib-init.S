@@ -126,7 +126,7 @@ sp_frame = 24 * NBPW
 //  .long offset(escape_hatch)
 //  .long offset(xct_off)    dst of f_exp
 _start: .globl _start
-//  brk #0  // debugging
+//    brk #0  // debugging
 
   slot f_argc  // 0
   slot f_argv  // 1
@@ -191,9 +191,12 @@ main:
 5:  // auxp cannot be empty (must have AT_UID), so 'cmp' above sets nzvc
         csel x1,x1,x3,eq  // x1 if found, else x3
         neg x1,x1
+        mov tmp2x,#0
 
   section ANDMAJNZ  // Android passes junk args to DT_INIT?
         mov x1,#~0<<12  // -4096
+asl_delta= 1<<12
+        mov tmp2x,#asl_delta
 
   section ELFMAKNZ
         str x1,[sp,#f_PMASK]
@@ -222,7 +225,8 @@ main:
         lodsl; mov tmp,eax  // offset(b_info)
                mov rcx,rsi
         lodsl; sub rcx,rcx,rax; //str ecx,[sp,#o_reloc]
-        lodsl; add rax,rax,rcx; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
+        lodsl; add rax,rax,tmp2x  // +asl_delta
+               add rax,rax,rcx; str rax,[sp,#f_uinit]  // reloc DT_INIT  for step 12
   slot o_hatch  // 6
         lodsl; add rax,rax,rcx; str rax,[sp,#o_hatch]  // reloc &hatch   for step 10
         lodsl; add rdi,rax,rcx  // destination for decompress

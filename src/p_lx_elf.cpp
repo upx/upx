@@ -328,7 +328,8 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
             : elf_unsigned_dynamic(Elf32_Dyn::DT_INIT) );
         set_te32(&disp, firstpc_va - load_va);
         if (opt->o_unix.android_shlib) { // the extra page
-            set_te32(&disp, asl_delta + firstpc_va - load_va);
+            // Hacked in *-linux.shlib-init.S
+            //set_te32(&disp, asl_delta + firstpc_va - load_va);
         }
         fo->write(&disp, sizeof(disp));  // DT_INIT.d_val
         len += sizeof(disp);
@@ -2953,8 +2954,13 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                 // .p_filesz,.p_memsz are updated in ::pack3
             }
 
+            Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)&lowmem[0];
+            upx_uint64_t e_entry = get_te64(&ehdr->e_entry);
+            if (xct_off < e_entry) {
+                set_te64(&ehdr->e_entry, asl_delta + e_entry);
+            }
             // Relocate Shdr; and Rela, Rel (below xct_off)
-            set_te64(&((Elf64_Ehdr *)&lowmem[0])->e_shoff, xct_off);
+            set_te64(&ehdr->e_shoff, xct_off);
             memcpy(&lowmem[xct_off], shdri, e_shnum * sizeof(Elf64_Ehdr));
             Elf64_Shdr *const shdro = (Elf64_Shdr *)&lowmem[xct_off];
             Elf64_Shdr *shdr = shdro;
@@ -3574,6 +3580,49 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     }
 }
 
+void
+PackLinuxElf64::unRela64(
+    upx_uint64_t dt_rela,
+    Elf64_Rela *rela0,
+    unsigned relasz,
+    MemBuffer &ptload1,
+    upx_uint64_t const load_off,
+    OutputFile *fo
+)
+{
+    Elf64_Rela *rela = rela0;
+    for (int k = relasz / sizeof(Elf64_Rela); --k >= 0; ++rela) {
+        upx_uint64_t r_addend = get_te64(&rela->r_addend);
+        upx_uint64_t r_offset = get_te64(&rela->r_offset);
+        upx_uint64_t r_info   = get_te64(&rela->r_info);
+        unsigned r_type = ELF64_R_TYPE(r_info);
+        if (xct_off <= r_offset) {
+            set_te64(&rela->r_offset, r_offset - asl_delta);
+        }
+        if (Elf64_Ehdr::EM_AARCH64 == e_machine) {
+            if (R_AARCH64_RELATIVE == r_type) {
+                if (xct_off <= r_addend) {
+                    set_te64(&rela->r_addend, r_addend - asl_delta);
+                }
+            }
+            if (R_AARCH64_JUMP_SLOT == r_type) {
+                ++n_jmp_slot;
+                // .rela.plt contains offset of the "first time" target
+                upx_uint64_t d = r_offset - load_off - asl_delta;
+                if (plt_off > d) {
+                    plt_off = d;
+                }
+                upx_uint64_t w = get_te64(&ptload1[d]);
+                if (xct_off <= w) {
+                    set_te64(&ptload1[d], w - asl_delta);
+                }
+            }
+        }
+    }
+    fo->seek(dt_rela, SEEK_SET);
+    fo->rewrite(rela0, relasz);
+}
+
 void PackLinuxElf64::unpack(OutputFile *fo)
 {
     if (e_phoff != sizeof(Elf64_Ehdr)) {// Phdrs not contiguous with Ehdr
@@ -3613,7 +3662,6 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         throwCantUnpack("b_info corrupted");
     ph.filter_cto = bhdr.b_cto8;
 
-#define MAX_ELF_HDR 1024
     MemBuffer u(ph.u_len);
     Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)&u[0];
     Elf64_Phdr const *phdr = 0;
@@ -3641,9 +3689,11 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
+#define MAX_ELF_HDR 1024
     if ((MAX_ELF_HDR - sizeof(Elf64_Ehdr))/sizeof(Elf64_Phdr) < u_phnum) {
         throwCantUnpack("bad compressed e_phnum");
     }
+#undef MAX_ELF_HDR
 
     // Packed ET_EXE has no PT_DYNAMIC.
     // Packed ET_DYN has original PT_DYNAMIC for info needed by rtld.
@@ -3781,6 +3831,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         for (unsigned j= 0; j < u_phnum; ++j, ++phdr) {
             if (PT_LOAD64==get_te32(&phdr->p_type) && 0!=n_ptload++) {
                 load_off = get_te64(&phdr->p_offset);
+                load_va = get_te64(&phdr->p_vaddr);
                 fi->seek(old_data_off, SEEK_SET);
                 fi->readx(ibuf, old_data_len);
                 total_in  += old_data_len;
@@ -3793,24 +3844,68 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         }
         // Restore DT_INIT.d_val
         phdr = (Elf64_Phdr *)&u[sizeof(*ehdr)];
+        if (fo)
         for (unsigned j= 0; j < u_phnum; ++j, ++phdr) {
             if (phdr->PT_DYNAMIC==get_te32(&phdr->p_type)) {
+                upx_uint64_t dt_pltrelsz(0), dt_jmprel(0);
+                upx_uint64_t dt_relasz(0), dt_rela(0);
                 unsigned const dyn_off = get_te64(&phdr->p_offset);
                 unsigned const dyn_len = get_te64(&phdr->p_filesz);
                 Elf64_Dyn *dyn = (Elf64_Dyn *)((unsigned char *)ibuf +
                     (dyn_off - load_off));
                 for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
-                    if (dyn->DT_INIT==get_te32(&dyn->d_tag)) {
-                        if (fo) {
-                            fo->seek(sizeof(upx_uint64_t) + j2 + dyn_off, SEEK_SET);
-                            fo->rewrite(&old_dtinit, sizeof(old_dtinit));
-                            fo->seek(0, SEEK_END);
-                        }
-                        break;
+                    upx_uint64_t const tag = get_te64(&dyn->d_tag);
+                    upx_uint64_t val = get_te64(&dyn->d_val);
+                    switch (tag) {
+                    case dyn->DT_INIT: {
+                        fo->seek(sizeof(upx_uint64_t) + j2 + dyn_off, SEEK_SET);
+                        fo->rewrite(&old_dtinit, sizeof(old_dtinit));
+                    } break;
+                    case dyn->DT_PREINIT_ARRAY:
+                    case dyn->DT_INIT_ARRAY:
+                    case dyn->DT_FINI_ARRAY:
+                    case dyn->DT_FINI:
+                    case dyn->DT_PLTGOT: {
+                        fo->seek(sizeof(upx_uint64_t) + j2 + dyn_off, SEEK_SET);
+                        val -= asl_delta;
+                        fo->rewrite(&val, sizeof(val));
+                    } break;
+                    case dyn->DT_PLTRELSZ: { // Size in bytes of PLT relocs
+                        dt_pltrelsz = val;  (void)dt_pltrelsz;
+                    } break;
+                    case dyn->DT_JMPREL: { // Address of PLT relocs
+                        dt_jmprel = val;  (void)dt_jmprel;
+                    } break;
+                    case dyn->DT_RELASZ: { // Total size of Rela relocs
+                        dt_relasz = val;
+                    } break;
+                    case dyn->DT_RELA: { // Address of Rela relocs
+                        dt_rela = val;
+                    } break;
+                    } // end switch()
+                }
+
+                lowmem.alloc(xct_off);
+                fi->seek(0, SEEK_SET);
+                fi->read(lowmem, xct_off);  // contains relocation tables
+                if (dt_relasz) {
+                    Elf64_Rela *const rela0 = (Elf64_Rela *)lowmem.subref(
+                        "bad Rela offset", dt_rela, dt_relasz);
+                    unRela64(dt_rela, rela0, dt_relasz, ibuf, load_va, fo);
+                }
+                if (dt_pltrelsz) {
+                    Elf64_Rela *const jmp0 = (Elf64_Rela *)lowmem.subref(
+                        "bad Jmprel offset", dt_jmprel, dt_pltrelsz);
+                    plt_off = ~0ull; n_jmp_slot = 0;
+                    unRela64(dt_jmprel, jmp0,  dt_pltrelsz, ibuf, load_va, fo);
+                    if (~0ull != plt_off) {
+                        fo->seek(plt_off + load_off, SEEK_SET);
+                        fo->rewrite(&ibuf[plt_off], n_jmp_slot * sizeof(void *));
                     }
                 }
             }
         }
+        if (fo) fo->seek(0, SEEK_END);
     }
 
     // update header with totals
@@ -3824,7 +3919,6 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     // finally test the checksums
     if (ph.c_adler != c_adler || ph.u_adler != u_adler)
         throwChecksumError();
-#undef MAX_ELF_HDR
 }
 
 
