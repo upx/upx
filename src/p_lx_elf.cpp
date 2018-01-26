@@ -315,7 +315,8 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
     fo->write(&zero, t);
     len += t;
 
-    set_te32(&disp, sz_elf_hdrs + sizeof(p_info) + sizeof(l_info));
+    set_te32(&disp, sz_elf_hdrs + sizeof(p_info) + sizeof(l_info) +
+        (!!xct_off & !!opt->o_unix.android_shlib));  // |1 iff android shlib
     fo->write(&disp, sizeof(disp));  // offset(b_info)
     len += sizeof(disp);
     set_te32(&disp, len);  // distance back to beginning (detect dynamic reloc)
@@ -327,10 +328,6 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
             ? jni_onload_va
             : elf_unsigned_dynamic(Elf32_Dyn::DT_INIT) );
         set_te32(&disp, firstpc_va - load_va);
-        if (opt->o_unix.android_shlib) { // the extra page
-            // Hacked in *-linux.shlib-init.S
-            //set_te32(&disp, asl_delta + firstpc_va - load_va);
-        }
         fo->write(&disp, sizeof(disp));  // DT_INIT.d_val
         len += sizeof(disp);
 
