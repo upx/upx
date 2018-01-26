@@ -398,7 +398,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             unsigned const ioff = get_te32(&phdr->p_offset);
             unsigned       align= get_te32(&phdr->p_align);
             unsigned const type = get_te32(&phdr->p_type);
-            if (phdr->PT_INTERP==type) {
+            if (Elf32_Phdr::PT_INTERP==type) {
                 // Rotate to highest position, so it can be lopped
                 // by decrementing e_phnum.
                 memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));
@@ -408,7 +408,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 set_te16(&ehdri.e_phnum, --e_phnum);
                 continue;
             }
-            if (phdr->PT_LOAD32==type) {
+            if (PT_LOAD32==type) {
                 if (xct_off < ioff) {  // Slide up non-first PT_LOAD.
                     if ((1u<<12) < align) {
                         align = 1u<<12;
@@ -428,13 +428,13 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 continue;  // all done with this PT_LOAD
             }
             // Compute new offset of &DT_INIT.d_val.
-            if (/*0==jni_onload_sym &&*/ phdr->PT_DYNAMIC==type) {
+            if (/*0==jni_onload_sym &&*/ Elf32_Phdr::PT_DYNAMIC==type) {
                 off_init = ioff + ((xct_off < ioff) ? so_slide : 0);
                 fi->seek(ioff, SEEK_SET);
                 fi->read(ibuf, len);
                 Elf32_Dyn *dyn = (Elf32_Dyn *)(void *)ibuf;
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
-                    if (dyn->DT_INIT==get_te32(&dyn->d_tag)) {
+                    if (Elf32_Dyn::DT_INIT==get_te32(&dyn->d_tag)) {
                         unsigned const t = (unsigned char *)&dyn->d_val -
                                            (unsigned char *)ibuf;
                         off_init += t;
@@ -536,7 +536,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             upx_uint64_t const ioff = get_te64(&phdri[j].p_offset);
             upx_uint64_t       align= get_te64(&phdr->p_align);
             unsigned const type = get_te32(&phdr->p_type);
-            if (phdr->PT_INTERP==type) {
+            if (Elf64_Phdr::PT_INTERP==type) {
                 // Rotate to highest position, so it can be lopped
                 // by decrementing e_phnum.
                 memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));
@@ -546,7 +546,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 set_te16(&ehdri.e_phnum, --e_phnum);
                 continue;
             }
-            if (phdr->PT_LOAD==type) {
+            if (PT_LOAD64 == type) {
                 if (xct_off < ioff) {  // Slide up non-first PT_LOAD.
                     // AMD64 chip supports page sizes of 4KiB, 2MiB, and 1GiB;
                     // the operating system chooses one.  .p_align typically
@@ -571,11 +571,11 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 continue;  // all done with this PT_LOAD
             }
             // Compute new offset of &DT_INIT.d_val.
-            if (phdr->PT_DYNAMIC==type) {
+            if (Elf64_Phdr::PT_DYNAMIC==type) {
                 off_init = ioff + ((xct_off < ioff) ? so_slide : 0);
                 Elf64_Dyn *dyn = (Elf64_Dyn *)&file_image[ioff];
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
-                    if (dyn->DT_INIT==get_te64(&dyn->d_tag)) {
+                    if (Elf64_Dyn::DT_INIT==get_te64(&dyn->d_tag)) {
                         unsigned const t = (unsigned char *)&dyn->d_val -
                                            (unsigned char *)&file_image[ioff];
                         off_init += t;
@@ -1702,7 +1702,7 @@ bool PackLinuxElf32::canPack()
         }
         unsigned const p_type = get_te32(&phdr->p_type);
         unsigned const p_offset = get_te32(&phdr->p_offset);
-        if (1!=exetype && phdr->PT_LOAD32 == p_type) { // 1st PT_LOAD
+        if (1!=exetype && PT_LOAD32 == p_type) { // 1st PT_LOAD
             exetype = 1;
             load_va = get_te32(&phdr->p_vaddr);  // class data member
 
@@ -1722,7 +1722,7 @@ bool PackLinuxElf32::canPack()
             }
             hatch_off = ~3u & (3+ get_te32(&phdr->p_memsz));
         }
-        if (phdr->PT_NOTE == p_type) {
+        if (PT_NOTE32 == p_type) {
             unsigned const x = get_te32(&phdr->p_memsz);
             if ( sizeof(elfout.notes) < x  // beware overflow of note_size
             ||  (sizeof(elfout.notes) < (note_size += x)) ) {
@@ -1889,7 +1889,7 @@ bool PackLinuxElf32::canPack()
                 phdr = phdri;
                 for (unsigned j= 0; j < e_phnum; ++phdr, ++j) {
                     unsigned const vaddr = get_te32(&phdr->p_vaddr);
-                    if (Elf32_Phdr::PT_NOTE == get_te32(&phdr->p_type)
+                    if (PT_NOTE32 == get_te32(&phdr->p_type)
                     && xct_va < vaddr) {
                         char buf[40]; snprintf(buf, sizeof(buf),
                            "PT_NOTE %#x above stub", vaddr);
@@ -1956,7 +1956,7 @@ PackLinuxElf64::canPack()
         if (j >= 14)
             return false;
         unsigned const p_type = get_te32(&phdr->p_type);
-        if (1!=exetype && phdr->PT_LOAD64 == p_type) { // 1st PT_LOAD
+        if (1!=exetype && PT_LOAD64 == p_type) { // 1st PT_LOAD
             exetype = 1;
             load_va = get_te64(&phdr->p_vaddr);  // class data member
             upx_uint64_t const p_offset = get_te64(&phdr->p_offset);
@@ -2085,7 +2085,7 @@ PackLinuxElf64::canPack()
                 phdr = phdri;
                 for (unsigned j= 0; j < e_phnum; ++phdr, ++j) {
                     upx_uint64_t const vaddr = get_te64(&phdr->p_vaddr);
-                    if (Elf64_Phdr::PT_NOTE == get_te32(&phdr->p_type)
+                    if (PT_NOTE64 == get_te32(&phdr->p_type)
                     && xct_va < vaddr) {
                         char buf[40]; snprintf(buf, sizeof(buf),
                            "PT_NOTE %#lx above stub", (unsigned long)vaddr);
@@ -2139,7 +2139,7 @@ PackLinuxElf32::getbase(const Elf32_Phdr *phdr, int nph) const
 {
     off_t base = ~0u;
     for (int j = 0; j < nph; ++phdr, ++j) {
-        if (phdr->PT_LOAD == get_te32(&phdr->p_type)) {
+        if (PT_LOAD32 == get_te32(&phdr->p_type)) {
             unsigned const vaddr = get_te32(&phdr->p_vaddr);
             if (vaddr < (unsigned) base)
                 base = vaddr;
@@ -2302,7 +2302,7 @@ PackNetBSDElf32x86::generateElfHdr(
     note_offset += (np_PaX    ? sizeof(Elf32_Phdr) : 0);
     Elf32_Phdr *phdr = &elfout.phdr[2];
     if (np_NetBSD) {
-        set_te32(&phdr->p_type, Elf32_Phdr::PT_NOTE);
+        set_te32(&phdr->p_type, PT_NOTE32);
         set_te32(&phdr->p_offset, note_offset);
         set_te32(&phdr->p_vaddr, note_offset);
         set_te32(&phdr->p_paddr, note_offset);
@@ -2316,7 +2316,7 @@ PackNetBSDElf32x86::generateElfHdr(
         ++phdr;
     }
     if (np_PaX) {
-        set_te32(&phdr->p_type, Elf32_Phdr::PT_NOTE);
+        set_te32(&phdr->p_type, PT_NOTE32);
         set_te32(&phdr->p_offset, note_offset);
         set_te32(&phdr->p_vaddr, note_offset);
         set_te32(&phdr->p_paddr, note_offset);
@@ -2393,7 +2393,7 @@ PackOpenBSDElf32x86::generateElfHdr(
     unsigned const note_offset = sizeof(*h3) - sizeof(linfo);
     sz_elf_hdrs = sizeof(elfnote) + note_offset;
 
-    set_te32(&h3->phdr[2].p_type, Elf32_Phdr::PT_NOTE);
+    set_te32(&h3->phdr[2].p_type, PT_NOTE32);
     set_te32(&h3->phdr[2].p_offset, note_offset);
     set_te32(&h3->phdr[2].p_vaddr, note_offset);
     set_te32(&h3->phdr[2].p_paddr, note_offset);
@@ -2536,7 +2536,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
     Elf32_Phdr *phdr = phdri;
     note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-        if (phdr->PT_NOTE32 == get_te32(&phdr->p_type)) {
+        if (PT_NOTE32 == get_te32(&phdr->p_type)) {
             note_size += up4(get_te32(&phdr->p_filesz));
         }
     }
@@ -2547,19 +2547,19 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
     phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         unsigned const type = get_te32(&phdr->p_type);
-        if (phdr->PT_NOTE32 == type) {
+        if (PT_NOTE32 == type) {
             unsigned const len = get_te32(&phdr->p_filesz);
             fi->seek(get_te32(&phdr->p_offset), SEEK_SET);
             fi->readx(&note_body[note_size], len);
             note_size += up4(len);
         }
-        if (phdr->PT_LOAD32 == type) {
+        if (PT_LOAD32 == type) {
             unsigned x = get_te32(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
                 ++lg2_page;
             }
         }
-        if (phdr->PT_GNU_STACK32 == type) {
+        if (PT_GNU_STACK32 == type) {
             // MIPS stub cannot handle GNU_STACK yet.
             if (Elf32_Ehdr::EM_MIPS != this->e_machine) {
                 gnu_stack = phdr;
@@ -2846,7 +2846,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
     Elf64_Phdr *phdr = phdri;
     note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-        if (phdr->PT_NOTE64 == get_te32(&phdr->p_type)) {
+        if (PT_NOTE64 == get_te32(&phdr->p_type)) {
             note_size += up4(get_te64(&phdr->p_filesz));
         }
     }
@@ -2857,19 +2857,19 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
     phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         unsigned const type = get_te32(&phdr->p_type);
-        if (phdr->PT_NOTE64 == type) {
+        if (PT_NOTE64 == type) {
             unsigned const len = get_te64(&phdr->p_filesz);
             fi->seek(get_te64(&phdr->p_offset), SEEK_SET);
             fi->readx(&note_body[note_size], len);
             note_size += up4(len);
         }
-        if (phdr->PT_LOAD64 == type) {
+        if (PT_LOAD64 == type) {
             unsigned x = get_te64(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
                 ++lg2_page;
             }
         }
-        if (phdr->PT_GNU_STACK64 == type) {
+        if (PT_GNU_STACK64 == type) {
             gnu_stack = phdr;
         }
     }
@@ -3515,7 +3515,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         Elf32_Phdr *phdr = &elfout.phdr[2];
         unsigned const o_phnum = get_te16(&elfout.ehdr.e_phnum);
         for (unsigned j = 2; j < o_phnum; ++j, ++phdr) {
-            if (Elf32_Phdr::PT_NOTE==get_te32(&phdr->p_type)) {
+            if (PT_NOTE32 == get_te32(&phdr->p_type)) {
                 set_te32(            &phdr->p_vaddr,
                     reloc + get_te32(&phdr->p_vaddr));
                 set_te32(            &phdr->p_paddr,
@@ -3564,7 +3564,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         fo->rewrite(&linfo, sizeof(linfo));
     }
     else {
-        if (Elf64_Phdr::PT_NOTE==get_te64(&elfout.phdr[2].p_type)) {
+        if (PT_NOTE64 == get_te64(&elfout.phdr[2].p_type)) {
             upx_uint64_t const reloc = get_te64(&elfout.phdr[0].p_vaddr);
             set_te64(            &elfout.phdr[2].p_vaddr,
                 reloc + get_te64(&elfout.phdr[2].p_vaddr));
@@ -3846,7 +3846,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         phdr = (Elf64_Phdr *)&u[sizeof(*ehdr)];
         if (fo)
         for (unsigned j= 0; j < u_phnum; ++j, ++phdr) {
-            if (phdr->PT_DYNAMIC==get_te32(&phdr->p_type)) {
+            if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
                 upx_uint64_t dt_pltrelsz(0), dt_jmprel(0);
                 upx_uint64_t dt_relasz(0), dt_rela(0);
                 unsigned const dyn_off = get_te64(&phdr->p_offset);
@@ -3857,29 +3857,29 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                     upx_uint64_t const tag = get_te64(&dyn->d_tag);
                     upx_uint64_t val = get_te64(&dyn->d_val);
                     switch (tag) {
-                    case dyn->DT_INIT: {
+                        case Elf64_Dyn::DT_INIT: {
                         fo->seek(sizeof(upx_uint64_t) + j2 + dyn_off, SEEK_SET);
                         fo->rewrite(&old_dtinit, sizeof(old_dtinit));
                     } break;
-                    case dyn->DT_PREINIT_ARRAY:
-                    case dyn->DT_INIT_ARRAY:
-                    case dyn->DT_FINI_ARRAY:
-                    case dyn->DT_FINI:
-                    case dyn->DT_PLTGOT: {
+                    case Elf64_Dyn::DT_PREINIT_ARRAY:
+                    case Elf64_Dyn::DT_INIT_ARRAY:
+                    case Elf64_Dyn::DT_FINI_ARRAY:
+                    case Elf64_Dyn::DT_FINI:
+                    case Elf64_Dyn::DT_PLTGOT: {
                         fo->seek(sizeof(upx_uint64_t) + j2 + dyn_off, SEEK_SET);
                         val -= asl_delta;
                         fo->rewrite(&val, sizeof(val));
                     } break;
-                    case dyn->DT_PLTRELSZ: { // Size in bytes of PLT relocs
+                    case Elf64_Dyn::DT_PLTRELSZ: { // Size in bytes of PLT relocs
                         dt_pltrelsz = val;  (void)dt_pltrelsz;
                     } break;
-                    case dyn->DT_JMPREL: { // Address of PLT relocs
+                    case Elf64_Dyn::DT_JMPREL: { // Address of PLT relocs
                         dt_jmprel = val;  (void)dt_jmprel;
                     } break;
-                    case dyn->DT_RELASZ: { // Total size of Rela relocs
+                    case Elf64_Dyn::DT_RELASZ: { // Total size of Rela relocs
                         dt_relasz = val;
                     } break;
-                    case dyn->DT_RELA: { // Address of Rela relocs
+                    case Elf64_Dyn::DT_RELA: { // Address of Rela relocs
                         dt_rela = val;
                     } break;
                     } // end switch()
@@ -4555,13 +4555,13 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         // Restore DT_INIT.d_val
         phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
         for (unsigned j= 0; j < u_phnum; ++j, ++phdr) {
-            if (phdr->PT_DYNAMIC==get_te32(&phdr->p_type)) {
+            if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
                 unsigned const dyn_off = get_te32(&phdr->p_offset);
                 unsigned const dyn_len = get_te32(&phdr->p_filesz);
                 Elf32_Dyn *dyn = (Elf32_Dyn *)((unsigned char *)ibuf +
                     (dyn_off - load_off));
                 for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
-                    if (dyn->DT_INIT==get_te32(&dyn->d_tag)) {
+                    if (Elf32_Dyn::DT_INIT==get_te32(&dyn->d_tag)) {
                         if (fo) {
                             fo->seek(sizeof(unsigned) + j2 + dyn_off, SEEK_SET);
                             fo->rewrite(&old_dtinit, sizeof(old_dtinit));
