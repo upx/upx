@@ -384,9 +384,10 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         // between end_text and data, which we wish to prevent
         // because the expanded program will use that space.
         // So: pretend 4KiB pages.
-        unsigned const pm = (Elf64_Ehdr::EM_PPC64 == e_machine)
+        unsigned pm = (Elf64_Ehdr::EM_PPC64 == e_machine)
             ? page_mask  // reducing to 4KiB DOES NOT WORK ??
             : ((~(unsigned)0)<<12);
+        pm = page_mask;  // Revert until consequences can be analyzed
         v_hole = pm & (~pm + v_hole + get_te32(&elfout.phdr[0].p_vaddr));
         set_te32(&elfout.phdr[1].p_vaddr, v_hole);
         set_te32(&elfout.phdr[1].p_align, ((unsigned)0) - pm);
