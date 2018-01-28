@@ -112,7 +112,7 @@ _=-1+_  // one less word on stack
 #define lodslu bl get4u
 
   section ELFMAINX
-//  .long offset(b_info)  src for f_exp
+//  .long offset(b_info)|(asl_delta>>12)  src for f_exp
 //D_INFO:
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
@@ -135,13 +135,19 @@ o_uinit= 1  // lr
         adr esi,here
         sub esi,#(here - _start) + 5*NBPW  // -NBPW + &D_INFO
 here:
-        ldr tmp,[esi,#0*NBPW]  // offset(b_info)
+        ldr tmp,[esi,#0*NBPW]  // offset(b_info)|(asl_delta>>12)
+                mov edi,#1
                                add ecx,esi,#NBPW  // &D_INFO
-        ldr eax,[esi,#1*NBPW]; sub ecx,eax; //str ecx,[SP(o_reloc)]
-// reloc DT_INIT  for step 12
-        ldr eax,[esi,#2*NBPW]; add eax,ecx; str eax,[SP(o_uinit)]
+        ldr eax,[esi,#1*NBPW]
+                and edi,tmp  // asl_delta>>12
+                sub tmp,edi  // offset(b_info)
+                               sub ecx,eax; //str ecx,[SP(o_reloc)]
+                lsl edi,#12  // asl_delta
+        ldr eax,[esi,#2*NBPW]; add eax,ecx
+                               add eax,edi
+                               str eax,[SP(o_uinit)]  // reloc DT_INIT  for step 12
         ldr edi,[esi,#4*NBPW]; add edi,ecx  // dst for f_exp
-                               add esi,tmp,ecx  // &b_info  src for f_exp
+        add esi,tmp,ecx  // &b_info  src for f_exp
 
         sub sp,#3*NBPW  // 3 slots of space
         _=1+_  // &escape_hatch (step 10)

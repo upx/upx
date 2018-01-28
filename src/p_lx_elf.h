@@ -167,6 +167,8 @@ protected:
     unsigned so_slide;
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
+    unsigned n_jmp_slot;
+    unsigned plt_off;
     unsigned page_mask;  // AND clears the offset-within-page
 
     Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC

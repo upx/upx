@@ -120,7 +120,7 @@ sp_frame = 24 * NBPW
 .endm
 
   section ELFMAINX
-//  .long offset(b_info)  src of f_exp
+//  .long offset(b_info)|(asl_delta>>12)  src of f_exp
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
