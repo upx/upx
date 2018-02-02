@@ -123,6 +123,8 @@ protected:
     virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
+    virtual void unRel32(unsigned dt_rel, Elf32_Rel *rel0, unsigned relsz,
+        MemBuffer &membuf, unsigned const load_off, OutputFile *fo);
 
     virtual void generateElfHdr(
         OutputFile *,
