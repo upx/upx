@@ -159,6 +159,7 @@ unfold:  // in: r3= mflg; lr= &O_BINFO
 // Unfold
         ldr r3,[r6,#sz_unc]; str r3,[sp,#-4]!  @ P_01
         mov r3,sp  @ &sz_unc
+        ldrb r0,[r6,#b_method]; str r0,[sp,#-4]!  @ P_02  5th param to f_exp
         add r2,r6,r10  @ dst= reloc(&b_info)
         ldr r1,[r6,#sz_cpr]  @ srclen
         add r0,r6,#3*4  @ src
@@ -166,7 +167,8 @@ unfold:  // in: r3= mflg; lr= &O_BINFO
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#2; bl trace
 #endif  /*}*/
-        mov lr,pc; ldr pc,[sp,#4+ F_f_exp]  @ call f_exp  [ARMv4 lacks blx]
+        mov lr,pc; ldr pc,[sp,#2*4+ F_f_exp]  @ call f_exp  [ARMv4 lacks blx]
+        add sp,sp,#4  @ P_02  remove 5th param
         ldr r3,[sp],#4  @ P_01  sz_unc
 
         ldr r1,[sp,#F_mflg]  @ mflg
