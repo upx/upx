@@ -43,35 +43,14 @@ dst .req x2
 #define M_LZMA          14
         cmp meth,#M_LZMA; bne not_lzma
 
-        add x1,src,len,uxtw  // x1= eof_src;
-        mov x4,#0
-        PUSH4(x1,x2,x3, lr)
-
-        PUSH2(x4,x4)  // clear CLzmaDecoderState, inSizeProcessed, outSizeProcessed
-State= 0
-#define a0 x0  /* &CLzmaDecoderState */
-        add a0,sp,#State
-#define a1 x1  /* inp */
-#define a2 w2  /* inSize */
-#define a3 x3  /* &inSizeProcessed */
-        add a3,sp,#8
-#define a4 x4  /* outp */
-#define a5 w5  /* outSize */
-#define a6 x6  /* &outSizeProcessed */
-        add a6,sp,#12
-
 #define t0  w7
 #define t1  w8
 #define t1x x8
 
-#define fp  x29
+fp .req x29
+        PUSH4(x2,x3, fp,lr)  // dst,ldst, fp,lr
+        mov fp,sp
 
-//The target is:
-//LzmaDecode(  // from lzmaSDK/C/7zip/Compress/LZMA_C/LzmaDecode.h
-//      a0= &CLzmaDecoderState,
-//      a1= inp,  a2= inSize,  a3= &inSizeProcessed,
-//      a4= outp, a5= outSize, a6= &outSizeProcessed
-//)
 #define LZMA_BASE_SIZE 1846
 #define LZMA_LIT_SIZE   768
 
@@ -79,46 +58,58 @@ State= 0
         mov t0,#2*LZMA_LIT_SIZE
         lsr t1,t1,#3  // lit_context_bits + lit_pos_bits
         lslv t0,t0,t1  // 2*LZMA_LIT_SIZE << (lit_context_bits + lit_pos_bits)
-        mov fp,sp
 #define W 4  /* even #bits to round up so that 8 bits span all the 1's */
-        add t0,t0,#((~(~0<<W) + 2*LZMA_BASE_SIZE)>>W)<<W
+        add t0,t0,#((~(~0<<W) + 2*LZMA_BASE_SIZE)>>W)<<W  // 0 mod 16
 
         mov t1x,sp
         sub sp,sp,t0,uxtw
-
-1:  // clear inSizeProcessed and CLzmaDecoderState
-        stp x4,x4,[x3],#2*8
-        cmp x3,t1x
+        mov x4,sp
+1:  // clear lzma probability array
+        stp xzr,xzr,[x4],#2*8
+        cmp x4,t1x
         blo 1b
 
+#define a0 x0  /* &CLzmaDecoderState */
+#define a1 x1  /* inp */
+#define a2 w2  /* inSize */
+#define a3 x3  /* &inSizeProcessed */
+#define a4 x4  /* outp */
+#define a5 w5  /* outSize */
+#define a6 x6  /* &outSizeProcessed */
+//The target is:
+//LzmaDecode(  // from lzmaSDK/C/7zip/Compress/LZMA_C/LzmaDecode.h
+//      a0= &CLzmaDecoderState,
+//      a1= inp,  a2= inSize,  a3= &inSizeProcessed,
+//      a4= outp, a5= outSize, a6= &outSizeProcessed
+//)
+        stp xzr,xzr,[sp,#-2*NBPW]!  // clear CLzmaDecoderState, inSizeProcessed
+
         mov a6,ldst  // &outSizeProcessed
-        mov a5,t0  // outSize
+        ldr a5,[a6]  // outSize
         mov a4,dst  // outp
+        add a3,sp,#8  // &inSizeProcessed
         sub w2,lsrc,#2  // inSize
         mov a1,src  // inp
+State= 0
+        add a0,sp,#State
 
         ldrb t0,[a1],#1  // first byte, replaces LzmaDecodeProperties()
         and  t0,t0,#7  // posBits
-        strb t0,[sp,#2 + State]
+        strb t0,[a0,#2]
         ldrb t0,[a1],#1  // second byte, replaces LzmaDecodeProperties()
         lsr  t1,t0,#4  // lit_pos_bits
-        strb t1,[sp,#1 + State]
+        strb t1,[a0,#1]
         and  t0,t0,#0xf  // lib_context_bits
-        strb t0,[sp,#0 + State]
-
-        add a0,sp,#State
+        strb t0,[a0,#0]
         bl 1f  // the call
-        mov sp,fp
 
 eof_lzma:
-        POP4(x1,x3,x4, lr)  // x1= eof_src; r3= orig_dst; r4= plen_dst
-        SUB2(src,x1)  // 0 if actual src length equals expected length
-        SUB2(dst,x3)  // actual dst length
-        str dstw,[x4]
+        mov sp,fp
         mov x4,x0  // save result value
+        POP4(x0,x1, fp,lr)  // x0= orig_dst; x1= plen_dst
+        ldr x1,[x1]  // outSizeProcessed
 
-        mov x0,x3  // orig_dst
-        add x1,x3,dst  // orig_dst + dst_len
+        add x1,x1,x0  // last
 cache_lzma:
         dc cvau,x0  // Clean by VA to point of Unification
         ic ivau,x0  // Invalidate by VA to point of Unification
