@@ -10,12 +10,6 @@ environment:
     - { C: msvc-14.0-x64, CL_VERSION: 19.00, VS_VERSION: 2015 }
     - { C: msvc-15.0-x86, CL_VERSION: 19.10, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
     - { C: msvc-15.0-x64, CL_VERSION: 19.10, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
-#   - { C: gcc-4.9-m32, T: SKIP }
-#   - { C: gcc-4.9-m64, T: SKIP }
-  UPX_AUTOMATIC_BUILDS_SSL_KEY:
-    secure: PZMpVeqnEYe39kK+Zu2/fnmZ6/HG6Lvls0hh9GMVU9vCWsr8xaU7kIbHBS01puUkb4bEWPILKYvSEDuhOhguDjd/P4QdXWipvV/F2GaVax0=
-  UPX_AUTOMATIC_BUILDS_SSL_IV:
-    secure: ZshjJ/78dbY60mVJjZJv9Si7rHY9VQb1tfQvFd4lqvY=
 
 init:
   - git config --global core.autocrlf input
