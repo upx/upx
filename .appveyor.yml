@@ -78,18 +78,18 @@ build_script:
   # build UCL
   - cd %BDIR%\ucl-1.03
   - set s=c:\projects\deps\ucl-1.03
-  - cl -MT -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
+  - cl -MT -Z7 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
   - link -lib -out:ucl.lib *.obj
   # build zlib
   - cd %BDIR%\zlib-1.2.8
-  - cl -MT -O2 -W2 %DEFS% -c c:\projects\deps\zlib-1.2.8\*.c
+  - cl -MT -Z7 -W2 %DEFS% -c c:\projects\deps\zlib-1.2.8\*.c
   - link -lib -out:zlib.lib *.obj
   # build UPX
   - cd %BDIR%\upx
   - set s=c:\projects\upx\src
   - cat .GITREV.txt
   - set /p GITREV=<.GITREV.txt
-  - cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DWITH_LZMA=0x443 -DUCL_NO_ASM -I%s%\lzma-sdk -Ic:\projects\deps\ucl-1.03\include -Ic:\projects\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
+  - cl -MT -EHsc -J -Z7 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DWITH_LZMA=0x443 -DUCL_NO_ASM -I%s%\lzma-sdk -Ic:\projects\deps\ucl-1.03\include -Ic:\projects\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
 
 test_script:
   - set UPX=--no-color --no-progress
