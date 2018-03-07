@@ -84,6 +84,7 @@ build_script:
   - cat .GITREV.txt
   - set /p GITREV=<.GITREV.txt
   - cl -MT -EHsc -J -Z7 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DWITH_LZMA=0x443 -DUCL_NO_ASM -I%s%\lzma-sdk -Ic:\projects\deps\ucl-1.03\include -Ic:\projects\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
+  - ls
 
 artifacts:
   # pushing entire folder as a zip archive
