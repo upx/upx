@@ -255,11 +255,11 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     }
     if (0==e_phnum) throwCantUnpack("0==e_phnum");
     e_phoff = get_te32(&ehdri.e_phoff);
-    if ((unsigned long)file_size < ((unsigned long)e_phoff + e_phnum * sizeof(Elf32_Phdr))) {
+    if ((unsigned long)file_size < ((unsigned long long)e_phoff + e_phnum * sizeof(Elf32_Phdr))) {
         throwCantUnpack("bad e_phoff");
     }
     e_shoff = get_te32(&ehdri.e_shoff);
-    if ((unsigned long)file_size < ((unsigned long)e_shoff + e_shnum * sizeof(Elf32_Shdr))) {
+    if ((unsigned long)file_size < ((unsigned long long)e_shoff + e_shnum * sizeof(Elf32_Shdr))) {
         throwCantUnpack("bad e_shoff");
     }
     sz_phdrs = e_phnum * e_phentsize;
