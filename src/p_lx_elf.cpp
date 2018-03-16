@@ -255,11 +255,13 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     }
     if (0==e_phnum) throwCantUnpack("0==e_phnum");
     e_phoff = get_te32(&ehdri.e_phoff);
-    if ((unsigned long)file_size < ((unsigned long)e_phoff + e_phnum * sizeof(Elf32_Phdr))) {
+    unsigned const last_Phdr = e_phoff + e_phnum * sizeof(Elf32_Phdr);
+    if (last_Phdr < e_phoff || (unsigned long)file_size < last_Phdr) {
         throwCantUnpack("bad e_phoff");
     }
     e_shoff = get_te32(&ehdri.e_shoff);
-    if ((unsigned long)file_size < ((unsigned long)e_shoff + e_shnum * sizeof(Elf32_Shdr))) {
+    unsigned const last_Shdr = e_shoff + e_shnum * sizeof(Elf32_Shdr);
+    if (last_Shdr < e_shoff || (unsigned long)file_size < last_Shdr) {
         throwCantUnpack("bad e_shoff");
     }
     sz_phdrs = e_phnum * e_phentsize;
@@ -760,11 +762,13 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     }
     if (0==e_phnum) throwCantUnpack("0==e_phnum");
     e_phoff = get_te64(&ehdri.e_phoff);
-    if ((unsigned long)file_size < (e_phoff + e_phnum * sizeof(Elf64_Phdr))) {
+    upx_uint64_t const last_Phdr = e_phoff + e_phnum * sizeof(Elf64_Phdr);
+    if (last_Phdr < e_phoff || (unsigned long)file_size < last_Phdr) {
         throwCantUnpack("bad e_phoff");
     }
     e_shoff = get_te64(&ehdri.e_shoff);
-    if ((unsigned long)file_size < (e_shoff + e_shnum * sizeof(Elf64_Shdr))) {
+    upx_uint64_t const last_Shdr = e_shoff + e_shnum * sizeof(Elf64_Shdr);
+    if (last_Shdr < e_shoff || (unsigned long)file_size < last_Shdr) {
         throwCantUnpack("bad e_shoff");
     }
     sz_phdrs = e_phnum * e_phentsize;
