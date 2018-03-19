@@ -831,7 +831,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
         {
             if (is_text) {
                 slide = 0;
-                segTEXT.filesize = fo->getBytesWritten();
+                segTEXT.vmsize = segTEXT.filesize = fo->getBytesWritten();
                 segTEXT.maxprot  |= Mach_command::VM_PROT_WRITE;
                 segcmdtmp = segTEXT;
                 opos = o_end_txt = segcmdtmp.filesize + segcmdtmp.fileoff;
@@ -942,10 +942,12 @@ off_t PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
     fo->write(&disp, sizeof(disp));
     len += sizeof(disp);
 
-    disp = len - sz_mach_headers;  // backward offset to start of compressed data
-    fo->write(&disp, sizeof(disp));
-    len += sizeof(disp);
-    segTEXT.vmsize = segLINK.vmaddr - segTEXT.vmaddr;  // must protect this much
+    if (my_filetype!=Mach_header::MH_DYLIB) {
+        disp = len - sz_mach_headers;  // backward offset to start of compressed data
+        fo->write(&disp, sizeof(disp));
+        len += sizeof(disp);
+    }
+    segTEXT.vmsize = segTEXT.filesize;
     threado_setPC(entryVMA= len + segTEXT.vmaddr);
 
     return super::pack3(fo, ft);
@@ -978,14 +980,10 @@ off_t PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 off_t PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    TE64 disp64;
     upx_uint64_t const zero = 0;
     off_t len = fo->getBytesWritten();
-    fo->write(&zero, 7& (0u-len));
-    len += (7& (0u-len)) + sizeof(disp64) + 4*sizeof(disp);
-
-    disp64= len;
-    fo->write(&disp64, sizeof(disp64));  // __mod_init_func
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + 3*sizeof(disp);
 
     disp = prev_mod_init_func;
     fo->write(&disp, sizeof(disp));  // user .init_address
