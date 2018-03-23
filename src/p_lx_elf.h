@@ -81,7 +81,6 @@ protected:
     unsigned sz_pack2a;  // after pack2() of all PT_LOAD
     unsigned lg2_page;  // log2(PAGE_SIZE)
     unsigned page_size;  // 1u<<lg2_page
-    bool is_big;  // stub style: must use area above the brk
     bool is_pie;  // is Position-Independent-Executable (ET_DYN main program)
     unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
     unsigned hatch_off;  // file offset of escape hatch
