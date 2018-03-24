@@ -183,7 +183,9 @@ main:
                mov ecx,esi
         lodsl; sub ecx,ecx,eax; //str ecx,[fp,#o_reloc]
                sub tmp,esi,tmp  // &b_info
-        lodsl; add eax,ecx,eax; str eax,[fp,#o_uinit]  // reloc DT_INIT  for step 12
+        lodsl; cmp eax,#0; beq 0f
+               add eax,ecx,eax  // reloc DT_INIT  for step 12
+            0: str eax,[fp,#o_uinit]
         lodsl; add eax,ecx,eax; push eax               // reloc &hatch   for step 10
 o_hatch= -1*4
         lodsl; add edi,ecx,eax  // &l_info; also destination for decompress
@@ -308,11 +310,18 @@ supervise:
         error ARMEL_EABI4, ARM_OLDABI
 #endif  //}
         ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
+hatch_empty:
+        ret
 
 L620:  // Implant escape hatch at end of .text
         ldr eax,[fp,#o_hatch]
-        ldmia  lr,{arg1,arg2}
+        ldmia  lr,{arg1,arg2,arg3}
         stmia eax,{arg1,arg2}
+        ldr tmp,[fp,#o_uinit]
+        cmp tmp,#0; bne 0f
+          str arg3,[eax]
+          str eax,[fp,#o_uinit]
+0:
 
 //p_unflt
         ldmia sp!,{arg1,arg2,arg3,arg4, eax, r12}  // r12= w_fragment [toss]
