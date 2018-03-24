@@ -229,6 +229,7 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL),
     o_elf_shnum(0)
 {
+    memset(dt_table, 0, sizeof(dt_table));
 }
 
 PackLinuxElf::~PackLinuxElf()
@@ -292,6 +293,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf32_Dyn const *)(check_pt_dynamic(phdr) + file_image);
+            invert_pt_dynamic();
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -328,7 +330,7 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
     if (xct_off) {  // is_shlib
         upx_uint64_t const firstpc_va = (jni_onload_va
             ? jni_onload_va
-            : elf_unsigned_dynamic(Elf32_Dyn::DT_INIT) );
+            : elf_unsigned_dynamic(upx_dt_init) );
         set_te32(&disp, firstpc_va - load_va);
         fo->write(&disp, sizeof(disp));  // DT_INIT.d_val
         len += sizeof(disp);
@@ -444,10 +446,9 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 off_init = ioff + ((xct_off < ioff) ? so_slide : 0);
                 Elf32_Dyn *dyn = (Elf32_Dyn *)(void *)&file_image[ioff];
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
-                    if (Elf32_Dyn::DT_INIT==get_te32(&dyn->d_tag)) {
-                        unsigned const t = (unsigned char *)&dyn->d_val -
-                                           (unsigned char *)&file_image[ioff];
-                        off_init += t;
+                    if (get_te32(&dyn->d_tag) == upx_dt_init) {
+                        off_init += (unsigned char *)&dyn->d_val
+                                  - (unsigned char *)&file_image[ioff];
                         break;
                     }
                 }
@@ -482,7 +483,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 &&  !strcmp(".rel.plt", get_te32(&shdr->sh_name) + shstrtab)) {
                     unsigned f_off = elf_get_offset_from_address(plt_off);
                     fo->seek(so_slide + f_off, SEEK_SET);  // FIXME: assumes PT_LOAD[1]
-                    fo->rewrite(&file_image[f_off], n_jmp_slot * sizeof(void *));
+                    fo->rewrite(&file_image[f_off], n_jmp_slot * sizeof(unsigned));
                  }
             }
         }
@@ -594,7 +595,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 off_init = ioff + ((xct_off < ioff) ? so_slide : 0);
                 Elf64_Dyn *dyn = (Elf64_Dyn *)&file_image[ioff];
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
-                    if (Elf64_Dyn::DT_INIT==get_te64(&dyn->d_tag)) {
+                    if (upx_dt_init==get_te64(&dyn->d_tag)) {
                         unsigned const t = (unsigned char *)&dyn->d_val -
                                            (unsigned char *)&file_image[ioff];
                         off_init += t;
@@ -797,6 +798,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
             dynseg= (Elf64_Dyn const *)(check_pt_dynamic(phdr) + file_image);
+            invert_pt_dynamic();
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -1576,6 +1578,23 @@ PackLinuxElf64arm::buildLoader(const Filter *ft)
         stub_arm64_linux_elf_fold,  sizeof(stub_arm64_linux_elf_fold), ft);
 }
 
+void
+PackLinuxElf32::invert_pt_dynamic()
+{
+    Elf32_Dyn const *dynp= dynseg;
+    unsigned ndx = 1+ 0;
+    if (dynp)
+    for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++ndx, ++dynp) {
+        if (dynp->d_tag < DT_NUM) {
+            dt_table[dynp->d_tag] = ndx;
+        }
+    }
+    upx_dt_init = 0;
+         if (dt_table[Elf32_Dyn::DT_INIT])          upx_dt_init = Elf32_Dyn::DT_INIT;
+    else if (dt_table[Elf32_Dyn::DT_PREINIT_ARRAY]) upx_dt_init = Elf32_Dyn::DT_PREINIT_ARRAY;
+    else if (dt_table[Elf32_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf32_Dyn::DT_INIT_ARRAY;
+}
+
 Elf32_Phdr const *
 PackLinuxElf32::elf_find_ptype(unsigned type, Elf32_Phdr const *phdr, unsigned phnum)
 {
@@ -1827,6 +1846,7 @@ bool PackLinuxElf32::canPack()
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf32_Dyn const *)(check_pt_dynamic(phdr) + file_image);
+            invert_pt_dynamic();
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -1859,7 +1879,7 @@ bool PackLinuxElf32::canPack()
         // 2011-06-01: stub.shlib-init.S works around by installing hatch
         // at end of .text.
 
-        if (/*jni_onload_sym ||*/ elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
+        if (/*jni_onload_sym ||*/ elf_find_dynamic(upx_dt_init)) {
             if (this->e_machine!=Elf32_Ehdr::EM_386
             &&  this->e_machine!=Elf32_Ehdr::EM_MIPS
             &&  this->e_machine!=Elf32_Ehdr::EM_ARM)
@@ -1875,6 +1895,19 @@ bool PackLinuxElf32::canPack()
                     if (Elf32_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
                         xct_va = umin(xct_va, get_te32(&shdr->sh_addr));
                     }
+                    // By default /bin/ld leaves 4 extra DT_NULL to support pre-linking.
+                    // Take one of them if DT_INIT is not present already.
+                    if (Elf32_Shdr::SHT_DYNAMIC == get_te32(&shdr->sh_type)
+                    &&  Elf32_Dyn::DT_INIT != upx_dt_init) {
+                        unsigned n = get_te32(&shdr->sh_size) / sizeof(Elf32_Dyn);
+                        Elf32_Dyn *dynp = const_cast<Elf32_Dyn *>(dynseg);
+                        for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++dynp) /* empty */;
+                        if ((1+ dynp) < (n+ dynseg)) { // take one
+                            set_te32(&dynp->d_tag, Elf32_Dyn::DT_INIT);
+                            dynp->d_val = 0;
+                            upx_dt_init = Elf32_Dyn::DT_INIT;
+                        }
+                    }
                 }
             }
             else { // no Sections; use heuristics
@@ -1882,7 +1915,7 @@ bool PackLinuxElf32::canPack()
                 unsigned const strtab = elf_unsigned_dynamic(Elf32_Dyn::DT_STRTAB);
                 unsigned const relsz  = elf_unsigned_dynamic(Elf32_Dyn::DT_RELSZ);
                 unsigned const rel    = elf_unsigned_dynamic(Elf32_Dyn::DT_REL);
-                unsigned const init   = elf_unsigned_dynamic(Elf32_Dyn::DT_INIT);
+                unsigned const init   = elf_unsigned_dynamic(upx_dt_init);
                 if ((init == (relsz + rel   ) && rel    == (strsz + strtab))
                 ||  (init == (strsz + strtab) && strtab == (relsz + rel   ))
                 ) {
@@ -2032,6 +2065,7 @@ PackLinuxElf64::canPack()
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf64_Dyn const *)(check_pt_dynamic(phdr) + file_image);
+            invert_pt_dynamic();
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -2059,7 +2093,7 @@ PackLinuxElf64::canPack()
         // into good positions when building the original shared library,
         // and also requires ld-linux to behave.
 
-        if (elf_find_dynamic(Elf64_Dyn::DT_INIT)) {
+        if (elf_find_dynamic(upx_dt_init)) {
             if (elf_has_dynamic(Elf64_Dyn::DT_TEXTREL)) {
                 throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
@@ -2078,7 +2112,7 @@ PackLinuxElf64::canPack()
                 upx_uint64_t const strtab = elf_unsigned_dynamic(Elf64_Dyn::DT_STRTAB);
                 upx_uint64_t const relsz  = elf_unsigned_dynamic(Elf64_Dyn::DT_RELSZ);
                 upx_uint64_t const rel    = elf_unsigned_dynamic(Elf64_Dyn::DT_REL);
-                upx_uint64_t const init   = elf_unsigned_dynamic(Elf64_Dyn::DT_INIT);
+                upx_uint64_t const init   = elf_unsigned_dynamic(upx_dt_init);
                 if ((init == (relsz + rel   ) && rel    == (strsz + strtab))
                 ||  (init == (strsz + strtab) && strtab == (relsz + rel   ))
                 ) {
@@ -4019,10 +4053,11 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                     upx_uint64_t const dyn_len = get_te64(&dynhdr->p_filesz);
                     Elf64_Dyn *dyn = (Elf64_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
+                    dynseg = dyn; invert_pt_dynamic();
                     for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
                         upx_uint64_t const tag = get_te64(&dyn->d_tag);
                         upx_uint64_t       val = get_te64(&dyn->d_val);
-                        if (Elf64_Dyn::DT_INIT == tag) {
+                        if (upx_dt_init == tag) {
                             set_te64(&dyn->d_val, old_dtinit);
                         }
                         if (is_asl) switch (tag) {
@@ -4344,6 +4379,23 @@ PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
     }
     sz_dynseg = memsz;
     return t;
+}
+
+void
+PackLinuxElf64::invert_pt_dynamic()
+{
+    Elf64_Dyn const *dynp= dynseg;
+    unsigned ndx = 1+ 0;
+    if (dynp)
+    for (; Elf64_Dyn::DT_NULL != dynp->d_tag; ++ndx, ++dynp) {
+        if (dynp->d_tag < DT_NUM) {
+            dt_table[dynp->d_tag] = ndx;
+        }
+    }
+    upx_dt_init = 0;
+         if (dt_table[Elf64_Dyn::DT_INIT])          upx_dt_init = Elf64_Dyn::DT_INIT;
+    else if (dt_table[Elf64_Dyn::DT_PREINIT_ARRAY]) upx_dt_init = Elf64_Dyn::DT_PREINIT_ARRAY;
+    else if (dt_table[Elf64_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf64_Dyn::DT_INIT_ARRAY;
 }
 
 void const *
@@ -4743,11 +4795,16 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                     unsigned const dyn_len = get_te32(&dynhdr->p_filesz);
                     Elf32_Dyn *dyn = (Elf32_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
+                    dynseg = dyn; invert_pt_dynamic();
                     for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
                         unsigned const tag = get_te32(&dyn->d_tag);
                         unsigned       val = get_te32(&dyn->d_val);
                         if (Elf32_Dyn::DT_INIT == tag) {
                             set_te32(&dyn->d_val, old_dtinit);
+                            if (!old_dtinit) { // compressor took the slot
+                                dyn->d_tag = Elf32_Dyn::DT_NULL;
+                                dyn->d_val = 0;
+                            }
                         }
                         if (is_asl) switch (tag) {
                         case Elf32_Dyn::DT_RELSZ:    { dt_relsz    = val; } break;

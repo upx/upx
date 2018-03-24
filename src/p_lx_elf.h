@@ -94,6 +94,9 @@ protected:
     unsigned char ei_data;
     unsigned char ei_osabi;
     char const *osabi_note;
+    unsigned upx_dt_init;  // DT_INIT, DT_PREINIT_ARRAY, DT_INIT_ARRAY
+    static unsigned const DT_NUM = 34;  // elf.h
+    unsigned dt_table[DT_NUM];  // 1+ index in PT_DYNAMIC
 
     unsigned char const *buildid_data;
     int o_elf_shnum; // num output Shdrs
@@ -152,6 +155,7 @@ protected:
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
     unsigned check_pt_dynamic(Elf32_Phdr const *);
+    void invert_pt_dynamic();
     void const *elf_find_dynamic(unsigned) const;
     Elf32_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
@@ -282,6 +286,7 @@ protected:
     Elf64_Shdr const *elf_find_section_name(char const *) const;
     Elf64_Shdr const *elf_find_section_type(unsigned) const;
     upx_uint64_t check_pt_dynamic(Elf64_Phdr const *);
+    void invert_pt_dynamic();
     void const *elf_find_dynamic(unsigned) const;
     Elf64_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
