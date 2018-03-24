@@ -483,7 +483,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 &&  !strcmp(".rel.plt", get_te32(&shdr->sh_name) + shstrtab)) {
                     unsigned f_off = elf_get_offset_from_address(plt_off);
                     fo->seek(so_slide + f_off, SEEK_SET);  // FIXME: assumes PT_LOAD[1]
-                    fo->rewrite(&file_image[f_off], n_jmp_slot * sizeof(unsigned));
+                    fo->rewrite(&file_image[f_off], n_jmp_slot * 4);
                  }
             }
         }
@@ -632,7 +632,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 &&  !strcmp(".rela.plt", get_te32(&shdr->sh_name) + shstrtab)) {
                     upx_uint64_t f_off = elf_get_offset_from_address(plt_off);
                     fo->seek(so_slide + f_off, SEEK_SET);  // FIXME: assumes PT_LOAD[1]
-                    fo->rewrite(&file_image[f_off], n_jmp_slot * sizeof(void *));
+                    fo->rewrite(&file_image[f_off], n_jmp_slot * 8);
                 }
             }
         }
@@ -1895,14 +1895,14 @@ bool PackLinuxElf32::canPack()
                     if (Elf32_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
                         xct_va = umin(xct_va, get_te32(&shdr->sh_addr));
                     }
-                    // By default /bin/ld leaves 4 extra DT_NULL to support pre-linking.
-                    // Take one of them if DT_INIT is not present already.
+                    // By default /usr/bin/ld leaves 4 extra DT_NULL to support pre-linking.
+                    // Take one if DT_INIT is not present.
                     if (Elf32_Shdr::SHT_DYNAMIC == get_te32(&shdr->sh_type)
                     &&  Elf32_Dyn::DT_INIT != upx_dt_init) {
-                        unsigned n = get_te32(&shdr->sh_size) / sizeof(Elf32_Dyn);
+                        unsigned const n = get_te32(&shdr->sh_size) / sizeof(Elf32_Dyn);
                         Elf32_Dyn *dynp = const_cast<Elf32_Dyn *>(dynseg);
-                        for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++dynp) /* empty */;
-                        if ((1+ dynp) < (n+ dynseg)) { // take one
+                        for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++dynp) /* empty */ ;
+                        if ((1+ dynp) < (n+ dynseg)) { // not the terminator, so take it
                             set_te32(&dynp->d_tag, Elf32_Dyn::DT_INIT);
                             dynp->d_val = 0;
                             upx_dt_init = Elf32_Dyn::DT_INIT;
