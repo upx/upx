@@ -330,7 +330,7 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
     if (xct_off) {  // is_shlib
         upx_uint64_t const firstpc_va = (jni_onload_va
             ? jni_onload_va
-            : elf_unsigned_dynamic(upx_dt_init) );
+            : user_init_va);
         set_te32(&disp, firstpc_va - load_va);
         fo->write(&disp, sizeof(disp));  // DT_INIT.d_val
         len += sizeof(disp);
@@ -401,11 +401,12 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         set_te32(&elfout.phdr[1].p_flags, Elf32_Phdr::PF_W|Elf32_Phdr::PF_R);
     }
     if (0!=xct_off) {  // shared library
+        unsigned word = (Elf32_Ehdr::EM_ARM==e_machine) + load_va + sz_pack2;  // Thumb mode
+        set_te32(&file_image[user_init_off], word);  // set the hook
+
+        unsigned off = fo->st_size();
         Elf32_Phdr *phdr = (Elf32_Phdr *)lowmem.subref(
                 "bad e_phoff", e_phoff, e_phnum * sizeof(Elf32_Phdr));
-        unsigned off = fo->st_size();
-        unsigned off_init = 0;  // where in file
-        unsigned va_init = sz_pack2;   // virtual address
         so_slide = 0;
         for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
             unsigned const len  = get_te32(&phdr->p_filesz);
@@ -435,36 +436,15 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                     set_te32(&phdr->p_offset, so_slide + ioff);
                 }
                 else {  // Change length of first PT_LOAD.
-                    va_init += get_te32(&phdr->p_vaddr);
                     set_te32(&phdr->p_filesz, sz_pack2 + lsize);
                     set_te32(&phdr->p_memsz,  sz_pack2 + lsize);
                 }
                 continue;  // all done with this PT_LOAD
             }
-            // Compute new offset of &DT_INIT.d_val.
-            if (Elf32_Phdr::PT_DYNAMIC==type) {
-                off_init = ioff + ((xct_off < ioff) ? so_slide : 0);
-                Elf32_Dyn *dyn = (Elf32_Dyn *)(void *)&file_image[ioff];
-                for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
-                    if (get_te32(&dyn->d_tag) == upx_dt_init) {
-                        off_init += (unsigned char *)&dyn->d_val
-                                  - (unsigned char *)&file_image[ioff];
-                        break;
-                    }
-                }
-                // fall through to relocate .p_offset
-            }
             if (xct_off < ioff)
                 set_te32(&phdr->p_offset, so_slide + ioff);
         }  // end each Phdr
 
-        if (off_init) {  // change DT_INIT.d_val
-            fo->seek(off_init, SEEK_SET);
-            va_init |= (Elf32_Ehdr::EM_ARM==e_machine);  // THUMB mode
-            unsigned word; set_te32(&word, va_init);
-            fo->rewrite(&word, sizeof(word));
-            flen = fo->seek(0, SEEK_END);
-        }
         if (opt->o_unix.android_shlib) {
             // Update {DYNAMIC}.sh_offset by so_slide.
             Elf32_Shdr *shdr = (Elf32_Shdr *)lowmem.subref(
@@ -1892,20 +1872,33 @@ bool PackLinuxElf32::canPack()
             xct_va = ~0u;
             if (e_shnum) {
                 for (int j= e_shnum; --j>=0; ++shdr) {
+                    unsigned const sh_type = get_te32(&shdr->sh_type);
                     if (Elf32_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
                         xct_va = umin(xct_va, get_te32(&shdr->sh_addr));
                     }
+                    // Hook the first slot of DT_PREINIT_ARRAY or DT_INIT_ARRAY.
+                    if ((     Elf32_Dyn::DT_PREINIT_ARRAY==upx_dt_init
+                        &&  Elf32_Shdr::SHT_PREINIT_ARRAY==sh_type)
+                    ||  (     Elf32_Dyn::DT_INIT_ARRAY   ==upx_dt_init
+                        &&  Elf32_Shdr::SHT_INIT_ARRAY   ==sh_type) ) {
+                        user_init_off = get_te32(&shdr->sh_offset);
+                        user_init_va = get_te32(&file_image[user_init_off]);
+                    }
                     // By default /usr/bin/ld leaves 4 extra DT_NULL to support pre-linking.
-                    // Take one if DT_INIT is not present.
-                    if (Elf32_Shdr::SHT_DYNAMIC == get_te32(&shdr->sh_type)
-                    &&  Elf32_Dyn::DT_INIT != upx_dt_init) {
+                    // Take one as a last resort.
+                    if ((Elf32_Dyn::DT_INIT==upx_dt_init || !upx_dt_init)
+                    &&  Elf32_Shdr::SHT_DYNAMIC == sh_type) {
                         unsigned const n = get_te32(&shdr->sh_size) / sizeof(Elf32_Dyn);
-                        Elf32_Dyn *dynp = const_cast<Elf32_Dyn *>(dynseg);
-                        for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++dynp) /* empty */ ;
+                        Elf32_Dyn *dynp = (Elf32_Dyn *)&file_image[shdr->sh_offset];
+                        for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++dynp) {
+                            if (upx_dt_init == get_te32(&dynp->d_tag)) {
+                                break;  // re-found DT_INIT
+                            }
+                        }
                         if ((1+ dynp) < (n+ dynseg)) { // not the terminator, so take it
-                            set_te32(&dynp->d_tag, Elf32_Dyn::DT_INIT);
-                            dynp->d_val = 0;
-                            upx_dt_init = Elf32_Dyn::DT_INIT;
+                            user_init_va = get_te32(&dynp->d_val);  // 0 if (0==upx_dt_init)
+                            set_te32(&dynp->d_tag, upx_dt_init = Elf32_Dyn::DT_INIT);
+                            user_init_off = (char const *)&dynp->d_val - (char const *)&file_image[0];
                         }
                     }
                 }

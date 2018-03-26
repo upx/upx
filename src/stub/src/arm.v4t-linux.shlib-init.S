@@ -143,10 +143,11 @@ here:
                 sub tmp,edi  // offset(b_info)
                                sub ecx,eax; //str ecx,[SP(o_reloc)]
                 lsl edi,#12  // asl_delta
-        ldr eax,[esi,#2*NBPW]; cmp eax,#0; beq 0f
+        ldr eax,[esi,#2*NBPW]; cmp eax,#0; beq 0f  // empty user_init
                                add eax,ecx  // reloc DT_INIT  for step 12
                                add eax,edi
-                            0: str eax,[SP(o_uinit)]
+                               str eax,[SP(o_uinit)]
+                            0:
         ldr edi,[esi,#4*NBPW]; add edi,ecx  // dst for f_exp
         add esi,tmp,ecx  // &b_info  src for f_exp
 
@@ -156,7 +157,7 @@ o_hatch=_   // 10
         _=2+_  // param space: munmap temp pages (step 9)
 p_unmap=_  // 12
 
-        push_ lr
+        push_ lr  // will be lr at entry to user_init
 o_lr=_  // 13
         ldr eax,[esi,#sz_cpr]; add esi,#sz_b_info
         add esi,eax  // skip unpack helper block
@@ -348,13 +349,6 @@ _=-5+_  // 22
         bic edi,tmp  // round_up(2, .p_memsz + .p_vaddr)
         ldr tmp,hatch  // the 2 instructions
         str tmp,[edi]
-        ldr tmp,[SP(o_uinit)]
-        cmp tmp,#0; bne 0f
-          ldrh tmp,hatch_empty
-          strh tmp,[edi,#2*2]
-          add tmp,edi,#2*2
-          str tmp,[SP(o_uinit)]
-0:
         add edi,#1  // thumb mode
         str edi,[SP(o_hatch)]
 
@@ -390,8 +384,6 @@ _=-3+_  // 9
 hatch:
         swi 0  // 0xdf00; munmap
         pop {r0,r1,r2,r3,r4,r5,r6,r7,pc}  // 0xbdff; goto user DT_INIT
-hatch_empty:
-        ret
 
         .thumb_func
 movsl_subr:

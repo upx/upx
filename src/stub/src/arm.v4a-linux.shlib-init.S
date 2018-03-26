@@ -90,6 +90,7 @@ _start: .globl _start
         stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
         mov fp,sp
 o_uinit= (3+4+2)*4  // pc
+        str lr,[fp,#o_uinit]  // default for empty user_init
 
         bl main  // push &f_decompress
 f_decompress:
@@ -185,7 +186,8 @@ main:
                sub tmp,esi,tmp  // &b_info
         lodsl; cmp eax,#0; beq 0f
                add eax,ecx,eax  // reloc DT_INIT  for step 12
-            0: str eax,[fp,#o_uinit]
+               str eax,[fp,#o_uinit]
+             0:
         lodsl; add eax,ecx,eax; push eax               // reloc &hatch   for step 10
 o_hatch= -1*4
         lodsl; add edi,ecx,eax  // &l_info; also destination for decompress
@@ -310,18 +312,11 @@ supervise:
         error ARMEL_EABI4, ARM_OLDABI
 #endif  //}
         ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
-hatch_empty:
-        ret
 
 L620:  // Implant escape hatch at end of .text
         ldr eax,[fp,#o_hatch]
-        ldmia  lr,{arg1,arg2,arg3}
+        ldmia  lr,{arg1,arg2}
         stmia eax,{arg1,arg2}
-        ldr tmp,[fp,#o_uinit]
-        cmp tmp,#0; bne 0f
-          str arg3,[eax]
-          str eax,[fp,#o_uinit]
-0:
 
 //p_unflt
         ldmia sp!,{arg1,arg2,arg3,arg4, eax, r12}  // r12= w_fragment [toss]

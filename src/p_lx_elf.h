@@ -88,6 +88,8 @@ protected:
     upx_uint64_t load_va;  // PT_LOAD[0].p_vaddr
     upx_uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
     upx_uint64_t jni_onload_va;  // runtime &JNI_OnLoad
+    upx_uint64_t user_init_va;
+    unsigned user_init_off;  // within file_image
 
     upx_uint16_t  e_machine;
     unsigned char ei_class;
