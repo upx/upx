@@ -1097,9 +1097,12 @@ PeFile::Export::~Export()
     free(ename);
     delete [] functionptrs;
     delete [] ordinals;
-    for (unsigned ic = 0; ic < edir.names + edir.functions; ic++)
-        free(names[ic]);
-    delete [] names;
+    if (names) {
+        unsigned const limit = edir.names + edir.functions;
+        for (unsigned ic = 0; ic < limit; ic++)
+            if (names[ic]) free(names[ic]);  // allocated by strdup()
+        delete [] names;
+    }
 }
 
 void PeFile::Export::convert(unsigned eoffs,unsigned esize)
@@ -1108,6 +1111,11 @@ void PeFile::Export::convert(unsigned eoffs,unsigned esize)
     size = sizeof(export_dir_t);
     iv.add(eoffs,size);
 
+    if (getsize() <= (unsigned)edir.name) {
+        char msg[50]; snprintf(msg, sizeof(msg),
+                "bad export directory name offset %#x", (unsigned)edir.name);
+        throwInternalError(msg);
+    }
     unsigned len = strlen(base + edir.name) + 1;
     ename = strdup(base + edir.name);
     size += len;
@@ -2887,19 +2895,25 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
 
     // decompress
     decompress(ibuf,obuf);
-    upx_byte *extrainfo = obuf + get_le32(obuf + ph.u_len - 4);
+    unsigned skip = get_le32(obuf + ph.u_len - 4);
+    unsigned take = sizeof(oh);
+    upx_byte *extrainfo = obuf.subref("bad extrainfo offset %#x", skip, take);
     //upx_byte * const eistart = extrainfo;
 
-    memcpy(&oh, extrainfo, sizeof (oh));
-    extrainfo += sizeof (oh);
+    memcpy(&oh, extrainfo, take);
+    extrainfo += take;
+    skip      += take;
     unsigned objs = oh.objects;
 
     if ((int) objs <= 0 || isection[2].size == 0)
         throwCantUnpack("unexpected value in the PE header");
     Array(pe_section_t, osection, objs);
-    memcpy(osection,extrainfo,sizeof(pe_section_t) * objs);
+    take = sizeof(pe_section_t) * objs;
+    extrainfo = obuf.subref("bad extra section size at %#x", skip, take);
+    memcpy(osection, extrainfo, take);
+    extrainfo += take;
+    skip      += take;
     rvamin = osection[0].vaddr;
-    extrainfo += sizeof(pe_section_t) * objs;
 
     // read the noncompressed section
     ibuf.dealloc();
