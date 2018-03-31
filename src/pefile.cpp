@@ -1111,9 +1111,9 @@ void PeFile::Export::convert(unsigned eoffs,unsigned esize)
     size = sizeof(export_dir_t);
     iv.add(eoffs,size);
 
-    if (getsize() <= (unsigned)edir.name) {
+    if (eoffs + esize <= (unsigned)edir.name) {
         char msg[50]; snprintf(msg, sizeof(msg),
-                "bad export directory name offset %#x", (unsigned)edir.name);
+                "bad export directory name RVA %#x", (unsigned)edir.name);
         throwInternalError(msg);
     }
     unsigned len = strlen(base + edir.name) + 1;
