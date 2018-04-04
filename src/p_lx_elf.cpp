@@ -226,6 +226,7 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
     sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0),
     lg2_page(12), page_size(1u<<lg2_page), is_pie(0),
     xct_off(0), xct_va(0), jni_onload_va(0),
+    user_init_va(0), user_init_off(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL),
     o_elf_shnum(0)
 {
@@ -293,7 +294,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf32_Dyn const *)(check_pt_dynamic(phdr) + file_image);
-            invert_pt_dynamic();
+            invert_pt_dynamic(dynseg);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -758,7 +759,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
             dynseg= (Elf64_Dyn const *)(check_pt_dynamic(phdr) + file_image);
-            invert_pt_dynamic();
+            invert_pt_dynamic(dynseg);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -1539,14 +1540,19 @@ PackLinuxElf64arm::buildLoader(const Filter *ft)
 }
 
 void
-PackLinuxElf32::invert_pt_dynamic()
+PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
 {
-    Elf32_Dyn const *dynp= dynseg;
+    if (dt_table[Elf32_Dyn::DT_NULL]) {
+        return;  // not 1st time; do not change upx_dt_init
+    }
     unsigned ndx = 1+ 0;
     if (dynp)
-    for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++ndx, ++dynp) {
+    for (; ; ++ndx, ++dynp) {
         if (dynp->d_tag < DT_NUM) {
             dt_table[dynp->d_tag] = ndx;
+        }
+        if (Elf32_Dyn::DT_NULL == dynp->d_tag) {
+            break;  // check here so that dt_table[DT_NULL] is set
         }
     }
     upx_dt_init = 0;
@@ -1804,7 +1810,7 @@ bool PackLinuxElf32::canPack()
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf32_Dyn const *)(check_pt_dynamic(phdr) + file_image);
-            invert_pt_dynamic();
+            invert_pt_dynamic(dynseg);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -1891,6 +1897,8 @@ bool PackLinuxElf32::canPack()
                 ||  (init == (strsz + strtab) && strtab == (relsz + rel   ))
                 ) {
                     xct_va = init;
+                    user_init_va = init;
+                    user_init_off = elf_get_offset_from_address(init);
                 }
             }
             // Rely on 0==elf_unsigned_dynamic(tag) if no such tag.
@@ -2038,7 +2046,7 @@ PackLinuxElf64::canPack()
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf64_Dyn const *)(check_pt_dynamic(phdr) + file_image);
-            invert_pt_dynamic();
+            invert_pt_dynamic(dynseg);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -2116,6 +2124,8 @@ PackLinuxElf64::canPack()
                 ||  (init == (strsz + strtab) && strtab == (relsz + rel   ))
                 ) {
                     xct_va = init;
+                    user_init_va = init;
+                    user_init_off = elf_get_offset_from_address(init);
                 }
             }
             // Rely on 0==elf_unsigned_dynamic(tag) if no such tag.
@@ -4051,7 +4061,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                     upx_uint64_t const dyn_len = get_te64(&dynhdr->p_filesz);
                     Elf64_Dyn *dyn = (Elf64_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
-                    dynseg = dyn; invert_pt_dynamic();
+                    dynseg = dyn; invert_pt_dynamic(dynseg);
                     for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
                         upx_uint64_t const tag = get_te64(&dyn->d_tag);
                         upx_uint64_t       val = get_te64(&dyn->d_val);
@@ -4390,14 +4400,19 @@ PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
 }
 
 void
-PackLinuxElf64::invert_pt_dynamic()
+PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
 {
-    Elf64_Dyn const *dynp= dynseg;
+    if (dt_table[Elf64_Dyn::DT_NULL]) {
+        return;  // not 1st time; do not change upx_dt_init
+    }
     unsigned ndx = 1+ 0;
     if (dynp)
-    for (; Elf64_Dyn::DT_NULL != dynp->d_tag; ++ndx, ++dynp) {
+    for (; ; ++ndx, ++dynp) {
         if (dynp->d_tag < DT_NUM) {
             dt_table[dynp->d_tag] = ndx;
+        }
+        if (Elf64_Dyn::DT_NULL == dynp->d_tag) {
+            break;  // check here so that dt_table[DT_NULL] is set
         }
     }
     upx_dt_init = 0;
@@ -4803,7 +4818,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                     unsigned const dyn_len = get_te32(&dynhdr->p_filesz);
                     Elf32_Dyn *dyn = (Elf32_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
-                    dynseg = dyn; invert_pt_dynamic();
+                    dynseg = dyn; invert_pt_dynamic(dynseg);
                     for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
                         unsigned const tag = get_te32(&dyn->d_tag);
                         unsigned       val = get_te32(&dyn->d_val);
