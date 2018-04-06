@@ -1412,6 +1412,7 @@ void PeFile::processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
     {
       //set handler offset
       *(LEXX*)(otls + sotls - 2 * cb_size) = tls_handler_offset + imagebase;
+      *(LEXX*)(otls + sotls - 1 * cb_size) = 0;  // end of one-item list
       //add relocation for TLS handler offset
       rel->add(newaddr + sotls - 2 * cb_size, reloc_type);
     }
