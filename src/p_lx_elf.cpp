@@ -264,7 +264,9 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     e_shoff = get_te32(&ehdri.e_shoff);
     unsigned const last_Shdr = e_shoff + e_shnum * sizeof(Elf32_Shdr);
     if (last_Shdr < e_shoff || (unsigned long)file_size < last_Shdr) {
-        throwCantUnpack("bad e_shoff");
+        if (opt->cmd == CMD_COMPRESS) {
+            throwCantUnpack("bad e_shoff");
+        }
     }
     sz_phdrs = e_phnum * e_phentsize;
 
@@ -282,6 +284,9 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         f->readx(file_image, file_size);
         phdri= (Elf32_Phdr *)(e_phoff + file_image);  // do not free() !!
         shdri= (Elf32_Shdr *)(e_shoff + file_image);  // do not free() !!
+        if (opt->cmd != CMD_COMPRESS) {
+            shdri = NULL;
+        }
         sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
         if (sec_dynsym) {
             unsigned t = get_te32(&sec_dynsym->sh_link);
@@ -729,7 +734,9 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     e_shoff = get_te64(&ehdri.e_shoff);
     upx_uint64_t const last_Shdr = e_shoff + e_shnum * sizeof(Elf64_Shdr);
     if (last_Shdr < e_shoff || (unsigned long)file_size < last_Shdr) {
-        throwCantUnpack("bad e_shoff");
+        if (opt->cmd == CMD_COMPRESS) {
+            throwCantUnpack("bad e_shoff");
+        }
     }
     sz_phdrs = e_phnum * e_phentsize;
 
@@ -747,6 +754,9 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         f->readx(file_image, file_size);
         phdri= (Elf64_Phdr *)(e_phoff + file_image);  // do not free() !!
         shdri= (Elf64_Shdr *)(e_shoff + file_image);  // do not free() !!
+        if (opt->cmd != CMD_COMPRESS) {
+            shdri = NULL;
+        }
         sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
         if (sec_dynsym) {
             unsigned t = get_te32(&sec_dynsym->sh_link);
@@ -1589,6 +1599,9 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_name(
 ) const
 {
     Elf32_Shdr const *shdr = shdri;
+    if (!shdr) {
+        return 0;
+    }
     int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         if (0==strcmp(name, &shstrtab[get_te32(&shdr->sh_name)])) {
@@ -1603,6 +1616,9 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_name(
 ) const
 {
     Elf64_Shdr const *shdr = shdri;
+    if (!shdr) {
+        return 0;
+    }
     int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         unsigned ndx = get_te64(&shdr->sh_name);
@@ -1618,6 +1634,9 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_type(
 ) const
 {
     Elf32_Shdr const *shdr = shdri;
+    if (!shdr) {
+        return 0;
+    }
     int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         if (type==get_te32(&shdr->sh_type)) {
@@ -1632,6 +1651,9 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_type(
 ) const
 {
     Elf64_Shdr const *shdr = shdri;
+    if (!shdr) {
+        return 0;
+    }
     int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         if (type==get_te32(&shdr->sh_type)) {
@@ -4058,8 +4080,11 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 if (Elf64_Phdr::PT_DYNAMIC==get_te32(&dynhdr->p_type)) {
                     upx_uint64_t dt_pltrelsz(0), dt_jmprel(0);
                     upx_uint64_t dt_relasz(0), dt_rela(0);
-                    upx_uint64_t const dyn_off = get_te64(&dynhdr->p_offset);
                     upx_uint64_t const dyn_len = get_te64(&dynhdr->p_filesz);
+                    upx_uint64_t const dyn_off = get_te64(&dynhdr->p_offset);
+                    if (dyn_off < load_off) {
+                        continue;  // Oops.  Not really is_shlib ?  [built by 'rust' ?]
+                    }
                     Elf64_Dyn *dyn = (Elf64_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
                     dynseg = dyn; invert_pt_dynamic(dynseg);
@@ -4816,8 +4841,11 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 if (Elf32_Phdr::PT_DYNAMIC==get_te32(&dynhdr->p_type)) {
                     unsigned dt_pltrelsz(0), dt_jmprel(0);
                     unsigned dt_relsz(0), dt_rel(0);
-                    unsigned const dyn_off = get_te32(&dynhdr->p_offset);
                     unsigned const dyn_len = get_te32(&dynhdr->p_filesz);
+                    unsigned const dyn_off = get_te32(&dynhdr->p_offset);
+                    if (dyn_off < load_off) {
+                        continue;  // Oops.  Not really is_shlib ?  [built by 'rust' ?]
+                    }
                     Elf32_Dyn *dyn = (Elf32_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
                     dynseg = dyn; invert_pt_dynamic(dynseg);
