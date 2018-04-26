@@ -1548,10 +1548,11 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
     unsigned ndx = 1+ 0;
     if (dynp)
     for (; ; ++ndx, ++dynp) {
-        if (dynp->d_tag < DT_NUM) {
-            dt_table[dynp->d_tag] = ndx;
+        unsigned const d_tag = get_te32(&dynp->d_tag);
+        if (d_tag < DT_NUM) {
+            dt_table[d_tag] = ndx;
         }
-        if (Elf32_Dyn::DT_NULL == dynp->d_tag) {
+        if (Elf32_Dyn::DT_NULL == d_tag) {
             break;  // check here so that dt_table[DT_NULL] is set
         }
     }
@@ -1873,7 +1874,7 @@ bool PackLinuxElf32::canPack()
                     if ((Elf32_Dyn::DT_INIT==upx_dt_init || !upx_dt_init)
                     &&  Elf32_Shdr::SHT_DYNAMIC == sh_type) {
                         unsigned const n = get_te32(&shdr->sh_size) / sizeof(Elf32_Dyn);
-                        Elf32_Dyn *dynp = (Elf32_Dyn *)&file_image[shdr->sh_offset];
+                        Elf32_Dyn *dynp = (Elf32_Dyn *)&file_image[get_te32(&shdr->sh_offset)];
                         for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++dynp) {
                             if (upx_dt_init == get_te32(&dynp->d_tag)) {
                                 break;  // re-found DT_INIT
@@ -2100,7 +2101,7 @@ PackLinuxElf64::canPack()
                     if ((Elf64_Dyn::DT_INIT==upx_dt_init || !upx_dt_init)
                     &&  Elf64_Shdr::SHT_DYNAMIC == sh_type) {
                         unsigned const n = get_te64(&shdr->sh_size) / sizeof(Elf64_Dyn);
-                        Elf64_Dyn *dynp = (Elf64_Dyn *)&file_image[shdr->sh_offset];
+                        Elf64_Dyn *dynp = (Elf64_Dyn *)&file_image[get_te64(&shdr->sh_offset)];
                         for (; Elf64_Dyn::DT_NULL != dynp->d_tag; ++dynp) {
                             if (upx_dt_init == get_te64(&dynp->d_tag)) {
                                 break;  // re-found DT_INIT
@@ -4408,10 +4409,11 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
     unsigned ndx = 1+ 0;
     if (dynp)
     for (; ; ++ndx, ++dynp) {
-        if (dynp->d_tag < DT_NUM) {
-            dt_table[dynp->d_tag] = ndx;
+        upx_uint64_t const d_tag = get_te64(&dynp->d_tag);
+        if (d_tag < DT_NUM) {
+            dt_table[d_tag] = ndx;
         }
-        if (Elf64_Dyn::DT_NULL == dynp->d_tag) {
+        if (Elf64_Dyn::DT_NULL == d_tag) {
             break;  // check here so that dt_table[DT_NULL] is set
         }
     }
