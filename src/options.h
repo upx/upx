@@ -147,6 +147,7 @@ struct options_t {
         unsigned char osabi0;       // replacement if 0==.e_ident[EI_OSABI]
         bool preserve_build_id;     // copy the build-id to the compressed binary
         bool android_shlib;         // keep some ElfXX_Shdr for dlopen()
+        bool force_pie;             // choose DF_1_PIE instead of is_shlib
     } o_unix;
     struct {
         bool le;

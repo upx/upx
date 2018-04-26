@@ -869,6 +869,9 @@ static int do_option(int optc, const char *arg)
     case 676:
         opt->o_unix.android_shlib = true;
         break;
+    case 677:
+        opt->o_unix.force_pie = true;
+        break;
 
     case '\0':
         return -1;
@@ -1020,6 +1023,7 @@ static const struct mfx_option longopts[] =
     {"unmap-all-pages",  0x10, 0, 674},     // linux /proc/self/exe vanishes
     {"preserve-build-id",   0, 0, 675},
     {"android-shlib",       0, 0, 676},
+    {"force-pie",           0, 0, 677},
     // watcom/le
     {"le",               0x10, 0, 620},     // produce LE output
     // win32/pe

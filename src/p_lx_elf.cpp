@@ -1840,7 +1840,8 @@ bool PackLinuxElf32::canPack()
         dynstr=          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
         dynsym=     (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
 
-        if (Elf32_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf32_Dyn::DT_FLAGS_1)
+        if (opt->o_unix.force_pie
+        ||      Elf32_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf32_Dyn::DT_FLAGS_1)
         ||  calls_crt1((Elf32_Rel const *)elf_find_dynamic(Elf32_Dyn::DT_REL),
                                  (int)elf_unsigned_dynamic(Elf32_Dyn::DT_RELSZ))
         ||  calls_crt1((Elf32_Rel const *)elf_find_dynamic(Elf32_Dyn::DT_JMPREL),
@@ -2076,7 +2077,8 @@ PackLinuxElf64::canPack()
         dynstr=          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
         dynsym=     (Elf64_Sym const *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
 
-        if (Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1)
+        if (opt->o_unix.force_pie
+        ||       Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1)
         ||  calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA),
                                   (int)elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ))
         ||  calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL),
