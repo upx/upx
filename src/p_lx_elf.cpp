@@ -1665,6 +1665,9 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_type(
 
 bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
 {
+    if (!dynsym || !dynstr) {
+        return false;
+    }
     for (; 0 < sz; (sz -= sizeof(Elf64_Rela)), ++rela) {
         unsigned const symnum = get_te64(&rela->r_info) >> 32;
         char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
@@ -1679,6 +1682,9 @@ bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
 
 bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
 {
+    if (!dynsym || !dynstr) {
+        return false;
+    }
     for (; 0 < sz; (sz -= sizeof(Elf32_Rel)), ++rel) {
         unsigned const symnum = get_te32(&rel->r_info) >> 8;
         char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
@@ -1928,16 +1934,31 @@ bool PackLinuxElf32::canPack()
             // Rely on 0==elf_unsigned_dynamic(tag) if no such tag.
             unsigned const va_gash = elf_unsigned_dynamic(Elf32_Dyn::DT_GNU_HASH);
             unsigned const va_hash = elf_unsigned_dynamic(Elf32_Dyn::DT_HASH);
-            if (xct_va < va_gash  ||  (0==va_gash && xct_va < va_hash)
-            ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_STRTAB)
-            ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_SYMTAB)
-            ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_REL)
-            ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_RELA)
-            ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_JMPREL)
-            ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERDEF)
-            ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERSYM)
-            ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERNEEDED) ) {
-                throwCantPack("DT_ tag above stub");
+            unsigned y = 0;
+            if ((y=1, xct_va < va_gash)  ||  (y=2, (0==va_gash && xct_va < va_hash))
+            ||  (y=3, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_STRTAB))
+            ||  (y=4, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_SYMTAB))
+            ||  (y=5, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_REL))
+            ||  (y=6, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_RELA))
+            ||  (y=7, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_JMPREL))
+            ||  (y=8, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERDEF))
+            ||  (y=9, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERSYM))
+            ||  (y=10, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERNEEDED)) ) {
+                static char const *which[] = {
+                    "unknown",
+                    "DT_GNU_HASH",
+                    "DT_HASH",
+                    "DT_STRTAB",
+                    "DT_SYMTAB",
+                    "DT_REL",
+                    "DT_RELA",
+                    "DT_JMPREL",
+                    "DT_VERDEF",
+                    "DT_VERSYM",
+                    "DT_VERNEEDED",
+                };
+                char buf[30]; snprintf(buf, sizeof(buf), "%s above stub", which[y]);
+                throwCantPack(buf);
                 goto abandon;
             }
             if (!opt->o_unix.android_shlib) {
@@ -2156,16 +2177,31 @@ PackLinuxElf64::canPack()
             // Rely on 0==elf_unsigned_dynamic(tag) if no such tag.
             upx_uint64_t const va_gash = elf_unsigned_dynamic(Elf64_Dyn::DT_GNU_HASH);
             upx_uint64_t const va_hash = elf_unsigned_dynamic(Elf64_Dyn::DT_HASH);
-            if (xct_va < va_gash  ||  (0==va_gash && xct_va < va_hash)
-            ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_STRTAB)
-            ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_SYMTAB)
-            ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_REL)
-            ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_RELA)
-            ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_JMPREL)
-            ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERDEF)
-            ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERSYM)
-            ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERNEEDED) ) {
-                throwCantPack("DT_ tag above stub");
+            unsigned y = 0;
+            if ((y=1, xct_va < va_gash)  ||  (y=2, (0==va_gash && xct_va < va_hash))
+            ||  (y=3, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_STRTAB))
+            ||  (y=4, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_SYMTAB))
+            ||  (y=5, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_REL))
+            ||  (y=6, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_RELA))
+            ||  (y=7, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_JMPREL))
+            ||  (y=8, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERDEF))
+            ||  (y=9, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERSYM))
+            ||  (y=10, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERNEEDED)) ) {
+                static char const *which[] = {
+                    "unknown",
+                    "DT_GNU_HASH",
+                    "DT_HASH",
+                    "DT_STRTAB",
+                    "DT_SYMTAB",
+                    "DT_REL",
+                    "DT_RELA",
+                    "DT_JMPREL",
+                    "DT_VERDEF",
+                    "DT_VERSYM",
+                    "DT_VERNEEDED",
+                };
+                char buf[30]; snprintf(buf, sizeof(buf), "%s above stub", which[y]);
+                throwCantPack(buf);
                 goto abandon;
             }
             if (!opt->o_unix.android_shlib) {
@@ -4342,9 +4378,11 @@ unsigned  // checked .p_offset; sz_dynseg set
 PackLinuxElf32::check_pt_dynamic(Elf32_Phdr const *const phdr)
 {
     unsigned t = get_te32(&phdr->p_offset), s = sizeof(Elf32_Dyn) + t;
+    unsigned vaddr = get_te32(&phdr->p_vaddr);
     unsigned filesz = get_te32(&phdr->p_filesz), memsz = get_te32(&phdr->p_memsz);
     if (s < t || file_size < (off_t)s
     ||  (3 & t) || (7 & (filesz | memsz))  // .balign 4; 8==sizeof(Elf32_Dyn)
+    ||  (-1+ page_size) & (t ^ vaddr)
     ||  filesz < sizeof(Elf32_Dyn)
     ||  memsz  < sizeof(Elf32_Dyn)
     ||  filesz < memsz) {
@@ -4413,9 +4451,11 @@ upx_uint64_t  // checked .p_offset; sz_dynseg set
 PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
 {
     upx_uint64_t t = get_te64(&phdr->p_offset), s = sizeof(Elf64_Dyn) + t;
+    upx_uint64_t vaddr = get_te64(&phdr->p_vaddr);
     upx_uint64_t filesz = get_te64(&phdr->p_filesz), memsz = get_te64(&phdr->p_memsz);
     if (s < t || (upx_uint64_t)file_size < s
     ||  (7 & t) || (0xf & (filesz | memsz))  // .balign 8; 16==sizeof(Elf64_Dyn)
+    ||  (-1+ page_size) & (t ^ vaddr)
     ||  filesz < sizeof(Elf64_Dyn)
     ||  memsz  < sizeof(Elf64_Dyn)
     ||  filesz < memsz) {
