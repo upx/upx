@@ -582,7 +582,6 @@ __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     Elf32_Addr *const p_brk
-    , Elf32_Addr const elfaddr
 #if defined (__mips__)  //{
     , size_t const page_mask
 #endif  //}
@@ -592,7 +591,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     size_t const page_mask = get_page_mask();
 #endif  //}
     Elf32_Addr lo= ~0, hi= 0, addr = 0;
-    DPRINTF("xfind_pages  %%x  %%p  %%d  %%x  %%p\\n", mflags, phdr, phnum, elfaddr, p_brk);
+    DPRINTF("xfind_pages  %%x  %%p  %%d  %%p\\n", mflags, phdr, phnum, p_brk);
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type
 #if defined(__arm__)  /*{*/
                                &&  phdr->p_memsz
@@ -616,17 +615,8 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     }
     lo -= ~page_mask & lo;  // round down to page boundary
     hi  =  page_mask & (hi - lo - page_mask -1);  // page length
-    if (MAP_FIXED & mflags) {
-        addr = lo;
-    }
-    else if (0==lo) { // -pie ET_DYN
-        addr = elfaddr;
-        if (addr) {
-            mflags |= MAP_FIXED;
-        }
-    }
     DPRINTF("  addr=%%p  lo=%%p  hi=%%p\\n", addr, lo, hi);
-    addr = (Elf32_Addr)mmap_privanon((void *)addr, hi, PROT_NONE, mflags);
+    addr = (Elf32_Addr)mmap_privanon((void *)lo, hi, PROT_NONE, mflags);
     DPRINTF("  addr=%%p\\n", addr);
     *p_brk = hi + addr;  // the logical value of brk(0)
     return (ptrdiff_t)addr - lo;
@@ -636,7 +626,6 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf
-    , Elf32_Addr elfaddr
 #if defined(__mips__)  //{
     , size_t const page_mask
 #endif  //}
@@ -652,7 +641,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     Elf32_Addr v_brk;
 
     ptrdiff_t reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
-         phdr, ehdr->e_phnum, &v_brk, elfaddr
+         phdr, ehdr->e_phnum, &v_brk
 #if defined(__mips__)  //{
          , page_mask
 #endif  //}
@@ -666,13 +655,18 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
         fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0),
         av, page_mask, reloc, p_reloc, *p_reloc, f_unf);
     int j;
-    for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_LOAD==phdr->p_type
+    for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
+    if (xi && PT_PHDR==phdr->p_type) {
+        auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
+    } else
+    if (PT_LOAD==phdr->p_type
 #if defined(__arm__)  /*{*/
          &&  phdr->p_memsz
 #endif  /*}*/
         ) {
         if (xi && !phdr->p_offset /*&& ET_EXEC==ehdr->e_type*/) { // 1st PT_LOAD
             // ? Compressed PT_INTERP must not overwrite values from compressed a.out?
+            auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc + ehdr->e_phoff);
             auxv_up(av, AT_PHNUM, ehdr->e_phnum);
             auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
             //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
@@ -904,7 +898,7 @@ void *upx_main(
     Elf32_Phdr *phdr = (Elf32_Phdr *)(1+ ehdr);
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    Elf32_Addr entry = do_xmap((int)f_exp, ehdr, &xi, av, &reloc, f_unf, elfaddr
+    Elf32_Addr entry = do_xmap((int)f_exp, ehdr, &xi, av, &reloc, f_unf
 #if defined(__mips__)  //{
         , page_mask
 #endif  //}
@@ -924,7 +918,7 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0, 0
+        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0
 #if defined(__mips__)  //{
             , page_mask
 #endif  //}
