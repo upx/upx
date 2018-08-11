@@ -982,6 +982,9 @@ Linker* PackLinuxElf64ppc::newLinker() const
 PackLinuxElf64amd::PackLinuxElf64amd(InputFile *f)
     : super(f)
 {
+    // Why did PackLinuxElf64Le set lg2_page = 16 ?
+    // It causes trouble for check_pt_dynamic() from canPack().
+    lg2_page = 12;  page_size = 1u<<lg2_page;
     e_machine = Elf64_Ehdr::EM_X86_64;
     ei_class = Elf64_Ehdr::ELFCLASS64;
     ei_data = Elf64_Ehdr::ELFDATA2LSB;
