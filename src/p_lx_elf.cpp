@@ -410,9 +410,9 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         unsigned word = (Elf32_Ehdr::EM_ARM==e_machine) + load_va + sz_pack2;  // Thumb mode
         set_te32(&file_image[user_init_off], word);  // set the hook
 
-        unsigned off = fo->st_size();
         Elf32_Phdr *phdr = (Elf32_Phdr *)lowmem.subref(
                 "bad e_phoff", e_phoff, e_phnum * sizeof(Elf32_Phdr));
+        unsigned off = fo->st_size();
         so_slide = 0;
         for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
             unsigned const len  = get_te32(&phdr->p_filesz);
@@ -422,14 +422,14 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             if (Elf32_Phdr::PT_INTERP==type) {
                 // Rotate to highest position, so it can be lopped
                 // by decrementing e_phnum.
-                memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));
-                memmove(phdr, 1+phdr, j * sizeof(*phdr));  // overlapping
-                memcpy(&phdr[j], (unsigned char *)ibuf, sizeof(*phdr));
+                memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));  // extract
+                memmove(phdr, 1+phdr, (e_phnum - (1+ j))*sizeof(*phdr));  // overlapping
+                memcpy(&phdr[-1+ e_phnum], (unsigned char *)ibuf, sizeof(*phdr));  // to top
                 --phdr;
                 set_te16(&ehdri.e_phnum, --e_phnum);
                 continue;
             }
-            if (PT_LOAD32==type) {
+            if (PT_LOAD32 == type) {
                 if (xct_off < ioff) {  // Slide up non-first PT_LOAD.
                     if ((1u<<12) < align) {
                         align = 1u<<12;
@@ -441,9 +441,9 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                     so_slide = off - ioff;
                     set_te32(&phdr->p_offset, so_slide + ioff);
                 }
-                else {  // Change length of first PT_LOAD.
-                    set_te32(&phdr->p_filesz, sz_pack2 + lsize);
-                    set_te32(&phdr->p_memsz,  sz_pack2 + lsize);
+                else if ((ioff - xct_off) < len) { // Change length of compressed PT_LOAD.
+                    set_te32(&phdr->p_filesz, sz_pack2 + lsize - ioff);
+                    set_te32(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
                 }
                 continue;  // all done with this PT_LOAD
             }
@@ -460,7 +460,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 if (Elf32_Shdr::SHT_DYNAMIC == get_te32(&shdr->sh_type)) {
                     unsigned offset = get_te32(&shdr->sh_offset);
                     set_te32(&shdr->sh_offset, so_slide + offset );
-                    fo->seek(j * sizeof(Elf32_Shdr) + xct_off - asl_delta, SEEK_SET);
+                    fo->seek((j * sizeof(Elf32_Shdr)) + xct_off - asl_delta, SEEK_SET);
                     fo->rewrite(shdr, sizeof(*shdr));
                     fo->seek(0, SEEK_END);
                 }
@@ -546,9 +546,9 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             if (Elf64_Phdr::PT_INTERP==type) {
                 // Rotate to highest position, so it can be lopped
                 // by decrementing e_phnum.
-                memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));
-                memmove(phdr, 1+phdr, j * sizeof(*phdr));  // overlapping
-                memcpy(&phdr[j], (unsigned char *)ibuf, sizeof(*phdr));
+                memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));  // extract
+                memmove(phdr, 1+phdr, (e_phnum - (1+ j))*sizeof(*phdr));  // overlapping
+                memcpy(&phdr[-1+ e_phnum], (unsigned char *)ibuf, sizeof(*phdr));  // to top
                 --phdr;
                 set_te16(&ehdri.e_phnum, --e_phnum);
                 continue;
@@ -570,9 +570,9 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                     so_slide = off - ioff;
                     set_te64(&phdr->p_offset, so_slide + ioff);
                 }
-                else {  // Change length of first PT_LOAD.
-                    set_te64(&phdr->p_filesz, sz_pack2 + lsize);
-                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize);
+                else if ((ioff - xct_off) < len) { // Change length of compressed PT_LOAD.
+                    set_te64(&phdr->p_filesz, sz_pack2 + lsize - ioff);
+                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
                 }
                 continue;  // all done with this PT_LOAD
             }
@@ -3409,40 +3409,55 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
     uip->ui_total_passes -= !!is_shlib;  // not .data of shlib
 
     // compress extents
-    unsigned hdr_u_len = sizeof(Elf32_Ehdr) + sz_phdrs;
+    unsigned hdr_u_len = (is_shlib ? xct_off : (sizeof(Elf32_Ehdr) + sz_phdrs));
 
-    unsigned total_in = xct_off - (is_shlib ? hdr_u_len : 0);
-    unsigned total_out = xct_off;
+    unsigned total_in =  (is_shlib ?           0 : xct_off);
+    unsigned total_out = (is_shlib ? sz_elf_hdrs : xct_off);
 
     uip->ui_pass = 0;
     ft.addvalue = 0;
 
+    unsigned nk_f = 0; unsigned xsz_f = 0;
+    for (k = 0; k < e_phnum; ++k)
+    if (PT_LOAD32==get_te32(&phdri[k].p_type)
+    &&  Elf32_Phdr::PF_X & get_te32(&phdri[k].p_flags)) {
+        unsigned xsz =     get_te32(&phdri[k].p_filesz);
+        if (xsz_f < xsz) {
+            xsz_f = xsz;
+            nk_f = k;
+        }
+    }
     int nx = 0;
-    for (k = 0; k < e_phnum; ++k) if (PT_LOAD32==get_te32(&phdri[k].p_type)) {
+    for (k = 0; k < e_phnum; ++k)
+    if (PT_LOAD32==get_te32(&phdri[k].p_type)) {
         if (ft.id < 0x40) {
             // FIXME: ??    ft.addvalue = phdri[k].p_vaddr;
         }
         x.offset = get_te32(&phdri[k].p_offset);
         x.size   = get_te32(&phdri[k].p_filesz);
-        if (0 == nx) { // 1st PT_LOAD32 must cover Ehdr at 0==p_offset
-            unsigned const delta = !is_shlib
-                ? (sizeof(Elf32_Ehdr) + sz_phdrs)  // main executable
-                : xct_off;  // shared library
-            if (ft.id < 0x40) {
-                // FIXME: ??     ft.addvalue += asl_delta;
+        if (!is_shlib || hdr_u_len < x.size) {
+            if (0 == nx) { // 1st PT_LOAD32 must cover Ehdr at 0==p_offset
+                unsigned const delta = hdr_u_len;
+                if (ft.id < 0x40) {
+                    // FIXME: ??     ft.addvalue += asl_delta;
+                }
+                x.offset += delta;
+                x.size   -= delta;
             }
-            x.offset += delta;
-            x.size   -= delta;
+            // compressWithFilters() always assumes a "loader", so would
+            // throw NotCompressible for small .data Extents, which PowerPC
+            // sometimes marks as PF_X anyway.  So filter only first segment.
+            if (k == nk_f || !is_shlib) {
+                packExtent(x, total_in, total_out,
+                    (k==nk_f ? &ft : 0 ), fo, hdr_u_len);
+            }
+            else {
+                total_in += x.size;
+            }
         }
-        // compressWithFilters() always assumes a "loader", so would
-        // throw NotCompressible for small .data Extents, which PowerPC
-        // sometimes marks as PF_X anyway.  So filter only first segment.
-        if (0==nx || !is_shlib)
-        packExtent(x, total_in, total_out,
-            ((0==nx && (Elf32_Phdr::PF_X & get_te32(&phdri[k].p_flags)))
-                ? &ft : 0 ), fo, hdr_u_len);
-        else
-            total_in += x.size;
+        else {
+                total_in += x.size;
+        }
         hdr_u_len = 0;
         ++nx;
     }
@@ -3526,6 +3541,16 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     uip->ui_pass = 0;
     ft.addvalue = 0;
 
+    unsigned nk_f = 0; upx_uint64_t xsz_f = 0;
+    for (k = 0; k < e_phnum; ++k)
+    if (PT_LOAD64==get_te32(&phdri[k].p_type)
+    &&  Elf64_Phdr::PF_X & get_te64(&phdri[k].p_flags)) {
+        upx_uint64_t xsz = get_te64(&phdri[k].p_filesz);
+        if (xsz_f < xsz) {
+            xsz_f = xsz;
+            nk_f = k;
+        }
+    }
     int nx = 0;
     for (k = 0; k < e_phnum; ++k)
     if (PT_LOAD64==get_te32(&phdri[k].p_type)) {
@@ -3534,30 +3559,36 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         }
         x.offset = get_te64(&phdri[k].p_offset);
         x.size   = get_te64(&phdri[k].p_filesz);
-        if (0 == nx) { // 1st PT_LOAD64 must cover Ehdr at 0==p_offset
-            unsigned const delta = hdr_u_len;
-            if (ft.id < 0x40) {
-                // FIXME: ??     ft.addvalue += asl_delta;
+        if (!is_shlib || hdr_u_len < x.size) {
+            if (0 == nx) { // 1st PT_LOAD64 must cover Ehdr at 0==p_offset
+                unsigned const delta = hdr_u_len;
+                if (ft.id < 0x40) {
+                    // FIXME: ??     ft.addvalue += asl_delta;
+                }
+                x.offset += delta;
+                x.size   -= delta;
             }
-            x.offset += delta;
-            x.size   -= delta;
+            // compressWithFilters() always assumes a "loader", so would
+            // throw NotCompressible for small .data Extents, which PowerPC
+            // sometimes marks as PF_X anyway.  So filter only first segment.
+            if (k == nk_f || !is_shlib) {
+                packExtent(x, total_in, total_out,
+                    (k==nk_f ? &ft : 0 ), fo, hdr_u_len);
+            }
+            else {
+                total_in += x.size;
+            }
         }
-        // compressWithFilters() always assumes a "loader", so would
-        // throw NotCompressible for small .data Extents, which PowerPC
-        // sometimes marks as PF_X anyway.  So filter only first segment.
-        if (0==nx || !is_shlib)
-        packExtent(x, total_in, total_out,
-            ((0==nx && (Elf64_Phdr::PF_X & get_te64(&phdri[k].p_flags)))
-                ? &ft : 0 ), fo, hdr_u_len);
-        else
-            total_in += x.size;
+        else {
+                total_in += x.size;
+        }
         hdr_u_len = 0;
         ++nx;
     }
     sz_pack2a = fpad4(fo);  // MATCH01
 
     // Accounting only; ::pack3 will do the compression and output
-    for (k = 0; k < e_phnum; ++k) { //
+    for (k = 0; k < e_phnum; ++k) {
         total_in += find_LOAD_gap(phdri, k, e_phnum);
     }
 
