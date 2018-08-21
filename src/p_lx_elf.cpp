@@ -430,7 +430,11 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 continue;
             }
             if (PT_LOAD32 == type) {
-                if (xct_off < ioff) {  // Slide up non-first PT_LOAD.
+                if ((xct_off - ioff) < len) { // Change length of compressed PT_LOAD.
+                    set_te32(&phdr->p_filesz, sz_pack2 + lsize - ioff);
+                    set_te32(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
+                }
+                else if (xct_off < ioff) { // Slide subsequent PT_LOAD.
                     if ((1u<<12) < align) {
                         align = 1u<<12;
                         set_te32(&phdr->p_align, align);
@@ -440,10 +444,6 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                     fo->write(&file_image[ioff], len);
                     so_slide = off - ioff;
                     set_te32(&phdr->p_offset, so_slide + ioff);
-                }
-                else if ((ioff - xct_off) < len) { // Change length of compressed PT_LOAD.
-                    set_te32(&phdr->p_filesz, sz_pack2 + lsize - ioff);
-                    set_te32(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
                 }
                 continue;  // all done with this PT_LOAD
             }
@@ -554,7 +554,11 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 continue;
             }
             if (PT_LOAD64 == type) {
-                if (xct_off < ioff) {  // Slide up non-first PT_LOAD.
+                if ((xct_off - ioff) < len) { // Change length of compressed PT_LOAD.
+                    set_te64(&phdr->p_filesz, sz_pack2 + lsize - ioff);
+                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
+                }
+                else if (xct_off < ioff) {  // Slide subsequent PT_LOAD.
                     // AMD64 chip supports page sizes of 4KiB, 2MiB, and 1GiB;
                     // the operating system chooses one.  .p_align typically
                     // is a forward-looking 2MiB.  In 2009 Linux chooses 4KiB.
@@ -569,10 +573,6 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                     fo->write(&file_image[ioff], len);
                     so_slide = off - ioff;
                     set_te64(&phdr->p_offset, so_slide + ioff);
-                }
-                else if ((ioff - xct_off) < len) { // Change length of compressed PT_LOAD.
-                    set_te64(&phdr->p_filesz, sz_pack2 + lsize - ioff);
-                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
                 }
                 continue;  // all done with this PT_LOAD
             }
