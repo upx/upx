@@ -127,12 +127,12 @@ void mem_clear(void *p, size_t n) {
 namespace N_BELE_CTP {
 const BEPolicy be_policy;
 const LEPolicy le_policy;
-}
+} // namespace N_BELE_CTP
 
 namespace N_BELE_RTP {
 const BEPolicy be_policy;
 const LEPolicy le_policy;
-}
+} // namespace N_BELE_RTP
 
 /*************************************************************************
 // qsort() util
