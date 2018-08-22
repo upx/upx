@@ -223,6 +223,11 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
             av->a_un.a_val = value;
             return;
         }
+        if (av->a_type==AT_NULL) {
+            // We can't do this as part of the for loop because we overwrite
+            // AT_NULL too.
+            return;
+        }
     }
 }
 
