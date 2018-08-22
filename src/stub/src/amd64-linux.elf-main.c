@@ -183,6 +183,11 @@ auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
             av->a_un.a_val = value;
             return;
         }
+        if (av->a_type==AT_NULL) {
+            // We can't do this as part of the for loop because we overwrite
+            // AT_NULL too.
+            return;
+        }
     }
 }
 
