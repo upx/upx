@@ -168,6 +168,7 @@ if [[ $BM_B =~ (^|\+)coverage($|\+) ]]; then
 fi
 
 export UPX="--prefer-ucl --no-color --no-progress"
+export UPX_DISABLE_GITREV_WARNING=1
 
 # let's go
 if ! $upx_run --version;          then echo "UPX-ERROR: FATAL: upx --version FAILED"; exit 1; fi

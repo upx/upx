@@ -1540,11 +1540,18 @@ int __acc_cdecl_main main(int argc, char *argv[])
 
     if (gitrev[0])
     {
-        FILE *f = stdout;
-        int fg = con_fg(f,FG_RED);
-        con_fprintf(f,"\nWARNING: this is an unstable beta version - use for testing only! Really.\n");
-        fg = con_fg(f,fg);
-        UNUSED(fg);
+        bool warn = true;
+        const char *ee = getenv("UPX_DISABLE_GITREV_WARNING");
+        if (ee && ee[0] && strcmp(ee, "1") == 0)
+            warn = false;
+        if (warn)
+        {
+            FILE *f = stdout;
+            int fg = con_fg(f, FG_RED);
+            con_fprintf(f, "\nWARNING: this is an unstable beta version - use for testing only! Really.\n");
+            fg = con_fg(f, fg);
+            UNUSED(fg);
+        }
     }
 
 #if 0 && defined(__GLIBC__)
