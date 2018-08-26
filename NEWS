@@ -3,7 +3,6 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.95 (26 Aug 2018):
-  * UPX has moved to GitHub - the new home page is https://upx.github.io
   * Flag --android-shlib to work around bad design in Android
   * Flag --force-pie when ET_DYN main program is not marked as DF_1_PIE
   * Better compatibility with varying layout of address space on Linux
@@ -23,7 +22,7 @@ Changes in 3.93 (29 Jan 2017):
   * bug fixes - see https://github.com/upx/upx/milestone/2
 
 Changes in 3.92 (11 Dec 2016):
-  * UPX has moved to GitHub - the new home page is https://upx.github.io
+  * INFO: UPX has moved to GitHub - the new home page is https://upx.github.io
   * IMPORTANT: all PE formats: internal changes: reunited the diverged source
     files - please report all regressions into the bug tracker and try UPX 3.91
     in case of problems.
