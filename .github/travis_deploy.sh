@@ -103,6 +103,14 @@ else
 fi
 d=$d-$BM_C-$BM_B
 
+# remove redundant -m32/-m64/-x86/-x64 from directory name
+if [[ $d =~ ^((i386-darwin|i386-linux|i386-win32).*)(-m32|-x86)(-.+)?$ ]]; then
+   d="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
+fi
+if [[ $d =~ ^((amd64-darwin|amd64-linux|amd64-win64).*)(-m64|-x64)(-.+)?$ ]]; then
+   d="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
+fi
+
 if [[ -n $subdir ]]; then
     print_header "DEPLOY $subdir/$d"
 else
