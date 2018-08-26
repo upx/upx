@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 3.96 (XX XXX 2018):
+
 Changes in 3.95 (26 Aug 2018):
   * Flag --android-shlib to work around bad design in Android
   * Flag --force-pie when ET_DYN main program is not marked as DF_1_PIE
