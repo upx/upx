@@ -3,6 +3,11 @@
 
 os: Visual Studio 2015
 
+branches:
+  except:
+    - /^gitlab.*/
+    - /^travis.*/
+
 environment:
   global: { TRAVIS_OS_NAME: windows, CROSS: "", C: "", B: release, T: "", X: "" }
   matrix:
