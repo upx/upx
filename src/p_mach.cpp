@@ -551,6 +551,7 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 #define PAGE_MASK64 (~(upx_uint64_t)0<<12)
 #define PAGE_SIZE64 ((upx_uint64_t)0-PAGE_MASK64)
 
+unsigned const blankLINK = 16;  // size of our empty __LINK segment
 // Note: "readelf --segments"  ==>  "otool -hl" or "otool -hlv" etc. (Xcode on MacOS)
 
 template <class T>
@@ -581,10 +582,10 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
         segLINK.fileoff = len;  // must be in the file
         segLINK.vmaddr =  len + segTEXT.vmaddr;
-        fo->write(page, 16); len += 16;
+        fo->write(page, blankLINK); len += blankLINK;
         // reserve convex hull of input segments
         segLINK.vmsize -= (segLINK.vmaddr - segTEXT.vmaddr);
-        segLINK.filesize = 16;
+        segLINK.filesize = blankLINK;
 
         // Get a writeable copy of the stub to make editing easier.
         ByteArray(upxstub, sz_stub_main);
@@ -1355,8 +1356,10 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     pos += cmdsize;
                     fo->write((char const *)ptr1, cmdsize);
 
+                    // 400: space for LC_UUID, LC_RPATH, LC_CODE_SIGNATURE, etc.
                     gap = 400 + threado_size();
-                    secTEXT.addr = gap + pos;
+                    secTEXT.offset = gap + pos;
+                    secTEXT.addr = secTEXT.offset + segTEXT.vmaddr;
                     break;
                 }
             }
@@ -1595,6 +1598,9 @@ int PackMachBase<T>::canUnpack()
             }
             if (!strcmp("__LINKEDIT", segptr->segname)) {
                 offLINK = segptr->fileoff;
+                if (segptr->filesize == blankLINK) {
+                    style = 395;
+                }
                 if (offLINK < (off_t) pos_next) {
                     offLINK = pos_next;
                 }
@@ -1611,7 +1617,7 @@ int PackMachBase<T>::canUnpack()
             rip = entryVMA = threadc_getPC(ptr);
         }
     }
-    if (3==nseg) { // __PAGEZERO, __TEXT, __LINKEDIT;  no __XHDR, no UPX_DATA
+    if (3==nseg && 395 != style) { // __PAGEZERO, __TEXT, __LINKEDIT;  no __XHDR, no UPX_DATA
         style = 392;
     }
     if (391==style && 0==offLINK && 2==ncmds) { // pre-3.91 ?
@@ -1631,6 +1637,9 @@ int PackMachBase<T>::canUnpack()
             bufsize = fi->st_size() - offLINK;
         }
         fi->seek(offLINK, SEEK_SET);
+    } else
+    if (395 == style) {
+        fi->seek(offLINK - bufsize - sizeof(PackHeader), SEEK_SET);
     }
     MemBuffer buf(bufsize);
 
