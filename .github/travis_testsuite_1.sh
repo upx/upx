@@ -186,7 +186,7 @@ testdir=t010_decompressed
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 
 testsuite_header $testdir
-for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
+for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.9[15]*; do
     testsuite_split_f $f
     [[ -z $fb ]] && continue
     echo "# $f"
