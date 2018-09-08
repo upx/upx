@@ -1502,6 +1502,9 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->seek(- (off_t)(sizeof(bhdr) + ph.c_len), SEEK_CUR);
     for (unsigned k = 0; k < ncmds; ++k) {
         if (msegcmd[k].cmd==lc_seg && msegcmd[k].filesize!=0) {
+            if (!strcmp("__TEXT", msegcmd[k].segname)) {
+                segTEXT = msegcmd[k];
+            }
             if (fo)
                 fo->seek(msegcmd[k].fileoff, SEEK_SET);
             unpackExtent(msegcmd[k].filesize, fo, total_in, total_out,
@@ -1513,6 +1516,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     }
     Mach_segment_command const *sc = (Mach_segment_command const *)(void *)(1+ mhdr);
     if (my_filetype==Mach_header::MH_DYLIB) { // rest of lc_seg are not compressed
+        upx_uint64_t cpr_mod_init_func(0);
+                TE32 unc_mod_init_func; *(int *)&unc_mod_init_func = 0;
         Mach_segment_command const *rc = rawmseg;
         rc = (Mach_segment_command const *)(rc->cmdsize + (char const *)rc);
         sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc);
@@ -1524,12 +1529,20 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         ) {
             if (lc_seg==rc->cmd
             &&  0!=rc->filesize ) {
+                if (!strcmp("__DATA", rc->segname)) {
+                    cpr_mod_init_func = get_mod_init_func(rc);
+                    fi->seek(cpr_mod_init_func - 4*sizeof(TE32), SEEK_SET);
+                    fi->readx(&unc_mod_init_func, sizeof(unc_mod_init_func));
+                }
                 fi->seek(rc->fileoff, SEEK_SET);
                 if (fo)
                     fo->seek(sc->fileoff, SEEK_SET);
                 unsigned const len = rc->filesize;
                 MemBuffer data(len);
                 fi->readx(data, len);
+                if (!strcmp("__DATA", rc->segname)) {
+                    set_te32(&data[o__mod_init_func - rc->fileoff], unc_mod_init_func);
+                }
                 if (fo)
                     fo->write(data, len);
             }
@@ -1565,6 +1578,7 @@ int PackMachBase<T>::canUnpack()
     my_cpusubtype = mhdri.cpusubtype;
 
     int headway = (int)mhdri.sizeofcmds;
+    sz_mach_headers = headway + sizeof(mhdri);
     if (1024 < headway) {
         infoWarning("Mach_header.sizeofcmds(%d) > 1024", headway);
     }
@@ -1632,11 +1646,16 @@ int PackMachBase<T>::canUnpack()
     if (391 == style) { // PackHeader precedes __LINKEDIT
         fi->seek(offLINK - bufsize, SEEK_SET);
     } else
-    if (392 == style) { // PackHeader follows loader at __LINKEDIT
-        if ((off_t)bufsize > (fi->st_size() - offLINK)) {
-            bufsize = fi->st_size() - offLINK;
+    if (392 == style) {
+        if (MH_DYLIB == my_filetype) {
+            fi->seek(fi->st_size() - bufsize, SEEK_SET);
         }
-        fi->seek(offLINK, SEEK_SET);
+        else { // PackHeader follows loader at __LINKEDIT
+            if ((off_t)bufsize > (fi->st_size() - offLINK)) {
+                bufsize = fi->st_size() - offLINK;
+            }
+            fi->seek(offLINK, SEEK_SET);
+        }
     } else
     if (395 == style) {
         fi->seek(offLINK - bufsize - sizeof(PackHeader), SEEK_SET);
@@ -1735,23 +1754,63 @@ int PackMachBase<T>::canUnpack()
                     }
                 }
             }
-
-            overlay_offset = 0;
         }
     }
 
+    overlay_offset = 0;  // impossible value
     int l = ph.buf_offset + ph.getPackHeaderSize();
-    if (l < 0 || (unsigned)(l + 4) > bufsize)
+    if (0 <= l && (unsigned)(l + sizeof(TE32)) <=bufsize) {
+        overlay_offset = get_te32(buf + i + l);
+    }
+    if (       overlay_offset < sz_mach_headers
+    ||  (off_t)overlay_offset >= file_size) {
+        infoWarning("file corrupted");
+        MemBuffer buf2(umin(1<<14, file_size));
+        fi->seek(sz_mach_headers, SEEK_SET);
+        fi->readx(buf2, buf2.getSize());
+        unsigned const *p = (unsigned const *)&buf2[0];
+        unsigned const *const e_buf2 = (unsigned const *)&buf2[buf2.getSize() - 4*sizeof(*p)];
+        for (; p <= e_buf2; ++p)
+        if (   0==p[0]  // p_info.p_progid
+        &&     0!=p[1]  // p_info.p_filesize
+        &&  p[2]==p[1]  // p_info.p_blocksize == p_info.p_filesize
+        &&       file_size < get_te32(&p[1])  // compression was worthwhile
+        &&  sz_mach_headers==get_te32(&p[3])  // b_info.sz_unc
+        ) {
+            overlay_offset = ((char const *)p - (char const *)&buf2[0]) + sz_mach_headers;
+            if (!(3&overlay_offset  // not word aligned
+                    ||        overlay_offset < sz_mach_headers
+                    || (off_t)overlay_offset >= file_size)) {
+                infoWarning("attempting recovery, overlay_offset = %#x", overlay_offset);
+                return true;
+            }
+        }
         throwCantUnpack("file corrupted");
-    overlay_offset = get_te32(buf + i + l);
-    if ((off_t)overlay_offset >= file_size)
-        throwCantUnpack("file corrupted");
-
+    }
     return true;
 }
 #define WANT_MACH_SEGMENT_ENUM
 #define WANT_MACH_SECTION_ENUM
 #include "p_mach_enum.h"
+
+template <class T>
+upx_uint64_t PackMachBase<T>::get_mod_init_func(Mach_segment_command const *segptr)
+{
+    for (Mach_section_command const *secptr = (Mach_section_command const *)(1+ segptr);
+        ptr_udiff(secptr, segptr) < segptr->cmdsize;
+        ++secptr
+    ) {
+        if (sizeof(Addr) == secptr->size
+        && !strcmp("__mod_init_func", secptr->sectname)) {
+            o__mod_init_func = secptr->offset;
+            fi->seek(o__mod_init_func, SEEK_SET);
+            Addr tmp;
+            fi->readx(&tmp, sizeof(Addr));
+            return tmp;
+        }
+    }
+    return 0;
+}
 
 template <class T>
 bool PackMachBase<T>::canPack()
@@ -1797,17 +1856,7 @@ bool PackMachBase<T>::canPack()
         if (lc_seg == segptr->cmd) {
             msegcmd[j] = *segptr;
             if (!strcmp("__DATA", segptr->segname)) {
-                for (Mach_section_command const *secptr = (Mach_section_command const *)(1+ segptr);
-                    ptr_udiff(secptr, segptr) < segptr->cmdsize;
-                    ++secptr
-                ) {
-                    if (sizeof(Addr) == secptr->size
-                    && !strcmp("__mod_init_func", secptr->sectname)) {
-                        o__mod_init_func = secptr->offset;
-                        fi->seek(o__mod_init_func, SEEK_SET);
-                        fi->readx(&prev_mod_init_func, sizeof(Addr));
-                    }
-                }
+                prev_mod_init_func = get_mod_init_func(segptr);
             }
         }
         else {

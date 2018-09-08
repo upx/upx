@@ -780,6 +780,7 @@ public:
 
     virtual bool canPack();
     virtual int canUnpack();
+    virtual upx_uint64_t get_mod_init_func(Mach_segment_command const *segptr);
     virtual unsigned find_SEGMENT_gap(unsigned const k, unsigned pos_eof);
 
 protected:
