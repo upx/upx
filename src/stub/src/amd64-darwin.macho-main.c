@@ -310,7 +310,8 @@ typedef struct {
             MH_MAGIC64 = 1+0xfeedface
         };
         enum e2 {
-            MH_EXECUTE = 2
+            MH_EXECUTE = 2,
+            MH_DYLINKER= 7     /* /usr/bin/dyld */
         };
         enum e3 {
             MH_NOUNDEFS = 1
@@ -453,6 +454,7 @@ typedef union {
 #endif  //}
 #define MAP_ANON_FD    -1
 
+#define PROT_NONE      0
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
@@ -461,7 +463,56 @@ extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t_upx_stub);
 ssize_t pread(int, void *, size_t, off_t_upx_stub);
 extern void bswap(void *, unsigned);
 
-// FIXME: must reserve convex hull of pages; must reloc PIE
+typedef size_t Addr;  // this source file is used by 32-bit and 64-bit machines
+
+// Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
+// and mmap that much, to be sure that a kernel using exec-shield-randomize
+// won't place the first piece in a way that leaves no room for the rest.
+static Addr // returns relocation constant
+xfind_pages(
+    Mach_header const *const mhdr,
+    Mach_segment_command const *sc,
+    int const ncmds,
+    Addr addr
+)
+{
+    Addr lo= ~(Addr)0, hi= 0;
+    int j;
+    unsigned mflags = ((mhdr->filetype == MH_DYLINKER || mhdr->flags & MH_PIE) ? 0 : MAP_FIXED);
+    mflags += MAP_PRIVATE | MAP_ANON;  // '+' can optimize better than '|'
+    DPRINTF("xfind_pages  mhdr=%%p  sc=%%p  ncmds=%%d  addr=%%p\\n",
+        mhdr, sc, ncmds, addr);
+    for (j=0; j < ncmds; ++j,
+        (sc = (Mach_segment_command const *)((sc->cmdsize>>2) + (unsigned const *)sc))
+    ) {
+        DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x\\n", j, sc->cmd, sc->cmdsize);
+        if (LC_SEGMENT==sc->cmd && sc->vmsize && sc->filesize) {
+            if (0==(1+ lo)  // 1st LC_SEGMENT
+            &&  mhdr->filetype == MH_DYLINKER  // of /usr/lib/dyld
+            &&  sc->vmaddr != 0  // non-floating address
+            ) {
+                // "pre-linked" dyld on MacOS 10.11.x El Capitan
+                mflags |= MAP_FIXED;
+            }
+            if (lo > sc->vmaddr) {
+                lo = sc->vmaddr;
+            }
+            if (hi < (sc->vmsize + sc->vmaddr)) {
+                hi =  sc->vmsize + sc->vmaddr;
+            }
+        }
+    }
+    lo -= ~PAGE_MASK & lo;  // round down to page boundary
+    hi  =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
+    if (MAP_FIXED & mflags) {
+        addr = lo;
+    }
+    DPRINTF("  addr=%%p  lo=%%p  len=%%p  mflags=%%x\\n", addr, lo, hi, mflags);
+    addr = (Addr)mmap((void *)addr, hi, PROT_NONE, mflags, MAP_ANON_FD, 0);
+    DPRINTF("  addr=%%p\\n", addr);
+    return (Addr)(addr - lo);
+}
+
 unsigned * // &hatch if main; &Mach_thread_state if dyld
 do_xmap(
     Mach_header *const mhdr,
@@ -473,52 +524,55 @@ do_xmap(
     f_unfilter *const f_unf
 )
 {
-    unsigned *rv = 0;
-    Mach_segment_command *sc = (Mach_segment_command *)(1+ mhdr);
-    size_t reloc = 0;
-    unsigned j;
-
     DPRINTF("do_xmap  fdi=%%x  mhdr=%%p  *mhdrpp=%%p  xi=%%p(%%x %%p) f_unf=%%p\\n",
         fdi, mhdr, (mhdrpp ? *mhdrpp : 0), xi, (xi? xi->size: 0), (xi? xi->buf: 0), f_unf);
 
+    unsigned *rv = 0;
+    Mach_segment_command *sc = (Mach_segment_command *)(1+ mhdr);
+    Addr const reloc = xfind_pages(mhdr, sc, mhdr->ncmds, 0);
+    DPRINTF("do_xmap reloc=%%p\\n", reloc);
+    unsigned j;
     for ( j=0; j < mhdr->ncmds; ++j,
         (sc = (Mach_segment_command *)((sc->cmdsize>>2) + (unsigned *)sc))
     ) {
         DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x\\n", j, sc->cmd, sc->cmdsize);
-        if (LC_SEGMENT==sc->cmd && sc->vmsize) {
-            if (!sc->fileoff && sc->filesize  // should be __TEXT
-            && *mhdrpp && ((*mhdrpp)->flags & MH_PIE)) {
-                reloc = (size_t)*mhdrpp - sc->vmaddr;
-                DPRINTF("reloc=%%p\\n", reloc);
-            }
+        if (LC_SEGMENT==sc->cmd && sc->filesize) {
             Extent xo;
             size_t mlen = xo.size = sc->filesize;
-            unsigned char  *addr = xo.buf = reloc + (unsigned char *)sc->vmaddr;
-            unsigned char *haddr = sc->vmsize + addr;
-            size_t frag = (int)(uint64_t)addr &~ PAGE_MASK;
+                          xo.buf  = (void *)(reloc + sc->vmaddr);
+            Addr  addr = (Addr)xo.buf;
+            Addr haddr = sc->vmsize + addr;
+            size_t frag = addr &~ PAGE_MASK;
             addr -= frag;
             mlen += frag;
 
+            DPRINTF("    mlen=%%p  frag=%%p  addr=%%p\\n", mlen, frag, addr);
             if (0!=mlen) {
-                // Decompressor can overrun the destination by 3 bytes.  [x86 only]
-                size_t const mlen3 = mlen + (xi ? 3 : 0);
+                size_t const mlen3 = mlen
+    #if defined(__x86_64__)  //{
+                    // Decompressor can overrun the destination by 3 bytes.  [x86 only]
+                    + (xi ? 3 : 0)
+    #endif  //}
+                    ;
                 unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
-                unsigned const flags = (*mhdrpp ? MAP_FIXED : 0) | MAP_PRIVATE |
-                            ((xi || 0==sc->filesize) ? MAP_ANON : 0);
-                int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
+                // MAP_FIXED: xfind_pages() reserved them, so use them!
+                unsigned const flags = MAP_FIXED | MAP_PRIVATE |
+                                ((xi || 0==sc->filesize) ? MAP_ANON    : 0);
+                int const fdm = ((xi || 0==sc->filesize) ? MAP_ANON_FD : fdi);
                 off_t_upx_stub const offset = sc->fileoff + fat_offset;
 
                 DPRINTF("mmap  addr=%%p  len=%%p  prot=%%x  flags=%%x  fd=%%d  off=%%p  reloc=%%p\\n",
                     addr, mlen3, prot, flags, fdm, offset, reloc);
-                unsigned *maddr = mmap(addr, mlen3, prot, flags, fdm, offset);
-                if (!*mhdrpp) { // MH_DYLINKER
-                    *mhdrpp = (Mach_header*)maddr;
-                    addr = (unsigned char *)maddr;
-                    reloc = (size_t)addr;
+                {
+                    Addr maddr = (Addr)mmap((void *)addr, mlen3, prot, flags, fdm, offset);
+                    DPRINTF("maddr=%%p\\n", maddr);
+                    if (maddr != addr) {
+                        err_exit(8);
+                    }
+                    addr = maddr;
                 }
-                if (addr != (unsigned char *)maddr) {
-                    DPRINTF("maddr=%%p  addr=%%p\\n", maddr, addr);
-                    err_exit(8);
+                if (!*mhdrpp) { // MH_DYLINKER
+                    *mhdrpp = (Mach_header*)addr;
                 }
             }
             if (xi && 0!=sc->filesize) {
@@ -539,7 +593,7 @@ do_xmap(
                     unsigned int   *p2;
                     unsigned long  *p3;
                 } u;
-                u.p0 = addr;
+                u.p0 = (unsigned char *)addr;
                 Mach_segment_command *segp = (Mach_segment_command *)((((char *)sc - (char *)mhdr)>>2) + u.p2);
                 Mach_section_command *const secp = (Mach_section_command *)(1+ segp);
     #if defined(__aarch64__)  //{
@@ -559,8 +613,8 @@ do_xmap(
             }
             /*bzero(addr, frag);*/  // fragment at lo end
             frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
-            bzero(mlen+addr, frag);  // fragment at hi end
-            if (0!=mlen && 0!=mprotect(addr, mlen, sc->initprot)) {
+            bzero((void *)(mlen+addr), frag);  // fragment at hi end
+            if (0!=mlen && 0!=mprotect((void *)addr, mlen, sc->initprot)) {
                 err_exit(10);
     ERR_LAB
             }
@@ -570,7 +624,7 @@ do_xmap(
                 0!=addr &&
     #endif  /*}*/
                             addr < haddr) { // need pages for .bss
-                if (0!=addr && addr != mmap(addr, haddr - addr, sc->initprot,
+                if (0!=addr && addr != (Addr)mmap((void *)addr, haddr - addr, sc->initprot,
                         MAP_FIXED | MAP_PRIVATE | MAP_ANON, MAP_ANON_FD, 0 ) ) {
                     err_exit(9);
                 }
@@ -578,6 +632,7 @@ do_xmap(
             else if (xi) { // cleanup if decompressor overrun crosses page boundary
                 mlen = ~PAGE_MASK & (3+ mlen);
                 if (mlen<=3) { // page fragment was overrun buffer only
+                    DPRINTF("munmap  %%x  %%x\\n", addr, mlen);
                     munmap((char *)addr, mlen);
                 }
             }
