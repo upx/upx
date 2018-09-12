@@ -1774,8 +1774,8 @@ int PackMachBase<T>::canUnpack()
         if (   0==p[0]  // p_info.p_progid
         &&     0!=p[1]  // p_info.p_filesize
         &&  p[2]==p[1]  // p_info.p_blocksize == p_info.p_filesize
-        &&  (TE32)file_size < get_te32(&p[1])  // compression was worthwhile
-        &&  sz_mach_headers== get_te32(&p[3])  // b_info.sz_unc
+        &&  (unsigned)file_size < get_te32(&p[1])  // compression was worthwhile
+        &&  sz_mach_headers==get_te32(&p[3])  // b_info.sz_unc
         ) {
             overlay_offset = ((char const *)p - (char const *)&buf2[0]) + sz_mach_headers;
             if (!(3&overlay_offset  // not word aligned
