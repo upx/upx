@@ -2651,6 +2651,42 @@ PackLinuxElf64::generateElfHdr(
 #include "p_elf_enum.h"
 #undef WANT_REL_ENUM
 
+// Android shlib has ABS symbols that actually are relative.
+static char const abs_symbol_names[][14] = {
+      "__bss_end__"
+    ,  "_bss_end__"
+    , "__bss_start"
+    , "__bss_start__"
+    ,  "_edata"
+    ,  "_end"
+    , "__end__"
+    , ""
+};
+
+int
+PackLinuxElf32::adjABS(Elf32_Sym *sym, unsigned delta)
+{
+    for (int j = 0; abs_symbol_names[j][0]; ++j) {
+        if (!strcmp(abs_symbol_names[j], &dynstr[sym->st_name])) {
+            sym->st_value += delta;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int
+PackLinuxElf64::adjABS(Elf64_Sym *sym, unsigned delta)
+{
+    for (int j = 0; abs_symbol_names[j][0]; ++j) {
+        if (!strcmp(abs_symbol_names[j], &dynstr[sym->st_name])) {
+            sym->st_value += delta;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 {
     fi->seek(0, SEEK_SET);
@@ -2740,6 +2776,9 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                 &&  Elf32_Sym::SHN_ABS   != symsec
                 &&  xct_off <= symval) {
                     set_te32(&sym->st_value, asl_delta + symval);
+                }
+                if (Elf32_Sym::SHN_ABS == symsec && xct_off <= symval) {
+                    adjABS(sym, asl_delta);
                 }
             }
 
@@ -3134,6 +3173,9 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                 &&  Elf64_Sym::SHN_ABS   != symsec
                 &&  xct_off <= symval) {
                     set_te64(&sym->st_value, asl_delta + symval);
+                }
+                if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
+                    adjABS(sym, asl_delta);
                 }
             }
 
@@ -3989,7 +4031,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
 
     // Packed ET_EXE has no PT_DYNAMIC.
     // Packed ET_DYN has original PT_DYNAMIC for info needed by rtld.
-    bool const is_shlib = !!elf_find_ptype(Elf64_Phdr::PT_DYNAMIC, phdri, c_phnum);
+    Elf64_Phdr const *const dynhdr = elf_find_ptype(Elf64_Phdr::PT_DYNAMIC, phdri, c_phnum);
+    bool const is_shlib = !!dynhdr;
     if (is_shlib) {
         // Unpack and output the Ehdr and Phdrs for real.
         // This depends on position within input file fi.
@@ -3997,9 +4040,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             c_adler, u_adler, false, szb_info);
 
         // The first PT_LOAD.  Part is not compressed (for benefit of rtld.)
-        // Read enough to position the input for next unpackExtent.
         fi->seek(0, SEEK_SET);
-        fi->readx(ibuf, overlay_offset + sizeof(hbuf) + szb_info + ph.c_len);
+        fi->readx(ibuf, get_te64(&dynhdr->p_offset) + get_te64(&dynhdr->p_filesz));
         overlay_offset -= sizeof(linfo);
         xct_off = overlay_offset;
         e_shoff = get_te64(&ehdri.e_shoff);
@@ -4011,6 +4053,9 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 xct_off = e_shoff;
             }
             // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
+            dynseg = (Elf64_Dyn const *)ibuf.subref(
+                "bad DYNAMIC", get_te64(&dynhdr->p_offset), get_te64(&dynhdr->p_filesz));
+            dynstr = (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
             sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
             upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
             upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
@@ -4024,6 +4069,9 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 &&  Elf64_Sym::SHN_ABS   != symsec
                 &&  xct_off <= symval) {
                     set_te64(&sym->st_value, symval - asl_delta);
+                }
+                if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
+                    adjABS(sym, -asl_delta);
                 }
             }
         }
@@ -4044,6 +4092,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         total_in  = xct_off;
         total_out = xct_off;
         ph.u_len = 0;
+        // Position the input for next unpackExtent.
+        fi->seek(sizeof(linfo) + overlay_offset + sizeof(hbuf) + szb_info + ph.c_len, SEEK_SET);
 
         // Decompress and unfilter the tail of first PT_LOAD.
         phdr = (Elf64_Phdr *) (void *) (1+ ehdr);
@@ -4150,13 +4200,13 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 total_in  += old_data_len;
                 total_out += old_data_len;
 
-                Elf64_Phdr *dynhdr = (Elf64_Phdr *)&u[sizeof(*ehdr)];
-                for (unsigned j3= 0; j3 < u_phnum; ++j3, ++dynhdr)
-                if (Elf64_Phdr::PT_DYNAMIC==get_te32(&dynhdr->p_type)) {
+                Elf64_Phdr const *udynhdr = (Elf64_Phdr *)&u[sizeof(*ehdr)];
+                for (unsigned j3= 0; j3 < u_phnum; ++j3, ++udynhdr)
+                if (Elf64_Phdr::PT_DYNAMIC==get_te32(&udynhdr->p_type)) {
                     upx_uint64_t dt_pltrelsz(0), dt_jmprel(0);
                     upx_uint64_t dt_relasz(0), dt_rela(0);
-                    upx_uint64_t const dyn_len = get_te64(&dynhdr->p_filesz);
-                    upx_uint64_t const dyn_off = get_te64(&dynhdr->p_offset);
+                    upx_uint64_t const dyn_len = get_te64(&udynhdr->p_filesz);
+                    upx_uint64_t const dyn_off = get_te64(&udynhdr->p_offset);
                     if (dyn_off < load_off) {
                         continue;  // Oops.  Not really is_shlib ?  [built by 'rust' ?]
                     }
@@ -4757,7 +4807,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 
     // Packed ET_EXE has no PT_DYNAMIC.
     // Packed ET_DYN has original PT_DYNAMIC for info needed by rtld.
-    bool const is_shlib = !!elf_find_ptype(Elf32_Phdr::PT_DYNAMIC, phdri, c_phnum);
+    Elf32_Phdr const *const dynhdr = elf_find_ptype(Elf32_Phdr::PT_DYNAMIC, phdri, c_phnum);
+    bool const is_shlib = !!dynhdr;
     if (is_shlib) {
         // Unpack and output the Ehdr and Phdrs for real.
         // This depends on position within input file fi.
@@ -4765,9 +4816,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
             c_adler, u_adler, false, szb_info);
 
         // The first PT_LOAD.  Part is not compressed (for benefit of rtld.)
-        // Read enough to position the input for next unpackExtent.
         fi->seek(0, SEEK_SET);
-        fi->readx(ibuf, overlay_offset + sizeof(hbuf) + szb_info + ph.c_len);
+        fi->readx(ibuf, get_te32(&dynhdr->p_offset) + get_te32(&dynhdr->p_filesz));
         overlay_offset -= sizeof(linfo);
         xct_off = overlay_offset;
         e_shoff = get_te32(&ehdri.e_shoff);
@@ -4779,7 +4829,10 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 xct_off = e_shoff;
             }
             // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
-            sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
+            dynseg = (Elf32_Dyn const *)ibuf.subref(
+                "bad DYNAMIC", get_te32(&dynhdr->p_offset), get_te32(&dynhdr->p_filesz));
+            dynstr = (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
+            sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
             unsigned const off_dynsym = get_te32(&sec_dynsym->sh_offset);
             unsigned const sz_dynsym  = get_te32(&sec_dynsym->sh_size);
             Elf32_Sym *const sym0 = (Elf32_Sym *)ibuf.subref(
@@ -4792,6 +4845,9 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 &&  Elf32_Sym::SHN_ABS   != symsec
                 &&  xct_off <= symval) {
                     set_te32(&sym->st_value, symval - asl_delta);
+                }
+                if (Elf32_Sym::SHN_ABS == symsec && xct_off <= symval) {
+                    adjABS(sym, -asl_delta);
                 }
             }
         }
@@ -4812,6 +4868,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         total_in  = xct_off;
         total_out = xct_off;
         ph.u_len = 0;
+        // Position the input for next unpackExtent.
+        fi->seek(sizeof(linfo) + overlay_offset + sizeof(hbuf) + szb_info + ph.c_len, SEEK_SET);
 
         // Decompress and unfilter the tail of first PT_LOAD.
         phdr = (Elf32_Phdr *) (void *) (1+ ehdr);
@@ -4918,13 +4976,13 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 total_in  += old_data_len;
                 total_out += old_data_len;
 
-                Elf32_Phdr *dynhdr = (Elf32_Phdr *)&u[sizeof(*ehdr)];
-                for (unsigned j3= 0; j3 < u_phnum; ++j3, ++dynhdr)
+                Elf32_Phdr const *udynhdr = (Elf32_Phdr *)&u[sizeof(*ehdr)];
+                for (unsigned j3= 0; j3 < u_phnum; ++j3, ++udynhdr)
                 if (Elf32_Phdr::PT_DYNAMIC==get_te32(&dynhdr->p_type)) {
                     unsigned dt_pltrelsz(0), dt_jmprel(0);
                     unsigned dt_relsz(0), dt_rel(0);
-                    unsigned const dyn_len = get_te32(&dynhdr->p_filesz);
-                    unsigned const dyn_off = get_te32(&dynhdr->p_offset);
+                    unsigned const dyn_len = get_te32(&udynhdr->p_filesz);
+                    unsigned const dyn_off = get_te32(&udynhdr->p_offset);
                     if (dyn_off < load_off) {
                         continue;  // Oops.  Not really is_shlib ?  [built by 'rust' ?]
                     }

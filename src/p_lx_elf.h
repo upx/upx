@@ -161,6 +161,7 @@ protected:
     void const *elf_find_dynamic(unsigned) const;
     Elf32_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
+    virtual int adjABS(Elf32_Sym *sym, unsigned delta);
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
@@ -292,6 +293,7 @@ protected:
     void const *elf_find_dynamic(unsigned) const;
     Elf64_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
+    virtual int adjABS(Elf64_Sym *sym, unsigned delta);
 
 protected:
     Elf64_Ehdr  ehdri; // from input file
