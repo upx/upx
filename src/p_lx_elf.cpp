@@ -4003,12 +4003,15 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         overlay_offset -= sizeof(linfo);
         xct_off = overlay_offset;
         e_shoff = get_te64(&ehdri.e_shoff);
-        if (e_shoff && shdri) { // --android-shlib
+        if (e_shoff && e_shnum) { // --android-shlib
+            shdri = (Elf64_Shdr /*const*/ *)ibuf.subref(
+                "bad Shdr table", e_shoff, sizeof(Elf64_Shdr)*e_shnum);
             upx_uint64_t xct_off2 = get_te64(&shdri->sh_offset);
             if (e_shoff == xct_off2) {
                 xct_off = e_shoff;
             }
             // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
+            sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
             upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
             upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
             Elf64_Sym *const sym0 = (Elf64_Sym *)ibuf.subref(
@@ -4092,7 +4095,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         unsigned d_info[6]; fi->readx(d_info, sizeof(d_info));
         if (0==old_dtinit) {
             old_dtinit = d_info[2 + (0==d_info[0])];
-            is_asl = 1u& d_info[1];
+            is_asl = 1u& d_info[0];
         }
         fi->seek(lsize - sizeof(d_info), SEEK_CUR);
     }
@@ -4768,12 +4771,15 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         overlay_offset -= sizeof(linfo);
         xct_off = overlay_offset;
         e_shoff = get_te32(&ehdri.e_shoff);
-        if (e_shoff && shdri) { // --android-shlib
+        if (e_shoff && e_shnum) { // --android-shlib
+            shdri = (Elf32_Shdr /*const*/ *)ibuf.subref(
+                "bad Shdr table", e_shoff, sizeof(Elf32_Shdr)*e_shnum);
             unsigned xct_off2 = get_te32(&shdri->sh_offset);
             if (e_shoff == xct_off2) {
                 xct_off = e_shoff;
             }
             // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
+            sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
             unsigned const off_dynsym = get_te32(&sec_dynsym->sh_offset);
             unsigned const sz_dynsym  = get_te32(&sec_dynsym->sh_size);
             Elf32_Sym *const sym0 = (Elf32_Sym *)ibuf.subref(
@@ -4857,7 +4863,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         unsigned d_info[4]; fi->readx(d_info, sizeof(d_info));
         if (0==old_dtinit) {
             old_dtinit = d_info[2 + (0==d_info[0])];
-            is_asl = 1u& d_info[1];
+            is_asl = 1u& d_info[0];
         }
         fi->seek(lsize - sizeof(d_info), SEEK_CUR);
     }
