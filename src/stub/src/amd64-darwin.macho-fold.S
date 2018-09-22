@@ -122,36 +122,58 @@ mmap: .globl mmap
 read: .globl read
         mov $SYS_read,%al
 
+        push %r9; push %r8; push %rcx; push %rdx; push %rsi; push %rdi
         movzbl %al,%eax; push %rax  // save SYS_nnn for error diagnosis
         or $SYSBASE,%eax
         mov %rcx,%r10
         syscall  // .byte 0x0f,0x05
+
+#define DEBUG 0
+#if !DEBUG  //{
         jc sysfail
-        pop %rcx  // toss SYS_nnn
+        add $7*8,%rsp  // SYS_nnn, 6 args
         ret
+#endif  //}
 
-sysfail:  // syscall failed: write hex error code on stderr
-        mov %rax,%rdx
-        pop %rax  // SYS_nnn
-        push %rdi; push %rsi
-        push %rdx  // retval
+DFRAME=0x100
+sysfail:
+        pushf
+        push %rax  // retval
+        push %rdi; push %rsi  // registers used
+        push %rbp; mov %rsp,%rbp
+        cmpl $SYS_write,5*8+0*8(%rbp); je ignore_WRITE
+        sub $DFRAME,%rsp  // alloca
 
-        sub $0x70,%rsp  // alloca
         mov %rsp,%rdi  // output ptr
-        call pr_hex; movb $'=',%al; stosb
-        movq 0x70(%rsp),%rax  // retval
-        call pr_hex; movb $'\n',%al; stosb
+        movb $'\n',%al; stosb
+        movb $'*',%al; stosb
+        mov     3*8(%rbp),%rax; call pr_hex; movb $'=',%al; stosb  // retval
+        mov 5*8+0*8(%rbp),%rax; call pr_hex; movb $'(',%al; stosb  // SYS_nnn
+        mov 5*8+1*8(%rbp),%rax; call pr_hex; movb $',',%al; stosb  // arg1
+        mov 5*8+2*8(%rbp),%rax; call pr_hex; movb $',',%al; stosb  // arg2
+        mov 5*8+3*8(%rbp),%rax; call pr_hex; movb $',',%al; stosb  // arg3
+        mov 5*8+4*8(%rbp),%rax; call pr_hex; movb $',',%al; stosb  // arg4
+        mov 5*8+5*8(%rbp),%rax; call pr_hex; movb $',',%al; stosb  // arg5
+        mov 5*8+6*8(%rbp),%rax; call pr_hex; movb $')',%al; stosb  // arg6
+        movb $'\n',%al; stosb
+
         mov %rdi,%rdx
         sub %rsp,%rdx  // len
         mov %rsp,%rsi  // ptr
         mov $2,%edi  // FD_STDERR
         mov $SYS_write+SYSBASE,%eax
         syscall
-        add $0x70,%rsp
 
-        pop %rcx  // toss retval
-        pop %rsi; pop %rdi
+        add $DFRAME,%rsp
+ignore_WRITE:
+        pop %rbp; pop %rsi; pop %rdi
+        pop %rax  // retval
+        popf
+        lea 7*8(%rsp),%rsp  // SYS_nnn, args
+
+        jnc sysOK
         or $~0,%rax  //mov errno,eax
+sysOK:
         ret
 
 pr_hex:
