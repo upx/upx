@@ -558,7 +558,7 @@ template <class T>
 void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     // offset of p_info in compressed file
-    overlay_offset = secTEXT.addr + sizeof(linfo);
+    overlay_offset = secTEXT.offset + sizeof(linfo);
     super::pack4(fo, ft);
 
     if (Mach_header::MH_EXECUTE == my_filetype) {
@@ -612,6 +612,9 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         case Mach_command::LC_SEGMENT: // fall through
         case Mach_command::LC_SEGMENT_64: {
             Mach_segment_command *const segptr = (Mach_segment_command *)lcp;
+            if (!strcmp("__PAGEZERO", segptr->segname)) {
+                segptr->vmsize = pagezero_vmsize;
+            }
             if (!strcmp("__TEXT", segptr->segname)) {
                 sectxt = (Mach_section_command *)(1+ segptr);
                 txt_addr = sectxt->addr;
