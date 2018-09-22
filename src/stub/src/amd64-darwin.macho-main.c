@@ -128,6 +128,7 @@ xread(Extent *x, void *buf, size_t count)
     for (j = count; 0!=j--; ++p, ++q) {
         *q = *p;
     }
+    DPRINTF("   buf: %%x %%x %%x\\n", ((int *)buf)[0], ((int *)buf)[1], ((int *)buf)[2]);
     x->buf  += count;
     x->size -= count;
 }
@@ -480,15 +481,18 @@ xfind_pages(
     int j;
     unsigned mflags = ((mhdr->filetype == MH_DYLINKER || mhdr->flags & MH_PIE) ? 0 : MAP_FIXED);
     mflags += MAP_PRIVATE | MAP_ANON;  // '+' can optimize better than '|'
-    DPRINTF("xfind_pages  mhdr=%%p  sc=%%p  ncmds=%%d  addr=%%p\\n",
-        mhdr, sc, ncmds, addr);
+    DPRINTF("xfind_pages  mhdr=%%p  sc=%%p  ncmds=%%d  addr=%%p  mflags=%%x\\n",
+        mhdr, sc, ncmds, addr, mflags);
     for (j=0; j < ncmds; ++j,
         (sc = (Mach_segment_command const *)((sc->cmdsize>>2) + (unsigned const *)sc))
-    ) {
-        DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x\\n", j, sc->cmd, sc->cmdsize);
-        if (LC_SEGMENT==sc->cmd && sc->vmsize && sc->filesize) {
-            if (0==(1+ lo)  // 1st LC_SEGMENT
-            &&  mhdr->filetype == MH_DYLINKER  // of /usr/lib/dyld
+    ) if (LC_SEGMENT==sc->cmd) {
+        DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x  vmaddr=%%p  vmsize==%%p  lo=%%p  mflags=%%x\\n",
+            j, sc->cmd, sc->cmdsize, sc->vmaddr, sc->vmsize, lo, mflags);
+        if (sc->vmsize  // theoretically occupies address space
+        &&  !(sc->vmaddr==0 && (MAP_FIXED & mflags))  // but ignore PAGEZERO when MAP_FIXED
+        ) {
+            if (mhdr->filetype == MH_DYLINKER  // /usr/lib/dyld
+            &&  0==(1+ lo)  // 1st LC_SEGMENT
             &&  sc->vmaddr != 0  // non-floating address
             ) {
                 // "pre-linked" dyld on MacOS 10.11.x El Capitan
@@ -504,12 +508,19 @@ xfind_pages(
     }
     lo -= ~PAGE_MASK & lo;  // round down to page boundary
     hi  =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
+    DPRINTF("  addr=%%p  lo=%%p  len=%%p  mflags=%%x\\n", addr, lo, hi, mflags);
     if (MAP_FIXED & mflags) {
         addr = lo;
+        int rv = munmap((void *)addr, hi);
+        if (rv) {
+            DPRINTF("munmap addr=%%p len=%%p, rv=%%x\\n", addr, hi, rv);
+        }
     }
-    DPRINTF("  addr=%%p  lo=%%p  len=%%p  mflags=%%x\\n", addr, lo, hi, mflags);
     addr = (Addr)mmap((void *)addr, hi, PROT_NONE, mflags, MAP_ANON_FD, 0);
     DPRINTF("  addr=%%p\\n", addr);
+    if (~PAGE_MASK & addr) {
+        err_exit(6);
+    }
     return (Addr)(addr - lo);
 }
 
@@ -536,7 +547,7 @@ do_xmap(
         (sc = (Mach_segment_command *)((sc->cmdsize>>2) + (unsigned *)sc))
     ) {
         DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x\\n", j, sc->cmd, sc->cmdsize);
-        if (LC_SEGMENT==sc->cmd && sc->filesize) {
+        if (LC_SEGMENT==sc->cmd && sc->vmsize) {
             Extent xo;
             size_t mlen = xo.size = sc->filesize;
                           xo.buf  = (void *)(reloc + sc->vmaddr);
@@ -863,7 +874,7 @@ finish:
 done:
     va_end(va);
     return n;
- }
+}
 
 #endif  //}
 
