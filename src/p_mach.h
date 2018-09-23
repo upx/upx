@@ -823,6 +823,7 @@ protected:
     unsigned o__mod_init_func;  // file offset to __DATA.__mod_init_func Mach_section_command
     upx_uint64_t prev_mod_init_func;
     upx_uint64_t pagezero_vmsize;
+    upx_uint64_t vma_max;  // max over (.vmsize + .vmaddr)
     Mach_header mhdri;
 
     Mach_header mhdro;

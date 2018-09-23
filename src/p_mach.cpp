@@ -583,8 +583,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         segLINK.fileoff = len;  // must be in the file
         segLINK.vmaddr =  len + segTEXT.vmaddr;
         fo->write(page, blankLINK); len += blankLINK;
-        // reserve convex hull of input segments
-        segLINK.vmsize -= (segLINK.vmaddr - segTEXT.vmaddr);
+        segLINK.vmsize = PAGE_SIZE;
         segLINK.filesize = blankLINK;
 
         // Get a writeable copy of the stub to make editing easier.
@@ -593,6 +592,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
         Mach_header *const mhp = (Mach_header *)upxstub;
         mhp->cpusubtype = my_cpusubtype;
+        mhp->flags = mhdro.flags;
         char *tail = (char *)(1+ mhp);
         Mach_section_command *sectxt = 0;  // in temp for output
         unsigned txt_addr = 0;
@@ -1243,9 +1243,8 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
         memcpy(&mhdro, stub_main, sizeof(mhdro));
+        mhdro.flags = mhdri.flags;
         COMPILE_TIME_ASSERT(sizeof(mhdro.flags) == sizeof(unsigned))
-        mhdro.flags &= ~ (unsigned) Mach_header::MH_PIE;  // we require fixed address
-        mhdro.flags |= Mach_header::MH_BINDATLOAD;  // DT_BIND_NOW
     }
     unsigned pos = sizeof(mhdro);
     fo->write(&mhdro, sizeof(mhdro));
@@ -1270,12 +1269,16 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segTEXT.cmdsize = sizeof(segTEXT) + sizeof(secTEXT);
     strncpy((char *)segTEXT.segname, "__TEXT", sizeof(segTEXT.segname));
     if (my_filetype==Mach_header::MH_EXECUTE) {
-        int k;  // must ignore zero-length segments, which sort last
-        for (k=1 /*n_segment*/; --k>=0; )
-            if (msegcmd[k].vmsize!=0)
-                break;
-        segTEXT.vmaddr = PAGE_MASK64 & (~PAGE_MASK64 +
-            msegcmd[k].vmsize + msegcmd[k].vmaddr );
+        if (Mach_header::MH_PIE & mhdri.flags) {
+            segTEXT.vmaddr = segZERO.vmsize;  // contiguous
+        }
+        else { // not MH_PIE
+            // Start above all eventual mappings.
+            // Cannot enlarge segZERO.vmsize because MacOS 10.13 (HighSierra)
+            // won't permit re-map of PAGEZERO.
+            // Stub will fill with PROT_NONE first.
+            segTEXT.vmaddr = vma_max;
+        }
     }
     if (my_filetype==Mach_header::MH_DYLIB) {
         segTEXT.vmaddr = 0;
@@ -1319,18 +1322,10 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segLINK = segTEXT;
     segLINK.cmdsize = sizeof(segLINK);
     strncpy((char *)segLINK.segname, "__LINKEDIT", sizeof(segLINK.segname));
-    segLINK.nsects = 0;
     segLINK.initprot = Mach_command::VM_PROT_READ;
+    segLINK.nsects = 0;
+    segLINK.vmsize = 0;
     // Adjust later: .vmaddr .vmsize .fileoff .filesize
-    upx_uint64_t up(0);
-    unsigned const ncmds = mhdri.ncmds;
-    for (unsigned j= 0; j < ncmds; ++j) if (lc_seg == msegcmd[j].cmd) {
-        upx_uint64_t sup = msegcmd[j].vmsize + msegcmd[j].vmaddr;
-        if (up < sup) {
-            up = sup;
-            segLINK.vmsize = sup - segLINK.vmaddr;
-        }
-    }
 
     unsigned gap = 0;
     if (my_filetype == Mach_header::MH_EXECUTE) {
@@ -1899,12 +1894,17 @@ bool PackMachBase<T>::canPack()
     }
 
     // Check alignment of non-null LC_SEGMENT.
+    vma_max = 0;
     for (unsigned j= 0; j < ncmds; ++j) {
         if (lc_seg==msegcmd[j].cmd) {
             if (msegcmd[j].vmsize==0)
                 break;  // was sorted last
             if (~PAGE_MASK & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
                 return false;
+            }
+            upx_uint64_t t = msegcmd[j].vmsize + msegcmd[j].vmaddr;
+            if (vma_max < t) {
+                vma_max = t;
             }
 
             // We used to check that LC_SEGMENTS were contiguous,
@@ -1915,6 +1915,7 @@ bool PackMachBase<T>::canPack()
             sz_segment = msegcmd[j].filesize + msegcmd[j].fileoff - msegcmd[0].fileoff;
         }
     }
+    vma_max = PAGE_MASK & (~PAGE_MASK + vma_max);
 
     // info: currently the header is 36 (32+4) bytes before EOF
     unsigned char buf[256];

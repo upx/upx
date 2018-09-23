@@ -42,6 +42,8 @@ mlc_cmdsize = 4
 
 sz_Mach_header64= 8*4
   mhdr_ncmds= 4*4
+  mhdr_flags= 6*4
+MH_PIE=0x200000
 
 sz_Mach_segment= 2*4 + 16 + 4*NBPW + 4*4
   mseg_segname=  2*4
@@ -247,6 +249,18 @@ sz_b_info= 12
 
 // Decompress the rest of this loader, and jump to it.
 unfold:
+        testl $MH_PIE,mhdr_flags(%r_MHDR); jnz is_pie
+
+        // Not PIE.  Map the gap from PAGEZERO.vmsize to TEXT.vmaddr with
+        // PROT_NONE so that MacOS will not use it. But do_xmap will use it.
+        subq %arg6,%arg6  // 0 offset
+        orl $-1,%arg5l  // fd
+        push $MAP_PRIVATE|MAP_ANON|MAP_FIXED; pop %sys4
+        push $0; pop %arg3  // PROT_NONE
+        movq mseg_vmsize + sz_Mach_header64(%r_MHDR),%arg1  // __PAGEZERO.vmsize
+        movq %r_MHDR,%arg2; subq %arg1,%arg2  // size of gap between PAGEZERO and TEXT
+        mov $SYS_mmap,%eax; syscall
+is_pie:
         pop %rbx  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_fold...}
         pop %rdi  // P_08  fd
 
