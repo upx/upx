@@ -182,14 +182,15 @@ F_delta= 3*4
         str r0,[sp,#F_entry - F_delta]  @ entry address
 
 // Map 1 page of /proc/self/exe so that it does not disappear
-        mov r5,#0  @ SEEK_SET
-        ldr r4,[sp,#F_fd - F_delta]!  @ fd
+        ldr r4,[sp],#4  @ pop r4,F_fd
+        mov r5,#0  @ SEEK_SET offset
+        stmdb sp!,{r4,r5}  @ arg5,arg6 calling convention
         mov r3,#MAP_PRIVATE
         mov r2,#PROT_READ
         mov r1,#PAGE_SIZE
         mov r0,#0  @ any address
         bl mmap  @ no error check: cannot recover
-        ldr r0,[sp],#4  @ F_fd
+        ldmia sp!,{r0,r1}  @ fd, offset
         bl close
 
 #if DEBUG  //{

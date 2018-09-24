@@ -124,9 +124,9 @@ end_decompress: .globl end_decompress
         /* IDENTSTR goes here */
 
 section ELFMAINZ
-unfold:  // in: r3= mflg; lr= &O_BINFO
+unfold:  // in: r3= mflg; r6= elfaddr; lr= &O_BINFO
         str r3,[sp,#F_mflg]
-        mvn r10,r6; add r10,r10,#1  @ "neg r10,r6": -elfaddr
+        mov r10,#0; sub r10,r10,r6  @ "neg r10,r6": -elfaddr
         add r6,lr,#4  @ &b_info of folded code
         add r14,r6,r10  @ offset(b_info)
 
