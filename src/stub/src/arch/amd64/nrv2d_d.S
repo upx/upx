@@ -30,10 +30,9 @@
 */
 
 #ifndef NO_METHOD_CHECK
-        cmpb $ M_NRV2D_LE32,methb; je top_n2d; jmp not_n2d
-#else
-        jmp top_n2d
+        cmpb $ M_NRV2D_LE32,methb; jne not_n2d
 #endif
+        jmp top_n2d
 
 lit_n2d:
         incq %rsi; movb %dl,(%rdi)
@@ -74,7 +73,10 @@ gotlen_n2d:
 bot_n2d:  // In: 0==len
         jmp top_n2d
 
+#ifndef NO_METHOD_CHECK
 not_n2d:
+        push %rdi; pop %rsi  # src = arg1
+#endif
 
 /*
 vi:ts=8:et:nowrap

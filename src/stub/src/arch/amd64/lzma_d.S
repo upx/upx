@@ -104,7 +104,13 @@ section LZMA_DEC30
         movl szSizeT(%rbx),%ecx; addq %rcx,%rsi  //  inSizeProcessed
         movl        (%rbx),%edx; addq %rdx,%rdi  // outSizeProcessed
         leave  // movl %ebp,%rsp; popq %rbp
+#ifndef NO_METHOD_CHECK
+        jmp eof_lzma
 not_lzma:
+        push %rdi; pop %rsi  # src = arg1
+        # fall into 'eof'
+eof_lzma:
+#endif
 
 // vi:ts=8:et
 
