@@ -313,7 +313,7 @@ is_pie:
         movq %rsi,%arg1  // src
         pop %arg2  // P_14  srclen
         call *%rbp  // old f_exp
-        pop %ecx  // P_13  toss .sz_unc
+        pop %rcx  // P_13  toss .sz_unc
 
 // PROT_EXEC
         pop %arg2  // P_12  length
