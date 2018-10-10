@@ -1491,11 +1491,11 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
                     lsize = getLoaderSize();
                     assert(lsize > 0);
                 }
-#if 0
+#if 0  //{
                 printf("\n%2d %02x: %d +%4d +%3d = %d  (best: %d +%4d +%3d = %d)\n", ph.method, ph.filter,
                        ph.c_len, lsize, hdr_c_len, ph.c_len + lsize + hdr_c_len,
                        best_ph.c_len, best_ph_lsize, best_hdr_c_len, best_ph.c_len + best_ph_lsize + best_hdr_c_len);
-#endif
+#endif  //}
                 bool update = false;
                 if (ph.c_len + lsize + hdr_c_len < best_ph.c_len + best_ph_lsize + best_hdr_c_len)
                     update = true;
