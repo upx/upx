@@ -131,6 +131,7 @@ static void
 err_exit(int a)
 {
     (void)a;  // debugging convenience
+    DPRINTF("err_exit %%d\\n", a);
     exit(127);
 }
 #endif  //}
@@ -198,8 +199,10 @@ ERR_LAB
                     h.b_method
 #endif  //}
                 );
-            if (j != 0 || out_len != (nrv_uint)h.sz_unc)
+            if (j != 0 || out_len != (nrv_uint)h.sz_unc) {
+                DPRINTF("j=%%x  out_len=%%x  &h=%%p\\n", j, out_len, &h);
                 err_exit(7);
+            }
             // Skip Ehdr+Phdrs: separate 1st block, not filtered
             if (h.b_ftid!=0 && f_unf  // have filter
             &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
