@@ -68,6 +68,7 @@ SP_fd= 3*4
 /* In:
    r4= LENX
    r5= ADRX
+   lr= "/proc/self/exe"
 new sp/            elfaddr,fd, ADRU,LENU, f_exp,%entry, argc,argv,0,envp,0,auxv
         (ADRX,LENX) = extent of compressed program (after moving)
         (ADRU,LENU) = params for final munmap()
@@ -112,13 +113,14 @@ F_entry=   7*4
 
         mov r2,#PATH_MAX
         mov r1,r0  @ buffer
-        adr r0,proc_self_exe  @ arg1
+        mov r0,lr  @ arg1= "/proc/self/exe"
         sub r2,r2,#1  @ room for null terminator
-        bl readlink; add r2,r1,r0  @ provisional end
-        cmn r0,#4096; bcc link_ok  @ no error
-        adr r1,proc_self_exe    @ buffer (input name)
-        add r2,r1,#proc_self_align - proc_self_exe  @ end
+        bl readlink
+        cmn r0,#4096
+        movcs r1,lr  @ "/proc/self/exe"
+        movcs r0,#14  @ strlen("/proc/self/exe")
 link_ok:
+        add r2,r1,r0  @ end
         mov r0,r6  @ &old_strings
         mov  r3,#0;        strb r3,[r0,#-1]!  @ terminate link name
 0: // copy backwards to beginning

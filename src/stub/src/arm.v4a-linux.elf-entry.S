@@ -195,7 +195,11 @@ unfold:  // in: r3= mflg; r6= elfaddr; lr= &O_BINFO
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
+        adr lr,proc_self_exe
         add pc,r6,r10  @ goto reloc(unfold)
+proc_self_exe:
+        .asciz "/proc/self/exe"
+        .balign 4
 
 #if DEBUG  /*{*/
 TRACE_BUFLEN=512
@@ -247,11 +251,8 @@ L620:
         ret
 hex:
         .ascii "0123456789abcdef"
-#endif  /*}*/
-
-proc_self_exe:
-        .asciz "/proc/self/exe"
         .balign 4
+#endif  /*}*/
 
 main:  // IN: lr= &f_exp
         ldr r0,[lr,#sz_pack2 - f_exp]  @ sz_pack2
