@@ -4861,7 +4861,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                     set_te32(&sym->st_value, symval - asl_delta);
                 }
                 if (Elf32_Sym::SHN_ABS == symsec && xct_off <= symval) {
-                    adjABS(sym, -asl_delta);
+                    adjABS(sym, 0u - asl_delta);
                 }
             }
         }
