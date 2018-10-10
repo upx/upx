@@ -1826,16 +1826,23 @@ bool PackLinuxElf32::canPack()
         phdri= (Elf32_Phdr *)((size_t)e_phoff + file_image);  // do not free() !!
         shdri= (Elf32_Shdr *)((size_t)e_shoff + file_image);  // do not free() !!
 
-        sec_strndx = &shdri[get_te16(&ehdr->e_shstrndx)];
-        shstrtab = (char const *)(get_te32(&sec_strndx->sh_offset) + file_image);
-        sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
-        if (sec_dynsym)
-            sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
+        if (!e_shnum) {
+            sec_strndx = NULL;
+            shstrtab = NULL;
+        }
+        else {
+            sec_strndx = &shdri[get_te16(&ehdr->e_shstrndx)];
+            shstrtab = (char const *)(get_te32(&sec_strndx->sh_offset) + file_image);
+            sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
+            if (sec_dynsym) {
+                sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
+            }
 
-        if (Elf32_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-        || 0!=strcmp((char const *)".shstrtab",
-                    &shstrtab[get_te32(&sec_strndx->sh_name)]) ) {
-            throwCantPack("bad e_shstrndx");
+            if (Elf32_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
+            || 0!=strcmp((char const *)".shstrtab",
+                        &shstrtab[get_te32(&sec_strndx->sh_name)]) ) {
+                throwCantPack("bad e_shstrndx");
+            }
         }
 
         phdr= phdri;
@@ -2078,16 +2085,23 @@ PackLinuxElf64::canPack()
         phdri= (Elf64_Phdr *)((size_t)e_phoff + file_image);  // do not free() !!
         shdri= (Elf64_Shdr *)((size_t)e_shoff + file_image);  // do not free() !!
 
-        sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
-        if (sec_dynsym)
-            sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
+        if (!e_shnum) {
+            sec_strndx = NULL;
+            shstrtab = NULL;
+        }
+        else {
+            sec_strndx = &shdri[get_te16(&ehdr->e_shstrndx)];
+            shstrtab = (char const *)(get_te64(&sec_strndx->sh_offset) + file_image);
+            sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
+            if (sec_dynsym) {
+                sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
+            }
 
-        sec_strndx = &shdri[get_te16(&ehdr->e_shstrndx)];
-        shstrtab = (char const *)(get_te64(&sec_strndx->sh_offset) + file_image);
-        if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-        || 0!=strcmp((char const *)".shstrtab",
-                    &shstrtab[get_te32(&sec_strndx->sh_name)]) ) {
-            throwCantPack("bad e_shstrndx");
+            if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
+            || 0!=strcmp((char const *)".shstrtab",
+                        &shstrtab[get_te32(&sec_strndx->sh_name)]) ) {
+                throwCantPack("bad e_shstrndx");
+            }
         }
 
         phdr= phdri;
