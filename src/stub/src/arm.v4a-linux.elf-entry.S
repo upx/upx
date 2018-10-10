@@ -172,9 +172,7 @@ unfold:  // in: r3= mflg; r6= elfaddr; lr= &O_BINFO
         ldr r3,[sp],#4  @ P_01  sz_unc
 
         ldr r1,[sp,#F_mflg]  @ mflg
-        ldr r0,[r4]  @ "orr r3,r3,#0" at mflg_subr
-        orr r0,r0,r1  @ change the 8-bit immediate
-        str r0,[r4]
+        str r1,[r4]  @ pass mflg to folded code
 
 // PROT_EXEC
         ldr r0,[sp,#F_f_exp]
@@ -193,7 +191,7 @@ unfold:  // in: r3= mflg; r6= elfaddr; lr= &O_BINFO
         ldr r0,[sp,#F_ADRU]
         sub r4,r9,r1  @ LENX= sz_pack2 - O_BINFO
         add r5,r0,r1  @ ADRX= new Elf32_Ehdr + O_BINFO
-        add r6,r6,#2*4  @ past mflg_subr
+        add r6,r6,#4  @ past the forwarded data
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/

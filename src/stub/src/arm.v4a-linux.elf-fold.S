@@ -40,6 +40,7 @@ sz_b_info = 12
   sz_cpr= 4
   b_method= 8
 
+MAP_ANONYMOUS= 0x20
 MAP_PRIVATE=   0x02
 MAP_FIXED=     0x10
 
@@ -61,9 +62,7 @@ PATH_MAX= 4096
 #define OVERHEAD 2048
 #define MAX_ELF_HDR 512
 
-mflg_subr:  @ for handling QNX vs Linux
-        orr r3,r3,#0  @ re-written to MAP_PRIVATE|MAP_ANONYMOUS
-        ret
+mflg_data: .int MAP_PRIVATE|MAP_ANONYMOUS  @ overwritten for QNX vs Linux
 
 SP_fd= 3*4
 /* In:
@@ -215,16 +214,16 @@ F_delta= 3*4
         mov r10,#0
         mov r11,#0
 
-#if DEBUG  //{
+#if 1|DEBUG  //{
 /* Heuristic cache flush: sweep contiguous range to force collisions and evictions. */
-        sub r12,sp,#(1<<19)  @ limit: 1/2 MB more
+        sub r12,sp,#(1<<18)  @ limit: 1/4 MB more
 sweep:
         ldr r7,[sp],#-(1<<5)  @ extend stack; read allocate 32 bytes
         str r7,[sp]  @ make it dirty
         ldr r7,[sp]  @ read alocate again in case dirtying caused COW split
         cmp r12,sp; blo sweep
 
-        add sp,sp,#(1<<19)  @ pop stack
+        add sp,sp,#(1<<18)  @ pop stack
 #endif  //}
 
 #if defined(ARMEL_DARWIN)  /*{*/
@@ -432,10 +431,11 @@ get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
 
 mmap_privanon: .globl mmap_privanon
         stmdb sp!,{r4,r5,lr}
+        ldr r4,mflg_data  @ Map_PRIVATE|MAP_ANON for Linux; MAP_PRIVANON for QNX
         mov r5,#0  @ offset= 0
+        orr r3,r3,r4  @ combine with input (such as MAP_FIXED)
         mvn r4,#0  @ fd= -1
-        adr lr, mmap_do
-        b mflg_subr // fix r3 for QNX vs Linux
+        b mmap_do
 
 #if 1|DEBUG  /*{*/
 
