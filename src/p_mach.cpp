@@ -517,19 +517,18 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
            if (xa < xb)        return -1;  // LC_SEGMENT first
            if (xa > xb)        return  1;
            if (0 != xa)        return  0;  // not LC_SEGMENT
-    // Beware 0==.vmsize (some MacOSX __DWARF debug info: a "comment")
-    if (a->vmsize!=0 && b->vmsize!=0) {
-        if (a->vmaddr < b->vmaddr) return -1;  // ascending by .vmaddr
-        if (a->vmaddr > b->vmaddr) return  1;
-    }
-    else { // 0==.vmsize goes last, except ordered by fileoff
-        if (a->vmsize)         return -1;  // 'a' is first
-        if (b->vmsize)         return  1;  // 'a' is last
-        if (a->fileoff < b->fileoff)
+    // Ascending by .fileoff so that find_SEGMENT_gap works
+    if (a->fileoff < b->fileoff)
                                return -1;
-        if (a->fileoff > b->fileoff)
+    if (a->fileoff > b->fileoff)
                                return  1;
-    }
+    // Ascending by .vmaddr
+    if (a->vmaddr < b->vmaddr) return -1;
+    if (a->vmaddr > b->vmaddr) return  1;
+    // Descending by .vmsize
+    if (a->vmsize)             return -1;  // 'a' is first
+    if (b->vmsize)             return  1;  // 'a' is last
+    // What could remain?
                                return  0;
 }
 
@@ -1485,7 +1484,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         }
     }
 
-    // Put LC_SEGMENT together at the beginning, ascending by .vmaddr.
+    // Put LC_SEGMENT together at the beginning
     qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
     n_segment = 0;
     for (unsigned j= 0; j < ncmds; ++j) {
@@ -1885,7 +1884,7 @@ bool PackMachBase<T>::canPack()
         return false;
     }
 
-    // Put LC_SEGMENT together at the beginning, ascending by .vmaddr.
+    // Put LC_SEGMENT together at the beginning
     qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
 
     if (lc_seg==msegcmd[0].cmd && 0==msegcmd[0].vmaddr
@@ -1897,8 +1896,7 @@ bool PackMachBase<T>::canPack()
     vma_max = 0;
     for (unsigned j= 0; j < ncmds; ++j) {
         if (lc_seg==msegcmd[j].cmd) {
-            if (msegcmd[j].vmsize==0)
-                break;  // was sorted last
+            ++n_segment;
             if (~PAGE_MASK & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
                 return false;
             }
@@ -1906,12 +1904,7 @@ bool PackMachBase<T>::canPack()
             if (vma_max < t) {
                 vma_max = t;
             }
-
-            // We used to check that LC_SEGMENTS were contiguous,
-            // but apparently that is not needed anymore,
-            // and Google compilers generate strange layouts.
-
-            ++n_segment;
+            // Segments need not be contigous {esp. "rust")
             sz_segment = msegcmd[j].filesize + msegcmd[j].fileoff - msegcmd[0].fileoff;
         }
     }

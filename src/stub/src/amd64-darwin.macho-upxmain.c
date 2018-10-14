@@ -517,7 +517,13 @@ do_xmap(
 
     for ( j=0; j < mhdr->ncmds; ++j,
         (sc = (Mach_segment_command const *)(sc->cmdsize + (unsigned char const *)sc))
-    ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize!=0) {
+    ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize==0) {
+            // Typical __DWARF info segment for 'rust'
+            struct b_info h;
+            xread(xi, (unsigned char *)&h, sizeof(h));
+            DPRINTF("    0==.vmsize; skipping %%x\\n", h.sz_cpr);
+            xi->buf += h.sz_cpr;
+    else if (LC_SEGMENT_64==sc->cmd && sc->vmsize!=0) {
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
         Addr  addr = xo.buf  = base + (Addr)sc->vmaddr;
