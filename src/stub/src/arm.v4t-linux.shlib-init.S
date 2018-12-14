@@ -402,7 +402,7 @@ movsl_subr:
 movsl:  // In:  edi= 4-byte aligned dst; esi= 4-byte aligned src; ecx= word count
 .real_start_ofmovsl:
         mov tmp,#7; tst ecx,tmp; bne 9b
-        lsr ecx,#3; beq 9f
+        lsr ecx,#3; beq 8f  // THUMB return when zero
         .balign 4; bx pc; nop  // enter ARM mode
         .arm
         stmdb  sp!,{r2,   r4,r6, r7,r8,r9}  // tmp===r3, ecx===r5
@@ -412,6 +412,9 @@ movsl:  // In:  edi= 4-byte aligned dst; esi= 4-byte aligned src; ecx= word coun
         ldmia  sp!,{r2,   r4,r6, r7,r8,r9}
 9:
         ret
+8:
+        .thumb
+        bx lr
 
 #if !defined(ARMEL_EABI4)  /*{*/
         .arm
