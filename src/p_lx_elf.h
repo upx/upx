@@ -163,6 +163,7 @@ protected:
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
     virtual int adjABS(Elf32_Sym *sym, unsigned delta);
 
+    char const *get_dynsym_name(unsigned symnum, unsigned relnum) const;
 protected:
     Elf32_Ehdr  ehdri; // from input file
     MemBuffer lowmem;  // especially for shlib
@@ -189,6 +190,8 @@ protected:
     Elf32_Shdr       *sec_strndx;
     Elf32_Shdr const *sec_dynsym;
     Elf32_Shdr const *sec_dynstr;
+    unsigned symnum_end;
+    unsigned strtab_end;
 
     __packed_struct(cprElfHdr1)
         Elf32_Ehdr ehdr;
@@ -295,6 +298,7 @@ protected:
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
     virtual int adjABS(Elf64_Sym *sym, unsigned delta);
 
+    char const *get_dynsym_name(unsigned symnum, unsigned relnum) const;
 protected:
     Elf64_Ehdr  ehdri; // from input file
     MemBuffer lowmem;  // especially for shlib
@@ -321,6 +325,8 @@ protected:
     Elf64_Shdr       *sec_strndx;
     Elf64_Shdr const *sec_dynsym;
     Elf64_Shdr const *sec_dynstr;
+    unsigned symnum_end;
+    unsigned strtab_end;
 
     __packed_struct(cprElfHdr1)
         Elf64_Ehdr ehdr;

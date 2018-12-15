@@ -672,6 +672,7 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
     jni_onload_sym(NULL),
     shstrtab(NULL),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
+    , symnum_end(0)
 {
     memset(&ehdri, 0, sizeof(ehdri));
     if (f) {
@@ -693,6 +694,7 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
     jni_onload_sym(NULL),
     shstrtab(NULL),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
+    , symnum_end(0)
 {
     memset(&ehdri, 0, sizeof(ehdri));
     if (f) {
@@ -1558,6 +1560,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
     if (dt_table[Elf32_Dyn::DT_NULL]) {
         return;  // not 1st time; do not change upx_dt_init
     }
+    Elf32_Dyn const *const dynp0 = dynp;
     unsigned ndx = 1+ 0;
     if (dynp)
     for (; ; ++ndx, ++dynp) {
@@ -1573,6 +1576,28 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
          if (dt_table[Elf32_Dyn::DT_INIT])          upx_dt_init = Elf32_Dyn::DT_INIT;
     else if (dt_table[Elf32_Dyn::DT_PREINIT_ARRAY]) upx_dt_init = Elf32_Dyn::DT_PREINIT_ARRAY;
     else if (dt_table[Elf32_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf32_Dyn::DT_INIT_ARRAY;
+
+    unsigned const z_str = dt_table[Elf32_Dyn::DT_STRSZ];
+    if (z_str) {
+        strtab_end = get_te32(&dynp0[-1+ z_str].d_val);
+        if (file_size <= strtab_end) { // FIXME: not tight enough
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad DT_STRSZ %#x", strtab_end);
+            throwCantPack(msg);
+        }
+    }
+    unsigned const x_sym = dt_table[Elf32_Dyn::DT_SYMTAB];
+    unsigned const x_str = dt_table[Elf32_Dyn::DT_STRTAB];
+    if (x_sym && x_str) {
+        upx_uint32_t const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
+        upx_uint32_t const v_str = get_te32(&dynp0[-1+ x_str].d_val);
+        unsigned const  z_sym = dt_table[Elf32_Dyn::DT_SYMENT];
+        unsigned const sz_sym = !z_sym ? sizeof(Elf32_Sym)
+            : get_te32(&dynp0[-1+ z_sym].d_val);
+        if (v_sym < v_str) {
+            symnum_end = (v_str - v_sym) / sz_sym;
+        }
+    }
 }
 
 Elf32_Phdr const *
@@ -1666,14 +1691,30 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_type(
     return 0;
 }
 
+char const *PackLinuxElf64::get_dynsym_name(unsigned symnum, unsigned relnum) const
+{
+    if (symnum_end <= symnum) {
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad symnum %#x in Elf64_Rel[%d]\n", symnum, relnum);
+        throwCantPack(msg);
+    }
+    unsigned st_name = get_te64(&dynsym[symnum].st_name);
+    if (strtab_end <= st_name) {
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad .st_name %#x in DT_STRTAB[%d]\n", st_name, symnum);
+        throwCantPack(msg);
+    }
+    return &dynstr[st_name];
+}
+
 bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
 {
     if (!dynsym || !dynstr) {
         return false;
     }
-    for (; 0 < sz; (sz -= sizeof(Elf64_Rela)), ++rela) {
+    for (unsigned relnum= 0; 0 < sz; (sz -= sizeof(Elf64_Rela)), ++rela, ++relnum) {
         unsigned const symnum = get_te64(&rela->r_info) >> 32;
-        char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
+        char const *const symnam = get_dynsym_name(symnum, relnum);
         if (0==strcmp(symnam, "__libc_start_main")  // glibc
         ||  0==strcmp(symnam, "__libc_init")  // Android
         ||  0==strcmp(symnam, "__uClibc_main")
@@ -1683,14 +1724,30 @@ bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
     return false;
 }
 
+char const *PackLinuxElf32::get_dynsym_name(unsigned symnum, unsigned relnum) const
+{
+    if (symnum_end <= symnum) {
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad symnum %#x in Elf32_Rel[%d]\n", symnum, relnum);
+        throwCantPack(msg);
+    }
+    unsigned st_name = get_te32(&dynsym[symnum].st_name);
+    if (strtab_end <= st_name) {
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad .st_name %#x in DT_STRTAB[%d]\n", st_name, symnum);
+        throwCantPack(msg);
+    }
+    return &dynstr[st_name];
+}
+
 bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
 {
     if (!dynsym || !dynstr) {
         return false;
     }
-    for (; 0 < sz; (sz -= sizeof(Elf32_Rel)), ++rel) {
+    for (unsigned relnum= 0; 0 < sz; (sz -= sizeof(Elf32_Rel)), ++rel, ++relnum) {
         unsigned const symnum = get_te32(&rel->r_info) >> 8;
-        char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
+        char const *const symnam = get_dynsym_name(symnum, relnum);
         if (0==strcmp(symnam, "__libc_start_main")  // glibc
         ||  0==strcmp(symnam, "__libc_init")  // Android
         ||  0==strcmp(symnam, "__uClibc_main")
@@ -4574,6 +4631,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
     if (dt_table[Elf64_Dyn::DT_NULL]) {
         return;  // not 1st time; do not change upx_dt_init
     }
+    Elf64_Dyn const *const dynp0 = dynp;
     unsigned ndx = 1+ 0;
     if (dynp)
     for (; ; ++ndx, ++dynp) {
@@ -4589,6 +4647,28 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
          if (dt_table[Elf64_Dyn::DT_INIT])          upx_dt_init = Elf64_Dyn::DT_INIT;
     else if (dt_table[Elf64_Dyn::DT_PREINIT_ARRAY]) upx_dt_init = Elf64_Dyn::DT_PREINIT_ARRAY;
     else if (dt_table[Elf64_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf64_Dyn::DT_INIT_ARRAY;
+
+    unsigned const z_str = dt_table[Elf64_Dyn::DT_STRSZ];
+    if (z_str) {
+        strtab_end = get_te64(&dynp0[-1+ z_str].d_val);
+        if (file_size <= strtab_end) { // FIXME: not tight enough
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad DT_STRSZ %#x", strtab_end);
+            throwCantPack(msg);
+        }
+    }
+    unsigned const x_sym = dt_table[Elf64_Dyn::DT_SYMTAB];
+    unsigned const x_str = dt_table[Elf64_Dyn::DT_STRTAB];
+    if (x_sym && x_str) {
+        upx_uint64_t const v_sym = get_te64(&dynp0[-1+ x_sym].d_val);
+        upx_uint64_t const v_str = get_te64(&dynp0[-1+ x_str].d_val);
+        unsigned const  z_sym = dt_table[Elf64_Dyn::DT_SYMENT];
+        unsigned const sz_sym = !z_sym ? sizeof(Elf64_Sym)
+            : get_te64(&dynp0[-1+ z_sym].d_val);
+        if (v_sym < v_str) {
+            symnum_end = (v_str - v_sym) / sz_sym;
+        }
+    }
 }
 
 void const *
@@ -4653,7 +4733,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const m = elf_hash(name) % nbucket;
         unsigned si;
         for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
-            char const *const p= get_te32(&dynsym[si].st_name) + dynstr;
+            char const *const p= get_dynsym_name(si, 0);
             if (0==strcmp(name, p)) {
                 return &dynsym[si];
             }
@@ -4702,7 +4782,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned const m = elf_hash(name) % nbucket;
         unsigned si;
         for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
-            char const *const p= get_te64(&dynsym[si].st_name) + dynstr;
+            char const *const p= get_dynsym_name(si, 0);
             if (0==strcmp(name, p)) {
                 return &dynsym[si];
             }

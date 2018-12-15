@@ -155,12 +155,14 @@
         DT_RELA     =  7,       /* Relocations which do contain an addend */
         DT_RELASZ   =  8,       /* Total size of Rela relocs */
         DT_RELAENT  =  9,       /* Size of one RELA relocation */
+        DT_STRSZ    = 10,       /* Size of string table */
+        DT_SYMENT   = 11,       /* Size of one symbol table entry */
         DT_INIT     = 12,       /* Address of init function */
         DT_FINI     = 13,       /* Address of termination function */
+
         DT_REL      = 17,       /* Relocations which contain no addend */
         DT_RELSZ   =  18,       /* Total size of Rel relocs */
         DT_RELENT   = 19,       /* Size of one Rel relocation */
-        DT_STRSZ    = 10,       /* Sizeof string table */
         DT_PLTREL   = 20,       /* Type of reloc in PLT */
         DT_TEXTREL  = 22,       /* Reloc might modify .text */
         DT_JMPREL   = 23,       /* Address of PLT relocs */
