@@ -1645,9 +1645,10 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         }
     }
     unsigned const e_shstrndx = get_te16(&ehdri.e_shstrndx);
-    if (e_shnum <= e_shstrndx) {
+    if (e_shnum <= e_shstrndx
+    &&  !(0==e_shnum && 0==e_shstrndx) ) {
         char msg[40]; snprintf(msg, sizeof(msg),
-            "bad .e_shstrndx %d > .e_shnum %d", e_shstrndx, e_shnum);
+            "bad .e_shstrndx %d >= .e_shnum %d", e_shstrndx, e_shnum);
         throwCantPack(msg);
     }
 }
@@ -1956,25 +1957,25 @@ bool PackLinuxElf32::canPack()
         phdri= (Elf32_Phdr *)((size_t)e_phoff + file_image);  // do not free() !!
         shdri= (Elf32_Shdr *)((size_t)e_shoff + file_image);  // do not free() !!
 
-        if (!e_shnum) {
-            sec_strndx = NULL;
-            shstrtab = NULL;
-        }
-        else {
+        sec_strndx = NULL;
+        shstrtab = NULL;
+        if (e_shnum) {
             unsigned const e_shstrndx = get_te16(&ehdr->e_shstrndx);
-            if (e_shnum <= e_shstrndx) {
-                char msg[40]; snprintf(msg, sizeof(msg),
-                    "bad e_shstrndx %#x >= e_shnum %d", e_shstrndx, e_shnum);
-                throwCantPack(msg);
+            if (e_shstrndx) {
+                if (e_shnum <= e_shstrndx) {
+                    char msg[40]; snprintf(msg, sizeof(msg),
+                        "bad e_shstrndx %#x >= e_shnum %d", e_shstrndx, e_shnum);
+                    throwCantPack(msg);
+                }
+                sec_strndx = &shdri[e_shstrndx];
+                unsigned const sh_offset = get_te32(&sec_strndx->sh_offset);
+                if (file_size <= (off_t)sh_offset) {
+                    char msg[50]; snprintf(msg, sizeof(msg),
+                        "bad .e_shstrndx->sh_offset %#x", sh_offset);
+                    throwCantPack(msg);
+                }
+                shstrtab = (char const *)(sh_offset + file_image);
             }
-            sec_strndx = &shdri[e_shstrndx];
-            unsigned const sh_offset = get_te32(&sec_strndx->sh_offset);
-            if (file_size <= (off_t)sh_offset) {
-                char msg[50]; snprintf(msg, sizeof(msg),
-                    "bad .e_shstrndx->sh_offset %#x", sh_offset);
-                throwCantPack(msg);
-            }
-            shstrtab = (char const *)(sh_offset + file_image);
             sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
             if (sec_dynsym) {
                 unsigned const sh_link = get_te32(&sec_dynsym->sh_link);
@@ -1985,11 +1986,15 @@ bool PackLinuxElf32::canPack()
                 sec_dynstr = &shdri[sh_link];
             }
 
-            unsigned const sh_name = get_te32(&sec_strndx->sh_name);
-            if (Elf32_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-            || file_size <= (off_t)sh_name  // FIXME: weak
-            || 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]) ) {
-                throwCantPack("bad e_shstrndx");
+            if (sec_strndx) {
+                unsigned const sh_name = get_te32(&sec_strndx->sh_name);
+                if (Elf32_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
+                || file_size <= (off_t)sh_name  // FIXME: weak
+                || (sh_name
+                  && 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]))
+                ) {
+                    throwCantPack("bad e_shstrndx");
+                }
             }
         }
 
@@ -2239,25 +2244,25 @@ PackLinuxElf64::canPack()
         phdri= (Elf64_Phdr *)((size_t)e_phoff + file_image);  // do not free() !!
         shdri= (Elf64_Shdr *)((size_t)e_shoff + file_image);  // do not free() !!
 
-        if (!e_shnum) {
-            sec_strndx = NULL;
-            shstrtab = NULL;
-        }
-        else {
+        sec_strndx = NULL;
+        shstrtab = NULL;
+        if (e_shnum) {
             unsigned const e_shstrndx = get_te16(&ehdr->e_shstrndx);
-            if (e_shnum <= e_shstrndx) {
-                char msg[40]; snprintf(msg, sizeof(msg),
-                    "bad e_shstrndx %#x >= e_shnum %d", e_shstrndx, e_shnum);
-                throwCantPack(msg);
+            if (e_shstrndx) {
+                if (e_shnum <= e_shstrndx) {
+                    char msg[40]; snprintf(msg, sizeof(msg),
+                        "bad e_shstrndx %#x >= e_shnum %d", e_shstrndx, e_shnum);
+                    throwCantPack(msg);
+                }
+                sec_strndx = &shdri[e_shstrndx];
+                upx_uint64_t sh_offset = get_te64(&sec_strndx->sh_offset);
+                if (file_size <= (off_t)sh_offset) {
+                    char msg[50]; snprintf(msg, sizeof(msg),
+                        "bad .e_shstrndx->sh_offset %#lx", (long unsigned)sh_offset);
+                    throwCantPack(msg);
+                }
+                shstrtab = (char const *)(sh_offset + file_image);
             }
-            sec_strndx = &shdri[e_shstrndx];
-            upx_uint64_t sh_offset = get_te64(&sec_strndx->sh_offset);
-            if (file_size <= (off_t)sh_offset) {
-                char msg[50]; snprintf(msg, sizeof(msg),
-                    "bad .e_shstrndx->sh_offset %#lx", (long unsigned)sh_offset);
-                throwCantPack(msg);
-            }
-            shstrtab = (char const *)(sh_offset + file_image);
             sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
             if (sec_dynsym) {
                 upx_uint64_t const sh_link = get_te64(&sec_dynsym->sh_link);
@@ -2268,11 +2273,15 @@ PackLinuxElf64::canPack()
                 sec_dynstr = &shdri[sh_link];
             }
 
-            unsigned const sh_name = get_te32(&sec_strndx->sh_name);
-            if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-            || file_size <= (off_t)sh_name  // FIXME: weak
-            || 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]) ) {
-                throwCantPack("bad e_shstrndx");
+            if (sec_strndx) {
+                unsigned const sh_name = get_te32(&sec_strndx->sh_name);
+                if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
+                || file_size <= (off_t)sh_name  // FIXME: weak
+                || (sh_name
+                  && 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]))
+                ) {
+                    throwCantPack("bad e_shstrndx");
+                }
             }
         }
 
@@ -4251,21 +4260,23 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 "bad DYNAMIC", get_te64(&dynhdr->p_offset), get_te64(&dynhdr->p_filesz));
             dynstr = (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
             sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
-            upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
-            upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
-            Elf64_Sym *const sym0 = (Elf64_Sym *)ibuf.subref(
-                "bad dynsym", off_dynsym, sz_dynsym);
-            Elf64_Sym *sym = sym0;
-            for (int j = sz_dynsym / sizeof(Elf64_Sym); --j>=0; ++sym) {
-                upx_uint64_t symval = get_te64(&sym->st_value);
-                unsigned symsec = get_te16(&sym->st_shndx);
-                if (Elf64_Sym::SHN_UNDEF != symsec
-                &&  Elf64_Sym::SHN_ABS   != symsec
-                &&  xct_off <= symval) {
-                    set_te64(&sym->st_value, symval - asl_delta);
-                }
-                if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
-                    adjABS(sym, 0u - asl_delta);
+            if (sec_dynsym) {
+                upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
+                upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
+                Elf64_Sym *const sym0 = (Elf64_Sym *)ibuf.subref(
+                    "bad dynsym", off_dynsym, sz_dynsym);
+                Elf64_Sym *sym = sym0;
+                for (int j = sz_dynsym / sizeof(Elf64_Sym); --j>=0; ++sym) {
+                    upx_uint64_t symval = get_te64(&sym->st_value);
+                    unsigned symsec = get_te16(&sym->st_shndx);
+                    if (Elf64_Sym::SHN_UNDEF != symsec
+                    &&  Elf64_Sym::SHN_ABS   != symsec
+                    &&  xct_off <= symval) {
+                        set_te64(&sym->st_value, symval - asl_delta);
+                    }
+                    if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
+                        adjABS(sym, 0u - asl_delta);
+                    }
                 }
             }
         }
@@ -4668,9 +4679,10 @@ PackLinuxElf32::check_pt_dynamic(Elf32_Phdr const *const phdr)
     unsigned t = get_te32(&phdr->p_offset), s = sizeof(Elf32_Dyn) + t;
     unsigned vaddr = get_te32(&phdr->p_vaddr);
     unsigned filesz = get_te32(&phdr->p_filesz), memsz = get_te32(&phdr->p_memsz);
+    unsigned align = get_te32(&phdr->p_align);
     if (s < t || file_size < (off_t)s
     ||  (3 & t) || (7 & (filesz | memsz))  // .balign 4; 8==sizeof(Elf32_Dyn)
-    ||  (-1+ page_size) & (t ^ vaddr)
+    ||  (-1+ align) & (t ^ vaddr)
     ||  filesz < sizeof(Elf32_Dyn)
     ||  memsz  < sizeof(Elf32_Dyn)
     ||  filesz < memsz) {
@@ -4748,9 +4760,10 @@ PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
     upx_uint64_t t = get_te64(&phdr->p_offset), s = sizeof(Elf64_Dyn) + t;
     upx_uint64_t vaddr = get_te64(&phdr->p_vaddr);
     upx_uint64_t filesz = get_te64(&phdr->p_filesz), memsz = get_te64(&phdr->p_memsz);
+    upx_uint64_t align = get_te64(&phdr->p_align);
     if (s < t || (upx_uint64_t)file_size < s
     ||  (7 & t) || (0xf & (filesz | memsz))  // .balign 8; 16==sizeof(Elf64_Dyn)
-    ||  (-1+ page_size) & (t ^ vaddr)
+    ||  (-1+ align) & (t ^ vaddr)
     ||  filesz < sizeof(Elf64_Dyn)
     ||  memsz  < sizeof(Elf64_Dyn)
     ||  filesz < memsz) {
@@ -4860,9 +4873,10 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         }
     }
     unsigned const e_shstrndx = get_te16(&ehdri.e_shstrndx);
-    if (e_shnum <= e_shstrndx) {
+    if (e_shnum <= e_shstrndx
+    &&  !(0==e_shnum && 0==e_shstrndx) ) {
         char msg[40]; snprintf(msg, sizeof(msg),
-            "bad .e_shstrndx %d > .e_shnum %d", e_shstrndx, e_shnum);
+            "bad .e_shstrndx %d >= .e_shnum %d", e_shstrndx, e_shnum);
         throwCantPack(msg);
     }
 }
@@ -5123,21 +5137,23 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 "bad DYNAMIC", get_te32(&dynhdr->p_offset), get_te32(&dynhdr->p_filesz));
             dynstr = (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
             sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
-            unsigned const off_dynsym = get_te32(&sec_dynsym->sh_offset);
-            unsigned const sz_dynsym  = get_te32(&sec_dynsym->sh_size);
-            Elf32_Sym *const sym0 = (Elf32_Sym *)ibuf.subref(
-                "bad dynsym", off_dynsym, sz_dynsym);
-            Elf32_Sym *sym = sym0;
-            for (int j = sz_dynsym / sizeof(Elf32_Sym); --j>=0; ++sym) {
-                unsigned symval = get_te32(&sym->st_value);
-                unsigned symsec = get_te16(&sym->st_shndx);
-                if (Elf32_Sym::SHN_UNDEF != symsec
-                &&  Elf32_Sym::SHN_ABS   != symsec
-                &&  xct_off <= symval) {
-                    set_te32(&sym->st_value, symval - asl_delta);
-                }
-                if (Elf32_Sym::SHN_ABS == symsec && xct_off <= symval) {
-                    adjABS(sym, 0u - asl_delta);
+            if (sec_dynsym) {
+                unsigned const off_dynsym = get_te32(&sec_dynsym->sh_offset);
+                unsigned const sz_dynsym  = get_te32(&sec_dynsym->sh_size);
+                Elf32_Sym *const sym0 = (Elf32_Sym *)ibuf.subref(
+                    "bad dynsym", off_dynsym, sz_dynsym);
+                Elf32_Sym *sym = sym0;
+                for (int j = sz_dynsym / sizeof(Elf32_Sym); --j>=0; ++sym) {
+                    unsigned symval = get_te32(&sym->st_value);
+                    unsigned symsec = get_te16(&sym->st_shndx);
+                    if (Elf32_Sym::SHN_UNDEF != symsec
+                    &&  Elf32_Sym::SHN_ABS   != symsec
+                    &&  xct_off <= symval) {
+                        set_te32(&sym->st_value, symval - asl_delta);
+                    }
+                    if (Elf32_Sym::SHN_ABS == symsec && xct_off <= symval) {
+                        adjABS(sym, 0u - asl_delta);
+                    }
                 }
             }
         }
