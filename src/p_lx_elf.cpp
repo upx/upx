@@ -4690,6 +4690,11 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
     if (dynp)
     for (; ; ++ndx, ++dynp) {
         upx_uint64_t const d_tag = get_te64(&dynp->d_tag);
+        if (d_tag>>32) { // outrageous
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad Elf64_Dyn[%d].d_tag %#lx", -1+ ndx, (long unsigned)d_tag);
+            throwCantPack(msg);
+        }
         if (d_tag < DT_NUM) {
             dt_table[d_tag] = ndx;
         }
