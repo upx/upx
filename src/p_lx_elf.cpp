@@ -2128,7 +2128,7 @@ bool PackLinuxElf32::canPack()
             }
             xct_off = elf_get_offset_from_address(xct_va);
             if (opt->debug.debug_level) {
-                fprintf(stderr, "shlib canPack: xct_va=%#lx  xct_off=%lx\n",
+                fprintf(stderr, "shlib canPack: xct_va=%#lx  xct_off=%#lx\n",
                     (long)xct_va, (long)xct_off);
             }
             goto proceed;  // But proper packing depends on checking xct_va.
@@ -2390,7 +2390,7 @@ PackLinuxElf64::canPack()
             }
             xct_off = elf_get_offset_from_address(xct_va);
             if (opt->debug.debug_level) {
-                fprintf(stderr, "shlib canPack: xct_va=%#lx  xct_off=%lx\n",
+                fprintf(stderr, "shlib canPack: xct_va=%#lx  xct_off=%#lx\n",
                     (long)xct_va, (long)xct_off);
             }
             goto proceed;  // But proper packing depends on checking xct_va.
@@ -4614,7 +4614,14 @@ PackLinuxElf32::elf_get_offset_from_address(unsigned addr) const
     for (; --j>=0; ++phdr) if (PT_LOAD32 == get_te32(&phdr->p_type)) {
         unsigned const t = addr - get_te32(&phdr->p_vaddr);
         if (t < get_te32(&phdr->p_filesz)) {
-            return t + get_te32(&phdr->p_offset);
+            unsigned const p_offset = get_te32(&phdr->p_offset);
+            if (file_size <= (off_t)p_offset) { // FIXME: weak
+                char msg[40]; snprintf(msg, sizeof(msg),
+                    "bad Elf32_Phdr[%d].p_offset %x",
+                    -1+ e_phnum - j, p_offset);
+                throwCantPack(msg);
+            }
+            return t + p_offset;
         }
     }
     return 0;
@@ -4687,7 +4694,14 @@ PackLinuxElf64::elf_get_offset_from_address(upx_uint64_t addr) const
     for (; --j>=0; ++phdr) if (PT_LOAD64 == get_te32(&phdr->p_type)) {
         upx_uint64_t const t = addr - get_te64(&phdr->p_vaddr);
         if (t < get_te64(&phdr->p_filesz)) {
-            return t + get_te64(&phdr->p_offset);
+            upx_uint64_t const p_offset = get_te64(&phdr->p_offset);
+            if (file_size <= (off_t)p_offset) { // FIXME: weak
+                char msg[40]; snprintf(msg, sizeof(msg),
+                    "bad Elf64_Phdr[%d].p_offset %#lx",
+                    -1+ e_phnum - j, (long unsigned)p_offset);
+                throwCantPack(msg);
+            }
+            return t + p_offset;
         }
     }
     return 0;
