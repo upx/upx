@@ -1642,6 +1642,12 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
             throwCantPack(msg);
         }
     }
+    unsigned const e_shstrndx = get_te16(&ehdri.e_shstrndx);
+    if (e_shnum <= e_shstrndx) {
+        char msg[40]; snprintf(msg, sizeof(msg),
+            "bad .e_shstrndx %d > .e_shnum %d", e_shstrndx, e_shnum);
+        throwCantPack(msg);
+    }
 }
 
 Elf32_Phdr const *
@@ -1676,7 +1682,14 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_name(
     }
     int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
-        if (0==strcmp(name, &shstrtab[get_te32(&shdr->sh_name)])) {
+        unsigned const sh_name = get_te32(&shdr->sh_name);
+        if (file_size <= sh_name) {  // FIXME: weak
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad Elf32_Shdr[%d].sh_name %#x",
+                -1+ e_shnum -j, sh_name);
+            throwCantPack(msg);
+        }
+        if (0==strcmp(name, &shstrtab[sh_name])) {
             return shdr;
         }
     }
@@ -1693,8 +1706,14 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_name(
     }
     int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
-        unsigned ndx = get_te64(&shdr->sh_name);
-        if (0==strcmp(name, &shstrtab[ndx])) {
+        unsigned const sh_name = get_te32(&shdr->sh_name);
+        if (file_size <= sh_name) {  // FIXME: weak
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad Elf64_Shdr[%d].sh_name %#x",
+                -1+ e_shnum -j, sh_name);
+            throwCantPack(msg);
+        }
+        if (0==strcmp(name, &shstrtab[sh_name])) {
             return shdr;
         }
     }
@@ -1941,15 +1960,27 @@ bool PackLinuxElf32::canPack()
         }
         else {
             sec_strndx = &shdri[get_te16(&ehdr->e_shstrndx)];
-            shstrtab = (char const *)(get_te32(&sec_strndx->sh_offset) + file_image);
+            unsigned const sh_offset = get_te32(&sec_strndx->sh_offset);
+            if (file_size <= (off_t)sh_offset) {
+                char msg[50]; snprintf(msg, sizeof(msg),
+                    "bad .e_shstrndx->sh_offset %#x", sh_offset);
+                throwCantPack(msg);
+            }
+            shstrtab = (char const *)(sh_offset + file_image);
             sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
             if (sec_dynsym) {
-                sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
+                unsigned const sh_link = get_te32(&sec_dynsym->sh_link);
+                if (e_shnum <= sh_link) {
+                    char msg[50]; snprintf(msg, sizeof(msg),
+                        "bad SHT_DYNSYM.sh_link %#x", sh_link);
+                }
+                sec_dynstr = &shdri[sh_link];
             }
 
+            unsigned const sh_name = get_te32(&sec_strndx->sh_name);
             if (Elf32_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-            || 0!=strcmp((char const *)".shstrtab",
-                        &shstrtab[get_te32(&sec_strndx->sh_name)]) ) {
+            || file_size <= (off_t)sh_name  // FIXME: weak
+            || 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]) ) {
                 throwCantPack("bad e_shstrndx");
             }
         }
@@ -2200,15 +2231,27 @@ PackLinuxElf64::canPack()
         }
         else {
             sec_strndx = &shdri[get_te16(&ehdr->e_shstrndx)];
-            shstrtab = (char const *)(get_te64(&sec_strndx->sh_offset) + file_image);
+            upx_uint64_t sh_offset = get_te64(&sec_strndx->sh_offset);
+            if (file_size <= (off_t)sh_offset) {
+                char msg[50]; snprintf(msg, sizeof(msg),
+                    "bad .e_shstrndx->sh_offset %#lx", (long unsigned)sh_offset);
+                throwCantPack(msg);
+            }
+            shstrtab = (char const *)(sh_offset + file_image);
             sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
             if (sec_dynsym) {
-                sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
+                upx_uint64_t const sh_link = get_te64(&sec_dynsym->sh_link);
+                if (e_shnum <= sh_link) {
+                    char msg[50]; snprintf(msg, sizeof(msg),
+                        "bad SHT_DYNSYM.sh_link %#lx", (long unsigned)sh_link);
+                }
+                sec_dynstr = &shdri[sh_link];
             }
 
+            unsigned const sh_name = get_te32(&sec_strndx->sh_name);
             if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-            || 0!=strcmp((char const *)".shstrtab",
-                        &shstrtab[get_te32(&sec_strndx->sh_name)]) ) {
+            || file_size <= (off_t)sh_name  // FIXME: weak
+            || 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]) ) {
                 throwCantPack("bad e_shstrndx");
             }
         }
@@ -4773,6 +4816,12 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
                 n_bucket, n_bitmask, (long unsigned)(v_sym - v_gsh));
             throwCantPack(msg);
         }
+    }
+    unsigned const e_shstrndx = get_te16(&ehdri.e_shstrndx);
+    if (e_shnum <= e_shstrndx) {
+        char msg[40]; snprintf(msg, sizeof(msg),
+            "bad .e_shstrndx %d > .e_shnum %d", e_shstrndx, e_shnum);
+        throwCantPack(msg);
     }
 }
 
