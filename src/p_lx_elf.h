@@ -163,6 +163,7 @@ protected:
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
     virtual int adjABS(Elf32_Sym *sym, unsigned delta);
 
+    char const *get_str_name(unsigned st_name, unsigned symnum) const;
     char const *get_dynsym_name(unsigned symnum, unsigned relnum) const;
 protected:
     Elf32_Ehdr  ehdri; // from input file
@@ -298,6 +299,7 @@ protected:
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
     virtual int adjABS(Elf64_Sym *sym, unsigned delta);
 
+    char const *get_str_name(upx_uint64_t st_name, unsigned symnum) const;
     char const *get_dynsym_name(unsigned symnum, unsigned relnum) const;
 protected:
     Elf64_Ehdr  ehdri; // from input file
