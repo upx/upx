@@ -1760,7 +1760,7 @@ char const *PackLinuxElf64::get_str_name(unsigned st_name, unsigned symnum) cons
 {
     if (strtab_end <= st_name) {
         char msg[70]; snprintf(msg, sizeof(msg),
-            "bad .st_name %#x in DT_SYMTAB[%d]\n", st_name, symnum);
+            "bad .st_name %#x in DT_SYMTAB[%d]", st_name, symnum);
         throwCantPack(msg);
     }
     return &dynstr[st_name];
@@ -1770,7 +1770,7 @@ char const *PackLinuxElf64::get_dynsym_name(unsigned symnum, unsigned relnum) co
 {
     if (symnum_end <= symnum) {
         char msg[70]; snprintf(msg, sizeof(msg),
-            "bad symnum %#x in Elf64_Rel[%d]\n", symnum, relnum);
+            "bad symnum %#x in Elf64_Rel[%d]", symnum, relnum);
         throwCantPack(msg);
     }
     return get_str_name(get_te32(&dynsym[symnum].st_name), symnum);
@@ -2054,6 +2054,12 @@ bool PackLinuxElf32::canPack()
                     ||  (     Elf32_Dyn::DT_INIT_ARRAY   ==upx_dt_init
                         &&  Elf32_Shdr::SHT_INIT_ARRAY   ==sh_type) ) {
                         user_init_off = get_te32(&shdr->sh_offset);
+                        if (file_size <= user_init_off) {
+                            char msg[70]; snprintf(msg, sizeof(msg),
+                                "bad Elf32_Shdr[%d].sh_offset %#x",
+                                -1+ e_shnum - j, user_init_off);
+                            throwCantPack(msg);
+                        }
                         user_init_va = get_te32(&file_image[user_init_off]);
                     }
                     // By default /usr/bin/ld leaves 4 extra DT_NULL to support pre-linking.
@@ -2322,6 +2328,12 @@ PackLinuxElf64::canPack()
                     ||  (     Elf64_Dyn::DT_INIT_ARRAY   ==upx_dt_init
                         &&  Elf64_Shdr::SHT_INIT_ARRAY   ==sh_type) ) {
                         user_init_off = get_te64(&shdr->sh_offset);
+                        if (file_size <= user_init_off) {
+                            char msg[70]; snprintf(msg, sizeof(msg),
+                                "bad Elf64_Shdr[%d].sh_offset %#x",
+                                -1+ e_shnum - j, user_init_off);
+                            throwCantPack(msg);
+                        }
                         user_init_va = get_te64(&file_image[user_init_off]);
                     }
                     // By default /usr/bin/ld leaves 4 extra DT_NULL to support pre-linking.
