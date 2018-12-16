@@ -1756,11 +1756,11 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_type(
     return 0;
 }
 
-char const *PackLinuxElf64::get_str_name(upx_uint64_t st_name, unsigned symnum) const
+char const *PackLinuxElf64::get_str_name(unsigned st_name, unsigned symnum) const
 {
     if (strtab_end <= st_name) {
         char msg[70]; snprintf(msg, sizeof(msg),
-            "bad .st_name %#lx in DT_SYMTAB[%d]\n", (unsigned long)st_name, symnum);
+            "bad .st_name %#x in DT_SYMTAB[%d]\n", st_name, symnum);
         throwCantPack(msg);
     }
     return &dynstr[st_name];
@@ -1773,7 +1773,7 @@ char const *PackLinuxElf64::get_dynsym_name(unsigned symnum, unsigned relnum) co
             "bad symnum %#x in Elf64_Rel[%d]\n", symnum, relnum);
         throwCantPack(msg);
     }
-    return get_str_name(get_te64(&dynsym[symnum].st_name), symnum);
+    return get_str_name(get_te32(&dynsym[symnum].st_name), symnum);
 }
 
 bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
@@ -2860,7 +2860,7 @@ int
 PackLinuxElf64::adjABS(Elf64_Sym *sym, unsigned delta)
 {
     for (int j = 0; abs_symbol_names[j][0]; ++j) {
-        upx_uint64_t st_name = get_te64(&sym->st_name);
+        unsigned st_name = get_te32(&sym->st_name);
         if (!strcmp(abs_symbol_names[j], get_str_name(st_name, -1))) {
             sym->st_value += delta;
             return 1;
@@ -4993,7 +4993,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
                 unsigned const *hp = &hasharr[bucket - symbias];
 
                 do if (0==((h ^ get_te32(hp))>>1)) {
-                    upx_uint64_t st_name = get_te64(&dsp->st_name);
+                    unsigned st_name = get_te32(&dsp->st_name);
                     char const *const p = get_str_name(st_name, -1);
                     if (0==strcmp(name, p)) {
                         return dsp;
