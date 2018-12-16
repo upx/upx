@@ -1607,11 +1607,12 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         unsigned const *const chains = &buckets[nbucket];
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
-        if (v_hsh < v_sym
-        && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
-           + sizeof(*buckets)*nbucket  // buckets
-           + sizeof(*chains) *nbucket  // chains
-           )) {
+        if (!nbucket
+        || ((v_hsh < v_sym) && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
+                + sizeof(*buckets)*nbucket  // buckets
+                + sizeof(*chains) *nbucket  // chains
+           ))
+        ) {
             char msg[90]; snprintf(msg, sizeof(msg),
                 "bad DT_HASH nbucket=%#x  len=%#x",
                 nbucket, (v_sym - v_hsh));
@@ -1630,12 +1631,13 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
       //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
-        if (v_gsh < v_sym
-        && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
-           + sizeof(*bitmask)*n_bitmask  // bitmask
-           + sizeof(*buckets)*n_bucket  // buckets
-           + sizeof(*hasharr)*n_bucket  // hasharr
-           )) {
+        if (!n_bucket || !n_bitmask
+        || ((v_gsh < v_sym) && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
+                + sizeof(*bitmask)*n_bitmask  // bitmask
+                + sizeof(*buckets)*n_bucket  // buckets
+                + sizeof(*hasharr)*n_bucket  // hasharr
+            ))
+        ) {
             char msg[90]; snprintf(msg, sizeof(msg),
                 "bad DT_GNU_HASH n_bucket=%#x  n_bitmask=%#x  len=%#x",
                 n_bucket, n_bitmask, v_sym - v_gsh);
@@ -4782,11 +4784,12 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         unsigned const *const chains = &buckets[nbucket];
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
-        if (v_hsh < v_sym
-        && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
-           + sizeof(*buckets)*nbucket  // buckets
-           + sizeof(*chains) *nbucket  // chains
-           )) {
+        if (!nbucket
+        || ((v_hsh < v_sym) && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
+                + sizeof(*buckets)*nbucket  // buckets
+                + sizeof(*chains) *nbucket  // chains
+           ))
+        ) {
             char msg[90]; snprintf(msg, sizeof(msg),
                 "bad DT_HASH nbucket=%#x  len=%#x",
                 nbucket, (v_sym - v_hsh));
@@ -4805,12 +4808,13 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
       //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum
 
         upx_uint64_t const v_sym = get_te64(&dynp0[-1+ x_sym].d_val);
-        if (v_gsh < v_sym
-        && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
-           + sizeof(*bitmask)*n_bitmask  // bitmask
-           + sizeof(*buckets)*n_bucket  // buckets
-           + sizeof(*hasharr)*n_bucket  // hasharr
-           )) {
+        if (!n_bucket || !n_bitmask
+        || ((v_gsh < v_sym) && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
+                + sizeof(*bitmask)*n_bitmask  // bitmask
+                + sizeof(*buckets)*n_bucket  // buckets
+                + sizeof(*hasharr)*n_bucket  // hasharr
+            ))
+        ) {
             char msg[90]; snprintf(msg, sizeof(msg),
                 "bad DT_GNU_HASH n_bucket=%#x  n_bitmask=%#x  len=%#lx",
                 n_bucket, n_bitmask, (long unsigned)(v_sym - v_gsh));
