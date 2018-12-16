@@ -1961,7 +1961,13 @@ bool PackLinuxElf32::canPack()
             shstrtab = NULL;
         }
         else {
-            sec_strndx = &shdri[get_te16(&ehdr->e_shstrndx)];
+            unsigned const e_shstrndx = get_te16(&ehdr->e_shstrndx);
+            if (e_shnum <= e_shstrndx) {
+                char msg[40]; snprintf(msg, sizeof(msg),
+                    "bad e_shstrndx %#x > e_shnum %d", e_shstrndx, e_shnum);
+                throwCantPack(msg);
+            }
+            sec_strndx = &shdri[e_shstrndx];
             unsigned const sh_offset = get_te32(&sec_strndx->sh_offset);
             if (file_size <= (off_t)sh_offset) {
                 char msg[50]; snprintf(msg, sizeof(msg),
@@ -2232,7 +2238,13 @@ PackLinuxElf64::canPack()
             shstrtab = NULL;
         }
         else {
-            sec_strndx = &shdri[get_te16(&ehdr->e_shstrndx)];
+            unsigned const e_shstrndx = get_te16(&ehdr->e_shstrndx);
+            if (e_shnum <= e_shstrndx) {
+                char msg[40]; snprintf(msg, sizeof(msg),
+                    "bad e_shstrndx %#x > e_shnum %d", e_shstrndx, e_shnum);
+                throwCantPack(msg);
+            }
+            sec_strndx = &shdri[e_shstrndx];
             upx_uint64_t sh_offset = get_te64(&sec_strndx->sh_offset);
             if (file_size <= (off_t)sh_offset) {
                 char msg[50]; snprintf(msg, sizeof(msg),
