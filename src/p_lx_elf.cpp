@@ -1964,7 +1964,7 @@ bool PackLinuxElf32::canPack()
             unsigned const e_shstrndx = get_te16(&ehdr->e_shstrndx);
             if (e_shnum <= e_shstrndx) {
                 char msg[40]; snprintf(msg, sizeof(msg),
-                    "bad e_shstrndx %#x > e_shnum %d", e_shstrndx, e_shnum);
+                    "bad e_shstrndx %#x >= e_shnum %d", e_shstrndx, e_shnum);
                 throwCantPack(msg);
             }
             sec_strndx = &shdri[e_shstrndx];
@@ -2241,7 +2241,7 @@ PackLinuxElf64::canPack()
             unsigned const e_shstrndx = get_te16(&ehdr->e_shstrndx);
             if (e_shnum <= e_shstrndx) {
                 char msg[40]; snprintf(msg, sizeof(msg),
-                    "bad e_shstrndx %#x > e_shnum %d", e_shstrndx, e_shnum);
+                    "bad e_shstrndx %#x >= e_shnum %d", e_shstrndx, e_shnum);
                 throwCantPack(msg);
             }
             sec_strndx = &shdri[e_shstrndx];
