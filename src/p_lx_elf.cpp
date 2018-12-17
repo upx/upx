@@ -4248,6 +4248,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         overlay_offset -= sizeof(linfo);
         xct_off = overlay_offset;
         e_shoff = get_te64(&ehdri.e_shoff);
+        ibuf.subref("bad .e_shoff %#lx for %#lx", e_shoff, sizeof(Elf64_Shdr) * e_shnum);
         if (e_shoff && e_shnum) { // --android-shlib
             shdri = (Elf64_Shdr /*const*/ *)ibuf.subref(
                 "bad Shdr table", e_shoff, sizeof(Elf64_Shdr)*e_shnum);
@@ -5125,6 +5126,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         overlay_offset -= sizeof(linfo);
         xct_off = overlay_offset;
         e_shoff = get_te32(&ehdri.e_shoff);
+        ibuf.subref("bad .e_shoff %#x for %#x", e_shoff, sizeof(Elf32_Shdr) * e_shnum);
         if (e_shoff && e_shnum) { // --android-shlib
             shdri = (Elf32_Shdr /*const*/ *)ibuf.subref(
                 "bad Shdr table", e_shoff, sizeof(Elf32_Shdr)*e_shnum);
