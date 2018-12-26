@@ -1608,6 +1608,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
         if (!nbucket
+        || (nbucket>>31) || (file_size/sizeof(unsigned)) <= (2*nbucket)  // FIXME: weak
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
                 + sizeof(*buckets)*nbucket  // buckets
                 + sizeof(*chains) *nbucket  // chains
@@ -1619,12 +1620,13 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
             throwCantPack(msg);
         }
     }
-    // DT_GNU_HASH often ends at DT_SYMTAB
+    // DT_GNU_HASH often ends at DT_SYMTAB;  FIXME: not for Android?
     unsigned const v_gsh = elf_unsigned_dynamic(Elf32_Dyn::DT_GNU_HASH);
     if (v_gsh && file_image) {
         gashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
         unsigned const n_bucket = get_te32(&gashtab[0]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
+        unsigned const gnu_shift = get_te32(&gashtab[3]);
         unsigned const *const bitmask = (unsigned const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket];
@@ -1632,6 +1634,12 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
         if (!n_bucket || !n_bitmask
+        || (-1+ n_bitmask) & n_bitmask  // not a power of 2
+        || 8*sizeof(unsigned) <= gnu_shift  // shifted result always == 0
+        || (n_bucket>>30)  // fie on fuzzers
+        || (n_bitmask>>30)
+        || (file_size / sizeof(unsigned)) <= (n_bitmask + 2*n_bucket)  // FIXME: weak
+        // FIXME: next test does work for Android?
         || ((v_gsh < v_sym) && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
                 + sizeof(*bitmask)*n_bitmask  // bitmask
                 + sizeof(*buckets)*n_bucket  // buckets
@@ -4837,6 +4845,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
         if (!nbucket
+        || (nbucket>>31) || (file_size/sizeof(unsigned)) <= (2*nbucket)  // FIXME: weak
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
                 + sizeof(*buckets)*nbucket  // buckets
                 + sizeof(*chains) *nbucket  // chains
@@ -4848,12 +4857,13 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
             throwCantPack(msg);
         }
     }
-    // DT_GNU_HASH often ends at DT_SYMTAB
+    // DT_GNU_HASH often ends at DT_SYMTAB;  FIXME: not for Android?
     unsigned const v_gsh = elf_unsigned_dynamic(Elf64_Dyn::DT_GNU_HASH);
     if (v_gsh && file_image) {
         gashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
         unsigned const n_bucket = get_te32(&gashtab[0]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
+        unsigned const gnu_shift = get_te32(&gashtab[3]);
         upx_uint64_t const *const bitmask = (upx_uint64_t const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket];
@@ -4861,6 +4871,12 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
 
         upx_uint64_t const v_sym = get_te64(&dynp0[-1+ x_sym].d_val);
         if (!n_bucket || !n_bitmask
+        || (-1+ n_bitmask) & n_bitmask  // not a power of 2
+        || 8*sizeof(upx_uint64_t) <= gnu_shift  // shifted result always == 0
+        || (n_bucket>>30)  // fie on fuzzers
+        || (n_bitmask>>30)
+        || (file_size/sizeof(unsigned)) <= ((sizeof(*bitmask)/sizeof(unsigned))*n_bitmask + 2*n_bucket)  // FIXME: weak
+        // FIXME: next test does work for Android?
         || ((v_gsh < v_sym) && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
                 + sizeof(*bitmask)*n_bitmask  // bitmask
                 + sizeof(*buckets)*n_bucket  // buckets
