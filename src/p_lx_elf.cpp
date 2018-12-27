@@ -1580,7 +1580,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
     unsigned const z_str = dt_table[Elf32_Dyn::DT_STRSZ];
     if (z_str) {
         strtab_end = get_te32(&dynp0[-1+ z_str].d_val);
-        if (file_size <= strtab_end) { // FIXME: not tight enough
+        if (file_size <= (off_t)strtab_end) { // FIXME: weak
             char msg[50]; snprintf(msg, sizeof(msg),
                 "bad DT_STRSZ %#x", strtab_end);
             throwCantPack(msg);
@@ -1604,7 +1604,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
-        unsigned const *const chains = &buckets[nbucket];
+        unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
         if (!nbucket
@@ -1629,7 +1629,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         unsigned const gnu_shift = get_te32(&gashtab[3]);
         unsigned const *const bitmask = (unsigned const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
-        unsigned     const *const hasharr = &buckets[n_bucket];
+        unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
       //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
@@ -1694,7 +1694,7 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_name(
     int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         unsigned const sh_name = get_te32(&shdr->sh_name);
-        if (file_size <= sh_name) {  // FIXME: weak
+        if (file_size <= (off_t)sh_name) {  // FIXME: weak
             char msg[50]; snprintf(msg, sizeof(msg),
                 "bad Elf32_Shdr[%d].sh_name %#x",
                 -1+ e_shnum -j, sh_name);
@@ -1718,7 +1718,7 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_name(
     int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         unsigned const sh_name = get_te32(&shdr->sh_name);
-        if (file_size <= sh_name) {  // FIXME: weak
+        if (file_size <= (off_t)sh_name) {  // FIXME: weak
             char msg[50]; snprintf(msg, sizeof(msg),
                 "bad Elf64_Shdr[%d].sh_name %#x",
                 -1+ e_shnum -j, sh_name);
@@ -2067,7 +2067,7 @@ bool PackLinuxElf32::canPack()
                     ||  (     Elf32_Dyn::DT_INIT_ARRAY   ==upx_dt_init
                         &&  Elf32_Shdr::SHT_INIT_ARRAY   ==sh_type) ) {
                         user_init_off = get_te32(&shdr->sh_offset);
-                        if (file_size <= user_init_off) {
+                        if (file_size <= (off_t)user_init_off) {
                             char msg[70]; snprintf(msg, sizeof(msg),
                                 "bad Elf32_Shdr[%d].sh_offset %#x",
                                 -1+ e_shnum - j, user_init_off);
@@ -2345,7 +2345,7 @@ PackLinuxElf64::canPack()
                     ||  (     Elf64_Dyn::DT_INIT_ARRAY   ==upx_dt_init
                         &&  Elf64_Shdr::SHT_INIT_ARRAY   ==sh_type) ) {
                         user_init_off = get_te64(&shdr->sh_offset);
-                        if (file_size <= user_init_off) {
+                        if (file_size <= (off_t)user_init_off) {
                             char msg[70]; snprintf(msg, sizeof(msg),
                                 "bad Elf64_Shdr[%d].sh_offset %#x",
                                 -1+ e_shnum - j, user_init_off);
@@ -2877,7 +2877,7 @@ PackLinuxElf32::adjABS(Elf32_Sym *sym, unsigned delta)
 {
     for (int j = 0; abs_symbol_names[j][0]; ++j) {
         unsigned st_name = get_te32(&sym->st_name);
-        if (!strcmp(abs_symbol_names[j], get_str_name(st_name, -1))) {
+        if (!strcmp(abs_symbol_names[j], get_str_name(st_name, (unsigned)-1))) {
             sym->st_value += delta;
             return 1;
         }
@@ -2890,7 +2890,7 @@ PackLinuxElf64::adjABS(Elf64_Sym *sym, unsigned delta)
 {
     for (int j = 0; abs_symbol_names[j][0]; ++j) {
         unsigned st_name = get_te32(&sym->st_name);
-        if (!strcmp(abs_symbol_names[j], get_str_name(st_name, -1))) {
+        if (!strcmp(abs_symbol_names[j], get_str_name(st_name, (unsigned)-1))) {
             sym->st_value += delta;
             return 1;
         }
@@ -4815,7 +4815,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
     unsigned const z_str = dt_table[Elf64_Dyn::DT_STRSZ];
     if (z_str) {
         strtab_end = get_te64(&dynp0[-1+ z_str].d_val);
-        if (file_size <= strtab_end) { // FIXME: not tight enough
+        if (file_size <= (off_t)strtab_end) { // FIXME: weak
             char msg[50]; snprintf(msg, sizeof(msg),
                 "bad DT_STRSZ %#x", strtab_end);
             throwCantPack(msg);
@@ -4841,7 +4841,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
-        unsigned const *const chains = &buckets[nbucket];
+        unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
         if (!nbucket
@@ -4866,7 +4866,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         unsigned const gnu_shift = get_te32(&gashtab[3]);
         upx_uint64_t const *const bitmask = (upx_uint64_t const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
-        unsigned     const *const hasharr = &buckets[n_bucket];
+        unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
       //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum
 
         upx_uint64_t const v_sym = get_te64(&dynp0[-1+ x_sym].d_val);
@@ -4960,7 +4960,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const m = elf_hash(name) % nbucket;
         unsigned si;
         for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
-            char const *const p= get_dynsym_name(si, -1);
+            char const *const p= get_dynsym_name(si, (unsigned)-1);
             if (0==strcmp(name, p)) {
                 return &dynsym[si];
             }
@@ -4988,7 +4988,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
 
                 do if (0==((h ^ get_te32(hp))>>1)) {
                     unsigned st_name = get_te32(&dsp->st_name);
-                    char const *const p = get_str_name(st_name, -1);
+                    char const *const p = get_str_name(st_name, (unsigned)-1);
                     if (0==strcmp(name, p)) {
                         return dsp;
                     }
@@ -5009,7 +5009,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned const m = elf_hash(name) % nbucket;
         unsigned si;
         for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
-            char const *const p= get_dynsym_name(si, -1);
+            char const *const p= get_dynsym_name(si, (unsigned)-1);
             if (0==strcmp(name, p)) {
                 return &dynsym[si];
             }
@@ -5037,7 +5037,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
 
                 do if (0==((h ^ get_te32(hp))>>1)) {
                     unsigned st_name = get_te32(&dsp->st_name);
-                    char const *const p = get_str_name(st_name, -1);
+                    char const *const p = get_str_name(st_name, (unsigned)-1);
                     if (0==strcmp(name, p)) {
                         return dsp;
                     }
