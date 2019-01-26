@@ -1432,8 +1432,9 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
     soloadconf = get_le32(loadconf);
     if (soloadconf == 0)
         return;
-    if (soloadconf > 256)
-        throwCantPack("size of Load Configuration directory unexpected");
+    static int const MAX_SOLOADCONF = 256;  // XXX FIXME: Why?
+    if (soloadconf > MAX_SOLOADCONF)
+        info("Load Configuration directory %d > %d", soloadconf, MAX_SOLOADCONF);
 
     // if there were relocation entries referring to the load config table
     // then we need them for the copy of the table too
