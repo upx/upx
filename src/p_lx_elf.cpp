@@ -3012,7 +3012,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                     if (PT_NOTE32 == get_te32(&phdr->p_type)) {
                         upx_uint32_t memsz = get_te32(&phdr->p_memsz);
                         if (sizeof(buf_notes) < (memsz + len_notes)) {
-                            throwCantPack("PT_NOTES too big");
+                            throwCantPack("PT_NOTEs too big");
                         }
                         set_te32(&phdr->p_vaddr,
                             len_notes + (e_shnum * sizeof(Elf32_Shdr)) + xct_off);
@@ -3136,11 +3136,17 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                     fo->rewrite(rel0, sh_size);
                 }
                 if (Elf32_Shdr::SHT_NOTE == sh_type) {
-                    if (xct_off <= sh_offset) {
-                        set_te32(&shdr->sh_offset,
-                            (e_shnum * sizeof(Elf32_Shdr)) + xct_off);
-                        shdr->sh_addr = shdr->sh_offset;
+                    if (!(Elf32_Shdr::SHF_ALLOC & get_te32(&shdr->sh_flags))) {
+                        // example: version number of 'gold' linker (static binder)
+                        if (sizeof(buf_notes) < (sh_size + len_notes)) {
+                            throwCantPack("SHT_NOTEs too big");
+                        }
+                        set_te32(&shdro[j].sh_offset,
+                            len_notes + (e_shnum * sizeof(Elf32_Shdr)) + xct_off);
+                        memcpy(&buf_notes[len_notes], &file_image[sh_offset], sh_size);
+                        len_notes += sh_size;
                     }
+                    // else: SHF_ALLOC, thus already in PT_LOAD
                 }
             }
             // shstrndx will move
@@ -3518,11 +3524,17 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                     }
                 }
                 if (Elf64_Shdr::SHT_NOTE == sh_type) {
-                    if (xct_off <= sh_offset) {
-                        set_te64(&shdr->sh_offset,
-                            (e_shnum * sizeof(Elf64_Shdr)) + xct_off);
-                        shdr->sh_addr = shdr->sh_offset;
+                    if (!(Elf64_Shdr::SHF_ALLOC & get_te64(&shdr->sh_flags))) {
+                        // example: version numer of 'gold' linker (static binder)
+                        if (sizeof(buf_notes) < (sh_size + len_notes)) {
+                            throwCantPack("SHT_NOTEs too big");
+                        }
+                        set_te64(&shdro[j].sh_offset,
+                            len_notes + (e_shnum * sizeof(Elf64_Shdr)) + xct_off);
+                        memcpy(&buf_notes[len_notes], &file_image[sh_offset], sh_size);
+                        len_notes += sh_size;
                     }
+                    // else: SHF_ALLOC, thus already in PT_LOAD
                 }
             }
             // shstrndx will move
