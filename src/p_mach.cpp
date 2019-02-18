@@ -618,6 +618,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 sectxt = (Mach_section_command *)(1+ segptr);
                 txt_addr = sectxt->addr;
                 sz_cmd = (segTEXT.nsects * sizeof(secTEXT)) + sizeof(segTEXT);
+                mhp->sizeofcmds += sizeof(secTEXT) * (1 - segptr->nsects);
                 memcpy(tail, &segTEXT, sz_cmd); tail += sz_cmd;
                 goto next;
             }
