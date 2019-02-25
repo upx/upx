@@ -1432,9 +1432,9 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
     soloadconf = get_le32(loadconf);
     if (soloadconf == 0)
         return;
-    static int const MAX_SOLOADCONF = 256;  // XXX FIXME: Why?
+    static unsigned const MAX_SOLOADCONF = 256;  // XXX FIXME: Why?
     if (soloadconf > MAX_SOLOADCONF)
-        info("Load Configuration directory %d > %d", soloadconf, MAX_SOLOADCONF);
+        info("Load Configuration directory %u > %u", soloadconf, MAX_SOLOADCONF);
 
     // if there were relocation entries referring to the load config table
     // then we need them for the copy of the table too
