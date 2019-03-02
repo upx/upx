@@ -409,7 +409,9 @@ xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
         }
     }
     DPRINTF("  addr=%%p  lo=%%p  hi=%%p\\n", addr, lo, hi);
-    addr = (Elf64_Addr)mmap((void *)addr, hi, PROT_NONE, mflags, -1, 0);
+    // PROT_WRITE allows testing of 64k pages on 4k Linux
+    addr = (Elf64_Addr)mmap((void *)addr, hi, (DEBUG ? PROT_WRITE : PROT_NONE),  // FIXME XXX EVIL
+        mflags, -1, 0);
     DPRINTF("  addr=%%p\\n", addr);
     *p_brk = hi + addr;  // the logical value of brk(0)
     return (Elf64_Addr)(addr - lo);
