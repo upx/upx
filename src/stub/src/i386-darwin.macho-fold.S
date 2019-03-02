@@ -29,7 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/i386/macros.S"
+        .att_syntax  // opcode src,dst
+NBPW= 4
 
 sz_b_info= 12
   sz_unc= 0
@@ -40,54 +41,48 @@ sz_p_info= 12
 
 _start: .globl _start  # ignored, but silence "cannot find entry symbol _start" from ld
 
-i386_ts_eax = 0*4
-i386_ts_ebx = 1*4
-i386_ts_ecx = 2*4
-i386_ts_edx = 3*4
-i386_ts_edi = 4*4
-i386_ts_esi = 5*4
-i386_ts_ebp = 6*4
-i386_ts_esp = 7*4
-i386_ts_ss  = 8*4
-i386_ts_eflags = 9*4
-i386_ts_eip = 10*4
-i386_ts_cs  = 11*4
-i386_ts_ds  = 12*4
-i386_ts_es  = 13*4
-i386_ts_fs  = 14*4
-i386_ts_gs  = 15*4
+//In:
+// %ebp= f_exp
+// %esp/ MHDR, LENX, ADRX, FUNF, argc, argv, 0, envp, 0, apple, 0, strings
 
-fold_begin:  // In: ebx= &total_length
-////        int3
-        push 0  # default value for mhdrp
-        mov edi,esp  # &mhdrp
-        lea esi,[ 2+ ebp]  # &f_unfilter
-        mov edx,[ebx]  # sz_total
-        mov ecx,ebx
-        sub ecx,edx  # src= &{l_info; p_info; b_info}
-        mov ebx,[sz_unc + sz_p_info + sz_l_info + ecx]  # sz_mach_headers
-        mov eax,2048  # allow for /usr/lib/dyld
-        cmp eax,ebx
-        jbe 0f
-        mov ebx,eax
+fold_begin:
+//  int3
+        pop %eax  // MHDR
+        pop %edx  // LENX
+        pop %ecx  // ADRX  &{l_info; p_info; b_info}
+
+        mov sz_unc + sz_p_info + sz_l_info(%ecx),%ebx  # sz_mach_headers
+        movl $2048,%esi
+        cmp %esi,%ebx  # allow for /usr/lib/dyld: 1564==sizeofcmds (MacOS 10.6.8)
+        ja 0f
+        mov %esi,%ebx
 0:
-        sub esp,ebx  # alloca
-        pusha  # (mhdrpp, f_unfilter, f_decompress, mhdr, sz_mhdr, sz_total, src, junk)
-        call upx_main  # Out: eax= &Mach_i386_thread_state of dyld
-        mov ecx,[4*4 + esp]  # sz_mhdr
-        lea esp,[8*4 + 1*ecx + esp]  # un_pusha, un_alloca; keep mhdrp
-        jmp [i386_ts_eip + eax]  # esp: mhdrp, argc, argv...
+        pop %esi  // FUNF
+
+        push $0  # default value for mhdrp
+        mov %esp,%edi  # &mhdrp
+        sub %ebx,%esp  # alloca
+        pusha  # (mhdrpp, f_unfilter, f_decompress, mhdr, sz_mhdr, sz_total, src, MHDR)
+        call upx_main  # Out: %eax= entry
+        movl 5*NBPW(%esp),%edi  # sz_total
+        movl 7*NBPW(%esp),%esi  # MHDR
+        push %eax; push %edi; push %esi; call munmap
+        pop %eax; pop %eax; pop %eax  # %eax= entry
+
+        mov 4*NBPW(%esp),%ecx  # sz_mhdr
+        lea 8*NBPW(%esp,%ecx),%esp  # un_pusha, un_alloca; keep mhdrp
+        jmp *%eax  # esp: mhdrp, argc, argv...
 
 bswap: .globl bswap
-        mov eax,[4+ esp]  # ptr
-        mov ecx,[8+ esp]  # len
+        mov 1*NBPW(%esp),%eax  # ptr
+        mov 2*NBPW(%esp),%ecx  # len
 0:
-        mov edx,[eax]
+        mov (%eax),%edx
         .byte 0x0f,0xc8+2  // bswap edx
-        mov [eax],edx
-        sub ecx,4
-        lea eax,[4+ eax]
-        jae 0b
+        mov %edx,(%eax)
+        sub $NBPW,%ecx
+        lea  NBPW(%eax),%eax
+        ja 0b
         ret
 
 SYS_exit  =1
@@ -102,36 +97,40 @@ SYS_mmap    =197
 SYS_munmap  = 73
 SYS_mprotect= 74
 
+spin: .globl spin
+        rep; nop; jmp spin
+        ret
+
 sysgo:
-        pop edx  # return address for sysenter
+        pop %edx  # return address for sysenter
         .byte 0x0f, 0x34  # sysenter
 
 // lazy jmps enable compression of this code
 write: .globl write
-        mov al,SYS_write; jmps 2+ 0f; 0:
+        mov $SYS_write,%al; 0:jmp 0f
 exit: .globl exit
-        mov al,SYS_exit;  jmps 2+ 0f; 0:
+        mov $SYS_exit,%al;  0:jmp 0f
 mprotect: .globl mprotect
-        mov al,SYS_mprotect; jmps 2+ 0f; 0:
+        mov $SYS_mprotect,%al; 0:jmp 0f
 munmap: .globl munmap
-        mov al,SYS_munmap; jmps 2+ 0f; 0:
+        mov $SYS_munmap,%al; 0:jmp 0f
 pread: .globl pread
-        mov al,SYS_pread; jmps 2+ 0f; 0:
+        mov $SYS_pread,%al; 0:jmp 0f
 close: .globl close
-        mov al,SYS_close; jmps 2+ 0f; 0:
+        mov $SYS_close,%al; 0:jmp 0f
 open: .globl open
-        mov al,SYS_open;  jmps 2+ 0f; 0:
+        mov $SYS_open,%al;  0:jmp 0f
 mmap: .globl mmap
-        mov al,SYS_mmap;  jmps 2+ 0f; 0:
+        mov $SYS_mmap,%al;  0:jmp 0f
 read: .globl read
-        mov al,SYS_read
+        mov $SYS_read,%al;  0:
 
-        movzbl eax,al  # SYS_nnnnn
-        mov ecx,esp  # &{user_ret_addr, arg1, arg2, ...}
+        movzbl %al,%eax  # SYS_nnnnn
+        mov %esp,%ecx  # &{user_ret_addr, arg1, arg2, ...}
         call sysgo
-        jncs 0f
-        //mov errno,eax
-        or eax,~0
+        jnc 0f
+        //mov errno,%eax
+        or $~0,%eax
 0:
         ret
 

@@ -72,31 +72,32 @@ LOAD tmp/i386-darwin.macho-main.o
 .plt
  *(.plt)
 
-.text           0x0000000008048000      0x46f
+.text           0x0000000008048000      0x5b1
  *(.text .stub .text.* .gnu.linkonce.t.*)
- .text          0x0000000008048000       0x7a tmp/i386-darwin.macho-fold.o
-                0x0000000008048054                munmap
-                0x000000000804802e                bswap
-                0x0000000008048064                mmap
-                0x0000000008048048                write
+ .text          0x0000000008048000       0x90 tmp/i386-darwin.macho-fold.o
+                0x0000000008048069                munmap
+                0x000000000804803b                bswap
+                0x0000000008048079                mmap
+                0x000000000804805d                write
                 0x0000000008048000                _start
-                0x0000000008048068                read
-                0x0000000008048058                pread
-                0x000000000804804c                exit
-                0x0000000008048060                open
-                0x0000000008048050                mprotect
-                0x000000000804805c                close
- *fill*         0x000000000804807a        0x2 90909090
- .text          0x000000000804807c      0x3f3 tmp/i386-darwin.macho-main.o
-                0x0000000008048341                upx_main
+                0x000000000804807d                read
+                0x0000000008048052                spin
+                0x000000000804806d                pread
+                0x0000000008048061                exit
+                0x0000000008048075                open
+                0x0000000008048065                mprotect
+                0x0000000008048071                close
+ .text          0x0000000008048090      0x521 tmp/i386-darwin.macho-main.o
+                0x0000000008048197                do_xmap
+                0x0000000008048485                upx_main
  *(.text.*personality*)
  *(.gnu.warning)
 
 .fini
  *(.fini)
-                0x000000000804846f                PROVIDE (__etext, .)
-                0x000000000804846f                PROVIDE (_etext, .)
-                0x000000000804846f                PROVIDE (etext, .)
+                0x00000000080485b1                PROVIDE (__etext, .)
+                0x00000000080485b1                PROVIDE (_etext, .)
+                0x00000000080485b1                PROVIDE (etext, .)
 
 .rodata
  *(.rodata .rodata.* .gnu.linkonce.r.*)
@@ -112,8 +113,8 @@ LOAD tmp/i386-darwin.macho-main.o
 
 .gcc_except_table
  *(.gcc_except_table .gcc_except_table.*)
-                0x000000000804846f                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
-                0x000000000804946f                . = (0x1000 DATA_SEGMENT_ALIGN 0x1000)
+                0x00000000080485b1                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x00000000080495b1                . = (0x1000 DATA_SEGMENT_ALIGN 0x1000)
 
 .eh_frame
  *(.eh_frame)
@@ -128,22 +129,22 @@ LOAD tmp/i386-darwin.macho-main.o
  *(.tbss .tbss.* .gnu.linkonce.tb.*)
  *(.tcommon)
 
-.preinit_array  0x000000000804946f        0x0
-                0x000000000804946f                PROVIDE (__preinit_array_start, .)
+.preinit_array  0x00000000080495b1        0x0
+                0x00000000080495b1                PROVIDE (__preinit_array_start, .)
  *(.preinit_array)
-                0x000000000804946f                PROVIDE (__preinit_array_end, .)
+                0x00000000080495b1                PROVIDE (__preinit_array_end, .)
 
-.init_array     0x000000000804946f        0x0
-                0x000000000804946f                PROVIDE (__init_array_start, .)
+.init_array     0x00000000080495b1        0x0
+                0x00000000080495b1                PROVIDE (__init_array_start, .)
  *(SORT(.init_array.*))
  *(.init_array)
-                0x000000000804946f                PROVIDE (__init_array_end, .)
+                0x00000000080495b1                PROVIDE (__init_array_end, .)
 
-.fini_array     0x000000000804946f        0x0
-                0x000000000804946f                PROVIDE (__fini_array_start, .)
+.fini_array     0x00000000080495b1        0x0
+                0x00000000080495b1                PROVIDE (__fini_array_start, .)
  *(.fini_array)
  *(SORT(.fini_array.*))
-                0x000000000804946f                PROVIDE (__fini_array_end, .)
+                0x00000000080495b1                PROVIDE (__fini_array_end, .)
 
 .ctors
  *crtbegin*.o(.ctors)
@@ -169,35 +170,35 @@ LOAD tmp/i386-darwin.macho-main.o
 
 .got
  *(.got)
-                0x000000000804946f                . = (. DATA_SEGMENT_RELRO_END 0xc)
+                0x00000000080495b1                . = (. DATA_SEGMENT_RELRO_END 0xc)
 
 .got.plt
  *(.got.plt)
 
-.data           0x0000000008049470        0x0
+.data           0x00000000080495b4        0x0
  *(.data .data.* .gnu.linkonce.d.*)
- .data          0x0000000008049470        0x0 tmp/i386-darwin.macho-fold.o
- .data          0x0000000008049470        0x0 tmp/i386-darwin.macho-main.o
+ .data          0x00000000080495b4        0x0 tmp/i386-darwin.macho-fold.o
+ .data          0x00000000080495b4        0x0 tmp/i386-darwin.macho-main.o
  *(.gnu.linkonce.d.*personality*)
 
 .data1
  *(.data1)
-                0x0000000008049470                _edata = .
-                0x0000000008049470                PROVIDE (edata, .)
-                0x0000000008049470                __bss_start = .
+                0x00000000080495b4                _edata = .
+                0x00000000080495b4                PROVIDE (edata, .)
+                0x00000000080495b4                __bss_start = .
 
-.bss            0x0000000008049470        0x0
+.bss            0x00000000080495b4        0x0
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss           0x0000000008049470        0x0 tmp/i386-darwin.macho-fold.o
- .bss           0x0000000008049470        0x0 tmp/i386-darwin.macho-main.o
+ .bss           0x00000000080495b4        0x0 tmp/i386-darwin.macho-fold.o
+ .bss           0x00000000080495b4        0x0 tmp/i386-darwin.macho-main.o
  *(COMMON)
-                0x0000000008049470                . = ALIGN ((. != 0x0)?0x4:0x1)
-                0x0000000008049470                . = ALIGN (0x4)
-                0x0000000008049470                . = ALIGN (0x4)
-                0x0000000008049470                _end = .
-                0x0000000008049470                PROVIDE (end, .)
-                0x0000000008049470                . = DATA_SEGMENT_END (.)
+                0x00000000080495b4                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x00000000080495b4                . = ALIGN (0x4)
+                0x00000000080495b4                . = ALIGN (0x4)
+                0x00000000080495b4                _end = .
+                0x00000000080495b4                PROVIDE (end, .)
+                0x00000000080495b4                . = DATA_SEGMENT_END (.)
 
 .stab
  *(.stab)

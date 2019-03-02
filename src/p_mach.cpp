@@ -269,84 +269,22 @@ PackMachBase<T>::addStubEntrySections(Filter const *)
     addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
 }
 
-void PackMachI386::addStubEntrySections(Filter const *ft)
+void PackMachI386::addStubEntrySections(Filter const * /*ft*/)
 {
-    int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
-
-    if (Mach_header::MH_EXECUTE == my_filetype) {
-        addLoader("I386BXX0", NULL);  // .word offset to f_exp
+    addLoader("MACHMAINX", NULL);  // different for MY_DYLIB vs MH_EXECUTE
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        addLoader("MACH_UNC", NULL);
     }
-    else {
-        addLoader("LEXEC000", NULL);  // entry to stub
-    }
-    if (ft->id) { // decompr, unfilter are separate
-        if (Mach_header::MH_EXECUTE != my_filetype) {
-            addLoader("LXUNF000", NULL);  // 2-byte jump to f_exp
-        }
-        addLoader("LXUNF002", NULL);  // entry to f_unf
-        // prolog to f_unf
-        if (0x80==(ft->id & 0xF0)) {
-            if (256==n_mru) {
-                addLoader("MRUBYTE0", NULL);
-            }
-            else if (n_mru) {
-                addLoader("LXMRU005", NULL);
-            }
-            if (n_mru) {
-                addLoader("LXMRU006", NULL);
-            }
-            else {
-                addLoader("LXMRU007", NULL);
-            }
-        }
-        else {
-            if (0x40==(ft->id & 0xF0)) {
-                addLoader("LXUNF008", NULL);
-            }
-        }
-        if (Mach_header::MH_EXECUTE == my_filetype) {
-            addFilter32(ft->id);  // f_unf body
-            if (0x80==(ft->id & 0xF0)) {
-                if (0==n_mru) {
-                    addLoader("LXMRU058", NULL);
-                }
-            }
-            addLoader("LXUNF035", NULL);  // epilog to f_unf
-        }
-        else { // MH_DYLIB
-            addLoader("LXUNF010", NULL);  // jmp32 lxunf0  # to rest of f_unf
-            if (n_mru) {
-                addLoader("LEXEC009", NULL);  // empty (unify source with other cases)
-            }
-        }
-    }
-    if (Mach_header::MH_EXECUTE == my_filetype) {
-        addLoader("I386BXX1", NULL);
-    }
-    addLoader("LEXEC010", NULL);  // prolog to f_exp
-    addLoader(getDecompressorSections(), NULL);
-    addLoader("LEXEC015", NULL);  // epilog to f_exp
-    if (ft->id) {
-        if (Mach_header::MH_EXECUTE != my_filetype) {
-            if (0x80!=(ft->id & 0xF0)) {
-                addLoader("LXUNF042", NULL);  // lxunf0:
-            }
-            addFilter32(ft->id);  // body of f_unf
-            if (0x80==(ft->id & 0xF0)) {
-                if (0==n_mru) {
-                    addLoader("LXMRU058", NULL);
-                }
-            }
-            addLoader("LXUNF035", NULL);  // epilog to f_unf
-        }
-    }
-    else {
-        addLoader("LEXEC017", NULL);  // epilog to f_exp
-    }
-
-    addLoader("IDENTSTR", NULL);
-    addLoader("LEXEC020", NULL);
-    addLoader("FOLDEXEC", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
+        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
+        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    if (hasLoaderSection("CFLUSH"))
+        addLoader("CFLUSH");
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
 }
 
 void PackMachAMD64::addStubEntrySections(Filter const * /*ft*/)
@@ -593,8 +531,6 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         mhp->cpusubtype = my_cpusubtype;
         mhp->flags = mhdro.flags;
         char *tail = (char *)(1+ mhp);
-        Mach_section_command *sectxt = 0;  // in temp for output
-        unsigned txt_addr = 0;
         char *const lcp_end = mhdro.sizeofcmds + tail;
         Mach_command *lcp = (Mach_command *)(1+ mhp);
         Mach_command *lcp_next;
@@ -615,8 +551,6 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 segptr->vmsize = pagezero_vmsize;
             }
             if (!strcmp("__TEXT", segptr->segname)) {
-                sectxt = (Mach_section_command *)(1+ segptr);
-                txt_addr = sectxt->addr;
                 sz_cmd = (segTEXT.nsects * sizeof(secTEXT)) + sizeof(segTEXT);
                 mhp->sizeofcmds += sizeof(secTEXT) * (1 - segptr->nsects);
                 memcpy(tail, &segTEXT, sz_cmd); tail += sz_cmd;
@@ -627,6 +561,16 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 delta = offLINK - segptr->fileoff;  // relocation constant
 
                 sz_cmd = sizeof(segLINK);
+                if (Mach_header::CPU_TYPE_I386==mhdri.cputype
+                &&  Mach_header::MH_EXECUTE==mhdri.filetype) {
+                    segLINK.maxprot = 0
+                        | Mach_command::VM_PROT_EXECUTE
+                        | Mach_command::VM_PROT_WRITE
+                        | Mach_command::VM_PROT_READ;
+                    segLINK.initprot = 0
+                        | Mach_command::VM_PROT_WRITE
+                        | Mach_command::VM_PROT_READ;
+                }
                 memcpy(tail, &segLINK, sz_cmd); tail += sz_cmd;
                 goto next;
             }
@@ -677,8 +621,6 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             skip = 1;
         } break;
         case Mach_command::LC_UNIXTHREAD: { // pre-LC_MAIN
-            threado_setPC(secTEXT.addr +
-                (threadc_getPC(lcp) - txt_addr));
             skip = 1;
         } break;
         case Mach_command::LC_LOAD_DYLIB: {

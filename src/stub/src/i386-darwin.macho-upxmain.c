@@ -710,6 +710,44 @@ typedef struct {
 //#    -Wl,-unexported_symbols_list unexport-upxload.txt \
 //# strip -u -r i386-darwin.macho-upxmain.exe
 
+// Makefile:
+//# Compile i386-darwin.macho-upxmain.c on MacOS 10.9 (Mavericks) or later,
+//# to get smaller code.  Then copy i386-darwin.macho-upxmain.o to MacOS 10.6.x,
+//# and static link, to get runtime conventions straight [??]
+//#\tgcc -m32 -c -I $PWD \
+//#\t    -Os -fPIC -fno-stack-protector -fno-unwind-tables \
+//#\t    i386-darwin.macho-upxmain.c
+//
+//i386-darwin.macho-upxmain.exe: Makefile
+//i386-darwin.macho-upxmain.exe: start.S
+//i386-darwin.macho-upxmain.exe: i386-darwin.macho-upxsubr.S
+//i386-darwin.macho-upxmain.exe: i386-darwin.macho-upxmain.o
+//\tgcc -c start.S i386-darwin.macho-upxsubr.S
+//\tgcc -o $@ -I $PWD \
+//\t    -O -nostartfiles -fno-stack-protector -fno-unwind-tables \
+//\t    start.o \
+//\t    i386-darwin.macho-upxmain.o \
+//\t    i386-darwin.macho-upxsubr.o \
+//\t    -Wl,-pagezero_size,0x1000 \
+//\t    -Wl,-no_uuid \
+//\t    -Wl,-bind_at_load \
+//\t    -Wl,-headerpad,0x400
+//\tstrip -u -r -S -x $@
+//\totool -hl $@ >upxmain-new.otool
+
+// History: Originally this file i386-darwin.macho-upxmain.c was the entry point
+// of the compressed program.  The output i386-darwin.macho-upxmain.exe was used
+// as a prototype for LC_* commands.  The start address was in LC_UNIXTHREAD.
+// The decompressor upx_main() i386-darwin.macho-main.c itself was not compressed.
+//
+// Then MacOS 10.7 ("Lion") supported 64-bit x86_64, and things began to change.
+// The start address (for anything except the dynamic linker) is in LC_MAIN.
+// We still use LC_UNIXTHREAD because we are "dynamic linker".
+// Because no program on MacOS uses brk(0), then the compressed program and stub
+// could above the space for un-compressed program, saving a copy-and-relocate.
+// The run-time decompression could be more like on Linux, using: macho-entry.S,
+// macho-fold.S, macho-main.c
+
 int
 main(int argc, char *argv[])
 {
