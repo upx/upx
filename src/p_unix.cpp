@@ -63,7 +63,7 @@ bool PackUnix::canPack()
     if (exetype == 0)
         return false;
 
-#if defined(__unix__)
+#if defined(__unix__) && !defined(__MSYS2__)
     // must be executable by owner
     if ((fi->st.st_mode & S_IXUSR) == 0)
         throwCantPack("file not executable; try 'chmod +x'");
