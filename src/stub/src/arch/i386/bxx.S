@@ -31,16 +31,16 @@ i386bxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 #ifndef NO_METHOD_CHECK
         cmpl $0x49,4*NBPW(%esp); jne ckend0  # filter: JMP, CALL, 6-byte Jxx
 #endif
-	push %ebp; movl %esp,%ebp
+        push %ebp; movl %esp,%ebp
         push %ebx  # C-language saved regs
-	push %esi
-	push %edi
+        push %esi
+        push %edi
 
-	movl 2*NBPW(%ebp),%esi  // src
-	movl 3*NBPW(%ebp),%ecx  // len
-	movl 4*NBPW(%ebp),%edx  // b_cto8 (%dl)
+        movl 2*NBPW(%ebp),%esi  // src
+        movl 3*NBPW(%ebp),%ecx  // len
+        movl 4*NBPW(%ebp),%edx  // b_cto8 (%dl)
         lea (1- 4)(%esi,%ecx),%ecx  # beyond last possible displacement
-	movl %esi,%ebx  // start of buffer
+        movl %esi,%ebx  // start of buffer
         jmp ckstart
 ckloop4:
         cmpl %ecx,%esi; jae ckend
@@ -66,10 +66,10 @@ ckstart:
         cmpl %ecx,%esi; jae ckend
         lodsb; jmp ckloop2  # 0x0F prefix would overlap previous displacement
 ckend:
-	pop %edi
-	pop %esi
+        pop %edi
+        pop %esi
         pop %ebx
-	pop %ebp
+        pop %ebp
 ckend0:
 #ifndef NO_METHOD_CHECK
         ret
