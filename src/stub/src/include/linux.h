@@ -142,6 +142,9 @@ struct timespec {
 #define MAP_DENYWRITE 0x0800  /* ETXTBSY */
 
 // <linux/prctl.h>
+// These should enable removal of PT_LOAD[1] for setting brk(0).
+// "git blame linux/kernel/sys.c" says:
+// 028ee4be34a09 (Cyrill Gorcunov        2012-01-12 17:20:55 -0800 2157)   case PR_SET_MM_START_BRK:
 #define PR_SET_MM               35
 # define PR_SET_MM_START_BRK            6
 # define PR_SET_MM_BRK                  7
