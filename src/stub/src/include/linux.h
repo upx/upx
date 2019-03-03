@@ -141,6 +141,10 @@ struct timespec {
 #define MAP_ANONYMOUS   0x20
 #define MAP_DENYWRITE 0x0800  /* ETXTBSY */
 
+// <linux/prctl.h>
+#define PR_SET_MM               35
+# define PR_SET_MM_START_BRK            6
+# define PR_SET_MM_BRK                  7
 
 /*************************************************************************
 // i386 syscalls
