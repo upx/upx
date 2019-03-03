@@ -72,8 +72,10 @@ RepLenCoder= (LenCoder + kNumLenProbs)
 Literal=  (RepLenCoder + kNumLenProbs)
 
 // Already #define in lzma_d.S
-//LZMA_BASE_SIZE= Literal
-//LZMA_LIT_SIZE=  768
+#ifndef LZMA_LIT_SIZE  //{
+#define LZMA_BASE_SIZE 1846
+#define LZMA_LIT_SIZE  768
+#endif  //}
 
 #define call bl  /* subroutine call */
 

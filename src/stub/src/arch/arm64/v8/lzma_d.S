@@ -29,7 +29,10 @@
    <jreiser@users.sourceforge.net>
 */
 
+#include "macros.S"
+
 #define section .section
+NBPW= 8
 
   section LZMA_ELF00
 //decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)

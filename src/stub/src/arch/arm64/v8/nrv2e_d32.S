@@ -28,6 +28,8 @@
    John F. Reiser
    <jreiser@users.sourceforge.net>
 */
+#include "macros.S"
+
 #define SAFE 0  /* 1 for src+dst bounds checking: cost 76 bytes */
 
 #define lr   x30

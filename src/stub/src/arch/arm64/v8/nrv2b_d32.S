@@ -29,6 +29,8 @@
    <jreiser@users.sourceforge.net>
 */
 
+#include "macros.S"
+
 #define lr   x30
 #define ip0  x16
 
@@ -48,6 +50,7 @@
 #define SUB2( dst,src) sub  dst,dst,src
 #define SUB2S(dst,src) subs dst,dst,src
 #define LDRB3(reg,psrc,incr) ldrb reg,psrc,incr
+#define LDR3( reg,psrc,incr) ldr  reg,psrc,incr
 #define STRB3(reg,pdst,incr) strb reg,pdst,incr
 
 #undef  GETBIT
