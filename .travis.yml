@@ -257,6 +257,12 @@ matrix:
       compiler: clang
       env: C=clang-900-m64
 
+addons:
+  homebrew:
+    packages:
+      - coreutils
+      - lcov
+
 install:
   - uname -a; pwd; id; umask
   - cat /etc/os-release || true
@@ -268,9 +274,7 @@ install:
       fi
     fi
     if [[ $TRAVIS_OS_NAME == osx ]]; then
-      if ! gsha256sum </bin/sh >/dev/null 2>/dev/null; then travis_retry brew install coreutils; fi
       if [[ $B =~ (^|\+)coverage($|\+) ]]; then
-        travis_retry brew install lcov
         travis_retry pip install --user cpp-coveralls
       fi
     fi
