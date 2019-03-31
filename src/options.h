@@ -148,6 +148,7 @@ struct options_t {
         bool preserve_build_id;     // copy the build-id to the compressed binary
         bool android_shlib;         // keep some ElfXX_Shdr for dlopen()
         bool force_pie;             // choose DF_1_PIE instead of is_shlib
+        bool assume_execute_permission;  // do not check .st_mode for S_IXUSR
     } o_unix;
     struct {
         bool le;

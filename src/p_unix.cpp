@@ -63,11 +63,10 @@ bool PackUnix::canPack()
     if (exetype == 0)
         return false;
 
-#if defined(__unix__) && !defined(__MSYS2__)
     // must be executable by owner
-    if ((fi->st.st_mode & S_IXUSR) == 0)
+    if (!opt->o_unix.assume_execute_permission  // benefits __MSYS2__
+    &&  (fi->st.st_mode & S_IXUSR) == 0)
         throwCantPack("file not executable; try 'chmod +x'");
-#endif
     if (file_size < 4096)
         throwCantPack("file is too small");
 
