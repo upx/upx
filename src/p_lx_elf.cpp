@@ -426,9 +426,10 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 // by decrementing e_phnum.
                 memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));  // extract
                 memmove(phdr, 1+phdr, (e_phnum - (1+ j))*sizeof(*phdr));  // overlapping
-                memcpy(&phdr[-1+ e_phnum], (unsigned char *)ibuf, sizeof(*phdr));  // to top
-                --phdr;
-                set_te16(&ehdri.e_phnum, --e_phnum);
+                memcpy(&phdr[e_phnum - (1+ j)], (unsigned char *)ibuf, sizeof(*phdr));  // to top
+                --phdr; --e_phnum;
+                set_te16(&ehdri.e_phnum, e_phnum);
+                set_te16(&((Elf32_Ehdr *)(unsigned char *)lowmem)->e_phnum, e_phnum);
                 continue;
             }
             if (PT_LOAD32 == type) {
@@ -550,9 +551,10 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 // by decrementing e_phnum.
                 memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));  // extract
                 memmove(phdr, 1+phdr, (e_phnum - (1+ j))*sizeof(*phdr));  // overlapping
-                memcpy(&phdr[-1+ e_phnum], (unsigned char *)ibuf, sizeof(*phdr));  // to top
-                --phdr;
-                set_te16(&ehdri.e_phnum, --e_phnum);
+                memcpy(&phdr[e_phnum - (1+ j)], (unsigned char *)ibuf, sizeof(*phdr));  // to top
+                --phdr; --e_phnum;
+                set_te16(&ehdri.e_phnum, e_phnum);
+                set_te16(&((Elf64_Ehdr *)(unsigned char *)lowmem)->e_phnum, e_phnum);
                 continue;
             }
             if (PT_LOAD64 == type) {
