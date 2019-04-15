@@ -268,7 +268,8 @@ protected:
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
     virtual void unRela64(upx_uint64_t dt_rela, Elf64_Rela *rela0, unsigned relasz,
-        MemBuffer &membuf, upx_uint64_t const load_off, OutputFile *fo);
+        MemBuffer &membuf, upx_uint64_t const load_off, upx_uint64_t const old_dtinit,
+        OutputFile *fo);
 
     virtual void generateElfHdr(
         OutputFile *,

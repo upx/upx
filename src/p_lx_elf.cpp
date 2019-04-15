@@ -325,7 +325,7 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
 
     unsigned const t = (4 & len) ^ ((!!xct_off)<<2);  // 0 or 4
     fo->write(&zero, t);
-    len += t;
+    len += t;  // force sz_pack2 (0 mod 8)  [see below]
 
     set_te32(&disp, sz_elf_hdrs + sizeof(p_info) + sizeof(l_info) +
         (!!xct_off & !!opt->o_unix.android_shlib));  // |1 iff android shlib
@@ -354,7 +354,7 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
         fo->write(&disp, sizeof(disp));  // offset(dst for f_exp)
         len += sizeof(disp);
     }
-    sz_pack2 = len;  // 0 mod 8
+    sz_pack2 = len;  // 0 mod 8  [see above]
 
     super::pack3(fo, ft);  // append the decompressor
     set_te16(&linfo.l_lsize, up4(  // MATCH03: up4
@@ -568,7 +568,9 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                     // is a forward-looking 2MiB.  In 2009 Linux chooses 4KiB.
                     // We choose 4KiB to waste less space.  If Linux chooses
                     // 2MiB later, then our output will not run.
-                    if ((1u<<12) < align) {
+                    if ((1u<<12) < align
+                    &&  Elf64_Ehdr::EM_X86_64 ==e_machine
+                    ) {
                         align = 1u<<12;
                         set_te64(&phdr->p_align, align);
                     }
@@ -1845,6 +1847,10 @@ bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
     return false;
 }
 
+#define WANT_REL_ENUM
+#include "p_elf_enum.h"
+#undef WANT_REL_ENUM
+
 bool PackLinuxElf32::canPack()
 {
     union {
@@ -2012,6 +2018,7 @@ bool PackLinuxElf32::canPack()
             }
         }
 
+        Elf32_Phdr const *pload_x0(0);  // first eXecutable PT_LOAD
         phdr= phdri;
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
@@ -2019,6 +2026,11 @@ bool PackLinuxElf32::canPack()
             invert_pt_dynamic(dynseg);
         }
         else if (PT_LOAD32==get_te32(&phdr->p_type)) {
+            if (!pload_x0
+            &&  Elf32_Phdr::PF_X & get_te32(&phdr->p_flags)
+            ) {
+                pload_x0 = phdr;
+            }
             check_pt_load(phdr);
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -2061,6 +2073,16 @@ bool PackLinuxElf32::canPack()
                 throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
             }
+            if (!(Elf32_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf32_Dyn::DT_FLAGS_1))) {
+                // not explicitly PIE main program
+                if (Elf32_Ehdr::EM_ARM == e_machine  // Android is common
+                &&  !opt->o_unix.android_shlib  // but not explicit
+                ) {
+                    opt->info_mode++;
+                    info("note: use --android-shlib if appropriate");
+                    opt->info_mode--;
+                }
+            }
             Elf32_Shdr const *shdr = shdri;
             xct_va = ~0u;
             if (e_shnum) {
@@ -2074,6 +2096,7 @@ bool PackLinuxElf32::canPack()
                         &&  Elf32_Shdr::SHT_PREINIT_ARRAY==sh_type)
                     ||  (     Elf32_Dyn::DT_INIT_ARRAY   ==upx_dt_init
                         &&  Elf32_Shdr::SHT_INIT_ARRAY   ==sh_type) ) {
+                        unsigned user_init_ava = get_te32(&shdr->sh_addr);
                         user_init_off = get_te32(&shdr->sh_offset);
                         if ((u32_t)file_size <= user_init_off) {
                             char msg[70]; snprintf(msg, sizeof(msg),
@@ -2081,7 +2104,50 @@ bool PackLinuxElf32::canPack()
                                 -1+ e_shnum - j, user_init_off);
                             throwCantPack(msg);
                         }
-                        user_init_va = get_te32(&file_image[user_init_off]);
+                        // Check that &file_image[user_init_off] has
+                        // *_RELATIVE relocation, and fetch user_init_va.
+                        // If Elf32_Rela then the actual value is in Rela.r_addend.
+                        int z_rel = dt_table[Elf32_Dyn::DT_REL];
+                        int z_rsz = dt_table[Elf32_Dyn::DT_RELSZ];
+                        if (z_rel && z_rsz) {
+                            unsigned rel_off = get_te32(&dynseg[-1+ z_rel].d_val);
+                            Elf32_Rel *rp = (Elf32_Rel *)&file_image[rel_off];
+                            unsigned relsz   = get_te32(&dynseg[-1+ z_rsz].d_val);
+                            Elf32_Rel *last = (Elf32_Rel *)(relsz + (char *)rp);
+                            for (; rp < last; ++rp) {
+                                unsigned r_va = get_te32(&rp->r_offset);
+                                if (r_va == user_init_ava) { // found the Elf32_Rel
+                                    unsigned r_info = get_te32(&rp->r_info);
+                                    unsigned r_type = ELF32_R_TYPE(r_info);
+                                    if (Elf32_Ehdr::EM_ARM == e_machine
+                                    &&  R_ARM_RELATIVE == r_type) {
+                                        user_init_va = get_te32(&file_image[user_init_off]);
+                                    }
+                                    else {
+                                        char msg[50]; snprintf(msg, sizeof(msg),
+                                            "bad relocation %#x DT_INIT_ARRAY[0]",
+                                            r_info);
+                                        throwCantPack(msg);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        unsigned const p_filesz = get_te32(&pload_x0->p_filesz);
+                        if (!((user_init_va - xct_va) < p_filesz)) {
+                            // Not in executable portion of first executable PT_LOAD.
+                            if (0==user_init_va && opt->o_unix.android_shlib) {
+                                // Android allows (0 ==> skip) ?
+                                upx_dt_init = 0;  // force steal of 'extra' DT_NULL
+                                // XXX: FIXME: depends on SHT_DYNAMIC coming later
+                            }
+                            else {
+                                char msg[70]; snprintf(msg, sizeof(msg),
+                                    "bad init address %#x in Elf32_Shdr[%d].%#x\n",
+                                    (unsigned)user_init_va, -1+ e_shnum - j, user_init_off);
+                                throwCantPack(msg);
+                            }
+                        }
                     }
                     // By default /usr/bin/ld leaves 4 extra DT_NULL to support pre-linking.
                     // Take one as a last resort.
@@ -2301,6 +2367,7 @@ PackLinuxElf64::canPack()
             }
         }
 
+        Elf64_Phdr const *pload_x0(0);  // first eXecutable PT_LOAD
         phdr= phdri;
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
@@ -2308,6 +2375,11 @@ PackLinuxElf64::canPack()
             invert_pt_dynamic(dynseg);
         }
         else if (PT_LOAD64==get_te32(&phdr->p_type)) {
+            if (!pload_x0
+            &&  Elf32_Phdr::PF_X & get_te32(&phdr->p_flags)
+            ) {
+                pload_x0 = phdr;
+            }
             check_pt_load(phdr);
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -2341,6 +2413,16 @@ PackLinuxElf64::canPack()
                 throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
             }
+            if (!(Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1))) {
+                // not explicitly PIE main program
+                if (Elf64_Ehdr::EM_AARCH64 == e_machine  // Android is common
+                &&  !opt->o_unix.android_shlib  // but not explicit
+                ) {
+                    opt->info_mode++;
+                    info("note: use --android-shlib if appropriate");
+                    opt->info_mode--;
+                }
+            }
             Elf64_Shdr const *shdr = shdri;
             xct_va = ~0ull;
             if (e_shnum) {
@@ -2354,6 +2436,7 @@ PackLinuxElf64::canPack()
                         &&  Elf64_Shdr::SHT_PREINIT_ARRAY==sh_type)
                     ||  (     Elf64_Dyn::DT_INIT_ARRAY   ==upx_dt_init
                         &&  Elf64_Shdr::SHT_INIT_ARRAY   ==sh_type) ) {
+                        unsigned user_init_ava = get_te32(&shdr->sh_addr);
                         user_init_off = get_te64(&shdr->sh_offset);
                         if ((u64_t)file_size <= user_init_off) {
                             char msg[70]; snprintf(msg, sizeof(msg),
@@ -2361,7 +2444,50 @@ PackLinuxElf64::canPack()
                                 -1+ e_shnum - j, user_init_off);
                             throwCantPack(msg);
                         }
-                        user_init_va = get_te64(&file_image[user_init_off]);
+                        // Check that &file_image[user_init_off] has
+                        // *_RELATIVE relocation, and fetch user_init_va.
+                        // If Elf64_Rela then the actual value is in Rela.r_addend.
+                        int z_rel = dt_table[Elf64_Dyn::DT_RELA];
+                        int z_rsz = dt_table[Elf64_Dyn::DT_RELASZ];
+                        if (z_rel && z_rsz) {
+                            unsigned rel_off = get_te64(&dynseg[-1+ z_rel].d_val);
+                            Elf64_Rela *rp = (Elf64_Rela *)&file_image[rel_off];
+                            unsigned relsz   = get_te64(&dynseg[-1+ z_rsz].d_val);
+                            Elf64_Rela *last = (Elf64_Rela *)(relsz + (char *)rp);
+                            for (; rp < last; ++rp) {
+                                unsigned r_va = get_te64(&rp->r_offset);
+                                if (r_va == user_init_ava) { // found the Elf64_Rela
+                                    unsigned r_info = get_te64(&rp->r_info);
+                                    unsigned r_type = ELF64_R_TYPE(r_info);
+                                    if (Elf64_Ehdr::EM_AARCH64 == e_machine
+                                    &&  R_AARCH64_RELATIVE == r_type) {
+                                        user_init_va = get_te64(&rp->r_addend);
+                                    }
+                                    else {
+                                        char msg[50]; snprintf(msg, sizeof(msg),
+                                            "bad relocation %#x DT_INIT_ARRAY[0]",
+                                            r_info);
+                                        throwCantPack(msg);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        unsigned const p_filesz = get_te64(&pload_x0->p_filesz);
+                        if (!((user_init_va - xct_va) < p_filesz)) {
+                            // Not in executable portion of first executable PT_LOAD.
+                            if (0==user_init_va && opt->o_unix.android_shlib) {
+                                // Android allows (0 ==> skip) ?
+                                upx_dt_init = 0;  // force steal of 'extra' DT_NULL
+                                // XXX: FIXME: depends on SHT_DYNAMIC coming later
+                            }
+                            else {
+                                char msg[70]; snprintf(msg, sizeof(msg),
+                                    "bad init address %#x in Elf64_Shdr[%d].%#x\n",
+                                    (unsigned)user_init_va, -1+ e_shnum - j, user_init_off);
+                                throwCantPack(msg);
+                            }
+                        }
                     }
                     // By default /usr/bin/ld leaves 4 extra DT_NULL to support pre-linking.
                     // Take one as a last resort.
@@ -2865,10 +2991,6 @@ PackLinuxElf64::generateElfHdr(
         assert(false);  // unknown ph.format, PackLinuxElf64
     }
 }
-
-#define WANT_REL_ENUM
-#include "p_elf_enum.h"
-#undef WANT_REL_ENUM
 
 // Android shlib has ABS symbols that actually are relative.
 static char const abs_symbol_names[][14] = {
@@ -3536,7 +3658,11 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                         memcpy(&buf_notes[len_notes], &file_image[sh_offset], sh_size);
                         len_notes += sh_size;
                     }
-                    // else: SHF_ALLOC, thus already in PT_LOAD
+                    else { // SHF_ALLOC: in PT_LOAD; but move sh_addr and sh_offset
+                        upx_uint64_t pos = xct_off + e_shnum * sizeof(Elf64_Shdr);
+                        set_te64(&shdr->sh_addr,   pos);
+                        set_te64(&shdr->sh_offset, pos);
+                    }
                 }
             }
             // shstrndx will move
@@ -4150,28 +4276,36 @@ PackLinuxElf64::unRela64(
     unsigned relasz,
     MemBuffer &ptload1,
     upx_uint64_t const load_off,
+    upx_uint64_t old_dtinit,
     OutputFile *fo
 )
 {
     Elf64_Rela *rela = rela0;
     for (int k = relasz / sizeof(Elf64_Rela); --k >= 0; ++rela) {
         upx_uint64_t r_addend = get_te64(&rela->r_addend);
+        if (xct_off <= r_addend) {
+            r_addend -= asl_delta;
+            set_te64(&rela->r_addend, r_addend);
+        }
+
         upx_uint64_t r_offset = get_te64(&rela->r_offset);
+        if (xct_off <= r_offset) {
+            r_offset -= asl_delta;
+            set_te64(&rela->r_offset, r_offset);
+        }
+
         upx_uint64_t r_info   = get_te64(&rela->r_info);
         unsigned r_type = ELF64_R_TYPE(r_info);
-        if (xct_off <= r_offset) {
-            set_te64(&rela->r_offset, r_offset - asl_delta);
-        }
         if (Elf64_Ehdr::EM_AARCH64 == e_machine) {
             if (R_AARCH64_RELATIVE == r_type) {
-                if (xct_off <= r_addend) {
-                    set_te64(&rela->r_addend, r_addend - asl_delta);
+                if (old_dtinit == r_addend) {
+                    set_te64(&ptload1[r_offset - load_off], r_addend);
                 }
             }
             if (R_AARCH64_JUMP_SLOT == r_type) {
                 ++n_jmp_slot;
                 // .rela.plt contains offset of the "first time" target
-                upx_uint64_t d = r_offset - load_off - asl_delta;
+                upx_uint64_t d = r_offset - load_off;
                 if (plt_off > d) {
                     plt_off = d;
                 }
@@ -4380,8 +4514,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         funpad4(fi);  // MATCH01
         unsigned d_info[6]; fi->readx(d_info, sizeof(d_info));
         if (0==old_dtinit) {
-            old_dtinit = d_info[2 + (0==d_info[0])];
-            is_asl = 1u& d_info[0];
+            old_dtinit = get_te32(&d_info[2 + (0==d_info[0])]);
+            is_asl = 1u& get_te32(&d_info[0 + (0==d_info[0])]);
         }
         fi->seek(lsize - sizeof(d_info), SEEK_CUR);
     }
@@ -4488,12 +4622,12 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                         if (dt_relasz && dt_rela) {
                             Elf64_Rela *const rela0 = (Elf64_Rela *)lowmem.subref(
                                 "bad Rela offset", dt_rela, dt_relasz);
-                            unRela64(dt_rela, rela0, dt_relasz, ibuf, load_va, fo);
+                            unRela64(dt_rela, rela0, dt_relasz, ibuf, load_va, old_dtinit, fo);
                         }
                         if (dt_pltrelsz && dt_jmprel) { // FIXME:  overlap w/ DT_REL ?
                             Elf64_Rela *const jmp0 = (Elf64_Rela *)lowmem.subref(
                                 "bad Jmprel offset", dt_jmprel, dt_pltrelsz);
-                            unRela64(dt_jmprel, jmp0, dt_pltrelsz, ibuf, load_va, fo);
+                            unRela64(dt_jmprel, jmp0, dt_pltrelsz, ibuf, load_va, old_dtinit, fo);
                         }
                         // Modified relocation tables are re-written by unRela64
                     }
@@ -5306,8 +5440,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         funpad4(fi);  // MATCH01
         unsigned d_info[4]; fi->readx(d_info, sizeof(d_info));
         if (0==old_dtinit) {
-            old_dtinit = d_info[2 + (0==d_info[0])];
-            is_asl = 1u& d_info[0];
+            old_dtinit = get_te32(&d_info[2 + (0==d_info[0])]);
+            is_asl = 1u& get_te32(&d_info[0 + (0==d_info[0])]);
         }
         fi->seek(lsize - sizeof(d_info), SEEK_CUR);
     }
@@ -5364,7 +5498,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 
                 Elf32_Phdr const *udynhdr = (Elf32_Phdr *)&u[sizeof(*ehdr)];
                 for (unsigned j3= 0; j3 < u_phnum; ++j3, ++udynhdr)
-                if (Elf32_Phdr::PT_DYNAMIC==get_te32(&dynhdr->p_type)) {
+                if (Elf32_Phdr::PT_DYNAMIC==get_te32(&udynhdr->p_type)) {
                     unsigned dt_pltrelsz(0), dt_jmprel(0);
                     unsigned dt_relsz(0), dt_rel(0);
                     unsigned const dyn_len = get_te32(&udynhdr->p_filesz);
