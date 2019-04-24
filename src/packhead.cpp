@@ -85,6 +85,29 @@ int PackHeader::getPackHeaderSize() const {
     return n;
 }
 
+static bool packheader_size_valid(int format, int boff, int blen)
+{
+    int p_size = 0;
+    if(format < 128) {
+        if(format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS) {
+            p_size = 21;
+        }
+        else if (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH) {
+			p_size = 26;
+		}
+		else {
+			p_size = 31;
+		}
+    }
+    else {
+        p_size = 31;
+    }
+
+    if( boff + p_size > blen )
+        return false;
+    return true;
+}
+
 /*************************************************************************
 // see stub/header.ash
 **************************************************************************/
@@ -186,7 +209,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
                 format, method, level);
     }
     const int size = getPackHeaderSize();
-    if (boff + size <= 0 || boff + size > blen)
+    if (boff + size <= 0 || boff + size > blen || !packheader_size_valid(format, boff, blen))
         throwCantUnpack("header corrupted 2");
 
     //
