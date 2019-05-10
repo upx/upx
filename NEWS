@@ -4,6 +4,7 @@ User visible changes for UPX
 
 Changes in 3.96 (24 Feb 2019):
   * bug fixes - see https://github.com/upx/upx/milestone/5
+  * New option --assume-execute-permission for MSYS2 etc.
 
 Changes in 3.95 (26 Aug 2018):
   * Flag --android-shlib to work around bad design in Android
