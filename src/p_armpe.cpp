@@ -237,7 +237,8 @@ void PackArmPe::defineSymbols(unsigned ncsection, unsigned, unsigned,
 
 void PackArmPe::setOhDataBase(const pe_section_t *osection)
 {
-    oh.database = osection[2].vaddr;
+    if (oh.database > oh.headersize) // NOT overlaped MZ and PE headers
+        oh.database = osection[2].vaddr;
 }
 
 void PackArmPe::setOhHeaderSize(const pe_section_t *osection)
