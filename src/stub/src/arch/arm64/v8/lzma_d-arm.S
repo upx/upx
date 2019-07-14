@@ -503,8 +503,8 @@ rcGetBitCont:
         mul bound,starp,y0tmp
         cmp Code,bound; bhs rcGB1
 rcGB0: // Code < bound
+        mov Range,bound  // 'bound' dies
         mov y0tmp,#kBitModelTotal
-        mov Range,bound
         sub y0tmp,y0tmp,starp
         adcs mo,mi,mi  // mo = (mi<<1) | (Code >= bound);  set CC
         add starp,starp,y0tmp, lsr #kNumMoveBits
