@@ -3842,7 +3842,7 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
                 if (ft.id < 0x40) {
                     // FIXME: ??     ft.addvalue += asl_delta;
                 }
-                if (delta == x.size) { // PT_LOAD[0] with ElfXX.Ehdr only
+                if ((off_t)delta == x.size) { // PT_LOAD[0] with ElfXX.Ehdr only
                     // QBE backend - http://c9x.me/compile/
                     hdr_u_len = 0;  // no fiddling necessary!
                     // &ft arg to packExtent will be zero becaue (k != nk_f)
@@ -3973,7 +3973,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
                 if (ft.id < 0x40) {
                     // FIXME: ??     ft.addvalue += asl_delta;
                 }
-                if (delta == x.size) { // PT_LOAD[0] with ElfXX.Ehdr only
+                if ((off_t)delta == x.size) { // PT_LOAD[0] with ElfXX.Ehdr only
                     // QBE backend - http://c9x.me/compile/
                     hdr_u_len = 0;  // no fiddling necessary!
                     // &ft arg to packExtent will be zero becaue (k != nk_f)
