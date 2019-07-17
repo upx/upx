@@ -48,7 +48,7 @@ endif
 # we need UCL and zlib - you can set envvar UPX_UCLDIR
 ifneq ($(wildcard $(UPX_UCLDIR)/include/ucl/ucl.h),)
 INCLUDES += -I$(UPX_UCLDIR)/include
-LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
+LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/lib/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
 endif
 LIBS += -lucl -lz
 # LZMA from https://github.com/upx/upx-lzma-sdk
