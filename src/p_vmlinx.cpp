@@ -577,6 +577,7 @@ int PackVmlinuxBase<T>::canUnpack()
     Shdr *p;
     for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
         if ((unsigned)file_size < (p->sh_size + p->sh_offset)
+        || (5+ p->sh_name) < p->sh_name  // wrap: ignore malformed
         ||  shstrsec->sh_size < (5+ p->sh_name) ) {
             continue;
         }
