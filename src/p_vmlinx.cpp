@@ -115,7 +115,7 @@ typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
         &&  p->sh_size    <= ((unsigned long)file_size - p->sh_offset)
         &&  p->sh_name    <   (unsigned long)file_size
         &&  10            <= ((unsigned long)file_size - p->sh_name)
-                // 10 == (1+ strlen(".shstrtab"))
+            // 10 == (1+ strlen(".shstrtab"))
         ) {
             delete [] shstrtab;
             shstrtab = new char[1+ p->sh_size];
