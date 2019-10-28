@@ -183,8 +183,8 @@ xPMASK .req x20
         ldr x2,[xauxe,#NBPW - sz_auxv]  // Elf64_auxv_t[AT_NULL@.a_type].a_val
         mov w8,#__NR_munmap
 #if DEBUG  //{
-        ldr w3,[x4,#0]  // 1st instr
-        ldr w4,[x4,#4]  // 2nd instr
+        ldr w3,[x2,#0]  // 1st instr
+        ldr w4,[x2,#4]  // 2nd instr
         TRACE(4)
 #endif  //}
 

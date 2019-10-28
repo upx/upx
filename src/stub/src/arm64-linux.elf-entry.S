@@ -57,6 +57,7 @@ sz_auxv= 2*NBPW
 
 AT_FDCWD= -100  // <fcntl.h>
 O_RDONLY=  0
+FD_stderr= 2
 
 PROT_READ=  1
 PROT_WRITE= 2
@@ -300,7 +301,7 @@ L610:  // each word
         mov w0,#'\n'; strb w0,[x2],#1
         mov x1,sp  // buf
         sub x2,x2,x1  // count
-        mov w0,#2  // FD_STDERR
+        mov w0,#FD_stderr
         do_sys __NR_write
         add sp,sp,#TRACE_BUFLEN
 
@@ -353,6 +354,14 @@ zfind:
         ldr x1,[x0],#NBPW; cbnz x1,zfind
         ret
 
+L75:
+        mov w2,#14  // length
+        adr x1,proc_self_exe
+        mov w0,#FD_stderr
+        do_sys __NR_write
+        mov w0,#127
+        do_sys __NR_exit
+
 main:
         mov xfexp,lr
         mov x0,sp; call zfind  // x0= &envp
@@ -372,6 +381,7 @@ main:
         adr x1,proc_self_exe
         mov w2,O_RDONLY
         do_sys __NR_openat; mov wfd,w0
+        cmp w0,#0; blt L75
 
         call unfold
 LxFOLD:

@@ -56,6 +56,8 @@ MAP_ANONYMOUS= 0x20
 
 SYS_mmap= 9  // 64-bit mode only!
 
+FD_stderr= 2
+
 PAGE_SHIFT= 12
 PAGE_MASK= (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
@@ -207,12 +209,18 @@ msg_SELinux:
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
+
         // IDENTSTR goes here
 
   section ELFMAINZ
+msg_proc_self_exe:
+        push $14; pop %arg3  // length
+        push %arg1; pop %arg2  // "/proc/self/exe"
+        jmp L75
 L72:
         pop %arg2  // message text
-        push $2; pop %arg1  // fd stderr
+L75:
+        push $FD_stderr; pop %arg1
         push $ __NR_write; pop %rax
         syscall
 die:
@@ -225,7 +233,7 @@ unfold:  // IN: rbp= &f_exp; rsp/ &proc_self_exe,%entry
         pop %arg1  // &proc_self_exe
         sub %arg2l,%arg2l  // O_RDONLY
         push $__NR_open; pop %rax
-        syscall
+        syscall; test %eax,%eax; js msg_proc_self_exe
         push %rax  // save fd
 
         lea -4+ FOLD - proc_self_exe(%arg1),%rsi  // &O_BINFO | is_ptinterp

@@ -55,6 +55,7 @@ MAP_ANONYMOUS= 0x20
 MAP_FIXED=     0x10
 MAP_PRIVATE=   0x02
 
+FD_stderr=      2
 O_RDONLY=       0
 
 PAGE_SHIFT= 12
@@ -254,6 +255,14 @@ hex:
         .balign 4
 #endif  /*}*/
 
+L75:
+        mov r2,#14  @ length
+        adr r1,proc_self_exe
+        mov r0,#FD_stderr
+        do_sys7t __NR_write
+        mov r0,#127
+        do_sys7t __NR_exit
+
 main:  // IN: lr= &f_exp
         ldr r0,[lr,#sz_pack2 - f_exp]  @ sz_pack2
         add r6, lr,#sz_pack2 - f_exp  @ &sz_pack2
@@ -266,6 +275,7 @@ main:  // IN: lr= &f_exp
         adr r0,proc_self_exe
         mov r1,#O_RDONLY
         do_sys7t __NR_open
+        cmp r0,#0; blt L75
         str r0,[sp,#F_fd]
 
         ldr r3,[lr,#mflg - f_exp]
