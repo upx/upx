@@ -1518,8 +1518,13 @@ int PackMachBase<T>::canUnpack()
     my_cpusubtype = mhdri.cpusubtype;
 
     int headway = (int)mhdri.sizeofcmds;
+    if (headway < (int)(3 * sizeof(Mach_segment_command)
+                  + sizeof(Mach_main_command))) {
+        infoWarning("Mach_header.sizeofcmds = %d too small", headway);
+        throwCantUnpack("file corrupted");
+    }
     sz_mach_headers = headway + sizeof(mhdri);
-    if (1024 < headway) {
+    if (2048 < headway) {
         infoWarning("Mach_header.sizeofcmds(%d) > 1024", headway);
     }
     rawmseg = (Mach_segment_command *) New(char, mhdri.sizeofcmds);
@@ -1535,8 +1540,24 @@ int PackMachBase<T>::canUnpack()
     Mach_command const *ptr = (Mach_command const *)rawmseg;
     for (unsigned j= 0; j < ncmds;
             ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr), ++j) {
-        Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
+        if ((unsigned)headway < ptr->cmdsize) {
+                infoWarning("bad Mach_command[%u]{@0x%lx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx",
+                    j, sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg), headway,
+                    file_size, (unsigned long)ptr->cmdsize);
+                throwCantUnpack("file corrupted");
+        }
         if (lc_seg == ptr->cmd) {
+            Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
+            if ((unsigned long)file_size < segptr->filesize
+            ||  (unsigned long)file_size < segptr->fileoff
+            ||  (unsigned long)file_size < (segptr->filesize + segptr->fileoff)) {
+                infoWarning("bad Mach_segment_command[%u]{@0x%lx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx"
+                      "  filesize=0x%lx  fileoff=0x%lx",
+                    j, sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg), headway,
+                    file_size, (unsigned long)ptr->cmdsize,
+                    (unsigned long)segptr->filesize, (unsigned long)segptr->fileoff);
+                throwCantUnpack("file corrupted");
+            }
             ++nseg;
             if (!strcmp("__XHDR", segptr->segname)) {
                 // PackHeader precedes __LINKEDIT (pre-Sierra MacOS 10.12)
