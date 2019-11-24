@@ -1574,6 +1574,14 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
     for (; ; ++ndx, ++dynp) {
         unsigned const d_tag = get_te32(&dynp->d_tag);
         if (d_tag < DT_NUM) {
+            if (dt_table[d_tag]
+            &&    get_te32(&dynp->d_val)
+               != get_te32(&dynp0[-1+ dt_table[d_tag]].d_val)) {
+                char msg[50]; snprintf(msg, sizeof(msg),
+                    "duplicate DT_%#x: [%#x] [%#x]",
+                    d_tag, -1+ dt_table[d_tag], -1+ ndx);
+                throwCantPack(msg);
+            }
             dt_table[d_tag] = ndx;
         }
         if (Elf32_Dyn::DT_NULL == d_tag) {
@@ -1607,9 +1615,14 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         }
     }
     // DT_HASH often ends at DT_SYMTAB
-    unsigned const v_hsh = elf_unsigned_dynamic(Elf64_Dyn::DT_HASH);
+    unsigned const v_hsh = elf_unsigned_dynamic(Elf32_Dyn::DT_HASH);
     if (v_hsh && file_image) {
-        hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
+        hashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
+        if (!hashtab) {
+            char msg[40]; snprintf(msg, sizeof(msg),
+               "bad DT_HASH %#x", v_hsh);
+            throwCantPack(msg);
+        }
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
@@ -1632,6 +1645,11 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
     unsigned const v_gsh = elf_unsigned_dynamic(Elf32_Dyn::DT_GNU_HASH);
     if (v_gsh && file_image) {
         gashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
+        if (!gashtab) {
+            char msg[40]; snprintf(msg, sizeof(msg),
+               "bad DT_GNU_HASH %#x", v_gsh);
+            throwCantPack(msg);
+        }
         unsigned const n_bucket = get_te32(&gashtab[0]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
         unsigned const gnu_shift = get_te32(&gashtab[3]);
@@ -1795,7 +1813,7 @@ char const *PackLinuxElf64::get_dynsym_name(unsigned symnum, unsigned relnum) co
 
 bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
 {
-    if (!dynsym || !dynstr) {
+    if (!dynsym || !dynstr || !rela) {
         return false;
     }
     for (unsigned relnum= 0; 0 < sz; (sz -= sizeof(Elf64_Rela)), ++rela, ++relnum) {
@@ -1832,7 +1850,7 @@ char const *PackLinuxElf32::get_dynsym_name(unsigned symnum, unsigned relnum) co
 
 bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
 {
-    if (!dynsym || !dynstr) {
+    if (!dynsym || !dynstr || !rel) {
         return false;
     }
     for (unsigned relnum= 0; 0 < sz; (sz -= sizeof(Elf32_Rel)), ++rel, ++relnum) {
@@ -4901,7 +4919,7 @@ PackLinuxElf32::elf_find_dynamic(unsigned int key) const
     for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
             && Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
         unsigned const t= elf_get_offset_from_address(get_te32(&dynp->d_val));
-        if (t) {
+        if (t && t < file_size) {
             return t + file_image;
         }
         break;
@@ -5011,6 +5029,14 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
             throwCantPack(msg);
         }
         if (d_tag < DT_NUM) {
+            if (dt_table[d_tag]
+            &&    get_te64(&dynp->d_val)
+               != get_te64(&dynp0[-1+ dt_table[d_tag]].d_val)) {
+                char msg[50]; snprintf(msg, sizeof(msg),
+                    "duplicate DT_%#x: [%#x] [%#x]",
+                    (unsigned)d_tag, -1+ dt_table[d_tag], -1+ ndx);
+                throwCantPack(msg);
+            }
             dt_table[d_tag] = ndx;
         }
         if (Elf64_Dyn::DT_NULL == d_tag) {
@@ -5049,6 +5075,11 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
     unsigned const v_hsh = elf_unsigned_dynamic(Elf64_Dyn::DT_HASH);
     if (v_hsh && file_image) {
         hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
+        if (!hashtab) {
+            char msg[40]; snprintf(msg, sizeof(msg),
+               "bad DT_HASH %#x", v_hsh);
+            throwCantPack(msg);
+        }
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
@@ -5071,6 +5102,11 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
     unsigned const v_gsh = elf_unsigned_dynamic(Elf64_Dyn::DT_GNU_HASH);
     if (v_gsh && file_image) {
         gashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
+        if (!gashtab) {
+            char msg[40]; snprintf(msg, sizeof(msg),
+               "bad DT_GNU_HASH %#x", v_gsh);
+            throwCantPack(msg);
+        }
         unsigned const n_bucket = get_te32(&gashtab[0]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
         unsigned const gnu_shift = get_te32(&gashtab[3]);
@@ -5116,8 +5152,8 @@ PackLinuxElf64::elf_find_dynamic(unsigned int key) const
     for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
             && Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
         upx_uint64_t const t= elf_get_offset_from_address(get_te64(&dynp->d_val));
-        if (t) {
-            return &((unsigned char const *)file_image)[(size_t)t];
+        if (t && t < (upx_uint64_t)file_size) {
+            return t + file_image;
         }
         break;
     }
