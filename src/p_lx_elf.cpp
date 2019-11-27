@@ -1574,7 +1574,8 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
     for (; ; ++ndx, ++dynp) {
         unsigned const d_tag = get_te32(&dynp->d_tag);
         if (d_tag < DT_NUM) {
-            if (dt_table[d_tag]
+            if (Elf32_Dyn::DT_NEEDED != d_tag
+            &&  dt_table[d_tag]
             &&    get_te32(&dynp->d_val)
                != get_te32(&dynp0[-1+ dt_table[d_tag]].d_val)) {
                 char msg[50]; snprintf(msg, sizeof(msg),
@@ -5029,7 +5030,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
             throwCantPack(msg);
         }
         if (d_tag < DT_NUM) {
-            if (dt_table[d_tag]
+            if (Elf64_Dyn::DT_NEEDED != d_tag
+            &&  dt_table[d_tag]
             &&    get_te64(&dynp->d_val)
                != get_te64(&dynp0[-1+ dt_table[d_tag]].d_val)) {
                 char msg[50]; snprintf(msg, sizeof(msg),
