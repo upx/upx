@@ -2446,7 +2446,7 @@ PackLinuxElf64::canPack()
             xct_va = ~0ull;
             if (e_shnum) {
                 for (int j= e_shnum; --j>=0; ++shdr) {
-                    unsigned const sh_type = get_te64(&shdr->sh_type);
+                    unsigned const sh_type = get_te32(&shdr->sh_type);
                     if (Elf64_Shdr::SHF_EXECINSTR & get_te64(&shdr->sh_flags)) {
                         xct_va = umin(xct_va, get_te64(&shdr->sh_addr));
                     }
@@ -2481,6 +2481,10 @@ PackLinuxElf64::canPack()
                                     if (Elf64_Ehdr::EM_AARCH64 == e_machine
                                     &&  R_AARCH64_RELATIVE == r_type) {
                                         user_init_va = get_te64(&rp->r_addend);
+                                    }
+                                    else if (Elf64_Ehdr::EM_AARCH64 == e_machine
+                                    &&  R_AARCH64_ABS64 == r_type) {
+                                        user_init_va = get_te64(&file_image[user_init_off]);
                                     }
                                     else {
                                         char msg[50]; snprintf(msg, sizeof(msg),

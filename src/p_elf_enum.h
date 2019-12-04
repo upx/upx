@@ -242,6 +242,8 @@
         R_PPC_JMP_SLOT = 21,
         R_PPC64_JMP_SLOT = R_PPC_JMP_SLOT,
         R_X86_64_JUMP_SLOT = 7
+
+        , R_AARCH64_ABS64 = 257
     };
 #endif  //}
 
