@@ -312,7 +312,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         jni_onload_sym = elf_lookup("JNI_OnLoad");
         if (jni_onload_sym) {
             jni_onload_va = get_te32(&jni_onload_sym->st_value);
-            jni_onload_va = 0;
+            jni_onload_va = 0;  // FIXME not understood; need example
         }
     }
 }
@@ -790,7 +790,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         jni_onload_sym = elf_lookup("JNI_OnLoad");
         if (jni_onload_sym) {
             jni_onload_va = get_te64(&jni_onload_sym->st_value);
-            jni_onload_va = 0;
+            jni_onload_va = 0;  // FIXME not understood; need example
         }
     }
 }
@@ -3262,13 +3262,19 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                         if (xct_off <= r_offset) {
                             set_te32(&rel->r_offset, asl_delta + r_offset);
                         }
-                        if (Elf32_Ehdr::EM_ARM == e_machine) {
-                            if (R_ARM_RELATIVE  == r_type) {
+                        if (Elf32_Ehdr::EM_ARM == e_machine) switch (r_type) {
+                            default: {
+                                char msg[90]; snprintf(msg, sizeof(msg),
+                                    "unexpected relocation %#x [%#x]",
+                                    r_type, -1 + (sh_size / sh_entsize) - k);
+                                throwCantPack(msg);
+                            } break;
+                            case R_ARM_RELATIVE: {
                                 if (xct_off <= w) {
                                     set_te32(&file_image[d], asl_delta + w);
                                 }
-                            }
-                            if (R_ARM_JUMP_SLOT == r_type) {
+                            } break;
+                            case R_ARM_JUMP_SLOT: {
                                 if (plt_off > r_offset) {
                                     plt_off = r_offset;
                                 }
@@ -3276,7 +3282,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                                     set_te32(&file_image[d], asl_delta + w);
                                 }
                                 ++n_jmp_slot;
-                            }
+                            }; break;
                         }
                     }
                     fo->seek(sh_offset, SEEK_SET);
@@ -3293,7 +3299,15 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                         memcpy(&buf_notes[len_notes], &file_image[sh_offset], sh_size);
                         len_notes += sh_size;
                     }
-                    // else: SHF_ALLOC, thus already in PT_LOAD
+                    else { // SHF_ALLOC, thus already in PT_LOAD
+                        // Not sure why we need this conditional.
+                        // Anyway, some Android have multiple SHT_NOTE sections.
+                        if (xct_off <= sh_offset) {
+                            upx_uint32_t pos = xct_off + e_shnum * sizeof(Elf32_Shdr);
+                            set_te32(&shdr->sh_addr,   pos);
+                            set_te32(&shdr->sh_offset, pos);
+                        }
+                    }
                 }
             }
             // shstrndx will move
@@ -3621,13 +3635,19 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                         if (xct_off <= r_offset) {
                             set_te64(&rela->r_offset, asl_delta + r_offset);
                         }
-                        if (Elf64_Ehdr::EM_AARCH64 == e_machine) {
-                            if (R_AARCH64_RELATIVE == r_type) {
+                        if (Elf64_Ehdr::EM_AARCH64 == e_machine) switch (r_type) {
+                            default: {
+                                char msg[90]; snprintf(msg, sizeof(msg),
+                                    "unexpected relocation %#x [%#x]",
+                                    r_type, -1 + (unsigned)(sh_size / sh_entsize) - k);
+                                throwCantPack(msg);
+                            } break;
+                            case R_AARCH64_RELATIVE: {
                                 if (xct_off <= r_addend) {
                                     set_te64(&rela->r_addend, asl_delta + r_addend);
                                 }
-                            }
-                            if (R_AARCH64_JUMP_SLOT == r_type) {
+                            } break;
+                            case R_AARCH64_JUMP_SLOT: {
                                 // .rela.plt contains offset of the "first time" target
                                 if (plt_off > r_offset) {
                                     plt_off = r_offset;
@@ -3638,7 +3658,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                                     set_te64(&file_image[d], asl_delta + w);
                                 }
                                 ++n_jmp_slot;
-                            }
+                            } break;
                         }
                     }
                     fo->seek(sh_offset, SEEK_SET);
@@ -3682,9 +3702,13 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                         len_notes += sh_size;
                     }
                     else { // SHF_ALLOC: in PT_LOAD; but move sh_addr and sh_offset
-                        upx_uint64_t pos = xct_off + e_shnum * sizeof(Elf64_Shdr);
-                        set_te64(&shdr->sh_addr,   pos);
-                        set_te64(&shdr->sh_offset, pos);
+                        // Not sure why we need this conditional.
+                        // Anyway, some Android have multiple SHT_NOTE sections.
+                        if (xct_off <= sh_offset) {
+                            upx_uint64_t pos = xct_off + e_shnum * sizeof(Elf64_Shdr);
+                            set_te64(&shdr->sh_addr,   pos);
+                            set_te64(&shdr->sh_offset, pos);
+                        }
                     }
                 }
             }
