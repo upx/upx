@@ -3269,6 +3269,8 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                                     r_type, -1 + (sh_size / sh_entsize) - k);
                                 throwCantPack(msg);
                             } break;
+                            case R_ARM_ABS32:  // FALL THROUGH
+                            case R_ARM_GLOB_DAT: // FALL THROUGH
                             case R_ARM_RELATIVE: {
                                 if (xct_off <= w) {
                                     set_te32(&file_image[d], asl_delta + w);
@@ -3642,6 +3644,8 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                                     r_type, -1 + (unsigned)(sh_size / sh_entsize) - k);
                                 throwCantPack(msg);
                             } break;
+                            case R_AARCH64_ABS64: // FALL THROUGH
+                            case R_AARCH64_GLOB_DAT: // FALL THROUGH
                             case R_AARCH64_RELATIVE: {
                                 if (xct_off <= r_addend) {
                                     set_te64(&rela->r_addend, asl_delta + r_addend);
