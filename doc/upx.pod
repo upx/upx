@@ -13,7 +13,7 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 =head1 ABSTRACT
 
                     The Ultimate Packer for eXecutables
-   Copyright (c) 1996-2019 Markus Oberhumer, Laszlo Molnar & John Reiser
+   Copyright (c) 1996-2020 Markus Oberhumer, Laszlo Molnar & John Reiser
                            https://upx.github.io
 
 
@@ -934,13 +934,13 @@ Please report all bugs immediately to the authors.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1996-2019 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
 
-Copyright (C) 1996-2019 Laszlo Molnar
+Copyright (C) 1996-2020 Laszlo Molnar
 
-Copyright (C) 2000-2019 John F. Reiser
+Copyright (C) 2000-2020 John F. Reiser
 
-Copyright (C) 2002-2019 Jens Medoch
+Copyright (C) 2002-2020 Jens Medoch
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.
