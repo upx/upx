@@ -230,9 +230,10 @@ typedef size_t upx_rsize_t;
 #endif
 
 // avoid warnings about shadowing global functions
-#undef index  /* <strings.h> BSD legacy; removed by POSIX.1-2008 */
-#define index  upx_index /* prefer strchr() instead of index() */
-#define outp   upx_outp  /* removed by VS2015; instead: _outp */
+#undef index
+#define basename            upx_basename
+#define index               upx_index
+#define outp                upx_outp
 
 #undef PAGE_MASK
 #undef PAGE_SIZE
