@@ -57,11 +57,6 @@ PackUnix::PackUnix(InputFile *f) :
 }
 
 
-#ifndef S_IXUSR  //{ MSVC lacks this
-#define S_IXUSR __S_IEXEC
-#define __S_IEXEC 0100  /* Execute by owner.  */
-#endif  //}
-
 // common part of canPack(), enhanced by subclasses
 bool PackUnix::canPack()
 {
