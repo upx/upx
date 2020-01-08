@@ -37,6 +37,7 @@ else
 fi
 subdir=${subdir%%:*}; subdir=${subdir%%/*}; subdir=${subdir%%--*}
 case $branch in
+    appveyor*) ;;
     devel*) ;;
     gitlab*) ;;
     master*) ;;

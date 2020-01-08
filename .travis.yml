@@ -3,20 +3,25 @@
 
 sudo: false
 os: linux
-dist: trusty
+dist: xenial
 language: cpp
 
 notifications: { email: { on_success: never, on_failure: change } }
 
+branches:
+  except:
+    - /^appveyor.*/
+    - /^gitlab.*/
+
 # Ubuntu 12.04 LTS "Precise"
+#   also see TB_OS_linux_precise_llvm below
 .ubuntu_precise_toolchain_sources: &PS
   - ubuntu-toolchain-r-test
-# llvm-toolchain-precise has been disabled 2018-08-28 - see https://github.com/travis-ci/apt-source-safelist/commit/e9d632eb79c7b733b3bfe722356e892ab8e06059
-# see TB_OS_linux_precise_llvm below
-# - llvm-toolchain-precise-3.5
-# - llvm-toolchain-precise-3.6
-# - llvm-toolchain-precise-3.7
-# - llvm-toolchain-precise-3.8
+  - llvm-toolchain-precise-3.5
+  - llvm-toolchain-precise-3.6
+  - llvm-toolchain-precise-3.7
+  - llvm-toolchain-precise-3.8
+  - llvm-toolchain-precise-3.9
 
 # Ubuntu 14.04 LTS "Trusty"
 .ubuntu_trusty_toolchain_sources: &TS
@@ -28,17 +33,24 @@ notifications: { email: { on_success: never, on_failure: change } }
   - llvm-toolchain-trusty-7
   - llvm-toolchain-trusty-8
 
+# Ubuntu 16.04 LTS "Xenial"
+.ubuntu_xenial_toolchain_sources: &XS
+  - ubuntu-toolchain-r-test
+  - llvm-toolchain-xenial-6.0
+  - llvm-toolchain-xenial-7
+  - llvm-toolchain-xenial-8
+
 env:
   global:
-    # TB_LEVEL >= 1: gcc-7, gcc-8, clang-6, xcode10
-    # TB_LEVEL >= 2: gcc-4.4, gcc-4.8, gcc-6, clang-3.4
-    # TB_LEVEL >= 3: gcc-4.6, gcc-5, clang-3.9, xcode9
+    # TB_LEVEL >= 1: gcc-7, gcc-8, gcc-9, clang-8, xcode11
+    # TB_LEVEL >= 2: gcc-4.4, gcc-4.8, gcc-6, clang-3.4, clang-7
+    # TB_LEVEL >= 3: gcc-4.6, gcc-5, clang-3.9, clang-6, xcode10
     # TB_LEVEL >= 4: include sanitize/scan-build/valgrind builds
     # TB_LEVEL >= 5: cross-compilers running testsuite under qemu/wine
     # TB_LEVEL >= 6: all other compilers & builds
     - TB_LEVEL=5
     - TB_OS_linux=1 TB_OS_osx=1
-    - TB_OS_linux_precise_llvm=0
+    - TB_OS_linux_precise_llvm=1
     - CROSS= C= B= T= X=
     - secure: "YXHLXK+CM5d8yELIUSSs+P0/CoefClO7/AUX1oBj5W75g+YzR5uS2doVsB8UH8S8/GdNxk4P9Jgn4EiEVnjfGgn2eAD9MVpDPIxyJs5vI+5G77asq3QNdSl6QFv3O9I/6yBoVCewgPFPqsMd7Yvs/Ea3LcQkqalVhrC8ybYtmfs6VL2w33gn2J3b3TCn/s21L0ijklM0xvP1GNMDtuUpTSish5wvGOHE/91rwtdUDbJR8u31QY7fTASDiNnL/7ihgEIZ5XxpDYXviX1GC+nemhX1fWpmVmuT8m30Ruodi0yJVGASw9i2SaKv/VX/fJ/w2vlCfspL5LMZKkVLlfpIo3mQGqmMHFxv7mNy+hRu50ptoWNSkWArcqifwveh2liHUpl4jTvWaVll5Tw5VUGJhAUdzCTnqLIbWFnKIgCedL3iRFi4+EbyWNxel8lFESMOTDZFfJG5yEiDJbgbLsUaT2GmrsOphwAG7zDcZzvYTdjg/lF4Wh0MUnQJ+0MhDpii8Ahjp49lAPdw8uRQyyY7d7ksYKXVIkbgl6dRCC5vZSPucJiFjq2BClqIoEmzZPvHveDbovzFkNhJX9tFLrHLcXbPPcegww1FGoQ3wBM6JwJ+TvSD6N4OdCmou05aDuuQeznHi3GxOScjGwxdMIU28fdJDCTDg2rOihm22kHVajo="
     - secure: "JpSv3+QRmHcfN/bmT3mVkqET44NCPhM/qpcUssCVXnd2GW0qWURoyPHzVMn/gbeAkUjR6djtN3OzJ+M181QmlmTmE26pZC9Q6r1buNDWdkIH1FcpMCa67BBAjmq+yDwulDtvCMv0lbz60v57lzHBOLczF3yMxBVTjXxt1RsrzDLHzzVaDR5lEe+sQUNeRL7Vaq8crimPNTr4ZhMe59eweTO/3AWovuSPf250k1flfv7I8audZgrVZdbVKvj5C3Sziy1AGXcu8mDfET9/Ya2XBCQHWODjiKlnhSxqthhP3gQuacaLjpS2FjvQlamd+I9x6BBoLSeNbiXD9vgCydDUKvmUrU+zQs64U1hHk9WZWVC19kG7lTtTdanGDIUlIUtFZgqE4AQpJaIUWkUmHGyHi61JMvduzX21eL5c5j9DoJteX42FPb1n3xK/JSnUkLMpbFdQuy5inhzefhDfeNzaYxt8nPwHnJqrF73SW4PLDKeRyzvg/P+zqcou8nXrHfA1z9/FlnYzf7Qc9meai9Q/JARX3Q1ZKu5uyG+RuBLe2POq0192w6pflTr1ZlLJsKNSc1147PviKfmpla1lg3/6uVzMp5tgwbve/hx9SDXiRueGttKw/ymsY662+8G24NRKo4fxNklWFHaB4owM84edDzXDckPXbPgue8/HQT8BFio="
@@ -48,7 +60,7 @@ matrix:
   include:
     - if: 1 = 1
       os: linux
-      dist: trusty
+      dist: xenial
       compiler: gcc
       env: X=rebuild-stubs
       addons: { apt: { packages: [ "g++-multilib", "lib32z1" ] } }
@@ -221,6 +233,19 @@ matrix:
       env: C=gcc-8-m64 B=valgrind T=valgrind
       addons: { apt: { sources: *TS, packages: [ "g++-8", valgrind ] } }
 
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+      os: linux
+      dist: xenial
+      compiler: gcc
+      env: C=gcc-9-m32
+      addons: { apt: { sources: *XS, packages: [ "g++-9-multilib", "zlib1g-dev:i386" ] } }
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+      os: linux
+      dist: xenial
+      compiler: gcc
+      env: C=gcc-9-m64
+      addons: { apt: { sources: *XS, packages: [ "g++-9" ] } }
+
     - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[2-9]$/
       os: linux
       dist: precise
@@ -324,13 +349,13 @@ matrix:
       env: C=clang-5.0-m64
       addons: { apt: { sources: *TS, packages: [ "clang-5.0" ] } }
 
-    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
       os: linux
       dist: trusty
       compiler: clang
       env: C=clang-6.0-m32
       addons: { apt: { sources: *TS, packages: [ "clang-6.0", "g++-7-multilib", "zlib1g-dev:i386" ] } }
-    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
       os: linux
       dist: trusty
       compiler: clang
@@ -365,6 +390,33 @@ matrix:
       env: C=clang-6.0-m64 B=scan-build
       addons: { apt: { sources: *TS, packages: [ "clang-6.0", "clang-tools-6.0" ] } }
 
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[2-9]$/
+      os: linux
+      dist: xenial
+      compiler: clang
+      env: C=clang-7-m32
+      addons: { apt: { sources: *XS, packages: [ "clang-7", "g++-9-multilib", "zlib1g-dev:i386" ] } }
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[2-9]$/
+      os: linux
+      dist: xenial
+      compiler: clang
+      env: C=clang-7-m64
+      addons: { apt: { sources: *XS, packages: [ "clang-7" ] } }
+
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+      os: linux
+      dist: xenial
+      compiler: clang
+      env: C=clang-8-m32
+      addons: { apt: { sources: *XS, packages: [ "clang-8", "g++-9-multilib", "zlib1g-dev:i386" ] } }
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+      os: linux
+      dist: xenial
+      compiler: clang
+      env: C=clang-8-m64
+      addons: { apt: { sources: *XS, packages: [ "clang-8" ] } }
+
+    # Ubuntu 12.04 cross compilers
     - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[5-9]$/
       os: linux
       dist: precise
@@ -389,6 +441,26 @@ matrix:
       compiler: gcc
       env: CROSS=x86_64-w64-mingw32 C=gcc-4.6 T=wine
       addons: { apt: { packages: [ "binutils-mingw-w64-x86-64", "g++-mingw-w64-x86-64", "wine" ] } }
+
+    # Ubuntu 16.04 cross compilers
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[5-90]$/
+      os: linux
+      dist: xenial
+      compiler: gcc
+      env: CROSS=mips-linux-gnu C=gcc-5 T=qemu
+      addons: { apt: { packages: [ "g++-5-mips-linux-gnu", "qemu-user" ] } }
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[5-90]$/
+      os: linux
+      dist: xenial
+      compiler: gcc
+      env: CROSS=mipsel-linux-gnu C=gcc-5 T=qemu
+      addons: { apt: { packages: [ "g++-5-mipsel-linux-gnu", "qemu-user" ] } }
+    - if: env(TB_OS_linux) = 1 AND env(TB_LEVEL) =~ /^[5-90]$/
+      os: linux
+      dist: xenial
+      compiler: gcc
+      env: CROSS=powerpc-linux-gnu C=gcc-5 T=qemu
+      addons: { apt: { packages: [ "g++-5-powerpc-linux-gnu", "qemu-user" ] } }
 
     - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[6-9]$/
       os: osx
@@ -425,27 +497,34 @@ matrix:
       compiler: clang
       env: C=clang-802-m64
 
-    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
+    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[6-9]$/
       os: osx
       osx_image: xcode9.4
       compiler: clang
       env: C=clang-902-m32
-    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
+    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[6-9]$/
       os: osx
       osx_image: xcode9.4
       compiler: clang
       env: C=clang-902-m64
 
-    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
       os: osx
-      osx_image: xcode10
+      osx_image: xcode10.3
       compiler: clang
       env: C=clang-1000-m32
-    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
       os: osx
-      osx_image: xcode10
+      osx_image: xcode10.3
       compiler: clang
       env: C=clang-1000-m64
+
+    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
+      os: osx
+      osx_image: xcode11.3
+      compiler: clang
+      env: C=clang-1100-m64
+      addons: { homebrew: { packages: [ "coreutils" ] } }
 
 install:
   - uname -a; pwd; id; umask
