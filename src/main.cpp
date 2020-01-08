@@ -872,9 +872,6 @@ static int do_option(int optc, const char *arg)
     case 677:
         opt->o_unix.force_pie = true;
         break;
-    case 678:
-        opt->o_unix.assume_execute_permission = true;
-        break;
 
     case '\0':
         return -1;
@@ -1027,7 +1024,6 @@ static const struct mfx_option longopts[] =
     {"preserve-build-id",   0, 0, 675},
     {"android-shlib",       0, 0, 676},
     {"force-pie",           0, 0, 677},
-    {"assume-execute-permission", 0, 0, 678},
     // watcom/le
     {"le",               0x10, 0, 620},     // produce LE output
     // win32/pe
