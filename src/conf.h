@@ -230,7 +230,9 @@ typedef size_t upx_rsize_t;
 #endif
 
 // avoid warnings about shadowing global functions
+#undef basename
 #undef index
+#undef outp
 #define basename            upx_basename
 #define index               upx_index
 #define outp                upx_outp
