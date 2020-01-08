@@ -42,6 +42,9 @@
 #include "p_lx_elf.h"
 #include "ui.h"
 
+typedef upx_uint32_t u32_t;  // easier to type; more narrow
+typedef upx_uint64_t u64_t;  // easier to type; more narrow
+
 #define PT_LOAD32   Elf32_Phdr::PT_LOAD
 #define PT_LOAD64   Elf64_Phdr::PT_LOAD
 #define PT_NOTE32   Elf32_Phdr::PT_NOTE
@@ -4952,7 +4955,7 @@ PackLinuxElf32::elf_find_dynamic(unsigned int key) const
     for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
             && Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
         unsigned const t= elf_get_offset_from_address(get_te32(&dynp->d_val));
-        if (t && t < file_size) {
+        if (t && t < (unsigned)file_size) {
             return t + file_image;
         }
         break;
