@@ -25,6 +25,8 @@ notifications: { email: { on_success: never, on_failure: change } }
   - llvm-toolchain-trusty-4.0
   - llvm-toolchain-trusty-5.0
   - llvm-toolchain-trusty-6.0
+  - llvm-toolchain-trusty-7
+  - llvm-toolchain-trusty-8
 
 env:
   global:
