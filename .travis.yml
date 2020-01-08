@@ -44,7 +44,7 @@ env:
   global:
     # TB_LEVEL >= 1: gcc-7, gcc-8, gcc-9, clang-8, xcode11
     # TB_LEVEL >= 2: gcc-4.4, gcc-4.8, gcc-6, clang-3.4, clang-7
-    # TB_LEVEL >= 3: gcc-4.6, gcc-5, clang-3.9, clang-6, xcode10
+    # TB_LEVEL >= 3: gcc-4.6, gcc-5, clang-3.9, clang-6, xcode9, xcode10
     # TB_LEVEL >= 4: include sanitize/scan-build/valgrind builds
     # TB_LEVEL >= 5: cross-compilers running testsuite under qemu/wine
     # TB_LEVEL >= 6: all other compilers & builds
@@ -497,22 +497,17 @@ matrix:
       compiler: clang
       env: C=clang-802-m64
 
-    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[6-9]$/
+    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
       os: osx
       osx_image: xcode9.4
       compiler: clang
       env: C=clang-902-m32
-    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[6-9]$/
+    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
       os: osx
       osx_image: xcode9.4
       compiler: clang
       env: C=clang-902-m64
 
-    - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
-      os: osx
-      osx_image: xcode10.3
-      compiler: clang
-      env: C=clang-1000-m32
     - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[3-9]$/
       os: osx
       osx_image: xcode10.3
