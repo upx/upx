@@ -2039,11 +2039,12 @@ bool PackLinuxElf32::canPack()
             if (sec_strndx) {
                 unsigned const sh_name = get_te32(&sec_strndx->sh_name);
                 if (Elf32_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-                || (u32_t)file_size <= sh_name  // FIXME: weak
+                || (u32_t)file_size <= (sizeof(".shstrtab")
+                    + sh_name + (shstrtab - (const char *)&file_image[0]))
                 || (sh_name
                   && 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]))
                 ) {
-                    throwCantPack("bad e_shstrndx");
+                    throwCantPack("bad e_shstrtab");
                 }
             }
         }
@@ -2388,11 +2389,12 @@ PackLinuxElf64::canPack()
             if (sec_strndx) {
                 unsigned const sh_name = get_te32(&sec_strndx->sh_name);
                 if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-                || (u32_t)file_size <= sh_name  // FIXME: weak
+                || (u32_t)file_size <= (sizeof(".shstrtab")
+                    + sh_name + (shstrtab - (const char *)&file_image[0]))
                 || (sh_name
                   && 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]))
                 ) {
-                    throwCantPack("bad e_shstrndx");
+                    throwCantPack("bad e_shstrtab");
                 }
             }
         }
