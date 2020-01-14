@@ -1614,8 +1614,16 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         unsigned const  z_sym = dt_table[Elf32_Dyn::DT_SYMENT];
         unsigned const sz_sym = !z_sym ? sizeof(Elf32_Sym)
             : get_te32(&dynp0[-1+ z_sym].d_val);
+        if (sz_sym < sizeof(Elf32_Sym)) {
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad DT_SYMENT %x", sz_sym);
+            throwCantPack(msg);
+        }
         if (v_sym < v_str) {
             symnum_end = (v_str - v_sym) / sz_sym;
+        }
+        if (symnum_end < 1) {
+            throwCantPack("bad DT_SYMTAB");
         }
     }
     // DT_HASH often ends at DT_SYMTAB
@@ -5104,8 +5112,16 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         unsigned const  z_sym = dt_table[Elf64_Dyn::DT_SYMENT];
         unsigned const sz_sym = !z_sym ? sizeof(Elf64_Sym)
             : get_te64(&dynp0[-1+ z_sym].d_val);
+        if (sz_sym < sizeof(Elf64_Sym)) {
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad DT_SYMENT %x", sz_sym);
+            throwCantPack(msg);
+        }
         if (v_sym < v_str) {
             symnum_end = (v_str - v_sym) / sz_sym;
+        }
+        if (symnum_end < 1) {
+            throwCantPack("bad DT_SYMTAB");
         }
     }
     // DT_HASH often ends at DT_SYMTAB
