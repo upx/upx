@@ -1639,8 +1639,8 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
-        unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
-        if (!nbucket
+        unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
+        if (!nbucket || !v_sym
         || (nbucket>>31) || (file_size/sizeof(unsigned)) <= (2*nbucket)  // FIXME: weak
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
                 + sizeof(*buckets)*nbucket  // buckets
@@ -1670,8 +1670,8 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
       //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum
 
-        unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
-        if (!n_bucket || !n_bitmask
+        unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
+        if (!n_bucket || !n_bitmask || !v_sym
         || (-1+ n_bitmask) & n_bitmask  // not a power of 2
         || 8*sizeof(unsigned) <= gnu_shift  // shifted result always == 0
         || (n_bucket>>30)  // fie on fuzzers
@@ -5139,8 +5139,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
-        unsigned const v_sym = get_te32(&dynp0[-1+ x_sym].d_val);
-        if (!nbucket
+        unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
+        if (!nbucket || !v_sym
         || (nbucket>>31) || (file_size/sizeof(unsigned)) <= (2*nbucket)  // FIXME: weak
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
                 + sizeof(*buckets)*nbucket  // buckets
@@ -5170,8 +5170,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
       //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum
 
-        upx_uint64_t const v_sym = get_te64(&dynp0[-1+ x_sym].d_val);
-        if (!n_bucket || !n_bitmask
+        upx_uint64_t const v_sym = !x_sym ? 0 : get_te64(&dynp0[-1+ x_sym].d_val);
+        if (!n_bucket || !n_bitmask || !v_sym
         || (-1+ n_bitmask) & n_bitmask  // not a power of 2
         || 8*sizeof(upx_uint64_t) <= gnu_shift  // shifted result always == 0
         || (n_bucket>>30)  // fie on fuzzers
