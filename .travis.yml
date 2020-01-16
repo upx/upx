@@ -512,7 +512,7 @@ matrix:
       os: osx
       osx_image: xcode10.3
       compiler: clang
-      env: C=clang-1000-m64
+      env: C=clang-1001-m64
 
     - if: env(TB_OS_osx) = 1 AND env(TB_LEVEL) =~ /^[1-9]$/
       os: osx

@@ -105,6 +105,7 @@ test_script:
   # now run the UPX testsuite using bash
   - cd c:\projects\upx
   - bash ./.github/travis_testsuite_1.sh
-  - bash ./.github/travis_deploy.sh
+  # info: it seems that ssh is not properly installed/started on the 2019 worker image
+  - if NOT "%VS_VERSION%"=="2019" ( bash ./.github/travis_deploy.sh )
 
 # vim:set ts=2 sw=2 et:
