@@ -27,7 +27,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20170301L
+#define ACC_VERSION     20200116L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -52,6 +52,8 @@
 #    error "__cplusplus"
 #  elif (__cplusplus < 199711L)
 #    define ACC_LANG_CXX        1
+#  elif (__cplusplus >= 201402L)
+#    define ACC_LANG_CXX        __cplusplus
 #  elif defined(_MSC_VER) && defined(_MSVC_LANG) && (_MSVC_LANG+0 >= 201402L) && 1
 #    define ACC_LANG_CXX        _MSVC_LANG
 #  else
@@ -65,6 +67,33 @@
 #    define ACC_LANG_C          1
 #  endif
 #endif
+#endif
+#if defined(ACC_CFG_ASSERT_LANG_ASSEMBLER) && (ACC_CFG_ASSERT_LANG_ASSEMBLER+0)
+#  if !(ACC_LANG_ASSEMBLER)
+#    error "ACC_CFG_ASSERT_LANG_ASSEMBLER"
+#  endif
+#  if (ACC_CFG_ASSERT_LANG_ASSEMBLER > 1) && (ACC_CFG_ASSERT_LANG_ASSEMBLER < ACC_LANG_ASSEMBLER)
+#    error "ACC_CFG_ASSERT_LANG_ASSEMBLER standard min version"
+#  endif
+#endif
+#if defined(ACC_CFG_ASSERT_LANG_C) && (ACC_CFG_ASSERT_LANG_C+0)
+#  if !(ACC_LANG_C)
+#    error "ACC_CFG_ASSERT_LANG_C"
+#  endif
+#  if (ACC_CFG_ASSERT_LANG_C > 1) && (ACC_CFG_ASSERT_LANG_C < ACC_LANG_C)
+#    error "ACC_CFG_ASSERT_LANG_C standard min version"
+#  endif
+#endif
+#if defined(ACC_CFG_ASSERT_LANG_CXX) && (ACC_CFG_ASSERT_LANG_CXX+0)
+#  if !(ACC_LANG_CXX)
+#    error "ACC_CFG_ASSERT_LANG_CXX"
+#  endif
+#  if !defined(__cplusplus)
+#    error "ACC_CFG_ASSERT_LANG_CXX  __cplusplus"
+#  endif
+#  if (ACC_CFG_ASSERT_LANG_CXX > 1) && (ACC_CFG_ASSERT_LANG_CXX < ACC_LANG_CXX)
+#    error "ACC_CFG_ASSERT_LANG_CXX standard min version"
+#  endif
 #endif
 #if !defined(ACC_CFG_NO_DISABLE_WUNDEF)
 #if defined(__ARMCC_VERSION)
@@ -523,6 +552,9 @@
 #  if defined(_AIX) || defined(__AIX__) || defined(__aix__)
 #    define ACC_OS_POSIX_AIX        1
 #    define ACC_INFO_OS_POSIX       "aix"
+#  elif defined(__DragonFly__)
+#    define ACC_OS_POSIX_DRAGONFLY  1
+#    define ACC_INFO_OS_POSIX       "dragonfly"
 #  elif defined(__FreeBSD__)
 #    define ACC_OS_POSIX_FREEBSD    1
 #    define ACC_INFO_OS_POSIX       "freebsd"
@@ -965,6 +997,9 @@
 #elif defined(__IAR_SYSTEMS_ICC__) && defined(__ICC8051__)
 #  define ACC_ARCH_MCS51            1
 #  define ACC_INFO_ARCH             "mcs51"
+#elif defined(__microblaze__) || defined(__MICROBLAZE__)
+#  define ACC_ARCH_MICROBLAZE       1
+#  define ACC_INFO_ARCH             "microblaze"
 #elif defined(__mips__) || defined(__mips) || defined(_MIPS_ARCH) || defined(_M_MRX000)
 #  define ACC_ARCH_MIPS             1
 #  define ACC_INFO_ARCH             "mips"
@@ -1563,7 +1598,7 @@ extern "C" {
 #endif
 #if !defined(ACC_UNUSED_LABEL)
 #  if (ACC_CC_CLANG >= 0x020800ul)
-#    define ACC_UNUSED_LABEL(l)     (__acc_gnuc_extension__ ((void) ((const void *) &&l)))
+#    define ACC_UNUSED_LABEL(l)     (__acc_gnuc_extension__ ((void) ACC_STATIC_CAST(const void *, &&l)))
 #  elif (ACC_CC_ARMCC || ACC_CC_CLANG || ACC_CC_INTELC || ACC_CC_WATCOMC)
 #    define ACC_UNUSED_LABEL(l)     if __acc_cte(0) goto l
 #  else
@@ -2040,7 +2075,11 @@ extern "C" {
 #endif
 #endif
 #if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
-#  if (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
+#  if (ACC_LANG_CXX >= 201103L)
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  static_assert(e, #e);
+#  elif (ACC_LANG_C >= 201112L)
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  _Static_assert(e, #e);
+#  elif (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
 #    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int __ACC_CTA_NAME(acc_cta__)[1-!(e)]; ACC_EXTERN_C_END
 #  elif (ACC_CC_DMC || ACC_CC_SYMANTECC)
 #    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int __ACC_CTA_NAME(acc_cta__)[1u-2*!(e)]; ACC_EXTERN_C_END
@@ -2055,7 +2094,11 @@ extern "C" {
 #  endif
 #endif
 #if !defined(ACC_COMPILE_TIME_ASSERT)
-#  if (ACC_CC_AZTECC)
+#  if (ACC_LANG_CXX >= 201103L)
+#    define ACC_COMPILE_TIME_ASSERT(e)  {static_assert(e, #e);}
+#  elif (ACC_LANG_C >= 201112L)
+#    define ACC_COMPILE_TIME_ASSERT(e)  {_Static_assert(e, #e);}
+#  elif (ACC_CC_AZTECC)
 #    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __ACC_CTA_NAME(acc_cta_t__)[1-!(e)];}
 #  elif (ACC_CC_CLANG && (ACC_CC_CLANG >= 0x030000ul))
 #    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __ACC_CTA_NAME(acc_cta_t__)[1-2*!(e)] __attribute__((__unused__));}
@@ -2378,7 +2421,9 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_LONG == sizeof(long))
 #  define ACC_WORDSIZE              4
 #elif (ACC_ARCH_Z80)
 #  define ACC_WORDSIZE              1
-#elif (ACC_SIZEOF_LONG == 8) && ((defined(__mips__) && defined(__R5900__)) || defined(__MIPS_PSX2__))
+#elif (ACC_ARCH_MIPS) && (ACC_SIZEOF_LONG == 8) && (defined(__R5900) || defined(__MIPS_PSX2__))
+#  define ACC_WORDSIZE              8
+#elif (ACC_ARCH_MIPS) && (ACC_SIZEOF_LONG == 4) && defined(__mips64) && defined(_MIPS_SIM) && defined(_ABIN32) && (_MIPS_SIM+0 == _ABIN32+0)
 #  define ACC_WORDSIZE              8
 #elif (ACC_OS_OS400 || defined(__OS400__))
 #  define ACC_WORDSIZE              8
@@ -2780,6 +2825,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  endif
 #elif (ACC_ARCH_RISCV)
 #  define ACC_OPT_AVOID_UINT_INDEX          1
+# if 0
 #  ifndef ACC_OPT_UNALIGNED16
 #  define ACC_OPT_UNALIGNED16               1
 #  endif
@@ -2791,6 +2837,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #    define ACC_OPT_UNALIGNED64             1
 #    endif
 #  endif
+# endif
 #elif (ACC_ARCH_S390)
 #  ifndef ACC_OPT_UNALIGNED16
 #  define ACC_OPT_UNALIGNED16               1
@@ -3377,7 +3424,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #if (ACC_OS_POSIX)
 #  if (ACC_OS_POSIX_AIX)
 #    define HAVE_SYS_RESOURCE_H 1
-#  elif (ACC_OS_POSIX_DARWIN || ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_NETBSD || ACC_OS_POSIX_OPENBSD)
+#  elif (ACC_OS_POSIX_DARWIN || ACC_OS_POSIX_DRAGONFLY || ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_NETBSD || ACC_OS_POSIX_OPENBSD)
 #    define HAVE_STRINGS_H 1
 #    undef HAVE_MALLOC_H
 #  elif (ACC_OS_POSIX_HPUX || ACC_OS_POSIX_INTERIX)
@@ -6679,35 +6726,31 @@ ACCLIB_PUBLIC(int, acc_dos_free) (void __far* p)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
 ACCLIB_PUBLIC(void, acc_getopt_init) (acc_getopt_p g,
-                                      int start_argc, int argc, char** argv)
+                                      int start_argc, int argc, char **argv)
 {
     memset(g, 0, sizeof(*g));
     g->optind = start_argc;
     g->argc = argc; g->argv = argv;
     g->optopt = -1;
 }
-static int __ACCLIB_FUNCNAME(acc_getopt_rotate) (char** p, int first, int middle, int last)
+static int __ACCLIB_FUNCNAME(acc_getopt_rotate) (char **p, int first, int middle, int last)
 {
     int i = middle, n = middle - first;
     if (first >= middle || middle >= last) return 0;
-    for (;;)
-    {
-        char* t = p[first]; p[first] = p[i]; p[i] = t;
-        if (++first == middle)
-        {
-            if (++i == last) break;
+    for (;;) {
+        char *t = p[first]; p[first++] = p[i]; p[i++] = t;
+        if (first == middle) {
+            if (i == last) break;
             middle = i;
-        }
-        else if (++i == last)
+        } else if (i == last)
             i = middle;
     }
     return n;
 }
-static int __ACCLIB_FUNCNAME(acc_getopt_perror) (acc_getopt_p g, int ret, const char* f, ...)
+static int __ACCLIB_FUNCNAME(acc_getopt_perror) (acc_getopt_p g, int ret, const char *f, ...)
 {
-    if (g->opterr)
-    {
-#if (HAVE_STDARG_H)
+    if (g->opterr) {
+#if defined(HAVE_STDARG_H) && (HAVE_STDARG_H)
         struct { va_list ap; } s;
         va_start(s.ap, f);
         g->opterr(g, f, &s);
@@ -6720,16 +6763,15 @@ static int __ACCLIB_FUNCNAME(acc_getopt_perror) (acc_getopt_p g, int ret, const 
     return ret;
 }
 ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
-                                const char* shortopts,
+                                const char *shortopts,
                                 const acc_getopt_longopt_p longopts,
-                                int* longind)
+                                int *longind)
 {
 #define pe  __ACCLIB_FUNCNAME(acc_getopt_perror)
     int ordering = ACC_GETOPT_PERMUTE;
     int missing_arg_ret = g->bad_option;
-    char* a;
-    if (shortopts)
-    {
+    char *a;
+    if (shortopts) {
         if (*shortopts == '-' || *shortopts == '+')
             ordering = *shortopts++ == '-' ? ACC_GETOPT_RETURN_IN_ORDER : ACC_GETOPT_REQUIRE_ORDER;
         if (*shortopts == ':')
@@ -6746,20 +6788,17 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
         goto acc_label_next_shortopt;
     g->optind -= __ACCLIB_FUNCNAME(acc_getopt_rotate)(g->argv, g->pending_rotate_first, g->pending_rotate_middle, g->optind);
     g->pending_rotate_first = g->pending_rotate_middle = g->optind;
-    if (ordering == ACC_GETOPT_PERMUTE)
-    {
+    if (ordering == ACC_GETOPT_PERMUTE) {
         while (g->optind < g->argc && !(g->argv[g->optind][0] == '-' && g->argv[g->optind][1]))
             ++g->optind;
         g->pending_rotate_middle = g->optind;
     }
-    if (g->optind >= g->argc)
-    {
+    if (g->optind >= g->argc) {
         g->optind = g->pending_rotate_first;
         goto acc_label_eof;
     }
     a = g->argv[g->optind];
-    if (a[0] == '-' && a[1] == '-')
-    {
+    if (a[0] == '-' && a[1] == '-') {
         size_t l = 0;
         const acc_getopt_longopt_p o;
         const acc_getopt_longopt_p o1 = NULL;
@@ -6770,12 +6809,13 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
             goto acc_label_eof;
         for (a += 2; a[l] && a[l] != '=' && a[l] != '#'; )
             ++l;
-        for (o = longopts; l && o && o->name; ++o)
-        {
+        for (o = longopts; l && o && o->name; ++o) {
             if (strncmp(a, o->name, l) != 0)
                 continue;
             if (!o->name[l])
                 goto acc_label_found_o;
+            if ((o->has_arg & (ACC_GETOPT_EXACT_ARG | 0x80)) == (ACC_GETOPT_EXACT_ARG | 0x80))
+                continue;
             need_exact |= o->has_arg & ACC_GETOPT_EXACT_ARG;
             if (o1) o2 = o;
             else    o1 = o;
@@ -6787,8 +6827,7 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
         o = o1;
     acc_label_found_o:
         a += l;
-        switch (o->has_arg & 0x2f)
-        {
+        switch (o->has_arg & 0x2f) {
         case ACC_GETOPT_OPTIONAL_ARG:
             if (a[0])
                 g->optarg = a + 1;
@@ -6798,7 +6837,7 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
                 g->optarg = a + 1;
             else if (g->optind < g->argc)
                 g->optarg = g->argv[g->optind++];
-            if (!g->optarg)
+            if (!g->optarg || (!g->optarg[0] && (o->has_arg & 0x40)))
                 return pe(g, missing_arg_ret, "option '--%s' requires an argument", o->name);
             break;
         case ACC_GETOPT_REQUIRED_ARG | 0x20:
@@ -6814,43 +6853,35 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
         }
         if (longind)
             *longind = (int) (o - longopts);
-        if (o->flag)
-        {
+        if (o->flag) {
             *o->flag = o->val;
             return 0;
         }
         return o->val;
     }
-    if (a[0] == '-' && a[1])
-    {
+    if (a[0] == '-' && a[1]) {
         unsigned char c;
-        const char* s;
+        const char *s;
     acc_label_next_shortopt:
         a = g->argv[g->optind] + ++g->shortpos;
         c = (unsigned char) *a++; s = NULL;
         if (c != ':' && shortopts)
             s = strchr(shortopts, c);
-        if (!s || s[1] != ':')
-        {
+        if (!s || s[1] != ':') {
             if (!a[0])
                 { ++g->optind; g->shortpos = 0; }
-            if (!s)
-            {
+            if (!s) {
                 g->optopt = c;
                 return pe(g, g->bad_option, "invalid option '-%c'", c);
             }
-        }
-        else
-        {
+        } else {
             ++g->optind; g->shortpos = 0;
             if (a[0])
                 g->optarg = a;
-            else if (s[2] != ':')
-            {
+            else if (s[2] != ':') {
                 if (g->optind < g->argc)
                     g->optarg = g->argv[g->optind++];
-                else
-                {
+                else {
                     g->optopt = c;
                     return pe(g, missing_arg_ret, "option '-%c' requires an argument", c);
                 }
@@ -6858,8 +6889,7 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
         }
         return c;
     }
-    if (ordering == ACC_GETOPT_RETURN_IN_ORDER)
-    {
+    if (ordering == ACC_GETOPT_RETURN_IN_ORDER) {
         ++g->optind;
         g->optarg = a;
         return 1;
@@ -7352,7 +7382,7 @@ static int acc_pclock_read_clock_gettime_t_libc(acc_pclock_handle_p h, acc_pcloc
     if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0)
         return -1;
     c->tv_sec = ts.tv_sec;
-    c->tv_nsec = (acc_uint32l_t) ts.tv_nsec;
+    c->tv_nsec = ACC_STATIC_CAST(acc_uint32l_t, ts.tv_nsec);
     ACC_UNUSED(h); return 0;
 }
 #endif
