@@ -229,19 +229,27 @@ make_hatch_x86_64(
     unsigned const frag_mask
 )
 {
+    unsigned xprot = 0;
     unsigned *hatch = 0;
     DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        if (
         // Try page fragmentation just beyond .text .
-        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+             ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
                 &&  (1*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
         // Try Elf64_Ehdr.e_ident[12..15] .  warning: 'const' cast away
         ||   ( (hatch = (void *)(&((Elf64_Ehdr *)(phdr->p_vaddr + reloc))->e_ident[12])),
                 (phdr->p_offset==0) )
+        // Allocate and use a new page.
+        ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_WRITE|PROT_READ,
+                MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         )
         {
             hatch[0] = 0xc35a050f;  // syscall; pop %rdx; ret
+            if (xprot) {
+                mprotect(hatch, 1*sizeof(unsigned), PROT_EXEC|PROT_READ);
+            }
         }
         else {
             hatch = 0;
@@ -263,22 +271,30 @@ make_hatch_ppc64(
     unsigned const frag_mask
 )
 {
+    unsigned xprot = 0;
     unsigned *hatch = 0;
     DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        if (
         // Try page fragmentation just beyond .text .
-        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+            ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
                 &&  (3*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
         // Try Elf64_Phdr[1].p_paddr (2 instr) and .p_filesz (1 instr)
         ||   ( (hatch = (void *)(&((Elf64_Phdr *)(1+  // Ehdr and Phdr are contiguous
                 ((Elf64_Ehdr *)(phdr->p_vaddr + reloc))))[1].p_paddr)),
                 (phdr->p_offset==0) )
+        // Allocate and use a new page.
+        ||   (  xprot = 1, hatch = mmap(0, 1<<12, PROT_WRITE|PROT_READ,
+                MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         )
         {
             hatch[0]= 0x44000002;  // sc
             hatch[1]= ORRX(12,31,31);  // movr r12,r31 ==> or r12,r31,r31
             hatch[2]= 0x4e800020;  // blr
+            if (xprot) {
+                mprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
+            }
         }
         else {
             hatch = 0;
@@ -294,6 +310,7 @@ make_hatch_arm64(
     unsigned const frag_mask
 )
 {
+    unsigned xprot = 0;
     unsigned *hatch = 0;
     //DPRINTF((STR_make_hatch(),phdr,reloc));
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
@@ -305,17 +322,24 @@ make_hatch_arm64(
         // which uses the comma to save bytes when test_locj involves locj
         // and the action is the same when either test succeeds.
 
+        if (
         // Try page fragmentation just beyond .text .
-        if ( ( (hatch = (void *)(~3ul & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
+             ( (hatch = (void *)(~3ul & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
                 &&  (2*4)<=(frag_mask & -(int)(uint64_t)hatch) ) ) // space left on page
         // Try Elf64_Ehdr.e_ident[8..15] .  warning: 'const' cast away
         ||   ( (hatch = (void *)(&((Elf64_Ehdr *)(phdr->p_vaddr + reloc))->e_ident[8])),
-                (phdr->p_offset==0)
+                (phdr->p_offset==0) )
+        // Allocate and use a new page.
+        ||   (  xprot = 1, hatch = mmap(0, 1<<12, PROT_WRITE|PROT_READ,
+                MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         )
-        ) {
-            hatch[0]= 0xd4000001;  // svc #0
-            hatch[1]= 0xd65f03c0;  // ret (jmp *lr)
+        {
+            hatch[0] = 0xd4000001;  // svc #0
+            hatch[1] = 0xd65f03c0;  // ret (jmp *lr)
+            if (xprot) {
+                mprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+            }
         }
         else {
             hatch = 0;

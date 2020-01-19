@@ -9,24 +9,24 @@ Linker script and memory map
 TARGET(elf32-i386)
                 0x0000000000c01080                . = ((0xc01000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000c01080      0x6ac
+.text           0x0000000000c01080      0x714
  *(.text)
  .text          0x0000000000c01080      0x14c tmp/i386-linux.elf-fold.o
                 0x0000000000c011a0                mmap
- .text          0x0000000000c011cc      0x560 tmp/i386-linux.elf-main.o
+ .text          0x0000000000c011cc      0x5c8 tmp/i386-linux.elf-main.o
                 0x0000000000c012f4                get_page_mask
-                0x0000000000c01622                upx_main
+                0x0000000000c0168a                upx_main
  *(.data)
- .data          0x0000000000c0172c        0x0 tmp/i386-linux.elf-fold.o
- .data          0x0000000000c0172c        0x0 tmp/i386-linux.elf-main.o
+ .data          0x0000000000c01794        0x0 tmp/i386-linux.elf-fold.o
+ .data          0x0000000000c01794        0x0 tmp/i386-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000c0172c        0x0
- .bss           0x0000000000c0172c        0x0 tmp/i386-linux.elf-fold.o
- .bss           0x0000000000c0172c        0x0 tmp/i386-linux.elf-main.o
+.bss            0x0000000000c01794        0x0
+ .bss           0x0000000000c01794        0x0 tmp/i386-linux.elf-fold.o
+ .bss           0x0000000000c01794        0x0 tmp/i386-linux.elf-main.o
 
-.rel.dyn        0x0000000000c0172c        0x0
+.rel.dyn        0x0000000000c01794        0x0
  .rel.text      0x0000000000000000        0x0 tmp/i386-linux.elf-fold.o
 LOAD tmp/i386-linux.elf-fold.o
 LOAD tmp/i386-linux.elf-main.o

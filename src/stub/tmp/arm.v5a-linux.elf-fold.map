@@ -9,7 +9,7 @@ Linker script and memory map
 TARGET(elf32-littlearm)
                 0x0000000000008080                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008080      0xa78
+.text           0x0000000000008080      0xae0
  *(.text)
  .text          0x0000000000008080      0x398 tmp/arm.v5a-linux.elf-fold.o
                 0x0000000000008334                munmap
@@ -29,18 +29,18 @@ TARGET(elf32-littlearm)
                 0x00000000000083bc                div10
                 0x0000000000008348                mprotect
                 0x00000000000082d0                close
- .text          0x0000000000008418      0x6e0 tmp/armel-linux.elf-main.o
+ .text          0x0000000000008418      0x748 tmp/armel-linux.elf-main.o
                 0x0000000000008438                get_page_mask
-                0x00000000000089c4                upx_main
+                0x0000000000008a2c                upx_main
  *(.data)
- .data          0x0000000000008af8        0x0 tmp/arm.v5a-linux.elf-fold.o
- .data          0x0000000000008af8        0x0 tmp/armel-linux.elf-main.o
+ .data          0x0000000000008b60        0x0 tmp/arm.v5a-linux.elf-fold.o
+ .data          0x0000000000008b60        0x0 tmp/armel-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000008af8        0x0
- .bss           0x0000000000008af8        0x0 tmp/arm.v5a-linux.elf-fold.o
- .bss           0x0000000000008af8        0x0 tmp/armel-linux.elf-main.o
+.bss            0x0000000000008b60        0x0
+ .bss           0x0000000000008b60        0x0 tmp/arm.v5a-linux.elf-fold.o
+ .bss           0x0000000000008b60        0x0 tmp/armel-linux.elf-main.o
 LOAD tmp/arm.v5a-linux.elf-fold.o
 LOAD tmp/armel-linux.elf-main.o
 OUTPUT(tmp/arm.v5a-linux.elf-fold.bin elf32-littlearm)
