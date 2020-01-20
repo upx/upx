@@ -2956,7 +2956,7 @@ PackLinuxElf64::generateElfHdr(
     ) { // propagate sloppiness so that decompression does not complain
         h3->ehdr.e_ident[Elf64_Ehdr::EI_OSABI] = ehdri.e_ident[Elf64_Ehdr::EI_OSABI];
     }
-    if (Elf64_Ehdr::EM_PPC64 == ehdri.e_machine) {
+    if (Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine)) {
         h3->ehdr.e_flags = ehdri.e_flags;  // "0x1, abiv1" vs "0x2, abiv2"
     }
 
