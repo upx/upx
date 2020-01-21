@@ -2431,7 +2431,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
     ODSIZE(PEDIR_TLS) = sotls ? (sizeof(LEXX) == 4 ? 0x18 : 0x28) : 0;
-    ic += sotls;
+    ic = ALIGN_UP(ic + sotls, 4u);
 
     processLoadConf(&rel, &loadconfiv, ic);
     ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
