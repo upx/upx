@@ -1328,7 +1328,6 @@ __acc_static_noinline void upx_sanity_check(void)
 
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1)
     assert(strlen(UPX_VERSION_STRING4) == 4);
-    assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_YEAR) == 4 + 1)
     assert(strlen(UPX_VERSION_YEAR) == 4);
     assert(memcmp(UPX_VERSION_DATE_ISO, UPX_VERSION_YEAR, 4) == 0);

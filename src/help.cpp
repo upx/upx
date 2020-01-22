@@ -53,7 +53,6 @@ void show_head(void)
         return;
     head_done = 1;
 
-#define V(x)    (strcmp(UPX_VERSION_STRING, UPX_VERSION_STRING4) ? UPX_VERSION_STRING : UPX_VERSION_STRING x)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
                 "                       Ultimate Packer for eXecutables\n"
@@ -67,10 +66,6 @@ void show_head(void)
 #if defined(UPX_VERSION_GITREV)
                 gitrev,
                 (sizeof(gitrev)-1 > 6 && gitrev[sizeof(gitrev)-2] == '+') ? '+' : ' ',
-#elif (ACC_OS_DOS16 || ACC_OS_DOS32)
-                V("d"),
-#elif (ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-                V("w"),
 #else
                 UPX_VERSION_STRING,
 #endif
