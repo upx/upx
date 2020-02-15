@@ -439,6 +439,12 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 if ((xct_off - ioff) < len) { // Change length of compressed PT_LOAD.
                     set_te32(&phdr->p_filesz, sz_pack2 + lsize - ioff);
                     set_te32(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
+                    if (user_init_off < xct_off) { // MIPS puts PT_DYNAMIC here
+                        // Allow for DT_INIT in a new [stolen] slot
+                        unsigned off2 = user_init_off - sizeof(word);
+                        fo->seek(off2, SEEK_SET);
+                        fo->rewrite(&file_image[off2], 2*sizeof(word));
+                    }
                 }
                 else if (xct_off < ioff) { // Slide subsequent PT_LOAD.
                     if ((1u<<12) < align) {
@@ -564,6 +570,12 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 if ((xct_off - ioff) < len) { // Change length of compressed PT_LOAD.
                     set_te64(&phdr->p_filesz, sz_pack2 + lsize - ioff);
                     set_te64(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
+                    if (user_init_off < xct_off) { // MIPS puts PT_DYNAMIC here
+                        // Allow for DT_INIT in a new [stolen] slot
+                        unsigned off2 = user_init_off - sizeof(word);
+                        fo->seek(off2, SEEK_SET);
+                        fo->rewrite(&file_image[off2], 2*sizeof(word));
+                    }
                 }
                 else if (xct_off < ioff) {  // Slide subsequent PT_LOAD.
                     // AMD64 chip supports page sizes of 4KiB, 2MiB, and 1GiB;
