@@ -287,17 +287,14 @@ def main(argv):
     # check file size
     st = os.stat(ifile)
     if 1 and st.st_size <= 0:
-        print >> sys.stderr, "%s: ERROR: empty file" % (ifile)
-        sys.exit(1)
+        sys.exit("%s: ERROR: empty file" % (ifile))
     if 1 and st.st_size > 128*1024:
-        print >> sys.stderr, "%s: ERROR: file is too big (%d bytes)" % (ifile, st.st_size)
-        sys.exit(1)
+        sys.exit("%s: ERROR: file is too big (%d bytes)" % (ifile, st.st_size))
 
     # read ifile
     ifile = os.path.normpath(ifile)
-    ifp = open(ifile, "rb")
-    idata = ifp.read()
-    ifp.close()
+    with open(ifile, "rb") as ifp:
+        idata = ifp.read()
     assert len(idata) == st.st_size
 
     # opts.ident
