@@ -2933,6 +2933,18 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
         ft.unfilter(obuf + oh.codebase - rvamin, oh.codesize);
     }
 
+     //NEW: disable reloc stripping if ASLR is enabled
+    if(ih.dllflags & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)
+        opt->win32_pe.strip_relocs = false;
+
+    // FIXME: ih.flags is checked here because of a bug in UPX 0.92
+    if ((opt->win32_pe.strip_relocs && !isdll) || (ih.flags & RELOCS_STRIPPED))
+    {
+        oh.flags |= RELOCS_STRIPPED;
+        ODADDR(PEDIR_RELOC) = 0;
+        ODSIZE(PEDIR_RELOC) = 0;
+    }
+
     rebuildImports<LEXX>(extrainfo, ord_mask, set_oft);
     rebuildRelocs(extrainfo, sizeof(ih.imagebase) * 8, oh.flags, oh.imagebase);
     rebuildTls();
@@ -2965,18 +2977,6 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     // oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(pe_section_t) * objs, oh.filealign);
     oh.headersize = rvamin;
     oh.chksum = 0;
-
-    //NEW: disable reloc stripping if ASLR is enabled
-    if(ih.dllflags & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)
-        opt->win32_pe.strip_relocs = false;
-
-    // FIXME: ih.flags is checked here because of a bug in UPX 0.92
-    if ((opt->win32_pe.strip_relocs && !isdll) || (ih.flags & RELOCS_STRIPPED))
-    {
-        oh.flags |= RELOCS_STRIPPED;
-        ODADDR(PEDIR_RELOC) = 0;
-        ODSIZE(PEDIR_RELOC) = 0;
-    }
 
     // write decompressed file
     if (fo)
