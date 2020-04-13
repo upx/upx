@@ -2693,15 +2693,7 @@ void PeFile::rebuildRelocs(upx_byte *& extrainfo, unsigned bits,
     }
     rel.finish (oxrelocs,soxrelocs);
 
-    if (opt->win32_pe.strip_relocs && !isdll)
-    {
-        obuf.clear(ODADDR(PEDIR_RELOC) - rvamin, ODSIZE(PEDIR_RELOC));
-        ODADDR(PEDIR_RELOC) = 0;
-        soxrelocs = 0;
-        // FIXME: try to remove the original relocation section somehow
-    }
-    else
-        omemcpy(obuf + ODADDR(PEDIR_RELOC) - rvamin,oxrelocs,soxrelocs);
+    omemcpy(obuf + ODADDR(PEDIR_RELOC) - rvamin,oxrelocs,soxrelocs);
     delete [] oxrelocs; oxrelocs = NULL;
     wrkmem.dealloc();
 
@@ -2933,12 +2925,8 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
         ft.unfilter(obuf + oh.codebase - rvamin, oh.codesize);
     }
 
-     //NEW: disable reloc stripping if ASLR is enabled
-    if(ih.dllflags & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)
-        opt->win32_pe.strip_relocs = false;
-
     // FIXME: ih.flags is checked here because of a bug in UPX 0.92
-    if ((opt->win32_pe.strip_relocs && !isdll) || (ih.flags & RELOCS_STRIPPED))
+    if (ih.flags & RELOCS_STRIPPED)
     {
         oh.flags |= RELOCS_STRIPPED;
         ODADDR(PEDIR_RELOC) = 0;
