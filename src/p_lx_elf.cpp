@@ -4698,7 +4698,14 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                                     dyn->d_val = 0;
                                 }
                             }
-                            else { // DT_INIT_ARRAY, DT_PREINIT_ARRAY
+                            else if (Elf64_Dyn::DT_INIT_ARRAY    == tag
+                            ||       Elf64_Dyn::DT_PREINIT_ARRAY == tag) {
+                                if (val < load_va || (long unsigned)file_size < (long unsigned)val) {
+                                    char msg[50]; snprintf(msg, sizeof(msg),
+                                            "Bad Dynamic tag %#lx %#lx",
+                                            (long unsigned)tag, (long unsigned)val);
+                                    throwCantUnpack(msg);
+                                }
                                 set_te64(&ibuf[val - load_va], old_dtinit
                                     + (is_asl ? asl_delta : 0));  // counter-act unRel64
                             }
@@ -5651,7 +5658,14 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                                     dyn->d_val = 0;
                                 }
                             }
-                            else { // DT_INIT_ARRAY, DT_PREINIT_ARRAY
+                            else if (Elf32_Dyn::DT_INIT_ARRAY    == tag
+                            ||       Elf32_Dyn::DT_PREINIT_ARRAY == tag) {
+                                if (val < load_va || (unsigned)file_size < (unsigned)val) {
+                                    char msg[50]; snprintf(msg, sizeof(msg),
+                                            "Bad Dynamic tag %#x %#x",
+                                            (unsigned)tag, (unsigned)val);
+                                    throwCantUnpack(msg);
+                                }
                                 set_te32(&ibuf[val - load_va], old_dtinit
                                     + (is_asl ? asl_delta : 0));  // counter-act unRel32
                             }
