@@ -4970,6 +4970,7 @@ PackLinuxElf32::check_pt_dynamic(Elf32_Phdr const *const phdr)
     if (s < t || (u32_t)file_size < s
     ||  (3 & t) || (7 & (filesz | memsz))  // .balign 4; 8==sizeof(Elf32_Dyn)
     ||  (-1+ align) & (t ^ vaddr)
+    ||  (unsigned long)file_size <= memsz
     ||  filesz < sizeof(Elf32_Dyn)
     ||  memsz  < sizeof(Elf32_Dyn)
     ||  filesz < memsz) {
@@ -5071,6 +5072,7 @@ PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
     if (s < t || (upx_uint64_t)file_size < s
     ||  (7 & t) || (0xf & (filesz | memsz))  // .balign 8; 16==sizeof(Elf64_Dyn)
     ||  (-1+ align) & (t ^ vaddr)
+    ||  (unsigned long)file_size <= memsz
     ||  filesz < sizeof(Elf64_Dyn)
     ||  memsz  < sizeof(Elf64_Dyn)
     ||  filesz < memsz) {
