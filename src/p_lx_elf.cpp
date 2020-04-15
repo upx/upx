@@ -4667,6 +4667,11 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                     upx_uint64_t dt_relasz(0), dt_rela(0);
                     upx_uint64_t const dyn_len = get_te64(&udynhdr->p_filesz);
                     upx_uint64_t const dyn_off = get_te64(&udynhdr->p_offset);
+                    if ((unsigned long)file_size < (dyn_len + dyn_off)) {
+                        char msg[50]; snprintf(msg, sizeof(msg),
+                                "bad PT_DYNAMIC .p_filesz %#lx", (long unsigned)dyn_len);
+                        throwCantUnpack(msg);
+                    }
                     if (dyn_off < load_off) {
                         continue;  // Oops.  Not really is_shlib ?  [built by 'rust' ?]
                     }
@@ -5627,6 +5632,11 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                     unsigned dt_relsz(0), dt_rel(0);
                     unsigned const dyn_len = get_te32(&udynhdr->p_filesz);
                     unsigned const dyn_off = get_te32(&udynhdr->p_offset);
+                    if ((unsigned long)file_size < (dyn_len + dyn_off)) {
+                        char msg[50]; snprintf(msg, sizeof(msg),
+                                "bad PT_DYNAMIC .p_filesz %#x", dyn_len);
+                        throwCantUnpack(msg);
+                    }
                     if (dyn_off < load_off) {
                         continue;  // Oops.  Not really is_shlib ?  [built by 'rust' ?]
                     }
