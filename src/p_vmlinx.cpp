@@ -104,7 +104,6 @@ PackVmlinuxBase<T>::compare_Phdr(void const *aa, void const *bb)
 template <class T>
 typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
 {
-    Shdr const *p;
     unsigned const e_shnum = ehdri.e_shnum;
     if (ehdri.e_shentsize != sizeof(*shdri)
     ||  (unsigned long)file_size < ehdri.e_shoff
@@ -114,7 +113,13 @@ typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
     shdri = new Shdr[(unsigned) e_shnum];
     fi->seek(ehdri.e_shoff, SEEK_SET);
     fi->readx(shdri, e_shnum * sizeof(*shdri));
-    p = &shdri[ehdri.e_shstrndx];  // supposed
+    unsigned const e_shstrndx = ehdri.e_shstrndx;
+    if (e_shnum <= e_shstrndx) {
+        char msg[50]; snprintf(msg, sizeof(msg),
+                "bad .e_shstrndx %#x", e_shstrndx);
+        throwCantPack(msg);
+    }
+    Shdr const *p = &shdri[e_shstrndx];
     if (Shdr::SHT_STRTAB==p->sh_type
     &&  p->sh_offset  <= ((unsigned long)file_size - sizeof(*shdri))
     &&  p->sh_size    <= ((unsigned long)file_size - p->sh_offset)
