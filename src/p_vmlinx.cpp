@@ -105,18 +105,29 @@ template <class T>
 typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
 {
     Shdr const *p, *shstrsec=0;
+    if (ehdri.e_shentsize != sizeof(*shdri)
+    ||  (unsigned long)file_size < ehdri.e_shoff
+    ||  (unsigned long)file_size < ehdri.e_shoff + ehdri.e_shentsize * ehdri.e_shnum) {
+        throwCantPack("bad ElfXX_Shdrs");
+    }
     shdri = new Shdr[(unsigned) ehdri.e_shnum];
     fi->seek(ehdri.e_shoff, SEEK_SET);
     fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
+    unsigned e_shnum = ehdri.e_shnum;
+    unsigned j;
+    for (p = shdri, j = 0; j < e_shnum; ++j, ++p) {
         if (Shdr::SHT_STRTAB==p->sh_type
-        &&  p->sh_offset  <   (unsigned long)file_size
+        &&  p->sh_offset  <= ((unsigned long)file_size - sizeof(*shdri))
         &&  p->sh_size    <= ((unsigned long)file_size - p->sh_offset)
-        &&  p->sh_name    <   (unsigned long)file_size
+        &&  p->sh_name    <= ((unsigned long)file_size - p->sh_offset)
         &&  10            <= ((unsigned long)file_size - p->sh_name)
             // 10 == (1+ strlen(".shstrtab"))
         ) {
+            if (p->sh_size <= p->sh_name) {
+                char msg[50]; snprintf(msg, sizeof(msg),
+                    "bad SHT_STRTAB[%u]", j);
+                throwCantPack(msg);
+            }
             delete [] shstrtab;
             shstrtab = new char[1+ p->sh_size];
             fi->seek(p->sh_offset, SEEK_SET);
