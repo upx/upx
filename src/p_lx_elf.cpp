@@ -1675,30 +1675,47 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
             throwCantPack(msg);
         }
         unsigned const n_bucket = get_te32(&gashtab[0]);
+        unsigned const symbias  = get_te32(&gashtab[1]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
         unsigned const gnu_shift = get_te32(&gashtab[3]);
         unsigned const *const bitmask = (unsigned const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
-      //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum
+      //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum, except:
+        // Rust and Android trim unused zeroes from high end of hasharr[]
+        unsigned bmax = 0;
+        for (unsigned j= 0; j < n_bucket; ++j) {
+            if (buckets[j]) {
+                if (bmax < buckets[j]) {
+                    bmax = buckets[j];
+                }
+            }
+        }
+        if (bmax < symbias) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                    "bad DT_GNU_HASH max_bucket=%#x < symbias=%#x", bmax, symbias);
+            throwCantPack(msg);
+        }
+        bmax -= symbias;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
+        unsigned r = 0;
         if (!n_bucket || !n_bitmask || !v_sym
-        || (-1+ n_bitmask) & n_bitmask  // not a power of 2
-        || 8*sizeof(unsigned) <= gnu_shift  // shifted result always == 0
-        || (n_bucket>>30)  // fie on fuzzers
-        || (n_bitmask>>30)
-        || (file_size / sizeof(unsigned)) <= (n_bitmask + 2*n_bucket)  // FIXME: weak
-        // FIXME: next test does work for Android?
-        || ((v_gsh < v_sym) && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
+        || (r=1, ((-1+ n_bitmask) & n_bitmask))  // not a power of 2
+        || (r=2, (8*sizeof(unsigned) <= gnu_shift))  // shifted result always == 0
+        || (r=3, (n_bucket>>30))  // fie on fuzzers
+        || (r=4, (n_bitmask>>30))
+        || (r=5, ((file_size/sizeof(unsigned))
+                <= ((sizeof(*bitmask)/sizeof(unsigned))*n_bitmask + 2*n_bucket)))  // FIXME: weak
+        || (r=6, ((v_gsh < v_sym) && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
                 + sizeof(*bitmask)*n_bitmask  // bitmask
                 + sizeof(*buckets)*n_bucket  // buckets
-                + sizeof(*hasharr)*n_bucket  // hasharr
-            ))
+                + sizeof(*hasharr)*(1+ bmax)  // hasharr
+            )) )
         ) {
             char msg[90]; snprintf(msg, sizeof(msg),
-                "bad DT_GNU_HASH n_bucket=%#x  n_bitmask=%#x  len=%#x",
-                n_bucket, n_bitmask, v_sym - v_gsh);
+                "bad DT_GNU_HASH n_bucket=%#x  n_bitmask=%#x  len=%#lx  r=%d",
+                n_bucket, n_bitmask, (long unsigned)(v_sym - v_gsh), r);
             throwCantPack(msg);
         }
     }
@@ -5189,30 +5206,47 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
             throwCantPack(msg);
         }
         unsigned const n_bucket = get_te32(&gashtab[0]);
+        unsigned const symbias  = get_te32(&gashtab[1]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
         unsigned const gnu_shift = get_te32(&gashtab[3]);
         upx_uint64_t const *const bitmask = (upx_uint64_t const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
-      //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum
+      //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum, except:
+        // Rust and Android trim unused zeroes from high end of hasharr[]
+        unsigned bmax = 0;
+        for (unsigned j= 0; j < n_bucket; ++j) {
+            if (buckets[j]) {
+                if (bmax < buckets[j]) {
+                    bmax = buckets[j];
+                }
+            }
+        }
+        if (bmax < symbias) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                    "bad DT_GNU_HASH max_bucket=%#x < symbias=%#x", bmax, symbias);
+            throwCantPack(msg);
+        }
+        bmax -= symbias;
 
         upx_uint64_t const v_sym = !x_sym ? 0 : get_te64(&dynp0[-1+ x_sym].d_val);
+        unsigned r = 0;
         if (!n_bucket || !n_bitmask || !v_sym
-        || (-1+ n_bitmask) & n_bitmask  // not a power of 2
-        || 8*sizeof(upx_uint64_t) <= gnu_shift  // shifted result always == 0
-        || (n_bucket>>30)  // fie on fuzzers
-        || (n_bitmask>>30)
-        || (file_size/sizeof(unsigned)) <= ((sizeof(*bitmask)/sizeof(unsigned))*n_bitmask + 2*n_bucket)  // FIXME: weak
-        // FIXME: next test does work for Android?
-        || ((v_gsh < v_sym) && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
+        || (r=1, ((-1+ n_bitmask) & n_bitmask))  // not a power of 2
+        || (r=2, (8*sizeof(upx_uint64_t) <= gnu_shift))  // shifted result always == 0
+        || (r=3, (n_bucket>>30))  // fie on fuzzers
+        || (r=4, (n_bitmask>>30))
+        || (r=5, ((file_size/sizeof(unsigned))
+                <= ((sizeof(*bitmask)/sizeof(unsigned))*n_bitmask + 2*n_bucket)))  // FIXME: weak
+        || (r=6, ((v_gsh < v_sym) && (v_sym - v_gsh) < (sizeof(unsigned)*4  // headers
                 + sizeof(*bitmask)*n_bitmask  // bitmask
                 + sizeof(*buckets)*n_bucket  // buckets
-                + sizeof(*hasharr)*n_bucket  // hasharr
-            ))
+                + sizeof(*hasharr)*(1+ bmax)  // hasharr
+            )) )
         ) {
             char msg[90]; snprintf(msg, sizeof(msg),
-                "bad DT_GNU_HASH n_bucket=%#x  n_bitmask=%#x  len=%#lx",
-                n_bucket, n_bitmask, (long unsigned)(v_sym - v_gsh));
+                "bad DT_GNU_HASH n_bucket=%#x  n_bitmask=%#x  len=%#lx  r=%d",
+                n_bucket, n_bitmask, (long unsigned)(v_sym - v_gsh), r);
             throwCantPack(msg);
         }
     }
