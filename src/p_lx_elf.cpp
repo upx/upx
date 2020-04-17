@@ -1686,6 +1686,12 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         unsigned bmax = 0;
         for (unsigned j= 0; j < n_bucket; ++j) {
             if (buckets[j]) {
+                if (buckets[j] < symbias) {
+                    char msg[50]; snprintf(msg, sizeof(msg),
+                            "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
+                            buckets[j], symbias);
+                    throwCantPack(msg);
+                }
                 if (bmax < buckets[j]) {
                     bmax = buckets[j];
                 }
@@ -5231,6 +5237,12 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         unsigned bmax = 0;
         for (unsigned j= 0; j < n_bucket; ++j) {
             if (buckets[j]) {
+                if (buckets[j] < symbias) {
+                    char msg[50]; snprintf(msg, sizeof(msg),
+                            "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
+                            buckets[j], symbias);
+                    throwCantPack(msg);
+                }
                 if (bmax < buckets[j]) {
                     bmax = buckets[j];
                 }
@@ -5357,6 +5369,12 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
 
         if (1& (w>>hbit1) & (w>>hbit2)) {
             unsigned bucket = get_te32(&buckets[h % n_bucket]);
+            if (n_bucket <= bucket) {
+                char msg[80]; snprintf(msg, sizeof(msg),
+                        "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
+                        n_bucket, h % n_bucket, bucket);
+                throwCantPack(msg);
+            }
             if (0!=bucket) {
                 Elf32_Sym const *dsp = &dynsym[bucket];
                 unsigned const *hp = &hasharr[bucket - symbias];
@@ -5406,6 +5424,12 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
 
         if (1& (w>>hbit1) & (w>>hbit2)) {
             unsigned bucket = get_te32(&buckets[h % n_bucket]);
+            if (n_bucket <= bucket) {
+                char msg[80]; snprintf(msg, sizeof(msg),
+                        "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
+                        n_bucket, h % n_bucket, bucket);
+                throwCantPack(msg);
+            }
             if (0!=bucket) {
                 Elf64_Sym const *dsp = &dynsym[bucket];
                 unsigned const *hp = &hasharr[bucket - symbias];
