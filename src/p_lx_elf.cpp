@@ -1697,9 +1697,9 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
                 }
             }
         }
-        if (bmax < symbias) {
+        if ((1+ bmax) < symbias) {
             char msg[80]; snprintf(msg, sizeof(msg),
-                    "bad DT_GNU_HASH max_bucket=%#x < symbias=%#x", bmax, symbias);
+                    "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
             throwCantPack(msg);
         }
         bmax -= symbias;
@@ -5248,9 +5248,9 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
                 }
             }
         }
-        if (bmax < symbias) {
+        if ((1+ bmax) < symbias) {
             char msg[80]; snprintf(msg, sizeof(msg),
-                    "bad DT_GNU_HASH max_bucket=%#x < symbias=%#x", bmax, symbias);
+                    "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
             throwCantPack(msg);
         }
         bmax -= symbias;
