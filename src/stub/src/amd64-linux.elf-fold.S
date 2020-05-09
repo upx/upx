@@ -147,7 +147,6 @@ L90:
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unf arg6,
                 Elf64_Addr elfaddr )
 */
-int3
 // rsp/ elfaddr,{OVERHEAD},fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
         addq $1*NBPW+OVERHEAD,%rsp  # also discard elfaddr
         movq %rax,4*NBPW(%rsp)  # entry
