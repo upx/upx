@@ -68,11 +68,11 @@ __NR_exit= 60
 __NR_readlink= 89
 
 // IN:
-// %rbx= &O_BINFO; %rbp= f_exp; %r14= ADRX; %r15= LENX;
+// %rbx= 4+ &O_BINFO; %rbp= f_exp; %r14= ADRX; %r15= LENX;
 // rsp/ elfaddr,fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
 
 fold_begin:
-////    int3  // DEBUG only
+    int3  // DEBUG only
         call L90
 #include "arch/amd64/bxx.S"
 L90:
@@ -142,11 +142,13 @@ L90:
         push %rax  # elfaddr  7th arg
 
         movq %rbp,%arg5  # &decompress: f_expand
+int3
         call upx_main  # Out: %rax= entry
 /* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unf arg6,
                 Elf64_Addr elfaddr )
 */
+int3
         addq $1*NBPW+OVERHEAD,%rsp  # toss elfaddr, too
         movq %rax,4*NBPW(%rsp)  # entry
         pop %rbx  # fd
@@ -169,8 +171,8 @@ L90:
         jmp *-8(%r14)  # goto: syscall; pop %rdx; ret
 
 mmap: .globl mmap
+  int3
         movb $ __NR_mmap,%al
-sysarg4:
         movq %arg4,%sys4
 sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
         movzbl %al,%eax
