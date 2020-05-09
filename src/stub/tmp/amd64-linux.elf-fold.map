@@ -10,17 +10,17 @@ Linker script and memory map
 
 .text           0x00000000001000bc      0x868
  *(.text)
- .text          0x00000000001000bc      0x19e tmp/amd64-linux.elf-fold.o
-                0x000000000010024a                munmap
-                0x0000000000100223                mmap
-                0x0000000000100252                write
-                0x0000000000100256                read
-                0x000000000010023a                exit
-                0x000000000010023e                brk
-                0x0000000000100246                open
-                0x000000000010024e                mprotect
-                0x0000000000100242                close
- *fill*         0x000000000010025a        0x2 00
+ .text          0x00000000001000bc      0x19d tmp/amd64-linux.elf-fold.o
+                0x0000000000100249                munmap
+                0x0000000000100222                mmap
+                0x0000000000100251                write
+                0x0000000000100255                read
+                0x0000000000100239                exit
+                0x000000000010023d                brk
+                0x0000000000100245                open
+                0x000000000010024d                mprotect
+                0x0000000000100241                close
+ *fill*         0x0000000000100259        0x3 00
  .text          0x000000000010025c      0x6c6 tmp/amd64-linux.elf-main.o
                 0x00000000001007da                upx_main
  *(.data)
