@@ -239,21 +239,20 @@ unfold:  // IN: rbp= &f_exp; rsp/ &proc_self_exe,%entry
         lea -4+ FOLD - proc_self_exe(%arg1),%rsi  // &O_BINFO | is_ptinterp
         lodsl; and $~1,%eax; movl %eax,%r14d  // O_BINFO
         push %rsi; pop %rbx  // &b_info of folded decompressor
-        lodsl; xchg %eax,%edx;         add %rbx,%rdx  // .sz_unc; last of unfolded
-        lodsl; xchg %eax,%r13d; lodsl; add %rsi,%r13  // .sz_cpr; last of   folded
+        movl (%rsi),%edx  // .sz_unc
 
         lea sz_pack2 - f_exp(%rbp),%rcx  // &sz_pack2
         movl (%rcx),%r15d  // sz_pack2: length before stub
         subq %r15,%rcx  // elfaddr= &Elf64_Ehdr of this stub
         subl %r14d,%r15d  // LENX= sz_pack2 - O_BINFO
+        addq %rcx,%r14  // ADRX= elfaddr + O_BINFO
           pop %rdi  // fd
-        subq %rcx,%rdx; push %rdx  // LENU
+        push %rdx  // LENU
         push %rax  // %ADRU
-        subq %rcx,%r13  // LENF
           push %rdi  // fd
         push %rcx  // elfaddr
 
-// Reserve space for input file and unfolded stub.
+// Reserve space for unfolded stub.
         subq %arg6,%arg6  // 0 offset
         orl $-1,%arg5l  // fd
         push $MAP_PRIVATE|MAP_ANONYMOUS; pop %sys4
@@ -261,44 +260,23 @@ unfold:  // IN: rbp= &f_exp; rsp/ &proc_self_exe,%entry
         push $PROT_READ|PROT_WRITE; pop %arg3
         subl %arg1l,%arg1l  // 0; kernel chooses addr
         push $__NR_mmap; pop %rax; syscall
-        addq %rax,%r14  // + O_BINFO = ADRX
         movq %rax,2*8(%rsp)  // ADRU
 
-// Duplicate the input data.
-        xchgq %rax,%arg1  // same address
-        //subq %arg6,%arg6  // 0 offset
-        movl 1*8(%rsp),%arg5l  // fd
-        push $MAP_PRIVATE|MAP_FIXED; pop %sys4
-        //push $PROT_READ|PROT_WRITE; pop %arg3
-        movq %r13,%arg2  // len
-        push $__NR_mmap; pop %rax; syscall
-
-// Remember new f_exp region for PROT_EXEC.
-        movq 3*8(%rsp),%rdx  // LENU
-        pop %rcx; push %rcx  // elfaddr
-        addq %rax,%rdx  // new last of unfoded
-        subq %rcx,%rax  // new - old
-        movq %rax,%r12  // relocation constant
-        addq %rbp,%rax; push %rax  // P_10  new f_exp
-        andq $PAGE_MASK,%rax; push %rax  // P_11  address
-        subq %rax,%rdx; push %rdx  // P_12  length
-
 // Unfold
-        movq %rbx,%rsi
+        push %rax; pop %arg3  // dst= new unfold
+        push %rbx; pop %rsi
         lodsl; push %rax; movq %rsp,%arg4  // P_13  .sz_unc; &dstlen
-        lea (%rbx,%r12),%arg3  // dst= new unfold
         movq %arg3,%r13  // execute here
         lodsl; push %rax  // P_14  tmp= .sz_cpr
         lodsl; xchg %eax,%arg5l  // .b_method
         movq %rsi,%arg1  // src
         pop %arg2  // P_14  srclen
-        call *%rbp  // old f_exp
+        call *%rbp  // f_exp
         pop %rcx  // P_13  toss .sz_unc
 
 // PROT_EXEC
-        pop %arg2  // P_12  length
-        pop %arg1  // P_11  addr
-        pop %rbp   // P_10  new f_exp
+        movq 3*8(%rsp),%arg2  // LENU
+        movq 2*8(%rsp),%arg1  // ADRU
         push $PROT_READ|PROT_EXEC; pop %arg3
         push $__NR_mprotect; pop %rax; syscall
 

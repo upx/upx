@@ -458,13 +458,25 @@ do_xmap(
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
     Elf64_Addr v_brk;
-    Elf64_Addr const reloc = xfind_pages(
-        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk
-        , *p_reloc
+    Elf64_Addr reloc;
+    if (xi) { // compressed main program:
+        // C_BASE space reservation, C_TEXT compressed data and stub
+        Elf64_Addr ehdr0 = *p_reloc;  // the 'hi' copy!
+        Elf64_Phdr *phdr0 = (Elf64_Phdr *)(((Elf64_Ehdr *)ehdr0)->e_phoff + ehdr0);
+        // Clear the 'lo' space reservation for use by PT_LOADs
+        ehdr0 -= phdr0[1].p_vaddr;  // the 'lo' copy
+        v_brk = phdr0->p_memsz + ehdr0;
+        reloc = (Elf64_Addr)mmap((void *)ehdr0, phdr0->p_memsz, PROT_NONE,
+            MAP_FIXED|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+    }
+    else { // PT_INTERP
+        reloc = xfind_pages(
+            ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk, *p_reloc
 #if defined(__powerpc64__) || defined(__aarch64__)
-        , PAGE_MASK
+            , PAGE_MASK
 #endif
-    );
+        );
+    }
     DPRINTF("do_xmap reloc=%%p\\n", reloc);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
