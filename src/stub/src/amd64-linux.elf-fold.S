@@ -67,12 +67,12 @@ __NR_brk=      12
 __NR_exit= 60
 __NR_readlink= 89
 
-// IN:
+// IN: [ADRX,+LENX): compressed data; [ADRU,+LENU): expanded fold (w/ upx_main)
 // %rbx= 4+ &O_BINFO; %rbp= f_exp; %r14= ADRX; %r15= LENX;
 // rsp/ elfaddr,fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
 
 fold_begin:
-    int3  // DEBUG only
+////    int3  // DEBUG only
         call L90
 #include "arch/amd64/bxx.S"
 L90:
@@ -139,39 +139,47 @@ L90:
         pop %rax  # elfaddr
         subq $ OVERHEAD,%rsp
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
-        push %rax  # elfaddr  7th arg
+        push %rax; mov %rax,%r13  # elfaddr  7th arg
 
         movq %rbp,%arg5  # &decompress: f_expand
-int3
         call upx_main  # Out: %rax= entry
 /* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unf arg6,
                 Elf64_Addr elfaddr )
 */
 int3
-        addq $1*NBPW+OVERHEAD,%rsp  # toss elfaddr, too
+// rsp/ elfaddr,{OVERHEAD},fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
+        addq $1*NBPW+OVERHEAD,%rsp  # also discard elfaddr
         movq %rax,4*NBPW(%rsp)  # entry
         pop %rbx  # fd
 
-// Map 1 page of /proc/self/exe so that it does not disappear.
-        sub %arg6l,%arg6l  # 0 offset
+sz_Ehdr= 8*NBPW
+sz_Phdr= 7*NBPW
+p_vaddr= 4+4+8
+// Discard pages of compressed data (includes [ADRX,+LENX) )
+        movq p_vaddr+sz_Phdr+sz_Ehdr(%r13),%arg2  #   Phdr[C_TEXT= 1].p_vaddr
+        movq %r13,%arg1  # hi elfaddr
+        subq p_vaddr        +sz_Ehdr(%r13),%arg2  # - Phdr[C_BASE= 0].p_vaddr ==> len
+        call munmap  # discard C_TEXT compressed data
+
+// Map 1 page of /proc/self/exe so that the symlink does not disappear.
+        subq %arg6,%arg6  # 0 offset
         mov %ebx,%arg5l  # fd
-        push $MAP_PRIVATE; pop %sys4  # BEWARE:  %sys4
+        push $MAP_PRIVATE; pop %arg4
         push $PROT_READ; pop %arg3
         mov $PAGE_SIZE,%arg2l
-        push $0; pop %arg1
-        push $__NR_mmap; pop %rax; syscall
+        subl %arg1l,%arg1l  # 0
+        call mmap
 
         mov %ebx,%edi  # fd
-        push $__NR_close; pop %rax; syscall
+        call close
 
-        pop %arg1  # ADRU
+        pop %arg1  # ADRU: unfolded upx_main etc.
         pop %arg2  # LENU
-        push $ __NR_munmap; pop %rax
+        push $__NR_munmap; pop %rax
         jmp *-8(%r14)  # goto: syscall; pop %rdx; ret
 
 mmap: .globl mmap
-  int3
         movb $ __NR_mmap,%al
         movq %arg4,%sys4
 sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
