@@ -90,26 +90,26 @@ __NR_write    = 0x40  //  64
 #endif  //}
 
 //lr   .req x30
-wLENU  .req w29
+wLENU  .req w29  // un-folded fold_begin and upx_main
   xLENU  .req x29
 xADRU  .req x28
-wfd    .req w27
+
+wfd    .req w27  // file descriptor of /proc/self/exe
   xfd    .req x27
-xPMASK .req x26
+xPMASK .req x26  // PAGE_MASK
   // The above 4 registers are passed on stack to unfolded code.
 
-xelfa  .req x25
-xfexp  .req x24
+xelfa  .req x25  // hi &Elf64_Ehdr
+xfexp  .req x24  // de-compressor
   // xPMASK, xelfa, xfexp still are used here.
 
-wLENM  .req w29  // overlaps wLENU
-  xLENM  .req x29
-  wLENX  .req wLENM
-xADRM  .req x28  // overlaps xADRU
-  xADRX  .req xADRM
-wobinf .req w27  // overlaps wfd
+wLENC  .req w29  // compressed input  OVERLAPS wLENU
+  xLENC  .req x29
+xADRC  .req x28  // OVERLAPS xADRU
+xADRM  .req x27  // conveneinence; OVERLAPS wfd, xfd
+wLENM  .req w23
+  xLENM  .req x23
 
-xrelo  .req x23
 xauxv  .req x22
 wszuf  .req w21
   xszuf  .req x21
@@ -187,70 +187,49 @@ mmap:
 
 unfold:
         mov xFOLD,lr
-// Reserve enough space to decompress the folded code onto xFOLD
+// Reserve enough space to decompress the folded code of the stub
         ldr w0,  [xfexp,#sz_pack2 - f_exp]
         add xelfa,xfexp,#sz_pack2 - f_exp
         sub xelfa,xelfa,x0  // &Elf64_Ehdr of stub
-        ldr wszuf,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // sz_unc of fold
-        sub x1,xFOLD,xelfa // offset(FOLD)
+        ldr w1,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // .sz_unc of fold
         mov w4,#-1  // fd
         mov w3,#MAP_PRIVATE|MAP_ANONYMOUS
-        add x1,x1,wszuf,uxtw  // length needed
         mov x0,#0  // kernel chooses addr
         call mmapRW0
           PUSH2(x0,x1)  // ADRU, LENU
-
-// Duplicate the input data.
-        ldr w8,[xFOLD,#sz_cpr + LBINFO - LxFOLD]  // sz_cpr of fold
-        sub x1,xFOLD,xelfa  // offset(FOLD)
-        mov w4,wfd  // from file
-        mov w3,#MAP_PRIVATE|MAP_FIXED
           PUSH2(xPMASK,xfd)
-        add x1,x1,x8  // + sz_cpr of fold; x1 <= .st_size
-        call mmapRW0  // IN: x0= ADRU;  OUT: x0= ADRU
-        sub xrelo,x0,xelfa  // relocation amount
-        mov x8,xfexp; add xfexp,xfexp,xrelo  // use old f_exp; xfexp= new &f_exp
-
-// Decompress from old folded code, overwriting new copy of folded code
-        ldr wobinf,[xFOLD,#        LOBINFO - LxFOLD]  // O_BINFO
-        add src,xFOLD,#sz_b_info +  LBINFO - LxFOLD  // old folded code
-        add xFOLD,xFOLD,xrelo  // dst for unfolding;  use copied data
-        add xLENM,xFOLD,wszuf,uxtw  // + sz_unc = last of unfolded
-        and xADRM,xfexp,xPMASK  // base for PROT_EXEC
-        sub xLENM,xLENM,xADRM  // length for PROT_EXEC
+        mov xADRM,x0  // convenience
+// Decompress folded code
+        mov dst,x0  // ADRU
+        PUSH1(x1); mov ldst,sp  // &slot on stack; lzma uses for EOF
+        add src,    xFOLD,#sz_b_info + LBINFO - LxFOLD  // folded code
+        ldr lsrc,  [XFOLD,#sz_cpr    + LBINFO - LxFOLD]
+        ldrb wmeth,[xFOLD,#b_method  + LBINFO - LxFOLD]
     TRACE(#1)
-
-// The new f_exp has PROT_WRITE, so use the old f_exp to decompress
-        ldrb wmeth,[xFOLD,#b_method + LBINFO - LxFOLD]
-        PUSH1(xszuf)  // lzma uses for EOF
-        mov ldst,sp  // &slot on stack
-        mov dst,xFOLD  // dst for unfolding
-        ldr lsrc,[xFOLD,#sz_cpr + LBINFO - LxFOLD]
-        callr x8  // decompress it
-        POP1(x8)
+        callr xfexp  // decompress it
+        POP1(x8)  // discard lzma EOF
 
 // Generate code to compute PAGE_MASK
-        ldr x0,[xFOLD,#1*4]  // 2nd instr
+        ldr x0,[xADRM,#1*4]  // 2nd instr
         rbit x1,xPMASK
         clz x1,x1  // # trailing 0's in xPMASK
         add x1,x1,#1
         lsl x1,x1,#2*5  // past two register numbers
         orr x0,x0,x1
-        str x0,[xFOLD,#1*4]  // modify 2nd instr: "add x1,x0,#1+ count"
+        str x0,[xADRM,#1*4]  // modify 2nd instr: "add x1,x0,#1+ count"
 
 // PROT_EXEC
         mov w2,#PROT_EXEC|PROT_READ
-        mov w1,wLENM  // length
+        ldr w1,[sp,3*NBPW]  // LENU
         mov x0,xADRM  // base
     TRACE(#2)
         do_sys __NR_mprotect
 
 // Use the unfolded code
-        ldr wLENX,[xfexp,#sz_pack2 - f_exp]
-        add xADRX,xelfa,wobinf,uxtw  // old compressed &b_info
-        add xADRX,xADRX,xrelo  // new compressed &b_info
-
-        add x0,xFOLD,#4*4  // jmp over get_page_mask()
+        ldr w0,[xFOLD, #LOBINFO - LxFOLD]  // O_BINFO
+        ldr wLENC,[xfexp,#sz_pack2 - f_exp]
+        add xADRC,xelfa,x0  // &b_info of compressed input data
+        add x0,xADRM,#4*4  // jmp over get_page_mask()
         jr x0
 
 #if DEBUG  //{
