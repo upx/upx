@@ -28,11 +28,15 @@
 //
 
 NBPW= 8
+#define call bl
+
 #define ARM_OLDABI 1
 #include "arch/arm64/v8/macros.S"
 
-sz_Elf64_Ehdr= 64
-sz_Elf64_Phdr= 56
+sz_Ehdr= 8*NBPW
+sz_Phdr= 7*NBPW
+  p_vaddr= 4+4+8
+
 sz_l_info = 12
 sz_p_info = 12
 sz_b_info = 12
@@ -59,7 +63,7 @@ PATH_MAX= 4096
 #endif  /*}*/
 #if DEBUG  //{
 #define TRACE(arg) \
-        stp lr,x0,[sp,#-2*NBPW]!; mov x0,arg; bl trace; \
+        stp lr,x0,[sp,#-2*NBPW]!; mov x0,arg; call trace; \
         ldp lr,x0,[sp],#2*NBPW
 #else  //}{
 #define TRACE(arg) /*empty*/
@@ -82,15 +86,16 @@ fold_begin:
 
 // In:  sp/ PMASK,fd,ADRU,LENU, argc,argv,...
 //lr   .req x30
-wLENX  .req w29
-xADRX  .req x28
+wLENC  .req w29  // compressed input
+  xLENC  .req x29
+xADRC  .req x28
 
-wLENU  .req w27
+wLENU  .req w27  // unfolded fold_begin and upx_main
   xLENU  .req x27
 xADRU  .req x26
 
-xelfa  .req x25
-xfexp  .req x24
+xelfa  .req x25  // hi &Elf64_Ehdr
+xfexp  .req x24  // de-compressor
 xauxe  .req x23  // past new auxv
 xauxv  .req x22
 
@@ -146,7 +151,7 @@ xPMASK .req x20
 
         mov w2,#PATH_MAX-1  // buffer length and null terminator
         adr x0,proc_self_exe
-        bl readlink
+        call readlink
         cmn x0,#4096; bcs 0f  // error
         strb wzr,[x2,x0]  // null terminate pathname (x2 is old x1)
 0:
@@ -159,11 +164,18 @@ xPMASK .req x20
         mov x4,xfexp  // &f_decompress
         mov x3,xauxv  // new &Elf64_auxv_t
         mov x2,sp  // ehdr
-        mov w1,wLENX  // total size of compressed data
-        mov x0,xADRX  // &b_info
-        bl upx_main
+        mov w1,wLENC  // total size of compressed data
+        mov x0,xADRC  // &b_info
+        call upx_main
           add sp,sp,#MAX_ELF_HDR + OVERHEAD  // un-alloca
         mov xfexp,x0  // entry address
+
+// Discard pages of compressed input data (includes [ADRC,+LENC) )
+        ldr x1,[xelfa,#p_vaddr+sz_Phdr+sz_Ehdr]  // Phdr[C_TEXT= 1].p_vaddr
+        ldr x2,[xelfa,#p_vaddr        +sz_Ehdr]  // Phdr[C_BASE= 0].p_vaddr
+        mov x0,xelfa  // hi &Elf64_Ehdr
+        sub x1,x1,x2
+        call munmap  // discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that munmap does not remove all references
         mov x5,#0  // offset
@@ -172,22 +184,21 @@ xPMASK .req x20
         mov w2,#PROT_READ
         mov x1,#PAGE_SIZE
         mov x0,#0  // addr
-        bl mmap
+        call mmap
 
         mov w0,wfd  // fd
-        bl close
+        call close
 
         mov lr,xfexp  // entry
         mov x0,xADRU
         mov w1,wLENU
         ldr x2,[xauxe,#NBPW - sz_auxv]  // Elf64_auxv_t[AT_NULL@.a_type].a_val
-        mov w8,#__NR_munmap
+        mov w8,#__NR_munmap  // munmap(ADRU, LENU)  unfolded stub
 #if DEBUG  //{
         ldr w3,[x2,#0]  // 1st instr
         ldr w4,[x2,#4]  // 2nd instr
         TRACE(4)
 #endif  //}
-
         br x2  // goto escape hatch
 
 space3eq:
@@ -256,18 +267,18 @@ trace:  // preserves condition code (thank you, CBNZ) [if write() does!]
         sub sp,sp,#TRACE_BUFLEN
         mov x2,sp  // output string
 
-        mov w1,#'\n'; bl trace_hex  // In: r0 as label
+        mov w1,#'\n'; call trace_hex  // In: r0 as label
         mov w1,#'>';  strb w1,[x2],#1
 
         mov w5,#10  // nrows to print
 L600:  // each row
         add x1,sp,#TRACE_BUFLEN
         sub x0,x4,x1
-        lsr x0,x0,#3; mov w1,#'\n'; bl trace_hex2  // which block of 4
+        lsr x0,x0,#3; mov w1,#'\n'; call trace_hex2  // which block of 4
 
         mov w6,#4  // 64-bit words per row
 L610:  // each word
-        ldr x0,[x4],#8; mov w1,#(' '<<8)|' '; bl trace_hex  // next word
+        ldr x0,[x4],#8; mov w1,#(' '<<8)|' '; call trace_hex  // next word
         sub w6,w6,#1; cbnz w6,L610
 
         sub w5,w5,#1; cbnz w5,L600
