@@ -33,6 +33,7 @@
 
 sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
+p_vaddr= 4+4
 sz_l_info = 12
 sz_p_info = 12
 sz_b_info = 12
@@ -61,6 +62,7 @@ PATH_MAX= 4096
 
 #define OVERHEAD 2048
 #define MAX_ELF_HDR 512
+#define call bl
 
 mflg_data: .int MAP_PRIVATE|MAP_ANONYMOUS  @ overwritten for QNX vs Linux
 
@@ -70,8 +72,8 @@ SP_fd= 3*4
    r5= ADRX
    lr= "/proc/self/exe"
 new sp/            elfaddr,fd, ADRU,LENU, f_exp,%entry, argc,argv,0,envp,0,auxv
-        (ADRX,LENX) = extent of compressed program (after moving)
-        (ADRU,LENU) = params for final munmap()
+        (ADRX,LENX) = extent of compressed program
+        (ADRU,LENU) = params to munmap unfolded stub
 */
 fold_begin:  // enter here
 #if DEBUG  //{
@@ -115,7 +117,7 @@ F_entry=   7*4
         mov r1,r0  @ buffer
         mov r0,lr  @ arg1= "/proc/self/exe"
         sub r2,r2,#1  @ room for null terminator
-        bl readlink
+        call readlink
         cmn r0,#4096
         movcs r1,lr  @ "/proc/self/exe"
         movcs r0,#14  @ strlen("/proc/self/exe")
@@ -174,13 +176,20 @@ F_delta= 3*4
 #endif  //}
 // r0=av; r1=sz_cpr; r2=f_decompress; r3=f_unfilter;
 // xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}, elfaddr
-        bl upx_main
+        call upx_main
         add sp,sp,#(9-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x14; bl trace
 #endif  //}
         str r0,[sp,#F_entry - F_delta]  @ entry address
+
+// Discard pages of compressed input data (includes [ADRC,+LENC) )
+        ldr r1,[r11,#p_vaddr+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_vaddr
+        ldr r2,[r11,#p_vaddr              +sz_Elf32_Ehdr]  // Phdr[C_BASE= 0].p_vaddr
+        mov r0,r11  // hi &Elf32_Ehdr
+        sub r1,r1,r2
+        call munmap  // discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that it does not disappear
         ldr r4,[sp],#4  @ pop r4,F_fd
@@ -190,9 +199,9 @@ F_delta= 3*4
         mov r2,#PROT_READ
         mov r1,#PAGE_SIZE
         mov r0,#0  @ any address
-        bl mmap  @ no error check: cannot recover
+        call mmap  @ no error check: cannot recover
         ldmia sp!,{r0,r1}  @ fd, offset
-        bl close
+        call close
 
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x15; bl trace

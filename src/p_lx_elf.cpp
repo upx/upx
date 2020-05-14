@@ -412,23 +412,18 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 
     set_te32(&elfout.phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
     set_te32(&elfout.phdr[C_TEXT].p_memsz,  sz_pack2 + lsize);
-    if (0==xct_off) { // not shared library; adjust PT_LOAD
-        // .p_align can be big for segments, but Linux uses 4KiB pages.
-        // This allows [vvar], [vdso], etc to sneak into the gap
-        // between end_text and data, which we wish to prevent
-        // because the expanded program will use that space.
-        // So: pretend 4KiB pages.
-        unsigned pm = (Elf64_Ehdr::EM_PPC64 == e_machine)
-            ? page_mask  // reducing to 4KiB DOES NOT WORK ??
-            : ((~(unsigned)0)<<12);
-        pm = page_mask;  // Revert until consequences can be analyzed
-        v_hole = pm & (~pm + v_hole + get_te32(&elfout.phdr[C_TEXT].p_vaddr));
-        set_te32(&elfout.phdr[C_BASE].p_vaddr, v_hole);
-        set_te32(&elfout.phdr[C_BASE].p_align, ((unsigned)0) - pm);
+    if (0==xct_off) { // not shared library
+        set_te32(&elfout.phdr[C_BASE].p_align, 0u - page_mask);
         elfout.phdr[C_BASE].p_paddr = elfout.phdr[C_BASE].p_vaddr;
         elfout.phdr[C_BASE].p_offset = 0;
-        set_te32(&elfout.phdr[C_BASE].p_memsz, getbrk(phdri, e_phnum) - v_hole);
+        unsigned vbase = get_te32(&elfout.phdr[C_BASE].p_vaddr);
+        unsigned abrk = getbrk(phdri, e_phnum);
+        set_te32(&elfout.phdr[C_BASE].p_filesz, 0x1000);  // Linux kernel SIGSEGV if (0==.p_filesz)
+        set_te32(&elfout.phdr[C_BASE].p_memsz, abrk - vbase);
         set_te32(&elfout.phdr[C_BASE].p_flags, Elf32_Phdr::PF_W|Elf32_Phdr::PF_R);
+        set_te32(&elfout.phdr[C_TEXT].p_vaddr, abrk= (page_mask & (~page_mask + abrk)));
+        elfout.phdr[C_TEXT].p_paddr = elfout.phdr[C_TEXT].p_vaddr;
+        set_te32(&elfout.ehdr.e_entry, abrk + get_te32(&elfout.ehdr.e_entry) - vbase);
     }
     if (0!=xct_off) {  // shared library
         unsigned word = (Elf32_Ehdr::EM_ARM==e_machine) + load_va + sz_pack2;  // Thumb mode
@@ -2725,14 +2720,19 @@ PackLinuxElf32::generateElfHdr(
 {
     cprElfHdr2 *const h2 = (cprElfHdr2 *)(void *)&elfout;
     cprElfHdr3 *const h3 = (cprElfHdr3 *)(void *)&elfout;
-    memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
+    h3->ehdr =         ((cprElfHdr3 const *)proto)->ehdr;
+    h3->phdr[C_BASE] = ((cprElfHdr3 const *)proto)->phdr[1];  // .data; .p_align
+    h3->phdr[C_TEXT] = ((cprElfHdr3 const *)proto)->phdr[0];  // .text
+    memset(&h3->linfo, 0, sizeof(h3->linfo));
+
     h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
     h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
-    unsigned phnum_o = get_te16(&h2->ehdr.e_phnum);
     if (Elf32_Ehdr::EM_MIPS==e_machine) { // MIPS R3000  FIXME
         h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = Elf32_Ehdr::ELFOSABI_NONE;
         h3->ehdr.e_flags = ehdri.e_flags;
     }
+
+    unsigned phnum_o = get_te16(&h2->ehdr.e_phnum);
 
     assert(get_te32(&h2->ehdr.e_phoff)     == sizeof(Elf32_Ehdr));
                          h2->ehdr.e_shoff = 0;
@@ -2768,26 +2768,21 @@ PackLinuxElf32::generateElfHdr(
     if (brka) {
         // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
         upx_uint32_t lo_va_user = ~0u;  // infinity
-        upx_uint32_t memsz(0);
         for (int j= e_phnum; --j>=0; ) {
             if (PT_LOAD32 == get_te32(&phdri[j].p_type)) {
                 upx_uint32_t const vaddr = get_te32(&phdri[j].p_vaddr);
                 lo_va_user = umin(lo_va_user, vaddr);
-                if (vaddr == lo_va_user) {
-                    memsz = get_te32(&phdri[j].p_memsz);
-                }
             }
         }
-        set_te32(&h2->phdr[C_TEXT].p_paddr, lo_va_user);
-        set_te32(&h2->phdr[C_TEXT].p_vaddr, lo_va_user);
-        unsigned const brkb = page_mask & (~page_mask +
-            get_te32(&h2->phdr[C_TEXT].p_vaddr) + memsz);
+        set_te32(                 &h2->phdr[C_BASE].p_vaddr, lo_va_user);
+        h2->phdr[C_BASE].p_paddr = h2->phdr[C_BASE].p_vaddr;
+        h2->phdr[C_TEXT].p_vaddr = h2->phdr[C_BASE].p_vaddr;
+        h2->phdr[C_TEXT].p_paddr = h2->phdr[C_BASE].p_vaddr;
         set_te32(&h2->phdr[C_BASE].p_type, PT_LOAD32);  // be sure
         h2->phdr[C_BASE].p_offset = 0;
-        set_te32(&h2->phdr[C_BASE].p_vaddr, brkb);
-        set_te32(&h2->phdr[C_BASE].p_paddr, brkb);
         h2->phdr[C_BASE].p_filesz = 0;
-        set_te32(&h2->phdr[C_BASE].p_memsz, brka - brkb);
+        // .p_memsz = brka;  temporary until sz_pack2
+        set_te32(&h2->phdr[C_BASE].p_memsz, brka);
         set_te32(&h2->phdr[C_BASE].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
@@ -3051,8 +3046,10 @@ PackLinuxElf64::generateElfHdr(
                 lo_va_user = umin64(lo_va_user, vaddr);
             }
         }
-        set_te64(&h2->phdr[C_TEXT].p_paddr, lo_va_user);
-        set_te64(&h2->phdr[C_TEXT].p_vaddr, lo_va_user);
+        set_te64(                 &h2->phdr[C_BASE].p_vaddr, lo_va_user);
+        h2->phdr[C_BASE].p_paddr = h2->phdr[C_BASE].p_vaddr;
+        h2->phdr[C_TEXT].p_vaddr = h2->phdr[C_BASE].p_vaddr;
+        h2->phdr[C_TEXT].p_paddr = h2->phdr[C_BASE].p_vaddr;
         set_te32(&h2->phdr[C_BASE].p_type, PT_LOAD64);  // be sure
         h2->phdr[C_BASE].p_offset = 0;
         h2->phdr[C_BASE].p_filesz = 0;
