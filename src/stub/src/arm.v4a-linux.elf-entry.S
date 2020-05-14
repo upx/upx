@@ -90,7 +90,7 @@ sz_pack2= . - 4
 mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
-////    nop; bkpt
+////  nop; bkpt
         sub sp,sp,#6*4
 F_elfaddr= 0*4
 F_fd=      1*4
@@ -127,17 +127,14 @@ end_decompress: .globl end_decompress
 section ELFMAINZ
 unfold:  // in: r3= mflg; r6= elfaddr; lr= &O_BINFO
         str r3,[sp,#F_mflg]
-        mov r10,#0; sub r10,r10,r6  @ "neg r10,r6": -elfaddr
-        add r6,lr,#4  @ &b_info of folded code
-        add r14,r6,r10  @ offset(b_info)
+        add r6,lr,#4  @ &b_info of folded stub
 
-// Reserve space for input file and unfolded stub
-        ldr r1,[r6,#sz_unc]
+// Reserve space for unfolded stub
         mov r5,#0  @ offset
         mov r4,#-1  @ fd
         @r3= mflg  @ MAP_PRIVATE|MAP_ANONYMOUS or MAP_PRIVANON
         mov r2,#PROT_READ|PROT_WRITE
-        add r1,r1,r14  @ length= .sz_unc + offset(b_info)
+        ldr r1,[r6,#sz_unc]
         mov r0,#0  @ kernel chooses addr
         str r1,[sp,#F_LENU]  @ length to munmap
         do_sys7t __NR_mmap64
@@ -146,25 +143,14 @@ unfold:  // in: r3= mflg; r6= elfaddr; lr= &O_BINFO
         stmdb sp!,{TRACE_REGS}; mov r0,#1; bl trace
 #endif  /*}*/
 
-// Duplicate the input data
-        ldr r1,[r6,#sz_cpr]
-        @mov r5,#0
-        ldr r4,[sp,#F_fd]
-        mov r3,#MAP_PRIVATE|MAP_FIXED
-        @mov r2,#PROT_READ|PROT_WRITE
-        add r1,r1,r14  @ length= .sz_cpr + offset(b_info)
-        @mov r0,r0  @ same address
-        do_sys7t __NR_mmap64
-        add r10,r0,r10  @ relocation amount= (new - old)
-
 // Unfold
         ldr r3,[r6,#sz_unc]; str r3,[sp,#-4]!  @ P_01
-        mov r3,sp  @ &sz_unc
+        mov r3,sp  @ &sz_unc = &dstlen
+        mov r2,r0  @ dst
         ldrb r0,[r6,#b_method]; str r0,[sp,#-4]!  @ P_02  5th param to f_exp
-        add r2,r6,r10  @ dst= reloc(&b_info)
         ldr r1,[r6,#sz_cpr]  @ srclen
-        add r0,r6,#3*4  @ src
-        mov r4,r2  @ copy of dst
+        add r0,r6,#sz_b_info  @ src
+        mov r10,r2  @ copy of dst
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#2; bl trace
 #endif  /*}*/
@@ -173,31 +159,24 @@ unfold:  // in: r3= mflg; r6= elfaddr; lr= &O_BINFO
         ldr r3,[sp],#4  @ P_01  sz_unc
 
         ldr r1,[sp,#F_mflg]  @ mflg
-        str r1,[r4]  @ pass mflg to folded code
+        str r1,[r10],#4  @ pass mflg to folded code
 
 // PROT_EXEC
-        ldr r0,[sp,#F_f_exp]
-          add r1,r3,r6   @ old last needed
-        add r0,r0,r10  @ reloc(f_exp)
-          add r1,r1,r10  @ new last needed
-        str r0,[sp,#F_f_exp]  @ new f_exp
-        mov r0,r0,lsr #PAGE_SHIFT  @ round down
-          mov r2,#PROT_EXEC|PROT_READ
-        mov r0,r0, lsl #PAGE_SHIFT
-          sub r1,r1,r0  @ length
+        mov r2,#PROT_EXEC|PROT_READ
+        ldr r1,[sp,#F_LENU]
+        ldr r0,[sp,#F_ADRU]
         do_sys7t __NR_mprotect
 
-// Use the copy
+// jmp unfolded_code
+        ldr r0,[sp,#F_elfaddr]
         ldr r1,[r6,#-4]  @ O_BINFO
-        ldr r0,[sp,#F_ADRU]
+        add r5,r0,r1  @ ADRX= &b_info
         sub r4,r9,r1  @ LENX= sz_pack2 - O_BINFO
-        add r5,r0,r1  @ ADRX= new Elf32_Ehdr + O_BINFO
-        add r6,r6,#4  @ past the forwarded data
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
         adr lr,proc_self_exe
-        add pc,r6,r10  @ goto reloc(unfold)
+        mov pc,r10  @ goto unfold
 proc_self_exe:
         .asciz "/proc/self/exe"
         .balign 4
