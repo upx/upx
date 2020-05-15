@@ -36,12 +36,13 @@ PAGE_SIZE= ( 1<<12)
 PATH_MAX= 4096
 
 ET_DYN= 3
-#define szElf32_Ehdr 0x34
-#define szElf32_Phdr 8*4
-e_type=   16
-e_phnum=  44
-#define e_entry  (16 + 2*2 + 4)
-#define p_memsz  5*4
+sz_Elf32_Ehdr= 0x34
+  e_type=   16
+  e_entry=  (16 + 2*2 + 4)
+  e_phnum=  44
+sz_Elf32_Phdr= 8*4
+  p_memsz=  5*4
+
 #define szb_info 12
 #define szl_info 12
 #define szp_info 12
@@ -66,9 +67,9 @@ O_RDONLY=       0
 // are uncompressed.
 
 // enter:
-// eax:ADRX; ebx:free; ecx:LENX; edx:&unfold
+// eax:ADRX; ebx:free; ecx:LENX
 // ebp:f_exp; esi:free; edi:elfaddr
-// esp/ ADRU,LENU,fd,entry,argc,argv,0,envp,0,auxv,0,strings
+// esp/ ADRU,LENU,fd,%entry,argc,argv,0,envp,0,auxv,0,strings
 //      (ADRU,LENU) = params for final munmap()
 //      (ADRX,LENX) = extent of compressed program (after moving)
 
@@ -172,9 +173,15 @@ F_fd= 6*4  // frame offset to fd
 .extern upx_main
         call upx_main  // returns entry address
         dec edi
+        mov esi,eax  // entry
+        mov ebp,[8*4+ esp]  // elfaddr
+
+// Discard C_TEXT (includes [ADRC,+LENC) )
+        mov ecx,[ebp+ p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
+        mov ebx,ebp  // hi &Elf32_Ehdr
+        push __NR_munmap; pop %eax; int 0x80  // discard C_TEXT compressed data
 
 // Buggy programs may depend on uninit stack being 0, so clear what we used.
-        mov esi,eax  // save entry
         mov edx,edi  // save auxv
         mov edi,esp
         mov ecx,((8 +1)*4 + MAX_ELF_HDR + OVERHEAD) >>2  // 8 params, elfaddr, un-alloca
@@ -185,13 +192,14 @@ F_fd= 6*4  // frame offset to fd
         pop eax  // ADRU
         pop ecx  // LENU
         pop edi  // fd
-        pop ebx  // space
+        pop ebx  // %entry
         push esi  // entry
         push ecx  // LENU
         push eax  // ADRU
         push edx  // auxv
         push edi  // fd, auxv, ADRU, LENU, entry, argc
 
+// Map one page of /proc/self/exe so that symlink does not disappear
         sub ebp,ebp  // 0 block in file
         // edi has fd
         push MAP_PRIVATE; pop esi
@@ -211,7 +219,8 @@ L60:
         scasd  // a_type
         jne L60  // not AT_NULL
 // edi now points at [AT_NULL]a_un.a_ptr which contains result of make_hatch()
-        pop ebx  // ADRU
+
+        pop ebx  // ADRU  parameters for final munmap
         pop ecx  // LENU
 
         push eax
