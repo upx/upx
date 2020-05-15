@@ -43,7 +43,7 @@ section LEXEC000
 sz_pack2 = -4+ _start
 _start: .globl _start
 ////    nop; int3  // DEBUG
-        push eax  // space for entry address
+        push eax  // space for %entry address
 /*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
@@ -183,47 +183,19 @@ unfold:  // IN: ebp= f_exp;  esp/ &O_BINFO
         sub ecx,ecx  // O_RDONLY
         push __NR_open; pop eax; int 0x80; push eax  // P_31  fd
 
-// Reserve space for input file and unfolded stub
+// Reserve space for unfolded stub
         push 0  // offset
-          mov edx,esi
         push -1  // fd
-          sub edx,edi  // offset(dst) of unfold
         push MAP_PRIVATE|MAP_ANONYMOUS
-          add edx,[esi]  // + sz_unc
+          mov edx,[esi]  // .sz_unc
         push PROT_READ|PROT_WRITE
         push edx  // len
         push 0 // kernel chooses addr
         call mmap
-        pop ecx; push ecx  // P_31 fd
         push edx  // P_23  LENU
         push eax  // P_24  ADRU
+        xchg eax,edx  // edx= ADRU
 
-// Duplicate the input data.
-          mov edx,esi
-        push 0 // offset
-          sub edx,edi  // offset(dst) of unfold
-        push ecx  // fd
-          add edx,[esi + sz_cpr]  // edx <= .st_size
-        PUSH MAP_PRIVATE|MAP_FIXED  // at reserved addr eax by previous mmap
-        push PROT_READ|PROT_WRITE
-        push edx  // len
-        push eax  // addr
-        call mmap  // another copy of this program
-
-// Remember new f_exp region for PROT_EXEC.
-        mov edx,eax  // copy ADRU
-        sub eax,edi  // relocation amount
-        add eax,esi  // dst for unfolding
-        mov ecx,eax
-        push eax  // P_20 dst
-        add ecx,[esi]  // + sz_unc; last of unfolded
-        mov eax,ebp  // old f_exp
-        sub eax,edi  // offset(f_exp)
-        add eax,edx  // new f_exp
-        and eax,PAGE_MASK  // base to protect
-        sub ecx,eax  // length to protect
-        pop edx; push edx  // P_20 dst
-        push ecx; push eax  // P_21  save for PROT_EXEC
 // Unfold
         lodsd; push eax; mov ebx,esp  // sz_unc
         lodsd; xchg ecx,eax  // sz_cpr
@@ -234,20 +206,23 @@ unfold:  // IN: ebp= f_exp;  esp/ &O_BINFO
         push esi  // src
         call ebp  // decompress
         add esp,6*4
+
 // PROT_EXEC
-        pop ebx; pop ecx  // P_21
+        pop %ebx  // P_24 ADRU
+        pop %ecx  // P_23 LENU
         push PROT_EXEC|PROT_READ; pop edx
+        push %ecx  // P_23 LENU
+        push %ebx  // P_24 ADRU
         push __NR_mprotect; pop eax; int 0x80
-// Use the copy
-        pop edx  // P_20 &unfold
-        pop eax; push eax  // P_24  ADRU
-        sub ebp,edi  // - old_base
-        add ebp,eax  // new f_exp
-        add eax,[-4*4 + esi]  // + O_BINFO = ADRX
+
+// Jump to unfolded code
+        mov eax,[-4*4 + esi]  // O_BINFO
+        add eax,edi  // ADRX
         mov ecx,[sz_pack2 - f_exp + ebp]  // LENX(==sz_pack2)
-// eax:ADRX; ebx:free; ecx:LENX; edx:&unfold
-// ebp:f_exp; esi:&old_b_info(fold); edi:dynbase
-        jmp edx  // esp/ ADRU,LENU,fd,entry,argc,argv,0,...
+// eax:ADRX; ebx:free; ecx:LENX
+// ebp:f_exp; esi:&b_info(fold); edi:dynbase
+        pop %edx; push %edx
+        jmp edx  // esp/ ADRU,LENU,fd,%entry,argc,argv,0,...
 
 mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
         lea ebx,[4+esp]

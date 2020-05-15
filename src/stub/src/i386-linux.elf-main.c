@@ -673,13 +673,19 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     Elf32_Addr reloc;
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
-        Elf32_Addr ehdr0 = *p_reloc;  // the 'hi' copy!
-        Elf32_Phdr *phdr0 = (Elf32_Phdr *)(((Elf32_Ehdr *)ehdr0)->e_phoff + ehdr0);
+        Elf32_Addr  ehdr0 = *p_reloc;  // the 'hi' copy!
+        Elf32_Phdr *phdr0 = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)ehdr0);  // cheats .e_phoff
         // Clear the 'lo' space reservation for use by PT_LOADs
-        ehdr0 -= phdr0[1].p_vaddr;  // the 'lo' copy
+        if (ET_EXEC==((Elf32_Ehdr *)ehdr0)->e_type) {
+            ehdr0 = phdr0[0].p_vaddr;
+            reloc = 0;
+        }
+        else {
+            ehdr0 -= phdr0[1].p_vaddr;
+            reloc = ehdr0;
+        }
         v_brk = phdr0->p_memsz + ehdr0;
-        reloc = (Elf32_Addr)mmap((void *)ehdr0, phdr0->p_memsz, PROT_NONE,
-            MAP_FIXED|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+        munmap((void *)ehdr0, phdr0->p_memsz);
     }
     else { // PT_INTERP
         reloc = xfind_pages(
@@ -936,7 +942,7 @@ void *upx_main(
     xi.size  = sz_compressed;
 #endif  // !__mips__ }
 
-    Elf32_Addr reloc = elfaddr;
+    Elf32_Addr reloc = elfaddr;  // ET_EXEC problem!
     DPRINTF("upx_main1  .e_entry=%%p  reloc=%%p\\n", ehdr->e_entry, reloc);
     Elf32_Phdr *phdr = (Elf32_Phdr *)(1+ ehdr);
 

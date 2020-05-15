@@ -472,7 +472,6 @@ static void exit(int code)
     for (;;) {}
 }
 
-#if 0  /*{ UNUSED */
 static int munmap(void *addr, size_t len)
 {
 #define __NR_munmap (91+ 4000)
@@ -487,7 +486,6 @@ static int munmap(void *addr, size_t len)
     );
     return v0;
 }
-#endif  /*}*/
 
 static int mprotect(void const *addr, size_t len, int prot)
 {
