@@ -5362,7 +5362,8 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket];
         unsigned const m = elf_hash(name) % nbucket;
-        if ((unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
+        if (!nbucket
+        ||  (unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
                 <= sizeof(unsigned)*nbucket ) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad nbucket %#x\n", nbucket);
@@ -5384,7 +5385,14 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const *const bitmask = &gashtab[4];
         unsigned const *const buckets = &bitmask[n_bitmask];
         unsigned const *const hasharr = &buckets[n_bucket];
-        if ((unsigned)(file_size - ((char const *)bitmask - (char const *)(void const *)file_image))
+        if (!n_bucket
+        || (void const *)&file_image[file_size] <= (void const *)hasharr) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                "bad n_bucket %#x\n", n_bucket);
+            throwCantPack(msg);
+        }
+        if (!n_bitmask
+        || (unsigned)(file_size - ((char const *)bitmask - (char const *)(void const *)file_image))
                 <= sizeof(unsigned)*n_bitmask ) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bitmask %#x\n", n_bitmask);
@@ -5431,7 +5439,8 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket];
         unsigned const m = elf_hash(name) % nbucket;
-        if ((unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
+        if (!nbucket
+        ||  (unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
                 <= sizeof(unsigned)*nbucket ) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad nbucket %#x\n", nbucket);
@@ -5453,7 +5462,14 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         upx_uint64_t const *const bitmask = (upx_uint64_t const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket];
-        if ((unsigned)(file_size - ((char const *)bitmask - (char const *)(void const *)file_image))
+        if (!n_bucket
+        || (void const *)&file_image[file_size] <= (void const *)hasharr) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                "bad n_bucket %#x\n", n_bucket);
+            throwCantPack(msg);
+        }
+        if (!n_bitmask
+        || (unsigned)(file_size - ((char const *)bitmask - (char const *)(void const *)file_image))
                 <= sizeof(unsigned)*n_bitmask ) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bitmask %#x\n", n_bitmask);
