@@ -1692,6 +1692,12 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         unsigned const *const bitmask = (unsigned const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
+        if (!n_bucket || (1u<<31) <= n_bucket  /* fie on fuzzers */
+        || (void const *)&file_image[file_size] <= (void const *)hasharr) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                "bad n_bucket %#x\n", n_bucket);
+            throwCantPack(msg);
+        }
       //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum, except:
         // Rust and Android trim unused zeroes from high end of hasharr[]
         unsigned bmax = 0;
@@ -5249,6 +5255,12 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
         upx_uint64_t const *const bitmask = (upx_uint64_t const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
+        if (!n_bucket || (1u<<31) <= n_bucket  /* fie on fuzzers */
+        || (void const *)&file_image[file_size] <= (void const *)hasharr) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                "bad n_bucket %#x\n", n_bucket);
+            throwCantPack(msg);
+        }
       //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum, except:
         // Rust and Android trim unused zeroes from high end of hasharr[]
         unsigned bmax = 0;
