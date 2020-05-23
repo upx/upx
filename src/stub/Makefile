@@ -206,7 +206,7 @@ tc_objdump_disasm_options =
 ECHO_e     = /bin/echo -e
 ECHO_E     = /bin/echo -E
 PERL       = perl
-PYTHON     = python
+PYTHON     = python2
 UNIX2DOS  := $(PERL) -i -pe 's/$$/\r/;'
 
 # trim (strip) trailing whitespace
