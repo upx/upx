@@ -191,11 +191,6 @@ r_obinf= 19
 unfold:  // IN: r_exp, r_auxv, r_PMASK
         mflr r_FLD  // LrFLD
 
-// Open /proc/self/exe
-        call 0f; .asciz "/proc/self/exe"; .balign 4; 0: mflr a0
-        li a1,O_RDONLY
-        li r0,__NR_open; sc; mr r_fd,a0
-
 //Reserve enough space to decompress the folded code onto r_FLD.
         lwz r0,   sz_pack2 - f_exp(r_exp)
         la r_elfa,sz_pack2 - f_exp(r_exp)
@@ -210,25 +205,7 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
         call mmapRW0
         mr r_ADRU,a0
 
-//Duplicate the input data.
-        lwz r0,sz_cpr + LBINFO - LrFLD(r_FLD)  // sz_cpr of fold
-        sub a1,r_LENU,r_szuf  // - sz_unc of fold
-        mr a4,r_fd  // from file
-        li a3,MAP_PRIVATE|MAP_FIXED  // at reserved addr a0 by previous mmap
-        add a1,a1,r0  // + sz_cpr of fold; a1 <= .st_size
-        call mmapRW0
-        sub r_relo,a0,r_elfa  // relocation amount
-        mtctr r_exp; add r_exp,r_exp,r_relo  // use old f_exp; r_exp= new &f_exp
-
-// Decompress from old folded code, overwriting new copy of folded code.
-        lwz r_obinf,       LOBINFO - LrFLD(r_FLD)  // O_BINFO
-        la src,sz_b_info +  LBINFO - LrFLD(r_FLD)  // old folded code
-        add r_FLD,r_FLD,r_relo  // dst for unfolding;  use copied data
-        add r_LENM,r_FLD,r_szuf  // + sz_unc = last of unfolded
-        and r_ADRM,r_exp,r_PMASK  // base for PROT_EXEC
-        sub r_LENM,r_LENM,r_ADRM  // length for PROT_EXEC
-
-// The new f_exp has PROT_WRITE, so use the old f_exp to decompress.
+// Decompress folded code
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         std r_szuf,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
         la ldst,   SZ_FRAME+31*NBPW(sp)  // &slot on stack
