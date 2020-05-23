@@ -312,7 +312,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         dynsym = (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
         gashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
         hashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
-        if (3& ((unsigned)(long)dynsym | (unsigned)(long)gashtab | (unsigned)(long)hashtab)) {
+        if (3& ((uintptr_t)dynsym | (uintptr_t)gashtab | (uintptr_t)hashtab)) {
             throwCantPack("unaligned DT_SYMTAB, DT_GNU_HASH, or DT_HASH/n");
         }
         jni_onload_sym = elf_lookup("JNI_OnLoad");
@@ -805,7 +805,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         dynsym = (Elf64_Sym const *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
         gashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
         hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
-        if (3& ((unsigned)(long)dynsym | (unsigned)(long)gashtab | (unsigned)(long)hashtab)) {
+        if (3& ((uintptr_t)dynsym | (uintptr_t)gashtab | (uintptr_t)hashtab)) {
             throwCantPack("unaligned DT_SYMTAB, DT_GNU_HASH, or DT_HASH/n");
         }
         jni_onload_sym = elf_lookup("JNI_OnLoad");
