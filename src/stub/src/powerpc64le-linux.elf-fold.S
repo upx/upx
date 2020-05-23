@@ -139,6 +139,10 @@ L90:
         la cblk,NBPW(a1)  // original &strings
         stwu r0,NBPW(a0)
         la  r_buf,L_PFX(a0)  // buffer
+// r_fd = open("/proc/self/exe", O_RDONLY)
+        li a1,O_RDONLY
+        la a0,L_PFX+ L90a - L90b(r_unf)  //     "/proc/self/exe"
+        call open; mr r_fd,a0
 // readlink("/proc/self/exe", buffer, -1+ PATH_MAX)
         li a2,-1+ PATH_MAX
         movr a1,r_buf  // buffer
@@ -215,6 +219,14 @@ noTOC:
         std r3,0(av_hi)  // .func for .e_entry
 #endif  //}
         mr r_exp,a0  // save &entry (.entry when BIG_ENDIAN)
+
+p_vaddr= 4+4+8
+// Discard pages of compressed data (includes [ADRX,+LENX) )
+        ld a1,p_vaddr+szElf64_Phdr+szElf64_Ehdr(r_elfa)  // Phdr[C_TEXT= 1].p_vaddr
+        ld r0,p_vaddr             +szElf64_Ehdr(r_elfa)  // Phdr[C_BASE= 0].p_vaddr
+        movr a0,r_elfa  // hi elfaddr
+        subf a1,r0,a1  // length
+        call munmap  # discard C_TEXT compressed data
 
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)
         li a5,0  // offset
