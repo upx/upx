@@ -174,23 +174,18 @@ r_LENU=  28
 r_fd=    27
 r_auxv=  26
 r_elf=   25
-r_ADRM=  24; r_ADRX= r_ADRM
-r_LENM=  23; r_LENX= r_LENM
+r_ADRX=  24
+r_LENX=  23
 r_FLD=   22
 r_szuf=  21
-r_relo=  20
+
 r_obinf= 19
 
         /* Decompress the rest of this loader, and jump to it. */
 unfold:  // IN: r_exp, r_auxv, r_PMASK
         mflr r_FLD  // LrFLD
 
-//Open /proc/self/exe
-        call 0f; .asciz "/proc/self/exe"; .balign 4; 0: mflr a0
-        li a1,O_RDONLY
-        li r0,__NR_open; sc; mr r_fd,a0
-
-//Reserve enough space to decompress the folded code onto r_FLD.
+//Reserve enough space to decompress the folded code of the stub
         lwz r0,  sz_pack2 - f_exp(r_exp)
         la r_elf,sz_pack2 - f_exp(r_exp)
           li a4,-1
@@ -198,57 +193,39 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
           li a3,MAP_PRIVATE|MAP_ANONYMOUS
         sub r_elf,r_elf,r0  // r_elf=&Elf32_Ehdr of stub
           li a0,0  // kernel chooses addr
-        sub r0,r_FLD,r_elf  // offset(fold)
-        add a1,r_szuf,r0  // length needed
+        mr a1,r_szuf  // length needed
         mr r_LENU,a1
-        call mmapRW0
+        call mmapRW0  // fills in a5, a2
         mr r_ADRU,a0
 
-//Duplicate the input data.
-        lwz r0,sz_cpr + LBINFO - LrFLD(r_FLD)  // sz_cpr of fold
-        sub a1,r_LENU,r_szuf  // - sz_unc of fold
-        mr a4,r_fd  // from file
-        li a3,MAP_PRIVATE|MAP_FIXED  // at reserved addr a0 by previous mmap
-        add a1,a1,r0  // + sz_cpr of fold; a1 <= .st_size
-        call mmapRW0
-        sub r_relo,a0,r_elf  // relocation amount
-        mtctr r_exp; add r_exp,r_exp,r_relo  // use old f_exp; r_exp= new &f_exp
-
-// Decompress from old folded code, overwriting new copy of folded code.
-        lwz r_obinf,       LOBINFO - LrFLD(r_FLD)  // O_BINFO
-        la src,sz_b_info + LBINFO - LrFLD(r_FLD)  // old folded code
-        add r_FLD,r_FLD,r_relo  // dst for unfolding;  use copied data
-        add r_LENM,r_FLD,r_szuf  // + sz_unc = last of unfolded
-        and r_ADRM,r_exp,r_PMASK  // base for PROT_EXEC
-        sub r_LENM,r_LENM,r_ADRM  // length for PROT_EXEC
-
-// The new f_exp has PROT_WRITE, so use the old f_exp to decompress.
+// Decompress folded code
+        lwz r_obinf,      LOBINFO - LrFLD(r_FLD)  // O_BINFO
+        mtctr r_exp
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         stw  r_szuf,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
-        la ldst,SZ_FRAME+31*NBPW(sp)  // &slot on stack
-        mr dst,r_FLD  // dst for unfolding
+        la ldst,    SZ_FRAME+31*NBPW(sp)  // &slot on stack
+        mr dst,r_ADRU  // dst for unfolding
         lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
+        la src,sz_b_info + LBINFO - LrFLD(r_FLD)  // folded code
         bctrl  // decompress it
 
 // Generate code to compute PAGE_MASK.
-        lwz r0,0(r_FLD)  // "li r3,PAGE_MASK>>9"
+        lwz r0,0(r_ADRU)  // "li r3,PAGE_MASK>>9"
         srwi a0,r_PMASK,9
         insrwi r0,a0,16,16  // replace the immediate constant
-        stw r0,0(r_FLD)  // get_page_mask: li r3,PAGE_MASK>>9
+        stw r0,0(r_ADRU)  // get_page_mask: li r3,PAGE_MASK>>9
 
 // PROT_EXEC
         li a2,PROT_EXEC|PROT_READ
-        mr a1,r_LENM  // length
-        mr a0,r_ADRM  // base
+        mr a1,r_LENU  // length
+        mr a0,r_ADRU  // base
         li r0,__NR_mprotect; sc
 
 // Use the unfolded code
+          addi r0,r_ADRU,4*4  // skip get_page_mask()
         lwz r_LENX, sz_pack2 - f_exp(r_exp)
-        add r_ADRX,r_elf,r_obinf  // old compressed data
-        add r_ADRX,r_ADRX,r_relo  // new compressed data
-
-        addi r0,r_FLD,4*4  // jmp over get_page_mask()
-        mtctr r0
+          mtctr r0
+        add r_ADRX,r_elf,r_obinf  // compressed data
         bctr
 
 // Example code at entrypoint of C-language subroutine:
