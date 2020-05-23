@@ -165,7 +165,11 @@ typedef unsigned char   upx_byte;
 // see C 11 standard, Annex K
 typedef size_t upx_rsize_t;
 #define UPX_RSIZE_MAX       UPX_RSIZE_MAX_MEM
+#if (ACC_SIZEOF_VOID_P > 4)
+#define UPX_RSIZE_MAX_MEM   (2 * 768 * 1024 * 1024)   // DO NOT CHANGE
+#else
 #define UPX_RSIZE_MAX_MEM   (768 * 1024 * 1024)   // DO NOT CHANGE
+#endif
 #define UPX_RSIZE_MAX_STR   (1024 * 1024)
 
 
