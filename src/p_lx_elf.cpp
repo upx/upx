@@ -2782,7 +2782,7 @@ PackLinuxElf32::generateElfHdr(
         h2->phdr[C_BASE].p_offset = 0;
         h2->phdr[C_BASE].p_filesz = 0;
         // .p_memsz = brka;  temporary until sz_pack2
-        set_te32(&h2->phdr[C_BASE].p_memsz, brka);
+        set_te32(&h2->phdr[C_BASE].p_memsz, brka - lo_va_user);
         set_te32(&h2->phdr[C_BASE].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
@@ -3054,7 +3054,7 @@ PackLinuxElf64::generateElfHdr(
         h2->phdr[C_BASE].p_offset = 0;
         h2->phdr[C_BASE].p_filesz = 0;
         // .p_memsz = brka;  temporary until sz_pack2
-        set_te64(&h2->phdr[C_BASE].p_memsz, brka);
+        set_te64(&h2->phdr[C_BASE].p_memsz, brka - lo_va_user);
         set_te32(&h2->phdr[C_BASE].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
