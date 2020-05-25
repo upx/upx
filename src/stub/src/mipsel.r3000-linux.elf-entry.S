@@ -307,78 +307,53 @@ die:
         li a0,127
         li v0,__NR_exit; syscall
 
-unfold:  // IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD,ra= "/proc/self/exe"
+unfold:  // IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
         addiu sp,sp,-sp_frame
         sw $r_PMASK,F_PMASK(sp)
 
-// Open /proc/self/exe
-        move a0,ra
-        li a1,O_RDONLY
-        li v0,__NR_open; syscall; sw v0,F_fd(sp)
-
-// Reserve enough space to decompress the folded code onto $r_FOLD.
-        lw v0,                  sz_pack2 - f_exp($r_fexp)  // length before stub
-          addiu $r_elfa,$r_fexp,sz_pack2 - f_exp
+// Reserve enough space to decompress the folded code of the stub
+        lw $r_LENX,sz_pack2 - f_exp($r_fexp)  // length before stub
+        la $r_elfa,sz_pack2 - f_exp($r_fexp)
           li a4,-1
         lw $r_szuf,sz_unc($r_FOLD)  // sz_unc of fold
           li a3,MAP_PRIVATE|MAP_ANONYMOUS
-        sub $r_elfa,$r_elfa,v0  // $r_elfa= &Elf32_Ehdr of this stub
+        sub $r_elfa,$r_elfa,$r_LENX  // $r_elfa= &Elf32_Ehdr of this stub
           li a0,0  // kenrel chooses addr
-        sub v0,$r_FOLD,$r_elfa  // offset(fold)
-        add a1,$r_szuf,v0  // length needed
-        sw a1,F_LENU(sp)
+        move a1,$r_szuf
         bal mmapRW0
-          move $r_LENU,a1
-        sw v0,F_ADRU(sp)
+          sw a1,F_LENU(sp)
+        sw v0,  F_ADRU(sp)
 
-// Duplicate the input data
-        lw v0,sz_cpr($r_FOLD)  // sz_cpr of fold
-        sub a1,$r_LENU,$r_szuf  // - sz_unc of fold
-        lw a4,F_fd(sp)  // from file
-        li a3,MAP_PRIVATE|MAP_FIXED  // at reserved addr a0 by previous map
-        add a1,a1,v0  // + sz_cpr of fold; a1 <= .st_size
-        bal mmapRW0
-          lw a0,F_ADRU(sp)
-        sub $r_relo, v0,$r_elfa  // relocation amount
-        move ra,$r_fexp; add $r_fexp,$r_fexp,$r_relo  // use old f_exp; $r_fexp= new &f_exp
-
-// Decompress from old folded code, overwriting new copy of folded code
-        lw $r_ADRX,   -4($r_FOLD)  // O_BINFO
-        addiu src,$r_FOLD,sz_b_info  // a0  old folded code
-        add $r_FOLD,$r_FOLD,$r_relo  // dst for unfoding;  use copied data
-        add t1, $r_FOLD, $r_szuf  // + sz_unc = last of unfolded
-        and t0,$r_fexp,$r_PMASK  // base for PROT_EXEC
-        sw  t0,F_ADRM(sp)
-        sub t1,t1,t0  // length for PROT_EXEC
-        sw  t1,F_LENM(sp)
-
-// The new f_exp has PROT_WRITE, so use the old f_exp to decompress.
-        lb meth,b_method($r_FOLD)
+        lw $r_ADRX,-4($r_FOLD)  // O_BINFO
+// Decompress folded code
+        lb meth,b_method($r_FOLD)  // a4
         sw $r_szuf,0(sp)  // lzma uses for EOF
-        move dst,$r_FOLD  // a2  dst for unfolding
+        move ldst,sp  // a3  &slot on stack
+        move dst,v0  // a2  dst for unfolding
         lw lsrc,sz_cpr($r_FOLD)  // a1
-        jalr ra  // decompress it
-          move ldst,sp  // a3  &slot on stack
+        jalr $r_fexp  // decompress it
+          addiu src,$r_FOLD,sz_b_info  // a0  folded code
 
 // Generate code to compute PAGE_MASK.
-        lw v0,0($r_FOLD)  // "li v0,0"
-        srl v1,$r_PMASK,9
+        lw a0,F_ADRU(sp)
+          srl v1,$r_PMASK,9
+        lw v0,0(a0)  // "li v0,0"
         andi v1,v1,0xffff  // 0xffff is NOT sign-extended
         or v0,v0,v1  // replace immediate constant
-        sw v0,0($r_FOLD)
+        sw v0,0(a0)
 
 // PROT_EXEC
         li a2,PROT_EXEC|PROT_READ
-        lw a1,F_LENM(sp)  // length
-        lw a0,F_ADRM(sp)  // base
+        lw a1,F_LENU(sp)  // length
+      //lw a0,F_ADRU(sp)  // base
         li v0,__NR_mprotect; syscall
 
 // Use the unfolded code
-        addi ra,$r_FOLD,4*4  // jmp over get_page_mask()
-        lw  $r_LENX,sz_pack2 - f_exp($r_fexp)
-        add $r_ADRX,$r_elfa,$r_ADRX  // old compressed data
+        lw ra,F_ADRU(sp)
+          //nop  r_LENX
+        addi ra,ra,4*4  // jmp over get_page_mask()
         jr ra
-          add $r_ADRX,$r_ADRX,$r_relo  // new compressed data
+          addu $r_ADRX,$r_elfa,$r_ADRX  // compressed data
 
 mmapRW0:
         li a5,0  // offset
@@ -424,7 +399,6 @@ main:
         bal unfold
           addiu $r_FOLD,ra,LrFLD - 0f  // &b_info for folded loader
 0:
-        .asciz "/proc/self/exe"; .balign 4
         .long O_BINFO
 LrFLD:
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
