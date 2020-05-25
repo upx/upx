@@ -198,8 +198,8 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
         call mmapRW0  // fills in a5, a2
         mr r_ADRU,a0
 
-// Decompress folded code
         lwz r_obinf,      LOBINFO - LrFLD(r_FLD)  // O_BINFO
+// Decompress folded code
         mtctr r_exp
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         stw  r_szuf,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
