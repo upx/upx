@@ -73,6 +73,8 @@ MAP_PRIVATE=  0x002
 MAP_ANONYMOUS=0x800  # not same as i386
 PROT_READ= 1
 
+O_RDONLY= 0
+
 get_page_mask:
         li v0,0  // modified to PAGE_MASK >> 9
         jr ra
@@ -100,23 +102,21 @@ a5_sys=  5*NBPW
 //k0             26  /* trashed by syscall */
 //t9, jp         25  /* trashed by syscall ? */
 //t8             24  /* trashed by syscall ? */
-//s7 AVAIL       23  /* s7 */
+//s7 AVAIL       23  /* s7 */  # saved temp for /proc/self/exe
 #define r_auxv   22  /* s6 */
 #define r_elfa   21  /* s5 */
 #define r_auxe   20  /* s4 */
-#define r_LENU   19  /* s3 */
-#define r_ADRU   18  /* s2 */
+//s3 AVAIL       19  /* s3 */  # previously r_LENU
+//s2 AVAIL       18  /* s2 */  # previously r_ADRU
 #define r_LENX   17  /* s1 */
 #define r_ADRX   16  /* s0 */
 
 /* In:
     r_ADRX,r_LENX,r_elfa,r_auxv,r_PMASK,r_fexp
-    sp= -sp_frame{%,%,%,%,PMASK,fd,ADRU,LENU}, {argc,argv...,0,env...,0,auxv...,0,0,strings}
+    sp= -sp_frame{%,%,%,%,PMASK,%fd,ADRU,LENU}, {argc,argv...,0,env...,0,auxv...,0,0,strings}
 */
 fold_begin:
 ////    break
-        lw $r_ADRU,F_ADRU(sp)
-        lw $r_LENU,F_LENU(sp)
         move v0,sp
         addiu sp,(~0<<4)&-(NBPW+ 4+ PATHSIZE - sp_frame)  # alloca: new envp[0], "   =", buffer
 
@@ -141,16 +141,22 @@ L30:  // copy auxv
         sb tmp,2(v1)
         li tmp,'='
         sb tmp,3(v1)
+        addiu s7,v1,4  # &buf[0]
 
-        li a2,PATHSIZE-1
-        addiu a1,v1,4  # &buf[0]
         bal 9f
-          move a0,ra  # &path
+          sw ra,F_fd(sp)  # "/proc/self/exe"
         .asciz "/proc/self/exe"
         .balign 4
 9:
-        li v0,__NR_readlink
-        syscall
+        li a1,O_RDONLY
+        move a0,ra  # "/proc/self/exe"
+        li v0,__NR_open; syscall
+
+        li a2,PATHSIZE-1
+        move a1,s7  # &buf[0]
+        lw a0,F_fd(sp)  # "/proc/self/exe"
+        sw v0,F_fd(sp)  # result of __NR_open
+        li v0,__NR_readlink; syscall
         bltz a3,0f
           addu tmp,a1,v0
         sb $0,(tmp)  # null terminate the path
@@ -186,6 +192,14 @@ BAL=0x04110000
         addiu sp,MAX_ELF_HDR  # un-alloca
         move $r_fexp,v0  # &entry
 
+p_vaddr= 4+4
+// Discard pages of compressed data (includes [ADRX,+LENX) )
+        lw a1,p_vaddr+sz_Phdr+sz_Ehdr($r_elfa)  // Phdr[C_TEXT= 1].p_vaddr
+        lw v0,p_vaddr        +sz_Ehdr($r_elfa)  // Phdr[C_BASE= 0].p_vaddr
+        move a0,$r_elfa  // hi elfaddr
+        subu a1,a1,v0  // length
+        li v0,__NR_munmap; syscall
+
 // Map 1 page of /proc/self/exe so that munmap does not remove all references
         lw   a4,F_fd(sp)
         move a5,$0  // offset
@@ -196,25 +210,28 @@ BAL=0x04110000
         neg  a1,$r_PMASK  // PAGE_SIZE
         move a0,$0  // addr
         li v0,__NR_mmap; syscall
-
+// close /proc/self/exe
         lw a0,a4_sys(sp)  // fd
         li v0,__NR_close; syscall
+
+        lw a1,F_LENU(sp)  # prepare for munmap() at escape hatch
+        lw a0,F_ADRU(sp)
         addiu sp,sp,sp_frame
 
 /* Workaround suspected glibc bug: elf/rtld.c assumes uninit local is zero.
    2007-11-24 openembedded.org mipsel-linux 2.6.12.6/glibc 2.3.2
 */
         move tmp,sp
-        addiu sp, -300  # estimated stack bound of upx_main and below
+        addiu sp, -512  # estimated stack bound of upx_main and below
 0:
         addiu sp,NBPW
         bne sp,tmp,0b
           sw $0,-NBPW(sp)
 
         lw tmp,-sz_auxv+ a_val($r_auxe)  // last .a_val
-          move a1,$r_LENU
+          nop  # needed? allegedly MIPS R3000 provides load delay in hardware when needed
         beqz tmp,L40  # could not make escape hatch
-          move a0,$r_ADRU
+          nop  # even R3000 requires branch delay
         jr tmp  # goto munmap escape hatch: [syscall; jr $r_fexp; nop]
           li v0,__NR_munmap
 L40:
@@ -256,8 +273,7 @@ mmap: .globl mmap
         addiu sp,sp,-sp_frame
         sw a4,a4_sys(sp)
         sw a5,a5_sys(sp)
-        li v0,__NR_mmap
-        syscall
+        li v0,__NR_mmap; syscall
         b sysret
           addiu sp,sp,sp_frame
 #endif  /*}*/

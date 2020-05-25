@@ -476,12 +476,12 @@ static int munmap(void *addr, size_t len)
 {
 #define __NR_munmap (91+ 4000)
     register  void *const a0 asm("a0") = addr;
-    register size_t const a1 asm("a2") = len;
-    register size_t       v0 asm("v0");
+    register size_t const a1 asm("a1") = len;
+    register size_t       v0 asm("v0") = __NR_munmap;
     __asm__ __volatile__(
         "bal sysgo"
-    :      "=r"(v0)
-    :  [v0] "r"(__NR_munmap), "r"(a0), "r"(a1)
+    : "+r"(v0)
+    : "r"(a0), "r"(a1)
     : "a3", "ra"
     );
     return v0;
@@ -498,7 +498,7 @@ static int mprotect(void const *addr, size_t len, int prot)
         "bal sysgo"
     : "+r"(v0)
     : "r"(a0), "r"(a1), "r"(a2)
-    : "a3", "ra", "ra"
+    : "a3", "ra"
     );
     return v0;
 }
