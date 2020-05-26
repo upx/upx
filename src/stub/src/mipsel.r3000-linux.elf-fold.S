@@ -220,9 +220,16 @@ p_vaddr= 4+4
 
 /* Workaround suspected glibc bug: elf/rtld.c assumes uninit local is zero.
    2007-11-24 openembedded.org mipsel-linux 2.6.12.6/glibc 2.3.2
+
+   Also early uClibc/ldso/ldso/ldso.c function _dl_get_ready_to_run() forgot
+     _dl_memset(app_tpnt, 0, sizeof(*app_tpnt));
+   leaving garbage in
+            if (app_tpnt->dynamic_info[DT_TEXTREL]) {
+   leading to SIGSEGV.  Fixed in [git blame:]
+27d501fdbf (Denis Vlasenko           2009-01-10 21:02:48 +0000
 */
         move tmp,sp
-        addiu sp, -512  # estimated stack bound of upx_main and below
+        addiu sp, -0x380  # estimated stack bound of upx_main and below
 0:
         addiu sp,NBPW
         bne sp,tmp,0b
