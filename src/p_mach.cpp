@@ -1386,7 +1386,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(&hbuf, sizeof(hbuf));
     unsigned const orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);  // emacs-21.2.1 was 0x01d47e6c (== 30703212)
-    if (blocksize > orig_file_size || blocksize > 0x05000000)
+    if (blocksize > orig_file_size || blocksize > UPX_RSIZE_MAX_MEM)
         throwCantUnpack("file header corrupted");
     if (file_size > (off_t)orig_file_size) {
         opt->info_mode += !opt->info_mode ? 1 : 0;  // make visible
