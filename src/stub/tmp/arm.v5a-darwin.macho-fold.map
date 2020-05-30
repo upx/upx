@@ -72,7 +72,7 @@ LOAD tmp/arm.v5a-darwin.macho-main.o
 .plt
  *(.plt)
 
-.text           0x0000000008048000      0x9b8
+.text           0x0000000008048000      0xa6c
  *(.text .stub .text.* .gnu.linkonce.t.*)
  .text          0x0000000008048000      0x22c tmp/arm.v5a-darwin.macho-fold.o
                 0x0000000008048128                munmap
@@ -90,17 +90,17 @@ LOAD tmp/arm.v5a-darwin.macho-main.o
                 0x00000000080481d0                div10
                 0x000000000804813c                mprotect
                 0x0000000008048100                close
- .text          0x000000000804822c      0x78c tmp/arm.v5a-darwin.macho-main.o
-                0x00000000080483e4                do_xmap
-                0x0000000008048800                upx_main
+ .text          0x000000000804822c      0x840 tmp/arm.v5a-darwin.macho-main.o
+                0x0000000008048408                do_xmap
+                0x00000000080488b4                upx_main
  *(.text.*personality*)
  *(.gnu.warning)
 
 .fini
  *(.fini)
-                0x00000000080489b8                PROVIDE (__etext, .)
-                0x00000000080489b8                PROVIDE (_etext, .)
-                0x00000000080489b8                PROVIDE (etext, .)
+                0x0000000008048a6c                PROVIDE (__etext, .)
+                0x0000000008048a6c                PROVIDE (_etext, .)
+                0x0000000008048a6c                PROVIDE (etext, .)
 
 .rodata
  *(.rodata .rodata.* .gnu.linkonce.r.*)
@@ -116,8 +116,8 @@ LOAD tmp/arm.v5a-darwin.macho-main.o
 
 .gcc_except_table
  *(.gcc_except_table .gcc_except_table.*)
-                0x00000000080489b8                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
-                0x00000000080499b8                . = (0x1000 DATA_SEGMENT_ALIGN 0x1000)
+                0x0000000008048a6c                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x0000000008049a6c                . = (0x1000 DATA_SEGMENT_ALIGN 0x1000)
 
 .eh_frame
  *(.eh_frame)
@@ -132,22 +132,22 @@ LOAD tmp/arm.v5a-darwin.macho-main.o
  *(.tbss .tbss.* .gnu.linkonce.tb.*)
  *(.tcommon)
 
-.preinit_array  0x00000000080499b8        0x0
-                0x00000000080499b8                PROVIDE (__preinit_array_start, .)
+.preinit_array  0x0000000008049a6c        0x0
+                0x0000000008049a6c                PROVIDE (__preinit_array_start, .)
  *(.preinit_array)
-                0x00000000080499b8                PROVIDE (__preinit_array_end, .)
+                0x0000000008049a6c                PROVIDE (__preinit_array_end, .)
 
-.init_array     0x00000000080499b8        0x0
-                0x00000000080499b8                PROVIDE (__init_array_start, .)
+.init_array     0x0000000008049a6c        0x0
+                0x0000000008049a6c                PROVIDE (__init_array_start, .)
  *(SORT(.init_array.*))
  *(.init_array)
-                0x00000000080499b8                PROVIDE (__init_array_end, .)
+                0x0000000008049a6c                PROVIDE (__init_array_end, .)
 
-.fini_array     0x00000000080499b8        0x0
-                0x00000000080499b8                PROVIDE (__fini_array_start, .)
+.fini_array     0x0000000008049a6c        0x0
+                0x0000000008049a6c                PROVIDE (__fini_array_start, .)
  *(.fini_array)
  *(SORT(.fini_array.*))
-                0x00000000080499b8                PROVIDE (__fini_array_end, .)
+                0x0000000008049a6c                PROVIDE (__fini_array_end, .)
 
 .ctors
  *crtbegin*.o(.ctors)
@@ -173,35 +173,35 @@ LOAD tmp/arm.v5a-darwin.macho-main.o
 
 .got
  *(.got)
-                0x00000000080499b8                . = (. DATA_SEGMENT_RELRO_END 0xc)
+                0x0000000008049a6c                . = (. DATA_SEGMENT_RELRO_END 0xc)
 
 .got.plt
  *(.got.plt)
 
-.data           0x00000000080499b8        0x0
+.data           0x0000000008049a6c        0x0
  *(.data .data.* .gnu.linkonce.d.*)
- .data          0x00000000080499b8        0x0 tmp/arm.v5a-darwin.macho-fold.o
- .data          0x00000000080499b8        0x0 tmp/arm.v5a-darwin.macho-main.o
+ .data          0x0000000008049a6c        0x0 tmp/arm.v5a-darwin.macho-fold.o
+ .data          0x0000000008049a6c        0x0 tmp/arm.v5a-darwin.macho-main.o
  *(.gnu.linkonce.d.*personality*)
 
 .data1
  *(.data1)
-                0x00000000080499b8                _edata = .
-                0x00000000080499b8                PROVIDE (edata, .)
-                0x00000000080499b8                __bss_start = .
+                0x0000000008049a6c                _edata = .
+                0x0000000008049a6c                PROVIDE (edata, .)
+                0x0000000008049a6c                __bss_start = .
 
-.bss            0x00000000080499b8        0x0
+.bss            0x0000000008049a6c        0x0
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss           0x00000000080499b8        0x0 tmp/arm.v5a-darwin.macho-fold.o
- .bss           0x00000000080499b8        0x0 tmp/arm.v5a-darwin.macho-main.o
+ .bss           0x0000000008049a6c        0x0 tmp/arm.v5a-darwin.macho-fold.o
+ .bss           0x0000000008049a6c        0x0 tmp/arm.v5a-darwin.macho-main.o
  *(COMMON)
-                0x00000000080499b8                . = ALIGN ((. != 0x0)?0x4:0x1)
-                0x00000000080499b8                . = ALIGN (0x4)
-                0x00000000080499b8                . = ALIGN (0x4)
-                0x00000000080499b8                _end = .
-                0x00000000080499b8                PROVIDE (end, .)
-                0x00000000080499b8                . = DATA_SEGMENT_END (.)
+                0x0000000008049a6c                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x0000000008049a6c                . = ALIGN (0x4)
+                0x0000000008049a6c                . = ALIGN (0x4)
+                0x0000000008049a6c                _end = .
+                0x0000000008049a6c                PROVIDE (end, .)
+                0x0000000008049a6c                . = DATA_SEGMENT_END (.)
 
 .stab
  *(.stab)

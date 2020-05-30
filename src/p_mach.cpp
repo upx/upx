@@ -1089,8 +1089,19 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
         }
         bool const do_filter = (msegcmd[k].filesize==exe_filesize_max)
             && 0!=(Mach_command::VM_PROT_EXECUTE & msegcmd[k].initprot);
+        Mach_segment_command const *ptr = rawmseg;
+        unsigned b_extra = 0;
+        for (unsigned j= 0; j < mhdri.ncmds; ++j) {
+            if (msegcmd[k].cmd    == ptr->cmd
+            &&  msegcmd[k].vmaddr == ptr->vmaddr
+            &&  msegcmd[k].vmsize == ptr->vmsize) {
+                b_extra = j;
+                break;
+            }
+            ptr = (Mach_segment_command const *)(ptr->cmdsize + (char const *)ptr);
+        }
         packExtent(x, total_in, total_out,
-            (do_filter ? &ft : 0 ), fo, hdr_u_len );
+            (do_filter ? &ft : 0 ), fo, hdr_u_len, b_extra );
         if (do_filter) {
             exe_filesize_max = 0;
         }
