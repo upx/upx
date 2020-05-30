@@ -322,7 +322,8 @@ void PackUnix::packExtent(
     unsigned &total_out,
     Filter *ft,
     OutputFile *fo,
-    unsigned hdr_u_len
+    unsigned hdr_u_len,
+    unsigned b_extra
 )
 {
     unsigned const init_u_adler = ph.u_adler;
@@ -425,6 +426,7 @@ void PackUnix::packExtent(
                 tmp.b_cto8 = ft->cto;
             }
         }
+        tmp.b_extra = b_extra;
         fo->write(&tmp, sizeof(tmp));
         b_len += sizeof(b_info);
 

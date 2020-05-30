@@ -844,7 +844,7 @@ protected:
         unsigned char b_method; // compression algorithm
         unsigned char b_ftid;   // filter id
         unsigned char b_cto8;   // filter parameter
-        unsigned char b_unused;
+        unsigned char b_segseq; // LC_SEGMENT ordinal
     __packed_struct_end()
 
     __packed_struct(l_info)     // 12-byte trailer in header for loader

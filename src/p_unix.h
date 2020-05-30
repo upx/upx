@@ -73,7 +73,7 @@ protected:
     };
     virtual void packExtent(const Extent &x,
         unsigned &total_in, unsigned &total_out, Filter *, OutputFile *,
-        unsigned hdr_len = 0);
+        unsigned hdr_len = 0, unsigned b_extra = 0);
     virtual void unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &total_in, unsigned &total_out,
         unsigned &c_adler, unsigned &u_adler,
@@ -98,7 +98,7 @@ protected:
         unsigned char b_method;  // compression algorithm
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
-        unsigned char b_unused;
+        unsigned char b_extra;
     __packed_struct_end()
 
     __packed_struct(l_info) // 12-byte trailer in header for loader
@@ -139,7 +139,7 @@ protected:
         unsigned char b_method;  // compression algorithm
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
-        unsigned char b_unused;
+        unsigned char b_extra;
     __packed_struct_end()
 
     __packed_struct(l_info) // 12-byte trailer in header for loader
@@ -171,7 +171,7 @@ protected:
         unsigned char b_method;  // compression algorithm
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
-        unsigned char b_unused;
+        unsigned char b_extra;
     __packed_struct_end()
 
     __packed_struct(l_info) // 12-byte trailer in header for loader
