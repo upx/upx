@@ -75,7 +75,7 @@ M_NRV2E_LE32=8
 //  .long offset({l_info; p_info; b_info; compressed data})
   section ELFMAINX
 _start: .globl _start
-////  nop; int3; int3
+  nop; int3; int3
         push %rax  // space for &DT_INIT
 o_uinit= 5*8
         push %arg2; push %arg1  // save first two args to DT_INIT()

@@ -667,16 +667,35 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #else  //}{
     unsigned const frag_mask = ~get_page_mask();
 #endif  //}
-    Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
-        (void const *)ehdr);
+    Elf32_Phdr const *phdr = (Elf32_Phdr const *)(void const *)(ehdr->e_phoff +
+        (char const *)ehdr);
     Elf32_Addr v_brk;
-
-    ptrdiff_t reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
-         phdr, ehdr->e_phnum, &v_brk
+    Elf32_Addr reloc;
+    if (xi) { // compressed main program:
+        // C_BASE space reservation, C_TEXT compressed data and stub
+        Elf32_Addr  ehdr0 = *p_reloc;  // the 'hi' copy!
+        Elf32_Phdr *phdr0 = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)ehdr0);  // cheats .e_phoff
+        // Clear the 'lo' space reservation for use by PT_LOADs
+        if (ET_EXEC==((Elf32_Ehdr *)ehdr0)->e_type) {
+            ehdr0 = phdr0[0].p_vaddr;
+            reloc = 0;
+        }
+        else {
+            ehdr0 -= phdr0[1].p_vaddr;
+            reloc = ehdr0;
+        }
+        v_brk = phdr0->p_memsz + ehdr0;
+        DPRINTF("do_xmap munmap [%%p, +%%x)\n", ehdr0, phdr0->p_memsz);
+        munmap((void *)ehdr0, phdr0->p_memsz);
+    }
+    else { // PT_INTERP
+        reloc = xfind_pages(
+            ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk
 #if defined(__mips__)  //{
          , page_mask
 #endif  //}
-         );
+        );
+    }
 
 #if DEBUG &&!defined(__mips__)  //{
     size_t const page_mask = 0;
@@ -924,7 +943,7 @@ void *upx_main(
     xi.size  = sz_compressed;
 #endif  // !__mips__ }
 
-    Elf32_Addr reloc = elfaddr;
+    Elf32_Addr reloc = elfaddr;  // ET_EXEC problem!
     DPRINTF("upx_main1  .e_entry=%%p  reloc=%%p\\n", ehdr->e_entry, reloc);
     Elf32_Phdr *phdr = (Elf32_Phdr *)(1+ ehdr);
 

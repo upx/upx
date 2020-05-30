@@ -35,9 +35,6 @@ NBPW= 4  // Number of Bytes Per Word
 
 PATH_MAX= 4096  // /usr/include/linux/limits.h
 
-szElf32_Ehdr= 0x34
-szElf32_Phdr= 0x20
-e_phnum= 44
 AT_NULL= 0
 
 sz_b_info= 12
@@ -116,6 +113,10 @@ L90:
         la cblk,NBPW(a1)  // original &strings
         stwu r0,NBPW(a0)
         la  r_buf,L_PFX(a0)  // buffer
+// r_fd = open("/proc/self/exe", O_RDONLY)
+        li a1,O_RDONLY
+        la a0,L_PFX+ L90a - L90b(r_unf)  //     "/proc/self/exe"
+        call open; mr r_fd,a0
 // readlink("/proc/self/exe", buffer, -1+ PATH_MAX)
         li a2,-1+ PATH_MAX
         movr a1,r_buf  // buffer
@@ -164,6 +165,16 @@ L90:
 
         la  sp,SZ_FRAME+OVERHEAD(sp)  // deallocate this frame
         mr r_exp,a0  // save &entry
+
+sz_Ehdr= 13*NBPW
+sz_Phdr= 8*NBPW
+p_vaddr= 4+4
+// Discard pages of compressed data (includes [ADRX,+LENX) )
+        lwz a1,p_vaddr+sz_Phdr+sz_Ehdr(r_elf)  // Phdr[C_TEXT= 1].p_vaddr
+        lwz r0,p_vaddr        +sz_Ehdr(r_elf)  // Phdr[C_BASE= 0].p_vaddr
+        movr a0,r_elf  // hi elfaddr
+        subf a1,r0,a1  // length
+        call munmap  # discard C_TEXT compressed data
 
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)
         li a5,0  // offset
