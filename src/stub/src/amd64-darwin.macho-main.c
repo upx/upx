@@ -575,7 +575,7 @@ do_xmap(
                     }
                 }
             }
-            if (!sc->vmsize) { // not mapped, such as __DWARF info for 'rust'
+            if (!sc->vmsize) { // not mapped, such as __DWARF info for 'go'
                 if (xi) {
                     DPRINTF("    0==.vmsize; skipping %%x\\n", h.sz_cpr);
                     xi->size -= sizeof(h) + h.sz_cpr;
