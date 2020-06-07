@@ -136,6 +136,7 @@ xread(Extent *x, void *buf, size_t count)
 static void
 xpeek(Extent *x, void *buf, size_t count)
 {
+    DPRINTF("xpeek buf=%%p  count=%%x  ", buf, count);
     xread(x, buf, count);
     x->size += count;
     x->buf  -= count;
@@ -493,8 +494,8 @@ xfind_pages(
     for (j=0; j < ncmds; ++j,
         (sc = (Mach_segment_command const *)((sc->cmdsize>>2) + (unsigned const *)sc))
     ) if (LC_SEGMENT==sc->cmd) {
-        DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x  vmaddr=%%p  vmsize==%%p  lo=%%p  mflags=%%x\\n",
-            j, sc->cmd, sc->cmdsize, sc->vmaddr, sc->vmsize, lo, mflags);
+        DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x  vmaddr=%%p  vmsize==%%p  filesize=%%p  lo=%%p  mflags=%%x\\n",
+            j, sc->cmd, sc->cmdsize, sc->vmaddr, sc->vmsize, sc->filesize, lo, mflags);
         if (sc->vmsize  // theoretically occupies address space
         &&  !(sc->vmaddr==0 && (MAP_FIXED & mflags))  // but ignore PAGEZERO when MAP_FIXED
         ) {
@@ -563,6 +564,7 @@ do_xmap(
             struct b_info h;
             if (xi && sc->filesize) { // Find the correct compressed block.
                 xpeek(xi, (unsigned char *)&h, sizeof(h));
+                DPRINTF("  h.b_extra=%%d  j=%%d\n", h.b_extra, j);
                 if (h.b_extra != j) { // not the next one
                     *xi = xi_orig;  // rewind
                     for (;;) {
