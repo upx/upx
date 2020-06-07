@@ -409,6 +409,7 @@ void PackUnix::packExtent(
             set_te32(&tmp.sz_unc, hdr_u_len);
             set_te32(&tmp.sz_cpr, hdr_c_len);
             tmp.b_method = (unsigned char) ph.method;
+            tmp.b_extra = b_extra;
             fo->write(&tmp, sizeof(tmp));
             b_len += sizeof(b_info);
             fo->write(hdr_obuf, hdr_c_len);
