@@ -1663,14 +1663,23 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
-        if (!nbucket || !v_sym
-        || (nbucket>>31) || (file_size/sizeof(unsigned)) <= (2*nbucket)  // FIXME: weak
-        || ((v_hsh < v_sym) && (v_sym - v_hsh) < (sizeof(unsigned)*2  // headers
-                + sizeof(*buckets)*nbucket  // buckets
-                + sizeof(*chains) *nbucket  // chains
-           ))
+        if (!nbucket || (nbucket>>31) || !v_sym || file_size <= v_sym
+        || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
-            char msg[90]; snprintf(msg, sizeof(msg),
+            char msg[80]; snprintf(msg, sizeof(msg),
+                "bad DT_HASH nbucket=%#x  len=%#x",
+                nbucket, (v_sym - v_hsh));
+            throwCantPack(msg);
+        }
+        unsigned chmax = 0;
+        for (unsigned j= 0; j < nbucket; ++j) {
+            if (chmax < buckets[j]) {
+                chmax = buckets[j];
+            }
+        }
+        if ((v_hsh < v_sym) && (v_sym - v_hsh) <
+                (sizeof(*buckets)*(2+ nbucket) + sizeof(*chains)*(1+ chmax))) {
+            char msg[80]; snprintf(msg, sizeof(msg),
                 "bad DT_HASH nbucket=%#x  len=%#x",
                 nbucket, (v_sym - v_hsh));
             throwCantPack(msg);
