@@ -5415,7 +5415,6 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket];
-        unsigned const m = elf_hash(name) % nbucket;
         if (!nbucket
         ||  (unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
                 <= sizeof(unsigned)*nbucket ) {
@@ -5423,6 +5422,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
                 "bad nbucket %#x\n", nbucket);
             throwCantPack(msg);
         }
+        unsigned const m = elf_hash(name) % nbucket;
         unsigned si;
         for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
             char const *const p= get_dynsym_name(si, (unsigned)-1);
@@ -5492,7 +5492,6 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket];
-        unsigned const m = elf_hash(name) % nbucket;
         if (!nbucket
         ||  (unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
                 <= sizeof(unsigned)*nbucket ) {
@@ -5500,6 +5499,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
                 "bad nbucket %#x\n", nbucket);
             throwCantPack(msg);
         }
+        unsigned const m = elf_hash(name) % nbucket;
         unsigned si;
         for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
             char const *const p= get_dynsym_name(si, (unsigned)-1);
