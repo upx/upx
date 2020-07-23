@@ -4550,7 +4550,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
 #define MAX_ELF_HDR 1024
-    if ((MAX_ELF_HDR - sizeof(Elf64_Ehdr))/sizeof(Elf64_Phdr) < u_phnum) {
+    if ((umin64(MAX_ELF_HDR, ph.u_len) - sizeof(Elf64_Ehdr))/sizeof(Elf64_Phdr) < u_phnum) {
         throwCantUnpack("bad compressed e_phnum");
     }
 #undef MAX_ELF_HDR
@@ -5617,7 +5617,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
 #define MAX_ELF_HDR 512
-    if ((MAX_ELF_HDR - sizeof(Elf32_Ehdr))/sizeof(Elf32_Phdr) < u_phnum) {
+    if ((umin(MAX_ELF_HDR, ph.u_len) - sizeof(Elf32_Ehdr))/sizeof(Elf32_Phdr) < u_phnum) {
         throwCantUnpack("bad compressed e_phnum");
     }
 #undef MAX_ELF_HDR
