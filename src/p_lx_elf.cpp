@@ -302,7 +302,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf32_Dyn const *)(check_pt_dynamic(phdr) + file_image);
-            invert_pt_dynamic(dynseg);
+            invert_pt_dynamic(dynseg, get_te32(&phdr->p_filesz));
         }
         else if (PT_LOAD32==get_te32(&phdr->p_type)) {
             check_pt_load(phdr);
@@ -800,7 +800,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         for (int j = e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
             dynseg= (Elf64_Dyn const *)(check_pt_dynamic(phdr) + file_image);
-            invert_pt_dynamic(dynseg);
+            invert_pt_dynamic(dynseg, get_te64(&phdr->p_filesz));
         }
         else if (PT_LOAD64==get_te32(&phdr->p_type)) {
             check_pt_load(phdr);
@@ -1589,15 +1589,24 @@ PackLinuxElf64arm::buildLoader(const Filter *ft)
 }
 
 void
-PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp)
+PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned dt_filesz)
 {
     if (dt_table[Elf32_Dyn::DT_NULL]) {
         return;  // not 1st time; do not change upx_dt_init
     }
+    if ((file_size - (e_phnum*sizeof(Elf32_Phdr) + sizeof(Elf32_Ehdr))) < dt_filesz) {
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad PT_DYNAMIC.pt_filesz %#x", dt_filesz);
+        throwCantPack(msg);
+    }
     Elf32_Dyn const *const dynp0 = dynp;
     unsigned ndx = 1+ 0;
+    unsigned const limit = dt_filesz / sizeof(*dynp);
     if (dynp)
     for (; ; ++ndx, ++dynp) {
+        if (limit <= ndx) {
+            throwCantPack("DT_NULL not found");
+        }
         unsigned const d_tag = get_te32(&dynp->d_tag);
         if (d_tag < DT_NUM) {
             if (Elf32_Dyn::DT_NEEDED != d_tag
@@ -2115,7 +2124,7 @@ bool PackLinuxElf32::canPack()
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf32_Dyn const *)(check_pt_dynamic(phdr) + file_image);
-            invert_pt_dynamic(dynseg);
+            invert_pt_dynamic(dynseg, get_te32(&phdr->p_filesz));
         }
         else if (PT_LOAD32==get_te32(&phdr->p_type)) {
             if (!pload_x0
@@ -2465,7 +2474,7 @@ PackLinuxElf64::canPack()
         for (int j= e_phnum; --j>=0; ++phdr)
         if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             dynseg= (Elf64_Dyn const *)(check_pt_dynamic(phdr) + file_image);
-            invert_pt_dynamic(dynseg);
+            invert_pt_dynamic(dynseg, get_te64(&phdr->p_filesz));
         }
         else if (PT_LOAD64==get_te32(&phdr->p_type)) {
             if (!pload_x0
@@ -4752,7 +4761,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                     }
                     Elf64_Dyn *dyn = (Elf64_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
-                    dynseg = dyn; invert_pt_dynamic(dynseg);
+                    dynseg = dyn; invert_pt_dynamic(dynseg, get_te64(&udynhdr->p_filesz));
                     for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
                         upx_uint64_t const tag = get_te64(&dyn->d_tag);
                         upx_uint64_t       val = get_te64(&dyn->d_val);
@@ -5160,15 +5169,24 @@ PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
 }
 
 void
-PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp)
+PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t dt_filesz)
 {
     if (dt_table[Elf64_Dyn::DT_NULL]) {
         return;  // not 1st time; do not change upx_dt_init
     }
+    if ((file_size - (e_phnum*sizeof(Elf64_Phdr) + sizeof(Elf64_Ehdr))) < dt_filesz) {
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad PT_DYNAMIC.pt_filesz %#lx", (long unsigned)dt_filesz);
+        throwCantPack(msg);
+    }
     Elf64_Dyn const *const dynp0 = dynp;
     unsigned ndx = 1+ 0;
+    unsigned const limit = dt_filesz / sizeof(*dynp);
     if (dynp)
     for (; ; ++ndx, ++dynp) {
+        if (limit <= ndx) {
+            throwCantPack("DT_NULL not found");
+        }
         upx_uint64_t const d_tag = get_te64(&dynp->d_tag);
         if (d_tag>>32) { // outrageous
             char msg[50]; snprintf(msg, sizeof(msg),
@@ -5819,7 +5837,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                     }
                     Elf32_Dyn *dyn = (Elf32_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
-                    dynseg = dyn; invert_pt_dynamic(dynseg);
+                    dynseg = dyn; invert_pt_dynamic(dynseg, get_te32(&udynhdr->p_filesz));
                     for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
                         unsigned const tag = get_te32(&dyn->d_tag);
                         unsigned       val = get_te32(&dyn->d_val);

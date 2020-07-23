@@ -157,7 +157,7 @@ protected:
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
     unsigned check_pt_load(Elf32_Phdr const *);
     unsigned check_pt_dynamic(Elf32_Phdr const *);
-    void invert_pt_dynamic(Elf32_Dyn const *);
+    void invert_pt_dynamic(Elf32_Dyn const *, unsigned dt_filesz);
     void const *elf_find_dynamic(unsigned) const;
     Elf32_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
@@ -295,7 +295,7 @@ protected:
     Elf64_Shdr const *elf_find_section_type(unsigned) const;
     upx_uint64_t check_pt_load(Elf64_Phdr const *);
     upx_uint64_t check_pt_dynamic(Elf64_Phdr const *);
-    void invert_pt_dynamic(Elf64_Dyn const *);
+    void invert_pt_dynamic(Elf64_Dyn const *, upx_uint64_t dt_filesz);
     void const *elf_find_dynamic(unsigned) const;
     Elf64_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const;
