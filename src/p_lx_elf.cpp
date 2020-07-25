@@ -3134,8 +3134,8 @@ static char const abs_symbol_names[][14] = {
 int
 PackLinuxElf32::adjABS(Elf32_Sym *sym, unsigned delta)
 {
+    unsigned st_name = get_te32(&sym->st_name);
     for (int j = 0; abs_symbol_names[j][0]; ++j) {
-        unsigned st_name = get_te32(&sym->st_name);
         if (!strcmp(abs_symbol_names[j], get_str_name(st_name, (unsigned)-1))) {
             sym->st_value += delta;
             return 1;
@@ -3147,8 +3147,8 @@ PackLinuxElf32::adjABS(Elf32_Sym *sym, unsigned delta)
 int
 PackLinuxElf64::adjABS(Elf64_Sym *sym, unsigned delta)
 {
+    unsigned st_name = get_te32(&sym->st_name);
     for (int j = 0; abs_symbol_names[j][0]; ++j) {
-        unsigned st_name = get_te32(&sym->st_name);
         if (!strcmp(abs_symbol_names[j], get_str_name(st_name, (unsigned)-1))) {
             sym->st_value += delta;
             return 1;
@@ -4614,16 +4614,21 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 xct_off = e_shoff;
             }
             // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
-            dynseg = (Elf64_Dyn const *)ibuf.subref(
-                "bad DYNAMIC", get_te64(&dynhdr->p_offset), get_te64(&dynhdr->p_filesz));
+            upx_uint64_t dyn_offset = get_te64(&dynhdr->p_offset);
+            upx_uint64_t dyn_filesz = get_te64(&dynhdr->p_filesz);
+            if (orig_file_size < dyn_offset
+            || (orig_file_size - dyn_offset) < dyn_filesz) {
+                throwCantUnpack("bad PT_DYNAMIC");
+            }
+            dynseg = (Elf64_Dyn const *)ibuf.subref("bad DYNAMIC", dyn_offset, dyn_filesz);
             dynstr = (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
             sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
             if (sec_dynsym) {
                 upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
                 upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
-                if ((upx_uint64_t)file_size < sz_dynsym
-                ||  (upx_uint64_t)file_size < off_dynsym
-                || ((upx_uint64_t)file_size - off_dynsym) < sz_dynsym) {
+                if (orig_file_size < sz_dynsym
+                ||  orig_file_size < off_dynsym
+                || (orig_file_size - off_dynsym) < sz_dynsym) {
                     throwCantUnpack("bad SHT_DYNSYM");
                 }
                 Elf64_Sym *const sym0 = (Elf64_Sym *)ibuf.subref(
@@ -5695,13 +5700,23 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 xct_off = e_shoff;
             }
             // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
-            dynseg = (Elf32_Dyn const *)ibuf.subref(
-                "bad DYNAMIC", get_te32(&dynhdr->p_offset), get_te32(&dynhdr->p_filesz));
+            unsigned dyn_offset = get_te32(&dynhdr->p_offset);
+            unsigned dyn_filesz = get_te32(&dynhdr->p_filesz);
+            if (orig_file_size < dyn_offset
+            || (orig_file_size - dyn_offset) < dyn_filesz) {
+                throwCantUnpack("bad PT_DYNAMIC");
+            }
+            dynseg = (Elf32_Dyn const *)ibuf.subref("bad DYNAMIC", dyn_offset, dyn_filesz);
             dynstr = (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
             sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
             if (sec_dynsym) {
                 unsigned const off_dynsym = get_te32(&sec_dynsym->sh_offset);
                 unsigned const sz_dynsym  = get_te32(&sec_dynsym->sh_size);
+                if (orig_file_size < sz_dynsym
+                ||  orig_file_size < off_dynsym
+                || (orig_file_size - off_dynsym) < sz_dynsym) {
+                    throwCantUnpack("bad SHT_DYNSYM");
+                }
                 Elf32_Sym *const sym0 = (Elf32_Sym *)ibuf.subref(
                     "bad dynsym", off_dynsym, sz_dynsym);
                 Elf32_Sym *sym = sym0;
