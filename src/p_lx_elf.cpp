@@ -2599,8 +2599,15 @@ PackLinuxElf64::canPack()
                     // Take one as a last resort.
                     if ((Elf64_Dyn::DT_INIT==upx_dt_init || !upx_dt_init)
                     &&  Elf64_Shdr::SHT_DYNAMIC == sh_type) {
-                        unsigned const n = get_te64(&shdr->sh_size) / sizeof(Elf64_Dyn);
-                        Elf64_Dyn *dynp = (Elf64_Dyn *)&file_image[get_te64(&shdr->sh_offset)];
+                        upx_uint64_t sh_offset = get_te64(&shdr->sh_offset);
+                        upx_uint64_t sh_size = get_te64(&shdr->sh_size);
+                        if ((upx_uint64_t)file_size < sh_size
+                        ||  (upx_uint64_t)file_size < sh_offset
+                        || ((upx_uint64_t)file_size - sh_offset) < sh_size) {
+                            throwCantPack("bad SHT_DYNAMIC");
+                        }
+                        unsigned const n = sh_size / sizeof(Elf64_Dyn);
+                        Elf64_Dyn *dynp = (Elf64_Dyn *)&file_image[sh_offset];
                         for (; Elf64_Dyn::DT_NULL != dynp->d_tag; ++dynp) {
                             if (upx_dt_init == get_te64(&dynp->d_tag)) {
                                 break;  // re-found DT_INIT
@@ -3647,6 +3654,11 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             // Relocate dynsym (DT_SYMTAB) which is below xct_va
             upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
             upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
+            if ((upx_uint64_t)file_size < sz_dynsym
+            ||  (upx_uint64_t)file_size < off_dynsym
+            || ((upx_uint64_t)file_size - off_dynsym) < sz_dynsym) {
+                throwCantPack("bad DT_SYMTAB");
+            }
             Elf64_Sym *dyntym = (Elf64_Sym *)lowmem.subref(
                 "bad dynsym", off_dynsym, sz_dynsym);
             Elf64_Sym *sym = dyntym;
@@ -3709,6 +3721,11 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                 upx_uint64_t sh_size = get_te64(&shdr->sh_size);
                 upx_uint64_t sh_offset = get_te64(&shdr->sh_offset);
                 upx_uint64_t sh_entsize = get_te64(&shdr->sh_entsize);
+                if ((upx_uint64_t)file_size < sh_size
+                ||  (upx_uint64_t)file_size < sh_offset
+                || ((upx_uint64_t)file_size - sh_offset) < sh_size) {
+                    throwCantPack("bad SHT_STRNDX");
+                }
 
                 if (xct_off <= sh_offset) {
                     upx_uint64_t addr = get_te64(&shdr->sh_addr);
@@ -4596,6 +4613,11 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             if (sec_dynsym) {
                 upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
                 upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
+                if ((upx_uint64_t)file_size < sz_dynsym
+                ||  (upx_uint64_t)file_size < off_dynsym
+                || ((upx_uint64_t)file_size - off_dynsym) < sz_dynsym) {
+                    throwCantUnpack("bad SHT_DYNSYM");
+                }
                 Elf64_Sym *const sym0 = (Elf64_Sym *)ibuf.subref(
                     "bad dynsym", off_dynsym, sz_dynsym);
                 Elf64_Sym *sym = sym0;
