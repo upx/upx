@@ -269,7 +269,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     e_shoff = get_te32(&ehdri.e_shoff);
     unsigned const last_Shdr = e_shoff + e_shnum * sizeof(Elf32_Shdr);
     if (last_Shdr < e_shoff  // wrap-around
-    ||  e_shoff < last_Phdr
+    ||  (e_shnum && e_shoff < last_Phdr)
     ||  (unsigned long)file_size < last_Shdr) {
         if (opt->cmd == CMD_COMPRESS) {
             throwCantUnpack("bad e_shoff");
@@ -771,7 +771,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     e_shoff = get_te64(&ehdri.e_shoff);
     upx_uint64_t const last_Shdr = e_shoff + e_shnum * sizeof(Elf64_Shdr);
     if (last_Shdr < e_shoff  // wrap-around
-    ||  e_shoff < last_Phdr
+    ||  (e_shnum && e_shoff < last_Phdr)
     ||  (unsigned long)file_size < last_Shdr) {
         if (opt->cmd == CMD_COMPRESS) {
             throwCantUnpack("bad e_shoff");
@@ -2693,8 +2693,9 @@ PackLinuxElf64::canPack()
             }
             goto proceed;  // But proper packing depends on checking xct_va.
         }
-        else
+        else {
             throwCantPack("need DT_INIT; try \"void _init(void){}\"");
+        }
 abandon:
         return false;
 proceed: ;
