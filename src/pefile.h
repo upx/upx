@@ -54,7 +54,8 @@ protected:
     unsigned readSections(unsigned objs, unsigned usize,
                           unsigned ih_filealign, unsigned ih_datasize);
     void checkHeaderValues(unsigned subsystem, unsigned mask,
-                           unsigned ih_entry, unsigned ih_filealign);
+                           unsigned ih_entry, unsigned ih_filealign,
+                           unsigned ih_dllflags);
     unsigned handleStripRelocs(upx_uint64_t ih_imagebase,
                                upx_uint64_t default_imagebase,
                                unsigned dllflags);
@@ -268,6 +269,7 @@ protected:
         IMAGE_DLLCHARACTERISTICS_NO_SEH                = 0x0400,
         IMAGE_DLLCHARACTERISTICS_NO_BIND               = 0x0800,
         IMAGE_DLLCHARACTERISTICS_WDM_DRIVER            = 0x2000,
+        IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD    = 0x4000,
         IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000
     };
 
