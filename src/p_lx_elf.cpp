@@ -423,6 +423,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         set_te32(&elfout.phdr[C_BASE].p_align, 0u - page_mask);
         elfout.phdr[C_BASE].p_paddr = elfout.phdr[C_BASE].p_vaddr;
         elfout.phdr[C_BASE].p_offset = 0;
+        // vbase handles ET_EXEC.  FIXME: pre-linking?
         unsigned vbase = get_te32(&elfout.phdr[C_BASE].p_vaddr);
         unsigned abrk = getbrk(phdri, e_phnum);
         set_te32(&elfout.phdr[C_BASE].p_filesz, 0x1000);  // Linux kernel SIGSEGV if (0==.p_filesz)
@@ -547,12 +548,14 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         elfout.phdr[C_BASE].p_paddr = elfout.phdr[C_BASE].p_vaddr;
         elfout.phdr[C_BASE].p_offset = 0;
         upx_uint64_t abrk = getbrk(phdri, e_phnum);
+        // vbase handles ET_EXEC.  FIXME: pre-linking?
+        upx_uint64_t const vbase = get_te64(&elfout.phdr[C_BASE].p_vaddr);
         set_te64(&elfout.phdr[C_BASE].p_filesz, 0x1000);  // Linux kernel SIGSEGV if (0==.p_filesz)
-        set_te64(&elfout.phdr[C_BASE].p_memsz, abrk);
+        set_te64(&elfout.phdr[C_BASE].p_memsz, abrk - vbase);
         set_te32(&elfout.phdr[C_BASE].p_flags, Elf32_Phdr::PF_W|Elf32_Phdr::PF_R);
         set_te64(&elfout.phdr[C_TEXT].p_vaddr, abrk= (page_mask & (~page_mask + abrk)));
         elfout.phdr[C_TEXT].p_paddr = elfout.phdr[C_TEXT].p_vaddr;
-        set_te64(&elfout.ehdr.e_entry, abrk + get_te64(&elfout.ehdr.e_entry));
+        set_te64(&elfout.ehdr.e_entry, abrk + get_te64(&elfout.ehdr.e_entry) - vbase);
     }
     if (0!=xct_off) {  // shared library
         upx_uint64_t word = load_va + sz_pack2;
