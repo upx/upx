@@ -465,9 +465,15 @@ do_xmap(
         Elf64_Phdr *phdr0 = (Elf64_Phdr *)(((Elf64_Ehdr *)ehdr0)->e_phoff + ehdr0);
         // Clear the 'lo' space reservation for use by PT_LOADs
         ehdr0 -= phdr0[1].p_vaddr;  // the 'lo' copy
+        if (ET_EXEC==ehdr->e_type) {
+            ehdr0 = phdr0[0].p_vaddr;
+        }
         v_brk = phdr0->p_memsz + ehdr0;
         reloc = (Elf64_Addr)mmap((void *)ehdr0, phdr0->p_memsz, PROT_NONE,
             MAP_FIXED|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+        if (ET_EXEC==ehdr->e_type) {
+            reloc = 0;
+        }
     }
     else { // PT_INTERP
         reloc = xfind_pages(
