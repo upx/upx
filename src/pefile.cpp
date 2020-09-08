@@ -1377,7 +1377,7 @@ void PeFile::processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
         return;
     // add new relocation entries
 
-    if __acc_cte(tls_handler_offset_reloc > 0)
+    if __acc_cte(tls_handler_offset > 0 && tls_handler_offset_reloc > 0)
         rel->add(tls_handler_offset + tls_handler_offset_reloc, reloc_type);
 
     unsigned ic;
