@@ -999,12 +999,13 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image,
                 p += 4;
             p += 2;
         }
+    upx_byte const *in_end = p;
     //fprintf(stderr,"relocnum=%x\n",relocn);
     out->alloc(4*relocn+4); // one extra data
     LE32 *outp = (LE32*) (unsigned char *) *out;
     LE32 *relocs = outp;
     unsigned jc = (unsigned) -4;
-    for (p = *in; *p; p++)
+    for (p = *in; p < in_end; p++)
     {
         if (*p < 0xF0)
             jc += *p;
@@ -1020,17 +1021,27 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image,
             jc += dif;
         }
         *relocs++ = jc;
+        if (!--relocn) {
+            break;
+        }
         if (bswap && image)
         {
-            if (bits == 32)
+            if (bits == 32) {
                 acc_ua_swab32s(image + jc);
-            else if (bits == 64)
+                if (((image + jc) - p) < 4) { // data cannot overlap control
+                    p = image + jc + 4;
+                }
+            }
+            else if (bits == 64) {
                 set_be64(image + jc, get_le64(image + jc));
+                if (((image + jc) - p) < 8) { // data cannot overlap control
+                    p = image + jc + 8;
+                }
+            }
             else
                 throwInternalError("unoptimizeReloc problem");
         }
     }
-    //fprintf(stderr,"relocnum=%x\n",relocn);
     *in = p+1;
     return (unsigned) (relocs - outp);
 }
