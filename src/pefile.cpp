@@ -76,6 +76,7 @@ static void xcheck(size_t poff, size_t plen, const void *b, size_t blen)
 #define omemset(a,b,c)      OCHECK(a,c), memset(a,b,c)
 #define imemcpy(a,b,c)      ICHECK(a,c), memcpy(a,b,c)
 #define omemcpy(a,b,c)      OCHECK(a,c), memcpy(a,b,c)
+#define omemmove(a,b,c)     OCHECK(a,c), memmove(a,b,c)
 
 
 /*************************************************************************
@@ -2814,16 +2815,14 @@ void PeFile::rebuildImports(upx_byte *& extrainfo,
         if (inamespos)
         {
             // now I rebuild the dll names
-            OCHECK(dllnames, dlen + 1);
-            strcpy(dllnames, dname);
+            omemcpy(dllnames, dname, dlen + 1);
             im->dllname = ptr_diff(dllnames,Obuf);
             //;;;printf("\ndll: %s:",dllnames);
             dllnames += dlen + 1;
         }
         else
         {
-            OCHECK(Obuf + im->dllname, dlen + 1);
-            strcpy(Obuf + im->dllname, dname);
+            omemcpy(Obuf + im->dllname, dname, dlen + 1);
         }
         im->iat = iatoffs;
         if (set_oft)
@@ -2847,8 +2846,8 @@ void PeFile::rebuildImports(upx_byte *& extrainfo,
                 }
                 else
                 {
-                    OCHECK(Obuf + (*newiat + 2), ilen + 1);
-                    strcpy(Obuf + (*newiat + 2), p);
+                    // Beware overlap!
+                    omemmove(Obuf + (*newiat + 2), p, ilen + 1);
                 }
                 p += ilen;
             }
