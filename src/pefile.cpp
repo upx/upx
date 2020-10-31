@@ -2108,8 +2108,7 @@ void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
 }
 
 void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
-                               unsigned ih_entry, unsigned ih_filealign,
-                               unsigned ih_dllflags)
+                               unsigned ih_entry, unsigned ih_filealign)
 {
     if ((1u << subsystem) & ~mask)
     {
@@ -2133,9 +2132,6 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
 
     if (ih_filealign < 0x200)
         throwCantPack("filealign < 0x200 is not yet supported");
-
-    if (ih_dllflags & IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD)
-        throwCantPack("CFGuard enabled PE files are not supported");
 }
 
 unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase,
@@ -2245,7 +2241,18 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     readSectionHeaders(objs, sizeof(ih));
     if (!opt->force && handleForceOption())
         throwCantPack("unexpected value in PE header (try --force)");
-    checkHeaderValues(ih.subsystem, subsystem_mask, ih.entry, ih.filealign, ih.dllflags);
+
+    if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD)
+        throwCantPack("CFGuard enabled PE files are not supported");
+
+    if (ih.dllflags & IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY)
+    {
+        if (opt->force)
+            ih.dllflags &= ~IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY;
+        else
+            throwCantPack("image forces integrity check (use --force to remove)");
+    }
+    checkHeaderValues(ih.subsystem, subsystem_mask, ih.entry, ih.filealign);
 
     //remove certificate directory entry
     if (IDSIZE(PEDIR_SEC))
