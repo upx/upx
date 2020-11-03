@@ -185,6 +185,13 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
         fprintf(stderr, "  fillPackHeader  version=%d  format=%d  method=%d  level=%d\n", version,
                 format, method, level);
     }
+    if (0==format || 128==format
+    ||  (format < 128 && format > UPX_F_LINUX_ELF64_ARM)
+    ||  (format > 128 && format > UPX_F_DYLIB_PPC64)) {
+        char msg[24];
+        snprintf(msg, sizeof(msg), "unknown format %d", format);
+        throwCantUnpack(msg);
+    }
     const int size = getPackHeaderSize();
     if (boff + size <= 0 || boff + size > blen)
         throwCantUnpack("header corrupted 2");
@@ -198,16 +205,25 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
         u_adler = get_le32(p + 8);
         c_adler = get_le32(p + 12);
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS) {
+            if (size < 21) {
+                throwCantUnpack("header corrupted 5");
+            }
             u_len = get_le16(p + 16);
             c_len = get_le16(p + 18);
             u_file_size = u_len;
             off_filter = 20;
         } else if (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH) {
+            if (size < 26) {
+                throwCantUnpack("header corrupted 6");
+            }
             u_len = get_le24(p + 16);
             c_len = get_le24(p + 19);
             u_file_size = get_le24(p + 22);
             off_filter = 25;
         } else {
+            if (size < 31) {
+                throwCantUnpack("header corrupted 7");
+            }
             u_len = get_le32(p + 16);
             c_len = get_le32(p + 20);
             u_file_size = get_le32(p + 24);
@@ -216,6 +232,9 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
             n_mru = p[30] ? 1 + p[30] : 0;
         }
     } else {
+        if (size < 31) {
+            throwCantUnpack("header corrupted 8");
+        }
         u_len = get_be32(p + 8);
         c_len = get_be32(p + 12);
         u_adler = get_be32(p + 16);
