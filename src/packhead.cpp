@@ -42,7 +42,7 @@ PackHeader::PackHeader() : version(-1), format(-1) {}
 **************************************************************************/
 
 static unsigned char get_packheader_checksum(const upx_bytep buf, int len) {
-    assert(len >= sizeof(int32_t));
+    assert(len >= 4);
     assert(get_le32(buf) == UPX_MAGIC_LE32);
     // printf("1 %d\n", len);
     buf += 4;
