@@ -2847,7 +2847,7 @@ void PeFile::rebuildImports(upx_byte *& extrainfo,
                 else
                 {
                     // Beware overlap!
-                    omemmove(Obuf + (*newiat + 2), p, ilen + 1);
+                    omemmove(Obuf + (*newiat + 2), p, ilen);
                 }
                 p += ilen;
             }
