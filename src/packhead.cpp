@@ -42,6 +42,7 @@ PackHeader::PackHeader() : version(-1), format(-1) {}
 **************************************************************************/
 
 static unsigned char get_packheader_checksum(const upx_bytep buf, int len) {
+    assert(len >= sizeof(int32_t));
     assert(get_le32(buf) == UPX_MAGIC_LE32);
     // printf("1 %d\n", len);
     buf += 4;
@@ -90,6 +91,8 @@ int PackHeader::getPackHeaderSize() const {
 **************************************************************************/
 
 void PackHeader::putPackHeader(upx_bytep p) {
+    // NOTE: It is the caller's responsbility to ensure the buffer p has
+    // sufficient space for the header.
     assert(get_le32(p) == UPX_MAGIC_LE32);
     if (get_le32(p + 4) != UPX_MAGIC2_LE32) {
         // fprintf(stderr, "MAGIC2_LE32: %x %x\n", get_le32(p+4), UPX_MAGIC2_LE32);
