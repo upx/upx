@@ -245,7 +245,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
     }
 
     if (version >= 10) {
-        if (off_filter >  size_remaining) {
+        if (off_filter >=  size_remaining) {
           throwCantUnpack("header corrupted 10");
         }
         filter = p[off_filter];
