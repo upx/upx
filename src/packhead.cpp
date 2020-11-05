@@ -192,22 +192,37 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
     //
     // decode the new variable length header
     //
+    // NOTE: the getPackHeaderSize() check is based on thev _version_ whereas
+    // the code below does not.
+    const int size_remaining = blen - boff;
 
     int off_filter = 0;
     if (format < 128) {
+        if (16 >  size_remaining) {
+          throwCantUnpack("header corrupted 5");
+        }
         u_adler = get_le32(p + 8);
         c_adler = get_le32(p + 12);
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS) {
+            if (20 >  size_remaining) {
+              throwCantUnpack("header corrupted 6");
+            }
             u_len = get_le16(p + 16);
             c_len = get_le16(p + 18);
             u_file_size = u_len;
             off_filter = 20;
         } else if (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH) {
+            if (25 >  size_remaining) {
+              throwCantUnpack("header corrupted 7");
+            }
             u_len = get_le24(p + 16);
             c_len = get_le24(p + 19);
             u_file_size = get_le24(p + 22);
             off_filter = 25;
         } else {
+            if (30 >  size_remaining) {
+              throwCantUnpack("header corrupted 8");
+            }
             u_len = get_le32(p + 16);
             c_len = get_le32(p + 20);
             u_file_size = get_le32(p + 24);
@@ -216,6 +231,9 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
             n_mru = p[30] ? 1 + p[30] : 0;
         }
     } else {
+        if (30 >  size_remaining) {
+          throwCantUnpack("header corrupted 9");
+        }
         u_len = get_be32(p + 8);
         c_len = get_be32(p + 12);
         u_adler = get_be32(p + 16);
@@ -226,9 +244,12 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
         n_mru = p[30] ? 1 + p[30] : 0;
     }
 
-    if (version >= 10)
+    if (version >= 10) {
+        if (off_filter >  size_remaining) {
+          throwCantUnpack("header corrupted 10");
+        }
         filter = p[off_filter];
-    else if ((level & 128) == 0)
+    } else if ((level & 128) == 0)
         filter = 0;
     else {
         // convert old flags to new filter id
