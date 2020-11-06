@@ -278,7 +278,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
     // check header_checksum
     if (version > 9) {
         unsigned const size = getPackHeaderSize();  // expected; based on format and version
-        if (size < headway
+        if (headway < size
         || p[size - 1] != get_packheader_checksum(p, size - 1))
             throwCantUnpack("header corrupted 3");
     }
