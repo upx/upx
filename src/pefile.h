@@ -54,8 +54,7 @@ protected:
     unsigned readSections(unsigned objs, unsigned usize,
                           unsigned ih_filealign, unsigned ih_datasize);
     void checkHeaderValues(unsigned subsystem, unsigned mask,
-                           unsigned ih_entry, unsigned ih_filealign,
-                           unsigned ih_dllflags);
+                           unsigned ih_entry, unsigned ih_filealign);
     unsigned handleStripRelocs(upx_uint64_t ih_imagebase,
                                upx_uint64_t default_imagebase,
                                unsigned dllflags);
