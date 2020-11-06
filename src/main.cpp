@@ -1412,7 +1412,7 @@ extern "C" { extern long _stksize; long _stksize = 256 * 1024L; }
 extern "C" { extern int _dowildcard; int _dowildcard = -1; }
 #endif
 
-int __acc_cdecl_main original_main(int argc, char *argv[])
+int real_main(int argc, char *argv[])
 {
     int i;
     static char default_argv0[] = "upx";

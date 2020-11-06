@@ -42,7 +42,7 @@ extern "C" { extern int _dowildcard; int _dowildcard = -1; }
 
 int __acc_cdecl_main main(int argc, char *argv[])
 {
-    return original_main(argc, argv);
+    return real_main(argc, argv);
 }
 
 #endif /* !(WITH_GUI) */
