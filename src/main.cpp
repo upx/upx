@@ -110,7 +110,7 @@ static int exit_code = EXIT_OK;
 /*************************************************************************
 // exit handlers
 **************************************************************************/
-/*
+#ifndef DO_NOT_EXIT
 #if defined(__GNUC__)
 static void do_exit(void) __attribute__((__noreturn__));
 #endif
@@ -126,7 +126,7 @@ static void do_exit(void)
     fflush(stderr);
     exit(exit_code);
 }
-*/
+#endif
 
 #define EXIT_FATAL  3
 
@@ -167,8 +167,9 @@ bool set_exit_code(int ec)
 void e_exit(int ec)
 {
     (void) set_exit_code(ec);
-    // HACK HACK HACK: do this better (#defines?)
-    // do_exit();
+#ifndef DO_NOT_EXIT
+    do_exit();
+#endif
 
 }
 

@@ -8,6 +8,7 @@
 BUILD_TYPE_DEBUG    ?= 1
 BUILD_TYPE_SANITIZE ?= 0
 BUILD_USE_DEPEND    ?= 1
+BUILD_DO_NOT_EXIT   ?= 0
 
 MAKEFLAGS += -r
 .SUFFIXES:
@@ -76,6 +77,10 @@ CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer -DACC_
 CXXFLAGS += $(CXXFLAGS_SANITIZE)
 # these are the only 2 objects that are actually speed-sensitive
 compress_lzma$(objext) filteri$(objext) : override CXXFLAGS_SANITIZE =
+endif
+ifeq ($(BUILD_DO_NOT_EXIT),1)
+CXXFLAGS_DO_NOT_EXIT ?= -DDO_NOT_EXIT
+CXXFLAGS += $(CXXFLAGS_DO_NOT_EXIT)
 endif
 
 # rules
