@@ -6,7 +6,8 @@
 #include <vector>
 #include <fstream>
 
-extern int original_main(int argc, char** argv);
+// From ../src/conf.h
+extern int real_main(int argc, char** argv);
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   // This is the minimum size of file accepted. The fuzzing is faster if we
@@ -26,7 +27,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
   // Test the UPX file
   argv.push_back("-t");
   argv.push_back(name.c_str());
-  original_main(argv.size(), const_cast<char**>(argv.data()));
+  real_main(argv.size(), const_cast<char**>(argv.data()));
 
   // And cleanup temp file.
   std::remove(name.c_str());
