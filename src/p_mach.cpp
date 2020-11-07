@@ -1606,7 +1606,7 @@ int PackMachBase<T>::canUnpack()
     if (3==nseg && 395 != style) { // __PAGEZERO, __TEXT, __LINKEDIT;  no __XHDR, no UPX_DATA
         style = 392;
     }
-    if (391==style && 0==offLINK && 2==ncmds) { // pre-3.91 ?
+    if (391==style && 0==offLINK && 2==ncmds && ptrTEXT) { // pre-3.91 ?
         offLINK = ptrTEXT->fileoff + ptrTEXT->filesize;  // fake __LINKEDIT at EOF
     }
     if (0 == style || 0 == offLINK) {
