@@ -11,4 +11,9 @@ wget https://github.com/gutiniao/afltest/archive/master.zip
 unzip -o master.zip
 rm master.zip
 
+# Get some more fuzzing cases
+wget https://github.com/liamjm/upx_fuzzing_corpus/archive/master.zip
+unzip -o master.zip
+rm master.zip
+
 
