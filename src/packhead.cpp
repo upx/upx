@@ -42,6 +42,7 @@ PackHeader::PackHeader() : version(-1), format(-1) {}
 **************************************************************************/
 
 static unsigned char get_packheader_checksum(const upx_bytep buf, int len) {
+    assert(len >= 4);
     assert(get_le32(buf) == UPX_MAGIC_LE32);
     // printf("1 %d\n", len);
     buf += 4;
@@ -58,12 +59,14 @@ static unsigned char get_packheader_checksum(const upx_bytep buf, int len) {
 //
 **************************************************************************/
 
+// Returns the size that will be generated based on version and format,
+// not necessarily the size that actually is present in spoofed input.
 int PackHeader::getPackHeaderSize() const {
     if (format < 0 || version < 0)
         throwInternalError("getPackHeaderSize");
 
     int n = 0;
-    if (version <= 3)
+    if (version <= 3)  // Note: covers (version <= 0)
         n = 24;
     else if (version <= 9) {
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS)
@@ -90,6 +93,8 @@ int PackHeader::getPackHeaderSize() const {
 **************************************************************************/
 
 void PackHeader::putPackHeader(upx_bytep p) {
+    // NOTE: It is the caller's responsbility to ensure the buffer p has
+    // sufficient space for the header.
     assert(get_le32(p) == UPX_MAGIC_LE32);
     if (get_le32(p + 4) != UPX_MAGIC2_LE32) {
         // fprintf(stderr, "MAGIC2_LE32: %x %x\n", get_le32(p+4), UPX_MAGIC2_LE32);
@@ -170,11 +175,11 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
     if (boff < 0)
         return false;
 
-    if (boff + 8 <= 0 || boff + 8 > blen)
+    const upx_bytep const p = buf + boff;
+    unsigned const headway = blen - boff;  // bytes remaining in buf
+
+    if (headway < (1+ 7))
         throwCantUnpack("header corrupted 1");
-
-    const upx_bytep p = buf + boff;
-
     version = p[4];
     format = p[5];
     method = p[6];
@@ -192,20 +197,20 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
         snprintf(msg, sizeof(msg), "unknown format %d", format);
         throwCantUnpack(msg);
     }
-    const int size = getPackHeaderSize();
-    if (boff + size <= 0 || boff + size > blen)
-        throwCantUnpack("header corrupted 2");
 
     //
     // decode the new variable length header
     //
 
-    int off_filter = 0;
+    unsigned off_filter = 0;
     if (format < 128) {
+        if (headway < 16) {
+            throwCantUnpack("header corrupted 2");
+        }
         u_adler = get_le32(p + 8);
         c_adler = get_le32(p + 12);
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS) {
-            if (size < 21) {
+            if (headway < 20) {
                 throwCantUnpack("header corrupted 5");
             }
             u_len = get_le16(p + 16);
@@ -213,7 +218,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
             u_file_size = u_len;
             off_filter = 20;
         } else if (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH) {
-            if (size < 26) {
+            if (headway < 25) {
                 throwCantUnpack("header corrupted 6");
             }
             u_len = get_le24(p + 16);
@@ -221,7 +226,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
             u_file_size = get_le24(p + 22);
             off_filter = 25;
         } else {
-            if (size < 31) {
+            if (headway < (3+ 28)) {
                 throwCantUnpack("header corrupted 7");
             }
             u_len = get_le32(p + 16);
@@ -232,7 +237,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
             n_mru = p[30] ? 1 + p[30] : 0;
         }
     } else {
-        if (size < 31) {
+        if (headway < (3+ 28)) {
             throwCantUnpack("header corrupted 8");
         }
         u_len = get_be32(p + 8);
@@ -245,8 +250,12 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
         n_mru = p[30] ? 1 + p[30] : 0;
     }
 
-    if (version >= 10)
+    if (version >= 10) {
+        if (headway < (1+ off_filter)) {
+            throwCantUnpack("header corrupted 9");
+        }
         filter = p[off_filter];
+    }
     else if ((level & 128) == 0)
         filter = 0;
     else {
@@ -267,9 +276,12 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
         throwCantUnpack("cannot unpack UPX ;-)");
 
     // check header_checksum
-    if (version > 9)
-        if (p[size - 1] != get_packheader_checksum(p, size - 1))
+    if (version > 9) {
+        unsigned const size = getPackHeaderSize();  // expected; based on format and version
+        if (headway < size
+        || p[size - 1] != get_packheader_checksum(p, size - 1))
             throwCantUnpack("header corrupted 3");
+    }
 
     if (c_len < 2 || u_len < 2 || !mem_size_valid_bytes(c_len) || !mem_size_valid_bytes(u_len))
         throwCantUnpack("header corrupted 4");
