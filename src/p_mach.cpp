@@ -1429,13 +1429,18 @@ void PackMachBase<T>::unpack(OutputFile *fo)
 
     msegcmd = New(Mach_segment_command, ncmds);
     unsigned char const *ptr = (unsigned char const *)(1+mhdr);
+    printf("mhdr valid from %p -> %p\n", (unsigned char const *)mhdr, ((unsigned char const *)mhdr)+ph.u_len);
     for (unsigned j= 0; j < ncmds; ++j) {
+      size_t bytes_to_write = umin(sizeof(Mach_segment_command), ((Mach_command const *)ptr)->cmdsize);
+        if (ptr_udiff(ptr+bytes_to_write, (1+ mhdr)) > ph.u_len) {
+            printf("throwCantUnpack(\"cmdsize\")\n");
+            throwCantUnpack("cmdsize");
+        }
+        printf("going to memcpy %p -> %p size=%x\n", &msegcmd[j], ptr, umin(sizeof(Mach_segment_command),
+                                                                                        ((Mach_command const *)ptr)->cmdsize));
         memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command),
             ((Mach_command const *)ptr)->cmdsize));
         ptr += (unsigned) ((Mach_command const *)ptr)->cmdsize;
-        if (ptr_udiff(ptr, (1+ mhdr)) > ph.u_len) {
-            throwCantUnpack("cmdsize");
-        }
     }
 
     // Put LC_SEGMENT together at the beginning
