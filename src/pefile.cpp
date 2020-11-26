@@ -1737,7 +1737,7 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
     }
 }
 
-upx_byte* PeFile::Resource::build()
+upx_byte *PeFile::Resource::build()
 {
     mem.dealloc();
     newstart = nullptr;
