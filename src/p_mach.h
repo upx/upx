@@ -818,8 +818,13 @@ protected:
     upx_byte const *stub_entry;
     upx_byte const *stub_fold;
     upx_byte const *stub_main;
+
+    MemBuffer rawmseg_buf;  // Mach_segment_command[];
     Mach_segment_command *rawmseg;  // as input, with sections
+
+    MemBuffer msegcmd_buf;  // Mach_segment_command[];
     Mach_segment_command *msegcmd;  // LC_SEGMENT first, without sections
+
     unsigned o__mod_init_func;  // file offset to __DATA.__mod_init_func Mach_section_command
     upx_uint64_t prev_mod_init_func;
     upx_uint64_t pagezero_vmsize;
