@@ -120,8 +120,6 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
 template <class T>
 PackMachBase<T>::~PackMachBase()
 {
-    delete [] rawmseg;
-    delete [] msegcmd;
 }
 
 PackDylibI386::PackDylibI386(InputFile *f) : super(f)
@@ -388,7 +386,8 @@ PackMachBase<T>::buildMachLoader(
   }
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
-    unsigned char *const cprLoader = New(unsigned char, sizeof(h) + h.sz_unc);
+    MemBuffer cprLoader_buf(sizeof(h) + h.sz_unc);
+    unsigned char *const cprLoader = (unsigned char *)cprLoader_buf.getVoidPtr();
   if (0 < szfold) {
     unsigned sz_cpr = 0;
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &sz_cpr,
@@ -401,7 +400,6 @@ PackMachBase<T>::buildMachLoader(
 
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + h.sz_cpr, 0);
-    delete [] cprLoader;
 
     int const GAP = 128;  // must match stub/l_mac_ppc.S
     int const NO_LAP = 64;  // must match stub/src/*darwin*.S
@@ -1385,7 +1383,9 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     if ((sizeof(mhdri) + sz_cmds) > (size_t)fi->st_size()) {
         throwCantUnpack("file header corrupted");
     }
-    rawmseg = (Mach_segment_command *) New(char, sz_cmds);
+    rawmseg_buf.dealloc();  // discard "same" contents from ::canUnpack()
+    rawmseg_buf.alloc(sz_cmds);
+    rawmseg = (Mach_segment_command *)rawmseg_buf.getVoidPtr();
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
     // FIXME forgot space left for LC_CODE_SIGNATURE;
@@ -1418,7 +1418,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
 
     // Uncompress Macho headers
     fi->readx(ibuf, ph.c_len);
-    Mach_header *const mhdr = (Mach_header *) New(upx_byte, ph.u_len);
+    MemBuffer mhdr_buf(ph.u_len);
+    Mach_header *const mhdr = (Mach_header *)mhdr_buf.getVoidPtr();
     decompress(ibuf, (upx_byte *)mhdr, false);
     if (mhdri.magic      != mhdr->magic
     ||  mhdri.cputype    != mhdr->cputype
@@ -1427,15 +1428,19 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         throwCantUnpack("file header corrupted");
     unsigned const ncmds = mhdr->ncmds;
 
-    msegcmd = New(Mach_segment_command, ncmds);
+    msegcmd_buf.alloc(sizeof(Mach_segment_command) * ncmds);
+    msegcmd = (Mach_segment_command *)msegcmd_buf.getVoidPtr();
     unsigned char const *ptr = (unsigned char const *)(1+mhdr);
     for (unsigned j= 0; j < ncmds; ++j) {
+        unsigned char const *const next = ((Mach_command const *)ptr)->cmdsize + ptr;
+        if (ptr_udiff(next, (1+ mhdr)) > ph.u_len) {
+            char msg[50]; snprintf(msg, sizeof(msg), "cmdsize[%d] %#x",
+                j, (unsigned)(next - ptr));
+            throwCantUnpack(msg);
+        }
         memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command),
             ((Mach_command const *)ptr)->cmdsize));
-        ptr += (unsigned) ((Mach_command const *)ptr)->cmdsize;
-        if (ptr_udiff(ptr, (1+ mhdr)) > ph.u_len) {
-            throwCantUnpack("cmdsize");
-        }
+        ptr = next;
     }
 
     // Put LC_SEGMENT together at the beginning
@@ -1510,7 +1515,6 @@ void PackMachBase<T>::unpack(OutputFile *fo)
                 c_adler, u_adler, false, sizeof(bhdr));
         }
     }
-    delete [] mhdr;
 }
 
 // The prize is the value of overlay_offset: the offset of compressed data
@@ -1538,7 +1542,8 @@ int PackMachBase<T>::canUnpack()
     if (2048 < headway) {
         infoWarning("Mach_header.sizeofcmds(%d) > 1024", headway);
     }
-    rawmseg = (Mach_segment_command *) New(char, mhdri.sizeofcmds);
+    rawmseg_buf.alloc(mhdri.sizeofcmds);
+    rawmseg = (Mach_segment_command *)rawmseg_buf.getVoidPtr();
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
     Mach_segment_command const *ptrTEXT = 0;
@@ -1807,14 +1812,16 @@ bool PackMachBase<T>::canPack()
     if (16384 < sz_mhcmds) { // somewhat arbitrary, but amd64-darwin.macho-upxmain.c
         throwCantPack("16384 < Mach_header.sizeofcmds");
     }
-    rawmseg = (Mach_segment_command *) New(char, sz_mhcmds);
+    rawmseg_buf.alloc(sz_mhcmds);
+    rawmseg = (Mach_segment_command *)(void *)rawmseg_buf;
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
     unsigned const ncmds = mhdri.ncmds;
     if (256 < ncmds) { // arbitrary, but guard against garbage
         throwCantPack("256 < Mach_header.ncmds");
     }
-    msegcmd = New(Mach_segment_command, ncmds);
+    msegcmd_buf.alloc(sizeof(Mach_segment_command) * ncmds);
+    msegcmd = (Mach_segment_command *)msegcmd_buf.getVoidPtr();
     unsigned char const *ptr = (unsigned char const *)rawmseg;
     for (unsigned j= 0; j < ncmds; ++j) {
         Mach_segment_command const *segptr = (Mach_segment_command const *)ptr;
