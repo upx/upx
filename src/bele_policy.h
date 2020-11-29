@@ -126,13 +126,13 @@ struct BEPolicy
         { set_be64(p, v); }
 
     V unsigned get16_signed(const void *p) C
-        { return get_be16_signed(p); }
+        { return (unsigned)get_be16_signed(p); }
     V unsigned get24_signed(const void *p) C
-        { return get_be24_signed(p); }
+        { return (unsigned)get_be24_signed(p); }
     V unsigned get32_signed(const void *p) C
-        { return get_be32_signed(p); }
+        { return (unsigned)get_be32_signed(p); }
     V upx_uint64_t get64_signed(const void *p) C
-        { return get_be64_signed(p); }
+        { return (upx_uint64_t)get_be64_signed(p); }
 
     S u16_compare(const void *a, const void *b) C
         { return be16_compare(a, b); }
@@ -203,13 +203,13 @@ struct LEPolicy
         { set_le64(p, v); }
 
     V unsigned get16_signed(const void *p) C
-        { return get_le16_signed(p); }
+        { return (unsigned)get_le16_signed(p); }
     V unsigned get24_signed(const void *p) C
-        { return get_le24_signed(p); }
+        { return (unsigned)get_le24_signed(p); }
     V unsigned get32_signed(const void *p) C
-        { return get_le32_signed(p); }
+        { return (unsigned)get_le32_signed(p); }
     V upx_uint64_t get64_signed(const void *p) C
-        { return get_le64_signed(p); }
+        { return (upx_uint64_t)get_le64_signed(p); }
 
     S u16_compare(const void *a, const void *b) C
         { return le16_compare(a, b); }
