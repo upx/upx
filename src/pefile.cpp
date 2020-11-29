@@ -3126,8 +3126,15 @@ void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask,
                      upx_uint64_t default_imagebase,
                      bool last_section_rsrc_only)
 {
+#if defined(_MSVC_LANG)  //{
+#pragma warning( push )
+#pragma warning( suppress: 4245 )
+#endif  //}
     super::pack0<LE32>(fo, ih, oh, subsystem_mask,
                        default_imagebase, last_section_rsrc_only);
+#if defined(_MSVC_LANG)  //{
+#pragma warning( pop )
+#endif  //}
 }
 
 void PeFile32::unpack(OutputFile *fo)
@@ -3182,7 +3189,14 @@ void PeFile64::readPeHeader()
 void PeFile64::pack0(OutputFile *fo, unsigned subsystem_mask,
                      upx_uint64_t default_imagebase)
 {
+#if defined(_MSVC_LANG)  //{
+#pragma warning( push )
+#pragma warning( suppress: 4245 )
+#endif  //}
     super::pack0<LE64>(fo, ih, oh, subsystem_mask, default_imagebase, false);
+#if defined(_MSVC_LANG)  //{
+#pragma warning( pop )
+#endif  //}
 }
 
 void PeFile64::unpack(OutputFile *fo)
