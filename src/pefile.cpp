@@ -3110,7 +3110,9 @@ void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask,
                      upx_uint64_t default_imagebase,
                      bool last_section_rsrc_only)
 {
-    super::pack0<LE32>(fo, ih, oh, subsystem_mask,
+    // Redundant cast of subsystem_mask tries to workaround
+    // MSVC complaint C4245 signed/unsigned mismatch
+    super::pack0<LE32>(fo, ih, oh, (unsigned)subsystem_mask,
                        default_imagebase, last_section_rsrc_only);
 }
 
