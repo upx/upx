@@ -44,6 +44,17 @@ Please report all problems or suggestions to the authors. Thanks.
 
 
 
+=head1 SECURITY CONTEXT
+
+IMPORTANT NOTE: B<UPX> inherits the security context of any files it handles.
+
+This means that packing, unpacking, or even testing or listing a file requires
+the same security considerations as acutally executing the file.
+
+Use B<UPX> on trusted files only!
+
+
+
 =head1 DESCRIPTION
 
 B<UPX> is a versatile executable packer with the following features:
