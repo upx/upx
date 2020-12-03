@@ -147,12 +147,16 @@ if [[ -z $BM_CROSS ]]; then
                 v=${BM_C:6:3}; CC="clang-$v"; CXX="clang++-$v"; SCAN_BUILD="scan-build-$v" ;;
             clang-[789]-m??)
                 v=${BM_C:6:1}; CC="clang-$v"; CXX="clang++-$v"; SCAN_BUILD="scan-build-$v" ;;
+            clang-1[0-9]-m??)
+                v=${BM_C:6:2}; CC="clang-$v"; CXX="clang++-$v"; SCAN_BUILD="scan-build-$v" ;;
             gcc | gcc-m?? | gcc-mx32)
                 CC="gcc"; CXX="g++" ;; # standard system compiler
             gcc-[34].[0-9]-m?? | gcc-[34].[0-9]-mx32)
                 v=${BM_C:4:3}; CC="gcc-$v"; CXX="g++-$v" ;;
             gcc-[56789]-m?? | gcc-[56789]-mx32)
                 v=${BM_C:4:1}; CC="gcc-$v"; CXX="g++-$v" ;;
+            gcc-1[0-9]-m?? | gcc-1[0-9]-mx32)
+                v=${BM_C:4:2}; CC="gcc-$v"; CXX="g++-$v" ;;
         esac
     fi
 fi
@@ -188,7 +192,7 @@ mkbuilddirs() {
 # search for an existing $toptop_builddir
 if [[ -z $toptop_builddir ]]; then
     for d in . ..;  do
-        for subdir in "local" appveyor circle gitlab travis .; do
+        for subdir in "local" appveyor circle github gitlab travis .; do
             dd=$d/build/$subdir
             if [[ -d $dd ]]; then
                 toptop_builddir=$(readlink -en -- "$dd")
