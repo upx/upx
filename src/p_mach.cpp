@@ -465,7 +465,7 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
     if (a->vmsize)             return -1;  // 'a' is first
     if (b->vmsize)             return  1;  // 'a' is last
     // What could remain?
-                               return  0;
+    return 0;
 }
 
 #undef PAGE_MASK
