@@ -2138,7 +2138,7 @@ unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase,
                                    upx_uint64_t default_imagebase,
                                    unsigned dllflags)
 {
-    if (dllflags & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)
+    if (dllflags & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
         opt->win32_pe.strip_relocs = false;
     else if (isdll) //do never strip relocations from DLLs
         opt->win32_pe.strip_relocs = false;
@@ -2245,10 +2245,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD)
         throwCantPack("CFGuard enabled PE files are not supported");
 
-    if (ih.dllflags & IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY)
+    if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY)
     {
         if (opt->force)
-            ih.dllflags &= ~(unsigned)IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY;
+            ih.dllflags &= ~(unsigned)IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY;
         else
             throwCantPack("image forces integrity check (use --force to remove)");
     }
