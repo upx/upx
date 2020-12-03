@@ -316,7 +316,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         dynsym = (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
         gashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
         hashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
-        if (3& ((uintptr_t)dynsym | (uintptr_t)gashtab | (uintptr_t)hashtab)) {
+        if (3& ((upx_uintptr_t)dynsym | (upx_uintptr_t)gashtab | (upx_uintptr_t)hashtab)) {
             throwCantPack("unaligned DT_SYMTAB, DT_GNU_HASH, or DT_HASH/n");
         }
         jni_onload_sym = elf_lookup("JNI_OnLoad");
@@ -821,7 +821,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         dynsym = (Elf64_Sym const *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
         gashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
         hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
-        if (3& ((uintptr_t)dynsym | (uintptr_t)gashtab | (uintptr_t)hashtab)) {
+        if (3& ((upx_uintptr_t)dynsym | (upx_uintptr_t)gashtab | (upx_uintptr_t)hashtab)) {
             throwCantPack("unaligned DT_SYMTAB, DT_GNU_HASH, or DT_HASH/n");
         }
         jni_onload_sym = elf_lookup("JNI_OnLoad");
@@ -5213,7 +5213,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t dt_filesz)
     if (dt_table[Elf64_Dyn::DT_NULL]) {
         return;  // not 1st time; do not change upx_dt_init
     }
-    if ((file_size - (e_phnum*sizeof(Elf64_Phdr) + sizeof(Elf64_Ehdr))) < dt_filesz) {
+    if (((u64_t)file_size - (e_phnum*sizeof(Elf64_Phdr) + sizeof(Elf64_Ehdr))) < dt_filesz) {
         char msg[50]; snprintf(msg, sizeof(msg),
             "bad PT_DYNAMIC.pt_filesz %#lx", (long unsigned)dt_filesz);
         throwCantPack(msg);
