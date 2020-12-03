@@ -52,6 +52,17 @@ http://compression.ca/ .
 UPX aims to be Commercial Quality Freeware.
 
 
+SECURITY CONTEXT
+================
+
+IMPORTANT NOTE: UPX inherits the security context of any files it handles.
+
+This means that packing, unpacking, or even testing or listing a file requires
+the same security considerations as acutally executing the file.
+
+Use UPX on trusted files only!
+
+
 SHORT DOCUMENTATION
 ===================
 
