@@ -2247,26 +2247,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
     if (ih.dllflags & IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY)
     {
-        if (opt->force) {
-#if defined(_MSVC_LANG)  //{
-#pragma warning( push )
-#pragma warning( suppress: 4245 )
-// MSVC bug
-// pefile.cpp(3114): note: see reference to function template instantiation 'void PeFile::pack0<LE32,PeFile32::pe_header_t>(OutputFile *,ht &,ht &,unsigned int,upx_uint64_t,bool)' being compiled
-//        with
-//        [
-//            ht=PeFile32::pe_header_t
-//        ]
-// pefile.cpp(2251): warning C4245: 'argument': conversion from 'int' to 'unsigned int', signed/unsigned mismatch
-#endif  //}
-             ih.dllflags &= ~IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY;
-#if defined(_MSVC_LANG)  //{
-#pragma warning( pop )
-#endif  //}
-        }
-        else {
+        if (opt->force)
+            ih.dllflags &= ~(unsigned)IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY;
+        else
             throwCantPack("image forces integrity check (use --force to remove)");
-        }
     }
     checkHeaderValues(ih.subsystem, subsystem_mask, ih.entry, ih.filealign);
 
@@ -3126,15 +3110,8 @@ void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask,
                      upx_uint64_t default_imagebase,
                      bool last_section_rsrc_only)
 {
-#if defined(_MSVC_LANG)  //{
-#pragma warning( push )
-#pragma warning( suppress: 4245 )
-#endif  //}
     super::pack0<LE32>(fo, ih, oh, subsystem_mask,
                        default_imagebase, last_section_rsrc_only);
-#if defined(_MSVC_LANG)  //{
-#pragma warning( pop )
-#endif  //}
 }
 
 void PeFile32::unpack(OutputFile *fo)
@@ -3189,14 +3166,7 @@ void PeFile64::readPeHeader()
 void PeFile64::pack0(OutputFile *fo, unsigned subsystem_mask,
                      upx_uint64_t default_imagebase)
 {
-#if defined(_MSVC_LANG)  //{
-#pragma warning( push )
-#pragma warning( suppress: 4245 )
-#endif  //}
     super::pack0<LE64>(fo, ih, oh, subsystem_mask, default_imagebase, false);
-#if defined(_MSVC_LANG)  //{
-#pragma warning( pop )
-#endif  //}
 }
 
 void PeFile64::unpack(OutputFile *fo)
