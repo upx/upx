@@ -66,7 +66,7 @@ int PackHeader::getPackHeaderSize() const {
         throwInternalError("getPackHeaderSize");
 
     int n = 0;
-    if (version <= 3)  // Note: covers (version <= 0)
+    if (version <= 3) // Note: covers (version <= 0)
         n = 24;
     else if (version <= 9) {
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS)
@@ -176,9 +176,9 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
         return false;
 
     const upx_bytep const p = buf + boff;
-    unsigned const headway = blen - boff;  // bytes remaining in buf
+    unsigned const headway = blen - boff; // bytes remaining in buf
 
-    if (headway < (1+ 7))
+    if (headway < (1 + 7))
         throwCantUnpack("header corrupted 1");
     version = p[4];
     format = p[5];
@@ -190,9 +190,8 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
         fprintf(stderr, "  fillPackHeader  version=%d  format=%d  method=%d  level=%d\n", version,
                 format, method, level);
     }
-    if (0==format || 128==format
-    ||  (format < 128 && format > UPX_F_LINUX_ELF64_ARM)
-    ||  (format > 128 && format > UPX_F_DYLIB_PPC64)) {
+    if (0 == format || 128 == format || (format < 128 && format > UPX_F_LINUX_ELF64_ARM) ||
+        (format > 128 && format > UPX_F_DYLIB_PPC64)) {
         char msg[24];
         snprintf(msg, sizeof(msg), "unknown format %d", format);
         throwCantUnpack(msg);
@@ -226,7 +225,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
             u_file_size = get_le24(p + 22);
             off_filter = 25;
         } else {
-            if (headway < (3+ 28)) {
+            if (headway < (3 + 28)) {
                 throwCantUnpack("header corrupted 7");
             }
             u_len = get_le32(p + 16);
@@ -237,7 +236,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
             n_mru = p[30] ? 1 + p[30] : 0;
         }
     } else {
-        if (headway < (3+ 28)) {
+        if (headway < (3 + 28)) {
             throwCantUnpack("header corrupted 8");
         }
         u_len = get_be32(p + 8);
@@ -251,12 +250,11 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
     }
 
     if (version >= 10) {
-        if (headway < (1+ off_filter)) {
+        if (headway < (1 + off_filter)) {
             throwCantUnpack("header corrupted 9");
         }
         filter = p[off_filter];
-    }
-    else if ((level & 128) == 0)
+    } else if ((level & 128) == 0)
         filter = 0;
     else {
         // convert old flags to new filter id
@@ -277,9 +275,8 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
 
     // check header_checksum
     if (version > 9) {
-        unsigned const size = getPackHeaderSize();  // expected; based on format and version
-        if (headway < size
-        || p[size - 1] != get_packheader_checksum(p, size - 1))
+        unsigned const size = getPackHeaderSize(); // expected; based on format and version
+        if (headway < size || p[size - 1] != get_packheader_checksum(p, size - 1))
             throwCantUnpack("header corrupted 3");
     }
 
