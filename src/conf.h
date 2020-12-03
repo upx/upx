@@ -183,10 +183,10 @@ typedef size_t upx_rsize_t;
 #  define STDERR_FILENO     (fileno(stderr))
 #endif
 
-#if !(HAVE_STRCASECMP) && (HAVE_STRICMP)
+#if !(HAVE_STRCASECMP) && (HAVE_STRICMP) && !defined(strcasecmp)
 #  define strcasecmp        stricmp
 #endif
-#if !(HAVE_STRNCASECMP) && (HAVE_STRNICMP)
+#if !(HAVE_STRNCASECMP) && (HAVE_STRNICMP) && !defined(strncasecmp)
 #  define strncasecmp       strnicmp
 #endif
 
