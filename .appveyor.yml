@@ -5,6 +5,7 @@ os: Visual Studio 2015
 
 branches:
   except:
+    - /^github.*/
     - /^gitlab.*/
     - /^travis.*/
 

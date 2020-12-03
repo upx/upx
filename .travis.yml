@@ -11,6 +11,7 @@ notifications: { email: { on_success: never, on_failure: change } }
 branches:
   except:
     - /^appveyor.*/
+    - /^github.*/
     - /^gitlab.*/
 
 # Ubuntu 12.04 LTS "Precise"

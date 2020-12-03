@@ -1,0 +1,63 @@
+# Support for GitHub Actions -- https://github.com/features/actions
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+name: GitHub CI
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!appveyor*'
+      - '!gitlab*'
+      - '!travis*'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-20.04, C: clang-10-m64 }
+          - { os: ubuntu-20.04, C: gcc-10-m64 }
+          #- { os: ubuntu-20.04, X: rebuild-stubs }
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      #if: contains(matrix.os, 'ubuntu')
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with: { submodules: true }
+
+      - name: 'Step: prepare sources'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          uname -a; pwd; id; umask
+          #cat /etc/os-release || true
+          #env
+          cd ..; mkdir -p deps build/github; cd deps
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
+          git clone https://github.com/upx/upx-testsuite
+          if [[ $X =~ (^|\+)rebuild-stubs($|\+) ]]; then
+            wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -xJ
+          fi
+
+      - name: 'Step: build'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          bash ./.github/travis_build.sh
+
+      - name: 'Step: run testsuite'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          bash ./.github/travis_testsuite_1.sh
+
+# vim:set ts=2 sw=2 et:
