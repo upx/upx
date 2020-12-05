@@ -231,6 +231,7 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
     xct_off(0), xct_va(0), jni_onload_va(0),
     user_init_va(0), user_init_off(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL),
+    shstrtab(NULL),
     o_elf_shnum(0)
 {
     memset(dt_table, 0, sizeof(dt_table));
@@ -702,11 +703,10 @@ void PackLinuxElf64::defineSymbols(Filter const *ft)
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
     : super(f), phdri(NULL), shdri(NULL),
-    gnu_stack(NULL), note_body(NULL),
+    gnu_stack(NULL),
     page_mask(~0u<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     jni_onload_sym(NULL),
-    shstrtab(NULL),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
     , symnum_end(0)
 {
@@ -719,16 +719,14 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
 
 PackLinuxElf32::~PackLinuxElf32()
 {
-    delete[] note_body;
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
     : super(f), phdri(NULL), shdri(NULL),
-    gnu_stack(NULL), note_body(NULL),
+    gnu_stack(NULL),
     page_mask(~0ull<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     jni_onload_sym(NULL),
-    shstrtab(NULL),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
     , symnum_end(0)
 {
@@ -741,7 +739,6 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
 
 PackLinuxElf64::~PackLinuxElf64()
 {
-    delete[] note_body;
 }
 
 // FIXME: should be templated with PackLinuxElf32help1
@@ -1181,8 +1178,10 @@ PackLinuxElf32::buildLinuxLoader(
     h.b_cto8 = (unsigned char) ph.filter_cto;
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
-    h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc + (0==h.sz_unc));
-    unsigned char *const cprLoader = New(unsigned char, sizeof(h) + h.sz_cpr);
+    MemBuffer mb_cprLoader;
+    mb_cprLoader.allocForCompression(h.sz_unc + (0==h.sz_unc));
+    h.sz_cpr = mb_cprLoader.getSize();
+    unsigned char *const cprLoader = (unsigned char *)mb_cprLoader;
     {
     unsigned h_sz_cpr = h.sz_cpr;
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h_sz_cpr,
@@ -1194,7 +1193,8 @@ PackLinuxElf32::buildLinuxLoader(
 #if 0  //{  debugging only
     if (M_IS_LZMA(ph.method)) {
         ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
-        unsigned char *tmp = New(unsigned char, tmp_len);
+        MemBuffer mb_tmp(tmp_len);
+        unsigned char *tmp = (unsigned char *)mb_tmp;
         memset(tmp, 0, tmp_len);
         int r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
         if (r == UPX_E_OUT_OF_MEMORY)
@@ -1203,7 +1203,6 @@ PackLinuxElf32::buildLinuxLoader(
         for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
             printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);
         }
-        delete[] tmp;
     }
 #endif  //}
     unsigned const sz_cpr = h.sz_cpr;
@@ -1213,7 +1212,6 @@ PackLinuxElf32::buildLinuxLoader(
 
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
-    delete [] cprLoader;
   }
   else {
     linker->addSection("FOLDEXEC", "", 0, 0);
@@ -1250,8 +1248,10 @@ PackLinuxElf64::buildLinuxLoader(
     h.b_cto8 = (unsigned char) ph.filter_cto;
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
-    h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc + (0==h.sz_unc));
-    unsigned char *const cprLoader = New(unsigned char, sizeof(h) + h.sz_cpr);
+    MemBuffer mb_cprLoader;
+    mb_cprLoader.allocForCompression(h.sz_unc + (0==h.sz_unc));
+    h.sz_cpr = mb_cprLoader.getSize();
+    unsigned char *const cprLoader = (unsigned char *)mb_cprLoader;
     {
     unsigned h_sz_cpr = h.sz_cpr;
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h_sz_cpr,
@@ -1263,7 +1263,8 @@ PackLinuxElf64::buildLinuxLoader(
 #if 0  //{  debugging only
     if (M_IS_LZMA(ph.method)) {
         ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
-        unsigned char *tmp = New(unsigned char, tmp_len);
+        MemBuffer mb_tmp(tmp_len);
+        unsigned char *tmp = (unsigned char *)mb_tmp;
         memset(tmp, 0, tmp_len);
         int r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
         if (r == UPX_E_OUT_OF_MEMORY)
@@ -1272,7 +1273,6 @@ PackLinuxElf64::buildLinuxLoader(
         for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
             printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);
         }
-        delete[] tmp;
     }
 #endif  //}
     unsigned const sz_cpr = h.sz_cpr;
@@ -1282,7 +1282,6 @@ PackLinuxElf64::buildLinuxLoader(
 
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
-    delete [] cprLoader;
   }
   else {
     linker->addSection("FOLDEXEC", "", 0, 0);
@@ -2867,7 +2866,7 @@ PackNetBSDElf32x86::generateElfHdr(
     // Find the NetBSD PT_NOTE and the PaX PT_NOTE.
     Elf32_Nhdr const *np_NetBSD = 0;  unsigned sz_NetBSD = 0;
     Elf32_Nhdr const *np_PaX    = 0;  unsigned sz_PaX    = 0;
-    unsigned char *cp = note_body;
+    unsigned char *cp = (unsigned char *)note_body;
     unsigned j;
     for (j=0; j < note_size; ) {
         Elf32_Nhdr const *const np = (Elf32_Nhdr const *)(void *)cp;
@@ -3177,7 +3176,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
         }
     }
     if (note_size) {
-        note_body = New(unsigned char, note_size);
+        note_body.alloc(note_size);
         note_size = 0;
     }
     phdr = phdri;
@@ -3464,23 +3463,19 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
         sec_strndx = &shdri[get_te16(&ehdri.e_shstrndx)];
 
         unsigned sh_size = get_te32(&sec_strndx->sh_size);
-        char *strtab = New(char, sh_size);
+        mb_shstrtab.alloc(sh_size); shstrtab = (char *)mb_shstrtab.getVoidPtr();
         fi->seek(0,SEEK_SET);
         fi->seek(sec_strndx->sh_offset,SEEK_SET);
-        fi->readx(strtab, sh_size);
-
-        shstrtab = (const char*)strtab;
+        fi->readx(mb_shstrtab, sh_size);
 
         Elf32_Shdr const *buildid = elf_find_section_name(".note.gnu.build-id");
         if (buildid) {
             unsigned bid_sh_size = get_te32(&buildid->sh_size);
-            unsigned char *data = New(unsigned char, bid_sh_size);
-            memset(data,0,bid_sh_size);
+            buildid_data.alloc(bid_sh_size);
+            buildid_data.clear();
             fi->seek(0,SEEK_SET);
             fi->seek(buildid->sh_offset,SEEK_SET);
-            fi->readx(data, bid_sh_size);
-
-            buildid_data  = data;
+            fi->readx((void *)buildid_data, bid_sh_size);
 
             o_elf_shnum = 3;
             memset(&shdrout,0,sizeof(shdrout));
@@ -3606,7 +3601,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         }
     }
     if (note_size) {
-        note_body = New(unsigned char, note_size);
+        note_body.alloc(note_size);
         note_size = 0;
     }
     phdr = phdri;
@@ -3885,23 +3880,19 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         sec_strndx = &shdri[get_te16(&ehdri.e_shstrndx)];
 
         upx_uint64_t sh_size = get_te64(&sec_strndx->sh_size);
-        char *strtab = New(char, sh_size);
+        mb_shstrtab.alloc(sh_size); shstrtab = (char *)mb_shstrtab.getVoidPtr();
         fi->seek(0,SEEK_SET);
         fi->seek(sec_strndx->sh_offset,SEEK_SET);
-        fi->readx(strtab, sh_size);
-
-        shstrtab = (const char*)strtab;
+        fi->readx(mb_shstrtab, sh_size);
 
         Elf64_Shdr const *buildid = elf_find_section_name(".note.gnu.build-id");
         if (buildid) {
             unsigned bid_sh_size = get_te32(&buildid->sh_size);
-            unsigned char *data = New(unsigned char, bid_sh_size);
-            memset(data,0,bid_sh_size);
+            buildid_data.alloc(bid_sh_size);
+            buildid_data.clear();
             fi->seek(0,SEEK_SET);
             fi->seek(buildid->sh_offset,SEEK_SET);
-            fi->readx(data,bid_sh_size);
-
-            buildid_data  = data;
+            fi->readx((void *)buildid_data, bid_sh_size);
 
             o_elf_shnum = 3;
             memset(&shdrout,0,sizeof(shdrout));

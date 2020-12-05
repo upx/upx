@@ -99,7 +99,11 @@ protected:
     static unsigned const DT_NUM = 34;  // elf.h
     unsigned dt_table[DT_NUM];  // 1+ index in PT_DYNAMIC
 
-    unsigned char const *buildid_data;
+    MemBuffer mb_shstrtab;   // via ElfXX_Shdr
+    char const *shstrtab;
+    MemBuffer buildid_data;
+    MemBuffer note_body;  // concatenated contents of PT_NOTEs, if any
+    unsigned note_size;  // total size of PT_NOTEs
     int o_elf_shnum; // num output Shdrs
     static unsigned char o_shstrtab[];
 };
@@ -175,8 +179,6 @@ protected:
     unsigned e_shoff;
     unsigned sz_dynseg;  // PT_DYNAMIC.p_memsz
     unsigned so_slide;
-    unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
-    unsigned note_size;  // total size of PT_NOTEs
     unsigned n_jmp_slot;
     unsigned plt_off;
     unsigned page_mask;  // AND clears the offset-within-page
@@ -186,7 +188,6 @@ protected:
     unsigned int const *gashtab;  // from DT_GNU_HASH
     Elf32_Sym    const *dynsym;   // from DT_SYMTAB
     Elf32_Sym    const *jni_onload_sym;
-    char const *shstrtab;   // via Elf32_Shdr
 
     Elf32_Shdr       *sec_strndx;
     Elf32_Shdr const *sec_dynsym;
@@ -313,8 +314,6 @@ protected:
     upx_uint64_t e_shoff;
     upx_uint64_t sz_dynseg;  // PT_DYNAMIC.p_memsz
     upx_uint64_t so_slide;
-    unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
-    unsigned note_size;  // total size of PT_NOTEs
     unsigned n_jmp_slot;
     upx_uint64_t plt_off;
     upx_uint64_t page_mask;  // AND clears the offset-within-page
@@ -324,7 +323,6 @@ protected:
     unsigned int const *gashtab;  // from DT_GNU_HASH
     Elf64_Sym    const *dynsym;   // from DT_SYMTAB
     Elf64_Sym    const *jni_onload_sym;
-    char const *shstrtab;   // via Elf64_Shdr
 
     Elf64_Shdr       *sec_strndx;
     Elf64_Shdr const *sec_dynsym;
