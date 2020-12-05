@@ -1,0 +1,167 @@
+# Support for GitHub Actions -- https://github.com/features/actions
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+name: 'CI'
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!appveyor*'
+      - '!gitlab*'
+      - '!travis*'
+
+  workflow_dispatch:
+
+jobs:
+  job-ci-rebuild-and-verify-stubs:
+    name: 'Rebuild stubs'
+    runs-on: ubuntu-16.04
+    steps:
+      - name: 'Install extra packages'
+        run: |
+          uname -a; pwd; id; umask
+          export DEBIAN_FRONTEND=noninteractive
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y libmpfr4:i386 zlib1g:i386
+          cd ..; mkdir -p deps; cd deps
+          wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -xJ
+      - name: 'Check out code'
+        uses: actions/checkout@v2
+        with: { submodules: true }
+      - name: 'Rebuild and verify stubs'
+        run: env C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux bash ./.github/travis_build.sh
+
+  job-ci-linux-toolchains:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: amd64-linux-clang-10, os: ubuntu-20.04, C: clang-10-m64 }
+          - { name: amd64-linux-gcc-10,   os: ubuntu-20.04, C: gcc-10-m64 }
+          - { name: i386-linux-clang-10,  os: ubuntu-20.04, C: clang-10-m32 }
+          - { name: i386-linux-gcc-10,    os: ubuntu-20.04, C: gcc-10-m32 }
+
+    steps:
+      - name: 'Install extra packages'
+        run: |
+          uname -a; pwd; id; umask
+          #cat /etc/os-release || true
+          #env
+          if [[ ${{ matrix.os }} =~ ^ubuntu ]]; then
+            export DEBIAN_FRONTEND=noninteractive
+            if [[ ${{ matrix.C }} =~ ^(clang|gcc).*-m32$ ]]; then
+              sudo dpkg --add-architecture i386
+              sudo apt-get update
+              sudo apt-get install -y g++-9-multilib g++-10-multilib zlib1g-dev:i386
+            fi
+          fi
+
+      - name: 'Check out code'
+        uses: actions/checkout@v2
+        with: { submodules: true }
+
+      - name: 'Prepare sources'
+        run: |
+          cd ..; mkdir -p deps build/github; cd deps
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+          git clone --depth=1 https://github.com/upx/upx-testsuite
+
+      - name: 'Build'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          export BUILD_LOCAL_UCL=1
+          bash ./.github/travis_build.sh
+
+      - name: 'Run test suite'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          bash ./.github/travis_testsuite_1.sh
+
+  job-ci-windows-toolchains:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: amd64-win64-msvc-14.2, os: windows-2019, C: msvc-14.2-x64, A: x64 }
+          - { name: i386-win32-msvc-14.2,  os: windows-2019, C: msvc-14.2-x86, A: x86 }
+
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v2
+        with: { submodules: true }
+
+      - name: 'Prepare sources'
+        run: |
+          $C="${{ matrix.C }}"
+          Get-Command bash,cat,chmod,cmp,cp,curl,date,env,file,git,gzip,mkdir,mv,openssl,readlink,rm,rmdir,sed,sha256sum,sort,ssh,ssh-add,ssh-agent,ssh-keyscan,tar,touch,which
+          cd ..; md build,build\$C,deps; cd deps
+          curl -sS -L --retry 5 -o ucl-1.03.tar.gz   "https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.gz"
+          curl -sS -L --retry 5 -o zlib-1.2.8.tar.gz "https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.gz"
+          git clone --depth=1 https://github.com/upx/upx-testsuite
+          tar -xzf ucl-1.03.tar.gz
+          tar -xzf zlib-1.2.8.tar.gz
+          # patch UCL for newer msvc (vsnprintf issue)
+          sed -i '/# *define.*snprintf  *_v*snprintf$/d' ucl-1.03/acc/acc_auto.h
+
+      - name: 'Set up Developer Command Prompt'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.A }}
+
+      - name: 'Build'
+        shell: cmd
+        run: |
+          set C=${{ matrix.C }}
+          set B=release
+          @REM setup directories following the VPATH build in travis_build.sh
+          where cl & where link
+          set BDIR=\a\upx\build\%C%\%B%
+          md %BDIR% %BDIR%\ucl-1.03 %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib-1.2.8
+          set DEFS=-D_CRT_SECURE_NO_WARNINGS
+          git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
+          @REM build UCL
+          cd %BDIR%\ucl-1.03
+          set s=\a\upx\deps\ucl-1.03
+          cl -MT -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
+          link -lib -out:ucl.lib *.obj
+          @REM build zlib
+          cd %BDIR%\zlib-1.2.8
+          cl -MT -O2 -W2 %DEFS% -c \a\upx\deps\zlib-1.2.8\*.c
+          link -lib -out:zlib.lib *.obj
+          @REM build UPX
+          cd %BDIR%\upx
+          set s=\a\upx\upx\src
+          cat .GITREV.txt
+          set /p GITREV=<.GITREV.txt
+          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DUCL_NO_ASM -I%s%\lzma-sdk -I\a\upx\deps\ucl-1.03\include -I\a\upx\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
+
+      - name: 'Basic tests'
+        shell: cmd
+        run: |
+          set C=${{ matrix.C }}
+          set B=release
+          cd \a\upx\build\%C%\%B%\upx
+          set UPX=--no-color --no-progress
+          .\upx.exe --version
+          .\upx.exe upx.exe -o upx_packed.exe
+          dir *.exe
+          .\upx.exe -l upx_packed.exe
+          .\upx.exe -t upx_packed.exe
+          .\upx_packed.exe --version
+
+      - name: 'Run test suite'
+        shell: cmd
+        run: |
+          set C=${{ matrix.C }}
+          set B=release
+          bash ./.github/travis_testsuite_1.sh
+
+# vim:set ts=2 sw=2 et:
