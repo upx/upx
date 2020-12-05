@@ -1,0 +1,90 @@
+# Support for GitHub Actions -- https://github.com/features/actions
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+name: 'CI'
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!appveyor*'
+      - '!gitlab*'
+      - '!travis*'
+
+  workflow_dispatch:
+
+jobs:
+  rebuild-stubs:
+    name: 'Rebuild stubs'
+    runs-on: ubuntu-16.04
+    steps:
+      - name: 'Install extra packages'
+        run: |
+          uname -a; pwd; id; umask
+          export DEBIAN_FRONTEND=noninteractive
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y libmpfr4:i386 zlib1g:i386
+          cd ..; mkdir -p deps; cd deps
+          wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -xJ
+      - name: 'Check out code'
+        uses: actions/checkout@v2
+        with: { submodules: true }
+      - name: 'Rebuild and verify stubs'
+        run: |
+          export C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux
+          bash ./.github/travis_build.sh
+
+  build-and-test-upx:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: amd64-linux-clang-10, os: ubuntu-20.04, C: clang-10-m64 }
+          - { name: amd64-linux-gcc-10,   os: ubuntu-20.04, C: gcc-10-m64 }
+          - { name: i386-linux-clang-10,  os: ubuntu-20.04, C: clang-10-m32 }
+          - { name: i386-linux-gcc-10,    os: ubuntu-20.04, C: gcc-10-m32 }
+
+    steps:
+      - name: 'Install extra packages'
+        run: |
+          uname -a; pwd; id; umask
+          #cat /etc/os-release || true
+          #env
+          if [[ ${{ matrix.os }} =~ ^ubuntu ]]; then
+            export DEBIAN_FRONTEND=noninteractive
+            if [[ ${{ matrix.C }} =~ ^(clang|gcc).*-m32$ ]]; then
+              sudo dpkg --add-architecture i386
+              sudo apt-get update
+              sudo apt-get install -y g++-9-multilib g++-10-multilib zlib1g-dev:i386
+            fi
+          fi
+
+      - name: 'Check out code'
+        uses: actions/checkout@v2
+        with: { submodules: true }
+
+      - name: 'Prepare sources'
+        run: |
+          cd ..; mkdir -p deps build/github; cd deps
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
+          git clone --depth=1 https://github.com/upx/upx-testsuite
+
+      - name: 'Build'
+        run: |
+          if [[ ${{ matrix.name }} =~ linux-(clang|gcc) ]]; then
+            export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+            export BUILD_LOCAL_UCL=1
+            bash ./.github/travis_build.sh
+          fi
+
+      - name: 'Run test suite'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          bash ./.github/travis_testsuite_1.sh
+
+# vim:set ts=2 sw=2 et:
