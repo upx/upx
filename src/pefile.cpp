@@ -372,7 +372,8 @@ void PeFile32::processRelocs() // pass1
     {
         if (IDSIZE(PEDIR_RELOC))
             ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
-        orelocs = new upx_byte [1];
+        mb_orelocs.alloc(1);
+        orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
         sorelocs = 0;
         return;
     }
@@ -422,7 +423,8 @@ void PeFile32::processRelocs() // pass1
     }
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
-    orelocs = new upx_byte [mem_size(4, rnum, 1024)];  // 1024 - safety
+    mb_orelocs.alloc(mem_size(4, rnum, 1024));  // 1024 - safety
+    orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
     sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3], xcounts[3],
                             orelocs, ibuf + rvamin, 1, &big_relocs),
                         orelocs);
@@ -471,7 +473,8 @@ void PeFile64::processRelocs() // pass1
     {
         if (IDSIZE(PEDIR_RELOC))
             ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
-        orelocs = new upx_byte [1];
+        mb_orelocs.alloc(1);
+        orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
         sorelocs = 0;
         return;
     }
@@ -523,7 +526,8 @@ void PeFile64::processRelocs() // pass1
     }
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
-    orelocs = new upx_byte [mem_size(4, rnum, 1024)];  // 1024 - safety
+    mb_orelocs.alloc(mem_size(4, rnum, 1024));  // 1024 - safety
+    orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
     sorelocs = ptr_diff(optimizeReloc64((upx_byte*) fix[10], xcounts[10],
                             orelocs, ibuf + rvamin, 1, &big_relocs),
                         orelocs);
@@ -938,7 +942,8 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             soimport++; // separator
         }
     }
-    oimport = New(upx_byte, soimport);
+    mb_oimport.alloc(soimport);
+    oimport = (upx_byte *)mb_oimport.getVoidPtr();
     memset(oimport,0,soimport);
 
     qsort(idlls,dllnum,sizeof (udll*),udll::compare);
@@ -1218,7 +1223,8 @@ void PeFile::processExports(Export *xport) // pass1
     }
     xport->convert(IDADDR(PEDIR_EXPORT),IDSIZE(PEDIR_EXPORT));
     soexport = ALIGN_UP(xport->getsize(), 4u);
-    oexport = New(upx_byte, soexport);
+    mb_oexport.alloc(soexport);
+    oexport = (upx_byte *)mb_oexport.getVoidPtr();
     memset(oexport, 0, soexport);
 }
 
@@ -1346,7 +1352,8 @@ void PeFile::processTls1(Interval *iv,
         sotls = ALIGN_UP(sotls, cb_size) + 2 * cb_size;
 
     // the PE loader wants this stuff uncompressed
-    otls = New(upx_byte, sotls);
+    mb_otls.alloc(sotls);
+    otls = (upx_byte *)mb_otls.getVoidPtr();
     memset(otls,0,sotls);
     unsigned const take1 = sizeof(tls);
     unsigned const skip1 = IDADDR(PEDIR_TLS);
@@ -1450,7 +1457,8 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
             // printf("loadconf reloc detected: %x\n", pos);
         }
 
-    oloadconf = New(upx_byte, soloadconf);
+    mb_oloadconf.alloc(soloadconf);
+    oloadconf = (upx_byte *)mb_oloadconf.getVoidPtr();
     memcpy(oloadconf, loadconf, soloadconf);
 }
 
@@ -1903,7 +1911,8 @@ void PeFile::processResources(Resource *res)
 
     for (soresources = res->dirsize(); res->next(); soresources += 4 + res->size())
         ;
-    oresources = New(upx_byte, soresources);
+    mb_oresources.alloc(soresources);
+    oresources = (upx_byte *)mb_oresources.getVoidPtr();
     upx_byte *ores = oresources + res->dirsize();
 
     char *keep_icons = NULL; // icon ids in the first icon group
@@ -2075,7 +2084,8 @@ void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
     if (!objs) {
         return;
     }
-    isection = New(pe_section_t, objs);
+    mb_isection.alloc(sizeof(pe_section_t) * objs);
+    isection = (pe_section_t *)mb_isection.getVoidPtr();
     if (file_size < (off_t)(pe_offset + sizeof_ih + sizeof(pe_section_t)*objs)) {
         char buf[32]; snprintf(buf, sizeof(buf), "too many sections %d", objs);
         throwCantPack(buf);
@@ -3007,7 +3017,8 @@ int PeFile::canUnpack0(unsigned max_sections, LE16 &ih_objects,
         return false;
 
     unsigned objs = ih_objects;
-    isection = New(pe_section_t, objs);
+    mb_isection.alloc(sizeof(pe_section_t) * objs);
+    isection = (pe_section_t *)mb_isection.getVoidPtr();
     fi->seek(pe_offset + ihsize, SEEK_SET);
     fi->readx(isection,sizeof(pe_section_t)*objs);
     if (ih_objects < 3)
@@ -3070,15 +3081,8 @@ upx_uint64_t PeFile::ilinkerGetAddress(const char *d, const char *n) const
 
 PeFile::~PeFile()
 {
-    delete [] isection;
-    delete [] orelocs;
-    delete [] oimport;
     oimpdlls = NULL;
-    delete [] oexport;
-    delete [] otls;
-    delete [] oresources;
     delete [] oxrelocs;
-    delete [] oloadconf;
     delete ilinker;
     //delete res;
 }
