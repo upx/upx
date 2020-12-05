@@ -103,6 +103,7 @@ protected:
                         ord_mask_t ord_mask, bool set_oft);
     virtual unsigned processImports() = 0;
     virtual void processImports2(unsigned, unsigned);
+    MemBuffer mb_oimport;
     upx_byte *oimport;
     unsigned soimport;
     upx_byte *oimpdlls;
@@ -117,6 +118,7 @@ protected:
     void processRelocs(Reloc *);
     void rebuildRelocs(upx_byte *&, unsigned bits,
                        unsigned flags, upx_uint64_t imagebase);
+    MemBuffer mb_orelocs;
     upx_byte *orelocs;
     unsigned sorelocs;
     upx_byte *oxrelocs;
@@ -125,12 +127,14 @@ protected:
     void processExports(Export *);
     void processExports(Export *,unsigned);
     void rebuildExports();
+    MemBuffer mb_oexport;
     upx_byte *oexport;
     unsigned soexport;
 
     void processResources(Resource *);
     void processResources(Resource *, unsigned);
     void rebuildResources(upx_byte *&, unsigned);
+    MemBuffer mb_oresources;
     upx_byte *oresources;
     unsigned soresources;
 
@@ -147,6 +151,7 @@ protected:
     virtual void processTls(Reloc *r, const Interval *iv, unsigned a) = 0;
 
     void rebuildTls();
+    MemBuffer mb_otls;
     upx_byte *otls;
     unsigned sotls;
     unsigned tlsindex;
@@ -156,6 +161,7 @@ protected:
 
     void processLoadConf(Reloc *, const Interval *, unsigned);
     void processLoadConf(Interval *);
+    MemBuffer mb_oloadconf;
     upx_byte *oloadconf;
     unsigned soloadconf;
 
@@ -200,6 +206,7 @@ protected:
         LE32    flags;
     __packed_struct_end()
 
+    MemBuffer mb_isection;
     pe_section_t *isection;
     bool isdll;
     bool isrtm;
