@@ -22,8 +22,8 @@ environment:
     - { C: msvc-14.0-x64, CL_VERSION: 19.00, VS_VERSION: 2015 }
     - { C: msvc-14.1-x86, CL_VERSION: 19.16, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
     - { C: msvc-14.1-x64, CL_VERSION: 19.16, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
-    - { C: msvc-14.2-x86, CL_VERSION: 19.24, VS_VERSION: 2019, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 }
-    - { C: msvc-14.2-x64, CL_VERSION: 19.24, VS_VERSION: 2019, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 }
+    - { C: msvc-14.2-x86, CL_VERSION: 19.28, VS_VERSION: 2019, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 }
+    - { C: msvc-14.2-x64, CL_VERSION: 19.28, VS_VERSION: 2019, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 }
   UPX_AUTOMATIC_BUILDS_SSL_KEY:
     secure: PZMpVeqnEYe39kK+Zu2/fnmZ6/HG6Lvls0hh9GMVU9vCWsr8xaU7kIbHBS01puUkb4bEWPILKYvSEDuhOhguDjd/P4QdXWipvV/F2GaVax0=
   UPX_AUTOMATIC_BUILDS_SSL_IV:
@@ -45,15 +45,15 @@ install:
   - cd c:\projects\upx
   - git submodule update --init --recursive
   - cd c:\projects\deps
-  - curl -q -L --retry 5 -o ucl-1.03.tar.gz   "https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.gz"
-  - curl -q -L --retry 5 -o zlib-1.2.8.tar.gz "https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.gz"
+  - curl -q -sS -L --retry 5 -o ucl-1.03.tar.gz   "https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.gz"
+  - curl -q -sS -L --retry 5 -o zlib-1.2.8.tar.gz "https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.gz"
   - git clone https://github.com/upx/upx-testsuite
   - tar -xzf ucl-1.03.tar.gz
   - tar -xzf zlib-1.2.8.tar.gz
   # patch UCL for msvc-14.0 (vsnprintf issue)
   - sed -i '/# *define.*snprintf  *_v*snprintf$/d' ucl-1.03/acc/acc_auto.h
-##- curl -q -L --retry 5 -o config.guess "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD"
-##- curl -q -L --retry 5 -o config.sub   "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD"
+##- curl -q -sS -L --retry 5 -o config.guess "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD"
+##- curl -q -sS -L --retry 5 -o config.sub   "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD"
 ##- cp config.guess config.sub ucl-1.03/acconfig/
   # setup compiler
   - if "%C%"=="msvc-10.0-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" x86 )
