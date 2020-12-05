@@ -1731,14 +1731,19 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
 
 upx_byte *PeFile::Resource::build()
 {
-    newstart = New(upx_byte, dirsize());
-    unsigned bpos = 0,spos = dsize;
-    build(root,bpos,spos,0);
+    mb_start.dealloc();
+    newstart = nullptr;
+    if (dirsize()) {
+      mb_start.alloc(dirsize());
+      newstart = static_cast<upx_byte *>(mb_start.getVoidPtr());
+      unsigned bpos = 0,spos = dsize;
+      build(root,bpos,spos,0);
 
-    // dirsize() is 4 bytes aligned, so we may need to zero
-    // up to 2 bytes to make valgrind happy
-    while (spos < dirsize())
-        newstart[spos++] = 0;
+      // dirsize() is 4 bytes aligned, so we may need to zero
+      // up to 2 bytes to make valgrind happy
+      while (spos < dirsize())
+          newstart[spos++] = 0;
+    }
 
     return newstart;
 }
@@ -1825,9 +1830,10 @@ void PeFile::processResources(Resource *res,unsigned newaddr)
     while (res->next())
         if (res->newoffs())
             res->newoffs() += newaddr;
-    upx_byte *p = res->build();
-    memcpy(oresources,p,res->dirsize());
-    delete [] p;
+    if (res->dirsize()) {
+      upx_byte *p = res->build();
+      memcpy(oresources,p,res->dirsize());
+    }
 }
 
 static bool match(unsigned itype, const unsigned char *ntype,
@@ -2757,12 +2763,13 @@ void PeFile::rebuildResources(upx_byte *& extrainfo, unsigned lastvaddr)
                 icondir_count = 0;
             }
         }
-    upx_byte *p = res.build();
-    OCHECK(obuf + ODADDR(PEDIR_RESOURCE) - rvamin, 16);
-    // write back when the original is zeroed
-    if (get_le32(obuf + ODADDR(PEDIR_RESOURCE) - rvamin + 12) == 0)
+    if (res.dirsize()) {
+      upx_byte *p = res.build();
+      OCHECK(obuf + ODADDR(PEDIR_RESOURCE) - rvamin, 16);
+      // write back when the original is zeroed
+      if (get_le32(obuf + ODADDR(PEDIR_RESOURCE) - rvamin + 12) == 0)
         omemcpy(obuf + ODADDR(PEDIR_RESOURCE) - rvamin, p, res.dirsize());
-    delete [] p;
+    }
 }
 
 template <typename LEXX, typename ord_mask_t>
