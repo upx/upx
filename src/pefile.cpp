@@ -1739,11 +1739,11 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
 
 upx_byte *PeFile::Resource::build()
 {
-    mem.dealloc();
+    mb_start.dealloc();
     newstart = nullptr;
     if (dirsize()) {
-      mem.alloc(dirsize());
-      newstart = static_cast<upx_byte *>(mem.getVoidPtr());
+      mb_start.alloc(dirsize());
+      newstart = static_cast<upx_byte *>(mb_start.getVoidPtr());
       unsigned bpos = 0,spos = dsize;
       build(root,bpos,spos,0);
 

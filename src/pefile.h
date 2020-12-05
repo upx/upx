@@ -350,7 +350,7 @@ protected:
         struct upx_rbranch;
         struct upx_rleaf;
 
-        MemBuffer mem;
+        MemBuffer mb_start;
         const upx_byte *start;
         upx_byte   *newstart;
         upx_rnode  *root;
