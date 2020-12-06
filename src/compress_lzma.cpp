@@ -187,7 +187,7 @@ static int prepare(lzma_compress_result_t *res,
     {
         for (;;)
         {
-            unsigned n = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
+            unsigned n = 1846 + (768u << (res->lit_context_bits + res->lit_pos_bits));
             if (n <= lcconf->max_num_probs)
                 break;
             if (res->lit_pos_bits > res->lit_context_bits)
@@ -211,7 +211,7 @@ static int prepare(lzma_compress_result_t *res,
     lzma_compress_config_t::dict_size_t::assertValue(res->dict_size);
     lzma_compress_config_t::num_fast_bytes_t::assertValue(res->num_fast_bytes);
 
-    res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
+    res->num_probs = 1846 + (768u << (res->lit_context_bits + res->lit_pos_bits));
     //printf("\nlzma_compress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs);
     return 0;
 

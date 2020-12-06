@@ -105,7 +105,7 @@ int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
     s.avail_out = *dst_len;
     s.total_in = s.total_out = 0;
 
-    zr = deflateInit2(&s, level, Z_DEFLATED, 0 - (int)window_bits,
+    zr = (int)deflateInit2(&s, level, Z_DEFLATED, 0 - (int)window_bits,
                       mem_level, strategy);
     if (zr != Z_OK)
         goto error;
