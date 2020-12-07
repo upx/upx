@@ -29,6 +29,15 @@
 #ifndef __UPX_CONF_H
 #define __UPX_CONF_H 1
 
+#if defined(__cplusplus)
+#  if (__cplusplus >= 201402L)
+#  elif defined(__GNUC__) && (__GNUC__+0 == 4) && (__cplusplus >= 201300L)
+#  elif defined(_MSC_VER) && defined(_MSVC_LANG) && (_MSVC_LANG+0 >= 201402L)
+#  else
+#    error "C++ 14 is required"
+#  endif
+#endif
+
 #include "version.h"
 
 #if !defined(_FILE_OFFSET_BITS)
