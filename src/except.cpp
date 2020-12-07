@@ -35,7 +35,7 @@
 
 unsigned long Throwable::counter = 0;
 
-Throwable::Throwable(const char *m, int e, bool w) NOTHROW
+Throwable::Throwable(const char *m, int e, bool w) noexcept
     : super(), msg(NULL), err(e), is_warning(w)
 {
     if (m)
@@ -47,7 +47,7 @@ Throwable::Throwable(const char *m, int e, bool w) NOTHROW
 }
 
 
-Throwable::Throwable(const Throwable &other) NOTHROW
+Throwable::Throwable(const Throwable &other) noexcept
     : super(other), msg(NULL), err(other.err), is_warning(other.is_warning)
 {
     if (other.msg)
@@ -59,7 +59,7 @@ Throwable::Throwable(const Throwable &other) NOTHROW
 }
 
 
-Throwable::~Throwable() NOTHROW
+Throwable::~Throwable() noexcept
 {
 #if 0
     counter--;
@@ -187,7 +187,7 @@ void throwEOFException(const char *msg, int e)
 //
 **************************************************************************/
 
-const char *prettyName(const char *n) NOTHROW
+const char *prettyName(const char *n) noexcept
 {
     if (n == NULL)
         return "(null)";
