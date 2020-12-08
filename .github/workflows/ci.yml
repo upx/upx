@@ -31,9 +31,11 @@ jobs:
         uses: actions/checkout@v2
         with: { submodules: true }
       - name: 'Rebuild and verify stubs'
-        run: env C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux bash ./.github/travis_build.sh
+        run: |
+          env C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux bash ./.github/travis_build.sh
 
   job-ci-linux-toolchains:
+    needs: [ job-ci-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
@@ -83,8 +85,14 @@ jobs:
           bash ./.github/travis_testsuite_1.sh
 
   job-ci-windows-toolchains:
+    needs: [ job-ci-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+
+    env:
+      C: ${{ matrix.C }}
+      B: release
+      H: 'd:\a\upx'
 
     strategy:
       fail-fast: false
@@ -99,16 +107,20 @@ jobs:
         with: { submodules: true }
 
       - name: 'Prepare sources'
+        shell: cmd
         run: |
-          $C="${{ matrix.C }}"
-          Get-Command bash,cat,chmod,cmp,cp,curl,date,env,file,git,gzip,mkdir,mv,openssl,readlink,rm,rmdir,sed,sha256sum,sort,ssh,ssh-add,ssh-agent,ssh-keyscan,tar,touch,which
-          cd ..; md build,build\$C,deps; cd deps
+          where bash & where cat & where chmod & where cmp & where cp & where curl & where date & where file & where git & where gzip & where mkdir & where mv & where openssl & where readlink & where rm & where rmdir & where sed & where sha256sum & where sort & where ssh & where ssh-add & where ssh-agent & where ssh-keyscan & where tar & where touch
+          git config --global core.autocrlf input
+          git --version & bash --version
+          cd %H%
+          md build build\%C% deps
+          cd deps
           curl -sS -L --retry 5 -o ucl-1.03.tar.gz   "https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.gz"
           curl -sS -L --retry 5 -o zlib-1.2.8.tar.gz "https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.gz"
           git clone --depth=1 https://github.com/upx/upx-testsuite
           tar -xzf ucl-1.03.tar.gz
           tar -xzf zlib-1.2.8.tar.gz
-          # patch UCL for newer msvc (vsnprintf issue)
+          @REM patch UCL for newer msvc (vsnprintf issue)
           sed -i '/# *define.*snprintf  *_v*snprintf$/d' ucl-1.03/acc/acc_auto.h
 
       - name: 'Set up Developer Command Prompt'
@@ -119,36 +131,32 @@ jobs:
       - name: 'Build'
         shell: cmd
         run: |
-          set C=${{ matrix.C }}
-          set B=release
           @REM setup directories following the VPATH build in travis_build.sh
           where cl & where link
-          set BDIR=\a\upx\build\%C%\%B%
+          set BDIR=%H%\build\%C%\%B%
           md %BDIR% %BDIR%\ucl-1.03 %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib-1.2.8
           set DEFS=-D_CRT_SECURE_NO_WARNINGS
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
           @REM build UCL
           cd %BDIR%\ucl-1.03
-          set s=\a\upx\deps\ucl-1.03
+          set s=%H%\deps\ucl-1.03
           cl -MT -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
           link -lib -out:ucl.lib *.obj
           @REM build zlib
           cd %BDIR%\zlib-1.2.8
-          cl -MT -O2 -W2 %DEFS% -c \a\upx\deps\zlib-1.2.8\*.c
+          cl -MT -O2 -W2 %DEFS% -c %H%\deps\zlib-1.2.8\*.c
           link -lib -out:zlib.lib *.obj
           @REM build UPX
           cd %BDIR%\upx
-          set s=\a\upx\upx\src
+          set s=%H%\upx\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DUCL_NO_ASM -I%s%\lzma-sdk -I\a\upx\deps\ucl-1.03\include -I\a\upx\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
+          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DUCL_NO_ASM -I%s%\lzma-sdk -I%H%\deps\ucl-1.03\include -I%H%\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
 
       - name: 'Basic tests'
         shell: cmd
         run: |
-          set C=${{ matrix.C }}
-          set B=release
-          cd \a\upx\build\%C%\%B%\upx
+          cd %H%\build\%C%\%B%\upx
           set UPX=--no-color --no-progress
           .\upx.exe --version
           .\upx.exe upx.exe -o upx_packed.exe
@@ -160,8 +168,6 @@ jobs:
       - name: 'Run test suite'
         shell: cmd
         run: |
-          set C=${{ matrix.C }}
-          set B=release
           bash ./.github/travis_testsuite_1.sh
 
 # vim:set ts=2 sw=2 et:
