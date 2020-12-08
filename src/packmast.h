@@ -38,7 +38,7 @@ class OutputFile;
 
 class PackMaster {
 public:
-    PackMaster(InputFile *f, options_t *o = NULL);
+    PackMaster(InputFile *f, options_t *o = nullptr);
     virtual ~PackMaster();
 
     void pack(OutputFile *fo);

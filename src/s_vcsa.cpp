@@ -89,7 +89,7 @@ static void sb_push(screen_t *this, const Cell *line, int len) {
 
 static const Cell *sb_pop(screen_t *this) {
     if (this->data->sb_sp == this->data->sb_base)
-        return NULL;
+        return nullptr;
     sb_add(this, &this->data->sb_sp, -1);
     return this->data->sb_buf[this->data->sb_sp];
 }
@@ -276,7 +276,7 @@ static int init(screen_t *this, int fd) {
                     this->data->map[i] = i;
                 i = init_scrnmap(this, this->data->fd) || init_scrnmap(this, STDIN_FILENO);
 
-                getChar(this, NULL, &attr, this->data->cursor_x, this->data->cursor_y);
+                getChar(this, nullptr, &attr, this->data->cursor_x, this->data->cursor_y);
                 this->data->init_attr = attr;
                 this->data->attr = attr;
                 a = make_cell(this, ' ', attr);
@@ -384,7 +384,7 @@ static int scrollDown(screen_t *this, int lines) {
     for (y = lines; --y >= 0;) {
 #if USE_SCROLLBACK
         const Cell *buf = sb_pop(this);
-        if (buf == NULL)
+        if (buf == nullptr)
             clearLine(this, y);
         else
             updateLineN(this, buf, y, sc * 2);
@@ -420,7 +420,7 @@ static int kbhit(screen_t *this) {
     FD_SET(fd, &fds);
     tv.tv_sec = usec / 1000000;
     tv.tv_usec = usec % 1000000;
-    return (select(fd + 1, &fds, NULL, NULL, &tv) > 0);
+    return (select(fd + 1, &fds, nullptr, nullptr, &tv) > 0);
 }
 
 static int intro(screen_t *this, void (*show_frames)(screen_t *)) {
@@ -455,7 +455,7 @@ static int intro(screen_t *this, void (*show_frames)(screen_t *)) {
 
 static const screen_t driver = {sobject_destroy,
                                 finalize,
-                                0, /* atExit */
+                                nullptr, /* atExit */
                                 init,
                                 refresh,
                                 getMode,
@@ -471,7 +471,7 @@ static const screen_t driver = {sobject_destroy,
                                 setBg,
                                 setCursor,
                                 setCursorShape,
-                                0, /* hideCursor */
+                                nullptr, /* hideCursor */
                                 putChar,
                                 putCharAttr,
                                 putString,
@@ -484,7 +484,7 @@ static const screen_t driver = {sobject_destroy,
                                 getScrollCounter,
                                 kbhit,
                                 intro,
-                                (struct screen_data_t *) 0};
+                                (struct screen_data_t *) nullptr};
 
 /* public constructor */
 screen_t *screen_vcsa_construct(void) { return sobject_construct(&driver, sizeof(*driver.data)); }

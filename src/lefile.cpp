@@ -33,7 +33,7 @@
 
 
 LeFile::LeFile(InputFile *f) :
-    fif(f), fof(NULL),
+    fif(f), fof(nullptr),
     le_offset(0), exe_offset(0)
 {
     COMPILE_TIME_ASSERT(sizeof(le_header_t) == 196);
@@ -41,13 +41,13 @@ LeFile::LeFile(InputFile *f) :
     COMPILE_TIME_ASSERT(sizeof(le_pagemap_entry_t) == 4);
     memset(&ih,0,sizeof ih);
     memset(&oh,0,sizeof oh);
-    iobject_table = oobject_table = NULL;
-    ifpage_table = ofpage_table = NULL;
-    ipm_entries = opm_entries = NULL;
-    ires_names = ores_names = NULL;
-    ifixups = ofixups = NULL;
-    inonres_names = ononres_names = NULL;
-    ientries = oentries = NULL;
+    iobject_table = oobject_table = nullptr;
+    ifpage_table = ofpage_table = nullptr;
+    ipm_entries = opm_entries = nullptr;
+    ires_names = ores_names = nullptr;
+    ifixups = ofixups = nullptr;
+    inonres_names = ononres_names = nullptr;
+    ientries = oentries = nullptr;
 }
 
 
@@ -206,7 +206,7 @@ void LeFile::readImage()
 
 void LeFile::writeImage()
 {
-    if (fof && oimage != NULL)
+    if (fof && oimage != nullptr)
         fof->write(oimage, soimage);
 }
 

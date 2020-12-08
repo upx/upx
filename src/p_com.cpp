@@ -143,7 +143,7 @@ void PackCom::buildLoader(const Filter *ft)
               "NRVDECO1",
               ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
               "NRVDECO2",
-              NULL
+              nullptr
              );
     if (ft->id)
     {
@@ -164,7 +164,7 @@ void PackCom::addFilter16(int filter_id)
                   filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I086" : "CT16I286,CT16SUB0"),
                   "CALLTRI2",
                   getFormat() == UPX_F_DOS_COM ? "CORETURN" : "",
-                  NULL
+                  nullptr
                  );
     else
         addLoader(filter_id%3 == 1 ? "CT16E800" : "CT16E900",
@@ -173,7 +173,7 @@ void PackCom::addFilter16(int filter_id)
                   filter_id < 4 ? "CT16SUB1" : "",
                   filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I087" : "CT16I287,CT16SUB1"),
                   "CALLTRI6",
-                  NULL
+                  nullptr
                  );
 }
 

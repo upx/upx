@@ -57,7 +57,7 @@
 //
 **************************************************************************/
 
-PackMaster::PackMaster(InputFile *f, options_t *o) : fi(f), p(NULL) {
+PackMaster::PackMaster(InputFile *f, options_t *o) : fi(f), p(nullptr) {
     // replace global options with local options
     saved_opt = o;
     if (o) {
@@ -67,13 +67,13 @@ PackMaster::PackMaster(InputFile *f, options_t *o) : fi(f), p(NULL) {
 }
 
 PackMaster::~PackMaster() {
-    fi = NULL;
+    fi = nullptr;
     delete p;
-    p = NULL;
+    p = nullptr;
     // restore global options
     if (saved_opt)
         opt = saved_opt;
-    saved_opt = NULL;
+    saved_opt = nullptr;
 }
 
 /*************************************************************************
@@ -81,8 +81,8 @@ PackMaster::~PackMaster() {
 **************************************************************************/
 
 static Packer *try_pack(Packer *p, void *user) {
-    if (p == NULL)
-        return NULL;
+    if (p == nullptr)
+        return nullptr;
     InputFile *f = (InputFile *) user;
     p->assertPacker();
     try {
@@ -100,12 +100,12 @@ static Packer *try_pack(Packer *p, void *user) {
         throw;
     }
     delete p;
-    return NULL;
+    return nullptr;
 }
 
 static Packer *try_unpack(Packer *p, void *user) {
-    if (p == NULL)
-        return NULL;
+    if (p == nullptr)
+        return nullptr;
     InputFile *f = (InputFile *) user;
     p->assertPacker();
     try {
@@ -126,7 +126,7 @@ static Packer *try_unpack(Packer *p, void *user) {
         throw;
     }
     delete p;
-    return NULL;
+    return nullptr;
 }
 
 /*************************************************************************
@@ -135,7 +135,7 @@ static Packer *try_unpack(Packer *p, void *user) {
 
 Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const options_t *o,
                                     void *user) {
-    Packer *p = NULL;
+    Packer *p = nullptr;
 
 #define D(Klass)                                                                                   \
     ACC_BLOCK_BEGIN                                                                                \
@@ -143,7 +143,7 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     if (o->debug.debug_level)                                                                      \
         fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", kp->getVersion(),               \
                 kp->getFormat(), #Klass);                                                          \
-    if ((p = func(kp, user)) != NULL)                                                              \
+    if ((p = func(kp, user)) != nullptr)                                                           \
         return p;                                                                                  \
     ACC_BLOCK_END
 
@@ -232,7 +232,7 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     //   D(PackDylibI386);
     //   D(PackDylibPPC32);
 
-    return NULL;
+    return nullptr;
 #undef D
 }
 
@@ -258,26 +258,26 @@ Packer *PackMaster::getUnpacker(InputFile *f) {
 
 void PackMaster::pack(OutputFile *fo) {
     p = getPacker(fi);
-    fi = NULL;
+    fi = nullptr;
     p->doPack(fo);
 }
 
 void PackMaster::unpack(OutputFile *fo) {
     p = getUnpacker(fi);
     p->assertPacker();
-    fi = NULL;
+    fi = nullptr;
     p->doUnpack(fo);
 }
 
 void PackMaster::test() {
     p = getUnpacker(fi);
-    fi = NULL;
+    fi = nullptr;
     p->doTest();
 }
 
 void PackMaster::list() {
     p = getUnpacker(fi);
-    fi = NULL;
+    fi = nullptr;
     p->doList();
 }
 
@@ -286,9 +286,9 @@ void PackMaster::fileInfo() {
     if (!p)
         p = visitAllPackers(try_pack, fi, opt, fi);
     if (!p)
-        throwUnknownExecutableFormat(NULL, 1); // make a warning here
+        throwUnknownExecutableFormat(nullptr, 1); // make a warning here
     p->assertPacker();
-    fi = NULL;
+    fi = nullptr;
     p->doFileInfo();
 }
 

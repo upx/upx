@@ -159,7 +159,7 @@ int PackVmlinuzI386::decompressKernel()
     fi->readx(obuf, file_size);
 
     {
-    const upx_byte *base = NULL;
+    const upx_byte *base = nullptr;
     unsigned relocated = 0;
 
     // See startup_32: in linux/arch/i386/boot/compressed/head.S
@@ -270,7 +270,7 @@ int PackVmlinuzI386::decompressKernel()
             if (fd < 0)
                 break;
             gzFile zf = gzdopen(fd, "rb");
-            if (zf == NULL)
+            if (zf == nullptr)
                 break;
             // estimate gzip-decompressed kernel size & alloc buffer
             if (ibuf.getSize() == 0)
@@ -434,15 +434,15 @@ void PackVmlinuzI386::buildLoader(const Filter *ft)
               ft->id ? "LZCALLT1" : "",
               "LZIMAGE0",
               getDecompressorSections(),
-              NULL
+              nullptr
              );
     if (ft->id)
     {
         assert(ft->calls > 0);
-        addLoader("LZCALLT9", NULL);
+        addLoader("LZCALLT9", nullptr);
         addFilter32(ft->id);
     }
-    addLoader("LINUZ990,IDENTSTR,UPX1HEAD", NULL);
+    addLoader("LINUZ990,IDENTSTR,UPX1HEAD", nullptr);
 }
 
 
@@ -511,7 +511,7 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
             "LINUZ140,LZCUTPOI,LINUZ141",
             (ft->id ? "LINUZ145" : ""),
             (ph.first_offset_found == 1 ? "LINUZ010" : ""),
-            NULL);
+            nullptr);
     }
     else {
         addLoader("LINUZ000,LINUZ001,LINUZVGA,LINUZ005",
@@ -521,26 +521,26 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
               "+40", // align the stuff to 4 byte boundary
               "UPX1HEAD", // 32 byte
               "LZCUTPOI",
-              NULL);
+              nullptr);
         // fake alignment for the start of the decompressor
         //linker->defineSymbol("LZCUTPOI", 0x1000);
     }
 
-    addLoader(getDecompressorSections(), NULL);
+    addLoader(getDecompressorSections(), nullptr);
 
     if (ft->id)
     {
             assert(ft->calls > 0);
         if (0x40==(0xf0 & ft->id)) {
-            addLoader("LZCKLLT9", NULL);
+            addLoader("LZCKLLT9", nullptr);
         }
         else {
-            addLoader("LZCALLT9", NULL);
+            addLoader("LZCALLT9", nullptr);
         }
         addFilter32(ft->id);
     }
     if (0!=page_offset) {
-        addLoader("LINUZ150,IDENTSTR,+40,UPX1HEAD", NULL);
+        addLoader("LINUZ150,IDENTSTR,+40,UPX1HEAD", nullptr);
         unsigned const l_len = getLoaderSize();
         unsigned const c_len = ALIGN_UP(ph.c_len, 4u);
         unsigned const e_len = getLoaderSectionStart("LINUZ141") -
@@ -558,7 +558,7 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
         linker->defineSymbol("unc_offset", ph.overlap_overhead + ph.u_len - c_len);
     }
     else {
-        addLoader("LINUZ990", NULL);
+        addLoader("LINUZ990", nullptr);
     }
 }
 
@@ -852,7 +852,7 @@ int PackVmlinuzARMEL::decompressKernel()
             if (fd < 0)
                 break;
             gzFile zf = gzdopen(fd, "rb");
-            if (zf == NULL)
+            if (zf == nullptr)
                 break;
             // estimate gzip-decompressed kernel size & alloc buffer
             if (ibuf.getSize() == 0)
@@ -929,23 +929,23 @@ void PackVmlinuzARMEL::buildLoader(const Filter *ft)
 {
     // prepare loader; same as vmlinux (with 'x')
     initLoader(stub_arm_v5a_linux_kernel_vmlinux, sizeof(stub_arm_v5a_linux_kernel_vmlinux));
-    addLoader("LINUX000", NULL);
+    addLoader("LINUX000", nullptr);
     if (ft->id) {
         assert(ft->calls > 0);
-        addLoader("LINUX010", NULL);
+        addLoader("LINUX010", nullptr);
     }
-    addLoader("LINUX020", NULL);
+    addLoader("LINUX020", nullptr);
     if (ft->id) {
         addFilter32(ft->id);
     }
-    addLoader("LINUX030", NULL);
-         if (ph.method == M_NRV2E_8) addLoader("NRV2E", NULL);
-    else if (ph.method == M_NRV2B_8) addLoader("NRV2B", NULL);
-    else if (ph.method == M_NRV2D_8) addLoader("NRV2D", NULL);
+    addLoader("LINUX030", nullptr);
+         if (ph.method == M_NRV2E_8) addLoader("NRV2E", nullptr);
+    else if (ph.method == M_NRV2B_8) addLoader("NRV2B", nullptr);
+    else if (ph.method == M_NRV2D_8) addLoader("NRV2D", nullptr);
     else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00",
-        (opt->small ? "LZMA_DEC10" : "LZMA_DEC20"), "LZMA_DEC30", NULL);
+        (opt->small ? "LZMA_DEC10" : "LZMA_DEC20"), "LZMA_DEC30", nullptr);
     else throwBadLoader();
-    addLoader("IDENTSTR,UPX1HEAD", NULL);
+    addLoader("IDENTSTR,UPX1HEAD", nullptr);
 
     // To debug (2008-09-14):
     //   Build gdb-6.8-21.fc9.src.rpm; ./configure --target=arm-none-elf; make

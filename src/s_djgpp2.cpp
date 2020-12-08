@@ -97,7 +97,7 @@ static void sb_push(screen_t *this, const Cell *line, int len) {
 
 static const Cell *sb_pop(screen_t *this) {
     if (this->data->sb_sp == this->data->sb_base)
-        return NULL;
+        return nullptr;
     sb_add(this, &this->data->sb_sp, -1);
     return this->data->sb_buf[this->data->sb_sp];
 }
@@ -274,7 +274,7 @@ static int init(screen_t *this, int fd) {
             return -1;
     }
     ScreenGetCursor(&this->data->cursor_y, &this->data->cursor_x);
-    getChar(this, NULL, &attr, this->data->cursor_x, this->data->cursor_y);
+    getChar(this, nullptr, &attr, this->data->cursor_x, this->data->cursor_y);
     this->data->init_attr = attr;
     if (mode != 7) {
         /* Does it normally blink when bg has its 3rd bit set?  */
@@ -369,7 +369,7 @@ static int scrollDown(screen_t *this, int lines) {
     for (y = lines; --y >= 0;) {
 #if USE_SCROLLBACK
         const Cell *buf = sb_pop(this);
-        if (buf == NULL)
+        if (buf == nullptr)
             clearLine(this, y);
         else
             updateLineN(this, buf, y, sc * 2);
@@ -417,10 +417,10 @@ static void atExit(void) {
         return;
     done = 1;
     if (ae.cursor_shape >= 0)
-        setCursorShape(NULL, ae.cursor_shape);
+        setCursorShape(nullptr, ae.cursor_shape);
 }
 
-static const screen_t driver = {sobject_destroy, 0, /* finalize, */
+static const screen_t driver = {sobject_destroy, nullptr, /* finalize */
                                 atExit,          init,       refresh,
                                 getMode,         getPage,    getRows,
                                 getCols,         isMono,     getFg,
@@ -430,7 +430,7 @@ static const screen_t driver = {sobject_destroy, 0, /* finalize, */
                                 putCharAttr,     putString,  putStringAttr,
                                 clear,           clearLine,  updateLineN,
                                 scrollUp,        scrollDown, getScrollCounter,
-                                s_kbhit,         intro,      (struct screen_data_t *) 0};
+                                s_kbhit,         intro,      (struct screen_data_t *) nullptr};
 
 /* public constructor */
 screen_t *screen_djgpp2_construct(void) { return sobject_construct(&driver, sizeof(*driver.data)); }

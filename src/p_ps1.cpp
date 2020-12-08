@@ -108,7 +108,7 @@ const int *PackPs1::getCompressionMethods(int method, int level) const
 
 const int *PackPs1::getFilters() const
 {
-    return NULL;
+    return nullptr;
 }
 
 Linker* PackPs1::newLinker() const
@@ -166,7 +166,7 @@ void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsign
         ps1_exe_chb_t * p = (ps1_exe_chb_t * )cpr_bh;
 
         int r = upx_compress(src, SZ_IH_BKUP,
-                             &p->ih_bkup, &sz_cbh, NULL, M_NRV2E_8, 10, NULL, NULL );
+                             &p->ih_bkup, &sz_cbh, nullptr, M_NRV2E_8, 10, nullptr, nullptr );
         if (r != UPX_E_OK || sz_cbh >= SZ_IH_BKUP)
             throwInternalError("header compression failed");
         INIT_BH_BKUP(p, sz_cbh);
@@ -193,7 +193,7 @@ bool PackPs1::getBkupHeader(unsigned char *p, unsigned char *dst)
 
         unsigned sz_bh = SZ_IH_BKUP;
         int r = upx_decompress((const unsigned char *)&src->ih_bkup, src->len,
-                               unc_bh, &sz_bh, M_NRV2E_8, NULL );
+                               unc_bh, &sz_bh, M_NRV2E_8, nullptr );
         if (r == UPX_E_OUT_OF_MEMORY)
             throwOutOfMemoryException();
         if (r != UPX_E_OK || sz_bh != SZ_IH_BKUP)
@@ -285,7 +285,7 @@ bool PackPs1::canPack()
 
 void PackPs1::buildLoader(const Filter *)
 {
-    const char *method = NULL;
+    const char *method = nullptr;
 
     if (ph.method == M_NRV2B_8)
         method = isCon ? "nrv2b.small,8bit.sub,nrv.done" :
@@ -329,9 +329,9 @@ void PackPs1::buildLoader(const Filter *)
     {
         initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1));
         addLoader("decompressor.start",
-                  isCon ? "LZMA_DEC20" : "LZMA_DEC10", "lzma.init", NULL);
+                  isCon ? "LZMA_DEC20" : "LZMA_DEC10", "lzma.init", nullptr);
         addLoader(sa_tmp > (0x10000 << 2) ? "memset.long" : "memset.short",
-                  !foundBss ? "con.exit" : "bss.exit", NULL);
+                  !foundBss ? "con.exit" : "bss.exit", nullptr);
     }
     else
     {
@@ -340,7 +340,7 @@ void PackPs1::buildLoader(const Filter *)
             sz_lcpr = MemBuffer::getSizeForCompression(sz_lunc);
             unsigned char *cprLoader = New(unsigned char, sz_lcpr);
             int r = upx_compress(getLoader(), sz_lunc, cprLoader, &sz_lcpr,
-                                 NULL, M_NRV2B_8, 10, NULL, NULL );
+                                 nullptr, M_NRV2B_8, 10, nullptr, nullptr );
             if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
                 throwInternalError("loader compression failed");
             initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1),
@@ -362,7 +362,7 @@ void PackPs1::buildLoader(const Filter *)
                 addLoader(!foundBss ? "con.start" : "bss.con.start",
                           method,
                           ih.tx_ptr & 0xffff ?  "dec.ptr" : "dec.ptr.hi",
-                          "con.entry", "pad.code", "lzma.exec", NULL);
+                          "con.entry", "pad.code", "lzma.exec", nullptr);
             else
                 addLoader(!foundBss ? "con.start" : "bss.con.start", "con.mcpy",
                           ph.c_len & 3 ? "con.padcd" : "",
@@ -370,7 +370,7 @@ void PackPs1::buildLoader(const Filter *)
                           "con.entry", method,
                           sa_cnt ? sa_cnt > (0x10000 << 2) ? "memset.long" : "memset.short" : "",
                           !foundBss ? "con.exit" : "bss.exit",
-                          "pad.code", NULL);
+                          "pad.code", nullptr);
         }
         else
         {
@@ -379,7 +379,7 @@ void PackPs1::buildLoader(const Filter *)
                           !foundBss ? "cdb.entry.lzma" : "bss.cdb.entry.lzma",
                           method, "cdb.lzma.cpr",
                           ih.tx_ptr & 0xffff ?  "dec.ptr" : "dec.ptr.hi",
-                          "lzma.exec", NULL);
+                          "lzma.exec", nullptr);
             else
             {
                 assert(foundBss != true);
@@ -387,10 +387,10 @@ void PackPs1::buildLoader(const Filter *)
                           ih.tx_ptr & 0xffff ?  "cdb.dec.ptr" : "cdb.dec.ptr.hi",
                           method,
                           sa_cnt ? sa_cnt > (0x10000 << 2) ? "memset.long" : "memset.short" : "",
-                          "cdb.exit", NULL);
+                          "cdb.exit", nullptr);
             }
         }
-        addLoader("UPX1HEAD", "IDENTSTR", NULL);
+        addLoader("UPX1HEAD", "IDENTSTR", nullptr);
     }
 }
 

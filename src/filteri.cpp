@@ -170,7 +170,7 @@ umin(unsigned const a, unsigned const b)
 
 const FilterImp::FilterEntry FilterImp::filters[] = {
     // no filter
-    { 0x00, 0,          0, NULL, NULL, NULL },
+    { 0x00, 0,          0, nullptr, nullptr, nullptr },
 
     // 16-bit calltrick
     { 0x01, 4,          0, f_ct16_e8, u_ct16_e8, s_ct16_e8 },

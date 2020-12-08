@@ -42,7 +42,7 @@ protected:
     PackUnix(InputFile *f);
 public:
     virtual int getVersion() const { return 13; }
-    virtual const int *getFilters() const { return NULL; }
+    virtual const int *getFilters() const { return nullptr; }
     virtual int getStrategy(Filter &);
 
     virtual void pack(OutputFile *fo);

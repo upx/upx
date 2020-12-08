@@ -55,7 +55,7 @@ void printClearLine(FILE *f)
     }
 
     fflush(stdout); fflush(stderr);
-    if (f == NULL)
+    if (f == nullptr)
         f = stdout;
     con_fprintf(f, "%s", clear_line_msg);
     fflush(f);

@@ -299,7 +299,7 @@ void do_files(int i, int argc, char *argv[]) {
             e_exit(EXIT_ERROR);
         } catch (...) {
             unlink_ofile(oname);
-            printUnhandledException(iname, NULL);
+            printUnhandledException(iname, nullptr);
             e_exit(EXIT_ERROR);
         }
     }

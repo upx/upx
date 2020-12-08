@@ -70,9 +70,9 @@ protected:
     __packed_struct(ps1_exe_t)
         // ident string
         char id[8];
-        // is NULL
+        // is nullptr
         LE32 text;
-        // is NULL
+        // is nullptr
         LE32 data;
         // initial program counter
         LE32 epc;

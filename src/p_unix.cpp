@@ -93,9 +93,9 @@ void PackUnix::writePackHeader(OutputFile *fo)
     set_le32(buf+0, UPX_MAGIC_LE32);
     set_le32(buf+4, UPX_MAGIC2_LE32);
 
-    checkPatch(NULL, 0, 0, 0);  // reset
+    checkPatch(nullptr, 0, 0, 0);  // reset
     patchPackHeader(buf, hsize);
-    checkPatch(NULL, 0, 0, 0);  // reset
+    checkPatch(nullptr, 0, 0, 0);  // reset
 
     fo->write(buf, hsize);
 }
@@ -179,7 +179,7 @@ int PackUnix::pack2(OutputFile *fo, Filter &ft)
             !!n_block++);  // check compression ratio only on first block
 
         if (ph.c_len < ph.u_len) {
-            const upx_bytep tbuf = NULL;
+            const upx_bytep tbuf = nullptr;
             if (ft.id == 0) tbuf = ibuf;
             ph.overlap_overhead = OVERHEAD;
             if (!testOverlappingDecompression(obuf, tbuf, ph.overlap_overhead)) {
@@ -248,7 +248,7 @@ PackUnix::patchLoaderChecksum()
 
 off_t PackUnix::pack3(OutputFile *fo, Filter &ft)
 {
-    if (0==linker) {
+    if (nullptr==linker) {
         // If no filter, then linker is not constructed by side effect
         // of packExtent calling compressWithFilters.
         // This is typical after "/usr/bin/patchelf --set-rpath".
@@ -372,8 +372,8 @@ void PackUnix::packExtent(
         }
 
         if (ph.c_len < ph.u_len) {
-            const upx_bytep tbuf = NULL;
-            if (ft == NULL || ft->id == 0) tbuf = ibuf;
+            const upx_bytep tbuf = nullptr;
+            if (ft == nullptr || ft->id == 0) tbuf = ibuf;
             ph.overlap_overhead = OVERHEAD;
             if (!testOverlappingDecompression(obuf, tbuf, ph.overlap_overhead)) {
                 // not in-place compressible
@@ -394,8 +394,8 @@ void PackUnix::packExtent(
             unsigned hdr_c_len = 0;
             MemBuffer hdr_obuf;
             hdr_obuf.allocForCompression(hdr_u_len);
-            int r = upx_compress(hdr_ibuf, hdr_u_len, hdr_obuf, &hdr_c_len, 0,
-                ph.method, 10, NULL, NULL);
+            int r = upx_compress(hdr_ibuf, hdr_u_len, hdr_obuf, &hdr_c_len, nullptr,
+                ph.method, 10, nullptr, nullptr);
             if (r != UPX_E_OK)
                 throwInternalError("header compression failed");
             if (hdr_c_len >= hdr_u_len)
@@ -566,8 +566,8 @@ void PackUnix::unpack(OutputFile *fo)
         ? sizeof(bhdr.sz_unc) + sizeof(bhdr.sz_cpr)  // old style
         : sizeof(bhdr);
 
-    unsigned c_adler = upx_adler32(NULL, 0);
-    unsigned u_adler = upx_adler32(NULL, 0);
+    unsigned c_adler = upx_adler32(nullptr, 0);
+    unsigned u_adler = upx_adler32(nullptr, 0);
 
     // defaults for ph.version == 8
     unsigned orig_file_size = 0;

@@ -170,9 +170,9 @@ public:
 protected:
     // main compression drivers
     virtual bool compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
-                          const upx_compress_config_t *cconf = NULL);
+                          const upx_compress_config_t *cconf = nullptr);
     virtual void decompress(const upx_bytep in, upx_bytep out,
-                            bool verify_checksum = true, Filter *ft = NULL);
+                            bool verify_checksum = true, Filter *ft = nullptr);
     virtual bool checkDefaultCompressionRatio(unsigned u_len, unsigned c_len) const;
     virtual bool checkCompressionRatio(unsigned u_len, unsigned c_len) const;
     virtual bool checkFinalCompressionRatio(const OutputFile *fo) const;
@@ -214,8 +214,8 @@ protected:
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const;
     //   destructive decompress + verify
-    void verifyOverlappingDecompression(Filter *ft = NULL);
-    void verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Filter *ft = NULL);
+    void verifyOverlappingDecompression(Filter *ft = nullptr);
+    void verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Filter *ft = nullptr);
 
     // packheader handling
     virtual int patchPackHeader(void *b, int blen);
@@ -244,8 +244,8 @@ protected:
     void __acc_cdecl_va addLoaderVA(const char *s, ...);
 #endif
     virtual bool hasLoaderSection(const char *name) const;
-    virtual int getLoaderSection(const char *name, int *slen=NULL) const;
-    virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
+    virtual int getLoaderSection(const char *name, int *slen=nullptr) const;
+    virtual int getLoaderSectionStart(const char *name, int *slen=nullptr) const;
 
     // compression handling [see packer_c.cpp]
 public:
@@ -325,8 +325,8 @@ private:
 
 private:
     // disable copy and assignment
-    Packer(const Packer &); // {}
-    Packer& operator= (const Packer &); // { return *this; }
+    Packer(const Packer &) = delete;
+    Packer& operator= (const Packer &) = delete;
 };
 
 

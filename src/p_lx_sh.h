@@ -48,7 +48,7 @@ public:
     virtual int getFormat() const { return UPX_F_LINUX_SH_i386; }
     virtual const char *getName() const { return "linux.sh/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.elf.shell"; }
-    virtual const int *getFilters() const { return NULL; }
+    virtual const int *getFilters() const { return nullptr; }
     virtual void buildLoader(const Filter *);
 
     virtual void pack1(OutputFile *fo, Filter &ft);

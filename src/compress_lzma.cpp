@@ -230,6 +230,8 @@ error:
 #undef _WIN32_WCE
 #undef COMPRESS_MF_MT
 #undef _NO_EXCEPTIONS
+#undef NULL
+#define NULL nullptr
 #include "C/Common/MyInitGuid.h"
 //#include "C/7zip/Compress/LZMA/LZMADecoder.h"
 #include "C/7zip/Compress/LZMA/LZMAEncoder.h"
@@ -253,7 +255,7 @@ STDMETHODIMP InStream::Read(void *data, UInt32 size, UInt32 *processedSize)
     if (size > remain) size = (UInt32) remain;
     memmove(data, b_buf + b_pos, size);
     b_pos += size;
-    if (processedSize != NULL) *processedSize = size;
+    if (processedSize != nullptr) *processedSize = size;
     return S_OK;
 }
 
@@ -279,7 +281,7 @@ STDMETHODIMP OutStream::Write(const void *data, UInt32 size, UInt32 *processedSi
     if (size > remain) size = (UInt32) remain, overflow = true;
     memmove(b_buf + b_pos, data, size);
     b_pos += size;
-    if (processedSize != NULL) *processedSize = size;
+    if (processedSize != nullptr) *processedSize = size;
     return overflow ? E_FAIL : S_OK;
 }
 
@@ -321,11 +323,11 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
                                    upx_compress_result_t *cresult )
 {
     assert(M_IS_LZMA(method));
-    assert(level > 0); assert(cresult != NULL);
+    assert(level > 0); assert(cresult != nullptr);
 
     int r = UPX_E_ERROR;
     HRESULT rh;
-    const lzma_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_lzma : NULL;
+    const lzma_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_lzma : nullptr;
     lzma_compress_result_t *res = &cresult->result_lzma;
 
     MyLzma::InStream is; is.AddRef();
@@ -382,7 +384,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     os.WriteByte(Byte((t << 3) | res->pos_bits));
     os.WriteByte(Byte((res->lit_pos_bits << 4) | (res->lit_context_bits)));
 
-    rh = enc.Code(&is, &os, NULL, NULL, &progress);
+    rh = enc.Code(&is, &os, nullptr, nullptr, &progress);
 
     } catch (...) {
         rh = E_OUTOFMEMORY;
@@ -509,7 +511,7 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
     // NOTE: there is a very tiny possibility that decompression has
     //   succeeded but the data is not restored correctly because of
     //   in-place buffer overlapping, so we use an extra memcmp().
-    if (tbuf != NULL && memcmp(tbuf, b, *dst_len) != 0)
+    if (tbuf != nullptr && memcmp(tbuf, b, *dst_len) != 0)
         return UPX_E_ERROR;
     return UPX_E_OK;
 }
@@ -530,7 +532,7 @@ const char *upx_lzma_version_string(void)
     return "4.43";
 #else
 #   error "unknown WITH_LZMA version"
-    return NULL;
+    return nullptr;
 #endif
 }
 

@@ -93,22 +93,22 @@ void PackTmt::buildLoader(const Filter *ft)
               "TMTMAIN1B",
               ft->id ? "TMTCALT1" : "",
               "TMTMAIN2,UPX1HEAD,TMTCUTPO",
-              NULL);
+              nullptr);
 
     // fake alignment for the start of the decompressor
     linker->defineSymbol("TMTCUTPO", 0x1000);
 
-    addLoader(getDecompressorSections(), "TMTMAIN5", NULL);
+    addLoader(getDecompressorSections(), "TMTMAIN5", nullptr);
     if (ft->id)
     {
         assert(ft->calls > 0);
-        addLoader("TMTCALT2",NULL);
+        addLoader("TMTCALT2",nullptr);
         addFilter32(ft->id);
     }
     addLoader("TMTRELOC,RELOC320",
               big_relocs ? "REL32BIG" : "",
               "RELOC32J,TMTJUMP1",
-              NULL
+              nullptr
              );
 }
 

@@ -106,13 +106,13 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
                                    upx_compress_result_t *cresult )
 {
     int r;
-    assert(level > 0); assert(cresult != NULL);
+    assert(level > 0); assert(cresult != nullptr);
 
     COMPILE_TIME_ASSERT(sizeof(ucl_compress_config_t) == sizeof(REAL_ucl_compress_config_t))
 
     ucl_progress_callback_t cb;
-    cb.callback = 0;
-    cb.user = NULL;
+    cb.callback = nullptr;
+    cb.user = nullptr;
     if (cb_parm && cb_parm->nprogress) {
         cb.callback = wrap_nprogress_ucl;
         cb.user = cb_parm;
@@ -188,31 +188,31 @@ int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
     switch (method)
     {
     case M_NRV2B_8:
-        r = ucl_nrv2b_decompress_safe_8(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2b_decompress_safe_8(src,src_len,dst,dst_len,nullptr);
         break;
     case M_NRV2B_LE16:
-        r = ucl_nrv2b_decompress_safe_le16(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2b_decompress_safe_le16(src,src_len,dst,dst_len,nullptr);
         break;
     case M_NRV2B_LE32:
-        r = ucl_nrv2b_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2b_decompress_safe_le32(src,src_len,dst,dst_len,nullptr);
         break;
     case M_NRV2D_8:
-        r = ucl_nrv2d_decompress_safe_8(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2d_decompress_safe_8(src,src_len,dst,dst_len,nullptr);
         break;
     case M_NRV2D_LE16:
-        r = ucl_nrv2d_decompress_safe_le16(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2d_decompress_safe_le16(src,src_len,dst,dst_len,nullptr);
         break;
     case M_NRV2D_LE32:
-        r = ucl_nrv2d_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2d_decompress_safe_le32(src,src_len,dst,dst_len,nullptr);
         break;
     case M_NRV2E_8:
-        r = ucl_nrv2e_decompress_safe_8(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2e_decompress_safe_8(src,src_len,dst,dst_len,nullptr);
         break;
     case M_NRV2E_LE16:
-        r = ucl_nrv2e_decompress_safe_le16(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2e_decompress_safe_le16(src,src_len,dst,dst_len,nullptr);
         break;
     case M_NRV2E_LE32:
-        r = ucl_nrv2e_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
+        r = ucl_nrv2e_decompress_safe_le32(src,src_len,dst,dst_len,nullptr);
         break;
     default:
         throwInternalError("unknown decompression method");
@@ -241,31 +241,31 @@ int upx_ucl_test_overlap   ( const upx_bytep buf,
     switch (method)
     {
     case M_NRV2B_8:
-        r = ucl_nrv2b_test_overlap_8(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2b_test_overlap_8(buf,src_off,src_len,dst_len,nullptr);
         break;
     case M_NRV2B_LE16:
-        r = ucl_nrv2b_test_overlap_le16(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2b_test_overlap_le16(buf,src_off,src_len,dst_len,nullptr);
         break;
     case M_NRV2B_LE32:
-        r = ucl_nrv2b_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2b_test_overlap_le32(buf,src_off,src_len,dst_len,nullptr);
         break;
     case M_NRV2D_8:
-        r = ucl_nrv2d_test_overlap_8(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2d_test_overlap_8(buf,src_off,src_len,dst_len,nullptr);
         break;
     case M_NRV2D_LE16:
-        r = ucl_nrv2d_test_overlap_le16(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2d_test_overlap_le16(buf,src_off,src_len,dst_len,nullptr);
         break;
     case M_NRV2D_LE32:
-        r = ucl_nrv2d_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2d_test_overlap_le32(buf,src_off,src_len,dst_len,nullptr);
         break;
     case M_NRV2E_8:
-        r = ucl_nrv2e_test_overlap_8(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2e_test_overlap_8(buf,src_off,src_len,dst_len,nullptr);
         break;
     case M_NRV2E_LE16:
-        r = ucl_nrv2e_test_overlap_le16(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2e_test_overlap_le16(buf,src_off,src_len,dst_len,nullptr);
         break;
     case M_NRV2E_LE32:
-        r = ucl_nrv2e_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
+        r = ucl_nrv2e_test_overlap_le32(buf,src_off,src_len,dst_len,nullptr);
         break;
     default:
         throwInternalError("unknown decompression method");

@@ -150,38 +150,38 @@ off_t PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
         initLoader(stub_i386_linux_elf_interp_entry, sizeof(stub_i386_linux_elf_interp_entry));
         linker->addSection("FOLDEXEC", stub_i386_linux_elf_interp_fold, sizeof(stub_i386_linux_elf_interp_fold), 0);
 
-        addLoader("LXPTI000", NULL);
+        addLoader("LXPTI000", nullptr);
 
-        addLoader("LXPTI040", NULL);
-        ph.method = M_NRV2B_LE32; addLoader(getDecompressorSections(), NULL);
-        addLoader("LXPTI090", NULL);
+        addLoader("LXPTI040", nullptr);
+        ph.method = M_NRV2B_LE32; addLoader(getDecompressorSections(), nullptr);
+        addLoader("LXPTI090", nullptr);
 
-        addLoader("LXPTI041", NULL);
-        ph.method = M_NRV2D_LE32; addLoader(getDecompressorSections(), NULL);
-        addLoader("LXPTI090", NULL);
+        addLoader("LXPTI041", nullptr);
+        ph.method = M_NRV2D_LE32; addLoader(getDecompressorSections(), nullptr);
+        addLoader("LXPTI090", nullptr);
 
-        addLoader("LXPTI042", NULL);
-        ph.method = M_NRV2E_LE32; addLoader(getDecompressorSections(), NULL);
-        addLoader("LXPTI090", NULL);
+        addLoader("LXPTI042", nullptr);
+        ph.method = M_NRV2E_LE32; addLoader(getDecompressorSections(), nullptr);
+        addLoader("LXPTI090", nullptr);
 
-        //addLoader("LXPTI043", NULL);
-        //ph.method = M_CL1B_LE32;  addLoader(getDecompressorSections(), NULL);
-        //addLoader("LXPTI090", NULL);
+        //addLoader("LXPTI043", nullptr);
+        //ph.method = M_CL1B_LE32;  addLoader(getDecompressorSections(), nullptr);
+        //addLoader("LXPTI090", nullptr);
 
-        addLoader("LXPTI091", NULL);
+        addLoader("LXPTI091", nullptr);
 
-        addLoader("LXPTI140", NULL);
+        addLoader("LXPTI140", nullptr);
 
-        addLoader("LXUNF002,LXUNF008,LXUNF010", NULL);
+        addLoader("LXUNF002,LXUNF008,LXUNF010", nullptr);
         addFilter32(0x46);
-        addLoader("LXUNF042,LXUNF035", NULL);
+        addLoader("LXUNF042,LXUNF035", nullptr);
 
-        addLoader("LXUNF002,LXUNF008,LXUNF010", NULL);
+        addLoader("LXUNF002,LXUNF008,LXUNF010", nullptr);
         addFilter32(0x49);
-        addLoader("LXUNF042,LXUNF035", NULL);
+        addLoader("LXUNF042,LXUNF035", nullptr);
 
-        addLoader("LXPTI200", NULL);
-        addLoader("FOLDEXEC", NULL);
+        addLoader("LXPTI200", nullptr);
+        addLoader("FOLDEXEC", nullptr);
         upx_byte const *p = getLoader();
         lsize = getLoaderSize();
         updateLoader(fo);
@@ -236,8 +236,8 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
 
     unsigned total_in = 0;
     unsigned total_out = 0;
-    unsigned c_adler = upx_adler32(NULL, 0);
-    unsigned u_adler = upx_adler32(NULL, 0);
+    unsigned c_adler = upx_adler32(nullptr, 0);
+    unsigned u_adler = upx_adler32(nullptr, 0);
     off_t ptload0hi=0, ptload1lo=0, ptload1sz=0;
 
     // decompress PT_LOAD

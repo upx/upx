@@ -106,11 +106,11 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
         unsigned flavor, unsigned count, unsigned size) :
     super(f), my_cputype(cputype), my_filetype(filetype), my_thread_flavor(flavor),
     my_thread_state_word_count(count), my_thread_command_size(size),
-    n_segment(0), rawmseg(NULL), msegcmd(NULL), o__mod_init_func(0),
+    n_segment(0), rawmseg(nullptr), msegcmd(nullptr), o__mod_init_func(0),
     prev_mod_init_func(0), pagezero_vmsize(0)
 {
     MachClass::compileTimeAssertions();
-    bele = N_BELE_CTP::getRTP((const BeLePolicy*) NULL);
+    bele = N_BELE_CTP::getRTP((const BeLePolicy*) nullptr);
     memset(&cmdUUID, 0, sizeof(cmdUUID));
     memset(&cmdSRCVER, 0, sizeof(cmdSRCVER));
     memset(&cmdVERMIN, 0, sizeof(cmdVERMIN));
@@ -254,107 +254,107 @@ template <class T>
 void
 PackMachBase<T>::addStubEntrySections(Filter const *)
 {
-    addLoader("MACOS000", NULL);
-   //addLoader(getDecompressorSections(), NULL);
+    addLoader("MACOS000", nullptr);
+   //addLoader(getDecompressorSections(), nullptr);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
         : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
         : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
+        : nullptr), nullptr);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
-    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
+    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", nullptr);
 }
 
 void PackMachI386::addStubEntrySections(Filter const * /*ft*/)
 {
-    addLoader("MACHMAINX", NULL);  // different for MY_DYLIB vs MH_EXECUTE
+    addLoader("MACHMAINX", nullptr);  // different for MY_DYLIB vs MH_EXECUTE
     if (my_filetype==Mach_header::MH_EXECUTE) {
-        addLoader("MACH_UNC", NULL);
+        addLoader("MACH_UNC", nullptr);
     }
-   //addLoader(getDecompressorSections(), NULL);
+   //addLoader(getDecompressorSections(), nullptr);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
         : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
         : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
+        : nullptr), nullptr);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
-    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", nullptr);
 }
 
 void PackMachAMD64::addStubEntrySections(Filter const * /*ft*/)
 {
-    addLoader("MACHMAINX", NULL);  // different for MY_DYLIB vs MH_EXECUTE
+    addLoader("MACHMAINX", nullptr);  // different for MY_DYLIB vs MH_EXECUTE
     if (my_filetype==Mach_header::MH_EXECUTE) {
-        addLoader("MACH_UNC", NULL);
+        addLoader("MACH_UNC", nullptr);
     }
-   //addLoader(getDecompressorSections(), NULL);
+   //addLoader(getDecompressorSections(), nullptr);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
         : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
         : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
+        : nullptr), nullptr);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
-    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", nullptr);
 }
 
 void PackMachPPC32::addStubEntrySections(Filter const * /*ft*/)
 {
     if (my_filetype!=Mach_header::MH_EXECUTE) {
-        addLoader("MACHMAINX", NULL);
+        addLoader("MACHMAINX", nullptr);
     }
     else {
-        addLoader("PPC32BXX", NULL);
+        addLoader("PPC32BXX", nullptr);
     }
-    addLoader("MACH_UNC", NULL);
-   //addLoader(getDecompressorSections(), NULL);
+    addLoader("MACH_UNC", nullptr);
+   //addLoader(getDecompressorSections(), nullptr);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
         : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
         : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
+        : nullptr), nullptr);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
-    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ", NULL);
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ", nullptr);
     if (my_filetype!=Mach_header::MH_EXECUTE) {
-        addLoader("FOLDEXEC", NULL);
+        addLoader("FOLDEXEC", nullptr);
     }
 }
 
 void PackMachARMEL::addStubEntrySections(Filter const * /*ft*/)
 {
-    addLoader("MACHMAINX", NULL);
-   //addLoader(getDecompressorSections(), NULL);
+    addLoader("MACHMAINX", nullptr);
+   //addLoader(getDecompressorSections(), nullptr);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
         : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
         : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
+        : nullptr), nullptr);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
-    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", nullptr);
 }
 
 void PackMachARM64EL::addStubEntrySections(Filter const * /*ft*/)
 {
-    addLoader("MACHMAINX", NULL);
-   //addLoader(getDecompressorSections(), NULL);
+    addLoader("MACHMAINX", nullptr);
+   //addLoader(getDecompressorSections(), nullptr);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
         : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
         : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
+        : nullptr), nullptr);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
-    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", nullptr);
 }
 
 template <class T>
@@ -391,7 +391,7 @@ PackMachBase<T>::buildMachLoader(
   if (0 < szfold) {
     unsigned sz_cpr = 0;
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &sz_cpr,
-        NULL, ph.method, 10, NULL, NULL );
+        nullptr, ph.method, 10, nullptr, nullptr );
     h.sz_cpr = sz_cpr;
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
@@ -1099,7 +1099,7 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
             ptr = (Mach_segment_command const *)(ptr->cmdsize + (char const *)ptr);
         }
         packExtent(x, total_in, total_out,
-            (do_filter ? &ft : 0 ), fo, hdr_u_len, b_extra );
+            (do_filter ? &ft : nullptr), fo, hdr_u_len, b_extra );
         if (do_filter) {
             exe_filesize_max = 0;
         }
@@ -1114,7 +1114,7 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
         x.size = find_SEGMENT_gap(k, fi->st_size());
         if (x.size) {
             x.offset = msegcmd[k].fileoff +msegcmd[k].filesize;
-            packExtent(x, total_in, total_out, 0, fo);
+            packExtent(x, total_in, total_out, nullptr, fo);
         }
     }
 
@@ -1452,8 +1452,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
 
     unsigned total_in = 0;
     unsigned total_out = 0;
-    unsigned c_adler = upx_adler32(NULL, 0);
-    unsigned u_adler = upx_adler32(NULL, 0);
+    unsigned c_adler = upx_adler32(nullptr, 0);
+    unsigned u_adler = upx_adler32(nullptr, 0);
 
     fi->seek(- (off_t)(sizeof(bhdr) + ph.c_len), SEEK_CUR);
     for (unsigned k = 0; k < ncmds; ++k) {
@@ -1546,7 +1546,7 @@ int PackMachBase<T>::canUnpack()
     rawmseg = (Mach_segment_command *)rawmseg_buf.getVoidPtr();
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
-    Mach_segment_command const *ptrTEXT = 0;
+    Mach_segment_command const *ptrTEXT = nullptr;
     upx_uint64_t rip = 0;
     unsigned style = 0;
     off_t offLINK = 0;
@@ -1903,7 +1903,7 @@ bool PackMachBase<T>::canPack()
     if (!n_segment) {
         return false;
     }
-    struct {
+    static struct {
         unsigned cputype;
         unsigned short filetype;
         unsigned short sz_stub_entry;
@@ -1923,7 +1923,7 @@ bool PackMachBase<T>::canPack()
         },
         {CPU_TYPE_I386, MH_DYLIB,
             sizeof(stub_i386_darwin_dylib_entry), 0, 0,
-                   stub_i386_darwin_dylib_entry,  0, 0
+                   stub_i386_darwin_dylib_entry,  nullptr, nullptr
         },
         {CPU_TYPE_X86_64, MH_EXECUTE,
             sizeof(stub_amd64_darwin_macho_entry),
@@ -1931,11 +1931,11 @@ bool PackMachBase<T>::canPack()
             0, //sizeof(stub_amd64_darwin_macho_upxmain_exe),
                    stub_amd64_darwin_macho_entry,
                    stub_amd64_darwin_macho_fold,
-                   0 // stub_amd64_darwin_macho_upxmain_exe
+                   nullptr // stub_amd64_darwin_macho_upxmain_exe
         },
         {CPU_TYPE_X86_64, MH_DYLIB,
             sizeof(stub_amd64_darwin_dylib_entry), 0, 0,
-                   stub_amd64_darwin_dylib_entry,  0, 0
+                   stub_amd64_darwin_dylib_entry,  nullptr, nullptr
         },
         {CPU_TYPE_ARM, MH_EXECUTE,
             sizeof(stub_arm_v5a_darwin_macho_entry),
@@ -1943,7 +1943,7 @@ bool PackMachBase<T>::canPack()
             0,
                    stub_arm_v5a_darwin_macho_entry,
                    stub_arm_v5a_darwin_macho_fold,
-                   0
+                   nullptr
         },
         {CPU_TYPE_ARM64, MH_EXECUTE,
             sizeof(stub_arm64_darwin_macho_entry),
@@ -1951,7 +1951,7 @@ bool PackMachBase<T>::canPack()
             0,
                    stub_arm64_darwin_macho_entry,
                    stub_arm64_darwin_macho_fold,
-                   0
+                   nullptr
         },
         {CPU_TYPE_POWERPC, MH_EXECUTE,
             sizeof(stub_powerpc_darwin_macho_entry),
@@ -1963,7 +1963,7 @@ bool PackMachBase<T>::canPack()
         },
         {CPU_TYPE_POWERPC, MH_DYLIB,
             sizeof(stub_powerpc_darwin_dylib_entry), 0, 0,
-                   stub_powerpc_darwin_dylib_entry,  0, 0
+                   stub_powerpc_darwin_dylib_entry,  nullptr, nullptr
         },
         {CPU_TYPE_POWERPC64LE, MH_EXECUTE,
             sizeof(stub_powerpc64le_darwin_macho_entry),
@@ -1971,13 +1971,13 @@ bool PackMachBase<T>::canPack()
             0,
                    stub_powerpc64le_darwin_macho_entry,
                    stub_powerpc64le_darwin_macho_fold,
-                   0
+                   nullptr
         },
         {CPU_TYPE_POWERPC64LE, MH_DYLIB,
             sizeof(stub_powerpc64le_darwin_dylib_entry), 0, 0,
-                   stub_powerpc64le_darwin_dylib_entry,  0, 0
+                   stub_powerpc64le_darwin_dylib_entry,  nullptr, nullptr
         },
-        {0,0, 0,0,0, 0,0,0}
+        {0,0, 0,0,0, nullptr,nullptr,nullptr}
     };
     for (unsigned j = 0; stub_list[j].cputype; ++j) {
         if (stub_list[j].cputype  == my_cputype
@@ -2236,7 +2236,7 @@ void PackMachFat::pack(OutputFile *fo)
 
 void PackMachFat::unpack(OutputFile *fo)
 {
-    if (fo) {  // test mode ("-t") sets fo = NULL
+    if (fo) {  // test mode ("-t") sets fo = nullptr
         fo->seek(0, SEEK_SET);
         fo->write(&fat_head, sizeof(fat_head.fat) +
             fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));

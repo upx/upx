@@ -36,7 +36,7 @@
 unsigned long Throwable::counter = 0;
 
 Throwable::Throwable(const char *m, int e, bool w) noexcept
-    : super(), msg(NULL), err(e), is_warning(w)
+    : super(), msg(nullptr), err(e), is_warning(w)
 {
     if (m)
         msg = strdup(m);
@@ -48,7 +48,7 @@ Throwable::Throwable(const char *m, int e, bool w) noexcept
 
 
 Throwable::Throwable(const Throwable &other) noexcept
-    : super(other), msg(NULL), err(other.err), is_warning(other.is_warning)
+    : super(other), msg(nullptr), err(other.err), is_warning(other.is_warning)
 {
     if (other.msg)
         msg = strdup(other.msg);
@@ -112,7 +112,7 @@ void throwAlreadyPacked(const char *msg)
 
 void throwAlreadyPackedByUPX(const char *msg)
 {
-    if (msg == NULL)
+    if (msg == nullptr)
         msg = "already packed by UPX";
     throwAlreadyPacked(msg);
 }
@@ -130,7 +130,7 @@ void throwCantUnpack(const char *msg)
 
 void throwNotPacked(const char *msg)
 {
-    if (msg == NULL)
+    if (msg == nullptr)
         msg = "not packed by UPX";
     throw NotPackedException(msg);
 }
@@ -163,7 +163,7 @@ void throwBadLoader()
 
 void throwOutOfMemoryException(const char *msg)
 {
-    if (msg == NULL)
+    if (msg == nullptr)
         msg = "out of memory";
     throw OutOfMemoryException(msg);
 }
@@ -177,7 +177,7 @@ void throwIOException(const char *msg, int e)
 
 void throwEOFException(const char *msg, int e)
 {
-    if (msg == NULL && e == 0)
+    if (msg == nullptr && e == 0)
         msg = "premature end of file";
     throw EOFException(msg, e);
 }
@@ -189,7 +189,7 @@ void throwEOFException(const char *msg, int e)
 
 const char *prettyName(const char *n) noexcept
 {
-    if (n == NULL)
+    if (n == nullptr)
         return "(null)";
     while (*n)
     {
