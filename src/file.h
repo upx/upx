@@ -163,10 +163,10 @@ class MemoryOutputFile : public FileBase
     typedef FileBase super;
 public:
     MemoryOutputFile();
-    virtual ~MemoryOutputFile() { b = NULL; }
+    virtual ~MemoryOutputFile() { b = nullptr; }
 
-    virtual bool close() { b = NULL; return true; }
-    virtual bool isOpen() const { return b != NULL; }
+    virtual bool close() { b = nullptr; return true; }
+    virtual bool isOpen() const { return b != nullptr; }
     virtual void open(void *buf, unsigned size)
         { b = (upx_bytep) buf; b_size = size; }
 

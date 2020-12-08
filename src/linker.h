@@ -88,14 +88,14 @@ public:
     void __acc_cdecl_va addLoaderVA(const char *s, ...);
 #endif
     virtual Section *addSection(const char *sname, const void *sdata, int slen, unsigned p2align);
-    virtual int getSection(const char *sname, int *slen = NULL) const;
+    virtual int getSection(const char *sname, int *slen = nullptr) const;
     virtual int getSectionSize(const char *sname) const;
-    virtual upx_byte *getLoader(int *llen = NULL) const;
+    virtual upx_byte *getLoader(int *llen = nullptr) const;
     virtual void defineSymbol(const char *name, upx_uint64_t value);
     virtual upx_uint64_t getSymbolOffset(const char *) const;
 
     virtual void dumpSymbol(const Symbol *, unsigned flags, FILE *fp) const;
-    virtual void dumpSymbols(unsigned flags = 0, FILE *fp = NULL) const;
+    virtual void dumpSymbols(unsigned flags = 0, FILE *fp = nullptr) const;
 
     void alignWithByte(unsigned len, unsigned char b);
     virtual void alignCode(unsigned len) { alignWithByte(len, 0); }

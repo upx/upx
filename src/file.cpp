@@ -69,7 +69,7 @@ void File::unlink(const char *name)
 **************************************************************************/
 
 FileBase::FileBase() :
-    _fd(-1), _flags(0), _shflags(0), _mode(0), _name(NULL), _offset(0), _length(0)
+    _fd(-1), _flags(0), _shflags(0), _mode(0), _name(nullptr), _offset(0), _length(0)
 {
     memset(&st,0,sizeof(st));
 }
@@ -122,7 +122,7 @@ bool FileBase::close()
     _fd = -1;
     _flags = 0;
     _mode = 0;
-    _name = NULL;
+    _name = nullptr;
     _offset = 0;
     _length = 0;
     return ok;
@@ -477,7 +477,7 @@ void OutputFile::dump(const char *name, const void *buf, int len, int flags)
 #if 0
 
 MemoryOutputFile::MemoryOutputFile() :
-    b(NULL), b_size(0), b_pos(0), bytes_written(0)
+    b(nullptr), b_size(0), b_pos(0), bytes_written(0)
 {
 }
 

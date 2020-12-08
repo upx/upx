@@ -39,7 +39,7 @@ unsigned upx_adler32(const void *buf, unsigned len, unsigned adler)
 {
     if (len == 0)
         return adler;
-    assert(buf != NULL);
+    assert(buf != nullptr);
 #if 1
     return upx_ucl_adler32(buf, len, adler);
 #else
@@ -53,7 +53,7 @@ unsigned upx_crc32(const void *buf, unsigned len, unsigned crc)
 {
     if (len == 0)
         return crc;
-    assert(buf != NULL);
+    assert(buf != nullptr);
 #if 1
     return upx_ucl_crc32(buf, len, crc);
 #else
@@ -145,7 +145,7 @@ int upx_decompress         ( const upx_bytep src, unsigned  src_len,
     assert(src_len < *dst_len); // must be compressed
 
     if (cresult && cresult->method == 0)
-        cresult = NULL;
+        cresult = nullptr;
 
     if __acc_cte(0) {
     }
@@ -187,7 +187,7 @@ int upx_test_overlap       ( const upx_bytep buf,
     int r = UPX_E_ERROR;
 
     if (cresult && cresult->method == 0)
-        cresult = NULL;
+        cresult = nullptr;
 
     assert(*dst_len > 0);
     assert(src_len < *dst_len); // must be compressed

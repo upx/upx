@@ -95,16 +95,16 @@ void PackWcle::buildLoader(const Filter *ft)
     initLoader(stub_i386_dos32_watcom_le, sizeof(stub_i386_dos32_watcom_le));
     addLoader("IDENTSTR,WCLEMAIN",
               ph.first_offset_found == 1 ? "WCLEMAIN02" : "",
-              "WCLEMAIN03,UPX1HEAD,WCLECUTP", NULL);
+              "WCLEMAIN03,UPX1HEAD,WCLECUTP", nullptr);
 
     // fake alignment for the start of the decompressor
     linker->defineSymbol("WCLECUTP", 0x1000);
 
-    addLoader(getDecompressorSections(), "WCLEMAI2", NULL);
+    addLoader(getDecompressorSections(), "WCLEMAI2", nullptr);
     if (ft->id)
     {
         assert(ft->calls > 0);
-        addLoader(ft->addvalue ? "WCCTTPOS" : "WCCTTNUL", NULL);
+        addLoader(ft->addvalue ? "WCCTTPOS" : "WCCTTNUL", nullptr);
         addFilter32(ft->id);
     }
 #if 1
@@ -113,13 +113,13 @@ void PackWcle::buildLoader(const Filter *ft)
         addLoader("WCRELOC1,RELOC320",
                   big_relocs ? "REL32BIG" : "",
                   "RELOC32J",
-                  NULL
+                  nullptr
                  );
     }
 #endif
     addLoader(has_extra_code ? "WCRELSEL" : "",
               "WCLEMAI4",
-              NULL
+              nullptr
              );
 }
 
@@ -178,7 +178,7 @@ void PackWcle::encodeEntryTable()
 
     soentries = ptr_diff(p, ientries) + 1;
     oentries = ientries;
-    ientries = NULL;
+    ientries = nullptr;
 }
 
 
@@ -425,7 +425,7 @@ void PackWcle::encodeImage(Filter *ft)
     memcpy(ibuf,iimage,soimage);
     memcpy(ibuf+soimage,ifixups,sofixups);
 
-    delete[] ifixups; ifixups = NULL;
+    delete[] ifixups; ifixups = nullptr;
 
     oimage.allocForCompression(isize, RESERVED+512);
     // prepare packheader
@@ -437,7 +437,7 @@ void PackWcle::encodeImage(Filter *ft)
     compressWithFilters(ibuf, isize,
                         oimage + RESERVED,
                         ibuf + ft->addvalue, ft->buf_len,
-                        NULL, 0,
+                        nullptr, 0,
                         ft, 512, &cconf, 0);
 
     ibuf.dealloc();
@@ -766,7 +766,7 @@ void PackWcle::decodeEntryTable()
 
     soentries = ptr_diff(p, ientries) + 1;
     oentries = ientries;
-    ientries = NULL;
+    ientries = nullptr;
 }
 
 

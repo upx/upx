@@ -78,7 +78,7 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
     MemBuffer buf(sz_fold);
     memcpy(buf, stub_i386_linux_elf_shell_fold, sz_fold);
 
-    checkPatch(NULL, 0, 0, 0);  // reset
+    checkPatch(nullptr, 0, 0, 0);  // reset
     patch_le32(buf,sz_fold,"UPX3",l_shname);
     patch_le32(buf,sz_fold,"UPX2",o_shname);
 
@@ -115,12 +115,12 @@ bool PackLinuxI386sh::getShellName(char *buf)
     static char const *const shname[] = { // known shells that accept "-c" arg
         "ash", "bash", "bsh", "csh", "ksh", "pdksh", "sh", "tcsh", "zsh",
         "python", "python2", "python3",
-        NULL
+        nullptr
     };
     const char *bname = strrchr(buf, '/');
-    if (bname == NULL)
+    if (bname == nullptr)
         return false;
-    for (int j = 0; NULL != shname[j]; ++j) {
+    for (int j = 0; nullptr != shname[j]; ++j) {
         if (0 == strcmp(shname[j], bname + 1)) {
             bool const s = super::canPack();
             if (s) {

@@ -72,11 +72,11 @@ static int do_init(screen_t *s, int fd)
 static screen_t *do_construct(screen_t *s, int fd)
 {
     if (!s)
-        return NULL;
+        return nullptr;
     if (do_init(s,fd) != 0)
     {
         s->destroy(s);
-        return NULL;
+        return nullptr;
     }
     return s;
 }
@@ -86,7 +86,7 @@ static screen_t *do_construct(screen_t *s, int fd)
 //
 **************************************************************************/
 
-static screen_t *screen = NULL;
+static screen_t *screen = nullptr;
 
 static void __acc_cdecl_atexit do_destroy(void)
 {
@@ -95,7 +95,7 @@ static void __acc_cdecl_atexit do_destroy(void)
         if (screen->atExit)
             screen->atExit();
         screen->destroy(screen);
-        screen = NULL;
+        screen = nullptr;
     }
 }
 
@@ -113,7 +113,7 @@ static int init(FILE *f, int o, int now)
     int n;
 
     UNUSED(now);
-    assert(screen == NULL);
+    assert(screen == nullptr);
 
     if (o == CON_SCREEN)
         n = CON_SCREEN;

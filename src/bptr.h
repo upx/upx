@@ -44,10 +44,10 @@ public:
 
     ~BoundedPtr() { }
 
-    explicit BoundedPtr(void* base, size_t size_in_bytes, T* ptr=0)
+    BoundedPtr(void* base, size_t size_in_bytes, T* ptr=nullptr)
         : ptr_(ptr), base_(base), size_in_bytes_(0)
     {
-        assert(base_ != NULL);
+        assert(base_ != nullptr);
         size_in_bytes_ = mem_size(1, size_in_bytes);
         check();
     }
@@ -86,7 +86,7 @@ private:
             throwCantUnpack("pointer out of range; take care!");
     }
     void check() const { // check ptr_ invariant: either NULL or valid checkRange()
-        if (ptr_ != NULL)
+        if (ptr_ != nullptr)
             checkRange();
     }
 
@@ -95,7 +95,7 @@ private:
     size_t size_in_bytes_;
 
     // disable copy
-    BoundedPtr(const BoundedPtr&); // {}
+    BoundedPtr(const BoundedPtr&) = delete;
     // disable dynamic allocation
     DISABLE_NEW_DELETE
 };

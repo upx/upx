@@ -63,7 +63,7 @@ const int *PackTos::getCompressionMethods(int method, int level) const
 
 const int *PackTos::getFilters() const
 {
-    return NULL;
+    return nullptr;
 }
 
 

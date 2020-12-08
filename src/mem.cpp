@@ -62,7 +62,7 @@ __acc_static_forceinline bool use_simple_mcheck() { return true; }
 **************************************************************************/
 
 MemBuffer::MemBuffer(upx_uint64_t size) :
-    b(NULL), b_size(0)
+    b(nullptr), b_size(0)
 {
     alloc(size);
 }
@@ -87,7 +87,7 @@ unsigned char *MemBuffer::subref(char const *errfmt, unsigned skip, unsigned tak
 
 void MemBuffer::dealloc()
 {
-    if (b != NULL)
+    if (b != nullptr)
     {
         checkState();
         if (use_simple_mcheck())
@@ -102,7 +102,7 @@ void MemBuffer::dealloc()
         }
         else
             ::free(b);
-        b = NULL;
+        b = nullptr;
         b_size = 0;
     }
     else
@@ -186,7 +186,7 @@ void MemBuffer::checkState() const
 void MemBuffer::alloc(upx_uint64_t size)
 {
     // NOTE: we don't automatically free a used buffer
-    assert(b == NULL);
+    assert(b == nullptr);
     assert(b_size == 0);
     //
     assert(size > 0);

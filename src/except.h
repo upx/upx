@@ -42,7 +42,7 @@ class Throwable : public std::exception
 {
     typedef std::exception super;
 protected:
-    Throwable(const char *m = 0, int e = 0, bool w = false) noexcept;
+    Throwable(const char *m = nullptr, int e = 0, bool w = false) noexcept;
 public:
     Throwable(const Throwable &) noexcept;
     virtual ~Throwable() noexcept;
@@ -71,7 +71,7 @@ class Exception : public Throwable
 {
     typedef Throwable super;
 public:
-    Exception(const char *m = 0, int e = 0, bool w = false) noexcept : super(m,e,w) { }
+    Exception(const char *m = nullptr, int e = 0, bool w = false) noexcept : super(m,e,w) { }
 };
 
 
@@ -80,7 +80,7 @@ class Error : public Throwable
 {
     typedef Throwable super;
 public:
-    Error(const char *m = 0, int e = 0) noexcept : super(m,e) { }
+    Error(const char *m = nullptr, int e = 0) noexcept : super(m,e) { }
 };
 
 
@@ -92,7 +92,7 @@ class OutOfMemoryException : public Exception
 {
     typedef Exception super;
 public:
-    OutOfMemoryException(const char *m = 0, int e = 0) noexcept : super(m,e) { }
+    OutOfMemoryException(const char *m = nullptr, int e = 0) noexcept : super(m,e) { }
 };
 
 
@@ -100,7 +100,7 @@ class IOException : public Exception
 {
     typedef Exception super;
 public:
-    IOException(const char *m = 0, int e = 0) noexcept : super(m,e) { }
+    IOException(const char *m = nullptr, int e = 0) noexcept : super(m,e) { }
 };
 
 
@@ -108,7 +108,7 @@ class EOFException : public IOException
 {
     typedef IOException super;
 public:
-    EOFException(const char *m = 0, int e = 0) noexcept : super(m,e) { }
+    EOFException(const char *m = nullptr, int e = 0) noexcept : super(m,e) { }
 };
 
 
@@ -116,7 +116,7 @@ class FileNotFoundException : public IOException
 {
     typedef IOException super;
 public:
-    FileNotFoundException(const char *m = 0, int e = 0) noexcept : super(m,e) { }
+    FileNotFoundException(const char *m = nullptr, int e = 0) noexcept : super(m,e) { }
 };
 
 
@@ -124,7 +124,7 @@ class FileAlreadyExistsException : public IOException
 {
     typedef IOException super;
 public:
-    FileAlreadyExistsException(const char *m = 0, int e = 0) noexcept : super(m,e) { }
+    FileAlreadyExistsException(const char *m = nullptr, int e = 0) noexcept : super(m,e) { }
 };
 
 
@@ -136,35 +136,35 @@ class OverlayException : public Exception
 {
     typedef Exception super;
 public:
-    OverlayException(const char *m = 0, bool w = false) noexcept : super(m,0,w) { }
+    OverlayException(const char *m = nullptr, bool w = false) noexcept : super(m,0,w) { }
 };
 
 class CantPackException : public Exception
 {
     typedef Exception super;
 public:
-    CantPackException(const char *m = 0, bool w = false) noexcept : super(m,0,w) { }
+    CantPackException(const char *m = nullptr, bool w = false) noexcept : super(m,0,w) { }
 };
 
 class UnknownExecutableFormatException : public CantPackException
 {
     typedef CantPackException super;
 public:
-    UnknownExecutableFormatException(const char *m = 0, bool w = false) noexcept : super(m,w) { }
+    UnknownExecutableFormatException(const char *m = nullptr, bool w = false) noexcept : super(m,w) { }
 };
 
 class AlreadyPackedException : public CantPackException
 {
     typedef CantPackException super;
 public:
-    AlreadyPackedException(const char *m = 0) noexcept : super(m) { is_warning = true; }
+    AlreadyPackedException(const char *m = nullptr) noexcept : super(m) { is_warning = true; }
 };
 
 class NotCompressibleException : public CantPackException
 {
     typedef CantPackException super;
 public:
-    NotCompressibleException(const char *m = 0) noexcept : super(m) { }
+    NotCompressibleException(const char *m = nullptr) noexcept : super(m) { }
 };
 
 
@@ -172,14 +172,14 @@ class CantUnpackException : public Exception
 {
     typedef Exception super;
 public:
-    CantUnpackException(const char *m = 0, bool w = false) noexcept : super(m,0,w) { }
+    CantUnpackException(const char *m = nullptr, bool w = false) noexcept : super(m,0,w) { }
 };
 
 class NotPackedException : public CantUnpackException
 {
     typedef CantUnpackException super;
 public:
-    NotPackedException(const char *m = 0) noexcept : super(m,true) { }
+    NotPackedException(const char *m = nullptr) noexcept : super(m,true) { }
 };
 
 
@@ -191,7 +191,7 @@ class InternalError : public Error
 {
     typedef Error super;
 public:
-    InternalError(const char *m = 0) noexcept : super(m,0) { }
+    InternalError(const char *m = nullptr) noexcept : super(m,0) { }
 };
 
 
@@ -208,20 +208,20 @@ public:
 
 void throwCantPack(const char *msg) NORET;
 void throwCantPackExact() NORET;
-void throwUnknownExecutableFormat(const char *msg = NULL, bool warn = false) NORET;
-void throwNotCompressible(const char *msg = NULL) NORET;
-void throwAlreadyPacked(const char *msg = NULL) NORET;
-void throwAlreadyPackedByUPX(const char *msg = NULL) NORET;
+void throwUnknownExecutableFormat(const char *msg = nullptr, bool warn = false) NORET;
+void throwNotCompressible(const char *msg = nullptr) NORET;
+void throwAlreadyPacked(const char *msg = nullptr) NORET;
+void throwAlreadyPackedByUPX(const char *msg = nullptr) NORET;
 void throwCantUnpack(const char *msg) NORET;
-void throwNotPacked(const char *msg = NULL) NORET;
+void throwNotPacked(const char *msg = nullptr) NORET;
 void throwFilterException() NORET;
 void throwBadLoader() NORET;
 void throwChecksumError() NORET;
 void throwCompressedDataViolation() NORET;
 void throwInternalError(const char *msg) NORET;
-void throwOutOfMemoryException(const char *msg = NULL) NORET;
-void throwIOException(const char *msg = NULL, int e = 0) NORET;
-void throwEOFException(const char *msg = NULL, int e = 0) NORET;
+void throwOutOfMemoryException(const char *msg = nullptr) NORET;
+void throwIOException(const char *msg = nullptr, int e = 0) NORET;
+void throwEOFException(const char *msg = nullptr, int e = 0) NORET;
 
 #undef NORET
 
