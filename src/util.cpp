@@ -241,9 +241,6 @@ int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2) {
 int find(const void *b, int blen, const void *what, int wlen) {
     if (b == nullptr || blen <= 0 || what == nullptr || wlen <= 0)
         return -1;
-    // Fast exit if the wanted string is longer than the buffer.
-    if (wlen > blen)
-        return -1;
 
     int i;
     const unsigned char *base = (const unsigned char *) b;
