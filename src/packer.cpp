@@ -1020,7 +1020,7 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image,
             }
             jc += dif;
         }
-        *relocs++ = jc;
+        *relocs++ = jc;  // FIXME: range check jc
         if (!--relocn) {
             break;
         }
@@ -1028,14 +1028,16 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image,
         {
             if (bits == 32) {
                 acc_ua_swab32s(image + jc);
-                if (((image + jc) - p) < 4) { // data cannot overlap control
-                    p = image + jc + 4;
+                if ((unsigned long)(p - (image + jc)) < 4) {
+                    // data must not overlap control
+                    p = 4+ image + jc;
                 }
             }
             else if (bits == 64) {
                 set_be64(image + jc, get_le64(image + jc));
-                if (((image + jc) - p) < 8) { // data cannot overlap control
-                    p = image + jc + 8;
+                if ((unsigned long)(p - (image + jc)) < 8) {
+                    // data must not overlap control
+                    p = 8+ image + jc;
                 }
             }
             else
