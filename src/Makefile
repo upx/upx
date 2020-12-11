@@ -55,6 +55,7 @@ LIBS += -lucl -lz
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
+CXXFLAGS += -std=c++14
 ifeq ($(BUILD_TYPE_DEBUG),1)
 CXXFLAGS_OPTIMIZE ?= -O0 -g
 else
