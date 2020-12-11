@@ -214,6 +214,7 @@ void show_help(int verbose)
         con_fprintf(f,"\nCompression tuning options:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
+                    "  --lzma              try LZMA [slower but tighter than NRV]\n"
                     "  --brute             try all available compression methods & filters [slow]\n"
                     "  --ultra-brute       try even more compression variants [very slow]\n"
                     "\n");
