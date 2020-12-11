@@ -1030,14 +1030,14 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image,
                 acc_ua_swab32s(image + jc);
                 if ((unsigned long)(p - (image + jc)) < 4) {
                     // data must not overlap control
-                    p = 4+ image + jc;
+                    p = (4 - 1) + image + jc;  // -1: 'for' also increments
                 }
             }
             else if (bits == 64) {
                 set_be64(image + jc, get_le64(image + jc));
                 if ((unsigned long)(p - (image + jc)) < 8) {
                     // data must not overlap control
-                    p = 8+ image + jc;
+                    p = (8 - 1) + image + jc;  // -1: 'for' also increments
                 }
             }
             else
