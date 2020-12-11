@@ -2222,8 +2222,20 @@ bool PackLinuxElf32::canPack()
                         int z_rsz = dt_table[Elf32_Dyn::DT_RELSZ];
                         if (z_rel && z_rsz) {
                             unsigned rel_off = get_te32(&dynseg[-1+ z_rel].d_val);
+                            if ((unsigned)file_size <= rel_off) {
+                                char msg[70]; snprintf(msg, sizeof(msg),
+                                     "bad Elf32_Dynamic[DT_REL] %#x\n",
+                                     rel_off);
+                                throwCantPack(msg);
+                            }
                             Elf32_Rel *rp = (Elf32_Rel *)&file_image[rel_off];
                             unsigned relsz   = get_te32(&dynseg[-1+ z_rsz].d_val);
+                            if ((unsigned)file_size <= relsz) {
+                                char msg[70]; snprintf(msg, sizeof(msg),
+                                     "bad Elf32_Dynamic[DT_RELSZ] %#x\n",
+                                     relsz);
+                                throwCantPack(msg);
+                            }
                             Elf32_Rel *last = (Elf32_Rel *)(relsz + (char *)rp);
                             for (; rp < last; ++rp) {
                                 unsigned r_va = get_te32(&rp->r_offset);
@@ -2562,14 +2574,26 @@ PackLinuxElf64::canPack()
                         int z_rel = dt_table[Elf64_Dyn::DT_RELA];
                         int z_rsz = dt_table[Elf64_Dyn::DT_RELASZ];
                         if (z_rel && z_rsz) {
-                            unsigned rel_off = get_te64(&dynseg[-1+ z_rel].d_val);
+                            upx_uint64_t rel_off = get_te64(&dynseg[-1+ z_rel].d_val);
+                            if ((u64_t)file_size <= rel_off) {
+                                char msg[70]; snprintf(msg, sizeof(msg),
+                                     "bad Elf64_Dynamic[DT_RELA] %#llx\n",
+                                     rel_off);
+                                throwCantPack(msg);
+                            }
                             Elf64_Rela *rp = (Elf64_Rela *)&file_image[rel_off];
-                            unsigned relsz   = get_te64(&dynseg[-1+ z_rsz].d_val);
+                            upx_uint64_t relsz   = get_te64(&dynseg[-1+ z_rsz].d_val);
+                            if ((u64_t)file_size <= relsz) {
+                                char msg[70]; snprintf(msg, sizeof(msg),
+                                     "bad Elf64_Dynamic[DT_RELASZ] %#llx\n",
+                                     relsz);
+                                throwCantPack(msg);
+                            }
                             Elf64_Rela *last = (Elf64_Rela *)(relsz + (char *)rp);
                             for (; rp < last; ++rp) {
-                                unsigned r_va = get_te64(&rp->r_offset);
+                                upx_uint64_t r_va = get_te64(&rp->r_offset);
                                 if (r_va == user_init_ava) { // found the Elf64_Rela
-                                    unsigned r_info = get_te64(&rp->r_info);
+                                    upx_uint64_t r_info = get_te64(&rp->r_info);
                                     unsigned r_type = ELF64_R_TYPE(r_info);
                                     if (Elf64_Ehdr::EM_AARCH64 == e_machine
                                     &&  R_AARCH64_RELATIVE == r_type) {
@@ -2581,7 +2605,7 @@ PackLinuxElf64::canPack()
                                     }
                                     else {
                                         char msg[50]; snprintf(msg, sizeof(msg),
-                                            "bad relocation %#x DT_INIT_ARRAY[0]",
+                                            "bad relocation %#llx DT_INIT_ARRAY[0]",
                                             r_info);
                                         throwCantPack(msg);
                                     }
