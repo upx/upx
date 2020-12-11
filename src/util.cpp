@@ -99,8 +99,8 @@ bool mem_size_valid_bytes(upx_uint64_t bytes) {
 }
 
 int ptr_diff(const void *p1, const void *p2) {
-    assert(p1 != NULL);
-    assert(p2 != NULL);
+    assert(p1 != nullptr);
+    assert(p2 != nullptr);
     ptrdiff_t d = (const char *) p1 - (const char *) p2;
     if (p1 >= p2)
         assert(mem_size_valid_bytes(d));
@@ -239,10 +239,7 @@ int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2) {
 **************************************************************************/
 
 int find(const void *b, int blen, const void *what, int wlen) {
-    if (b == NULL || blen <= 0 || what == NULL || wlen <= 0)
-        return -1;
-    // Fast exit if the wanted string is longer than the buffer.
-    if (wlen > blen)
+    if (b == nullptr || blen <= 0 || what == nullptr || wlen <= 0)
         return -1;
 
     int i;
@@ -319,7 +316,7 @@ int mem_replace(void *bb, int blen, const void *what, int wlen, const void *r) {
 
 static const char dir_sep[] = "/\\";
 #define fn_is_drive(s) (s[0] && s[1] == ':')
-#define fn_is_sep(c) (strchr(dir_sep, c) != NULL)
+#define fn_is_sep(c) (strchr(dir_sep, c) != nullptr)
 #define fn_skip_drive(s) (fn_is_drive(s) ? (s) + 2 : (s))
 #define fn_tolower(c) (tolower(((unsigned char) (c))))
 
@@ -443,7 +440,7 @@ bool file_exists(const char *name) {
 
 bool maketempname(char *ofilename, size_t size, const char *ifilename, const char *ext,
                   bool force) {
-    char *ofext = NULL, *ofname;
+    char *ofext = nullptr, *ofname;
     int ofile;
 
     if (size <= 0)
@@ -454,7 +451,7 @@ bool maketempname(char *ofilename, size_t size, const char *ifilename, const cha
         if (*ofname == '.')
             ofext = ofname;
     }
-    if (ofext == NULL)
+    if (ofext == nullptr)
         ofext = ofilename + strlen(ofilename);
     strcpy(ofext, ext);
 
@@ -472,7 +469,7 @@ bool maketempname(char *ofilename, size_t size, const char *ifilename, const cha
 }
 
 bool makebakname(char *ofilename, size_t size, const char *ifilename, bool force) {
-    char *ofext = NULL, *ofname;
+    char *ofext = nullptr, *ofname;
     int ofile;
 
     if (size <= 0)
@@ -483,7 +480,7 @@ bool makebakname(char *ofilename, size_t size, const char *ifilename, bool force
         if (*ofname == '.')
             ofext = ofname;
     }
-    if (ofext == NULL) {
+    if (ofext == nullptr) {
         ofext = ofilename + strlen(ofilename);
         strcpy(ofext, ".~");
     } else if (strlen(ofext) < 1 + 3)

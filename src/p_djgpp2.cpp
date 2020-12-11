@@ -103,15 +103,15 @@ void PackDjgpp2::buildLoader(const Filter *ft)
               getDecompressorSections(),
               M_IS_LZMA(ph.method) ? "LZMA_DONE_STACK" : "",
               "DJ2BSS00",
-              NULL
+              nullptr
              );
     if (ft->id)
     {
         assert(ft->calls > 0);
-        addLoader("DJCALLT2", NULL);
+        addLoader("DJCALLT2", nullptr);
         addFilter32(ft->id);
     }
-    addLoader("DJRETURN,+40C,UPX1HEAD", NULL);
+    addLoader("DJRETURN,+40C,UPX1HEAD", nullptr);
 }
 
 

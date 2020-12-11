@@ -107,7 +107,7 @@ struct PackerNames
     Entry names[64];
     size_t names_count;
     const options_t *o;
-    PackerNames() : names_count(0), o(NULL) { }
+    PackerNames() : names_count(0), o(nullptr) { }
     void add(const Packer *p)
     {
         p->assertPacker();
@@ -120,8 +120,8 @@ struct PackerNames
     {
         PackerNames *self = (PackerNames *) user;
         self->add(p);
-        delete p; p = NULL;
-        return NULL;
+        delete p; p = nullptr;
+        return nullptr;
     }
     static int __acc_cdecl_qsort cmp_fname(const void *a, const void *b) {
         return strcmp(((const Entry *) a)->fname, ((const Entry *) b)->fname);
@@ -135,7 +135,7 @@ static void show_all_packers(FILE *f, int verbose)
 {
     options_t o; o.reset();
     PackerNames pn; pn.o = &o;
-    PackMaster::visitAllPackers(PackerNames::visit, NULL, &o, &pn);
+    PackMaster::visitAllPackers(PackerNames::visit, nullptr, &o, &pn);
     qsort(pn.names, pn.names_count, sizeof(PackerNames::Entry), PackerNames::cmp_fname);
     size_t pos = 0;
     for (size_t i = 0; i < pn.names_count; ++i)
@@ -389,22 +389,22 @@ void show_version(int x)
            );
 #if (WITH_NRV)
     v = upx_nrv_version_string();
-    if (v != NULL && v[0])
+    if (v != nullptr && v[0])
         fprintf(fp, "NRV data compression library %s\n", v);
 #endif
 #if (WITH_UCL)
     v = upx_ucl_version_string();
-    if (v != NULL && v[0])
+    if (v != nullptr && v[0])
         fprintf(fp, "UCL data compression library %s\n", v);
 #endif
 #if (WITH_ZLIB)
     v = upx_zlib_version_string();
-    if (v != NULL && v[0])
+    if (v != nullptr && v[0])
         fprintf(fp, "zlib data compression library %s\n", v);
 #endif
 #if (WITH_LZMA)
     v = upx_lzma_version_string();
-    if (v != NULL && v[0])
+    if (v != nullptr && v[0])
         fprintf(fp, "LZMA SDK version %s\n", v);
 #endif
     fprintf(fp, "Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer\n");

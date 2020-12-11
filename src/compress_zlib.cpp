@@ -73,11 +73,11 @@ int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
                                    upx_compress_result_t *cresult )
 {
     assert(method == M_DEFLATE);
-    assert(level > 0); assert(cresult != NULL);
+    assert(level > 0); assert(cresult != nullptr);
     UNUSED(cb_parm);
     int r = UPX_E_ERROR;
     int zr;
-    const zlib_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_zlib : NULL;
+    const zlib_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_zlib : nullptr;
     zlib_compress_result_t *res = &cresult->result_zlib;
 
     if (level == 10)
@@ -97,8 +97,8 @@ int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
     res->dummy = 0;
 
     z_stream s;
-    s.zalloc = (alloc_func) 0;
-    s.zfree = (free_func) 0;
+    s.zalloc = (alloc_func) nullptr;
+    s.zfree = (free_func) nullptr;
     s.next_in = ACC_UNCONST_CAST(upx_bytep, src);
     s.avail_in = src_len;
     s.next_out = dst;
@@ -151,8 +151,8 @@ int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
     int zr;
 
     z_stream s;
-    s.zalloc = (alloc_func) 0;
-    s.zfree = (free_func) 0;
+    s.zalloc = (alloc_func) nullptr;
+    s.zfree = (free_func) nullptr;
     s.next_in = ACC_UNCONST_CAST(upx_bytep, src);
     s.avail_in = src_len;
     s.next_out = dst;
@@ -212,7 +212,7 @@ int upx_zlib_test_overlap  ( const upx_bytep buf,
     // NOTE: there is a very tiny possibility that decompression has
     //   succeeded but the data is not restored correctly because of
     //   in-place buffer overlapping, so we use an extra memcmp().
-    if (tbuf != NULL && memcmp(tbuf, b, *dst_len) != 0)
+    if (tbuf != nullptr && memcmp(tbuf, b, *dst_len) != 0)
         return UPX_E_ERROR;
     return UPX_E_OK;
 }

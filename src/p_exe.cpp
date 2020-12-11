@@ -72,7 +72,7 @@ const int *PackExe::getCompressionMethods(int method, int level) const
 
 const int *PackExe::getFilters() const
 {
-    return NULL;
+    return nullptr;
 }
 
 
@@ -119,7 +119,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 
 void PackExe::addLoaderEpilogue(int flag)
 {
-    addLoader("EXEMAIN5", NULL);
+    addLoader("EXEMAIN5", nullptr);
     if (relocsize)
         addLoader(ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? "EXENOADJ" : "EXEADJUS",
                   "EXERELO1",
@@ -127,19 +127,19 @@ void PackExe::addLoaderEpilogue(int flag)
                   "EXERELO2",
                   ih_exesize > 0xFE00 ? "EXEREBIG" : "",
                   "EXERELO3",
-                  NULL
+                  nullptr
                  );
     addLoader("EXEMAIN8",
               device_driver ? "DEVICEEND" : "",
               (flag & SS) ? "EXESTACK" : "",
               (flag & SP) ? "EXESTASP" : "",
               (flag & USEJUMP) ? "EXEJUMPF" : "",
-              NULL
+              nullptr
              );
     if (!(flag & USEJUMP))
         addLoader(ih.cs ? "EXERCSPO" : "",
                   "EXERETIP",
-                  NULL
+                  nullptr
                  );
 
     linker->defineSymbol("original_cs", ih.cs);
@@ -167,7 +167,7 @@ void PackExe::buildLoader(const Filter *)
                   use_clear_dirty_stack ? "LZMA_DEC31" : "",
                   "LZMA_DEC32",
                   ph.u_len > 0xffff ? "LZMA_DEC33" : "",
-                  NULL
+                  nullptr
                  );
 
         addLoaderEpilogue(flag);
@@ -196,7 +196,7 @@ void PackExe::buildLoader(const Filter *)
         compressed_lzma.allocForCompression(lsize);
         unsigned c_len_lzma = MemBuffer::getSizeForCompression(lsize);
         int r = upx_compress(loader, lsize, compressed_lzma, &c_len_lzma,
-                             NULL, M_NRV2B_LE16, 9, NULL, NULL);
+                             nullptr, M_NRV2B_LE16, 9, nullptr, nullptr);
         assert(r == UPX_E_OK); assert(c_len_lzma < lsize);
 
         info("lzma+relocator code compressed: %u -> %u", lsize, c_len_lzma);
@@ -204,15 +204,15 @@ void PackExe::buildLoader(const Filter *)
         initLoader(stub_i086_dos16_exe, sizeof(stub_i086_dos16_exe));
         // prepare loader
         if (device_driver)
-            addLoader("DEVICEENTRY,LZMADEVICE,DEVICEENTRY2", NULL);
+            addLoader("DEVICEENTRY,LZMADEVICE,DEVICEENTRY2", nullptr);
 
         linker->addSection("COMPRESSED_LZMA", compressed_lzma, c_len_lzma, 0);
         addLoader("LZMAENTRY,NRV2B160,NRVDDONE,NRVDECO1,NRVGTD00,NRVDECO2",
-                  NULL);
+                  nullptr);
 
     }
     else if (device_driver)
-        addLoader("DEVICEENTRY,DEVICEENTRY2", NULL);
+        addLoader("DEVICEENTRY,DEVICEENTRY2", nullptr);
 
     addLoader("EXEENTRY",
               M_IS_LZMA(ph.method) && device_driver ? "LONGSUB" : "SHORTSUB",
@@ -223,7 +223,7 @@ void PackExe::buildLoader(const Filter *)
               "EXEMAIN4C",
               M_IS_LZMA(ph.method) ? "COMPRESSED_LZMA_START,COMPRESSED_LZMA" : "",
               "+G5DXXXX,UPX1HEAD,EXECUTPO",
-              NULL
+              nullptr
              );
     if (ph.method == M_NRV2B_8)
         addLoader("NRV2B16S",               // decompressor
@@ -235,7 +235,7 @@ void PackExe::buildLoader(const Filter *)
                   "NRV2BEX3",
                   ph.c_len > 0xffff ? "N2B64K02" : "",
                   "NRV2BEX9",
-                  NULL
+                  nullptr
                  );
     else if (ph.method == M_NRV2D_8)
         addLoader("NRV2D16S",
@@ -247,7 +247,7 @@ void PackExe::buildLoader(const Filter *)
                   "NRV2DEX3",
                   ph.c_len > 0xffff ? "N2D64K02" : "",
                   "NRV2DEX9",
-                  NULL
+                  nullptr
                  );
     else if (ph.method == M_NRV2E_8)
         addLoader("NRV2E16S",
@@ -259,7 +259,7 @@ void PackExe::buildLoader(const Filter *)
                   "NRV2EEX3",
                   ph.c_len > 0xffff ? "N2E64K02" : "",
                   "NRV2EEX9",
-                  NULL
+                  nullptr
                  );
     else if M_IS_LZMA(ph.method)
         return;
@@ -495,7 +495,7 @@ void PackExe::pack(OutputFile *fo)
         upx_byte out[9*relocsize/8+1024];
         unsigned in_len = relocsize;
         unsigned out_len = 0;
-        ucl_nrv2b_99_compress(w, in_len, out, &out_len, NULL, 9, NULL, NULL);
+        ucl_nrv2b_99_compress(w, in_len, out, &out_len, nullptr, 9, nullptr, nullptr);
         printf("reloc compress: %d -> %d\n", in_len, out_len);
 #endif
     }

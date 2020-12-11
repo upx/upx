@@ -117,13 +117,13 @@ void PackW32Pe::buildLoader(const Filter *ft)
               getDecompressorSections(),
               /*multipass ? "PEMULTIP" :  */  "",
               "PEMAIN10",
-              NULL
+              nullptr
              );
     if (ft->id)
     {
         const unsigned texv = ih.codebase - rvamin;
         assert(ft->calls > 0);
-        addLoader(texv ? "PECTTPOS" : "PECTTNUL",NULL);
+        addLoader(texv ? "PECTTPOS" : "PECTTNUL",nullptr);
         addFilter32(ft->id);
     }
     if (soimport)
@@ -134,7 +134,7 @@ void PackW32Pe::buildLoader(const Filter *ft)
                   "PEIMPOR2",
                   isdll ? "PEIERDLL" : "PEIEREXE",
                   "PEIMDONE",
-                  NULL
+                  nullptr
                  );
     if (sorelocs)
     {
@@ -142,34 +142,34 @@ void PackW32Pe::buildLoader(const Filter *ft)
                   "PERELOC3,RELOC320",
                   big_relocs ? "REL32BIG" : "",
                   "RELOC32J",
-                  NULL
+                  nullptr
                  );
         //FIXME: the following should be moved out of the above if
         addLoader(big_relocs&6 ? "PERLOHI0" : "",
                   big_relocs&4 ? "PERELLO0" : "",
                   big_relocs&2 ? "PERELHI0" : "",
-                  NULL
+                  nullptr
                  );
     }
     if (use_dep_hack)
-        addLoader("PEDEPHAK", NULL);
+        addLoader("PEDEPHAK", nullptr);
 
     //NEW: TLS callback support PART 1, the callback handler installation - Stefan Widmann
     if(use_tls_callbacks)
-        addLoader("PETLSC", NULL);
+        addLoader("PETLSC", nullptr);
 
-    addLoader("PEMAIN20", NULL);
+    addLoader("PEMAIN20", nullptr);
     if (use_clear_dirty_stack)
-        addLoader("CLEARSTACK", NULL);
-    addLoader("PEMAIN21", NULL);
+        addLoader("CLEARSTACK", nullptr);
+    addLoader("PEMAIN21", nullptr);
     //NEW: last loader sections split up to insert TLS callback handler - Stefan Widmann
-    addLoader(ih.entry ? "PEDOJUMP" : "PERETURN", NULL);
+    addLoader(ih.entry ? "PEDOJUMP" : "PERETURN", nullptr);
 
     //NEW: TLS callback support PART 2, the callback handler - Stefan Widmann
     if(use_tls_callbacks)
-        addLoader("PETLSC2", NULL);
+        addLoader("PETLSC2", nullptr);
 
-    addLoader("IDENTSTR,UPX1HEAD", NULL);
+    addLoader("IDENTSTR,UPX1HEAD", nullptr);
 
 }
 

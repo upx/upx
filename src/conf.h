@@ -29,6 +29,15 @@
 #ifndef __UPX_CONF_H
 #define __UPX_CONF_H 1
 
+#if defined(__cplusplus)
+#  if (__cplusplus >= 201402L)
+#  elif defined(__GNUC__) && (__GNUC__+0 == 4) && (__cplusplus >= 201300L)
+#  elif defined(_MSC_VER) && defined(_MSVC_LANG) && (_MSVC_LANG+0 >= 201402L)
+#  else
+#    error "C++ 14 is required"
+#  endif
+#endif
+
 #include "version.h"
 
 #if !defined(_FILE_OFFSET_BITS)
@@ -56,11 +65,16 @@
 #  error "UINT_MAX"
 #endif
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(int) == 4)
+ACC_COMPILE_TIME_ASSERT_HEADER(-1 == ~0) // two's complement - see http://wg21.link/P0907R4
+ACC_COMPILE_TIME_ASSERT_HEADER(0u-1 == ~0u) // two's complement - see http://wg21.link/P0907R4
 ACC_COMPILE_TIME_ASSERT_HEADER((1u << 31) << 1 == 0)
 ACC_COMPILE_TIME_ASSERT_HEADER(((int)(1u << 31)) >> 31 == -1) // arithmetic right shift
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 
+#if (ACC_CC_GNUC >= 0x040700)
+#  pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
+#endif
 #if (ACC_CC_MSC)
 #  pragma warning(error: 4127)
 #  pragma warning(error: 4146)
@@ -576,7 +590,7 @@ struct upx_compress_config_t
     void reset() { conf_lzma.reset(); conf_ucl.reset(); conf_zlib.reset(); }
 };
 
-#define NULL_cconf  ((upx_compress_config_t *) NULL)
+#define NULL_cconf  ((upx_compress_config_t *) nullptr)
 
 
 /*************************************************************************
@@ -661,7 +675,7 @@ void e_exit(int ec);
 
 // msg.cpp
 void printSetNl(int need_nl);
-void printClearLine(FILE *f = NULL);
+void printClearLine(FILE *f = nullptr);
 void printErr(const char *iname, const Throwable *e);
 void printUnhandledException(const char *iname, const std::exception *e);
 #if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)

@@ -52,7 +52,7 @@
 static void xcheck(const void *p)
 {
     if (!p)
-        throwCantUnpack("unexpected NULL pointer; take care!");
+        throwCantUnpack("unexpected nullptr pointer; take care!");
 }
 static void xcheck(const void *p, size_t plen, const void *b, size_t blen)
 {
@@ -92,14 +92,14 @@ PeFile::PeFile(InputFile *f) : super(f)
     COMPILE_TIME_ASSERT_ALIGNED1(pe_section_t)
     COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->win32_pe.compress_rt))
 
-    isection = NULL;
-    oimport = NULL;
-    oimpdlls = NULL;
-    orelocs = NULL;
-    oexport = NULL;
-    otls = NULL;
-    oresources = NULL;
-    oxrelocs = NULL;
+    isection = nullptr;
+    oimport = nullptr;
+    oimpdlls = nullptr;
+    orelocs = nullptr;
+    oexport = nullptr;
+    otls = nullptr;
+    oresources = nullptr;
+    oxrelocs = nullptr;
     icondir_offset = 0;
     icondir_count = 0;
     importbyordinal = false;
@@ -110,9 +110,9 @@ PeFile::PeFile(InputFile *f) : super(f)
     soxrelocs = 0;
     sotls = 0;
     isdll = false;
-    ilinker = NULL;
+    ilinker = nullptr;
     use_tls_callbacks = false;
-    oloadconf = NULL;
+    oloadconf = nullptr;
     soloadconf = 0;
 
     use_dep_hack = true;
@@ -194,7 +194,7 @@ int PeFile::readFileHeader()
 // interval handling
 **************************************************************************/
 
-PeFile::Interval::Interval(void *b) : capacity(0),base(b),ivarr(NULL),ivnum(0)
+PeFile::Interval::Interval(void *b) : capacity(0),base(b),ivarr(nullptr),ivnum(0)
 {}
 
 PeFile::Interval::~Interval()
@@ -286,7 +286,7 @@ void PeFile::Reloc::newRelocPos(void *p)
 }
 
 PeFile::Reloc::Reloc(upx_byte *s,unsigned si) :
-    start(s), size(si), rel(NULL), rel1(NULL)
+    start(s), size(si), rel(nullptr), rel1(nullptr)
 {
     COMPILE_TIME_ASSERT(sizeof(reloc) == 8)
     COMPILE_TIME_ASSERT_ALIGNED1(reloc)
@@ -297,7 +297,7 @@ PeFile::Reloc::Reloc(upx_byte *s,unsigned si) :
 }
 
 PeFile::Reloc::Reloc(unsigned rnum) :
-    start(NULL), size(0), rel(NULL), rel1(NULL)
+    start(nullptr), size(0), rel(nullptr), rel1(nullptr)
 {
     start = new upx_byte[mem_size(4, rnum, 8192)];
     counts[0] = 0;
@@ -307,8 +307,10 @@ bool PeFile::Reloc::next(unsigned &pos,unsigned &type)
 {
     if (!rel)
         newRelocPos(start);
-    if (ptr_diff(rel, start) >= (int) size || rel->pagestart == 0)
-        return rel = 0,false; // rewind
+    if (ptr_diff(rel, start) >= (int) size || rel->pagestart == 0) {
+        rel = nullptr; // rewind
+        return false;
+    }
 
     pos = rel->pagestart + (*rel1 & 0xfff);
     type = *rel1++ >> 12;
@@ -348,7 +350,7 @@ void PeFile::Reloc::finish(upx_byte *&p,unsigned &siz)
     siz = ptr_diff(rel1,start) &~ 3;
     siz -= 8;
     // siz can be 0 in 64-bit mode // assert(siz > 0);
-    start = 0; // safety
+    start = nullptr; // safety
 }
 
 void PeFile::processRelocs(Reloc *rel) // pass2
@@ -659,7 +661,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
         tstr desc_name(name_for_dll(dll, descriptor_id));
 
         char tsep = thunk_separator;
-        if (findSection(sdll, false) == NULL)
+        if (findSection(sdll, false) == nullptr)
         {
             tsep = thunk_separator_first;
             addSection(sdll, dll, strlen(dll) + 1, 0); // name of the dll
@@ -670,7 +672,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
                           "R_X86_64_32", sdll, 0);
         }
         tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
-        if (findSection(thunk, false) != NULL)
+        if (findSection(thunk, false) != nullptr)
             return; // we already have this dll/proc
         addSection(thunk, zeros, thunk_size, 0);
         addSymbol(thunk, thunk, 0);
@@ -722,9 +724,9 @@ public:
     explicit ImportLinker(unsigned thunk_size_) : thunk_size(thunk_size_)
     {
         assert(thunk_size == 4 || thunk_size == 8);
-        addSection("*UND*", NULL, 0, 0);
+        addSection("*UND*", nullptr, 0, 0);
         addSymbol("*UND*", "*UND*", 0);
-        addSection("*ZSTART", NULL, 0, 0);
+        addSection("*ZSTART", nullptr, 0, 0);
         addSymbol("*ZSTART", "*ZSTART", 0);
         Section *s = addSection("Dzero", zeros, sizeof(import_desc), 0);
         assert(s->name[0] == descriptor_id);
@@ -754,7 +756,7 @@ public:
 
     unsigned build()
     {
-        assert(output == NULL);
+        assert(output == nullptr);
         int osize = 4 + 2 * nsections; // upper limit for alignments
         for (unsigned ic = 0; ic < nsections; ic++)
             osize += sections[ic]->size;
@@ -789,8 +791,8 @@ public:
         ACC_COMPILE_TIME_ASSERT(sizeof(C2) == 1)  // "char" or "unsigned char"
         const Section *s = getThunk((const char*) dll, (const char*) proc,
                                     thunk_separator_first);
-        if (s == NULL && (s = getThunk((const char*) dll,(const char*) proc,
-                                       thunk_separator)) == NULL)
+        if (s == nullptr && (s = getThunk((const char*) dll,(const char*) proc,
+                                       thunk_separator)) == nullptr)
             throwInternalError("entry not found");
         return s->offset;
     }
@@ -804,8 +806,8 @@ public:
         upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
 
         const Section *s = getThunk((const char*) dll, ord, thunk_separator_first);
-        if (s == NULL
-            && (s = getThunk((const char*) dll, ord, thunk_separator)) == NULL)
+        if (s == nullptr
+            && (s = getThunk((const char*) dll, ord, thunk_separator)) == nullptr)
             throwInternalError("entry not found");
         return s->offset;
     }
@@ -823,7 +825,7 @@ public:
     {
         ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         tstr sdll(name_for_dll((const char*) dll, dll_name_id));
-        return findSection(sdll, false) != NULL;
+        return findSection(sdll, false) != nullptr;
     }
 };
 const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = { 0 };
@@ -913,7 +915,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     {
         idlls[ic] = dlls + ic;
         dlls[ic].name = ibuf.subref("bad dllname %#x", im->dllname, 1);
-        dlls[ic].shname = NULL;
+        dlls[ic].shname = nullptr;
         dlls[ic].ordinal = 0;
         dlls[ic].iat = im->iat;
         unsigned const skip2 = (im->oft ? im->oft : im->iat);
@@ -936,7 +938,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
                 IPTR_I(const upx_byte, n, ibuf + *tarr + 2);
                 unsigned len = strlen(n);
                 soimport += len + 1;
-                if (dlls[ic].shname == NULL || len < strlen (dlls[ic].shname))
+                if (dlls[ic].shname == nullptr || len < strlen (dlls[ic].shname))
                     dlls[ic].shname = ibuf + *tarr + 2;
             }
             soimport++; // separator
@@ -1092,8 +1094,8 @@ PeFile::Export::Export(char *_base) : base(_base), iv(_base)
 {
     COMPILE_TIME_ASSERT(sizeof(export_dir_t) == 40)
     COMPILE_TIME_ASSERT_ALIGNED1(export_dir_t)
-    ename = functionptrs = ordinals = NULL;
-    names = NULL;
+    ename = functionptrs = ordinals = nullptr;
+    names = nullptr;
     memset(&edir,0,sizeof(edir));
     size = 0;
 }
@@ -1158,7 +1160,7 @@ void PeFile::Export::convert(unsigned eoffs,unsigned esize)
             names[ic + edir.names] = strdup(forw);
         }
         else
-            names[ic + edir.names] = NULL;
+            names[ic + edir.names] = nullptr;
 
     len = 2 * edir.names;
     ordinals = New(char, len + 1);
@@ -1523,7 +1525,7 @@ struct PeFile::Resource::upx_rleaf : public PeFile::Resource::upx_rnode
 };
 
 PeFile::Resource::Resource(const upx_byte *ibufstart_,
-                           const upx_byte *ibufend_) : root(NULL)
+                           const upx_byte *ibufend_) : root(nullptr)
 {
     ibufstart = ibufstart_;
     ibufend = ibufend_;
@@ -1540,7 +1542,7 @@ PeFile::Resource::Resource(const upx_byte *p,
 
 PeFile::Resource::~Resource()
 {
-    if (root) { destroy(root, 0); root = NULL; }
+    if (root) { destroy(root, 0); root = nullptr; }
 }
 
 unsigned PeFile::Resource::dirsize() const
@@ -1551,7 +1553,7 @@ unsigned PeFile::Resource::dirsize() const
 bool PeFile::Resource::next()
 {
     // wow, builtin autorewind... :-)
-    return (current = current ? current->next : head) != NULL;
+    return (current = current ? current->next : head) != nullptr;
 }
 
 unsigned PeFile::Resource::itype() const
@@ -1609,10 +1611,10 @@ void PeFile::Resource::init(const upx_byte *res)
     COMPILE_TIME_ASSERT_ALIGNED1(res_data)
 
     start = res;
-    root = head = current = NULL;
+    root = head = current = nullptr;
     dsize = ssize = 0;
     check((const res_dir*) start,0);
-    root = convert(start,NULL,0);
+    root = convert(start,nullptr,0);
 }
 
 void PeFile::Resource::check(const res_dir *node,unsigned level)
@@ -1647,7 +1649,7 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
         ibufcheck(node, sizeof(*node));
         upx_rleaf *leaf = new upx_rleaf;
         leaf->id = 0;
-        leaf->name = NULL;
+        leaf->name = nullptr;
         leaf->parent = parent;
         leaf->next = head;
         leaf->newoffset = 0;
@@ -1662,11 +1664,11 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
     ibufcheck(node, sizeof(*node));
     int ic = node->identr + node->namedentr;
     if (ic == 0)
-        return NULL;
+        return nullptr;
 
     upx_rbranch *branch = new upx_rbranch;
     branch->id = 0;
-    branch->name = NULL;
+    branch->name = nullptr;
     branch->parent = parent;
     branch->nc = ic;
     branch->children = New(upx_rnode *, ic);
@@ -1724,7 +1726,7 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
         be->child = bpos + ((level < 2) ? 0x80000000 : 0);
 
         const upx_byte *p;
-        if ((p = branch->children[ic]->name) != 0)
+        if ((p = branch->children[ic]->name) != nullptr)
         {
             be->tnl = spos + 0x80000000;
             if (spos + get_le16(p) * 2 + 2 > dirsize())
@@ -1762,16 +1764,16 @@ void PeFile::Resource::destroy(upx_rnode *node,unsigned level)
     if (level == 3)
     {
         upx_rleaf *leaf = ACC_STATIC_CAST(upx_rleaf *, node);
-        delete [] leaf->name; leaf->name = NULL;
+        delete [] leaf->name; leaf->name = nullptr;
         delete leaf;
     }
     else
     {
         upx_rbranch *branch = ACC_STATIC_CAST(upx_rbranch *, node);
-        delete [] branch->name; branch->name = NULL;
+        delete [] branch->name; branch->name = nullptr;
         for (int ic = branch->nc; --ic >= 0; )
             destroy(branch->children[ic], level + 1);
-        delete [] branch->children; branch->children = NULL;
+        delete [] branch->children; branch->children = nullptr;
         delete branch;
     }
 }
@@ -1883,7 +1885,7 @@ static bool match(unsigned itype, const unsigned char *ntype,
                 return true;
         }
 
-        if (delim2 == NULL)
+        if (delim2 == nullptr)
             break;
         keep = delim2 + 1;
     }
@@ -1921,7 +1923,7 @@ void PeFile::processResources(Resource *res)
     oresources = (upx_byte *)mb_oresources.getVoidPtr();
     upx_byte *ores = oresources + res->dirsize();
 
-    char *keep_icons = NULL; // icon ids in the first icon group
+    char *keep_icons = nullptr; // icon ids in the first icon group
     unsigned iconsin1stdir = 0;
     if (opt->win32_pe.compress_icons == 2)
         while (res->next()) // there is no rewind() in Resource
@@ -2223,7 +2225,7 @@ unsigned PeFile::readSections(unsigned objs, unsigned usize,
 void PeFile::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned ih_codebase)
 {
     compressWithFilters(&ft, 2048, NULL_cconf, filter_strategy,
-                        ih_codebase, rvamin, 0, NULL, 0);
+                        ih_codebase, rvamin, 0, nullptr, 0);
 }
 
 void PeFile::callProcessRelocs(Reloc &rel, unsigned &ic)
@@ -2722,7 +2724,7 @@ void PeFile::rebuildRelocs(upx_byte *& extrainfo, unsigned bits,
     rel.finish (oxrelocs,soxrelocs);
 
     omemcpy(obuf + ODADDR(PEDIR_RELOC) - rvamin,oxrelocs,soxrelocs);
-    delete [] oxrelocs; oxrelocs = NULL;
+    delete [] oxrelocs; oxrelocs = nullptr;
     wrkmem.dealloc();
 
     ODSIZE(PEDIR_RELOC) = soxrelocs;
@@ -3088,7 +3090,7 @@ upx_uint64_t PeFile::ilinkerGetAddress(const char *d, const char *n) const
 
 PeFile::~PeFile()
 {
-    oimpdlls = NULL;
+    oimpdlls = nullptr;
     delete [] oxrelocs;
     delete ilinker;
     //delete res;

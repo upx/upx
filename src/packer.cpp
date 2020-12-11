@@ -39,12 +39,12 @@
 **************************************************************************/
 
 Packer::Packer(InputFile *f) :
-    bele(NULL),
+    bele(nullptr),
     fi(f), file_size(-1), ph_format(-1), ph_version(-1),
-    uip(NULL), linker(NULL),
-    last_patch(NULL), last_patch_len(0), last_patch_off(0)
+    uip(nullptr), linker(nullptr),
+    last_patch(nullptr), last_patch_len(0), last_patch_off(0)
 {
-    if (fi != NULL)
+    if (fi != nullptr)
         file_size = fi->st_size();
     uip = new UiPacker(this);
     mem_clear(&ph, sizeof(ph));
@@ -53,8 +53,8 @@ Packer::Packer(InputFile *f) :
 
 Packer::~Packer()
 {
-    delete uip; uip = NULL;
-    delete linker; linker = NULL;
+    delete uip; uip = nullptr;
+    delete linker; linker = nullptr;
 }
 
 
@@ -68,9 +68,9 @@ void Packer::assertPacker() const
     assert(strlen(getName()) <= 15);
     // info: 36 is the limit for show_all_packers() in help.cpp
     assert(strlen(getFullName(opt)) <= 32);
-    assert(strlen(getFullName(NULL)) <= 32);
-    if (bele == NULL) fprintf(stderr, "%s\n", getName());
-    assert(bele != NULL);
+    assert(strlen(getFullName(nullptr)) <= 32);
+    if (bele == nullptr) fprintf(stderr, "%s\n", getName());
+    assert(bele != nullptr);
     if (getFormat() != UPX_F_MACH_FAT) // macho/fat is multiarch
     {
         const N_BELE_RTP::AbstractPolicy *format_bele;
@@ -136,7 +136,7 @@ void Packer::doFileInfo()
 
 void Packer::test()
 {
-    unpack(NULL);
+    unpack(nullptr);
 }
 
 
@@ -639,11 +639,11 @@ unsigned Packer::getRandomId() const
     while (id == 0)
     {
 #if !(HAVE_GETTIMEOFDAY) || ((ACC_OS_DOS32) && defined(__DJGPP__))
-        id ^= (unsigned) time(NULL);
+        id ^= (unsigned) time(nullptr);
         id ^= ((unsigned) clock()) << 12;
 #else
         struct timeval tv;
-        gettimeofday(&tv, 0);
+        gettimeofday(&tv, nullptr);
         id ^= (unsigned) tv.tv_sec;
         id ^= ((unsigned) tv.tv_usec) << 12;  // shift into high-bits
 #endif
@@ -670,7 +670,7 @@ void Packer::initPackHeader()
     ph.format = getFormat();
     ph.method = M_NONE;
     ph.level = -1;
-    ph.u_adler = ph.c_adler = ph.saved_u_adler = ph.saved_c_adler = upx_adler32(NULL,0);
+    ph.u_adler = ph.c_adler = ph.saved_u_adler = ph.saved_c_adler = upx_adler32(nullptr,0);
     ph.buf_offset = 0;
     ph.u_file_size = file_size;
 }
@@ -788,15 +788,15 @@ void Packer::checkAlreadyPacked(const void *b, int blen)
 
 void Packer::checkPatch(void *b, int blen, int boff, int size)
 {
-    if (b == NULL && blen == 0 && boff == 0 && size == 0)
+    if (b == nullptr && blen == 0 && boff == 0 && size == 0)
     {
         // reset
-        last_patch = NULL;
+        last_patch = nullptr;
         last_patch_len = 0;
         last_patch_off = 0;
         return;
     }
-    if (b == NULL || blen <= 0 || boff < 0 || size <= 0)
+    if (b == nullptr || blen <= 0 || boff < 0 || size <= 0)
         throwBadLoader();
     if (boff + size <= 0 || boff + size > blen)
         throwBadLoader();
@@ -1091,7 +1091,7 @@ static const char *getIdentstr(unsigned *size, int small)
             { identbig,   (int)sizeof(identbig) },
             { identsmall, (int)sizeof(identsmall) },
             { identtiny,  (int)sizeof(identtiny) },
-        { NULL, 0 } };
+        { nullptr, 0 } };
         const strinfo_t* iter;
 
         for (iter = strlist; iter->s; ++iter)
@@ -1139,7 +1139,7 @@ void Packer::initLoader(const void *pdata, int plen, int small)
 
 
 #define C const char *
-#define N ACC_STATIC_CAST(void *, 0)
+#define N ACC_STATIC_CAST(void *, nullptr)
 void Packer::addLoader(C a)
 { addLoaderVA(a, N); }
 void Packer::addLoader(C a, C b)
@@ -1175,7 +1175,7 @@ upx_byte *Packer::getLoader() const
 {
     int size = -1;
     upx_byte *oloader = linker->getLoader(&size);
-    if (oloader == NULL || size <= 0)
+    if (oloader == nullptr || size <= 0)
         throwBadLoader();
     return oloader;
 }
@@ -1184,7 +1184,7 @@ int Packer::getLoaderSize() const
 {
     int size = -1;
     upx_byte *oloader = linker->getLoader(&size);
-    if (oloader == NULL || size <= 0)
+    if (oloader == nullptr || size <= 0)
         throwBadLoader();
     return size;
 }
@@ -1192,7 +1192,7 @@ int Packer::getLoaderSize() const
 bool Packer::hasLoaderSection(const char *name) const
 {
     void *section = linker->findSection(name, false);
-    return section != NULL;
+    return section != nullptr;
 }
 
 int Packer::getLoaderSection(const char *name, int *slen) const
@@ -1289,7 +1289,7 @@ void Packer::relocateLoader()
 static int prepareMethods(int *methods, int ph_method, const int *all_methods)
 {
     int nmethods = 0;
-    if (!opt->all_methods || all_methods == NULL)
+    if (!opt->all_methods || all_methods == nullptr)
     {
         methods[nmethods++] = ph_method;
         return nmethods;
@@ -1431,7 +1431,7 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
     {
         assert(isValidCompressionMethod(methods[mm]));
         unsigned hdr_c_len = 0;
-        if (hdr_ptr != NULL && hdr_len)
+        if (hdr_ptr != nullptr && hdr_len)
         {
             if (nfilters_success_total != 0 && o_tmp == o_ptr)
             {
@@ -1440,7 +1440,7 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
                 o_tmp = o_tmp_buf;
             }
             int r = upx_compress(hdr_ptr, hdr_len, o_tmp, &hdr_c_len,
-                                 NULL, methods[mm], 10, NULL, NULL);
+                                 nullptr, methods[mm], 10, nullptr, nullptr);
             if (r != UPX_E_OK)
                 throwInternalError("header compression failed");
             if (hdr_c_len >= hdr_len)
@@ -1584,7 +1584,7 @@ void Packer::compressWithFilters(Filter *ft,
                                  bool inhibit_compression_check)
 {
     compressWithFilters(ft, overlap_range, cconf, filter_strategy,
-                        0, 0, 0, NULL, 0, inhibit_compression_check);
+                        0, 0, 0, nullptr, 0, inhibit_compression_check);
 }
 
 

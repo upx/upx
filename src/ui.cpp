@@ -157,7 +157,7 @@ static const char *mkline(upx_uint64_t fu_len, upx_uint64_t fc_len, upx_uint64_t
 //
 **************************************************************************/
 
-UiPacker::UiPacker(const Packer *p_) : ui_pass(0), ui_total_passes(0), p(p_), s(NULL) {
+UiPacker::UiPacker(const Packer *p_) : ui_pass(0), ui_total_passes(0), p(p_), s(nullptr) {
     init_global_constants();
 
     cb.reset();
@@ -177,7 +177,7 @@ UiPacker::UiPacker(const Packer *p_) : ui_pass(0), ui_total_passes(0), p(p_), s(
         s->mode = M_INFO;
     else if (opt->verbose == 1 || opt->no_progress)
         s->mode = M_MSG;
-    else if (s->screen == NULL)
+    else if (s->screen == nullptr)
         s->mode = M_CB_TERM;
     else
         s->mode = M_CB_SCREEN;
@@ -186,7 +186,7 @@ UiPacker::UiPacker(const Packer *p_) : ui_pass(0), ui_total_passes(0), p(p_), s(
 UiPacker::~UiPacker() {
     cb.reset();
     delete s;
-    s = NULL;
+    s = nullptr;
 }
 
 /*************************************************************************

@@ -4812,13 +4812,13 @@ typedef unsigned short wchar_t;
 #define _WCHAR_T_DEFINED 1
 #endif
 #endif
-#ifndef NULL
+#ifndef nullptr
 #if defined(__cplusplus) && defined(__GNUC__) && (__GNUC__ >= 4)
-#define NULL    __null
+#define nullptr    __null
 #elif defined(__cplusplus)
-#define NULL    0
+#define nullptr    0
 #else
-#define NULL    ((void*)0)
+#define nullptr    ((void*)0)
 #endif
 #endif
 #ifndef offsetof
@@ -6756,7 +6756,7 @@ static int __ACCLIB_FUNCNAME(acc_getopt_perror) (acc_getopt_p g, int ret, const 
         g->opterr(g, f, &s);
         va_end(s.ap);
 #else
-        g->opterr(g, f, NULL);
+        g->opterr(g, f, nullptr);
 #endif
     }
     ++g->errcount;
@@ -6777,7 +6777,7 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
         if (*shortopts == ':')
             missing_arg_ret = *shortopts++;
     }
-    g->optarg = NULL;
+    g->optarg = nullptr;
     if (g->optopt == -1)
         g->optopt = g->bad_option;
     if (longind)
@@ -6801,8 +6801,8 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
     if (a[0] == '-' && a[1] == '-') {
         size_t l = 0;
         const acc_getopt_longopt_p o;
-        const acc_getopt_longopt_p o1 = NULL;
-        const acc_getopt_longopt_p o2 = NULL;
+        const acc_getopt_longopt_p o1 = nullptr;
+        const acc_getopt_longopt_p o2 = nullptr;
         int need_exact = 0;
         ++g->optind;
         if (!a[2])
@@ -6864,7 +6864,7 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
         const char *s;
     acc_label_next_shortopt:
         a = g->argv[g->optind] + ++g->shortpos;
-        c = (unsigned char) *a++; s = NULL;
+        c = (unsigned char) *a++; s = nullptr;
         if (c != ':' && shortopts)
             s = strchr(shortopts, c);
         if (!s || s[1] != ':') {
@@ -7235,7 +7235,7 @@ static int acc_pclock_read_clock_gettime_r_syscall(acc_pclock_handle_p h, acc_pc
 static int acc_pclock_read_gettimeofday(acc_pclock_handle_p h, acc_pclock_p c)
 {
     struct timeval tv;
-    if (gettimeofday(&tv, NULL) != 0)
+    if (gettimeofday(&tv, nullptr) != 0)
         return -1;
 #if defined(acc_int64l_t)
     c->tv_sec = tv.tv_sec;
@@ -7428,7 +7428,7 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
     h->h = ACC_STATIC_CAST(acclib_handle_t, 0);
     h->mode = -1;
     h->read_error = 2;
-    h->name = NULL;
+    h->name = nullptr;
     h->gettime = ACC_STATIC_CAST(acc_pclock_gettime_t, 0);
 #if defined(acc_int64l_t)
     h->ticks_base = 0;
@@ -7556,7 +7556,7 @@ ACCLIB_PUBLIC(int, acc_pclock_close) (acc_pclock_handle_p h)
 {
     h->h = ACC_STATIC_CAST(acclib_handle_t, 0);
     h->mode = -1;
-    h->name = NULL;
+    h->name = nullptr;
     h->gettime = ACC_STATIC_CAST(acc_pclock_gettime_t, 0);
     return 0;
 }

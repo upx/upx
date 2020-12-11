@@ -37,7 +37,7 @@
 class MemBuffer
 {
 public:
-    MemBuffer() : b(NULL), b_size(0) { }
+    MemBuffer() : b(nullptr), b_size(0) { }
     explicit MemBuffer(upx_uint64_t size);
     ~MemBuffer();
 
@@ -76,8 +76,8 @@ private:
     static unsigned global_alloc_counter;
 
     // disable copy and assignment
-    MemBuffer(const MemBuffer &); // {}
-    MemBuffer& operator= (const MemBuffer &); // { return *this; }
+    MemBuffer(const MemBuffer &) = delete;
+    MemBuffer& operator= (const MemBuffer &) = delete;
 
     // disable dynamic allocation
     DISABLE_NEW_DELETE

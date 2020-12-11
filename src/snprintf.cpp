@@ -140,7 +140,7 @@ static void fmtstr(char *buffer, size_t *currsize, size_t maxsize, const char *s
 #ifdef DEBUG_SNPRINTF
     printf("fmtstr min=%d max=%d s=[%s]\n", min, max, strvalue);
 #endif
-    assert(strvalue != NULL);
+    assert(strvalue != nullptr);
     padlen = min - strln;
     if (padlen < 0)
         padlen = 0;
@@ -677,27 +677,27 @@ static size_t dopr(char *buffer, size_t maxsize, const char *format, va_list arg
                 if (cflags == DP_C_CHAR) {
                     signed char *num;
                     num = va_arg(args, signed char *);
-                    assert(num != NULL);
+                    assert(num != nullptr);
                     *num = (signed char) currsize;
                 } else if (cflags == DP_C_SHORT) {
                     short *num;
                     num = va_arg(args, short *);
-                    assert(num != NULL);
+                    assert(num != nullptr);
                     *num = (short) currsize;
                 } else if (cflags == DP_C_LONG) {
                     long *num;
                     num = va_arg(args, long *);
-                    assert(num != NULL);
+                    assert(num != nullptr);
                     *num = (long) currsize;
                 } else if (cflags == DP_C_LLONG) {
                     LLONG *num;
                     num = va_arg(args, LLONG *);
-                    assert(num != NULL);
+                    assert(num != nullptr);
                     *num = (LLONG) currsize;
                 } else {
                     int *num;
                     num = va_arg(args, int *);
-                    assert(num != NULL);
+                    assert(num != nullptr);
                     *num = (int) currsize;
                 }
                 break;
@@ -776,7 +776,7 @@ int upx_vsnprintf(char *str, upx_rsize_t max_size, const char *format, va_list a
 
     // preconditions
     assert(max_size <= UPX_RSIZE_MAX_STR);
-    if (str != NULL)
+    if (str != nullptr)
         assert(max_size > 0);
     else
         assert(max_size == 0);
@@ -786,7 +786,7 @@ int upx_vsnprintf(char *str, upx_rsize_t max_size, const char *format, va_list a
     // postconditions
     assert(size > 0);
     assert(size <= UPX_RSIZE_MAX_STR);
-    if (str != NULL) {
+    if (str != nullptr) {
         assert(size <= max_size);
         assert(str[size - 1] == '\0');
     }
@@ -807,20 +807,20 @@ int __acc_cdecl_va upx_snprintf(char *str, upx_rsize_t max_size, const char *for
 int upx_vasprintf(char **ptr, const char *format, va_list ap) {
     int len;
 
-    assert(ptr != NULL);
-    *ptr = NULL;
+    assert(ptr != nullptr);
+    *ptr = nullptr;
 #if defined(va_copy)
     va_list ap_copy;
     va_copy(ap_copy, ap);
-    len = upx_vsnprintf(NULL, 0, format, ap_copy);
+    len = upx_vsnprintf(nullptr, 0, format, ap_copy);
     va_end(ap_copy);
 #else
-    len = upx_vsnprintf(NULL, 0, format, ap);
+    len = upx_vsnprintf(nullptr, 0, format, ap);
 #endif
     if (len >= 0) {
         *ptr = (char *) malloc(len + 1);
-        assert(*ptr != NULL);
-        if (*ptr == NULL)
+        assert(*ptr != nullptr);
+        if (*ptr == nullptr)
             return -1;
         int len2 = upx_vsnprintf(*ptr, len + 1, format, ap);
         assert(len2 == len);
@@ -840,7 +840,7 @@ int __acc_cdecl_va upx_asprintf(char **ptr, const char *format, ...) {
 
 #undef strlen
 upx_rsize_t upx_strlen(const char *s) {
-    assert(s != NULL);
+    assert(s != nullptr);
     size_t len = strlen(s);
     assert(len < UPX_RSIZE_MAX_STR);
     return len;
@@ -881,7 +881,7 @@ int main(void)
         "%.0f",
         "%f",
         "-16.16f",
-        NULL
+        nullptr
     };
     const double fp_nums[] = {
         6442452944.1234, -1.5, 134.21, 91340.2, 341.1234, 0203.9, 0.96, 0.996,
@@ -898,7 +898,7 @@ int main(void)
         "%01.3d",
         "%4d",
         "%d",
-        NULL
+        nullptr
     };
     const long int_nums[] = { -1, 134, 91340, 341, 0203, 0 };
     const char *str_fmt[] = {
@@ -914,7 +914,7 @@ int main(void)
         "%10s",
         0
     };
-    const char *str_vals[] = {"hello", "a", "", "a longer string", NULL};
+    const char *str_vals[] = {"hello", "a", "", "a longer string", nullptr};
     int x, y;
     int fail = 0;
     int num = 0;
@@ -923,7 +923,7 @@ int main(void)
 
     for (x = 0; fp_fmt[x] ; x++) {
         for (y = 0; fp_nums[y] != 0 ; y++) {
-            int l1 = snprintf(NULL, 0, fp_fmt[x], fp_nums[y]);
+            int l1 = snprintf(nullptr, 0, fp_fmt[x], fp_nums[y]);
             int l2 = snprintf(buf1, sizeof(buf1), fp_fmt[x], fp_nums[y]);
             sprintf (buf2, fp_fmt[x], fp_nums[y]);
             if (strcmp (buf1, buf2)) {
@@ -959,7 +959,7 @@ int main(void)
 
     for (x = 0; str_fmt[x] ; x++) {
         for (y = 0; str_vals[y] != 0 ; y++) {
-            int l1 = snprintf(NULL, 0, str_fmt[x], str_vals[y]);
+            int l1 = snprintf(nullptr, 0, str_fmt[x], str_vals[y]);
             int l2 = snprintf(buf1, sizeof(buf1), str_fmt[x], str_vals[y]);
             sprintf (buf2, str_fmt[x], str_vals[y]);
             if (strcmp (buf1, buf2)) {

@@ -346,7 +346,7 @@ static int do_scroll(screen_t *this, int lines, int way) {
         break;
     }
     // ScrollConsoleScreenBuffer(this->data->ho, &rect, &clip, dest, &this->data->empty_cell);
-    ScrollConsoleScreenBuffer(this->data->ho, &rect, NULL, dest, &this->data->empty_cell);
+    ScrollConsoleScreenBuffer(this->data->ho, &rect, nullptr, dest, &this->data->empty_cell);
 
     return lines;
 }
@@ -395,7 +395,7 @@ static void atExit(void) {
     }
 }
 
-static const screen_t driver = {sobject_destroy, 0, /* finalize, */
+static const screen_t driver = {sobject_destroy, nullptr, /* finalize */
                                 atExit,          init,       refresh,
                                 getMode,         getPage,    getRows,
                                 getCols,         isMono,     getFg,
@@ -405,7 +405,7 @@ static const screen_t driver = {sobject_destroy, 0, /* finalize, */
                                 putCharAttr,     putString,  putStringAttr,
                                 clear,           clearLine,  updateLineN,
                                 scrollUp,        scrollDown, getScrollCounter,
-                                s_kbhit,         intro,      (struct screen_data_t *) 0};
+                                s_kbhit,         intro,      (struct screen_data_t *) nullptr};
 
 /* public constructor */
 screen_t *screen_win32_construct(void) { return sobject_construct(&driver, sizeof(*driver.data)); }

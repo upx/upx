@@ -38,7 +38,7 @@ char *__cxa_demangle(const char *mangled_name, char *buf, size_t *n, int *status
     UNUSED(n);
     if (status)
         *status = -1; /* memory_allocation_failure */
-    return NULL;
+    return nullptr;
 }
 } /* extern "C" */
 #endif

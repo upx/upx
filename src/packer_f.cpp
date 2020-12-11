@@ -76,7 +76,7 @@ void Packer::addFilter32(int filter_id)
             addLoader("ctok32.00",
                 ((0x50==filter_id) ? "ctok32.50" :
                  (0x51==filter_id) ? "ctok32.51" : ""),
-                "ctok32.10", NULL);
+                "ctok32.10", nullptr);
         }
         else if ((filter_id & 0xf) % 3 == 0) {
             if (filter_id < 0x40) {
@@ -85,19 +85,19 @@ void Packer::addFilter32(int filter_id)
                         "CALLTR01",
                         (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR01,CTBSWA01" : "CTBROR01,CTBSWA01") : "",
                         "CALLTR02",
-                        NULL
+                        nullptr
                         );
             }
             else if (0x40==(0xF0 & filter_id)) {
-                addLoader("ctok32.00", NULL);
+                addLoader("ctok32.00", nullptr);
                 if (9<=(0xf & filter_id)) {
-                    addLoader("ctok32.10", NULL);
+                    addLoader("ctok32.10", nullptr);
                 }
-                addLoader("ctok32.20", NULL);
+                addLoader("ctok32.20", nullptr);
                 if (9<=(0xf & filter_id)) {
-                    addLoader("ctok32.30", NULL);
+                    addLoader("ctok32.30", nullptr);
                 }
-                addLoader("ctok32.40", NULL);
+                addLoader("ctok32.40", nullptr);
             }
         }
         else
@@ -108,7 +108,7 @@ void Packer::addFilter32(int filter_id)
                     "CALLTR12",
                     (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR11,CTBSWA11" : "CTBROR11,CTBSWA11") : "",
                     "CALLTR13",
-                    NULL
+                    nullptr
                     );
     }
     if (0x80==(filter_id & 0xF0)) {
@@ -120,187 +120,187 @@ void Packer::addFilter32(int filter_id)
         unsigned const f_jcc2 = f80_jcc2(filter_id);
 
         if (NOFILT!=f_jcc2) {
-                addLoader("LXJCC010", NULL);
+                addLoader("LXJCC010", nullptr);
                 if (n_mru) {
-                    addLoader("LXMRU045", NULL);
+                    addLoader("LXMRU045", nullptr);
                 }
                 else {
-                    addLoader("LXMRU046", NULL);
+                    addLoader("LXMRU046", nullptr);
                 }
                 if (0==n_mru || MRUFLT!=f_jcc2) {
-                    addLoader("LXJCC020", NULL);
+                    addLoader("LXJCC020", nullptr);
                 }
                 else { // 0!=n_mru
-                    addLoader("LXJCC021", NULL);
+                    addLoader("LXJCC021", nullptr);
                 }
                 if (NOFILT!=f_jcc2) {
-                    addLoader("LXJCC023", NULL);
+                    addLoader("LXJCC023", nullptr);
                 }
         }
-        addLoader("LXUNF037", NULL);
+        addLoader("LXUNF037", nullptr);
         if (x386) {
             if (n_mru) {
-                addLoader("LXUNF386", NULL);
+                addLoader("LXUNF386", nullptr);
             }
-            addLoader("LXUNF387", NULL);
+            addLoader("LXUNF387", nullptr);
             if (n_mru) {
-                addLoader("LXUNF388", NULL);
+                addLoader("LXUNF388", nullptr);
             }
         }
         else {
-            addLoader("LXUNF486", NULL);
+            addLoader("LXUNF486", nullptr);
             if (n_mru) {
-                addLoader("LXUNF487", NULL);
+                addLoader("LXUNF487", nullptr);
             }
         }
         if (n_mru) {
-            addLoader("LXMRU065", NULL);
+            addLoader("LXMRU065", nullptr);
             if (256==n_mru) {
-                addLoader("MRUBYTE3", NULL);
+                addLoader("MRUBYTE3", nullptr);
             }
             else {
-                addLoader("MRUARB30", NULL);
+                addLoader("MRUARB30", nullptr);
                 if (mrupwr2) {
-                    addLoader("MRUBITS3", NULL);
+                    addLoader("MRUBITS3", nullptr);
                 }
                 else {
-                    addLoader("MRUARB40", NULL);
+                    addLoader("MRUARB40", nullptr);
                 }
             }
-            addLoader("LXMRU070", NULL);
+            addLoader("LXMRU070", nullptr);
             if (256==n_mru) {
-                addLoader("MRUBYTE4", NULL);
+                addLoader("MRUBYTE4", nullptr);
             }
             else if (mrupwr2) {
-                addLoader("MRUBITS4", NULL);
+                addLoader("MRUBITS4", nullptr);
             }
             else {
-                addLoader("MRUARB50", NULL);
+                addLoader("MRUARB50", nullptr);
             }
-            addLoader("LXMRU080", NULL);
+            addLoader("LXMRU080", nullptr);
             if (256==n_mru) {
-                addLoader("MRUBYTE5", NULL);
+                addLoader("MRUBYTE5", nullptr);
             }
             else {
-                addLoader("MRUARB60", NULL);
+                addLoader("MRUARB60", nullptr);
                 if (mrupwr2) {
-                    addLoader("MRUBITS5", NULL);
+                    addLoader("MRUBITS5", nullptr);
                 }
                 else {
-                    addLoader("MRUARB70", NULL);
+                    addLoader("MRUARB70", nullptr);
                 }
             }
-            addLoader("LXMRU090", NULL);
+            addLoader("LXMRU090", nullptr);
             if (256==n_mru) {
-                addLoader("MRUBYTE6", NULL);
+                addLoader("MRUBYTE6", nullptr);
             }
             else {
-                addLoader("MRUARB80", NULL);
+                addLoader("MRUARB80", nullptr);
                 if (mrupwr2) {
-                        addLoader("MRUBITS6", NULL);
+                        addLoader("MRUBITS6", nullptr);
                 }
                 else {
-                    addLoader("MRUARB90", NULL);
+                    addLoader("MRUARB90", nullptr);
                 }
             }
-            addLoader("LXMRU100", NULL);
+            addLoader("LXMRU100", nullptr);
         }
-        addLoader("LXUNF040", NULL);
+        addLoader("LXUNF040", nullptr);
         if (n_mru) {
-            addLoader("LXMRU110", NULL);
+            addLoader("LXMRU110", nullptr);
         }
         else {
-            addLoader("LXMRU111", NULL);
+            addLoader("LXMRU111", nullptr);
         }
-        addLoader("LXUNF041", NULL);
-        addLoader("LXUNF042", NULL);
+        addLoader("LXUNF041", nullptr);
+        addLoader("LXUNF042", nullptr);
         if (n_mru) {
-            addLoader("LXMRU010", NULL);
+            addLoader("LXMRU010", nullptr);
             if (NOFILT!=f_jmp1 && NOFILT==f_call) {
-                addLoader("LXJMPA00", NULL);
+                addLoader("LXJMPA00", nullptr);
             }
             else {
-                addLoader("LXCALLB0", NULL);
+                addLoader("LXCALLB0", nullptr);
             }
-            addLoader("LXUNF021", NULL);
+            addLoader("LXUNF021", nullptr);
         }
         else {
-            addLoader("LXMRU022", NULL);
+            addLoader("LXMRU022", nullptr);
             if (NOFILT!=f_jmp1 && NOFILT==f_call) {
-                addLoader("LXJMPA01", NULL);
+                addLoader("LXJMPA01", nullptr);
             }
             else {
-                addLoader("LXCALLB1", NULL);
+                addLoader("LXCALLB1", nullptr);
             }
         }
         if (n_mru) {
             if (256!=n_mru && mrupwr2) {
-                addLoader("MRUBITS1", NULL);
+                addLoader("MRUBITS1", nullptr);
             }
-            addLoader("LXMRU030", NULL);
+            addLoader("LXMRU030", nullptr);
             if (256==n_mru) {
-                addLoader("MRUBYTE1", NULL);
+                addLoader("MRUBYTE1", nullptr);
             }
             else {
-                addLoader("MRUARB10", NULL);
+                addLoader("MRUARB10", nullptr);
             }
-            addLoader("LXMRU040", NULL);
+            addLoader("LXMRU040", nullptr);
         }
 
-        addLoader("LXUNF030", NULL);
+        addLoader("LXUNF030", nullptr);
         if (NOFILT!=f_jcc2) {
-            addLoader("LXJCC000", NULL);
+            addLoader("LXJCC000", nullptr);
         }
         if (NOFILT!=f_call || NOFILT!=f_jmp1) { // at least one is filtered
             // shift opcode origin to zero
             if (0==n_mru) {
-                addLoader("LXCJ0MRU", NULL);
+                addLoader("LXCJ0MRU", nullptr);
             }
             else {
-                addLoader("LXCJ1MRU", NULL);
+                addLoader("LXCJ1MRU", nullptr);
             }
 
             // determine if in range
             if ((NOFILT!=f_call) && (NOFILT!=f_jmp1)) { // unfilter both
-                addLoader("LXCALJMP", NULL);
+                addLoader("LXCALJMP", nullptr);
             }
             if ((NOFILT==f_call) ^  (NOFILT==f_jmp1)) { // unfilter just one
                 if (0==n_mru) {
-                    addLoader("LXCALL00", NULL);
+                    addLoader("LXCALL00", nullptr);
                 }
                 else {
-                    addLoader("LXCALL01", NULL);
+                    addLoader("LXCALL01", nullptr);
                 }
             }
 
             // determine if mru applies
             if (0==n_mru || ! ((FNOMRU==f_call) || (FNOMRU==f_jmp1)) ) {
-                addLoader("LXCJ2MRU", NULL);  // no mru, or no exceptions
+                addLoader("LXCJ2MRU", nullptr);  // no mru, or no exceptions
             }
             else {  // mru on one, but not the other
-                addLoader("LXCJ4MRU", NULL);
+                addLoader("LXCJ4MRU", nullptr);
                 if (MRUFLT==f_jmp1) { // JMP only
-                    addLoader("LXCJ6MRU", NULL);
+                    addLoader("LXCJ6MRU", nullptr);
                 } else
                 if (MRUFLT==f_call) { // CALL only
-                    addLoader("LXCJ7MRU", NULL);
+                    addLoader("LXCJ7MRU", nullptr);
                 }
-                addLoader("LXCJ8MRU", NULL);
+                addLoader("LXCJ8MRU", nullptr);
             }
         }
-        addLoader("LXUNF034", NULL);
+        addLoader("LXUNF034", nullptr);
         if (n_mru) {
-            addLoader("LXMRU055", NULL);
+            addLoader("LXMRU055", nullptr);
             if (256==n_mru) {
-                addLoader("MRUBYTE2", NULL);
+                addLoader("MRUBYTE2", nullptr);
             }
             else if (mrupwr2) {
-                addLoader("MRUBITS2", NULL);
+                addLoader("MRUBITS2", nullptr);
             }
             else if (n_mru) {
-                addLoader("MRUARB20", NULL);
+                addLoader("MRUARB20", nullptr);
             }
-            addLoader("LXMRU057", NULL);
+            addLoader("LXMRU057", nullptr);
         }
     }
 }

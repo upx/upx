@@ -280,7 +280,7 @@ static void check_options(int i, int argc)
     if (!(opt->cmd == CMD_COMPRESS || opt->cmd == CMD_DECOMPRESS))
         opt->backup = 1;
 
-    check_not_both(opt->to_stdout, opt->output_name != NULL, "--stdout", "-o");
+    check_not_both(opt->to_stdout, opt->output_name != nullptr, "--stdout", "-o");
     if (opt->to_stdout && opt->cmd == CMD_COMPRESS)
     {
         fprintf(stderr,"%s: cannot use '--stdout' when compressing\n", argv0);
@@ -393,12 +393,12 @@ char* prepare_shortopts(char *buf, const char *n,
         static char vopts[1024];
         if (v > 0 && v < 1024)
         {
-            if (vopts[v] && strchr(buf,v) == NULL)
+            if (vopts[v] && strchr(buf,v) == nullptr)
                 printf("warning: duplicate option %d ('%c')!\n", v, v & 127);
             vopts[v] = 1;
         }
 #endif
-        if (v > 0 && v < 256 && strchr(buf,v) == NULL)
+        if (v > 0 && v < 256 && strchr(buf,v) == nullptr)
         {
             *o++ = (char) v;
             if ((longopts->has_arg & 0xf) >= 1)
@@ -439,7 +439,7 @@ static int getoptvar(T *var, const T min_value, const T max_value, const char *a
     *var = v;
     goto done;
 error:
-    if (arg_fatal != NULL)
+    if (arg_fatal != nullptr)
         e_optval(arg_fatal);
 done:
     return r;
@@ -889,163 +889,164 @@ static int do_option(int optc, const char *arg)
 
 static int get_options(int argc, char **argv)
 {
+    constexpr int *N = nullptr;
 
 static const struct mfx_option longopts[] =
 {
     // commands
-    {"best",             0x10, 0, 900},     // compress best
-    {"brute",            0x10, 0, 901},     // compress best, brute force
-    {"ultra-brute",      0x10, 0, 902},     // compress best, brute force
-    {"decompress",          0, 0, 'd'},     // decompress
-    {"fast",             0x10, 0, '1'},     // compress faster
-    {"fileinfo",         0x10, 0, 909},     // display info about file
-    {"file-info",        0x10, 0, 909},     // display info about file
-    {"help",                0, 0, 'h'+256}, // give help
-    {"license",             0, 0, 'L'},     // display software license
-    {"list",                0, 0, 'l'},     // list compressed exe
-    {"test",                0, 0, 't'},     // test compressed file integrity
-    {"uncompress",          0, 0, 'd'},     // decompress
-    {"version",             0, 0, 'V'+256}, // display version number
+    {"best",             0x10, N, 900},     // compress best
+    {"brute",            0x10, N, 901},     // compress best, brute force
+    {"ultra-brute",      0x10, N, 902},     // compress best, brute force
+    {"decompress",          0, N, 'd'},     // decompress
+    {"fast",             0x10, N, '1'},     // compress faster
+    {"fileinfo",         0x10, N, 909},     // display info about file
+    {"file-info",        0x10, N, 909},     // display info about file
+    {"help",                0, N, 'h'+256}, // give help
+    {"license",             0, N, 'L'},     // display software license
+    {"list",                0, N, 'l'},     // list compressed exe
+    {"test",                0, N, 't'},     // test compressed file integrity
+    {"uncompress",          0, N, 'd'},     // decompress
+    {"version",             0, N, 'V'+256}, // display version number
 
     // options
-    {"force",               0, 0, 'f'},     // force overwrite of output files
-    {"force-compress",      0, 0, 'f'},     //   and compression of suspicious files
-    {"info",                0, 0, 'i'},     // info mode
-    {"no-env",           0x10, 0, 519},     // no environment var
-    {"no-mode",          0x10, 0, 526},     // do not preserve mode (permissions)
-    {"no-owner",         0x10, 0, 527},     // do not preserve ownership
-    {"no-progress",         0, 0, 516},     // no progress bar
-    {"no-time",          0x10, 0, 528},     // do not preserve timestamp
-    {"output",           0x21, 0, 'o'},
-    {"quiet",               0, 0, 'q'},     // quiet mode
-    {"silent",              0, 0, 'q'},     // quiet mode
+    {"force",               0, N, 'f'},     // force overwrite of output files
+    {"force-compress",      0, N, 'f'},     //   and compression of suspicious files
+    {"info",                0, N, 'i'},     // info mode
+    {"no-env",           0x10, N, 519},     // no environment var
+    {"no-mode",          0x10, N, 526},     // do not preserve mode (permissions)
+    {"no-owner",         0x10, N, 527},     // do not preserve ownership
+    {"no-progress",         0, N, 516},     // no progress bar
+    {"no-time",          0x10, N, 528},     // do not preserve timestamp
+    {"output",           0x21, N, 'o'},
+    {"quiet",               0, N, 'q'},     // quiet mode
+    {"silent",              0, N, 'q'},     // quiet mode
 #if 0
     // FIXME: to_stdout doesn't work because of console code mess
-    {"stdout",           0x10, 0, 517},     // write output on standard output
-    {"to-stdout",        0x10, 0, 517},     // write output on standard output
+    {"stdout",           0x10, N, 517},     // write output on standard output
+    {"to-stdout",        0x10, N, 517},     // write output on standard output
 #endif
-    {"verbose",             0, 0, 'v'},     // verbose mode
+    {"verbose",             0, N, 'v'},     // verbose mode
 
     // debug options
-    {"debug",            0x10, 0, 'D'},
-    {"dump-stub-loader" ,0x31, 0, 544},     // for internal debugging
-    {"fake-stub-version",0x31, 0, 542},     // for internal debugging
-    {"fake-stub-year"   ,0x31, 0, 543},     // for internal debugging
-    {"disable-random-id",0x10, 0, 545},     // for internal debugging
+    {"debug",            0x10, N, 'D'},
+    {"dump-stub-loader" ,0x31, N, 544},     // for internal debugging
+    {"fake-stub-version",0x31, N, 542},     // for internal debugging
+    {"fake-stub-year"   ,0x31, N, 543},     // for internal debugging
+    {"disable-random-id",0x10, N, 545},     // for internal debugging
 
     // backup options
-    {"backup",           0x10, 0, 'k'},
-    {"keep",             0x10, 0, 'k'},
-    {"no-backup",        0x10, 0, 541},
+    {"backup",           0x10, N, 'k'},
+    {"keep",             0x10, N, 'k'},
+    {"no-backup",        0x10, N, 541},
 
     // overlay options
-    {"overlay",          0x31, 0, 551},     // --overlay=
-    {"skip-overlay",     0x10, 0, 552},
-    {"no-overlay",       0x10, 0, 552},     // old name
-    {"copy-overlay",     0x10, 0, 553},
-    {"strip-overlay",    0x10, 0, 554},
+    {"overlay",          0x31, N, 551},     // --overlay=
+    {"skip-overlay",     0x10, N, 552},
+    {"no-overlay",       0x10, N, 552},     // old name
+    {"copy-overlay",     0x10, N, 553},
+    {"strip-overlay",    0x10, N, 554},
 
     // CPU options
-    {"cpu",              0x31, 0, 560},     // --cpu=
-    {"8086",             0x10, 0, 561},
-    {"386",              0x10, 0, 563},
-    {"486",              0x10, 0, 564},
+    {"cpu",              0x31, N, 560},     // --cpu=
+    {"8086",             0x10, N, 561},
+    {"386",              0x10, N, 563},
+    {"486",              0x10, N, 564},
 
     // color options
-    {"no-color",         0x10, 0, 512},
-    {"mono",             0x10, 0, 513},
-    {"color",            0x10, 0, 514},
+    {"no-color",         0x10, N, 512},
+    {"mono",             0x10, N, 513},
+    {"color",            0x10, N, 514},
 
     // compression method
-    {"nrv2b",            0x10, 0, 702},     // --nrv2b
-    {"nrv2d",            0x10, 0, 704},     // --nrv2d
-    {"nrv2e",            0x10, 0, 705},     // --nrv2e
-    {"lzma",             0x10, 0, 721},     // --lzma
-    {"no-lzma",          0x10, 0, 722},     // disable all_methods_use_lzma
-    {"prefer-nrv",       0x10, 0, 723},
-    {"prefer-ucl",       0x10, 0, 724},
+    {"nrv2b",            0x10, N, 702},     // --nrv2b
+    {"nrv2d",            0x10, N, 704},     // --nrv2d
+    {"nrv2e",            0x10, N, 705},     // --nrv2e
+    {"lzma",             0x10, N, 721},     // --lzma
+    {"no-lzma",          0x10, N, 722},     // disable all_methods_use_lzma
+    {"prefer-nrv",       0x10, N, 723},
+    {"prefer-ucl",       0x10, N, 724},
     // compression settings
-    {"all-filters",      0x10, 0, 523},
-    {"all-methods",      0x10, 0, 524},
-    {"exact",            0x10, 0, 525},     // user requires byte-identical decompression
-    {"filter",           0x31, 0, 521},     // --filter=
-    {"no-filter",        0x10, 0, 522},
-    {"small",            0x10, 0, 520},
+    {"all-filters",      0x10, N, 523},
+    {"all-methods",      0x10, N, 524},
+    {"exact",            0x10, N, 525},     // user requires byte-identical decompression
+    {"filter",           0x31, N, 521},     // --filter=
+    {"no-filter",        0x10, N, 522},
+    {"small",            0x10, N, 520},
     // compression runtime parameters
-    {"crp-nrv-cf",       0x31, 0, 801},
-    {"crp-nrv-sl",       0x31, 0, 802},
-    {"crp-nrv-hl",       0x31, 0, 803},
-    {"crp-nrv-pl",       0x31, 0, 804},
-    {"crp-nrv-mo",       0x31, 0, 805},
-    {"crp-nrv-mm",       0x31, 0, 806},
-    {"crp-nrv-ms",       0x31, 0, 807},
-    {"crp-ucl-cf",       0x31, 0, 801},
-    {"crp-ucl-sl",       0x31, 0, 802},
-    {"crp-ucl-hl",       0x31, 0, 803},
-    {"crp-ucl-pl",       0x31, 0, 804},
-    {"crp-ucl-mo",       0x31, 0, 805},
-    {"crp-ucl-mm",       0x31, 0, 806},
-    {"crp-ucl-ms",       0x31, 0, 807},
-    {"crp-lzma-pb",      0x31, 0, 811},
-    {"crp-lzma-lp",      0x31, 0, 812},
-    {"crp-lzma-lc",      0x31, 0, 813},
-    {"crp-lzma-ds",      0x31, 0, 814},
-    {"crp-lzma-fb",      0x31, 0, 816},
-    {"crp-zlib-ml",      0x31, 0, 821},
-    {"crp-zlib-wb",      0x31, 0, 822},
-    {"crp-zlib-st",      0x31, 0, 823},
+    {"crp-nrv-cf",       0x31, N, 801},
+    {"crp-nrv-sl",       0x31, N, 802},
+    {"crp-nrv-hl",       0x31, N, 803},
+    {"crp-nrv-pl",       0x31, N, 804},
+    {"crp-nrv-mo",       0x31, N, 805},
+    {"crp-nrv-mm",       0x31, N, 806},
+    {"crp-nrv-ms",       0x31, N, 807},
+    {"crp-ucl-cf",       0x31, N, 801},
+    {"crp-ucl-sl",       0x31, N, 802},
+    {"crp-ucl-hl",       0x31, N, 803},
+    {"crp-ucl-pl",       0x31, N, 804},
+    {"crp-ucl-mo",       0x31, N, 805},
+    {"crp-ucl-mm",       0x31, N, 806},
+    {"crp-ucl-ms",       0x31, N, 807},
+    {"crp-lzma-pb",      0x31, N, 811},
+    {"crp-lzma-lp",      0x31, N, 812},
+    {"crp-lzma-lc",      0x31, N, 813},
+    {"crp-lzma-ds",      0x31, N, 814},
+    {"crp-lzma-fb",      0x31, N, 816},
+    {"crp-zlib-ml",      0x31, N, 821},
+    {"crp-zlib-wb",      0x31, N, 822},
+    {"crp-zlib-st",      0x31, N, 823},
     // [deprecated - only for compatibility with UPX 2.0x]
-    {"crp-ms",           0x31, 0, 807},
+    {"crp-ms",           0x31, N, 807},
 
     // atari/tos
-    {"split-segments",   0x10, 0, 650},
+    {"split-segments",   0x10, N, 650},
     // djgpp2/coff
-    {"coff",             0x10, 0, 610},     // produce COFF output
+    {"coff",             0x10, N, 610},     // produce COFF output
     // dos/com
     // dos/exe
     //{"force-stub",             0x10, 0, 600},
-    {"no-reloc",         0x10, 0, 601},     // no reloc. record into packer dos/exe
+    {"no-reloc",         0x10, N, 601},     // no reloc. record into packer dos/exe
     // dos/sys
     // unix
-    {"blocksize",        0x31, 0, 660},     // --blocksize=
-    {"force-execve",     0x10, 0, 661},     // force linux/386 execve format
-    {"is_ptinterp",      0x10, 0, 663},     // linux/elf386 PT_INTERP program
-    {"use_ptinterp",     0x10, 0, 664},     // linux/elf386 PT_INTERP program
-    {"make_ptinterp",    0x10, 0, 665},     // linux/elf386 PT_INTERP program
-    {"Linux",            0x10, 0, 666},
-    {"linux",            0x10, 0, 666},
-    {"FreeBSD",          0x10, 0, 667},
-    {"freebsd",          0x10, 0, 667},
-    {"NetBSD",           0x10, 0, 668},
-    {"netbsd",           0x10, 0, 668},
-    {"OpenBSD",          0x10, 0, 669},
-    {"openbsd",          0x10, 0, 669},
-    {"unmap-all-pages",  0x10, 0, 674},     // linux /proc/self/exe vanishes
-    {"preserve-build-id",   0, 0, 675},
-    {"android-shlib",       0, 0, 676},
-    {"force-pie",           0, 0, 677},
+    {"blocksize",        0x31, N, 660},     // --blocksize=
+    {"force-execve",     0x10, N, 661},     // force linux/386 execve format
+    {"is_ptinterp",      0x10, N, 663},     // linux/elf386 PT_INTERP program
+    {"use_ptinterp",     0x10, N, 664},     // linux/elf386 PT_INTERP program
+    {"make_ptinterp",    0x10, N, 665},     // linux/elf386 PT_INTERP program
+    {"Linux",            0x10, N, 666},
+    {"linux",            0x10, N, 666},
+    {"FreeBSD",          0x10, N, 667},
+    {"freebsd",          0x10, N, 667},
+    {"NetBSD",           0x10, N, 668},
+    {"netbsd",           0x10, N, 668},
+    {"OpenBSD",          0x10, N, 669},
+    {"openbsd",          0x10, N, 669},
+    {"unmap-all-pages",  0x10, N, 674},     // linux /proc/self/exe vanishes
+    {"preserve-build-id",   0, N, 675},
+    {"android-shlib",       0, N, 676},
+    {"force-pie",           0, N, 677},
     // watcom/le
-    {"le",               0x10, 0, 620},     // produce LE output
+    {"le",               0x10, N, 620},     // produce LE output
     // win32/pe
-    {"compress-exports",    2, 0, 630},
-    {"compress-icons",      2, 0, 631},
-    {"compress-resources",  2, 0, 632},
-    {"strip-loadconf",   0x12, 0, 633},     // OBSOLETE - IGNORED
-    {"strip-relocs",     0x12, 0, 634},
-    {"keep-resource",    0x31, 0, 635},
+    {"compress-exports",    2, N, 630},
+    {"compress-icons",      2, N, 631},
+    {"compress-resources",  2, N, 632},
+    {"strip-loadconf",   0x12, N, 633},     // OBSOLETE - IGNORED
+    {"strip-relocs",     0x12, N, 634},
+    {"keep-resource",    0x31, N, 635},
     // ps1/exe
-    {"boot-only",        0x10, 0, 670},
-    {"no-align",         0x10, 0, 671},
-    {"8-bit",            0x10, 0, 672},
-    {"8mib-ram",         0x10, 0, 673},
-    {"8mb-ram",          0x10, 0, 673},
+    {"boot-only",        0x10, N, 670},
+    {"no-align",         0x10, N, 671},
+    {"8-bit",            0x10, N, 672},
+    {"8mib-ram",         0x10, N, 673},
+    {"8mb-ram",          0x10, N, 673},
 
     // mp (meta) options
-    {"mp-compress-task",        0x31, 0, 501},
-    {"mp-query-format",         0x10, 0, 502},
-    {"mp-query-num-tasks",      0x10, 0, 503},
+    {"mp-compress-task",        0x31, N, 501},
+    {"mp-query-format",         0x10, N, 502},
+    {"mp-query-num-tasks",      0x10, N, 503},
 
-    { NULL, 0, NULL, 0 }
+    { nullptr, 0, nullptr, 0 }
 };
 
     int optc, longind;
@@ -1069,88 +1070,89 @@ static const struct mfx_option longopts[] =
 #if defined(OPTIONS_VAR)
 static void get_envoptions(int argc, char **argv)
 {
+    constexpr int *N = nullptr;
 
 /* only some options are allowed in the environment variable */
 
 static const struct mfx_option longopts[] =
 {
     // commands
-    {"best",             0x10, 0, 900},     // compress best
-    {"brute",            0x10, 0, 901},     // compress best, brute force
-    {"ultra-brute",      0x10, 0, 902},     // compress best, brute force
-    {"fast",             0x10, 0, '1'},     // compress faster
+    {"best",             0x10, N, 900},     // compress best
+    {"brute",            0x10, N, 901},     // compress best, brute force
+    {"ultra-brute",      0x10, N, 902},     // compress best, brute force
+    {"fast",             0x10, N, '1'},     // compress faster
 
     // options
-    {"info",                0, 0, 'i'},     // info mode
-    {"no-progress",         0, 0, 516},     // no progress bar
-    {"quiet",               0, 0, 'q'},     // quiet mode
-    {"silent",              0, 0, 'q'},     // quiet mode
-    {"verbose",             0, 0, 'v'},     // verbose mode
+    {"info",                0, N, 'i'},     // info mode
+    {"no-progress",         0, N, 516},     // no progress bar
+    {"quiet",               0, N, 'q'},     // quiet mode
+    {"silent",              0, N, 'q'},     // quiet mode
+    {"verbose",             0, N, 'v'},     // verbose mode
 
     // debug options
-    {"disable-random-id",0x10, 0, 545},     // for internal debugging
+    {"disable-random-id",0x10, N, 545},     // for internal debugging
 
     // backup options
-    {"backup",           0x10, 0, 'k'},
-    {"keep",             0x10, 0, 'k'},
-    {"no-backup",        0x10, 0, 541},
+    {"backup",           0x10, N, 'k'},
+    {"keep",             0x10, N, 'k'},
+    {"no-backup",        0x10, N, 541},
 
     // overlay options
-    {"overlay",          0x31, 0, 551},     // --overlay=
-    {"skip-overlay",     0x10, 0, 552},
-    {"no-overlay",       0x10, 0, 552},     // old name
-    {"copy-overlay",     0x10, 0, 553},
-    {"strip-overlay",    0x10, 0, 554},
+    {"overlay",          0x31, N, 551},     // --overlay=
+    {"skip-overlay",     0x10, N, 552},
+    {"no-overlay",       0x10, N, 552},     // old name
+    {"copy-overlay",     0x10, N, 553},
+    {"strip-overlay",    0x10, N, 554},
 
     // CPU options
-    {"cpu",              0x31, 0, 560},     // --cpu=
-    {"8086",             0x10, 0, 561},
-    {"386",              0x10, 0, 563},
-    {"486",              0x10, 0, 564},
+    {"cpu",              0x31, N, 560},     // --cpu=
+    {"8086",             0x10, N, 561},
+    {"386",              0x10, N, 563},
+    {"486",              0x10, N, 564},
 
     // color options
-    {"no-color",         0x10, 0, 512},
-    {"mono",             0x10, 0, 513},
-    {"color",            0x10, 0, 514},
+    {"no-color",         0x10, N, 512},
+    {"mono",             0x10, N, 513},
+    {"color",            0x10, N, 514},
 
     // compression settings
-    {"exact",            0x10, 0, 525},     // user requires byte-identical decompression
+    {"exact",            0x10, N, 525},     // user requires byte-identical decompression
 
     // compression method
-    {"nrv2b",            0x10, 0, 702},     // --nrv2b
-    {"nrv2d",            0x10, 0, 704},     // --nrv2d
-    {"nrv2e",            0x10, 0, 705},     // --nrv2e
-    {"lzma",             0x10, 0, 721},     // --lzma
-    {"no-lzma",          0x10, 0, 722},     // disable all_methods_use_lzma
-    {"prefer-nrv",       0x10, 0, 723},
-    {"prefer-ucl",       0x10, 0, 724},
+    {"nrv2b",            0x10, N, 702},     // --nrv2b
+    {"nrv2d",            0x10, N, 704},     // --nrv2d
+    {"nrv2e",            0x10, N, 705},     // --nrv2e
+    {"lzma",             0x10, N, 721},     // --lzma
+    {"no-lzma",          0x10, N, 722},     // disable all_methods_use_lzma
+    {"prefer-nrv",       0x10, N, 723},
+    {"prefer-ucl",       0x10, N, 724},
     // compression settings
     // compression runtime parameters
 
     // win32/pe
-    {"compress-exports",    2, 0, 630},
-    {"compress-icons",      2, 0, 631},
-    {"compress-resources",  2, 0, 632},
-    {"strip-loadconf",   0x12, 0, 633},     // OBSOLETE - IGNORED
-    {"strip-relocs",     0x12, 0, 634},
-    {"keep-resource",    0x31, 0, 635},
+    {"compress-exports",    2, N, 630},
+    {"compress-icons",      2, N, 631},
+    {"compress-resources",  2, N, 632},
+    {"strip-loadconf",   0x12, N, 633},     // OBSOLETE - IGNORED
+    {"strip-relocs",     0x12, N, 634},
+    {"keep-resource",    0x31, N, 635},
 
-    { NULL, 0, NULL, 0 }
+    { nullptr, 0, nullptr, 0 }
 };
 
     char *env, *p;
     const char *var;
     int i, optc, longind;
     int targc;
-    char **targv = NULL;
+    char **targv = nullptr;
     static const char sep[] = " \t";
     char shortopts[256];
 
     var = getenv(OPTIONS_VAR);
-    if (var == NULL || !var[0])
+    if (var == nullptr || !var[0])
         return;
     env = strdup(var);
-    if (env == NULL)
+    if (env == nullptr)
         return;
 
     /* count arguments */
@@ -1171,7 +1173,7 @@ static const struct mfx_option longopts[] =
     /* alloc temp argv */
     if (targc > 1)
         targv = (char **) calloc(targc+1,sizeof(char *));
-    if (targv == NULL)
+    if (targv == nullptr)
     {
         free(env);
         return;
@@ -1192,7 +1194,7 @@ static const struct mfx_option longopts[] =
             break;
         *p++ = '\0';
     }
-    targv[targc] = NULL;
+    targv[targc] = nullptr;
 
     /* check that only options are in temp argv */
     for (i = 1; i < targc; i++)
@@ -1207,7 +1209,7 @@ static const struct mfx_option longopts[] =
     while ((optc = acc_getopt(&mfx_getopt, shortopts, longopts, &longind)) >= 0)
     {
         if (do_option(optc, targv[mfx_optind-1]) != 0)
-            e_envopt(NULL);
+            e_envopt(nullptr);
     }
 
     if (mfx_optind < targc)
@@ -1472,7 +1474,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     assert(upx_nrv_init() == 0);
 #endif
 
-    //srand((int) time(NULL));
+    //srand((int) time(nullptr));
     srand((int) clock());
 
     /* get options */
@@ -1484,7 +1486,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     i = get_options(argc,argv);
     assert(i <= argc);
 
-    set_term(NULL);
+    set_term(nullptr);
 //    cmdline_cmd = opt->cmd;
     switch (opt->cmd)
     {

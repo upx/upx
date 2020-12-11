@@ -28,7 +28,7 @@
 
 #include "conf.h"
 
-FILE *con_term = NULL;
+FILE *con_term = nullptr;
 
 #if (USE_CONSOLE)
 
@@ -60,7 +60,7 @@ static void try_init(console_t *c, FILE *f)
     {
         con_mode = k;
         con = c;
-        con->init = 0;
+        con->init = nullptr;
         if (!con->set_fg)
             con->set_fg = console_none.set_fg;
         if (!con->print0)
@@ -137,7 +137,7 @@ console_t console_init =
 {
     init,
     set_fg,
-    0,
+    nullptr,
     intro
 };
 

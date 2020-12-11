@@ -228,7 +228,7 @@ const char *Packer::getDecompressorSections() const
         return opt->small ? lzma_small  : lzma_fast;
     }
     throwInternalError("bad decompressor");
-    return NULL;
+    return nullptr;
 }
 
 

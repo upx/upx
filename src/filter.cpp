@@ -70,10 +70,10 @@ const FilterImp::FilterEntry *FilterImp::getFilter(int id)
     }
 
     if (id < 0 || id > 255)
-        return NULL;
+        return nullptr;
     unsigned index = filter_map[id];
     if (index == 0xff)                  // empty slot
-        return NULL;
+        return nullptr;
     assert(filters[index].id == id);
     return &filters[index];
 }
@@ -82,7 +82,7 @@ const FilterImp::FilterEntry *FilterImp::getFilter(int id)
 bool Filter::isValidFilter(int filter_id)
 {
     const FilterImp::FilterEntry * const fe = FilterImp::getFilter(filter_id);
-    return fe != NULL;
+    return fe != nullptr;
 }
 
 bool Filter::isValidFilter(int filter_id, const int *allowed_filters)
@@ -91,7 +91,7 @@ bool Filter::isValidFilter(int filter_id, const int *allowed_filters)
         return false;
     if (filter_id == 0)
         return true;
-    if (allowed_filters == NULL)
+    if (allowed_filters == nullptr)
         return false;
     while (*allowed_filters != FT_END)
         if (*allowed_filters++ == filter_id)
@@ -107,10 +107,10 @@ bool Filter::isValidFilter(int filter_id, const int *allowed_filters)
 void Filter::init(int id_, unsigned addvalue_)
 {
     this->id = id_;
-    initFilter(this, NULL, 0);
+    initFilter(this, nullptr, 0);
     // clear input parameters
     this->addvalue = addvalue_;
-    this->preferred_ctos = NULL;
+    this->preferred_ctos = nullptr;
     // clear input/output parameters
     this->cto = 0;
     this->n_mru = 0;
@@ -122,7 +122,7 @@ bool Filter::filter(upx_byte *buf_, unsigned buf_len_)
     initFilter(this, buf_, buf_len_);
 
     const FilterImp::FilterEntry * const fe = FilterImp::getFilter(id);
-    if (fe == NULL)
+    if (fe == nullptr)
         throwInternalError("filter-1");
     if (fe->id == 0)
         return true;
@@ -155,7 +155,7 @@ void Filter::unfilter(upx_byte *buf_, unsigned buf_len_, bool verify_checksum)
     initFilter(this, buf_, buf_len_);
 
     const FilterImp::FilterEntry * const fe = FilterImp::getFilter(id);
-    if (fe == NULL)
+    if (fe == nullptr)
         throwInternalError("unfilter-1");
     if (fe->id == 0)
         return;
@@ -207,7 +207,7 @@ bool Filter::scan(const upx_byte *buf_, unsigned buf_len_)
     initFilter(this, b, buf_len_);
 
     const FilterImp::FilterEntry * const fe = FilterImp::getFilter(id);
-    if (fe == NULL)
+    if (fe == nullptr)
         throwInternalError("scan-1");
     if (fe->id == 0)
         return true;

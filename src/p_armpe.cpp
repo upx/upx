@@ -145,38 +145,38 @@ void PackArmPe::buildLoader(const Filter *ft)
     initLoader(loader, size);
 
     if (isdll)
-        addLoader("DllStart", NULL);
-    addLoader("ExeStart", NULL);
+        addLoader("DllStart", nullptr);
+    addLoader("ExeStart", nullptr);
 
     if (ph.method == M_NRV2E_8)
-        addLoader("Call2E", NULL);
+        addLoader("Call2E", nullptr);
     else if (ph.method == M_NRV2B_8)
-        addLoader("Call2B", NULL);
+        addLoader("Call2B", nullptr);
     else if (ph.method == M_NRV2D_8)
-        addLoader("Call2D", NULL);
+        addLoader("Call2D", nullptr);
     else if (M_IS_LZMA(ph.method))
-        addLoader("+40C,CallLZMA", NULL);
+        addLoader("+40C,CallLZMA", nullptr);
 
 
     if (ft->id == 0x50)
-        addLoader("+40C,Unfilter_0x50", NULL);
+        addLoader("+40C,Unfilter_0x50", nullptr);
 
     if (sorelocs)
-        addLoader("+40C,Relocs", NULL);
+        addLoader("+40C,Relocs", nullptr);
 
-    addLoader("+40C,Imports", NULL);
-    addLoader("ProcessEnd", NULL);
+    addLoader("+40C,Imports", nullptr);
+    addLoader("ProcessEnd", nullptr);
 
     if (ph.method == M_NRV2E_8)
-        addLoader(".ucl_nrv2e_decompress_8", NULL);
+        addLoader(".ucl_nrv2e_decompress_8", nullptr);
     else if (ph.method == M_NRV2B_8)
-        addLoader(".ucl_nrv2b_decompress_8", NULL);
+        addLoader(".ucl_nrv2b_decompress_8", nullptr);
     else if (ph.method == M_NRV2D_8)
-        addLoader(".ucl_nrv2d_decompress_8", NULL);
+        addLoader(".ucl_nrv2d_decompress_8", nullptr);
     else if (M_IS_LZMA(ph.method))
-        addLoader("+40C,LZMA_DECODE,LZMA_DEC10", NULL);
+        addLoader("+40C,LZMA_DECODE,LZMA_DEC10", nullptr);
 
-    addLoader("IDENTSTR,UPX1HEAD", NULL);
+    addLoader("IDENTSTR,UPX1HEAD", nullptr);
 }
 
 bool PackArmPe::handleForceOption()
@@ -197,7 +197,7 @@ void PackArmPe::callCompressWithFilters(Filter &ft, int filter_strategy, unsigne
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
     compressWithFilters(&ft, 2048, &cconf, filter_strategy,
-                        ih_codebase, rvamin, 0, NULL, 0);
+                        ih_codebase, rvamin, 0, nullptr, 0);
 }
 
 void PackArmPe::addNewRelocations(Reloc &rel, unsigned upxsection)
