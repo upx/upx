@@ -33,12 +33,6 @@
 #include "p_elf.h"
 
 
-#if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
-#include <crt0.h>
-int _crt0_startup_flags = _CRT0_FLAG_UNIX_SBRK;
-#endif
-
-
 /*************************************************************************
 // options
 **************************************************************************/
@@ -103,14 +97,18 @@ static void handle_opterr(acc_getopt_p g, const char *f, void *v)
 }
 
 
-static int num_files = -1;
-static int exit_code = EXIT_OK;
-
-
 /*************************************************************************
 // exit handlers
 **************************************************************************/
 
+static int exit_code = EXIT_OK;
+
+#if (WITH_GUI)
+__acc_static_noinline void do_exit(void)
+{
+    throw exit_code;
+}
+#else
 #if defined(__GNUC__)
 static void do_exit(void) __attribute__((__noreturn__));
 #endif
@@ -126,6 +124,7 @@ static void do_exit(void)
     fflush(stderr);
     exit(exit_code);
 }
+#endif
 
 
 #define EXIT_FATAL  3
@@ -164,7 +163,7 @@ bool set_exit_code(int ec)
 }
 
 
-void e_exit(int ec)
+static void e_exit(int ec)
 {
     (void) set_exit_code(ec);
     do_exit();
@@ -1426,29 +1425,10 @@ void upx_compiler_sanity_check(void)
 // main entry point
 **************************************************************************/
 
-#if !(WITH_GUI)
-
-#if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
-extern "C" { extern long _stksize; long _stksize = 256 * 1024L; }
-#endif
-#if (ACC_OS_WIN32 || ACC_OS_WIN64) && (defined(__MINGW32__) || defined(__MINGW64__))
-extern "C" { extern int _dowildcard; int _dowildcard = -1; }
-#endif
-
-int __acc_cdecl_main main(int argc, char *argv[])
+int upx_main(int argc, char *argv[])
 {
     int i;
     static char default_argv0[] = "upx";
-//    int cmdline_cmd = CMD_NONE;
-
-#if 0 && (ACC_OS_DOS32) && defined(__DJGPP__)
-    // LFN=n may cause problems with 2.03's _rename and mkdir under WinME
-    putenv("LFN=y");
-#endif
-#if (ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_MSC) && defined(_WRITE_ABORT_MSG) && defined(_CALL_REPORTFAULT)
-    _set_abort_behavior(_WRITE_ABORT_MSG, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
-#endif
-    acc_wildargv(&argc, &argv);
 
     upx_compiler_sanity_check();
     opt->reset();
@@ -1477,7 +1457,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
 #else
     progname = fn_basename(argv0);
 #endif
-    while (progname[0] == '.' && progname[1] == '/'  && progname[2])
+    while (progname[0] == '.' && progname[1] == '/' && progname[2])
         progname += 2;
 
     set_term(stderr);
@@ -1497,9 +1477,6 @@ int __acc_cdecl_main main(int argc, char *argv[])
     assert(upx_nrv_init() == 0);
 #endif
 
-    //srand((int) time(nullptr));
-    srand((int) clock());
-
     /* get options */
     first_options(argc,argv);
 #if defined(OPTIONS_VAR)
@@ -1510,7 +1487,6 @@ int __acc_cdecl_main main(int argc, char *argv[])
     assert(i <= argc);
 
     set_term(nullptr);
-//    cmdline_cmd = opt->cmd;
     switch (opt->cmd)
     {
     case CMD_NONE:
@@ -1549,7 +1525,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
         e_help();
     set_term(stderr);
     check_options(i,argc);
-    num_files = argc - i;
+    int num_files = argc - i;
     if (num_files < 1)
     {
         if (opt->verbose >= 2)
@@ -1560,7 +1536,8 @@ int __acc_cdecl_main main(int argc, char *argv[])
 
     /* start work */
     set_term(stdout);
-    do_files(i,argc,argv);
+    if (do_files(i,argc,argv) != 0)
+        return exit_code;
 
     if (gitrev[0])
     {
@@ -1578,10 +1555,46 @@ int __acc_cdecl_main main(int argc, char *argv[])
         }
     }
 
+    return exit_code;
+}
+
+
+/*************************************************************************
+// real entry point
+**************************************************************************/
+
+#if !(WITH_GUI)
+
+#if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
+#include <crt0.h>
+int _crt0_startup_flags = _CRT0_FLAG_UNIX_SBRK;
+#endif
+#if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
+extern "C" { extern long _stksize; long _stksize = 256 * 1024L; }
+#endif
+#if (ACC_OS_WIN32 || ACC_OS_WIN64) && (defined(__MINGW32__) || defined(__MINGW64__))
+extern "C" { extern int _dowildcard; int _dowildcard = -1; }
+#endif
+
+int __acc_cdecl_main main(int argc, char *argv[])
+{
+#if 0 && (ACC_OS_DOS32) && defined(__DJGPP__)
+    // LFN=n may cause problems with 2.03's _rename and mkdir under WinME
+    putenv("LFN=y");
+#endif
+#if (ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_MSC) && defined(_WRITE_ABORT_MSG) && defined(_CALL_REPORTFAULT)
+    _set_abort_behavior(_WRITE_ABORT_MSG, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#endif
+    acc_wildargv(&argc, &argv);
+    //srand((int) time(nullptr));
+    srand((int) clock());
+
+    int r = upx_main(argc, argv);
+
 #if 0 && defined(__GLIBC__)
     //malloc_stats();
 #endif
-    return exit_code;
+    return r;
 }
 
 #endif /* !(WITH_GUI) */

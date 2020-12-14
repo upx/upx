@@ -668,12 +668,8 @@ typedef ElfLinker Linker;
 // main.cpp
 extern const char *progname;
 bool set_exit_code(int ec);
-#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-void e_exit(int ec) __attribute__((__noreturn__));
-#else
-void e_exit(int ec);
-#endif
 void upx_compiler_sanity_check(void);
+int upx_main(int argc, char *argv[]);
 
 
 // msg.cpp
@@ -709,7 +705,7 @@ void infoWriting(const char *what, long size);
 
 // work.cpp
 void do_one_file(const char *iname, char *oname);
-void do_files(int i, int argc, char *argv[]);
+int do_files(int i, int argc, char *argv[]);
 
 
 // help.cpp
