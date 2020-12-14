@@ -254,7 +254,7 @@ static void unlink_ofile(char *oname) {
     }
 }
 
-void do_files(int i, int argc, char *argv[]) {
+int do_files(int i, int argc, char *argv[]) {
     upx_compiler_sanity_check();
     if (opt->verbose >= 1) {
         show_head();
@@ -275,33 +275,40 @@ void do_files(int i, int argc, char *argv[]) {
             if (opt->verbose >= 1 || (opt->verbose >= 0 && !e.isWarning()))
                 printErr(iname, &e);
             set_exit_code(e.isWarning() ? EXIT_WARN : EXIT_ERROR);
+            // continue processing more files
         } catch (const Error &e) {
             unlink_ofile(oname);
             printErr(iname, &e);
-            e_exit(EXIT_ERROR);
+            set_exit_code(EXIT_ERROR);
+            return -1;
         } catch (std::bad_alloc *e) {
             unlink_ofile(oname);
             printErr(iname, "out of memory");
             UNUSED(e);
             // delete e;
-            e_exit(EXIT_ERROR);
+            set_exit_code(EXIT_ERROR);
+            return -1;
         } catch (const std::bad_alloc &) {
             unlink_ofile(oname);
             printErr(iname, "out of memory");
-            e_exit(EXIT_ERROR);
+            set_exit_code(EXIT_ERROR);
+            return -1;
         } catch (std::exception *e) {
             unlink_ofile(oname);
             printUnhandledException(iname, e);
             // delete e;
-            e_exit(EXIT_ERROR);
+            set_exit_code(EXIT_ERROR);
+            return -1;
         } catch (const std::exception &e) {
             unlink_ofile(oname);
             printUnhandledException(iname, &e);
-            e_exit(EXIT_ERROR);
+            set_exit_code(EXIT_ERROR);
+            return -1;
         } catch (...) {
             unlink_ofile(oname);
             printUnhandledException(iname, nullptr);
-            e_exit(EXIT_ERROR);
+            set_exit_code(EXIT_ERROR);
+            return -1;
         }
     }
 
@@ -315,6 +322,7 @@ void do_files(int i, int argc, char *argv[]) {
         UiPacker::uiTestTotal();
     else if (opt->cmd == CMD_FILEINFO)
         UiPacker::uiFileInfoTotal();
+    return 0;
 }
 
 /* vim:set ts=4 sw=4 et: */
