@@ -65,6 +65,8 @@
 #  error "UINT_MAX"
 #endif
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(int) == 4)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(long long) == 8)
+// check sane compiler mandatory flags
 ACC_COMPILE_TIME_ASSERT_HEADER(-1 == ~0) // two's complement - see http://wg21.link/P0907R4
 ACC_COMPILE_TIME_ASSERT_HEADER(0u-1 == ~0u) // two's complement - see http://wg21.link/P0907R4
 ACC_COMPILE_TIME_ASSERT_HEADER((1u << 31) << 1 == 0)
@@ -179,7 +181,7 @@ typedef unsigned char   upx_byte;
 // see C 11 standard, Annex K
 typedef size_t upx_rsize_t;
 #define UPX_RSIZE_MAX       UPX_RSIZE_MAX_MEM
-#define UPX_RSIZE_MAX_MEM   (768 * 1024 * 1024)   // DO NOT CHANGE
+#define UPX_RSIZE_MAX_MEM   (768 * 1024 * 1024)   // DO NOT CHANGE !!!
 #define UPX_RSIZE_MAX_STR   (1024 * 1024)
 
 
@@ -671,6 +673,7 @@ void e_exit(int ec) __attribute__((__noreturn__));
 #else
 void e_exit(int ec);
 #endif
+void upx_compiler_sanity_check(void);
 
 
 // msg.cpp

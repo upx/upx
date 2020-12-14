@@ -1,30 +1,29 @@
 #
-# UPX Makefile - needs GNU make 3.81 or better
+# UPX Makefile - needs GNU make
 #
 # Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
 #
+
+MAKEFLAGS += -rR
+.SUFFIXES:
+export SHELL = /bin/sh
 
 # build configuration options for this Makefile
 BUILD_TYPE_DEBUG    ?= 0
 BUILD_TYPE_SANITIZE ?= 0
 BUILD_USE_DEPEND    ?= 1
 
-MAKEFLAGS += -r
-.SUFFIXES:
-export SHELL = /bin/sh
-override ee = $($1) $(EXTRA_$1) $(upx_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
-
 ifndef srcdir
-srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
-srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,' || echo 'ERROR')
+  srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
+  srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,' || echo 'ERROR')
 endif
 ifndef top_srcdir
-top_srcdir := $(srcdir)/..
+  top_srcdir := $(srcdir)/..
 endif
 include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 ifneq ($(srcdir),.)
-vpath %.cpp .:$(srcdir)
-vpath %.h   .:$(srcdir)
+  vpath %.cpp .:$(srcdir)
+  vpath %.h   .:$(srcdir)
 endif
 
 # toolchain
@@ -34,50 +33,60 @@ exeext ?= .out
 libext ?= .a
 objext ?= .o
 
+# flags composition
+override all_flags = $(mf.$1) $($1) $(EXTRA_$1) $(upx_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
+ALL_CPPFLAGS = $(strip $(call all_flags,CPPFLAGS))
+ALL_CXXFLAGS = $(strip $(call all_flags,CXXFLAGS))
+ALL_LDFLAGS  = $(strip $(call all_flags,LDFLAGS))
+ALL_LDADD    = $(strip $(call all_flags,LDADD))
+ALL_LIBS     = $(strip $(call all_flags,LIBS))
+
 upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp))
 upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
 
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
 UPX_VERSION_GITREV := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=12 HEAD || echo 'ERROR'))
 ifneq ($(UPX_VERSION_GITREV),)
-GITREV_PLUS := $(strip $(shell cd '$(top_srcdir)' && git diff --exit-code HEAD >/dev/null && echo '' || echo '+'))
-DEFS += '-DUPX_VERSION_GITREV="$(UPX_VERSION_GITREV)$(GITREV_PLUS)"'
+  GITREV_PLUS := $(strip $(shell cd '$(top_srcdir)' && git diff --exit-code HEAD >/dev/null && echo '' || echo '+'))
+  DEFS += '-DUPX_VERSION_GITREV="$(UPX_VERSION_GITREV)$(GITREV_PLUS)"'
 endif
 endif
 
 # we need UCL and zlib - you can set envvar UPX_UCLDIR
 ifneq ($(wildcard $(UPX_UCLDIR)/include/ucl/ucl.h),)
-INCLUDES += -I$(UPX_UCLDIR)/include
-LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
+  INCLUDES += -I$(UPX_UCLDIR)/include
+  LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
 endif
 LIBS += -lucl -lz
 # LZMA from https://github.com/upx/upx-lzma-sdk
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 
-CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
-CXXFLAGS += -std=c++14
+# optional flags
 ifeq ($(BUILD_TYPE_DEBUG),1)
-CXXFLAGS_OPTIMIZE ?= -O0 -g
+  CXXFLAGS_OPTIMIZE ?= -O0 -g
 else
-CXXFLAGS_OPTIMIZE ?= -O2
+  CXXFLAGS_OPTIMIZE ?= -O2
 endif
-CXXFLAGS += $(CXXFLAGS_OPTIMIZE)
-# protect against security threats caused by misguided C++ compiler "optimizations"
-ifeq ($(findstring clang,$(CXX)),)
-CXXFLAGS += -fno-delete-null-pointer-checks
-endif
-CXXFLAGS += -fno-strict-aliasing -fwrapv
-CXXFLAGS += -funsigned-char
-CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wsign-compare -Wvla -Wwrite-strings
-CXXFLAGS_WERROR ?= -Werror
-CXXFLAGS += $(CXXFLAGS_WERROR)
-
 ifeq ($(BUILD_TYPE_SANITIZE),1)
-CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer -DACC_CFG_NO_UNALIGNED
-CXXFLAGS += $(CXXFLAGS_SANITIZE)
-# these are the only 2 objects that are actually speed-sensitive
-compress_lzma$(objext) filteri$(objext) : override CXXFLAGS_SANITIZE =
+  CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer -DACC_CFG_NO_UNALIGNED
+else
+  CXXFLAGS_SANITIZE ?= -fstack-protector-all
 endif
+ifeq ($(findstring clang,$(CXX)),)
+  CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS ?= -fno-delete-null-pointer-checks
+endif
+CXXFLAGS_WERROR ?= -Werror
+
+# Mandatory Flags - DO NOT CHANGE!
+mf.CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
+mf.CXXFLAGS += $(CXXFLAGS_OPTIMIZE)
+# protect against security threats caused by misguided C++ compiler "optimizations"
+mf.CXXFLAGS += $(CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS)
+mf.CXXFLAGS += -fno-strict-aliasing -fno-strict-overflow
+mf.CXXFLAGS += -funsigned-char
+mf.CXXFLAGS += $(CXXFLAGS_SANITIZE)
+mf.CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
+mf.CXXFLAGS += $(CXXFLAGS_WERROR)
 
 # rules
 all: upx$(exeext) | ./.depend
@@ -85,20 +94,30 @@ all: upx$(exeext) | ./.depend
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$($(notdir $@).PRE_LINK_STEP)
-	$(strip $(CXXLD) $(call ee,CXXFLAGS) $(call ee,LDFLAGS) -o $@ $(upx_OBJECTS) $(call ee,LDADD) $(call ee,LIBS))
+	$(strip $(CXXLD) $(ALL_CXXFLAGS) $(ALL_LDFLAGS) -o $@ $(upx_OBJECTS) $(ALL_LDADD) $(ALL_LIBS))
 	$($(notdir $@).POST_LINK_STEP)
 	$(CHECK_WHITESPACE)
 
 %.o : %.cpp | ./.depend
-	$(strip $(CXX) $(call ee,CPPFLAGS) $(call ee,CXXFLAGS) -o $@ -c $<)
+	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -c $<)
 %.cpp.ii : %.cpp
-	$(strip $(CXX) $(call ee,CPPFLAGS) $(call ee,CXXFLAGS) -o $@ -E $<)
+	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -E $<)
+
+# object overrides
+compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
+# these are the only 2 objects that are actually speed-sensitive
+compress_lzma$(objext) : override CXXFLAGS_SANITIZE =
+filteri$(objext)       : override CXXFLAGS_SANITIZE =
+# disable some warnings
+compress_lzma$(objext) : upx_CXXFLAGS += -Wno-shadow
+p_mach$(objext)        : upx_CXXFLAGS += -Wno-cast-align
 
 ifeq ($(BUILD_USE_DEPEND),1)
 ./.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
 	@rm -f $@
 	@echo "Updating $@"
-	@$(strip $(CXX) $(call ee,CPPFLAGS) $(call ee,CXXFLAGS) -MM) $(filter %.cpp,$^) > $@
+	@$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -MM) $(filter %.cpp,$^) > $@
+./.depend : INCLUDES += -I$(UPX_LZMADIR)
 else
 ./.depend:
 .PHONY: ./.depend
@@ -116,11 +135,6 @@ endif
 
 mostlyclean clean distclean maintainer-clean:
 	rm -f *.d *.ii *.map *.o *.obj *.res ./.depend upx.exe upx.out upx.ttp upx$(exeext)
-
-./.depend compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
-
-compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
-p_mach$(objext)        : CXXFLAGS += -Wno-cast-align
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
 

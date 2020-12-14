@@ -1289,12 +1289,22 @@ static bool test(void)
     return true;
 }};
 
+template <class A, class B> struct TestNoStrictAliasingStruct {
+    __acc_static_noinline bool test(A *a, B *b) { *a = 0; *b = (B)((B)0-1); return *a != 0; }
+};
+template <class A, class B> static inline bool testNoStrictAliasing(A *a, B *b) {
+    return TestNoStrictAliasingStruct<A,B>::test(a, b);
+}
+template <class T> struct TestIntegerWrap {
+    static inline bool inc(T x) { return x + 1 > x; }
+    static inline bool dec(T x) { return x - 1 < x; }
+};
 
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
 #include "miniacc.h"
 
-__acc_static_noinline void upx_sanity_check(void)
+void upx_compiler_sanity_check(void)
 {
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
@@ -1340,6 +1350,7 @@ __acc_static_noinline void upx_sanity_check(void)
         else { assert(revlen == 12 || revlen == 13); }
         if (revlen == 6 || revlen == 13) { assert(gitrev[revlen-1] == '+'); }
     }
+    assert(UPX_RSIZE_MAX_MEM == 805306368);
 
 #if 1
     assert(TestBELE<LE16>::test());
@@ -1396,6 +1407,18 @@ __acc_static_noinline void upx_sanity_check(void)
     assert(get_be64_signed(d) == UPX_INT64_C(9186918263483431288));
     }
 #endif
+
+    union { short v_short; int v_int; long v_long; } u;
+    assert(testNoStrictAliasing(&u.v_short, &u.v_long));
+
+    assert( TestIntegerWrap<int>::inc(0));
+    assert(!TestIntegerWrap<int>::inc(INT_MAX));
+    assert( TestIntegerWrap<int>::dec(0));
+    assert(!TestIntegerWrap<int>::dec(INT_MIN));
+    assert( TestIntegerWrap<unsigned>::inc(0));
+    assert(!TestIntegerWrap<unsigned>::inc(UINT_MAX));
+    assert( TestIntegerWrap<unsigned>::dec(1));
+    assert(!TestIntegerWrap<unsigned>::dec(0));
 }
 
 
@@ -1427,7 +1450,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
 #endif
     acc_wildargv(&argc, &argv);
 
-    upx_sanity_check();
+    upx_compiler_sanity_check();
     opt->reset();
 
     if (!argv[0] || !argv[0][0])

@@ -255,6 +255,7 @@ static void unlink_ofile(char *oname) {
 }
 
 void do_files(int i, int argc, char *argv[]) {
+    upx_compiler_sanity_check();
     if (opt->verbose >= 1) {
         show_head();
         UiPacker::uiHeader();
