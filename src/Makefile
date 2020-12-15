@@ -4,7 +4,7 @@
 # Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
 #
 
-MAKEFLAGS += -rR
+MAKEFLAGS += -r
 .SUFFIXES:
 export SHELL = /bin/sh
 
