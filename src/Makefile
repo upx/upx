@@ -61,7 +61,7 @@ LIBS += -lucl -lz
 # LZMA from https://github.com/upx/upx-lzma-sdk
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 
-# optional flags
+# default flags that you can change or override
 ifeq ($(BUILD_TYPE_DEBUG),1)
   CXXFLAGS_OPTIMIZE ?= -O0 -g
 else
@@ -85,7 +85,7 @@ mf.CXXFLAGS += $(CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS)
 mf.CXXFLAGS += -fno-strict-aliasing -fno-strict-overflow
 mf.CXXFLAGS += -funsigned-char
 mf.CXXFLAGS += $(CXXFLAGS_SANITIZE)
-mf.CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
+mf.CXXFLAGS += -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
 mf.CXXFLAGS += $(CXXFLAGS_WERROR)
 
 # rules

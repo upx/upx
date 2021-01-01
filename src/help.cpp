@@ -413,7 +413,7 @@ void show_version(int x)
     fprintf(fp, "Copyright (C) 2000-2021 John F. Reiser\n");
     fprintf(fp, "Copyright (C) 2002-2021 Jens Medoch\n");
 #if (WITH_ZLIB)
-    fprintf(fp, "Copyright (C) 1995" "-2005 Jean-loup Gailly and Mark Adler\n");
+    fprintf(fp, "Copyright (C) 1995" "-2017 Jean-loup Gailly and Mark Adler\n");
 #endif
 #if (WITH_LZMA)
     fprintf(fp, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
