@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -408,10 +408,10 @@ void show_version(int x)
     if (v != nullptr && v[0])
         fprintf(fp, "LZMA SDK version %s\n", v);
 #endif
-    fprintf(fp, "Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer\n");
-    fprintf(fp, "Copyright (C) 1996-2020 Laszlo Molnar\n");
-    fprintf(fp, "Copyright (C) 2000-2020 John F. Reiser\n");
-    fprintf(fp, "Copyright (C) 2002-2020 Jens Medoch\n");
+    fprintf(fp, "Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer\n");
+    fprintf(fp, "Copyright (C) 1996-2021 Laszlo Molnar\n");
+    fprintf(fp, "Copyright (C) 2000-2021 John F. Reiser\n");
+    fprintf(fp, "Copyright (C) 2002-2021 Jens Medoch\n");
 #if (WITH_ZLIB)
     fprintf(fp, "Copyright (C) 1995" "-2005 Jean-loup Gailly and Mark Adler\n");
 #endif
