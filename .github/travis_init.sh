@@ -179,7 +179,7 @@ fi # CC_OVERRIDE
 [[ -z $upx_SRCDIR ]] && upx_SRCDIR=$(readlink -mn -- $argv0dir/..)
 [[ -z $ucl_SRCDIR ]] && ucl_SRCDIR=$(readlink -mn -- $upx_SRCDIR/../deps/ucl-1.03)
 [[ -z $upx_testsuite_SRCDIR ]] && upx_testsuite_SRCDIR=$(readlink -mn -- $upx_SRCDIR/../deps/upx-testsuite)
-[[ -z $zlib_SRCDIR ]] && zlib_SRCDIR=$(readlink -mn -- $upx_SRCDIR/../deps/zlib-1.2.8)
+[[ -z $zlib_SRCDIR ]] && zlib_SRCDIR=$(readlink -mn -- $upx_SRCDIR/../deps/zlib-1.2.11)
 
 # build dirs
 mkbuilddirs() {
@@ -207,7 +207,7 @@ fi
 [[ -z $upx_BUILDDIR ]] && upx_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx")
 [[ -z $ucl_BUILDDIR ]] && ucl_BUILDDIR=$(readlink -mn -- "$toptop_bdir/ucl-1.03")
 [[ -z $upx_testsuite_BUILDDIR ]] && upx_testsuite_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx-testsuite")
-[[ -z $zlib_BUILDDIR ]] && zlib_BUILDDIR=$(readlink -mn -- "$toptop_bdir/zlib-1.2.8")
+[[ -z $zlib_BUILDDIR ]] && zlib_BUILDDIR=$(readlink -mn -- "$toptop_bdir/zlib-1.2.11")
 [[ -z $lcov_OUTPUTDIR ]] && lcov_OUTPUTDIR=$(readlink -mn -- "$toptop_bdir/.lcov-results")
 unset toptop_builddir toptop_bdir
 
