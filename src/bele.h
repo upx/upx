@@ -29,168 +29,240 @@
 #ifndef __UPX_BELE_H
 #define __UPX_BELE_H 1
 
+// BE - Big Endian
+// LE - Little Endian
+// NE - Native Endiannes (aka host endianness)
+// TE - Target Endiannes
 
 /*************************************************************************
-// core
+// core - NE
+**************************************************************************/
+
+__acc_static_forceinline unsigned get_ne16(const void *p)
+{
+    upx_uint16_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+
+__acc_static_forceinline unsigned get_ne32(const void *p)
+{
+    upx_uint32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+
+__acc_static_forceinline upx_uint64_t get_ne64(const void *p)
+{
+    upx_uint64_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+
+__acc_static_forceinline void set_ne16(void *p, unsigned vv)
+{
+    upx_uint16_t v = (upx_uint16_t) (vv & 0xffff);
+    upx_memcpy_inline(p, &v, sizeof(v));
+}
+
+__acc_static_forceinline void set_ne32(void *p, unsigned vv)
+{
+    upx_uint32_t v = vv;
+    upx_memcpy_inline(p, &v, sizeof(v));
+}
+
+__acc_static_forceinline void set_ne64(void *p, upx_uint64_t vv)
+{
+    upx_uint64_t v = vv;
+    upx_memcpy_inline(p, &v, sizeof(v));
+}
+
+
+/*************************************************************************
+// core - bswap
+**************************************************************************/
+
+#if (ACC_CC_MSC)
+
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(long) == 4)
+
+__acc_static_forceinline unsigned bswap16(unsigned v)
+{
+    return (unsigned) _byteswap_ulong(v << 16);
+}
+__acc_static_forceinline unsigned bswap32(unsigned v)
+{
+    return (unsigned) _byteswap_ulong(v);
+}
+__acc_static_forceinline upx_uint64_t bswap64(upx_uint64_t v)
+{
+    return _byteswap_uint64(v);
+}
+
+#else
+
+__acc_static_forceinline constexpr unsigned bswap16(unsigned v)
+{
+    //return __builtin_bswap16((upx_uint16_t) v);
+    //return (unsigned) __builtin_bswap64((upx_uint64_t) v << 48);
+    return __builtin_bswap32(v << 16);
+}
+__acc_static_forceinline constexpr unsigned bswap32(unsigned v)
+{
+    //return (unsigned) __builtin_bswap64((upx_uint64_t) v << 32);
+    return __builtin_bswap32(v);
+}
+__acc_static_forceinline constexpr upx_uint64_t bswap64(upx_uint64_t v)
+{
+    return __builtin_bswap64(v);
+}
+
+#endif
+
+__acc_static_forceinline constexpr unsigned no_bswap16(unsigned v)
+{
+    return v & 0xffff; // needed so that this is equivalent to bswap16() above
+}
+
+__acc_static_forceinline constexpr unsigned no_bswap32(unsigned v)
+{
+    return v;
+}
+
+__acc_static_forceinline constexpr upx_uint64_t no_bswap64(upx_uint64_t v)
+{
+    return v;
+}
+
+
+#if (ACC_ABI_BIG_ENDIAN)
+#  define ne16_to_be16(v) no_bswap16(v)
+#  define ne32_to_be32(v) no_bswap32(v)
+#  define ne64_to_be64(v) no_bswap64(v)
+#  define ne16_to_le16(v) bswap16(v)
+#  define ne32_to_le32(v) bswap32(v)
+#  define ne64_to_le64(v) bswap64(v)
+#else
+#  define ne16_to_be16(v) bswap16(v)
+#  define ne32_to_be32(v) bswap32(v)
+#  define ne64_to_be64(v) bswap64(v)
+#  define ne16_to_le16(v) no_bswap16(v)
+#  define ne32_to_le32(v) no_bswap32(v)
+#  define ne64_to_le64(v) no_bswap64(v)
+#endif
+
+
+/*************************************************************************
+// get/set 16/32/64
 **************************************************************************/
 
 inline unsigned get_be16(const void *p)
 {
-#if defined(ACC_UA_GET_BE16)
-    return ACC_UA_GET_BE16(p);
-#else
-    return acc_ua_get_be16(p);
-#endif
+    return ne16_to_be16(get_ne16(p));
 }
 
 inline void set_be16(void *p, unsigned v)
 {
-#if defined(ACC_UA_SET_BE16)
-    ACC_UA_SET_BE16(p, v);
-#else
-    acc_ua_set_be16(p, v);
-#endif
-}
-
-inline unsigned get_be24(const void *p)
-{
-#if defined(ACC_UA_GET_BE24)
-    return ACC_UA_GET_BE24(p);
-#else
-    return acc_ua_get_be24(p);
-#endif
-}
-
-inline void set_be24(void *p, unsigned v)
-{
-#if defined(ACC_UA_SET_BE24)
-    ACC_UA_SET_BE24(p, v);
-#else
-    acc_ua_set_be24(p, v);
-#endif
+    set_ne16(p, ne16_to_be16(v));
 }
 
 inline unsigned get_be32(const void *p)
 {
-#if defined(ACC_UA_GET_BE32)
-    return ACC_UA_GET_BE32(p);
-#else
-    return acc_ua_get_be32(p);
-#endif
+    return ne32_to_be32(get_ne32(p));
 }
 
 inline void set_be32(void *p, unsigned v)
 {
-#if defined(ACC_UA_SET_BE32)
-    ACC_UA_SET_BE32(p, v);
-#else
-    acc_ua_set_be32(p, v);
-#endif
+    set_ne32(p, ne32_to_be32(v));
 }
 
 inline upx_uint64_t get_be64(const void *p)
 {
-#if defined(ACC_UA_GET_BE64)
-    return ACC_UA_GET_BE64(p);
-#else
-    return acc_ua_get_be64(p);
-#endif
+    return ne64_to_be64(get_ne64(p));
 }
 
 inline void set_be64(void *p, upx_uint64_t v)
 {
-#if defined(ACC_UA_SET_BE64)
-    ACC_UA_SET_BE64(p, v);
-#else
-    acc_ua_set_be64(p, v);
-#endif
+    set_ne64(p, ne64_to_be64(v));
 }
 
 inline unsigned get_le16(const void *p)
 {
-#if defined(ACC_UA_GET_LE16)
-    return ACC_UA_GET_LE16(p);
-#else
-    return acc_ua_get_le16(p);
-#endif
+    return ne16_to_le16(get_ne16(p));
 }
 
 inline void set_le16(void *p, unsigned v)
 {
-#if defined(ACC_UA_SET_LE16)
-    ACC_UA_SET_LE16(p, v);
-#else
-    acc_ua_set_le16(p, v);
-#endif
-}
-
-inline unsigned get_le24(const void *p)
-{
-#if defined(ACC_UA_GET_LE24)
-    return ACC_UA_GET_LE24(p);
-#else
-    return acc_ua_get_le24(p);
-#endif
-}
-
-inline void set_le24(void *p, unsigned v)
-{
-#if defined(ACC_UA_SET_LE24)
-    ACC_UA_SET_LE24(p, v);
-#else
-    acc_ua_set_le24(p, v);
-#endif
-}
-
-inline unsigned get_le26(const void *p)
-{
-    const acc_hbyte_p b = ACC_CCAST(const acc_hbyte_p, p);
-    return ACC_ICONV(acc_uint32l_t, b[0]       ) | (  ACC_ICONV(acc_uint32l_t, b[1])     <<  8) |
-          (ACC_ICONV(acc_uint32l_t, b[2]) << 16) | (((ACC_ICONV(acc_uint32l_t, b[3]) & 3)<< 24));
-}
-
-inline void set_le26(void *p, unsigned v)
-{
-    acc_hbyte_p b = ACC_PCAST(acc_hbyte_p, p);
-    b[0] = ACC_ICONV(unsigned char, (v >>  0) & 0xff);
-    b[1] = ACC_ICONV(unsigned char, (v >>  8) & 0xff);
-    b[2] = ACC_ICONV(unsigned char, (v >> 16) & 0xff);
-    b[3] = ACC_ICONV(unsigned char, (v >> 24) & 0x03) | (0xFC & b[3]);
+    set_ne16(p, ne16_to_le16(v));
 }
 
 inline unsigned get_le32(const void *p)
 {
-#if defined(ACC_UA_GET_LE32)
-    return ACC_UA_GET_LE32(p);
-#else
-    return acc_ua_get_le32(p);
-#endif
+    return ne32_to_le32(get_ne32(p));
 }
 
 inline void set_le32(void *p, unsigned v)
 {
-#if defined(ACC_UA_SET_LE32)
-    ACC_UA_SET_LE32(p, v);
-#else
-    acc_ua_set_le32(p, v);
-#endif
+    set_ne32(p, ne32_to_le32(v));
 }
 
 inline upx_uint64_t get_le64(const void *p)
 {
-#if defined(ACC_UA_GET_LE64)
-    return ACC_UA_GET_LE64(p);
-#else
-    return acc_ua_get_le64(p);
-#endif
+    return ne64_to_le64(get_ne64(p));
 }
 
 inline void set_le64(void *p, upx_uint64_t v)
 {
-#if defined(ACC_UA_SET_LE64)
-    ACC_UA_SET_LE64(p, v);
+    set_ne64(p, ne64_to_le64(v));
+}
+
+
+/*************************************************************************
+// get/set 24/26
+**************************************************************************/
+
+inline unsigned get_be24(const void *p)
+{
+    const unsigned char *b = ACC_CCAST(const unsigned char *, p);
+    return (b[0] << 16) | (b[1] << 8) | (b[2] << 0);
+}
+
+inline void set_be24(void *p, unsigned v)
+{
+    unsigned char *b = ACC_PCAST(unsigned char *, p);
+    b[0] = ACC_ICONV(unsigned char, (v >> 16) & 0xff);
+    b[1] = ACC_ICONV(unsigned char, (v >>  8) & 0xff);
+    b[2] = ACC_ICONV(unsigned char, (v >>  0) & 0xff);
+}
+
+inline unsigned get_le24(const void *p)
+{
+    const unsigned char *b = ACC_CCAST(const unsigned char *, p);
+    return (b[0] << 0) | (b[1] << 8) | (b[2] << 16);
+}
+
+inline void set_le24(void *p, unsigned v)
+{
+    unsigned char *b = ACC_PCAST(unsigned char *, p);
+    b[0] = ACC_ICONV(unsigned char, (v >>  0) & 0xff);
+    b[1] = ACC_ICONV(unsigned char, (v >>  8) & 0xff);
+    b[2] = ACC_ICONV(unsigned char, (v >> 16) & 0xff);
+}
+
+
+inline unsigned get_le26(const void *p)
+{
+    return get_le32(p) & 0x03ffffff;
+}
+
+inline void set_le26(void *p, unsigned v)
+{
+    // preserve the top 6 bits
+#if 0
+    set_le32(p, (get_le32(p) & 0xfc000000) | (v & 0x03ffffff));
 #else
-    acc_ua_set_le64(p, v);
+    // optimized version, saving a bswap32
+    set_ne32(p, (get_ne32(p) & ne32_to_le32(0xfc000000)) | ne32_to_le32(v & 0x03ffffff));
 #endif
 }
 
@@ -261,58 +333,6 @@ inline upx_int64_t get_le64_signed(const void *p)
 {
     upx_uint64_t v = get_le64(p);
     return sign_extend(v, 64);
-}
-
-
-/*************************************************************************
-// swab (bswap)
-**************************************************************************/
-
-inline unsigned acc_swab16(unsigned v)
-{
-    return ((v & 0x00ff) << 8) |
-           ((v & 0xff00) >> 8);
-}
-
-inline unsigned acc_swab32(unsigned v)
-{
-    return ((v & 0x000000ff) << 24) |
-           ((v & 0x0000ff00) <<  8) |
-           ((v & 0x00ff0000) >>  8) |
-           ((v & 0xff000000) >> 24);
-}
-
-
-inline unsigned acc_swab16p(const upx_uint16_t *p)
-{
-    return acc_swab16(*p);
-}
-
-inline unsigned acc_swap32p(const upx_uint32_t *p)
-{
-    return acc_swab32(*p);
-}
-
-
-inline void acc_swab16s(upx_uint16_t *p)
-{
-    *p = ACC_ICONV(upx_uint16_t, acc_swab16(*p));
-}
-
-inline void acc_swab32s(upx_uint32_t *p)
-{
-    *p = ACC_ICONV(upx_uint32_t, acc_swab32(*p));
-}
-
-
-inline void acc_ua_swab16s(void *p)
-{
-    set_be16(p, get_le16(p));
-}
-
-inline void acc_ua_swab32s(void *p)
-{
-    set_be32(p, get_le32(p));
 }
 
 
@@ -433,6 +453,17 @@ __packed_struct(LE64)
 
     operator upx_uint64_t () const { return get_le64(d); }
 __packed_struct_end()
+
+
+#if (ACC_ABI_BIG_ENDIAN)
+typedef BE16 NE16;
+typedef BE32 NE32;
+typedef BE64 NE64;
+#else
+typedef LE16 NE16;
+typedef LE32 NE32;
+typedef LE64 NE64;
+#endif
 
 
 /*************************************************************************

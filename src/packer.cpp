@@ -961,7 +961,7 @@ upx_byte *Packer::optimizeReloc(upx_byte *in, unsigned relocnum,
         if (bswap)
         {
             if (bits == 32)
-                acc_ua_swab32s(image + pc);
+                set_be32(image + pc, get_le32(image + pc));
             else if (bits == 64)
                 set_be64(image + pc, get_le64(image + pc));
             else
@@ -1027,15 +1027,15 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image,
         if (bswap && image)
         {
             if (bits == 32) {
-                acc_ua_swab32s(image + jc);
-                if ((unsigned long)(p - (image + jc)) < 4) {
+                set_be32(image + jc, get_le32(image + jc));
+                if ((size_t)(p - (image + jc)) < 4) {
                     // data must not overlap control
                     p = (4 - 1) + image + jc;  // -1: 'for' also increments
                 }
             }
             else if (bits == 64) {
                 set_be64(image + jc, get_le64(image + jc));
-                if ((unsigned long)(p - (image + jc)) < 8) {
+                if ((size_t)(p - (image + jc)) < 8) {
                     // data must not overlap control
                     p = (8 - 1) + image + jc;  // -1: 'for' also increments
                 }

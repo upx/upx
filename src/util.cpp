@@ -39,7 +39,6 @@
 #define ACC_WANT_ACCLIB_GETOPT 1
 #define ACC_WANT_ACCLIB_HSREAD 1
 #define ACC_WANT_ACCLIB_MISC 1
-#define ACC_WANT_ACCLIB_UA 1
 #define ACC_WANT_ACCLIB_WILDARGV 1
 #undef HAVE_MKDIR
 #include "miniacc.h"

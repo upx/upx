@@ -1251,7 +1251,7 @@ static void first_options(int argc, char **argv)
 **************************************************************************/
 
 template <class T> struct TestBELE {
-static bool test(void)
+__acc_static_noinline bool test(void)
 {
     COMPILE_TIME_ASSERT_ALIGNED1(T)
     __packed_struct(test1_t) char a; T b;    __packed_struct_end()
@@ -1267,7 +1267,7 @@ static bool test(void)
     COMPILE_TIME_ASSERT(__acc_alignof(t1) == 1)
     COMPILE_TIME_ASSERT(__acc_alignof(t2) == 1)
 #endif
-#if 1 && !defined(UPX_OFFICIAL_BUILD)
+#if 1
     T allbits; allbits = 0; allbits -= 1;
     //++allbits; allbits++; --allbits; allbits--;
     T v1; v1 = 1; v1 *= 2; v1 -= 1;
@@ -1288,11 +1288,11 @@ static bool test(void)
     return true;
 }};
 
-template <class A, class B> struct TestNoStrictAliasingStruct {
-    __acc_static_noinline bool test(A *a, B *b) { *a = 0; *b = (B)((B)0-1); return *a != 0; }
+template <class A, class B> struct TestNoAliasingStruct {
+    __acc_static_noinline bool test(A *a, B *b) { *a = 0; *b = 0; *b -= 3; return *a != 0; }
 };
-template <class A, class B> static inline bool testNoStrictAliasing(A *a, B *b) {
-    return TestNoStrictAliasingStruct<A,B>::test(a, b);
+template <class A, class B> __acc_static_forceinline bool testNoAliasing(A *a, B *b) {
+    return TestNoAliasingStruct<A,B>::test(a, b);
 }
 template <class T> struct TestIntegerWrap {
     static inline bool inc(T x) { return x + 1 > x; }
@@ -1359,15 +1359,12 @@ void upx_compiler_sanity_check(void)
     assert(TestBELE<BE32>::test());
     assert(TestBELE<BE64>::test());
     {
-    static const unsigned char dd[32]
-#if 1 && (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE) && defined(__ELF__)
-        __attribute__((__aligned__(16)))
-#endif
-        = { 0, 0, 0, 0, 0, 0, 0,
+    alignas(16) static const unsigned char dd[32] = {
+        0, 0, 0, 0, 0, 0, 0,
         0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8,
         0, 0, 0, 0,
         0x7f, 0x7e, 0x7d, 0x7c, 0x7b, 0x7a, 0x79, 0x78,
-    0, 0, 0, 0, 0 };
+        0, 0, 0, 0, 0 };
     const unsigned char *d;
     const N_BELE_RTP::AbstractPolicy *bele;
     d = dd + 7;
@@ -1405,10 +1402,34 @@ void upx_compiler_sanity_check(void)
     assert(get_be32_signed(d) == 2138996092);
     assert(get_be64_signed(d) == UPX_INT64_C(9186918263483431288));
     }
+    {
+    unsigned dd;
+    void *d = &dd;
+    dd = ne32_to_le32(0xf7f6f5f4);
+    assert(get_le26(d) == 0x03f6f5f4);
+    set_le26(d, 0);
+    assert(get_le26(d) == 0);
+    assert(dd == ne32_to_le32(0xf4000000));
+    set_le26(d, 0xff020304);
+    assert(get_le26(d) == 0x03020304);
+    assert(dd == ne32_to_le32(0xf7020304));
+    }
 #endif
-
-    union { short v_short; int v_int; long v_long; } u;
-    assert(testNoStrictAliasing(&u.v_short, &u.v_long));
+    union {
+        short v_short; int v_int; long v_long; long long v_llong;
+        BE16 b16; BE32 b32; BE64 b64; LE16 l16; LE32 l32; LE64 l64;
+    } u;
+    assert(testNoAliasing(&u.v_short, &u.b32));
+    assert(testNoAliasing(&u.v_short, &u.l32));
+    assert(testNoAliasing(&u.v_int, &u.b64));
+    assert(testNoAliasing(&u.v_int, &u.l64));
+#if 0
+    // check working -fno-strict-aliasing
+    assert(testNoAliasing(&u.v_short, &u.v_int));
+    assert(testNoAliasing(&u.v_int, &u.v_long));
+    assert(testNoAliasing(&u.v_int, &u.v_llong));
+    assert(testNoAliasing(&u.v_long, &u.v_llong));
+#endif
 
     assert( TestIntegerWrap<int>::inc(0));
     assert(!TestIntegerWrap<int>::inc(INT_MAX));
