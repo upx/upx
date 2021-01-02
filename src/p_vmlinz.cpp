@@ -595,7 +595,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);
         if (linker->bele->isBE()) // big endian - bswap32
-            acc_swab32s(&properties);
+            properties = bswap32(properties);
         linker->defineSymbol("lzma_properties", properties);
         // -2 for properties
         linker->defineSymbol("lzma_c_len", ph.c_len - 2);

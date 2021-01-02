@@ -35,13 +35,9 @@
 
 #ifdef WANT_MACH_HEADER_ENUM  /*{*/
 #undef WANT_MACH_HEADER_ENUM
-# if 0
-    enum { // magic
+    enum : unsigned { // magic
         MH_MAGIC = 0xfeedface
     };
-# else
-    static const unsigned MH_MAGIC = 0xfeedface;
-# endif
     enum { // cputype
         CPU_TYPE_I386      =          7,
         CPU_TYPE_X86_64    = 0x01000007,
@@ -138,9 +134,8 @@
         S_16BYTE_LITERALS,
         S_DTRACE_DOF
     };
-    static const unsigned S_ATTR_PURE_INSTRUCTIONS = 0x80000000;
-    enum { // section flags (high 24 bits)
-        //S_ATTR_PURE_INSTRUCTIONS = 0x80000000,
+    enum : unsigned { // section flags (high 24 bits)
+        S_ATTR_PURE_INSTRUCTIONS = 0x80000000,
         S_ATTR_NO_TOC            = 0x40000000,
         S_ATTR_STRIP_STATIC_SYMS = 0x20000000,
         S_ATTR_NO_DEAD_STRIP     = 0x10000000,

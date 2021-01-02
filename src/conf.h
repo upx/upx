@@ -64,6 +64,8 @@
 #if !defined(UINT_MAX) || (UINT_MAX != 0xffffffffL)
 #  error "UINT_MAX"
 #endif
+ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(short) == 2)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(int) == 4)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(long long) == 8)
 // check sane compiler mandatory flags
@@ -274,6 +276,21 @@ typedef size_t upx_rsize_t;
 //
 **************************************************************************/
 
+#if !defined(__has_builtin)
+#  define __has_builtin(x)      0
+#endif
+
+#if __has_builtin(__builtin_memcpy_inline)
+#  define upx_memcpy_inline     __builtin_memcpy_inline
+#elif __has_builtin(__builtin_memcpy)
+#  define upx_memcpy_inline     __builtin_memcpy
+#elif defined(__GNUC__)
+#  define upx_memcpy_inline     __builtin_memcpy
+#else
+#  define upx_memcpy_inline     memcpy
+#endif
+
+
 #if (ACC_CC_MSC)
 #define __packed_struct(s)      struct s {
 #define __packed_struct_end()   };
@@ -324,6 +341,7 @@ inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b;
     type * const var = ACC_STATIC_CAST(type *, var ## _membuf.getVoidPtr())
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)
+
 
 class noncopyable
 {
@@ -658,6 +676,13 @@ struct upx_compress_result_t
 #include "bele.h"
 #include "util.h"
 #include "console.h"
+
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<short, upx_int16_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned short, upx_uint16_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<int, upx_int32_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned, upx_uint32_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<long long, upx_int64_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned long long, upx_uint64_t>::value))
 
 
 // classes

@@ -38,6 +38,7 @@
 
 #include <exception>
 #include <new>
+#include <type_traits>
 #include <typeinfo>
 
 /*************************************************************************
