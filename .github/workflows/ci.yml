@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  job-ci-rebuild-and-verify-stubs:
+  job-rebuild-and-verify-stubs:
     name: 'Rebuild stubs'
     runs-on: ubuntu-16.04
     steps:
@@ -34,8 +34,8 @@ jobs:
         run: |
           env C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux bash ./.github/travis_build.sh
 
-  job-ci-linux-toolchains:
-    needs: [ job-ci-rebuild-and-verify-stubs ]
+  job-linux-toolchains:
+    needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
@@ -71,7 +71,7 @@ jobs:
         run: |
           cd ..; mkdir -p deps build/github; cd deps
           wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
-          git clone --depth=1 https://github.com/upx/upx-testsuite
+          git clone --depth=1 --single-branch https://github.com/upx/upx-testsuite
 
       - name: 'Build'
         run: |
@@ -84,8 +84,52 @@ jobs:
           export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
           bash ./.github/travis_testsuite_1.sh
 
-  job-ci-windows-toolchains:
-    needs: [ job-ci-rebuild-and-verify-stubs ]
+  job-windows-cross-toolchains:
+    needs: [ job-rebuild-and-verify-stubs ]
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: amd64-win64-gcc-9, os: ubuntu-20.04, CROSS: x86_64-w64-mingw32, C: gcc-9, T: wine }
+
+    steps:
+      - name: 'Install extra packages'
+        run: |
+          uname -a; pwd; id; umask
+          export DEBIAN_FRONTEND=noninteractive
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 wine wine64
+
+      - name: 'Check out code'
+        uses: actions/checkout@v2
+        with: { submodules: true }
+
+      - name: 'Prepare sources'
+        run: |
+          cd ..; mkdir -p deps build/github; cd deps
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.11.tar.xz | tar -xJ
+          git clone --depth=1 --single-branch https://github.com/upx/upx-testsuite
+
+      - name: 'Build'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          export CROSS=${{matrix.CROSS}}
+          export BUILD_LOCAL_UCL=1
+          bash ./.github/travis_build.sh
+
+      - name: 'Run test suite'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          export CROSS=${{matrix.CROSS}}
+          bash ./.github/travis_testsuite_1.sh
+
+  job-windows-toolchains:
+    needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 

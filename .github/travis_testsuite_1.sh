@@ -2,7 +2,6 @@
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
 
-# Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 #

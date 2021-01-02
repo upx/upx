@@ -1,6 +1,5 @@
 ## vim:set ts=4 sw=4 et:
 
-# Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 #set -x # debug
@@ -128,6 +127,15 @@ if [[ -n $BM_CROSS ]]; then
             x86_64-w64-mingw32-gcc-5)
                 upx_exeext=.exe
                 [[ -z $upx_wine ]] && upx_wine="wine"
+                x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
+        esac
+    elif egrep -q '^PRETTY_NAME="?Ubuntu 20\.04' /etc/os-release; then
+        case $BM_CROSS-$BM_C in
+            x86_64-w64-mingw32-gcc-9)
+                export upx_EXTRA_CPPFLAGS="-D__USE_MINGW_ANSI_STDIO=1"
+                export upx_EXTRA_LDFLAGS="-static"
+                upx_exeext=.exe
+                [[ -z $upx_wine ]] && upx_wine="wine64"
                 x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
         esac
     fi
