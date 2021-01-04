@@ -68,9 +68,18 @@ else
   CXXFLAGS_OPTIMIZE ?= -O2
 endif
 ifeq ($(BUILD_TYPE_SANITIZE),1)
-  CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer -DACC_CFG_NO_UNALIGNED
+  # full sanitizer
+  CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer
+else ifeq ($(BUILD_TYPE_SANITIZE),2)
+  # lightweight sanitizer
+  # TODO: can we make this the default for release builds?
+  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-strong -fstack-protector-all
+else ifeq ($(BUILD_TYPE_DEBUG),1)
+  # default sanitizer for debug builds
+  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fstack-protector-strong -fstack-protector-all
 else
-  CXXFLAGS_SANITIZE ?= -fstack-protector-all
+  # default sanitizer for release builds
+  CXXFLAGS_SANITIZE ?= -fstack-protector-strong
 endif
 ifeq ($(findstring clang,$(CXX)),)
   CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS ?= -fno-delete-null-pointer-checks
@@ -170,7 +179,7 @@ ifneq ($(wildcard $(top_srcdir)/.github/travis_testsuite_1.sh),)
 run-testsuite: export upx_exe                := ./upx$(exeext)
 run-testsuite: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
 run-testsuite: export upx_testsuite_BUILDDIR := ./tmp-testsuite
-run-testsuite: ./upx$(exeext)
+run-testsuite: upx$(exeext)
 	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
 .PHONY: run-testsuite
 endif
@@ -181,7 +190,6 @@ ifeq ($(shell uname),Linux)
 CLANG_FORMAT_FILES += linker.cpp linker.h packhead.cpp packmast.cpp packmast.h
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += snprintf.cpp
-CLANG_FORMAT_FILES += stdcxx.cpp stdcxx.h
 CLANG_FORMAT_FILES += ui.cpp ui.h util.cpp util.h work.cpp
 clang-format:
 	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))
