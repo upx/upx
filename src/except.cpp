@@ -25,9 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
-
 
 /*************************************************************************
 //
@@ -35,9 +33,10 @@
 
 unsigned long Throwable::counter = 0;
 
-Throwable::Throwable(const char *m, int e, bool w) noexcept
-    : super(), msg(nullptr), err(e), is_warning(w)
-{
+Throwable::Throwable(const char *m, int e, bool w) noexcept : super(),
+                                                              msg(nullptr),
+                                                              err(e),
+                                                              is_warning(w) {
     if (m)
         msg = strdup(m);
 #if 0
@@ -46,10 +45,10 @@ Throwable::Throwable(const char *m, int e, bool w) noexcept
 #endif
 }
 
-
-Throwable::Throwable(const Throwable &other) noexcept
-    : super(other), msg(nullptr), err(other.err), is_warning(other.is_warning)
-{
+Throwable::Throwable(const Throwable &other) noexcept : super(other),
+                                                        msg(nullptr),
+                                                        err(other.err),
+                                                        is_warning(other.is_warning) {
     if (other.msg)
         msg = strdup(other.msg);
 #if 0
@@ -58,9 +57,7 @@ Throwable::Throwable(const Throwable &other) noexcept
 #endif
 }
 
-
-Throwable::~Throwable() noexcept
-{
+Throwable::~Throwable() noexcept {
 #if 0
     counter--;
     fprintf(stderr, "destruct exception: %s %lu\n", msg, counter);
@@ -69,13 +66,11 @@ Throwable::~Throwable() noexcept
         free(msg);
 }
 
-
 /*************************************************************************
 // compression
 **************************************************************************/
 
-void throwCantPack(const char *msg)
-{
+void throwCantPack(const char *msg) {
     // UGLY, but makes things easier
     if (opt->cmd == CMD_COMPRESS)
         throw CantPackException(msg);
@@ -85,119 +80,78 @@ void throwCantPack(const char *msg)
         throw CantUnpackException(msg);
 }
 
-void throwCantPackExact()
-{
-    throwCantPack("option '--exact' does not work with this file");
-}
+void throwCantPackExact() { throwCantPack("option '--exact' does not work with this file"); }
 
-void throwFilterException()
-{
-    throwCantPack("filter problem");
-}
+void throwFilterException() { throwCantPack("filter problem"); }
 
-void throwUnknownExecutableFormat(const char *msg, bool warn)
-{
+void throwUnknownExecutableFormat(const char *msg, bool warn) {
     throw UnknownExecutableFormatException(msg, warn);
 }
 
-void throwNotCompressible(const char *msg)
-{
-    throw NotCompressibleException(msg);
-}
+void throwNotCompressible(const char *msg) { throw NotCompressibleException(msg); }
 
-void throwAlreadyPacked(const char *msg)
-{
-    throw AlreadyPackedException(msg);
-}
+void throwAlreadyPacked(const char *msg) { throw AlreadyPackedException(msg); }
 
-void throwAlreadyPackedByUPX(const char *msg)
-{
+void throwAlreadyPackedByUPX(const char *msg) {
     if (msg == nullptr)
         msg = "already packed by UPX";
     throwAlreadyPacked(msg);
 }
 
-
 /*************************************************************************
 // decompression
 **************************************************************************/
 
-void throwCantUnpack(const char *msg)
-{
+void throwCantUnpack(const char *msg) {
     // UGLY, but makes things easier
     throwCantPack(msg);
 }
 
-void throwNotPacked(const char *msg)
-{
+void throwNotPacked(const char *msg) {
     if (msg == nullptr)
         msg = "not packed by UPX";
     throw NotPackedException(msg);
 }
 
-void throwChecksumError()
-{
-    throw Exception("checksum error");
-}
+void throwChecksumError() { throw Exception("checksum error"); }
 
-void throwCompressedDataViolation()
-{
-    throw Exception("compressed data violation");
-}
-
+void throwCompressedDataViolation() { throw Exception("compressed data violation"); }
 
 /*************************************************************************
 // other
 **************************************************************************/
 
-void throwInternalError(const char *msg)
-{
-    throw InternalError(msg);
-}
+void throwInternalError(const char *msg) { throw InternalError(msg); }
 
-void throwBadLoader()
-{
-    throwInternalError("bad loader");
-}
+void throwBadLoader() { throwInternalError("bad loader"); }
 
-
-void throwOutOfMemoryException(const char *msg)
-{
+void throwOutOfMemoryException(const char *msg) {
     if (msg == nullptr)
         msg = "out of memory";
     throw OutOfMemoryException(msg);
 }
 
+void throwIOException(const char *msg, int e) { throw IOException(msg, e); }
 
-void throwIOException(const char *msg, int e)
-{
-    throw IOException(msg, e);
-}
-
-
-void throwEOFException(const char *msg, int e)
-{
+void throwEOFException(const char *msg, int e) {
     if (msg == nullptr && e == 0)
         msg = "premature end of file";
     throw EOFException(msg, e);
 }
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-const char *prettyName(const char *n) noexcept
-{
+const char *prettyName(const char *n) noexcept {
     if (n == nullptr)
         return "(null)";
-    while (*n)
-    {
-        if (*n >= '0' && *n <= '9')             // Linux ABI
+    while (*n) {
+        if (*n >= '0' && *n <= '9') // Linux ABI
             n++;
         else if (*n == ' ')
             n++;
-        else if (strncmp(n, "class ", 6) == 0)  // Visual C++
+        else if (strncmp(n, "class ", 6) == 0) // Visual C++
             n += 6;
         else
             break;

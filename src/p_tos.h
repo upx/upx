@@ -25,18 +25,16 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #ifndef __UPX_P_TOS_H
 #define __UPX_P_TOS_H 1
-
 
 /*************************************************************************
 // atari/tos
 **************************************************************************/
 
-class PackTos : public Packer
-{
+class PackTos : public Packer {
     typedef Packer super;
+
 public:
     PackTos(InputFile *f);
     virtual int getVersion() const { return 13; }
@@ -55,14 +53,14 @@ public:
     virtual void fileInfo();
 
 protected:
-    virtual Linker* newLinker() const;
+    virtual Linker *newLinker() const;
     virtual void buildLoader(const Filter *ft);
     unsigned getDecomprOffset(int method, int small) const;
 
     virtual int readFileHeader();
     virtual bool checkFileHeader();
 
-    __packed_struct(tos_header_t)
+    struct alignas(1) tos_header_t {
         BE16 fh_magic;
         BE32 fh_text;
         BE32 fh_data;
@@ -71,17 +69,18 @@ protected:
         BE32 fh_reserved;
         BE32 fh_flag;
         BE16 fh_reloc;
-    __packed_struct_end()
+    };
 
     tos_header_t ih, oh;
 
     // symbols for buildLoader()
-    struct LinkerSymbols
-    {
+    struct LinkerSymbols {
         enum { LOOP_NONE, LOOP_SUBQ_L, LOOP_SUBQ_W, LOOP_DBRA };
         struct LoopInfo {
-            unsigned mode; unsigned count; unsigned value;
-            void init(unsigned count, bool allow_dbra=true);
+            unsigned mode;
+            unsigned count;
+            unsigned value;
+            void init(unsigned count, bool allow_dbra = true);
         };
         // buildLoader() input
         bool need_reloc;
@@ -104,7 +103,6 @@ protected:
     };
     LinkerSymbols symbols;
 };
-
 
 #endif /* already included */
 
