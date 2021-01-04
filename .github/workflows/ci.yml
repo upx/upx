@@ -47,6 +47,8 @@ jobs:
           - { name: amd64-linux-gcc-10,   os: ubuntu-20.04, C: gcc-10-m64 }
           - { name: i386-linux-clang-10,  os: ubuntu-20.04, C: clang-10-m32 }
           - { name: i386-linux-gcc-10,    os: ubuntu-20.04, C: gcc-10-m32 }
+          - { name: amd64-linux-clang-10-sanitize, os: ubuntu-20.04, C: clang-10-m64, B: sanitize }
+          - { name: amd64-linux-gcc-10-sanitize,   os: ubuntu-20.04, C: gcc-10-m64,   B: sanitize }
 
     steps:
       - name: 'Install extra packages'
