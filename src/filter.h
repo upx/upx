@@ -67,8 +67,8 @@ public:
 public:
     // Will be set by each call to filter()/unfilter().
     // Read-only afterwards.
-    upx_byte *buf;
-    unsigned buf_len;
+    upx_byte *buf = nullptr;
+    unsigned buf_len = 0;
 
     // Checksum of the buffer before applying the filter
     // or after un-applying the filter.
@@ -76,7 +76,7 @@ public:
 
     // Input parameters used by various filters.
     unsigned addvalue;
-    const int *preferred_ctos;
+    const int *preferred_ctos = nullptr;
 
     // Input/output parameters used by various filters
     unsigned char cto;              // call trick offset

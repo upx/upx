@@ -286,13 +286,8 @@ typedef size_t upx_rsize_t;
 #endif
 
 
-#if (ACC_CC_MSC)
-#define __packed_struct(s)      struct s {
+#define __packed_struct(s)      struct alignas(1) s {
 #define __packed_struct_end()   };
-#else
-#define __packed_struct(s)      __acc_struct_packed(s)
-#define __packed_struct_end()   __acc_struct_packed_end()
-#endif
 
 #define UNUSED(var)             ACC_UNUSED(var)
 #define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
