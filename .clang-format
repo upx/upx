@@ -1,0 +1,12 @@
+﻿# for clang-format-10.0.1
+---
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+#AlignConsecutiveAssignments: true
+AlwaysBreakTemplateDeclarations: true
+ColumnLimit: 100
+IndentWidth: 4
+SortIncludes: false
+SpaceAfterCStyleCast: true
+Standard: Cpp03
+...
