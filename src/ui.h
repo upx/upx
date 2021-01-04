@@ -87,14 +87,14 @@ public:
 
 protected:
     virtual void printInfo(int nl = 0);
-    const Packer *p;
+    const Packer *p = nullptr;
 
     // callback
     upx_callback_t cb;
 
     // internal state
     struct State;
-    State *s;
+    State *s = nullptr;
 
     // totals
     static unsigned total_files;

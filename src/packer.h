@@ -289,8 +289,8 @@ protected:
     void set_te64(void *p, upx_uint64_t v) const { bele->set64(p, v); }
 
 protected:
-    const N_BELE_RTP::AbstractPolicy *bele; // target endianness
-    InputFile *fi;
+    const N_BELE_RTP::AbstractPolicy *bele = nullptr; // target endianness
+    InputFile *fi = nullptr;
     off_t file_size; // will get set by constructor
     PackHeader ph;   // must be filled by canUnpack()
     int ph_format;
@@ -301,14 +301,14 @@ protected:
     MemBuffer obuf; // output
 
     // UI handler
-    UiPacker *uip;
+    UiPacker *uip = nullptr;
 
     // linker
-    Linker *linker;
+    Linker *linker = nullptr;
 
 private:
     // private to checkPatch()
-    void *last_patch;
+    void *last_patch = nullptr;
     int last_patch_len;
     int last_patch_off;
 
