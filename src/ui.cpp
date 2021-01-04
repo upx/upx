@@ -466,8 +466,9 @@ void UiPacker::uiPackEnd(const OutputFile *fo) {
         name = opt->output_name;
     else if (opt->to_stdout)
         name = "<stdout>";
-    con_fprintf(stdout, "%s\n", mkline(p->ph.u_file_size, fo->st_size(), p->ph.u_len, p->ph.c_len,
-                                       p->getName(), fn_basename(name)));
+    con_fprintf(stdout, "%s\n",
+                mkline(p->ph.u_file_size, fo->st_size(), p->ph.u_len, p->ph.c_len, p->getName(),
+                       fn_basename(name)));
     printSetNl(0);
 }
 
@@ -496,8 +497,9 @@ void UiPacker::uiUnpackEnd(const OutputFile *fo) {
         name = opt->output_name;
     else if (opt->to_stdout)
         name = "<stdout>";
-    con_fprintf(stdout, "%s\n", mkline(fo->getBytesWritten(), p->file_size, p->ph.u_len,
-                                       p->ph.c_len, p->getName(), fn_basename(name), true));
+    con_fprintf(stdout, "%s\n",
+                mkline(fo->getBytesWritten(), p->file_size, p->ph.u_len, p->ph.c_len, p->getName(),
+                       fn_basename(name), true));
     printSetNl(0);
 }
 
@@ -514,8 +516,9 @@ void UiPacker::uiListStart() { total_files++; }
 
 void UiPacker::uiList() {
     const char *name = p->fi->getName();
-    con_fprintf(stdout, "%s\n", mkline(p->ph.u_file_size, p->file_size, p->ph.u_len, p->ph.c_len,
-                                       p->getName(), name));
+    con_fprintf(
+        stdout, "%s\n",
+        mkline(p->ph.u_file_size, p->file_size, p->ph.u_len, p->ph.c_len, p->getName(), name));
     printSetNl(0);
 }
 
@@ -526,8 +529,9 @@ void UiPacker::uiListTotal(bool decompress) {
         char name[32];
         upx_snprintf(name, sizeof(name), "[ %u file%s ]", total_files_done,
                      total_files_done == 1 ? "" : "s");
-        con_fprintf(stdout, "%s%s\n", header_line2, mkline(total_fu_len, total_fc_len, total_u_len,
-                                                           total_c_len, "", name, decompress));
+        con_fprintf(
+            stdout, "%s%s\n", header_line2,
+            mkline(total_fu_len, total_fc_len, total_u_len, total_c_len, "", name, decompress));
         printSetNl(0);
     }
 }
