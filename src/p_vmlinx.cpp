@@ -318,13 +318,13 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
             throwInternalError("Ehdr compression failed");
 
         __packed_struct(b_info) // 12-byte header before each compressed block
-            unsigned sz_unc;  // uncompressed_size
-            unsigned sz_cpr;  //   compressed_size
+            NE32 sz_unc;  // uncompressed_size
+            NE32 sz_cpr;  //   compressed_size
             unsigned char b_method;  // compression algorithm
             unsigned char b_ftid;  // filter id
             unsigned char b_cto8;  // filter parameter
             unsigned char b_unused;  // FIXME: !=0  for partial-block unfilter
-            // unsigned f_offset, f_len;  // only if    partial-block unfilter
+            // NE32 f_offset, f_len;  // only if    partial-block unfilter
         __packed_struct_end()
 
         struct b_info hdr_info;
