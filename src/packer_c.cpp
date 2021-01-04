@@ -38,13 +38,8 @@
 
 bool Packer::isValidCompressionMethod(int method)
 {
-    if (M_IS_LZMA(method)) {
-#if !(WITH_LZMA)
-        assert(0 && "Internal error - LZMA not compiled in");
-#else
+    if (M_IS_LZMA(method))
         return true;
-#endif
-    }
     return (method >= M_NRV2B_LE32 && method <= M_LZMA);
 }
 

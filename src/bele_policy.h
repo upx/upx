@@ -84,7 +84,7 @@ struct AbstractPolicy
     S u64_compare_signed(const void *a, const void *b) C = 0;
 
     // disable dynamic allocation
-    DISABLE_NEW_DELETE
+    ACC_CXX_DISABLE_NEW_DELETE
 };
 #endif
 
@@ -162,7 +162,7 @@ struct BEPolicy
     }
 
     // disable dynamic allocation
-    DISABLE_NEW_DELETE
+    ACC_CXX_DISABLE_NEW_DELETE
 };
 
 
@@ -239,10 +239,11 @@ struct LEPolicy
     }
 
     // disable dynamic allocation
-    DISABLE_NEW_DELETE
+    ACC_CXX_DISABLE_NEW_DELETE
 };
 
 
+// native policy (aka host policy)
 #if (ACC_ABI_BIG_ENDIAN)
 typedef BEPolicy HostPolicy;
 #elif (ACC_ABI_LITTLE_ENDIAN)

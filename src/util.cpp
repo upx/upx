@@ -46,6 +46,7 @@
 /*************************************************************************
 // assert sane memory buffer sizes to protect against integer overflows
 // and malicious header fields
+// see C 11 standard, Annex K
 **************************************************************************/
 
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_MEM == UPX_RSIZE_MAX)
@@ -516,30 +517,5 @@ unsigned get_ratio(upx_uint64_t u_len, upx_uint64_t c_len) {
         x = 10 * n - 1;
     return ACC_ICONV(unsigned, x);
 }
-
-/*************************************************************************
-// Don't link these functions from libc ==> save xxx bytes
-**************************************************************************/
-
-extern "C" {
-
-// FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
-#if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(__CEGCC__) && !defined(_WIN32)
-int dup(int fd) {
-    UNUSED(fd);
-    return -1;
-}
-#endif
-
-#if (ACC_OS_DOS32) && defined(__DJGPP__)
-// int _is_executable(const char *, int, const char *) { return 0; }
-
-// FIXME: something wants to link in ctime.o
-// time_t mktime(struct tm *) { return 0; }
-
-// time_t time(time_t *t) { if (t) *t = 0; return 0; }
-#endif
-
-} // extern "C"
 
 /* vim:set ts=4 sw=4 et: */

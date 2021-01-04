@@ -900,7 +900,7 @@ int main(void)
         "%d",
         nullptr
     };
-    const long int_nums[] = { -1, 134, 91340, 341, 0203, 0 };
+    const int int_nums[] = { -1, 134, 91340, 341, 0203, 0 };
     const char *str_fmt[] = {
         "10.5s",
         "5.10s",

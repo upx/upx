@@ -122,7 +122,7 @@ jobs:
           export BUILD_LOCAL_UCL=1
           bash ./.github/travis_build.sh
 
-      - name: 'Run test suite'
+      - name: 'Run test suite using Wine'
         run: |
           export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
           export CROSS=${{matrix.CROSS}}
@@ -195,7 +195,7 @@ jobs:
           set s=%H%\upx\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DUCL_NO_ASM -I%s%\lzma-sdk -I%H%\deps\ucl-1.03\include -I%H%\deps\zlib-1.2.11 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.11\zlib.lib
+          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%s%\lzma-sdk -I%H%\deps\ucl-1.03\include -I%H%\deps\zlib-1.2.11 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.11\zlib.lib
 
       - name: 'Basic tests'
         shell: cmd

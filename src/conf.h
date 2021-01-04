@@ -76,6 +76,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(((int)(1u << 31)) >> 31 == -1) // arithmetic righ
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 
+// enable/disable some warnings
 #if (ACC_CC_GNUC >= 0x040700)
 #  pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
 #endif
@@ -87,14 +88,6 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 #  pragma warning(disable: 4244) // -Wconversion
 #  pragma warning(disable: 4267) // -Wconversion
 #  pragma warning(disable: 4820) // padding added after data member
-#endif
-
-// FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
-#if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(__CEGCC__) && !defined(_WIN32)
-#  undef HAVE_CHMOD
-#  undef HAVE_CHOWN
-#  undef HAVE_LSTAT
-#  undef HAVE_UTIME
 #endif
 
 #define ACC_WANT_ACC_INCD_H 1
@@ -457,12 +450,6 @@ private:
 #define UPX_F_VMLINUX_PPC64     141
 #define UPX_F_DYLIB_PPC64       142
 
-// compression methods
-#define M_ALL           (-1)
-#define M_END           (-2)
-#define M_NONE          (-3)
-#define M_SKIP          (-4)
-#define M_ULTRA_BRUTE   (-5)
 // compression methods - DO NOT CHANGE
 #define M_NRV2B_LE32    2
 #define M_NRV2B_8       3
@@ -478,6 +465,12 @@ private:
 //#define M_CL1B_LE16     13
 #define M_LZMA          14
 #define M_DEFLATE       15      /* zlib */
+// compression methods internal usage
+#define M_ALL           (-1)
+#define M_END           (-2)
+#define M_NONE          (-3)
+#define M_SKIP          (-4)
+#define M_ULTRA_BRUTE   (-5)
 
 #define M_IS_NRV2B(x)   ((x) >= M_NRV2B_LE32 && (x) <= M_NRV2B_LE16)
 #define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
@@ -670,19 +663,23 @@ struct upx_compress_result_t
 **************************************************************************/
 
 #include "snprintf.h"   // must get included first!
-#include "stdcxx.h"
-#include "options.h"
-#include "except.h"
-#include "bele.h"
-#include "util.h"
-#include "console.h"
 
+#include <exception>
+#include <new>
+#include <type_traits>
+#include <typeinfo>
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<short, upx_int16_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned short, upx_uint16_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<int, upx_int32_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned, upx_uint32_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<long long, upx_int64_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned long long, upx_uint64_t>::value))
+
+#include "options.h"
+#include "except.h"
+#include "bele.h"
+#include "util.h"
+#include "console.h"
 
 
 // classes

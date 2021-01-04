@@ -1404,7 +1404,7 @@ void upx_compiler_sanity_check(void)
     }
     {
     unsigned dd;
-    void *d = &dd;
+    void * const d = &dd;
     dd = ne32_to_le32(0xf7f6f5f4);
     assert(get_le26(d) == 0x03f6f5f4);
     set_le26(d, 0);
@@ -1423,7 +1423,7 @@ void upx_compiler_sanity_check(void)
     assert(testNoAliasing(&u.v_short, &u.l32));
     assert(testNoAliasing(&u.v_int, &u.b64));
     assert(testNoAliasing(&u.v_int, &u.l64));
-#if 0
+#if 1
     // check working -fno-strict-aliasing
     assert(testNoAliasing(&u.v_short, &u.v_int));
     assert(testNoAliasing(&u.v_int, &u.v_long));

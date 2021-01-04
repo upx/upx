@@ -753,7 +753,7 @@ bool Packer::getPackHeader(void *b, int blen, bool allow_incompressible)
 
 bool Packer::readPackHeader(int len, bool allow_incompressible)
 {
-    assert((int)len > 0);
+    assert(len > 0);
     MemBuffer buf(len);
     len = fi->read(buf, len);
     if (len <= 0)
