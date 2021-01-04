@@ -70,7 +70,7 @@ inline int strcasecmp(const unsigned char *s1, const unsigned char *s2) {
     return strcasecmp((const char *) s1, (const char *) s2);
 }
 
-inline size_t strlen(const unsigned char *s) { return strlen((const char *) s); }
+inline upx_rsize_t upx_strlen(const unsigned char *s) { return upx_strlen((const char *) s); }
 
 #endif /* already included */
 

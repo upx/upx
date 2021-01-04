@@ -80,7 +80,7 @@ private:
     MemBuffer& operator= (const MemBuffer &) = delete;
 
     // disable dynamic allocation
-    DISABLE_NEW_DELETE
+    ACC_CXX_DISABLE_NEW_DELETE
 };
 
 #endif /* already included */

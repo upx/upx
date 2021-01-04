@@ -28,34 +28,6 @@
 
 #include "conf.h"
 #include "compress.h"
-#if !(WITH_UCL)
-extern int compress_ucl_dummy;
-int compress_ucl_dummy = 0;
-#else
-
-#if 1 && !(UCL_USE_ASM) && (ACC_ARCH_I386)
-#  if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_WATCOMC)
-#    define UCL_USE_ASM 1
-#  endif
-#endif
-#if (UCL_NO_ASM)
-#  undef UCL_USE_ASM
-#endif
-#if (ACC_CFG_NO_UNALIGNED)
-#  undef UCL_USE_ASM
-#endif
-#if 1 && (UCL_USE_ASM)
-#  include <ucl/ucl_asm.h>
-#  define ucl_nrv2b_decompress_safe_8       ucl_nrv2b_decompress_asm_safe_8
-#  define ucl_nrv2b_decompress_safe_le16    ucl_nrv2b_decompress_asm_safe_le16
-#  define ucl_nrv2b_decompress_safe_le32    ucl_nrv2b_decompress_asm_safe_le32
-#  define ucl_nrv2d_decompress_safe_8       ucl_nrv2d_decompress_asm_safe_8
-#  define ucl_nrv2d_decompress_safe_le16    ucl_nrv2d_decompress_asm_safe_le16
-#  define ucl_nrv2d_decompress_safe_le32    ucl_nrv2d_decompress_asm_safe_le32
-#  define ucl_nrv2e_decompress_safe_8       ucl_nrv2e_decompress_asm_safe_8
-#  define ucl_nrv2e_decompress_safe_le16    ucl_nrv2e_decompress_asm_safe_le16
-#  define ucl_nrv2e_decompress_safe_le32    ucl_nrv2e_decompress_asm_safe_le32
-#endif
 
 
 /*************************************************************************
@@ -314,7 +286,5 @@ unsigned upx_ucl_crc32(const void *buf, unsigned len, unsigned crc)
     return ucl_crc32(crc, (const ucl_bytep) buf, len);
 }
 #endif
-
-#endif /* WITH_UCL */
 
 /* vim:set ts=4 sw=4 et: */

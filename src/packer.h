@@ -49,7 +49,7 @@ class PackHeader
     friend class Packer;
 
 private:
-    // these are strictly private to Packer and not accessible in subclasses:
+    // these are strictly private to Packer and not accessible in subclasses
     PackHeader();
 
     void putPackHeader(upx_bytep p);

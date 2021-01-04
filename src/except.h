@@ -59,7 +59,7 @@ private:
     // disable assignment
     Throwable& operator= (const Throwable &);
     // disable dynamic allocation
-    DISABLE_NEW_DELETE
+    ACC_CXX_DISABLE_NEW_DELETE
 
 private:
     static unsigned long counter;       // for debugging

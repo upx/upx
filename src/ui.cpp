@@ -1,4 +1,4 @@
-/* ui.cpp --
+/* ui.cpp -- User Interface
 
    This file is part of the UPX executable compressor.
 

@@ -1,4 +1,4 @@
-/* ui.h --
+/* ui.h -- User Interface
 
    This file is part of the UPX executable compressor.
 
@@ -51,7 +51,6 @@ public:
     static void uiTestTotal();
     static void uiFileInfoTotal();
 
-public:
     virtual void uiPackStart(const OutputFile *fo);
     virtual void uiPackEnd(const OutputFile *fo);
     virtual void uiUnpackStart(const OutputFile *fo);
