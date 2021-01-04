@@ -26,7 +26,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libmpfr4:i386 zlib1g:i386
           cd ..; mkdir -p deps; cd deps
-          wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -xJ
+          wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20210104/bin-upx-20210104.tar.xz | tar -xJ
       - name: 'Check out code'
         uses: actions/checkout@v2
         with: { submodules: true }
