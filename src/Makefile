@@ -187,12 +187,16 @@ endif
 
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
+CLANG_FORMAT_FILES += bele.h bele_policy.h
+CLANG_FORMAT_FILES += except.cpp except.h
 CLANG_FORMAT_FILES += linker.cpp linker.h packhead.cpp packmast.cpp packmast.h
+CLANG_FORMAT_FILES += main.cpp options.h packer.cpp packer.h
+CLANG_FORMAT_FILES += p_tos.cpp p_tos.h
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += snprintf.cpp
 CLANG_FORMAT_FILES += ui.cpp ui.h util.cpp util.h work.cpp
 clang-format:
-	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))
+	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(sort $(CLANG_FORMAT_FILES)))
 .PHONY: clang-format
 endif
 

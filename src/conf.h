@@ -269,6 +269,8 @@ typedef size_t upx_rsize_t;
 //
 **************************************************************************/
 
+#define CLANG_FORMAT_DUMMY_STATEMENT /*empty*/
+
 #if !defined(__has_builtin)
 #  define __has_builtin(x)      0
 #endif
