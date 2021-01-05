@@ -124,7 +124,7 @@ console_t;
 
 #if defined(__GNUC__)
 void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...)
-        __attribute__((__format__(printf,2,3)));
+        __attribute__((__format__(__printf__,2,3)));
 #else
 void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...);
 #endif

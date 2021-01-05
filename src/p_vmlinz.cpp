@@ -116,7 +116,7 @@ int PackVmlinuzI386::readFileHeader()
         return 0;
 
     int format = UPX_F_VMLINUZ_i386;
-    unsigned sys_size = ALIGN_UP((unsigned) file_size, 16u) - setup_size;
+    unsigned sys_size = ALIGN_UP((unsigned) file_size_u, 16u) - setup_size;
 
     const unsigned char *p = (const unsigned char *) &h + 0x1e3;
 
@@ -234,7 +234,7 @@ int PackVmlinuzI386::decompressKernel()
     }
     }
 
-    checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, (off_t)1024));
+    checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, 1024LL));
 
     int gzoff = setup_size;
     if (0x208<=h.version) {
@@ -259,7 +259,7 @@ int PackVmlinuzI386::decompressKernel()
         // try to decompress
         int klen;
         int fd;
-        off_t fd_pos;
+        upx_off_t fd_pos;
         for (;;)
         {
             klen = -1;
@@ -344,7 +344,7 @@ int PackVmlinuzI386::decompressKernel()
         // some checks
         if (fd_pos != file_size)
         {
-            //printf("fd_pos: %ld, file_size: %ld\n", (long)fd_pos, (long)file_size);
+            NO_printf("fd_pos: %lld, file_size: %lld\n", fd_pos, file_size);
 
             // linux-2.6.21.5/arch/i386/boot/compressed/vmlinux.lds
             // puts .data.compressed ahead of .text, .rodata, etc;
@@ -759,7 +759,7 @@ int PackVmlinuzARMEL::decompressKernel()
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
 
-    //checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, (off_t)1024));
+    //checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, 1024LL));
 
     // Find head.S:
     //      bl decompress_kernel  # 0xeb......
@@ -841,7 +841,7 @@ int PackVmlinuzARMEL::decompressKernel()
         // try to decompress
         int klen;
         int fd;
-        off_t fd_pos;
+        upx_off_t fd_pos;
         for (;;)
         {
             klen = -1;

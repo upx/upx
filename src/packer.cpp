@@ -39,8 +39,10 @@
 Packer::Packer(InputFile *f)
     : bele(nullptr), fi(f), file_size(-1), ph_format(-1), ph_version(-1), uip(nullptr),
       linker(nullptr), last_patch(nullptr), last_patch_len(0), last_patch_off(0) {
+    file_size = 0;
     if (fi != nullptr)
         file_size = fi->st_size();
+    mem_size_assert(1, file_size_u);
     uip = new UiPacker(this);
     mem_clear(&ph, sizeof(ph));
 }
@@ -504,7 +506,7 @@ void Packer::handleStub(InputFile *fif, OutputFile *fo, unsigned size) {
 }
 
 void Packer::checkOverlay(unsigned overlay) {
-    if ((int) overlay < 0 || (off_t) overlay > file_size)
+    if ((int) overlay < 0 || overlay > file_size_u)
         throw OverlayException("invalid overlay size; file is possibly corrupt");
     if (overlay == 0)
         return;
@@ -515,7 +517,7 @@ void Packer::checkOverlay(unsigned overlay) {
 
 void Packer::copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer *buf, bool do_seek) {
     assert((int) overlay >= 0);
-    assert((off_t) overlay < file_size);
+    assert(overlay < file_size_u);
     buf->checkState();
     if (!fo || overlay == 0)
         return;
@@ -526,7 +528,7 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer *buf, bool 
     }
     info("Copying overlay: %d bytes", overlay);
     if (do_seek)
-        fi->seek(-(off_t) overlay, SEEK_END);
+        fi->seek(-(upx_off_t) overlay, SEEK_END);
 
     // get buffer size, align to improve i/o speed
     unsigned buf_size = buf->getSize();
@@ -640,9 +642,9 @@ bool Packer::getPackHeader(void *b, int blen, bool allow_incompressible) {
             return false;
 
     if (ph.c_len > ph.u_len || (ph.c_len == ph.u_len && !allow_incompressible) ||
-        (off_t) ph.c_len >= file_size || ph.version <= 0 || ph.version >= 0xff)
+        ph.c_len >= file_size_u || ph.version <= 0 || ph.version >= 0xff)
         throwCantUnpack("header corrupted");
-    else if ((off_t) ph.u_len > ph.u_file_size) {
+    else if (ph.u_len > ph.u_file_size) {
 #if 0
         // FIXME: does this check make sense w.r.t. overlays ???
         if (ph.format == UPX_F_WIN32_PE || ph.format == UPX_F_DOS_EXE)

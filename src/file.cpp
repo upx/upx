@@ -170,10 +170,9 @@ void FileBase::write(const void *buf, int len)
 }
 
 
-off_t FileBase::seek(upx_int64_t off64, int whence)
+upx_off_t FileBase::seek(upx_off_t off, int whence)
 {
-    mem_size_assert(1, off64 >= 0 ? off64 : -off64); // sanity check
-    off_t off = ACC_ICONV(off_t, off64);
+    mem_size_assert(1, off >= 0 ? off : -off); // sanity check
     if (!isOpen())
         throwIOException("bad seek 1");
     if (whence == SEEK_SET) {
@@ -193,24 +192,24 @@ off_t FileBase::seek(upx_int64_t off64, int whence)
 }
 
 
-off_t FileBase::tell() const
+upx_off_t FileBase::tell() const
 {
     if (!isOpen())
         throwIOException("bad tell");
-    off_t l = ::lseek(_fd, 0, SEEK_CUR);
+    upx_off_t l = ::lseek(_fd, 0, SEEK_CUR);
     if (l < 0)
         throwIOException("tell error",errno);
     return l - _offset;
 }
 
 
-void FileBase::set_extent(off_t offset, off_t length)
+void FileBase::set_extent(upx_off_t offset, upx_off_t length)
 {
     _offset = offset;
     _length = length;
 }
 
-off_t FileBase::st_size() const
+upx_off_t FileBase::st_size() const
 {
     return _length;
 }
@@ -289,21 +288,21 @@ int InputFile::readx(MemBuffer &buf, int len)
 }
 
 
-off_t InputFile::seek(upx_int64_t off64, int whence)
+upx_off_t InputFile::seek(upx_off_t off, int whence)
 {
-    off_t pos = super::seek(off64, whence);
+    upx_off_t pos = super::seek(off, whence);
     if (_length < pos)
         throwIOException("bad seek 4");
     return pos;
 }
 
 
-off_t InputFile::tell() const
+upx_off_t InputFile::tell() const
 {
     return super::tell();
 }
 
-off_t InputFile::st_size_orig() const
+upx_off_t InputFile::st_size_orig() const
 {
     return _length_orig;
 }
@@ -373,7 +372,7 @@ void OutputFile::write(const void *buf, int len)
     bytes_written += len;
 }
 
-off_t OutputFile::st_size() const
+upx_off_t OutputFile::st_size() const
 {
     if (opt->to_stdout) {  // might be a pipe ==> .st_size is invalid
         return bytes_written;  // too big if seek()+write() instead of rewrite()
@@ -406,10 +405,9 @@ void OutputFile::rewrite(const void *buf, int len)
     bytes_written -= len;       // restore
 }
 
-off_t OutputFile::seek(upx_int64_t off64, int whence)
+upx_off_t OutputFile::seek(upx_off_t off, int whence)
 {
-    mem_size_assert(1, off64 >= 0 ? off64 : -off64); // sanity check
-    off_t off = ACC_ICONV(off_t, off64);
+    mem_size_assert(1, off >= 0 ? off : -off); // sanity check
     assert(!opt->to_stdout);
     switch (whence) {
     case SEEK_SET: {
@@ -436,20 +434,20 @@ off_t OutputFile::seek(upx_int64_t off64, int whence)
 //    return infile.read(buf, len);
 //}
 
-void OutputFile::set_extent(off_t offset, off_t length)
+void OutputFile::set_extent(upx_off_t offset, upx_off_t length)
 {
     super::set_extent(offset, length);
     bytes_written = 0;
-    if (0==offset && (off_t)~0u==length) {
+    if (0==offset && (upx_off_t)~0u==length) {
         if (::fstat(_fd, &st) != 0)
             throwIOException(_name, errno);
         _length = st.st_size - offset;
     }
 }
 
-off_t OutputFile::unset_extent()
+upx_off_t OutputFile::unset_extent()
 {
-    off_t l = ::lseek(_fd, 0, SEEK_END);
+    upx_off_t l = ::lseek(_fd, 0, SEEK_END);
     if (l < 0)
         throwIOException("lseek error", errno);
     _offset = 0;

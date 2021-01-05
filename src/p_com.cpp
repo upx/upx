@@ -223,7 +223,7 @@ int PackCom::canUnpack()
 {
     if (!readPackHeader(128))
         return false;
-    if (file_size <= (off_t) ph.c_len)
+    if (file_size_u <= ph.c_len)
         return false;
     return true;
 }
@@ -243,8 +243,8 @@ void PackCom::unpack(OutputFile *fo)
     fi->readx(ibuf,file_size);
 
     // get compressed data offset
-    int e_len = ph.buf_offset + ph.getPackHeaderSize();
-    if (file_size <= e_len + (off_t)ph.c_len)
+    unsigned e_len = ph.buf_offset + ph.getPackHeaderSize();
+    if (file_size_u <= e_len + ph.c_len)
         throwCantUnpack("file damaged");
 
     // decompress

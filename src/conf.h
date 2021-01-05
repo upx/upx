@@ -31,7 +31,6 @@
 
 #if defined(__cplusplus)
 #  if (__cplusplus >= 201402L)
-#  elif defined(__GNUC__) && (__GNUC__+0 == 4) && (__cplusplus >= 201300L)
 #  elif defined(_MSC_VER) && defined(_MSVC_LANG) && (_MSVC_LANG+0 >= 201402L)
 #  else
 #    error "C++ 14 is required"
@@ -43,6 +42,16 @@
 #if !defined(_FILE_OFFSET_BITS)
 #  define _FILE_OFFSET_BITS 64
 #endif
+// MinGW <stdio.h> confusion
+#if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__)
+#  if !defined(_USE_MINGW_ANSI_STDIO)
+#    define _USE_MINGW_ANSI_STDIO 1
+#  endif
+#  if !defined(__printf__)
+#    define __printf__ __gnu_printf__
+#  endif
+#endif
+
 #undef NDEBUG
 
 
@@ -179,6 +188,16 @@ typedef size_t upx_rsize_t;
 #define UPX_RSIZE_MAX_MEM   (768 * 1024 * 1024)   // DO NOT CHANGE !!!
 #define UPX_RSIZE_MAX_STR   (1024 * 1024)
 
+// using the system off_t was a bad idea even back in 199x...
+typedef upx_int64_t upx_off_t;
+#undef off_t
+#if 0
+// at some future point we can do this...
+#define off_t DO_NOT_USE_off_t
+#else
+#define off_t upx_off_t
+#endif
+
 
 /*************************************************************************
 // portab
@@ -270,6 +289,15 @@ typedef size_t upx_rsize_t;
 **************************************************************************/
 
 #define CLANG_FORMAT_DUMMY_STATEMENT /*empty*/
+
+#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+__acc_static_forceinline void NO_printf(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
+__acc_static_forceinline void NO_fprintf(FILE *, const char *, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
+#endif
+__acc_static_forceinline void NO_printf(const char *, ...) {}
+__acc_static_forceinline void NO_fprintf(FILE *, const char *, ...) {}
 
 #if !defined(__has_builtin)
 #  define __has_builtin(x)      0
