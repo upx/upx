@@ -59,24 +59,24 @@ public:
     virtual bool isOpen() const { return _fd >= 0; }
     int getFd() const { return _fd; }
     const char *getName() const { return _name; }
-    virtual off_t st_size() const;  // { return _length; }
-    virtual void set_extent(off_t offset, off_t length);
+    virtual upx_off_t st_size() const;  // { return _length; }
+    virtual void set_extent(upx_off_t offset, upx_off_t length);
 
 protected:
     bool do_sopen();
     virtual int read(void *buf, int len);
     virtual int readx(void *buf, int len);
     virtual void write(const void *buf, int len);
-    virtual off_t seek(upx_int64_t off, int whence);
-    virtual off_t tell() const;
+    virtual upx_off_t seek(upx_off_t off, int whence);
+    virtual upx_off_t tell() const;
 
     int _fd;
     int _flags;
     int _shflags;
     int _mode;
     const char *_name;
-    off_t _offset;
-    off_t _length;
+    upx_off_t _offset;
+    upx_off_t _length;
 public:
     struct stat st;
 };
@@ -106,11 +106,11 @@ public:
     virtual int read(MemBuffer &buf, int len);
     virtual int readx(MemBuffer &buf, int len);
 
-    virtual off_t seek(upx_int64_t off, int whence);
-    virtual off_t tell() const;
-    virtual off_t st_size_orig() const;
+    virtual upx_off_t seek(upx_off_t off, int whence);
+    virtual upx_off_t tell() const;
+    virtual upx_off_t st_size_orig() const;
 protected:
-    off_t _length_orig;
+    upx_off_t _length_orig;
 };
 
 
@@ -135,21 +135,21 @@ public:
     virtual void write(const void *buf, int len);
     virtual void write(const MemBuffer *buf, int len);
     virtual void write(const MemBuffer &buf, int len);
-    virtual void set_extent(off_t offset, off_t length);
-    virtual off_t unset_extent();  // returns actual length
+    virtual void set_extent(upx_off_t offset, upx_off_t length);
+    virtual upx_off_t unset_extent();  // returns actual length
 
-    off_t getBytesWritten() const { return bytes_written; }
-    virtual off_t st_size() const;  // { return _length; }
+    upx_off_t getBytesWritten() const { return bytes_written; }
+    virtual upx_off_t st_size() const;  // { return _length; }
 
     // FIXME - these won't work when using the '--stdout' option
-    virtual off_t seek(upx_int64_t off, int whence);
+    virtual upx_off_t seek(upx_off_t off, int whence);
     virtual void rewrite(const void *buf, int len);
 
     // util
     static void dump(const char *name, const void *buf, int len, int flags=-1);
 
 protected:
-    off_t bytes_written;
+    upx_off_t bytes_written;
 };
 
 
@@ -172,13 +172,13 @@ public:
 
     virtual void write(const void *buf, int len);
 
-    off_t getBytesWritten() const { return bytes_written; }
+    upx_off_t getBytesWritten() const { return bytes_written; }
 
 protected:
     upx_bytep b;
     unsigned b_size;
     unsigned b_pos;
-    off_t bytes_written;
+    upx_off_t bytes_written;
 };
 #endif /* if 0 */
 

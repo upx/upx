@@ -273,7 +273,7 @@ bool PackPs1::canPack()
         throwCantPack("unsupported header flags (try --force)");
     if (!opt->force && file_size < PS_MIN_SIZE)
         throwCantPack("file is too small (try --force)");
-    if (!opt->force && file_size > (off_t) PS_MAX_SIZE)
+    if (!opt->force && file_size_u > PS_MAX_SIZE)
         throwCantPack("file is too big (try --force)");
     return true;
 }

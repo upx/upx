@@ -2094,7 +2094,7 @@ void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
     }
     mb_isection.alloc(sizeof(pe_section_t) * objs);
     isection = (pe_section_t *)mb_isection.getVoidPtr();
-    if (file_size < (off_t)(pe_offset + sizeof_ih + sizeof(pe_section_t)*objs)) {
+    if (file_size_u < pe_offset + sizeof_ih + sizeof(pe_section_t)*objs) {
         char buf[32]; snprintf(buf, sizeof(buf), "too many sections %d", objs);
         throwCantPack(buf);
     }

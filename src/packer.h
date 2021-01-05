@@ -66,7 +66,7 @@ public:
     unsigned c_len;
     unsigned u_adler;
     unsigned c_adler;
-    off_t u_file_size;
+    unsigned u_file_size;
     int filter;
     int filter_cto;
     int n_mru; // FIXME: rename to filter_misc
@@ -291,8 +291,13 @@ protected:
 protected:
     const N_BELE_RTP::AbstractPolicy *bele = nullptr; // target endianness
     InputFile *fi = nullptr;
-    off_t file_size; // will get set by constructor
-    PackHeader ph;   // must be filled by canUnpack()
+
+    union {                       // unnamed union
+        upx_int64_t file_size;    // will get set by constructor
+        upx_uint64_t file_size_u; // explicitly unsigned
+    };
+
+    PackHeader ph; // must be filled by canUnpack()
     int ph_format;
     int ph_version;
 

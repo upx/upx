@@ -35,7 +35,7 @@
 **************************************************************************/
 
 #if defined(__SANITIZE_ADDRESS__)
-__acc_static_forceinline bool use_simple_mcheck() { return false; }
+__acc_static_forceinline constexpr bool use_simple_mcheck() { return false; }
 #elif (WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
 static int use_simple_mcheck_flag = -1;
 __acc_static_noinline void use_simple_mcheck_init()

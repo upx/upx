@@ -1272,12 +1272,6 @@ void upx_compiler_sanity_check(void) {
     COMPILE_TIME_ASSERT(sizeof(long) >= 4)
     COMPILE_TIME_ASSERT(sizeof(void *) >= 4)
 
-    COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long))
-    COMPILE_TIME_ASSERT(((off_t) -1) < 0)
-#if (ACC_OS_POSIX_DARWIN || ACC_OS_POSIX_LINUX)
-    COMPILE_TIME_ASSERT(sizeof(off_t) >= 8)
-#endif
-
     COMPILE_TIME_ASSERT(sizeof(BE16) == 2)
     COMPILE_TIME_ASSERT(sizeof(BE32) == 4)
     COMPILE_TIME_ASSERT(sizeof(BE64) == 8)
@@ -1573,6 +1567,17 @@ int __acc_cdecl_main main(int argc, char *argv[]) {
     acc_wildargv(&argc, &argv);
     // srand((int) time(nullptr));
     srand((int) clock());
+
+#if defined(_WIN32) || 1
+    // runtime check that Win32/MinGW <stdio.h> works as expected
+    {
+        long long ll = argc < 0 ? 0 : -1;
+        unsigned long long llu = (unsigned long long) ll;
+        char buf[256];
+        upx_snprintf(buf, sizeof(buf), ".%d.%ld.%lld.%u.%lu.%llu", -3, -2L, ll, 3U, 2LU, llu);
+        assert(strcmp(buf, ".-3.-2.-1.3.2.18446744073709551615") == 0);
+    }
+#endif
 
     int r = upx_main(argc, argv);
 

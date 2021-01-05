@@ -45,7 +45,7 @@ static void __acc_cdecl_va internal_error(const char *format, ...) {
     va_list ap;
 
     va_start(ap, format);
-    vsnprintf(buf, sizeof(buf), format, ap);
+    upx_vsnprintf(buf, sizeof(buf), format, ap);
     va_end(ap);
 
     throwInternalError(buf);

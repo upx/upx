@@ -566,11 +566,6 @@ void UiPacker::uiTestTotal() { uiFooter("Tested"); }
 **************************************************************************/
 
 bool UiPacker::uiFileInfoStart() {
-#if defined(_WIN32) // msvcrt
-#define PRLLD "I64d"
-#else
-#define PRLLD "lld"
-#endif
     total_files++;
 
     int fg = con_fg(stdout, FG_CYAN);
@@ -578,16 +573,15 @@ bool UiPacker::uiFileInfoStart() {
     fg = con_fg(stdout, fg);
     UNUSED(fg);
     if (p->ph.c_len > 0) {
-        con_fprintf(stdout, "  %8" PRLLD " bytes", (long long) p->file_size);
+        con_fprintf(stdout, "  %8llu bytes", p->file_size_u);
         con_fprintf(stdout, ", compressed by UPX %d, method %d, level %d, filter 0x%02x/0x%02x\n",
                     p->ph.version, p->ph.method, p->ph.level, p->ph.filter, p->ph.filter_cto);
         return false;
     } else {
-        con_fprintf(stdout, "  %8" PRLLD " bytes", (long long) p->file_size);
+        con_fprintf(stdout, "  %8llu bytes", p->file_size_u);
         con_fprintf(stdout, ", not compressed by UPX\n");
         return true;
     }
-#undef PRLLD
 }
 
 void UiPacker::uiFileInfoEnd() { uiUpdate(); }
@@ -628,8 +622,8 @@ void UiPacker::uiFooter(const char *t) {
     }
 }
 
-void UiPacker::uiUpdate(off_t fc_len, off_t fu_len) {
-    update_fc_len = (fc_len >= 0) ? fc_len : p->file_size;
+void UiPacker::uiUpdate(upx_off_t fc_len, upx_off_t fu_len) {
+    update_fc_len = (fc_len >= 0) ? fc_len : p->file_size_u;
     update_fu_len = (fu_len >= 0) ? fu_len : p->ph.u_file_size;
     update_c_len = p->ph.c_len;
     update_u_len = p->ph.u_len;

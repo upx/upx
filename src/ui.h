@@ -76,7 +76,7 @@ protected:
     virtual void doCallback(unsigned isize, unsigned osize);
 
 protected:
-    virtual void uiUpdate(off_t fc_len = -1, off_t fu_len = -1);
+    virtual void uiUpdate(upx_off_t fc_len = -1, upx_off_t fu_len = -1);
 
 public:
     static void uiHeader();
