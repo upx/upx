@@ -1342,7 +1342,7 @@ void upx_compiler_sanity_check(void) {
         assert(get_le32(d) == 0xfcfdfeff);
         assert(bele->get32(d) == 0xfcfdfeff);
         assert(get_le32_signed(d) == -50462977);
-        assert(get_le64_signed(d) == UPX_INT64_C(-506097522914230529));
+        assert(get_le64_signed(d) == -506097522914230529LL);
         assert(find_be16(d, 2, 0xfffe) == 0);
         assert(find_le16(d, 2, 0xfeff) == 0);
         assert(find_be32(d, 4, 0xfffefdfc) == 0);
@@ -1351,7 +1351,7 @@ void upx_compiler_sanity_check(void) {
         assert(get_be16_signed(d) == 32638);
         assert(get_be24_signed(d) == 8355453);
         assert(get_be32_signed(d) == 2138996092);
-        assert(get_be64_signed(d) == UPX_INT64_C(9186918263483431288));
+        assert(get_be64_signed(d) == 9186918263483431288LL);
     }
     {
         unsigned dd;
@@ -1574,7 +1574,7 @@ int __acc_cdecl_main main(int argc, char *argv[]) {
         long long ll = argc < 0 ? 0 : -1;
         unsigned long long llu = (unsigned long long) ll;
         char buf[256];
-        upx_snprintf(buf, sizeof(buf), ".%d.%ld.%lld.%u.%lu.%llu", -3, -2L, ll, 3U, 2LU, llu);
+        snprintf(buf, sizeof(buf), ".%d.%ld.%lld.%u.%lu.%llu", -3, -2L, ll, 3U, 2LU, llu);
         assert(strcmp(buf, ".-3.-2.-1.3.2.18446744073709551615") == 0);
     }
 #endif

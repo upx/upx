@@ -223,10 +223,10 @@ protected:
     void addLoader(C, C, C, C, C, C, C, C, C);
     void addLoader(C, C, C, C, C, C, C, C, C, C);
 #undef C
-#if 1 && (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x040100))
-    void __acc_cdecl_va addLoaderVA(const char *s, ...) __attribute__((__sentinel__));
+#if (ACC_CC_CLANG || ACC_CC_GNUC)
+    void addLoaderVA(const char *s, ...) __attribute__((__sentinel__));
 #else
-    void __acc_cdecl_va addLoaderVA(const char *s, ...);
+    void addLoaderVA(const char *s, ...);
 #endif
     virtual bool hasLoaderSection(const char *name) const;
     virtual int getLoaderSection(const char *name, int *slen = nullptr) const;
