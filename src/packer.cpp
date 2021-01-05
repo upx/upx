@@ -1013,7 +1013,7 @@ void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g, C h, C i, C j) {
 #undef C
 #undef N
 
-void __acc_cdecl_va Packer::addLoaderVA(const char *s, ...) {
+void Packer::addLoaderVA(const char *s, ...) {
     va_list ap;
     va_start(ap, s);
     linker->addLoader(s, ap);

@@ -122,12 +122,7 @@ typedef struct
 console_t;
 
 
-#if defined(__GNUC__)
-void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...)
-        __attribute__((__format__(__printf__,2,3)));
-#else
-void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...);
-#endif
+void con_fprintf(FILE *f, const char *format, ...) attribute_format(2, 3);
 
 
 #define FG_BLACK     0x00

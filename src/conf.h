@@ -42,13 +42,9 @@
 #if !defined(_FILE_OFFSET_BITS)
 #  define _FILE_OFFSET_BITS 64
 #endif
-// MinGW <stdio.h> confusion
 #if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__)
 #  if !defined(_USE_MINGW_ANSI_STDIO)
 #    define _USE_MINGW_ANSI_STDIO 1
-#  endif
-#  if !defined(__printf__)
-#    define __printf__ __gnu_printf__
 #  endif
 #endif
 
@@ -99,6 +95,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 #  pragma warning(disable: 4820) // padding added after data member
 #endif
 
+#undef snprintf
+#undef vsnprintf
 #define ACC_WANT_ACC_INCD_H 1
 #define ACC_WANT_ACC_INCE_H 1
 #define ACC_WANT_ACC_LIB_H 1
@@ -115,12 +113,6 @@ typedef acc_uint32_t    upx_uint32_t;
 typedef acc_int64_t     upx_int64_t;
 typedef acc_uint64_t    upx_uint64_t;
 typedef acc_uintptr_t   upx_uintptr_t;
-#define UPX_INT16_C     ACC_INT16_C
-#define UPX_UINT16_C    ACC_UINT16_C
-#define UPX_INT32_C     ACC_INT32_C
-#define UPX_UINT32_C    ACC_UINT32_C
-#define UPX_INT64_C     ACC_INT64_C
-#define UPX_UINT64_C    ACC_UINT64_C
 
 typedef unsigned char   upx_byte;
 #define upx_bytep       upx_byte *
@@ -290,14 +282,18 @@ typedef upx_int64_t upx_off_t;
 
 #define CLANG_FORMAT_DUMMY_STATEMENT /*empty*/
 
-#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-__acc_static_forceinline void NO_printf(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-__acc_static_forceinline void NO_fprintf(FILE *, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
+#if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__) && !defined(__clang__)
+#  define attribute_format(a,b) __attribute__((__format__(__gnu_printf__,a,b)));
+#elif (ACC_CC_CLANG || ACC_CC_GNUC)
+#  define attribute_format(a,b) __attribute__((__format__(__printf__,a,b)));
+#else
+#  define attribute_format(a,b) /*empty*/
 #endif
-__acc_static_forceinline void NO_printf(const char *, ...) {}
-__acc_static_forceinline void NO_fprintf(FILE *, const char *, ...) {}
+
+inline void NO_printf(const char *, ...) attribute_format(1, 2);
+inline void NO_fprintf(FILE *, const char *, ...) attribute_format(2, 3);
+inline void NO_printf(const char *, ...) {}
+inline void NO_fprintf(FILE *, const char *, ...) {}
 
 #if !defined(__has_builtin)
 #  define __has_builtin(x)      0
@@ -724,29 +720,13 @@ void printSetNl(int need_nl);
 void printClearLine(FILE *f = nullptr);
 void printErr(const char *iname, const Throwable *e);
 void printUnhandledException(const char *iname, const std::exception *e);
-#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-void __acc_cdecl_va printErr(const char *iname, const char *format, ...)
-        __attribute__((__format__(__printf__,2,3)));
-void __acc_cdecl_va printWarn(const char *iname, const char *format, ...)
-        __attribute__((__format__(__printf__,2,3)));
-#else
-void __acc_cdecl_va printErr(const char *iname, const char *format, ...);
-void __acc_cdecl_va printWarn(const char *iname, const char *format, ...);
-#endif
+void printErr(const char *iname, const char *format, ...) attribute_format(2, 3);
+void printWarn(const char *iname, const char *format, ...) attribute_format(2, 3);
 
-#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-void __acc_cdecl_va infoWarning(const char *format, ...)
-        __attribute__((__format__(__printf__,1,2)));
-void __acc_cdecl_va infoHeader(const char *format, ...)
-        __attribute__((__format__(__printf__,1,2)));
-void __acc_cdecl_va info(const char *format, ...)
-        __attribute__((__format__(__printf__,1,2)));
-#else
-void __acc_cdecl_va infoWarning(const char *format, ...);
-void __acc_cdecl_va infoHeader(const char *format, ...);
-void __acc_cdecl_va info(const char *format, ...);
-#endif
-void infoHeader();
+void infoWarning(const char *format, ...) attribute_format(1, 2);
+void infoHeader(const char *format, ...) attribute_format(1, 2);
+void info(const char *format, ...) attribute_format(1, 2);
+void infoHeader(void);
 void infoWriting(const char *what, long size);
 
 

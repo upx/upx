@@ -192,7 +192,7 @@ __acc_static_forceinline int sign_extend(unsigned v, unsigned bits) {
 }
 
 __acc_static_forceinline upx_int64_t sign_extend(upx_uint64_t v, unsigned bits) {
-    const upx_uint64_t sign_bit = UPX_UINT64_C(1) << (bits - 1);
+    const upx_uint64_t sign_bit = 1ull << (bits - 1);
     v &= sign_bit | (sign_bit - 1);
     v |= 0 - (v & sign_bit);
     return ACC_ICAST(upx_int64_t, v);

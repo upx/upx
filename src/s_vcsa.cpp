@@ -258,10 +258,10 @@ static int init(screen_t *this, int fd) {
         int attr;
         Cell a;
 
-        upx_snprintf(vc_name, sizeof(vc_name), "/dev/vcsa%d", (int) MINOR(st.st_rdev));
+        upx_safe_snprintf(vc_name, sizeof(vc_name), "/dev/vcsa%d", (int) MINOR(st.st_rdev));
         this->data->fd = open(vc_name, O_RDWR);
         if (this->data->fd == -1) {
-            upx_snprintf(vc_name, sizeof(vc_name), "/dev/vcc/a%d", (int) MINOR(st.st_rdev));
+            upx_safe_snprintf(vc_name, sizeof(vc_name), "/dev/vcc/a%d", (int) MINOR(st.st_rdev));
             this->data->fd = open(vc_name, O_RDWR);
         }
         if (this->data->fd != -1) {

@@ -91,10 +91,10 @@ static void pr_error(const char *iname, const char *msg, bool is_warning)
     bool c = acc_isatty(STDERR_FILENO) ? 1 : 0;
 
     int fg = con_fg(stderr,FG_BRTRED);
-    upx_snprintf(buf+strlen(buf),sizeof(buf)-strlen(buf),"%s: ", progname);
+    snprintf(buf+strlen(buf),sizeof(buf)-strlen(buf),"%s: ", progname);
     pr_print(c,buf);
     //(void)con_fg(stderr,FG_RED);
-    upx_snprintf(buf,sizeof(buf),"%s: ", iname);
+    snprintf(buf,sizeof(buf),"%s: ", iname);
     pr_print(c,buf);
     //(void)con_fg(stderr,FG_BRTRED);
     pr_print(c,msg);
@@ -112,13 +112,13 @@ void printErr(const char *iname, const Throwable *e)
     char buf[1024];
     size_t l;
 
-    upx_snprintf(buf, sizeof(buf), "%s", prettyName(typeid(*e).name()));
+    snprintf(buf, sizeof(buf), "%s", prettyName(typeid(*e).name()));
     l = strlen(buf);
     if (l < sizeof(buf) && e->getMsg())
-        upx_snprintf(buf+l, sizeof(buf)-l, ": %s", e->getMsg());
+        snprintf(buf+l, sizeof(buf)-l, ": %s", e->getMsg());
     l = strlen(buf);
     if (l < sizeof(buf) && e->getErrno()) {
-        upx_snprintf(buf+l, sizeof(buf)-l, ": %s", strerror(e->getErrno()));
+        snprintf(buf+l, sizeof(buf)-l, ": %s", strerror(e->getErrno()));
 #if 1
         // some compilers (e.g. Borland C++) put a trailing '\n'
         // into strerror() result
@@ -131,26 +131,26 @@ void printErr(const char *iname, const Throwable *e)
 }
 
 
-void __acc_cdecl_va printErr(const char *iname, const char *format, ...)
+void printErr(const char *iname, const char *format, ...)
 {
     va_list args;
     char buf[1024];
 
     va_start(args,format);
-    upx_vsnprintf(buf,sizeof(buf),format,args);
+    upx_safe_vsnprintf(buf,sizeof(buf),format,args);
     va_end(args);
 
     pr_error(iname,buf,false);
 }
 
 
-void __acc_cdecl_va printWarn(const char *iname, const char *format, ...)
+void printWarn(const char *iname, const char *format, ...)
 {
     va_list args;
     char buf[1024];
 
     va_start(args,format);
-    upx_vsnprintf(buf,sizeof(buf),format,args);
+    upx_safe_vsnprintf(buf,sizeof(buf),format,args);
     va_end(args);
 
     pr_error(iname,buf,true);
@@ -201,21 +201,21 @@ void infoHeader()
     info_header = 0;
 }
 
-void __acc_cdecl_va infoHeader(const char *format, ...)
+void infoHeader(const char *format, ...)
 {
     if (opt->info_mode <= 0)
         return;
     va_list args;
     char buf[1024];
     va_start(args,format);
-    upx_vsnprintf(buf,sizeof(buf),format,args);
+    upx_safe_vsnprintf(buf,sizeof(buf),format,args);
     va_end(args);
     info_print(buf);
     info_header = 1;
 }
 
 
-void __acc_cdecl_va info(const char *format, ...)
+void info(const char *format, ...)
 {
     if (opt->info_mode <= 0)
         return;
@@ -224,13 +224,13 @@ void __acc_cdecl_va info(const char *format, ...)
     const int n = 4 * info_header;
     memset(buf, ' ', n);
     va_start(args,format);
-    upx_vsnprintf(buf+n,sizeof(buf)-n,format,args);
+    upx_safe_vsnprintf(buf+n,sizeof(buf)-n,format,args);
     va_end(args);
     info_print(buf);
 }
 
 
-void __acc_cdecl_va infoWarning(const char *format, ...)
+void infoWarning(const char *format, ...)
 {
     if (opt->info_mode <= 0)
     {
@@ -240,7 +240,7 @@ void __acc_cdecl_va infoWarning(const char *format, ...)
     va_list args;
     char buf[1024];
     va_start(args,format);
-    upx_vsnprintf(buf,sizeof(buf),format,args);
+    upx_safe_vsnprintf(buf,sizeof(buf),format,args);
     va_end(args);
     info("[WARNING] %s\n", buf);
 }

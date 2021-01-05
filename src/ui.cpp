@@ -140,14 +140,14 @@ static const char *mkline(upx_uint64_t fu_len, upx_uint64_t fc_len, upx_uint64_t
     if (ratio >= 1000 * 1000)
         strcpy(r, "overlay");
     else
-        upx_snprintf(r, sizeof(r), "%3u.%02u%%", ratio / 10000, (ratio % 10000) / 100);
+        upx_safe_snprintf(r, sizeof(r), "%3u.%02u%%", ratio / 10000, (ratio % 10000) / 100);
     if (decompress)
         f = "%10lld <-%10lld  %7s %15s %s";
     else
         f = "%10lld ->%10lld  %7s %15s %s";
     center_string(fn, sizeof(fn), format_name);
     assert(strlen(fn) == 15);
-    upx_snprintf(buf, sizeof(buf), f, (long long) fu_len, (long long) fc_len, r, fn, filename);
+    upx_safe_snprintf(buf, sizeof(buf), f, (long long) fu_len, (long long) fc_len, r, fn, filename);
     UNUSED(u_len);
     UNUSED(c_len);
     return buf;
@@ -259,8 +259,8 @@ void UiPacker::startCallback(unsigned u_len, unsigned step, int pass, int total_
             total_passes /= 10;
         } while (total_passes > 0);
         buflen = sizeof(s->msg_buf) - s->bar_pos;
-        l = upx_snprintf(&s->msg_buf[s->bar_pos], buflen, "%*d/%*d  ", s->pass_digits, s->pass,
-                         s->pass_digits, s->total_passes);
+        l = upx_safe_snprintf(&s->msg_buf[s->bar_pos], buflen, "%*d/%*d  ", s->pass_digits, s->pass,
+                              s->pass_digits, s->total_passes);
         if (l > 0 && s->bar_len - l > 10) {
             s->bar_len -= l;
             s->bar_pos += l;
@@ -408,8 +408,8 @@ void UiPacker::doCallback(unsigned isize, unsigned osize) {
         ratio = get_ratio(isize, osize);
 
     int buflen = (int) (&s->msg_buf[sizeof(s->msg_buf)] - m);
-    upx_snprintf(m, buflen, "  %3d.%1d%%  %c ", ratio / 10000, (ratio % 10000) / 1000,
-                 spinner[s->spin_counter & 3]);
+    upx_safe_snprintf(m, buflen, "  %3d.%1d%%  %c ", ratio / 10000, (ratio % 10000) / 1000,
+                      spinner[s->spin_counter & 3]);
     assert(strlen(s->msg_buf) < 1 + 80);
 
     s->pos = pos;
@@ -527,8 +527,8 @@ void UiPacker::uiListEnd() { uiUpdate(); }
 void UiPacker::uiListTotal(bool decompress) {
     if (opt->verbose >= 1 && total_files >= 2) {
         char name[32];
-        upx_snprintf(name, sizeof(name), "[ %u file%s ]", total_files_done,
-                     total_files_done == 1 ? "" : "s");
+        upx_safe_snprintf(name, sizeof(name), "[ %u file%s ]", total_files_done,
+                          total_files_done == 1 ? "" : "s");
         con_fprintf(
             stdout, "%s%s\n", header_line2,
             mkline(total_fu_len, total_fc_len, total_u_len, total_c_len, "", name, decompress));

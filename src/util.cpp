@@ -28,12 +28,6 @@
 #include "conf.h"
 #include "util.h"
 
-#if (ACC_CC_MSC && (_MSC_VER >= 1000 && _MSC_VER < 1200))
-/* avoid -W4 warnings in <conio.h> */
-#pragma warning(disable : 4032)
-/* avoid -W4 warnings in <windows.h> */
-#pragma warning(disable : 4201 4214 4514)
-#endif
 #define ACC_WANT_ACC_INCI_H 1
 #include "miniacc.h"
 #define ACC_WANT_ACCLIB_GETOPT 1
@@ -394,9 +388,9 @@ bool set_method_name(char *buf, size_t size, int method, int level) {
         r = false;
     }
     if (level > 0)
-        upx_snprintf(buf, size, "%s/%d", alg, level);
+        upx_safe_snprintf(buf, size, "%s/%d", alg, level);
     else
-        upx_snprintf(buf, size, "%s", alg);
+        upx_safe_snprintf(buf, size, "%s", alg);
     return r;
 }
 
@@ -461,7 +455,7 @@ bool maketempname(char *ofilename, size_t size, const char *ifilename, const cha
             return true;
         if (!force)
             break;
-        upx_snprintf(ofext, 5, ".%03d", ofile);
+        upx_safe_snprintf(ofext, 5, ".%03d", ofile);
     }
 
     ofilename[0] = 0;
@@ -494,7 +488,7 @@ bool makebakname(char *ofilename, size_t size, const char *ifilename, bool force
             return true;
         if (!force)
             break;
-        upx_snprintf(ofext, 5, ".%03d", ofile);
+        upx_safe_snprintf(ofext, 5, ".%03d", ofile);
     }
 
     ofilename[0] = 0;
