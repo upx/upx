@@ -1961,6 +1961,17 @@ bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
 #include "p_elf_enum.h"
 #undef WANT_REL_ENUM
 
+int PackLinuxElf32::canUnpack()
+{
+    if (super::canUnpack()) {
+        return true;
+    }
+    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
+        PackLinuxElf32help1(fi);
+    }
+    return false;
+}
+
 bool PackLinuxElf32::canPack()
 {
     union {
@@ -2371,6 +2382,30 @@ proceed: ;
     // set options
     opt->o_unix.blocksize = blocksize = file_size;
     return true;
+}
+
+int PackLinuxElf64::canUnpack()
+{
+    if (super::canUnpack()) {
+        return true;
+    }
+    if (Elf64_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
+        PackLinuxElf64help1(fi);
+        Elf64_Phdr const *phdr = phdri, *last_LOAD = nullptr;
+        for (unsigned j = 0; j < e_phnum; ++phdr, ++j)
+            if (Elf64_Phdr::PT_LOAD==get_te32(&phdr->p_type)) {
+                last_LOAD = phdr;
+            }
+        if (!last_LOAD)
+            return false;
+        off_t offset = get_te64(&last_LOAD->p_offset);
+        unsigned filesz = get_te64(&last_LOAD->p_filesz);
+        fi->seek(filesz+offset, SEEK_SET);
+        MemBuffer buf(32 + sizeof(overlay_offset));
+        fi->readx(buf, buf.getSize());
+        return PackUnix::find_overlay_offset(buf);
+    }
+    return false;
 }
 
 bool
@@ -4908,6 +4943,14 @@ PackLinuxElf32x86::PackLinuxElf32x86(InputFile *f) : super(f)
 
 PackLinuxElf32x86::~PackLinuxElf32x86()
 {
+}
+
+int PackLinuxElf32x86::canUnpack()
+{
+    if (super::canUnpack()) {
+        return true;
+    }
+    return false;
 }
 
 Linker* PackLinuxElf32x86::newLinker() const

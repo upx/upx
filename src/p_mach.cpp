@@ -1550,7 +1550,7 @@ int PackMachBase<T>::canUnpack()
     }
     sz_mach_headers = headway + sizeof(mhdri);
     if (2048 < headway) {
-        infoWarning("Mach_header.sizeofcmds(%d) > 1024", headway);
+        infoWarning("Mach_header.sizeofcmds(%d) > 2048", headway);
     }
     rawmseg_buf.alloc(mhdri.sizeofcmds);
     rawmseg = (Mach_segment_command *)rawmseg_buf.getVoidPtr();
