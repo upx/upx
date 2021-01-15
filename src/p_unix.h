@@ -50,6 +50,7 @@ public:
 
     virtual bool canPack();
     virtual int canUnpack();
+    int find_overlay_offset(MemBuffer const &buf);
 
 protected:
     // called by the generic pack()

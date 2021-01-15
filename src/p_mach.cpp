@@ -1533,6 +1533,7 @@ int PackMachBase<T>::canUnpack()
     my_cpusubtype = mhdri.cpusubtype;
 
     int headway = (int)mhdri.sizeofcmds;
+    if (0)
     if (headway < (int)(3 * sizeof(Mach_segment_command)
                   + sizeof(Mach_main_command))) {
         infoWarning("Mach_header.sizeofcmds = %d too small", headway);
@@ -1540,7 +1541,7 @@ int PackMachBase<T>::canUnpack()
     }
     sz_mach_headers = headway + sizeof(mhdri);
     if (2048 < headway) {
-        infoWarning("Mach_header.sizeofcmds(%d) > 1024", headway);
+        infoWarning("Mach_header.sizeofcmds(%d) > 2048", headway);
     }
     rawmseg_buf.alloc(mhdri.sizeofcmds);
     rawmseg = (Mach_segment_command *)rawmseg_buf.getVoidPtr();

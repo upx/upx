@@ -523,6 +523,7 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
 // Generic Unix canUnpack().
 **************************************************************************/
 
+// The prize is the value of overlay_offset: the offset of compressed data
 int PackUnix::canUnpack()
 {
     int const small = 32 + sizeof(overlay_offset);
@@ -534,6 +535,13 @@ int PackUnix::canUnpack()
 
     fi->seek(-(off_t)bufsize, SEEK_END);
     fi->readx(buf, bufsize);
+    return find_overlay_offset(buf);
+}
+
+int PackUnix::find_overlay_offset(MemBuffer const &buf)
+{
+    int const small = 32 + sizeof(overlay_offset);
+    int const bufsize = buf.getSize();
     int i = bufsize;
     while (i > small && 0 == buf[--i]) { }
     i -= small;
@@ -550,7 +558,6 @@ int PackUnix::canUnpack()
 
     return true;
 }
-
 
 /*************************************************************************
 // Generic Unix unpack().

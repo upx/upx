@@ -711,9 +711,9 @@ int Packer::patchPackHeader(void *b, int blen)
 }
 
 
-bool Packer::getPackHeader(void *b, int blen, bool allow_incompressible)
+bool Packer::getPackHeader(void const *b, int blen, bool allow_incompressible)
 {
-    if (!ph.fillPackHeader((unsigned char *)b, blen))
+    if (!ph.fillPackHeader((unsigned char const *)b, blen))
         return false;
 
     if (ph.version > getVersion())
