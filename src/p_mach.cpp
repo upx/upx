@@ -1533,8 +1533,10 @@ int PackMachBase<T>::canUnpack()
     my_cpusubtype = mhdri.cpusubtype;
 
     int headway = (int)mhdri.sizeofcmds;
-    if (headway < (int)(3 * sizeof(Mach_segment_command)
-                  + sizeof(Mach_main_command))) {
+    // old style:   LC_SEGMENT + LC_UNIXTHREAD  [smaller, varies by $ARCH]
+    // new style: 3*LC_SEGMENT + LC_MAIN        [larger]
+    // FIXME: So this test is weak.
+    if (headway < (int)(sizeof(Mach_segment_command) + 4*4)) {
         infoWarning("Mach_header.sizeofcmds = %d too small", headway);
         throwCantUnpack("file corrupted");
     }
