@@ -876,7 +876,7 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image, MemBuffer *out,
     upx_byte const *in_end = p;
     // fprintf(stderr,"relocnum=%x\n",relocn);
     out->alloc(4 * relocn + 4); // one extra data
-    LE32 *outp = (LE32 *) (unsigned char *) *out;
+    LE32 *const outp = (LE32 *) (unsigned char *) *out;
     LE32 *relocs = outp;
     unsigned jc = (unsigned) -4;
     for (p = *in; p < in_end; p++) {
