@@ -609,7 +609,7 @@ void PackWcle::decodeFixups()
         static unsigned char const blank[9] = {0};
         if (!memcmp(blank, selfrel_fixups, sizeof(blank))) {
             char msg[50]; snprintf(msg, sizeof(msg),
-                "bad selfrel_fixups +%#lx", selfrel_fixups - p);
+                "bad selfrel_fixups +%#zx", selfrel_fixups - p);
             throwCantPack(msg);
         }
         selfrel_fixups += 9;
