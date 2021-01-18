@@ -582,7 +582,7 @@ void PackWcle::decodeFixups()
     iimage.dealloc();
 
     MemBuffer tmpbuf;
-    unsigned fixupn = unoptimizeReloc32(&p,oimage,&tmpbuf,1);
+    unsigned const fixupn = unoptimizeReloc32(&p,oimage,&tmpbuf,1);
 
     MemBuffer wrkmem(8*fixupn+8);
     unsigned ic,jc,o,r;
@@ -603,8 +603,17 @@ void PackWcle::decodeFixups()
     const upx_byte *selector_fixups = p;
     const upx_byte *selfrel_fixups = p;
 
-    while (*selfrel_fixups != 0xC3)
+    while (*selfrel_fixups != 0xC3) {
+        // FIXME: Heuristic defense for running off the end.
+        // End is unknown, but all-zero definitely is bad.
+        static unsigned char const blank[9] = {0};
+        if (!memcmp(blank, selfrel_fixups, sizeof(blank))) {
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad selfrel_fixups +%#lx", selfrel_fixups - p);
+            throwCantPack(msg);
+        }
         selfrel_fixups += 9;
+    }
     selfrel_fixups++;
     unsigned selectlen = ptr_diff(selfrel_fixups, selector_fixups)/9;
 
