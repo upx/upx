@@ -1811,8 +1811,9 @@ bool PackMachBase<T>::canPack()
         char buf[32]; snprintf(buf, sizeof(buf), "bad sizeofcmds %d", sz_mhcmds);
         throwCantPack(buf);
     }
-    if (16384 < sz_mhcmds) { // somewhat arbitrary, but amd64-darwin.macho-upxmain.c
-        throwCantPack("16384 < Mach_header.sizeofcmds");
+    if (!sz_mhcmds
+    ||  16384 < sz_mhcmds) { // somewhat arbitrary, but amd64-darwin.macho-upxmain.c
+        throwCantPack("16384 < Mach_header.sizeofcmds (or ==0)");
     }
     rawmseg_buf.alloc(sz_mhcmds);
     rawmseg = (Mach_segment_command *)(void *)rawmseg_buf;
