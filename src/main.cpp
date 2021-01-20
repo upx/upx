@@ -1409,7 +1409,7 @@ int upx_main(int argc, char *argv[]) {
     static char default_argv0[] = "upx";
 
     upx_compiler_sanity_check();
-    // allow serial re-use of main() as a subroutine
+    // Allow serial re-use of upx_main() as a subroutine
     done_output_name = 0;
     opt->reset();
 
