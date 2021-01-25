@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -40,12 +40,12 @@ static bool update_capacity(unsigned size, unsigned *capacity) {
     return true;
 }
 
-static void __acc_cdecl_va internal_error(const char *format, ...) {
+static void internal_error(const char *format, ...) {
     static char buf[1024];
     va_list ap;
 
     va_start(ap, format);
-    vsnprintf(buf, sizeof(buf), format, ap);
+    upx_safe_vsnprintf(buf, sizeof(buf), format, ap);
     va_end(ap);
 
     throwInternalError(buf);
@@ -426,7 +426,7 @@ void ElfLinker::addLoader(const char *s, va_list ap) {
     }
 }
 
-void __acc_cdecl_va ElfLinker::addLoaderVA(const char *s, ...) {
+void ElfLinker::addLoaderVA(const char *s, ...) {
     va_list ap;
     va_start(ap, s);
     addLoader(s, ap);
@@ -503,8 +503,8 @@ void ElfLinker::dumpSymbol(const Symbol *symbol, unsigned flags, FILE *fp) const
     if ((flags & 1) && symbol->section->output == nullptr)
         return;
     char d0[16 + 1], d1[16 + 1];
-    upx_snprintf(d0, sizeof(d0), "%016llx", (upx_uint64_t) symbol->offset);
-    upx_snprintf(d1, sizeof(d1), "%016llx", (upx_uint64_t) symbol->section->offset);
+    upx_safe_snprintf(d0, sizeof(d0), "%016llx", (upx_uint64_t) symbol->offset);
+    upx_safe_snprintf(d1, sizeof(d1), "%016llx", (upx_uint64_t) symbol->section->offset);
     fprintf(fp, "%-28s 0x%-16s | %-28s 0x%-16s\n", symbol->name, d0, symbol->section->name, d1);
 }
 void ElfLinker::dumpSymbols(unsigned flags, FILE *fp) const {
@@ -514,7 +514,7 @@ void ElfLinker::dumpSymbols(unsigned flags, FILE *fp) const {
         // default: dump symbols in used section order
         for (const Section *section = head; section; section = section->next) {
             char d1[16 + 1];
-            upx_snprintf(d1, sizeof(d1), "%016llx", (upx_uint64_t) section->offset);
+            upx_safe_snprintf(d1, sizeof(d1), "%016llx", (upx_uint64_t) section->offset);
             fprintf(fp, "%-42s%-28s 0x%-16s\n", "", section->name, d1);
             for (unsigned ic = 0; ic < nsymbols; ic++) {
                 const Symbol *symbol = symbols[ic];

@@ -2,7 +2,6 @@
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
 
-# Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
@@ -44,7 +43,7 @@ if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
     elif [[ -f "$HOME/.local/bin/bin-upx/upx-stubtools-check-version" ]]; then
         bin_upx=$(readlink -en -- "$HOME/.local/bin/bin-upx")
     else
-        bin_upx=$(readlink -en -- "$upx_SRCDIR/../deps/bin-upx-20160918")
+        bin_upx=$(readlink -en -- "$upx_SRCDIR/../deps/bin-upx-20210104")
     fi
     cd / && cd $upx_SRCDIR || exit 1
     extra_subdirs=()
@@ -130,7 +129,6 @@ fi
 export UPX_UCLDIR="$ucl_SRCDIR"
 cd / && cd $upx_BUILDDIR || exit 1
 make="make -f $upx_SRCDIR/src/Makefile"
-EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -DUCL_NO_ASM"
 EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$ucl_BUILDDIR/src/.libs"
 if [[ $BUILD_LOCAL_ZLIB == 1 ]]; then
     EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -I$zlib_SRCDIR"
@@ -144,7 +142,6 @@ if [[ $BM_B =~ (^|\+)debug($|\+) ]]; then
     make="$make BUILD_TYPE_DEBUG=1"
 fi
 if [[ $BM_B =~ (^|\+)sanitize($|\+) ]]; then
-    case $TRAVIS_OS_NAME-$CC in linux-gcc*) EXTRA_LDFLAGS="$EXTRA_LDFLAGS -fuse-ld=gold" ;; esac
     make="$make BUILD_TYPE_SANITIZE=1"
 fi
 if [[ $BM_B =~ (^|\+)scan-build($|\+) ]]; then

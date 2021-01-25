@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -97,7 +97,7 @@ private:
     // disable copy
     BoundedPtr(const BoundedPtr&) = delete;
     // disable dynamic allocation
-    DISABLE_NEW_DELETE
+    ACC_CXX_DISABLE_NEW_DELETE
 };
 
 

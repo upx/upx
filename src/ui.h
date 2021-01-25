@@ -1,9 +1,9 @@
-/* ui.h --
+/* ui.h -- User Interface
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -51,7 +51,6 @@ public:
     static void uiTestTotal();
     static void uiFileInfoTotal();
 
-public:
     virtual void uiPackStart(const OutputFile *fo);
     virtual void uiPackEnd(const OutputFile *fo);
     virtual void uiUnpackStart(const OutputFile *fo);
@@ -77,7 +76,7 @@ protected:
     virtual void doCallback(unsigned isize, unsigned osize);
 
 protected:
-    virtual void uiUpdate(off_t fc_len = -1, off_t fu_len = -1);
+    virtual void uiUpdate(upx_off_t fc_len = -1, upx_off_t fu_len = -1);
 
 public:
     static void uiHeader();
@@ -88,14 +87,14 @@ public:
 
 protected:
     virtual void printInfo(int nl = 0);
-    const Packer *p;
+    const Packer *p = nullptr;
 
     // callback
     upx_callback_t cb;
 
     // internal state
     struct State;
-    State *s;
+    State *s = nullptr;
 
     // totals
     static unsigned total_files;

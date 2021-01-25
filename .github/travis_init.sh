@@ -1,6 +1,5 @@
 ## vim:set ts=4 sw=4 et:
 
-# Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 #set -x # debug
@@ -130,6 +129,15 @@ if [[ -n $BM_CROSS ]]; then
                 [[ -z $upx_wine ]] && upx_wine="wine"
                 x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
         esac
+    elif egrep -q '^PRETTY_NAME="?Ubuntu 20\.04' /etc/os-release; then
+        case $BM_CROSS-$BM_C in
+            x86_64-w64-mingw32-gcc-9)
+                export upx_EXTRA_CPPFLAGS="-D__USE_MINGW_ANSI_STDIO=1"
+                export upx_EXTRA_LDFLAGS="-static"
+                upx_exeext=.exe
+                [[ -z $upx_wine ]] && upx_wine="wine64"
+                x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
+        esac
     fi
 fi # BM_CROSS
 if [[ "$CC" == "false" ]]; then # generic
@@ -179,7 +187,7 @@ fi # CC_OVERRIDE
 [[ -z $upx_SRCDIR ]] && upx_SRCDIR=$(readlink -mn -- $argv0dir/..)
 [[ -z $ucl_SRCDIR ]] && ucl_SRCDIR=$(readlink -mn -- $upx_SRCDIR/../deps/ucl-1.03)
 [[ -z $upx_testsuite_SRCDIR ]] && upx_testsuite_SRCDIR=$(readlink -mn -- $upx_SRCDIR/../deps/upx-testsuite)
-[[ -z $zlib_SRCDIR ]] && zlib_SRCDIR=$(readlink -mn -- $upx_SRCDIR/../deps/zlib-1.2.8)
+[[ -z $zlib_SRCDIR ]] && zlib_SRCDIR=$(readlink -mn -- $upx_SRCDIR/../deps/zlib-1.2.11)
 
 # build dirs
 mkbuilddirs() {
@@ -207,7 +215,7 @@ fi
 [[ -z $upx_BUILDDIR ]] && upx_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx")
 [[ -z $ucl_BUILDDIR ]] && ucl_BUILDDIR=$(readlink -mn -- "$toptop_bdir/ucl-1.03")
 [[ -z $upx_testsuite_BUILDDIR ]] && upx_testsuite_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx-testsuite")
-[[ -z $zlib_BUILDDIR ]] && zlib_BUILDDIR=$(readlink -mn -- "$toptop_bdir/zlib-1.2.8")
+[[ -z $zlib_BUILDDIR ]] && zlib_BUILDDIR=$(readlink -mn -- "$toptop_bdir/zlib-1.2.11")
 [[ -z $lcov_OUTPUTDIR ]] && lcov_OUTPUTDIR=$(readlink -mn -- "$toptop_bdir/.lcov-results")
 unset toptop_builddir toptop_bdir
 

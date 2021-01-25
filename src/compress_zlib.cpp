@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -29,6 +29,7 @@
 #include "conf.h"
 #include "compress.h"
 #include "mem.h"
+#include <zlib.h>
 
 
 void zlib_compress_config_t::reset()
@@ -39,14 +40,6 @@ void zlib_compress_config_t::reset()
     window_bits.reset();
     strategy.reset();
 }
-
-
-#if !(WITH_ZLIB)
-extern int compress_zlib_dummy;
-int compress_zlib_dummy = 0;
-#else
-
-#include <zlib.h>
 
 
 static int convert_errno_from_zlib(int zr)
@@ -250,7 +243,5 @@ unsigned upx_zlib_crc32(const void *buf, unsigned len, unsigned crc)
 }
 #endif
 
-
-#endif /* WITH_ZLIB */
 
 /* vim:set ts=4 sw=4 et: */

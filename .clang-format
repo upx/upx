@@ -1,0 +1,27 @@
+# for clang-format-10.0.1
+# "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." Rob Pike
+---
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+#AlignConsecutiveAssignments: true
+AlwaysBreakTemplateDeclarations: true
+ColumnLimit: 100
+IndentWidth: 4
+SortIncludes: false
+SpaceAfterCStyleCast: true
+StatementMacros: [
+  ACCCHK_ASSERT,
+  ACCCHK_ASSERT_IS_SIGNED_T,
+  ACCCHK_ASSERT_IS_UNSIGNED_T,
+  ACCCHK_ASSERT_SIGN_T,
+  ACC_COMPILE_TIME_ASSERT,
+  ACC_COMPILE_TIME_ASSERT_HEADER,
+  ACC_CXX_DISABLE_NEW_DELETE,
+  ACC_CXX_TRIGGER_FUNCTION,
+  ACC_CXX_TRIGGER_FUNCTION_IMPL,
+  CLANG_FORMAT_DUMMY_STATEMENT,
+  COMPILE_TIME_ASSERT,
+  COMPILE_TIME_ASSERT_ALIGNED1,
+]
+Standard: Cpp03
+...

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -31,7 +31,6 @@
 
 #if defined(__cplusplus)
 #  if (__cplusplus >= 201402L)
-#  elif defined(__GNUC__) && (__GNUC__+0 == 4) && (__cplusplus >= 201300L)
 #  elif defined(_MSC_VER) && defined(_MSVC_LANG) && (_MSVC_LANG+0 >= 201402L)
 #  else
 #    error "C++ 14 is required"
@@ -43,6 +42,12 @@
 #if !defined(_FILE_OFFSET_BITS)
 #  define _FILE_OFFSET_BITS 64
 #endif
+#if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__)
+#  if !defined(_USE_MINGW_ANSI_STDIO)
+#    define _USE_MINGW_ANSI_STDIO 1
+#  endif
+#endif
+
 #undef NDEBUG
 
 
@@ -64,6 +69,8 @@
 #if !defined(UINT_MAX) || (UINT_MAX != 0xffffffffL)
 #  error "UINT_MAX"
 #endif
+ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(short) == 2)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(int) == 4)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(long long) == 8)
 // check sane compiler mandatory flags
@@ -74,6 +81,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(((int)(1u << 31)) >> 31 == -1) // arithmetic righ
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 
+// enable/disable some warnings
 #if (ACC_CC_GNUC >= 0x040700)
 #  pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
 #endif
@@ -87,14 +95,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 #  pragma warning(disable: 4820) // padding added after data member
 #endif
 
-// FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
-#if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(__CEGCC__) && !defined(_WIN32)
-#  undef HAVE_CHMOD
-#  undef HAVE_CHOWN
-#  undef HAVE_LSTAT
-#  undef HAVE_UTIME
-#endif
-
+#undef snprintf
+#undef vsnprintf
 #define ACC_WANT_ACC_INCD_H 1
 #define ACC_WANT_ACC_INCE_H 1
 #define ACC_WANT_ACC_LIB_H 1
@@ -111,12 +113,6 @@ typedef acc_uint32_t    upx_uint32_t;
 typedef acc_int64_t     upx_int64_t;
 typedef acc_uint64_t    upx_uint64_t;
 typedef acc_uintptr_t   upx_uintptr_t;
-#define UPX_INT16_C     ACC_INT16_C
-#define UPX_UINT16_C    ACC_UINT16_C
-#define UPX_INT32_C     ACC_INT32_C
-#define UPX_UINT32_C    ACC_UINT32_C
-#define UPX_INT64_C     ACC_INT64_C
-#define UPX_UINT64_C    ACC_UINT64_C
 
 typedef unsigned char   upx_byte;
 #define upx_bytep       upx_byte *
@@ -183,6 +179,16 @@ typedef size_t upx_rsize_t;
 #define UPX_RSIZE_MAX       UPX_RSIZE_MAX_MEM
 #define UPX_RSIZE_MAX_MEM   (768 * 1024 * 1024)   // DO NOT CHANGE !!!
 #define UPX_RSIZE_MAX_STR   (1024 * 1024)
+
+// using the system off_t was a bad idea even back in 199x...
+typedef upx_int64_t upx_off_t;
+#undef off_t
+#if 0
+// at some future point we can do this...
+#define off_t DO_NOT_USE_off_t
+#else
+#define off_t upx_off_t
+#endif
 
 
 /*************************************************************************
@@ -274,13 +280,38 @@ typedef size_t upx_rsize_t;
 //
 **************************************************************************/
 
-#if (ACC_CC_MSC)
-#define __packed_struct(s)      struct s {
-#define __packed_struct_end()   };
+#define CLANG_FORMAT_DUMMY_STATEMENT /*empty*/
+
+#if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__) && !defined(__clang__)
+#  define attribute_format(a,b) __attribute__((__format__(__gnu_printf__,a,b)));
+#elif (ACC_CC_CLANG || ACC_CC_GNUC)
+#  define attribute_format(a,b) __attribute__((__format__(__printf__,a,b)));
 #else
-#define __packed_struct(s)      __acc_struct_packed(s)
-#define __packed_struct_end()   __acc_struct_packed_end()
+#  define attribute_format(a,b) /*empty*/
 #endif
+
+inline void NO_printf(const char *, ...) attribute_format(1, 2);
+inline void NO_fprintf(FILE *, const char *, ...) attribute_format(2, 3);
+inline void NO_printf(const char *, ...) {}
+inline void NO_fprintf(FILE *, const char *, ...) {}
+
+#if !defined(__has_builtin)
+#  define __has_builtin(x)      0
+#endif
+
+#if __has_builtin(__builtin_memcpy_inline)
+#  define upx_memcpy_inline     __builtin_memcpy_inline
+#elif __has_builtin(__builtin_memcpy)
+#  define upx_memcpy_inline     __builtin_memcpy
+#elif defined(__GNUC__)
+#  define upx_memcpy_inline     __builtin_memcpy
+#else
+#  define upx_memcpy_inline     memcpy
+#endif
+
+
+#define __packed_struct(s)      struct alignas(1) s {
+#define __packed_struct_end()   };
 
 #define UNUSED(var)             ACC_UNUSED(var)
 #define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
@@ -324,6 +355,7 @@ inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b;
     type * const var = ACC_STATIC_CAST(type *, var ## _membuf.getVoidPtr())
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)
+
 
 class noncopyable
 {
@@ -439,12 +471,6 @@ private:
 #define UPX_F_VMLINUX_PPC64     141
 #define UPX_F_DYLIB_PPC64       142
 
-// compression methods
-#define M_ALL           (-1)
-#define M_END           (-2)
-#define M_NONE          (-3)
-#define M_SKIP          (-4)
-#define M_ULTRA_BRUTE   (-5)
 // compression methods - DO NOT CHANGE
 #define M_NRV2B_LE32    2
 #define M_NRV2B_8       3
@@ -460,6 +486,12 @@ private:
 //#define M_CL1B_LE16     13
 #define M_LZMA          14
 #define M_DEFLATE       15      /* zlib */
+// compression methods internal usage
+#define M_ALL           (-1)
+#define M_END           (-2)
+#define M_NONE          (-3)
+#define M_SKIP          (-4)
+#define M_ULTRA_BRUTE   (-5)
 
 #define M_IS_NRV2B(x)   ((x) >= M_NRV2B_LE32 && (x) <= M_NRV2B_LE16)
 #define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
@@ -652,7 +684,18 @@ struct upx_compress_result_t
 **************************************************************************/
 
 #include "snprintf.h"   // must get included first!
-#include "stdcxx.h"
+
+#include <exception>
+#include <new>
+#include <type_traits>
+#include <typeinfo>
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<short, upx_int16_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned short, upx_uint16_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<int, upx_int32_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned, upx_uint32_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<long long, upx_int64_t>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned long long, upx_uint64_t>::value))
+
 #include "options.h"
 #include "except.h"
 #include "bele.h"
@@ -677,29 +720,13 @@ void printSetNl(int need_nl);
 void printClearLine(FILE *f = nullptr);
 void printErr(const char *iname, const Throwable *e);
 void printUnhandledException(const char *iname, const std::exception *e);
-#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-void __acc_cdecl_va printErr(const char *iname, const char *format, ...)
-        __attribute__((__format__(__printf__,2,3)));
-void __acc_cdecl_va printWarn(const char *iname, const char *format, ...)
-        __attribute__((__format__(__printf__,2,3)));
-#else
-void __acc_cdecl_va printErr(const char *iname, const char *format, ...);
-void __acc_cdecl_va printWarn(const char *iname, const char *format, ...);
-#endif
+void printErr(const char *iname, const char *format, ...) attribute_format(2, 3);
+void printWarn(const char *iname, const char *format, ...) attribute_format(2, 3);
 
-#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-void __acc_cdecl_va infoWarning(const char *format, ...)
-        __attribute__((__format__(__printf__,1,2)));
-void __acc_cdecl_va infoHeader(const char *format, ...)
-        __attribute__((__format__(__printf__,1,2)));
-void __acc_cdecl_va info(const char *format, ...)
-        __attribute__((__format__(__printf__,1,2)));
-#else
-void __acc_cdecl_va infoWarning(const char *format, ...);
-void __acc_cdecl_va infoHeader(const char *format, ...);
-void __acc_cdecl_va info(const char *format, ...);
-#endif
-void infoHeader();
+void infoWarning(const char *format, ...) attribute_format(1, 2);
+void infoHeader(const char *format, ...) attribute_format(1, 2);
+void info(const char *format, ...) attribute_format(1, 2);
+void infoHeader(void);
 void infoWriting(const char *what, long size);
 
 

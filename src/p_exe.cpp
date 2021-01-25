@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -286,10 +286,10 @@ int PackExe::readFileHeader()
     }
     ih_imagesize = ih_exesize - ih.headsize16*16;
     ih_overlay = file_size - ih_exesize;
-    if (file_size < (int)sizeof(ih)
+    if (file_size_u < sizeof(ih)
     ||  ((ih.m512 | ih.p512) && ih.m512+ih.p512*512u < sizeof (ih)))
         throwCantPack("illegal exe header");
-    if (file_size < (off_t)ih_exesize || ih_imagesize <= 0 || ih_imagesize > ih_exesize)
+    if (file_size_u < ih_exesize || ih_imagesize <= 0 || ih_imagesize > ih_exesize)
         throwCantPack("exe header corrupted");
 #if 0
     printf("dos/exe header: %d %d %d\n", ih_exesize, ih_imagesize, ih_overlay);
@@ -674,10 +674,10 @@ int PackExe::canUnpack()
 {
     if (!readFileHeader())
         return false;
-    const off_t off = ih.headsize16 * 16;
+    const unsigned off = ih.headsize16 * 16;
     fi->seek(off, SEEK_SET);
     bool b = readPackHeader(4096);
-    return b && (off + (off_t) ph.c_len <= file_size);
+    return b && (off + ph.c_len <= file_size_u);
 }
 
 

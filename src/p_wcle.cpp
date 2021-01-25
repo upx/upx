@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -582,7 +582,7 @@ void PackWcle::decodeFixups()
     iimage.dealloc();
 
     MemBuffer tmpbuf;
-    unsigned fixupn = unoptimizeReloc32(&p,oimage,&tmpbuf,1);
+    unsigned const fixupn = unoptimizeReloc32(&p,oimage,&tmpbuf,1);
 
     MemBuffer wrkmem(8*fixupn+8);
     unsigned ic,jc,o,r;
@@ -599,14 +599,40 @@ void PackWcle::decodeFixups()
     set_le32(wrkmem+ic*8,0xFFFFFFFF);     // end of 32-bit offset fixups
     tmpbuf.dealloc();
 
-    // selector fixups and self-relative fixups
+    // selector fixups then self-relative fixups
     const upx_byte *selector_fixups = p;
-    const upx_byte *selfrel_fixups = p;
 
-    while (*selfrel_fixups != 0xC3)
-        selfrel_fixups += 9;
-    selfrel_fixups++;
-    unsigned selectlen = ptr_diff(selfrel_fixups, selector_fixups)/9;
+    // Find selfrel_fixups by skipping over selector_fixups.
+    const upx_byte *q = selector_fixups;
+    // The code is a subroutine that ends in RET (0xC3).
+    while (*q != 0xC3) {
+        // Defend against tampered selector_fixups; see PackWcle::preprocessFixups().
+        // selector_fixups[] is x386 code with 9-byte blocks of 2 instructions each:
+        // "\x8C\xCB\x66\x89\x9D"  // mov bx, cs ; mov [xxx+ebp], bx
+        // "\x8C\xCA\x66\x89\x95"
+        // and where byte [+1] also can be '\xDA' or '\xDB'.
+        if (0x8C != q[0]
+        ||  0x66 != q[2]
+        ||  0x89 != q[3]) { // Unexpected; tampering?
+            // Try to recover by looking for the RET.
+            upx_byte const *q2 = (upx_byte const *)memchr(q, 0xC3, 9);
+            if (q2) { // Assume recovery
+                 q = q2; break;
+            }
+        }
+        // Guard against run-away.
+        static unsigned char const blank[9] = {0};
+        if (q > (oimage + ph.u_len - sizeof(blank))  // catastrohpic worst case
+        ||  !memcmp(blank, q, sizeof(blank))  // no-good early warning
+        ) {
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad selector_fixups +%#zx", q - selector_fixups);
+            throwCantPack(msg);
+        }
+        q += 9;
+    }
+    unsigned selectlen = ptr_diff(q, selector_fixups)/9;
+    const upx_byte *selfrel_fixups = 1+ q;  // Skip the 0xC3
 
     ofixups = New(upx_byte, fixupn*9+1000+selectlen*5);
     upx_bytep fp = ofixups;

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -161,24 +161,25 @@ static bool is_dlm(InputFile *fi, unsigned coff_offset)
 
 static void handle_allegropak(InputFile *fi, OutputFile *fo)
 {
-    unsigned char buf[0x4000];
+    unsigned char b[8];
     int pfsize = 0;
 
     try {
         fi->seek(-8, SEEK_END);
-        fi->readx(buf, 8);
-        if (memcmp(buf, "slh+", 4) != 0)
+        fi->readx(b, 8);
+        if (memcmp(b, "slh+", 4) != 0)
             return;
-        pfsize = get_be32_signed(buf+4);
-        if (pfsize <= 8 || pfsize >= (off_t) fi->st.st_size)
+        pfsize = get_be32_signed(b+4);
+        if (pfsize <= 8 || pfsize >= fi->st.st_size)
             return;
-        fi->seek(-(off_t)pfsize, SEEK_END);
+        fi->seek(-pfsize, SEEK_END);
     } catch (const IOException&) {
         return;
     }
+    MemBuffer buf(0x4000);
     while (pfsize > 0)
     {
-        const int len = UPX_MIN(pfsize, (int)sizeof(buf));
+        const int len = UPX_MIN(pfsize, (int)buf.getSize());
         fi->readx(buf, len);
         fo->write(buf, len);
         pfsize -= len;

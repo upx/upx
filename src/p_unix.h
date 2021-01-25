@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -94,8 +94,8 @@ protected:
 
     // must agree with stub/linux.hh
     __packed_struct(b_info) // 12-byte header before each compressed block
-        unsigned sz_unc;  // uncompressed_size
-        unsigned sz_cpr;  //   compressed_size
+        NE32 sz_unc;  // uncompressed_size
+        NE32 sz_cpr;  //   compressed_size
         unsigned char b_method;  // compression algorithm
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
@@ -111,9 +111,9 @@ protected:
     __packed_struct_end()
 
     __packed_struct(p_info) // 12-byte packed program header
-        unsigned p_progid;
-        unsigned p_filesize;
-        unsigned p_blocksize;
+        NE32 p_progid;
+        NE32 p_filesize;
+        NE32 p_blocksize;
     __packed_struct_end()
 
     struct l_info linfo;

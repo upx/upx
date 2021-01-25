@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -122,12 +122,7 @@ typedef struct
 console_t;
 
 
-#if defined(__GNUC__)
-void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...)
-        __attribute__((__format__(printf,2,3)));
-#else
-void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...);
-#endif
+void con_fprintf(FILE *f, const char *format, ...) attribute_format(2, 3);
 
 
 #define FG_BLACK     0x00

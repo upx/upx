@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 2004-2020 John Reiser
+   Copyright (C) 2004-2021 John Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -1532,10 +1532,15 @@ int PackMachBase<T>::canUnpack()
         return false;
     my_cpusubtype = mhdri.cpusubtype;
 
+    unsigned const ncmds = mhdri.ncmds;
     int headway = (int)mhdri.sizeofcmds;
-    if (0)
-    if (headway < (int)(3 * sizeof(Mach_segment_command)
-                  + sizeof(Mach_main_command))) {
+    // old style:   LC_SEGMENT + LC_UNIXTHREAD  [smaller, varies by $ARCH]
+    // new style: 3*LC_SEGMENT + LC_MAIN        [larger]
+    if ((2 == ncmds
+        && headway < (int)(sizeof(Mach_segment_command) + 4*4))
+    ||  (3 <= ncmds
+        && headway < (int)(3 * sizeof(Mach_segment_command)
+                    + sizeof(Mach_main_command)))) {
         infoWarning("Mach_header.sizeofcmds = %d too small", headway);
         throwCantUnpack("file corrupted");
     }
@@ -1553,7 +1558,6 @@ int PackMachBase<T>::canUnpack()
     off_t offLINK = 0;
     unsigned pos_next = 0;
     unsigned nseg = 0;
-    unsigned const ncmds = mhdri.ncmds;
     Mach_command const *ptr = (Mach_command const *)rawmseg;
     for (unsigned j= 0; j < ncmds;
             ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr), ++j) {
@@ -1804,23 +1808,24 @@ bool PackMachBase<T>::canPack()
         return false;
     my_cpusubtype = mhdri.cpusubtype;
 
+    unsigned const ncmds = mhdri.ncmds;
+    if (!ncmds || 256 < ncmds) { // arbitrary, but guard against garbage
+        throwCantPack("256 < Mach_header.ncmds");
+    }
     unsigned const sz_mhcmds = (unsigned)mhdri.sizeofcmds;
     unsigned headway = file_size - sizeof(mhdri);
     if (headway < sz_mhcmds) {
         char buf[32]; snprintf(buf, sizeof(buf), "bad sizeofcmds %d", sz_mhcmds);
         throwCantPack(buf);
     }
-    if (16384 < sz_mhcmds) { // somewhat arbitrary, but amd64-darwin.macho-upxmain.c
-        throwCantPack("16384 < Mach_header.sizeofcmds");
+    if (!sz_mhcmds
+    ||  16384 < sz_mhcmds) { // somewhat arbitrary, but amd64-darwin.macho-upxmain.c
+        throwCantPack("16384 < Mach_header.sizeofcmds (or ==0)");
     }
     rawmseg_buf.alloc(sz_mhcmds);
     rawmseg = (Mach_segment_command *)(void *)rawmseg_buf;
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
-    unsigned const ncmds = mhdri.ncmds;
-    if (256 < ncmds) { // arbitrary, but guard against garbage
-        throwCantPack("256 < Mach_header.ncmds");
-    }
     msegcmd_buf.alloc(sizeof(Mach_segment_command) * ncmds);
     msegcmd = (Mach_segment_command *)msegcmd_buf.getVoidPtr();
     unsigned char const *ptr = (unsigned char const *)rawmseg;

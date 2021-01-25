@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -35,7 +35,7 @@
 **************************************************************************/
 
 #if defined(__SANITIZE_ADDRESS__)
-__acc_static_forceinline bool use_simple_mcheck() { return false; }
+__acc_static_forceinline constexpr bool use_simple_mcheck() { return false; }
 #elif (WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
 static int use_simple_mcheck_flag = -1;
 __acc_static_noinline void use_simple_mcheck_init()

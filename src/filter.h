@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -67,8 +67,8 @@ public:
 public:
     // Will be set by each call to filter()/unfilter().
     // Read-only afterwards.
-    upx_byte *buf;
-    unsigned buf_len;
+    upx_byte *buf = nullptr;
+    unsigned buf_len = 0;
 
     // Checksum of the buffer before applying the filter
     // or after un-applying the filter.
@@ -76,7 +76,7 @@ public:
 
     // Input parameters used by various filters.
     unsigned addvalue;
-    const int *preferred_ctos;
+    const int *preferred_ctos = nullptr;
 
     // Input/output parameters used by various filters
     unsigned char cto;              // call trick offset

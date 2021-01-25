@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -632,7 +632,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
         unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
         tstr dlln(name_for_dll(dll, first_char));
         char *procn = New(char, len);
-        upx_snprintf(procn, len, "%s%c", (const char*) dlln, separator);
+        upx_safe_snprintf(procn, len, "%s%c", (const char*) dlln, separator);
         encode_name(proc, procn + strlen(procn));
         return procn;
     }
@@ -741,7 +741,7 @@ public:
         ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         assert(ordinal > 0 && ordinal < 0x10000);
         char ord[1+5+1];
-        upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        upx_safe_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
         add((const char*) dll, ord, ordinal);
     }
 
@@ -803,7 +803,7 @@ public:
         ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         assert(ordinal > 0 && ordinal < 0x10000);
         char ord[1+5+1];
-        upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        upx_safe_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
 
         const Section *s = getThunk((const char*) dll, ord, thunk_separator_first);
         if (s == nullptr
@@ -898,7 +898,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             if (u2->ordinal) return 1;
             if (!u1->shname) return 1;
             if (!u2->shname) return -1;
-            rc = (int) (upx_strlen(u1->shname) - upx_strlen(u2->shname));
+            rc = (int) (upx_safe_strlen(u1->shname) - upx_safe_strlen(u2->shname));
             if (rc) return rc;
             return strcmp(u1->shname, u2->shname);
         }
@@ -1933,7 +1933,7 @@ void PeFile::processResources(Resource *res)
                 keep_icons = New(char, 1 + iconsin1stdir * 9);
                 *keep_icons = 0;
                 for (unsigned ic = 0; ic < iconsin1stdir; ic++)
-                    upx_snprintf(keep_icons + strlen(keep_icons), 9, "3/%u,",
+                    upx_safe_snprintf(keep_icons + strlen(keep_icons), 9, "3/%u,",
                                  get_le16(ibuf.subref("bad resoff %#x", res->offs() + 6 + ic * 14 + 12, 2)));
                 if (*keep_icons)
                     keep_icons[strlen(keep_icons) - 1] = 0;
@@ -2094,7 +2094,7 @@ void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
     }
     mb_isection.alloc(sizeof(pe_section_t) * objs);
     isection = (pe_section_t *)mb_isection.getVoidPtr();
-    if (file_size < (off_t)(pe_offset + sizeof_ih + sizeof(pe_section_t)*objs)) {
+    if (file_size_u < pe_offset + sizeof_ih + sizeof(pe_section_t)*objs) {
         char buf[32]; snprintf(buf, sizeof(buf), "too many sections %d", objs);
         throwCantPack(buf);
     }
@@ -2131,7 +2131,7 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
     if ((1u << subsystem) & ~mask)
     {
         char buf[100];
-        upx_snprintf(buf, sizeof(buf), "PE: subsystem %u is not supported",
+        upx_safe_snprintf(buf, sizeof(buf), "PE: subsystem %u is not supported",
                      subsystem);
         throwCantPack(buf);
     }

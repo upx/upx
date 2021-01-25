@@ -5,7 +5,7 @@
 # cross-assemblers and cross-compilers - please see README.SRC
 # for details.
 #
-# Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
+# Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
 #
 
 MAKEFLAGS += -rR
@@ -162,7 +162,7 @@ endif
 all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 .upx-stubtools-stamp: $(MAKEFILE_LIST)
-	upx-stubtools-check-version 20160918
+	upx-stubtools-check-version 20210104
 	@echo "timestamp" > $@
 .DELETE_ON_ERROR: .upx-stubtools-stamp
 %/.tmp-stamp:

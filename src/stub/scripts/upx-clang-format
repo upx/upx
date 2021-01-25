@@ -2,34 +2,26 @@
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
 
-# NOTE: we are using clang-format-3.9.0 from upx-stubtools
+# "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." Rob Pike
+
+# NOTE: we are using clang-format-10.0.1 from upx-stubtools
 # see https://github.com/upx/upx-stubtools/releases
 
-CLANG_FORMAT="$HOME/local/bin/bin-upx/clang-format-3.9.0"
+CLANG_FORMAT="$HOME/local/bin/bin-upx/clang-format-10.0.1"
 if [[ ! -f $CLANG_FORMAT ]]; then
-CLANG_FORMAT="$HOME/.local/bin/bin-upx/clang-format-3.9.0"
+CLANG_FORMAT="$HOME/.local/bin/bin-upx/clang-format-10.0.1"
 fi
 if [[ ! -f $CLANG_FORMAT ]]; then
-CLANG_FORMAT="$HOME/bin/bin-upx/clang-format-3.9.0"
+CLANG_FORMAT="$HOME/bin/bin-upx/clang-format-10.0.1"
 fi
 if [[ ! -f $CLANG_FORMAT ]]; then
-    echo "ERROR: $0: cannot find clang-format-3.9.0"
-    echo "ERROR: $0: please visit https://github.com/upx/upx-stubtools/releases"
+    echo "ERROR: $0: cannot find clang-format-10.0.1"
+    echo "ERROR: $0: please visit https://github.com/upx/upx-stubtools"
     exit 1
 fi
 
-s='Language: Cpp, BasedOnStyle: LLVM, '
-s="$s"' AccessModifierOffset: -4, '
-#s="$s"' AllowShortFunctionsOnASingleLine: None, '
-s="$s"' AlwaysBreakTemplateDeclarations: true, '
-s="$s"' ColumnLimit: 100, '
-####s="$s"' FixNamespaceComments: false, '                  # added in llvm-5.0
-s="$s"' IndentWidth: 4, '
-s="$s"' SortIncludes: false, '                          # added in llvm-3.8
-s="$s"' SpaceAfterCStyleCast: true, '                   # added in llvm-3.6
-s="$s"' Standard: Cpp03, '
-CLANG_FORMAT_STYLE='-style={'"$s"' }'
+# NOTE: we use .clang-format config from upx.git/.clang-format
 
 #echo $CLANG_FORMAT
-exec "$CLANG_FORMAT" "$CLANG_FORMAT_STYLE" "$@"
+exec "$CLANG_FORMAT" -style=file "$@"
 exit 1

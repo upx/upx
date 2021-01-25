@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  job-ci-rebuild-and-verify-stubs:
+  job-rebuild-and-verify-stubs:
     name: 'Rebuild stubs'
     runs-on: ubuntu-16.04
     steps:
@@ -26,7 +26,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libmpfr4:i386 zlib1g:i386
           cd ..; mkdir -p deps; cd deps
-          wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -xJ
+          wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20210104/bin-upx-20210104.tar.xz | tar -xJ
       - name: 'Check out code'
         uses: actions/checkout@v2
         with: { submodules: true }
@@ -34,8 +34,8 @@ jobs:
         run: |
           env C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux bash ./.github/travis_build.sh
 
-  job-ci-linux-toolchains:
-    needs: [ job-ci-rebuild-and-verify-stubs ]
+  job-linux-toolchains:
+    needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
@@ -47,6 +47,8 @@ jobs:
           - { name: amd64-linux-gcc-10,   os: ubuntu-20.04, C: gcc-10-m64 }
           - { name: i386-linux-clang-10,  os: ubuntu-20.04, C: clang-10-m32 }
           - { name: i386-linux-gcc-10,    os: ubuntu-20.04, C: gcc-10-m32 }
+          - { name: amd64-linux-clang-10-sanitize, os: ubuntu-20.04, C: clang-10-m64, B: sanitize }
+          - { name: amd64-linux-gcc-10-sanitize,   os: ubuntu-20.04, C: gcc-10-m64,   B: sanitize }
 
     steps:
       - name: 'Install extra packages'
@@ -71,7 +73,7 @@ jobs:
         run: |
           cd ..; mkdir -p deps build/github; cd deps
           wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
-          git clone --depth=1 https://github.com/upx/upx-testsuite
+          git clone --depth=1 --single-branch https://github.com/upx/upx-testsuite
 
       - name: 'Build'
         run: |
@@ -84,8 +86,52 @@ jobs:
           export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
           bash ./.github/travis_testsuite_1.sh
 
-  job-ci-windows-toolchains:
-    needs: [ job-ci-rebuild-and-verify-stubs ]
+  job-windows-cross-toolchains:
+    needs: [ job-rebuild-and-verify-stubs ]
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: amd64-win64-gcc-9, os: ubuntu-20.04, CROSS: x86_64-w64-mingw32, C: gcc-9, T: wine }
+
+    steps:
+      - name: 'Install extra packages'
+        run: |
+          uname -a; pwd; id; umask
+          export DEBIAN_FRONTEND=noninteractive
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 wine wine64
+
+      - name: 'Check out code'
+        uses: actions/checkout@v2
+        with: { submodules: true }
+
+      - name: 'Prepare sources'
+        run: |
+          cd ..; mkdir -p deps build/github; cd deps
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.11.tar.xz | tar -xJ
+          git clone --depth=1 --single-branch https://github.com/upx/upx-testsuite
+
+      - name: 'Build'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          export CROSS=${{matrix.CROSS}}
+          export BUILD_LOCAL_UCL=1
+          bash ./.github/travis_build.sh
+
+      - name: 'Run test suite using Wine'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
+          export CROSS=${{matrix.CROSS}}
+          bash ./.github/travis_testsuite_1.sh
+
+  job-windows-toolchains:
+    needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
@@ -116,10 +162,10 @@ jobs:
           md build build\%C% deps
           cd deps
           curl -sS -L --retry 5 -o ucl-1.03.tar.gz   "https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.gz"
-          curl -sS -L --retry 5 -o zlib-1.2.8.tar.gz "https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.gz"
+          curl -sS -L --retry 5 -o zlib-1.2.11.tar.gz "https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.11.tar.gz"
           git clone --depth=1 https://github.com/upx/upx-testsuite
           tar -xzf ucl-1.03.tar.gz
-          tar -xzf zlib-1.2.8.tar.gz
+          tar -xzf zlib-1.2.11.tar.gz
           @REM patch UCL for newer msvc (vsnprintf issue)
           sed -i '/# *define.*snprintf  *_v*snprintf$/d' ucl-1.03/acc/acc_auto.h
 
@@ -134,7 +180,7 @@ jobs:
           @REM setup directories following the VPATH build in travis_build.sh
           where cl & where link
           set BDIR=%H%\build\%C%\%B%
-          md %BDIR% %BDIR%\ucl-1.03 %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib-1.2.8
+          md %BDIR% %BDIR%\ucl-1.03 %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib-1.2.11
           set DEFS=-D_CRT_SECURE_NO_WARNINGS
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
           @REM build UCL
@@ -143,15 +189,15 @@ jobs:
           cl -MT -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
           link -lib -out:ucl.lib *.obj
           @REM build zlib
-          cd %BDIR%\zlib-1.2.8
-          cl -MT -O2 -W2 %DEFS% -c %H%\deps\zlib-1.2.8\*.c
+          cd %BDIR%\zlib-1.2.11
+          cl -MT -O2 -W2 %DEFS% -c %H%\deps\zlib-1.2.11\*.c
           link -lib -out:zlib.lib *.obj
           @REM build UPX
           cd %BDIR%\upx
           set s=%H%\upx\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DUCL_NO_ASM -I%s%\lzma-sdk -I%H%\deps\ucl-1.03\include -I%H%\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
+          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%s%\lzma-sdk -I%H%\deps\ucl-1.03\include -I%H%\deps\zlib-1.2.11 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.11\zlib.lib
 
       - name: 'Basic tests'
         shell: cmd

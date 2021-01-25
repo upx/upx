@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -258,10 +258,10 @@ static int init(screen_t *this, int fd) {
         int attr;
         Cell a;
 
-        upx_snprintf(vc_name, sizeof(vc_name), "/dev/vcsa%d", (int) MINOR(st.st_rdev));
+        upx_safe_snprintf(vc_name, sizeof(vc_name), "/dev/vcsa%d", (int) MINOR(st.st_rdev));
         this->data->fd = open(vc_name, O_RDWR);
         if (this->data->fd == -1) {
-            upx_snprintf(vc_name, sizeof(vc_name), "/dev/vcc/a%d", (int) MINOR(st.st_rdev));
+            upx_safe_snprintf(vc_name, sizeof(vc_name), "/dev/vcc/a%d", (int) MINOR(st.st_rdev));
             this->data->fd = open(vc_name, O_RDWR);
         }
         if (this->data->fd != -1) {

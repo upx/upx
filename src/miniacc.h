@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -3841,8 +3841,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
 #  else
-#    define snprintf _snprintf
-#    define vsnprintf _vsnprintf
+//#    define snprintf _snprintf
+//#    define vsnprintf _vsnprintf
 #  endif
 #elif (ACC_OS_WIN32 && ACC_LIBC_MSL)
 #  if (__MSL__ < 0x8000ul)

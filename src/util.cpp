@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -28,18 +28,11 @@
 #include "conf.h"
 #include "util.h"
 
-#if (ACC_CC_MSC && (_MSC_VER >= 1000 && _MSC_VER < 1200))
-/* avoid -W4 warnings in <conio.h> */
-#pragma warning(disable : 4032)
-/* avoid -W4 warnings in <windows.h> */
-#pragma warning(disable : 4201 4214 4514)
-#endif
 #define ACC_WANT_ACC_INCI_H 1
 #include "miniacc.h"
 #define ACC_WANT_ACCLIB_GETOPT 1
 #define ACC_WANT_ACCLIB_HSREAD 1
 #define ACC_WANT_ACCLIB_MISC 1
-#define ACC_WANT_ACCLIB_UA 1
 #define ACC_WANT_ACCLIB_WILDARGV 1
 #undef HAVE_MKDIR
 #include "miniacc.h"
@@ -47,6 +40,7 @@
 /*************************************************************************
 // assert sane memory buffer sizes to protect against integer overflows
 // and malicious header fields
+// see C 11 standard, Annex K
 **************************************************************************/
 
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_MEM == UPX_RSIZE_MAX)
@@ -394,9 +388,9 @@ bool set_method_name(char *buf, size_t size, int method, int level) {
         r = false;
     }
     if (level > 0)
-        upx_snprintf(buf, size, "%s/%d", alg, level);
+        upx_safe_snprintf(buf, size, "%s/%d", alg, level);
     else
-        upx_snprintf(buf, size, "%s", alg);
+        upx_safe_snprintf(buf, size, "%s", alg);
     return r;
 }
 
@@ -461,7 +455,7 @@ bool maketempname(char *ofilename, size_t size, const char *ifilename, const cha
             return true;
         if (!force)
             break;
-        upx_snprintf(ofext, 5, ".%03d", ofile);
+        upx_safe_snprintf(ofext, 5, ".%03d", ofile);
     }
 
     ofilename[0] = 0;
@@ -494,7 +488,7 @@ bool makebakname(char *ofilename, size_t size, const char *ifilename, bool force
             return true;
         if (!force)
             break;
-        upx_snprintf(ofext, 5, ".%03d", ofile);
+        upx_safe_snprintf(ofext, 5, ".%03d", ofile);
     }
 
     ofilename[0] = 0;
@@ -517,30 +511,5 @@ unsigned get_ratio(upx_uint64_t u_len, upx_uint64_t c_len) {
         x = 10 * n - 1;
     return ACC_ICONV(unsigned, x);
 }
-
-/*************************************************************************
-// Don't link these functions from libc ==> save xxx bytes
-**************************************************************************/
-
-extern "C" {
-
-// FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
-#if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(__CEGCC__) && !defined(_WIN32)
-int dup(int fd) {
-    UNUSED(fd);
-    return -1;
-}
-#endif
-
-#if (ACC_OS_DOS32) && defined(__DJGPP__)
-// int _is_executable(const char *, int, const char *) { return 0; }
-
-// FIXME: something wants to link in ctime.o
-// time_t mktime(struct tm *) { return 0; }
-
-// time_t time(time_t *t) { if (t) *t = 0; return 0; }
-#endif
-
-} // extern "C"
 
 /* vim:set ts=4 sw=4 et: */

@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
-   Copyright (C) 2002-2020 Jens Medoch
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
+   Copyright (C) 2002-2021 Jens Medoch
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -273,7 +273,7 @@ bool PackPs1::canPack()
         throwCantPack("unsupported header flags (try --force)");
     if (!opt->force && file_size < PS_MIN_SIZE)
         throwCantPack("file is too small (try --force)");
-    if (!opt->force && file_size > (off_t) PS_MAX_SIZE)
+    if (!opt->force && file_size_u > PS_MAX_SIZE)
         throwCantPack("file is too big (try --force)");
     return true;
 }

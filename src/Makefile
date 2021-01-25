@@ -1,7 +1,7 @@
 #
 # UPX Makefile - needs GNU make
 #
-# Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
+# Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
 #
 
 MAKEFLAGS += -r
@@ -61,16 +61,25 @@ LIBS += -lucl -lz
 # LZMA from https://github.com/upx/upx-lzma-sdk
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 
-# optional flags
+# default flags that you can change or override
 ifeq ($(BUILD_TYPE_DEBUG),1)
   CXXFLAGS_OPTIMIZE ?= -O0 -g
 else
   CXXFLAGS_OPTIMIZE ?= -O2
 endif
 ifeq ($(BUILD_TYPE_SANITIZE),1)
-  CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer -DACC_CFG_NO_UNALIGNED
+  # full sanitizer
+  CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer
+else ifeq ($(BUILD_TYPE_SANITIZE),2)
+  # lightweight sanitizer
+  # TODO: can we make this the default for release builds?
+  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-strong -fstack-protector-all
+else ifeq ($(BUILD_TYPE_DEBUG),1)
+  # default sanitizer for debug builds
+  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fstack-protector-strong -fstack-protector-all
 else
-  CXXFLAGS_SANITIZE ?= -fstack-protector-all
+  # default sanitizer for release builds
+  CXXFLAGS_SANITIZE ?= -fstack-protector-strong
 endif
 ifeq ($(findstring clang,$(CXX)),)
   CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS ?= -fno-delete-null-pointer-checks
@@ -85,7 +94,7 @@ mf.CXXFLAGS += $(CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS)
 mf.CXXFLAGS += -fno-strict-aliasing -fno-strict-overflow
 mf.CXXFLAGS += -funsigned-char
 mf.CXXFLAGS += $(CXXFLAGS_SANITIZE)
-mf.CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
+mf.CXXFLAGS += -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
 mf.CXXFLAGS += $(CXXFLAGS_WERROR)
 
 # rules
@@ -170,7 +179,7 @@ ifneq ($(wildcard $(top_srcdir)/.github/travis_testsuite_1.sh),)
 run-testsuite: export upx_exe                := ./upx$(exeext)
 run-testsuite: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
 run-testsuite: export upx_testsuite_BUILDDIR := ./tmp-testsuite
-run-testsuite: ./upx$(exeext)
+run-testsuite: upx$(exeext)
 	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
 .PHONY: run-testsuite
 endif
@@ -178,13 +187,16 @@ endif
 
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
+CLANG_FORMAT_FILES += bele.h bele_policy.h
+CLANG_FORMAT_FILES += except.cpp except.h
 CLANG_FORMAT_FILES += linker.cpp linker.h packhead.cpp packmast.cpp packmast.h
+CLANG_FORMAT_FILES += main.cpp options.h packer.cpp packer.h
+CLANG_FORMAT_FILES += p_tos.cpp p_tos.h
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += snprintf.cpp
-CLANG_FORMAT_FILES += stdcxx.cpp stdcxx.h
 CLANG_FORMAT_FILES += ui.cpp ui.h util.cpp util.h work.cpp
 clang-format:
-	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))
+	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(sort $(CLANG_FORMAT_FILES)))
 .PHONY: clang-format
 endif
 

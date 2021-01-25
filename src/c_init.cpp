@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2020 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2020 Laszlo Molnar
+   Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2021 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -142,13 +142,13 @@ console_t console_init =
 };
 
 
-void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...)
+void con_fprintf(FILE *f, const char *format, ...)
 {
     va_list args;
     char buf[80*25];
 
     va_start(args, format);
-    upx_vsnprintf(buf, sizeof(buf), format,args);
+    upx_safe_vsnprintf(buf, sizeof(buf), format,args);
     va_end(args);
 
     if (con == me)
