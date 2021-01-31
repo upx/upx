@@ -157,6 +157,7 @@
         x86_THREAD_STATE64 = 4,
         i386_OLD_THREAD_STATE = -1,
         ARM_THREAD_STATE = 1
+        , ARM_THREAD_STATE64 = 6  // also ARM_THREAD_STATE64_COUNT 68
     };
 #endif  /*}*/
 
