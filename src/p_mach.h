@@ -512,6 +512,7 @@ template <class TMachITypes> __packed_struct(Mach_ARM64_thread_state)
     Xword x28, fp,  lr,  sp;
     Xword pc;
     Word cpsr;
+    Word pad;  // to (0 mod 8)
 __packed_struct_end()
 
 }  // namespace N_Mach64

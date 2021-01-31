@@ -204,7 +204,7 @@ PackMachARMEL::PackMachARMEL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
 { }
 
 PackMachARM64EL::PackMachARM64EL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM64,
-        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE,
+        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE64,
         sizeof(Mach_ARM64_thread_state)>>2, sizeof(threado))
 { }
 
