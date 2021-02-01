@@ -61,6 +61,7 @@ jobs:
             if [[ ${{ matrix.C }} =~ ^(clang|gcc).*-m32$ ]]; then
               sudo dpkg --add-architecture i386
               sudo apt-get update
+              sudo apt-get install --only-upgrade apt
               sudo apt-get install -y g++-9-multilib g++-10-multilib zlib1g-dev:i386
             fi
           fi
