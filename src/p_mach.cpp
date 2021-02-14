@@ -1194,7 +1194,11 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
         memcpy(&mhdro, stub_main, sizeof(mhdro));
-        mhdro.flags = mhdri.flags;
+        mhdro.flags = mhdri.flags & ~(
+              Mach_header::MH_DYLDLINK  // no dyld at this time
+            | Mach_header::MH_TWOLEVEL  // dyld-specific
+            | Mach_header::MH_BINDATLOAD  // dyld-specific
+            );
         COMPILE_TIME_ASSERT(sizeof(mhdro.flags) == sizeof(unsigned))
     }
     unsigned pos = sizeof(mhdro);
