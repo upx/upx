@@ -199,7 +199,6 @@ xPMASK .req x20
         ldr w4,[x2,#4]  // 2nd instr
         TRACE(4)
 #endif  //}
-    brk #0
         br x2  // goto escape hatch
 
 space3eq:
