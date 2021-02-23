@@ -1055,8 +1055,8 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     }
 
     // compress extents
-    unsigned total_in = 0;
-    unsigned total_out = 0;
+    total_in = 0;
+    total_out = 0;
 
     unsigned hdr_u_len = mhdri.sizeofcmds + sizeof(mhdri);
 
@@ -1098,7 +1098,7 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
             }
             ptr = (Mach_segment_command const *)(ptr->cmdsize + (char const *)ptr);
         }
-        packExtent(x, total_in, total_out,
+        packExtent(x,
             (do_filter ? &ft : nullptr), fo, hdr_u_len, b_extra );
         if (do_filter) {
             exe_filesize_max = 0;
@@ -1114,7 +1114,7 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
         x.size = find_SEGMENT_gap(k, fi->st_size());
         if (x.size) {
             x.offset = msegcmd[k].fileoff +msegcmd[k].filesize;
-            packExtent(x, total_in, total_out, nullptr, fo);
+            packExtent(x, nullptr, fo);
         }
     }
 
@@ -1454,8 +1454,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         n_segment += (lc_seg==msegcmd[j].cmd);
     }
 
-    unsigned total_in = 0;
-    unsigned total_out = 0;
+    total_in = 0;
+    total_out = 0;
     unsigned c_adler = upx_adler32(nullptr, 0);
     unsigned u_adler = upx_adler32(nullptr, 0);
 
@@ -1467,7 +1467,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
             }
             if (fo)
                 fo->seek(msegcmd[k].fileoff, SEEK_SET);
-            unpackExtent(msegcmd[k].filesize, fo, total_in, total_out,
+            unpackExtent(msegcmd[k].filesize, fo,
                 c_adler, u_adler, false, sizeof(bhdr));
             if (my_filetype==Mach_header::MH_DYLIB) {
                 break;  // only the first lc_seg when MH_DYLIB
@@ -1515,7 +1515,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
             unsigned const where = msegcmd[j].fileoff +msegcmd[j].filesize;
             if (fo)
                 fo->seek(where, SEEK_SET);
-            unpackExtent(size, fo, total_in, total_out,
+            unpackExtent(size, fo,
                 c_adler, u_adler, false, sizeof(bhdr));
         }
     }

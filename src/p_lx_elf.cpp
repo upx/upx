@@ -402,14 +402,14 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
     set_te32(&elfout.phdr[C_TEXT].p_filesz, v_hole);
     set_te32(&elfout.phdr[C_TEXT].p_memsz,  v_hole);
     // Then compressed gaps (including debuginfo.)
-    unsigned total_in = 0, total_out = 0;
+    total_in = 0; total_out = 0;
     for (unsigned k = 0; k < e_phnum; ++k) {
         Extent x;
         x.size = find_LOAD_gap(phdri, k, e_phnum);
         if (x.size) {
             x.offset = get_te32(&phdri[k].p_offset) +
                        get_te32(&phdri[k].p_filesz);
-            packExtent(x, total_in, total_out, nullptr, fo);
+            packExtent(x, nullptr, fo);
         }
     }
     // write block end marker (uncompressed size 0)
@@ -526,14 +526,14 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
     set_te64(&elfout.phdr[C_TEXT].p_filesz, v_hole);
     set_te64(&elfout.phdr[C_TEXT].p_memsz,  v_hole);
     // Then compressed gaps (including debuginfo.)
-    unsigned total_in = 0, total_out = 0;
+    total_in = 0; total_out = 0;
     for (unsigned k = 0; k < e_phnum; ++k) {
         Extent x;
         x.size = find_LOAD_gap(phdri, k, e_phnum);
         if (x.size) {
             x.offset = get_te64(&phdri[k].p_offset) +
                        get_te64(&phdri[k].p_filesz);
-            packExtent(x, total_in, total_out, nullptr, fo);
+            packExtent(x, nullptr, fo);
         }
     }
     // write block end marker (uncompressed size 0)
@@ -4045,8 +4045,8 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
     // compress extents
     unsigned hdr_u_len = (is_shlib ? xct_off : (sizeof(Elf32_Ehdr) + sz_phdrs));
 
-    unsigned total_in =  (is_shlib ?           0 : xct_off);
-    unsigned total_out = (is_shlib ? sz_elf_hdrs : xct_off);
+    total_in =  (is_shlib ?           0 : xct_off);
+    total_out = (is_shlib ? sz_elf_hdrs : xct_off);
 
     uip->ui_pass = 0;
     ft.addvalue = 0;
@@ -4089,7 +4089,7 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
             // throw NotCompressible for small .data Extents, which PowerPC
             // sometimes marks as PF_X anyway.  So filter only first segment.
             if (k == nk_f || !is_shlib) {
-                packExtent(x, total_in, total_out,
+                packExtent(x,
                     (k==nk_f ? &ft : nullptr ), fo, hdr_u_len);
             }
             else {
@@ -4176,8 +4176,8 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     // compress extents
     unsigned hdr_u_len = (is_shlib ? xct_off : (sizeof(Elf64_Ehdr) + sz_phdrs));
 
-    unsigned total_in =  (is_shlib ?           0 : xct_off);
-    unsigned total_out = (is_shlib ? sz_elf_hdrs : xct_off);
+    total_in =  (is_shlib ?           0 : xct_off);
+    total_out = (is_shlib ? sz_elf_hdrs : xct_off);
 
     uip->ui_pass = 0;
     ft.addvalue = 0;
@@ -4220,7 +4220,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
             // throw NotCompressible for small .data Extents, which PowerPC
             // sometimes marks as PF_X anyway.  So filter only first segment.
             if (k == nk_f || !is_shlib) {
-                packExtent(x, total_in, total_out,
+                packExtent(x,
                     (k==nk_f ? &ft : nullptr ), fo, hdr_u_len);
             }
             else {
@@ -4573,8 +4573,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         throwCantUnpack("bad e_phoff");
     }
     unsigned const c_phnum = get_te16(&ehdri.e_phnum);
-    upx_uint64_t old_data_off = 0;
-    upx_uint64_t old_data_len = 0;
+    old_data_off = 0;
+    old_data_len = 0;
     upx_uint64_t old_dtinit = 0;
     unsigned is_asl = 0;  // is Android Shared Library
 
@@ -4633,8 +4633,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
 
     unsigned const u_phnum = get_te16(&ehdr->e_phnum);
-    unsigned total_in = 0;
-    unsigned total_out = 0;
+    total_in = 0;
+    total_out = 0;
     unsigned c_adler = upx_adler32(nullptr, 0);
     unsigned u_adler = upx_adler32(nullptr, 0);
 #define MAX_ELF_HDR 1024
@@ -4650,7 +4650,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     if (is_shlib) {
         // Unpack and output the Ehdr and Phdrs for real.
         // This depends on position within input file fi.
-        unpackExtent(ph.u_len, fo, total_in, total_out,
+        unpackExtent(ph.u_len, fo,
             c_adler, u_adler, false, szb_info);
 
         // The first PT_LOAD.  Part is not compressed (for benefit of rtld.)
@@ -4730,7 +4730,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 break;
             }
         }
-        unpackExtent(ph.u_len, fo, total_in, total_out,
+        unpackExtent(ph.u_len, fo,
             c_adler, u_adler, false, szb_info);
     }
     else {  // main executable
@@ -4744,12 +4744,12 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 if (fo)
                     fo->seek(offset, SEEK_SET);
                 if (Elf64_Phdr::PF_X & get_te32(&phdr->p_flags)) {
-                    unpackExtent(filesz, fo, total_in, total_out,
+                    unpackExtent(filesz, fo,
                         c_adler, u_adler, first_PF_X, szb_info);
                     first_PF_X = false;
                 }
                 else {
-                    unpackExtent(filesz, fo, total_in, total_out,
+                    unpackExtent(filesz, fo,
                         c_adler, u_adler, false, szb_info);
                 }
             }
@@ -4798,7 +4798,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                                    get_te64(&phdr[j].p_filesz);
             if (fo)
                 fo->seek(where, SEEK_SET);
-            unpackExtent(size, fo, total_in, total_out,
+            unpackExtent(size, fo,
                 c_adler, u_adler, false, szb_info,
                 (phdr[j].p_offset != hi_offset));
         }
@@ -5666,8 +5666,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         throwCantUnpack("bad e_phoff");
     }
     unsigned const c_phnum = get_te16(&ehdri.e_phnum);
-    unsigned old_data_off = 0;
-    unsigned old_data_len = 0;
+    old_data_off = 0;
+    old_data_len = 0;
     unsigned old_dtinit = 0;
     unsigned is_asl = 0;  // is Android Shared Library
 
@@ -5727,8 +5727,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
 
     unsigned const u_phnum = get_te16(&ehdr->e_phnum);
-    unsigned total_in = 0;
-    unsigned total_out = 0;
+    total_in = 0;
+    total_out = 0;
     unsigned c_adler = upx_adler32(nullptr, 0);
     unsigned u_adler = upx_adler32(nullptr, 0);
 #define MAX_ELF_HDR 512
@@ -5744,7 +5744,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     if (is_shlib) {
         // Unpack and output the Ehdr and Phdrs for real.
         // This depends on position within input file fi.
-        unpackExtent(ph.u_len, fo, total_in, total_out,
+        unpackExtent(ph.u_len, fo,
             c_adler, u_adler, false, szb_info);
 
         // The first PT_LOAD.  Part is not compressed (for benefit of rtld.)
@@ -5824,7 +5824,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 break;
             }
         }
-        unpackExtent(ph.u_len, fo, total_in, total_out,
+        unpackExtent(ph.u_len, fo,
             c_adler, u_adler, false, szb_info);
     }
     else {  // main executable
@@ -5838,12 +5838,12 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 if (fo)
                     fo->seek(offset, SEEK_SET);
                 if (Elf32_Phdr::PF_X & get_te32(&phdr->p_flags)) {
-                    unpackExtent(filesz, fo, total_in, total_out,
+                    unpackExtent(filesz, fo,
                         c_adler, u_adler, first_PF_X, szb_info);
                     first_PF_X = false;
                 }
                 else {
-                    unpackExtent(filesz, fo, total_in, total_out,
+                    unpackExtent(filesz, fo,
                         c_adler, u_adler, false, szb_info);
                 }
             }
@@ -5892,7 +5892,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                                    get_te32(&phdr[j].p_filesz);
             if (fo)
                 fo->seek(where, SEEK_SET);
-            unpackExtent(size, fo, total_in, total_out,
+            unpackExtent(size, fo,
                 c_adler, u_adler, false, szb_info,
                 (phdr[j].p_offset != hi_offset));
         }

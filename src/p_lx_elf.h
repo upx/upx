@@ -62,6 +62,7 @@ protected:
     virtual void defineSymbols(Filter const *);
     virtual void addStubEntrySections(Filter const *);
     virtual void unpack(OutputFile *fo);
+    unsigned old_data_off, old_data_len;  // un_shlib
 
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const = 0;
     static unsigned elf_hash(char const *) /*const*/;
@@ -268,6 +269,22 @@ protected:
     virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
+    virtual void un_shlib_1(
+        OutputFile *const fo,
+        unsigned &c_adler,
+        unsigned &u_adler,
+        Elf64_Ehdr const *ehdr,
+        Elf64_Phdr const *const dynhdr,
+        unsigned const orig_file_size,
+        unsigned const szb_info
+    );
+    virtual void un_DT_INIT(
+        Elf64_Phdr const *phdr,
+        unsigned u_phnum,
+        unsigned old_dtinit,
+        OutputFile *fo,
+        unsigned is_asl
+    );
     virtual void unRela64(upx_uint64_t dt_rela, Elf64_Rela *rela0, unsigned relasz,
         MemBuffer &membuf, upx_uint64_t const load_off, upx_uint64_t const old_dtinit,
         OutputFile *fo);

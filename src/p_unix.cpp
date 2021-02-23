@@ -137,8 +137,8 @@ int PackUnix::getStrategy(Filter &/*ft*/)
 int PackUnix::pack2(OutputFile *fo, Filter &ft)
 {
     // compress blocks
-    unsigned total_in = 0;
-    unsigned total_out = 0;
+    total_in = 0;
+    total_out = 0;
 
 // FIXME: ui_total_passes is not correct with multiple blocks...
 //    ui_total_passes = (file_size + blocksize - 1) / blocksize;
@@ -318,8 +318,6 @@ void PackUnix::pack(OutputFile *fo)
 
 void PackUnix::packExtent(
     const Extent &x,
-    unsigned &total_in,
-    unsigned &total_out,
     Filter *ft,
     OutputFile *fo,
     unsigned hdr_u_len,
@@ -450,7 +448,6 @@ void PackUnix::packExtent(
 }
 
 void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
-    unsigned &total_in, unsigned &total_out,
     unsigned &c_adler, unsigned &u_adler,
     bool first_PF_X, unsigned szb_info, bool is_rewrite
 )
@@ -602,8 +599,8 @@ void PackUnix::unpack(OutputFile *fo)
     ibuf.alloc(blocksize + OVERHEAD);
 
     // decompress blocks
-    unsigned total_in = 0;
-    unsigned total_out = 0;
+    total_in = 0;
+    total_out = 0;
     memset(&bhdr, 0, sizeof(bhdr));
     for (;;)
     {
