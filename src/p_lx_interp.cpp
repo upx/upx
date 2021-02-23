@@ -234,8 +234,8 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
     fi->readx(ibuf, ph.c_len);
     decompress(ibuf, (upx_byte *)ehdr, false);
 
-    unsigned total_in = 0;
-    unsigned total_out = 0;
+    total_in = 0;
+    total_out = 0;
     unsigned c_adler = upx_adler32(nullptr, 0);
     unsigned u_adler = upx_adler32(nullptr, 0);
     off_t ptload0hi=0, ptload1lo=0, ptload1sz=0;
@@ -255,12 +255,12 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
             if (fo)
                 fo->seek(phdr->p_offset, SEEK_SET);
             if (Elf32_Phdr::PF_X & phdr->p_flags) {
-                unpackExtent(phdr->p_filesz, fo, total_in, total_out,
+                unpackExtent(phdr->p_filesz, fo,
                     c_adler, u_adler, first_PF_X, szb_info);
                 first_PF_X = false;
             }
             else {
-                unpackExtent(phdr->p_filesz, fo, total_in, total_out,
+                unpackExtent(phdr->p_filesz, fo,
                     c_adler, u_adler, false, szb_info);
             }
         }
@@ -269,13 +269,13 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
     if (0!=ptload1sz && ptload0hi < ptload1lo) {  // alignment hole?
         if (fo)
             fo->seek(ptload0hi, SEEK_SET);
-        unpackExtent(ptload1lo - ptload0hi, fo, total_in, total_out,
+        unpackExtent(ptload1lo - ptload0hi, fo,
             c_adler, u_adler, false, szb_info);
     }
     if (total_out != orig_file_size) {  // non-PT_LOAD stuff
         if (fo)
             fo->seek(0, SEEK_END);
-        unpackExtent(orig_file_size - total_out, fo, total_in, total_out,
+        unpackExtent(orig_file_size - total_out, fo,
             c_adler, u_adler, false, szb_info);
     }
 
