@@ -10,7 +10,7 @@ export SHELL = /bin/sh
 
 # build configuration options for this Makefile
 BUILD_TYPE_DEBUG    ?= 1
-BUILD_TYPE_SANITIZE ?= 1
+BUILD_TYPE_SANITIZE ?= 0
 BUILD_USE_DEPEND    ?= 1
 
 ifndef srcdir
