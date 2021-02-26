@@ -1844,6 +1844,17 @@ bool PackMachBase<T>::canPack()
         headway -= ((Mach_command const *)ptr)->cmdsize;
         if (lc_seg == segptr->cmd) {
             msegcmd[j] = *segptr;
+            if (!strcmp("__TEXT", segptr->segname)) {
+                Mach_section_command const *secp =
+                    (Mach_section_command const *)(const void*)(const char*)(1+ segptr);
+                unsigned const offset = secp->offset;
+                if (offset < file_size) {
+                    struct l_info h;
+                    fi->seek(offset, SEEK_SET);
+                    fi->readx(&h, sizeof(h));
+                    checkAlreadyPacked(&h, sizeof(h));
+                }
+            }
             if (!strcmp("__DATA", segptr->segname)) {
                 prev_mod_init_func = get_mod_init_func(segptr);
             }
@@ -1896,7 +1907,7 @@ bool PackMachBase<T>::canPack()
             if (vma_max < t) {
                 vma_max = t;
             }
-            // Segments need not be contigous {esp. "rust")
+            // Segments need not be contigous (esp. "rust"/"go")
             sz_segment = msegcmd[j].filesize + msegcmd[j].fileoff - msegcmd[0].fileoff;
         }
     }
