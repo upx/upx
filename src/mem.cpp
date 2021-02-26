@@ -110,10 +110,34 @@ void MemBuffer::dealloc()
 }
 
 
+static unsigned width(unsigned x)
+{
+    unsigned w = 0;
+    if ((~0u << 16) & x) { w += 16; x >>= 16; }
+    if ((~0u <<  8) & x) { w +=  8; x >>=  8; }
+    if ((~0u <<  4) & x) { w +=  4; x >>=  4; }
+    if ((~0u <<  2) & x) { w +=  2; x >>=  2; }
+    if ((~0u <<  1) & x) { w +=  1; x >>=  1; }
+    return 1+ w;
+}
+
+static unsigned umax(unsigned a, unsigned b)
+{
+    return (a >= b) ? a : b;
+}
+
 unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned extra)
 {
-    size_t bytes = mem_size(1, uncompressed_size, extra);
-    bytes += uncompressed_size/8 + 256;
+    size_t const z = uncompressed_size;  // fewer keystrokes and display columns
+    size_t bytes = mem_size(1, z, extra);
+    size_t const w = umax(8, width(z -1));  // ignore tiny offsets
+    bytes = 256 + // safety?
+        umax(bytes + z/8,  // All literal: 1 bit overhead per literal byte
+            // Worst matching: All match at max_offset, which implies 3==min_match
+                // NRV2B: 1 byte plus 2 bits per width exceeding 8 ("ss11")
+            umax((z/3 * (8+ 2*(w - 8)/1))/8,
+                // NRV2E: 1 byte plus 3 bits per pair of width exceeding 7 ("ss12")
+                 (z/3 * (8+ 3*(w - 7)/2))/8 ) );
     return ACC_ICONV(unsigned, bytes);
 }
 
