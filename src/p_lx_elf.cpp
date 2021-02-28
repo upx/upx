@@ -4569,7 +4569,6 @@ void PackLinuxElf64::un_shlib_1(
     OutputFile *const fo,
     unsigned &c_adler,
     unsigned &u_adler,
-    Elf64_Ehdr const *ehdr,
     Elf64_Phdr const *const dynhdr,
     unsigned const orig_file_size,
     unsigned const szb_info
@@ -4577,12 +4576,14 @@ void PackLinuxElf64::un_shlib_1(
 {
     // The first PT_LOAD.  Part is not compressed (for benefit of rtld.)
     fi->seek(0, SEEK_SET);
-    fi->readx(ibuf, get_te64(&dynhdr->p_offset) + get_te64(&dynhdr->p_filesz));
+    unsigned const limit_dynhdr = get_te64(&dynhdr->p_offset) + get_te64(&dynhdr->p_filesz);
+    fi->readx(ibuf, limit_dynhdr);
     overlay_offset -= sizeof(linfo);
     xct_off = overlay_offset;
     e_shoff = get_te64(&ehdri.e_shoff);
-    ibuf.subref("bad .e_shoff %#lx for %#lx", e_shoff, sizeof(Elf64_Shdr) * e_shnum);
-    if (e_shoff && e_shnum) { // --android-shlib
+    if (e_shoff && e_shnum
+    &&  (e_shoff + sizeof(Elf64_Shdr) * e_shnum) <= limit_dynhdr) { // --android-shlib
+        ibuf.subref("bad .e_shoff %#lx for %#lx", e_shoff, sizeof(Elf64_Shdr) * e_shnum);
         shdri = (Elf64_Shdr /*const*/ *)ibuf.subref(
             "bad Shdr table", e_shoff, sizeof(Elf64_Shdr)*e_shnum);
         upx_uint64_t xct_off2 = get_te64(&shdri->sh_offset);
@@ -4618,26 +4619,70 @@ void PackLinuxElf64::un_shlib_1(
         }
     }
     if (fo) {
-        fo->write(ibuf + ph.u_len, xct_off - ph.u_len);
+        fo->write(ibuf, xct_off);
     }
-
     total_in  = xct_off;
     total_out = xct_off;
-    ph.u_len = 0;
-    // Position the input for next unpackExtent.
-    fi->seek(sizeof(linfo) + overlay_offset + sizeof(p_info) + szb_info + ph.c_len, SEEK_SET);
 
-    // Decompress and unfilter the tail of first PT_LOAD.
-    Elf64_Phdr const *phdr = (Elf64_Phdr const *) (void const *) (1+ ehdr);
-    unsigned const u_phnum = get_te16(&ehdr->e_phnum);
-    for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
-        if (PT_LOAD64==get_te32(&phdr->p_type)) {
-            ph.u_len = get_te64(&phdr->p_filesz) - xct_off;
-            break;
-        }
-    }
+    // Decompress and unfilter the tail of PT_LOAD containing xct_off
+    fi->seek(xct_off + sizeof(linfo) + sizeof(p_info), SEEK_SET);
+    struct b_info hdr;
+    fi->readx(&hdr, sizeof(hdr));  // Peek at b_info
+    fi->seek(-(off_t)sizeof(hdr), SEEK_CUR);
+    ph.c_len = get_te32(&hdr.sz_cpr);
+    ph.u_len = get_te32(&hdr.sz_unc);
+
     unpackExtent(ph.u_len, fo,
         c_adler, u_adler, false, szb_info);
+
+    // Copy (slide) the remaining PT_LOAD; they are not compressed
+    Elf64_Phdr *phdr = phdri;
+    unsigned gap_offset = 0;
+    unsigned slide = 0;
+    int first = 0;
+    for (unsigned k = 0; k < e_phnum; ++k, ++phdr) {
+        if (PT_LOAD64==get_te32(&phdr->p_type)) {
+            unsigned vaddr = get_te64(&phdr->p_vaddr);
+            if (xct_off <= vaddr) {
+                unsigned offset = get_te64(&phdr->p_offset);
+                unsigned filesz = get_te64(&phdr->p_filesz);
+                if (0==first++) { // the partially-compressed PT_LOAD
+                    gap_offset = up4(filesz) + offset;
+                    set_te64(&phdr->p_filesz, ph.u_len + xct_off - vaddr);
+                    set_te64(&phdr->p_memsz,  ph.u_len + xct_off - vaddr);
+                }
+                else { // subsequent PT_LOAD
+                    fi->seek(offset, SEEK_SET);
+                    fi->readx(ibuf, filesz);
+
+                    if (0==slide) {
+                        slide = vaddr - offset;
+                    }
+                    set_te64(&phdr->p_offset, slide + offset);
+                    fo->seek(slide + offset, SEEK_SET);
+                    fo->write(ibuf, filesz);
+                }
+            }
+        }
+    }
+
+    // The compressed gaps (including to EOF: debuginfo.)
+    fi->seek(gap_offset, SEEK_SET);
+    phdr = phdri;
+    for (unsigned k = 0; k < e_phnum; ++k, ++phdr) {
+        if (PT_LOAD64==get_te32(&phdr->p_type)) {
+            unsigned vaddr = get_te64(&phdr->p_vaddr);
+            if (xct_off <= vaddr) {
+                unsigned gap = find_LOAD_gap(phdri, k, e_phnum);
+                if (gap) {
+                    unsigned offset = get_te64(&phdr->p_offset);
+                    unsigned filesz = get_te64(&phdr->p_filesz);
+                    fo->seek(filesz + offset, SEEK_SET);
+                    unpackExtent(gap, fo, c_adler, u_adler, false, szb_info);
+                }
+            }
+        }
+    }
 }
 
 void PackLinuxElf64::un_DT_INIT(
@@ -4815,7 +4860,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         // Packed shlib? (ET_DYN without -fPIE)
         if (!(Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1))) {
             is_shlib = 1;
-            un_shlib_1(fo, c_adler, u_adler, ehdr, dynhdr, orig_file_size, szb_info);
+            un_shlib_1(fo, c_adler, u_adler, dynhdr, orig_file_size, szb_info);
         }
     }
     else {  // main executable

@@ -273,7 +273,6 @@ protected:
         OutputFile *const fo,
         unsigned &c_adler,
         unsigned &u_adler,
-        Elf64_Ehdr const *ehdr,
         Elf64_Phdr const *const dynhdr,
         unsigned const orig_file_size,
         unsigned const szb_info
