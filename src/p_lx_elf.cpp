@@ -604,10 +604,11 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                         set_te64(&phdr->p_align, align);
                     }
                     off += (align-1) & (ioff - off);
+                    set_te64(&phdr->p_offset, off);
+                    so_slide = off - ioff;
                     fo->seek(  off, SEEK_SET);
                     fo->write(&file_image[ioff], len);
-                    so_slide = off - ioff;
-                    set_te64(&phdr->p_offset, so_slide + ioff);
+                    off += len;
                 }
                 continue;  // all done with this PT_LOAD
             }
@@ -4637,7 +4638,6 @@ void PackLinuxElf64::un_shlib_1(
 
     // Copy (slide) the remaining PT_LOAD; they are not compressed
     Elf64_Phdr *phdr = phdri;
-    unsigned gap_offset = 0;
     unsigned slide = 0;
     int first = 0;
     for (unsigned k = 0; k < e_phnum; ++k, ++phdr) {
@@ -4647,7 +4647,6 @@ void PackLinuxElf64::un_shlib_1(
                 unsigned offset = get_te64(&phdr->p_offset);
                 unsigned filesz = get_te64(&phdr->p_filesz);
                 if (0==first++) { // the partially-compressed PT_LOAD
-                    gap_offset = up4(filesz) + offset;
                     set_te64(&phdr->p_filesz, ph.u_len + xct_off - vaddr);
                     set_te64(&phdr->p_memsz,  ph.u_len + xct_off - vaddr);
                 }
@@ -4665,24 +4664,7 @@ void PackLinuxElf64::un_shlib_1(
             }
         }
     }
-
-    // The compressed gaps (including to EOF: debuginfo.)
-    fi->seek(gap_offset, SEEK_SET);
-    phdr = phdri;
-    for (unsigned k = 0; k < e_phnum; ++k, ++phdr) {
-        if (PT_LOAD64==get_te32(&phdr->p_type)) {
-            unsigned vaddr = get_te64(&phdr->p_vaddr);
-            if (xct_off <= vaddr) {
-                unsigned gap = find_LOAD_gap(phdri, k, e_phnum);
-                if (gap) {
-                    unsigned offset = get_te64(&phdr->p_offset);
-                    unsigned filesz = get_te64(&phdr->p_filesz);
-                    fo->seek(filesz + offset, SEEK_SET);
-                    unpackExtent(gap, fo, c_adler, u_adler, false, szb_info);
-                }
-            }
-        }
-    }
+    fi->seek(xct_off + sizeof(linfo) + sizeof(p_info) + sizeof(b_info) + up4(ph.c_len), SEEK_SET);  // loader offset
 }
 
 void PackLinuxElf64::un_DT_INIT(
@@ -4860,10 +4842,13 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         // Packed shlib? (ET_DYN without -fPIE)
         if (!(Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1))) {
             is_shlib = 1;
+            u_phnum = get_te16(&ehdri.e_phnum);
             un_shlib_1(fo, c_adler, u_adler, dynhdr, orig_file_size, szb_info);
+            *ehdr = ehdri;
+            memcpy(1+ehdr, phdri, u_phnum * sizeof(*phdri));
         }
     }
-    else {  // main executable
+    else { // main executable
         // Uncompress Ehdr and Phdrs: info for control of unpacking
         if (ibuf.getSize() < ph.c_len)
             throwCompressedDataViolation();
