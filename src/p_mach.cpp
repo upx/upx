@@ -2389,6 +2389,14 @@ bool PackMachFat::canPack()
                     return false;
             }
         } break;
+        case PackMachFat::CPU_TYPE_ARM64: {
+            PackMachARM64EL packer(fi);
+            if (!packer.canPack()) {
+                //PackDylibARM64EL pack2r(fi);  FIXME: not yet
+                //if (!pack2r.canPack())
+                    return false;
+            }
+        } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
             PackMachPPC32 packer(fi);
             if (!packer.canPack()) {
