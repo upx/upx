@@ -162,6 +162,7 @@ protected:
     Elf32_Phdr const *elf_find_ptype(unsigned type, Elf32_Phdr const *phdr0, unsigned phnum);
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
+    int is_LOAD32(Elf32_Phdr const *phdr) const;  // beware confusion with (1+ LO_PROC)
     unsigned check_pt_load(Elf32_Phdr const *);
     unsigned check_pt_dynamic(Elf32_Phdr const *);
     void invert_pt_dynamic(Elf32_Dyn const *, unsigned dt_filesz);
