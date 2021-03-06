@@ -470,6 +470,7 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
 
         int j = blocksize + OVERHEAD - sz_cpr;
         fi->readx(ibuf+j, sz_cpr);
+        total_in  += sz_cpr;
         // update checksum of compressed data
         c_adler = upx_adler32(ibuf + j, sz_cpr, c_adler);
         // decompress
@@ -499,8 +500,6 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
         }
         // update checksum of uncompressed data
         u_adler = upx_adler32(ibuf + j, sz_unc, u_adler);
-        total_in  += sz_cpr;
-        total_out += sz_unc;
         // write block
         if (fo) {
             if (is_rewrite) {
@@ -508,6 +507,7 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
             }
             else {
                 fo->write(ibuf + j, sz_unc);
+                total_out += sz_unc;
             }
         }
         if (wanted < (unsigned)sz_unc)
