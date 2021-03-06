@@ -41,6 +41,7 @@ public:
     virtual ~PackLinuxElf();
     /*virtual void buildLoader(const Filter *);*/
     virtual bool canUnpackVersion(int version) const { return (version >= 11); }
+    virtual int  canUnpack() { return super::canUnpack(); }
 
 protected:
     virtual const int *getCompressionMethods(int method, int level) const;
@@ -61,6 +62,7 @@ protected:
     virtual void defineSymbols(Filter const *);
     virtual void addStubEntrySections(Filter const *);
     virtual void unpack(OutputFile *fo);
+    unsigned old_data_off, old_data_len;  // un_shlib
 
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const = 0;
     static unsigned elf_hash(char const *) /*const*/;
@@ -118,6 +120,7 @@ protected:
     virtual void PackLinuxElf32help1(InputFile *f);
     virtual int checkEhdr(Elf32_Ehdr const *ehdr) const;
     virtual bool canPack();
+    virtual int  canUnpack();
 
     // These ARM routines are essentially common to big/little endian,
     // but the class hierarchy splits after this class.
@@ -259,12 +262,29 @@ protected:
     virtual void PackLinuxElf64help1(InputFile *f);
     virtual int checkEhdr(Elf64_Ehdr const *ehdr) const;
     virtual bool canPack();
+    virtual int  canUnpack();
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
     virtual off_t pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
+    virtual void un_shlib_1(
+        OutputFile *const fo,
+        Elf64_Phdr *const phdro,
+        unsigned &c_adler,
+        unsigned &u_adler,
+        Elf64_Phdr const *const dynhdr,
+        unsigned const orig_file_size,
+        unsigned const szb_info
+    );
+    virtual void un_DT_INIT(
+        unsigned old_dtinit,
+        Elf64_Phdr const *phdro,
+        Elf64_Phdr const *dynhdr,  // in phdri
+        OutputFile *fo,
+        unsigned is_asl
+    );
     virtual void unRela64(upx_uint64_t dt_rela, Elf64_Rela *rela0, unsigned relasz,
         MemBuffer &membuf, upx_uint64_t const load_off, upx_uint64_t const old_dtinit,
         OutputFile *fo);
@@ -534,6 +554,7 @@ public:
     virtual const char *getName() const { return "linux/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.elf"; }
     virtual const int *getFilters() const;
+    virtual int canUnpack();
 
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
