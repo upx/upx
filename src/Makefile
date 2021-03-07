@@ -9,7 +9,10 @@ MAKEFLAGS += -r
 export SHELL = /bin/sh
 
 # build configuration options for this Makefile
-BUILD_TYPE_DEBUG    ?= 1
+# 2021-03-07  BUILD_TYPE_DEBUG is off because CI build amd64-win64-gcc-9
+#             fails because it lacks libsantizer.spec, which is required
+#             by -fsanitize=undefined which is turned on by BUILD_TYPE_DEBUG.
+BUILD_TYPE_DEBUG    ?= 0
 BUILD_TYPE_SANITIZE ?= 0
 BUILD_USE_DEPEND    ?= 1
 
