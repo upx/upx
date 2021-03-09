@@ -87,6 +87,18 @@ jobs:
           export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
           bash ./.github/travis_testsuite_1.sh
 
+      - name: 'Make artifact'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}}; [ -n "$B" ] || B="release"
+          mkdir tmp
+          cp ../build/github/$C/$B/upx/upx.out tmp/upx
+
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}
+          path: tmp
+
   job-windows-cross-toolchains:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
@@ -130,6 +142,19 @@ jobs:
           export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
           export CROSS=${{matrix.CROSS}}
           bash ./.github/travis_testsuite_1.sh
+
+      - name: 'Make artifact'
+        run: |
+          export C=${{matrix.C}} B=${{matrix.B}}; [ -n "$B" ] || B="release"
+          export CROSS=${{matrix.CROSS}}
+          mkdir tmp
+          cp ../build/github/$CROSS-$C/$B/upx/upx.exe tmp/upx.exe
+
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}
+          path: tmp
 
   job-windows-toolchains:
     needs: [ job-rebuild-and-verify-stubs ]
@@ -216,5 +241,17 @@ jobs:
         shell: cmd
         run: |
           bash ./.github/travis_testsuite_1.sh
+
+      - name: 'Make artifact'
+        shell: cmd
+        run: |
+          mkdir tmp
+          copy %H%\build\%C%\%B%\upx\upx_packed.exe tmp\upx.exe
+
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}
+          path: tmp
 
 # vim:set ts=2 sw=2 et:
