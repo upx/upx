@@ -266,9 +266,10 @@ void PackW64Pep::defineSymbols(unsigned ncsection, unsigned upxsection,
     linker->defineSymbol("START", upxsection);
 }
 
-void PackW64Pep::setOhHeaderSize(const pe_section_t *)
+void PackW64Pep::setOhHeaderSize(const pe_section_t *osection)
 {
-    oh.headersize = rvamin; // FIXME
+    (void)osection;
+    oh.headersize = rvamin;  // FIXME
 }
 
 void PackW64Pep::pack(OutputFile *fo)

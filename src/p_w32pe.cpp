@@ -276,9 +276,10 @@ void PackW32Pe::setOhDataBase(const pe_section_t *osection)
     oh.database = osection[2].vaddr;
 }
 
-void PackW32Pe::setOhHeaderSize(const pe_section_t *)
+void PackW32Pe::setOhHeaderSize(const pe_section_t *osection)
 {
-    oh.headersize = rvamin; // FIXME
+    (void)osection;
+    oh.headersize = rvamin;  // FIXME
 }
 
 void PackW32Pe::pack(OutputFile *fo)

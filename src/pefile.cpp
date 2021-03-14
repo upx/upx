@@ -163,6 +163,13 @@ int PeFile::readFileHeader()
 
         if (h.mz == 'M' + 'Z'*256) // dos exe
         {
+            if (h.nexepos && h.nexepos < sizeof(exe_header_t)) {
+                // Overlapping MZ and PE headers by 'leanify', etc.
+                char buf[64]; snprintf(buf, sizeof(buf),
+                    "PE and MZ header overlap: %#x < %#x",
+                    (unsigned)h.nexepos, (unsigned)sizeof(exe_header_t));
+                throwCantPack(buf);
+            }
             unsigned const delta = (h.relocoffs >= 0x40)
                 ? h.nexepos // new format exe
                 : (h.p512*512+h.m512 - h.m512 ? 512 : h.nexepos);
@@ -3125,6 +3132,7 @@ void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask,
 {
     super::pack0<LE32>(fo, ih, oh, subsystem_mask,
                        default_imagebase, last_section_rsrc_only);
+    infoWarning("End of PeFile32::pack0");
 }
 
 void PeFile32::unpack(OutputFile *fo)
