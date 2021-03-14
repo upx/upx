@@ -174,6 +174,8 @@ int PeFile::readFileHeader()
                 throwCantPack(buf);
             }
             pe_offset += delta;
+            if (pe_offset < sizeof(h))
+                throwCantPack("MZ/PE headers overlap");
         }
         else if (get_le32(&h) == 'P' + 'E'*256)
             break;
