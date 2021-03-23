@@ -1694,8 +1694,9 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
         }
         unsigned chmax = 0;
         for (unsigned j= 0; j < nbucket; ++j) {
-            if (chmax < buckets[j]) {
-                chmax = buckets[j];
+            unsigned x = get_te32(&buckets[j]);
+            if (chmax < x) {
+                chmax = x;
             }
         }
         if ((v_hsh < v_sym) && (v_sym - v_hsh) <
@@ -5403,8 +5404,9 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         }
         unsigned chmax = 0;
         for (unsigned j= 0; j < nbucket; ++j) {
-            if (chmax < buckets[j]) {
-                chmax = buckets[j];
+            unsigned x = get_te32(&buckets[j]);
+            if (chmax < x) {
+                chmax = x;
             }
         }
         if ((v_hsh < v_sym) && (v_sym - v_hsh) <
