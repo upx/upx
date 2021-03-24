@@ -1733,15 +1733,16 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
         // Rust and Android trim unused zeroes from high end of hasharr[]
         unsigned bmax = 0;
         for (unsigned j= 0; j < n_bucket; ++j) {
-            if (buckets[j]) {
-                if (buckets[j] < symbias) {
+            unsigned bj = get_te32(&buckets[j]);
+            if (bj) {
+                if (bj < symbias) {
                     char msg[50]; snprintf(msg, sizeof(msg),
                             "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
-                            buckets[j], symbias);
+                            bj, symbias);
                     throwCantPack(msg);
                 }
-                if (bmax < buckets[j]) {
-                    bmax = buckets[j];
+                if (bmax < bj) {
+                    bmax = bj;
                 }
             }
         }
@@ -5443,15 +5444,16 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         // Rust and Android trim unused zeroes from high end of hasharr[]
         unsigned bmax = 0;
         for (unsigned j= 0; j < n_bucket; ++j) {
-            if (buckets[j]) {
-                if (buckets[j] < symbias) {
+            unsigned bj = get_te32(&buckets[j]);
+            if (bj) {
+                if (bj < symbias) {
                     char msg[50]; snprintf(msg, sizeof(msg),
                             "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
-                            buckets[j], symbias);
+                            bj, symbias);
                     throwCantPack(msg);
                 }
-                if (bmax < buckets[j]) {
-                    bmax = buckets[j];
+                if (bmax < bj) {
+                    bmax = bj;
                 }
             }
         }
