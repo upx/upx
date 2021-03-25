@@ -2997,9 +2997,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     ODADDR(PEDIR_BOUNDIM) = 0;
     ODSIZE(PEDIR_BOUNDIM) = 0;
 
-    // oh.headersize = osection[0].rawdataptr;
-    // oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(pe_section_t) * objs, oh.filealign);
-    oh.headersize = rvamin;
+    setOhHeaderSize(osection);
     oh.chksum = 0;
 
     // write decompressed file
