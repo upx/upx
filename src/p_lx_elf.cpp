@@ -1673,6 +1673,8 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
         }
     }
     // DT_HASH often ends at DT_SYMTAB
+    // FIXME: sort DT_HASH, DT_GNU_HASH, STRTAB, SYMTAB, REL, RELA
+    // to partition the space.
     unsigned const v_hsh = elf_unsigned_dynamic(Elf32_Dyn::DT_HASH);
     if (v_hsh && file_image) {
         hashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
@@ -1686,7 +1688,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
-        if (!nbucket || (nbucket>>31) || !v_sym || (unsigned)file_size <= v_sym
+        if ((nbucket>>31) || !v_sym || (unsigned)file_size <= v_sym
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
             char msg[80]; snprintf(msg, sizeof(msg),
@@ -5387,6 +5389,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         }
     }
     // DT_HASH often ends at DT_SYMTAB
+    // FIXME: sort DT_HASH, DT_GNU_HASH, STRTAB, SYMTAB, REL, RELA
+    // to partition the space.
     unsigned const v_hsh = elf_unsigned_dynamic(Elf64_Dyn::DT_HASH);
     if (v_hsh && file_image) {
         hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
@@ -5400,7 +5404,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
-        if (!nbucket || (nbucket>>31) || !v_sym || (unsigned)file_size <= v_sym
+        if ((nbucket>>31) || !v_sym || (unsigned)file_size <= v_sym
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
             char msg[80]; snprintf(msg, sizeof(msg),
