@@ -314,7 +314,8 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             unsigned offset = check_pt_dynamic(phdr);
             dynseg= (Elf32_Dyn const *)(offset + file_image);
-            invert_pt_dynamic(dynseg, get_te32(&phdr->p_filesz) - offset);
+            invert_pt_dynamic(dynseg,
+                umin(get_te32(&phdr->p_filesz), file_size - offset));
         }
         else if (is_LOAD32(phdr)) {
             check_pt_load(phdr);
@@ -815,7 +816,8 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
             upx_uint64_t offset = check_pt_dynamic(phdr);
             dynseg= (Elf64_Dyn const *)(offset + file_image);
-            invert_pt_dynamic(dynseg, get_te64(&phdr->p_filesz) - offset);
+            invert_pt_dynamic(dynseg,
+                umin(get_te64(&phdr->p_filesz), file_size - offset));
         }
         else if (PT_LOAD64==get_te32(&phdr->p_type)) {
             check_pt_load(phdr);
@@ -2150,7 +2152,8 @@ bool PackLinuxElf32::canPack()
         if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             unsigned offset = check_pt_dynamic(phdr);
             dynseg= (Elf32_Dyn const *)(offset + file_image);
-            invert_pt_dynamic(dynseg, file_size - offset);
+            invert_pt_dynamic(dynseg,
+                umin(get_te32(&phdr->p_filesz), file_size - offset));
         }
         else if (is_LOAD32(phdr)) {
             if (!pload_x0
@@ -2537,7 +2540,8 @@ PackLinuxElf64::canPack()
         if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             upx_uint64_t offset = check_pt_dynamic(phdr);
             dynseg= (Elf64_Dyn const *)(offset + file_image);
-            invert_pt_dynamic(dynseg, file_size - offset);
+            invert_pt_dynamic(dynseg,
+                umin(get_te64(&phdr->p_filesz), file_size - offset));
         }
         else if (PT_LOAD64==get_te32(&phdr->p_type)) {
             if (!pload_x0
@@ -4709,7 +4713,8 @@ void PackLinuxElf64::un_DT_INIT(
      fi->seek(dyn_off, SEEK_SET);
      fi->readx(ibuf, dyn_len);
      Elf64_Dyn *dyn = (Elf64_Dyn *)(void *)ibuf;
-     dynseg = dyn; invert_pt_dynamic(dynseg, file_size - dyn_off);
+     dynseg = dyn; invert_pt_dynamic(dynseg,
+         umin(dyn_len, file_size - dyn_off));
      for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
          upx_uint64_t const tag = get_te64(&dyn->d_tag);
          upx_uint64_t       val = get_te64(&dyn->d_val);
@@ -5975,7 +5980,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                     }
                     Elf32_Dyn *dyn = (Elf32_Dyn *)((unsigned char *)ibuf +
                         (dyn_off - load_off));
-                    dynseg = dyn; invert_pt_dynamic(dynseg, file_size - dyn_off);
+                    dynseg = dyn; invert_pt_dynamic(dynseg,
+                        umin(dyn_len, file_size - dyn_off));
                     for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
                         unsigned const tag = get_te32(&dyn->d_tag);
                         unsigned       val = get_te32(&dyn->d_val);
