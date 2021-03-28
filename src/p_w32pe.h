@@ -52,8 +52,8 @@ public:
                                unsigned sizeof_oh, unsigned isize_isplit,
                                unsigned s1addr);
     virtual void addNewRelocations(Reloc &, unsigned upxsection);
-    virtual void setOhDataBase(const pe_section_t *osection) override;
-    virtual void setOhHeaderSize(const pe_section_t *osection) override;
+    virtual void setOhDataBase(const pe_section_t *osection);
+    virtual void setOhHeaderSize(const pe_section_t *osection);
     virtual void pack(OutputFile *fo);
 
     virtual bool canPack();
