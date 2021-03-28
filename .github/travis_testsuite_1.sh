@@ -55,7 +55,7 @@ testsuite_check_sha() {
     if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
         echo "UPX-ERROR: $1 FAILED: checksum mismatch"
         diff -u $1/.sha256sums.expected $1/.sha256sums.current || true
-        exit_code=1
+        exit_code=99
         let num_errors+=1 || true
         all_errors="${all_errors} $1"
         #exit 1
