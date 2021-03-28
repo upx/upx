@@ -58,7 +58,7 @@ testsuite_check_sha() {
         exit_code=99
         let num_errors+=1 || true
         all_errors="${all_errors} $1"
-        #exit 1
+        #exit 99
     fi
     echo
 }
@@ -69,7 +69,7 @@ testsuite_check_sha_decompressed() {
         cat $1/.sha256sums.current
         echo "UPX-ERROR: FATAL: $1 FAILED: decompressed checksum mismatch"
         diff -u $1/.sha256sums.expected $1/.sha256sums.current || true
-        exit 1
+        exit 98
     fi
 }
 
