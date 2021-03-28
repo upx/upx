@@ -37,7 +37,7 @@ class UiPacker;
 //
 **************************************************************************/
 
-class UiPacker {
+class UiPacker final {
 public:
     UiPacker(const Packer *p_);
 

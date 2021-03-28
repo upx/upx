@@ -39,26 +39,26 @@ class PackCom : public Packer
     typedef Packer super;
 public:
     PackCom(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_DOS_COM; }
-    virtual const char *getName() const { return "dos/com"; }
-    //virtual const char *getFullName(const options_t *o) const { return o && o->cpu == o->CPU_8086 ? "i086-dos16.com" : "i286-dos16.com"; }
-    virtual const char *getFullName(const options_t *) const { return "i086-dos16.com"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_DOS_COM; }
+    virtual const char *getName() const override { return "dos/com"; }
+    //virtual const char *getFullName(const options_t *o) const override { return o && o->cpu == o->CPU_8086 ? "i086-dos16.com" : "i286-dos16.com"; }
+    virtual const char *getFullName(const options_t *) const override { return "i086-dos16.com"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
 protected:
     virtual unsigned getCallTrickOffset() const { return 0x100; }
-    virtual Linker* newLinker() const;
+    virtual Linker* newLinker() const override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft) override;
     virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned);
     virtual void addFilter16(int filter_id);
 };

@@ -34,32 +34,32 @@
 // dos/exe
 **************************************************************************/
 
-class PackExe : public Packer
+class PackExe final : public Packer
 {
     typedef Packer super;
 public:
     PackExe(InputFile *f);
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_DOS_EXE; }
-    virtual const char *getName() const { return "dos/exe"; }
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_DOS_EXE; }
+    virtual const char *getName() const override { return "dos/exe"; }
     //virtual const char *getFullName(const options_t *o) const { return o && o->cpu == o->CPU_8086 ? "i086-dos16.exe" : "i286-dos16.exe"; }
-    virtual const char *getFullName(const options_t *) const { return "i086-dos16.exe"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual const char *getFullName(const options_t *) const override { return "i086-dos16.exe"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
     // unpacker capabilities
-    virtual bool canUnpackVersion(int version) const
+    virtual bool canUnpackVersion(int version) const override
     {
         // NOTE: could adapt p_exe.cpp to support (version >= 8)
         return (version >= 10);
     }
-    virtual bool canUnpackFormat(int format) const
+    virtual bool canUnpackFormat(int format) const override
     {
         return (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH);
     }
@@ -70,8 +70,8 @@ protected:
     virtual int readFileHeader(void);
 
     virtual int fillExeHeader(struct exe_header_t *) const;
-    virtual void buildLoader(const Filter *ft);
-    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft) override;
+    virtual Linker* newLinker() const override;
     void addLoaderEpilogue(int flag);
 
     __packed_struct(exe_header_t)

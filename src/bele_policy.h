@@ -84,9 +84,14 @@ struct AbstractPolicy {
 };
 #endif
 
+#if defined(BELE_RTP)
+#undef C
+#define C const override
+#endif
+
 struct BEPolicy
 #if defined(BELE_RTP)
-    : public AbstractPolicy
+    final : public AbstractPolicy
 #endif
 {
     inline BEPolicy() {}
@@ -142,7 +147,7 @@ struct BEPolicy
 
 struct LEPolicy
 #if defined(BELE_RTP)
-    : public AbstractPolicy
+    final : public AbstractPolicy
 #endif
 {
     inline LEPolicy() {}

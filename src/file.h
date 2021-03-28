@@ -86,7 +86,7 @@ public:
 //
 **************************************************************************/
 
-class InputFile : public FileBase
+class InputFile final : public FileBase
 {
     typedef FileBase super;
 public:
@@ -99,15 +99,15 @@ public:
         sopen(name, flags, -1);
     }
 
-    virtual int read(void *buf, int len);
-    virtual int readx(void *buf, int len);
+    virtual int read(void *buf, int len) override;
+    virtual int readx(void *buf, int len) override;
     virtual int read(MemBuffer *buf, int len);
     virtual int readx(MemBuffer *buf, int len);
     virtual int read(MemBuffer &buf, int len);
     virtual int readx(MemBuffer &buf, int len);
 
-    virtual upx_off_t seek(upx_off_t off, int whence);
-    virtual upx_off_t tell() const;
+    virtual upx_off_t seek(upx_off_t off, int whence) override;
+    virtual upx_off_t tell() const override;
     virtual upx_off_t st_size_orig() const;
 protected:
     upx_off_t _length_orig;
@@ -118,7 +118,7 @@ protected:
 //
 **************************************************************************/
 
-class OutputFile : public FileBase
+class OutputFile final : public FileBase
 {
     typedef FileBase super;
 public:
@@ -132,17 +132,17 @@ public:
     }
     virtual bool openStdout(int flags=0, bool force=false);
 
-    virtual void write(const void *buf, int len);
+    virtual void write(const void *buf, int len) override;
     virtual void write(const MemBuffer *buf, int len);
     virtual void write(const MemBuffer &buf, int len);
-    virtual void set_extent(upx_off_t offset, upx_off_t length);
+    virtual void set_extent(upx_off_t offset, upx_off_t length) override;
     virtual upx_off_t unset_extent();  // returns actual length
 
     upx_off_t getBytesWritten() const { return bytes_written; }
-    virtual upx_off_t st_size() const;  // { return _length; }
+    virtual upx_off_t st_size() const override;  // { return _length; }
 
     // FIXME - these won't work when using the '--stdout' option
-    virtual upx_off_t seek(upx_off_t off, int whence);
+    virtual upx_off_t seek(upx_off_t off, int whence) override;
     virtual void rewrite(const void *buf, int len);
 
     // util

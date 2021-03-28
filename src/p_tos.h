@@ -32,33 +32,34 @@
 // atari/tos
 **************************************************************************/
 
-class PackTos : public Packer {
+class PackTos final : public Packer {
     typedef Packer super;
 
 public:
     PackTos(InputFile *f);
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_ATARI_TOS; }
-    virtual const char *getName() const { return "atari/tos"; }
-    virtual const char *getFullName(const options_t *) const { return "m68k-atari.tos"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_ATARI_TOS; }
+    virtual const char *getName() const override { return "atari/tos"; }
+    virtual const char *getFullName(const options_t *) const override { return "m68k-atari.tos"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
-    virtual void fileInfo();
+    virtual void fileInfo() override;
 
 protected:
-    virtual Linker *newLinker() const;
-    virtual void buildLoader(const Filter *ft);
+    virtual Linker *newLinker() const override;
+    virtual void buildLoader(const Filter *ft) override;
+
     unsigned getDecomprOffset(int method, int small) const;
 
-    virtual int readFileHeader();
-    virtual bool checkFileHeader();
+    int readFileHeader();
+    bool checkFileHeader();
 
     struct alignas(1) tos_header_t {
         BE16 fh_magic;
