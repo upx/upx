@@ -42,10 +42,10 @@ int upx_safe_vsnprintf(char *str, upx_rsize_t max_size, const char *format, va_l
     else
         assert(max_size == 0);
 
-    long long n = vsnprintf(str, max_size, format, ap);
-    assert(n >= 0);
-    assert(n < UPX_RSIZE_MAX_STR);
-    size = (size_t) n + 1;
+    long long len = vsnprintf(str, max_size, format, ap);
+    assert(len >= 0);
+    assert(len < UPX_RSIZE_MAX_STR);
+    size = (size_t) len + 1;
 
     // postconditions
     assert(size > 0);

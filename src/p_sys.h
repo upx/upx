@@ -34,25 +34,25 @@
 // dos/sys
 **************************************************************************/
 
-class PackSys : public PackCom
+class PackSys final : public PackCom
 {
     typedef PackCom super;
 public:
     PackSys(InputFile *f) : super(f) { }
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_DOS_SYS; }
-    virtual const char *getName() const { return "dos/sys"; }
-    //virtual const char *getFullName(const options_t *o) const { return o && o->cpu == o->CPU_8086 ? "i086-dos16.sys" : "i286-dos16.sys"; }
-    virtual const char *getFullName(const options_t *) const { return "i086-dos16.sys"; }
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_DOS_SYS; }
+    virtual const char *getName() const override { return "dos/sys"; }
+    //virtual const char *getFullName(const options_t *o) const override { return o && o->cpu == o->CPU_8086 ? "i086-dos16.sys" : "i286-dos16.sys"; }
+    virtual const char *getFullName(const options_t *) const override { return "i086-dos16.sys"; }
 
-    virtual bool canPack();
-
-protected:
-    virtual unsigned getCallTrickOffset() const { return 0; }
+    virtual bool canPack() override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned);
+    virtual unsigned getCallTrickOffset() const override { return 0; }
+
+protected:
+    virtual void buildLoader(const Filter *ft) override;
+    virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned) override;
 };
 
 

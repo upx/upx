@@ -34,38 +34,38 @@
 // watcom/le
 **************************************************************************/
 
-class PackWcle : public Packer, public LeFile
+class PackWcle final : public Packer, public LeFile
 {
     typedef Packer super;
 public:
     PackWcle(InputFile *f) : super(f), LeFile(f) { bele = &N_BELE_RTP::le_policy; }
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_WATCOM_LE; }
-    virtual const char *getName() const { return "watcom/le"; }
-    virtual const char *getFullName(const options_t *) const { return "i386-dos32.watcom.le"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_WATCOM_LE; }
+    virtual const char *getName() const override { return "watcom/le"; }
+    virtual const char *getFullName(const options_t *) const override { return "i386-dos32.watcom.le"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
 protected:
     virtual void handleStub(OutputFile *fo);
 
-    virtual void buildLoader(const Filter *ft);
-    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft) override;
+    virtual Linker* newLinker() const override;
 
-    virtual void readObjectTable();
+    virtual void readObjectTable() override;
     virtual void encodeObjectTable();
     virtual void decodeObjectTable();
 
     virtual void encodeFixupPageTable();
     virtual void decodeFixupPageTable();
 
-    virtual void encodePageMap();
+    virtual void encodePageMap() override;
 
     virtual void encodeEntryTable();
     virtual void decodeEntryTable();

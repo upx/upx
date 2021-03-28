@@ -98,6 +98,7 @@ mf.CXXFLAGS += -fno-strict-aliasing -fno-strict-overflow
 mf.CXXFLAGS += -funsigned-char
 mf.CXXFLAGS += $(CXXFLAGS_SANITIZE)
 mf.CXXFLAGS += -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
+##mf.CXXFLAGS += -Wsuggest-override
 mf.CXXFLAGS += $(CXXFLAGS_WERROR)
 
 # rules

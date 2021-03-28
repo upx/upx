@@ -596,7 +596,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
 {
     struct tstr : private ::noncopyable
     {
-        char *s;
+        char *s = nullptr;
         explicit tstr(char *str) : s(str) {}
         ~tstr() { delete [] s; }
         operator char *() const { return s; }
@@ -717,7 +717,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
         return strcmp(s1->name, s2->name);
     }
 
-    virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
+    virtual void alignCode(unsigned len) override { alignWithByte(len, 0); }
 
     const Section *getThunk(const char *dll, const char *proc, char tsep) const
     {

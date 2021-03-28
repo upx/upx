@@ -36,6 +36,9 @@
 #if (ACC_CC_GNUC >= 0x040200)
 #  pragma GCC diagnostic ignored "-Wshadow"
 #endif
+#if (ACC_CC_GNUC >= 0x050100)
+#  pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif
 #if (ACC_CC_MSC)
 #  pragma warning(disable: 4456)    // -Wno-shadow
 #endif
