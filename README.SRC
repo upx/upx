@@ -70,7 +70,7 @@ Prerequisites
 Tools needed to build/modify the UPX sources
 --------------------------------------------
 
-  - A C++ compiler: gcc >= 3.3 or clang.
+  - A C++ compiler that supports C++ 14: gcc >= 6.1 or clang.
 
   - GNU make 3.81 or better
 
@@ -92,7 +92,7 @@ To compile the packer sources
 
   Finally type
 
-     make
+     make all
 
 
 If you want to modify the stub sources you'll also need
