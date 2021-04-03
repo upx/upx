@@ -32,5 +32,6 @@ endif
 	$(MAKE) -C doc $@
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean
+.DEFAULT_GOAL := all
 
 # vim:set ts=8 sw=8 noet:
