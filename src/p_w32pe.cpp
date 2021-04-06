@@ -278,7 +278,7 @@ void PackW32Pe::setOhDataBase(const pe_section_t *osection)
 
 void PackW32Pe::setOhHeaderSize(const pe_section_t *osection)
 {
-    oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(osection) * oh.objects, oh.filealign);
+    oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(*osection) * oh.objects, oh.filealign);
 }
 
 void PackW32Pe::pack(OutputFile *fo)
