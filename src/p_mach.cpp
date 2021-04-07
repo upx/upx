@@ -1552,6 +1552,9 @@ int PackMachBase<T>::canUnpack()
     if (2048 < headway) {
         infoWarning("Mach_header.sizeofcmds(%d) > 2048", headway);
     }
+    if(!headway){
+        throwCantPack("Mach_header.sizeofcmds == 0");
+    }
     rawmseg_buf.alloc(mhdri.sizeofcmds);
     rawmseg = (Mach_segment_command *)rawmseg_buf.getVoidPtr();
     fi->readx(rawmseg, mhdri.sizeofcmds);
