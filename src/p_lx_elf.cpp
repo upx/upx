@@ -1971,11 +1971,15 @@ bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
 
 int PackLinuxElf32::canUnpack()
 {
-    if (super::canUnpack()) {
-        return true;
+    if (checkEhdr(&ehdri)) {
+        return false;
     }
+    // FIXME: ET_DYN same as 64-bit canUnpack ??
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         PackLinuxElf32help1(fi);
+    }
+    if (super::canUnpack()) {
+        return true;
     }
     return false;
 }
@@ -2396,8 +2400,8 @@ proceed: ;
 
 int PackLinuxElf64::canUnpack()
 {
-    if (super::canUnpack()) {
-        return true;
+    if (checkEhdr(&ehdri)) {
+        return false;
     }
     if (Elf64_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         PackLinuxElf64help1(fi);
@@ -2413,7 +2417,13 @@ int PackLinuxElf64::canUnpack()
         fi->seek(filesz+offset, SEEK_SET);
         MemBuffer buf(32 + sizeof(overlay_offset));
         fi->readx(buf, buf.getSize());
-        return PackUnix::find_overlay_offset(buf);
+        unsigned x = PackUnix::find_overlay_offset(buf);
+        if (x) {
+            return x;
+        }
+    }
+    if (super::canUnpack()) {
+        return true;
     }
     return false;
 }
