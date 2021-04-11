@@ -1614,7 +1614,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
         return;  // not 1st time; do not change upx_dt_init
     }
     Elf32_Dyn const *const dynp0 = dynp;
-    unsigned ndx = 1+ 0;
+    unsigned ndx = 0;
     unsigned const limit = headway / sizeof(*dynp);
     if (dynp)
     for (; ; ++ndx, ++dynp) {
@@ -1629,10 +1629,10 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
                != get_te32(&dynp0[-1+ dt_table[d_tag]].d_val)) {
                 char msg[50]; snprintf(msg, sizeof(msg),
                     "duplicate DT_%#x: [%#x] [%#x]",
-                    d_tag, -1+ dt_table[d_tag], -1+ ndx);
+                    d_tag, -1+ dt_table[d_tag], ndx);
                 throwCantPack(msg);
             }
-            dt_table[d_tag] = ndx;
+            dt_table[d_tag] = 1+ ndx;
         }
         if (Elf32_Dyn::DT_NULL == d_tag) {
             break;  // check here so that dt_table[DT_NULL] is set
@@ -1673,7 +1673,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
         }
     }
     // DT_HASH often ends at DT_SYMTAB
-    // FIXME: sort DT_HASH, DT_GNU_HASH, STRTAB, SYMTAB, REL, RELA
+    // FIXME: sort DT_HASH, DT_GNU_HASH, STRTAB, SYMTAB, REL, RELA, JMPREL
     // to partition the space.
     unsigned const v_hsh = elf_unsigned_dynamic(Elf32_Dyn::DT_HASH);
     if (v_hsh && file_image) {
@@ -1974,7 +1974,6 @@ int PackLinuxElf32::canUnpack()
     if (checkEhdr(&ehdri)) {
         return false;
     }
-    // FIXME: ET_DYN same as 64-bit canUnpack ??
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         PackLinuxElf32help1(fi);
     }
@@ -3813,7 +3812,8 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                 upx_uint64_t sh_entsize = get_te64(&shdr->sh_entsize);
                 if ((upx_uint64_t)file_size < sh_size
                 ||  (upx_uint64_t)file_size < sh_offset
-                || ((upx_uint64_t)file_size - sh_offset) < sh_size) {
+                || (Elf64_Shdr::SHT_NOBITS != sh_type
+                   && ((upx_uint64_t)file_size - sh_offset) < sh_size) ) {
                     throwCantPack("bad SHT_STRNDX");
                 }
 
@@ -5333,7 +5333,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         return;  // not 1st time; do not change upx_dt_init
     }
     Elf64_Dyn const *const dynp0 = dynp;
-    unsigned ndx = 1+ 0;
+    unsigned ndx = 0;
     unsigned const limit = headway / sizeof(*dynp);
     if (dynp)
     for (; ; ++ndx, ++dynp) {
@@ -5343,7 +5343,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         upx_uint64_t const d_tag = get_te64(&dynp->d_tag);
         if (d_tag>>32) { // outrageous
             char msg[50]; snprintf(msg, sizeof(msg),
-                "bad Elf64_Dyn[%d].d_tag %#lx", -1+ ndx, (long unsigned)d_tag);
+                "bad Elf64_Dyn[%d].d_tag %#lx", ndx, (long unsigned)d_tag);
             throwCantPack(msg);
         }
         if (d_tag < DT_NUM) {
@@ -5353,10 +5353,10 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
                != get_te64(&dynp0[-1+ dt_table[d_tag]].d_val)) {
                 char msg[50]; snprintf(msg, sizeof(msg),
                     "duplicate DT_%#x: [%#x] [%#x]",
-                    (unsigned)d_tag, -1+ dt_table[d_tag], -1+ ndx);
+                    (unsigned)d_tag, -1+ dt_table[d_tag], ndx);
                 throwCantPack(msg);
             }
-            dt_table[d_tag] = ndx;
+            dt_table[d_tag] = 1+ ndx;
         }
         if (Elf64_Dyn::DT_NULL == d_tag) {
             break;  // check here so that dt_table[DT_NULL] is set
@@ -5399,7 +5399,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         }
     }
     // DT_HASH often ends at DT_SYMTAB
-    // FIXME: sort DT_HASH, DT_GNU_HASH, STRTAB, SYMTAB, REL, RELA
+    // FIXME: sort DT_HASH, DT_GNU_HASH, STRTAB, SYMTAB, REL, RELA, JMPREL
     // to partition the space.
     unsigned const v_hsh = elf_unsigned_dynamic(Elf64_Dyn::DT_HASH);
     if (v_hsh && file_image) {
