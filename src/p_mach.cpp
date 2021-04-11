@@ -103,8 +103,9 @@ static const unsigned lc_routines[2] = {
 
 template <class T>
 PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
-        unsigned flavor, unsigned count, unsigned size) :
-    super(f), my_cputype(cputype), my_filetype(filetype), my_thread_flavor(flavor),
+        unsigned flavor, unsigned count, unsigned size, unsigned page_shift) :
+    super(f), my_page_size(1ull<<page_shift), my_page_mask(~0ull<<page_shift),
+    my_cputype(cputype), my_filetype(filetype), my_thread_flavor(flavor),
     my_thread_state_word_count(count), my_thread_command_size(size),
     n_segment(0), rawmseg(nullptr), msegcmd(nullptr), o__mod_init_func(0),
     prev_mod_init_func(0), pagezero_vmsize(0)
@@ -156,12 +157,12 @@ const int *PackMachARMEL::getCompressionMethods(int method, int level) const
 
 PackMachPPC32::PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
         Mach_header::MH_EXECUTE, Mach_thread_command::PPC_THREAD_STATE,
-        sizeof(Mach_ppc_thread_state)>>2, sizeof(threado))
+        sizeof(Mach_ppc_thread_state)>>2, sizeof(threado), 12)
 { }
 
 PackMachPPC64LE::PackMachPPC64LE(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC64LE,
         Mach_header::MH_EXECUTE, Mach_thread_command::PPC_THREAD_STATE64,
-        sizeof(Mach_ppcle_thread_state64)>>2, sizeof(threado))
+        sizeof(Mach_ppcle_thread_state64)>>2, sizeof(threado), 16)
 { }
 
 const int *PackMachPPC32::getFilters() const
@@ -178,7 +179,7 @@ const int *PackMachPPC64LE::getFilters() const
 
 PackMachI386::PackMachI386(InputFile *f) : super(f, Mach_header::CPU_TYPE_I386,
         Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::x86_THREAD_STATE32,
-        sizeof(Mach_i386_thread_state)>>2, sizeof(threado))
+        sizeof(Mach_i386_thread_state)>>2, sizeof(threado), 12)
 { }
 
 int const *PackMachI386::getFilters() const
@@ -189,7 +190,7 @@ int const *PackMachI386::getFilters() const
 
 PackMachAMD64::PackMachAMD64(InputFile *f) : super(f, Mach_header::CPU_TYPE_X86_64,
         Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::x86_THREAD_STATE64,
-        sizeof(Mach_AMD64_thread_state)>>2, sizeof(threado))
+        sizeof(Mach_AMD64_thread_state)>>2, sizeof(threado), 12)
 { }
 
 int const *PackMachAMD64::getFilters() const
@@ -200,12 +201,12 @@ int const *PackMachAMD64::getFilters() const
 
 PackMachARMEL::PackMachARMEL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
         Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE,
-        sizeof(Mach_ARM_thread_state)>>2, sizeof(threado))
+        sizeof(Mach_ARM_thread_state)>>2, sizeof(threado), 12)
 { }
 
 PackMachARM64EL::PackMachARM64EL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM64,
         Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE64,
-        sizeof(Mach_ARM64_thread_state)>>2, sizeof(threado))
+        sizeof(Mach_ARM64_thread_state)>>2, sizeof(threado), 14)
 { }
 
 int const *PackMachARMEL::getFilters() const
@@ -468,23 +469,8 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
     return 0;
 }
 
-#undef PAGE_MASK
-#undef PAGE_SIZE
-#define PAGE_MASK (~0u<<12)
-#define PAGE_SIZE (0u-PAGE_MASK)
-
-#undef PAGE_MASK64
-#undef PAGE_SIZE64
-#define PAGE_MASK64 (~(upx_uint64_t)0<<16)
-#define PAGE_SIZE64 ((upx_uint64_t)0-PAGE_MASK64)
-
 // At 2013-02-03 part of the source for codesign was
 //    http://opensource.apple.com/source/cctools/cctools-836/libstuff/ofile.c
-
-#undef PAGE_MASK64
-#undef PAGE_SIZE64
-#define PAGE_MASK64 (~(upx_uint64_t)0<<12)
-#define PAGE_SIZE64 ((upx_uint64_t)0-PAGE_MASK64)
 
 unsigned const blankLINK = 16;  // size of our empty __LINK segment
 // Note: "readelf --segments"  ==>  "otool -hl" or "otool -hlv" etc. (Xcode on MacOS)
@@ -498,9 +484,9 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
     if (Mach_header::MH_EXECUTE == my_filetype) {
         unsigned len = fo->getBytesWritten();
-        char page[~PAGE_MASK]; memset(page, 0, sizeof(page));
-        fo->write(page, ~PAGE_MASK & (0u - len));
-        len +=          ~PAGE_MASK & (0u - len) ;
+        MemBuffer page(my_page_size); memset(page, 0, my_page_size);
+        fo->write(page, ~my_page_mask & (0u - len));
+        len +=          ~my_page_mask & (0u - len) ;
 
         segTEXT.filesize = len;
         segTEXT.vmsize   = len;  // FIXME?  utilize GAP + NO_LAP + sz_unc - sz_cpr
@@ -518,7 +504,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         segLINK.fileoff = len;  // must be in the file
         segLINK.vmaddr =  len + segTEXT.vmaddr;
         fo->write(page, blankLINK); len += blankLINK;
-        segLINK.vmsize = PAGE_SIZE;
+        segLINK.vmsize = my_page_size;
         segLINK.filesize = blankLINK;
 
         // Get a writeable copy of the stub to make editing easier.
@@ -781,7 +767,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
                 opos = o_end_txt = segcmdtmp.filesize + segcmdtmp.fileoff;
             }
             else {
-                opos += ~PAGE_MASK & (0u - opos);  // advance to PAGE_SIZE boundary
+                opos += ~my_page_mask & (0u - opos);  // advance to my_page_size boundary
                 slide = opos - segcmdtmp.fileoff;
                 segcmdtmp.fileoff = opos;
             }
@@ -1208,17 +1194,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segZERO.cmd = lc_seg;
     segZERO.cmdsize = sizeof(segZERO);
     strncpy((char *)segZERO.segname, "__PAGEZERO", sizeof(segZERO.segname));
-    segZERO.vmsize = PAGE_SIZE;
-    if __acc_cte(sizeof(segZERO.vmsize) == 8
-    && mhdro.filetype == Mach_header::MH_EXECUTE
-    && mhdro.cputype == Mach_header::CPU_TYPE_X86_64) {
-        if (pagezero_vmsize < 0xF0000000ull) {
-            segZERO.vmsize = pagezero_vmsize;
-        }
-        else {
-            segZERO.vmsize <<= 20;  // (1ul<<32)
-        }
-    }
+    segZERO.vmsize = pagezero_vmsize;
 
     segTEXT.cmd = lc_seg;
     segTEXT.cmdsize = sizeof(segTEXT) + sizeof(secTEXT);
@@ -1262,8 +1238,8 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segXHDR = segTEXT;
     segXHDR.cmdsize = sizeof(segXHDR) + sizeof(secXHDR);
     segXHDR.vmaddr = segZERO.vmsize;
-    segXHDR.vmsize = PAGE_SIZE;
-    segXHDR.filesize = PAGE_SIZE;
+    segXHDR.vmsize = my_page_size;
+    segXHDR.filesize = my_page_size;
     segXHDR.nsects = 1;
     strncpy((char *)segXHDR.segname,  "UPX_DATA", sizeof(segXHDR.segname));
 
@@ -1552,7 +1528,7 @@ int PackMachBase<T>::canUnpack()
     if (2048 < headway) {
         infoWarning("Mach_header.sizeofcmds(%d) > 2048", headway);
     }
-    if(!headway){
+    if (!headway) {
         throwCantPack("Mach_header.sizeofcmds == 0");
     }
     rawmseg_buf.alloc(mhdri.sizeofcmds);
@@ -1903,7 +1879,7 @@ bool PackMachBase<T>::canPack()
     for (unsigned j= 0; j < ncmds; ++j) {
         if (lc_seg==msegcmd[j].cmd) {
             ++n_segment;
-            if (~PAGE_MASK & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
+            if (~my_page_mask & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
                 return false;
             }
             upx_uint64_t t = msegcmd[j].vmsize + msegcmd[j].vmaddr;
@@ -1914,7 +1890,7 @@ bool PackMachBase<T>::canPack()
             sz_segment = msegcmd[j].filesize + msegcmd[j].fileoff - msegcmd[0].fileoff;
         }
     }
-    vma_max = PAGE_MASK & (~PAGE_MASK + vma_max);
+    vma_max = my_page_mask & (~my_page_mask + vma_max);
 
     // info: currently the header is 36 (32+4) bytes before EOF
     unsigned char buf[256];

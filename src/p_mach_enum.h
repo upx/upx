@@ -53,6 +53,7 @@
         CPU_SUBTYPE_ARM_V6  = 6
     };
     enum { // filetype
+        MH_OBJECT  = 1,     /* relocatable object file */
         MH_EXECUTE = 2,
         MH_PRELOAD = 5,     /* preloaded executable */
         MH_DYLIB   = 6,     /* dynamically bound shared library */
