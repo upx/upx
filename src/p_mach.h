@@ -759,7 +759,8 @@ protected:
 
 public:
     PackMachBase(InputFile *, unsigned cpuid, unsigned filetype,
-        unsigned t_flavor, unsigned ts_word_cnt, unsigned tc_size);
+        unsigned t_flavor, unsigned ts_word_cnt, unsigned tc_size,
+        unsigned page_shift);
     virtual ~PackMachBase();
     virtual int getVersion() const { return 13; }
     virtual const int *getCompressionMethods(int method, int level) const;
@@ -803,6 +804,8 @@ protected:
     virtual upx_uint64_t threadc_getPC(void /*MachThreadCommand*/ const *) = 0;
 
     upx_uint64_t entryVMA;
+    upx_uint64_t my_page_size;
+    upx_uint64_t my_page_mask;
     unsigned my_cputype;
     unsigned my_cpusubtype;
     unsigned my_filetype;
