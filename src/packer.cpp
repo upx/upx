@@ -892,7 +892,7 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image, MemBuffer *out,
             jc += dif;
         }
         *relocs++ = jc; // FIXME: range check jc
-        if (!--relocn) {
+        if (!relocn--) {
             break;
         }
         if (bswap && image) {
