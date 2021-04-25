@@ -268,8 +268,6 @@ void PackW64Pep::defineSymbols(unsigned ncsection, unsigned upxsection,
 
 void PackW64Pep::pack(OutputFile *fo)
 {
-    // FIXME: Relocation stripping disabled for now - Stefan Widmann
-    opt->win32_pe.strip_relocs = false;
     super::pack0(fo, 0x0c, 0x0000000140000000ULL);
 }
 

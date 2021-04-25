@@ -59,7 +59,7 @@ protected:
                            unsigned ih_entry, unsigned ih_filealign);
     unsigned handleStripRelocs(upx_uint64_t ih_imagebase,
                                upx_uint64_t default_imagebase,
-                               unsigned dllflags);
+                               LE16 &dllflags);
 
     virtual bool handleForceOption() = 0;
     virtual void callCompressWithFilters(Filter &, int filter_strategy,
@@ -270,6 +270,7 @@ protected:
 
     //NEW: DLL characteristics definition for ASLR, ... - Stefan Widmann
     enum {
+        IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA       = 0x0020,
         IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE          = 0x0040,
         IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY       = 0x0080,
         IMAGE_DLLCHARACTERISTICS_NX_COMPAT             = 0x0100,
