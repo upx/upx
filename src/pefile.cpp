@@ -2292,9 +2292,6 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (!opt->force && handleForceOption())
         throwCantPack("unexpected value in PE header (try --force)");
 
-    if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD)
-        throwCantPack("CFGuard enabled PE files are not supported");
-
     if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY)
     {
         if (opt->force)
@@ -2316,6 +2313,26 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (overlay >= (unsigned) file_size)
         overlay = 0;
     checkOverlay(overlay);
+
+    if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD)
+    {
+        if (opt->force)
+        {
+            const unsigned lcsize = IDSIZE(PEDIR_LOADCONF);
+            const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
+            const unsigned gfpos = 14 * sizeof(ih.imagebase) +
+                                   6 * sizeof(LE32) + 4 * sizeof(LE16);
+            if (lcaddr && lcsize >= gfpos + sizeof(LE32))
+                // GuardFlags: Set IMAGE_GUARD_SECURITY_COOKIE_UNUSED
+                // and clear the rest
+                set_le32(ibuf.subref("bad guard flags at %#x", lcaddr + gfpos,
+                                     sizeof(LE32)), 0x00000800);
+            ih.dllflags ^= IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD;
+        }
+        else
+            throwCantPack("CFGuard enabled PE files are not supported (use "
+                          "--force to disable)");
+    }
 
     Resource res(ibuf, ibuf + ibuf.getSize());
     Interval tlsiv(ibuf);
