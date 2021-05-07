@@ -71,7 +71,10 @@ AT_PAGESZ= 6
 
 __NR_Linux = 4000
 __NR_exit     =   1+ __NR_Linux
+__NR_read     =   3+ __NR_Linux
 __NR_write    =   4+ __NR_Linux
+__NR_open     =   5+ __NR_Linux
+__NR_close    =   6+ __NR_Linux
 __NR_mmap64   =  90+ __NR_Linux
 __NR_munmap   =  91+ __NR_Linux
 __NR_mprotect = 125+ __NR_Linux
@@ -104,7 +107,7 @@ DCACHE= 1<<1
 #define UNFILTER 0  /* no unfilter for MIPS */
 
 N_SLOTS= 0
-sp_frame = 24 * NBPW
+sp_frame = 26 * NBPW
 .macro slot symbol, n
   .ifnb n
     N_SLOTS = \n + N_SLOTS
@@ -126,34 +129,67 @@ pb_info= . - 1*NBPW  //  .long offset({p_info; b_info; compressed data})
   slot f_envp
   slot f_argv
   slot f_argc
+  slot f_main
+  slot f_fd
 
-_start: .globl _start  // IN: jp= &_start; arg1= argc; arg2= argv; arg3= envp
+_start: .globl _start  // IN: jp= &_start
+// If glibc: arg1= argc; arg2= argv; arg3= envp
+// But musl: no args!
 ////    break  // for debugging
         addiu sp,sp,-sp_frame
         sw   ra,f_my_ra(sp)
         sw arg3,f_envp(sp)
         sw arg2,f_argv(sp)
         sw arg1,f_argc(sp)
+        sw   fp,f_fp(sp)
 
-// Calculate PAGE_MASK
-0:  // Advance envp to auxp
-        lw v0,(arg3)
-        bnez v0,0b
-          addiu arg3,arg3,NBPW
+        li v0,%lo(_start)
+        subu jp,jp,v0
+        addiu jp,jp,%lo(main)  // jp= &main
+        sw   jp,f_main(sp)
+
+// Determine PAGE_MASK
+        bal 0f
+          move a0,ra
+        .asciz "/proc/self/auxv"
+bad_open:
+bad_read:
+        li v1,1<<PAGE_SHIFT  // default
+        b 9f
+          negu fp,v1  // PAGE_MASK
+
+BUFLEN= 40*2*NBPW
+0:
+        move a1,zero  // O_RDONLY
+        do_sys __NR_open
+        bnez a3,bad_open
+          sw v0,f_fd(sp)  // fd
+
+        addiu sp,sp,-BUFLEN
+        li a2,BUFLEN  // buflen
+        move a1,sp  // buffer
+        move a0,v0  // fd
+        do_sys __NR_read
+        bltz a3,bad_read
+          addu a2,sp,v0  // end-of-buffer
+
+        move a3,sp  // buffer
 0:  // Find AT_PAGESZ
+        beq a3,a2,5f  // not found
+          li v1,1<<PAGE_SHIFT  // default value
         lw v0,a_type(arg3)
-        li v1,1<<PAGE_SHIFT  // default value
         beqz v0,5f  // AT_NULL
           addiu v0,v0,-AT_PAGESZ
         bnez v0,0b
           addiu arg3,arg3,2*NBPW
-        lw v1,-2*NBPW + a_val(arg3)
+        lw v1,-2*NBPW + a_val(arg3)  // non-default value
 5:  // v1= PAGE_SIZE
-          li v0,%lo(_start)
-        sw fp,f_fp(sp)
-          subu jp,jp,v0
+        addiu sp,sp,BUFLEN
         negu fp,v1  // PAGE_MASK
-          addiu jp,jp,%lo(main)  // jp= &main
+        lw a0,f_fd(sp)
+        do_sys __NR_close
+9:
+        lw jp,f_main(sp)
         jalr jp  // ra= &f_decompress
           nop
 e_start:
@@ -256,7 +292,7 @@ lxlzma_retval   = lxlzma_srcdone
         lw a0,lxlzma_dst(sp)
         lw a1,lxlzma_dstdone(sp)
         li a2,ICACHE|DCACHE
-        li v0,__NR_cacheflush; syscall
+        do_sys __NR_cacheflush
 
         lw v0,lxlzma_retval(sp)  # return value from decompression
 
@@ -305,7 +341,7 @@ eof:
         subu a1,lxdst,v1  // actual length generated
           sw a1,(lxdstlen)
         li a2,ICACHE|DCACHE
-        li v0,__NR_cacheflush; syscall
+        do_sys __NR_cacheflush
 
         lw v0,0(sp)
         jr ra
