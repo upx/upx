@@ -785,6 +785,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         }
     }
     sz_phdrs = e_phnum * e_phentsize;
+    sz_elf_hdrs = sz_phdrs + sizeof(Elf64_Ehdr);
 
     if (f && Elf64_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
@@ -4594,7 +4595,7 @@ PackLinuxElf64::unRela64(
 
 void PackLinuxElf64::un_shlib_1(
     OutputFile *const fo,
-    Elf64_Phdr *const phdro,
+    MemBuffer &o_elfhdrs,
     unsigned &c_adler,
     unsigned &u_adler,
     Elf64_Phdr const *const dynhdr,
@@ -4602,7 +4603,7 @@ void PackLinuxElf64::un_shlib_1(
     unsigned const szb_info
 )
 {
-    // The first PT_LOAD.  Part is not compressed (for benefit of rtld.)
+    // Below xct_off is not compressed (for benefit of rtld.)
     fi->seek(0, SEEK_SET);
     unsigned const limit_dynhdr = get_te64(&dynhdr->p_offset) + get_te64(&dynhdr->p_filesz);
     fi->readx(ibuf, limit_dynhdr);
@@ -4646,62 +4647,73 @@ void PackLinuxElf64::un_shlib_1(
             }
         }
     }
-    if (fo) {
-        fo->write(ibuf, xct_off);
-    }
-    total_in  = xct_off;
-    total_out = xct_off;
 
-    // Decompress and unfilter the tail of PT_LOAD containing xct_off
-    fi->seek(xct_off + sizeof(linfo) + sizeof(p_info), SEEK_SET);
-    struct b_info hdr;
-    fi->readx(&hdr, sizeof(hdr));  // Peek at b_info
-    fi->seek(-(off_t)sizeof(hdr), SEEK_CUR);
-    ph.c_len = get_te32(&hdr.sz_cpr);
-    ph.u_len = get_te32(&hdr.sz_unc);
+    // Decompress first Extent.  Old style covers [0, xct_off);
+    // new style covers just Elf headers: the rest below xct_off is constant!
+    fi->seek(xct_off, SEEK_SET);
+    struct {
+        struct l_info l;
+        struct p_info p;
+        struct b_info b;
+    } hdr;
+    fi->readx(&hdr, sizeof(hdr));
+    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
+    if (hdr.l.l_magic != UPX_MAGIC_LE32
+    ||  hdr.l.l_lsize != (unsigned)lsize
+    ||  hdr.p.p_filesize != ph.u_file_size) {
+        throwCantUnpack("corrupt l_info/p_info");
+    }
+    ph.c_len = get_te32(&hdr.b.sz_cpr);
+    ph.u_len = get_te32(&hdr.b.sz_unc);
 
     unpackExtent(ph.u_len, fo,
         c_adler, u_adler, false, szb_info);
+    // Recover original Elf headers from current output file
+    InputFile u_fi;
+    u_fi.open(fo->getName(), 0);
+    u_fi.readx((void *)o_elfhdrs,o_elfhdrs.getSize());
+    u_fi.close();
 
-    // Copy (slide) the remaining PT_LOAD; they are not compressed
-    Elf64_Phdr *phdr = phdro;
-    unsigned slide = 0;
-    int first = 0;
-    for (unsigned k = 0; k < e_phnum; ++k, ++phdr) {
-        unsigned type = get_te32(&phdr->p_type);
-        unsigned vaddr = get_te64(&phdr->p_vaddr);
-        unsigned offset = get_te64(&phdr->p_offset);
-        unsigned filesz = get_te64(&phdr->p_filesz);
-        if (xct_off <= vaddr) {
-            if (PT_LOAD64==type) {
-                if (0==first++) { // the partially-compressed PT_LOAD
-                    set_te64(&phdr->p_filesz, ph.u_len + xct_off - vaddr);
-                    set_te64(&phdr->p_memsz,  ph.u_len + xct_off - vaddr);
-                }
-                else { // subsequent PT_LOAD
-                    fi->seek(offset, SEEK_SET);
-                    fi->readx(ibuf, filesz);
-                    total_in += filesz;
-
-                    if (0==slide) {
-                        slide = vaddr - offset;
-                    }
-                    if (fo) {
-                        fo->seek(slide + offset, SEEK_SET);
-                        fo->write(ibuf, filesz);
-                        total_out = filesz + slide + offset;  // high-water mark
-                    }
-                }
-            }
-            set_te64(&phdr->p_offset, slide + offset);
+    // New style: up to xct_off
+    if (ph.u_len < xct_off) {
+        if (fo) {
+            fo->write(&ibuf[ph.u_len], xct_off - ph.u_len);
         }
     }
-    if (fo) { // Rewrite Phdrs after sliding
-        fo->seek(sizeof(Elf64_Ehdr), SEEK_SET);
-        fo->rewrite(phdro, e_phnum * sizeof(Elf64_Phdr));
+    // Tail of PT_LOAD beginning at xct_off
+    fi->readx(&hdr.b, sizeof(hdr.b));
+    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
+    ph.c_len = get_te32(&hdr.b.sz_cpr);
+    ph.u_len = get_te32(&hdr.b.sz_unc);
+    unpackExtent(ph.u_len, fo, c_adler, u_adler, false, szb_info);
+
+    funpad4(fi);
+    unsigned const l_offset = fi->tell();
+
+    // Copy (slide) the remaining PT_LOAD; they are not compressed
+    // because relocation processing by rtld might alter their memory image
+    Elf64_Phdr const *i_phdr = phdri;
+    Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
+    for (unsigned k = 0; k < e_phnum; ++k, ++i_phdr, ++o_phdr) {
+        unsigned type = get_te32(&i_phdr->p_type);
+        unsigned vaddr = get_te64(&i_phdr->p_vaddr);
+        unsigned offset = get_te64(&i_phdr->p_offset);
+        unsigned filesz = get_te64(&i_phdr->p_filesz);
+        if (xct_off <= vaddr) {
+            if (PT_LOAD64==type) {
+                fi->seek(offset, SEEK_SET);
+                fi->readx(ibuf, filesz);
+                total_in += filesz;
+
+                unsigned o_offset = get_te64(&o_phdr->p_offset);
+                fo->seek(o_offset, SEEK_SET);
+                fo->write(ibuf, filesz);
+                total_out = filesz + o_offset;  // high-water mark
+            }
+        }
     }
     // loader offset
-    fi->seek(xct_off + sizeof(linfo) + sizeof(p_info) + sizeof(b_info) + up4(ph.c_len), SEEK_SET);
+    fi->seek(l_offset, SEEK_SET);
 }
 
 void PackLinuxElf64::un_DT_INIT(
@@ -4840,7 +4852,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned u_adler = upx_adler32(nullptr, 0);
 
     unsigned is_shlib = 0;
-    MemBuffer phdro;
+    MemBuffer o_elfhdrs;
     Elf64_Phdr const *const dynhdr = elf_find_ptype(Elf64_Phdr::PT_DYNAMIC, phdri, c_phnum);
     if (dynhdr) {
         upx_uint64_t dyn_offset = get_te64(&dynhdr->p_offset);
@@ -4850,9 +4862,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         if (!(Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1))) {
             is_shlib = 1;
             u_phnum = get_te16(&ehdri.e_phnum);
-            phdro.alloc(u_phnum * sizeof(Elf64_Phdr));
-            memcpy(phdro, phdri, u_phnum * sizeof(*phdri));
-            un_shlib_1(fo, (Elf64_Phdr *)(void *)phdro, c_adler, u_adler, dynhdr, orig_file_size, szb_info);
+            o_elfhdrs.alloc(sz_elf_hdrs);
+            un_shlib_1(fo, o_elfhdrs, c_adler, u_adler, dynhdr, orig_file_size, szb_info);
             *ehdr = ehdri;
         }
     }
@@ -4881,8 +4892,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         if ((umin64(MAX_ELF_HDR, ph.u_len) - sizeof(Elf64_Ehdr))/sizeof(Elf64_Phdr) < u_phnum) {
             throwCantUnpack("bad compressed e_phnum");
         }
-        phdro.alloc(u_phnum * sizeof(Elf64_Phdr));
-        memcpy(phdro, 1+ ehdr, u_phnum * sizeof(Elf64_Phdr));
+        o_elfhdrs.alloc(sizeof(Elf64_Ehdr) + u_phnum * sizeof(Elf64_Phdr));
+        memcpy(o_elfhdrs, ehdr, o_elfhdrs.getSize());
 #undef MAX_ELF_HDR
 
         // Decompress each PT_LOAD.
@@ -4936,7 +4947,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     }
 
     // The gaps between PT_LOAD and after last PT_LOAD
-    phdr = (Elf64_Phdr *)(void *)phdro;
+    phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
     upx_uint64_t hi_offset(0);
     for (unsigned j = 0; j < u_phnum; ++j) {
         if (PT_LOAD64==phdr[j].p_type
@@ -4972,7 +4983,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     }
 
     if (is_shlib) {
-        un_DT_INIT(old_dtinit, (Elf64_Phdr *)(void *)phdro, dynhdr, fo, is_asl);
+        un_DT_INIT(old_dtinit, (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)o_elfhdrs), dynhdr, fo, is_asl);
     }
 
     // update header with totals

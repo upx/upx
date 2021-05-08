@@ -272,7 +272,7 @@ protected:
     virtual void unpack(OutputFile *fo);
     virtual void un_shlib_1(
         OutputFile *const fo,
-        Elf64_Phdr *const phdro,
+        MemBuffer &o_elfhdrs,
         unsigned &c_adler,
         unsigned &u_adler,
         Elf64_Phdr const *const dynhdr,
