@@ -363,7 +363,7 @@ void PeFile::Reloc::finish(upx_byte *&p,unsigned &siz)
 void PeFile::processRelocs(Reloc *rel) // pass2
 {
     rel->finish(oxrelocs,soxrelocs);
-    if (opt->win32_pe.strip_relocs && !isdll /*FIXME ASLR*/)
+    if (opt->win32_pe.strip_relocs)
         soxrelocs = 0;
 }
 
@@ -377,10 +377,13 @@ void PeFile32::processRelocs() // pass1
     const unsigned *counts = rel.getcounts();
     const unsigned rnum = counts[1] + counts[2] + counts[3];
 
-    if ((opt->win32_pe.strip_relocs && !isdll) || rnum == 0)
+    if (opt->win32_pe.strip_relocs || rnum == 0)
     {
         if (IDSIZE(PEDIR_RELOC))
+        {
             ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
+            ih.objects = tryremove(IDADDR(PEDIR_RELOC), ih.objects);
+        }
         mb_orelocs.alloc(1);
         orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
         sorelocs = 0;
@@ -478,10 +481,13 @@ void PeFile64::processRelocs() // pass1
     for (ic = 1; ic < 16; ic++)
         rnum += counts[ic];
 
-    if ((opt->win32_pe.strip_relocs && !isdll) || rnum == 0)
+    if (opt->win32_pe.strip_relocs || rnum == 0)
     {
         if (IDSIZE(PEDIR_RELOC))
+        {
             ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
+            ih.objects = tryremove(IDADDR(PEDIR_RELOC), ih.objects);
+        }
         mb_orelocs.alloc(1);
         orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
         sorelocs = 0;
@@ -2161,21 +2167,40 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
 
 unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase,
                                    upx_uint64_t default_imagebase,
-                                   unsigned dllflags)
+                                   LE16 &dllflags)
 {
-    if (dllflags & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
-        opt->win32_pe.strip_relocs = false;
-    else if (isdll) //do never strip relocations from DLLs
-        opt->win32_pe.strip_relocs = false;
-    else if (opt->win32_pe.strip_relocs < 0)
-        opt->win32_pe.strip_relocs = (ih_imagebase >= default_imagebase);
+    if (opt->win32_pe.strip_relocs < 0)
+    {
+        if (isdll || dllflags & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
+            opt->win32_pe.strip_relocs = false;
+        else
+            opt->win32_pe.strip_relocs = ih_imagebase >= default_imagebase;
+    }
     if (opt->win32_pe.strip_relocs)
     {
-        if (ih_imagebase < default_imagebase)
-            throwCantPack("--strip-relocs is not allowed with this imagebase");
-        else
-            return RELOCS_STRIPPED;
+        if (isdll)
+            throwCantPack("--strip-relocs is not allowed with DLL images");
+        if (dllflags & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
+        {
+            if (opt->force) // Disable ASLR
+            {
+                // The bit is set, so clear it with XOR
+                dllflags ^= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+                // HIGH_ENTROPY_VA has no effect without DYNAMIC_BASE, so clear
+                // it also if set
+                dllflags &= ~(unsigned)IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
+            }
+            else
+                throwCantPack("--strip-relocs is not allowed with ASLR (use "
+                              "with --force to remove)");
+        }
+        if (!opt->force && ih_imagebase < default_imagebase)
+            throwCantPack("--strip-relocs may not support this imagebase (try "
+                          "with --force)");
+        return RELOCS_STRIPPED;
     }
+    else
+        info("Base relocations stripping is disabled for this image");
     return 0;
 }
 
@@ -2267,9 +2292,6 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (!opt->force && handleForceOption())
         throwCantPack("unexpected value in PE header (try --force)");
 
-    if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD)
-        throwCantPack("CFGuard enabled PE files are not supported");
-
     if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY)
     {
         if (opt->force)
@@ -2291,6 +2313,26 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (overlay >= (unsigned) file_size)
         overlay = 0;
     checkOverlay(overlay);
+
+    if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD)
+    {
+        if (opt->force)
+        {
+            const unsigned lcsize = IDSIZE(PEDIR_LOADCONF);
+            const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
+            const unsigned gfpos = 14 * sizeof(ih.imagebase) +
+                                   6 * sizeof(LE32) + 4 * sizeof(LE16);
+            if (lcaddr && lcsize >= gfpos + sizeof(LE32))
+                // GuardFlags: Set IMAGE_GUARD_SECURITY_COOKIE_UNUSED
+                // and clear the rest
+                set_le32(ibuf.subref("bad guard flags at %#x", lcaddr + gfpos,
+                                     sizeof(LE32)), 0x00000800);
+            ih.dllflags ^= IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD;
+        }
+        else
+            throwCantPack("CFGuard enabled PE files are not supported (use "
+                          "--force to disable)");
+    }
 
     Resource res(ibuf, ibuf + ibuf.getSize());
     Interval tlsiv(ibuf);
@@ -2318,9 +2360,6 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         char buf[32]; snprintf(buf, sizeof(buf), "bad alignment %#x", 1+ oam1);
         throwCantPack(buf);
     }
-
-    // FIXME: disabled: the uncompressor would not allocate enough memory
-    //objs = tryremove(IDADDR(PEDIR_RELOC),objs);
 
     // FIXME: if the last object has a bss then this won't work
     // newvsize = (isection[objs-1].vaddr + isection[objs-1].size + oam1) &~ oam1;
@@ -2589,7 +2628,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (rvamin < osection[0].rawdataptr)
         throwCantPack("object alignment too small");
 
-    if (opt->win32_pe.strip_relocs && !isdll)
+    if (opt->win32_pe.strip_relocs)
         oh.flags |= RELOCS_STRIPPED;
 
     //for (ic = 0; ic < oh.filealign; ic += 4)
