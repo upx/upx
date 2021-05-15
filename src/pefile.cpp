@@ -684,7 +684,9 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
             addRelocation(desc_name, offsetof(import_desc, dllname),
                           "R_X86_64_32", sdll, 0);
         }
-        tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        tstr thunk(proc == nullptr ? name_for_dll(dll, thunk_id)
+                                   : name_for_proc(dll, proc, thunk_id, tsep));
+
         if (findSection(thunk, false) != nullptr)
             return; // we already have this dll/proc
         addSection(thunk, zeros, thunk_size, 0);
@@ -704,7 +706,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
             addRelocation(thunk, 0, reltype, "*UND*",
                           ordinal | (1ull << (thunk_size * 8 - 1)));
         }
-        else
+        else if (proc != nullptr)
         {
             tstr proc_name(name_for_proc(dll, proc, proc_name_id, procname_separator));
             addSection(proc_name, zeros, 2, 1); // 2 bytes of word aligned "hint"
@@ -714,6 +716,8 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
             strcat(proc_name, "X");
             addSection(proc_name, proc, strlen(proc), 0); // the name of the symbol
         }
+        else
+            infoWarning("empty import: %s", dll);
     }
 
     static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
@@ -752,10 +756,10 @@ public:
     void add(const C *dll, unsigned ordinal)
     {
         ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
-        assert(ordinal > 0 && ordinal < 0x10000);
+        assert(ordinal < 0x10000);
         char ord[1+5+1];
         upx_safe_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
-        add((const char*) dll, ord, ordinal);
+        add((const char*) dll, ordinal ? ord : nullptr, ordinal);
     }
 
     template <typename C1, typename C2>
@@ -988,12 +992,10 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         }
         else if (!ilinker->hasDll(idlls[ic]->name))
         {
-            if (idlls[ic]->ordinal)
-                ilinker->add(idlls[ic]->name, idlls[ic]->ordinal);
-            else if (idlls[ic]->shname)
+            if (idlls[ic]->shname && !idlls[ic]->ordinal)
                 ilinker->add(idlls[ic]->name, idlls[ic]->shname);
             else
-                throwInternalError("should not happen");
+                ilinker->add(idlls[ic]->name, idlls[ic]->ordinal);
         }
     }
 
@@ -1006,10 +1008,6 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     for (ic = 0; ic < dllnum; ic++)
     {
         LEXX *tarr = idlls[ic]->lookupt;
-#if 0 && ENABLE_THIS_AND_UNCOMPRESSION_WILL_BREAK // FIXME
-        if (!*tarr)  // no imports from this dll
-            continue;
-#endif
         set_le32(ppi, ilinker->getAddress(idlls[ic]->name));
         set_le32(ppi+4,idlls[ic]->iat - rvamin);
         ppi += 8;
