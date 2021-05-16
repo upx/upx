@@ -108,18 +108,15 @@ State= 0
 
 eof_lzma:
         mov sp,fp
-        mov x4,x0  // save result value
+        mov x5,x0  // save result value
         POP4(x0,x1, fp,lr)  // x0= orig_dst; x1= plen_dst
         ldr x1,[x1]  // outSizeProcessed
 
         add x1,x1,x0  // last
 cache_lzma:
-        dc cvau,x0  // Clean by VA to point of Unification
-        ic ivau,x0  // Invalidate by VA to point of Unification
-        add x0,x0,#64  // next line
-        cmp x0,x1; blo cache_lzma
+        clear_cache  // x0= lo; x1= hi; uses x2-x4
 
-        mov x0,x4  // result value
+        mov x0,x5  // result value
         ret
 
 #undef t0
