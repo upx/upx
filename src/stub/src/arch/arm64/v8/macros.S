@@ -61,5 +61,39 @@ fp .req x29
                 // orrcs r0,r0,#(1<<31)  // force negative on error; FIXME: needed?
 .endm
 
+.macro          clear_cache  // In: x0= lo; x1= hi; uses x2,x3,x4
+        mrs x3, ctr_el0
+        tbnz w3, #28, 1f  // not needed
+        ubfx x2, x3, #16, #4
+        mov x4, -4  // word mask (why not 8?)
+        lsl x4, x4, x2  // Dline_mask
+        and x2, x0, x4  // round down
+        cmp x2, x1
+        bhs 1f  // empty range
+0:
+        dc cvau, x2
+        sub x2, x2, x4
+        cmp x1, x2
+        bhi 0b
+1:
+        dsb ish
+
+        tbnz w3, #29, 3f  // not needed
+        and x3, x3, #0xf
+        mov x2, -4  // word mask (why not 8?)
+        lsl x2, x2, x3  // Iline_mask
+        and x0, x0, x2  // round down
+        cmp x1, x0
+        bls 3f  // empty range
+2:
+        ic ivau, x0
+        sub x0, x0, x2
+        cmp x1, x0
+        bhi 2b
+3:
+        dsb ish
+        isb
+.endm
+
 #endif  //}
 // vi:ts=8:et:nowrap
