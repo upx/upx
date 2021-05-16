@@ -16,16 +16,18 @@ on:
 jobs:
   job-rebuild-and-verify-stubs:
     name: 'Rebuild stubs'
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-20.04
     steps:
       - name: 'Install extra packages'
         run: |
           uname -a; pwd; id; umask
-          export DEBIAN_FRONTEND=noninteractive
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y libmpfr4:i386 zlib1g:i386
-          cd ..; mkdir -p deps; cd deps
+          cd ..; mkdir -p deps; cd deps; mkdir packages
+          # manually install compat libs from Ubuntu 16.04
+          wget -q 'http://mirror.enzu.com/ubuntu/pool/main/g/gmp/libgmp10_6.1.0+dfsg-2_amd64.deb'
+          wget -q 'http://mirror.enzu.com/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.4-1_amd64.deb'
+          for f in *.deb; do dpkg -x $f ./packages; done
+          sudo mv -v -n ./packages/usr/lib/x86_64-linux-gnu/lib* /usr/lib/x86_64-linux-gnu/
+          sudo ldconfig
           wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20210104/bin-upx-20210104.tar.xz | tar -xJ
       - name: 'Check out code'
         uses: actions/checkout@v2
