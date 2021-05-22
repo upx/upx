@@ -321,7 +321,8 @@ void PackUnix::packExtent(
     Filter *ft,
     OutputFile *fo,
     unsigned hdr_u_len,
-    unsigned b_extra
+    unsigned b_extra,
+    bool inhibit_compression_check
 )
 {
     unsigned const init_u_adler = ph.u_adler;
@@ -363,7 +364,7 @@ void PackUnix::packExtent(
             ft->cto = 0;
 
             compressWithFilters(ft, OVERHEAD, NULL_cconf, filter_strategy,
-                                0, 0, 0, hdr_ibuf, hdr_u_len);
+                                0, 0, 0, hdr_ibuf, hdr_u_len, inhibit_compression_check);
         }
         else {
             (void) compress(ibuf, ph.u_len, obuf);    // ignore return value

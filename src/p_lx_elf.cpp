@@ -599,7 +599,8 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                         fo->rewrite(&file_image[off2], 2*sizeof(word));
                     }
                 }
-                else if (xct_off < ioff) {  // Slide subsequent PT_LOAD.
+                else if (j && (Elf64_Phdr::PF_W & get_te64(&phdr->p_flags))
+                     &&  xct_off < ioff) {  // Slide subsequent PT_LOAD.
                     // AMD64 chip supports page sizes of 4KiB, 2MiB, and 1GiB;
                     // the operating system chooses one.  .p_align typically
                     // is a forward-looking 2MiB.  In 2009 Linux chooses 4KiB.
@@ -3711,12 +3712,14 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 
     progid = 0;  // getRandomId();  not useful, so do not clutter
     sz_elf_hdrs = sizeof(ehdri) + sz_phdrs;
-    if (0!=xct_off) {  // shared library
-        sz_elf_hdrs = xct_off;
+    if (0!=xct_off) { // shared library
         lowmem.alloc(xct_off + (!opt->o_unix.android_shlib
             ? 0
             : e_shnum * sizeof(Elf64_Shdr)));
         memcpy(lowmem, file_image, xct_off);  // android omits Shdr here
+    }
+    if (0!=xct_off && opt->o_unix.android_shlib) { // Android shared library
+        sz_elf_hdrs = xct_off;
         fo->write(lowmem, xct_off);  // < SHF_EXECINSTR (typ: in .plt or .init)
         if (opt->o_unix.android_shlib) {
             // In order to pacify the runtime linker on Android "O" ("Oreo"),
@@ -4225,9 +4228,39 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         }
         x.offset = get_te64(&phdri[k].p_offset);
         x.size   = get_te64(&phdri[k].p_filesz);
-        if (!is_shlib || hdr_u_len < (u64_t)x.size) {
+        if (is_shlib) {
+            if (x.offset <= xct_off) {
+                unsigned const len = umin(x.size, xct_off - x.offset);
+                if (len) {
+                    fi->seek(x.offset, SEEK_SET);
+                    fi->readx(ibuf, x.size);
+                    total_in += len;
+
+                    fo->seek(x.offset, SEEK_SET);
+                    fo->write(ibuf, len);
+                    total_out += len;
+                }
+                if (len != x.size) {
+                    x.offset = 0;
+                    x.size = sz_elf_hdrs;
+                    packExtent(x, nullptr, fo, 0, 0, true);
+                    total_in -= sz_elf_hdrs;
+
+                    x.offset = xct_off;
+                    x.size = get_te64(&phdri[k].p_filesz) - len;
+                    packExtent(x, &ft, fo, 0, 0, true);
+                }
+            }
+            else {
+                if (!(Elf64_Phdr::PF_W & get_te64(&phdri[k].p_flags))) {
+                    packExtent(x, &ft, fo, 0, 0, true);
+                }
+                // else wait until slide
+            }
+        }
+        else if (hdr_u_len < (u64_t)x.size) {
             if (0 == nx) { // 1st PT_LOAD64 must cover Ehdr at 0==p_offset
-                unsigned const delta = (is_shlib ? xct_off : hdr_u_len);
+                unsigned const delta = hdr_u_len;
                 if (ft.id < 0x40) {
                     // FIXME: ??     ft.addvalue += asl_delta;
                 }
@@ -4247,7 +4280,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
             // sometimes marks as PF_X anyway.  So filter only first segment.
             if (k == nk_f || !is_shlib) {
                 packExtent(x,
-                    (k==nk_f ? &ft : nullptr ), fo, hdr_u_len);
+                    (k==nk_f ? &ft : nullptr ), fo, hdr_u_len, 0, true);
             }
             else {
                 total_in += x.size;
