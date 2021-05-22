@@ -74,7 +74,8 @@ protected:
     };
     virtual void packExtent(const Extent &x,
         Filter *, OutputFile *,
-        unsigned hdr_len = 0, unsigned b_extra = 0);
+        unsigned hdr_len = 0, unsigned b_extra = 0 ,
+        bool inhibit_compression_check = false);
     virtual void unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &c_adler, unsigned &u_adler,
         bool first_PF_X, unsigned szb_info, bool is_rewrite = false);
