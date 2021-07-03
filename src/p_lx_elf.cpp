@@ -590,8 +590,8 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             }
             if (PT_LOAD64 == type) {
                 if ((xct_off - ioff) < len) { // Change length of compressed PT_LOAD.
-                    set_te64(&phdr->p_filesz, sz_pack2 + lsize - ioff);
-                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
+                    set_te64(&phdr->p_filesz, sz_pack2 + lsize);
+                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize);
                     if (user_init_off < xct_off) { // MIPS puts PT_DYNAMIC here
                         // Allow for DT_INIT in a new [stolen] slot
                         unsigned off2 = user_init_off - sizeof(word);
@@ -4204,8 +4204,8 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     // compress extents
     unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
 
-    total_in =  (is_shlib ?           0 : xct_off);
-    total_out = (is_shlib ? sz_elf_hdrs : xct_off);
+    total_in =  (is_shlib ? 0 : xct_off);
+    total_out = (is_shlib ? 0 : xct_off);
 
     uip->ui_pass = 0;
     ft.addvalue = 0;
@@ -4241,6 +4241,23 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
                     total_out += len;
                 }
                 if (len != x.size) {
+                    linfo.l_checksum = 0;
+                    linfo.l_magic = UPX_MAGIC_LE32;
+                    set_le16(&linfo.l_lsize, lsize);
+                    linfo.l_version = (unsigned char)ph.version;
+                    linfo.l_format =  (unsigned char)ph.format;
+                    linfo_off = fo->tell();
+                    fo->write(&linfo, sizeof(linfo));
+                    total_out += sizeof(linfo);
+                    overlay_offset = total_out;
+
+                    p_info hbuf;
+                    set_te32(&hbuf.p_progid, 0);
+                    set_te32(&hbuf.p_filesize, file_size);
+                    set_te32(&hbuf.p_blocksize, blocksize);
+                    fo->write(&hbuf, sizeof(hbuf));
+                    total_out += sizeof(p_info);
+
                     x.offset = 0;
                     x.size = sz_elf_hdrs;
                     packExtent(x, nullptr, fo, 0, 0, true);
@@ -4253,12 +4270,25 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
             }
             else {
                 if (!(Elf64_Phdr::PF_W & get_te64(&phdri[k].p_flags))) {
+                    // Read-only PT_LOAD, assume not written by relocationa.
+                    // Also assume not the source for R_*_COPY relocation,
+                    // therefore compress it.
                     packExtent(x, &ft, fo, 0, 0, true);
+                    // De-compressing will re-create it, but otherwise ignore it.
+                    Elf64_Phdr *phdro = (Elf64_Phdr *)(1+ (Elf64_Ehdr *)&lowmem[0]);
+                    set_te32(&phdro[k].p_type, Elf64_Phdr::PT_NULL);
                 }
-                // else wait until slide
+                else {
+                    // Read-write PT_LOAD.
+                    // Might be relocated, so cannot be compressed.
+                    // (Could compress if not relocated; complicates run-time.)
+                    // Postpone writing until "slide", but account for its size.
+                    total_in +=  x.size;
+                }
             }
         }
-        else if (hdr_u_len < (u64_t)x.size) {
+        else  // main program, not shared library
+        if (hdr_u_len < (u64_t)x.size) {
             if (0 == nx) { // 1st PT_LOAD64 must cover Ehdr at 0==p_offset
                 unsigned const delta = hdr_u_len;
                 if (ft.id < 0x40) {
@@ -4420,7 +4450,7 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
 
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 {
-    overlay_offset = sz_elf_hdrs + sizeof(linfo);
+    overlay_offset = xct_off ? xct_off : (sz_elf_hdrs + sizeof(linfo));
 
     if (opt->o_unix.preserve_build_id) {
         // calc e_shoff here and write shdrout, then o_shstrtab
@@ -4481,7 +4511,9 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 
 void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 {
-    overlay_offset = sz_elf_hdrs + sizeof(linfo);
+    if (!xct_off) {
+        overlay_offset = sz_elf_hdrs + sizeof(linfo);
+    }
 
     if (opt->o_unix.preserve_build_id) {
         // calc e_shoff here and write shdrout, then o_shstrtab
@@ -4511,8 +4543,10 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
         fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(Elf64_Phdr));
-        fo->seek(sz_elf_hdrs, SEEK_SET);
-        fo->rewrite(&linfo, sizeof(linfo));
+        //fo->seek(xct_off, SEEK_SET);  // FIXME
+        //fo->rewrite(&linfo, sizeof(linfo));
+        fo->seek(linfo_off, SEEK_SET);
+        fo->rewrite(&linfo, sizeof(linfo));  // duplicate?
     }
     else {
         if (PT_NOTE64 == get_te64(&elfout.phdr[C_NOTE].p_type)) {
@@ -4626,6 +4660,25 @@ PackLinuxElf64::unRela64(
     fo->rewrite(rela0, relasz);
 }
 
+// File layout of compressed .so shared library:
+// 1. new Elf headers: Ehdr, PT_LOAD (r-x), PT_LOAD (rw-, if any), non-PT_LOAD Phdrs
+// 2. Space for (original - 2) PT_LOAD Phdr
+// 3. Remaining original contents of file below xct_off
+// xct_off: (&lowest eXecutable Shdr section)
+// 4. l_info (12 bytes)
+// overlay_offset:
+// 5. p_info (12 bytes)
+// 6. compressed original Elf headers
+// 7. compressed remainder of PT_LOAD above xct_off
+// 8. compressed read-only PT_LOAD above xct_off (if any)
+// 9. uncompressed Read-Write PT_LOAD (slide down N pages)
+// 10. int[6] tables for de-compressor
+// DT_INIT:
+// 11. de-compressing loader
+// 12. compressed gaps between PT_LOADs (and EOF) above xct_off
+// 13. 32-byte pack header
+// 14. 4-byte overlay offset
+
 void PackLinuxElf64::un_shlib_1(
     OutputFile *const fo,
     MemBuffer &o_elfhdrs,
@@ -4707,46 +4760,50 @@ void PackLinuxElf64::un_shlib_1(
     u_fi.readx((void *)o_elfhdrs,o_elfhdrs.getSize());
     u_fi.close();
 
-    // New style: up to xct_off
+    // New style: not compressed, up to xct_off
     if (ph.u_len < xct_off) {
         if (fo) {
             fo->write(&ibuf[ph.u_len], xct_off - ph.u_len);
         }
     }
-    // Tail of PT_LOAD beginning at xct_off
-    fi->readx(&hdr.b, sizeof(hdr.b));
-    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
-    ph.c_len = get_te32(&hdr.b.sz_cpr);
-    ph.u_len = get_te32(&hdr.b.sz_unc);
-    unpackExtent(ph.u_len, fo, c_adler, u_adler, false, szb_info);
 
-    funpad4(fi);
-    unsigned const l_offset = fi->tell();
-
-    // Copy (slide) the remaining PT_LOAD; they are not compressed
-    // because relocation processing by rtld might alter their memory image
+    // Now handle compressed PT_LOADs
     Elf64_Phdr const *i_phdr = phdri;
     Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
+    int once = 0;
     for (unsigned k = 0; k < e_phnum; ++k, ++i_phdr, ++o_phdr) {
-        unsigned type = get_te32(&i_phdr->p_type);
-        unsigned vaddr = get_te64(&i_phdr->p_vaddr);
-        unsigned offset = get_te64(&i_phdr->p_offset);
-        unsigned filesz = get_te64(&i_phdr->p_filesz);
-        if (xct_off <= vaddr) {
-            if (PT_LOAD64==type) {
-                fi->seek(offset, SEEK_SET);
-                fi->readx(ibuf, filesz);
-                total_in += filesz;
-
-                unsigned o_offset = get_te64(&o_phdr->p_offset);
-                fo->seek(o_offset, SEEK_SET);
-                fo->write(ibuf, filesz);
-                total_out = filesz + o_offset;  // high-water mark
+        unsigned type = get_te32(&o_phdr->p_type);  // output side avoids PT_NULL
+        unsigned flags = get_te32(&o_phdr->p_flags);
+        unsigned vaddr = get_te64(&o_phdr->p_vaddr);
+        unsigned filesz = get_te64(&o_phdr->p_filesz);
+        unsigned o_offset = get_te64(&o_phdr->p_offset);
+        unsigned i_offset = get_te64(&i_phdr->p_offset);
+        if (xct_off <= vaddr) { // beyond rtld control info
+            if (PT_LOAD64==type
+            && xct_off < (filesz + vaddr)) {
+                if (!(Elf64_Phdr::PF_W & flags)) { // Read-only, so was compressed
+                    fi->readx(&hdr.b, sizeof(hdr.b));
+                    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
+                    ph.c_len = get_te32(&hdr.b.sz_cpr);
+                    ph.u_len = get_te32(&hdr.b.sz_unc);
+                    unpackExtent(ph.u_len, fo, c_adler, u_adler, false, szb_info);
+                }
+                else { // Writeable, so might be relocataed, so not compressed
+                    if (!once++) {
+                        funpad4(fi);
+                    }
+                    fi->seek(i_offset, SEEK_SET);
+                    fi->readx(ibuf, filesz);
+                    total_in += filesz;
+                    fo->seek(o_offset, SEEK_SET);
+                    fo->write(ibuf, filesz);
+                    total_out = filesz + o_offset;  // high-water mark
+                }
             }
         }
     }
-    // loader offset
-    fi->seek(l_offset, SEEK_SET);
+    // position fi at loader offset
+    fi->seek(overlay_offset, SEEK_SET);  // FIXME?
 }
 
 void PackLinuxElf64::un_DT_INIT(

@@ -405,6 +405,11 @@ void OutputFile::rewrite(const void *buf, int len)
     bytes_written -= len;       // restore
 }
 
+upx_off_t OutputFile::tell() const
+{
+    return super::tell();
+}
+
 upx_off_t OutputFile::seek(upx_off_t off, int whence)
 {
     mem_size_assert(1, off >= 0 ? off : -off); // sanity check

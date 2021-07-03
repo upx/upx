@@ -91,6 +91,7 @@ protected:
     upx_uint64_t jni_onload_va;  // runtime &JNI_OnLoad
     upx_uint64_t user_init_va;
     unsigned user_init_off;  // within file_image
+    unsigned linfo_off;
 
     upx_uint16_t  e_machine;
     unsigned char ei_class;
