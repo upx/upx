@@ -4270,7 +4270,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
             }
             else {
                 if (!(Elf64_Phdr::PF_W & get_te64(&phdri[k].p_flags))) {
-                    // Read-only PT_LOAD, assume not written by relocationa.
+                    // Read-only PT_LOAD, assume not written by relocations.
                     // Also assume not the source for R_*_COPY relocation,
                     // therefore compress it.
                     packExtent(x, &ft, fo, 0, 0, true);
@@ -4694,6 +4694,7 @@ void PackLinuxElf64::un_shlib_1(
     unsigned const limit_dynhdr = get_te64(&dynhdr->p_offset) + get_te64(&dynhdr->p_filesz);
     fi->readx(ibuf, limit_dynhdr);
     overlay_offset -= sizeof(linfo);
+    loader_offset = 0;
     xct_off = overlay_offset;
     e_shoff = get_te64(&ehdri.e_shoff);
     if (e_shoff && e_shnum
@@ -4784,13 +4785,17 @@ void PackLinuxElf64::un_shlib_1(
                 if (!(Elf64_Phdr::PF_W & flags)) { // Read-only, so was compressed
                     fi->readx(&hdr.b, sizeof(hdr.b));
                     fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
+                    if (fo) {
+                        fo->seek(o_offset, SEEK_SET);
+                    }
                     ph.c_len = get_te32(&hdr.b.sz_cpr);
                     ph.u_len = get_te32(&hdr.b.sz_unc);
                     unpackExtent(ph.u_len, fo, c_adler, u_adler, false, szb_info);
                 }
-                else { // Writeable, so might be relocataed, so not compressed
+                else { // Writeable, so might written by rtld, so not compressed.
                     if (!once++) {
                         funpad4(fi);
+                        loader_offset = fi->tell();
                     }
                     fi->seek(i_offset, SEEK_SET);
                     fi->readx(ibuf, filesz);
@@ -4803,7 +4808,7 @@ void PackLinuxElf64::un_shlib_1(
         }
     }
     // position fi at loader offset
-    fi->seek(overlay_offset, SEEK_SET);  // FIXME?
+    fi->seek(loader_offset, SEEK_SET);
 }
 
 void PackLinuxElf64::un_DT_INIT(
@@ -5027,7 +5032,12 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 ph.getPackHeaderSize() + sizeof(overlay_offset))
             < up4(file_size)) {
         // Loader is not at end; skip past it.
-        funpad4(fi);  // MATCH01
+        if (loader_offset) {
+            fi->seek(loader_offset, SEEK_SET);
+        }
+        else {
+            funpad4(fi);  // MATCH01
+        }
         unsigned d_info[6]; fi->readx(d_info, sizeof(d_info));
         if (0==old_dtinit) {
             old_dtinit = get_te32(&d_info[2 + (0==d_info[0])]);

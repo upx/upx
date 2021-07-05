@@ -384,7 +384,7 @@ void PackUnix::packExtent(
             ph.c_len = ph.u_len;
             memcpy(obuf, ibuf, ph.c_len);
             // must update checksum of compressed data
-            ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.saved_c_adler);
+            ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.c_adler);
         }
 
         // write block sizes
