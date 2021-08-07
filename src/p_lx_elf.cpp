@@ -369,8 +369,8 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
         if (opt->o_unix.android_shlib) {
             xct_off += asl_delta;  // the extra page
         }
-        set_te32(&disp, xct_off);
-        fo->write(&disp, sizeof(disp));  // offset(dst for f_exp)
+        set_te32(&disp, overlay_offset - sizeof(linfo));
+        fo->write(&disp, sizeof(disp));  // &{l_info; p_info; b_info}
         len += sizeof(disp);
     }
     sz_pack2 = len;  // 0 mod 8  [see above]
@@ -1742,7 +1742,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
             unsigned bj = get_te32(&buckets[j]);
             if (bj) {
                 if (bj < symbias) {
-                    char msg[50]; snprintf(msg, sizeof(msg),
+                    char msg[90]; snprintf(msg, sizeof(msg),
                             "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
                             bj, symbias);
                     throwCantPack(msg);
@@ -1753,7 +1753,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
             }
         }
         if ((1+ bmax) < symbias) {
-            char msg[80]; snprintf(msg, sizeof(msg),
+            char msg[90]; snprintf(msg, sizeof(msg),
                     "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
             throwCantPack(msg);
         }
@@ -2478,6 +2478,7 @@ PackLinuxElf64::canPack()
                 throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
                 return false;
             }
+            // FIXME: bad for shlib!
             hatch_off = ~3ul & (3+ get_te64(&phdr->p_memsz));
             break;
         }
@@ -4280,7 +4281,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
                 }
                 else {
                     // Read-write PT_LOAD.
-                    // Might be relocated, so cannot be compressed.
+                    // rtld might relocate, so we cannot compress.
                     // (Could compress if not relocated; complicates run-time.)
                     // Postpone writing until "slide", but account for its size.
                     total_in +=  x.size;
@@ -4479,6 +4480,12 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
+        { // Shouldn't this special case be handled earlier?
+            if (overlay_offset < xct_off) {
+                Elf32_Phdr *phdro = (Elf32_Phdr *)(&lowmem[sizeof(Elf32_Ehdr)]);
+                set_te32(&phdro->p_flags, Elf32_Phdr::PF_X | get_te32(&phdro->p_flags));
+            }
+        }
         fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(*phdri));
         fo->seek(sz_elf_hdrs, SEEK_SET);
         fo->rewrite(&linfo, sizeof(linfo));
@@ -4542,6 +4549,12 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
+        { // Shouldn't this special case be handled earlier?
+            if (overlay_offset < xct_off) {
+                Elf64_Phdr *phdro = (Elf64_Phdr *)(&lowmem[sizeof(Elf64_Ehdr)]);
+                set_te64(&phdro->p_flags, Elf64_Phdr::PF_X | get_te64(&phdro->p_flags));
+            }
+        }
         fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(Elf64_Phdr));
         //fo->seek(xct_off, SEEK_SET);  // FIXME
         //fo->rewrite(&linfo, sizeof(linfo));
@@ -4664,17 +4677,17 @@ PackLinuxElf64::unRela64(
 // 1. new Elf headers: Ehdr, PT_LOAD (r-x), PT_LOAD (rw-, if any), non-PT_LOAD Phdrs
 // 2. Space for (original - 2) PT_LOAD Phdr
 // 3. Remaining original contents of file below xct_off
-// xct_off: (&lowest eXecutable Shdr section)
+// xct_off: (&lowest eXecutable Shdr section; in original PT_LOAD[0] or [1])
 // 4. l_info (12 bytes)
 // overlay_offset:
 // 5. p_info (12 bytes)
-// 6. compressed original Elf headers
+// 6. compressed original Elf headers (prefixed by b_info as usual)
 // 7. compressed remainder of PT_LOAD above xct_off
 // 8. compressed read-only PT_LOAD above xct_off (if any)
 // 9. uncompressed Read-Write PT_LOAD (slide down N pages)
-// 10. int[6] tables for de-compressor
-// DT_INIT:
-// 11. de-compressing loader
+// 10. int[6] tables for UPX runtime de-compressor
+// (new) DT_INIT:
+// 11. UPX runtime de-compressing loader
 // 12. compressed gaps between PT_LOADs (and EOF) above xct_off
 // 13. 32-byte pack header
 // 14. 4-byte overlay offset
@@ -5578,7 +5591,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             unsigned bj = get_te32(&buckets[j]);
             if (bj) {
                 if (bj < symbias) {
-                    char msg[50]; snprintf(msg, sizeof(msg),
+                    char msg[90]; snprintf(msg, sizeof(msg),
                             "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
                             bj, symbias);
                     throwCantPack(msg);
@@ -5589,7 +5602,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             }
         }
         if ((1+ bmax) < symbias) {
-            char msg[80]; snprintf(msg, sizeof(msg),
+            char msg[90]; snprintf(msg, sizeof(msg),
                     "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
             throwCantPack(msg);
         }
@@ -5730,7 +5743,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         if (1& (w>>hbit1) & (w>>hbit2)) {
             unsigned bucket = get_te32(&buckets[h % n_bucket]);
             if (n_bucket <= bucket) {
-                char msg[80]; snprintf(msg, sizeof(msg),
+                char msg[90]; snprintf(msg, sizeof(msg),
                         "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
                         n_bucket, h % n_bucket, bucket);
                 throwCantPack(msg);
@@ -5807,7 +5820,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         if (1& (w>>hbit1) & (w>>hbit2)) {
             unsigned bucket = get_te32(&buckets[h % n_bucket]);
             if (n_bucket <= bucket) {
-                char msg[80]; snprintf(msg, sizeof(msg),
+                char msg[90]; snprintf(msg, sizeof(msg),
                         "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
                         n_bucket, h % n_bucket, bucket);
                 throwCantPack(msg);
