@@ -5478,7 +5478,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             unsigned bj = get_te32(&buckets[j]);
             if (bj) {
                 if (bj < symbias) {
-                    char msg[50]; snprintf(msg, sizeof(msg),
+                    char msg[60]; snprintf(msg, sizeof(msg),
                             "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
                             bj, symbias);
                     throwCantPack(msg);
