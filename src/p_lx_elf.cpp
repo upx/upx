@@ -1741,7 +1741,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
             unsigned bj = get_te32(&buckets[j]);
             if (bj) {
                 if (bj < symbias) {
-                    char msg[50]; snprintf(msg, sizeof(msg),
+                    char msg[90]; snprintf(msg, sizeof(msg),
                             "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
                             bj, symbias);
                     throwCantPack(msg);
@@ -1752,7 +1752,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
             }
         }
         if ((1+ bmax) < symbias) {
-            char msg[80]; snprintf(msg, sizeof(msg),
+            char msg[90]; snprintf(msg, sizeof(msg),
                     "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
             throwCantPack(msg);
         }
@@ -5478,7 +5478,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             unsigned bj = get_te32(&buckets[j]);
             if (bj) {
                 if (bj < symbias) {
-                    char msg[50]; snprintf(msg, sizeof(msg),
+                    char msg[90]; snprintf(msg, sizeof(msg),
                             "bad DT_GNU_HASH bucket[%d] < symbias{%#x}\n",
                             bj, symbias);
                     throwCantPack(msg);
@@ -5489,7 +5489,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             }
         }
         if ((1+ bmax) < symbias) {
-            char msg[80]; snprintf(msg, sizeof(msg),
+            char msg[90]; snprintf(msg, sizeof(msg),
                     "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
             throwCantPack(msg);
         }
@@ -5630,7 +5630,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         if (1& (w>>hbit1) & (w>>hbit2)) {
             unsigned bucket = get_te32(&buckets[h % n_bucket]);
             if (n_bucket <= bucket) {
-                char msg[80]; snprintf(msg, sizeof(msg),
+                char msg[90]; snprintf(msg, sizeof(msg),
                         "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
                         n_bucket, h % n_bucket, bucket);
                 throwCantPack(msg);
@@ -5707,7 +5707,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         if (1& (w>>hbit1) & (w>>hbit2)) {
             unsigned bucket = get_te32(&buckets[h % n_bucket]);
             if (n_bucket <= bucket) {
-                char msg[80]; snprintf(msg, sizeof(msg),
+                char msg[90]; snprintf(msg, sizeof(msg),
                         "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
                         n_bucket, h % n_bucket, bucket);
                 throwCantPack(msg);
