@@ -140,7 +140,7 @@ if [[ -n $BM_CROSS ]]; then
         esac
     fi
 fi # BM_CROSS
-if [[ "$CC" == "false" ]]; then # generic
+if [[ $CC == "false" ]]; then # generic
 if [[ -z $BM_CROSS ]]; then
     if [[ $TRAVIS_OS_NAME == osx ]]; then
         case $BM_C in
@@ -199,7 +199,7 @@ mkbuilddirs() {
 }
 # search for an existing $toptop_builddir
 if [[ -z $toptop_builddir ]]; then
-    for d in . ..;  do
+    for d in . ..; do
         for subdir in "local" appveyor circle github gitlab travis .; do
             dd=$d/build/$subdir
             if [[ -d $dd ]]; then

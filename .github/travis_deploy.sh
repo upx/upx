@@ -5,9 +5,9 @@ set -e; set -o pipefail
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
-argv0=$0; argv0abs=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
+    argv0=$0; argv0abs=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 else
-argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
+    argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 fi
 source "$argv0dir/travis_init.sh" || exit 1
 
@@ -32,7 +32,7 @@ elif [[ -n $GITLAB_CI ]]; then
     branch=$CI_BUILD_REF_NAME
 else
     branch=$TRAVIS_BRANCH
-    if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then exit 0; fi
+    if [[ $TRAVIS_PULL_REQUEST != "false" ]]; then exit 0; fi
 fi
 subdir=${subdir%%:*}; subdir=${subdir%%/*}; subdir=${subdir%%--*}
 case $branch in
@@ -45,9 +45,9 @@ case $branch in
 esac
 
 # get $rev, $branch and $git_user
-cd / && cd $upx_SRCDIR || exit 1
+cd / && cd "$upx_SRCDIR" || exit 1
 rev=$(git rev-parse --verify HEAD)
-if [[ "$branch" == gitlab* ]]; then
+if [[ $branch == gitlab* ]]; then
     if git fetch -v origin devel; then
         git branch -a -v
         rev=$(git merge-base origin/devel $rev || echo $rev)
@@ -74,7 +74,7 @@ unset timestamp date
 # // prepare directory $d
 # ************************************************************************/
 
-cd / && cd $upx_BUILDDIR || exit 1
+cd / && cd "$upx_BUILDDIR" || exit 1
 
 mkdir deploy || exit 1
 chmod 700 deploy
@@ -105,10 +105,10 @@ d=$d-$BM_C-$BM_B
 
 # remove redundant -m32/-m64/-x86/-x64 from directory name
 if [[ $d =~ ^((i386-darwin|i386-linux|i386-win32).*)(-m32|-x86)(-.+)?$ ]]; then
-   d="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
+    d="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
 fi
 if [[ $d =~ ^((amd64-darwin|amd64-linux|amd64-win64).*)(-m64|-x64)(-.+)?$ ]]; then
-   d="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
+    d="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
 fi
 
 if [[ -n $subdir ]]; then
