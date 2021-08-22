@@ -74,7 +74,7 @@ if [[ -n $BM_CROSS ]]; then
         export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
     fi
     cat /etc/os-release || true
-    if egrep -q '^PRETTY_NAME="?Ubuntu .*12\.04' /etc/os-release; then
+    if grep -E -q '^PRETTY_NAME="?Ubuntu .*12\.04' /etc/os-release; then
         case $BM_CROSS-$BM_C in
             arm-linux-gnueabi-gcc | arm-linux-gnueabi-gcc-4.6)
                 [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabi"
@@ -91,7 +91,7 @@ if [[ -n $BM_CROSS ]]; then
                 [[ -z $upx_wine ]] && upx_wine="wine"
                 x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
         esac
-    elif egrep -q '^PRETTY_NAME="?Ubuntu 16\.04' /etc/os-release; then
+    elif grep -E -q '^PRETTY_NAME="?Ubuntu 16\.04' /etc/os-release; then
         case $BM_CROSS-$BM_C in
             aarch64-linux-gnu-gcc-5)
                 [[ -z $upx_qemu ]] && upx_qemu="qemu-aarch64 -L /usr/aarch64-linux-gnu"
@@ -129,7 +129,7 @@ if [[ -n $BM_CROSS ]]; then
                 [[ -z $upx_wine ]] && upx_wine="wine"
                 x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
         esac
-    elif egrep -q '^PRETTY_NAME="?Ubuntu 20\.04' /etc/os-release; then
+    elif grep -E -q '^PRETTY_NAME="?Ubuntu 20\.04' /etc/os-release; then
         case $BM_CROSS-$BM_C in
             x86_64-w64-mingw32-gcc-9)
                 export upx_EXTRA_CPPFLAGS="-D__USE_MINGW_ANSI_STDIO=1"
