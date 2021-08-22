@@ -5,16 +5,16 @@ set -e; set -o pipefail
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
-argv0=$0; argv0abs=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
+    argv0=$0; argv0abs=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 else
-argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
+    argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 fi
 source "$argv0dir/travis_init.sh" || exit 1
 
 # create dirs
 cd / || exit 1
 mkbuilddirs $upx_BUILDDIR $ucl_BUILDDIR $upx_testsuite_BUILDDIR $zlib_BUILDDIR
-cd / && cd $upx_SRCDIR || exit 1
+cd / && cd "$upx_SRCDIR" || exit 1
 
 echo
 print_settings
@@ -25,10 +25,10 @@ echo
 
 # check whitespace
 if [[ $TRAVIS_OS_NAME == linux ]]; then
-cd / && cd $upx_SRCDIR || exit 1
-echo "Checking source code for whitespace violations..."
-bash ./src/stub/scripts/check_whitespace.sh || exit 1
-echo "  Passed."
+    cd / && cd $upx_SRCDIR || exit 1
+    echo "Checking source code for whitespace violations..."
+    bash ./src/stub/scripts/check_whitespace.sh || exit 1
+    echo "  Passed."
 fi # linux
 
 set -x
@@ -45,7 +45,7 @@ if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
     else
         bin_upx=$(readlink -en -- "$upx_SRCDIR/../deps/bin-upx-20210104")
     fi
-    cd / && cd $upx_SRCDIR || exit 1
+    cd / && cd "$upx_SRCDIR" || exit 1
     extra_subdirs=()
     extra_subdirs+=( src/stub/src/arch/amd64 )
     extra_subdirs+=( src/stub/src/arch/arm/v4a )
@@ -92,7 +92,7 @@ fi
 # build UCL
 #
 
-cd / && cd $ucl_BUILDDIR || exit 1
+cd / && cd "$ucl_BUILDDIR" || exit 1
 # patch UCL
 sed 's/^#elif (ACC_ARCH_AMD64 || ACC_ARCH_IA64)$/& \&\& !defined(__ILP32__)/' $ucl_SRCDIR/acc/acc_chk.ch > a.tmp
 if cmp -s a.tmp $ucl_SRCDIR/acc/acc_chk.ch; then rm a.tmp; else mv a.tmp $ucl_SRCDIR/acc/acc_chk.ch; fi
@@ -115,7 +115,7 @@ fi
 #
 
 if [[ $BUILD_LOCAL_ZLIB == 1 ]]; then
-    cd / && cd $zlib_BUILDDIR || exit 1
+    cd / && cd "$zlib_BUILDDIR" || exit 1
     # build manually
     rm -f ./*.o libz.a
     $CC -O2 -c $zlib_SRCDIR/*.c
@@ -127,7 +127,7 @@ fi
 #
 
 export UPX_UCLDIR="$ucl_SRCDIR"
-cd / && cd $upx_BUILDDIR || exit 1
+cd / && cd "$upx_BUILDDIR" || exit 1
 make="make -f $upx_SRCDIR/src/Makefile"
 EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$ucl_BUILDDIR/src/.libs"
 if [[ $BUILD_LOCAL_ZLIB == 1 ]]; then
