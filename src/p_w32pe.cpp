@@ -283,7 +283,12 @@ void PackW32Pe::setOhHeaderSize(const pe_section_t *osection)
 
 void PackW32Pe::pack(OutputFile *fo)
 {
-    super::pack0(fo, 0x0c, 0x400000, false);
+    super::pack0(fo
+        , (1u<<IMAGE_SUBSYSTEM_WINDOWS_GUI)
+        | (1u<<IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)  // no decompressor yet
+        , 0x400000
+        , false);
 }
 
 /* vim:set ts=4 sw=4 et: */
