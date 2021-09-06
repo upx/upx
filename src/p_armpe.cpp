@@ -247,7 +247,7 @@ void PackArmPe::setOhHeaderSize(const pe_section_t *osection)
 
 void PackArmPe::pack(OutputFile *fo)
 {
-    super::pack0(fo, 1U << 9, 0x10000, true);
+    super::pack0(fo, (1u<<IMAGE_SUBSYSTEM_WINDOWS_CE_GUI), 0x10000, true);
 }
 
 /* vim:set ts=4 sw=4 et: */
