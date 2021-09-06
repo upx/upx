@@ -268,7 +268,11 @@ void PackW64Pep::defineSymbols(unsigned ncsection, unsigned upxsection,
 
 void PackW64Pep::pack(OutputFile *fo)
 {
-    super::pack0(fo, 0x0c, 0x0000000140000000ULL);
+    super::pack0(fo
+        , (1u<<IMAGE_SUBSYSTEM_WINDOWS_GUI)
+        | (1u<<IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)  // no decompressor yet
+        , 0x0000000140000000ULL);
 }
 
 /* vim:set ts=4 sw=4 et: */

@@ -2148,6 +2148,16 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
                      subsystem);
         throwCantPack(buf);
     }
+    if (mask & (
+             (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)
+            |(1u<<IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+            |(1u<<IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+            |(1u<<IMAGE_SUBSYSTEM_EFI_ROM)
+              ))
+    {
+        infoWarning("PE: subsystem %u (EFI) lacks a run-time decompressor",
+            subsystem);
+    }
     //check CLR Runtime Header directory entry
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files are not yet supported");
