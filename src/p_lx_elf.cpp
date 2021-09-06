@@ -4673,7 +4673,7 @@ PackLinuxElf64::unRela64(
     fo->rewrite(rela0, relasz);
 }
 
-// File layout of compressed .so shared library:
+// File layout of compressed .so (new-style: 3 or 4 PT_LOAD) shared library:
 // 1. new Elf headers: Ehdr, PT_LOAD (r-x), PT_LOAD (rw-, if any), non-PT_LOAD Phdrs
 // 2. Space for (original - 2) PT_LOAD Phdr
 // 3. Remaining original contents of file below xct_off
@@ -4748,8 +4748,14 @@ void PackLinuxElf64::un_shlib_1(
         }
     }
 
-    // Decompress first Extent.  Old style covers [0, xct_off);
-    // new style covers just Elf headers: the rest below xct_off is constant!
+    // Decompress first Extent.  Old style covers [0, xct_off)
+    // which includes rtld constant data and eXecutable app code below DT_INIT.
+    // In old style, the first compressed Extent is redundant
+    // except for the compressed original Elf headers.
+    // New style covers just Elf headers: the rest below xct_off is
+    // rtld constant data: DT_*HASH, DT_SYMTAB, DT_STRTAB, etc.
+    // New style puts eXecutable app code in second PT_LOAD
+    // in order to mark Elf headers and rtld data as non-eXecutable.
     fi->seek(xct_off, SEEK_SET);
     struct {
         struct l_info l;
@@ -4774,52 +4780,60 @@ void PackLinuxElf64::un_shlib_1(
     u_fi.readx((void *)o_elfhdrs,o_elfhdrs.getSize());
     u_fi.close();
 
-    // New style: not compressed, up to xct_off
-    if (ph.u_len < xct_off) {
+    Elf64_Phdr const *t_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
+    unsigned t_flags = get_te32(&t_phdr->p_flags);
+
+    // New style: 1st PT_LOAD has no eXecutable code
+    if (!(Elf64_Phdr::PF_X & t_flags)) {
         if (fo) {
             fo->write(&ibuf[ph.u_len], xct_off - ph.u_len);
         }
-    }
-
-    // Now handle compressed PT_LOADs
-    Elf64_Phdr const *i_phdr = phdri;
-    Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
-    int once = 0;
-    for (unsigned k = 0; k < e_phnum; ++k, ++i_phdr, ++o_phdr) {
-        unsigned type = get_te32(&o_phdr->p_type);  // output side avoids PT_NULL
-        unsigned flags = get_te32(&o_phdr->p_flags);
-        unsigned vaddr = get_te64(&o_phdr->p_vaddr);
-        unsigned filesz = get_te64(&o_phdr->p_filesz);
-        unsigned o_offset = get_te64(&o_phdr->p_offset);
-        unsigned i_offset = get_te64(&i_phdr->p_offset);
-        if (xct_off <= vaddr) { // beyond rtld control info
-            if (PT_LOAD64==type
-            && xct_off < (filesz + vaddr)) {
-                if (!(Elf64_Phdr::PF_W & flags)) { // Read-only, so was compressed
-                    fi->readx(&hdr.b, sizeof(hdr.b));
-                    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
-                    if (fo) {
+        // Now handle compressed PT_LOADs.
+        // Phdr are parallel from input to output, except perhaps PT_NULL.
+        Elf64_Phdr const *i_phdr = phdri;
+        Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
+        int once = 0;
+        for (unsigned k = 0; k < e_phnum; ++k, ++i_phdr, ++o_phdr) {
+            unsigned type = get_te32(&o_phdr->p_type);  // output side avoids PT_NULL
+            unsigned flags = get_te32(&o_phdr->p_flags);
+            unsigned vaddr = get_te64(&o_phdr->p_vaddr);
+            unsigned filesz = get_te64(&o_phdr->p_filesz);
+            unsigned o_offset = get_te64(&o_phdr->p_offset);
+            unsigned i_offset = get_te64(&i_phdr->p_offset);
+            if (xct_off <= vaddr) { // beyond rtld control info
+                if (PT_LOAD64==type
+                && xct_off < (filesz + vaddr)) {
+                    if (!(Elf64_Phdr::PF_W & flags)) { // Read-only, so was compressed
+                        fi->readx(&hdr.b, sizeof(hdr.b));
+                        fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
+                        if (fo) {
+                            fo->seek(o_offset, SEEK_SET);
+                        }
+                        ph.c_len = get_te32(&hdr.b.sz_cpr);
+                        ph.u_len = get_te32(&hdr.b.sz_unc);
+                        unpackExtent(ph.u_len, fo, c_adler, u_adler, false, szb_info);
+                    }
+                    else { // Writeable, so might written by rtld, so not compressed.
+                        if (!once++) {
+                            funpad4(fi);
+                            loader_offset = fi->tell();
+                        }
+                        fi->seek(i_offset, SEEK_SET);
+                        fi->readx(ibuf, filesz);
+                        total_in += filesz;
                         fo->seek(o_offset, SEEK_SET);
+                        fo->write(ibuf, filesz);
+                        total_out = filesz + o_offset;  // high-water mark
                     }
-                    ph.c_len = get_te32(&hdr.b.sz_cpr);
-                    ph.u_len = get_te32(&hdr.b.sz_unc);
-                    unpackExtent(ph.u_len, fo, c_adler, u_adler, false, szb_info);
-                }
-                else { // Writeable, so might written by rtld, so not compressed.
-                    if (!once++) {
-                        funpad4(fi);
-                        loader_offset = fi->tell();
-                    }
-                    fi->seek(i_offset, SEEK_SET);
-                    fi->readx(ibuf, filesz);
-                    total_in += filesz;
-                    fo->seek(o_offset, SEEK_SET);
-                    fo->write(ibuf, filesz);
-                    total_out = filesz + o_offset;  // high-water mark
                 }
             }
         }
     }
+    else { // Old style
+        Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
+        fi->seek(o_phdr->p_offset, SEEK_CUR);  // DEBUG no-op
+    }
+
     // position fi at loader offset
     fi->seek(loader_offset, SEEK_SET);
 }
