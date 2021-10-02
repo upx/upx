@@ -82,7 +82,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 
 // enable/disable some warnings
-#if (ACC_CC_GNUC >= 0x040700)
+#if (ACC_CC_GNUC >= 0x040700) && defined(__GLIBC__)
 #  pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
 #endif
 #if (ACC_CC_MSC)
