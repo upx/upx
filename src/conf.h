@@ -82,9 +82,14 @@ ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 
 // enable/disable some warnings
-#if (ACC_CC_GNUC >= 0x040700)
+    // Some non-GLIBC toolchains do not use 'nullptr' everywhere when C++:
+    // openwrt-sdk-x86-64_gcc-11.2.0_musl.Linux-x86_64/staging_dir/
+    //   toolchain-x86_64_gcc-11.2.0_musl/include/fortify/stdlib.h:
+    //   51:32: error: zero as null pointer constant
+#if (ACC_CC_GNUC >= 0x040700) && defined(__GLIBC__)
 #  pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
 #endif
+
 #if (ACC_CC_MSC)
 #  pragma warning(error: 4127)
 #  pragma warning(error: 4146)
