@@ -762,13 +762,11 @@ void PackWcle::decodeImage()
 
 void PackWcle::decodeEntryTable()
 {
-    unsigned count,object,n,r;
+    unsigned count,object,r;
     upx_byte *p = ientries;
-    n = 0;
     while (*p)
     {
         count = *p;
-        n += count;
         if (p[1] == 0) // unused bundle
             p += 2;
         else if (p[1] == 3) // 32-bit offset bundle
