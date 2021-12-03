@@ -227,7 +227,7 @@ unfold:  // IN: ebp= f_exp;  esp/ &O_BINFO
 mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
         lea ebx,[4+esp]
         push __NR_mmap; pop eax; int 0x80
-        cmp eax,PAGE_MASK; jl 0f; hlt; 0:
+        cmp eax,PAGE_MASK; jb 0f; hlt; 0:
         ret 6*4
 
 main:
