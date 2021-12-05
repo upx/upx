@@ -1,0 +1,97 @@
+;                 ooooo     ooo ooooooooo.   ooooooo  ooooo
+;                 `888'     `8' `888   `Y88.  `8888    d8'
+;                  888       8   888   .d88'    Y888..8P
+;                  888       8   888ooo88P'      `8888'
+;                  888       8   888            .8PY888.
+;                  `88.    .8'   888           d8'  `888b
+;                    `YbodP'    o888o        o888o  o88888o
+;
+;
+;                    The Ultimate Packer for eXecutables
+;   Copyright (c) 1996-2020 Markus Oberhumer, Laszlo Molnar & John Reiser
+;                           https://upx.github.io
+;
+; Insstall:	https://github.com/heliomarpm
+
+[version]
+signature="$CHICAGO$"
+SetupClass=BASE
+
+[DefaultInstall]
+CopyFiles=ThisDll.sys.install
+AddReg=ThisDll.Add.Reg,ThisDll.Uninst.Reg
+
+[DefaultInstall.NT]
+CopyFiles=ThisDll.sys.install
+AddReg=ThisDll.Add.Reg,ThisDll.Uninst.Reg.NT
+
+[DefaultUninstall]
+DelFiles=ThisDll.sys.install
+DelReg=ThisDll.Add.Reg,ThisDll.Uninst.Reg
+
+[DefaultUninstall.NT]
+DelFiles=ThisDll.sys.install
+DelReg=ThisDll.Add.Reg,ThisDll.Uninst.Reg.NT
+
+[ThisDll.Add.Reg]
+HKCR,exefile\Shell\"%Comp%",,,"%ChaveComp%"
+HKCR,exefile\Shell\"%Comp%"\command,,,"%CommandComp%"
+HKCR,dllfile\Shell\"%Comp%",,,"%ChaveComp%"
+HKCR,dllfile\Shell\"%Comp%"\command,,,"%CommandComp%"
+HKCR,ocxfile\Shell\"%Comp%",,,"%ChaveComp%"
+HKCR,ocxfile\Shell\"%Comp%"\command,,,"%CommandComp%"
+
+HKCR,exefile\Shell\"%CompOut%",,,"%KeyCompOut%"
+HKCR,exefile\Shell\"%CompOut%"\command,,,"%CommandCompOut%"
+HKCR,dllfile\Shell\"%CompOut%",,,"%KeyCompOut%"
+HKCR,dllfile\Shell\"%CompOut%"\command,,,"%CommandCompOut%"
+HKCR,ocxfile\Shell\"%CompOut%",,,"%KeyCompOut%"
+HKCR,ocxfile\Shell\"%CompOut%"\command,,,"%CommandCompOut%"
+
+HKCR,exefile\Shell\"%DComp%",,,"%ChaveDComp%"
+HKCR,exefile\Shell\"%DComp%"\command,,,"%CommandDComp%"
+HKCR,dllfile\Shell\"%DComp%",,,"%ChaveDComp%"
+HKCR,dllfile\Shell\"%DComp%"\command,,,"%CommandDComp%"
+HKCR,ocxfile\Shell\"%DComp%",,,"%ChaveDComp%"
+HKCR,ocxfile\Shell\"%DComp%"\command,,,"%CommandDComp%"
+
+[ThisDll.Uninst.Reg]
+HKLM,%UNISTALL%,,,
+HKLM,%UNISTALL%,DisplayName,,"%NomeApp%"
+HKLM,%UNISTALL%,UninstallString,,"%10%\rundll.exe setupx.dll,InstallHinfSection DefaultUninstall 4 %11%\upx.inf"
+
+[ThisDll.Uninst.Reg.NT]
+HKLM,%UNISTALL%,,,
+HKLM,%UNISTALL%,DisplayName,,"%NomeApp%"
+HKLM,%UNISTALL%,"UninstallString",,"RunDll32 syssetup.dll,SetupInfObjectInstallAction DefaultUnInstall.NT 4 %11%\upx.inf"
+
+[ThisDll.sys.install]
+upx.exe
+upx.inf
+
+[DestinationDirs]
+ThisDll.sys.install = 11 ;Pasta System
+
+[SourceDisksNames]
+55="%NomeApp%","",1
+
+[SourceDisksFiles]
+%ThisDll%=55
+
+[Strings]
+ThisDll = "UPX.exe"
+NomeApp="UPX 3.96w - Ultimate Packer for eXecutables - 22 Jan 2020 (Apenas Remove)"
+
+Comp="Comp"
+ChaveComp="UPX - &Comp"
+CommandComp="UPX -9 ""%1"""
+
+CompOut="CompOutFile"
+KeyCompOut="UPX - &Comp OutFile"
+CommandCompOut="UPX -9 -o ""%1"".exe" "%1"""
+
+DComp="DesComp"
+ChaveDComp="UPX - &Desc"
+CommandDComp="UPX -d ""%1"""
+
+UNISTALL="Software\Microsoft\Windows\CurrentVersion\Uninstall\UPX"
