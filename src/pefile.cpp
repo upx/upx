@@ -314,7 +314,7 @@ bool PeFile::Reloc::next(unsigned &pos,unsigned &type)
 {
     if (!rel)
         newRelocPos(start);
-    if (ptr_diff(rel, start) >= (int) size || rel->pagestart == 0) {
+    if (ptr_diff(rel, start) >= (int) size) {
         rel = nullptr; // rewind
         return false;
     }
@@ -375,7 +375,11 @@ void PeFile32::processRelocs() // pass1
     unsigned const skip1 = IDADDR(PEDIR_RELOC);
     Reloc rel(ibuf.subref("bad reloc %#x", skip1, take1), take1);
     const unsigned *counts = rel.getcounts();
-    const unsigned rnum = counts[1] + counts[2] + counts[3];
+    unsigned rnum = 0;
+
+    unsigned ic;
+    for (ic = 1; ic < 16; ic++)
+        rnum += counts[ic];
 
     if (opt->win32_pe.strip_relocs || rnum == 0)
     {
@@ -390,7 +394,6 @@ void PeFile32::processRelocs() // pass1
         return;
     }
 
-    unsigned ic;
     for (ic = 15; ic > 3; ic--)
         if (counts[ic])
             infoWarning("skipping unsupported relocation type %d (%d)",ic,counts[ic]);
