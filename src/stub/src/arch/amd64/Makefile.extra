@@ -14,7 +14,7 @@ vpath %.c $(top_srcdir)/src/stub/src/c
 STUBS =
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 ifneq ($(UPX_LZMA_VERSION),)
-STUBS += lzma_d_cf.S lzma_d_cs.S
+STUBS += lzma_d_cf.S lzma_d_cs.S lzma_d_cn.S
 endif
 
 default.targets = all
@@ -52,3 +52,4 @@ lzma_d_c%.S : lzma_d_c.c
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL
+lzma_d_cn.% : PP_FLAGS = -DFAST -mno-red-zone

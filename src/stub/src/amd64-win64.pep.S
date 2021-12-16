@@ -205,6 +205,7 @@ section         LZMA_HEAD
                 mov     esi, IMM32(lzma_c_len)
 
 .att_syntax
+#define NO_RED_ZONE
 #include "arch/amd64/regs.h"
 #include "arch/amd64/lzma_d.S"
 
