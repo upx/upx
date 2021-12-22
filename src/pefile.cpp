@@ -2316,7 +2316,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (IDSIZE(PEDIR_SEC))
         IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
 
-    ih.flags |= handleStripRelocs(ih.imagebase, default_imagebase, ih.dllflags);
+    if (ih.flags & RELOCS_STRIPPED)
+        opt->win32_pe.strip_relocs = true;
+    else
+        ih.flags |= handleStripRelocs(ih.imagebase, default_imagebase, ih.dllflags);
 
     handleStub(fi,fo,pe_offset);
     unsigned overlaystart = readSections(objs, ih.imagesize, ih.filealign, ih.datasize);
@@ -2568,7 +2571,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     // this one is tricky: it seems windoze touches 4 bytes after
     // the end of the relocation data - so we have to increase
     // the virtual size of this section
-    const unsigned ncsize_virt_increase = (ncsize & oam1) == 0 ? 8 : 0;
+    const unsigned ncsize_virt_increase = soxrelocs && (ncsize & oam1) == 0 ? 8 : 0;
 
     // fill the sections
     strcpy(osection[0].name,"UPX0");
