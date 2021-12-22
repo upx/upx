@@ -191,8 +191,6 @@ int PeFile::readFileHeader()
         return 0;
     fi->seek(pe_offset,SEEK_SET);
     readPeHeader();
-    fi->seek(0x200,SEEK_SET);
-    fi->readx(&h,6);
     return getFormat();
 }
 
@@ -2172,8 +2170,11 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
     if (ih_entry && ih_entry < rvamin)
         throwCantPack("run a virus scanner on this file!");
 
-    if (ih_filealign < 0x200)
-        throwCantPack("filealign < 0x200 is not yet supported");
+    const unsigned fam1 = ih_filealign - 1;
+    if (!(1+ fam1) || (1+ fam1) & fam1) { // ih_filealign is not a power of 2
+        char buf[32]; snprintf(buf, sizeof(buf), "bad file alignment %#x", 1+ fam1);
+        throwCantPack(buf);
+    }
 }
 
 unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase,
@@ -2370,8 +2371,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         allow_filter = false;
 
     const unsigned oam1 = ih.objectalign - 1;
-    if ((1+ oam1) & oam1) { // ih.objectalign is not a power of 2
-        char buf[32]; snprintf(buf, sizeof(buf), "bad alignment %#x", 1+ oam1);
+    if (!(1+ oam1) || (1+ oam1) & oam1) { // ih.objectalign is not a power of 2
+        char buf[32]; snprintf(buf, sizeof(buf), "bad object alignment %#x", 1+ oam1);
         throwCantPack(buf);
     }
 
@@ -2448,6 +2449,9 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
         tlsindex = 0;
 
+    const int oh_filealign = UPX_MIN(ih.filealign, 0x200);
+    const unsigned fam1 = oh_filealign - 1;
+
     int identsize = 0;
     const unsigned codesize = getLoaderSection("IDENTSTR",&identsize);
     assert(identsize > 0);
@@ -2471,12 +2475,12 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     // identsplit - number of ident + (upx header) bytes to put into the PE header
     const unsigned sizeof_osection = sizeof(osection[0]) * oobjs;
     int identsplit = pe_offset + sizeof_osection + sizeof(ht);
-    if ((identsplit & 0x1ff) == 0)
+    if ((identsplit & fam1) == 0)
         identsplit = 0;
-    else if (((identsplit + identsize) ^ identsplit) < 0x200)
+    else if (((identsplit + identsize) ^ identsplit) < oh_filealign)
         identsplit = identsize;
     else
-        identsplit = ALIGN_GAP(identsplit, 0x200);
+        identsplit = ALIGN_GAP(identsplit, oh_filealign);
     ic = identsize - identsplit;
 
     const unsigned c_len = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
@@ -2493,7 +2497,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
     // new PE header
     memcpy(&oh,&ih,sizeof(oh));
-    oh.filealign = 0x200; // identsplit depends on this
+    oh.filealign = oh_filealign; // identsplit depends on this
     memset(osection,0,sizeof(osection));
 
     oh.entry = upxsection;
@@ -2566,7 +2570,6 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
     const unsigned ncsize = soxrelocs + soimpdlls + soexport
         + (!last_section_rsrc_only ? soresources : 0);
-    const unsigned fam1 = oh.filealign - 1;
 
     // this one is tricky: it seems windoze touches 4 bytes after
     // the end of the relocation data - so we have to increase
