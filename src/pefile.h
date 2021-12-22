@@ -214,6 +214,7 @@ protected:
     bool isrtm;
     bool use_dep_hack;
     bool use_clear_dirty_stack;
+    bool use_stub_relocs;
 
 
     static unsigned virta2objnum (unsigned, pe_section_t *, unsigned);

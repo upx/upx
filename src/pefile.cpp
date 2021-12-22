@@ -117,6 +117,7 @@ PeFile::PeFile(InputFile *f) : super(f)
 
     use_dep_hack = true;
     use_clear_dirty_stack = true;
+    use_stub_relocs = true;
     isrtm = false;
 }
 

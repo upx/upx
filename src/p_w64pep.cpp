@@ -47,7 +47,9 @@ static const
 **************************************************************************/
 
 PackW64Pep::PackW64Pep(InputFile *f) : super(f)
-{}
+{
+    use_stub_relocs = false;
+}
 
 
 PackW64Pep::~PackW64Pep()

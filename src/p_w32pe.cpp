@@ -110,14 +110,17 @@ void PackW32Pe::buildLoader(const Filter *ft)
 
     // prepare loader
     initLoader(stub_i386_win32_pe, sizeof(stub_i386_win32_pe), 2);
-    addLoader(isdll ? "PEISDLL1" : "",
-              "PEMAIN01",
+    if (isdll)
+        addLoader("PEISDLL1");
+    addLoader("PEMAIN01",
+              use_stub_relocs ? "PESOCREL" : "PESOCPIC",
+              "PESOUNC0",
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
               tmp_tlsindex ? "PETLSHAK" : "",
               "PEMAIN02",
               ph.first_offset_found == 1 ? "PEMAIN03" : "",
               getDecompressorSections(),
-              /*multipass ? "PEMULTIP" :  */  "",
+              //multipass ? "PEMULTIP" : "",
               "PEMAIN10",
               nullptr
              );
@@ -255,7 +258,7 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
 
     const unsigned esi0 = s1addr + ic;
     linker->defineSymbol("start_of_uncompressed", 0u - esi0 + rvamin);
-    linker->defineSymbol("start_of_compressed", esi0 + ih.imagebase);
+    linker->defineSymbol("start_of_compressed", use_stub_relocs ? esi0 + ih.imagebase : esi0);
 
     if (use_tls_callbacks)
     {
@@ -270,7 +273,8 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
 
 void PackW32Pe::addNewRelocations(Reloc &rel, unsigned base)
 {
-    rel.add(base + linker->getSymbolOffset("PEMAIN01") + 2, 3);
+    if (use_stub_relocs)
+        rel.add(base + linker->getSymbolOffset("PESOCREL") + 1, 3);
 }
 
 void PackW32Pe::setOhDataBase(const pe_section_t *osection)
