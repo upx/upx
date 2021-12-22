@@ -74,6 +74,9 @@ section         PEISDLL0
                 mov     [rsp + 8], rcx
                 mov     [rsp + 0x10], rdx
                 mov     [rsp + 0x18], r8
+section         PEISEFI0
+                push     rcx
+                push     rdx
 
 section         PEISDLL1
                 cmp     dl, 1
@@ -457,6 +460,9 @@ section         PEISDLL9
                 mov     r8, [rsp + 0x18]
                 mov     rdx, [rsp + 0x10]
                 mov     rcx, [rsp + 8]
+section         PEISEFI9
+                pop     rdx
+                pop     rcx
 
 section         PERETURN
                 push    1

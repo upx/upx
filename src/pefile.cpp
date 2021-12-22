@@ -119,6 +119,7 @@ PeFile::PeFile(InputFile *f) : super(f)
     use_clear_dirty_stack = true;
     use_stub_relocs = true;
     isrtm = false;
+    isefi = false;
 }
 
 
@@ -880,6 +881,13 @@ void PeFile::processImports2(unsigned myimport, unsigned) // pass 2
 template <typename LEXX, typename ord_mask_t>
 unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
 {
+    if (isefi) {
+        if (IDSIZE(PEDIR_IMPORT))
+            throwCantPack("imports not supported on EFI");
+
+        return 0;
+    }
+
     unsigned dllnum = 0;
     unsigned const take = IDSIZE(PEDIR_IMPORT);
     unsigned const skip = IDADDR(PEDIR_IMPORT);
@@ -1313,6 +1321,9 @@ void PeFile::processTls1(Interval *iv,
 
     COMPILE_TIME_ASSERT(sizeof(tls) == tls_traits<LEXX>::sotls)
     COMPILE_TIME_ASSERT_ALIGNED1(tls)
+
+    if (isefi && IDSIZE(PEDIR_TLS))
+        throwCantPack("TLS not supported on EFI");
 
     unsigned const take = ALIGN_UP(IDSIZE(PEDIR_TLS),4u);
     sotls = take;
@@ -1916,7 +1927,7 @@ void PeFile::processResources(Resource *res)
 
     // setup default options for resource compression
     if (opt->win32_pe.compress_resources < 0)
-        opt->win32_pe.compress_resources = true;
+        opt->win32_pe.compress_resources = !isefi;
     if (!opt->win32_pe.compress_resources)
     {
         opt->win32_pe.compress_icons = false;
@@ -2151,16 +2162,6 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
                      subsystem);
         throwCantPack(buf);
     }
-    if (mask & (
-             (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)
-            |(1u<<IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
-            |(1u<<IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
-            |(1u<<IMAGE_SUBSYSTEM_EFI_ROM)
-              ))
-    {
-        infoWarning("PE: subsystem %u (EFI) lacks a run-time decompressor",
-            subsystem);
-    }
     //check CLR Runtime Header directory entry
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files are not yet supported");
@@ -2187,15 +2188,15 @@ unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase,
 {
     if (opt->win32_pe.strip_relocs < 0)
     {
-        if (isdll || dllflags & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
+        if (isdll || isefi || dllflags & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
             opt->win32_pe.strip_relocs = false;
         else
             opt->win32_pe.strip_relocs = ih_imagebase >= default_imagebase;
     }
     if (opt->win32_pe.strip_relocs)
     {
-        if (isdll)
-            throwCantPack("--strip-relocs is not allowed with DLL images");
+        if (isdll || isefi)
+            throwCantPack("--strip-relocs is not allowed with DLL and EFI images");
         if (dllflags & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE)
         {
             if (opt->force) // Disable ASLR
@@ -2326,7 +2327,22 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     else
         ih.flags |= handleStripRelocs(ih.imagebase, default_imagebase, ih.dllflags);
 
-    handleStub(fi,fo,pe_offset);
+    if (isefi) {
+        // PIC for EFI only to avoid false positive detections of Win32 images
+        // without relocations fixed address is smaller
+        if (!opt->win32_pe.strip_relocs)
+            use_stub_relocs = false;
+
+        // EFI build tools already clear DOS stub
+        // and small file alignment benefits from extra space
+        unsigned char stub[0x40];
+        memset(stub, 0, sizeof(stub));
+        set_le16(stub, 'M' + 'Z'*256);
+        set_le32(stub + sizeof(stub) - sizeof(LE32), sizeof(stub));
+        fo->write(stub, sizeof(stub));
+        pe_offset = sizeof(stub);
+    } else
+        handleStub(fi,fo,pe_offset);
     unsigned overlaystart = readSections(objs, ih.imagesize, ih.filealign, ih.datasize);
     unsigned overlay = file_size - stripDebug(overlaystart);
     if (overlay >= (unsigned) file_size)
@@ -3102,9 +3118,10 @@ int PeFile::canUnpack0(unsigned max_sections, LE16 &ih_objects,
     isection = (pe_section_t *)mb_isection.getVoidPtr();
     fi->seek(pe_offset + ihsize, SEEK_SET);
     fi->readx(isection,sizeof(pe_section_t)*objs);
-    if (ih_objects < 3)
+    const unsigned min_sections = isefi ? 2 : 3;
+    if (ih_objects < min_sections)
         return -1;
-    bool is_packed = ((ih_objects == 3 || ih_objects == max_sections) &&
+    bool is_packed = (ih_objects >= min_sections && ih_objects <= max_sections &&
                       (IDSIZE(15) || ih_entry > isection[1].vaddr));
     bool found_ph = false;
     if (memcmp(isection[0].name,"UPX",3) == 0)
@@ -3188,7 +3205,15 @@ PeFile32::~PeFile32()
 void PeFile32::readPeHeader()
 {
     fi->readx(&ih,sizeof(ih));
-    isdll = ((ih.flags & DLL_FLAG) != 0);
+    isefi = ((1u << ih.subsystem) & (
+                                (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)
+                              | (1u<<IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+                              | (1u<<IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+                              | (1u<<IMAGE_SUBSYSTEM_EFI_ROM)
+                                  )) != 0;
+    isdll = !isefi && (ih.flags & DLL_FLAG) != 0;
+    use_dep_hack &= !isefi;
+    use_clear_dirty_stack &= !isefi;
 }
 
 void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask,
@@ -3246,7 +3271,15 @@ PeFile64::~PeFile64()
 void PeFile64::readPeHeader()
 {
     fi->readx(&ih,sizeof(ih));
-    isdll = ((ih.flags & DLL_FLAG) != 0);
+    isefi = ((1u << ih.subsystem) & (
+                                (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)
+                              | (1u<<IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+                              | (1u<<IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+                              | (1u<<IMAGE_SUBSYSTEM_EFI_ROM)
+                                  )) != 0;
+    isdll = !isefi && (ih.flags & DLL_FLAG) != 0;
+    use_dep_hack &= !isefi;
+    use_clear_dirty_stack &= !isefi;
 }
 
 void PeFile64::pack0(OutputFile *fo, unsigned subsystem_mask,
