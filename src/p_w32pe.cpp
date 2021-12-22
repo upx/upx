@@ -295,7 +295,10 @@ void PackW32Pe::pack(OutputFile *fo)
     super::pack0(fo
         , (1u<<IMAGE_SUBSYSTEM_WINDOWS_GUI)
         | (1u<<IMAGE_SUBSYSTEM_WINDOWS_CUI)
-        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)  // no decompressor yet
+        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_ROM)
         , 0x400000
         , false);
 }

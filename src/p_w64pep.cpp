@@ -103,6 +103,8 @@ void PackW64Pep::buildLoader(const Filter *ft)
     addLoader("START");
     if (ih.entry && isdll)
         addLoader("PEISDLL0");
+    if (isefi)
+        addLoader("PEISEFI0");
     addLoader(isdll ? "PEISDLL1" : "",
               "PEMAIN01",
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
@@ -167,6 +169,8 @@ void PackW64Pep::buildLoader(const Filter *ft)
 
     if (ih.entry && isdll)
         addLoader("PEISDLL9");
+    if (isefi)
+        addLoader("PEISEFI9");
     addLoader(ih.entry || !ilinker ? "PEDOJUMP" : "PERETURN", nullptr);
 
     //NEW: TLS callback support PART 2, the callback handler - Stefan Widmann
@@ -281,7 +285,10 @@ void PackW64Pep::pack(OutputFile *fo)
     super::pack0(fo
         , (1u<<IMAGE_SUBSYSTEM_WINDOWS_GUI)
         | (1u<<IMAGE_SUBSYSTEM_WINDOWS_CUI)
-        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)  // no decompressor yet
+        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_ROM)
         , 0x0000000140000000ULL);
 }
 
