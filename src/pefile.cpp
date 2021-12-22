@@ -867,6 +867,9 @@ void PeFile::processImports2(unsigned myimport, unsigned) // pass 2
 {
     COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
 
+    if (!ilinker)
+        return;
+
     ilinker->relocate_import(myimport);
     int len;
     oimpdlls = ilinker->getLoader(&len);
@@ -2540,7 +2543,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         callProcessRelocs(rel, ic);
 
     processImports2(ic, getProcessImportParam(upxsection));
-    ODADDR(PEDIR_IMPORT) = ic;
+    ODADDR(PEDIR_IMPORT) = soimpdlls ? ic : 0;
     ODSIZE(PEDIR_IMPORT) = soimpdlls;
     ic += soimpdlls;
 

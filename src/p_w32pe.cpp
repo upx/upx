@@ -168,7 +168,7 @@ void PackW32Pe::buildLoader(const Filter *ft)
         addLoader("CLEARSTACK", nullptr);
     addLoader("PEMAIN21", nullptr);
     //NEW: last loader sections split up to insert TLS callback handler - Stefan Widmann
-    addLoader(ih.entry ? "PEDOJUMP" : "PERETURN", nullptr);
+    addLoader(ih.entry || !ilinker ? "PEDOJUMP" : "PERETURN", nullptr);
 
     //NEW: TLS callback support PART 2, the callback handler - Stefan Widmann
     if(use_tls_callbacks)
@@ -232,16 +232,19 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
     }
     linker->defineSymbol("reloc_delt", 0u - (unsigned) ih.imagebase - rvamin);
     linker->defineSymbol("start_of_relocs", crelocs);
-    if (!isdll)
-        linker->defineSymbol("ExitProcess", 0u-rvamin +
-                             ilinkerGetAddress("kernel32.dll", "ExitProcess"));
-    linker->defineSymbol("GetProcAddress", 0u-rvamin +
-                         ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
-    linker->defineSymbol("kernel32_ordinals", myimport);
-    linker->defineSymbol("LoadLibraryA", 0u-rvamin +
-                         ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
-    linker->defineSymbol("start_of_imports", myimport);
-    linker->defineSymbol("compressed_imports", cimports);
+
+    if (ilinker) {
+        if (!isdll)
+            linker->defineSymbol("ExitProcess", 0u-rvamin +
+                                 ilinkerGetAddress("kernel32.dll", "ExitProcess"));
+        linker->defineSymbol("GetProcAddress", 0u-rvamin +
+                             ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
+        linker->defineSymbol("kernel32_ordinals", myimport);
+        linker->defineSymbol("LoadLibraryA", 0u-rvamin +
+                             ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
+        linker->defineSymbol("start_of_imports", myimport);
+        linker->defineSymbol("compressed_imports", cimports);
+    }
 
     defineDecompressorSymbols();
     linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
