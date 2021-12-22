@@ -2459,7 +2459,9 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     getLoaderSection("UPX1HEAD",(int*)&ic);
     identsize += ic;
 
-    const unsigned oobjs = last_section_rsrc_only ? 4 : 3;
+    const bool has_oxrelocs = !opt->win32_pe.strip_relocs && (use_stub_relocs || tlsiv.ivnum || loadconfiv.ivnum);
+    const bool has_ncsection = has_oxrelocs || soimpdlls || soexport || soresources;
+    const unsigned oobjs = last_section_rsrc_only ? 4 : has_ncsection ? 3 : 2;
     ////pe_section_t osection[oobjs];
     pe_section_t osection[4];
     // section 0 : bss
@@ -2528,7 +2530,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     ODSIZE(PEDIR_LOADCONF) = soloadconf;
     ic += soloadconf;
 
-    const bool rel_at_sections_start = oobjs == 4;
+    const bool rel_at_sections_start = last_section_rsrc_only;
 
     ic = ncsection;
     if (!last_section_rsrc_only)
@@ -2570,6 +2572,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
     const unsigned ncsize = soxrelocs + soimpdlls + soexport
         + (!last_section_rsrc_only ? soresources : 0);
+    assert((soxrelocs == 0) == !has_oxrelocs);
+    assert((ncsize == 0) == !has_ncsection);
 
     // this one is tricky: it seems windoze touches 4 bytes after
     // the end of the relocation data - so we have to increase
@@ -2598,7 +2602,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     osection[2].size = (ncsize + fam1) &~ fam1;
 
     osection[0].vsize = osection[1].vaddr - osection[0].vaddr;
-    if (oobjs == 3)
+    if (!last_section_rsrc_only)
     {
         osection[1].vsize = (osection[1].size + oam1) &~ oam1;
         osection[2].vsize = (osection[2].size + ncsize_virt_increase + oam1) &~ oam1;
@@ -2619,7 +2623,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     osection[1].flags = (unsigned) (PEFL_DATA|PEFL_EXEC|PEFL_WRITE|PEFL_READ);
     osection[2].flags = (unsigned) (PEFL_DATA|PEFL_WRITE|PEFL_READ);
 
-    if (oobjs == 4)
+    if (last_section_rsrc_only)
     {
         strcpy(osection[3].name, ".rsrc");
         osection[3].vaddr = res_start;
@@ -2663,7 +2667,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     // some alignment
     if (identsplit == identsize)
     {
-        unsigned n = osection[oobjs == 3 ? 0 : 1].rawdataptr - fo->getBytesWritten() - identsize;
+        unsigned n = osection[!last_section_rsrc_only ? 0 : 1].rawdataptr - fo->getBytesWritten() - identsize;
         assert(n <= oh.filealign);
         fo->write(ibuf, n);
     }
@@ -2991,7 +2995,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     skip      += take;
     unsigned objs = oh.objects;
 
-    if ((int) objs <= 0 || isection[2].size == 0)
+    if ((int) objs <= 0 || (iobjs > 2 && isection[2].size == 0))
         throwCantUnpack("unexpected value in the PE header");
     Array(pe_section_t, osection, objs);
     take = sizeof(pe_section_t) * objs;
@@ -3001,11 +3005,14 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     skip      += take;
     rvamin = osection[0].vaddr;
 
-    // read the noncompressed section
-    ibuf.dealloc();
-    ibuf.alloc(isection[2].size);
-    fi->seek(isection[2].rawdataptr,SEEK_SET);
-    fi->readx(ibuf,isection[2].size);
+    if (iobjs > 2)
+    {
+        // read the noncompressed section
+        ibuf.dealloc();
+        ibuf.alloc(isection[2].size);
+        fi->seek(isection[2].rawdataptr,SEEK_SET);
+        fi->readx(ibuf,isection[2].size);
+    }
 
     // unfilter
     if (ph.filter)
@@ -3030,7 +3037,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     rebuildTls();
     rebuildExports();
 
-    if (iobjs == 4)
+    if (iobjs > 3)
     {
         // read the resource section if present
         ibuf.dealloc();
