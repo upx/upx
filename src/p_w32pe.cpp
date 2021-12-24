@@ -78,10 +78,12 @@ Linker* PackW32Pe::newLinker() const
 
 int PackW32Pe::readFileHeader()
 {
-    char buf[6];
-    fi->seek(0x200, SEEK_SET);
-    fi->readx(buf, 6);
-    isrtm = memcmp(buf, "32STUB" ,6) == 0;
+    if (fi->st_size() >= 0x206) {
+        char buf[6];
+        fi->seek(0x200, SEEK_SET);
+        fi->readx(buf, 6);
+        isrtm = memcmp(buf, "32STUB" ,6) == 0;
+    }
     return super::readFileHeader();
 }
 
@@ -108,14 +110,17 @@ void PackW32Pe::buildLoader(const Filter *ft)
 
     // prepare loader
     initLoader(stub_i386_win32_pe, sizeof(stub_i386_win32_pe), 2);
-    addLoader(isdll ? "PEISDLL1" : "",
-              "PEMAIN01",
+    if (isdll)
+        addLoader("PEISDLL1");
+    addLoader("PEMAIN01",
+              use_stub_relocs ? "PESOCREL" : "PESOCPIC",
+              "PESOUNC0",
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
               tmp_tlsindex ? "PETLSHAK" : "",
               "PEMAIN02",
               ph.first_offset_found == 1 ? "PEMAIN03" : "",
               getDecompressorSections(),
-              /*multipass ? "PEMULTIP" :  */  "",
+              //multipass ? "PEMULTIP" : "",
               "PEMAIN10",
               nullptr
              );
@@ -163,7 +168,7 @@ void PackW32Pe::buildLoader(const Filter *ft)
         addLoader("CLEARSTACK", nullptr);
     addLoader("PEMAIN21", nullptr);
     //NEW: last loader sections split up to insert TLS callback handler - Stefan Widmann
-    addLoader(ih.entry ? "PEDOJUMP" : "PERETURN", nullptr);
+    addLoader(ih.entry || !ilinker ? "PEDOJUMP" : "PERETURN", nullptr);
 
     //NEW: TLS callback support PART 2, the callback handler - Stefan Widmann
     if(use_tls_callbacks)
@@ -227,16 +232,19 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
     }
     linker->defineSymbol("reloc_delt", 0u - (unsigned) ih.imagebase - rvamin);
     linker->defineSymbol("start_of_relocs", crelocs);
-    if (!isdll)
-        linker->defineSymbol("ExitProcess", 0u-rvamin +
-                             ilinkerGetAddress("kernel32.dll", "ExitProcess"));
-    linker->defineSymbol("GetProcAddress", 0u-rvamin +
-                         ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
-    linker->defineSymbol("kernel32_ordinals", myimport);
-    linker->defineSymbol("LoadLibraryA", 0u-rvamin +
-                         ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
-    linker->defineSymbol("start_of_imports", myimport);
-    linker->defineSymbol("compressed_imports", cimports);
+
+    if (ilinker) {
+        if (!isdll)
+            linker->defineSymbol("ExitProcess", 0u-rvamin +
+                                 ilinkerGetAddress("kernel32.dll", "ExitProcess"));
+        linker->defineSymbol("GetProcAddress", 0u-rvamin +
+                             ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
+        linker->defineSymbol("kernel32_ordinals", myimport);
+        linker->defineSymbol("LoadLibraryA", 0u-rvamin +
+                             ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
+        linker->defineSymbol("start_of_imports", myimport);
+        linker->defineSymbol("compressed_imports", cimports);
+    }
 
     defineDecompressorSymbols();
     linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
@@ -253,7 +261,7 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
 
     const unsigned esi0 = s1addr + ic;
     linker->defineSymbol("start_of_uncompressed", 0u - esi0 + rvamin);
-    linker->defineSymbol("start_of_compressed", esi0 + ih.imagebase);
+    linker->defineSymbol("start_of_compressed", use_stub_relocs ? esi0 + ih.imagebase : esi0);
 
     if (use_tls_callbacks)
     {
@@ -268,7 +276,8 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
 
 void PackW32Pe::addNewRelocations(Reloc &rel, unsigned base)
 {
-    rel.add(base + linker->getSymbolOffset("PEMAIN01") + 2, 3);
+    if (use_stub_relocs)
+        rel.add(base + linker->getSymbolOffset("PESOCREL") + 1, 3);
 }
 
 void PackW32Pe::setOhDataBase(const pe_section_t *osection)
@@ -286,7 +295,10 @@ void PackW32Pe::pack(OutputFile *fo)
     super::pack0(fo
         , (1u<<IMAGE_SUBSYSTEM_WINDOWS_GUI)
         | (1u<<IMAGE_SUBSYSTEM_WINDOWS_CUI)
-        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)  // no decompressor yet
+        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_ROM)
         , 0x400000
         , false);
 }

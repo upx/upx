@@ -47,7 +47,9 @@ static const
 **************************************************************************/
 
 PackW64Pep::PackW64Pep(InputFile *f) : super(f)
-{}
+{
+    use_stub_relocs = false;
+}
 
 
 PackW64Pep::~PackW64Pep()
@@ -101,6 +103,8 @@ void PackW64Pep::buildLoader(const Filter *ft)
     addLoader("START");
     if (ih.entry && isdll)
         addLoader("PEISDLL0");
+    if (isefi)
+        addLoader("PEISEFI0");
     addLoader(isdll ? "PEISDLL1" : "",
               "PEMAIN01",
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
@@ -165,7 +169,9 @@ void PackW64Pep::buildLoader(const Filter *ft)
 
     if (ih.entry && isdll)
         addLoader("PEISDLL9");
-    addLoader(ih.entry ? "PEDOJUMP" : "PERETURN", nullptr);
+    if (isefi)
+        addLoader("PEISEFI9");
+    addLoader(ih.entry || !ilinker ? "PEDOJUMP" : "PERETURN", nullptr);
 
     //NEW: TLS callback support PART 2, the callback handler - Stefan Widmann
     if(use_tls_callbacks)
@@ -225,16 +231,19 @@ void PackW64Pep::defineSymbols(unsigned ncsection, unsigned upxsection,
                              ilinkerGetAddress("kernel32.dll", "VirtualProtect"));
     }
     linker->defineSymbol("start_of_relocs", crelocs);
-    if (!isdll)
-        linker->defineSymbol("ExitProcess",
-                             ilinkerGetAddress("kernel32.dll", "ExitProcess"));
-    linker->defineSymbol("GetProcAddress",
-                         ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
-    linker->defineSymbol("kernel32_ordinals", myimport);
-    linker->defineSymbol("LoadLibraryA",
-                         ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
-    linker->defineSymbol("start_of_imports", myimport);
-    linker->defineSymbol("compressed_imports", cimports);
+
+    if (ilinker) {
+        if (!isdll)
+            linker->defineSymbol("ExitProcess",
+                                 ilinkerGetAddress("kernel32.dll", "ExitProcess"));
+        linker->defineSymbol("GetProcAddress",
+                             ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
+        linker->defineSymbol("kernel32_ordinals", myimport);
+        linker->defineSymbol("LoadLibraryA",
+                             ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
+        linker->defineSymbol("start_of_imports", myimport);
+        linker->defineSymbol("compressed_imports", cimports);
+    }
 
     if (M_IS_LZMA(ph.method))
     {
@@ -266,12 +275,20 @@ void PackW64Pep::defineSymbols(unsigned ncsection, unsigned upxsection,
     linker->defineSymbol("START", upxsection);
 }
 
+void PackW64Pep::setOhHeaderSize(const pe_section_t *osection)
+{
+    oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(*osection) * oh.objects, oh.filealign);
+}
+
 void PackW64Pep::pack(OutputFile *fo)
 {
     super::pack0(fo
         , (1u<<IMAGE_SUBSYSTEM_WINDOWS_GUI)
         | (1u<<IMAGE_SUBSYSTEM_WINDOWS_CUI)
-        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)  // no decompressor yet
+        | (1u<<IMAGE_SUBSYSTEM_EFI_APPLICATION)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+        | (1u<<IMAGE_SUBSYSTEM_EFI_ROM)
         , 0x0000000140000000ULL);
 }
 
