@@ -1645,13 +1645,11 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
     else if (dt_table[Elf32_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf32_Dyn::DT_INIT_ARRAY;
 
     unsigned const z_str = dt_table[Elf32_Dyn::DT_STRSZ];
-    if (z_str) {
-        strtab_end = get_te32(&dynp0[-1+ z_str].d_val);
-        if ((u32_t)file_size <= strtab_end) { // FIXME: weak
-            char msg[50]; snprintf(msg, sizeof(msg),
-                "bad DT_STRSZ %#x", strtab_end);
-            throwCantPack(msg);
-        }
+    strtab_end = !z_str ? 0 : get_te64(&dynp0[-1+ z_str].d_val);
+    if (!z_str || (u64_t)file_size <= strtab_end) { // FIXME: weak
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad DT_STRSZ %#x", strtab_end);
+        throwCantPack(msg);
     }
     unsigned const x_sym = dt_table[Elf32_Dyn::DT_SYMTAB];
     unsigned const x_str = dt_table[Elf32_Dyn::DT_STRTAB];
@@ -5380,14 +5378,13 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
     else if (dt_table[Elf64_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf64_Dyn::DT_INIT_ARRAY;
 
     unsigned const z_str = dt_table[Elf64_Dyn::DT_STRSZ];
-    if (z_str) {
-        strtab_end = get_te64(&dynp0[-1+ z_str].d_val);
-        if ((u64_t)file_size <= strtab_end) { // FIXME: weak
-            char msg[50]; snprintf(msg, sizeof(msg),
-                "bad DT_STRSZ %#x", strtab_end);
-            throwCantPack(msg);
-        }
+    strtab_end = !z_str ? 0 : get_te64(&dynp0[-1+ z_str].d_val);
+    if (!z_str || (u64_t)file_size <= strtab_end) { // FIXME: weak
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad DT_STRSZ %#x", strtab_end);
+        throwCantPack(msg);
     }
+
     // DT_SYMTAB has no designated length.
     // End it when next area else starts; often DT_STRTAB.  (FIXME)
     unsigned const x_sym = dt_table[Elf64_Dyn::DT_SYMTAB];
