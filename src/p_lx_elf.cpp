@@ -2168,6 +2168,9 @@ bool PackLinuxElf32::canPack()
             }
             check_pt_load(phdr);
         }
+        if (!pload_x0) {
+            throwCantPack("No PT_LOAD has (p_flags & PF_X)");
+        }
         // elf_find_dynamic() returns 0 if 0==dynseg.
         dynstr=          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
         dynsym=     (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
@@ -2562,6 +2565,9 @@ PackLinuxElf64::canPack()
                 pload_x0 = phdr;
             }
             check_pt_load(phdr);
+        }
+        if (!pload_x0) {
+            throwCantPack("No PT_LOAD has (p_flags & PF_X)");
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
         dynstr=          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
