@@ -1688,7 +1688,8 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
-        if ((nbucket>>31) || !v_sym || (unsigned)file_size <= v_sym
+        if ((unsigned)file_size <= nbucket/sizeof(*buckets)  // FIXME: weak
+        || !v_sym || (unsigned)file_size <= v_sym
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
             char msg[80]; snprintf(msg, sizeof(msg),
@@ -5556,7 +5557,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
-        if ((nbucket>>31) || !v_sym || (unsigned)file_size <= v_sym
+        if ((unsigned)file_size <= nbucket/sizeof(*buckets)  // FIXME: weak
+        || !v_sym || (unsigned)file_size <= v_sym
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
             char msg[80]; snprintf(msg, sizeof(msg),
