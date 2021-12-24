@@ -2710,7 +2710,6 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         fo->write(oxrelocs,soxrelocs);
     fo->write(oimpdlls,soimpdlls);
     fo->write(oexport,soexport);
-    fo->write(oxrelocs,soxrelocs);
     if (!last_section_rsrc_only)
         fo->write(oxrelocs,soxrelocs);
 
