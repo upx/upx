@@ -814,7 +814,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
 
         Elf64_Phdr const *phdr= phdri;
         for (int j = e_phnum; --j>=0; ++phdr)
-        if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
+        if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             upx_uint64_t offset = check_pt_dynamic(phdr);
             dynseg= (Elf64_Dyn const *)(offset + file_image);
             invert_pt_dynamic(dynseg,
@@ -1750,6 +1750,12 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
                 }
             }
         }
+        if (1==n_bucket  && 0==buckets[0]
+        &&  1==n_bitmask && 0==bitmask[0]) {
+            // 2021-09-11 Rust on RaspberryPi apparently uses this to minimize space.
+            // But then the DT_GNU_HASH symbol lookup algorithm always fails?
+            // https://github.com/upx/upx/issues/525
+        } else
         if ((1+ bmax) < symbias) {
             char msg[90]; snprintf(msg, sizeof(msg),
                     "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
@@ -5493,6 +5499,12 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
                 }
             }
         }
+        if (1==n_bucket  && 0==buckets[0]
+        &&  1==n_bitmask && 0==bitmask[0]) {
+            // 2021-09-11 Rust on RaspberryPi apparently uses this to minimize space.
+            // But then the DT_GNU_HASH symbol lookup algorithm always fails?
+            // https://github.com/upx/upx/issues/525
+        } else
         if ((1+ bmax) < symbias) {
             char msg[90]; snprintf(msg, sizeof(msg),
                     "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
@@ -5656,6 +5668,10 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
             }
         }
     }
+    // 2021-12-25  FIXME: Some Rust programs use
+    //    (1==n_bucket && 0==buckets[0] && 1==n_bitmask && 0==bitmask[0])
+    // to minimize space in DT_GNU_HASH. This causes the fancy lookup to fail.
+    // Is a fallback to linear seach assumed?
     return nullptr;
 
 }
@@ -5733,6 +5749,10 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
             }
         }
     }
+    // 2021-12-25  FIXME: Some Rust programs use
+    //    (1==n_bucket && 0==buckets[0] && 1==n_bitmask && 0==bitmask[0])
+    // to minimize space in DT_GNU_HASH. This causes the fancy lookup to fail.
+    // Is a fallback to linear seach assumed?
     return nullptr;
 
 }
