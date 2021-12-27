@@ -108,64 +108,90 @@ static const Lc_seg_info lc_seg_info[2] = {
 // = 0 : illegal or unknown to us
 // > 0 : actual size
 // < 0 : neg. of minimum size; total must be (0 mod 4) or (0 mod 8)
+//
+static const signed char lc_cmd_size[] = {
 // 2021-12: gcc 11.2.1 does not support 'sizeof' in designated initializer.
 // 2021-12: gcc 11.2.1 does not support [enum] as designator.
-static const signed char lc_cmd_size[] = {
-    [0x00] = 0,
-    [0x01 /*LC_SEGMENT*/] = -56,  // see lc_seg_info[]
-    [0x02 /*LC_SYMTAB*/]  =  24, // sizeof(Mach32_symtab_command)
-    [0x03 /*LC_SYMSEG*/]  =   0, // obsolete
-    [0x04 /*LC_THREAD*/]  = -16, // uint32_t[4] + XXX_thread_state
-    [0x05 /*LC_UNIXTHREAD*/]   = -16, // uint32_t[4] + XXX_thread_state
-    [0x06 /*LC_LOADFVMLIB*/]   = 0,
-    [0x07 /*LC_IDFVMLIB*/]     = 0,
-    [0x08 /*LC_IDENT*/]        = 0, // obsolete
-    [0x09 /*LC_FVMFILE*/]      = 0, // Apple internal
-    [0x0a /*LC_PREPAGE*/]      = 0, // Apple internal
-    [0x0b /*LC_DYSYMTAB*/]      =  80, // sizeof(Mach32_dysymtab_command
-    [0x0c /*LC_LOAD_DYLIB*/]    = -24, // sizeof(dylib_command) + string
-    [0x0d /*LC_ID_DYLIB*/]      = -24, // sizeof(dylib_command) + string
-    [0x0e /*LC_LOAD_DYLINKER*/] = -12, // sizeof(dylinker_command) + string
-    [0x0f /*LC_ID_DYLINKER*/]   = -12, // sizeof(dylinker_command) + string
-    [0x10 /*LC_PREBOUND_DYLIB*/] = 0,
-    [0x11 /*LC_ROUTINES*/]       = 0,  // FIXME
-    [0x12 /*LC_SUB_FRAMEWORK*/]  = 0,
-    [0x13 /*LC_SUB_UMBRELLA*/]   = 0,
-    [0x14 /*LC_SUB_CLIENT*/]     = 0,
-    [0x15 /*LC_SUB_LIBRARY*/]    = 0,
-    [0x16 /*lC_TWOLEVEL_HINTS*/] = -16, // sizeof(Mach32_twolevel_hints_command) + hints
-    [0x17 /*LC_PREBIND_CKSUM*/]  = 0,
-    [0x18 /*lo(LC_LOAD_WEAK_DYLIB)*/] = -24, // sizeof(dylib_command) + string
-    [0x19 /*LC_SEGMENT_64*/]     = -72,  // see lc_seg_info[]
-    [0x1a /*LC_ROUTINES_64*/]    = 0,  // FIXME
-    [0x1b /*LC_UUID*/]           =  24, // sizeof(Mach32_uuid_command)
-    [0x1c /*LC_RPATH*/]          = -12, // sizeof(rpath_command) + string
-    [0x1d /*LC_CODE_SIGNATURE*/] =  16, // sizeof(linkedit_data_command)
-    [0x1e /*LC_SEGMENT_SPLIT_INFO*/] =  16, // sizeof(linkedit_data_command)
-    [0x1F /*lo(LC_REEXPORT_DYLIB)*/] = -24, // sizeof(dylib_command) + string
-    [0x20 /*LC_LAZY_LOAD_DYLIB*/]    =   8, // ???
-    [0x21 /*LC_ENCRYPTION_INFO*/]    =  20, // sizeof(encryption_info_command)
-    [0x22 /*LC_DYLD_INFO*/]          =  48, // sizeof(dyld_info_command)
-    [0x23 /*LC_LOAD_UPWARD_DYLIB*/]  = 0,
-    [0x24 /*LC_VERSION_MIN_MACOSX*/] =  16, // sizeof(Mach32_version_min_command)
-    [0x25 /*LC_VERSION_MIN_IPHONEOS*/]= 16, // sizeof(Mach32_version_min_command)
-    [0x26 /*LC_FUNCTION_STARTS*/]    =  16, // sizeof(linkedit_data_command)
-    [0x27 /*LC_DYLD_ENVIRONMENT*/]   = -12, // sizeof(dylinker_command) + string
-    [0x28 /*lo(LC_MAIN)*/]           =  24, // sizeof(entry_point_command)
-    [0x29 /*LC_DATA_IN_CODE*/]       =  16, // sizeof(linkedit_data_command)
-    [0x2a /*LC_SOURCE_VERSION*/]     =  16, // sizeof(Mach32_source_version_command)
-    [0x2b /*LC_DYLIB_CODE_SIGN_DRS*/]=  16, // sizeof(linkedit_data_command)
-    [0x2c /*LC_ENCRYPTION_INFO_64*/] =  24, // sizeof(encryption_info_command_64)
-    [0x2d /*LC_LINKER_OPTION*/]      = 0,
-    [0x2e /*LC_LINKER_OPTIMIZATION_HINT*/] = 0,
-    [0x2f /*LC_VERSION_MIN_TVOS*/]   =  16, // sizeof(Mach32_version_min_command)
-    [0x30 /*LC_VERSION_MIN_WATCHOS*/]=  16, // sizeof(Mach32_version_min_command)
-    [0x31 /*LC_NOTE*/]               = -40, // sizeof(note_command) + data
-    [0x32 /*LC_BUILD_VERSION*/]      =  16, // sizeof(Mach32_source_version_command)
-    [0x33 /*lo(LC_DYLD_EXPORTS_TRIE)*/]   =  16, // sizeof(linkedit_data_command)
-    [0x34 /*lo(LC_DYLD_CHAINED_FIXUPS)*/] =  16, // sizeof(linkedit_data_command)
-    [0x35 /*lo(LC_FILESET_ENTRY)*/]       = -32, // sizeof(fileset_entry_command) + ???
+// 2021-12: "clang++-10 -std=c++14":
+//          error: array designators are a C99 extension [-Werror,-Wc99-designator]
+// 2021-12: "Microsoft (R) C/C++ Optimizing Compiler Version 19.29.30138 for x64":
+//          error C2143: syntax error: missing ']' before 'constant'
+// Therefore, use the old brittle style with explicit consecutive enumeration.
+// #define P(where, value) [(where)] = (value)
+#   define P(where, value)             (value)
+    P(0x00, 0),
+    P(0x01 /*LC_SEGMENT*/, -56),  // see lc_seg_info[]
+    P(0x02 /*LC_SYMTAB*/, 24), // sizeof(Mach32_symtab_command)
+    P(0x03 /*LC_SYMSEG*/, 0), // obsolete
+    P(0x04 /*LC_THREAD*/, -16), // uint32_t[4] + XXX_thread_state
+    P(0x05 /*LC_UNIXTHREAD*/, -16), // uint32_t[4] + XXX_thread_state
+    P(0x06 /*LC_LOADFVMLIB*/, 0),
+    P(0x07 /*LC_IDFVMLIB*/, 0),
+    P(0x08 /*LC_IDENT*/, 0), // obsolete
+    P(0x09 /*LC_FVMFILE*/, 0), // Apple internal
+    P(0x0a /*LC_PREPAGE*/, 0), // Apple internal
+    P(0x0b /*LC_DYSYMTAB*/, 80), // sizeof(Mach32_dysymtab_command
+    P(0x0c /*LC_LOAD_DYLIB*/, -24), // sizeof(dylib_command) + string
+    P(0x0d /*LC_ID_DYLIB*/, -24), // sizeof(dylib_command) + string
+    P(0x0e /*LC_LOAD_DYLINKER*/, -12), // sizeof(dylinker_command) + string
+    P(0x0f /*LC_ID_DYLINKER*/, -12), // sizeof(dylinker_command) + string
+    P(0x10 /*LC_PREBOUND_DYLIB*/, 0),
+    P(0x11 /*LC_ROUTINES*/, 0),  // FIXME
+    P(0x12 /*LC_SUB_FRAMEWORK*/, 0),
+    P(0x13 /*LC_SUB_UMBRELLA*/, 0),
+    P(0x14 /*LC_SUB_CLIENT*/, 0),
+    P(0x15 /*LC_SUB_LIBRARY*/, 0),
+    P(0x16 /*lC_TWOLEVEL_HINTS*/, -16), // sizeof(Mach32_twolevel_hints_command) + hints
+    P(0x17 /*LC_PREBIND_CKSUM*/, 0),
+    P(0x18 /*lo(LC_LOAD_WEAK_DYLIB)*/, -24), // sizeof(dylib_command) + string
+    P(0x19 /*LC_SEGMENT_64*/, -72),  // see lc_seg_info[]
+    P(0x1a /*LC_ROUTINES_64*/, 0),  // FIXME
+    P(0x1b /*LC_UUID*/, 24), // sizeof(Mach32_uuid_command)
+    P(0x1c /*LC_RPATH*/, -12), // sizeof(rpath_command) + string
+    P(0x1d /*LC_CODE_SIGNATURE*/, 16), // sizeof(linkedit_data_command)
+    P(0x1e /*LC_SEGMENT_SPLIT_INFO*/, 16), // sizeof(linkedit_data_command)
+    P(0x1F /*lo(LC_REEXPORT_DYLIB)*/, -24), // sizeof(dylib_command) + string
+    P(0x20 /*LC_LAZY_LOAD_DYLIB*/, 8), // ???
+    P(0x21 /*LC_ENCRYPTION_INFO*/, 20), // sizeof(encryption_info_command)
+    P(0x22 /*LC_DYLD_INFO*/, 48), // sizeof(dyld_info_command)
+    P(0x23 /*LC_LOAD_UPWARD_DYLIB*/, 0),
+    P(0x24 /*LC_VERSION_MIN_MACOSX*/, 16), // sizeof(Mach32_version_min_command)
+    P(0x25 /*LC_VERSION_MIN_IPHONEOS*/, 16), // sizeof(Mach32_version_min_command)
+    P(0x26 /*LC_FUNCTION_STARTS*/, 16), // sizeof(linkedit_data_command)
+    P(0x27 /*LC_DYLD_ENVIRONMENT*/, -12), // sizeof(dylinker_command) + string
+    P(0x28 /*lo(LC_MAIN)*/, 24), // sizeof(entry_point_command)
+    P(0x29 /*LC_DATA_IN_CODE*/, 16), // sizeof(linkedit_data_command)
+    P(0x2a /*LC_SOURCE_VERSION*/, 16), // sizeof(Mach32_source_version_command)
+    P(0x2b /*LC_DYLIB_CODE_SIGN_DRS*/, 16), // sizeof(linkedit_data_command)
+    P(0x2c /*LC_ENCRYPTION_INFO_64*/, 24), // sizeof(encryption_info_command_64)
+    P(0x2d /*LC_LINKER_OPTION*/, 0),
+    P(0x2e /*LC_LINKER_OPTIMIZATION_HINT*/, 0),
+    P(0x2f /*LC_VERSION_MIN_TVOS*/, 16), // sizeof(Mach32_version_min_command)
+    P(0x30 /*LC_VERSION_MIN_WATCHOS*/, 16), // sizeof(Mach32_version_min_command)
+    P(0x31 /*LC_NOTE*/, -40), // sizeof(note_command) + data
+    P(0x32 /*LC_BUILD_VERSION*/, 16), // sizeof(Mach32_source_version_command)
+    P(0x33 /*lo(LC_DYLD_EXPORTS_TRIE)*/, 16), // sizeof(linkedit_data_command)
+    P(0x34 /*lo(LC_DYLD_CHAINED_FIXUPS)*/, 16), // sizeof(linkedit_data_command)
+    P(0x35 /*lo(LC_FILESET_ENTRY)*/, -32), // sizeof(fileset_entry_command) + ???
+#undef P
 };
+
+static int is_bad_linker_command(
+    unsigned cmd, unsigned cmdsize,
+    unsigned headway, unsigned lc_seg, unsigned szAddr)
+{
+   return !cmd  // there is no LC_ cmd 0
+   || sizeof(lc_cmd_size) <= cmd  // beyond table of known sizes
+   || !lc_cmd_size[cmd]  // obsolete, or proper size not known to us
+   || !cmdsize || ((-1+ szAddr) & cmdsize)  // size not aligned
+   || headway < cmdsize  // not within header area
+   || (lc_seg == cmd  // lc_seg must have following lc_sections
+       && (cmdsize - lc_seg_info[szAddr>>3].segcmdsize) %
+                     lc_seg_info[szAddr>>3].seccmdsize)
+   || (0 < lc_cmd_size[cmd] &&  lc_cmd_size[cmd] != (int)cmdsize)  // not known size
+   || (0 > lc_cmd_size[cmd] && -lc_cmd_size[cmd]  > (int)cmdsize)  // below minimum size
+   ;
+}
 
 #if 0 // NOT USED
 static const unsigned lc_routines[2] = {
@@ -1618,7 +1644,9 @@ int PackMachBase<T>::canUnpack()
     Mach_command const *ptr = (Mach_command const *)rawmseg;
     for (unsigned j= 0; j < ncmds;
             ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr), ++j) {
-        if ((unsigned)headway < ptr->cmdsize) {
+        unsigned const cmd = ptr->cmd;
+        unsigned const cmdsize = ptr->cmdsize;
+        if (is_bad_linker_command(cmd, cmdsize, headway, lc_seg, sizeof(Addr))) {
                 infoWarning("bad Mach_command[%u]{@0x%lx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx",
                     j, (unsigned long) (sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg)), headway,
                     (unsigned long) file_size, (unsigned long)ptr->cmdsize);
@@ -1887,17 +1915,7 @@ bool PackMachBase<T>::canPack()
         Mach_segment_command const *segptr = (Mach_segment_command const *)ptr;
         unsigned const cmd     = segptr->cmd &~ LC_REQ_DYLD;
         unsigned const cmdsize = segptr->cmdsize;
-        if (!cmd  // there is no LC_ cmd 0
-        || sizeof(lc_cmd_size) <= cmd  // beyond table of known sizes
-        || !lc_cmd_size[cmd]  // obsolete, or proper size not known to us
-        || !cmdsize || ((-1+ sizeof(Addr)) & cmdsize)  // size not aligned
-        || headway < cmdsize  // not within header area
-        || (lc_seg == cmd  // lc_seg must have following lc_sections
-           && (cmdsize - lc_seg_info[sizeof(Addr)>>3].segcmdsize) %
-                         lc_seg_info[sizeof(Addr)>>3].seccmdsize)
-        || (0 < lc_cmd_size[cmd] &&  lc_cmd_size[cmd] != (int)cmdsize)  // not known size
-        || (0 > lc_cmd_size[cmd] && -lc_cmd_size[cmd]  > (int)cmdsize)  // below minimum size
-        ) {
+        if (is_bad_linker_command(cmd, cmdsize, headway, lc_seg, sizeof(Addr))) {
             char buf[80]; snprintf(buf, sizeof(buf),
                 "bad Mach_command[%d]{cmd=%#x, size=%#x}", j,
                 cmd, cmdsize);
