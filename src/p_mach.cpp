@@ -31,6 +31,9 @@
 #include "filter.h"
 #include "linker.h"
 #include "packer.h"
+#define WANT_MACH_SEGMENT_ENUM
+#define WANT_MACH_SECTION_ENUM
+#include "p_mach_enum.h"
 #include "p_mach.h"
 #include "ui.h"
 
@@ -87,10 +90,81 @@ static const
 // We simplify arbitrarily by compressing only the __TEXT segment,
 // which must be the first segment.
 
-static const unsigned lc_segment[2] = {
-    0x1, 0x19
-    //Mach_command::LC_SEGMENT,
-    //Mach_command::LC_SEGMENT_64
+struct Lc_seg_info {
+    unsigned char segment_cmd;
+    unsigned char segcmdsize;
+    unsigned char seccmdsize;
+    unsigned char routines_cmd;
+    unsigned char routinessize;
+};
+static const Lc_seg_info lc_seg_info[2] = {
+    {LC_SEGMENT,     sizeof(Mach32_segment_command), sizeof(Mach32_section_command),
+     LC_ROUTINES,    sizeof(Mach32_routines_command)},
+    {LC_SEGMENT_64,  sizeof(Mach64_segment_command), sizeof(Mach64_section_command),
+     LC_ROUTINES_64, sizeof(Mach64_routines_command)},
+};
+
+// Used to validate LC_ commands in order to defend against fuzzers.
+// = 0 : illegal or unknown to us
+// > 0 : actual size
+// < 0 : neg. of minimum size; total must be (0 mod 4) or (0 mod 8)
+// 2021-12: gcc 11.2.1 does not support 'sizeof' in designated initializer.
+// 2021-12: gcc 11.2.1 does not support [enum] as designator.
+static const signed char lc_cmd_size[] = {
+    [0x00] = 0,
+    [0x01 /*LC_SEGMENT*/] = -56,  // see lc_seg_info[]
+    [0x02 /*LC_SYMTAB*/]  =  24, // sizeof(Mach32_symtab_command)
+    [0x03 /*LC_SYMSEG*/]  =   0, // obsolete
+    [0x04 /*LC_THREAD*/]  = -16, // uint32_t[4] + XXX_thread_state
+    [0x05 /*LC_UNIXTHREAD*/]   = -16, // uint32_t[4] + XXX_thread_state
+    [0x06 /*LC_LOADFVMLIB*/]   = 0,
+    [0x07 /*LC_IDFVMLIB*/]     = 0,
+    [0x08 /*LC_IDENT*/]        = 0, // obsolete
+    [0x09 /*LC_FVMFILE*/]      = 0, // Apple internal
+    [0x0a /*LC_PREPAGE*/]      = 0, // Apple internal
+    [0x0b /*LC_DYSYMTAB*/]      =  80, // sizeof(Mach32_dysymtab_command
+    [0x0c /*LC_LOAD_DYLIB*/]    = -24, // sizeof(dylib_command) + string
+    [0x0d /*LC_ID_DYLIB*/]      = -24, // sizeof(dylib_command) + string
+    [0x0e /*LC_LOAD_DYLINKER*/] = -12, // sizeof(dylinker_command) + string
+    [0x0f /*LC_ID_DYLINKER*/]   = -12, // sizeof(dylinker_command) + string
+    [0x10 /*LC_PREBOUND_DYLIB*/] = 0,
+    [0x11 /*LC_ROUTINES*/]       = 0,  // FIXME
+    [0x12 /*LC_SUB_FRAMEWORK*/]  = 0,
+    [0x13 /*LC_SUB_UMBRELLA*/]   = 0,
+    [0x14 /*LC_SUB_CLIENT*/]     = 0,
+    [0x15 /*LC_SUB_LIBRARY*/]    = 0,
+    [0x16 /*lC_TWOLEVEL_HINTS*/] = -16, // sizeof(Mach32_twolevel_hints_command) + hints
+    [0x17 /*LC_PREBIND_CKSUM*/]  = 0,
+    [0x18 /*lo(LC_LOAD_WEAK_DYLIB)*/] = -24, // sizeof(dylib_command) + string
+    [0x19 /*LC_SEGMENT_64*/]     = -72,  // see lc_seg_info[]
+    [0x1a /*LC_ROUTINES_64*/]    = 0,  // FIXME
+    [0x1b /*LC_UUID*/]           =  24, // sizeof(Mach32_uuid_command)
+    [0x1c /*LC_RPATH*/]          = -12, // sizeof(rpath_command) + string
+    [0x1d /*LC_CODE_SIGNATURE*/] =  16, // sizeof(linkedit_data_command)
+    [0x1e /*LC_SEGMENT_SPLIT_INFO*/] =  16, // sizeof(linkedit_data_command)
+    [0x1F /*lo(LC_REEXPORT_DYLIB)*/] = -24, // sizeof(dylib_command) + string
+    [0x20 /*LC_LAZY_LOAD_DYLIB*/]    =   8, // ???
+    [0x21 /*LC_ENCRYPTION_INFO*/]    =  20, // sizeof(encryption_info_command)
+    [0x22 /*LC_DYLD_INFO*/]          =  48, // sizeof(dyld_info_command)
+    [0x23 /*LC_LOAD_UPWARD_DYLIB*/]  = 0,
+    [0x24 /*LC_VERSION_MIN_MACOSX*/] =  16, // sizeof(Mach32_version_min_command)
+    [0x25 /*LC_VERSION_MIN_IPHONEOS*/]= 16, // sizeof(Mach32_version_min_command)
+    [0x26 /*LC_FUNCTION_STARTS*/]    =  16, // sizeof(linkedit_data_command)
+    [0x27 /*LC_DYLD_ENVIRONMENT*/]   = -12, // sizeof(dylinker_command) + string
+    [0x28 /*lo(LC_MAIN)*/]           =  24, // sizeof(entry_point_command)
+    [0x29 /*LC_DATA_IN_CODE*/]       =  16, // sizeof(linkedit_data_command)
+    [0x2a /*LC_SOURCE_VERSION*/]     =  16, // sizeof(Mach32_source_version_command)
+    [0x2b /*LC_DYLIB_CODE_SIGN_DRS*/]=  16, // sizeof(linkedit_data_command)
+    [0x2c /*LC_ENCRYPTION_INFO_64*/] =  24, // sizeof(encryption_info_command_64)
+    [0x2d /*LC_LINKER_OPTION*/]      = 0,
+    [0x2e /*LC_LINKER_OPTIMIZATION_HINT*/] = 0,
+    [0x2f /*LC_VERSION_MIN_TVOS*/]   =  16, // sizeof(Mach32_version_min_command)
+    [0x30 /*LC_VERSION_MIN_WATCHOS*/]=  16, // sizeof(Mach32_version_min_command)
+    [0x31 /*LC_NOTE*/]               = -40, // sizeof(note_command) + data
+    [0x32 /*LC_BUILD_VERSION*/]      =  16, // sizeof(Mach32_source_version_command)
+    [0x33 /*lo(LC_DYLD_EXPORTS_TRIE)*/]   =  16, // sizeof(linkedit_data_command)
+    [0x34 /*lo(LC_DYLD_CHAINED_FIXUPS)*/] =  16, // sizeof(linkedit_data_command)
+    [0x35 /*lo(LC_FILESET_ENTRY)*/]       = -32, // sizeof(fileset_entry_command) + ???
 };
 
 #if 0 // NOT USED
@@ -448,7 +522,7 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 {
     Mach_segment_command const *const a = (Mach_segment_command const *)aa;
     Mach_segment_command const *const b = (Mach_segment_command const *)bb;
-    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     unsigned const xa = a->cmd - lc_seg;
     unsigned const xb = b->cmd - lc_seg;
            if (xa < xb)        return -1;  // LC_SEGMENT first
@@ -988,7 +1062,7 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
     unsigned const k, unsigned pos_eof
 )
 {
-    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     if (lc_seg!=msegcmd[k].cmd
     ||  0==msegcmd[k].filesize ) {
         return 0;
@@ -1021,7 +1095,7 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
 template <class T>
 int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed body
 {
-    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     Extent x;
     unsigned k;
 
@@ -1176,7 +1250,7 @@ void PackMachARM64EL::pack1_setup_threado(OutputFile *const fo)
 template <class T>
 void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate executable header
 {
-    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
         memcpy(&mhdro, stub_main, sizeof(mhdro));
@@ -1352,7 +1426,7 @@ umin(unsigned a, unsigned b)
 template <class T>
 void PackMachBase<T>::unpack(OutputFile *fo)
 {
-    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
     if ((MH_MAGIC + (sizeof(Addr)>>3)) != mhdri.magic
@@ -1501,7 +1575,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
 template <class T>
 int PackMachBase<T>::canUnpack()
 {
-    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
 
@@ -1754,9 +1828,6 @@ int PackMachBase<T>::canUnpack()
     }
     return true;
 }
-#define WANT_MACH_SEGMENT_ENUM
-#define WANT_MACH_SECTION_ENUM
-#include "p_mach_enum.h"
 
 template <class T>
 upx_uint64_t PackMachBase<T>::get_mod_init_func(Mach_segment_command const *segptr)
@@ -1780,7 +1851,7 @@ upx_uint64_t PackMachBase<T>::get_mod_init_func(Mach_segment_command const *segp
 template <class T>
 bool PackMachBase<T>::canPack()
 {
-    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
 
@@ -1814,14 +1885,26 @@ bool PackMachBase<T>::canPack()
     unsigned char const *ptr = (unsigned char const *)rawmseg;
     for (unsigned j= 0; j < ncmds; ++j) {
         Mach_segment_command const *segptr = (Mach_segment_command const *)ptr;
-        if (headway < ((Mach_command const *)ptr)->cmdsize) {
-            char buf[64]; snprintf(buf, sizeof(buf),
-                "bad Mach_command[%d]{%#x, %#x}", j,
-                (unsigned)segptr->cmd, (unsigned)((Mach_command const *)ptr)->cmdsize);
+        unsigned const cmd     = segptr->cmd &~ LC_REQ_DYLD;
+        unsigned const cmdsize = segptr->cmdsize;
+        if (!cmd  // there is no LC_ cmd 0
+        || sizeof(lc_cmd_size) <= cmd  // beyond table of known sizes
+        || !lc_cmd_size[cmd]  // obsolete, or proper size not known to us
+        || !cmdsize || ((-1+ sizeof(Addr)) & cmdsize)  // size not aligned
+        || headway < cmdsize  // not within header area
+        || (lc_seg == cmd  // lc_seg must have following lc_sections
+           && (cmdsize - lc_seg_info[sizeof(Addr)>>3].segcmdsize) %
+                         lc_seg_info[sizeof(Addr)>>3].seccmdsize)
+        || (0 < lc_cmd_size[cmd] &&  lc_cmd_size[cmd] != (int)cmdsize)  // not known size
+        || (0 > lc_cmd_size[cmd] && -lc_cmd_size[cmd]  > (int)cmdsize)  // below minimum size
+        ) {
+            char buf[80]; snprintf(buf, sizeof(buf),
+                "bad Mach_command[%d]{cmd=%#x, size=%#x}", j,
+                cmd, cmdsize);
             throwCantPack(buf);
         }
-        headway -= ((Mach_command const *)ptr)->cmdsize;
-        if (lc_seg == segptr->cmd) {
+        headway -= cmdsize;
+        if (lc_seg == cmd) {
             msegcmd[j] = *segptr;
             if (!strcmp("__TEXT", segptr->segname)) {
                 Mach_section_command const *secp =
