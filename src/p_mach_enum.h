@@ -81,6 +81,7 @@
         LC_LOAD_DYLIB    = 0xc,
         LC_ID_DYLIB      = 0xd,
         LC_LOAD_DYLINKER = 0xe,
+        LC_ID_DYLINKER   = 0xf,
         LC_ROUTINES      = 0x11,
         LC_TWOLEVEL_HINTS= 0x16,
         LC_LOAD_WEAK_DYLIB= (0x18 | LC_REQ_DYLD),
@@ -106,6 +107,7 @@
         LC_ENCRYPTION_INFO_64= 0x2C,
         LC_VERSION_MIN_TVOS= 0x2F,
         LC_VERSION_MIN_WATCHOS= 0x30,
+        LC_NOTE           = 0x31,
     };
 
     enum { // maxprot

@@ -1307,6 +1307,113 @@ protected:
 #include "p_mach_enum.h"
 };
 
+// Alignment and sizeof are independent of endianness,
+// so all the above template classes just complicate.
+// Besides, we use them only to check for valid Macho headers.
+// (Fie on fuzzers!)
+
+struct dyld_info_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t rebase_off;
+    uint32_t rebase_size;
+    uint32_t bind_off;
+    uint32_t bind_size;
+    uint32_t weak_bind_off;
+    uint32_t weak_bind_size;
+    uint32_t lazy_bind_off;
+    uint32_t lazy_bind_size;
+    uint32_t export_off;
+    uint32_t export_size;
+};
+union lc_str {
+    uint32_t offset;
+};
+
+struct dylib {
+    union lc_str name;
+    uint32_t timestamp;
+    uint32_t current_version;
+    uint32_t compatibility_version;
+};
+struct dylib_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    struct dylib dylib;
+};
+struct dylinker_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    union lc_str name;
+};
+struct encryption_info_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t cryptoff;
+    uint32_t cryptsize;
+    uint32_t cryptid;
+};
+struct encryption_info_command_64 {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t cryptoff;
+    uint32_t cryptsize;
+    uint32_t cryptid;
+    uint32_t pad;
+};
+struct entry_point_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint64_t entryoff;
+    uint64_t stacksize;
+};
+struct linkedit_data_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t dataoff;
+    uint32_t datasize;
+};
+struct rpath_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    union lc_str path;
+};
+struct routines_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t init_address;
+    uint32_t init_module;
+    uint32_t reserved1;
+    uint32_t reserved2;
+    uint32_t reserved3;
+    uint32_t reserved4;
+    uint32_t reserved5;
+    uint32_t reserved6;
+};
+struct routines_command_64 {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint64_t init_address;
+    uint64_t init_module;
+    uint64_t reserved1;
+    uint64_t reserved2;
+    uint64_t reserved3;
+    uint64_t reserved4;
+    uint64_t reserved5;
+    uint64_t reserved6;
+};
+struct uuid_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint8_t uuid[16];
+};
+struct version_min_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t version;
+    uint32_t sdk;
+};
+
 #endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */
