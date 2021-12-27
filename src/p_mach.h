@@ -1405,7 +1405,7 @@ struct routines_command_64 {
 struct uuid_command {
     upx_uint32_t cmd;
     upx_uint32_t cmdsize;
-    uint8_t uuid[16];
+    upx_uint8_t uuid[16];
 };
 struct version_min_command {
     upx_uint32_t cmd;
