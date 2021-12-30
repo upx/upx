@@ -441,7 +441,7 @@ void PeFile32::processRelocs() // pass1
     mb_orelocs.alloc(mem_size(4, rnum, 1024));  // 1024 - safety
     orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
     sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3], xcounts[3],
-                            orelocs, ibuf + rvamin, 1, &big_relocs),
+                            orelocs, ibuf + rvamin, file_size - rvamin, 1, &big_relocs),
                         orelocs);
     delete [] fix[3];
 
@@ -547,7 +547,7 @@ void PeFile64::processRelocs() // pass1
     mb_orelocs.alloc(mem_size(4, rnum, 1024));  // 1024 - safety
     orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
     sorelocs = ptr_diff(optimizeReloc64((upx_byte*) fix[10], xcounts[10],
-                            orelocs, ibuf + rvamin, 1, &big_relocs),
+                            orelocs, ibuf + rvamin, file_size - rvamin, 1, &big_relocs),
                         orelocs);
 
     for (ic = 15; ic; ic--)
