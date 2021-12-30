@@ -399,7 +399,7 @@ void PackWcle::preprocessFixups()
         delete[] ifixups;
         ifixups = new upx_byte[1000];
     }
-    fix = optimizeReloc32 (rl,rc,ifixups,iimage,1,&big_relocs);
+    fix = optimizeReloc32 (rl,rc,ifixups,iimage,file_size,1,&big_relocs);
     has_extra_code = srf != selector_fixups;
     // FIXME: this could be removed if has_extra_code = false
     // but then we'll need a flag
