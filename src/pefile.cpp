@@ -2485,7 +2485,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     getLoaderSection("UPX1HEAD",(int*)&ic);
     identsize += ic;
 
-    const bool has_oxrelocs = !opt->win32_pe.strip_relocs && (use_stub_relocs || tlsiv.ivnum || loadconfiv.ivnum);
+    const bool has_oxrelocs = !opt->win32_pe.strip_relocs && (use_stub_relocs || sotls || loadconfiv.ivnum);
     const bool has_ncsection = has_oxrelocs || soimpdlls || soexport || soresources;
     const unsigned oobjs = last_section_rsrc_only ? 4 : has_ncsection ? 3 : 2;
     ////pe_section_t osection[oobjs];
