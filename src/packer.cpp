@@ -37,7 +37,8 @@
 **************************************************************************/
 
 Packer::Packer(InputFile *f)
-    : bele(nullptr), fi(f), file_size(-1), ph_format(-1), ph_version(-1), uip(nullptr),
+    : bele(nullptr), fi(f), file_size(-1), ph_format(-1), ph_version(-1),
+      ibufgood(0), uip(nullptr),
       linker(nullptr), last_patch(nullptr), last_patch_len(0), last_patch_off(0) {
     file_size = 0;
     if (fi != nullptr)

@@ -441,7 +441,7 @@ void PeFile32::processRelocs() // pass1
     mb_orelocs.alloc(mem_size(4, rnum, 1024));  // 1024 - safety
     orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
     sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3], xcounts[3],
-                            orelocs, ibuf + rvamin, file_size - rvamin, 1, &big_relocs),
+                            orelocs, ibuf + rvamin, ibufgood - rvamin, 1, &big_relocs),
                         orelocs);
     delete [] fix[3];
 
@@ -547,7 +547,7 @@ void PeFile64::processRelocs() // pass1
     mb_orelocs.alloc(mem_size(4, rnum, 1024));  // 1024 - safety
     orelocs = (upx_byte *)mb_orelocs.getVoidPtr();
     sorelocs = ptr_diff(optimizeReloc64((upx_byte*) fix[10], xcounts[10],
-                            orelocs, ibuf + rvamin, file_size - rvamin, 1, &big_relocs),
+                            orelocs, ibuf + rvamin, ibufgood - rvamin, 1, &big_relocs),
                         orelocs);
 
     for (ic = 15; ic; ic--)
@@ -2221,6 +2221,11 @@ unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase,
     return 0;
 }
 
+static unsigned umax(unsigned a, unsigned b)
+{
+    return (a >= b) ? a : b;
+}
+
 unsigned PeFile::readSections(unsigned objs, unsigned usize,
                               unsigned ih_filealign, unsigned ih_datasize)
 {
@@ -2231,7 +2236,7 @@ unsigned PeFile::readSections(unsigned objs, unsigned usize,
 
     // BOUND IMPORT support. FIXME: is this ok?
     fi->seek(0,SEEK_SET);
-    fi->readx(ibuf,isection[0].rawdataptr);
+    fi->readx(ibuf,ibufgood= isection[0].rawdataptr);
 
     //Interval holes(ibuf);
 
@@ -2266,6 +2271,7 @@ unsigned PeFile::readSections(unsigned objs, unsigned usize,
         if (isection[ic].vaddr + jc > ibuf.getSize())
             throwInternalError("buffer too small 1");
         fi->readx(ibuf.subref("bad section %#x", isection[ic].vaddr, jc), jc);
+        ibufgood= umax(ibufgood, jc + isection[ic].vaddr);  // FIXME: simplistic
         jc += isection[ic].rawdataptr;
     }
     return overlaystart;
@@ -3000,7 +3006,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     ibuf.alloc(ph.c_len);
     obuf.allocForUncompression(ph.u_len);
     fi->seek(isection[1].rawdataptr - 64 + ph.buf_offset + ph.getPackHeaderSize(),SEEK_SET);
-    fi->readx(ibuf,ph.c_len);
+    fi->readx(ibuf, ibufgood= ph.c_len);
 
     // decompress
     decompress(ibuf,obuf);
@@ -3030,7 +3036,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
         ibuf.dealloc();
         ibuf.alloc(isection[2].size);
         fi->seek(isection[2].rawdataptr,SEEK_SET);
-        fi->readx(ibuf,isection[2].size);
+        fi->readx(ibuf, ibufgood= isection[2].size);
     }
 
     // unfilter
@@ -3062,7 +3068,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
         ibuf.dealloc();
         ibuf.alloc(isection[3].size);
         fi->seek(isection[3].rawdataptr,SEEK_SET);
-        fi->readx(ibuf,isection[3].size);
+        fi->readx(ibuf, ibufgood= isection[3].size);
     }
 
     rebuildResources(extrainfo, isection[ih.objects - 1].vaddr);

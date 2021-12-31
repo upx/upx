@@ -311,6 +311,7 @@ protected:
     // compression buffers
     MemBuffer ibuf; // input
     MemBuffer obuf; // output
+    unsigned ibufgood;  // high-water mark in ibuf (pefile.cpp)
 
     // UI handler
     UiPacker *uip = nullptr;
