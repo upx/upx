@@ -2514,7 +2514,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     const unsigned c_len = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
     obuf.clear(ph.c_len, c_len - ph.c_len);
 
-    const unsigned s1size = ALIGN_UP(ic + c_len + codesize, (unsigned) sizeof(LEXX)) + sotls + soloadconf;
+    const unsigned aligned_sotls = ALIGN_UP(sotls, (unsigned)sizeof(LEXX));
+    const unsigned s1size = ALIGN_UP(ic + c_len + codesize, (unsigned) sizeof(LEXX)) + aligned_sotls + soloadconf;
     const unsigned s1addr = (newvsize - (ic + c_len) + oam1) &~ oam1;
 
     const unsigned ncsection = (s1addr + s1size + oam1) &~ oam1;
@@ -2541,15 +2542,15 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     ODSIZE(PEDIR_BOUNDIM) = 0;
 
     // tls & loadconf are put into section 1
-    ic = s1addr + s1size - sotls - soloadconf;
+    ic = s1addr + s1size - aligned_sotls - soloadconf;
 
     if (use_tls_callbacks)
         tls_handler_offset = linker->getSymbolOffset("PETLSC2") + upxsection;
 
     processTls(&rel,&tlsiv,ic);
-    ODADDR(PEDIR_TLS) = sotls ? ic : 0;
-    ODSIZE(PEDIR_TLS) = sotls ? (sizeof(LEXX) == 4 ? 0x18 : 0x28) : 0;
-    ic = ALIGN_UP(ic + sotls, (unsigned)sizeof(LEXX));
+    ODADDR(PEDIR_TLS) = aligned_sotls ? ic : 0;
+    ODSIZE(PEDIR_TLS) = aligned_sotls ? (sizeof(LEXX) == 4 ? 0x18 : 0x28) : 0;
+    ic += aligned_sotls;
 
     processLoadConf(&rel, &loadconfiv, ic);
     ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
@@ -2706,7 +2707,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         OutputFile::dump(opt->debug.dump_stub_loader, loader, codesize);
     if ((ic = fo->getBytesWritten() & (sizeof(LEXX) - 1)) != 0)
         fo->write(ibuf, sizeof(LEXX) - ic);
-    fo->write(otls,sotls);
+    fo->write(otls, aligned_sotls);
     fo->write(oloadconf, soloadconf);
     if ((ic = fo->getBytesWritten() & fam1) != 0)
         fo->write(ibuf,oh.filealign - ic);
@@ -2736,6 +2737,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) codesize);
     printf("%-13s: tls          : %8ld bytes\n", getName(), (long) sotls);
+    printf("%-13s: aligned_tls  : %8ld bytes\n", getName(), (long) aligned_sotls);
     printf("%-13s: resources    : %8ld bytes\n", getName(), (long) soresources);
     printf("%-13s: imports      : %8ld bytes\n", getName(), (long) soimpdlls);
     printf("%-13s: exports      : %8ld bytes\n", getName(), (long) soexport);
