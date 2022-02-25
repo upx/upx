@@ -1507,25 +1507,27 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     ||  mhdri.filetype   != mhdr->filetype)
         throwCantUnpack("file header corrupted");
     unsigned const ncmds = mhdr->ncmds;
-
     if (!ncmds || 24 < ncmds) { // arbitrary limit
         char msg[40]; snprintf(msg, sizeof(msg),
             "bad Mach_header.ncmds = %d", ncmds);
         throwCantUnpack(msg);
     }
+
     msegcmd_buf.alloc(sizeof(Mach_segment_command) * ncmds);
     msegcmd = (Mach_segment_command *)msegcmd_buf.getVoidPtr();
     unsigned char const *ptr = (unsigned char const *)(1+mhdr);
+    unsigned headway = mhdr_buf.getSize() - sizeof(*mhdr);
     for (unsigned j= 0; j < ncmds; ++j) {
-        unsigned char const *const next = ((Mach_command const *)ptr)->cmdsize + ptr;
-        if (ptr_udiff(next, (1+ mhdr)) > ph.u_len) {
-            char msg[50]; snprintf(msg, sizeof(msg), "cmdsize[%d] %#x",
-                j, (unsigned)(next - ptr));
+        unsigned cmdsize = ((Mach_command const *)ptr)->cmdsize;
+        if (is_bad_linker_command( ((Mach_command const *)ptr)->cmd, cmdsize,
+                headway, lc_seg, sizeof(Addr))) {
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad packed Mach load_command @%#x", ptr_udiff(ptr, mhdr));
             throwCantUnpack(msg);
         }
-        memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command),
-            ((Mach_command const *)ptr)->cmdsize));
-        ptr = next;
+        memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command), cmdsize));
+        headway -= cmdsize;
+        ptr     += cmdsize;
     }
 
     // Put LC_SEGMENT together at the beginning
