@@ -1508,6 +1508,11 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         throwCantUnpack("file header corrupted");
     unsigned const ncmds = mhdr->ncmds;
 
+    if (!ncmds || 24 < ncmds) { // arbitrary limit
+        char msg[40]; snprintf(msg, sizeof(msg),
+            "bad Mach_header.ncmds = %d", ncmds);
+        throwCantUnpack(msg);
+    }
     msegcmd_buf.alloc(sizeof(Mach_segment_command) * ncmds);
     msegcmd = (Mach_segment_command *)msegcmd_buf.getVoidPtr();
     unsigned char const *ptr = (unsigned char const *)(1+mhdr);
