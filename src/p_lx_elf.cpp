@@ -4710,6 +4710,15 @@ void PackLinuxElf64::un_shlib_1(
         unsigned vaddr = get_te64(&i_phdr->p_vaddr);
         unsigned offset = get_te64(&i_phdr->p_offset);
         unsigned filesz = get_te64(&i_phdr->p_filesz);
+        unsigned ibufsz = ibuf.getSize();
+        if (!(type < Elf64_Phdr::PT_NUM
+            && offset <= ibufsz
+            && filesz <= ibufsz
+            && filesz <= (ibufsz - offset))) {
+            char msg[40]; snprintf(msg, sizeof(msg),
+                "bad Elf_Phdr[%d]", k);
+            throwCantUnpack(msg);
+        }
         if (xct_off <= vaddr) {
             if (PT_LOAD64==type) {
                 fi->seek(offset, SEEK_SET);

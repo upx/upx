@@ -91,6 +91,7 @@
         PT_INTERP  = 3,         /* Name of program interpreter */
         PT_NOTE    = 4,         /* Auxiliary information (esp. OpenBSD) */
         PT_PHDR    = 6          /* Entry for header table itself */
+        , PT_NUM   = 8          /* Number of defined types in low range */
         , PT_GNU_STACK = 0x6474e551      /* Indicates stack executability */
     };
 
