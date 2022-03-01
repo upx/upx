@@ -11,9 +11,138 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
+#ifdef __APPLE__  //{
 // /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach-o/loader.h
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#else  //}{
+    enum { // cmd
+        LC_REQ_DYLD      = 0x80000000,  // OR'ed ==> must not ignore
+        LC_SEGMENT       = 0x1,
+        LC_SYMTAB        = 0x2,
+        LC_THREAD        = 0x4,
+        LC_UNIXTHREAD    = 0x5,
+        LC_DYSYMTAB      = 0xb,
+        LC_LOAD_DYLIB    = 0xc,
+        LC_ID_DYLIB      = 0xd,
+        LC_LOAD_DYLINKER = 0xe,
+        LC_ID_DYLINKER   = 0xf,
+        LC_ROUTINES      = 0x11,
+        LC_TWOLEVEL_HINTS= 0x16,
+        LC_LOAD_WEAK_DYLIB= (0x18 | LC_REQ_DYLD),
+        LC_SEGMENT_64    = 0x19,
+        LC_ROUTINES_64   = 0x1a,
+        LC_UUID          = 0x1b,
+        LC_RPATH         = 0x1c,
+        LC_CODE_SIGNATURE = 0x1d,
+        LC_SEGMENT_SPLIT_INFO = 0x1e,
+        LC_REEXPORT_DYLIB = (0x1f | LC_REQ_DYLD),
+        LC_LAZY_LOAD_DYLIB= 0x20,
+        LC_ENCRYPTION_INFO= 0x21,
+        LC_DYLD_INFO      = 0x22,  // compressed dyld information (10.6.x)
+        LC_DYLD_INFO_ONLY = (0x22|LC_REQ_DYLD),
+        LC_VERSION_MIN_MACOSX= 0x24,
+        LC_VERSION_MIN_IPHONEOS= 0x25,
+        LC_FUNCTION_STARTS= 0x26,
+        LC_DYLD_ENVIRONMENT= 0x27,  // string as environment variable
+        LC_MAIN           = (0x28|LC_REQ_DYLD),
+        LC_DATA_IN_CODE   = 0x29,
+        LC_SOURCE_VERSION = 0x2a,
+        LC_DYLIB_CODE_SIGN_DRS= 0x2B,
+        LC_ENCRYPTION_INFO_64= 0x2C,
+        LC_LINKER_OPTIMIZATION_HINT = 0x2E,
+        LC_VERSION_MIN_TVOS= 0x2F,
+        LC_VERSION_MIN_WATCHOS= 0x30,
+        LC_NOTE           = 0x31,
+        LC_BUILD_VERSION  = 0x32,
+        LC_DYLD_EXPORTS_TRIE   = (0x33|LC_REQ_DYLD),
+        LC_DYLD_CHAINED_FIXUPS = (0x34|LC_REQ_DYLD),
+        LC_FILESET_ENTRY       = (0x35|LC_REQ_DYLD),
+    };
+
+#include <stdint.h>
+struct mach_header_64 {
+    uint32_t magic;
+    uint32_t cputype;
+    uint32_t cpusubtype;
+    uint32_t filetype;
+    uint32_t ncmds;
+    uint32_t sizeofcmds;
+    uint32_t flags;
+    uint32_t reserved;
+};
+struct load_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+};
+struct segment_command_64 {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    char     segname[16];
+    uint64_t vmaddr;
+    uint64_t vmsize;
+    uint64_t fileoff;
+    uint64_t filesize;
+    uint32_t maxprot;
+    uint32_t initprot;
+    uint32_t nsects;
+    uint32_t flags;
+};
+struct linkedit_data_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t dataoff;
+    uint32_t datasize;
+};
+struct symtab_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t symoff;
+    uint32_t nsyms;
+    uint32_t stroff;
+    uint32_t strsize;
+};
+struct dysymtab_command {
+    uint32_t cmd;
+    uint32_t cmdsize;
+
+    uint32_t ilocalsym;
+    uint32_t nlocalsym;
+
+    uint32_t iextdefsym;
+    uint32_t nextdefsym;
+
+    uint32_t iundefsym;
+    uint32_t nundefsym;
+
+    uint32_t tocoff;
+    uint32_t ntoc;
+
+    uint32_t modtaboff;
+    uint32_t nmodtab;
+
+    uint32_t extrefsymoff;
+    uint32_t nextrefsyms;
+
+    uint32_t indirectsymoff;
+    uint32_t nindirectsyms;
+
+    uint32_t extreloff;
+    uint32_t nextrel;
+
+    uint32_t locreloff;
+    uint32_t nlocrel;
+};
+struct nlist_64 {
+    union {
+        uint32_t  n_strx;
+    } n_un;
+    uint8_t n_type;
+    uint8_t n_sect;
+    uint16_t n_desc;
+    uint64_t n_value;
+};
+#endif  //}
 
 struct Cmd_names {
     unsigned char val;
@@ -64,7 +193,9 @@ struct Cmd_names {
 // Try to enable success of running "codesign -s - file" afterwards.
 // Note that LC_CODE_SIGNATURE should be removed before snipping:
 //   codesign --remove-signature file
-
+//
+// This is EXPERIMENTAL to aid in finding a "minimal" executable
+// on Apple MacOS Big Sur, particularly Apple M1 hardware (aarch64).
 int
 main(int argc, char const * /*const*/ *const argv, char const *const *const envp)
 {

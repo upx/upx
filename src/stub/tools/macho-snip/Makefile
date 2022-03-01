@@ -8,13 +8,13 @@
 
 CFLAGS += -g
 
-macho-snip: macho-snip.o udf
+macho-snip: macho-snip.o
 	$(CC) $(CFLAGS) -o macho-snip macho-snip.o
 
 udf.o: udf.s
 	gcc -c $<
 
-# shortest main program;  used as an example
+# shortest main program;  used as an example for Apple Mach-O
 udf: udf.o
 	gcc --verbose -nostartfiles -o udf $<
 	codesign --remove-signature udf
