@@ -247,10 +247,11 @@ main(int argc, char const * /*const*/ *const argv, char const *const *const envp
     unsigned ncmds = mhdr->ncmds;
     unsigned headway = mhdr->sizeofcmds;
     struct load_command *cmd = (struct load_command *)(1+ mhdr);
-    for (; ncmds; --ncmds) {
+    struct load_command *cmd_next;
+    unsigned delta_dataoff = 0;
+    for (; ncmds; --ncmds, cmd = cmd_next) {
         unsigned end_dataoff = 0;
         unsigned end_datasize = 0;
-        struct load_command *cmd_next;
 again: ;
         fprintf(stderr, "cmd@%p %s %d(%#x)\n",
             cmd, cmd_names[cmd->cmd&0xFF].name, cmd->cmd&0xFF, cmd->cmd);
@@ -271,15 +272,7 @@ again: ;
             }
         } break;
         case LC_CODE_SIGNATURE: {
-            fprintf(stderr, "macho-snip: LC_CODE_SIGNATURE not implemented\n");
-            continue;
-            struct linkedit_data_command *cmd_LED = (struct linkedit_data_command *)cmd;
-            if (( cmd_LED->dataoff + cmd_LED->datasize )
-            ==  (linkedit->fileoff + linkedit->filesize)) {
-                linkedit->filesize -= cmd_LED->datasize;
-            }
-            memset(addr + linkedit->fileoff, 0, cmdsize);
-            goto snip;
+            fprintf(stderr, "macho-snip: use 'codesign --remove-signature' to remove LC_CODE_SIGNATURE\n");
         } break;
 
 //struct nlist_64 {
@@ -305,6 +298,8 @@ again: ;
 // value per 4KB page) has offset (4 mod 16) instead of (0 mod 16).]
 
         case LC_SYMTAB: {
+            fprintf(stderr, "macho-snip: LC_SYMTAB skipped\n");
+            continue;
             struct symtab_command *symcmd = (struct symtab_command *)cmd;
             if ((  symcmd->strsize +    symcmd->stroff)
             != (linkedit->filesize + linkedit->fileoff)) {
@@ -328,6 +323,8 @@ again: ;
             symcmd->nsyms -= 1;  // lop last symbol  FIXME: generalize
         } break;
         case LC_DYSYMTAB: {
+            fprintf(stderr, "macho-snip: LD_DYSYMTAB skipped\n");
+            continue;
             struct dysymtab_command *dysym = (struct dysymtab_command *)cmd;
             if (0==(dysym->nundefsym -= 1)) { // FIXME: generalize
                 dysym->iundefsym = 0;
@@ -335,15 +332,25 @@ again: ;
         } break;
 
         case LC_BUILD_VERSION:
+        case LC_DYLD_INFO:  // also LC_DYLD_INFO_ONLY because low 8 bits
         case LC_LOAD_DYLIB:
         case LC_LOAD_DYLINKER:
         case LC_MAIN:
-        case LC_SOURCE_VERSION: {
+        case LC_SOURCE_VERSION: 
+        case LC_UUID:
+        {
             for (jargv = 2; jargv < argc; ++jargv) {
                 if (argv[jargv] && !strcmp(cmd_names[cmd->cmd & 0xFF].name, argv[jargv])) {
                     argv_done |= 1uL << jargv;
                     fprintf(stderr, "macho-snip: %#x, %s\n",
                         cmd_names[cmd->cmd & 0xFF].val, cmd_names[cmd->cmd & 0xFF].name);
+                    // EXPERIMENT:
+                    if (cmd->cmd == LC_DYLD_INFO_ONLY) { // the "must process" case
+                        struct dyld_info_command *dyldcmd = (struct dyld_info_command *)cmd;
+                        dyldcmd->export_off = 0;
+                        dyldcmd->export_size = 0;
+                        goto next;  // EXPERIMENT
+                    }
                     goto snip;
                 }
             }
@@ -366,8 +373,7 @@ again: ;
             }
         } break;
         }
-        cmd = (struct load_command *)(cmdsize + (void *)cmd);
-        continue;
+        continue;  // no changes ==> advance
 snip_linkedit_data_command: ;
         struct linkedit_data_command *ldc = (struct linkedit_data_command *)cmd;
         end_datasize = ldc->datasize;
@@ -379,12 +385,12 @@ snip_linkedit_data_command: ;
 snip: ;
         memmove(cmd, cmd_next, headway);
         memset(headway + (char *)cmd, 0, cmdsize);  // space that was vacated
-        cmd_next = cmd;  // we moved *cmd_next to *cmd
+        cmd_next = cmd;  // we moved tail at *cmd_next to *cmd
         mhdr->sizeofcmds -= cmdsize;
         mhdr->ncmds -= 1;
         argv[jargv] = 0;  // snip only once per argv[]
         }  // switch
-        cmd = cmd_next;
+next: ;
     }  // ncmds
     argv_done |= (1<<1) | (1<<0);  // argv[0,1] do not name linker_commands
     if (~(~0uL << argc) != argv_done) {
