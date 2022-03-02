@@ -336,7 +336,7 @@ again: ;
         case LC_LOAD_DYLIB:
         case LC_LOAD_DYLINKER:
         case LC_MAIN:
-        case LC_SOURCE_VERSION: 
+        case LC_SOURCE_VERSION:
         case LC_UUID:
         {
             for (jargv = 2; jargv < argc; ++jargv) {
