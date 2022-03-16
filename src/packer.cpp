@@ -37,7 +37,8 @@
 **************************************************************************/
 
 Packer::Packer(InputFile *f)
-    : bele(nullptr), fi(f), file_size(-1), ph_format(-1), ph_version(-1), uip(nullptr),
+    : bele(nullptr), fi(f), file_size(-1), ph_format(-1), ph_version(-1),
+      ibufgood(0), uip(nullptr),
       linker(nullptr), last_patch(nullptr), last_patch_len(0), last_patch_off(0) {
     file_size = 0;
     if (fi != nullptr)
@@ -805,8 +806,12 @@ int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_) {
 // relocation util
 **************************************************************************/
 
-upx_byte *Packer::optimizeReloc(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image,
-                                int bswap, int *big, int bits) {
+upx_byte *Packer::optimizeReloc(
+    upx_byte *in, unsigned relocnum,
+    upx_byte *out,
+    upx_byte *image, unsigned headway,
+    int bswap, int *big, int bits)
+{
     if (opt->exact)
         throwCantPackExact();
 
@@ -840,6 +845,11 @@ upx_byte *Packer::optimizeReloc(upx_byte *in, unsigned relocnum, upx_byte *out, 
             fix += 4;
         }
         pc += oc;
+        if (headway <= pc) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                "bad reloc[%#x] = %#x", jc, oc);
+            throwCantPack(msg);
+        }
         if (bswap) {
             if (bits == 32)
                 set_be32(image + pc, get_le32(image + pc));
@@ -853,14 +863,14 @@ upx_byte *Packer::optimizeReloc(upx_byte *in, unsigned relocnum, upx_byte *out, 
     return fix;
 }
 
-upx_byte *Packer::optimizeReloc32(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image,
+upx_byte *Packer::optimizeReloc32(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image, unsigned headway,
                                   int bswap, int *big) {
-    return optimizeReloc(in, relocnum, out, image, bswap, big, 32);
+    return optimizeReloc(in, relocnum, out, image, headway, bswap, big, 32);
 }
 
-upx_byte *Packer::optimizeReloc64(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image,
+upx_byte *Packer::optimizeReloc64(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image, unsigned headway,
                                   int bswap, int *big) {
-    return optimizeReloc(in, relocnum, out, image, bswap, big, 64);
+    return optimizeReloc(in, relocnum, out, image, headway, bswap, big, 64);
 }
 
 unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image, MemBuffer *out, int bswap,

@@ -399,7 +399,7 @@ void PackWcle::preprocessFixups()
         delete[] ifixups;
         ifixups = new upx_byte[1000];
     }
-    fix = optimizeReloc32 (rl,rc,ifixups,iimage,1,&big_relocs);
+    fix = optimizeReloc32 (rl,rc,ifixups,iimage,file_size,1,&big_relocs);
     has_extra_code = srf != selector_fixups;
     // FIXME: this could be removed if has_extra_code = false
     // but then we'll need a flag
@@ -762,13 +762,11 @@ void PackWcle::decodeImage()
 
 void PackWcle::decodeEntryTable()
 {
-    unsigned count,object,n,r;
+    unsigned count,object,r;
     upx_byte *p = ientries;
-    n = 0;
     while (*p)
     {
         count = *p;
-        n += count;
         if (p[1] == 0) // unused bundle
             p += 2;
         else if (p[1] == 3) // 32-bit offset bundle

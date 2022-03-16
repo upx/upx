@@ -172,7 +172,18 @@ int PackTmt::readFileHeader()
 
     fi->seek(adam_offset,SEEK_SET);
     fi->readx(&ih,sizeof(ih));
-    // FIXME: should add some checks for the values in 'ih'
+    // FIXME: should add more checks for the values in 'ih'
+    unsigned const imagesize = get_le32(&ih.imagesize);
+    unsigned const entry     = get_le32(&ih.entry);
+    unsigned const relocsize = get_le32(&ih.relocsize);
+    if (!imagesize
+    ||  file_size <= imagesize
+    ||  file_size <= entry
+    ||  file_size <= relocsize) {
+        printWarn(getName(), "bad header; imagesize=%#x  entry=%#x  relocsize=%#x",
+            imagesize, entry, relocsize);
+        return 0;
+    }
 
     return UPX_F_TMT_ADAM;
 #undef H4
@@ -224,7 +235,9 @@ void PackTmt::pack(OutputFile *fo)
     {
         for (unsigned ic=4; ic<=rsize; ic+=4)
             set_le32(wrkmem+ic,get_le32(wrkmem+ic)-4);
-        relocsize = ptr_diff(optimizeReloc32(wrkmem+4,rsize/4,wrkmem,ibuf,1,&big_relocs), wrkmem);
+        relocsize = ptr_diff(
+            optimizeReloc32(wrkmem+4,rsize/4,wrkmem,ibuf,file_size,1,&big_relocs),
+            wrkmem);
     }
 
     wrkmem[relocsize++] = 0;

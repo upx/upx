@@ -40,7 +40,14 @@ section         PEISDLL1
                 jnz     reloc_end_jmp
 section         PEMAIN01
                 pusha
+section         PESOCREL
                 mov     esi, offset start_of_compressed       // relocated
+section         PESOCPIC
+                call    get_eip
+get_eip:
+                pop     eax
+                lea     esi, [eax + start_of_compressed - get_eip]
+section         PESOUNC0
                 lea     edi, [esi + start_of_uncompressed]
 section         PEICONS1
                 incw    [edi + icon_offset]

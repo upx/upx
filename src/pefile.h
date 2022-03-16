@@ -212,8 +212,10 @@ protected:
     pe_section_t *isection;
     bool isdll;
     bool isrtm;
+    bool isefi;
     bool use_dep_hack;
     bool use_clear_dirty_stack;
+    bool use_stub_relocs;
 
 
     static unsigned virta2objnum (unsigned, pe_section_t *, unsigned);

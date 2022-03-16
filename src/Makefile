@@ -91,6 +91,7 @@ CXXFLAGS_WERROR ?= -Werror
 
 # Mandatory Flags - DO NOT CHANGE!
 mf.CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
+mf.CXXFLAGS += -std=c++14
 mf.CXXFLAGS += $(CXXFLAGS_OPTIMIZE)
 # protect against security threats caused by misguided C++ compiler "optimizations"
 mf.CXXFLAGS += $(CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS)

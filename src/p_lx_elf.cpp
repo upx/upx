@@ -815,7 +815,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
 
         Elf64_Phdr const *phdr= phdri;
         for (int j = e_phnum; --j>=0; ++phdr)
-        if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
+        if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             upx_uint64_t offset = check_pt_dynamic(phdr);
             dynseg= (Elf64_Dyn const *)(offset + file_image);
             invert_pt_dynamic(dynseg,
@@ -1646,13 +1646,11 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
     else if (dt_table[Elf32_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf32_Dyn::DT_INIT_ARRAY;
 
     unsigned const z_str = dt_table[Elf32_Dyn::DT_STRSZ];
-    if (z_str) {
-        strtab_end = get_te32(&dynp0[-1+ z_str].d_val);
-        if ((u32_t)file_size <= strtab_end) { // FIXME: weak
-            char msg[50]; snprintf(msg, sizeof(msg),
-                "bad DT_STRSZ %#x", strtab_end);
-            throwCantPack(msg);
-        }
+    strtab_end = !z_str ? 0 : get_te64(&dynp0[-1+ z_str].d_val);
+    if (!z_str || (u64_t)file_size <= strtab_end) { // FIXME: weak
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad DT_STRSZ %#x", strtab_end);
+        throwCantPack(msg);
     }
     unsigned const x_sym = dt_table[Elf32_Dyn::DT_SYMTAB];
     unsigned const x_str = dt_table[Elf32_Dyn::DT_STRTAB];
@@ -1690,7 +1688,8 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
-        if ((nbucket>>31) || !v_sym || (unsigned)file_size <= v_sym
+        if ((unsigned)file_size <= nbucket/sizeof(*buckets)  // FIXME: weak
+        || !v_sym || (unsigned)file_size <= v_sym
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
             char msg[80]; snprintf(msg, sizeof(msg),
@@ -1752,6 +1751,12 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
                 }
             }
         }
+        if (1==n_bucket  && 0==buckets[0]
+        &&  1==n_bitmask && 0==bitmask[0]) {
+            // 2021-09-11 Rust on RaspberryPi apparently uses this to minimize space.
+            // But then the DT_GNU_HASH symbol lookup algorithm always fails?
+            // https://github.com/upx/upx/issues/525
+        } else
         if ((1+ bmax) < symbias) {
             char msg[90]; snprintf(msg, sizeof(msg),
                     "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
@@ -2170,6 +2175,9 @@ bool PackLinuxElf32::canPack()
             }
             check_pt_load(phdr);
         }
+        if (!pload_x0) {
+            throwCantPack("No PT_LOAD has (p_flags & PF_X)");
+        }
         // elf_find_dynamic() returns 0 if 0==dynseg.
         dynstr=          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
         dynsym=     (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
@@ -2564,6 +2572,9 @@ PackLinuxElf64::canPack()
                 pload_x0 = phdr;
             }
             check_pt_load(phdr);
+        }
+        if (!pload_x0) {
+            throwCantPack("No PT_LOAD has (p_flags & PF_X)");
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
         dynstr=          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
@@ -5346,11 +5357,13 @@ PackLinuxElf32::check_pt_dynamic(Elf32_Phdr const *const phdr)
     unsigned vaddr = get_te32(&phdr->p_vaddr);
     unsigned filesz = get_te32(&phdr->p_filesz), memsz = get_te32(&phdr->p_memsz);
     unsigned align = get_te32(&phdr->p_align);
-    if (s < t || (u32_t)file_size < (filesz + t)
+    if (file_size_u < t || s < t
+    ||  file_size_u < filesz
+    ||  file_size_u < (filesz + t)
     ||  t < (e_phnum*sizeof(Elf32_Phdr) + sizeof(Elf32_Ehdr))
     ||  (3 & t) || (7 & (filesz | memsz))  // .balign 4; 8==sizeof(Elf32_Dyn)
     ||  (-1+ align) & (t ^ vaddr)
-    ||  (unsigned long)file_size <= memsz
+    ||  file_size_u <= memsz
     ||  filesz < sizeof(Elf32_Dyn)
     ||  memsz  < sizeof(Elf32_Dyn)
     ||  filesz < memsz) {
@@ -5449,11 +5462,13 @@ PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
     upx_uint64_t vaddr = get_te64(&phdr->p_vaddr);
     upx_uint64_t filesz = get_te64(&phdr->p_filesz), memsz = get_te64(&phdr->p_memsz);
     upx_uint64_t align = get_te64(&phdr->p_align);
-    if (s < t || (upx_uint64_t)file_size < (filesz + t)
+    if (file_size_u < t || s < t
+    ||  file_size_u < filesz
+    ||  file_size_u < (filesz + t)
     ||  t < (e_phnum*sizeof(Elf64_Phdr) + sizeof(Elf64_Ehdr))
     ||  (7 & t) || (0xf & (filesz | memsz))  // .balign 8; 16==sizeof(Elf64_Dyn)
     ||  (-1+ align) & (t ^ vaddr)
-    ||  (unsigned long)file_size <= memsz
+    ||  file_size_u <= memsz
     ||  filesz < sizeof(Elf64_Dyn)
     ||  memsz  < sizeof(Elf64_Dyn)
     ||  filesz < memsz) {
@@ -5507,14 +5522,13 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
     else if (dt_table[Elf64_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf64_Dyn::DT_INIT_ARRAY;
 
     unsigned const z_str = dt_table[Elf64_Dyn::DT_STRSZ];
-    if (z_str) {
-        strtab_end = get_te64(&dynp0[-1+ z_str].d_val);
-        if ((u64_t)file_size <= strtab_end) { // FIXME: weak
-            char msg[50]; snprintf(msg, sizeof(msg),
-                "bad DT_STRSZ %#x", strtab_end);
-            throwCantPack(msg);
-        }
+    strtab_end = !z_str ? 0 : get_te64(&dynp0[-1+ z_str].d_val);
+    if (!z_str || (u64_t)file_size <= strtab_end) { // FIXME: weak
+        char msg[50]; snprintf(msg, sizeof(msg),
+            "bad DT_STRSZ %#x", strtab_end);
+        throwCantPack(msg);
     }
+
     // DT_SYMTAB has no designated length.
     // End it when next area else starts; often DT_STRTAB.  (FIXME)
     unsigned const x_sym = dt_table[Elf64_Dyn::DT_SYMTAB];
@@ -5553,7 +5567,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
-        if ((nbucket>>31) || !v_sym || (unsigned)file_size <= v_sym
+        if ((unsigned)file_size <= nbucket/sizeof(*buckets)  // FIXME: weak
+        || !v_sym || (unsigned)file_size <= v_sym
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
             char msg[80]; snprintf(msg, sizeof(msg),
@@ -5615,6 +5630,12 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
                 }
             }
         }
+        if (1==n_bucket  && 0==buckets[0]
+        &&  1==n_bitmask && 0==bitmask[0]) {
+            // 2021-09-11 Rust on RaspberryPi apparently uses this to minimize space.
+            // But then the DT_GNU_HASH symbol lookup algorithm always fails?
+            // https://github.com/upx/upx/issues/525
+        } else
         if ((1+ bmax) < symbias) {
             char msg[90]; snprintf(msg, sizeof(msg),
                     "bad DT_GNU_HASH (1+ max_bucket)=%#x < symbias=%#x", 1+ bmax, symbias);
@@ -5711,19 +5732,20 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket];
-        if (!nbucket
-        ||  (unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
+        if ((unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
                 <= sizeof(unsigned)*nbucket ) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad nbucket %#x\n", nbucket);
             throwCantPack(msg);
         }
-        unsigned const m = elf_hash(name) % nbucket;
-        unsigned si;
-        for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
-            char const *const p= get_dynsym_name(si, (unsigned)-1);
-            if (0==strcmp(name, p)) {
-                return &dynsym[si];
+        if (nbucket) {
+            unsigned const m = elf_hash(name) % nbucket;
+            unsigned si;
+            for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
+                char const *const p= get_dynsym_name(si, (unsigned)-1);
+                if (0==strcmp(name, p)) {
+                    return &dynsym[si];
+                }
             }
         }
     }
@@ -5735,8 +5757,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const *const bitmask = &gashtab[4];
         unsigned const *const buckets = &bitmask[n_bitmask];
         unsigned const *const hasharr = &buckets[n_bucket];
-        if (!n_bucket
-        || (void const *)&file_image[file_size] <= (void const *)hasharr) {
+        if ((void const *)&file_image[file_size] <= (void const *)hasharr) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
@@ -5748,36 +5769,41 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
                 "bad n_bitmask %#x\n", n_bitmask);
             throwCantPack(msg);
         }
+        if (n_bucket) {
+            unsigned const h = gnu_hash(name);
+            unsigned const hbit1 = 037& h;
+            unsigned const hbit2 = 037& (h>>gnu_shift);
+            unsigned const w = get_te32(&bitmask[(n_bitmask -1) & (h>>5)]);
 
-        unsigned const h = gnu_hash(name);
-        unsigned const hbit1 = 037& h;
-        unsigned const hbit2 = 037& (h>>gnu_shift);
-        unsigned const w = get_te32(&bitmask[(n_bitmask -1) & (h>>5)]);
-
-        if (1& (w>>hbit1) & (w>>hbit2)) {
-            unsigned bucket = get_te32(&buckets[h % n_bucket]);
-            if (n_bucket <= bucket) {
-                char msg[90]; snprintf(msg, sizeof(msg),
-                        "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
-                        n_bucket, h % n_bucket, bucket);
-                throwCantPack(msg);
-            }
-            if (0!=bucket) {
-                Elf32_Sym const *dsp = &dynsym[bucket];
-                unsigned const *hp = &hasharr[bucket - symbias];
-
-                do if (0==((h ^ get_te32(hp))>>1)) {
-                    unsigned st_name = get_te32(&dsp->st_name);
-                    char const *const p = get_str_name(st_name, (unsigned)-1);
-                    if (0==strcmp(name, p)) {
-                        return dsp;
-                    }
-                } while (++dsp,
-                        (char const *)hp < (char const *)&file_image[file_size]
-                    &&  0==(1u& get_te32(hp++)));
+            if (1& (w>>hbit1) & (w>>hbit2)) {
+                unsigned bucket = get_te32(&buckets[h % n_bucket]);
+                if (n_bucket <= bucket) {
+                    char msg[90]; snprintf(msg, sizeof(msg),
+                            "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
+                            n_bucket, h % n_bucket, bucket);
+                    throwCantPack(msg);
+                }
+                if (0!=bucket) {
+                    Elf32_Sym const *dsp = &dynsym[bucket];
+                    unsigned const *hp = &hasharr[bucket - symbias];
+                    do if (0==((h ^ get_te32(hp))>>1)) {
+                        unsigned st_name = get_te32(&dsp->st_name);
+                        char const *const p = get_str_name(st_name, (unsigned)-1);
+                        if (0==strcmp(name, p)) {
+                            return dsp;
+                        }
+                    } while (++dsp,
+                            (char const *)hp < (char const *)&file_image[file_size]
+                        &&  0==(1u& get_te32(hp++)));
+                }
             }
         }
     }
+    // 2021-12-25  FIXME: Some Rust programs use
+    //    (1==n_bucket && 0==buckets[0] && 1==n_bitmask && 0==bitmask[0])
+    // to minimize space in DT_GNU_HASH. This causes the fancy lookup to fail.
+    // Is a fallback to linear seach assumed?
+    // 2022-03-12  Some Rust programs have 0==n_bucket.
     return nullptr;
 
 }
@@ -5788,19 +5814,20 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
         unsigned const *const chains = &buckets[nbucket];
-        if (!nbucket
-        ||  (unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
+        if ((unsigned)(file_size - ((char const *)buckets - (char const *)(void const *)file_image))
                 <= sizeof(unsigned)*nbucket ) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad nbucket %#x\n", nbucket);
             throwCantPack(msg);
         }
-        unsigned const m = elf_hash(name) % nbucket;
-        unsigned si;
-        for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
-            char const *const p= get_dynsym_name(si, (unsigned)-1);
-            if (0==strcmp(name, p)) {
-                return &dynsym[si];
+        if (nbucket) { // -rust-musl can have "empty" hashtab
+            unsigned const m = elf_hash(name) % nbucket;
+            unsigned si;
+            for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
+                char const *const p= get_dynsym_name(si, (unsigned)-1);
+                if (0==strcmp(name, p)) {
+                    return &dynsym[si];
+                }
             }
         }
     }
@@ -5812,8 +5839,8 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         upx_uint64_t const *const bitmask = (upx_uint64_t const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket];
-        if (!n_bucket
-        || (void const *)&file_image[file_size] <= (void const *)hasharr) {
+
+        if ((void const *)&file_image[file_size] <= (void const *)hasharr) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
@@ -5825,36 +5852,40 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
                 "bad n_bitmask %#x\n", n_bitmask);
             throwCantPack(msg);
         }
-
-        unsigned const h = gnu_hash(name);
-        unsigned const hbit1 = 077& h;
-        unsigned const hbit2 = 077& (h>>gnu_shift);
-        upx_uint64_t const w = get_te64(&bitmask[(n_bitmask -1) & (h>>6)]);
-
-        if (1& (w>>hbit1) & (w>>hbit2)) {
-            unsigned bucket = get_te32(&buckets[h % n_bucket]);
-            if (n_bucket <= bucket) {
-                char msg[90]; snprintf(msg, sizeof(msg),
-                        "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
-                        n_bucket, h % n_bucket, bucket);
-                throwCantPack(msg);
-            }
-            if (0!=bucket) {
-                Elf64_Sym const *dsp = &dynsym[bucket];
-                unsigned const *hp = &hasharr[bucket - symbias];
-
-                do if (0==((h ^ get_te32(hp))>>1)) {
-                    unsigned st_name = get_te32(&dsp->st_name);
-                    char const *const p = get_str_name(st_name, (unsigned)-1);
-                    if (0==strcmp(name, p)) {
-                        return dsp;
-                    }
-                } while (++dsp,
-                        (char const *)hp < (char const *)&file_image[file_size]
-                    &&  0==(1u& get_te32(hp++)));
+        if (n_bucket) { // -rust-musl can have "empty" gashtab
+            unsigned const h = gnu_hash(name);
+            unsigned const hbit1 = 077& h;
+            unsigned const hbit2 = 077& (h>>gnu_shift);
+            upx_uint64_t const w = get_te64(&bitmask[(n_bitmask -1) & (h>>6)]);
+            if (1& (w>>hbit1) & (w>>hbit2)) {
+                unsigned bucket = get_te32(&buckets[h % n_bucket]);
+                if (n_bucket <= bucket) {
+                    char msg[90]; snprintf(msg, sizeof(msg),
+                            "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
+                            n_bucket, h % n_bucket, bucket);
+                    throwCantPack(msg);
+                }
+                if (0!=bucket) {
+                    Elf64_Sym const *dsp = &dynsym[bucket];
+                    unsigned const *hp = &hasharr[bucket - symbias];
+                    do if (0==((h ^ get_te32(hp))>>1)) {
+                        unsigned st_name = get_te32(&dsp->st_name);
+                        char const *const p = get_str_name(st_name, (unsigned)-1);
+                        if (0==strcmp(name, p)) {
+                            return dsp;
+                        }
+                    } while (++dsp,
+                            (char const *)hp < (char const *)&file_image[file_size]
+                        &&  0==(1u& get_te32(hp++)));
+                }
             }
         }
     }
+    // 2021-12-25  FIXME: Some Rust programs use
+    //    (1==n_bucket && 0==buckets[0] && 1==n_bitmask && 0==bitmask[0])
+    // to minimize space in DT_GNU_HASH. This causes the fancy lookup to fail.
+    // Is a fallback to linear seach assumed?
+    // 2022-03-12  Some Rust programs have 0==n_bucket.
     return nullptr;
 
 }
