@@ -177,14 +177,23 @@ protected:
                              bool inhibit_compression_check = false);
     void compressWithFilters(Filter *ft, const unsigned overlap_range,
                              const upx_compress_config_t *cconf, int filter_strategy,
-                             unsigned filter_buf_off, unsigned compress_ibuf_off,
-                             unsigned compress_obuf_off, const upx_bytep hdr_ptr, unsigned hdr_len,
+                             unsigned    filter_buf_off,
+                             unsigned compress_ibuf_off,
+                             unsigned compress_obuf_off,
+                             upx_bytep const hdr_ptr, unsigned hdr_len,
                              bool inhibit_compression_check = false);
     // real compression driver
-    void compressWithFilters(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr, upx_bytep f_ptr,
-                             unsigned f_len, const upx_bytep hdr_ptr, unsigned hdr_len, Filter *ft,
-                             const unsigned overlap_range, const upx_compress_config_t *cconf,
-                             int filter_strategy, bool inhibit_compression_check = false);
+    void compressWithFilters(
+        upx_bytep i_ptr, unsigned i_len,  // written and restored by filters
+        upx_bytep o_ptr,
+        upx_bytep f_ptr, unsigned f_len,  // subset of [*i_ptr, +i_len)
+        upx_bytep const hdr_ptr, unsigned hdr_len,
+        Filter *parm_ft,  // updated
+        unsigned overlap_range,
+        upx_compress_config_t const *cconf,
+        int filter_strategy,
+        bool inhibit_compression_check = false
+    );
 
     // util for verifying overlapping decompresion
     //   non-destructive test
@@ -239,6 +248,7 @@ public:
 protected:
     const int *getDefaultCompressionMethods_8(int method, int level, int small = -1) const;
     const int *getDefaultCompressionMethods_le32(int method, int level, int small = -1) const;
+    int prepareMethods(int *methods, int ph_method, const int *all_methods) const;
     virtual const char *getDecompressorSections() const;
     virtual unsigned getDecompressorWrkmemSize() const;
     virtual void defineDecompressorSymbols();
