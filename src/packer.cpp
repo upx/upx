@@ -1091,6 +1091,7 @@ void Packer::relocateLoader() {
 }
 
 /*************************************************************************
+//      void Packer::compressWithFilters():
 // Try compression with several methods and filters, choose the best
 /  or first working one. Needs buildLoader().
 //
@@ -1137,7 +1138,7 @@ void Packer::relocateLoader() {
 // is OK because of the simplicity of not having two output arrays.
 **************************************************************************/
 
-static int prepareMethods(int *methods, int ph_method, const int *all_methods) {
+int Packer::prepareMethods(int *methods, int ph_method, const int *all_methods) const {
     int nmethods = 0;
     if (!opt->all_methods || all_methods == nullptr) {
         methods[nmethods++] = ph_method;
@@ -1212,11 +1213,18 @@ done:
     return nfilters;
 }
 
-void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr, upx_bytep f_ptr,
-                                 unsigned f_len, const upx_bytep hdr_ptr, unsigned hdr_len,
-                                 Filter *parm_ft, const unsigned overlap_range,
-                                 const upx_compress_config_t *cconf, int filter_strategy,
-                                 bool inhibit_compression_check) {
+void Packer::compressWithFilters(
+    upx_bytep       i_ptr, unsigned const i_len,  // written and restored by filters
+    upx_bytep const o_ptr,                        // where to put compressed output
+    upx_bytep       f_ptr, unsigned const f_len,  // subset of [*i_ptr, +i_len)
+    upx_bytep const hdr_ptr, unsigned const hdr_len,
+    Filter *const parm_ft,  // updated
+    unsigned const overlap_range,
+    upx_compress_config_t const *const cconf,
+    int filter_strategy,  // in+out for prepareFilters
+    bool const inhibit_compression_check
+)
+{
     parm_ft->buf_len = f_len;
     // struct copies
     const PackHeader orig_ph = this->ph;
@@ -1404,18 +1412,26 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len, upx_bytep o_pt
 //
 **************************************************************************/
 
-void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
-                                 const upx_compress_config_t *cconf, int filter_strategy,
-                                 bool inhibit_compression_check) {
-    compressWithFilters(ft, overlap_range, cconf, filter_strategy, 0, 0, 0, nullptr, 0,
-                        inhibit_compression_check);
+void Packer::compressWithFilters(
+    Filter *ft, const unsigned overlap_range,
+    const upx_compress_config_t *cconf, int filter_strategy,
+    bool inhibit_compression_check)
+{
+    compressWithFilters( // call the subroutine immediately below
+        ft, overlap_range,
+        cconf, filter_strategy,
+        0, 0, 0,
+        nullptr, 0,
+        inhibit_compression_check);
 }
 
-void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
-                                 const upx_compress_config_t *cconf, int filter_strategy,
-                                 unsigned filter_off, unsigned ibuf_off, unsigned obuf_off,
-                                 const upx_bytep hdr_ptr, unsigned hdr_len,
-                                 bool inhibit_compression_check) {
+void Packer::compressWithFilters(
+    Filter *ft, const unsigned overlap_range,
+    upx_compress_config_t const *cconf, int filter_strategy,
+    unsigned filter_off, unsigned ibuf_off, unsigned obuf_off,
+    upx_bytep const hdr_ptr, unsigned hdr_len,
+    bool inhibit_compression_check)
+{
     ibuf.checkState();
     obuf.checkState();
 
@@ -1427,8 +1443,13 @@ void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
 
     assert(f_ptr + f_len <= i_ptr + i_len);
 
-    compressWithFilters(i_ptr, i_len, o_ptr, f_ptr, f_len, hdr_ptr, hdr_len, ft, overlap_range,
-                        cconf, filter_strategy, inhibit_compression_check);
+    compressWithFilters( // call the first one in this file
+        i_ptr, i_len,
+        o_ptr,
+        f_ptr, f_len,
+        hdr_ptr, hdr_len,
+        ft, overlap_range,
+        cconf, filter_strategy, inhibit_compression_check);
 
     ibuf.checkState();
     obuf.checkState();

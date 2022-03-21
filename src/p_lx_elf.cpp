@@ -2276,8 +2276,8 @@ bool PackLinuxElf32::canPack()
                                 if (r_va == user_init_ava) { // found the Elf32_Rel
                                     unsigned r_info = get_te32(&rp->r_info);
                                     unsigned r_type = ELF32_R_TYPE(r_info);
-                                    if (Elf32_Ehdr::EM_ARM == e_machine
-                                    &&  R_ARM_RELATIVE == r_type) {
+                                    if ((Elf32_Ehdr::EM_ARM == e_machine && R_ARM_RELATIVE == r_type)
+                                    ||  (Elf32_Ehdr::EM_386 == e_machine && R_386_RELATIVE == r_type) ) {
                                         user_init_va = get_te32(&file_image[user_init_off]);
                                     }
                                     else {
@@ -2464,7 +2464,7 @@ PackLinuxElf64::canPack()
         return false;
     }
 
-    // The first PT_LOAD64 must cover the beginning of the file (0==p_offset).
+    upx_uint64_t max_LOADsz = 0, max_offset = 0;
     Elf64_Phdr const *phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14) {
@@ -2472,23 +2472,27 @@ PackLinuxElf64::canPack()
             return false;
         }
         unsigned const p_type = get_te32(&phdr->p_type);
-        if (1!=exetype && PT_LOAD64 == p_type) { // 1st PT_LOAD
-            exetype = 1;
-            load_va = get_te64(&phdr->p_vaddr);  // class data member
-            upx_uint64_t const p_offset = get_te64(&phdr->p_offset);
-            upx_uint64_t const off = ~page_mask & load_va;
-            if (off && off == p_offset) { // specific hint
-                throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
-                // Fixing it inside upx fails because packExtent() reads original file.
-                return false;
+        if (PT_LOAD64 == p_type) {
+            // The first PT_LOAD64 must cover the beginning of the file (0==p_offset).
+            if (1!= exetype) {
+                exetype = 1;
+                load_va = get_te64(&phdr->p_vaddr);  // class data member
+                upx_uint64_t const p_offset = get_te64(&phdr->p_offset);
+                upx_uint64_t const off = ~page_mask & load_va;
+                if (off && off == p_offset) { // specific hint
+                    throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
+                    // Fixing it inside upx fails because packExtent() reads original file.
+                    return false;
+                }
+                if (0 != p_offset) { // 1st PT_LOAD must cover Ehdr and Phdr
+                    throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
+                    return false;
+                }
+                // FIXME: bad for shlib!
+                hatch_off = ~3ul & (3+ get_te64(&phdr->p_memsz));
             }
-            if (0 != p_offset) { // 1st PT_LOAD must cover Ehdr and Phdr
-                throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
-                return false;
-            }
-            // FIXME: bad for shlib!
-            hatch_off = ~3ul & (3+ get_te64(&phdr->p_memsz));
-            break;
+            max_LOADsz = UPX_MAX(max_LOADsz, get_te64(&phdr->p_filesz));
+            max_offset = UPX_MAX(max_offset, get_te64(&phdr->p_filesz) + get_te64(&phdr->p_offset));
         }
     }
     // We want to compress position-independent executable (gcc -pie)
@@ -2804,7 +2808,8 @@ proceed: ;
     exetype = 0;
 
     // set options
-    opt->o_unix.blocksize = blocksize = file_size;
+    // .blocksize: avoid over-allocating
+    opt->o_unix.blocksize = blocksize = UPX_MAX(max_LOADsz, file_size - max_offset);
     return true;
 }
 
@@ -3688,6 +3693,18 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
     fi->readx(&ehdri, sizeof(ehdri));
     assert(e_phoff == sizeof(Elf64_Ehdr));  // checked by canPack()
     sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
+
+// We compress separate pieces (usually each PT_LOAD, plus the gaps in the file
+// that are not covered by any PT_LOAD), but currently at run time there can be
+// only one decompressor method.
+// Therefore we must plan ahead because Packer::compressWithFilters tries
+// to find the smallest result among the available methods.
+// In the future we may allow more than one decompression method at run time,
+// but for now we must choose just one, and force compressWithFilters to use it.
+    int methods[256];
+    int nmethods = prepareMethods(methods, ph.method, getCompressionMethods(M_ALL, ph.level));
+    if (1 < nmethods) {
+    }
 
     Elf64_Phdr *phdr = phdri;
     note_size = 0;
