@@ -341,6 +341,10 @@ private:
     Packer &operator=(const Packer &) = delete;
 };
 
+int     force_method(int method); // (0x80ul<<24)|method
+int    forced_method(int method); // (0x80ul<<24)|method ==> method
+int is_forced_method(int method); // predicate
+
 #endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */
