@@ -159,12 +159,31 @@ bool ph_skipVerify(const PackHeader &ph) {
     return true;
 }
 
+int force_method(int method)  // mark as forced
+{
+    return (0x80ul<<24) | method;
+}
+
+int is_forced_method(int method)  // predicate
+{
+    return -0x80 == (method >> 24);
+}
+
+int forced_method(int method)  // extract the forced method
+{
+    if (is_forced_method(method))
+        method &= ~(0x80ul<<24);
+    assert(method > 0);
+    return method;
+}
+
 /*************************************************************************
 // compress - wrap call to low-level upx_compress()
 **************************************************************************/
 
 bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
-                      const upx_compress_config_t *cconf_parm) {
+                      const upx_compress_config_t *cconf_parm)
+{
     ph.u_len = i_len;
     ph.c_len = 0;
     assert(ph.level >= 1);
@@ -185,7 +204,8 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
     if (cconf_parm)
         cconf = *cconf_parm;
     // cconf options
-    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method)) {
+    int method = forced_method(ph.method);
+    if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method)) {
         if (opt->crp.crp_ucl.c_flags != -1)
             cconf.conf_ucl.c_flags = opt->crp.crp_ucl.c_flags;
         if (opt->crp.crp_ucl.p_level != -1)
@@ -203,14 +223,14 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
             step = 0;
 #endif
     }
-    if (M_IS_LZMA(ph.method)) {
+    if (M_IS_LZMA(method)) {
         oassign(cconf.conf_lzma.pos_bits, opt->crp.crp_lzma.pos_bits);
         oassign(cconf.conf_lzma.lit_pos_bits, opt->crp.crp_lzma.lit_pos_bits);
         oassign(cconf.conf_lzma.lit_context_bits, opt->crp.crp_lzma.lit_context_bits);
         oassign(cconf.conf_lzma.dict_size, opt->crp.crp_lzma.dict_size);
         oassign(cconf.conf_lzma.num_fast_bytes, opt->crp.crp_lzma.num_fast_bytes);
     }
-    if (M_IS_DEFLATE(ph.method)) {
+    if (M_IS_DEFLATE(method)) {
         oassign(cconf.conf_zlib.mem_level, opt->crp.crp_zlib.mem_level);
         oassign(cconf.conf_zlib.window_bits, opt->crp.crp_zlib.window_bits);
         oassign(cconf.conf_zlib.strategy, opt->crp.crp_zlib.strategy);
@@ -223,7 +243,7 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
     // OutputFile::dump("data.raw", in, ph.u_len);
 
     // compress
-    int r = upx_compress(i_ptr, ph.u_len, o_ptr, &ph.c_len, uip->getCallback(), ph.method, ph.level,
+    int r = upx_compress(i_ptr, ph.u_len, o_ptr, &ph.c_len, uip->getCallback(), method, ph.level,
                          &cconf, &ph.compress_result);
 
     // uip->finalCallback(ph.u_len, ph.c_len);
@@ -234,7 +254,7 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
     if (r != UPX_E_OK)
         throwInternalError("compression failed");
 
-    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method)) {
+    if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method)) {
         const ucl_uint *res = ph.compress_result.result_ucl.result;
         // ph.min_offset_found = res[0];
         ph.max_offset_found = res[1];
@@ -251,7 +271,7 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
         }
     }
 
-    // printf("\nPacker::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
+    // printf("\nPacker::compress: %d/%d: %7d -> %7d\n", method, ph.level, ph.u_len, ph.c_len);
     if (!checkCompressionRatio(ph.u_len, ph.c_len))
         return false;
     // return in any case if not compressible
@@ -264,10 +284,10 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
     if (!ph_skipVerify(ph)) {
         // decompress
         unsigned new_len = ph.u_len;
-        r = upx_decompress(o_ptr, ph.c_len, i_ptr, &new_len, ph.method, &ph.compress_result);
+        r = upx_decompress(o_ptr, ph.c_len, i_ptr, &new_len, method, &ph.compress_result);
         if (r == UPX_E_OUT_OF_MEMORY)
             throwOutOfMemoryException();
-        // printf("%d %d: %d %d %d\n", ph.method, r, ph.c_len, ph.u_len, new_len);
+        // printf("%d %d: %d %d %d\n", method, r, ph.c_len, ph.u_len, new_len);
         if (r != UPX_E_OK)
             throwInternalError("decompression failed");
         if (new_len != ph.u_len)
@@ -338,7 +358,7 @@ void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out, bool verif
         throwCantUnpack("header corrupted");
     }
     unsigned new_len = ph.u_len;
-    int r = upx_decompress(in, ph.c_len, out, &new_len, ph.method, &ph.compress_result);
+    int r = upx_decompress(in, ph.c_len, out, &new_len, forced_method(ph.method), &ph.compress_result);
     if (r == UPX_E_OUT_OF_MEMORY)
         throwOutOfMemoryException();
     if (r != UPX_E_OK || new_len != ph.u_len)
@@ -382,8 +402,8 @@ static bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_byte
 
     unsigned src_off = ph.u_len + overlap_overhead - ph.c_len;
     unsigned new_len = ph.u_len;
-    int r = upx_test_overlap(buf - src_off, tbuf, src_off, ph.c_len, &new_len, ph.method,
-                             &ph.compress_result);
+    int r = upx_test_overlap(buf - src_off, tbuf, src_off, ph.c_len, &new_len,
+           forced_method(ph.method), &ph.compress_result);
     if (r == UPX_E_OUT_OF_MEMORY)
         throwOutOfMemoryException();
     return (r == UPX_E_OK && new_len == ph.u_len);
@@ -1140,8 +1160,8 @@ void Packer::relocateLoader() {
 
 int Packer::prepareMethods(int *methods, int ph_method, const int *all_methods) const {
     int nmethods = 0;
-    if (!opt->all_methods || all_methods == nullptr) {
-        methods[nmethods++] = ph_method;
+    if (!opt->all_methods || all_methods == nullptr || (-0x80 == (ph_method>>24))) {
+        methods[nmethods++] = forced_method(ph_method);
         return nmethods;
     }
     for (int mm = 0; all_methods[mm] != M_END; ++mm) {
@@ -1252,19 +1272,21 @@ void Packer::compressWithFilters(
     assert(nfilters < 256);
 #if 0
     printf("compressWithFilters: m(%d):", nmethods);
-    for (int i = 0; i < nmethods; i++) printf(" %d", methods[i]);
+    for (int i = 0; i < nmethods; i++) printf(" %#x", methods[i]);
     printf(" f(%d):", nfilters);
-    for (int i = 0; i < nfilters; i++) printf(" %d", filters[i]);
+    for (int i = 0; i < nfilters; i++) printf(" %#x", filters[i]);
     printf("\n");
 #endif
 
     // update total_passes; previous (ui_total_passes > 0) means incremental
-    if (uip->ui_total_passes > 0)
-        uip->ui_total_passes -= 1;
-    if (filter_strategy < 0)
-        uip->ui_total_passes += nmethods;
-    else
-        uip->ui_total_passes += nfilters * nmethods;
+    if (!is_forced_method(ph.method)) {
+        if (uip->ui_total_passes > 0)
+            uip->ui_total_passes -= 1;
+        if (filter_strategy < 0)
+            uip->ui_total_passes += nmethods;
+        else
+            uip->ui_total_passes += nfilters * nmethods;
+    }
 
     // Working buffer for compressed data. Don't waste memory and allocate as needed.
     upx_bytep o_tmp = o_ptr;
@@ -1274,6 +1296,9 @@ void Packer::compressWithFilters(
     int nfilters_success_total = 0;
     for (int mm = 0; mm < nmethods; mm++) // for all methods
     {
+#if 0  //{
+        printf("\nmethod %d (%d of %d)\n", methods[mm], 1+ mm, nmethods);
+#endif  //}
         assert(isValidCompressionMethod(methods[mm]));
         unsigned hdr_c_len = 0;
         if (hdr_ptr != nullptr && hdr_len) {
@@ -1319,7 +1344,7 @@ void Packer::compressWithFilters(
             }
             // filter success
 #if 0
-            printf("filter: id 0x%02x size %6d, calls %5d/%5d/%3d/%5d/%5d, cto 0x%02x\n",
+            printf("\nfilter: id 0x%02x size %6d, calls %5d/%5d/%3d/%5d/%5d, cto 0x%02x\n",
                    ft.id, ft.buf_len, ft.calls, ft.noncalls, ft.wrongcalls, ft.firstcall, ft.lastcall, ft.cto);
 #endif
             if (nfilters_success_total != 0 && o_tmp == o_ptr) {

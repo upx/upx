@@ -1266,7 +1266,7 @@ PackLinuxElf64::buildLinuxLoader(
     {
     unsigned h_sz_cpr = h.sz_cpr;
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h_sz_cpr,
-        nullptr, ph.method, 10, nullptr, nullptr );
+        nullptr, forced_method(ph.method), 10, nullptr, nullptr );
     h.sz_cpr = h_sz_cpr;
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
@@ -2808,7 +2808,8 @@ proceed: ;
     exetype = 0;
 
     // set options
-    // .blocksize: avoid over-allocating
+    // this->blocksize: avoid over-allocating.
+    // (file_size - max_offset): debug info, non-globl symbols, etc.
     opt->o_unix.blocksize = blocksize = UPX_MAX(max_LOADsz, file_size - max_offset);
     return true;
 }
@@ -3687,7 +3688,7 @@ void PackLinuxElf64ppc::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, stub_powerpc64_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
-void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
+void PackLinuxElf64::pack1(OutputFile *fo, Filter &ft)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -3698,16 +3699,102 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 // that are not covered by any PT_LOAD), but currently at run time there can be
 // only one decompressor method.
 // Therefore we must plan ahead because Packer::compressWithFilters tries
-// to find the smallest result among the available methods.
-// In the future we may allow more than one decompression method at run time,
-// but for now we must choose just one, and force compressWithFilters to use it.
+// to find the smallest result among the available methods, for one piece only.
+// In the future we may allow more than one decompression method at run time.
+// For now we must choose only one, and force PackUnix::packExtent
+// (==> compressWithFilters) to use it.
+    int nfilters = 0;
+    {
+        int const *fp = getFilters();
+        while (FT_END != *fp++) {
+            ++nfilters;
+        }
+    }
+    {
+        int npieces = 1;  // tail after highest PT_LOAD
+        Elf64_Phdr *phdr = phdri;
+        for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+            if (PT_LOAD64 == get_te32(&phdr->p_type)) {
+                unsigned const  flags = get_te32(&phdr->p_flags);
+                unsigned       offset = get_te64(&phdr->p_offset);
+                if (!xct_off  // not shlib
+                  // new-style shlib: PT_LOAD[0] has symbol table
+                  // which must not be compressed, but also lacks PF_X
+                ||    (Elf64_Phdr::PF_X & flags)
+                  // Read-only, non-first PT_LOAD is _assumed_ to be compressible
+                ||  (!(Elf64_Phdr::PF_W & flags) && 0!=offset))
+                {
+                    ++npieces;  // will attempt compression of this PT_LOAD
+                }
+            }
+        }
+        uip->ui_total_passes += npieces;
+    }
     int methods[256];
-    int nmethods = prepareMethods(methods, ph.method, getCompressionMethods(M_ALL, ph.level));
-    if (1 < nmethods) {
+    unsigned nmethods = prepareMethods(methods, ph.method, getCompressionMethods(M_ALL, ph.level));
+    if (1 < nmethods) { // Many are available, but we must choose only one
+        uip->ui_total_passes += 1;  // the batch for output
+        uip->ui_total_passes *= nmethods * (1+ nfilters);  // finding smallest total
+        PackHeader orig_ph = ph;
+        Filter orig_ft = ft;
+        unsigned max_offset = 0;
+        unsigned sz_best= ~0u;
+        int method_best = 0;
+        for (unsigned k = 0; k < nmethods; ++k) { // FIXME: parallelize; cost: working space
+            unsigned sz_this = 0;
+            Elf64_Phdr *phdr = phdri;
+            for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+                if (PT_LOAD64 == get_te32(&phdr->p_type)) {
+                    unsigned const  flags = get_te32(&phdr->p_flags);
+                    unsigned       offset = get_te64(&phdr->p_offset);
+                    unsigned       filesz = get_te64(&phdr->p_filesz);
+                    max_offset = UPX_MAX(max_offset, filesz + offset);
+                    if (!xct_off  // not shlib
+                      // new-style shlib: PT_LOAD[0] has symbol table
+                      // which must not be compressed, but also lacks PF_X
+                    ||    (Elf64_Phdr::PF_X & flags)
+                      // Read-only, non-first PT_LOAD is _assumed_ to be compressible
+                    ||  (!(Elf64_Phdr::PF_W & flags) && 0!=offset))
+                    {
+                        if (xct_off && 0==offset) { // old-style shlib
+                            offset  = xct_off;
+                            filesz -= xct_off;
+                        }
+                        fi->seek(offset, SEEK_SET);
+                        fi->readx(ibuf, filesz);
+                        ft = orig_ft;
+                        ph = orig_ph;
+                        ph.method = force_method(methods[k]);
+                        ph.u_len = filesz;
+                        compressWithFilters(&ft, OVERHEAD, NULL_cconf, 10, true);
+                        sz_this += ph.c_len;
+                    }
+                }
+            }
+            unsigned const sz_tail = file_size - max_offset;  // debuginfo, etc.
+            if (sz_tail) {
+                fi->seek(max_offset, SEEK_SET);
+                fi->readx(ibuf, sz_tail);
+                ft = orig_ft;
+                ph = orig_ph;
+                ph.method = force_method(methods[k]);
+                ph.u_len = sz_tail;
+                compressWithFilters(&ft, OVERHEAD, NULL_cconf, 10, true);
+                sz_this += ph.c_len;
+            }
+            // FIXME: loader size also depends on method
+            if (sz_best > sz_this) {
+                sz_best = sz_this;
+                method_best = methods[k];
+            }
+        }
+        ft = orig_ft;
+        ph = orig_ph;
+        ph.method = force_method(method_best);
     }
 
-    Elf64_Phdr *phdr = phdri;
     note_size = 0;
+    Elf64_Phdr *phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (PT_NOTE64 == get_te32(&phdr->p_type)) {
             note_size += up4(get_te64(&phdr->p_filesz));
