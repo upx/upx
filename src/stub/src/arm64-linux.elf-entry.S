@@ -135,7 +135,7 @@ mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
 #if DEBUG  /*{*/
-    brk #0
+    brk #0  // DEBUG
         TRACE(#0)
 #endif  /*}*/
         call main
