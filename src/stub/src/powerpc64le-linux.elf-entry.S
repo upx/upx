@@ -239,7 +239,7 @@ mmapRW0:
 mmapRW:
         li a2,PROT_READ|PROT_WRITE
 mmap:
-        li r0,__NR_mmap; sc; bns 0f; teq r0,r0; 0:
+        li r0,__NR_mmap; sc; bns 0f; teq r0,r0; 0:  // bad mmap
         ret
 
 zfind:

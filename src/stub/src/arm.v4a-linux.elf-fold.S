@@ -366,7 +366,7 @@ __ARM_NR_cacheflush = 2 + __ARM_NR_BASE
 
         .globl my_bkpt
 my_bkpt:
-        bkpt
+        bkpt  // my_bkpt
         ret
 
         .globl exit

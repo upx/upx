@@ -371,7 +371,7 @@ a5_sys=  5*NBPW  // temporary for syscall
         jr ra
           addiu sp,sp, sp_frame
 mmap_bad:
-        break
+        break  // mmap_bad
 
 zfind:  // result in $r_auxv
         lw v1,(a0); addiu a0,a0,NBPW

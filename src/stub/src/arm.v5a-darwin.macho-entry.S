@@ -277,7 +277,7 @@ hex:
 execp:
         .ascii "executable_path="  // 16 bytes
 L99:
-        bkpt
+        bkpt  // FIXME
 
 main:  // lr= &f_exp;  r7= &argc; r6= -2*NBPW + _start
         mov r_EXP,lr  // &f_decompress

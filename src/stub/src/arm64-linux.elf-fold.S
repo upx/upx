@@ -354,7 +354,7 @@ __NR_munmap   = 0xd7 + __NR_SYSCALL_BASE  // 215
 
         .globl my_bkpt
 my_bkpt:
-        brk #0
+        brk #0  // my_bkpt
         ret
 
         .globl exit

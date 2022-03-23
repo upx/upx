@@ -328,7 +328,7 @@ bswap9:
         ret
 
 bad__udivsi3:
-        bkpt
+        bkpt  // bad__udivsi3
 __udivsi3: .globl __udivsi3
         cmp r1,#10
         bne bad__udivsi3
