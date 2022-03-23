@@ -143,7 +143,7 @@ public:
 
     // FIXME - these won't work when using the '--stdout' option
     virtual upx_off_t seek(upx_off_t off, int whence) override;
-    virtual upx_off_t tell() const;
+    virtual upx_off_t tell() const override;
     virtual void rewrite(const void *buf, int len);
 
     // util
