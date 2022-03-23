@@ -5089,6 +5089,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned u_adler = upx_adler32(nullptr, 0);
 
     unsigned is_shlib = 0;
+    loader_offset = 0;
     MemBuffer o_elfhdrs;
     Elf64_Phdr const *const dynhdr = elf_find_ptype(Elf64_Phdr::PT_DYNAMIC, phdri, c_phnum);
     if (dynhdr) {
@@ -5163,6 +5164,25 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             break;
         }
     }
+    unsigned d_info[6];
+    unsigned sz_d_info = sizeof(d_info);
+    if (!is_shlib) {
+        if (get_te32(&phdri[0].p_flags) & Elf64_Phdr::PF_X) {
+            // Old style, such as upx-3.91 thru upx-3.95
+            switch (this->e_machine) { // FIXME: missing 32-bit EM_386 EM_ARM EM_PPC
+                default: {
+                    char msg[40]; snprintf(msg, sizeof(msg),
+                        "Unknown architecture %d", this->e_machine);
+                    throwCantUnpack(msg);
+                }; break;
+                case Elf64_Ehdr::EM_AARCH64: sz_d_info = 4 * sizeof(unsigned); break;
+                case Elf64_Ehdr::EM_PPC64:   sz_d_info = 3 * sizeof(unsigned); break;
+                case Elf64_Ehdr::EM_X86_64:  sz_d_info = 2 * sizeof(unsigned); break;
+            }
+        }
+        loader_offset = get_te64(&ehdri.e_entry) - load_va - sz_d_info;
+    }
+
     if (0x1000==get_te64(&phdri[0].p_filesz)  // detect C_BASE style
     &&  0==get_te64(&phdri[1].p_offset)
     &&  0==get_te64(&phdri[0].p_offset)
@@ -5180,12 +5200,12 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         else {
             funpad4(fi);  // MATCH01
         }
-        unsigned d_info[6]; fi->readx(d_info, sizeof(d_info));
-        if (0==old_dtinit) {
+        fi->readx(d_info, sz_d_info);
+        if (is_shlib && 0==old_dtinit) {
             old_dtinit = get_te32(&d_info[2 + (0==d_info[0])]);
             is_asl = 1u& get_te32(&d_info[0 + (0==d_info[0])]);
         }
-        fi->seek(lsize - sizeof(d_info), SEEK_CUR);
+        fi->seek(lsize - sz_d_info, SEEK_CUR);
     }
 
     // The gaps between PT_LOAD and after last PT_LOAD
