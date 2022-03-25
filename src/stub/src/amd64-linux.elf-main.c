@@ -506,6 +506,10 @@ do_xmap(
         size_t frag  = (size_t)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
+#if defined(__powerpc64__) || defined(__aarch64__)
+        // Round up to hardware PAGE_SIZE; allows emulator with smaller.
+        mlen += -(mlen + (size_t)addr) &~ PAGE_MASK;
+#endif
 
         if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
