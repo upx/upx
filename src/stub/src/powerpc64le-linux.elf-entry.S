@@ -180,8 +180,8 @@ r_LENU=  28
 r_fd=    27
 r_auxv=  26
 r_elfa=  25
-r_ADRM=  24; r_ADRX= r_ADRM
-r_LENM=  23; r_LENX= r_LENM
+r_ADRX=  24
+r_LENX=  23
 r_FLD=   22
 r_szuf=  21
 r_relo=  20
@@ -199,39 +199,39 @@ unfold:  // IN: r_exp, r_auxv, r_PMASK
           li a3,MAP_PRIVATE|MAP_ANONYMOUS
         sub r_elfa,r_elfa,r0  // r_elfa= &Elf64_Ehdr of stub
           li a0,0  // kernel chooses addr
-        sub r0,r_FLD,r_elfa  // offset(fold)
-        add a1,r_szuf,r0  // length needed
+        mr a1,r_szuf  // length needed
         mr r_LENU,a1
-        call mmapRW0
+        call mmapRW0  // fills in a5, a2
         mr r_ADRU,a0
 
+        lwz r_obinf,      LOBINFO - LrFLD(r_FLD)  // O_BINFO
 // Decompress folded code
+        mtctr r_exp
         lbz meth,b_method + LBINFO - LrFLD(r_FLD)
         std r_szuf,SZ_FRAME+31*NBPW(sp)  // lzma uses for EOF
         la ldst,   SZ_FRAME+31*NBPW(sp)  // &slot on stack
-        mr dst,r_FLD  // dst for unfolding
+        mr dst,r_ADRU  // dst for unfolding
         lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
+        la src,sz_b_info +  LBINFO - LrFLD(r_FLD)  // old folded code
         bctrl  // decompress it
 
 // Generate code to compute PAGE_MASK.
-        lwz r0,0(r_FLD)  // "li r3,PAGE_MASK>>9"
+        lwz r0,0(r_ADRU)  // "li r3,PAGE_MASK>>9"
         srdi a0,r_PMASK,9
         insrdi r0,a0,16,48  // replace the immediate constant
-        stw r0,0(r_FLD)  // get_page_mask: li r3,PAGE_MASK>>9
+        stw r0,0(r_ADRU)  // get_page_mask: li r3,PAGE_MASK>>9
 
 // PROT_EXEC
         li a2,PROT_EXEC|PROT_READ
-        mr a1,r_LENM  // length
-        mr a0,r_ADRM  // base
+        mr a1,r_LENU  // length
+        mr a0,r_ADRU  // base
         li r0,__NR_mprotect; sc
 
 // Use the unfolded code
+          addi r0,r_ADRU,4*4  // skip get_page_mask()
         lwz r_LENX, sz_pack2 - f_exp(r_exp)
-        add r_ADRX,r_elfa,r_obinf  // old compressed data
-        add r_ADRX,r_ADRX,r_relo  // new compressed data
-
-        addi r0,r_FLD,4*4  // jmp over get_page_mask()
-        mtctr r0
+          mtctr r0
+        add r_ADRX,r_elfa,r_obinf  // compressed data
         bctr
 
 mmapRW0:
