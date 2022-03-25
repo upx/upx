@@ -279,8 +279,8 @@ make_hatch_ppc64(
         // Try page fragmentation just beyond .text .
             ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  (3*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
-        // Try Elf64_Phdr[1].p_paddr (2 instr) and .p_filesz (1 instr)
+                &&  (4*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
+        // Try Elf64_Phdr[1].p_paddr (2 instr) and .p_filesz (2 instr)
         ||   ( (hatch = (void *)(&((Elf64_Phdr *)(1+  // Ehdr and Phdr are contiguous
                 ((Elf64_Ehdr *)(phdr->p_vaddr + reloc))))[1].p_paddr)),
                 (phdr->p_offset==0) )
@@ -291,7 +291,8 @@ make_hatch_ppc64(
         {
             hatch[0]= 0x44000002;  // sc
             hatch[1]= ORRX(12,31,31);  // movr r12,r31 ==> or r12,r31,r31
-            hatch[2]= 0x4e800020;  // blr
+            hatch[2]= 0x38800000;  // li r4,0
+            hatch[3]= 0x4e800020;  // blr
             if (xprot) {
                 mprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
