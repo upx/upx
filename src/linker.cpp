@@ -120,7 +120,8 @@ ElfLinker::~ElfLinker() {
     free(relocations);
 }
 
-void ElfLinker::init(const void *pdata_v, int plen) {
+void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra)
+{
     const upx_byte *pdata = (const upx_byte *) pdata_v;
     if (plen >= 16 && memcmp(pdata, "UPX#", 4) == 0) {
         // decompress pre-compressed stub-loader
@@ -156,30 +157,34 @@ void ElfLinker::init(const void *pdata_v, int plen) {
     }
     input[inputlen] = 0; // NUL terminate
 
-    output = new upx_byte[inputlen ? inputlen : 0x4000];
+    output = new upx_byte[inputlen ? (inputlen + pxtra) : 0x4000];
     outputlen = 0;
 
+    // FIXME: bad compare when either symbols or relocs are absent
     if ((int) strlen("Sections:\n"
                      "SYMBOL TABLE:\n"
                      "RELOCATION RECORDS FOR ") < inputlen) {
+        char const *const eof = (char const *)&input[inputlen];
         int pos = find(input, inputlen, "Sections:\n", 10);
         assert(pos != -1);
-        char *psections = (char *) input + pos;
+        char *const psections = (char *) input + pos;
 
-        char *psymbols = strstr(psections, "SYMBOL TABLE:\n");
-        assert(psymbols != nullptr);
+        char *const psymbols = strstr(psections, "SYMBOL TABLE:\n");
+        //assert(psymbols != nullptr);
 
-        char *prelocs = strstr(psymbols, "RELOCATION RECORDS FOR ");
-        assert(prelocs != nullptr);
+        char *const prelocs = strstr((psymbols ? psymbols : psections), "RELOCATION RECORDS FOR ");
+        //assert(prelocs != nullptr);
 
-        preprocessSections(psections, psymbols);
-        preprocessSymbols(psymbols, prelocs);
-        preprocessRelocations(prelocs, (char *) input + inputlen);
+        preprocessSections(psections, (psymbols ? psymbols : (prelocs ? prelocs : eof)));
+        if (psymbols)
+            preprocessSymbols(psymbols, (prelocs ? prelocs : eof));
+        if (prelocs)
+            preprocessRelocations(prelocs, eof);
         addLoader("*UND*");
     }
 }
 
-void ElfLinker::preprocessSections(char *start, char *end) {
+void ElfLinker::preprocessSections(char *start, char const *end) {
     char *nextl;
     for (nsections = 0; start < end; start = 1 + nextl) {
         nextl = strchr(start, '\n');
@@ -201,7 +206,7 @@ void ElfLinker::preprocessSections(char *start, char *end) {
     addSection("*UND*", nullptr, 0, 0);
 }
 
-void ElfLinker::preprocessSymbols(char *start, char *end) {
+void ElfLinker::preprocessSymbols(char *start, char const *end) {
     char *nextl;
     for (nsymbols = 0; start < end; start = 1 + nextl) {
         nextl = strchr(start, '\n');
@@ -237,7 +242,7 @@ void ElfLinker::preprocessSymbols(char *start, char *end) {
     }
 }
 
-void ElfLinker::preprocessRelocations(char *start, char *end) {
+void ElfLinker::preprocessRelocations(char *start, char const *end) {
     Section *section = nullptr;
     char *nextl;
     for (nrelocations = 0; start < end; start = 1 + nextl) {

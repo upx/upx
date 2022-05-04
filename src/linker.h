@@ -64,9 +64,9 @@ protected:
     bool reloc_done = false;
 
 protected:
-    void preprocessSections(char *start, char *end);
-    void preprocessSymbols(char *start, char *end);
-    void preprocessRelocations(char *start, char *end);
+    void preprocessSections(char *start, char const *end);
+    void preprocessSymbols(char *start, char const *end);
+    void preprocessRelocations(char *start, char const *end);
     Section *findSection(const char *name, bool fatal = true) const;
     Symbol *findSymbol(const char *name, bool fatal = true) const;
 
@@ -78,7 +78,7 @@ public:
     ElfLinker();
     virtual ~ElfLinker();
 
-    virtual void init(const void *pdata, int plen);
+    virtual void init(const void *pdata, int plen, unsigned pxtra = 0);
     // virtual void setLoaderAlignOffset(int phase);
     virtual int addLoader(const char *sname);
     void addLoader(const char *s, va_list ap);
