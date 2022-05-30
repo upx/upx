@@ -190,8 +190,8 @@ protected:
     unsigned page_mask;  // AND clears the offset-within-page
 
     Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC
-    unsigned int const *hashtab;  // from DT_HASH
-    unsigned int const *gashtab;  // from DT_GNU_HASH
+    unsigned int const *hashtab, *hashend;  // from DT_HASH
+    unsigned int const *gashtab, *gashend;  // from DT_GNU_HASH
     Elf32_Sym    const *dynsym;   // from DT_SYMTAB
     Elf32_Sym    const *jni_onload_sym;
 
@@ -342,8 +342,8 @@ protected:
     upx_uint64_t page_mask;  // AND clears the offset-within-page
 
     Elf64_Dyn    const *dynseg;   // from PT_DYNAMIC
-    unsigned int const *hashtab;  // from DT_HASH
-    unsigned int const *gashtab;  // from DT_GNU_HASH
+    unsigned int const *hashtab, *hashend;  // from DT_HASH
+    unsigned int const *gashtab, *gashend;  // from DT_GNU_HASH
     Elf64_Sym    const *dynsym;   // from DT_SYMTAB
     Elf64_Sym    const *jni_onload_sym;
 

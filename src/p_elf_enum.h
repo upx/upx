@@ -126,6 +126,7 @@
         SHT_GROUP = 17,         /* Section group */
         SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
         SHT_GNU_LIBLIST = 0x6ffffff7    /* Prelink library list */
+        , SHT_GNU_HASH =  0x6ffffff6    /* GNU-style hash table.  */
 
         , SHT_LOOS = 0x60000000  /* LOcal OS; SHT_ANDROID_REL{,A} is +1, +2 */
         , SHT_LOPROC = 0x70000000/* Start of processor-specific */
@@ -174,12 +175,14 @@
         DT_FINI_ARRAYSZ= 28,    /* size in bytes */
         DT_PREINIT_ARRAY  = 32, /* Array with addresses of preinit fct*/
         DT_PREINIT_ARRAYSZ= 33, /* size in bytes */
+        DT_NUM       = 35,      /* end of easy range */
+
         DT_CHECKSUM = 0x6ffffdf8,       /* Only for prelink? */
         DT_GNU_HASH = 0x6ffffef5,       /* GNU-style hash table */
         DT_VERSYM   = 0x6ffffff0,       /* version[] for each symbol */
         DT_FLAGS_1  = 0x6ffffffb,       /* DF_1_* */
         DT_VERDEF   = 0x6ffffffc,       /* version definitions[] */
-        DT_VERNEEDED= 0x6ffffffe        /* version[] needed */
+        DT_VERNEED  = 0x6ffffffe        /* version[] needed */
     };
     enum { // DT_FLAGS_1
         DF_1_NOW    = 0x00000001,  /* Set RTLD_NOW for this object.  */

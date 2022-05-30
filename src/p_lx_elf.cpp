@@ -713,7 +713,8 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
     : super(f), phdri(nullptr), shdri(nullptr),
     gnu_stack(nullptr),
     page_mask(~0u<<lg2_page),
-    dynseg(nullptr), hashtab(nullptr), gashtab(nullptr), dynsym(nullptr),
+    dynseg(nullptr), hashtab(nullptr), hashend(nullptr),
+                     gashtab(nullptr), gashend(nullptr), dynsym(nullptr),
     jni_onload_sym(nullptr),
     sec_strndx(nullptr), sec_dynsym(nullptr), sec_dynstr(nullptr)
     , symnum_end(0)
@@ -733,7 +734,8 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
     : super(f), phdri(nullptr), shdri(nullptr),
     gnu_stack(nullptr),
     page_mask(~0ull<<lg2_page),
-    dynseg(nullptr), hashtab(nullptr), gashtab(nullptr), dynsym(nullptr),
+    dynseg(nullptr), hashtab(nullptr), hashend(nullptr),
+                     gashtab(nullptr), gashend(nullptr), dynsym(nullptr),
     jni_onload_sym(nullptr),
     sec_strndx(nullptr), sec_dynsym(nullptr), sec_dynstr(nullptr)
     , symnum_end(0)
@@ -1734,7 +1736,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, unsigned headway)
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
         }
-      //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum, except:
+        //unsigned const *const gashend = &hasharr[n_bucket];  // minimum, except:
         // Rust and Android trim unused zeroes from high end of hasharr[]
         unsigned bmax = 0;
         for (unsigned j= 0; j < n_bucket; ++j) {
@@ -2351,7 +2353,7 @@ bool PackLinuxElf32::canPack()
             ||  (y=7, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_JMPREL))
             ||  (y=8, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERDEF))
             ||  (y=9, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERSYM))
-            ||  (y=10, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERNEEDED)) ) {
+            ||  (y=10, xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERNEED)) ) {
                 static char const *which[] = {
                     "unknown",
                     "DT_GNU_HASH",
@@ -2363,7 +2365,7 @@ bool PackLinuxElf32::canPack()
                     "DT_JMPREL",
                     "DT_VERDEF",
                     "DT_VERSYM",
-                    "DT_VERNEEDED",
+                    "DT_VERNEED",
                 };
                 char buf[30]; snprintf(buf, sizeof(buf), "%s above stub", which[y]);
                 throwCantPack(buf);
@@ -2755,7 +2757,7 @@ PackLinuxElf64::canPack()
             ||  (y=7, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_JMPREL))
             ||  (y=8, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERDEF))
             ||  (y=9, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERSYM))
-            ||  (y=10, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERNEEDED)) ) {
+            ||  (y=10, xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERNEED)) ) {
                 static char const *which[] = {
                     "unknown",
                     "DT_GNU_HASH",
@@ -2767,7 +2769,7 @@ PackLinuxElf64::canPack()
                     "DT_JMPREL",
                     "DT_VERDEF",
                     "DT_VERSYM",
-                    "DT_VERNEEDED",
+                    "DT_VERNEED",
                 };
                 char buf[30]; snprintf(buf, sizeof(buf), "%s above stub", which[y]);
                 throwCantPack(buf);
@@ -5604,6 +5606,16 @@ PackLinuxElf64::check_pt_dynamic(Elf64_Phdr const *const phdr)
     return t;
 }
 
+static int __acc_cdecl_qsort
+qcmp_unsigned(void const *const aa, void const *const bb)
+{
+    unsigned a = *(unsigned const *)aa;
+    unsigned b = *(unsigned const *)bb;
+    if (a < b) return -1;
+    if (a > b) return  1;
+    return  0;
+}
+
 void
 PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
 {
@@ -5675,9 +5687,48 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             throwCantPack("bad DT_SYMTAB");
         }
     }
-    // DT_HASH often ends at DT_SYMTAB
-    // FIXME: sort DT_HASH, DT_GNU_HASH, STRTAB, SYMTAB, REL, RELA, JMPREL
-    // to partition the space.
+    // DT_HASH, DT_GNU_HASH have no explicit length (except in ElfXX_Shdr),
+    // so it is hard to detect when the index of a hash chain is out-of-bounds.
+    // Workaround: Assume no overlap of DT_* tables.  Then any given table
+    // ends when another table begins.  So find the tables, and sort the offsets.
+    unsigned const dt_names[] = { // *.d_val are often in this order
+        Elf64_Dyn::DT_SYMTAB,
+        Elf64_Dyn::DT_VERSYM,
+        Elf64_Dyn::DT_VERNEED,
+        Elf64_Dyn::DT_HASH,
+        Elf64_Dyn::DT_GNU_HASH,
+        Elf64_Dyn::DT_STRTAB,
+        Elf64_Dyn::DT_VERDEF,
+        Elf64_Dyn::DT_REL,
+        Elf64_Dyn::DT_RELA,
+        Elf64_Dyn::DT_INIT,
+        Elf64_Dyn::DT_INIT_ARRAY,
+        0,
+    };
+    unsigned dt_offsets[sizeof(dt_names)/sizeof(dt_names[0])];
+    unsigned n_off = 0, k;
+    for (unsigned j=0; (k = dt_names[j]); ++j) {
+        dt_offsets[n_off] = 0;  // default to "not found"
+        if (k < DT_NUM) { // in range of easy table
+            if (dt_table[k]) { // present now
+                dt_offsets[n_off] = get_te64(&dynp0[-1+ dt_table[k]].d_val);
+            }
+        }
+        else {
+            if (file_image) { // why is this guard necessary?
+                dt_offsets[n_off] = elf_unsigned_dynamic(k);  // zero if not found
+            }
+        }
+        if (file_size <= dt_offsets[n_off]) {
+            char msg[60]; snprintf(msg, sizeof(msg), "bad DT_{%#x} = %#x (beyond EOF)",
+                dt_names[k], dt_offsets[n_off]);
+                throwCantPack(msg);
+        }
+        n_off += !!dt_offsets[n_off];
+    }
+    dt_offsets[n_off++] = file_size;  // sentinel
+    qsort(dt_offsets, n_off, sizeof(dt_offsets[0]), qcmp_unsigned);
+
     unsigned const v_hsh = elf_unsigned_dynamic(Elf64_Dyn::DT_HASH);
     if (v_hsh && file_image) {
         hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
@@ -5685,6 +5736,15 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             char msg[40]; snprintf(msg, sizeof(msg),
                "bad DT_HASH %#x", v_hsh);
             throwCantPack(msg);
+        }
+        for (unsigned j = 0; j < n_off; ++j) {
+            if (v_hsh == dt_offsets[j]) {
+                if (dt_offsets[1+ j]) {
+                    hashend = (unsigned const *)((dt_offsets[1+ j] - dt_offsets[j])
+                        + (char const *)hashtab);
+                }
+                break;
+            }
         }
         unsigned const nbucket = get_te32(&hashtab[0]);
         unsigned const *const buckets = &hashtab[2];
@@ -5724,6 +5784,15 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
                "bad DT_GNU_HASH %#x", v_gsh);
             throwCantPack(msg);
         }
+        for (unsigned j = 0; j < n_off; ++j) { // linear search of short table
+            if (v_gsh == dt_offsets[j]) {
+                if (dt_offsets[1+ j]) {
+                    gashend = (unsigned const *)((dt_offsets[1+ j] - dt_offsets[j])
+                        + (char const *)gashtab);
+                }
+                break;
+            }
+        }
         unsigned const n_bucket = get_te32(&gashtab[0]);
         unsigned const symbias  = get_te32(&gashtab[1]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
@@ -5737,7 +5806,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
         }
-      //unsigned     const *const gashend = &hasharr[n_bucket];  // minimum, except:
+        // unsigned const *const gashend = &hasharr[n_bucket];
+        // minimum, except:
         // Rust and Android trim unused zeroes from high end of hasharr[]
         unsigned bmax = 0;
         for (unsigned j= 0; j < n_bucket; ++j) {
@@ -5766,6 +5836,31 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             throwCantPack(msg);
         }
         bmax -= symbias;
+
+        // preliminary bound on gashend
+        Elf64_Shdr const *sec_gash = elf_find_section_type(Elf64_Shdr::SHT_GNU_HASH);
+        unsigned const off_symtab = elf_unsigned_dynamic(Elf64_Dyn::DT_SYMTAB);
+        unsigned const off_strtab = elf_unsigned_dynamic(Elf64_Dyn::DT_STRTAB);
+        unsigned const off_gshtab = elf_unsigned_dynamic(Elf64_Dyn::DT_GNU_HASH);
+        if (off_gshtab < file_size  // paranoia
+        &&  off_strtab < file_size
+        &&  off_symtab < file_size ) {
+            unsigned sz_gshtab = 0;
+            if (sec_gash && off_gshtab == get_te32(&sec_gash->sh_offset)) {
+               sz_gshtab = get_te32(&sec_gash->sh_size);
+            }
+            else { // heuristics
+                if (off_gshtab < off_strtab) {
+                    sz_gshtab = off_strtab - off_gshtab;
+                }
+                else if (off_gshtab < off_symtab) {
+                    sz_gshtab = off_symtab - off_gshtab;
+                }
+            }
+            if (sz_gshtab <= (file_size - off_gshtab)) {
+                gashend = (unsigned const *)(sz_gshtab + (char const *)gashtab);
+            }
+        }
 
         upx_uint64_t const v_sym = !x_sym ? 0 : get_te64(&dynp0[-1+ x_sym].d_val);
         unsigned r = 0;
@@ -5982,25 +6077,27 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
             unsigned const hbit2 = 077& (h>>gnu_shift);
             upx_uint64_t const w = get_te64(&bitmask[(n_bitmask -1) & (h>>6)]);
             if (1& (w>>hbit1) & (w>>hbit2)) {
-                unsigned bucket = get_te32(&buckets[h % n_bucket]);
-                if (n_bucket <= bucket) {
-                    char msg[90]; snprintf(msg, sizeof(msg),
-                            "bad DT_GNU_HASH n_bucket{%#x} <= buckets[%d]{%#x}\n",
-                            n_bucket, h % n_bucket, bucket);
-                    throwCantPack(msg);
-                }
-                if (0!=bucket) {
-                    Elf64_Sym const *dsp = &dynsym[bucket];
-                    unsigned const *hp = &hasharr[bucket - symbias];
-                    do if (0==((h ^ get_te32(hp))>>1)) {
-                        unsigned st_name = get_te32(&dsp->st_name);
-                        char const *const p = get_str_name(st_name, (unsigned)-1);
-                        if (0==strcmp(name, p)) {
-                            return dsp;
+                unsigned hhead = get_te32(&buckets[h % n_bucket]);
+                if (hhead) {
+                    Elf64_Sym const *dsp = &dynsym[hhead];
+                    unsigned const *hp = &hasharr[hhead - symbias];
+                    unsigned k;
+                    do {
+                        if (gashend <= hp) {
+                            char msg[120]; snprintf(msg, sizeof(msg),
+                                "bad gnu_hash[%#zx]  head=%u",
+                                hp - hasharr, hhead);
+                            throwCantPack(msg);
                         }
-                    } while (++dsp,
-                            (char const *)hp < (char const *)&file_image[file_size]
-                        &&  0==(1u& get_te32(hp++)));
+                        k = get_te32(hp);
+                        if (0==((h ^ k)>>1)) {
+                            unsigned const st_name = get_te32(&dsp->st_name);
+                            char const *const p = get_str_name(st_name, (unsigned)-1);
+                            if (0==strcmp(name, p)) {
+                                return dsp;
+                            }
+                        }
+                    } while (++dsp, ++hp, 0==(1u& k));
                 }
             }
         }
