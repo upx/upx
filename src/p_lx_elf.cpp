@@ -5707,7 +5707,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
     };
     unsigned dt_offsets[sizeof(dt_names)/sizeof(dt_names[0])];
     unsigned n_off = 0, k;
-    for (unsigned j=0; ((k = dt_names[j]), k); ++j) {
+    for (unsigned j=0; ((k = dt_names[j]),  k); ++j) {
         dt_offsets[n_off] = 0;  // default to "not found"
         if (k < DT_NUM) { // in range of easy table
             if (dt_table[k]) { // present now
