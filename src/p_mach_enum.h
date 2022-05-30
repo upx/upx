@@ -108,6 +108,11 @@
         LC_VERSION_MIN_TVOS= 0x2F,
         LC_VERSION_MIN_WATCHOS= 0x30,
         LC_NOTE           = 0x31,
+        LC_BUILD_VERSION  = 0x32,  // minimum; size 6*4 + N*2*4
+        LC_DYLD_EXPORTS_TRIE   = (0x33|LC_REQ_DYLD),  // size 4*4
+        LC_DYLD_CHAINED_FIXUPS = (0x34|LC_REQ_DYLD),  // size 4*4
+        LC_FILESET_ENTRY       = (0x35|LC_REQ_DYLD),  // size 6*4
+
     };
 
     enum { // maxprot
