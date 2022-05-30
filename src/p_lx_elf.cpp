@@ -5740,8 +5740,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         for (unsigned j = 0; j < n_off; ++j) {
             if (v_hsh == dt_offsets[j]) {
                 if (dt_offsets[1+ j]) {
-                    hashend = (unsigned const *)((dt_offsets[1+ j] - dt_offsets[j])
-                        + (void const *)hashtab);
+                    hashend = (unsigned const *)(void const *)
+                        ((dt_offsets[1+ j] - dt_offsets[j]) + (char const *)hashtab);
                 }
                 break;
             }
@@ -5787,8 +5787,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         for (unsigned j = 0; j < n_off; ++j) { // linear search of short table
             if (v_gsh == dt_offsets[j]) {
                 if (dt_offsets[1+ j]) {
-                    gashend = (unsigned const *)((dt_offsets[1+ j] - dt_offsets[j])
-                        + (void const *)gashtab);
+                    gashend = (unsigned const *)(void const *)
+                        ((dt_offsets[1+ j] - dt_offsets[j]) + (char const *)gashtab);
                 }
                 break;
             }
@@ -5858,7 +5858,8 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
                 }
             }
             if (sz_gshtab <= (file_size - off_gshtab)) {
-                gashend = (unsigned const *)(sz_gshtab + (void const *)gashtab);
+                gashend = (unsigned const *)(void const *)
+                    (sz_gshtab + (char const *)gashtab);
             }
         }
 
