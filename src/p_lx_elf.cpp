@@ -5741,7 +5741,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             if (v_hsh == dt_offsets[j]) {
                 if (dt_offsets[1+ j]) {
                     hashend = (unsigned const *)((dt_offsets[1+ j] - dt_offsets[j])
-                        + (char const *)hashtab);
+                        + (void const *)hashtab);
                 }
                 break;
             }
@@ -5788,7 +5788,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             if (v_gsh == dt_offsets[j]) {
                 if (dt_offsets[1+ j]) {
                     gashend = (unsigned const *)((dt_offsets[1+ j] - dt_offsets[j])
-                        + (char const *)gashtab);
+                        + (void const *)gashtab);
                 }
                 break;
             }
@@ -5858,7 +5858,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
                 }
             }
             if (sz_gshtab <= (file_size - off_gshtab)) {
-                gashend = (unsigned const *)(sz_gshtab + (char const *)gashtab);
+                gashend = (unsigned const *)(sz_gshtab + (void const *)gashtab);
             }
         }
 
