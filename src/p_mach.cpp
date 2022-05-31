@@ -1735,8 +1735,11 @@ int PackMachBase<T>::canUnpack()
         fi->seek(offLINK - bufsize - sizeof(PackHeader), SEEK_SET);
     }
     MemBuffer buf(bufsize);
+    MemBuffer buf3(bufsize);
 
     fi->readx(buf, bufsize);
+    // Do not overwrite buf[]; For scratch space, then use buf3 instead.
+
     int i = bufsize;
     while (i > small && 0 == buf[--i]) { }
     i -= small;
@@ -1747,11 +1750,13 @@ int PackMachBase<T>::canUnpack()
         upx_uint64_t const rip_off = ptrTEXT ? (rip - ptrTEXT->vmaddr) : 0;
         if (ptrTEXT && rip && rip_off < ptrTEXT->vmsize) {
             fi->seek(ptrTEXT->fileoff + rip_off, SEEK_SET);
-            fi->readx(buf, bufsize);
-            unsigned char const *b = &buf[0];
+            fi->readx(buf3, bufsize);
+            unsigned char const *b = &buf3[0];
             unsigned disp = *(TE32 const *)&b[1];
             // Emulate the code
             if (0xe8==b[0] && disp < bufsize
+                // This has been obsoleted by amd64-darwin.macho-entry.S
+                // searching for "executable_path=" etc.
             &&  0x5d==b[5+disp] && 0xe8==b[6+disp]) {
                 unsigned disp2 = 0u - *(TE32 const *)&b[7+disp];
                 if (disp2 < (12+disp) && 0x5b==b[11+disp-disp2]) {
@@ -1766,6 +1771,31 @@ int PackMachBase<T>::canUnpack()
                             return true;  // success
                         }
                         overlay_offset = 0;
+                    }
+                }
+            }
+            if (395 == style) { // Desperation
+                infoWarning("file corrupted");
+                fi->seek(file_size - bufsize, SEEK_SET);
+                fi->readx(buf3, bufsize);
+                unsigned const *p = (unsigned const *)&buf3[bufsize];
+                for (; buf3 < (void const *)--p; ) {
+                    unsigned x = *p;
+                    if (x) {
+                        if (!(3& x) && x < bufsize) {
+                            fi->seek(0, SEEK_SET);
+                            fi->readx(buf3, bufsize);
+                            p = (unsigned const *)&buf3[x];
+                            if (0 == p[0] && 0 != p[1] && p[1] == p[2]  // p_info
+                            &&  sz_mach_headers < p[3] && p[4] < p[3]  // b_info
+                            ) {
+                                overlay_offset = x;
+                                infoWarning("attempting recovery, overlay_offset = %#x",
+                                    overlay_offset);
+                                return true;
+                            }
+                        }
+                        break;
                     }
                 }
             }
@@ -1786,8 +1816,8 @@ int PackMachBase<T>::canUnpack()
             //      0== .p_progid
             //      .p_filesize == .p_blocksize
             fi->seek(overlay_offset, SEEK_SET);
-            fi->readx(buf, bufsize);
-            struct p_info const *const p_ptr = (struct p_info const *)&buf[0];
+            fi->readx(buf3, bufsize);
+            struct p_info const *const p_ptr = (struct p_info const *)&buf3[0];
             struct b_info const *const b_ptr = (struct b_info const *)(1+ p_ptr);
             TE32 const *uptr = (TE32 const *)(1+ b_ptr);
             if (b_ptr->sz_unc < 0x4000
@@ -1812,16 +1842,16 @@ int PackMachBase<T>::canUnpack()
             // is the total length of compressed data which precedes it
             //(distance to l_info), so that's another method.
             fi->seek(offLINK - 0x1000, SEEK_SET);
-            fi->readx(buf, 0x1000);
-            unsigned const *const lo = (unsigned const *)&buf[0];
+            fi->readx(buf3, 0x1000);
+            unsigned const *const lo = (unsigned const *)&buf3[0];
             unsigned const *p;
-            for (p = (unsigned const *)&buf[0x1000]; p > lo; ) if (*--p) {
+            for (p = (unsigned const *)&buf3[0x1000]; p > lo; ) if (*--p) {
                 overlay_offset  = *(TE32 const *)p;
                 if ((off_t)overlay_offset < offLINK) {
                     overlay_offset = ((char const *)p - (char const *)lo) +
                         (offLINK - 0x1000) - overlay_offset + sizeof(l_info);
                     fi->seek(overlay_offset, SEEK_SET);
-                    fi->readx(buf, bufsize);
+                    fi->readx(buf3, bufsize);
                     if (b_ptr->sz_unc < 0x4000
                     &&  b_ptr->sz_cpr < b_ptr->sz_unc ) {
                         return true;
