@@ -1775,7 +1775,7 @@ int PackMachBase<T>::canUnpack()
                 }
             }
             if (395 == style) { // Desperation
-                infoWarning("file corrupted");
+                infoWarning("file corrupted: %s", fi->getName());
                 fi->seek(file_size - bufsize, SEEK_SET);
                 fi->readx(buf3, bufsize);
                 unsigned const *p = (unsigned const *)&buf3[bufsize];
@@ -1868,7 +1868,7 @@ int PackMachBase<T>::canUnpack()
     }
     if (       overlay_offset < sz_mach_headers
     ||  (off_t)overlay_offset >= file_size) {
-        infoWarning("file corrupted");
+        infoWarning("file corrupted: %s", fi->getName());
         MemBuffer buf2(umin(1<<14, file_size));
         fi->seek(sz_mach_headers, SEEK_SET);
         fi->readx(buf2, buf2.getSize());
