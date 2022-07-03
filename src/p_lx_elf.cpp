@@ -5702,7 +5702,6 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         Elf64_Dyn::DT_REL,
         Elf64_Dyn::DT_RELA,
         Elf64_Dyn::DT_INIT,
-        Elf64_Dyn::DT_INIT_ARRAY,
         0,
     };
     unsigned dt_offsets[sizeof(dt_names)/sizeof(dt_names[0])];
