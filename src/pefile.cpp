@@ -2165,7 +2165,10 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
     //check CLR Runtime Header directory entry
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files are not yet supported");
-
+  
+    if(isection == NULL)
+        throwCantPack("No section was found");
+    
     if (memcmp(isection[0].name,"UPX",3) == 0)
         throwAlreadyPackedByUPX();
 
