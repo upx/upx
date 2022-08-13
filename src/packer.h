@@ -177,23 +177,17 @@ protected:
                              bool inhibit_compression_check = false);
     void compressWithFilters(Filter *ft, const unsigned overlap_range,
                              const upx_compress_config_t *cconf, int filter_strategy,
-                             unsigned    filter_buf_off,
-                             unsigned compress_ibuf_off,
-                             unsigned compress_obuf_off,
-                             upx_bytep const hdr_ptr, unsigned hdr_len,
+                             unsigned filter_buf_off, unsigned compress_ibuf_off,
+                             unsigned compress_obuf_off, upx_bytep const hdr_ptr, unsigned hdr_len,
                              bool inhibit_compression_check = false);
     // real compression driver
-    void compressWithFilters(
-        upx_bytep i_ptr, unsigned i_len,  // written and restored by filters
-        upx_bytep o_ptr,
-        upx_bytep f_ptr, unsigned f_len,  // subset of [*i_ptr, +i_len)
-        upx_bytep const hdr_ptr, unsigned hdr_len,
-        Filter *parm_ft,  // updated
-        unsigned overlap_range,
-        upx_compress_config_t const *cconf,
-        int filter_strategy,
-        bool inhibit_compression_check = false
-    );
+    void compressWithFilters(upx_bytep i_ptr, unsigned i_len, // written and restored by filters
+                             upx_bytep o_ptr, upx_bytep f_ptr,
+                             unsigned f_len, // subset of [*i_ptr, +i_len)
+                             upx_bytep const hdr_ptr, unsigned hdr_len,
+                             Filter *parm_ft, // updated
+                             unsigned overlap_range, upx_compress_config_t const *cconf,
+                             int filter_strategy, bool inhibit_compression_check = false);
 
     // util for verifying overlapping decompresion
     //   non-destructive test
@@ -279,22 +273,17 @@ protected:
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util
-    static upx_byte *optimizeReloc(
-        upx_byte *in, unsigned relocnum,
-        upx_byte *out, upx_byte *image, unsigned headway,
-        int bs, int *big, int bits);
-    static unsigned unoptimizeReloc(upx_byte **in, upx_byte *image, MemBuffer *out, int bs, int bits);
+    static upx_byte *optimizeReloc(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image,
+                                   unsigned headway, int bs, int *big, int bits);
+    static unsigned unoptimizeReloc(upx_byte **in, upx_byte *image, MemBuffer *out, int bs,
+                                    int bits);
 
-    static upx_byte *optimizeReloc32(
-        upx_byte *in, unsigned relocnum,
-        upx_byte *out, upx_byte *image, unsigned headway,
-        int bs, int *big);
+    static upx_byte *optimizeReloc32(upx_byte *in, unsigned relocnum, upx_byte *out,
+                                     upx_byte *image, unsigned headway, int bs, int *big);
     static unsigned unoptimizeReloc32(upx_byte **in, upx_byte *image, MemBuffer *out, int bs);
 
-    static upx_byte *optimizeReloc64(
-        upx_byte *in, unsigned relocnum,
-        upx_byte *out, upx_byte *image, unsigned headway,
-        int bs, int *big);
+    static upx_byte *optimizeReloc64(upx_byte *in, unsigned relocnum, upx_byte *out,
+                                     upx_byte *image, unsigned headway, int bs, int *big);
     static unsigned unoptimizeReloc64(upx_byte **in, upx_byte *image, MemBuffer *out, int bs);
 
     // target endianness abstraction
@@ -319,9 +308,9 @@ protected:
     int ph_version;
 
     // compression buffers
-    MemBuffer ibuf; // input
-    MemBuffer obuf; // output
-    unsigned ibufgood;  // high-water mark in ibuf (pefile.cpp)
+    MemBuffer ibuf;    // input
+    MemBuffer obuf;    // output
+    unsigned ibufgood; // high-water mark in ibuf (pefile.cpp)
 
     // UI handler
     UiPacker *uip = nullptr;
@@ -341,8 +330,8 @@ private:
     Packer &operator=(const Packer &) = delete;
 };
 
-int     force_method(int method); // (0x80ul<<24)|method
-int    forced_method(int method); // (0x80ul<<24)|method ==> method
+int force_method(int method);     // (0x80ul<<24)|method
+int forced_method(int method);    // (0x80ul<<24)|method ==> method
 int is_forced_method(int method); // predicate
 
 #endif /* already included */

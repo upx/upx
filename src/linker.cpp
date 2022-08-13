@@ -120,8 +120,7 @@ ElfLinker::~ElfLinker() {
     free(relocations);
 }
 
-void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra)
-{
+void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra) {
     const upx_byte *pdata = (const upx_byte *) pdata_v;
     if (plen >= 16 && memcmp(pdata, "UPX#", 4) == 0) {
         // decompress pre-compressed stub-loader
@@ -164,16 +163,16 @@ void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra)
     if ((int) strlen("Sections:\n"
                      "SYMBOL TABLE:\n"
                      "RELOCATION RECORDS FOR ") < inputlen) {
-        char const *const eof = (char const *)&input[inputlen];
+        char const *const eof = (char const *) &input[inputlen];
         int pos = find(input, inputlen, "Sections:\n", 10);
         assert(pos != -1);
         char *const psections = (char *) input + pos;
 
         char *const psymbols = strstr(psections, "SYMBOL TABLE:\n");
-        //assert(psymbols != nullptr);
+        // assert(psymbols != nullptr);
 
         char *const prelocs = strstr((psymbols ? psymbols : psections), "RELOCATION RECORDS FOR ");
-        //assert(prelocs != nullptr);
+        // assert(prelocs != nullptr);
 
         preprocessSections(psections, (psymbols ? psymbols : (prelocs ? prelocs : eof)));
         if (psymbols)
@@ -318,8 +317,7 @@ ElfLinker::Symbol *ElfLinker::findSymbol(const char *name, bool fatal) const {
 ElfLinker::Section *ElfLinker::addSection(const char *sname, const void *sdata, int slen,
                                           unsigned p2align) {
     // printf("addSection: %s len=%d align=%d\n", sname, slen, p2align);
-    if (!sdata
-    &&  (!strcmp("ABS*", sname) || !strcmp("UND*", sname)))
+    if (!sdata && (!strcmp("ABS*", sname) || !strcmp("UND*", sname)))
         return nullptr;
     if (update_capacity(nsections, &nsections_capacity))
         sections =

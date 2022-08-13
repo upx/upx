@@ -124,7 +124,8 @@
 
 #ifdef WANT_MACH_SECTION_ENUM  /*{*/
 #undef WANT_MACH_SECTION_ENUM
-    enum { // section type  (low byte only)
+    enum : unsigned {
+        // section type  (low byte only)
         S_REGULAR = 0,
         S_ZEROFILL,
         S_CSTRING_LITERALS,
@@ -140,9 +141,8 @@
         S_GB_ZEROFILL,
         S_INTERPOSING,
         S_16BYTE_LITERALS,
-        S_DTRACE_DOF
-    };
-    enum : unsigned { // section flags (high 24 bits)
+        S_DTRACE_DOF,
+        // section flags (high 24 bits)
         S_ATTR_PURE_INSTRUCTIONS = 0x80000000,
         S_ATTR_NO_TOC            = 0x40000000,
         S_ATTR_STRIP_STATIC_SYMS = 0x20000000,
