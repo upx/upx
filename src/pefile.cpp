@@ -1143,7 +1143,7 @@ void PeFile::Export::convert(unsigned eoffs,unsigned esize)
     size = sizeof(export_dir_t);
     iv.add(eoffs,size);
 
-    if (eoffs + esize <= (unsigned)edir.name) {
+    if (!edir.name || eoffs + esize <= (unsigned)edir.name) {
         char msg[50]; snprintf(msg, sizeof(msg),
                 "bad export directory name RVA %#x", (unsigned)edir.name);
         throwInternalError(msg);
