@@ -10,6 +10,7 @@ set -e; set -o pipefail
 git ls-files --full-name -z | perl -0 -n -e '
     s,^,./,;
     if (m,^\./src/lzma-sdk(\0|$),) { }
+    if (m,^\./vendor/,) { }
     elsif (m,\.bat(\0|$),) { }
     elsif (m,\.exe(\0|$),) { }
     else { print; }

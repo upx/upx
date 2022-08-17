@@ -11,6 +11,7 @@ find . \
     -type d -name '.hg' -prune -o \
     -type d -name 'build*' -prune -o \
     -type d -name 'tmp*' -prune -o \
+    -type d -name 'vendor' -prune -o \
     -type f -iname '*.bat' -prune -o \
     -type f -iname '*.exe' -prune -o \
     -type f -iname '*.o' -prune -o \
