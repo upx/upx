@@ -37,6 +37,13 @@
 #include "p_mach.h"
 #include "ui.h"
 
+#if (ACC_CC_CLANG)
+#  pragma clang diagnostic ignored "-Wcast-align"
+#endif
+#if (ACC_CC_GNUC >= 0x040200)
+#  pragma GCC diagnostic ignored "-Wcast-align"
+#endif
+
 static const
 #include "stub/i386-darwin.macho-entry.h"
 static const
