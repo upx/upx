@@ -1,3 +1,15 @@
+---
+name: Feature request
+about: Suggest an idea for this project
+title: ''
+labels: ''
+assignees: ''
+
+---
+
+This issue tracker is **ONLY** used for requesting sensible features.
+Please use [stackoverflow](https://stackoverflow.com) for supporting issues.
+
 <!---
 
 IF YOU REMOVE THIS TEMPLATE WE WILL CLOSE YOUR ISSUE WITHOUT RESPONSE.

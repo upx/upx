@@ -22,13 +22,20 @@ fi
 if [[ $BM_X == rebuild-stubs ]]; then
     exit 0
 fi
+
+# convenience
 [[ -f $upx_exe ]] && upx_exe=$(readlink -en -- "$upx_exe")
 
 # create dirs
 cd / || exit 1
-mkbuilddirs $upx_testsuite_BUILDDIR
+if [[ ! -d "$upx_testsuite_SRCDIR/files/packed" ]]; then
+    echo 'invalid or missing $upx_testsuite_SRCDIR:'
+    echo '  please git clone https://github.com/upx/upx-testsuite'
+    echo '  and set (export) the envvar upx_testsuite_SRCDIR to the local file path'
+    exit 1
+fi
+mkbuilddirs "$upx_testsuite_BUILDDIR"
 cd / && cd "$upx_testsuite_BUILDDIR" || exit 1
-if [[ ! -d $upx_testsuite_SRCDIR/files/packed ]]; then exit 1; fi
 
 # /***********************************************************************
 # // support functions

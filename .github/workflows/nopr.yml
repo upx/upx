@@ -1,0 +1,16 @@
+name: 'Close pull requests'
+on:
+  #pull_request:
+  workflow_dispatch:
+jobs:
+  close-pull-requests:
+    name: 'Close pull requests'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: 'Close pull requests'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr list --repo='${{ github.repository }}' --state=open --json=number | jq '.[].number' | xargs -r -n1 -- gh pr close --repo='${{ github.repository }}'
