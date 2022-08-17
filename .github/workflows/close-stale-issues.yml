@@ -1,6 +1,15 @@
 # see https://docs.github.com/en/actions/managing-issues-and-pull-requests/closing-inactive-issues
 # see https://github.com/actions/stale
 
+# Automatically closing issues is far from perfect, but then we only have
+# limited resources and this approach favors issues that people
+# actually care about.
+#
+# also see:
+#   "Should I Stale or Should I Close? An Analysis of a Bot that Closes
+#    Abandoned Issues and Pull Request".
+#   https://igorwiese.com/images/papers/Paper_BotSE_19.pdf
+
 name: Close inactive issues
 on:
   schedule:

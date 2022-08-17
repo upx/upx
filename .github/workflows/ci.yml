@@ -22,6 +22,9 @@ jobs:
         run: |
           uname -a; pwd; id; umask
           cd ..; mkdir -p deps; cd deps; mkdir packages
+          # for ubuntu-22.04: install python2
+          ##export DEBIAN_FRONTEND=noninteractive
+          ##sudo apt-get install -y --no-install-recommends python2-minimal
           # manually install compat libs from Ubuntu 16.04
           wget -q 'http://mirror.enzu.com/ubuntu/pool/main/g/gmp/libgmp10_6.1.0+dfsg-2_amd64.deb'
           wget -q 'http://mirror.enzu.com/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.4-1_amd64.deb'
@@ -30,13 +33,111 @@ jobs:
           sudo ldconfig
           wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20210104/bin-upx-20210104.tar.xz | tar -xJ
       - name: 'Check out code'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: { submodules: true }
       - name: 'Rebuild and verify stubs'
         run: |
           env C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux bash ./.github/travis_build.sh
+      - name: 'Check source code formatting'
+        run: |
+          bash ./misc/scripts/check_whitespace_git.sh
+          env UPX_CLANG_FORMAT="$PWD/../deps/bin-upx-20210104/clang-format-10.0.1" make -C src clang-format
+          if ! git diff --quiet; then git diff; exit 1; fi
+
+  job-linux-cmake:
+    needs: [ job-rebuild-and-verify-stubs ]
+    name: ${{ format('{0} cmake', matrix.os) }}
+    runs-on: ${{ matrix.os }}
+
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+      UPX_CMAKE_BUILD_FLAGS: --verbose
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-20.04 }
+          - { os: ubuntu-22.04 }
+
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Build cmake debug-gcc'
+        run:   'make build/debug-gcc'
+      - name: 'Build cmake release-gcc'
+        run:   'make build/release-gcc'
+      - name: 'Build cmake debug-clang'
+        run:   'make build/debug-clang'
+      - name: 'Build cmake release-clang'
+        run:   'make build/release-clang'
+      - name: 'Make artifact'
+        id: make_artifact
+        run: |
+          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${MATRIX_OS}
+          mkdir -p "tmp/artifact/$N"
+          (cd build && cp -ai --parents */upx "../tmp/artifact/$N")
+          (cd tmp/artifact && tar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
+          # set "upload_name" Javascript outputs value for use in next step
+          echo "::set-output name=upload_name::$N"
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.make_artifact.outputs.upload_name }}
+          path: tmp/artifact
+
+  job-windows-cmake:
+    needs: [ job-rebuild-and-verify-stubs ]
+    name: ${{ format('{0} cmake', matrix.os) }}
+    runs-on: ${{ matrix.os }}
+
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+      UPX_CMAKE_BUILD_FLAGS: --verbose
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # windows-2019 used to work but got broken with the 20220821.1
+          # runner-image update; disable for now
+          # see https://github.com/actions/runner-images.git
+          ####- { os: windows-2019 }
+          - { os: windows-2022 }
+
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Inspect runner-image settings'
+        # see https://github.com/actions/runner-images.git
+        if: ${{ false }}
+        run: |
+          Get-Command bash; Get-Command cmake; Get-Command make
+          bash --version; cmake --version; make --version
+          Get-Command cl -ErrorAction SilentlyContinue
+      - name: 'Build cmake debug'
+        run:   'make build/debug'
+      - name: 'Build cmake release'
+        run:   'make build/release'
+      - name: 'Make artifact'
+        id: make_artifact
+        shell: bash
+        run: |
+          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${MATRIX_OS}
+          mkdir -p "tmp/artifact/$N"
+          (cd build && cp -ai --parents */*/upx.exe "../tmp/artifact/$N")
+          # set "upload_name" Javascript outputs value for use in next step
+          echo "::set-output name=upload_name::$N"
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.make_artifact.outputs.upload_name }}
+          path: tmp/artifact
 
   job-linux-toolchains:
+    if: ${{ false }}  # disable for now
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -69,7 +170,7 @@ jobs:
           fi
 
       - name: 'Check out code'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: { submodules: true }
 
       - name: 'Prepare sources'
@@ -96,12 +197,13 @@ jobs:
           cp ../build/github/$C/$B/upx/upx.out tmp/upx
 
       - name: 'Upload artifact'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.name }}
           path: tmp
 
   job-windows-cross-toolchains:
+    if: ${{ false }}  # disable for now
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -122,7 +224,7 @@ jobs:
           sudo apt-get install -y binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 wine wine64
 
       - name: 'Check out code'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: { submodules: true }
 
       - name: 'Prepare sources'
@@ -153,7 +255,7 @@ jobs:
           cp ../build/github/$CROSS-$C/$B/upx/upx.exe tmp/upx.exe
 
       - name: 'Upload artifact'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.name }}
           path: tmp
@@ -167,6 +269,7 @@ jobs:
       C: ${{ matrix.C }}
       B: release
       H: 'd:\a\upx'
+      MATRIX_NAME: ${{ matrix.name }}
 
     strategy:
       fail-fast: false
@@ -177,7 +280,7 @@ jobs:
 
     steps:
       - name: 'Check out code'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: { submodules: true }
 
       - name: 'Prepare sources'
@@ -189,13 +292,7 @@ jobs:
           cd %H%
           md build build\%C% deps
           cd deps
-          curl -sS -L --retry 5 -o ucl-1.03.tar.gz   "https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.gz"
-          curl -sS -L --retry 5 -o zlib-1.2.11.tar.gz "https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.11.tar.gz"
           git clone --depth=1 https://github.com/upx/upx-testsuite
-          tar -xzf ucl-1.03.tar.gz
-          tar -xzf zlib-1.2.11.tar.gz
-          @REM patch UCL for newer msvc (vsnprintf issue)
-          sed -i '/# *define.*snprintf  *_v*snprintf$/d' ucl-1.03/acc/acc_auto.h
 
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
@@ -208,24 +305,24 @@ jobs:
           @REM setup directories following the VPATH build in travis_build.sh
           where cl & where link
           set BDIR=%H%\build\%C%\%B%
-          md %BDIR% %BDIR%\ucl-1.03 %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib-1.2.11
-          set DEFS=-D_CRT_SECURE_NO_WARNINGS
+          md %BDIR% %BDIR%\ucl %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib
+          set DEFS=-D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
           @REM build UCL
-          cd %BDIR%\ucl-1.03
-          set s=%H%\deps\ucl-1.03
+          cd %BDIR%\ucl
+          set s=%H%\upx\vendor\ucl
           cl -MT -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
           link -lib -out:ucl.lib *.obj
           @REM build zlib
-          cd %BDIR%\zlib-1.2.11
-          cl -MT -O2 -W2 %DEFS% -c %H%\deps\zlib-1.2.11\*.c
+          cd %BDIR%\zlib
+          cl -MT -O2 -W3 %DEFS% -c %H%\upx\vendor\zlib\*.c
           link -lib -out:zlib.lib *.obj
           @REM build UPX
           cd %BDIR%\upx
           set s=%H%\upx\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%s%\lzma-sdk -I%H%\deps\ucl-1.03\include -I%H%\deps\zlib-1.2.11 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.11\zlib.lib /link setargv.obj
+          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%H%\upx\vendor\doctest -I%H%\upx\vendor\lzma-sdk -I%H%\upx\vendor\ucl\include -I%H%\upx\vendor\zlib -Feupx.exe %s%\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
 
       - name: 'Basic tests'
         shell: cmd
@@ -245,15 +342,19 @@ jobs:
           bash ./.github/travis_testsuite_1.sh
 
       - name: 'Make artifact'
-        shell: cmd
+        id: make_artifact
+        shell: bash
         run: |
-          mkdir tmp
-          copy %H%\build\%C%\%B%\upx\upx_packed.exe tmp\upx.exe
+          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${MATRIX_NAME}
+          mkdir -p "tmp/artifact/$N/$B"
+          cp -ai ../build/$C/$B/upx/upx*.exe "tmp/artifact/$N/$B"
+          # set "upload_name" Javascript outputs value for use in next step
+          echo "::set-output name=upload_name::$N"
 
       - name: 'Upload artifact'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.name }}
-          path: tmp
+          name: ${{ steps.make_artifact.outputs.upload_name }}
+          path: tmp/artifact
 
 # vim:set ts=2 sw=2 et:
