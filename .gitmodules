@@ -1,0 +1,20 @@
+[submodule "vendor/doctest"]
+    path = vendor/doctest
+    url = https://github.com/upx/upx-vendor-doctest.git
+    branch = upx-vendor
+    shallow = true
+[submodule "vendor/lzma-sdk"]
+    path = vendor/lzma-sdk
+    url = https://github.com/upx/upx-vendor-lzma-sdk.git
+    branch = upx-vendor
+    shallow = true
+[submodule "vendor/ucl"]
+    path = vendor/ucl
+    url = https://github.com/upx/upx-vendor-ucl.git
+    branch = upx-vendor
+    shallow = true
+[submodule "vendor/zlib"]
+    path = vendor/zlib
+    url = https://github.com/upx/upx-vendor-zlib.git
+    branch = upx-vendor
+    shallow = true
