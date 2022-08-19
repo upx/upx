@@ -1,7 +1,7 @@
 #
 # UPX Makefile - needs GNU make
 #
-# Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
+# Copyright (C) 1996-2022 Markus Franz Xaver Johannes Oberhumer
 #
 
 MAKEFLAGS += -r
