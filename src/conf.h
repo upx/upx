@@ -78,8 +78,9 @@ ACC_COMPILE_TIME_ASSERT_HEADER(-1 == ~0) // two's complement - see http://wg21.l
 ACC_COMPILE_TIME_ASSERT_HEADER(0u-1 == ~0u) // two's complement - see http://wg21.link/P0907R4
 ACC_COMPILE_TIME_ASSERT_HEADER((1u << 31) << 1 == 0)
 ACC_COMPILE_TIME_ASSERT_HEADER(((int)(1u << 31)) >> 31 == -1) // arithmetic right shift
+ACC_COMPILE_TIME_ASSERT_HEADER((-1) >> 31 == -1) // arithmetic right shift
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
-ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
+ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 
 // enable/disable some warnings
     // Some non-GLIBC toolchains do not use 'nullptr' everywhere when C++:
@@ -88,6 +89,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
     //   51:32: error: zero as null pointer constant
 #if (ACC_CC_GNUC >= 0x040700) && defined(__GLIBC__)
 #  pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
+#elif (ACC_CC_CLANG >= 0x050000ul)
+#  pragma clang diagnostic error "-Wzero-as-null-pointer-constant"
 #endif
 
 #if (ACC_CC_MSC)
@@ -325,7 +328,7 @@ inline void NO_fprintf(FILE *, const char *, ...) {}
      typedef a acc_tmp_a_t; typedef b acc_tmp_b_t; \
      __packed_struct(acc_tmp_t) acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z; __packed_struct_end() \
      COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 2*sizeof(b)+sizeof(a)) \
-     COMPILE_TIME_ASSERT(sizeof(((acc_tmp_t*)0)->x)+sizeof(((acc_tmp_t*)0)->y)+sizeof(((acc_tmp_t*)0)->z) == 2*sizeof(b)+sizeof(a)) \
+     COMPILE_TIME_ASSERT(sizeof(((acc_tmp_t*)nullptr)->x)+sizeof(((acc_tmp_t*)nullptr)->y)+sizeof(((acc_tmp_t*)nullptr)->z) == 2*sizeof(b)+sizeof(a)) \
    }
 #if defined(__acc_alignof)
 #  define __COMPILE_TIME_ASSERT_ALIGNOF(a,b) \

@@ -151,8 +151,8 @@ int PeFile::readFileHeader()
 
     COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 64)
     COMPILE_TIME_ASSERT_ALIGNED1(exe_header_t)
-    COMPILE_TIME_ASSERT(sizeof(((exe_header_t*)0)->_)  == 18)
-    COMPILE_TIME_ASSERT(sizeof(((exe_header_t*)0)->__) == 34)
+    COMPILE_TIME_ASSERT(sizeof(((exe_header_t*)nullptr)->_)  == 18)
+    COMPILE_TIME_ASSERT(sizeof(((exe_header_t*)nullptr)->__) == 34)
 
     exe_header_t h;
     int ic;
@@ -2096,8 +2096,8 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 
     COMPILE_TIME_ASSERT(sizeof(debug_dir_t) == 28)
     COMPILE_TIME_ASSERT_ALIGNED1(debug_dir_t)
-    COMPILE_TIME_ASSERT(sizeof(((debug_dir_t*)0)->_)  == 16)
-    COMPILE_TIME_ASSERT(sizeof(((debug_dir_t*)0)->__) ==  4)
+    COMPILE_TIME_ASSERT(sizeof(((debug_dir_t*)nullptr)->_)  == 16)
+    COMPILE_TIME_ASSERT(sizeof(((debug_dir_t*)nullptr)->__) ==  4)
 
     unsigned const take = IDSIZE(PEDIR_DEBUG);
     unsigned const skip = IDADDR(PEDIR_DEBUG);
@@ -2166,7 +2166,7 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files are not yet supported");
 
-    if(isection == NULL)
+    if (isection == nullptr)
         throwCantPack("No section was found");
 
     if (memcmp(isection[0].name,"UPX",3) == 0)
