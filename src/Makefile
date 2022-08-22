@@ -1,17 +1,14 @@
 #
 # UPX Makefile - needs GNU make
 #
-# Copyright (C) 1996-2022 Markus Franz Xaver Johannes Oberhumer
-#
+
+# NOTE: this Makefile is deprecated, please use the CMake build instead !
 
 MAKEFLAGS += -r
 .SUFFIXES:
 export SHELL = /bin/sh
 
 # build configuration options for this Makefile
-# 2021-03-07  BUILD_TYPE_DEBUG is off because CI build amd64-win64-gcc-9
-#             fails because it lacks libsantizer.spec, which is required
-#             by -fsanitize=undefined which is turned on by BUILD_TYPE_DEBUG.
 BUILD_TYPE_DEBUG    ?= 0
 BUILD_TYPE_SANITIZE ?= 0
 BUILD_USE_DEPEND    ?= 1
@@ -27,6 +24,20 @@ include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 ifneq ($(srcdir),.)
   vpath %.cpp .:$(srcdir)
   vpath %.h   .:$(srcdir)
+endif
+
+# check git submodules
+ifeq ($(wildcard $(top_srcdir)/vendor/doctest/doctest/.),)
+  $(error ERROR: missing git submodule; run 'git submodule update --init')
+endif
+ifeq ($(wildcard $(top_srcdir)/vendor/lzma-sdk/C/.),)
+  $(error ERROR: missing git submodule; run 'git submodule update --init')
+endif
+ifeq ($(wildcard $(top_srcdir)/vendor/ucl/include/.),)
+  $(error ERROR: missing git submodule; run 'git submodule update --init')
+endif
+ifeq ($(wildcard $(top_srcdir)/vendor/zlib/crc32.c),)
+  $(error ERROR: missing git submodule; run 'git submodule update --init')
 endif
 
 # toolchain
@@ -48,21 +59,23 @@ upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp))
 upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
 
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
-UPX_VERSION_GITREV := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=12 HEAD || echo 'ERROR'))
-ifneq ($(UPX_VERSION_GITREV),)
-  GITREV_PLUS := $(strip $(shell cd '$(top_srcdir)' && git diff --exit-code HEAD >/dev/null && echo '' || echo '+'))
-  DEFS += '-DUPX_VERSION_GITREV="$(UPX_VERSION_GITREV)$(GITREV_PLUS)"'
+GITREV_SHORT := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=12 HEAD || echo 'ERROR'))
+ifneq ($(GITREV_SHORT),)
+  GITREV_PLUS := $(strip $(shell cd '$(top_srcdir)' && git diff --quiet >/dev/null && echo '' || echo '+'))
+  DEFS += '-DUPX_VERSION_GITREV="$(GITREV_SHORT)$(GITREV_PLUS)"'
 endif
 endif
 
-# we need UCL and zlib - you can set envvar UPX_UCLDIR
+INCLUDES += -I$(top_srcdir)/vendor/doctest
+ # we need UCL and zlib - you can set envvar UPX_UCLDIR
 ifneq ($(wildcard $(UPX_UCLDIR)/include/ucl/ucl.h),)
   INCLUDES += -I$(UPX_UCLDIR)/include
   LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
+else
+  # please use the CMake build
+  ##INCLUDES += -I$(top_srcdir)/vendor/ucl/include
 endif
 LIBS += -lucl -lz
-# LZMA from https://github.com/upx/upx-lzma-sdk
-include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 
 # default flags that you can change or override
 ifeq ($(BUILD_TYPE_DEBUG),1)
@@ -76,13 +89,15 @@ ifeq ($(BUILD_TYPE_SANITIZE),1)
 else ifeq ($(BUILD_TYPE_SANITIZE),2)
   # lightweight sanitizer
   # TODO: can we make this the default for release builds?
-  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-strong -fstack-protector-all
+  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all
 else ifeq ($(BUILD_TYPE_DEBUG),1)
   # default sanitizer for debug builds
-  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fstack-protector-strong -fstack-protector-all
+  #CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fstack-protector-all
+  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all
 else
   # default sanitizer for release builds
-  CXXFLAGS_SANITIZE ?= -fstack-protector-strong
+  #CXXFLAGS_SANITIZE ?= -fstack-protector-strong
+  CXXFLAGS_SANITIZE ?= -fstack-protector
 endif
 ifeq ($(findstring clang,$(CXX)),)
   CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS ?= -fno-delete-null-pointer-checks
@@ -97,6 +112,8 @@ mf.CXXFLAGS += $(CXXFLAGS_OPTIMIZE)
 mf.CXXFLAGS += $(CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS)
 mf.CXXFLAGS += -fno-strict-aliasing -fno-strict-overflow
 mf.CXXFLAGS += -funsigned-char
+# disable overambitious auto-vectorization until this actually gains something
+mf.CXXFLAGS += -fno-tree-vectorize
 mf.CXXFLAGS += $(CXXFLAGS_SANITIZE)
 mf.CXXFLAGS += -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
 ##mf.CXXFLAGS += -Wsuggest-override
@@ -118,20 +135,17 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -E $<)
 
 # object overrides
-compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
+compress_lzma$(objext) : INCLUDES += -I$(top_srcdir)/vendor/lzma-sdk
 # these are the only 2 objects that are actually speed-sensitive
 compress_lzma$(objext) : override CXXFLAGS_SANITIZE =
 filteri$(objext)       : override CXXFLAGS_SANITIZE =
-# disable some warnings
-compress_lzma$(objext) : upx_CXXFLAGS += -Wno-shadow
-p_mach$(objext)        : upx_CXXFLAGS += -Wno-cast-align
 
 ifeq ($(BUILD_USE_DEPEND),1)
 ./.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
 	@rm -f $@
 	@echo "Updating $@"
 	@$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -MM) $(filter %.cpp,$^) > $@
-./.depend : INCLUDES += -I$(UPX_LZMADIR)
+./.depend : INCLUDES += -I$(top_srcdir)/vendor/lzma-sdk
 else
 ./.depend:
 .PHONY: ./.depend
