@@ -2,13 +2,9 @@
 # that version works fine since 2006 and that is the only version
 # that is actually sufficiently tested!!!
 
+ifeq ($(wildcard $(top_srcdir)/vendor/lzma-sdk/C/.),)
+  $(error ERROR: missing git submodule; run 'git submodule update --init')
+endif
+
 override UPX_LZMADIR := $(top_srcdir)/vendor/lzma-sdk
 override UPX_LZMA_VERSION := 0x443
-
-ifeq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-  ifneq ($(wildcard $(top_srcdir)/.git/.),)
-    $(error ERROR: missing git submodule; run 'git submodule update --init --recursive')
-  else
-    $(error ERROR: missing directory vendor/lzma-sdk/; visit https://github.com/upx/upx-vendor-lzma-sdk )
-  endif
-endif
