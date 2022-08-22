@@ -1434,8 +1434,9 @@ void Packer::compressWithFilters(upx_bytep i_ptr,
 void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
                                  const upx_compress_config_t *cconf, int filter_strategy,
                                  bool inhibit_compression_check) {
-    compressWithFilters( // call the subroutine immediately below
-        ft, overlap_range, cconf, filter_strategy, 0, 0, 0, nullptr, 0, inhibit_compression_check);
+    // call the subroutine immediately below
+    compressWithFilters(ft, overlap_range, cconf, filter_strategy, 0, 0, 0, nullptr, 0,
+                        inhibit_compression_check);
 }
 
 void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
@@ -1454,9 +1455,9 @@ void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
 
     assert(f_ptr + f_len <= i_ptr + i_len);
 
-    compressWithFilters( // call the first one in this file
-        i_ptr, i_len, o_ptr, f_ptr, f_len, hdr_ptr, hdr_len, ft, overlap_range, cconf,
-        filter_strategy, inhibit_compression_check);
+    // call the first one in this file
+    compressWithFilters(i_ptr, i_len, o_ptr, f_ptr, f_len, hdr_ptr, hdr_len, ft, overlap_range,
+                        cconf, filter_strategy, inhibit_compression_check);
 
     ibuf.checkState();
     obuf.checkState();

@@ -53,7 +53,7 @@ __acc_static_forceinline bool use_simple_mcheck()
     return (bool) use_simple_mcheck_flag;
 }
 #else
-__acc_static_forceinline bool use_simple_mcheck() { return true; }
+__acc_static_forceinline constexpr bool use_simple_mcheck() { return true; }
 #endif
 
 

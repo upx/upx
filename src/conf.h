@@ -376,6 +376,27 @@ private:
 };
 
 
+namespace compile_time {
+constexpr bool string_eq(const char *a, const char *b) {
+    return *a == *b && (*a == '\0' || string_eq(a + 1, b + 1));
+}
+constexpr bool string_lt(const char *a, const char *b) {
+    return (unsigned char)*a < (unsigned char)*b || (*a != '\0' && *a == *b && string_lt(a + 1, b + 1));
+}
+constexpr bool string_ne(const char *a, const char *b) {
+    return !string_eq(a, b);
+}
+constexpr bool string_gt(const char *a, const char *b) {
+    return string_lt(b, a);
+}
+constexpr bool string_le(const char *a, const char *b) {
+    return !string_lt(b, a);
+}
+constexpr bool string_ge(const char *a, const char *b) {
+    return !string_lt(a, b);
+}
+}
+
 /*************************************************************************
 // constants
 **************************************************************************/
@@ -697,12 +718,6 @@ struct upx_compress_result_t
 #include <new>
 #include <type_traits>
 #include <typeinfo>
-ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<short, upx_int16_t>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned short, upx_uint16_t>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<int, upx_int32_t>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned, upx_uint32_t>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<long long, upx_int64_t>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned long long, upx_uint64_t>::value))
 
 #include "options.h"
 #include "except.h"
@@ -710,18 +725,21 @@ ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned long long, upx_uint64_t>::
 #include "util.h"
 #include "console.h"
 
+//#define DOCTEST_CONFIG_DISABLE
+#include <doctest/parts/doctest_fwd.h>
 
 // classes
 class ElfLinker;
 typedef ElfLinker Linker;
 
+// dt_check.cpp
+void upx_compiler_sanity_check(void);
+bool upx_doctest_check(void);
 
 // main.cpp
 extern const char *progname;
 bool set_exit_code(int ec);
-void upx_compiler_sanity_check(void);
 int upx_main(int argc, char *argv[]);
-
 
 // msg.cpp
 void printSetNl(int need_nl);
@@ -737,11 +755,9 @@ void info(const char *format, ...) attribute_format(1, 2);
 void infoHeader(void);
 void infoWriting(const char *what, long size);
 
-
 // work.cpp
 void do_one_file(const char *iname, char *oname);
 int do_files(int i, int argc, char *argv[]);
-
 
 // help.cpp
 extern const char gitrev[];
@@ -750,7 +766,6 @@ void show_help(int verbose=0);
 void show_license(void);
 void show_usage(void);
 void show_version(int);
-
 
 // compress.cpp
 unsigned upx_adler32(const void *buf, unsigned len, unsigned adler=1);

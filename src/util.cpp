@@ -33,6 +33,7 @@
 #define ACC_WANT_ACCLIB_GETOPT 1
 #define ACC_WANT_ACCLIB_HSREAD 1
 #define ACC_WANT_ACCLIB_MISC 1
+#define ACC_WANT_ACCLIB_VGET 1
 #define ACC_WANT_ACCLIB_WILDARGV 1
 #undef HAVE_MKDIR
 #include "miniacc.h"
@@ -90,6 +91,15 @@ bool mem_size_valid_bytes(upx_uint64_t bytes) {
     if (bytes > UPX_RSIZE_MAX)
         return false;
     return true;
+}
+
+TEST_CASE("mem_size") {
+    CHECK(mem_size_valid(1, 0));
+    CHECK(mem_size_valid(1, 0x30000000));
+    CHECK(!mem_size_valid(1, 0x30000000 + 1));
+    CHECK(!mem_size_valid(1, 0x30000000, 1));
+    CHECK(!mem_size_valid(1, 0x30000000, 0, 1));
+    CHECK(!mem_size_valid(1, 0x30000000, 0x30000000, 0x30000000));
 }
 
 int ptr_diff(const void *p1, const void *p2) {
@@ -284,6 +294,24 @@ int find_le64(const void *b, int blen, upx_uint64_t what) {
     return find(b, blen, w, 8);
 }
 
+TEST_CASE("find") {
+    static const unsigned char b[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    CHECK(find(b, 16, b, 0) == -1);
+    for (int i = 0; i < 16; i++) {
+        CHECK(find(b, 16, b + i, 1) == i);
+    }
+    for (int i = 1; i <= 16; i++) {
+        CHECK(find(b, 16, b, i) == 0);
+    }
+    CHECK(find(b, 16, b, 17) == -1);
+    CHECK(find_be16(b, 16, 0x0203) == 2);
+    CHECK(find_le16(b, 16, 0x0302) == 2);
+    CHECK(find_be32(b, 16, 0x04050607) == 4);
+    CHECK(find_le32(b, 16, 0x07060504) == 4);
+    CHECK(find_be64(b, 16, 0x08090a0b0c0d0e0fULL) == 8);
+    CHECK(find_le64(b, 16, 0x0f0e0d0c0b0a0908ULL) == 8);
+}
+
 int mem_replace(void *bb, int blen, const void *what, int wlen, const void *r) {
     unsigned char *b = (unsigned char *) bb;
     int boff = 0;
@@ -299,6 +327,16 @@ int mem_replace(void *bb, int blen, const void *what, int wlen, const void *r) {
         n++;
     }
     return n;
+}
+
+TEST_CASE("mem_replace") {
+    char b[16 + 1] = "aaaaaaaaaaaaaaaa";
+    CHECK(mem_replace(b, 16, "a", 0, "x") == 0);
+    CHECK(mem_replace(b, 16, "a", 1, "b") == 16);
+    CHECK(mem_replace(b, 8, "bb", 2, "cd") == 4);
+    CHECK(mem_replace(b + 8, 8, "bbb", 3, "efg") == 2);
+    CHECK(mem_replace(b, 16, "b", 1, "h") == 2);
+    CHECK(strcmp(b, "cdcdcdcdefgefghh") == 0);
 }
 
 /*************************************************************************
@@ -510,6 +548,18 @@ unsigned get_ratio(upx_uint64_t u_len, upx_uint64_t c_len) {
     if (x >= 10 * n) // >= "1000%"
         x = 10 * n - 1;
     return ACC_ICONV(unsigned, x);
+}
+
+TEST_CASE("get_ratio") {
+    CHECK(get_ratio(0, 0) == 0);
+    CHECK(get_ratio(0, 1) == 1000000);
+    CHECK(get_ratio(1, 0) == 50);
+    CHECK(get_ratio(1, 1) == 1000050);
+    CHECK(get_ratio(1, 9) == 9000050);
+    CHECK(get_ratio(1, 10) == 9999999);
+    CHECK(get_ratio(1, 11) == 9999999);
+    CHECK(get_ratio(100000, 100000) == 1000050);
+    CHECK(get_ratio(100000, 200000) == 2000050);
 }
 
 /* vim:set ts=4 sw=4 et: */
