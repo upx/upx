@@ -262,10 +262,8 @@ int upx_ucl_init(void)
 {
     if (ucl_init() != UCL_E_OK)
         return -1;
-#if defined(UPX_OFFICIAL_BUILD)
-    if (UCL_VERSION != ucl_version())
+    if (UCL_VERSION != ucl_version() || strcmp(UCL_VERSION_STRING, ucl_version_string()) != 0)
         return -2;
-#endif
     ucl_set_malloc_hooks(my_malloc, my_free);
     return 0;
 }
@@ -286,5 +284,57 @@ unsigned upx_ucl_crc32(const void *buf, unsigned len, unsigned crc)
     return ucl_crc32(crc, (const ucl_bytep) buf, len);
 }
 #endif
+
+/*************************************************************************
+// Debug checks
+**************************************************************************/
+
+#if DEBUG && 1
+
+#include "mem.h"
+
+static bool check_ucl(const int method, const unsigned expected_c_len) {
+    const unsigned u_len = 16384;
+    const unsigned c_extra = 4096;
+    MemBuffer u_buf, c_buf, d_buf;
+    unsigned c_len, d_len;
+    upx_compress_result_t cresult;
+    int r;
+    const int level = 3; // don't waste time
+
+    u_buf.alloc(u_len);
+    memset(u_buf, 0, u_len);
+    c_buf.allocForCompression(u_len, c_extra);
+    d_buf.allocForUncompression(u_len);
+
+    c_len = c_buf.getSize() - c_extra;
+    r = upx_ucl_compress(u_buf, u_len, c_buf + c_extra, &c_len, nullptr, method, level, NULL_cconf, &cresult);
+    if (r != 0 || c_len != expected_c_len) return false;
+
+    d_len = d_buf.getSize();
+    r = upx_ucl_decompress(c_buf + c_extra, c_len, d_buf, &d_len, method, nullptr);
+    if (r != 0 || d_len != u_len) return false;
+    if (memcmp(u_buf, d_buf, u_len) != 0) return false;
+
+    // TODO: rewrite Packer::findOverlapOverhead() so that we can test it here
+    //unsigned x_len = d_len;
+    //r = upx_ucl_test_overlap(c_buf, u_buf, c_extra, c_len, &x_len, method, nullptr);
+    return true;
+}
+
+TEST_CASE("compress_ucl") {
+    CHECK(check_ucl(M_NRV2B_8, 34));
+    CHECK(check_ucl(M_NRV2B_LE16, 34));
+    CHECK(check_ucl(M_NRV2B_LE32, 34));
+    CHECK(check_ucl(M_NRV2D_8, 32));
+    CHECK(check_ucl(M_NRV2D_LE16, 32));
+    CHECK(check_ucl(M_NRV2D_LE32, 34));
+    CHECK(check_ucl(M_NRV2E_8, 32));
+    CHECK(check_ucl(M_NRV2E_LE16, 32));
+    CHECK(check_ucl(M_NRV2E_LE32, 34));
+}
+
+#endif // DEBUG
+
 
 /* vim:set ts=4 sw=4 et: */

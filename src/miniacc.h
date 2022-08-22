@@ -1674,7 +1674,11 @@ extern "C" {
 #  define __acc_forceinline     __acc_inline
 #endif
 #if !defined(__acc_noinline)
-#if 1 && (ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x040000ul) && (ACC_CC_GNUC < 0x040003ul)
+#if (ACC_CC_GNUC >= 0x080000ul)
+#  define __acc_noinline        __attribute__((__noinline__,__noipa__))
+#elif (ACC_CC_GNUC >= 0x050000ul)
+#  define __acc_noinline        __attribute__((__noinline__,__noclone__,__no_icf__))
+#elif 1 && (ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x040000ul) && (ACC_CC_GNUC < 0x040003ul)
 #  define __acc_noinline        __attribute__((__noinline__,__used__))
 #elif (ACC_CC_GNUC >= 0x030200ul)
 #  define __acc_noinline        __attribute__((__noinline__))
@@ -6316,13 +6320,13 @@ ACCLIB_PUBLIC(void, acc_ua_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
 #endif
 extern void* volatile acc_vget_ptr__;
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x030400ul) || ACC_CC_LLVM)
-void* volatile __attribute__((__used__)) acc_vget_ptr__ = ACC_STATIC_CAST(void *, 0);
+void* volatile __attribute__((__used__)) acc_vget_ptr__ = ACC_STATIC_CAST(void *, nullptr);
 #else
-void* volatile acc_vget_ptr__ = ACC_STATIC_CAST(void *, 0);
+void* volatile acc_vget_ptr__ = ACC_STATIC_CAST(void *, nullptr);
 #endif
 #ifndef __ACCLIB_VGET_BODY
 #define __ACCLIB_VGET_BODY(T) \
-    if __acc_unlikely(acc_vget_ptr__) { \
+    if __acc_very_unlikely(acc_vget_ptr__) { \
         typedef T __acc_may_alias TT; \
         unsigned char e; expr &= 255; e = ACC_STATIC_CAST(unsigned char, expr); \
         * ACC_STATIC_CAST(TT *, acc_vget_ptr__) = v; \

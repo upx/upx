@@ -75,10 +75,10 @@ private:
 
     static unsigned global_alloc_counter;
 
-    // disable copy and assignment
+    // disable copy, assignment and move assignment
     MemBuffer(const MemBuffer &) = delete;
     MemBuffer& operator= (const MemBuffer &) = delete;
-
+    MemBuffer& operator= (MemBuffer &&) = delete;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
 };

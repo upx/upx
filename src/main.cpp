@@ -926,8 +926,6 @@ static int get_options(int argc, char **argv) {
         {"crp-zlib-ml", 0x31, N, 821},
         {"crp-zlib-wb", 0x31, N, 822},
         {"crp-zlib-st", 0x31, N, 823},
-        // [deprecated - only for compatibility with UPX 2.0x]
-        {"crp-ms", 0x31, N, 807},
 
         // atari/tos
         {"split-segments", 0x10, N, 650},
@@ -1165,257 +1163,27 @@ static void first_options(int argc, char **argv) {
 }
 
 /*************************************************************************
-// assert a sane architecture and compiler
-**************************************************************************/
-
-template <class T>
-struct TestBELE {
-    __acc_static_noinline bool test(void) {
-        COMPILE_TIME_ASSERT_ALIGNED1(T)
-        struct alignas(1) test1_t {
-            char a;
-            T b;
-        };
-        struct alignas(1) test2_t {
-            char a;
-            T b[3];
-        };
-        test1_t t1[7];
-        UNUSED(t1);
-        test2_t t2[7];
-        UNUSED(t2);
-        COMPILE_TIME_ASSERT(sizeof(test1_t) == 1 + sizeof(T))
-        COMPILE_TIME_ASSERT_ALIGNED1(test1_t)
-        COMPILE_TIME_ASSERT(sizeof(t1) == 7 + 7 * sizeof(T))
-        COMPILE_TIME_ASSERT(sizeof(test2_t) == 1 + 3 * sizeof(T))
-        COMPILE_TIME_ASSERT_ALIGNED1(test2_t)
-        COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21 * sizeof(T))
-#if defined(__acc_alignof)
-        COMPILE_TIME_ASSERT(__acc_alignof(t1) == 1)
-        COMPILE_TIME_ASSERT(__acc_alignof(t2) == 1)
-#endif
-#if 1
-        T allbits;
-        allbits = 0;
-        allbits += 1;
-        allbits -= 2;
-        T v1;
-        v1 = 1;
-        v1 *= 2;
-        v1 -= 1;
-        T v2;
-        v2 = 1;
-        assert((v1 == v2));
-        assert(!(v1 != v2));
-        assert((v1 <= v2));
-        assert((v1 >= v2));
-        assert(!(v1 < v2));
-        assert(!(v1 > v2));
-        v2 ^= allbits;
-        assert(!(v1 == v2));
-        assert((v1 != v2));
-        assert((v1 <= v2));
-        assert(!(v1 >= v2));
-        assert((v1 < v2));
-        assert(!(v1 > v2));
-        v2 += 2;
-        assert(v1 == 1);
-        assert(v2 == 0);
-        v1 <<= 1;
-        v1 |= v2;
-        v1 >>= 1;
-        v2 &= v1;
-        v2 /= v1;
-        v2 *= v1;
-        assert(v1 == 1);
-        assert(v2 == 0);
-        if ((v1 ^ v2) != 1)
-            return false;
-#endif
-        return true;
-    }
-};
-
-template <class A, class B>
-struct TestNoAliasingStruct {
-    __acc_static_noinline bool test(A *a, B *b) {
-        *a = 0;
-        *b = 0;
-        *b -= 3;
-        return *a != 0;
-    }
-};
-template <class A, class B>
-__acc_static_forceinline bool testNoAliasing(A *a, B *b) {
-    return TestNoAliasingStruct<A, B>::test(a, b);
-}
-template <class T>
-struct TestIntegerWrap {
-    static inline bool inc(T x) { return x + 1 > x; }
-    static inline bool dec(T x) { return x - 1 < x; }
-};
-
-#define ACC_WANT_ACC_CHK_CH 1
-#undef ACCCHK_ASSERT
-#include "miniacc.h"
-
-void upx_compiler_sanity_check(void) {
-#define ACC_WANT_ACC_CHK_CH 1
-#undef ACCCHK_ASSERT
-#define ACCCHK_ASSERT(expr) ACC_COMPILE_TIME_ASSERT(expr)
-#include "miniacc.h"
-#undef ACCCHK_ASSERT
-
-    COMPILE_TIME_ASSERT(sizeof(char) == 1)
-    COMPILE_TIME_ASSERT(sizeof(short) == 2)
-    COMPILE_TIME_ASSERT(sizeof(int) == 4)
-    COMPILE_TIME_ASSERT(sizeof(long) >= 4)
-    COMPILE_TIME_ASSERT(sizeof(void *) >= 4)
-
-    COMPILE_TIME_ASSERT(sizeof(BE16) == 2)
-    COMPILE_TIME_ASSERT(sizeof(BE32) == 4)
-    COMPILE_TIME_ASSERT(sizeof(BE64) == 8)
-    COMPILE_TIME_ASSERT(sizeof(LE16) == 2)
-    COMPILE_TIME_ASSERT(sizeof(LE32) == 4)
-    COMPILE_TIME_ASSERT(sizeof(LE64) == 8)
-
-    COMPILE_TIME_ASSERT_ALIGNED1(BE16)
-    COMPILE_TIME_ASSERT_ALIGNED1(BE32)
-    COMPILE_TIME_ASSERT_ALIGNED1(BE64)
-    COMPILE_TIME_ASSERT_ALIGNED1(LE16)
-    COMPILE_TIME_ASSERT_ALIGNED1(LE32)
-    COMPILE_TIME_ASSERT_ALIGNED1(LE64)
-
-    COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1)
-    assert(strlen(UPX_VERSION_STRING4) == 4);
-    COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_YEAR) == 4 + 1)
-    assert(strlen(UPX_VERSION_YEAR) == 4);
-    assert(memcmp(UPX_VERSION_DATE_ISO, UPX_VERSION_YEAR, 4) == 0);
-    assert(memcmp(&UPX_VERSION_DATE[sizeof(UPX_VERSION_DATE) - 1 - 4], UPX_VERSION_YEAR, 4) == 0);
-    if (gitrev[0]) {
-        size_t revlen = strlen(gitrev);
-        if (strncmp(gitrev, "ERROR", 5) == 0) {
-            assert(revlen == 5 || revlen == 6);
-        } else {
-            assert(revlen == 12 || revlen == 13);
-        }
-        if (revlen == 6 || revlen == 13) {
-            assert(gitrev[revlen - 1] == '+');
-        }
-    }
-    assert(UPX_RSIZE_MAX_MEM == 805306368);
-
-#if 1
-    assert(TestBELE<LE16>::test());
-    assert(TestBELE<LE32>::test());
-    assert(TestBELE<LE64>::test());
-    assert(TestBELE<BE16>::test());
-    assert(TestBELE<BE32>::test());
-    assert(TestBELE<BE64>::test());
-    {
-        alignas(16) static const unsigned char dd[32] = {
-            0, 0, 0, 0,    0,    0,    0,    0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8, 0,
-            0, 0, 0, 0x7f, 0x7e, 0x7d, 0x7c, 0x7b, 0x7a, 0x79, 0x78, 0,    0,    0,    0,    0};
-        const unsigned char *d;
-        const N_BELE_RTP::AbstractPolicy *bele;
-        d = dd + 7;
-        assert(upx_adler32(d, 4) == 0x09f003f7);
-        assert(upx_adler32(d, 4, 0) == 0x09ec03f6);
-        assert(upx_adler32(d, 4, 1) == 0x09f003f7);
-        bele = &N_BELE_RTP::be_policy;
-        assert(get_be16(d) == 0xfffe);
-        assert(bele->get16(d) == 0xfffe);
-        assert(get_be16_signed(d) == -2);
-        assert(get_be24(d) == 0xfffefd);
-        assert(bele->get24(d) == 0xfffefd);
-        assert(get_be24_signed(d) == -259);
-        assert(get_be32(d) == 0xfffefdfc);
-        assert(bele->get32(d) == 0xfffefdfc);
-        assert(get_be32_signed(d) == -66052);
-        bele = &N_BELE_RTP::le_policy;
-        assert(get_le16(d) == 0xfeff);
-        assert(bele->get16(d) == 0xfeff);
-        assert(get_le16_signed(d) == -257);
-        assert(get_le24(d) == 0xfdfeff);
-        assert(bele->get24(d) == 0xfdfeff);
-        assert(get_le24_signed(d) == -131329);
-        assert(get_le32(d) == 0xfcfdfeff);
-        assert(bele->get32(d) == 0xfcfdfeff);
-        assert(get_le32_signed(d) == -50462977);
-        assert(get_le64_signed(d) == -506097522914230529LL);
-        assert(find_be16(d, 2, 0xfffe) == 0);
-        assert(find_le16(d, 2, 0xfeff) == 0);
-        assert(find_be32(d, 4, 0xfffefdfc) == 0);
-        assert(find_le32(d, 4, 0xfcfdfeff) == 0);
-        d += 12;
-        assert(get_be16_signed(d) == 32638);
-        assert(get_be24_signed(d) == 8355453);
-        assert(get_be32_signed(d) == 2138996092);
-        assert(get_be64_signed(d) == 9186918263483431288LL);
-    }
-    {
-        unsigned dd;
-        void *const d = &dd;
-        dd = ne32_to_le32(0xf7f6f5f4);
-        assert(get_le26(d) == 0x03f6f5f4);
-        set_le26(d, 0);
-        assert(get_le26(d) == 0);
-        assert(dd == ne32_to_le32(0xf4000000));
-        set_le26(d, 0xff020304);
-        assert(get_le26(d) == 0x03020304);
-        assert(dd == ne32_to_le32(0xf7020304));
-    }
-#endif
-    union {
-        short v_short;
-        int v_int;
-        long v_long;
-        long long v_llong;
-        BE16 b16;
-        BE32 b32;
-        BE64 b64;
-        LE16 l16;
-        LE32 l32;
-        LE64 l64;
-    } u;
-    assert(testNoAliasing(&u.v_short, &u.b32));
-    assert(testNoAliasing(&u.v_short, &u.l32));
-    assert(testNoAliasing(&u.v_int, &u.b64));
-    assert(testNoAliasing(&u.v_int, &u.l64));
-#if 1
-    // check working -fno-strict-aliasing
-    assert(testNoAliasing(&u.v_short, &u.v_int));
-    assert(testNoAliasing(&u.v_int, &u.v_long));
-    assert(testNoAliasing(&u.v_int, &u.v_llong));
-    assert(testNoAliasing(&u.v_long, &u.v_llong));
-#endif
-
-    assert(TestIntegerWrap<int>::inc(0));
-    assert(!TestIntegerWrap<int>::inc(INT_MAX));
-    assert(TestIntegerWrap<int>::dec(0));
-    assert(!TestIntegerWrap<int>::dec(INT_MIN));
-    assert(TestIntegerWrap<unsigned>::inc(0));
-    assert(!TestIntegerWrap<unsigned>::inc(UINT_MAX));
-    assert(TestIntegerWrap<unsigned>::dec(1));
-    assert(!TestIntegerWrap<unsigned>::dec(0));
-}
-
-/*************************************************************************
 // main entry point
 **************************************************************************/
 
 int upx_main(int argc, char *argv[]) {
     int i;
     static char default_argv0[] = "upx";
+    assert(argc >= 1); // sanity check
+    if (!argv[0] || !argv[0][0])
+        argv[0] = default_argv0;
+    argv0 = argv[0];
 
     upx_compiler_sanity_check();
+    if (!upx_doctest_check()) {
+        fprintf(stderr, "%s: internal error: doctest failed\n", argv0);
+        e_exit(EXIT_INIT);
+    }
+
     // Allow serial re-use of upx_main() as a subroutine
     done_output_name = 0;
     opt->reset();
 
-    if (!argv[0] || !argv[0][0])
-        argv[0] = default_argv0;
-    argv0 = argv[0];
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_TOS || ACC_OS_WIN16 ||  \
      ACC_OS_WIN32 || ACC_OS_WIN64)
     {
@@ -1442,15 +1210,8 @@ int upx_main(int argc, char *argv[]) {
 
     set_term(stderr);
 
-    if (upx_ucl_init() != 0) {
-        show_head();
-        fprintf(stderr, "ucl_init() failed - check your UCL installation !\n");
-        if (UCL_VERSION != ucl_version())
-            fprintf(stderr, "library version conflict (%lx, %lx) - check your UCL installation !\n",
-                    (long) UCL_VERSION, (long) ucl_version());
-        e_exit(EXIT_INIT);
-    }
     assert(upx_lzma_init() == 0);
+    assert(upx_ucl_init() == 0);
     assert(upx_zlib_init() == 0);
 #if (WITH_NRV)
     assert(upx_nrv_init() == 0);
@@ -1569,17 +1330,6 @@ int __acc_cdecl_main main(int argc, char *argv[]) {
     acc_wildargv(&argc, &argv);
     // srand((int) time(nullptr));
     srand((int) clock());
-
-#if defined(_WIN32) || 1
-    // runtime check that Win32/MinGW <stdio.h> works as expected
-    {
-        long long ll = argc < 0 ? 0 : -1;
-        unsigned long long llu = (unsigned long long) ll;
-        char buf[256];
-        snprintf(buf, sizeof(buf), ".%d.%ld.%lld.%u.%lu.%llu", -3, -2L, ll, 3U, 2LU, llu);
-        assert(strcmp(buf, ".-3.-2.-1.3.2.18446744073709551615") == 0);
-    }
-#endif
 
     int r = upx_main(argc, argv);
 

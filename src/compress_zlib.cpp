@@ -217,10 +217,8 @@ int upx_zlib_test_overlap  ( const upx_bytep buf,
 
 int upx_zlib_init(void)
 {
-#if defined(UPX_OFFICIAL_BUILD)
     if (strcmp(ZLIB_VERSION, zlibVersion()) != 0)
         return -2;
-#endif
     return 0;
 }
 

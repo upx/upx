@@ -207,7 +207,7 @@ endif
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
 CLANG_FORMAT_FILES += bele.h bele_policy.h
-CLANG_FORMAT_FILES += except.cpp except.h
+CLANG_FORMAT_FILES += dt_check.cpp dt_impl.cpp except.cpp except.h
 CLANG_FORMAT_FILES += linker.cpp linker.h packhead.cpp packmast.cpp packmast.h
 CLANG_FORMAT_FILES += main.cpp options.h packer.cpp packer.h
 CLANG_FORMAT_FILES += p_tos.cpp p_tos.h
