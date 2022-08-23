@@ -27,7 +27,7 @@ echo
 if [[ $TRAVIS_OS_NAME == linux ]]; then
     cd / && cd $upx_SRCDIR || exit 1
     echo "Checking source code for whitespace violations..."
-    bash ./src/stub/scripts/check_whitespace.sh || exit 1
+    bash ./misc/scripts/check_whitespace.sh || exit 1
     echo "  Passed."
 fi # linux
 

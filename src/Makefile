@@ -153,9 +153,9 @@ endif
 
 CHECK_WHITESPACE =
 ifeq ($(shell uname),Linux)
-CHECK_WHITESPACE = $(top_srcdir)/src/stub/scripts/check_whitespace.sh $(top_srcdir)
+CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
-CHECK_WHITESPACE = $(top_srcdir)/src/stub/scripts/check_whitespace_git.sh $(top_srcdir)
+CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)
 endif
 check-whitespace : ; $(CHECK_WHITESPACE)
 endif
@@ -215,7 +215,7 @@ CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += snprintf.cpp
 CLANG_FORMAT_FILES += ui.cpp ui.h util.cpp util.h work.cpp
 clang-format:
-	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(sort $(CLANG_FORMAT_FILES)))
+	$(top_srcdir)/misc/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(sort $(CLANG_FORMAT_FILES)))
 .PHONY: clang-format
 endif
 
