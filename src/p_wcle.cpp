@@ -622,7 +622,7 @@ void PackWcle::decodeFixups()
         }
         // Guard against run-away.
         static unsigned char const blank[9] = {0};
-        if (q > (oimage + ph.u_len - sizeof(blank))  // catastrohpic worst case
+        if (q > (oimage + ph.u_len - sizeof(blank))  // catastrophic worst case
         ||  !memcmp(blank, q, sizeof(blank))  // no-good early warning
         ) {
             char msg[50]; snprintf(msg, sizeof(msg),
