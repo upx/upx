@@ -27,21 +27,6 @@ Foreword
   Markus & Laszlo
 
 
-Introduction
-------------
-
-  Welcome to the UPX source code release!
-
-  UPX is not a toy for kids. Apart from basic knowledge about executables
-  and data compression you will need to be firm in C++, assembler,
-  Perl and Makefiles. Probably some other things as well.
-
-  If you can't manage to compile it then the sources are
-  probably not for you. Don't email us for help.
-
-  The authors use Linux for development. You might want to as well.
-
-
 Short overview
 --------------
 
@@ -56,53 +41,34 @@ Short overview
      are #included by the individual executable format handlers.
 
 
-Prerequisites
--------------
-
-  - first of all you need to build the UCL compression library
-    http://www.oberhumer.com/opensource/ucl/
-    Use "CC=gcc -std=gnu89" especially with gcc-6.3 and gcc-7.1.
-    To build for native aarch64 (64-bit ARM) the files config.guess
-    and config.sub must be updated according to the recipe at
-    https://www.gnu.org/software/gettext/manual/html_node/config_002eguess.html
-
-
 Tools needed to build/modify the UPX sources
 --------------------------------------------
 
-  - A C++ compiler that supports C++ 14: gcc >= 6.1 or clang.
+  - A C++ compiler that supports C++ 14: clang, gcc or msvc
 
-  - GNU make 3.81 or better
+  - GNU make
 
-  - zlib and zlib-devel [or zlib-dev] software packages for your
-    host environment
-
-  - LZMA SDK from https://github.com/upx/upx-lzma-sdk
-    When using git run 'git submodule update --init --recursive'.
+  - CMake 3.13 or better; see https://cmake.org/
 
 
 To compile the packer sources
 -----------------------------
 
-  Set the environment variable UPX_UCLDIR to point to your
-  UCL build directory, e.g.
-
-     set UPX_UCLDIR=c:\src\ucl-1.03                   (DOS / Windows)
-     export UPX_UCLDIR=$HOME/local/src/ucl-1.03       (Unix)
-
-  Finally type
-
-     make all
+  - just run "make" in the top-level source directory
 
 
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
 
-  - Perl & Python
+  - a Linux host system
 
   - upx-stubtools - a number of cross-assemblers and cross-compilers.
-    Precompiled binaries for i386-linux hosts are available from
+    Precompiled binaries for amd64-linux hosts are available from
     https://github.com/upx/upx-stubtools/releases
+
+  - Perl & Python2
+
+  - NOTE: also see misc/rebuild-stubs-with-podman
 
 
 Misc. notes
@@ -118,9 +84,9 @@ Misc. notes
   - Use gcc extensions and other compiler specific stuff only through
     macros.
 
-***
 
 Some conventions:
+-----------------
 
   - follow our coding style
   - indent level = 4
@@ -128,18 +94,5 @@ Some conventions:
 
   - Use throwSomeException() functions instead of throw SomeException():
     this makes the code shorter if used often.
-
-***
-
-Patches/Contributions
-
-  - Please send us bug fixes/contributions only using
-
-      diff -u oldfile newfile
-
-    or
-
-      diff -uNr olddirectory newdirectory
-
 
 # vim:set ts=4 sw=4 et:
