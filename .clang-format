@@ -1,5 +1,6 @@
-# for clang-format-10.0.1
-# "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." Rob Pike
+# "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." --Rob Pike
+#
+# for clang-format-10.0.1 from https://github.com/upx/upx-stubtools/releases
 ---
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
@@ -9,6 +10,7 @@ ColumnLimit: 100
 IndentWidth: 4
 SortIncludes: false
 SpaceAfterCStyleCast: true
+Standard: Cpp03
 StatementMacros: [
   ACCCHK_ASSERT,
   ACCCHK_ASSERT_IS_SIGNED_T,
@@ -23,5 +25,4 @@ StatementMacros: [
   COMPILE_TIME_ASSERT,
   COMPILE_TIME_ASSERT_ALIGNED1,
 ]
-Standard: Cpp03
 ...
