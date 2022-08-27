@@ -1,5 +1,5 @@
-# for clang-format-10.0.1
-# "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." Rob Pike
+# for clang-format-10.0.1 from https://github.com/upx/upx-stubtools/releases
+# "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." --Rob Pike
 ---
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
