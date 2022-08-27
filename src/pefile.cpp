@@ -1079,7 +1079,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         // This decreases compression ratio, so FIXME somehow.
         infoWarning("can't remove unneeded imports");
         ilen += sizeof(import_desc) * dllnum;
-#if defined(DEBUG)
+#if TESTING
         if (opt->verbose > 3)
             names.dump();
 #endif
@@ -1194,7 +1194,7 @@ void PeFile::Export::convert(unsigned eoffs,unsigned esize)
     iv.flatten();
     if (iv.ivnum == 1)
         iv.clear();
-#if defined(DEBUG)
+#if TESTING
     else
         iv.dump();
 #endif
@@ -1853,7 +1853,7 @@ bool PeFile::Resource::clear()
     iv.flatten();
     if (iv.ivnum == 1)
         iv.clear();
-#if defined(DEBUG)
+#if TESTING
     if (opt->verbose > 3)
         iv.dump();
 #endif

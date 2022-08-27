@@ -405,10 +405,11 @@ void PackTos::pack(OutputFile *fo) {
     overlay = file_size - (FH_SIZE + i_text + i_data + i_sym);
     fi->readx(ibuf + t, overlay);
 
-#if 0 || (TESTING)
-    printf("text: %d, data: %d, sym: %d, bss: %d, flags=0x%x\n",
-           i_text, i_data, i_sym, i_bss, (int)ih.fh_flag);
-    printf("xx1 reloc: %d, overlay: %d, fixup: %d\n", relocsize, overlay, overlay >= 4 ? (int)get_be32(ibuf+t) : -1);
+#if TESTING
+    printf("text: %d, data: %d, sym: %d, bss: %d, flags=0x%x\n", i_text, i_data, i_sym, i_bss,
+           (int) ih.fh_flag);
+    printf("xx1 reloc: %d, overlay: %d, fixup: %d\n", relocsize, overlay,
+           overlay >= 4 ? (int) get_be32(ibuf + t) : -1);
 #endif
 
     // Check relocs (see load_and_reloc() in freemint/sys/memory.c).
@@ -431,7 +432,7 @@ void PackTos::pack(OutputFile *fo) {
         symbols.need_reloc = true;
     }
 
-#if 0 || (TESTING)
+#if TESTING
     printf("xx2: %d relocs: %d, overlay: %d, t: %d\n", nrelocs, relocsize, overlay, t);
 #endif
 
@@ -442,7 +443,7 @@ void PackTos::pack(OutputFile *fo) {
     ih.fh_sym = 0; // we stripped all symbols
     memcpy(ibuf + t, &ih, FH_SIZE);
     t += FH_SIZE;
-#if 0 || (TESTING)
+#if TESTING
     printf("xx3 reloc: %d, overlay: %d, t: %d\n", relocsize, overlay, t);
 #endif
     assert(t <= isize);
@@ -633,11 +634,11 @@ void PackTos::pack(OutputFile *fo) {
     // add an empty relocation fixup to workaround a bug in some TOS versions
     oh.fh_reloc = 0;
 
-#if 0 || (TESTING)
-    printf("old text: %6d, data: %6d, bss: %6d, reloc: %d, overlay: %d\n",
-           i_text, i_data, i_bss, relocsize, overlay);
-    printf("new text: %6d, data: %6d, bss: %6d, flag=0x%x\n",
-           o_text, o_data, o_bss, (int)oh.fh_flag);
+#if TESTING
+    printf("old text: %6d, data: %6d, bss: %6d, reloc: %d, overlay: %d\n", i_text, i_data, i_bss,
+           relocsize, overlay);
+    printf("new text: %6d, data: %6d, bss: %6d, flag=0x%x\n", o_text, o_data, o_bss,
+           (int) oh.fh_flag);
     linker->dumpSymbols();
 #endif
 

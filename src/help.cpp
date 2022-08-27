@@ -314,13 +314,13 @@ void show_help(int verbose)
 //                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type 'upx -L'.\n"
                 "");
 
-#if (DEBUG) || (TESTING)
+#if DEBUG || TESTING
     fg = con_fg(f,FG_RED);
     con_fprintf(f,"\nWARNING: this version is compiled with"
-#if (DEBUG)
+#if DEBUG
                 " -DDEBUG"
 #endif
-#if (TESTING)
+#if TESTING
                 " -DTESTING"
 #endif
                 "\n");
