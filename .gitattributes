@@ -1,0 +1,10 @@
+# make GitHub language detection more accurate, see https://github.com/github/linguist
+
+src/*.h linguist-language=C++
+src/*/*.h linguist-language=C++
+
+src/stub/**/*.ash linguist-language=Assembly
+src/stub/**/*.asm linguist-language=Assembly
+src/stub/**/*.S linguist-language=Assembly
+
+src/stub/tmp/** linguist-vendored
