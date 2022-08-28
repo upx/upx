@@ -251,14 +251,25 @@ bool PackDjgpp2::canPack()
     if (opt->force == 0)
         if (text->size != coff_hdr.a_tsize || data->size != coff_hdr.a_dsize)
             throwAlreadyPacked();
+
+    // Check for gap in vaddr between text and data, or between data and bss.
     if (text->vaddr + text->size != data->vaddr
         || data->vaddr + data->size != bss->vaddr)
     {
-        if (text->vaddr + text->size < data->vaddr &&
-            data->vaddr - text->vaddr == data->scnptr - text->scnptr)
+        // "Non-standard" layout of text,data,bss: not contiguous in vaddr.
+        // But should be OK if no overlap.
+
+        // Check for no overlap of text and data:
+        // neither by vaddr, nor by image data
+        if (text->vaddr + text->size <= data->vaddr &&
+            data->scnptr - text->scnptr <= data->vaddr - text->vaddr)
         {
-            // This hack is needed to compress Quake 1!
-            text->size = coff_hdr.a_tsize = data->vaddr - text->vaddr;
+            // Examples: Quake1; FreePascal(DOS) install.exe (github-issue45)
+            // Hack: enlarge text image data to eliminate the gap.
+            text->size = coff_hdr.a_tsize = data->scnptr - text->scnptr;
+            // But complain if this causes overlap in vaddr
+            if (text->vaddr + text->size > data->vaddr)
+                throwAlreadyPacked();
         }
         else
             throwAlreadyPacked();
@@ -326,7 +337,8 @@ void PackDjgpp2::pack(OutputFile *fo)
     linker->defineSymbol("original_entry", coff_hdr.a_entry);
     linker->defineSymbol("length_of_bss", ph.overlap_overhead / 4);
     defineDecompressorSymbols();
-    assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
+    // Just need no overlap; non-contiguous (gap length > 0)) is OK
+    assert(bss->vaddr >= ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
     linker->defineSymbol("stack_for_lzma", bss->vaddr + bss->size);
     linker->defineSymbol("start_of_uncompressed", text->vaddr - hdrsize);
     linker->defineSymbol("start_of_compressed", data->vaddr);
