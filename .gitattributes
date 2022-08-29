@@ -1,6 +1,7 @@
 # make GitHub language detection more accurate, see https://github.com/github/linguist
 
 src/*.h linguist-language=C++
+src/filter/*.h linguist-language=C++
 src/stub/*.h linguist-language=C++
 
 src/stub/**/*.ash linguist-language=Assembly
