@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 4.0.0 (XX XXX 2021):
+Changes in 4.0.0 (30 Sep 2022):
   * Switch to semantic versioning
   * SECURITY NOTES: emphasize the security context in the docs
   * Add support for EFI files (PE x86; Kornel Pal)
