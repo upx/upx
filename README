@@ -37,19 +37,13 @@ and run exactly as before, with no runtime or memory penalty for most
 of the supported formats.
 
 UPX supports a number of different executable formats, including
-Windows 95/98/ME/NT/2000/XP/CE programs and DLLs, DOS programs,
-and Linux executables and kernels.
+Windows programs and DLLs, macOS apps and Linux executables.
 
 UPX is free software distributed under the term of the GNU General
 Public License. Full source code is available.
 
 UPX may be distributed and used freely, even with commercial applications.
 See the UPX License Agreement for details.
-
-UPX is rated number one in the well known Archive Comparison Test. Visit
-http://compression.ca/ .
-
-UPX aims to be Commercial Quality Freeware.
 
 
 SECURITY CONTEXT
@@ -67,7 +61,7 @@ SHORT DOCUMENTATION
 ===================
 
 'upx program.exe' will compress a program or DLL. For best compression
-results try 'upx --brute program.exe'.
+results try 'upx --best program.exe' or 'upx --brute program.exe'.
 
 Please see the file UPX.DOC for the full documentation. The files
 NEWS and BUGS also contain various tidbits of information.
@@ -80,11 +74,8 @@ UPX comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
 
 Having said that, we think that UPX is quite stable now. Indeed we
 have compressed lots of files without any problems. Also, the
-current version has undergone several months of beta testing -
-actually it's almost 8 years since our first public beta.
-
-This is the first production quality release, and we plan that future
-releases will be backward compatible with this version.
+current version has undergone a lot of testing - actually
+it's almost 25 years since our first public beta. :-)
 
 Please report all problems or suggestions to the authors. Thanks.
 
@@ -92,23 +83,16 @@ Please report all problems or suggestions to the authors. Thanks.
 THE FUTURE
 ==========
 
-  - AArch64 (64-bit ARM) for Linux and iOS.
+  - Stay up-to-date with ongoing OS and executable format changes.
 
-  - The Linux approach could probably get ported to a lot of other Unix
-    variants, at least for other i386 architectures it shouldn't be too
-    much work. If someone sends me a fresh hard disk and an official
-    FreeBSD/OpenBSD/NetBSD/Solaris/BeOS... CD I might take a look at it ;-)
+  - RISC-V 64 for Linux.
 
   - We will *NOT* add any sort of protection and/or encryption.
     This only gives people a false feeling of security because
-    by definition all protectors/compressors can be broken.
-    And don't trust any advertisement of authors of other executable
-    compressors about this topic - just do a websearch on "unpackers"...
+    all protectors/compressors can be broken by definition.
 
-  - Fix all remaining bugs - keep your reports coming ;-)
-
-  - See the file PROJECTS in the source code distribution if you want
-    to contribute.
+  - Fix all remaining bugs - please report any issues
+    https://github.com/upx/upx/issues
 
 
 COPYRIGHT
@@ -144,6 +128,3 @@ Markus & Laszlo & John
 [ The term UPX is a shorthand for the Ultimate Packer for eXecutables
   and holds no connection with potential owners of registered trademarks
   or other rights. ]
-
-[ Feel free to contact us if you have commercial compression requirements
-  or interesting job offers. ]
