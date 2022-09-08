@@ -46,7 +46,7 @@ jobs:
 
   job-linux-cmake:
     needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ format('{0} cmake', matrix.os) }}
+    name: ${{ format('{0} cmake {1}-{2}', matrix.os, matrix.build_type, matrix.compiler.cc) }}
     runs-on: ${{ matrix.os }}
 
     env:
@@ -56,22 +56,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { os: ubuntu-20.04 }
-          - { os: ubuntu-22.04 }
+        os: [ ubuntu-20.04, ubuntu-22.04 ]
+        compiler:
+          - { cc: gcc, cxx: g++ }
+          - { cc: clang, cxx: clang++ }
+        build_type: [ Debug, Release ]
 
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
-      - name: 'Build cmake debug-gcc'
-        run:   'make build/debug-gcc'
-      - name: 'Build cmake release-gcc'
-        run:   'make build/release-gcc'
-      - name: 'Build cmake debug-clang'
-        run:   'make build/debug-clang'
-      - name: 'Build cmake release-clang'
-        run:   'make build/release-clang'
+      - name: 'Build cmake ${{ matrix.build_type }}-${{ matrix.compiler.cc }}'
+        env:
+          CC: ${{ matrix.compiler.cc }}
+          CXX: ${{ matrix.compiler.cxx }}
+        run: |
+          cmake -B build/${{ matrix.build_type }}-${{ matrix.compiler.cc }}
+          cmake --build build/${{ matrix.build_type }}-${{ matrix.compiler.cc }}
       - name: 'Make artifact'
         id: make_artifact
         run: |
@@ -89,7 +90,7 @@ jobs:
 
   job-windows-cmake:
     needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ format('{0} cmake', matrix.os) }}
+    name: ${{ format('{0} cmake {1}-{2}', matrix.os, matrix.build_type, matrix.compiler.cc) }}
     runs-on: ${{ matrix.os }}
 
     env:
@@ -99,12 +100,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # windows-2019 used to work but got broken with the 20220821.1
-          # runner-image update; disable for now
-          # see https://github.com/actions/runner-images.git
-          ####- { os: windows-2019 }
-          - { os: windows-2022 }
+        # windows-2019 used to work but got broken with the 20220821.1
+        # runner-image update; disable for now
+        # see https://github.com/actions/runner-images.git
+        ####- { os: windows-2019 }
+        os: [ windows-2022 ]
+        compiler:
+          - { cc: cl, cxx: cl }
+        build_type: [ Debug, Release ]
 
     steps:
       - name: 'Check out code'
@@ -117,10 +120,13 @@ jobs:
           Get-Command bash; Get-Command cmake; Get-Command make
           bash --version; cmake --version; make --version
           Get-Command cl -ErrorAction SilentlyContinue
-      - name: 'Build cmake debug'
-        run:   'make build/debug'
-      - name: 'Build cmake release'
-        run:   'make build/release'
+      - name: 'Build cmake ${{ matrix.build_type }}-${{ matrix.compiler.cc }}'
+        env:
+          CC: ${{ matrix.compiler.cc }}
+          CXX: ${{ matrix.compiler.cxx }}
+        run: |
+          cmake -B build/${{ matrix.build_type }}-${{ matrix.compiler.cc }}
+          cmake --build build/${{ matrix.build_type }}-${{ matrix.compiler.cc }}
       - name: 'Make artifact'
         id: make_artifact
         shell: bash
