@@ -48,11 +48,6 @@ enum {
 struct options_t {
     int cmd;
 
-    // mp (meta) options
-    int mp_compress_task;
-    bool mp_query_format;
-    bool mp_query_num_tasks;
-
     // compression options
     int method;
     bool method_lzma_seen;
@@ -63,7 +58,7 @@ struct options_t {
     int filter; // preferred filter from Packer::getFilters()
     bool ultra_brute;
     bool all_methods; // try all available compression methods ?
-    bool all_methods_use_lzma;
+    int all_methods_use_lzma;
     bool all_filters; // try all available filters ?
     bool no_filter;   // force no filter
     bool prefer_ucl;  // prefer UCL
@@ -90,8 +85,9 @@ struct options_t {
         int debug_level;
         bool disable_random_id; // for Packer::getRandomId()
         const char *dump_stub_loader;
-        char fake_stub_version[4 + 1]; // for internal debugging
-        char fake_stub_year[4 + 1];    // for internal debugging
+        char fake_stub_version[4 + 1];     // for internal debugging
+        char fake_stub_year[4 + 1];        // for internal debugging
+        bool getopt_throw_instead_of_exit; // for doctest
     } debug;
 
     // overlay handling

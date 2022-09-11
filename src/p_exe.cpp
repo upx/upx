@@ -63,9 +63,10 @@ const int *PackExe::getCompressionMethods(int method, int level) const
 {
     bool small = ih_imagesize <= 256*1024;
     // disable lzma for "--brute" unless explicitly given "--lzma"
-    // WARNING: this side effect persists for later files!
-    if (opt->all_methods_use_lzma && !opt->method_lzma_seen)
-        opt->all_methods_use_lzma = false;
+    // WARNING: this side effect may persists for later files;
+    //   but note that class PackMaster creates per-file local options
+    if (opt->all_methods_use_lzma == 1 && !opt->method_lzma_seen)
+        opt->all_methods_use_lzma = 0;
     return Packer::getDefaultCompressionMethods_8(method, level, small);
 }
 

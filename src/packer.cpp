@@ -1165,7 +1165,7 @@ int Packer::prepareMethods(int *methods, int ph_method, const int *all_methods) 
             break;
         if (method == M_SKIP || method == M_ULTRA_BRUTE)
             continue;
-        if (opt->all_methods && !opt->all_methods_use_lzma && M_IS_LZMA(method))
+        if (opt->all_methods && opt->all_methods_use_lzma != 1 && M_IS_LZMA(method))
             continue;
         // use this method
         assert(Packer::isValidCompressionMethod(method));

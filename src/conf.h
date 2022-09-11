@@ -738,7 +738,9 @@ bool upx_doctest_check(void);
 
 // main.cpp
 extern const char *progname;
-bool set_exit_code(int ec);
+bool main_set_exit_code(int ec);
+int main_get_options(int argc, char **argv);
+void main_get_envoptions();
 int upx_main(int argc, char *argv[]);
 
 // msg.cpp

@@ -35,48 +35,7 @@
 // options
 **************************************************************************/
 
-void options_t::reset() {
-    options_t *o = this;
-    mem_clear(o, sizeof(*o));
-    o->crp.reset();
-
-    o->cmd = CMD_NONE;
-    o->method = M_NONE;
-    o->level = -1;
-    o->filter = FT_NONE;
-
-    o->backup = -1;
-    o->overlay = -1;
-    o->preserve_mode = true;
-    o->preserve_ownership = true;
-    o->preserve_timestamp = true;
-
-    o->console = CON_FILE;
-#if (ACC_OS_DOS32) && defined(__DJGPP__)
-    o->console = CON_INIT;
-#elif (USE_SCREEN_WIN32)
-    o->console = CON_INIT;
-#elif 1 && defined(__linux__)
-    o->console = CON_INIT;
-#endif
-    o->verbose = 2;
-
-    o->win32_pe.compress_exports = 1;
-    o->win32_pe.compress_icons = 2;
-    o->win32_pe.compress_resources = -1;
-    for (unsigned i = 0; i < TABLESIZE(o->win32_pe.compress_rt); i++)
-        o->win32_pe.compress_rt[i] = -1;
-    o->win32_pe.compress_rt[24] = false; // 24 == RT_MANIFEST
-    o->win32_pe.strip_relocs = -1;
-    o->win32_pe.keep_resource = "";
-}
-
-static options_t global_options;
-options_t *opt = &global_options;
-
-static int done_output_name = 0;
-
-const char *argv0 = "";
+static const char *argv0 = "";
 const char *progname = "";
 
 static acc_getopt_t mfx_getopt;
@@ -138,14 +97,18 @@ static bool set_eec(int ec, int *eec) {
     return 0;
 }
 
-bool set_exit_code(int ec) { return set_eec(ec, &exit_code); }
+bool main_set_exit_code(int ec) { return set_eec(ec, &exit_code); }
 
 static void e_exit(int ec) {
-    (void) set_exit_code(ec);
+    if (opt->debug.getopt_throw_instead_of_exit)
+        throw ec;
+    (void) main_set_exit_code(ec);
     do_exit();
 }
 
 static void e_usage(void) {
+    if (opt->debug.getopt_throw_instead_of_exit)
+        throw EXIT_USAGE;
     show_usage();
     e_exit(EXIT_USAGE);
 }
@@ -287,7 +250,7 @@ static bool set_method(int m, int l) {
 
 static void set_output_name(const char *n, bool allow_m) {
 #if 1
-    if (done_output_name > 0) {
+    if (opt->output_name) {
         fprintf(stderr, "%s: option '-o' more than once given\n", argv0);
         e_usage();
     }
@@ -301,7 +264,6 @@ static void set_output_name(const char *n, bool allow_m) {
         e_usage();
     }
     opt->output_name = n;
-    done_output_name++;
 }
 
 /*************************************************************************
@@ -482,13 +444,13 @@ static int do_option(int optc, const char *arg) {
         break;
     case 721:
         opt->method_lzma_seen = true;
-        opt->all_methods_use_lzma = true;
+        opt->all_methods_use_lzma = 1;
         if (!set_method(M_LZMA, -1))
             e_method(M_LZMA, opt->level);
         break;
     case 722:
         opt->method_lzma_seen = false;
-        opt->all_methods_use_lzma = false;
+        opt->all_methods_use_lzma = -1; // explicitly disabled
         if (M_IS_LZMA(opt->method))
             opt->method = -1;
         break;
@@ -518,7 +480,8 @@ static int do_option(int optc, const char *arg) {
         /* fallthrough */
     case 901: // --brute
         opt->all_methods = true;
-        opt->all_methods_use_lzma = true;
+        if (opt->all_methods_use_lzma != -1)
+            opt->all_methods_use_lzma = 1;
         opt->method = -1;
         opt->all_filters = true;
         opt->filter = -1;
@@ -547,17 +510,6 @@ static int do_option(int optc, const char *arg) {
         break;
     case 545:
         opt->debug.disable_random_id = true;
-        break;
-
-    // mp (meta)
-    case 501:
-        getoptvar(&opt->mp_compress_task, 1, 999999, arg);
-        break;
-    case 502:
-        opt->mp_query_format = true;
-        break;
-    case 503:
-        opt->mp_query_num_tasks = true;
         break;
 
     // misc
@@ -606,7 +558,8 @@ static int do_option(int optc, const char *arg) {
         break;
     case 524: // --all-methods
         opt->all_methods = true;
-        opt->all_methods_use_lzma = true;
+        if (opt->all_methods_use_lzma != -1)
+            opt->all_methods_use_lzma = 1;
         opt->method = -1;
         break;
     case 525: // --exact
@@ -820,7 +773,7 @@ static int do_option(int optc, const char *arg) {
     return 0;
 }
 
-static int get_options(int argc, char **argv) {
+int main_get_options(int argc, char **argv) {
     constexpr int *N = nullptr;
 
     static const struct mfx_option longopts[] = {
@@ -852,9 +805,9 @@ static int get_options(int argc, char **argv) {
         {"quiet", 0, N, 'q'},  // quiet mode
         {"silent", 0, N, 'q'}, // quiet mode
 #if 0
-    // FIXME: to_stdout doesn't work because of console code mess
-    {"stdout",           0x10, N, 517},     // write output on standard output
-    {"to-stdout",        0x10, N, 517},     // write output on standard output
+        // FIXME: to_stdout doesn't work because of console code mess
+        {"stdout",           0x10, N, 517},     // write output on standard output
+        {"to-stdout",        0x10, N, 517},     // write output on standard output
 #endif
         {"verbose", 0, N, 'v'}, // verbose mode
 
@@ -970,11 +923,6 @@ static int get_options(int argc, char **argv) {
         {"8mib-ram", 0x10, N, 673},
         {"8mb-ram", 0x10, N, 673},
 
-        // mp (meta) options
-        {"mp-compress-task", 0x31, N, 501},
-        {"mp-query-format", 0x10, N, 502},
-        {"mp-query-num-tasks", 0x10, N, 503},
-
         {nullptr, 0, nullptr, 0}
     };
 
@@ -994,8 +942,8 @@ static int get_options(int argc, char **argv) {
     return mfx_optind;
 }
 
+void main_get_envoptions() {
 #if defined(OPTIONS_VAR)
-static void get_envoptions(int argc, char **argv) {
     constexpr int *N = nullptr;
 
     /* only some options are allowed in the environment variable */
@@ -1068,7 +1016,7 @@ static void get_envoptions(int argc, char **argv) {
     const char *var;
     int i, optc, longind;
     int targc;
-    char **targv = nullptr;
+    const char **targv = nullptr;
     static const char sep[] = " \t";
     char shortopts[256];
 
@@ -1095,14 +1043,14 @@ static void get_envoptions(int argc, char **argv) {
 
     /* alloc temp argv */
     if (targc > 1)
-        targv = (char **) calloc(targc + 1, sizeof(char *));
+        targv = (const char **) calloc(targc + 1, sizeof(char *));
     if (targv == nullptr) {
         free(env);
         return;
     }
 
     /* fill temp argv */
-    targv[0] = argv[0];
+    targv[0] = argv0;
     for (p = env, targc = 1;;) {
         while (*p && strchr(sep, *p))
             p++;
@@ -1124,7 +1072,7 @@ static void get_envoptions(int argc, char **argv) {
 
     /* handle options */
     prepare_shortopts(shortopts, "123456789", longopts);
-    acc_getopt_init(&mfx_getopt, 1, targc, targv);
+    acc_getopt_init(&mfx_getopt, 1, targc, const_cast<char **>(targv));
     mfx_getopt.progname = progname;
     mfx_getopt.opterr = handle_opterr;
     while ((optc = acc_getopt(&mfx_getopt, shortopts, longopts, &longind)) >= 0) {
@@ -1138,9 +1086,8 @@ static void get_envoptions(int argc, char **argv) {
     /* clean up */
     free(targv);
     free(env);
-    UNUSED(argc);
-}
 #endif /* defined(OPTIONS_VAR) */
+}
 
 static void first_options(int argc, char **argv) {
     int i;
@@ -1181,7 +1128,6 @@ int upx_main(int argc, char *argv[]) {
     }
 
     // Allow serial re-use of upx_main() as a subroutine
-    done_output_name = 0;
     opt->reset();
 
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_TOS || ACC_OS_WIN16 ||  \
@@ -1219,11 +1165,9 @@ int upx_main(int argc, char *argv[]) {
 
     /* get options */
     first_options(argc, argv);
-#if defined(OPTIONS_VAR)
     if (!opt->no_env)
-        get_envoptions(argc, argv);
-#endif
-    i = get_options(argc, argv);
+        main_get_envoptions();
+    i = main_get_options(argc, argv);
     assert(i <= argc);
 
     set_term(nullptr);

@@ -271,40 +271,40 @@ int do_files(int i, int argc, char *argv[]) {
             unlink_ofile(oname);
             if (opt->verbose >= 1 || (opt->verbose >= 0 && !e.isWarning()))
                 printErr(iname, &e);
-            set_exit_code(e.isWarning() ? EXIT_WARN : EXIT_ERROR);
+            main_set_exit_code(e.isWarning() ? EXIT_WARN : EXIT_ERROR);
             // continue processing more files
         } catch (const Error &e) {
             unlink_ofile(oname);
             printErr(iname, &e);
-            set_exit_code(EXIT_ERROR);
+            main_set_exit_code(EXIT_ERROR);
             return -1;
         } catch (std::bad_alloc *e) {
             unlink_ofile(oname);
             printErr(iname, "out of memory");
             UNUSED(e);
             // delete e;
-            set_exit_code(EXIT_ERROR);
+            main_set_exit_code(EXIT_ERROR);
             return -1;
         } catch (const std::bad_alloc &) {
             unlink_ofile(oname);
             printErr(iname, "out of memory");
-            set_exit_code(EXIT_ERROR);
+            main_set_exit_code(EXIT_ERROR);
             return -1;
         } catch (std::exception *e) {
             unlink_ofile(oname);
             printUnhandledException(iname, e);
             // delete e;
-            set_exit_code(EXIT_ERROR);
+            main_set_exit_code(EXIT_ERROR);
             return -1;
         } catch (const std::exception &e) {
             unlink_ofile(oname);
             printUnhandledException(iname, &e);
-            set_exit_code(EXIT_ERROR);
+            main_set_exit_code(EXIT_ERROR);
             return -1;
         } catch (...) {
             unlink_ofile(oname);
             printUnhandledException(iname, nullptr);
-            set_exit_code(EXIT_ERROR);
+            main_set_exit_code(EXIT_ERROR);
             return -1;
         }
     }
