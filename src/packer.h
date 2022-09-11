@@ -25,10 +25,11 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_PACKER_H
-#define __UPX_PACKER_H 1
+#pragma once
+#ifndef UPX_PACKER_H__
+#define UPX_PACKER_H__ 1
 
-#include "mem.h"
+#include "util/membuffer.h"
 
 class InputFile;
 class OutputFile;
@@ -42,15 +43,14 @@ class Filter;
 **************************************************************************/
 
 // see stub/src/include/header.S
-class PackHeader {
+class PackHeader final {
     friend class Packer;
 
-private:
-    // these are strictly private to Packer and not accessible in subclasses
+    // these are strictly private to friend Packer
     PackHeader();
 
-    void putPackHeader(upx_bytep p);
-    bool fillPackHeader(const upx_bytep b, int blen);
+    void putPackHeader(SPAN_S(upx_byte) p);
+    bool fillPackHeader(SPAN_S(const upx_byte) b, int blen);
 
 public:
     int getPackHeaderSize() const;
@@ -95,9 +95,9 @@ public:
 };
 
 bool ph_skipVerify(const PackHeader &ph);
-void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out, bool verify_checksum,
-                   Filter *ft);
-bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_bytep buf,
+void ph_decompress(PackHeader &ph, SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out,
+                   bool verify_checksum, Filter *ft);
+bool ph_testOverlappingDecompression(const PackHeader &ph, SPAN_P(const upx_byte) buf,
                                      unsigned overlap_overhead);
 
 /*************************************************************************
@@ -107,7 +107,6 @@ bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_bytep buf,
 **************************************************************************/
 
 class Packer {
-    // friend class PackMaster;
     friend class UiPacker;
 
 protected:
@@ -163,10 +162,10 @@ public:
 
 protected:
     // main compression drivers
-    virtual bool compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
-                          const upx_compress_config_t *cconf = nullptr);
-    virtual void decompress(const upx_bytep in, upx_bytep out, bool verify_checksum = true,
-                            Filter *ft = nullptr);
+    bool compress(SPAN_P(upx_byte) i_ptr, unsigned i_len, SPAN_P(upx_byte) o_ptr,
+                  const upx_compress_config_t *cconf = nullptr);
+    void decompress(SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out, bool verify_checksum = true,
+                    Filter *ft = nullptr);
     virtual bool checkDefaultCompressionRatio(unsigned u_len, unsigned c_len) const;
     virtual bool checkCompressionRatio(unsigned u_len, unsigned c_len) const;
     virtual bool checkFinalCompressionRatio(const OutputFile *fo) const;
@@ -202,7 +201,7 @@ protected:
 
     // packheader handling
     virtual int patchPackHeader(void *b, int blen);
-    virtual bool getPackHeader(void const *b, int blen, bool allow_incompressible = false);
+    virtual bool getPackHeader(const void *b, int blen, bool allow_incompressible = false);
     virtual bool readPackHeader(int len, bool allow_incompressible = false);
     virtual void checkAlreadyPacked(const void *b, int blen);
 
@@ -256,7 +255,7 @@ protected:
     // stub and overlay util
     static void handleStub(InputFile *fi, OutputFile *fo, unsigned size);
     virtual void checkOverlay(unsigned overlay);
-    virtual void copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer *buf, bool do_seek = true);
+    virtual void copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer &buf, bool do_seek = true);
 
     // misc util
     virtual unsigned getRandomId() const;
@@ -273,34 +272,37 @@ protected:
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util
-    static upx_byte *optimizeReloc(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image,
-                                   unsigned headway, int bs, int *big, int bits);
-    static unsigned unoptimizeReloc(upx_byte **in, upx_byte *image, MemBuffer *out, int bs,
-                                    int bits);
+    static unsigned optimizeReloc(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
+                                  SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big,
+                                  int bits);
+    static unsigned unoptimizeReloc(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
+                                    bool bswap, int bits);
 
-    static upx_byte *optimizeReloc32(upx_byte *in, unsigned relocnum, upx_byte *out,
-                                     upx_byte *image, unsigned headway, int bs, int *big);
-    static unsigned unoptimizeReloc32(upx_byte **in, upx_byte *image, MemBuffer *out, int bs);
+    static unsigned optimizeReloc32(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
+                                    SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big);
+    static unsigned unoptimizeReloc32(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
+                                      bool bswap);
 
-    static upx_byte *optimizeReloc64(upx_byte *in, unsigned relocnum, upx_byte *out,
-                                     upx_byte *image, unsigned headway, int bs, int *big);
-    static unsigned unoptimizeReloc64(upx_byte **in, upx_byte *image, MemBuffer *out, int bs);
+    static unsigned optimizeReloc64(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
+                                    SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big);
+    static unsigned unoptimizeReloc64(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
+                                      bool bswap);
 
-    // target endianness abstraction
+    // Target Endianness abstraction
     unsigned get_te16(const void *p) const { return bele->get16(p); }
     unsigned get_te32(const void *p) const { return bele->get32(p); }
     upx_uint64_t get_te64(const void *p) const { return bele->get64(p); }
-    void set_te16(void *p, unsigned v) const { bele->set16(p, v); }
-    void set_te32(void *p, unsigned v) const { bele->set32(p, v); }
-    void set_te64(void *p, upx_uint64_t v) const { bele->set64(p, v); }
+    void set_te16(void *p, unsigned v) { bele->set16(p, v); }
+    void set_te32(void *p, unsigned v) { bele->set32(p, v); }
+    void set_te64(void *p, upx_uint64_t v) { bele->set64(p, v); }
 
 protected:
     const N_BELE_RTP::AbstractPolicy *bele = nullptr; // target endianness
     InputFile *fi = nullptr;
 
-    union {                       // unnamed union
-        upx_int64_t file_size;    // will get set by constructor
-        upx_uint64_t file_size_u; // explicitly unsigned
+    union {                        // unnamed union
+        upx_int64_t file_size = 0; // will get set by constructor
+        upx_uint64_t file_size_u;  // explicitly unsigned
     };
 
     PackHeader ph; // must be filled by canUnpack()

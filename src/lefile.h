@@ -39,7 +39,7 @@ class OutputFile;
 
 class LeFile
 {
-public:
+protected:
     LeFile(InputFile *);
     virtual ~LeFile();
 
@@ -198,8 +198,10 @@ protected:
     upx_byte *ofixups;
     upx_byte *inonres_names;
     upx_byte *ononres_names;
-    MemBuffer iimage;
-    MemBuffer oimage;
+    MemBuffer mb_iimage;
+    SPAN_0(upx_byte) iimage = nullptr;
+    MemBuffer mb_oimage;
+    SPAN_0(upx_byte) oimage = nullptr;
     upx_byte *ientries;
     upx_byte *oentries;
 

@@ -291,7 +291,7 @@ unsigned upx_ucl_crc32(const void *buf, unsigned len, unsigned crc)
 
 #if DEBUG && 1
 
-#include "mem.h"
+#include "util/membuffer.h"
 
 static bool check_ucl(const int method, const unsigned expected_c_len) {
     const unsigned u_len = 16384;

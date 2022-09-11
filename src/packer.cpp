@@ -180,7 +180,7 @@ int forced_method(int method) // extract the forced method
 // compress - wrap call to low-level upx_compress()
 **************************************************************************/
 
-bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
+bool Packer::compress(SPAN_P(upx_byte) i_ptr, unsigned i_len, SPAN_P(upx_byte) o_ptr,
                       const upx_compress_config_t *cconf_parm) {
     ph.u_len = i_len;
     ph.c_len = 0;
@@ -194,7 +194,7 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
     ph.saved_u_adler = ph.u_adler;
     ph.saved_c_adler = ph.c_adler;
     // update checksum of uncompressed data
-    ph.u_adler = upx_adler32(i_ptr, ph.u_len, ph.u_adler);
+    ph.u_adler = upx_adler32(raw_bytes(i_ptr, ph.u_len), ph.u_len, ph.u_adler);
 
     // set compression parameters
     upx_compress_config_t cconf;
@@ -241,8 +241,8 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
     // OutputFile::dump("data.raw", in, ph.u_len);
 
     // compress
-    int r = upx_compress(i_ptr, ph.u_len, o_ptr, &ph.c_len, uip->getCallback(), method, ph.level,
-                         &cconf, &ph.compress_result);
+    int r = upx_compress(raw_bytes(i_ptr, ph.u_len), ph.u_len, raw_bytes(o_ptr, 0), &ph.c_len,
+                         uip->getCallback(), method, ph.level, &cconf, &ph.compress_result);
 
     // uip->finalCallback(ph.u_len, ph.c_len);
     uip->endCallback();
@@ -277,12 +277,13 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
         return false;
 
     // update checksum of compressed data
-    ph.c_adler = upx_adler32(o_ptr, ph.c_len, ph.c_adler);
+    ph.c_adler = upx_adler32(raw_bytes(o_ptr, ph.c_len), ph.c_len, ph.c_adler);
     // Decompress and verify. Skip this when using the fastest level.
     if (!ph_skipVerify(ph)) {
         // decompress
         unsigned new_len = ph.u_len;
-        r = upx_decompress(o_ptr, ph.c_len, i_ptr, &new_len, method, &ph.compress_result);
+        r = upx_decompress(raw_bytes(o_ptr, ph.c_len), ph.c_len, raw_bytes(i_ptr, ph.u_len),
+                           &new_len, method, &ph.compress_result);
         if (r == UPX_E_OUT_OF_MEMORY)
             throwOutOfMemoryException();
         // printf("%d %d: %d %d %d\n", method, r, ph.c_len, ph.u_len, new_len);
@@ -292,7 +293,7 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
             throwInternalError("decompression failed (size error)");
 
         // verify decompression
-        if (ph.u_adler != upx_adler32(i_ptr, ph.u_len, ph.saved_u_adler))
+        if (ph.u_adler != upx_adler32(raw_bytes(i_ptr, ph.u_len), ph.u_len, ph.saved_u_adler))
             throwInternalError("decompression failed (checksum error)");
     }
     return true;
@@ -340,13 +341,13 @@ bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const {
 // decompress
 **************************************************************************/
 
-void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out, bool verify_checksum,
-                   Filter *ft) {
+void ph_decompress(PackHeader &ph, SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out,
+                   bool verify_checksum, Filter *ft) {
     unsigned adler;
 
     // verify checksum of compressed data
     if (verify_checksum) {
-        adler = upx_adler32(in, ph.c_len, ph.saved_c_adler);
+        adler = upx_adler32(raw_bytes(in, ph.c_len), ph.c_len, ph.saved_c_adler);
         if (adler != ph.c_adler)
             throwChecksumError();
     }
@@ -356,8 +357,8 @@ void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out, bool verif
         throwCantUnpack("header corrupted");
     }
     unsigned new_len = ph.u_len;
-    int r =
-        upx_decompress(in, ph.c_len, out, &new_len, forced_method(ph.method), &ph.compress_result);
+    int r = upx_decompress(raw_bytes(in, ph.c_len), ph.c_len, raw_bytes(out, ph.u_len), &new_len,
+                           forced_method(ph.method), &ph.compress_result);
     if (r == UPX_E_OUT_OF_MEMORY)
         throwOutOfMemoryException();
     if (r != UPX_E_OK || new_len != ph.u_len)
@@ -366,14 +367,15 @@ void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out, bool verif
     // verify checksum of decompressed data
     if (verify_checksum) {
         if (ft)
-            ft->unfilter(out, ph.u_len);
-        adler = upx_adler32(out, ph.u_len, ph.saved_u_adler);
+            ft->unfilter(raw_bytes(out, ph.u_len), ph.u_len);
+        adler = upx_adler32(raw_bytes(out, ph.u_len), ph.u_len, ph.saved_u_adler);
         if (adler != ph.u_adler)
             throwChecksumError();
     }
 }
 
-void Packer::decompress(const upx_bytep in, upx_bytep out, bool verify_checksum, Filter *ft) {
+void Packer::decompress(SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out, bool verify_checksum,
+                        Filter *ft) {
     ph_decompress(ph, in, out, verify_checksum, ft);
 }
 
@@ -535,10 +537,10 @@ void Packer::checkOverlay(unsigned overlay) {
         throw OverlayException("file has overlay -- skipped; try '--overlay=copy'");
 }
 
-void Packer::copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer *buf, bool do_seek) {
+void Packer::copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer &buf, bool do_seek) {
     assert((int) overlay >= 0);
     assert(overlay < file_size_u);
-    buf->checkState();
+    buf.checkState();
     if (!fo || overlay == 0)
         return;
     if (opt->overlay != opt->COPY_OVERLAY) {
@@ -551,7 +553,7 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer *buf, bool 
         fi->seek(-(upx_off_t) overlay, SEEK_END);
 
     // get buffer size, align to improve i/o speed
-    unsigned buf_size = buf->getSize();
+    unsigned buf_size = buf.getSize();
     if (buf_size > 65536)
         buf_size = ALIGN_DOWN(buf_size, 4096u);
     assert((int) buf_size > 0);
@@ -562,7 +564,7 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer *buf, bool 
         fo->write(buf, len);
         overlay -= len;
     } while (overlay > 0);
-    buf->checkState();
+    buf.checkState();
 }
 
 // Create a pseudo-unique program id.
@@ -643,14 +645,15 @@ int Packer::patchPackHeader(void *b, int blen) {
     int boff = find_le32(b, blen, UPX_MAGIC_LE32);
     checkPatch(b, blen, boff, size);
 
-    unsigned char *p = (unsigned char *) b + boff;
-    ph.putPackHeader(p);
+    auto bb = (upx_byte *) b;
+    ph.putPackHeader(SPAN_S_MAKE(upx_byte, bb + boff, blen, bb));
 
     return boff;
 }
 
-bool Packer::getPackHeader(void const *b, int blen, bool allow_incompressible) {
-    if (!ph.fillPackHeader((unsigned char const *) b, blen))
+bool Packer::getPackHeader(const void *b, int blen, bool allow_incompressible) {
+    auto bb = (const upx_byte *) b;
+    if (!ph.fillPackHeader(SPAN_S_MAKE(const upx_byte, bb, blen), blen))
         return false;
 
     if (ph.version > getVersion())
@@ -825,18 +828,19 @@ int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_) {
 // relocation util
 **************************************************************************/
 
-upx_byte *Packer::optimizeReloc(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image,
-                                unsigned headway, int bswap, int *big, int bits) {
+unsigned Packer::optimizeReloc(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
+                               SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big,
+                               int bits) {
     if (opt->exact)
         throwCantPackExact();
 
     *big = 0;
     if (relocnum == 0)
-        return out;
-    qsort(in, relocnum, 4, le32_compare);
+        return 0;
+    qsort(raw_bytes(in, 4 * relocnum), relocnum, 4, le32_compare);
 
     unsigned jc, pc, oc;
-    upx_byte *fix = out;
+    SPAN_P_VAR(upx_byte, fix, out);
 
     pc = (unsigned) -4;
     for (jc = 0; jc < relocnum; jc++) {
@@ -875,36 +879,35 @@ upx_byte *Packer::optimizeReloc(upx_byte *in, unsigned relocnum, upx_byte *out, 
         }
     }
     *fix++ = 0;
-    return fix;
+    return ptr_udiff_bytes(fix, out);
 }
 
-upx_byte *Packer::optimizeReloc32(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image,
-                                  unsigned headway, int bswap, int *big) {
+unsigned Packer::optimizeReloc32(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
+                                 SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big) {
     return optimizeReloc(in, relocnum, out, image, headway, bswap, big, 32);
 }
 
-upx_byte *Packer::optimizeReloc64(upx_byte *in, unsigned relocnum, upx_byte *out, upx_byte *image,
-                                  unsigned headway, int bswap, int *big) {
+unsigned Packer::optimizeReloc64(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
+                                 SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big) {
     return optimizeReloc(in, relocnum, out, image, headway, bswap, big, 64);
 }
 
-unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image, MemBuffer *out, int bswap,
-                                 int bits) {
-    upx_byte *p;
+unsigned Packer::unoptimizeReloc(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
+                                 bool bswap, int bits) {
+    SPAN_P_VAR(upx_byte, p, in);
     unsigned relocn = 0;
-    for (p = *in; *p; p++, relocn++)
+    for (; *p; p++, relocn++)
         if (*p >= 0xF0) {
             if (*p == 0xF0 && get_le16(p + 1) == 0)
                 p += 4;
             p += 2;
         }
-    upx_byte const *in_end = p;
+    SPAN_P_VAR(upx_byte, const in_end, p);
     // fprintf(stderr,"relocnum=%x\n",relocn);
-    out->alloc(4 * relocn + 4); // one extra data
-    LE32 *const outp = (LE32 *) (unsigned char *) *out;
-    LE32 *relocs = outp;
+    out.alloc(4 * (relocn + 1)); // one extra entry
+    SPAN_S_VAR(LE32, relocs, out);
     unsigned jc = (unsigned) -4;
-    for (p = *in; p < in_end; p++) {
+    for (p = in; p < in_end; p++) {
         if (*p < 0xF0)
             jc += *p;
         else {
@@ -920,32 +923,34 @@ unsigned Packer::unoptimizeReloc(upx_byte **in, upx_byte *image, MemBuffer *out,
         if (!relocn--) {
             break;
         }
-        if (bswap && image) {
+        if (bswap && image != nullptr) {
             if (bits == 32) {
                 set_be32(image + jc, get_le32(image + jc));
-                if ((size_t)(p - (image + jc)) < 4) {
+                if ((unsigned) ptr_diff_bytes(p, image + jc) < 4) {
                     // data must not overlap control
-                    p = (4 - 1) + image + jc; // -1: 'for' also increments
+                    p = image + jc + (4 - 1); // -1: 'for' also increments
                 }
             } else if (bits == 64) {
                 set_be64(image + jc, get_le64(image + jc));
-                if ((size_t)(p - (image + jc)) < 8) {
+                if ((unsigned) ptr_diff_bytes(p, image + jc) < 8) {
                     // data must not overlap control
-                    p = (8 - 1) + image + jc; // -1: 'for' also increments
+                    p = image + jc + (8 - 1); // -1: 'for' also increments
                 }
             } else
                 throwInternalError("unoptimizeReloc problem");
         }
     }
-    *in = p + 1;
-    return (unsigned) (relocs - outp);
+    in = p + 1;
+    return ptr_udiff_bytes(relocs, out);
 }
 
-unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image, MemBuffer *out, int bswap) {
+unsigned Packer::unoptimizeReloc32(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
+                                   bool bswap) {
     return unoptimizeReloc(in, image, out, bswap, 32);
 }
 
-unsigned Packer::unoptimizeReloc64(upx_byte **in, upx_byte *image, MemBuffer *out, int bswap) {
+unsigned Packer::unoptimizeReloc64(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
+                                   bool bswap) {
     return unoptimizeReloc(in, image, out, bswap, 64);
 }
 

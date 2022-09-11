@@ -28,7 +28,7 @@
 
 #include "conf.h"
 #include "compress.h"
-#include "mem.h"
+#include "util/membuffer.h"
 
 #if (ACC_CC_CLANG)
 #  pragma clang diagnostic ignored "-Wshadow"

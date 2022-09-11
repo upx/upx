@@ -25,8 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_BELE_H
-#define __UPX_BELE_H 1
+#pragma once
+#ifndef UPX_BELE_H__
+#define UPX_BELE_H__ 1
 
 // BE - Big Endian
 // LE - Little Endian
@@ -294,6 +295,8 @@ struct alignas(1) BE16 {
     }
 
     operator unsigned() const { return get_be16(d); }
+
+    bool operator<(const BE16 &v) const { return unsigned(*this) < unsigned(v); }
 };
 
 struct alignas(1) BE32 {
@@ -341,6 +344,8 @@ struct alignas(1) BE32 {
     }
 
     operator unsigned() const { return get_be32(d); }
+
+    bool operator<(const BE32 &v) const { return unsigned(*this) < unsigned(v); }
 };
 
 struct alignas(1) BE64 {
@@ -388,6 +393,8 @@ struct alignas(1) BE64 {
     }
 
     operator upx_uint64_t() const { return get_be64(d); }
+
+    bool operator<(const BE64 &v) const { return upx_uint64_t(*this) < upx_uint64_t(v); }
 };
 
 struct alignas(1) LE16 {
@@ -435,6 +442,8 @@ struct alignas(1) LE16 {
     }
 
     operator unsigned() const { return get_le16(d); }
+
+    bool operator<(const LE16 &v) const { return unsigned(*this) < unsigned(v); }
 };
 
 struct alignas(1) LE32 {
@@ -482,6 +491,8 @@ struct alignas(1) LE32 {
     }
 
     operator unsigned() const { return get_le32(d); }
+
+    bool operator<(const LE32 &v) const { return unsigned(*this) < unsigned(v); }
 };
 
 struct alignas(1) LE64 {
@@ -529,6 +540,8 @@ struct alignas(1) LE64 {
     }
 
     operator upx_uint64_t() const { return get_le64(d); }
+
+    bool operator<(const LE64 &v) const { return upx_uint64_t(*this) < upx_uint64_t(v); }
 };
 
 // native types
@@ -548,20 +561,20 @@ typedef LE64 NE64;
 
 template <class T>
 inline T *operator+(T *ptr, const BE16 &v) {
-    return ptr + (unsigned) v;
+    return ptr + unsigned(v);
 }
 template <class T>
 inline T *operator-(T *ptr, const BE16 &v) {
-    return ptr - (unsigned) v;
+    return ptr - unsigned(v);
 }
 
 template <class T>
 inline T *operator+(T *ptr, const BE32 &v) {
-    return ptr + (unsigned) v;
+    return ptr + unsigned(v);
 }
 template <class T>
 inline T *operator-(T *ptr, const BE32 &v) {
-    return ptr - (unsigned) v;
+    return ptr - unsigned(v);
 }
 
 // these are not implemented on purpose and will cause link-time errors
@@ -572,20 +585,20 @@ T *operator-(T *ptr, const BE64 &v);
 
 template <class T>
 inline T *operator+(T *ptr, const LE16 &v) {
-    return ptr + (unsigned) v;
+    return ptr + unsigned(v);
 }
 template <class T>
 inline T *operator-(T *ptr, const LE16 &v) {
-    return ptr - (unsigned) v;
+    return ptr - unsigned(v);
 }
 
 template <class T>
 inline T *operator+(T *ptr, const LE32 &v) {
-    return ptr + (unsigned) v;
+    return ptr + unsigned(v);
 }
 template <class T>
 inline T *operator-(T *ptr, const LE32 &v) {
-    return ptr - (unsigned) v;
+    return ptr - unsigned(v);
 }
 
 // these are not implemented on purpose and will cause link-time errors
@@ -598,35 +611,35 @@ T *operator-(T *ptr, const LE64 &v);
 // global overloads
 **************************************************************************/
 
-inline unsigned ALIGN_DOWN(unsigned a, const BE32 &b) { return ALIGN_DOWN(a, (unsigned) b); }
-inline unsigned ALIGN_DOWN(const BE32 &a, unsigned b) { return ALIGN_DOWN((unsigned) a, b); }
-inline unsigned ALIGN_UP(unsigned a, const BE32 &b) { return ALIGN_UP(a, (unsigned) b); }
-inline unsigned ALIGN_UP(const BE32 &a, unsigned b) { return ALIGN_UP((unsigned) a, b); }
+inline unsigned ALIGN_DOWN(unsigned a, const BE32 &b) { return ALIGN_DOWN(a, unsigned(b)); }
+inline unsigned ALIGN_DOWN(const BE32 &a, unsigned b) { return ALIGN_DOWN(unsigned(a), b); }
+inline unsigned ALIGN_UP(unsigned a, const BE32 &b) { return ALIGN_UP(a, unsigned(b)); }
+inline unsigned ALIGN_UP(const BE32 &a, unsigned b) { return ALIGN_UP(unsigned(a), b); }
 
-inline unsigned ALIGN_DOWN(unsigned a, const LE32 &b) { return ALIGN_DOWN(a, (unsigned) b); }
-inline unsigned ALIGN_DOWN(const LE32 &a, unsigned b) { return ALIGN_DOWN((unsigned) a, b); }
-inline unsigned ALIGN_UP(unsigned a, const LE32 &b) { return ALIGN_UP(a, (unsigned) b); }
-inline unsigned ALIGN_UP(const LE32 &a, unsigned b) { return ALIGN_UP((unsigned) a, b); }
+inline unsigned ALIGN_DOWN(unsigned a, const LE32 &b) { return ALIGN_DOWN(a, unsigned(b)); }
+inline unsigned ALIGN_DOWN(const LE32 &a, unsigned b) { return ALIGN_DOWN(unsigned(a), b); }
+inline unsigned ALIGN_UP(unsigned a, const LE32 &b) { return ALIGN_UP(a, unsigned(b)); }
+inline unsigned ALIGN_UP(const LE32 &a, unsigned b) { return ALIGN_UP(unsigned(a), b); }
 
-inline unsigned UPX_MAX(unsigned a, const BE16 &b) { return UPX_MAX(a, (unsigned) b); }
-inline unsigned UPX_MAX(const BE16 &a, unsigned b) { return UPX_MAX((unsigned) a, b); }
-inline unsigned UPX_MIN(unsigned a, const BE16 &b) { return UPX_MIN(a, (unsigned) b); }
-inline unsigned UPX_MIN(const BE16 &a, unsigned b) { return UPX_MIN((unsigned) a, b); }
+inline unsigned UPX_MAX(unsigned a, const BE16 &b) { return UPX_MAX(a, unsigned(b)); }
+inline unsigned UPX_MAX(const BE16 &a, unsigned b) { return UPX_MAX(unsigned(a), b); }
+inline unsigned UPX_MIN(unsigned a, const BE16 &b) { return UPX_MIN(a, unsigned(b)); }
+inline unsigned UPX_MIN(const BE16 &a, unsigned b) { return UPX_MIN(unsigned(a), b); }
 
-inline unsigned UPX_MAX(unsigned a, const BE32 &b) { return UPX_MAX(a, (unsigned) b); }
-inline unsigned UPX_MAX(const BE32 &a, unsigned b) { return UPX_MAX((unsigned) a, b); }
-inline unsigned UPX_MIN(unsigned a, const BE32 &b) { return UPX_MIN(a, (unsigned) b); }
-inline unsigned UPX_MIN(const BE32 &a, unsigned b) { return UPX_MIN((unsigned) a, b); }
+inline unsigned UPX_MAX(unsigned a, const BE32 &b) { return UPX_MAX(a, unsigned(b)); }
+inline unsigned UPX_MAX(const BE32 &a, unsigned b) { return UPX_MAX(unsigned(a), b); }
+inline unsigned UPX_MIN(unsigned a, const BE32 &b) { return UPX_MIN(a, unsigned(b)); }
+inline unsigned UPX_MIN(const BE32 &a, unsigned b) { return UPX_MIN(unsigned(a), b); }
 
-inline unsigned UPX_MAX(unsigned a, const LE16 &b) { return UPX_MAX(a, (unsigned) b); }
-inline unsigned UPX_MAX(const LE16 &a, unsigned b) { return UPX_MAX((unsigned) a, b); }
-inline unsigned UPX_MIN(unsigned a, const LE16 &b) { return UPX_MIN(a, (unsigned) b); }
-inline unsigned UPX_MIN(const LE16 &a, unsigned b) { return UPX_MIN((unsigned) a, b); }
+inline unsigned UPX_MAX(unsigned a, const LE16 &b) { return UPX_MAX(a, unsigned(b)); }
+inline unsigned UPX_MAX(const LE16 &a, unsigned b) { return UPX_MAX(unsigned(a), b); }
+inline unsigned UPX_MIN(unsigned a, const LE16 &b) { return UPX_MIN(a, unsigned(b)); }
+inline unsigned UPX_MIN(const LE16 &a, unsigned b) { return UPX_MIN(unsigned(a), b); }
 
-inline unsigned UPX_MAX(unsigned a, const LE32 &b) { return UPX_MAX(a, (unsigned) b); }
-inline unsigned UPX_MAX(const LE32 &a, unsigned b) { return UPX_MAX((unsigned) a, b); }
-inline unsigned UPX_MIN(unsigned a, const LE32 &b) { return UPX_MIN(a, (unsigned) b); }
-inline unsigned UPX_MIN(const LE32 &a, unsigned b) { return UPX_MIN((unsigned) a, b); }
+inline unsigned UPX_MAX(unsigned a, const LE32 &b) { return UPX_MAX(a, unsigned(b)); }
+inline unsigned UPX_MAX(const LE32 &a, unsigned b) { return UPX_MAX(unsigned(a), b); }
+inline unsigned UPX_MIN(unsigned a, const LE32 &b) { return UPX_MIN(a, unsigned(b)); }
+inline unsigned UPX_MIN(const LE32 &a, unsigned b) { return UPX_MIN(unsigned(a), b); }
 
 /*************************************************************************
 // misc support

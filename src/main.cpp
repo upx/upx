@@ -1122,7 +1122,7 @@ int upx_main(int argc, char *argv[]) {
     argv0 = argv[0];
 
     upx_compiler_sanity_check();
-    if (!upx_doctest_check()) {
+    if (!upx_doctest_check(argc, argv)) {
         fprintf(stderr, "%s: internal error: doctest failed\n", argv0);
         e_exit(EXIT_INIT);
     }

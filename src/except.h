@@ -25,8 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_EXCEPT_H
-#define __UPX_EXCEPT_H 1
+#pragma once
+#ifndef UPX_EXCEPT_H__
+#define UPX_EXCEPT_H__ 1
 
 #ifdef __cplusplus
 
@@ -50,16 +51,16 @@ public:
     bool isWarning() const noexcept { return is_warning; }
 
 private:
-    char *msg;
-    int err;
+    char *msg = nullptr;
+    int err = 0;
 
 protected:
-    bool is_warning; // can be set by subclasses
+    bool is_warning = false; // can be set by subclasses
 
 private:
     // disable assignment
-    Throwable &operator=(const Throwable &);
-    // disable dynamic allocation
+    Throwable &operator=(const Throwable &) = delete;
+    // disable dynamic allocation => force throwing by value
     ACC_CXX_DISABLE_NEW_DELETE
 
 private:
@@ -192,27 +193,27 @@ public:
 
 #undef NORET
 #if 1 && defined(__GNUC__)
-#define NORET __attribute__((__noreturn__))
+#define NORET __attribute__((__noreturn__)) __acc_noinline
 #else
-#define NORET /*empty*/
+#define NORET __acc_noinline
 #endif
 
-void throwCantPack(const char *msg) NORET;
-void throwCantPackExact() NORET;
-void throwUnknownExecutableFormat(const char *msg = nullptr, bool warn = false) NORET;
-void throwNotCompressible(const char *msg = nullptr) NORET;
-void throwAlreadyPacked(const char *msg = nullptr) NORET;
-void throwAlreadyPackedByUPX(const char *msg = nullptr) NORET;
-void throwCantUnpack(const char *msg) NORET;
-void throwNotPacked(const char *msg = nullptr) NORET;
-void throwFilterException() NORET;
-void throwBadLoader() NORET;
-void throwChecksumError() NORET;
-void throwCompressedDataViolation() NORET;
-void throwInternalError(const char *msg) NORET;
-void throwOutOfMemoryException(const char *msg = nullptr) NORET;
-void throwIOException(const char *msg = nullptr, int e = 0) NORET;
-void throwEOFException(const char *msg = nullptr, int e = 0) NORET;
+NORET void throwCantPack(const char *msg);
+NORET void throwCantPackExact();
+NORET void throwUnknownExecutableFormat(const char *msg = nullptr, bool warn = false);
+NORET void throwNotCompressible(const char *msg = nullptr);
+NORET void throwAlreadyPacked(const char *msg = nullptr);
+NORET void throwAlreadyPackedByUPX(const char *msg = nullptr);
+NORET void throwCantUnpack(const char *msg);
+NORET void throwNotPacked(const char *msg = nullptr);
+NORET void throwFilterException();
+NORET void throwBadLoader();
+NORET void throwChecksumError();
+NORET void throwCompressedDataViolation();
+NORET void throwInternalError(const char *msg);
+NORET void throwOutOfMemoryException(const char *msg = nullptr);
+NORET void throwIOException(const char *msg = nullptr, int e = 0);
+NORET void throwEOFException(const char *msg = nullptr, int e = 0);
 
 #undef NORET
 

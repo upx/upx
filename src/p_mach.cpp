@@ -1529,7 +1529,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         if (is_bad_linker_command( ((Mach_command const *)ptr)->cmd, cmdsize,
                 headway, lc_seg, sizeof(Addr))) {
             char msg[50]; snprintf(msg, sizeof(msg),
-                "bad packed Mach load_command @%#x", ptr_udiff(ptr, mhdr));
+                "bad packed Mach load_command @%#x", ptr_udiff_bytes(ptr, mhdr));
             throwCantUnpack(msg);
         }
         memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command), cmdsize));
@@ -1905,7 +1905,7 @@ template <class T>
 upx_uint64_t PackMachBase<T>::get_mod_init_func(Mach_segment_command const *segptr)
 {
     for (Mach_section_command const *secptr = (Mach_section_command const *)(1+ segptr);
-        ptr_udiff(secptr, segptr) < segptr->cmdsize;
+        ptr_udiff_bytes(secptr, segptr) < segptr->cmdsize;
         ++secptr
     ) {
         if (sizeof(Addr) == secptr->size

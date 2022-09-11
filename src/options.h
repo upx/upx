@@ -25,8 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_OPTIONS_H
-#define __UPX_OPTIONS_H 1
+#pragma once
+#ifndef UPX_OPTIONS_H__
+#define UPX_OPTIONS_H__ 1
 
 /*************************************************************************
 // globals

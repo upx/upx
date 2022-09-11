@@ -25,35 +25,51 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#include "conf.h"
+#include "../conf.h"
 
 /*************************************************************************
 // upx_doctest_check()
 **************************************************************************/
 
-bool upx_doctest_check(void) {
+bool upx_doctest_check(int argc, char **argv) {
     bool minimal = true;   // only show failing tests
     bool duration = false; // show timings
+    bool success = false;  // show all tests
     const char *e = getenv("UPX_DEBUG_DOCTEST_VERBOSE");
     if (e && e[0] && strcmp(e, "0") != 0) {
         minimal = false;
         if (strcmp(e, "2") == 0)
             duration = true;
+        if (strcmp(e, "3") == 0) {
+            duration = true;
+            success = true;
+        }
     }
 #if DEBUG
     minimal = false;
     // duration = true;
 #endif
     doctest::Context context;
+#if 0
+    if (argc > 0 && argv != nullptr)
+        context.applyCommandLine(argc, argv);
+#else
+    UNUSED(argc);
+    UNUSED(argv);
+#endif
     if (minimal)
         context.setOption("dt-minimal", true);
     if (duration)
         context.setOption("dt-duration", true);
+    if (success)
+        context.setOption("dt-success", true);
     int r = context.run();
     if (context.shouldExit() || r != 0)
         return false;
     return true;
 }
+
+bool upx_doctest_check() { return upx_doctest_check(0, nullptr); }
 
 /*************************************************************************
 // compile-time checks
@@ -194,13 +210,13 @@ struct TestIntegerWrap {
 
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
-#include "miniacc.h"
+#include "../miniacc.h"
 
 void upx_compiler_sanity_check(void) {
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
 #define ACCCHK_ASSERT(expr) ACC_COMPILE_TIME_ASSERT(expr)
-#include "miniacc.h"
+#include "../miniacc.h"
 #undef ACCCHK_ASSERT
 
     COMPILE_TIME_ASSERT(sizeof(char) == 1)
@@ -390,11 +406,21 @@ TEST_CASE("working -fno-strict-overflow") {
 
 TEST_CASE("libc snprintf") {
     // runtime check that Win32/MinGW <stdio.h> works as expected
+    char buf[64];
     long long ll = acc_vget_int(-1, 0);
     unsigned long long llu = (unsigned long long) ll;
-    char buf[64];
-    snprintf(buf, sizeof(buf), ".%d.%ld.%lld.%u.%lu.%llu", -3, -2L, ll, 3U, 2LU, llu);
-    CHECK_EQ(strcmp(buf, ".-3.-2.-1.3.2.18446744073709551615"), 0);
+    snprintf(buf, sizeof(buf), "%d.%ld.%lld.%u.%lu.%llu", -3, -2L, ll, 3U, 2LU, llu);
+    CHECK_EQ(strcmp(buf, "-3.-2.-1.3.2.18446744073709551615"), 0);
+    intmax_t im = ll;
+    uintmax_t um = llu;
+    snprintf(buf, sizeof(buf), "%d.%d.%d.%d.%d.%d.%d.%d.%d.%jd", -4, 0, 0, 0, 0, 0, 0, 0, 4, im);
+    CHECK_EQ(strcmp(buf, "-4.0.0.0.0.0.0.0.4.-1"), 0);
+    snprintf(buf, sizeof(buf), "%d.%d.%d.%d.%d.%d.%d.%d.%d.%ju", -5, 0, 0, 0, 0, 0, 0, 0, 5, um);
+    CHECK_EQ(strcmp(buf, "-5.0.0.0.0.0.0.0.5.18446744073709551615"), 0);
+    snprintf(buf, sizeof(buf), "%d.%d.%d.%d.%d.%d.%d.%d.%d.%jx", -6, 0, 0, 0, 0, 0, 0, 0, 6, um);
+    CHECK_EQ(strcmp(buf, "-6.0.0.0.0.0.0.0.6.ffffffffffffffff"), 0);
+    snprintf(buf, sizeof(buf), "%d.%d.%d.%d.%d.%d.%d.%d.%d.%#jx", -7, 0, 0, 0, 0, 0, 0, 0, 7, um);
+    CHECK_EQ(strcmp(buf, "-7.0.0.0.0.0.0.0.7.0xffffffffffffffff"), 0);
 }
 
 /* vim:set ts=4 sw=4 et: */

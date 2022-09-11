@@ -1456,8 +1456,6 @@ static const
 static const
 #include "stub/armeb.v4a-linux.elf-fold.h"
 
-#include "mem.h"
-
 void
 PackLinuxElf32armBe::buildLoader(Filter const *ft)
 {
@@ -4611,7 +4609,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
             unsigned tmp = sz_pack2 + get_te32(&elfout.phdr[C_TEXT].p_vaddr);
             tmp |= (Elf32_Ehdr::EM_ARM==e_machine);  // THUMB mode
             set_te32(&tmp, tmp);
-            fo->seek(ptr_udiff(&jni_onload_sym->st_value, file_image), SEEK_SET);
+            fo->seek(ptr_udiff_bytes(&jni_onload_sym->st_value, file_image), SEEK_SET);
             fo->rewrite(&tmp, sizeof(tmp));
         }
     }

@@ -25,165 +25,110 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-#ifndef __UPX_FILE_H
-#define __UPX_FILE_H 1
-
-class MemBuffer;
-
+#pragma once
+#ifndef UPX_FILE_H__
+#define UPX_FILE_H__ 1
 
 /*************************************************************************
 //
 **************************************************************************/
 
-class File
-{
-protected:
-    File() { }
-    virtual ~File() { }
-public:
-    static void chmod(const char *name, int mode);
-    static void rename(const char *old_, const char *new_);
-    static void unlink(const char *name);
-};
-
-
-class FileBase : public File
-{
+class FileBase {
 protected:
     FileBase();
     virtual ~FileBase();
+
 public:
-    virtual bool close();
-    virtual void closex();
-    virtual bool isOpen() const { return _fd >= 0; }
+    bool close();
+    void closex();
+    bool isOpen() const { return _fd >= 0; }
     int getFd() const { return _fd; }
     const char *getName() const { return _name; }
-    virtual upx_off_t st_size() const;  // { return _length; }
+
+    virtual upx_off_t seek(upx_off_t off, int whence);
+    upx_off_t tell() const;
+    virtual upx_off_t st_size() const; // { return _length; }
     virtual void set_extent(upx_off_t offset, upx_off_t length);
+
+public:
+    // static file-related util functions
+    static void chmod(const char *name, int mode);
+    static void rename(const char *old_, const char *new_);
+    static void unlink(const char *name);
 
 protected:
     bool do_sopen();
-    virtual int read(void *buf, int len);
-    virtual int readx(void *buf, int len);
-    virtual void write(const void *buf, int len);
-    virtual upx_off_t seek(upx_off_t off, int whence);
-    virtual upx_off_t tell() const;
+    int _fd = -1;
+    int _flags = 0;
+    int _shflags = 0;
+    int _mode = 0;
+    const char *_name = nullptr;
+    upx_off_t _offset = 0;
+    upx_off_t _length = 0;
 
-    int _fd;
-    int _flags;
-    int _shflags;
-    int _mode;
-    const char *_name;
-    upx_off_t _offset;
-    upx_off_t _length;
 public:
-    struct stat st;
+    struct stat st = {};
 };
-
 
 /*************************************************************************
 //
 **************************************************************************/
 
-class InputFile final : public FileBase
-{
+class InputFile final : public FileBase {
     typedef FileBase super;
+
 public:
     InputFile();
-    virtual ~InputFile();
+    virtual ~InputFile() {}
 
-    virtual void sopen(const char *name, int flags, int shflags);
-    virtual void open(const char *name, int flags)
-    {
-        sopen(name, flags, -1);
-    }
+    void sopen(const char *name, int flags, int shflags);
+    void open(const char *name, int flags) { sopen(name, flags, -1); }
 
-    virtual int read(void *buf, int len) override;
-    virtual int readx(void *buf, int len) override;
-    virtual int read(MemBuffer *buf, int len);
-    virtual int readx(MemBuffer *buf, int len);
-    virtual int read(MemBuffer &buf, int len);
-    virtual int readx(MemBuffer &buf, int len);
+    int read(SPAN_P(void) buf, int len);
+    int readx(SPAN_P(void) buf, int len);
 
     virtual upx_off_t seek(upx_off_t off, int whence) override;
-    virtual upx_off_t tell() const override;
-    virtual upx_off_t st_size_orig() const;
-protected:
-    upx_off_t _length_orig;
-};
+    upx_off_t st_size_orig() const;
 
+protected:
+    upx_off_t _length_orig = 0;
+};
 
 /*************************************************************************
 //
 **************************************************************************/
 
-class OutputFile final : public FileBase
-{
+class OutputFile final : public FileBase {
     typedef FileBase super;
+
 public:
     OutputFile();
-    virtual ~OutputFile();
+    virtual ~OutputFile() {}
 
-    virtual void sopen(const char *name, int flags, int shflags, int mode);
-    virtual void open(const char *name, int flags, int mode)
-    {
-        sopen(name, flags, -1, mode);
-    }
-    virtual bool openStdout(int flags=0, bool force=false);
+    void sopen(const char *name, int flags, int shflags, int mode);
+    void open(const char *name, int flags, int mode) { sopen(name, flags, -1, mode); }
+    bool openStdout(int flags = 0, bool force = false);
 
-    virtual void write(const void *buf, int len) override;
-    virtual void write(const MemBuffer *buf, int len);
-    virtual void write(const MemBuffer &buf, int len);
+    // info: allow nullptr if len == 0
+    void write(SPAN_0(const void) buf, int len);
+
+    virtual upx_off_t seek(upx_off_t off, int whence) override;
+    virtual upx_off_t st_size() const override; // { return _length; }
     virtual void set_extent(upx_off_t offset, upx_off_t length) override;
-    virtual upx_off_t unset_extent();  // returns actual length
+    upx_off_t unset_extent(); // returns actual length
 
     upx_off_t getBytesWritten() const { return bytes_written; }
-    virtual upx_off_t st_size() const override;  // { return _length; }
 
     // FIXME - these won't work when using the '--stdout' option
-    virtual upx_off_t seek(upx_off_t off, int whence) override;
-    virtual upx_off_t tell() const override;
-    virtual void rewrite(const void *buf, int len);
+    void rewrite(SPAN_P(const void) buf, int len);
 
     // util
-    static void dump(const char *name, const void *buf, int len, int flags=-1);
+    static void dump(const char *name, SPAN_P(const void) buf, int len, int flags = -1);
 
 protected:
-    upx_off_t bytes_written;
+    upx_off_t bytes_written = 0;
 };
 
-
-/*************************************************************************
-//
-**************************************************************************/
-
-#if 0 /* NOT USED */
-class MemoryOutputFile : public FileBase
-{
-    typedef FileBase super;
-public:
-    MemoryOutputFile();
-    virtual ~MemoryOutputFile() { b = nullptr; }
-
-    virtual bool close() { b = nullptr; return true; }
-    virtual bool isOpen() const { return b != nullptr; }
-    virtual void open(void *buf, unsigned size)
-        { b = (upx_bytep) buf; b_size = size; }
-
-    virtual void write(const void *buf, int len);
-
-    upx_off_t getBytesWritten() const { return bytes_written; }
-
-protected:
-    upx_bytep b;
-    unsigned b_size;
-    unsigned b_pos;
-    upx_off_t bytes_written;
-};
-#endif /* if 0 */
-
-
-#endif /* already included */
+#endif
 
 /* vim:set ts=4 sw=4 et: */

@@ -41,7 +41,7 @@ PackHeader::PackHeader() : version(-1), format(-1) {}
 // simple checksum for the header itself (since version 10)
 **************************************************************************/
 
-static unsigned char get_packheader_checksum(const upx_bytep buf, int len) {
+static unsigned char get_packheader_checksum(SPAN_S(const upx_byte) buf, int len) {
     assert(len >= 4);
     assert(get_le32(buf) == UPX_MAGIC_LE32);
     // printf("1 %d\n", len);
@@ -92,7 +92,7 @@ int PackHeader::getPackHeaderSize() const {
 // see stub/header.ash
 **************************************************************************/
 
-void PackHeader::putPackHeader(upx_bytep p) {
+void PackHeader::putPackHeader(SPAN_S(upx_byte) p) {
     // NOTE: It is the caller's responsbility to ensure the buffer p has
     // sufficient space for the header.
     assert(get_le32(p) == UPX_MAGIC_LE32);
@@ -170,12 +170,12 @@ void PackHeader::putPackHeader(upx_bytep p) {
 //
 **************************************************************************/
 
-bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
-    int boff = find_le32(buf, blen, UPX_MAGIC_LE32);
+bool PackHeader::fillPackHeader(SPAN_S(const upx_byte) buf, int blen) {
+    int boff = find_le32(raw_bytes(buf, blen), blen, UPX_MAGIC_LE32);
     if (boff < 0)
         return false;
 
-    const upx_bytep const p = buf + boff;
+    SPAN_S_VAR(const upx_byte, p, buf + boff);
     unsigned const headway = blen - boff; // bytes remaining in buf
 
     if (headway < (1 + 7))

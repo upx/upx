@@ -607,8 +607,8 @@ void PackExe::pack(OutputFile *fo)
     }
 
     // g++ 3.1 does not like the following line...
-//    oh.relocoffs = offsetof(exe_header_t, firstreloc);
-    oh.relocoffs = ptr_diff(&oh.firstreloc, &oh);
+    oh.relocoffs = offsetof(exe_header_t, firstreloc);
+    //oh.relocoffs = ptr_udiff_bytes(&oh.firstreloc, &oh);
 
     linker->defineSymbol("destination_segment", oh.ss - ph.c_len / 16 - e_len / 16);
     linker->defineSymbol("source_segment", e_len / 16 + (copysize - firstcopy) / 16);
@@ -658,7 +658,7 @@ void PackExe::pack(OutputFile *fo)
     verifyOverlappingDecompression();
 
     // copy the overlay
-    copyOverlay(fo, ih_overlay, &obuf);
+    copyOverlay(fo, ih_overlay, obuf);
 //fprintf (stderr,"%x %x\n",relocsize,ph.u_len);
 
     // finally check the compression ratio
@@ -710,7 +710,7 @@ void PackExe::unpack(OutputFile *fo)
     const unsigned char flag = ibuf[imagesize];
 
     unsigned relocn = 0;
-    upx_byte *relocs = obuf + ph.u_len;
+    SPAN_S_VAR(upx_byte, relocs, obuf + ph.u_len, obuf);
 
     MemBuffer wrkmem;
     if (!(flag & NORELOC))
@@ -721,7 +721,7 @@ void PackExe::unpack(OutputFile *fo)
         wrkmem.alloc(4*MAXRELOCS);
         unsigned es = 0, ones = get_le16(relocs);
         const unsigned seghi = get_le16(relocs+2);
-        const upx_byte *p = relocs + 4;
+        SPAN_S_VAR(const upx_byte, p, relocs + 4);
 
         while (ones)
         {
@@ -739,10 +739,11 @@ void PackExe::unpack(OutputFile *fo)
                 dorel = true;
                 if (*p == 0)
                 {
-                    const upx_byte *q;
+                    SPAN_S_VAR(const upx_byte, q, obuf);
+
                     for (q = obuf+es*16+di; !(*q == 0x9a && get_le16(q+3) <= seghi); q++)
                         ;
-                    di = ptr_diff(q, obuf+es*16) + 3;
+                    di = ptr_diff_bytes(q, obuf+es*16) + 3;
                 }
                 else if (*p == 1)
                 {
@@ -768,7 +769,7 @@ void PackExe::unpack(OutputFile *fo)
             set_le32(wrkmem+4*relocn++,0);
     }
 
-    unsigned outputlen = ptr_diff(relocs, obuf) + sizeof(oh) + relocn*4;
+    unsigned outputlen = ptr_udiff_bytes(relocs, obuf) + sizeof(oh) + relocn*4;
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
     oh.headsize16 = 2+relocn/4;
@@ -800,10 +801,10 @@ void PackExe::unpack(OutputFile *fo)
     fo->write(&oh,sizeof(oh));
     if (relocn)
         fo->write(wrkmem,relocn*4);
-    fo->write(obuf, ptr_diff(relocs, obuf));
+    fo->write(obuf, ptr_diff_bytes(relocs, obuf));
 
     // copy the overlay
-    copyOverlay(fo, ih_overlay, &obuf);
+    copyOverlay(fo, ih_overlay, obuf);
 }
 
 

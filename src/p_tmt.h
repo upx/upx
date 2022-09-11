@@ -34,33 +34,33 @@
 // tmt/adam
 **************************************************************************/
 
-class PackTmt : public Packer
+class PackTmt final : public Packer
 {
     typedef Packer super;
 public:
     PackTmt(InputFile *f);
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_TMT_ADAM; }
-    virtual const char *getName() const { return "tmt/adam"; }
-    virtual const char *getFullName(const options_t *) const { return "i386-dos32.tmt.adam"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_TMT_ADAM; }
+    virtual const char *getName() const override { return "tmt/adam"; }
+    virtual const char *getFullName(const options_t *) const override { return "i386-dos32.tmt.adam"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
 protected:
-    virtual int readFileHeader();
+    int readFileHeader();
 
     virtual unsigned findOverlapOverhead(const upx_bytep buf,
                                          const upx_bytep tbuf,
                                          unsigned range = 0,
-                                         unsigned upper_limit = ~0u) const;
-    virtual void buildLoader(const Filter *ft);
-    virtual Linker* newLinker() const;
+                                         unsigned upper_limit = ~0u) const override;
+    virtual void buildLoader(const Filter *ft) override;
+    virtual Linker* newLinker() const override;
 
     unsigned adam_offset;
     int big_relocs;

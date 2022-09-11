@@ -38,34 +38,34 @@
 // ps1/exe
 **************************************************************************/
 
-class PackPs1 : public Packer
+class PackPs1 final : public Packer
 {
     typedef Packer super;
 public:
     PackPs1(InputFile *f);
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_PS1_EXE; }
-    virtual const char *getName() const { return "ps1/exe"; }
-    virtual const char *getFullName(const options_t *) const { return "mipsel.r3000-ps1"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_PS1_EXE; }
+    virtual const char *getName() const override { return "ps1/exe"; }
+    virtual const char *getFullName(const options_t *) const override { return "mipsel.r3000-ps1"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
 protected:
-    virtual void putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len);
-    virtual bool getBkupHeader(unsigned char *src, unsigned char * dst);
-    virtual bool readBkupHeader();
-    virtual void buildLoader(const Filter *ft);
-    virtual bool findBssSection();
-    virtual Linker* newLinker() const;
+    void putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len);
+    bool getBkupHeader(unsigned char *src, unsigned char * dst);
+    bool readBkupHeader();
+    virtual void buildLoader(const Filter *ft) override;
+    bool findBssSection();
+    virtual Linker* newLinker() const override;
 
-    virtual int readFileHeader();
-    virtual bool checkFileHeader();
+    int readFileHeader();
+    bool checkFileHeader();
 
     __packed_struct(ps1_exe_t)
         // ident string

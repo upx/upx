@@ -25,7 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#include "conf.h"
+#include "../conf.h"
 
 /*************************************************************************
 // UPX version of string functions, with assertions and sane limits

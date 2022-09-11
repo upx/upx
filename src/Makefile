@@ -55,7 +55,7 @@ ALL_LDFLAGS  = $(strip $(call all_flags,LDFLAGS))
 ALL_LDADD    = $(strip $(call all_flags,LDADD))
 ALL_LIBS     = $(strip $(call all_flags,LIBS))
 
-upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp))
+upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/util/*.cpp))
 upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
 
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
@@ -130,6 +130,8 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$(CHECK_WHITESPACE)
 
 %.o : %.cpp | ./.depend
+	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -c $<)
+%.o : util/%.cpp | ./.depend
 	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -c $<)
 %.cpp.ii : %.cpp
 	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -E $<)
@@ -207,13 +209,14 @@ endif
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
 CLANG_FORMAT_FILES += bele.h bele_policy.h
-CLANG_FORMAT_FILES += dt_check.cpp dt_impl.cpp except.cpp except.h
+CLANG_FORMAT_FILES += except.cpp except.h
+CLANG_FORMAT_FILES += file.cpp file.h
 CLANG_FORMAT_FILES += linker.cpp linker.h packhead.cpp packmast.cpp packmast.h
 CLANG_FORMAT_FILES += main.cpp options.cpp options.h packer.cpp packer.h
 CLANG_FORMAT_FILES += p_tos.cpp p_tos.h
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
-CLANG_FORMAT_FILES += snprintf.cpp
-CLANG_FORMAT_FILES += ui.cpp ui.h util.cpp util.h work.cpp
+CLANG_FORMAT_FILES += ui.cpp ui.h work.cpp
+CLANG_FORMAT_FILES += $(wildcard util/[a-ln-z]*.[ch]* util/mem*.[ch]*)
 clang-format:
 	$(top_srcdir)/misc/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(sort $(CLANG_FORMAT_FILES)))
 .PHONY: clang-format

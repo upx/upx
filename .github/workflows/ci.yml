@@ -311,18 +311,18 @@ jobs:
           @REM build UCL
           cd %BDIR%\ucl
           set s=%H%\upx\vendor\ucl
-          cl -MT -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
+          cl -MT -J -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
           link -lib -out:ucl.lib *.obj
           @REM build zlib
           cd %BDIR%\zlib
-          cl -MT -O2 -W3 %DEFS% -c %H%\upx\vendor\zlib\*.c
+          cl -MT -J -O2 -W3 %DEFS% -c %H%\upx\vendor\zlib\*.c
           link -lib -out:zlib.lib *.obj
           @REM build UPX
           cd %BDIR%\upx
           set s=%H%\upx\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%H%\upx\vendor\doctest -I%H%\upx\vendor\lzma-sdk -I%H%\upx\vendor\ucl\include -I%H%\upx\vendor\zlib -Feupx.exe %s%\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
+          cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%H%\upx\vendor\doctest -I%H%\upx\vendor\lzma-sdk -I%H%\upx\vendor\ucl\include -I%H%\upx\vendor\zlib -Feupx.exe %s%\*.cpp %s%\util\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
 
       - name: 'Basic tests'
         shell: cmd

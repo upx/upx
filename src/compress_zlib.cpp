@@ -28,7 +28,7 @@
 
 #include "conf.h"
 #include "compress.h"
-#include "mem.h"
+#include "util/membuffer.h"
 #include <zlib.h>
 
 

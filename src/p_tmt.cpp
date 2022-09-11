@@ -235,9 +235,7 @@ void PackTmt::pack(OutputFile *fo)
     {
         for (unsigned ic=4; ic<=rsize; ic+=4)
             set_le32(wrkmem+ic,get_le32(wrkmem+ic)-4);
-        relocsize = ptr_diff(
-            optimizeReloc32(wrkmem+4,rsize/4,wrkmem,ibuf,file_size,1,&big_relocs),
-            wrkmem);
+        relocsize = optimizeReloc32(wrkmem+4,rsize/4,wrkmem,ibuf,file_size,1,&big_relocs);
     }
 
     wrkmem[relocsize++] = 0;
@@ -300,7 +298,7 @@ void PackTmt::pack(OutputFile *fo)
     verifyOverlappingDecompression();
 
     // copy the overlay
-    copyOverlay(fo, overlay, &obuf);
+    copyOverlay(fo, overlay, obuf);
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
@@ -332,7 +330,7 @@ void PackTmt::unpack(OutputFile *fo)
 
     // decode relocations
     const unsigned osize = ph.u_len - get_le32(obuf+ph.u_len-4);
-    upx_byte *relocs = obuf + osize;
+    SPAN_P_VAR(upx_byte, relocs, obuf + osize);
     const unsigned origstart = get_le32(obuf+ph.u_len-8);
 
     // unfilter
@@ -343,12 +341,13 @@ void PackTmt::unpack(OutputFile *fo)
         ft.cto = (unsigned char) ph.filter_cto;
         if (ph.version < 11)
             ft.cto = (unsigned char) (get_le32(obuf+ph.u_len-12) >> 24);
-        ft.unfilter(obuf, ptr_diff(relocs, obuf));
+        ft.unfilter(obuf, ptr_udiff_bytes(relocs, obuf));
     }
 
     // decode relocations
-    MemBuffer wrkmem;
-    unsigned relocn = unoptimizeReloc32(&relocs,obuf,&wrkmem,1);
+    MemBuffer mb_wrkmem;
+    unsigned relocn = unoptimizeReloc32(relocs, obuf, mb_wrkmem, true);
+    SPAN_S_VAR(upx_byte, wrkmem, mb_wrkmem);
     for (unsigned ic = 0; ic < relocn; ic++)
         set_le32(wrkmem+ic*4,get_le32(wrkmem+ic*4)+4);
 
@@ -366,11 +365,11 @@ void PackTmt::unpack(OutputFile *fo)
     {
         fo->write(&oh,sizeof(oh));
         fo->write(obuf,osize);
-        fo->write(wrkmem,relocn*4);
+        fo->write(raw_bytes(wrkmem,relocn*4), relocn*4);
     }
 
     // copy the overlay
-    copyOverlay(fo, overlay, &obuf);
+    copyOverlay(fo, overlay, obuf);
 }
 
 /* vim:set ts=4 sw=4 et: */

@@ -190,15 +190,15 @@ void do_one_file(const char *iname, char *oname) {
             r = chmod(iname, 0777);
             IGNORE_ERROR(r);
 #endif
-            File::unlink(iname);
+            FileBase::unlink(iname);
         } else {
             // make backup
             char bakname[ACC_FN_PATH_MAX + 1];
             if (!makebakname(bakname, sizeof(bakname), iname))
                 throwIOException("could not create a backup file name");
-            File::rename(iname, bakname);
+            FileBase::rename(iname, bakname);
         }
-        File::rename(oname, iname);
+        FileBase::rename(oname, iname);
     }
 
     // copy file attributes
@@ -272,40 +272,40 @@ int do_files(int i, int argc, char *argv[]) {
             if (opt->verbose >= 1 || (opt->verbose >= 0 && !e.isWarning()))
                 printErr(iname, &e);
             main_set_exit_code(e.isWarning() ? EXIT_WARN : EXIT_ERROR);
-            // continue processing more files
+            // this is not fatal, continue processing more files
         } catch (const Error &e) {
             unlink_ofile(oname);
             printErr(iname, &e);
             main_set_exit_code(EXIT_ERROR);
-            return -1;
+            return -1; // fatal error
         } catch (std::bad_alloc *e) {
             unlink_ofile(oname);
             printErr(iname, "out of memory");
             UNUSED(e);
             // delete e;
             main_set_exit_code(EXIT_ERROR);
-            return -1;
+            return -1; // fatal error
         } catch (const std::bad_alloc &) {
             unlink_ofile(oname);
             printErr(iname, "out of memory");
             main_set_exit_code(EXIT_ERROR);
-            return -1;
+            return -1; // fatal error
         } catch (std::exception *e) {
             unlink_ofile(oname);
             printUnhandledException(iname, e);
             // delete e;
             main_set_exit_code(EXIT_ERROR);
-            return -1;
+            return -1; // fatal error
         } catch (const std::exception &e) {
             unlink_ofile(oname);
             printUnhandledException(iname, &e);
             main_set_exit_code(EXIT_ERROR);
-            return -1;
+            return -1; // fatal error
         } catch (...) {
             unlink_ofile(oname);
             printUnhandledException(iname, nullptr);
             main_set_exit_code(EXIT_ERROR);
-            return -1;
+            return -1; // fatal error
         }
     }
 

@@ -25,9 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-#ifndef __UPX_CONF_H
-#define __UPX_CONF_H 1
+#pragma once
+#ifndef UPX_CONF_H__
+#define UPX_CONF_H__ 1
 
 #if defined(__cplusplus)
 #  if (__cplusplus >= 201402L)
@@ -356,7 +356,7 @@ template <class T>
 inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b; }
 
 
-// An Array allocates memory on the heap, but automatically
+// An Array allocates memory on the heap, and automatically
 // gets destructed when leaving scope or on exceptions.
 #define Array(type, var, size) \
     MemBuffer var ## _membuf(mem_size(sizeof(type), size)); \
@@ -395,6 +395,23 @@ constexpr bool string_le(const char *a, const char *b) {
 constexpr bool string_ge(const char *a, const char *b) {
     return !string_lt(a, b);
 }
+}
+
+/*************************************************************************
+// raw_bytes() - get underlying memory from checked buffers/pointers.
+// This is overloaded by various utility classes like BoundedPtr,
+// MemBuffer and Span.
+//
+// Note that the pointer type is retained, the "_bytes" hints size_in_bytes
+**************************************************************************/
+
+// default: for any regular pointer, raw_bytes() is just the pointer itself
+template <class T>
+inline T *raw_bytes(T *ptr, size_t size_in_bytes) {
+    if (size_in_bytes > 0) {
+        assert(ptr != nullptr);
+    }
+    return ptr;
 }
 
 /*************************************************************************
@@ -712,7 +729,7 @@ struct upx_compress_result_t
 // globals
 **************************************************************************/
 
-#include "snprintf.h"   // must get included first!
+#include "util/snprintf.h"   // must get included first!
 
 #include <exception>
 #include <new>
@@ -722,19 +739,27 @@ struct upx_compress_result_t
 #include "options.h"
 #include "except.h"
 #include "bele.h"
-#include "util.h"
 #include "console.h"
-
-//#define DOCTEST_CONFIG_DISABLE
-#include <doctest/parts/doctest_fwd.h>
+#include "util/util.h"
 
 // classes
 class ElfLinker;
 typedef ElfLinker Linker;
 
-// dt_check.cpp
-void upx_compiler_sanity_check(void);
-bool upx_doctest_check(void);
+// util/membuffer.h
+class MemBuffer;
+void *membuffer_get_void_ptr(MemBuffer &mb);
+unsigned membuffer_get_size(MemBuffer &mb);
+
+#include "util/xspan.h"
+
+//#define DOCTEST_CONFIG_DISABLE
+#include <doctest/parts/doctest_fwd.h>
+
+// util/dt_check.cpp
+void upx_compiler_sanity_check();
+bool upx_doctest_check();
+bool upx_doctest_check(int argc, char **argv);
 
 // main.cpp
 extern const char *progname;
@@ -754,7 +779,7 @@ void printWarn(const char *iname, const char *format, ...) attribute_format(2, 3
 void infoWarning(const char *format, ...) attribute_format(1, 2);
 void infoHeader(const char *format, ...) attribute_format(1, 2);
 void info(const char *format, ...) attribute_format(1, 2);
-void infoHeader(void);
+void infoHeader();
 void infoWriting(const char *what, long size);
 
 // work.cpp
@@ -763,10 +788,10 @@ int do_files(int i, int argc, char *argv[]);
 
 // help.cpp
 extern const char gitrev[];
-void show_head(void);
+void show_head();
 void show_help(int verbose=0);
-void show_license(void);
-void show_usage(void);
+void show_license();
+void show_usage();
 void show_version(int);
 
 // compress.cpp

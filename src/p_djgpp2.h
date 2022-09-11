@@ -34,35 +34,35 @@
 // djgpp2/coff
 **************************************************************************/
 
-class PackDjgpp2 : public Packer
+class PackDjgpp2 final : public Packer
 {
     typedef Packer super;
 
 public:
     PackDjgpp2(InputFile *f);
-    virtual int getVersion() const { return 14; }
-    virtual int getFormat() const { return UPX_F_DJGPP2_COFF; }
-    virtual const char *getName() const { return "djgpp2/coff"; }
-    virtual const char *getFullName(const options_t *) const { return "i386-dos32.djgpp2.coff"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getVersion() const override { return 14; }
+    virtual int getFormat() const override { return UPX_F_DJGPP2_COFF; }
+    virtual const char *getName() const override { return "djgpp2/coff"; }
+    virtual const char *getFullName(const options_t *) const override { return "i386-dos32.djgpp2.coff"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
 protected:
-    virtual void handleStub(OutputFile *fo);
-    virtual int readFileHeader();
+    void handleStub(OutputFile *fo);
+    int readFileHeader();
 
     virtual unsigned findOverlapOverhead(const upx_bytep buf,
                                          const upx_bytep tbuf,
                                          unsigned range = 0,
-                                         unsigned upper_limit = ~0u) const;
-    virtual void buildLoader(const Filter *ft);
-    virtual Linker* newLinker() const;
+                                         unsigned upper_limit = ~0u) const override;
+    virtual void buildLoader(const Filter *ft) override;
+    virtual Linker* newLinker() const override;
 
     unsigned coff_offset;
 

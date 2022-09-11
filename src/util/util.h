@@ -25,32 +25,72 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_UTIL_H
-#define __UPX_UTIL_H 1
+#pragma once
+#ifndef UPX_UTIL_H__
+#define UPX_UTIL_H__ 1
 
 /*************************************************************************
-// protect against integer overflows and malicious header fields
+// assert sane memory buffer sizes to protect against integer overflows
+// and malicious header fields
+// see C 11 standard, Annex K
 **************************************************************************/
 
-#define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
-
-upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
-                     upx_uint64_t extra2 = 0);
-upx_rsize_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n);
-
-inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
-                            upx_uint64_t extra2 = 0) {
-    (void) mem_size(element_size, n, extra1, extra2); // sanity check
-}
+inline bool mem_size_valid_bytes(upx_uint64_t bytes) noexcept { return bytes <= UPX_RSIZE_MAX; }
 
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
-                    upx_uint64_t extra2 = 0);
-bool mem_size_valid_bytes(upx_uint64_t bytes);
+                    upx_uint64_t extra2 = 0) noexcept;
 
-int ptr_diff(const void *p1, const void *p2);
-unsigned ptr_udiff(const void *p1, const void *p2); // asserts p1 >= p2
+// new with asserted size; will throw on failure
+#define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
 
-void mem_clear(void *p, size_t n);
+// will throw on invalid size
+upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
+                     upx_uint64_t extra2 = 0);
+
+// inline fast paths:
+
+// will throw on invalid size
+inline upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n) {
+    upx_uint64_t bytes = element_size * n;
+    if __acc_very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX ||
+                            n > UPX_RSIZE_MAX || bytes > UPX_RSIZE_MAX)
+        return mem_size(element_size, n, 0, 0); // this will throw
+    return ACC_ICONV(upx_rsize_t, bytes);
+}
+
+// will throw on invalid size
+inline upx_rsize_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n) {
+    (void) mem_size(element_size, n); // assert size
+    return ACC_ICONV(upx_rsize_t, n); // and return n
+}
+
+// will throw on invalid size
+inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n) {
+    (void) mem_size(element_size, n); // assert size
+}
+
+// will throw on invalid size
+inline void mem_clear(void *p, size_t n) {
+    (void) mem_size(1, n); // assert size
+    memset(p, 0, n);
+}
+
+// ptrdiff_t with nullptr check and asserted size; will throw on failure
+// WARNING: returns size_in_bytes, not number of elements!
+int ptr_diff_bytes(const void *a, const void *b);
+unsigned ptr_udiff_bytes(const void *a, const void *b); // asserts a >= b
+
+// short names "ptr_diff" and "ptr_udiff" for types with sizeof(X) == 1
+template <class T, class U>
+inline typename std::enable_if<sizeof(T) == 1 && sizeof(U) == 1, int>::type ptr_diff(const T *a,
+                                                                                     const U *b) {
+    return ptr_diff_bytes(a, b);
+}
+template <class T, class U>
+inline typename std::enable_if<sizeof(T) == 1 && sizeof(U) == 1, unsigned>::type
+ptr_udiff(const T *a, const U *b) {
+    return ptr_udiff_bytes(a, b);
+}
 
 /*************************************************************************
 // misc. support functions

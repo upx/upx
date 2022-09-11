@@ -662,7 +662,7 @@ void PackTos::pack(OutputFile *fo) {
     verifyOverlappingDecompression();
 
     // copy the overlay
-    copyOverlay(fo, overlay, &obuf);
+    copyOverlay(fo, overlay, obuf);
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
@@ -713,7 +713,7 @@ void PackTos::unpack(OutputFile *fo) {
         fo->write(obuf, ph.u_len - FH_SIZE);           // orig. text+data+relocs
 
         // copy any overlay
-        copyOverlay(fo, overlay, &obuf);
+        copyOverlay(fo, overlay, obuf);
     }
 }
 

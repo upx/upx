@@ -25,6 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+#pragma once
 #ifndef __UPX_UI_H
 #define __UPX_UI_H 1
 
