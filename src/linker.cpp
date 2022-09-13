@@ -40,6 +40,7 @@ static bool update_capacity(unsigned size, unsigned *capacity) {
     return true;
 }
 
+static void internal_error(const char *format, ...) attribute_format(1, 2);
 static void internal_error(const char *format, ...) {
     static char buf[1024];
     va_list ap;
@@ -892,7 +893,7 @@ void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location, upx_uint
     if (strcmp(type, "8") == 0) {
         int displ = (signed char) *location + (int) value;
         if (range_check && (displ < -128 || displ > 127))
-            internal_error("target out of range (%d,%d,%d) in reloc %s:%x\n", displ, *location,
+            internal_error("target out of range (%d,%d,%llu) in reloc %s:%x\n", displ, *location,
                            value, rel->section->name, rel->offset);
         *location += value;
     } else if (strcmp(type, "16") == 0)
