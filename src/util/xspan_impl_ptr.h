@@ -64,17 +64,21 @@ public:
 #endif
 
     inline ~CSelf() {}
-    inline CSelf() {}
+    inline CSelf() { assertInvariants(); }
 
     // constructors from pointers
-    CSelf(pointer p) : ptr(makePtr(p)) {}
+    CSelf(pointer p) : ptr(makePtr(p)) { assertInvariants(); }
     template <class U>
-    CSelf(U *p, SPAN_REQUIRES_CONVERTIBLE_A) : ptr(makePtr(p)) {}
+    CSelf(U *p, SPAN_REQUIRES_CONVERTIBLE_A) : ptr(makePtr(p)) {
+        assertInvariants();
+    }
 
     // constructors
-    CSelf(const Self &other) : ptr(other.ptr) {}
+    CSelf(const Self &other) : ptr(other.ptr) { assertInvariants(); }
     template <class U>
-    CSelf(const CSelf<U> &other, SPAN_REQUIRES_CONVERTIBLE_A) : ptr(other.ptr) {}
+    CSelf(const CSelf<U> &other, SPAN_REQUIRES_CONVERTIBLE_A) : ptr(other.ptr) {
+        assertInvariants();
+    }
 
     Self &assign(const Self &other) {
         assertInvariants();
@@ -87,10 +91,11 @@ public:
     // assignment
     Self &operator=(const Self &other) { return assign(other); }
 
+    // FIXME: this is not called !!
     template <class U>
     SPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(U *other) {
-        assert(0);
+        // assert(0);
         return assign(Self(other));
     }
 
@@ -98,7 +103,7 @@ public:
     template <class U>
     SPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(const CSelf<U> &other) {
-        assert(0);
+        // assert(0);
         return assign(Self(other));
     }
 
@@ -187,6 +192,7 @@ public: // raw access
 #undef CSelf
 };
 
+// raw_bytes overload
 template <class T>
 inline T *raw_bytes(const Ptr<T> &a, size_t size_in_bytes) {
     return a.raw_bytes(size_in_bytes);

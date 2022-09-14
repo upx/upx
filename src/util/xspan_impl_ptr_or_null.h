@@ -48,22 +48,30 @@ private:
 #include "xspan_impl_common.h"
 public:
     // constructors from pointers
-    CSelf(pointer first) : ptr(first), base(nullptr), size_in_bytes(0) {}
+    CSelf(pointer first) : ptr(first), base(nullptr), size_in_bytes(0) { assertInvariants(); }
 
     // constructors
     CSelf(const Self &other)
-        : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {}
+        : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {
+        assertInvariants();
+    }
     template <class U>
     CSelf(const CSelf<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
-        : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {}
+        : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {
+        assertInvariants();
+    }
 
     // constructors from Span friends
     template <class U>
     CSelf(const PtrOrSpan<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
-        : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {}
+        : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {
+        assertInvariants();
+    }
     template <class U>
     CSelf(const Span<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
-        : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {}
+        : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {
+        assertInvariants();
+    }
 
     // assignment from Span friends
     template <class U>
@@ -82,6 +90,7 @@ public:
 #undef CSelf
 };
 
+// raw_bytes overload
 template <class T>
 inline T *raw_bytes(const PtrOrSpanOrNull<T> &a, size_t size_in_bytes) {
     return a.raw_bytes(size_in_bytes);

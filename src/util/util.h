@@ -40,7 +40,7 @@ inline bool mem_size_valid_bytes(upx_uint64_t bytes) noexcept { return bytes <= 
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
                     upx_uint64_t extra2 = 0) noexcept;
 
-// new with asserted size; will throw on failure
+// "new" with asserted size; will throw on failure
 #define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
 
 // will throw on invalid size
@@ -75,8 +75,8 @@ inline void mem_clear(void *p, size_t n) {
     memset(p, 0, n);
 }
 
-// ptrdiff_t with nullptr check and asserted size; will throw on failure
-// WARNING: returns size_in_bytes, not number of elements!
+// ptrdiff_t with nullptr checks and asserted size; will throw on failure
+// NOTE: returns size_in_bytes, not number of elements!
 int ptr_diff_bytes(const void *a, const void *b);
 unsigned ptr_udiff_bytes(const void *a, const void *b); // asserts a >= b
 
@@ -96,6 +96,16 @@ ptr_udiff(const T *a, const U *b) {
 // misc. support functions
 **************************************************************************/
 
+int find(const void *b, int blen, const void *what, int wlen);
+int find_be16(const void *b, int blen, unsigned what);
+int find_be32(const void *b, int blen, unsigned what);
+int find_be64(const void *b, int blen, upx_uint64_t what);
+int find_le16(const void *b, int blen, unsigned what);
+int find_le32(const void *b, int blen, unsigned what);
+int find_le64(const void *b, int blen, upx_uint64_t what);
+
+int mem_replace(void *b, int blen, const void *what, int wlen, const void *r);
+
 char *fn_basename(const char *name);
 int fn_strcmp(const char *n1, const char *n2);
 char *fn_strlwr(char *n);
@@ -109,16 +119,6 @@ bool makebakname(char *ofilename, size_t size, const char *ifilename, bool force
 unsigned get_ratio(upx_uint64_t u_len, upx_uint64_t c_len);
 bool set_method_name(char *buf, size_t size, int method, int level);
 void center_string(char *buf, size_t size, const char *s);
-
-int find(const void *b, int blen, const void *what, int wlen);
-int find_be16(const void *b, int blen, unsigned what);
-int find_be32(const void *b, int blen, unsigned what);
-int find_be64(const void *b, int blen, upx_uint64_t what);
-int find_le16(const void *b, int blen, unsigned what);
-int find_le32(const void *b, int blen, unsigned what);
-int find_le64(const void *b, int blen, upx_uint64_t what);
-
-int mem_replace(void *b, int blen, const void *what, int wlen, const void *r);
 
 #endif /* already included */
 

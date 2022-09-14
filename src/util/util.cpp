@@ -249,20 +249,20 @@ int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2) {
 }
 
 /*************************************************************************
-// find util
+// find and mem_replace util
 **************************************************************************/
 
-int find(const void *b, int blen, const void *what, int wlen) {
-    if (b == nullptr || blen <= 0 || what == nullptr || wlen <= 0)
+int find(const void *buf, int blen, const void *what, int wlen) {
+    // nullptr is explicitly allowed here
+    if (buf == nullptr || blen <= 0 || what == nullptr || wlen <= 0)
         return -1;
 
-    int i;
-    const unsigned char *base = (const unsigned char *) b;
-    unsigned char firstc = *(const unsigned char *) what;
+    const unsigned char *b = (const unsigned char *) buf;
+    unsigned char first_byte = *(const unsigned char *) what;
 
     blen -= wlen;
-    for (i = 0; i <= blen; i++, base++)
-        if (*base == firstc && memcmp(base, what, wlen) == 0)
+    for (int i = 0; i <= blen; i++, b++)
+        if (*b == first_byte && memcmp(b, what, wlen) == 0)
             return i;
 
     return -1;
@@ -305,6 +305,7 @@ int find_le64(const void *b, int blen, upx_uint64_t what) {
 }
 
 TEST_CASE("find") {
+    CHECK(find(nullptr, -1, nullptr, -1) == -1);
     static const unsigned char b[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
     CHECK(find(b, 16, b, 0) == -1);
     for (int i = 0; i < 16; i++) {
@@ -320,10 +321,12 @@ TEST_CASE("find") {
     CHECK(find_le32(b, 16, 0x07060504) == 4);
     CHECK(find_be64(b, 16, 0x08090a0b0c0d0e0fULL) == 8);
     CHECK(find_le64(b, 16, 0x0f0e0d0c0b0a0908ULL) == 8);
+    CHECK(find_be64(b, 15, 0x08090a0b0c0d0e0fULL) == -1);
+    CHECK(find_le64(b, 15, 0x0f0e0d0c0b0a0908ULL) == -1);
 }
 
-int mem_replace(void *bb, int blen, const void *what, int wlen, const void *r) {
-    unsigned char *b = (unsigned char *) bb;
+int mem_replace(void *buf, int blen, const void *what, int wlen, const void *replacement) {
+    unsigned char *b = (unsigned char *) buf;
     int boff = 0;
     int n = 0;
 
@@ -332,7 +335,7 @@ int mem_replace(void *bb, int blen, const void *what, int wlen, const void *r) {
         if (off < 0)
             break;
         boff += off;
-        memcpy(b + boff, r, wlen);
+        memcpy(b + boff, replacement, wlen);
         boff += wlen;
         n++;
     }

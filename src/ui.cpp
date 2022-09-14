@@ -94,7 +94,7 @@ unsigned UiPacker::update_fu_len = 0;
 static const char header_line1[] = "        File size         Ratio      Format      Name\n";
 static char header_line2[] = "   --------------------   ------   -----------   -----------\n";
 
-static char progress_filler[] = ".*[]";
+static char progress_filler[4 + 1] = ".*[]";
 
 static void init_global_constants(void) {
 #if 0 && (ACC_OS_DOS16 || ACC_OS_DOS32)
@@ -399,7 +399,7 @@ void UiPacker::doCallback(unsigned isize, unsigned osize) {
     char *m = &s->msg_buf[s->bar_pos];
     *m++ = progress_filler[2];
     for (i = 0; i < s->bar_len; i++)
-        *m++ = progress_filler[i <= pos];
+        *m++ = progress_filler[i <= pos ? 1 : 0];
     *m++ = progress_filler[3];
 
     // compute current compression ratio

@@ -107,9 +107,9 @@ static unsigned width(unsigned x) {
 static inline unsigned umax(unsigned a, unsigned b) { return (a >= b) ? a : b; }
 
 unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned extra) {
-    size_t const z = uncompressed_size;     // fewer keystrokes and display columns
-    size_t const w = umax(8, width(z - 1)); // ignore tiny offsets
-    size_t bytes = mem_size(1, z);
+    unsigned const z = uncompressed_size;                 // fewer keystrokes and display columns
+    unsigned const w = umax(8, width(z - 1));             // ignore tiny offsets
+    unsigned bytes = ACC_ICONV(unsigned, mem_size(1, z)); // check
     // Worst matching: All match at max_offset, which implies 3==min_match
     // All literal: 1 bit overhead per literal byte
     bytes = umax(bytes, bytes + z / 8);
@@ -119,11 +119,11 @@ unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned e
     bytes = umax(bytes, (z / 3 * (8 + 3 * (w - 7) / 2)) / 8);
     // extra + 256 safety for rounding
     bytes = mem_size(1, bytes, extra, 256);
-    return ACC_ICONV(unsigned, bytes);
+    return bytes;
 }
 
 unsigned MemBuffer::getSizeForUncompression(unsigned uncompressed_size, unsigned extra) {
-    size_t bytes = mem_size(1, uncompressed_size, extra);
+    size_t bytes = mem_size(1, uncompressed_size, extra); // check
     return ACC_ICONV(unsigned, bytes);
 }
 
@@ -152,9 +152,9 @@ void MemBuffer::fill(unsigned off, unsigned len, int value) {
 //
 **************************************************************************/
 
-#define PTR(p) ((unsigned) ((upx_uintptr_t)(p) &0xffffffff))
-#define MAGIC1(p) (PTR(p) ^ 0xfefdbeeb)
-#define MAGIC2(p) (PTR(p) ^ 0xfefdbeeb ^ 0x80024001)
+#define PTR_BITS(p) ((unsigned) ((upx_uintptr_t)(p) &0xffffffff))
+#define MAGIC1(p) ((PTR_BITS(p) ^ 0xfefdbeeb) | 1)
+#define MAGIC2(p) ((PTR_BITS(p) ^ 0xfefdbeeb ^ 0x80024011) | 1)
 
 unsigned MemBuffer::global_alloc_counter = 0;
 
@@ -162,11 +162,11 @@ void MemBuffer::checkState() const {
     if (!b)
         throwInternalError("block not allocated");
     if (use_simple_mcheck()) {
-        if (get_be32(b - 4) != MAGIC1(b))
+        if (get_ne32(b - 4) != MAGIC1(b))
             throwInternalError("memory clobbered before allocated block 1");
-        if (get_be32(b - 8) != b_size_in_bytes)
+        if (get_ne32(b - 8) != b_size_in_bytes)
             throwInternalError("memory clobbered before allocated block 2");
-        if (get_be32(b + b_size_in_bytes) != MAGIC2(b))
+        if (get_ne32(b + b_size_in_bytes) != MAGIC2(b))
             throwInternalError("memory clobbered past end of allocated block");
     }
 }
@@ -181,18 +181,17 @@ void MemBuffer::alloc(upx_uint64_t size) {
     unsigned char *p = (unsigned char *) malloc(bytes);
     if (!p)
         throwOutOfMemoryException();
+    b = p;
     b_size_in_bytes = ACC_ICONV(unsigned, size);
     if (use_simple_mcheck()) {
         b = p + 16;
         // store magic constants to detect buffer overruns
-        set_be32(b - 8, b_size_in_bytes);
-        set_be32(b - 4, MAGIC1(b));
-        set_be32(b + b_size_in_bytes, MAGIC2(b));
-        set_be32(b + b_size_in_bytes + 4, global_alloc_counter++);
-    } else
-        b = p;
-
-#if defined(__SANITIZE_ADDRESS__) || DEBUG
+        set_ne32(b - 8, b_size_in_bytes);
+        set_ne32(b - 4, MAGIC1(b));
+        set_ne32(b + b_size_in_bytes, MAGIC2(b));
+        set_ne32(b + b_size_in_bytes + 4, global_alloc_counter++);
+    }
+#if !defined(__SANITIZE_ADDRESS__) && 0
     fill(0, b_size_in_bytes, (rand() & 0xff) | 1); // debug
     (void) VALGRIND_MAKE_MEM_UNDEFINED(b, b_size_in_bytes);
 #endif
@@ -203,10 +202,10 @@ void MemBuffer::dealloc() {
         checkState();
         if (use_simple_mcheck()) {
             // clear magic constants
-            set_be32(b - 8, 0);
-            set_be32(b - 4, 0);
-            set_be32(b + b_size_in_bytes, 0);
-            set_be32(b + b_size_in_bytes + 4, 0);
+            set_ne32(b - 8, 0);
+            set_ne32(b - 4, 0);
+            set_ne32(b + b_size_in_bytes, 0);
+            set_ne32(b + b_size_in_bytes + 4, 0);
             //
             ::free(b - 16);
         } else
@@ -215,6 +214,31 @@ void MemBuffer::dealloc() {
         b_size_in_bytes = 0;
     } else {
         assert(b_size_in_bytes == 0);
+    }
+}
+
+/*************************************************************************
+//
+**************************************************************************/
+
+TEST_CASE("MemBuffer") {
+    MemBuffer mb;
+    CHECK_THROWS(mb.checkState());
+    CHECK_THROWS(mb.alloc(0x30000000 + 1));
+    CHECK(raw_bytes(mb, 0) == nullptr);
+    CHECK_THROWS(raw_bytes(mb, 1));
+    mb.alloc(64);
+    mb.checkState();
+    CHECK(raw_bytes(mb, 64) != nullptr);
+    CHECK(raw_bytes(mb, 64) == mb.getVoidPtr());
+    CHECK_THROWS(raw_bytes(mb, 65));
+    if (use_simple_mcheck()) {
+        upx_byte *b = raw_bytes(mb, 0);
+        unsigned magic1 = get_ne32(b - 4);
+        set_ne32(b - 4, magic1 ^ 1);
+        CHECK_THROWS(mb.checkState());
+        set_ne32(b - 4, magic1);
+        mb.checkState();
     }
 }
 

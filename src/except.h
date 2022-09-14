@@ -193,7 +193,7 @@ public:
 
 #undef NORET
 #if 1 && defined(__GNUC__)
-#define NORET __attribute__((__noreturn__)) __acc_noinline
+#define NORET __acc_noinline __attribute__((__noreturn__))
 #else
 #define NORET __acc_noinline
 #endif

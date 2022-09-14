@@ -30,7 +30,7 @@
 
 SPAN_NAMESPACE_BEGIN
 
-unsigned long long span_check_stats_check_range;
+unsigned long long span_check_stats_check_range = 0;
 
 __acc_noinline void span_fail_nullptr() {
     throwCantUnpack("span unexpected NULL pointer; take care!");

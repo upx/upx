@@ -48,20 +48,24 @@ public:
     // NOTE: for fully bound-checked pointer use SPAN_S from xspan.h
     operator pointer() const { return b; }
 
-    template <class U, class V = typename std::enable_if<std::is_integral<U>::value, U>::type>
-    pointer operator+(V n) const {
-        size_t bytes = mem_size(sizeof(T), n); // check
-        return raw_bytes(bytes) + n;
+    template <class U,
+              class /*Dummy*/ = typename std::enable_if<std::is_integral<U>::value, U>::type>
+    pointer operator+(U n) const {
+        size_t bytes = mem_size(sizeof(T), n); // check mem_size
+        return raw_bytes(bytes) + n;           // and check bytes
     }
 
     // NOT allowed; use raw_bytes() instead
-    template <class U, class V = typename std::enable_if<std::is_integral<U>::value, U>::type>
-    pointer operator-(V n) const = delete;
+    template <class U,
+              class /*Dummy*/ = typename std::enable_if<std::is_integral<U>::value, U>::type>
+    pointer operator-(U n) const = delete;
 
     pointer raw_bytes(size_t bytes) const {
         if (bytes > 0) {
-            assert(b != nullptr);
-            assert(bytes <= b_size_in_bytes);
+            if __acc_very_unlikely (b == nullptr)
+                throwInternalError("MemBuffer raw_bytes unexpected NULL ptr");
+            if __acc_very_unlikely (bytes > b_size_in_bytes)
+                throwInternalError("MemBuffer raw_bytes invalid size");
         }
         return b;
     }

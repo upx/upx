@@ -141,10 +141,6 @@ struct TestBELE {
         COMPILE_TIME_ASSERT(sizeof(test2_t) == 1 + 3 * sizeof(T))
         COMPILE_TIME_ASSERT_ALIGNED1(test2_t)
         COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21 * sizeof(T))
-#if defined(__acc_alignof)
-        COMPILE_TIME_ASSERT(__acc_alignof(t1) == 1)
-        COMPILE_TIME_ASSERT(__acc_alignof(t2) == 1)
-#endif
 #if 1
         T allbits;
         allbits = 0;

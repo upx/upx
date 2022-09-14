@@ -75,7 +75,7 @@ options_t *opt = &global_options;
 **************************************************************************/
 
 template <size_t N>
-static void test_options(const char *(&a)[N]) {
+static inline void test_options(const char *(&a)[N]) {
     (void) main_get_options((int) (N - 1), ACC_UNCONST_CAST(char **, a));
 }
 
@@ -85,42 +85,59 @@ TEST_CASE("getopt") {
     opt = &local_options;
     opt->reset();
     opt->debug.getopt_throw_instead_of_exit = true;
-    const char a0[] = "<argv0>";
+    static const char a0[] = "<argv0>";
 
-    SUBCASE("issue 587a") {
+    SUBCASE("issue 587") {
         const char *a[] = {a0, "--brute", "--lzma", nullptr};
-        CHECK(!opt->all_methods);
         test_options(a);
         CHECK(opt->all_methods);
         CHECK(opt->all_methods_use_lzma == 1);
     }
-    SUBCASE("issue 587b") {
+    SUBCASE("issue 587") {
         const char *a[] = {a0, "--lzma", "--brute", nullptr};
-        CHECK(!opt->all_methods);
         test_options(a);
         CHECK(opt->all_methods);
         CHECK(opt->all_methods_use_lzma == 1);
     }
-    SUBCASE("issue 587c") {
+    SUBCASE("issue 587") {
         const char *a[] = {a0, "--brute", "--no-lzma", nullptr};
-        CHECK(!opt->all_methods);
         test_options(a);
         CHECK(opt->all_methods);
         CHECK(opt->all_methods_use_lzma == -1);
     }
-    SUBCASE("issue 587d") {
+    SUBCASE("issue 587") {
         const char *a[] = {a0, "--no-lzma", "--brute", nullptr};
-        CHECK(!opt->all_methods);
         test_options(a);
         CHECK(opt->all_methods);
         CHECK(opt->all_methods_use_lzma == -1);
     }
-    SUBCASE("issue 587e") {
-        const char *a[] = {a0, "--no-lzma", "--all-methods", nullptr};
+    SUBCASE("issue 587") {
+        const char *a[] = {a0, "--no-lzma", "--lzma", nullptr};
+        test_options(a);
         CHECK(!opt->all_methods);
+        CHECK(opt->all_methods_use_lzma == 1);
+        CHECK(opt->method == M_LZMA);
+    }
+    SUBCASE("issue 587") {
+        const char *a[] = {a0, "--no-lzma", "--lzma", "--brute", nullptr};
+        test_options(a);
+        CHECK(opt->all_methods);
+        CHECK(opt->all_methods_use_lzma == 1);
+        CHECK(opt->method == -1);
+    }
+    SUBCASE("issue 587") {
+        const char *a[] = {a0, "--lzma", "--no-lzma", nullptr};
+        test_options(a);
+        CHECK(!opt->all_methods);
+        CHECK(opt->all_methods_use_lzma == -1);
+        CHECK(opt->method == -1);
+    }
+    SUBCASE("issue 587") {
+        const char *a[] = {a0, "--lzma", "--no-lzma", "--brute", nullptr};
         test_options(a);
         CHECK(opt->all_methods);
         CHECK(opt->all_methods_use_lzma == -1);
+        CHECK(opt->method == -1);
     }
 
     opt = saved_opt;

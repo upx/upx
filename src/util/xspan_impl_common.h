@@ -52,12 +52,20 @@ pointer ptr; // current view into (base, base+size_in_bytes) iff base != nullptr
 pointer base;
 size_type size_in_bytes;
 
-private:
-// disable taking the address => force passing by reference
-// [I'm not too sure about this design decision, but we can always allow it if needed]
-Self *operator&() const SPAN_DELETED_FUNCTION;
+// debug - internal sanity check; also serves as pseudo-documentation
+#if DEBUG || 1
+__acc_noinline void assertInvariants() const {
+    if __acc_cte (configRequirePtr)
+        assert(ptr != nullptr);
+    if __acc_cte (configRequireBase)
+        assert(base != nullptr);
+    if __acc_cte ((configRequirePtr || ptr != nullptr) && (configRequireBase || base != nullptr))
+        span_check_range(ptr, base, size_in_bytes);
+}
+#else
+__acc_forceinline void assertInvariants() const {}
+#endif
 
-private:
 static __acc_forceinline pointer makeNotNull(pointer p) {
     if __acc_very_unlikely (p == nullptr)
         span_fail_nullptr();
@@ -85,19 +93,6 @@ __acc_forceinline pointer ensureBase() const {
         span_fail_nullptr();
     return ptr;
 }
-// debug - extra internal sanity checks
-#if DEBUG || 1
-__acc_noinline void assertInvariants() const {
-    if __acc_cte (configRequirePtr)
-        assert(ptr != nullptr);
-    if __acc_cte (configRequireBase)
-        assert(base != nullptr);
-    if __acc_cte ((configRequirePtr || ptr != nullptr) && (configRequireBase || base != nullptr))
-        span_check_range(ptr, base, size_in_bytes);
-}
-#else
-__acc_forceinline void assertInvariants() const {}
-#endif
 
 public:
 inline ~CSelf() {}
@@ -396,6 +391,10 @@ pointer check_add(pointer p, ptrdiff_t n) const {
     assertInvariants();
     return p;
 }
+
+// disable taking the address => force passing by reference
+// [I'm not too sure about this design decision, but we can always allow it if needed]
+Self *operator&() const SPAN_DELETED_FUNCTION;
 
 public: // raw access
 pointer raw_ptr() const { return ptr; }

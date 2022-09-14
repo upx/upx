@@ -63,7 +63,7 @@
 #include "miniacc.h"
 #if !(ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_MSC)
    // other compilers may work, but we're NOT interested into supporting them
-#  error "only clang and gcc are officially supported"
+#  error "only clang, gcc and msvc are officially supported"
 #endif
 // UPX sanity checks for a sane compiler
 #if !defined(UINT_MAX) || (UINT_MAX != 0xffffffffL)
@@ -317,28 +317,24 @@ inline void NO_fprintf(FILE *, const char *, ...) {}
 #  define upx_memcpy_inline     memcpy
 #endif
 
-
-#define __packed_struct(s)      struct alignas(1) s {
-#define __packed_struct_end()   };
-
 #define UNUSED(var)             ACC_UNUSED(var)
 #define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
 
-#define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
+// TODO cleanup: we now require C++14, so remove all __packed_struct usage
+#define __packed_struct(s)      struct alignas(1) s {
+#define __packed_struct_end()   };
+
+#define COMPILE_TIME_ASSERT_ALIGNOF_USING_SIZEOF__(a,b) { \
      typedef a acc_tmp_a_t; typedef b acc_tmp_b_t; \
-     __packed_struct(acc_tmp_t) acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z; __packed_struct_end() \
+     struct alignas(1) acc_tmp_t { acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z; }; \
      COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 2*sizeof(b)+sizeof(a)) \
      COMPILE_TIME_ASSERT(sizeof(((acc_tmp_t*)nullptr)->x)+sizeof(((acc_tmp_t*)nullptr)->y)+sizeof(((acc_tmp_t*)nullptr)->z) == 2*sizeof(b)+sizeof(a)) \
    }
-#if defined(__acc_alignof)
-#  define __COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
-     __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) \
-     COMPILE_TIME_ASSERT(__acc_alignof(a) == sizeof(b))
-#else
-#  define __COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
-     __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b)
-#endif
-#define COMPILE_TIME_ASSERT_ALIGNED1(a)     __COMPILE_TIME_ASSERT_ALIGNOF(a,char)
+#define COMPILE_TIME_ASSERT_ALIGNOF__(a,b) \
+   COMPILE_TIME_ASSERT_ALIGNOF_USING_SIZEOF__(a,b) \
+   COMPILE_TIME_ASSERT(__acc_alignof(a) == sizeof(b)) \
+   COMPILE_TIME_ASSERT(alignof(a) == sizeof(b))
+#define COMPILE_TIME_ASSERT_ALIGNED1(a)     COMPILE_TIME_ASSERT_ALIGNOF__(a,char)
 
 #define TABLESIZE(table)    ((sizeof(table)/sizeof((table)[0])))
 
@@ -395,23 +391,6 @@ constexpr bool string_le(const char *a, const char *b) {
 constexpr bool string_ge(const char *a, const char *b) {
     return !string_lt(a, b);
 }
-}
-
-/*************************************************************************
-// raw_bytes() - get underlying memory from checked buffers/pointers.
-// This is overloaded by various utility classes like BoundedPtr,
-// MemBuffer and Span.
-//
-// Note that the pointer type is retained, the "_bytes" hints size_in_bytes
-**************************************************************************/
-
-// default: for any regular pointer, raw_bytes() is just the pointer itself
-template <class T>
-inline T *raw_bytes(T *ptr, size_t size_in_bytes) {
-    if (size_in_bytes > 0) {
-        assert(ptr != nullptr);
-    }
-    return ptr;
 }
 
 /*************************************************************************
@@ -815,13 +794,30 @@ int upx_test_overlap       ( const upx_bytep buf,
                                    int method,
                              const upx_compress_result_t *cresult );
 
+/*************************************************************************
+// raw_bytes() - get underlying memory from checked buffers/pointers.
+// This is overloaded by various utility classes like BoundedPtr,
+// MemBuffer and Span.
+//
+// Note that the pointer type is retained, the "_bytes" hints size_in_bytes
+**************************************************************************/
+
+// default: for any regular pointer, raw_bytes() is just the pointer itself
+template <class T>
+inline T *raw_bytes(T *ptr, size_t size_in_bytes) {
+    if (size_in_bytes > 0) {
+        if __acc_very_unlikely (ptr == nullptr)
+            throwInternalError("raw_bytes unexpected NULL ptr");
+    }
+    return ptr;
+}
+
 
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
 #    error "something pulled in <windows.h>"
 #  endif
 #endif
-
 
 #endif /* already included */
 

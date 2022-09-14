@@ -31,8 +31,8 @@
 // UPX version of string functions, with assertions and sane limits
 **************************************************************************/
 
-#undef vsnprintf
 int upx_safe_vsnprintf(char *str, upx_rsize_t max_size, const char *format, va_list ap) {
+#undef vsnprintf
     size_t size;
 
     // preconditions
@@ -56,6 +56,7 @@ int upx_safe_vsnprintf(char *str, upx_rsize_t max_size, const char *format, va_l
     }
 
     return ACC_ICONV(int, size - 1); // snprintf() returns length, not size
+#define vsnprintf upx_safe_vsnprintf
 }
 
 int upx_safe_snprintf(char *str, upx_rsize_t max_size, const char *format, ...) {
@@ -113,12 +114,13 @@ char *upx_safe_xprintf(const char *format, ...) {
     return ptr;
 }
 
-#undef strlen
 upx_rsize_t upx_safe_strlen(const char *s) {
+#undef strlen
     assert(s != nullptr);
     size_t len = strlen(s);
     assert(len < UPX_RSIZE_MAX_STR);
     return len;
+#define strlen upx_safe_strlen
 }
 
 /* vim:set ts=4 sw=4 et: */
