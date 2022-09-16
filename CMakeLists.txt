@@ -131,7 +131,8 @@ if(MSVC)
     target_compile_options(${t} PRIVATE -DHAVE_STDARG_H -DHAVE_VSNPRINTF -J -W3 ${warn_WX})
 else()
     target_compile_options(${t} PRIVATE -DHAVE_STDARG_H -DHAVE_UNISTD_H -DHAVE_VSNPRINTF)
-    target_compile_options(${t} PRIVATE -Wall -Wextra -Wvla ${warn_Werror})
+    # clang-15: -Wno-strict-prototypes is needed to silence the new -Wdeprecated-non-prototype warning
+    target_compile_options(${t} PRIVATE -Wall -Wextra -Wvla -Wno-strict-prototypes ${warn_Werror})
 endif()
 
 set(t upx)

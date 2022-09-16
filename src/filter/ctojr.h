@@ -254,6 +254,7 @@ static int F(Filter *f)
         calls,noncalls,noncalls2,size,cto8);
     printf("CALL/JMP/JCC  %d  %d  %d\n",wtally[0],wtally[1],wtally[2]);
 #endif
+    UNUSED(noncalls2);
     return 0;
 }
 
