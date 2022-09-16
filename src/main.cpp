@@ -99,14 +99,14 @@ static bool set_eec(int ec, int *eec) {
 
 bool main_set_exit_code(int ec) { return set_eec(ec, &exit_code); }
 
-static void e_exit(int ec) {
+__acc_static_noinline void e_exit(int ec) {
     if (opt->debug.getopt_throw_instead_of_exit)
         throw ec;
     (void) main_set_exit_code(ec);
     do_exit();
 }
 
-static void e_usage(void) {
+__acc_static_noinline void e_usage(void) {
     if (opt->debug.getopt_throw_instead_of_exit)
         throw EXIT_USAGE;
     show_usage();
@@ -478,7 +478,7 @@ static int do_option(int optc, const char *arg) {
     case 902: // --ultra-brute
         opt->ultra_brute = true;
         /* fallthrough */
-    case 901: // --brute
+    case 901: // --brute, much like --all-methods --all-filters --best
         opt->all_methods = true;
         if (opt->all_methods_use_lzma != -1)
             opt->all_methods_use_lzma = 1;
@@ -552,11 +552,11 @@ static int do_option(int optc, const char *arg) {
         opt->all_filters = false;
         opt->no_filter = true;
         break;
-    case 523: // --all-filters
+    case 523: // --all-filters, also see --brute above
         opt->all_filters = true;
         opt->filter = -1;
         break;
-    case 524: // --all-methods
+    case 524: // --all-methods, also see --brute above
         opt->all_methods = true;
         if (opt->all_methods_use_lzma != -1)
             opt->all_methods_use_lzma = 1;

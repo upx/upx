@@ -23,22 +23,11 @@ ratio and offers I<*very*> fast decompression. Your executables suffer
 no memory overhead or other drawbacks for most of the formats supported,
 because of in-place decompression.
 
-While you may use B<UPX> freely for both non-commercial and commercial
-executables (for details see the file LICENSE), we would highly
-appreciate if you credit B<UPX> and ourselves in the documentation,
-possibly including a reference to the B<UPX> home page. Thanks.
-
-[ Using B<UPX> in non-OpenSource applications without proper credits
-is considered not politically correct ;-) ]
-
 
 
 =head1 DISCLAIMER
 
 B<UPX> comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
-
-This is the first production quality release, and we plan that future 1.xx
-releases will be backward compatible with this version.
 
 Please report all problems or suggestions to the authors. Thanks.
 
@@ -59,50 +48,34 @@ Use B<UPX> on trusted files only!
 
 B<UPX> is a versatile executable packer with the following features:
 
-  - excellent compression ratio: compresses better than zip/gzip,
+  - secure: as UPX is documented Open Source since many years any relevant
+      Security/Antivirus software is able to peek inside UPX compressed
+      apps to verify them
+
+  - excellent compression ratio: typically compresses better than Zip,
       use UPX to decrease the size of your distribution !
 
-  - very fast decompression: about 10 MiB/sec on an ancient Pentium 133,
-      about 200 MiB/sec on an Athlon XP 2000+.
+  - very fast decompression: more than 1000 MB/sec on any reasonably modern
+      machine
 
   - no memory overhead for your compressed executables for most of the
-      supported formats
+      supported formats because of in-place decompression
 
-  - safe: you can list, test and unpack your executables
+  - safe: you can list, test and unpack your executables.
       Also, a checksum of both the compressed and uncompressed file is
       maintained internally.
 
-  - universal: UPX can pack a number of executable formats:
-      * atari/tos
-      * bvmlinuz/386    [bootable Linux kernel]
-      * djgpp2/coff
-      * dos/com
-      * dos/exe
-      * dos/sys
-      * linux/386
-      * linux/elf386
-      * linux/sh386
-      * ps1/exe
-      * rtm32/pe
-      * tmt/adam
-      * vmlinuz/386     [bootable Linux kernel]
-      * vmlinux/386
-      * watcom/le (supporting DOS4G, PMODE/W, DOS32a and CauseWay)
-      * win32/pe (exe and dll)
-      * win64/pe (exe and dll)
-      * arm/pe (exe and dll)
-      * linux/elfamd64
-      * linux/elfppc32
-      * mach/elfppc32
+  - universal: UPX can pack a number of executable formats, including
+      Windows programs and DLLs, macOS apps and Linux executables
 
   - portable: UPX is written in portable endian-neutral C++
 
   - extendable: because of the class layout it's very easy to support
       new executable formats or add new compression algorithms
 
-  - free: UPX can be distributed and used freely. And from version 0.99
-      the full source code of UPX is released under the GNU General Public
-      License (GPL) !
+  - free: UPX is distributed with full source code under the GNU General
+      Public License v2+, with special exceptions granting the free usage
+      for commercial programs
 
 You probably understand now why we call B<UPX> the "I<ultimate>"
 executable packer.
@@ -157,7 +130,11 @@ compress and then decompress your program a first time - any further
 compress-decompress steps should then yield byte-identical results
 as compared to the first decompressed version.]
 
-[ ...to be written... - type `B<upx --help>' for now ]
+B<-k>: keep backup files
+
+B<-o file>: write output to file
+
+[ ...more docs need to be written... - type `B<upx --help>' for now ]
 
 
 
@@ -197,7 +174,17 @@ Quick info for achieving the best compression ratio:
 
 =item *
 
-Try B<upx --brute myfile.exe> or even B<upx --ultra-brute myfile.exe>.
+Try B<upx --brute --no-lzma myfile.exe> or even
+B<upx --ultra-brute --no-lzma myfile.exe>.
+
+=item *
+
+The option B<--lzma> enables LZMA compression, which compresses better but
+is *significantly slower* at decompression. You probably do not want
+to use it for large files.
+
+(Note that B<--lzma> is automatically enabled by B<--all-methods> and
+B<--brute>, use B<--no-lzma> to override.)
 
 =item *
 
@@ -233,7 +220,7 @@ actually accesses this overlayed data.
 
 
 
-=head1 ENVIRONMENT
+=head1 ENVIRONMENT VARIABLE
 
 The environment variable B<UPX> can hold a set of default
 options for B<UPX>. These options are interpreted first and
@@ -263,7 +250,7 @@ This is the executable format used by the Atari ST/TT, a Motorola 68000
 based personal computer which was popular in the late '80s. Support
 of this format is only because of nostalgic feelings of one of
 the authors and serves no practical purpose :-).
-See http://www.freemint.de for more info.
+See https://freemint.github.io for more info.
 
 Packed programs will be byte-identical to the original after uncompression.
 All debug information will be stripped, though.
@@ -686,7 +673,7 @@ Extra options available for this executable format:
 =head2 NOTES FOR PS1/EXE
 
 This is the executable format used by the Sony PlayStation (PSone),
-a Mips R3000 based gaming console which is popular since the late '90s.
+a MIPS R3000 based gaming console which is popular since the late '90s.
 Support of this format is very similar to the Atari one, because of
 nostalgic feelings of one of the authors.
 

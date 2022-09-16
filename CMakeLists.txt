@@ -40,6 +40,9 @@ if(GIT_FOUND AND NOT UPX_CONFIG_DISABLE_GITREV)
         set(GITREV_SHORT "")
     endif()
 endif()
+if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git") # extra check
+    set(GITREV_SHORT "")
+endif()
 if(GITREV_SHORT)
     message(STATUS "UPX_VERSION_GITREV = \"${GITREV_SHORT}${GITREV_PLUS}\"")
 else()
@@ -62,12 +65,6 @@ if(is_multi_config)
 elseif(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
-
-# installation prefix and directories
-if(NOT CMAKE_INSTALL_PREFIX)
-    message(FATAL_ERROR "ERROR: CMAKE_INSTALL_PREFIX is not defined.")
-endif()
-include(GNUInstallDirs)
 
 #***********************************************************************
 # targets and compilation flags
@@ -163,15 +160,29 @@ endif()
 # "make test"
 #***********************************************************************
 
-# TODO - doctest
+# TODO: could add some explicit test programs; but then, the integrated
+# "doctest" is quite convenient and already covers a number of basic
+# checks - and more complex cases better should be handled by an
+# external test suite.
 ##include(CTest)
 
 #***********************************************************************
 # "make install"
 #***********************************************************************
 
+# installation prefix and directories
+if(NOT CMAKE_INSTALL_PREFIX)
+    message(FATAL_ERROR "ERROR: CMAKE_INSTALL_PREFIX is not defined.")
+endif()
+include(GNUInstallDirs)
+
 if(DEFINED CMAKE_INSTALL_FULL_BINDIR)
-# TODO ???
+    install(TARGETS upx DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
+    install(FILES
+        COPYING LICENSE NEWS README doc/upx-doc.html doc/upx-doc.txt
+        DESTINATION "${CMAKE_INSTALL_FULL_DOCDIR}"
+    )
+    install(FILES doc/upx.1 DESTINATION "${CMAKE_INSTALL_FULL_MANDIR}/man1")
 endif()
 
 #***********************************************************************

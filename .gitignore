@@ -3,6 +3,7 @@
 /Makevars.global*
 /build*
 /maint*
+/vendor*
 
 .depend
 GNUmakefile
@@ -24,9 +25,6 @@ tmp-testsuite*
 *.swp
 *.ttp
 
-doc/*.1
-doc/*.doc
-doc/*.html
 doc/*.man
 doc/*.ps
 doc/*.tex

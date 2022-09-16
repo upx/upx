@@ -1,5 +1,5 @@
 #
-# UPX doc Makefile - needs GNU make 3.81 or better
+# UPX doc Makefile - needs GNU make
 #
 
 MAKEFLAGS += -rR
@@ -26,8 +26,7 @@ VERSION      := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top
 RTRIM  := sed -e 's/[ $(tab)]*$$//'
 DETAB2 := sed -e 's/$(tab)/  /g'
 
-BUILT_SOURCES = upx.1 upx.doc upx.html upx.man upx.ps upx.tex
-BUILT_SOURCES = upx.1 upx.doc upx.html
+BUILT_SOURCES = upx.1 upx-doc.html upx-doc.txt
 
 
 ###
@@ -46,17 +45,13 @@ mostlyclean clean distclean maintainer-clean:
 ### rules
 ###
 
-.SUFFIXES: .1 .doc .html .man .pod .ps .tex
+.SUFFIXES: .1 .html .man .pod .ps .tex .txt
 
 %.1 : %.pod
 	pod2man --center=" " --release="$(PACKAGE) $(VERSION)" --date="$(VERSION_DATE)" $< | $(RTRIM) > $@
 	test -s $@
 
-%.doc : %.pod
-	pod2text < $< | $(RTRIM) > $@
-	test -s $@
-
-%.html : %.pod
+%-doc.html : %.pod
 	pod2html --noindex $< | $(RTRIM) | $(DETAB2) > $@
 	@rm -f pod2htm*
 	test -s $@
@@ -71,6 +66,10 @@ mostlyclean clean distclean maintainer-clean:
 
 %.tex : %.pod
 	pod2latex $<
+	test -s $@
+
+%-doc.txt : %.pod
+	pod2text < $< | $(RTRIM) > $@
 	test -s $@
 
 
