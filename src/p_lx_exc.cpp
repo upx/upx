@@ -49,6 +49,8 @@
 #define DT_STRSZ    Elf32_Dyn::DT_STRSZ
 #endif
 
+#define usizeof(x)      ((unsigned) sizeof(x))
+
 
 /*************************************************************************
 // linux/386 (generic "execve" format)
@@ -307,8 +309,8 @@ PackLinuxI386::buildLinuxLoader(
     unsigned fold_hdrlen = 0;
   if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
-    fold_hdrlen = sizeof(hf->ehdr) + hf->ehdr.e_phentsize * hf->ehdr.e_phnum +
-         sizeof(l_info);
+    fold_hdrlen = usizeof(hf->ehdr) + hf->ehdr.e_phentsize * hf->ehdr.e_phnum +
+         usizeof(l_info);
     if (0 == get_le32(fold_hdrlen + fold)) {
         // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
         fold_hdrlen = umax(0x80, fold_hdrlen);

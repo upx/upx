@@ -128,4 +128,11 @@ inline T *raw_bytes(const MemBufferBase<T> &a, size_t size_in_bytes) {
     return a.raw_bytes(size_in_bytes);
 }
 
+// global operators
+// rewrite "n + membuffer" to "membuffer + n" so that this will get checked above
+template <class U, class /*Dummy*/ = typename std::enable_if<std::is_integral<U>::value, U>::type>
+typename MemBuffer::pointer operator+(U n, const MemBuffer &mb) {
+    return mb + n;
+}
+
 /* vim:set ts=4 sw=4 et: */

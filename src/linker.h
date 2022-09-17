@@ -78,31 +78,38 @@ public:
     ElfLinker();
     virtual ~ElfLinker();
 
-    virtual void init(const void *pdata, int plen, unsigned pxtra = 0);
+    void init(const void *pdata, int plen, unsigned pxtra = 0);
     // virtual void setLoaderAlignOffset(int phase);
-    virtual int addLoader(const char *sname);
+    int addLoader(const char *sname);
     void addLoader(const char *s, va_list ap);
 #if (ACC_CC_CLANG || ACC_CC_GNUC)
     void addLoaderVA(const char *s, ...) __attribute__((__sentinel__));
 #else
     void addLoaderVA(const char *s, ...);
 #endif
-    virtual Section *addSection(const char *sname, const void *sdata, int slen, unsigned p2align);
-    virtual int getSection(const char *sname, int *slen = nullptr) const;
-    virtual int getSectionSize(const char *sname) const;
-    virtual upx_byte *getLoader(int *llen = nullptr) const;
-    virtual void defineSymbol(const char *name, upx_uint64_t value);
-    virtual upx_uint64_t getSymbolOffset(const char *) const;
+    Section *addSection(const char *sname, const void *sdata, int slen, unsigned p2align);
+    int getSection(const char *sname, int *slen = nullptr) const;
+    int getSectionSize(const char *sname) const;
+    upx_byte *getLoader(int *llen = nullptr) const;
+    void defineSymbol(const char *name, upx_uint64_t value);
+    upx_uint64_t getSymbolOffset(const char *) const;
 
-    virtual void dumpSymbol(const Symbol *, unsigned flags, FILE *fp) const;
-    virtual void dumpSymbols(unsigned flags = 0, FILE *fp = nullptr) const;
+    void dumpSymbol(const Symbol *, unsigned flags, FILE *fp) const;
+    void dumpSymbols(unsigned flags = 0, FILE *fp = nullptr) const;
 
     void alignWithByte(unsigned len, unsigned char b);
     virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
     virtual void alignData(unsigned len) { alignWithByte(len, 0); }
 
+    // provide overloads to pacify GitHub CodeQL
+    void defineSymbol(const char *name, int value) { defineSymbol(name, upx_uint64_t(value)); }
+    void defineSymbol(const char *name, unsigned value) { defineSymbol(name, upx_uint64_t(value)); }
+    void defineSymbol(const char *name, unsigned long value) {
+        defineSymbol(name, upx_uint64_t(value));
+    }
+
 protected:
-    virtual void relocate();
+    void relocate();
     virtual void relocate1(const Relocation *, upx_byte *location, upx_uint64_t value,
                            const char *type);
 

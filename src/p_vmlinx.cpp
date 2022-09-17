@@ -106,8 +106,8 @@ typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
 {
     unsigned const e_shnum = ehdri.e_shnum;
     if (ehdri.e_shentsize != sizeof(*shdri)
-    ||  (unsigned long)file_size < ehdri.e_shoff
-    ||  (unsigned long)file_size < ehdri.e_shoff + ehdri.e_shentsize * e_shnum) {
+    ||  file_size_u < ehdri.e_shoff
+    ||  file_size_u < ehdri.e_shoff + ehdri.e_shentsize * e_shnum) {
         throwCantPack("bad ElfXX_Shdrs");
     }
     shdri = new Shdr[(unsigned) e_shnum];
@@ -121,10 +121,10 @@ typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
     }
     Shdr const *p = &shdri[e_shstrndx];
     if (Shdr::SHT_STRTAB==p->sh_type
-    &&  p->sh_offset  <= ((unsigned long)file_size - sizeof(*shdri))
-    &&  p->sh_size    <= ((unsigned long)file_size - p->sh_offset)
-    &&  p->sh_name    <= ((unsigned long)file_size - p->sh_offset)
-    &&  10            <= ((unsigned long)file_size - p->sh_name)
+    &&  p->sh_offset  <= (file_size_u - sizeof(*shdri))
+    &&  p->sh_size    <= (file_size_u - p->sh_offset)
+    &&  p->sh_name    <= (file_size_u - p->sh_offset)
+    &&  10            <= (file_size_u - p->sh_name)
         // 10 == (1+ strlen(".shstrtab"))
     ) {
         if (p->sh_size <= p->sh_name) {
