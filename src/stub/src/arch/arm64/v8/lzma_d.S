@@ -90,7 +90,7 @@ fp .req x29
         mov a6,ldst  // &outSizeProcessed
         ldr a5,[a6]  // outSize
         mov a4,dst  // outp
-        add a3,sp,#8  // &inSizeProcessed
+        add a3,sp,#NBPW  // &inSizeProcessed
         sub w2,lsrc,#2  // inSize
         mov a1,src  // inp
 State= 0
@@ -104,7 +104,7 @@ State= 0
         strb t1,[a0,#1]
         and  t0,t0,#0xf  // lib_context_bits
         strb t0,[a0,#0]
-        bl 1f  // the call
+        bl ClangLzmaDecode  // the call
 
 eof_lzma:
         mov sp,fp
@@ -135,7 +135,7 @@ cache_lzma:
 #undef a5
 #undef a6
 
-1:  // entry to C-lang LzmaDecode
+ClangLzmaDecode:  // entry to C-lang LzmaDecode in next section
 
   section LZMA_DEC20
 #include "lzma_d_cf.S"

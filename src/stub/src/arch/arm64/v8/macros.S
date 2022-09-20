@@ -52,7 +52,7 @@ fp .req x29
 #define POP4(r1,r2,r3,r4) ldp r3,r4,[sp,#2*8]; ldp r1,r2,[sp],#4*8
 
 .macro          section name
-                .section \name
+                .section \name //,"ax"
 .endm
 
 .macro          do_sys N
