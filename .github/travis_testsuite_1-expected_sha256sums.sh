@@ -120,7 +120,7 @@ expected_sha256sums__t140_compress_lzma_2_no_filter="\
 dd10984767f9fe67900b64d63699ccaf858b9072272eef5ca373a7701d5057bb *amd64-win64.pe/upx-3.95.exe
 aa3abbcdc539608f201a5371f4fa5c576af792570a8c08485ba12562cd9da102 *arm-linux.elf/upx-3.95
 9e5ad415bb42155a3c527fd259ac7ca1534a14bec888cb1ee8a7cc8e2ca0019c *arm-wince.pe/upx-3.91.exe
-0ba9c3f8da39b3074cce41c643b526606cb69482761d7275371ff4b1d7336400 *arm64-linux.elf/upx-3.95
+53182c6d1e388ee2fde6bb4c03c98f8a41ef3b085484dae227f247f3160e3f74 *arm64-linux.elf/upx-3.95
 498fd16af812daa686ffa9983b36e3d494815f8cc71ab8a69addfc32c8fe5909 *armeb-linux.elf/upx-3.91
 c146c75c3039966cf7f804edb82d2106ca4b7464b511f5daad6c0558b9fd7c7f *armeb-linux.elf/upx-3.95
 99209d2c5e6e7bf9edad472b181318f135a619f10d19ecde37158a80e186658b *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -166,7 +166,7 @@ expected_sha256sums__t160_compress_all_methods_1_no_filter="\
 867627ab2c87ffe1d82d5f131c0b05f73fc73d1e0a0011e369adb543be3b0deb *amd64-win64.pe/upx-3.95.exe
 706dd328b777c4435edbcc95e1a1d33f7810ee48fac76f84d7f782c255eae839 *arm-linux.elf/upx-3.95
 9394653a9f6ca77c82916f06d402af45639815edc1eb06ba01e67510927f9d34 *arm-wince.pe/upx-3.91.exe
-4d8671b619a9d0f3036ae77255d0ec17209abaf09e7cbe0e7a2e0be1bea8035f *arm64-linux.elf/upx-3.95
+538942f2c885d83c817164ffe112875558809d7a4e3c1cd71b83784a84be4cc8 *arm64-linux.elf/upx-3.95
 0ad24da3b1858592f18cad99a7599c99f64bfb90986e87d594882b8c2aa06a0b *armeb-linux.elf/upx-3.91
 44ef84df06edd0457eedfce82e7b9e234ddff6ba2f4aa41b879d7c2f41cba443 *armeb-linux.elf/upx-3.95
 d8a099f8e4fd380b70f0cf8ef56cbebf232ea0c127529593c15fc34af7df32e7 *i386-dos32.djgpp2.coff/upx-3.91.exe
