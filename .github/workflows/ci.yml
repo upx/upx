@@ -48,18 +48,15 @@ jobs:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
-
     env:
       MATRIX_OS: ${{ matrix.os }}
       UPX_CMAKE_BUILD_FLAGS: --verbose
-
     strategy:
       fail-fast: false
       matrix:
         include:
           - { os: ubuntu-20.04 }
           - { os: ubuntu-22.04 }
-
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -87,15 +84,53 @@ jobs:
           name: ${{ steps.make_artifact.outputs.upload_name }}
           path: tmp/artifact
 
+  job-macos-cmake:
+    needs: [ job-rebuild-and-verify-stubs ]
+    name: ${{ format('{0} cmake', matrix.os) }}
+    runs-on: ${{ matrix.os }}
+    env:
+      MATRIX_OS: ${{ matrix.os }}
+      UPX_CMAKE_BUILD_FLAGS: --verbose
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-11, gcc: gcc-10, gxx: 'g++-10' }
+          - { os: macos-12, gcc: gcc-11, gxx: 'g++-11' }
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Build cmake debug-gcc'
+        run:   'make build/debug-gcc CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
+      - name: 'Build cmake release-gcc'
+        run:   'make build/release-gcc CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
+      - name: 'Build cmake debug-clang'
+        run:   'make build/debug-clang'
+      - name: 'Build cmake release-clang'
+        run:   'make build/release-clang'
+      - name: 'Make artifact'
+        id: make_artifact
+        run: |
+          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${MATRIX_OS}
+          mkdir -p "tmp/artifact/$N"
+          (cd build && rsync -R -a */upx "../tmp/artifact/$N/")
+          (cd tmp/artifact && gtar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
+          # GitHub Actions magic: set "upload_name" Javascript outputs value for use in next step
+          echo "::set-output name=upload_name::$N"
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.make_artifact.outputs.upload_name }}
+          path: tmp/artifact
+
   job-windows-cmake:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
-
     env:
       MATRIX_OS: ${{ matrix.os }}
       UPX_CMAKE_BUILD_FLAGS: --verbose
-
     strategy:
       fail-fast: false
       matrix:
@@ -105,7 +140,6 @@ jobs:
           # see https://github.com/actions/runner-images.git
           ####- { os: windows-2019 }
           - { os: windows-2022 }
-
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
