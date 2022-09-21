@@ -107,7 +107,7 @@ typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
     unsigned const e_shnum = ehdri.e_shnum;
     if (ehdri.e_shentsize != sizeof(*shdri)
     ||  file_size_u < ehdri.e_shoff
-    ||  file_size_u < ehdri.e_shoff + ehdri.e_shentsize * e_shnum) {
+    ||  file_size_u < ehdri.e_shoff + mem_size(ehdri.e_shentsize, e_shnum)) {
         throwCantPack("bad ElfXX_Shdrs");
     }
     shdri = new Shdr[(unsigned) e_shnum];
