@@ -130,16 +130,13 @@ STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
 STUBS += powerpc-linux.kernel.vmlinux-head.h
 STUBS += powerpc-linux.kernel.vmlinux.h
-STUBS += powerpc64le-darwin.dylib-entry.h
-STUBS += powerpc64le-darwin.macho-entry.h
-STUBS += powerpc64le-darwin.macho-fold.h
 STUBS += powerpc64le-linux.elf-entry.h
 STUBS += powerpc64le-linux.elf-fold.h
 STUBS += powerpc64le-linux.kernel.vmlinux-head.h
 STUBS += powerpc64le-linux.kernel.vmlinux.h
-#STUBS += powerpc64-darwin.dylib-entry.h
-#STUBS += powerpc64-darwin.macho-entry.h
-#STUBS += powerpc64-darwin.macho-fold.h
+STUBS += powerpc64-darwin.dylib-entry.h
+STUBS += powerpc64-darwin.macho-entry.h
+STUBS += powerpc64-darwin.macho-fold.h
 STUBS += powerpc64-linux.elf-entry.h
 STUBS += powerpc64-linux.elf-fold.h
 #STUBS += powerpc64-linux.kernel.vmlinux-head.h
@@ -1404,19 +1401,10 @@ powerpc-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // powerpc64le-darwin.dylib
+# // powerpc64-darwin.dylib
 # ************************************************************************/
 
 # info: we use the tc settings from powerpc64le-linux.elf
-powerpc64le-darwin.dylib%.h : tc_list = powerpc64le-linux.elf default
-powerpc64le-darwin.dylib%.h : tc_bfdname = elf64-powerpcle
-
-powerpc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
-
-
 powerpc64-darwin.dylib%.h : tc_list = powerpc64-linux.elf default
 powerpc64-darwin.dylib%.h : tc_bfdname = elf64-powerpc
 
@@ -1427,40 +1415,16 @@ powerpc64-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // powerpc64le-darwin.macho
+# // powerpc64-darwin.macho
 # ************************************************************************/
 
 # info: we use the tc settings from powerpc64le-linux.elf
-powerpc64le-darwin.macho%.h : tc_list = powerpc64le-darwin.macho powerpc64le-linux.elf default
-powerpc64le-darwin.macho%.h : tc_bfdname = elf64-powerpcle
-
-tc.powerpc64le-darwin.macho.ld = multiarch-ld-2.27 -b $(tc_bfdname)
-
-powerpc64le-darwin.macho-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
-
-powerpc64le-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc64le-darwin.macho-main.o
-	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	chmod a-x tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
-
-tmp/powerpc64le-darwin.macho-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,f-objstrip,$@)
-
 # Omit -Os because it references _savegpr0_28 and _restgpr0_28 (and *_16 and *_27)
 # only 3 times, so sharing the code of those routines saves almost nothing
 # (and we would have to write them ourselves.)
 # Besides, PowerPC has 31.5 registers (r0 cannot index), which is plenty.
-tmp/powerpc64le-darwin.macho-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -O $< -o $@
-	$(call tc,f-objstrip,$@)
-
-
 powerpc64-darwin.macho%.h : tc_list = powerpc64-darwin.macho powerpc64-linux.elf default
-powerpc64-darwin.macho%.h : tc_bfdname = elf64-powerpcbe
+powerpc64-darwin.macho%.h : tc_bfdname = elf64-powerpc
 
 tc.powerpc64-darwin.macho.ld = multiarch-ld-2.27 -b $(tc_bfdname)
 

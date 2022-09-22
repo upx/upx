@@ -82,11 +82,11 @@ static const
 #include "stub/powerpc-darwin.dylib-entry.h"
 
 static const
-#include "stub/powerpc64le-darwin.macho-entry.h"
+#include "stub/powerpc64-darwin.macho-entry.h"
 static const
-#include "stub/powerpc64le-darwin.macho-fold.h"
+#include "stub/powerpc64-darwin.macho-fold.h"
 static const
-#include "stub/powerpc64le-darwin.dylib-entry.h"
+#include "stub/powerpc64-darwin.dylib-entry.h"
 
 // Packing a Darwin (Mach-o) Mac OS X dylib (dynamic shared library)
 // is restricted.  UPX gets control as the -init function, at the very
@@ -2111,16 +2111,16 @@ bool PackMachBase<T>::canPack()
                    stub_powerpc_darwin_dylib_entry,  nullptr, nullptr
         },
         {CPU_TYPE_POWERPC64, MH_EXECUTE,
-            sizeof(stub_powerpc64le_darwin_macho_entry),
-            sizeof(stub_powerpc64le_darwin_macho_fold),
+            sizeof(stub_powerpc64_darwin_macho_entry),
+            sizeof(stub_powerpc64_darwin_macho_fold),
             0,
-                   stub_powerpc64le_darwin_macho_entry,
-                   stub_powerpc64le_darwin_macho_fold,
+                   stub_powerpc64_darwin_macho_entry,
+                   stub_powerpc64_darwin_macho_fold,
                    nullptr
         },
         {CPU_TYPE_POWERPC64, MH_DYLIB,
-            sizeof(stub_powerpc64le_darwin_dylib_entry), 0, 0,
-                   stub_powerpc64le_darwin_dylib_entry,  nullptr, nullptr
+            sizeof(stub_powerpc64_darwin_dylib_entry), 0, 0,
+                   stub_powerpc64_darwin_dylib_entry,  nullptr, nullptr
         },
         {0,0, 0,0,0, nullptr,nullptr,nullptr}
     };
