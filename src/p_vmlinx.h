@@ -59,7 +59,7 @@ protected:
 public:
     PackVmlinuxBase(InputFile *, unsigned, unsigned, unsigned, char const *);
     virtual ~PackVmlinuxBase();
-    virtual int getVersion() const { return 13; }
+    virtual int getVersion() const override { return 13; }
 
 protected:
     unsigned int const my_e_machine;
@@ -82,10 +82,10 @@ protected:
     virtual int getStrategy(Filter &/*ft*/);
     virtual bool is_valid_e_entry(Addr) = 0;
     virtual bool has_valid_vmlinux_head() = 0;
-    virtual bool canPack();
-    virtual void pack(OutputFile *fo);
-    virtual int canUnpack();  // bool, except -1: format known, but not packed
-    virtual void unpack(OutputFile *fo);
+    virtual bool canPack() override;
+    virtual void pack(OutputFile *fo) override;
+    virtual int canUnpack() override;  // bool, except -1: format known, but not packed
+    virtual void unpack(OutputFile *fo) override;
     virtual unsigned write_vmlinux_head(
         OutputFile *fo,
         Shdr *stxt
@@ -100,22 +100,22 @@ class PackVmlinuxI386 : public PackVmlinuxBase<ElfClass_LE32>
 public:
     PackVmlinuxI386(InputFile *f) : super(f, Ehdr::EM_386,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "startup_32") { }
-    virtual int getFormat() const { return UPX_F_VMLINUX_i386; }
-    virtual const char *getName() const { return "vmlinux/i386"; }
-    virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinux"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getFormat() const override { return UPX_F_VMLINUX_i386; }
+    virtual const char *getName() const override { return "vmlinux/i386"; }
+    virtual const char *getFullName(const options_t *) const override { return "i386-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual void defineDecompressorSymbols();
-    virtual Linker* newLinker() const;
-    virtual bool is_valid_e_entry(Addr);
-    virtual bool has_valid_vmlinux_head();
+    virtual void buildLoader(const Filter *ft) override;
+    virtual void defineDecompressorSymbols() override;
+    virtual Linker* newLinker() const override;
+    virtual bool is_valid_e_entry(Addr) override;
+    virtual bool has_valid_vmlinux_head() override;
     virtual unsigned write_vmlinux_head(
         OutputFile *fo,
         Shdr *stxt
-    );
+    ) override;
 };
 
 
@@ -125,22 +125,22 @@ class PackVmlinuxARMEL : public PackVmlinuxBase<ElfClass_LE32>
 public:
     PackVmlinuxARMEL(InputFile *f) : super(f, Ehdr::EM_ARM,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "decompress_kernel") { }
-    virtual int getFormat() const { return UPX_F_VMLINUX_ARMEL; }
-    virtual const char *getName() const { return "vmlinux/arm"; }
-    virtual const char *getFullName(const options_t *) const { return "arm-linux.kernel.vmlinux"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getFormat() const override { return UPX_F_VMLINUX_ARMEL; }
+    virtual const char *getName() const override { return "vmlinux/arm"; }
+    virtual const char *getFullName(const options_t *) const override { return "arm-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual void defineDecompressorSymbols();
-    virtual Linker* newLinker() const;
-    virtual bool is_valid_e_entry(Addr);
-    virtual bool has_valid_vmlinux_head();
+    virtual void buildLoader(const Filter *ft) override;
+    virtual void defineDecompressorSymbols() override;
+    virtual Linker* newLinker() const override;
+    virtual bool is_valid_e_entry(Addr) override;
+    virtual bool has_valid_vmlinux_head() override;
     virtual unsigned write_vmlinux_head(
         OutputFile *fo,
         Shdr *stxt
-    );
+    ) override;
 };
 
 class PackVmlinuxARMEB : public PackVmlinuxBase<ElfClass_BE32>
@@ -149,22 +149,22 @@ class PackVmlinuxARMEB : public PackVmlinuxBase<ElfClass_BE32>
 public:
     PackVmlinuxARMEB(InputFile *f) : super(f, Ehdr::EM_ARM,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2MSB, "decompress_kernel") { }
-    virtual int getFormat() const { return UPX_F_VMLINUX_ARMEB; }
-    virtual const char *getName() const { return "vmlinux/armeb"; }
-    virtual const char *getFullName(const options_t *) const { return "armeb-linux.kernel.vmlinux"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getFormat() const override { return UPX_F_VMLINUX_ARMEB; }
+    virtual const char *getName() const override { return "vmlinux/armeb"; }
+    virtual const char *getFullName(const options_t *) const override { return "armeb-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual void defineDecompressorSymbols();
-    virtual Linker* newLinker() const;
-    virtual bool is_valid_e_entry(Addr);
-    virtual bool has_valid_vmlinux_head();
+    virtual void buildLoader(const Filter *ft) override;
+    virtual void defineDecompressorSymbols() override;
+    virtual Linker* newLinker() const override;
+    virtual bool is_valid_e_entry(Addr) override;
+    virtual bool has_valid_vmlinux_head() override;
     virtual unsigned write_vmlinux_head(
         OutputFile *fo,
         Shdr *stxt
-    );
+    ) override;
 };
 
 class PackVmlinuxPPC32 : public PackVmlinuxBase<ElfClass_BE32>
@@ -173,22 +173,22 @@ class PackVmlinuxPPC32 : public PackVmlinuxBase<ElfClass_BE32>
 public:
     PackVmlinuxPPC32(InputFile *f) : super(f, Ehdr::EM_PPC,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2MSB, "_vmlinux_start") { }
-    virtual int getFormat() const { return UPX_F_VMLINUX_PPC32; }
-    virtual const char *getName() const { return "vmlinux/ppc32"; }
-    virtual const char *getFullName(const options_t *) const { return "powerpc-linux.kernel.vmlinux"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getFormat() const override { return UPX_F_VMLINUX_PPC32; }
+    virtual const char *getName() const override { return "vmlinux/ppc32"; }
+    virtual const char *getFullName(const options_t *) const override { return "powerpc-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual void defineDecompressorSymbols();
-    virtual Linker* newLinker() const;
-    virtual bool is_valid_e_entry(Addr);
-    virtual bool has_valid_vmlinux_head();
+    virtual void buildLoader(const Filter *ft) override;
+    virtual void defineDecompressorSymbols() override;
+    virtual Linker* newLinker() const override;
+    virtual bool is_valid_e_entry(Addr) override;
+    virtual bool has_valid_vmlinux_head() override;
     virtual unsigned write_vmlinux_head(
         OutputFile *fo,
         Shdr *stxt
-    );
+    ) override;
 };
 
 class PackVmlinuxPPC64LE : public PackVmlinuxBase<ElfClass_LE64>
@@ -197,22 +197,22 @@ class PackVmlinuxPPC64LE : public PackVmlinuxBase<ElfClass_LE64>
 public:
     PackVmlinuxPPC64LE(InputFile *f) : super(f, Ehdr::EM_PPC64,
         Ehdr::ELFCLASS64, Ehdr::ELFDATA2LSB, "_vmlinux_start") { }
-    virtual int getFormat() const { return UPX_F_VMLINUX_PPC64LE; }
-    virtual const char *getName() const { return "vmlinux/ppc64le"; }
-    virtual const char *getFullName(const options_t *) const { return "powerpc64le-linux.kernel.vmlinux"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getFormat() const override { return UPX_F_VMLINUX_PPC64LE; }
+    virtual const char *getName() const override { return "vmlinux/ppc64le"; }
+    virtual const char *getFullName(const options_t *) const override { return "powerpc64le-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual void defineDecompressorSymbols();
-    virtual Linker* newLinker() const;
-    virtual bool is_valid_e_entry(Addr);
-    virtual bool has_valid_vmlinux_head();
+    virtual void buildLoader(const Filter *ft) override;
+    virtual void defineDecompressorSymbols() override;
+    virtual Linker* newLinker() const override;
+    virtual bool is_valid_e_entry(Addr) override;
+    virtual bool has_valid_vmlinux_head() override;
     virtual unsigned write_vmlinux_head(
         OutputFile *fo,
         Shdr *stxt
-    );
+    ) override;
 };
 
 
@@ -222,22 +222,22 @@ class PackVmlinuxAMD64 : public PackVmlinuxBase<ElfClass_LE64>
 public:
     PackVmlinuxAMD64(InputFile *f) : super(f, Ehdr::EM_X86_64,
         Ehdr::ELFCLASS64, Ehdr::ELFDATA2LSB, "startup_32") { }
-    virtual int getFormat() const { return UPX_F_VMLINUX_AMD64; }
-    virtual const char *getName() const { return "vmlinux/amd64"; }
-    virtual const char *getFullName(const options_t *) const { return "amd64-linux.kernel.vmlinux"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getFormat() const override { return UPX_F_VMLINUX_AMD64; }
+    virtual const char *getName() const override { return "vmlinux/amd64"; }
+    virtual const char *getFullName(const options_t *) const override { return "amd64-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual void defineDecompressorSymbols();
-    virtual Linker* newLinker() const;
-    virtual bool is_valid_e_entry(Addr);
-    virtual bool has_valid_vmlinux_head();
+    virtual void buildLoader(const Filter *ft) override;
+    virtual void defineDecompressorSymbols() override;
+    virtual Linker* newLinker() const override;
+    virtual bool is_valid_e_entry(Addr) override;
+    virtual bool has_valid_vmlinux_head() override;
     virtual unsigned write_vmlinux_head(
         OutputFile *fo,
         Shdr *stxt
-    );
+    ) override;
 };
 
 

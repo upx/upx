@@ -41,36 +41,36 @@ class PackArmPe : public PeFile32
 public:
     PackArmPe(InputFile *f);
     virtual ~PackArmPe();
-    virtual int getFormat() const { return UPX_F_WINCE_ARM_PE; }
-    virtual const char *getName() const { return "arm/pe"; }
-    virtual const char *getFullName(const options_t *) const { return "arm-wince.pe"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
-    virtual void defineFilterSymbols(const Filter *) {}
+    virtual int getFormat() const override { return UPX_F_WINCE_ARM_PE; }
+    virtual const char *getName() const override { return "arm/pe"; }
+    virtual const char *getFullName(const options_t *) const override { return "arm-wince.pe"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
+    virtual void defineFilterSymbols(const Filter *) override {}
 
-    virtual bool handleForceOption();
+    virtual bool handleForceOption() override;
     virtual void callCompressWithFilters(Filter &, int filter_strategy,
-                                         unsigned ih_codebase);
+                                         unsigned ih_codebase) override;
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
                                unsigned sizeof_oh, unsigned isize_isplit,
-                               unsigned s1addr);
-    virtual void addNewRelocations(Reloc &, unsigned upxsection);
-    virtual unsigned getProcessImportParam(unsigned upxsection);
-    virtual void setOhDataBase(const pe_section_t *osection);
-    virtual void setOhHeaderSize(const pe_section_t *osection);
-    virtual void pack(OutputFile *fo);
+                               unsigned s1addr) override;
+    virtual void addNewRelocations(Reloc &, unsigned upxsection) override;
+    virtual unsigned getProcessImportParam(unsigned upxsection) override;
+    virtual void setOhDataBase(const pe_section_t *osection) override;
+    virtual void setOhHeaderSize(const pe_section_t *osection) override;
+    virtual void pack(OutputFile *fo) override;
 
-    virtual bool canPack();
+    virtual bool canPack() override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft) override;
+    virtual Linker* newLinker() const override;
 
-    virtual const char *kernelDll() const { return "COREDLL.dll"; }
-    virtual void processImports2(unsigned, unsigned);
-    virtual void addStubImports();
+    virtual const char *kernelDll() const override { return "COREDLL.dll"; }
+    virtual void processImports2(unsigned, unsigned) override;
+    virtual void addStubImports() override;
 
-    virtual void processTls(Interval *);
+    virtual void processTls(Interval *) override;
 
     bool use_thumb_stub;
 };

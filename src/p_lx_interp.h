@@ -44,18 +44,18 @@ class PackLinuxElf32x86interp : public PackLinuxElf32x86
 public:
     PackLinuxElf32x86interp(InputFile *f);
     virtual ~PackLinuxElf32x86interp();
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_LINUX_ELFI_i386; }
-    virtual const char *getName() const { return "linux/elfi386"; }
-    virtual const char *getFullName(const options_t *) const { return "i386-linux.elf.interp"; }
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_LINUX_ELFI_i386; }
+    virtual const char *getName() const override { return "linux/elfi386"; }
+    virtual const char *getFullName(const options_t *) const override { return "i386-linux.elf.interp"; }
 
-    virtual bool canPack();
-    virtual void unpack(OutputFile *fo);
+    virtual bool canPack() override;
+    virtual void unpack(OutputFile *fo) override;
 
 protected:
-    virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual int  pack2(OutputFile *, Filter &);  // append compressed data
-    virtual off_t pack3(OutputFile *, Filter &);  // build loader
+    virtual void pack1(OutputFile *, Filter &) override;  // generate executable header
+    virtual int  pack2(OutputFile *, Filter &) override;  // append compressed data
+    virtual off_t pack3(OutputFile *, Filter &) override;  // build loader
 };
 
 

@@ -41,15 +41,15 @@ class PackUnix : public Packer
 protected:
     PackUnix(InputFile *f);
 public:
-    virtual int getVersion() const { return 13; }
-    virtual const int *getFilters() const { return nullptr; }
+    virtual int getVersion() const override { return 13; }
+    virtual const int *getFilters() const override { return nullptr; }
     virtual int getStrategy(Filter &);
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
     int find_overlay_offset(MemBuffer const &buf);
 
 protected:
@@ -65,7 +65,7 @@ protected:
 
     virtual void writePackHeader(OutputFile *fo);
 
-    virtual bool checkCompressionRatio(unsigned, unsigned) const;
+    virtual bool checkCompressionRatio(unsigned, unsigned) const override;
 
 protected:
     struct Extent {

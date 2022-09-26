@@ -40,25 +40,25 @@ class PackW64Pep : public PeFile64
 public:
     PackW64Pep(InputFile *f);
     virtual ~PackW64Pep();
-    virtual int getFormat() const { return UPX_F_WIN64_PEP; }
-    virtual const char *getName() const { return "win64/pe"; }
-    virtual const char *getFullName(const options_t *) const { return "amd64-win64.pe"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getFormat() const override { return UPX_F_WIN64_PEP; }
+    virtual const char *getName() const override { return "win64/pe"; }
+    virtual const char *getFullName(const options_t *) const override { return "amd64-win64.pe"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
 
-    virtual bool handleForceOption();
+    virtual bool handleForceOption() override;
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
                                unsigned sizeof_oh, unsigned isize_isplit,
-                               unsigned s1addr);
-    virtual void setOhDataBase(const pe_section_t *) {}
-    virtual void setOhHeaderSize(const pe_section_t *osection);
-    virtual void pack(OutputFile *fo);
+                               unsigned s1addr) override;
+    virtual void setOhDataBase(const pe_section_t *) override {}
+    virtual void setOhHeaderSize(const pe_section_t *osection) override;
+    virtual void pack(OutputFile *fo) override;
 
-    virtual bool canPack();
+    virtual bool canPack() override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
-    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft) override;
+    virtual Linker* newLinker() const override;
 };
 
 

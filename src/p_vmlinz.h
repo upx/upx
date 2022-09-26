@@ -39,27 +39,27 @@ class PackVmlinuzI386 : public Packer
     typedef Packer super;
 public:
     PackVmlinuzI386(InputFile *f);
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_VMLINUZ_i386; }
-    virtual const char *getName() const { return "vmlinuz/i386"; }
-    virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinuz"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const override { return UPX_F_VMLINUZ_i386; }
+    virtual const char *getName() const override { return "vmlinuz/i386"; }
+    virtual const char *getFullName(const options_t *) const override { return "i386-linux.kernel.vmlinuz"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
     virtual int getStrategy(Filter &);
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
 protected:
     virtual int readFileHeader();
     virtual int decompressKernel();
     virtual void readKernel();
 
-    virtual void buildLoader(const Filter *ft);
-    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft) override;
+    virtual Linker* newLinker() const override;
 
 //    virtual upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;
@@ -109,15 +109,15 @@ class PackBvmlinuzI386 : public PackVmlinuzI386
     typedef PackVmlinuzI386 super;
 public:
     PackBvmlinuzI386(InputFile *f) : super(f) { }
-    virtual int getFormat() const { return UPX_F_BVMLINUZ_i386; }
-    virtual const char *getName() const { return "bvmlinuz/i386"; }
-    virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.bvmlinuz"; }
-    virtual const int *getFilters() const;
+    virtual int getFormat() const override { return UPX_F_BVMLINUZ_i386; }
+    virtual const char *getName() const override { return "bvmlinuz/i386"; }
+    virtual const char *getFullName(const options_t *) const override { return "i386-linux.kernel.bvmlinuz"; }
+    virtual const int *getFilters() const override;
 
-    virtual void pack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
 
 protected:
-    virtual void buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft) override;
 };
 
 
@@ -130,32 +130,32 @@ class PackVmlinuzARMEL : public Packer
     typedef Packer super;
 public:
     PackVmlinuzARMEL(InputFile *f);
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_VMLINUZ_ARMEL; }
-    virtual const char *getName() const { return "vmlinuz/arm"; }
-    virtual const char *getFullName(const options_t *) const { return "arm-linux.kernel.vmlinuz"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
+    virtual int getVersion() const override { return 13; }
+    virtual int getFormat() const  override{ return UPX_F_VMLINUZ_ARMEL; }
+    virtual const char *getName() const override { return "vmlinuz/arm"; }
+    virtual const char *getFullName(const options_t *) const override { return "arm-linux.kernel.vmlinuz"; }
+    virtual const int *getCompressionMethods(int method, int level) const override;
+    virtual const int *getFilters() const override;
     virtual int getStrategy(Filter &);
 
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
+    virtual void pack(OutputFile *fo) override;
+    virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack();
-    virtual int canUnpack();
+    virtual bool canPack() override;
+    virtual int canUnpack() override;
 
 protected:
     virtual int readFileHeader();
     virtual int decompressKernel();
     virtual void readKernel();
 
-    virtual void buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft) override;
     virtual unsigned write_vmlinuz_head(OutputFile *fo);
-    virtual void defineDecompressorSymbols();
-    virtual Linker* newLinker() const;
+    virtual void defineDecompressorSymbols() override;
+    virtual Linker* newLinker() const override;
 
-//    virtual upx_byte *getLoader() const;
-//    virtual int getLoaderSize() const;
+//    virtual upx_byte *getLoader() const override;
+//    virtual int getLoaderSize() const override;
 
 
     MemBuffer setup_buf;
