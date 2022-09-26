@@ -116,6 +116,8 @@ public:
     virtual ~Packer();
     virtual void assertPacker() const;
 
+    // getVersion() enables detecting forward incompatibility of unpack()
+    // by old upx when newer upx changes the format of compressed output.
     virtual int getVersion() const = 0;
     // A unique integer ID for this executable format. See conf.h.
     virtual int getFormat() const = 0;
