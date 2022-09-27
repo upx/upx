@@ -33,10 +33,13 @@
 #if (ACC_CC_CLANG)
 #  pragma clang diagnostic ignored "-Wshadow"
 #endif
+#if (ACC_CC_CLANG >= 0x0b0000)
+#  pragma clang diagnostic ignored "-Wsuggest-override"
+#endif
 #if (ACC_CC_GNUC >= 0x040200)
 #  pragma GCC diagnostic ignored "-Wshadow"
 #endif
-#if (ACC_CC_GNUC >= 0x050100)
+#if (ACC_CC_GNUC >= 0x0a0000)
 #  pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif
 #if (ACC_CC_MSC)

@@ -116,10 +116,6 @@ mf.CXXFLAGS += -funsigned-char
 mf.CXXFLAGS += -fno-tree-vectorize
 mf.CXXFLAGS += $(CXXFLAGS_SANITIZE)
 mf.CXXFLAGS += -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
-
-# clang-10 requires 'override'. gcc-12 does not, but "g++ -Wsuggest-override" tells you where
-##mf.CXXFLAGS += -Wsuggest-override
-
 mf.CXXFLAGS += $(CXXFLAGS_WERROR)
 
 # rules
