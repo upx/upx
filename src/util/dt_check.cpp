@@ -25,6 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+#include <cstdint>
 #include "../conf.h"
 
 /*************************************************************************
