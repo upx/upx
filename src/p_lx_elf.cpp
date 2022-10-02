@@ -6085,7 +6085,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
                     do {
                         if (gashend <= hp) {
                             char msg[120]; snprintf(msg, sizeof(msg),
-                                "bad gnu_hash[%#zx]  head=%u",
+                                "bad gnu_hash[%#tx]  head=%u",
                                 hp - hasharr, hhead);
                             throwCantPack(msg);
                         }

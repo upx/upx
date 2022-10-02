@@ -32,6 +32,10 @@
 **************************************************************************/
 
 bool upx_doctest_check(int argc, char **argv) {
+#if defined(DOCTEST_CONFIG_DISABLE)
+    UNUSED(argc);
+    UNUSED(argv);
+#else
     bool minimal = true;   // only show failing tests
     bool duration = false; // show timings
     bool success = false;  // show all tests
@@ -66,6 +70,7 @@ bool upx_doctest_check(int argc, char **argv) {
     int r = context.run();
     if (context.shouldExit() || r != 0)
         return false;
+#endif
     return true;
 }
 

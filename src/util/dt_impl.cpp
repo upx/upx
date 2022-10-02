@@ -32,6 +32,11 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #define DOCTEST_CONFIG_NO_MULTITHREADING
 #define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
+#if defined(__MSDOS__) && defined(__DJGPP__)
+#define DOCTEST_CONFIG_NO_POSIX_SIGNALS
+#endif
+#if !defined(DOCTEST_CONFIG_DISABLE)
 #include <doctest/parts/doctest.cpp>
+#endif
 
 /* vim:set ts=4 sw=4 et: */

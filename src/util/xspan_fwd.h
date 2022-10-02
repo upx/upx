@@ -283,7 +283,9 @@ inline C<T> operator-(const C<T> &a, const LE32 &v) {
 template <class T>
 typename std::enable_if<sizeof(T) == 1, upx_rsize_t>::type upx_safe_strlen(const C<T> &a) {
     // not fully checked, but can require at least 1 byte
-    return upx_safe_strlen(a.raw_bytes(1));
+    upx_rsize_t len = upx_safe_strlen(a.raw_bytes(1));
+    (void) a.raw_bytes(len + 1); // now can do a full check
+    return len;
 }
 
 #endif // UPX_VERSION_HEX

@@ -111,6 +111,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 
 #undef snprintf
 #undef vsnprintf
+#define HAVE_STDINT_H 1
 #define ACC_WANT_ACC_INCD_H 1
 #define ACC_WANT_ACC_INCE_H 1
 #define ACC_WANT_ACC_LIB_H 1
@@ -738,7 +739,7 @@ unsigned membuffer_get_size(MemBuffer &mb);
 
 #include "util/xspan.h"
 
-//#define DOCTEST_CONFIG_DISABLE
+//#define DOCTEST_CONFIG_DISABLE 1
 #include <doctest/parts/doctest_fwd.h>
 
 // util/dt_check.cpp

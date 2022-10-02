@@ -480,6 +480,7 @@ TEST_CASE("Span constness") {
 //
 **************************************************************************/
 
+#if !defined(DOCTEST_CONFIG_DISABLE)
 namespace {
 int my_memcmp_v1(SPAN_P(const void) a, SPAN_0(const void) b, size_t n) {
     if (b == nullptr)
@@ -499,6 +500,7 @@ int my_memcmp_v2(SPAN_P(const char) a, SPAN_0(const char) b, size_t n) {
     return memcmp(x, y, n);
 }
 } // namespace
+#endif
 
 TEST_CASE("PtrOrSpan") {
     static const char buf[4] = {0, 1, 2, 3};
