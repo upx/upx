@@ -10,22 +10,22 @@ TARGET(elf32-i386)
                 0x0000000001400074                . = (0x1400000 + SIZEOF_HEADERS)
                 0x0000000001400080                . = ALIGN (0x80)
 
-.data           0x0000000001400080      0x4a4
+.data           0x0000000001400080      0x4ac
  *(.text)
- .text          0x0000000001400080       0xec tmp/i386-linux.elf.shell-fold.o
-                0x000000000140015f                mmap
- .text          0x000000000140016c      0x3b8 tmp/i386-linux.elf.shell-main.o
-                0x00000000014003b4                upx_main
+ .text          0x0000000001400080       0xf4 tmp/i386-linux.elf.shell-fold.o
+                0x0000000001400167                mmap
+ .text          0x0000000001400174      0x3b8 tmp/i386-linux.elf.shell-main.o
+                0x00000000014003bc                upx_main
  *(.rodata)
  *(.data)
- .data          0x0000000001400524        0x0 tmp/i386-linux.elf.shell-fold.o
- .data          0x0000000001400524        0x0 tmp/i386-linux.elf.shell-main.o
+ .data          0x000000000140052c        0x0 tmp/i386-linux.elf.shell-fold.o
+ .data          0x000000000140052c        0x0 tmp/i386-linux.elf.shell-main.o
  *(.bss)
- .bss           0x0000000001400524        0x0 tmp/i386-linux.elf.shell-fold.o
- .bss           0x0000000001400524        0x0 tmp/i386-linux.elf.shell-main.o
+ .bss           0x000000000140052c        0x0 tmp/i386-linux.elf.shell-fold.o
+ .bss           0x000000000140052c        0x0 tmp/i386-linux.elf.shell-main.o
  *(COMMON)
 
-.rel.dyn        0x0000000001400524        0x0
+.rel.dyn        0x000000000140052c        0x0
  .rel.text      0x0000000000000000        0x0 tmp/i386-linux.elf.shell-fold.o
 LOAD tmp/i386-linux.elf.shell-fold.o
 LOAD tmp/i386-linux.elf.shell-main.o

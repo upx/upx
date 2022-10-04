@@ -126,6 +126,11 @@ bool PackLinuxI386sh::getShellName(char *buf)
             if (s) {
                 opt->o_unix.blocksize = blocksize = file_size;
             }
+            unsigned size = fi->st_size();
+            if (size > (125<<10)) { // 128KB but allow 3KB for environment
+                printWarn(fi->getName(), "Likely E2BIG for size=%u", size);
+                return false;
+            }
             return s;
         }
     }

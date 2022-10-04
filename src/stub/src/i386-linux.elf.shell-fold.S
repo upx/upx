@@ -225,6 +225,13 @@ no_opt_arg:
         push __NR_execve
         pop eax
         int 0x80
+// execve() has failed.  Propagate the error code.
+        neg eax  // make positive
+        xchg eax, ebx  // sysarg1
+#define __NR_exit 1
+        push __NR_exit
+        pop eax
+        int 0x80
         hlt
 
 #define __NR_mmap 90
