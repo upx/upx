@@ -33,14 +33,8 @@
 #if (ACC_CC_CLANG)
 #  pragma clang diagnostic ignored "-Wshadow"
 #endif
-#if (ACC_CC_CLANG >= 0x0b0000)
-#  pragma clang diagnostic ignored "-Wsuggest-override"
-#endif
 #if (ACC_CC_GNUC >= 0x040200)
 #  pragma GCC diagnostic ignored "-Wshadow"
-#endif
-#if (ACC_CC_GNUC >= 0x0a0000)
-#  pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif
 #if (ACC_CC_MSC)
 #  pragma warning(disable: 4456)    // -Wno-shadow
@@ -252,7 +246,7 @@ struct InStream: public ISequentialInStream, public CMyUnknownImp
     void Init(const Byte *data, size_t size) {
         b_buf = data; b_size = size; b_pos = 0;
     }
-    STDMETHOD(Read)(void *data, UInt32 size, UInt32 *processedSize);
+    STDMETHOD(Read)(void *data, UInt32 size, UInt32 *processedSize) override;
 };
 
 STDMETHODIMP InStream::Read(void *data, UInt32 size, UInt32 *processedSize)
@@ -278,7 +272,7 @@ struct OutStream : public ISequentialOutStream, public CMyUnknownImp
         b_buf[b_pos++] = c;
         return S_OK;
     }
-    STDMETHOD(Write)(const void *data, UInt32 size, UInt32 *processedSize);
+    STDMETHOD(Write)(const void *data, UInt32 size, UInt32 *processedSize) override;
 };
 
 STDMETHODIMP OutStream::Write(const void *data, UInt32 size, UInt32 *processedSize)
@@ -295,7 +289,7 @@ struct ProgressInfo : public ICompressProgressInfo, public CMyUnknownImp
 {
     virtual ~ProgressInfo() { }
     MY_UNKNOWN_IMP
-    STDMETHOD(SetRatioInfo)(const UInt64 *inSize, const UInt64 *outSize);
+    STDMETHOD(SetRatioInfo)(const UInt64 *inSize, const UInt64 *outSize) override;
     upx_callback_p cb;
 };
 
