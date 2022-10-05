@@ -96,14 +96,17 @@ jobs:
       matrix:
         include:
           - { os: macos-11, gcc: gcc-10, gxx: 'g++-10' }
-          - { os: macos-12, gcc: gcc-11, gxx: 'g++-11' }
+          # { os: macos-12, gcc: gcc-11, gxx: 'g++-11' } # disable gcc - XCode 14.0 ld bug
+          - { os: macos-12 }
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
       - name: 'Build cmake debug-gcc'
+        if: ${{ matrix.gcc != '' }}
         run:   'make build/debug-gcc CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
       - name: 'Build cmake release-gcc'
+        if: ${{ matrix.gcc != '' }}
         run:   'make build/release-gcc CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
       - name: 'Build cmake debug-clang'
         run:   'make build/debug-clang'
