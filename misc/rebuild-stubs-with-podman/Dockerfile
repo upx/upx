@@ -9,6 +9,9 @@ RUN dpkg --add-architecture i386 \
         aria2 ca-certificates git less libmpc3 libncurses5 make \
         ncurses-term perl-base python2-minimal xz-utils \
         libc6:i386 zlib1g:i386 \
+        # these packages are not required but make the image more convenient
+        # and also allow building upx via cmake:
+        bzip2 cmake file g++ patch unzip vim zip \
     && true
 
 # manually install compat libs from Ubuntu 16.04
