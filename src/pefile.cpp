@@ -1061,7 +1061,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
 
         unsigned esize = ptr_diff_bytes(tarr, idlls[ic]->lookupt);
         lookups.add(idlls[ic]->lookupt,esize);
-        if (ptr_diff(ibuf.subref("bad import name %#x", idlls[ic]->iat, 1), (char *)idlls[ic]->lookupt))
+        if (ptr_diff_bytes(ibuf.subref("bad import name %#x", idlls[ic]->iat, 1), (char *)idlls[ic]->lookupt) != 0)
         {
             memcpy(ibuf.subref("bad import name %#x", idlls[ic]->iat, esize), idlls[ic]->lookupt, esize);
             iats.add(idlls[ic]->iat,esize);
@@ -1215,18 +1215,18 @@ void PeFile::Export::build(char *newbase, unsigned newoffs)
     char * const enamep = ordinalp + 2 * edir.names;
     char * exports = enamep + strlen(ename) + 1;
 
-    edir.addrtable = newoffs + ptr_diff(functionp, newbase);
-    edir.ordinaltable = newoffs + ptr_diff(ordinalp, newbase);
+    edir.addrtable = newoffs + ptr_diff_bytes(functionp, newbase);
+    edir.ordinaltable = newoffs + ptr_diff_bytes(ordinalp, newbase);
     memcpy(ordinalp,ordinals,2 * edir.names);
 
-    edir.name = newoffs + ptr_diff(enamep, newbase);
+    edir.name = newoffs + ptr_diff_bytes(enamep, newbase);
     strcpy(enamep,ename);
-    edir.nameptrtable = newoffs + ptr_diff(namep, newbase);
+    edir.nameptrtable = newoffs + ptr_diff_bytes(namep, newbase);
     unsigned ic;
     for (ic = 0; ic < edir.names; ic++)
     {
         strcpy(exports,names[ic]);
-        set_le32(namep + 4 * ic,newoffs + ptr_diff(exports, newbase));
+        set_le32(namep + 4 * ic,newoffs + ptr_diff_bytes(exports, newbase));
         exports += strlen(exports) + 1;
     }
 
@@ -1235,7 +1235,7 @@ void PeFile::Export::build(char *newbase, unsigned newoffs)
         if (names[edir.names + ic])
         {
             strcpy(exports,names[edir.names + ic]);
-            set_le32(functionp + 4 * ic,newoffs + ptr_diff(exports, newbase));
+            set_le32(functionp + 4 * ic,newoffs + ptr_diff_bytes(exports, newbase));
             exports += strlen(exports) + 1;
         }
 

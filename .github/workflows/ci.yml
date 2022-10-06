@@ -49,7 +49,6 @@ jobs:
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
     env:
-      MATRIX_OS: ${{ matrix.os }}
       UPX_CMAKE_BUILD_FLAGS: --verbose
     strategy:
       fail-fast: false
@@ -72,7 +71,7 @@ jobs:
       - name: 'Make artifact'
         id: make_artifact
         run: |
-          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${MATRIX_OS}
+          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
           mkdir -p "tmp/artifact/$N"
           (cd build && cp -ai --parents */upx "../tmp/artifact/$N")
           (cd tmp/artifact && tar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
@@ -83,13 +82,18 @@ jobs:
         with:
           name: ${{ steps.make_artifact.outputs.upload_name }}
           path: tmp/artifact
+      - name: 'Run basic tests'
+        run: |
+          make -C build/debug-gcc test
+          make -C build/release-gcc test
+          make -C build/debug-clang test
+          make -C build/release-clang test
 
   job-macos-cmake:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
     env:
-      MATRIX_OS: ${{ matrix.os }}
       UPX_CMAKE_BUILD_FLAGS: --verbose
     strategy:
       fail-fast: false
@@ -115,7 +119,7 @@ jobs:
       - name: 'Make artifact'
         id: make_artifact
         run: |
-          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${MATRIX_OS}
+          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
           mkdir -p "tmp/artifact/$N"
           (cd build && rsync -R -a */upx "../tmp/artifact/$N/")
           (cd tmp/artifact && gtar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
@@ -126,13 +130,16 @@ jobs:
         with:
           name: ${{ steps.make_artifact.outputs.upload_name }}
           path: tmp/artifact
+      - name: 'Run basic tests'
+        run: |
+          make -C build/debug-clang test
+          make -C build/release-clang test
 
   job-windows-cmake:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
     env:
-      MATRIX_OS: ${{ matrix.os }}
       UPX_CMAKE_BUILD_FLAGS: --verbose
     strategy:
       fail-fast: false
@@ -162,7 +169,7 @@ jobs:
         id: make_artifact
         shell: bash
         run: |
-          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${MATRIX_OS}
+          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
           mkdir -p "tmp/artifact/$N"
           (cd build && cp -ai --parents */*/upx.exe "../tmp/artifact/$N")
           # GitHub Actions magic: set "upload_name" Javascript outputs value for use in next step
@@ -172,6 +179,10 @@ jobs:
         with:
           name: ${{ steps.make_artifact.outputs.upload_name }}
           path: tmp/artifact
+      - name: 'Run basic tests'
+        run: |
+          cmake --build build/debug   --config Debug   --target RUN_TESTS
+          cmake --build build/release --config Release --target RUN_TESTS
 
   job-linux-toolchains:
     if: ${{ false }}  # disable for now
@@ -306,7 +317,6 @@ jobs:
       C: ${{ matrix.C }}
       B: release
       H: 'd:\a\upx'
-      MATRIX_NAME: ${{ matrix.name }}
 
     strategy:
       fail-fast: false
@@ -319,7 +329,6 @@ jobs:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
-
       - name: 'Prepare sources'
         shell: cmd
         run: |
@@ -330,12 +339,10 @@ jobs:
           md build build\%C% deps
           cd deps
           git clone --depth=1 https://github.com/upx/upx-testsuite
-
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.A }}
-
       - name: 'Build'
         shell: cmd
         run: |
@@ -345,53 +352,49 @@ jobs:
           md %BDIR% %BDIR%\ucl %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib
           set DEFS=-D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
-          @REM build UCL
+          @REM ===== build UCL =====
           cd %BDIR%\ucl
           set s=%H%\upx\vendor\ucl
           cl -MT -J -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
           link -lib -out:ucl.lib *.obj
-          @REM build zlib
+          @REM ===== build zlib =====
           cd %BDIR%\zlib
           cl -MT -J -O2 -W3 %DEFS% -c %H%\upx\vendor\zlib\*.c
           link -lib -out:zlib.lib *.obj
-          @REM build UPX
+          @REM ===== build UPX =====
           cd %BDIR%\upx
           set s=%H%\upx\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
           cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%H%\upx\vendor\doctest -I%H%\upx\vendor\lzma-sdk -I%H%\upx\vendor\ucl\include -I%H%\upx\vendor\zlib -Feupx.exe %s%\*.cpp %s%\util\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
-
-      - name: 'Basic tests'
-        shell: cmd
+      - name: 'Make artifact'
+        id: make_artifact
+        shell: bash
         run: |
-          cd %H%\build\%C%\%B%\upx
-          set UPX=--no-color --no-progress
+          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.name }}
+          mkdir -p "tmp/artifact/$N/$B"
+          cp -ai ../build/$C/$B/upx/upx*.exe "tmp/artifact/$N/$B"
+          # GitHub Actions magic: set "upload_name" Javascript outputs value for use in next step
+          echo "::set-output name=upload_name::$N"
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.make_artifact.outputs.upload_name }}
+          path: tmp/artifact
+      - name: 'Run basic tests'
+        run: |
+          $ErrorActionPreference = 'stop'
+          $ErrorView = 'NormalView'
+          cd $Env:H\build\$Env:C\$Env:B\upx
+          $Env:UPX = "--no-color --no-progress"
           .\upx.exe --version
           .\upx.exe upx.exe -o upx_packed.exe
           dir *.exe
           .\upx.exe -l upx_packed.exe
           .\upx.exe -t upx_packed.exe
           .\upx_packed.exe --version
-
       - name: 'Run test suite'
-        shell: cmd
         run: |
           bash ./.github/travis_testsuite_1.sh
-
-      - name: 'Make artifact'
-        id: make_artifact
-        shell: bash
-        run: |
-          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${MATRIX_NAME}
-          mkdir -p "tmp/artifact/$N/$B"
-          cp -ai ../build/$C/$B/upx/upx*.exe "tmp/artifact/$N/$B"
-          # GitHub Actions magic: set "upload_name" Javascript outputs value for use in next step
-          echo "::set-output name=upload_name::$N"
-
-      - name: 'Upload artifact'
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ steps.make_artifact.outputs.upload_name }}
-          path: tmp/artifact
 
 # vim:set ts=2 sw=2 et:

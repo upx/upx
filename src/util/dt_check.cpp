@@ -36,10 +36,13 @@ bool upx_doctest_check(int argc, char **argv) {
     UNUSED(argc);
     UNUSED(argv);
 #else
+    const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
+    if (e && e[0] && strcmp(e, "0") != 0)
+        return true;
     bool minimal = true;   // only show failing tests
     bool duration = false; // show timings
     bool success = false;  // show all tests
-    const char *e = getenv("UPX_DEBUG_DOCTEST_VERBOSE");
+    e = getenv("UPX_DEBUG_DOCTEST_VERBOSE");
     if (e && e[0] && strcmp(e, "0") != 0) {
         minimal = false;
         if (strcmp(e, "2") == 0)

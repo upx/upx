@@ -161,11 +161,26 @@ endif()
 # "make test"
 #***********************************************************************
 
-# TODO: could add some explicit test programs; but then, the integrated
+if (NOT CMAKE_CROSSCOMPILING)
+    include(CTest)
+    set(exe ${CMAKE_EXECUTABLE_SUFFIX})
+    set(upx_self_exe "$<TARGET_FILE:upx>")
+    add_test(NAME upx-test-cleanup COMMAND rm -f ./upx.packed${exe} ./upx.unpacked${exe})
+    add_test(NAME upx-version      COMMAND upx --version)
+    add_test(NAME upx-help         COMMAND upx --help)
+    add_test(NAME upx-self-pack    COMMAND upx -3 ${upx_self_exe} -o upx.packed${exe})
+    add_test(NAME upx-list         COMMAND upx -l upx.packed${exe})
+    add_test(NAME upx-fileinfo     COMMAND upx --fileinfo upx.packed${exe})
+    add_test(NAME upx-test         COMMAND upx -t upx.packed${exe})
+    add_test(NAME upx-unpack       COMMAND upx -d upx.packed${exe} -o upx.unpacked${exe})
+    add_test(NAME upx-run-unpacked COMMAND ./upx.unpacked${exe} --version)
+    add_test(NAME upx-run-packed   COMMAND ./upx.packed${exe} --version)
+endif()
+
+# TODO: could add some more explicit test programs; but then, the integrated
 # "doctest" is quite convenient and already covers a number of basic
 # checks - and more complex cases better should be handled by an
 # external test suite.
-##include(CTest)
 
 #***********************************************************************
 # "make install"

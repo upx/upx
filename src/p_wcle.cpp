@@ -413,7 +413,7 @@ void PackWcle::preprocessFixups()
     set_le32(fix,0xFFFFFFFFUL);
     fix += 4;
 
-    sofixups = ptr_udiff(fix, ifixups);
+    sofixups = ptr_udiff_bytes(fix, ifixups);
 }
 
 

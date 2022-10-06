@@ -174,6 +174,7 @@ if [[ $BM_B =~ (^|\+)coverage($|\+) ]]; then
 fi
 
 export UPX="--prefer-ucl --no-color --no-progress"
+export UPX_DEBUG_DISABLE_GITREV_WARNING=1
 export UPX_DISABLE_GITREV_WARNING=1
 
 # let's go

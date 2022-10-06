@@ -35,19 +35,27 @@ unsigned long long span_check_stats_check_range = 0;
 __acc_noinline void span_fail_nullptr() {
     throwCantUnpack("span unexpected NULL pointer; take care!");
 }
-
 __acc_noinline void span_fail_not_same_base() {
     throwInternalError("span unexpected base pointer; take care!");
 }
+__acc_noinline void span_fail_range_nullptr() {
+    throwCantUnpack("span_check_range: unexpected NULL pointer; take care!");
+}
+__acc_noinline void span_fail_range_nullbase() {
+    throwCantUnpack("span_check_range: unexpected NULL base; take care!");
+}
+__acc_noinline void span_fail_range_range() {
+    throwCantUnpack("span_check_range: pointer out of range; take care!");
+}
 
-__acc_noinline void span_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes) {
+void span_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes) {
     if __acc_very_unlikely (p == nullptr)
-        throwCantUnpack("span_check_range: unexpected NULL pointer; take care!");
+        span_fail_range_nullptr();
     if __acc_very_unlikely (base == nullptr)
-        throwCantUnpack("span_check_range: unexpected NULL base; take care!");
+        span_fail_range_nullbase();
     ptrdiff_t off = (const char *) p - (const char *) base;
     if __acc_very_unlikely (off < 0 || off > size_in_bytes)
-        throwCantUnpack("span_check_range: pointer out of range; take care!");
+        span_fail_range_range();
     span_check_stats_check_range += 1;
     // fprintf(stderr, "span_check_range done\n");
 }

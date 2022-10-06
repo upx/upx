@@ -1223,7 +1223,7 @@ int upx_main(int argc, char *argv[]) {
 
     if (gitrev[0]) {
         bool warn = true;
-        const char *ee = getenv("UPX_DISABLE_GITREV_WARNING");
+        const char *ee = getenv("UPX_DEBUG_DISABLE_GITREV_WARNING");
         if (ee && ee[0] && strcmp(ee, "1") == 0)
             warn = false;
         if (warn) {

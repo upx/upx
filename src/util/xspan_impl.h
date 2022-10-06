@@ -43,7 +43,10 @@ SPAN_NAMESPACE_BEGIN
 
 __acc_noinline void span_fail_nullptr();
 __acc_noinline void span_fail_not_same_base();
-__acc_noinline void span_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes);
+__acc_noinline void span_fail_range_nullptr();
+__acc_noinline void span_fail_range_nullbase();
+__acc_noinline void span_fail_range_range();
+void span_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes);
 
 // help constructor to distinguish between number of elements and bytes
 struct SpanCount {
