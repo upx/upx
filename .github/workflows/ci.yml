@@ -1,6 +1,10 @@
 # Support for GitHub Actions -- https://github.com/features/actions
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
+# note: GitHub Actions runner images are frequently updated, and
+# unfortunately this sometimes breaks builds in mysterious ways...
+# see https://github.com/actions/runner-images.git
+
 name: 'CI'
 
 on:
@@ -10,8 +14,10 @@ on:
       - '!appveyor*'
       - '!gitlab*'
       - '!travis*'
-
   workflow_dispatch:
+
+env:
+  UPX_CMAKE_BUILD_FLAGS: --verbose
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -48,8 +54,6 @@ jobs:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
-    env:
-      UPX_CMAKE_BUILD_FLAGS: --verbose
     strategy:
       fail-fast: false
       matrix:
@@ -93,8 +97,6 @@ jobs:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
-    env:
-      UPX_CMAKE_BUILD_FLAGS: --verbose
     strategy:
       fail-fast: false
       matrix:
@@ -139,8 +141,6 @@ jobs:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
-    env:
-      UPX_CMAKE_BUILD_FLAGS: --verbose
     strategy:
       fail-fast: false
       matrix:
@@ -184,147 +184,22 @@ jobs:
           cmake --build build/debug   --config Debug   --target RUN_TESTS
           cmake --build build/release --config Release --target RUN_TESTS
 
-  job-linux-toolchains:
-    if: ${{ false }}  # disable for now
-    needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { name: amd64-linux-clang-10, os: ubuntu-20.04, C: clang-10-m64 }
-          - { name: amd64-linux-gcc-10,   os: ubuntu-20.04, C: gcc-10-m64 }
-          - { name: i386-linux-clang-10,  os: ubuntu-20.04, C: clang-10-m32 }
-          - { name: i386-linux-gcc-10,    os: ubuntu-20.04, C: gcc-10-m32 }
-          - { name: amd64-linux-clang-10-sanitize, os: ubuntu-20.04, C: clang-10-m64, B: sanitize }
-          - { name: amd64-linux-gcc-10-sanitize,   os: ubuntu-20.04, C: gcc-10-m64,   B: sanitize }
-
-    steps:
-      - name: 'Install extra packages'
-        run: |
-          uname -a; pwd; id; umask
-          #cat /etc/os-release || true
-          #env
-          if [[ ${{ matrix.os }} =~ ^ubuntu ]]; then
-            export DEBIAN_FRONTEND=noninteractive
-            if [[ ${{ matrix.C }} =~ ^(clang|gcc).*-m32$ ]]; then
-              sudo dpkg --add-architecture i386
-              sudo apt-get update
-              sudo apt-get install --only-upgrade apt
-              sudo apt-get install -y g++-9-multilib g++-10-multilib zlib1g-dev:i386
-            fi
-          fi
-
-      - name: 'Check out code'
-        uses: actions/checkout@v3
-        with: { submodules: true }
-
-      - name: 'Prepare sources'
-        run: |
-          cd ..; mkdir -p deps build/github; cd deps
-          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
-          git clone --depth=1 --single-branch https://github.com/upx/upx-testsuite
-
-      - name: 'Build'
-        run: |
-          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
-          export BUILD_LOCAL_UCL=1
-          bash ./.github/travis_build.sh
-
-      - name: 'Run test suite'
-        run: |
-          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
-          bash ./.github/travis_testsuite_1.sh
-
-      - name: 'Make artifact'
-        run: |
-          export C=${{matrix.C}} B=${{matrix.B}}; [ -n "$B" ] || B="release"
-          mkdir tmp
-          cp ../build/github/$C/$B/upx/upx.out tmp/upx
-
-      - name: 'Upload artifact'
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.name }}
-          path: tmp
-
-  job-windows-cross-toolchains:
-    if: ${{ false }}  # disable for now
-    needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { name: amd64-win64-gcc-9, os: ubuntu-20.04, CROSS: x86_64-w64-mingw32, C: gcc-9, T: wine }
-
-    steps:
-      - name: 'Install extra packages'
-        run: |
-          uname -a; pwd; id; umask
-          export DEBIAN_FRONTEND=noninteractive
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64 wine wine64
-
-      - name: 'Check out code'
-        uses: actions/checkout@v3
-        with: { submodules: true }
-
-      - name: 'Prepare sources'
-        run: |
-          cd ..; mkdir -p deps build/github; cd deps
-          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
-          wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.11.tar.xz | tar -xJ
-          git clone --depth=1 --single-branch https://github.com/upx/upx-testsuite
-
-      - name: 'Build'
-        run: |
-          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
-          export CROSS=${{matrix.CROSS}}
-          export BUILD_LOCAL_UCL=1
-          bash ./.github/travis_build.sh
-
-      - name: 'Run test suite using Wine'
-        run: |
-          export C=${{matrix.C}} B=${{matrix.B}} T=${{matrix.T}} X=${{matrix.X}} TRAVIS_OS_NAME=linux
-          export CROSS=${{matrix.CROSS}}
-          bash ./.github/travis_testsuite_1.sh
-
-      - name: 'Make artifact'
-        run: |
-          export C=${{matrix.C}} B=${{matrix.B}}; [ -n "$B" ] || B="release"
-          export CROSS=${{matrix.CROSS}}
-          mkdir tmp
-          cp ../build/github/$CROSS-$C/$B/upx/upx.exe tmp/upx.exe
-
-      - name: 'Upload artifact'
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.name }}
-          path: tmp
-
   job-windows-toolchains:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-
     env:
       C: ${{ matrix.C }}
       B: release
       H: 'd:\a\upx'
-
     strategy:
       fail-fast: false
       matrix:
         include:
           - { name: amd64-win64-msvc-14.2, os: windows-2019, C: msvc-14.2-x64, A: x64 }
+          - { name: amd64-win64-msvc-14.3, os: windows-2022, C: msvc-14.3-x64, A: x64 }
           - { name: i386-win32-msvc-14.2,  os: windows-2019, C: msvc-14.2-x86, A: x86 }
-
+          - { name: i386-win32-msvc-14.3,  os: windows-2022, C: msvc-14.3-x86, A: x86 }
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
