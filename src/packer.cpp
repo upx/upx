@@ -941,7 +941,7 @@ unsigned Packer::unoptimizeReloc(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, 
         }
     }
     in = p + 1;
-    return ptr_udiff_bytes(relocs, out);
+    return ptr_udiff_bytes(relocs, out) / 4; // return number of relocs
 }
 
 unsigned Packer::unoptimizeReloc32(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
