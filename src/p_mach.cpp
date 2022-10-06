@@ -187,6 +187,7 @@ static int is_bad_linker_command(
     unsigned cmd, unsigned cmdsize,
     unsigned headway, unsigned lc_seg, unsigned szAddr)
 {
+    cmd &= ~LC_REQ_DYLD;
    return !cmd  // there is no LC_ cmd 0
    || sizeof(lc_cmd_size) <= cmd  // beyond table of known sizes
    || !lc_cmd_size[cmd]  // obsolete, or proper size not known to us
