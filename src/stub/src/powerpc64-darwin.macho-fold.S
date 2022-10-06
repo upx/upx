@@ -1,10 +1,10 @@
-/* powerpc-darwin.macho-fold.S -- linkage to C code to process Mach-o binary
+/* powerpc64-darwin.macho-fold.S -- linkage to C code to process Mach-o binary
 *
 *  This file is part of the UPX executable compressor.
 *
-*  Copyright (C) 1996-2021 Markus Franz Xaver Johannes Oberhumer
-*  Copyright (C) 1996-2021 Laszlo Molnar
-*  Copyright (C) 2000-2021 John F. Reiser
+*  Copyright (C) 1996-2022 Markus Franz Xaver Johannes Oberhumer
+*  Copyright (C) 1996-2022 Laszlo Molnar
+*  Copyright (C) 2000-2022 John F. Reiser
 *  All Rights Reserved.
 *
 *  UPX and the UCL library are free software; you can redistribute them
@@ -29,8 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/powerpc/64le/macros.S"
-#include "arch/powerpc/64le/ppc_regs.h"
+#include "arch/powerpc/64/macros.S"
+#include "arch/powerpc/64/ppc_regs.h"
 retaddr = 2*8
 
 sz_b_info= 12

@@ -45,7 +45,6 @@
         CPU_TYPE_ARM64     = 0x0100000c,
         CPU_TYPE_POWERPC   = 0x00000012,
         CPU_TYPE_POWERPC64 = 0x01000012,
-        CPU_TYPE_POWERPC64LE = 0x01000021
     };
     enum { // cpusubtype
         CPU_SUBTYPE_ARM_ALL = 0,

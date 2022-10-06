@@ -480,10 +480,10 @@ constexpr bool string_ge(const char *a, const char *b) {
 
 #define UPX_F_MACH_ARM64EL      37
 
-#define UPX_F_MACH_PPC64LE      38
+//#define UPX_F_MACH_PPC64LE      38            // DOES NOT EXIST
 #define UPX_F_LINUX_ELFPPC64LE  39
 #define UPX_F_VMLINUX_PPC64LE   40
-#define UPX_F_DYLIB_PPC64LE     41
+//#define UPX_F_DYLIB_PPC64LE     41            // DOES NOT EXIST
 
 #define UPX_F_LINUX_ELF64_ARM   42
 
