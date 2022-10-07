@@ -4893,9 +4893,11 @@ void PackLinuxElf64::un_shlib_1(
         c_adler, u_adler, false, szb_info);
     // Recover original Elf headers from current output file
     InputFile u_fi;
-    u_fi.open(fo->getName(), 0);
-    u_fi.readx((void *)o_elfhdrs,o_elfhdrs.getSize());
-    u_fi.close();
+    if (fo) {
+        u_fi.open(fo->getName(), 0);
+        u_fi.readx((void *)o_elfhdrs,o_elfhdrs.getSize());
+        u_fi.close();
+    }
 
     Elf64_Phdr const *t_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
     unsigned t_flags = get_te32(&t_phdr->p_flags);
@@ -4938,8 +4940,10 @@ void PackLinuxElf64::un_shlib_1(
                         fi->seek(i_offset, SEEK_SET);
                         fi->readx(ibuf, filesz);
                         total_in += filesz;
-                        fo->seek(o_offset, SEEK_SET);
-                        fo->write(ibuf, filesz);
+                        if (fo) {
+                            fo->seek(o_offset, SEEK_SET);
+                            fo->write(ibuf, filesz);
+                        }
                         total_out = filesz + o_offset;  // high-water mark
                     }
                 }
@@ -4947,8 +4951,10 @@ void PackLinuxElf64::un_shlib_1(
         }
     }
     else { // Old style
-        Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
-        fi->seek(o_phdr->p_offset, SEEK_CUR);  // DEBUG no-op
+        if (fo) {
+            Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
+            fi->seek(o_phdr->p_offset, SEEK_CUR);  // DEBUG no-op
+        }
     }
 
     // position fi at loader offset
