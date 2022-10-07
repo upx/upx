@@ -119,15 +119,15 @@ L90:
 
         mov %ecx,%eax
         xor %edi,%eax
-        xor   $8,%eax
-        and   $8,%eax
+        xor   $NBPW,%eax
+        and   $NBPW,%eax
         sub %rax,%rdi  # keep 16-byte alignment of %rsp
 
         mov %rdi,%r14  # end of new auxv
-        sub $8,%rdi        # &last qword of new auxv
-        lea -8(%r15),%rsi  # &last qword of old auxv
+        sub $NBPW,%rdi        # &last qword of new auxv
+        lea -NBPW(%r15),%rsi  # &last qword of old auxv
         shr   $3,%rcx; rep movsq
-        lea 8(%rdi),%rsp
+        lea NBPW(%rdi),%rsp
      cld
 
         lea (%r14,%r12),%arg4  # &new Elf64_auxv
@@ -154,11 +154,10 @@ L90:
 
 sz_Ehdr= 8*NBPW
 sz_Phdr= 7*NBPW
-p_vaddr= 4+4+8
+p_memsz= 4+4+ 4*NBPW
 // Discard pages of compressed data (includes [ADRX,+LENX) )
-        movq p_vaddr+sz_Phdr+sz_Ehdr(%r13),%arg2  #   Phdr[C_TEXT= 1].p_vaddr
+        movq p_memsz+sz_Phdr+sz_Ehdr(%r13),%arg2  #   Phdr[C_TEXT= 1].p_memsz
         movq %r13,%arg1  # hi elfaddr
-        subq p_vaddr        +sz_Ehdr(%r13),%arg2  # - Phdr[C_BASE= 0].p_vaddr ==> len
         call munmap  # discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that the symlink does not disappear.
@@ -176,7 +175,7 @@ p_vaddr= 4+4+8
         pop %arg1  # ADRU: unfolded upx_main etc.
         pop %arg2  # LENU
         push $__NR_munmap; pop %rax
-        jmp *-8(%r14)  # goto: syscall; pop %rdx; ret
+        jmp *-NBPW(%r14)  # goto: syscall; pop %rdx; ret
 
 mmap: .globl mmap
         movb $ __NR_mmap,%al
