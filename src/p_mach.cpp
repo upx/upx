@@ -1724,7 +1724,7 @@ int PackMachBase<T>::canUnpack()
     }
 
     int const small = 32 + sizeof(overlay_offset);
-    unsigned bufsize = 4096;
+    unsigned bufsize = 4096 + sizeof(PackHeader);
     if (391 == style) { // PackHeader precedes __LINKEDIT
         fi->seek(offLINK - bufsize, SEEK_SET);
     } else
@@ -1740,7 +1740,7 @@ int PackMachBase<T>::canUnpack()
         }
     } else
     if (395 == style) {
-        fi->seek(offLINK - bufsize - sizeof(PackHeader), SEEK_SET);
+        fi->seek(offLINK - bufsize, SEEK_SET);
     }
     MemBuffer buf(bufsize);
     MemBuffer buf3(bufsize);
