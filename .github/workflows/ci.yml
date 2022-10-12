@@ -73,18 +73,17 @@ jobs:
       - name: 'Build cmake release-clang'
         run:   'make build/release-clang'
       - name: 'Make artifact'
-        id: make_artifact
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
           mkdir -p "tmp/artifact/$N"
           (cd build && cp -ai --parents */upx "../tmp/artifact/$N")
           (cd tmp/artifact && tar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
-          # GitHub Actions magic: set "upload_name" Javascript outputs value for use in next step
-          echo "::set-output name=upload_name::$N"
+          # GitHub Actions magic: set "artifact_name" environment value for use in next step
+          echo "artifact_name=$N" >> $GITHUB_ENV
       - name: 'Upload artifact'
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.make_artifact.outputs.upload_name }}
+          name: ${{ env.artifact_name }}
           path: tmp/artifact
       - name: 'Run basic tests'
         run: |
@@ -119,18 +118,17 @@ jobs:
       - name: 'Build cmake release-clang'
         run:   'make build/release-clang'
       - name: 'Make artifact'
-        id: make_artifact
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
           mkdir -p "tmp/artifact/$N"
           (cd build && rsync -R -a */upx "../tmp/artifact/$N/")
           (cd tmp/artifact && gtar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
-          # GitHub Actions magic: set "upload_name" Javascript outputs value for use in next step
-          echo "::set-output name=upload_name::$N"
+          # GitHub Actions magic: set "artifact_name" environment value for use in next step
+          echo "artifact_name=$N" >> $GITHUB_ENV
       - name: 'Upload artifact'
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.make_artifact.outputs.upload_name }}
+          name: ${{ env.artifact_name }}
           path: tmp/artifact
       - name: 'Run basic tests'
         run: |
@@ -166,18 +164,17 @@ jobs:
       - name: 'Build cmake release'
         run:   'make build/release'
       - name: 'Make artifact'
-        id: make_artifact
         shell: bash
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
           mkdir -p "tmp/artifact/$N"
           (cd build && cp -ai --parents */*/upx.exe "../tmp/artifact/$N")
-          # GitHub Actions magic: set "upload_name" Javascript outputs value for use in next step
-          echo "::set-output name=upload_name::$N"
+          # GitHub Actions magic: set "artifact_name" environment value for use in next step
+          echo "artifact_name=$N" >> $GITHUB_ENV
       - name: 'Upload artifact'
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.make_artifact.outputs.upload_name }}
+          name: ${{ env.artifact_name }}
           path: tmp/artifact
       - name: 'Run basic tests'
         run: |
@@ -243,18 +240,17 @@ jobs:
           set /p GITREV=<.GITREV.txt
           cl -MT -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%H%\upx\vendor\doctest -I%H%\upx\vendor\lzma-sdk -I%H%\upx\vendor\ucl\include -I%H%\upx\vendor\zlib -Feupx.exe %s%\*.cpp %s%\util\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
       - name: 'Make artifact'
-        id: make_artifact
         shell: bash
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.name }}
           mkdir -p "tmp/artifact/$N/$B"
           cp -ai ../build/$C/$B/upx/upx*.exe "tmp/artifact/$N/$B"
-          # GitHub Actions magic: set "upload_name" Javascript outputs value for use in next step
-          echo "::set-output name=upload_name::$N"
+          # GitHub Actions magic: set "artifact_name" environment value for use in next step
+          echo "artifact_name=$N" >> $GITHUB_ENV
       - name: 'Upload artifact'
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.make_artifact.outputs.upload_name }}
+          name: ${{ env.artifact_name }}
           path: tmp/artifact
       - name: 'Run basic tests'
         run: |
