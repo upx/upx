@@ -49,7 +49,7 @@ public:
     virtual void unpack(OutputFile *fo) override;
 
     virtual bool canPack() override;
-    virtual int canUnpack() override;
+    virtual int  canUnpack() override;  // really 'bool'
     int find_overlay_offset(MemBuffer const &buf);
 
 protected:

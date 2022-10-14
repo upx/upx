@@ -42,7 +42,7 @@ public:
     /*virtual void buildLoader(const Filter *);*/
     virtual int getVersion() const override { return 14; } // upx-3.96 cannot upack, for instance
     virtual bool canUnpackVersion(int version) const override { return (version >= 11); }
-    virtual int  canUnpack() override { return super::canUnpack(); }
+    virtual int  canUnpack() override { return super::canUnpack(); }  // really 'bool'
 
 protected:
     virtual const int *getCompressionMethods(int method, int level) const override;
@@ -123,7 +123,7 @@ protected:
     virtual void PackLinuxElf32help1(InputFile *f);
     virtual int checkEhdr(Elf32_Ehdr const *ehdr) const;
     virtual bool canPack() override;
-    virtual int  canUnpack() override;
+    virtual int  canUnpack() override;  // really 'bool'
 
     // These ARM routines are essentially common to big/little endian,
     // but the class hierarchy splits after this class.
@@ -266,7 +266,7 @@ protected:
     virtual void PackLinuxElf64help1(InputFile *f);
     virtual int checkEhdr(Elf64_Ehdr const *ehdr) const;
     virtual bool canPack() override;
-    virtual int  canUnpack() override;
+    virtual int  canUnpack() override;  // really 'bool'
 
     virtual void pack1(OutputFile *, Filter &) override;  // generate executable header
     virtual int  pack2(OutputFile *, Filter &) override;  // append compressed data
@@ -558,7 +558,7 @@ public:
     virtual const char *getName() const override { return "linux/i386"; }
     virtual const char *getFullName(const options_t *) const override { return "i386-linux.elf"; }
     virtual const int *getFilters() const override;
-    virtual int canUnpack() override;
+    virtual int  canUnpack() override;  // reallly 'bool'
 
 protected:
     virtual void pack1(OutputFile *, Filter &) override;  // generate executable header
