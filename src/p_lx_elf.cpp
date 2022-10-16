@@ -3694,6 +3694,243 @@ void PackLinuxElf64ppc::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, stub_powerpc64_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
+void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
+{
+    // In order to pacify the runtime linker on Android "O" ("Oreo"),
+    // we will splice-in a 4KiB page that contains an "extra" copy
+    // of the Shdr, any PT_NOTE above xct_off, and shstrtab.
+    // File order: Ehdr, Phdr[], section contents below xct_off,
+    //    Shdr_copy[], PT_NOTEs.hi, shstrtab.
+    xct_va  += asl_delta;
+    //xct_off += asl_delta;  // not until ::pack3()
+
+    // Relocate PT_DYNAMIC (in 2nd PT_LOAD)
+    Elf64_Dyn *dyn = const_cast<Elf64_Dyn *>(dynseg);
+    for (; dyn->d_tag; ++dyn) {
+        upx_uint64_t d_tag = get_te64(&dyn->d_tag);
+        if (Elf64_Dyn::DT_FINI       == d_tag
+        ||  Elf64_Dyn::DT_FINI_ARRAY == d_tag
+        ||  Elf64_Dyn::DT_INIT_ARRAY == d_tag
+        ||  Elf64_Dyn::DT_PREINIT_ARRAY == d_tag
+        ||  Elf64_Dyn::DT_PLTGOT      == d_tag) {
+            upx_uint64_t d_val = get_te64(&dyn->d_val);
+            set_te64(&dyn->d_val, asl_delta + d_val);
+        }
+    }
+    // Updated dynseg (.dynamic, in PT_DYNAMIC (PT_LOAD[1])) has not been written.
+    // dynseg is in file_image[] but not in low_mem[].
+
+    // Relocate dynsym (DT_SYMTAB) which is below xct_va
+    upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
+    upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
+    if ((upx_uint64_t)file_size < sz_dynsym
+    ||  (upx_uint64_t)file_size < off_dynsym
+    || ((upx_uint64_t)file_size - off_dynsym) < sz_dynsym) {
+        throwCantPack("bad DT_SYMTAB");
+    }
+    Elf64_Sym *dyntym = (Elf64_Sym *)lowmem.subref(
+        "bad dynsym", off_dynsym, sz_dynsym);
+    Elf64_Sym *sym = dyntym;
+    for (int j = sz_dynsym / sizeof(Elf64_Sym); --j>=0; ++sym) {
+        upx_uint64_t symval = get_te64(&sym->st_value);
+        unsigned symsec = get_te16(&sym->st_shndx);
+        if (Elf64_Sym::SHN_UNDEF != symsec
+        &&  Elf64_Sym::SHN_ABS   != symsec
+        &&  xct_off <= symval) {
+            set_te64(&sym->st_value, asl_delta + symval);
+        }
+        if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
+            adjABS(sym, asl_delta);
+        }
+    }
+
+    // Relocate Phdr virtual addresses, but not physical offsets and sizes
+    unsigned char buf_notes[512]; memset(buf_notes, 0, sizeof(buf_notes));
+    unsigned len_notes = 0;
+    Elf64_Phdr *phdr = (Elf64_Phdr *)lowmem.subref(
+        "bad e_phoff", e_phoff, e_phnum * sizeof(Elf64_Phdr));
+    for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
+        upx_uint64_t offset = get_te64(&phdr->p_offset);
+        if (xct_off <= offset) { // above the extra page
+            if (PT_NOTE64 == get_te32(&phdr->p_type)) {
+                upx_uint64_t memsz = get_te64(&phdr->p_memsz);
+                if (sizeof(buf_notes) < (memsz + len_notes)) {
+                    throwCantPack("PT_NOTES too big");
+                }
+                set_te64(&phdr->p_vaddr,
+                    len_notes + (e_shnum * sizeof(Elf64_Shdr)) + xct_off);
+                phdr->p_offset = phdr->p_paddr = phdr->p_vaddr;
+                memcpy(&buf_notes[len_notes], &file_image[offset], memsz);
+                len_notes += memsz;
+            }
+            else {
+                //set_te64(&phdr->p_offset, asl_delta + offset);  // physical
+                upx_uint64_t addr = get_te64(&phdr->p_paddr);
+                set_te64(&phdr->p_paddr, asl_delta + addr);
+                             addr = get_te64(&phdr->p_vaddr);
+                set_te64(&phdr->p_vaddr, asl_delta + addr);
+            }
+        }
+        // .p_filesz,.p_memsz are updated in ::pack3
+    }
+
+    Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)&lowmem[0];
+    upx_uint64_t e_entry = get_te64(&ehdr->e_entry);
+    if (xct_off < e_entry) {
+        set_te64(&ehdr->e_entry, asl_delta + e_entry);
+    }
+    // Relocate Shdr; and Rela, Rel (below xct_off)
+    set_te64(&ehdr->e_shoff, xct_off);
+    memcpy(&lowmem[xct_off], shdri, e_shnum * sizeof(Elf64_Shdr));
+    Elf64_Shdr *const shdro = (Elf64_Shdr *)&lowmem[xct_off];
+    Elf64_Shdr *shdr = shdro;
+    upx_uint64_t sz_shstrtab  = get_te64(&sec_strndx->sh_size);
+    for (unsigned j = 0; j < e_shnum; ++j, ++shdr) {
+        unsigned sh_type = get_te32(&shdr->sh_type);
+        upx_uint64_t sh_size = get_te64(&shdr->sh_size);
+        upx_uint64_t sh_offset = get_te64(&shdr->sh_offset);
+        upx_uint64_t sh_entsize = get_te64(&shdr->sh_entsize);
+        if ((upx_uint64_t)file_size < sh_size
+        ||  (upx_uint64_t)file_size < sh_offset
+        || (Elf64_Shdr::SHT_NOBITS != sh_type
+           && ((upx_uint64_t)file_size - sh_offset) < sh_size) ) {
+            throwCantPack("bad SHT_STRNDX");
+        }
+
+        if (xct_off <= sh_offset) {
+            upx_uint64_t addr = get_te64(&shdr->sh_addr);
+            set_te64(&shdr->sh_addr, asl_delta + addr);
+            set_te64(&shdr->sh_offset, asl_delta + sh_offset);
+        }
+        switch (sh_type) {
+        default: break;
+        case Elf64_Shdr::SHT_RELA: {
+            if (sizeof(Elf64_Rela) != sh_entsize) {
+                char msg[50];
+                snprintf(msg, sizeof(msg), "bad Rela.sh_entsize %lu", (long)sh_entsize);
+                throwCantPack(msg);
+            }
+            n_jmp_slot = 0;
+            plt_off = ~0ull;
+            Elf64_Rela *const relb = (Elf64_Rela *)lowmem.subref(
+                 "bad Rela offset", sh_offset, sh_size);
+            Elf64_Rela *rela = relb;
+            for (int k = sh_size / sh_entsize; --k >= 0; ++rela) {
+                upx_uint64_t r_addend = get_te64(&rela->r_addend);
+                upx_uint64_t r_offset = get_te64(&rela->r_offset);
+                upx_uint64_t r_info   = get_te64(&rela->r_info);
+                unsigned r_type = ELF64_R_TYPE(r_info);
+                if (xct_off <= r_offset) {
+                    set_te64(&rela->r_offset, asl_delta + r_offset);
+                }
+                if (Elf64_Ehdr::EM_AARCH64 == e_machine) switch (r_type) {
+                    default: {
+                        char msg[90]; snprintf(msg, sizeof(msg),
+                            "unexpected relocation %#x [%#x]",
+                            r_type, -1 + (unsigned)(sh_size / sh_entsize) - k);
+                        throwCantPack(msg);
+                    } break;
+                    case R_AARCH64_ABS64: // FALL THROUGH
+                    case R_AARCH64_GLOB_DAT: // FALL THROUGH
+                    case R_AARCH64_RELATIVE: {
+                        if (xct_off <= r_addend) {
+                            set_te64(&rela->r_addend, asl_delta + r_addend);
+                        }
+                    } break;
+                    case R_AARCH64_JUMP_SLOT: {
+                        // .rela.plt contains offset of the "first time" target
+                        if (plt_off > r_offset) {
+                            plt_off = r_offset;
+                        }
+                        upx_uint64_t d = elf_get_offset_from_address(r_offset);
+                        upx_uint64_t w = get_te64(&file_image[d]);
+                        if (xct_off <= w) {
+                            set_te64(&file_image[d], asl_delta + w);
+                        }
+                        ++n_jmp_slot;
+                    } break;
+                }
+            }
+            fo->seek(sh_offset, SEEK_SET);
+            fo->rewrite(relb, sh_size);
+        }; break;
+        case Elf64_Shdr::SHT_REL: {
+            if (sizeof(Elf64_Rel) != sh_entsize) {
+                char msg[50];
+                snprintf(msg, sizeof(msg), "bad Rel.sh_entsize %lu", (long)sh_entsize);
+                throwCantPack(msg);
+            }
+            Elf64_Rel *rel = (Elf64_Rel *)lowmem.subref(
+                    "bad Rel sh_offset", sh_offset, sh_size);
+            for (int k = sh_size / sh_entsize; --k >= 0; ++rel) {
+                upx_uint64_t r_offset = get_te64(&rel->r_offset);
+                if (xct_off <= r_offset) {
+                    set_te64(&rel->r_offset, asl_delta + r_offset);
+                }
+                // r_offset must be in 2nd PT_LOAD; .p_vaddr was already relocated
+                upx_uint64_t d = elf_get_offset_from_address(asl_delta + r_offset);
+                upx_uint64_t w = get_te64(&file_image[d]);
+                upx_uint64_t r_info = get_te64(&rel->r_info);
+                unsigned r_type = ELF64_R_TYPE(r_info);
+                if (xct_off <= w
+                &&  Elf64_Ehdr::EM_AARCH64 == e_machine
+                &&  (  R_AARCH64_RELATIVE  == r_type
+                    || R_AARCH64_JUMP_SLOT == r_type)) {
+                    set_te64(&file_image[d], asl_delta + w);
+                }
+            }
+        }; break;
+        case Elf64_Shdr::SHT_NOTE: {
+            if (!(Elf64_Shdr::SHF_ALLOC & get_te64(&shdr->sh_flags))) {
+                // example: version numer of 'gold' linker (static binder)
+                if (sizeof(buf_notes) < (sh_size + len_notes)) {
+                    throwCantPack("SHT_NOTEs too big");
+                }
+                set_te64(&shdro[j].sh_offset,
+                    len_notes + (e_shnum * sizeof(Elf64_Shdr)) + xct_off);
+                memcpy(&buf_notes[len_notes], &file_image[sh_offset], sh_size);
+                len_notes += sh_size;
+            }
+            else { // SHF_ALLOC: in PT_LOAD; but move sh_addr and sh_offset
+                // Not sure why we need this conditional.
+                // Anyway, some Android have multiple SHT_NOTE sections.
+                if (xct_off <= sh_offset) {
+                    upx_uint64_t pos = xct_off + e_shnum * sizeof(Elf64_Shdr);
+                    set_te64(&shdr->sh_addr,   pos);
+                    set_te64(&shdr->sh_offset, pos);
+                }
+            }
+        }; break;
+        } // end switch (sh_type)
+    }
+    // shstrndx will move
+    set_te64(&shdro[get_te16(&ehdri.e_shstrndx)].sh_offset,
+        len_notes + e_shnum * sizeof(Elf64_Shdr) + xct_off);
+
+    // (Re-)write all changes below xct_off
+    fo->seek(0, SEEK_SET);
+    fo->rewrite(lowmem, xct_off);
+
+    // New copy of Shdr
+    Elf64_Shdr blank; memset(&blank, 0, sizeof(blank));
+    set_te64(&blank.sh_offset, xct_off);  // hint for "upx -d"
+    fo->write(&blank, sizeof(blank));
+    fo->write(&shdro[1], (-1+ e_shnum) * sizeof(Elf64_Shdr));
+
+    if (len_notes) {
+        fo->write(buf_notes, len_notes);
+    }
+
+    // New copy of Shdr[.e_shstrndx].[ sh_offset, +.sh_size )
+    fo->write(shstrtab,  sz_shstrtab);
+
+    sz_elf_hdrs = fpad8(fo);
+    //xct_off += asl_delta;  // wait until ::pack3
+
+    memset(&linfo, 0, sizeof(linfo));
+    fo->write(&linfo, sizeof(linfo));
+}
+
 void PackLinuxElf64::pack1(OutputFile *fo, Filter &ft)
 {
     fi->seek(0, SEEK_SET);
@@ -3839,238 +4076,13 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter &ft)
             ? 0
             : e_shnum * sizeof(Elf64_Shdr)));
         memcpy(lowmem, file_image, xct_off);  // android omits Shdr here
-    }
-    if (0!=xct_off && opt->o_unix.android_shlib) { // Android shared library
-        sz_elf_hdrs = xct_off;
-        fo->write(lowmem, xct_off);  // < SHF_EXECINSTR (typ: in .plt or .init)
-        if (opt->o_unix.android_shlib) {
-            // In order to pacify the runtime linker on Android "O" ("Oreo"),
-            // we will splice-in a 4KiB page that contains an "extra" copy
-            // of the Shdr, any PT_NOTE above xct_off, and shstrtab.
-            // File order: Ehdr, Phdr[], section contents below xct_off,
-            //    Shdr_copy[], PT_NOTEs.hi, shstrtab.
-            xct_va  += asl_delta;
-            //xct_off += asl_delta;  // not yet
 
-            // Relocate PT_DYNAMIC (in 2nd PT_LOAD)
-            Elf64_Dyn *dyn = const_cast<Elf64_Dyn *>(dynseg);
-            for (; dyn->d_tag; ++dyn) {
-                upx_uint64_t d_tag = get_te64(&dyn->d_tag);
-                if (Elf64_Dyn::DT_FINI       == d_tag
-                ||  Elf64_Dyn::DT_FINI_ARRAY == d_tag
-                ||  Elf64_Dyn::DT_INIT_ARRAY == d_tag
-                ||  Elf64_Dyn::DT_PREINIT_ARRAY == d_tag
-                ||  Elf64_Dyn::DT_PLTGOT      == d_tag) {
-                    upx_uint64_t d_val = get_te64(&dyn->d_val);
-                    set_te64(&dyn->d_val, asl_delta + d_val);
-                }
-            }
+        if (opt->o_unix.android_shlib) { // Android shared library
+            sz_elf_hdrs = xct_off;
+            fo->write(lowmem, xct_off);  // < SHF_EXECINSTR (typ: in .plt or .init)
 
-            // Relocate dynsym (DT_SYMTAB) which is below xct_va
-            upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
-            upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
-            if ((upx_uint64_t)file_size < sz_dynsym
-            ||  (upx_uint64_t)file_size < off_dynsym
-            || ((upx_uint64_t)file_size - off_dynsym) < sz_dynsym) {
-                throwCantPack("bad DT_SYMTAB");
-            }
-            Elf64_Sym *dyntym = (Elf64_Sym *)lowmem.subref(
-                "bad dynsym", off_dynsym, sz_dynsym);
-            Elf64_Sym *sym = dyntym;
-            for (int j = sz_dynsym / sizeof(Elf64_Sym); --j>=0; ++sym) {
-                upx_uint64_t symval = get_te64(&sym->st_value);
-                unsigned symsec = get_te16(&sym->st_shndx);
-                if (Elf64_Sym::SHN_UNDEF != symsec
-                &&  Elf64_Sym::SHN_ABS   != symsec
-                &&  xct_off <= symval) {
-                    set_te64(&sym->st_value, asl_delta + symval);
-                }
-                if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
-                    adjABS(sym, asl_delta);
-                }
-            }
-
-            // Relocate Phdr virtual addresses, but not physical offsets and sizes
-            unsigned char buf_notes[512]; memset(buf_notes, 0, sizeof(buf_notes));
-            unsigned len_notes = 0;
-            phdr = (Elf64_Phdr *)lowmem.subref(
-                "bad e_phoff", e_phoff, e_phnum * sizeof(Elf64_Phdr));
-            for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
-                upx_uint64_t offset = get_te64(&phdr->p_offset);
-                if (xct_off <= offset) { // above the extra page
-                    if (PT_NOTE64 == get_te32(&phdr->p_type)) {
-                        upx_uint64_t memsz = get_te64(&phdr->p_memsz);
-                        if (sizeof(buf_notes) < (memsz + len_notes)) {
-                            throwCantPack("PT_NOTES too big");
-                        }
-                        set_te64(&phdr->p_vaddr,
-                            len_notes + (e_shnum * sizeof(Elf64_Shdr)) + xct_off);
-                        phdr->p_offset = phdr->p_paddr = phdr->p_vaddr;
-                        memcpy(&buf_notes[len_notes], &file_image[offset], memsz);
-                        len_notes += memsz;
-                    }
-                    else {
-                        //set_te64(&phdr->p_offset, asl_delta + offset);  // physical
-                        upx_uint64_t addr = get_te64(&phdr->p_paddr);
-                        set_te64(&phdr->p_paddr, asl_delta + addr);
-                                     addr = get_te64(&phdr->p_vaddr);
-                        set_te64(&phdr->p_vaddr, asl_delta + addr);
-                    }
-                }
-                // .p_filesz,.p_memsz are updated in ::pack3
-            }
-
-            Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)&lowmem[0];
-            upx_uint64_t e_entry = get_te64(&ehdr->e_entry);
-            if (xct_off < e_entry) {
-                set_te64(&ehdr->e_entry, asl_delta + e_entry);
-            }
-            // Relocate Shdr; and Rela, Rel (below xct_off)
-            set_te64(&ehdr->e_shoff, xct_off);
-            memcpy(&lowmem[xct_off], shdri, e_shnum * sizeof(Elf64_Shdr));
-            Elf64_Shdr *const shdro = (Elf64_Shdr *)&lowmem[xct_off];
-            Elf64_Shdr *shdr = shdro;
-            upx_uint64_t sz_shstrtab  = get_te64(&sec_strndx->sh_size);
-            for (unsigned j = 0; j < e_shnum; ++j, ++shdr) {
-                unsigned sh_type = get_te32(&shdr->sh_type);
-                upx_uint64_t sh_size = get_te64(&shdr->sh_size);
-                upx_uint64_t sh_offset = get_te64(&shdr->sh_offset);
-                upx_uint64_t sh_entsize = get_te64(&shdr->sh_entsize);
-                if ((upx_uint64_t)file_size < sh_size
-                ||  (upx_uint64_t)file_size < sh_offset
-                || (Elf64_Shdr::SHT_NOBITS != sh_type
-                   && ((upx_uint64_t)file_size - sh_offset) < sh_size) ) {
-                    throwCantPack("bad SHT_STRNDX");
-                }
-
-                if (xct_off <= sh_offset) {
-                    upx_uint64_t addr = get_te64(&shdr->sh_addr);
-                    set_te64(&shdr->sh_addr, asl_delta + addr);
-                }
-                if (Elf64_Shdr::SHT_RELA == sh_type) {
-                    if (sizeof(Elf64_Rela) != sh_entsize) {
-                        char msg[50];
-                        snprintf(msg, sizeof(msg), "bad Rela.sh_entsize %lu", (long)sh_entsize);
-                        throwCantPack(msg);
-                    }
-                    n_jmp_slot = 0;
-                    plt_off = ~0ull;
-                    Elf64_Rela *const relb = (Elf64_Rela *)lowmem.subref(
-                         "bad Rela offset", sh_offset, sh_size);
-                    Elf64_Rela *rela = relb;
-                    for (int k = sh_size / sh_entsize; --k >= 0; ++rela) {
-                        upx_uint64_t r_addend = get_te64(&rela->r_addend);
-                        upx_uint64_t r_offset = get_te64(&rela->r_offset);
-                        upx_uint64_t r_info   = get_te64(&rela->r_info);
-                        unsigned r_type = ELF64_R_TYPE(r_info);
-                        if (xct_off <= r_offset) {
-                            set_te64(&rela->r_offset, asl_delta + r_offset);
-                        }
-                        if (Elf64_Ehdr::EM_AARCH64 == e_machine) switch (r_type) {
-                            default: {
-                                char msg[90]; snprintf(msg, sizeof(msg),
-                                    "unexpected relocation %#x [%#x]",
-                                    r_type, -1 + (unsigned)(sh_size / sh_entsize) - k);
-                                throwCantPack(msg);
-                            } break;
-                            case R_AARCH64_ABS64: // FALL THROUGH
-                            case R_AARCH64_GLOB_DAT: // FALL THROUGH
-                            case R_AARCH64_RELATIVE: {
-                                if (xct_off <= r_addend) {
-                                    set_te64(&rela->r_addend, asl_delta + r_addend);
-                                }
-                            } break;
-                            case R_AARCH64_JUMP_SLOT: {
-                                // .rela.plt contains offset of the "first time" target
-                                if (plt_off > r_offset) {
-                                    plt_off = r_offset;
-                                }
-                                upx_uint64_t d = elf_get_offset_from_address(r_offset);
-                                upx_uint64_t w = get_te64(&file_image[d]);
-                                if (xct_off <= w) {
-                                    set_te64(&file_image[d], asl_delta + w);
-                                }
-                                ++n_jmp_slot;
-                            } break;
-                        }
-                    }
-                    fo->seek(sh_offset, SEEK_SET);
-                    fo->rewrite(relb, sh_size);
-                }
-                if (Elf64_Shdr::SHT_REL == sh_type) {
-                    if (sizeof(Elf64_Rel) != sh_entsize) {
-                        char msg[50];
-                        snprintf(msg, sizeof(msg), "bad Rel.sh_entsize %lu", (long)sh_entsize);
-                        throwCantPack(msg);
-                    }
-                    Elf64_Rel *rel = (Elf64_Rel *)lowmem.subref(
-                            "bad Rel sh_offset", sh_offset, sh_size);
-                    for (int k = sh_size / sh_entsize; --k >= 0; ++rel) {
-                        upx_uint64_t r_offset = get_te64(&rel->r_offset);
-                        if (xct_off <= r_offset) {
-                            set_te64(&rel->r_offset, asl_delta + r_offset);
-                        }
-                        // r_offset must be in 2nd PT_LOAD; .p_vaddr was already relocated
-                        upx_uint64_t d = elf_get_offset_from_address(asl_delta + r_offset);
-                        upx_uint64_t w = get_te64(&file_image[d]);
-                        upx_uint64_t r_info = get_te64(&rel->r_info);
-                        unsigned r_type = ELF64_R_TYPE(r_info);
-                        if (xct_off <= w
-                        &&  Elf64_Ehdr::EM_AARCH64 == e_machine
-                        &&  (  R_AARCH64_RELATIVE  == r_type
-                            || R_AARCH64_JUMP_SLOT == r_type)) {
-                            set_te64(&file_image[d], asl_delta + w);
-                        }
-                    }
-                }
-                if (Elf64_Shdr::SHT_NOTE == sh_type) {
-                    if (!(Elf64_Shdr::SHF_ALLOC & get_te64(&shdr->sh_flags))) {
-                        // example: version numer of 'gold' linker (static binder)
-                        if (sizeof(buf_notes) < (sh_size + len_notes)) {
-                            throwCantPack("SHT_NOTEs too big");
-                        }
-                        set_te64(&shdro[j].sh_offset,
-                            len_notes + (e_shnum * sizeof(Elf64_Shdr)) + xct_off);
-                        memcpy(&buf_notes[len_notes], &file_image[sh_offset], sh_size);
-                        len_notes += sh_size;
-                    }
-                    else { // SHF_ALLOC: in PT_LOAD; but move sh_addr and sh_offset
-                        // Not sure why we need this conditional.
-                        // Anyway, some Android have multiple SHT_NOTE sections.
-                        if (xct_off <= sh_offset) {
-                            upx_uint64_t pos = xct_off + e_shnum * sizeof(Elf64_Shdr);
-                            set_te64(&shdr->sh_addr,   pos);
-                            set_te64(&shdr->sh_offset, pos);
-                        }
-                    }
-                }
-            }
-            // shstrndx will move
-            set_te64(&shdro[get_te16(&ehdri.e_shstrndx)].sh_offset,
-                len_notes + e_shnum * sizeof(Elf64_Shdr) + xct_off);
-
-            // (Re-)write all changes below xct_off
-            fo->seek(0, SEEK_SET);
-            fo->rewrite(lowmem, xct_off);
-
-            // New copy of Shdr
-            Elf64_Shdr blank; memset(&blank, 0, sizeof(blank));
-            set_te64(&blank.sh_offset, xct_off);  // hint for "upx -d"
-            fo->write(&blank, sizeof(blank));
-            fo->write(&shdro[1], (-1+ e_shnum) * sizeof(Elf64_Shdr));
-
-            if (len_notes) {
-                fo->write(buf_notes, len_notes);
-            }
-
-            // New copy of Shdr[.e_shstrndx].[ sh_offset, +.sh_size )
-            fo->write(shstrtab,  sz_shstrtab);
-
-            sz_elf_hdrs = fpad8(fo);
-            //xct_off += asl_delta;  // wait until ::pack3
+            asl_pack1_Shdrs(fo);
         }
-        memset(&linfo, 0, sizeof(linfo));
-        fo->write(&linfo, sizeof(linfo));
     }
 
     // only execute if option present
@@ -4365,7 +4377,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
                 if (len != x.size) {
                     linfo.l_checksum = 0;
                     linfo.l_magic = UPX_MAGIC_LE32;
-                    set_le16(&linfo.l_lsize, lsize);
+                    set_le16(&linfo.l_lsize, lsize);  // preliminary (0)
                     linfo.l_version = (unsigned char)ph.version;
                     linfo.l_format =  (unsigned char)ph.format;
                     linfo_off = fo->tell();
