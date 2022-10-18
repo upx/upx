@@ -3694,6 +3694,7 @@ void PackLinuxElf64ppc::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, stub_powerpc64_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
+//FIXME: probably should be part of ::pack2()
 void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
 {
     // In order to pacify the runtime linker on Android "O" ("Oreo"),
@@ -3852,7 +3853,7 @@ void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
                 }
             }
             fo->seek(sh_offset, SEEK_SET);
-            fo->rewrite(relb, sh_size);
+            fo->rewrite(relb, sh_size);  // FIXME  BUG! fo not ready
         }; break;
         case Elf64_Shdr::SHT_REL: {
             if (sizeof(Elf64_Rel) != sh_entsize) {
@@ -3925,6 +3926,8 @@ void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
     fo->write(shstrtab,  sz_shstrtab);
 
     sz_elf_hdrs = fpad8(fo);
+    total_out = sz_elf_hdrs;
+    total_in = xct_off;
     //xct_off += asl_delta;  // wait until ::pack3
 
     memset(&linfo, 0, sizeof(linfo));
@@ -4321,25 +4324,42 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 {
     Extent x;
     unsigned k;
-    bool const is_shlib = (0!=xct_off);
+    unsigned const is_asl = (!!opt->o_unix.android_shlib) << 1;  // bit 1
+    unsigned const is_shlib = (0!=xct_off) | is_asl;
 
     // count passes, set ptload vars
     uip->ui_total_passes = 0;
     for (k = 0; k < e_phnum; ++k) {
         if (PT_LOAD64==get_te32(&phdri[k].p_type)) {
-            uip->ui_total_passes++;
+            if (!is_shlib) {
+                uip->ui_total_passes++;
+            }
+            else {
+                unsigned p_flags = get_te32(&phdri[k].p_flags);
+                if (Elf64_Phdr::PF_W & p_flags) {
+                    // rtld might write, so cannot compress
+                }
+                else {
+                    upx_uint64_t p_filesz = get_te64(&phdri[k].p_filesz);
+                    // First PT_LOAD (partial) only if has instructions
+                    if (k || xct_off < p_filesz) {
+                        uip->ui_total_passes++;
+                    }
+                }
+            }
             if (find_LOAD_gap(phdri, k, e_phnum)) {
                 uip->ui_total_passes++;
             }
         }
     }
-    uip->ui_total_passes -= !!is_shlib;  // not .data of shlib
 
     // compress extents
     unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
 
-    total_in =  (is_shlib ? 0 : xct_off);
-    total_out = (is_shlib ? 0 : xct_off);
+    if (!(is_shlib & is_asl)) {
+        total_in =  0;
+        total_out = 0;
+    }
 
     uip->ui_pass = 0;
     ft.addvalue = 0;
@@ -4363,9 +4383,9 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         x.offset = get_te64(&phdri[k].p_offset);
         x.size   = get_te64(&phdri[k].p_filesz);
         if (is_shlib) {
-            if (x.offset <= xct_off) {
+            if (x.offset <= xct_off) { // first PT_LOAD
                 unsigned const len = umin(x.size, xct_off - x.offset);
-                if (len) {
+                if (len && !is_asl) { // asl_pack1_Shdrs aleady handled
                     fi->seek(x.offset, SEEK_SET);
                     fi->readx(ibuf, x.size);
                     total_in += len;
@@ -4394,9 +4414,14 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 
                     x.offset = 0;
                     x.size = sz_elf_hdrs;
+                    if (is_asl) {
+                        x.size = hdr_u_len;
+                    }
+                    unsigned in_size = x.size;
                     packExtent(x, nullptr, fo, 0, 0, true);
-                    total_in -= sz_elf_hdrs;
+                    total_in -= in_size;
 
+                    // The rest of first PT_LOAD (above xct_off)
                     x.offset = xct_off;
                     x.size = get_te64(&phdri[k].p_filesz) - len;
                     packExtent(x, &ft, fo, 0, 0, true);
