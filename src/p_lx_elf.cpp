@@ -3694,8 +3694,7 @@ void PackLinuxElf64ppc::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, stub_powerpc64_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
-//FIXME: probably should be part of ::pack2()
-void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
+void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
 {
     // In order to pacify the runtime linker on Android "O" ("Oreo"),
     // we will splice-in a 4KiB page that contains an "extra" copy
@@ -3705,7 +3704,7 @@ void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
     xct_va  += asl_delta;
     //xct_off += asl_delta;  // not until ::pack3()
 
-    // Relocate PT_DYNAMIC (in 2nd PT_LOAD)
+    // Relocate PT_DYNAMIC (in PT_LOAD with PF_W)
     Elf64_Dyn *dyn = const_cast<Elf64_Dyn *>(dynseg);
     for (; dyn->d_tag; ++dyn) {
         upx_uint64_t d_tag = get_te64(&dyn->d_tag);
@@ -3718,7 +3717,7 @@ void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
             set_te64(&dyn->d_val, asl_delta + d_val);
         }
     }
-    // Updated dynseg (.dynamic, in PT_DYNAMIC (PT_LOAD[1])) has not been written.
+    // Updated dynseg (.dynamic, in PT_DYNAMIC (PT_LOAD{PF_W})) has not been written.
     // dynseg is in file_image[] but not in low_mem[].
 
     // Relocate dynsym (DT_SYMTAB) which is below xct_va
@@ -3852,8 +3851,6 @@ void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
                     } break;
                 }
             }
-            fo->seek(sh_offset, SEEK_SET);
-            fo->rewrite(relb, sh_size);  // FIXME  BUG! fo not ready
         }; break;
         case Elf64_Shdr::SHT_REL: {
             if (sizeof(Elf64_Rel) != sh_entsize) {
@@ -3934,7 +3931,7 @@ void PackLinuxElf64::asl_pack1_Shdrs(OutputFile *fo)
     fo->write(&linfo, sizeof(linfo));
 }
 
-void PackLinuxElf64::pack1(OutputFile *fo, Filter &ft)
+void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -4074,19 +4071,6 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter &ft)
 
     progid = 0;  // getRandomId();  not useful, so do not clutter
     sz_elf_hdrs = sizeof(ehdri) + sz_phdrs;
-    if (0!=xct_off) { // shared library
-        lowmem.alloc(xct_off + (!opt->o_unix.android_shlib
-            ? 0
-            : e_shnum * sizeof(Elf64_Shdr)));
-        memcpy(lowmem, file_image, xct_off);  // android omits Shdr here
-
-        if (opt->o_unix.android_shlib) { // Android shared library
-            sz_elf_hdrs = xct_off;
-            fo->write(lowmem, xct_off);  // < SHF_EXECINSTR (typ: in .plt or .init)
-
-            asl_pack1_Shdrs(fo);
-        }
-    }
 
     // only execute if option present
     if (opt->o_unix.preserve_build_id) {
@@ -4356,14 +4340,26 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     // compress extents
     unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
 
-    if (!(is_shlib & is_asl)) {
-        total_in =  0;
-        total_out = 0;
-    }
-
+    total_in =  0;
+    total_out = 0;
     uip->ui_pass = 0;
     ft.addvalue = 0;
 
+    if (is_shlib) { // prepare to alter Phdrs and Shdrs
+        lowmem.alloc(xct_off + (!is_asl
+            ? 0
+            : e_shnum * sizeof(Elf64_Shdr)));
+        memcpy(lowmem, file_image, xct_off);  // android omits Shdr here
+
+        if (is_asl) { // Android shared library
+            sz_elf_hdrs = xct_off;
+            fo->write(lowmem, xct_off);  // < SHF_EXECINSTR (typ: in .plt or .init)
+            total_in  = xct_off;
+            total_out = xct_off;
+
+            asl_pack2_Shdrs(fo);
+        }
+    }
     unsigned nk_f = 0; upx_uint64_t xsz_f = 0;
     for (k = 0; k < e_phnum; ++k)
     if (PT_LOAD64==get_te32(&phdri[k].p_type)
@@ -4385,7 +4381,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         if (is_shlib) {
             if (x.offset <= xct_off) { // first PT_LOAD
                 unsigned const len = umin(x.size, xct_off - x.offset);
-                if (len && !is_asl) { // asl_pack1_Shdrs aleady handled
+                if (len && !is_asl) { // asl_pack2_Shdrs aleady handled
                     fi->seek(x.offset, SEEK_SET);
                     fi->readx(ibuf, x.size);
                     total_in += len;

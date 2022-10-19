@@ -269,7 +269,7 @@ protected:
     virtual int  canUnpack() override;  // really 'bool'
 
     virtual void pack1(OutputFile *, Filter &) override;  // generate executable header
-    virtual void asl_pack1_Shdrs(OutputFile *);  // AndroidSharedLibrary processes Shdrs
+    virtual void asl_pack2_Shdrs(OutputFile *);  // AndroidSharedLibrary processes Shdrs
     virtual int  pack2(OutputFile *, Filter &) override;  // append compressed data
     virtual off_t pack3(OutputFile *, Filter &) override;  // append loader
     virtual void pack4(OutputFile *, Filter &) override;  // append pack header
