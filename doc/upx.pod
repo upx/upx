@@ -55,7 +55,7 @@ B<UPX> is a versatile executable packer with the following features:
   - excellent compression ratio: typically compresses better than Zip,
       use UPX to decrease the size of your distribution !
 
-  - very fast decompression: more than 1000 MB/sec on any reasonably modern
+  - very fast decompression: more than 500 MB/sec on any reasonably modern
       machine
 
   - no memory overhead for your compressed executables for most of the

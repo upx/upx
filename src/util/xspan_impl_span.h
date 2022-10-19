@@ -119,7 +119,7 @@ public:
 
 // raw_bytes overload
 template <class T>
-inline T *raw_bytes(const Span<T> &a, size_t size_in_bytes) {
+inline typename Span<T>::pointer raw_bytes(const Span<T> &a, size_t size_in_bytes) {
     return a.raw_bytes(size_in_bytes);
 }
 

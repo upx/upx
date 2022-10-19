@@ -192,13 +192,14 @@ template <class T>
 struct Ptr;
 
 template <class T>
-inline T *raw_bytes(const PtrOrSpanOrNull<T> &a, size_t size_in_bytes);
+inline typename PtrOrSpanOrNull<T>::pointer raw_bytes(const PtrOrSpanOrNull<T> &a,
+                                                      size_t size_in_bytes);
 template <class T>
-inline T *raw_bytes(const PtrOrSpan<T> &a, size_t size_in_bytes);
+inline typename PtrOrSpan<T>::pointer raw_bytes(const PtrOrSpan<T> &a, size_t size_in_bytes);
 template <class T>
-inline T *raw_bytes(const Span<T> &a, size_t size_in_bytes);
+inline typename Span<T>::pointer raw_bytes(const Span<T> &a, size_t size_in_bytes);
 template <class T>
-inline T *raw_bytes(const Ptr<T> &a, size_t size_in_bytes);
+inline typename Ptr<T>::pointer raw_bytes(const Ptr<T> &a, size_t size_in_bytes);
 
 class SpanInternalDummyArg; // not implemented
 

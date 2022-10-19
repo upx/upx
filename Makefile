@@ -10,7 +10,9 @@
 
 CMAKE = cmake
 UPX_CMAKE_BUILD_FLAGS += --parallel
-#UPX_CMAKE_BUILD_FLAGS += --verbose
+ifneq ($(VERBOSE),)
+  UPX_CMAKE_BUILD_FLAGS += --verbose
+endif
 
 # check git submodules
 ifeq ($(wildcard ./vendor/doctest/doctest/.),)

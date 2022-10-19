@@ -31,8 +31,7 @@
 public:
 typedef T element_type;
 typedef typename std::add_lvalue_reference<T>::type reference;
-// typedef typename std::add_pointer<T>::type pointer;
-typedef T *pointer;
+typedef typename std::add_pointer<T>::type pointer;
 typedef size_t size_type;
 
 // befriend all

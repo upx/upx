@@ -45,7 +45,6 @@ public:
 
     typedef T element_type;
     typedef typename std::add_lvalue_reference<T>::type reference;
-    // typedef T *pointer;
     typedef typename std::add_pointer<T>::type pointer;
 
 private:
@@ -194,7 +193,7 @@ public: // raw access
 
 // raw_bytes overload
 template <class T>
-inline T *raw_bytes(const Ptr<T> &a, size_t size_in_bytes) {
+inline typename Ptr<T>::pointer raw_bytes(const Ptr<T> &a, size_t size_in_bytes) {
     return a.raw_bytes(size_in_bytes);
 }
 

@@ -37,7 +37,7 @@ template <class T>
 class MemBufferBase {
 public:
     typedef T element_type;
-    typedef T *pointer;
+    typedef typename std::add_pointer<T>::type pointer;
 
 protected:
     pointer b = nullptr;
@@ -124,15 +124,17 @@ private:
 
 // raw_bytes overload
 template <class T>
-inline T *raw_bytes(const MemBufferBase<T> &a, size_t size_in_bytes) {
-    return a.raw_bytes(size_in_bytes);
+inline typename MemBufferBase<T>::pointer raw_bytes(const MemBufferBase<T> &mbb,
+                                                    size_t size_in_bytes) {
+    return mbb.raw_bytes(size_in_bytes);
 }
 
 // global operators
 // rewrite "n + membuffer" to "membuffer + n" so that this will get checked above
-template <class U, class /*Dummy*/ = typename std::enable_if<std::is_integral<U>::value, U>::type>
-typename MemBuffer::pointer operator+(U n, const MemBuffer &mb) {
-    return mb + n;
+template <class T, class U,
+          class /*Dummy*/ = typename std::enable_if<std::is_integral<U>::value, U>::type>
+inline typename MemBufferBase<T>::pointer operator+(U n, const MemBufferBase<T> &mbb) {
+    return mbb + n;
 }
 
 /* vim:set ts=4 sw=4 et: */
