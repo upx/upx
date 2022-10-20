@@ -63,13 +63,101 @@ void span_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes) 
 SPAN_NAMESPACE_END
 
 #endif // WITH_SPAN
-#if WITH_SPAN >= 2
 
 // lots of tests (and probably quite a number of redundant tests)
 
 /*************************************************************************
 //
 **************************************************************************/
+
+TEST_CASE("basic xspan usage") {
+    char buf[4] = {0, 1, 2, 3};
+
+    SUBCASE("SPAN_x") {
+        SPAN_0(char) a0 = nullptr;
+
+        SPAN_0(char) b0 = buf;
+        SPAN_P(char) bp = buf;
+
+        SPAN_0(char) c0 = SPAN_0_MAKE(char, buf);
+        SPAN_P(char) cp = SPAN_P_MAKE(char, buf);
+        SPAN_S(char) cs = SPAN_S_MAKE(char, buf, sizeof(buf));
+
+        SPAN_0(const char) const x0 = SPAN_0_MAKE(const char, buf);
+        SPAN_P(const char) const xp = SPAN_P_MAKE(const char, buf);
+        SPAN_S(const char) const xs = SPAN_S_MAKE(const char, buf, sizeof(buf));
+        SPAN_P(const char) const yp = xs;
+        SPAN_0(const char) const z0p = yp;
+        SPAN_0(const char) const z0s = xs;
+
+        CHECK((a0 == nullptr));
+        CHECK(c0 == b0);
+        CHECK(cp == bp);
+        CHECK(cs == bp);
+        CHECK(x0 == z0p);
+        CHECK(xp == z0s);
+    }
+
+    SUBCASE("SPAN_x_VAR") {
+        SPAN_0_VAR(char, a0, nullptr);
+
+        SPAN_0_VAR(char, b0, buf);
+        SPAN_P_VAR(char, bp, buf);
+
+        SPAN_0_VAR(char, c0, buf, sizeof(buf));
+        SPAN_P_VAR(char, cp, buf, sizeof(buf));
+        SPAN_S_VAR(char, cs, buf, sizeof(buf));
+
+        SPAN_0_VAR(char, d0, buf + 1, sizeof(buf), buf);
+        SPAN_P_VAR(char, dp, buf + 1, sizeof(buf), buf);
+        SPAN_S_VAR(char, ds, buf + 1, sizeof(buf), buf);
+
+        SPAN_0_VAR(const char, const x0, buf, sizeof(buf));
+        SPAN_P_VAR(const char, const xp, buf, sizeof(buf));
+        SPAN_S_VAR(const char, const xs, buf, sizeof(buf));
+        SPAN_P_VAR(const char, const yp, xs);
+        SPAN_0_VAR(const char, const z0p, yp);
+        SPAN_0_VAR(const char, const z0s, xs);
+
+        CHECK((a0 == nullptr));
+        CHECK(c0 == b0);
+        CHECK(cp == bp);
+        CHECK(cs == bp);
+        CHECK(d0 == dp);
+        CHECK(d0 == ds);
+        CHECK(x0 == z0p);
+        CHECK(xp == z0s);
+    }
+
+    SUBCASE("xspan in class") {
+        struct MyType {
+            SPAN_0(char) s0;
+            SPAN_P(char) sp;
+            SPAN_S(char) ss;
+#if __cplusplus >= 201103L
+            SPAN_0(char) x0 = nullptr;
+#endif
+#if WITH_SPAN >= 2
+            // much nicer syntax when using fully checked xspan:
+            MyType(char *b, size_t n, bool) : s0(b, n), sp(b, n), ss(b, n) {}
+#endif
+            MyType(char *b, size_t n)
+                : s0(SPAN_0_MAKE(char, b, n)), sp(SPAN_P_MAKE(char, b, n)),
+                  ss(SPAN_S_MAKE(char, b, n)) {
+                UNUSED(n);
+            }
+        };
+        MyType x(buf, sizeof(buf));
+        MyType y = MyType(buf, sizeof(buf));
+        CHECK(x.s0 == y.sp);
+    }
+}
+
+/*************************************************************************
+//
+**************************************************************************/
+
+#if WITH_SPAN >= 2
 
 TEST_CASE("PtrOrSpanOrNull") {
     char real_buf[2 + 6 + 2] = {126, 127, 0, 1, 2, 3, 4, 5, 124, 125};

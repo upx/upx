@@ -83,15 +83,15 @@ using SPAN_NAMESPACE_NAME::raw_bytes; // overloaded for all classes
 #define SPAN_P(type) PtrOrSpan<type>
 #define SPAN_S(type) Span<type>
 
-// define a new variable
-#define SPAN_0_VAR(type, var, first, ...) SPAN_0(type) var(first, ##__VA_ARGS__)
-#define SPAN_P_VAR(type, var, first, ...) SPAN_P(type) var(first, ##__VA_ARGS__)
-#define SPAN_S_VAR(type, var, first, ...) SPAN_S(type) var(first, ##__VA_ARGS__)
-
 // create a value
 #define SPAN_0_MAKE(type, first, ...) (SPAN_0(type)(first, ##__VA_ARGS__))
 #define SPAN_P_MAKE(type, first, ...) (SPAN_P(type)(first, ##__VA_ARGS__))
 #define SPAN_S_MAKE(type, first, ...) (SPAN_S(type)(first, ##__VA_ARGS__))
+
+// define a variable
+#define SPAN_0_VAR(type, var, first, ...) SPAN_0(type) var(first, ##__VA_ARGS__)
+#define SPAN_P_VAR(type, var, first, ...) SPAN_P(type) var(first, ##__VA_ARGS__)
+#define SPAN_S_VAR(type, var, first, ...) SPAN_S(type) var(first, ##__VA_ARGS__)
 
 #elif WITH_SPAN >= 1
 
@@ -101,27 +101,31 @@ using SPAN_NAMESPACE_NAME::raw_bytes; // overloaded for all classes
 #define SPAN_P(type) Ptr<type>
 #define SPAN_S(type) Ptr<type>
 
-// define a new variable
-#define SPAN_0_VAR(type, var, first, ...) SPAN_0(type) var(first)
-#define SPAN_P_VAR(type, var, first, ...) SPAN_P(type) var(first)
-#define SPAN_S_VAR(type, var, first, ...) SPAN_S(type) var(first)
-
 // create a value
 #define SPAN_0_MAKE(type, first, ...) (SPAN_0(type)(first))
 #define SPAN_P_MAKE(type, first, ...) (SPAN_P(type)(first))
 #define SPAN_S_MAKE(type, first, ...) (SPAN_S(type)(first))
 
+// define a variable
+#define SPAN_0_VAR(type, var, first, ...) SPAN_0(type) var(first)
+#define SPAN_P_VAR(type, var, first, ...) SPAN_P(type) var(first)
+#define SPAN_S_VAR(type, var, first, ...) SPAN_S(type) var(first)
+
 #else
 
-// unchecked raw pointers
+// unchecked regular pointers
 
 // helper for implicit pointer conversions and MemBuffer overloads
 template <class R, class T>
-inline R *span_make__(R * /*dummy*/, T *first) {
+inline R *span_make_helper__(R * /*dummy*/, T *first) {
     return first; // IMPORTANT: no cast here to detect bad usage
 }
 template <class R>
-inline R *span_make__(R * /*dummy*/, MemBuffer &first) {
+inline R *span_make_helper__(R * /*dummy*/, std::nullptr_t /*first*/) {
+    return nullptr;
+}
+template <class R>
+inline R *span_make_helper__(R * /*dummy*/, MemBuffer &first) {
     return (R *) membuffer_get_void_ptr(first);
 }
 
@@ -129,15 +133,15 @@ inline R *span_make__(R * /*dummy*/, MemBuffer &first) {
 #define SPAN_P(type) type *
 #define SPAN_S(type) type *
 
-// define a new variable
-#define SPAN_0_VAR(type, var, first, ...) type *var = span_make__((type *) nullptr, first)
-#define SPAN_P_VAR(type, var, first, ...) type *var = span_make__((type *) nullptr, first)
-#define SPAN_S_VAR(type, var, first, ...) type *var = span_make__((type *) nullptr, first)
-
 // create a value
-#define SPAN_0_MAKE(type, first, ...) (span_make__((type *) nullptr, first))
-#define SPAN_P_MAKE(type, first, ...) (span_make__((type *) nullptr, first))
-#define SPAN_S_MAKE(type, first, ...) (span_make__((type *) nullptr, first))
+#define SPAN_0_MAKE(type, first, ...) (span_make_helper__((type *) nullptr, first))
+#define SPAN_P_MAKE(type, first, ...) (span_make_helper__((type *) nullptr, first))
+#define SPAN_S_MAKE(type, first, ...) (span_make_helper__((type *) nullptr, first))
+
+// define a variable
+#define SPAN_0_VAR(type, var, first, ...) type *var = SPAN_0_MAKE(type, first)
+#define SPAN_P_VAR(type, var, first, ...) type *var = SPAN_P_MAKE(type, first)
+#define SPAN_S_VAR(type, var, first, ...) type *var = SPAN_S_MAKE(type, first)
 
 #endif // WITH_SPAN
 
