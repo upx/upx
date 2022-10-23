@@ -2889,14 +2889,18 @@ PackLinuxElf32::generateElfHdr(
                          h2->ehdr.e_shoff = 0;
     assert(get_te16(&h2->ehdr.e_ehsize)    == sizeof(Elf32_Ehdr));
     assert(get_te16(&h2->ehdr.e_phentsize) == sizeof(Elf32_Phdr));
-           set_te16(&h2->ehdr.e_shentsize, sizeof(Elf32_Shdr));
     if (o_elf_shnum) {
-                        h2->ehdr.e_shnum = o_elf_shnum;
-                        h2->ehdr.e_shstrndx = o_elf_shnum - 1;
+        set_te16(&h2->ehdr.e_shentsize, sizeof(Elf32_Shdr));
+        h2->ehdr.e_shnum = o_elf_shnum;
+        h2->ehdr.e_shstrndx = o_elf_shnum - 1;
     }
     else {
-                        h2->ehdr.e_shnum = 0;
-                        h2->ehdr.e_shstrndx = 0;
+        // https://bugzilla.redhat.com/show_bug.cgi?id=2131609
+        // 0==.e_shnum is a special case for libbfd
+        // that requires 0==.e_shentsize in order to force "no Shdrs"
+        h2->ehdr.e_shentsize = 0;
+        h2->ehdr.e_shnum = 0;
+        h2->ehdr.e_shstrndx = 0;
     }
 
     sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);  // default
@@ -3077,9 +3081,9 @@ PackOpenBSDElf32x86::generateElfHdr(
                          h3->ehdr.e_shoff = 0;
     assert(get_te16(&h3->ehdr.e_ehsize)    == sizeof(Elf32_Ehdr));
     assert(get_te16(&h3->ehdr.e_phentsize) == sizeof(Elf32_Phdr));
-           set_te16(&h3->ehdr.e_shentsize, sizeof(Elf32_Shdr));
-                         h3->ehdr.e_shnum = 0;
-                         h3->ehdr.e_shstrndx = 0;
+    h3->ehdr.e_shentsize = 0;
+    h3->ehdr.e_shnum = 0;
+    h3->ehdr.e_shstrndx = 0;
 
     struct {
         Elf32_Nhdr nhdr;
@@ -3162,14 +3166,15 @@ PackLinuxElf64::generateElfHdr(
                          h2->ehdr.e_shoff = 0;
     assert(get_te16(&h2->ehdr.e_ehsize)    == sizeof(Elf64_Ehdr));
     assert(get_te16(&h2->ehdr.e_phentsize) == sizeof(Elf64_Phdr));
-           set_te16(&h2->ehdr.e_shentsize, sizeof(Elf64_Shdr));
     if (o_elf_shnum) {
-                        h2->ehdr.e_shnum = o_elf_shnum;
-                        h2->ehdr.e_shstrndx = o_elf_shnum - 1;
+        set_te16(&h2->ehdr.e_shentsize, sizeof(Elf64_Shdr));
+        h2->ehdr.e_shnum = o_elf_shnum;
+        h2->ehdr.e_shstrndx = o_elf_shnum - 1;
     }
     else {
-                        h2->ehdr.e_shnum = 0;
-                        h2->ehdr.e_shstrndx = 0;
+        h2->ehdr.e_shentsize = 0;
+        h2->ehdr.e_shnum = 0;
+        h2->ehdr.e_shstrndx = 0;
     }
 
     sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);  // default
