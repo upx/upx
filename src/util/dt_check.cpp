@@ -42,38 +42,35 @@ bool upx_doctest_check(int argc, char **argv) {
     bool minimal = true;   // only show failing tests
     bool duration = false; // show timings
     bool success = false;  // show all tests
+#if DEBUG
+    minimal = false;
+#endif
     e = getenv("UPX_DEBUG_DOCTEST_VERBOSE");
-    if (e && e[0] && strcmp(e, "0") != 0) {
+    if (e && e[0]) {
         minimal = false;
-        if (strcmp(e, "2") == 0)
+        if (strcmp(e, "0") == 0) {
+            minimal = true;
+        } else if (strcmp(e, "2") == 0) {
             duration = true;
-        if (strcmp(e, "3") == 0) {
+        } else if (strcmp(e, "3") == 0) {
             duration = true;
             success = true;
         }
     }
-#if DEBUG
-    minimal = false;
-    // duration = true;
-#endif
     doctest::Context context;
-#if 0
-    if (argc > 0 && argv != nullptr)
-        context.applyCommandLine(argc, argv);
-#else
-    UNUSED(argc);
-    UNUSED(argv);
-#endif
     if (minimal)
         context.setOption("dt-minimal", true);
     if (duration)
         context.setOption("dt-duration", true);
     if (success)
         context.setOption("dt-success", true);
+    // this requires that main_get_options() understands "--dt-XXX" options
+    if (argc > 0 && argv != nullptr)
+        context.applyCommandLine(argc, argv);
     int r = context.run();
     if (context.shouldExit() || r != 0)
         return false;
-#endif
+#endif // DOCTEST_CONFIG_DISABLE
     return true;
 }
 

@@ -57,6 +57,8 @@ void options_t::reset() {
 #endif
     o->verbose = 2;
 
+    opt->o_unix.osabi0 = 3; // 3 == ELFOSABI_LINUX
+
     o->win32_pe.compress_exports = 1;
     o->win32_pe.compress_icons = 2;
     o->win32_pe.compress_resources = -1;

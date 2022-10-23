@@ -778,7 +778,7 @@ void show_head();
 void show_help(int verbose=0);
 void show_license();
 void show_usage();
-void show_version(int);
+void show_version(bool one_line=false);
 
 // compress.cpp
 unsigned upx_adler32(const void *buf, unsigned len, unsigned adler=1);

@@ -419,10 +419,11 @@ static int do_option(int optc, const char *arg) {
         set_cmd(CMD_VERSION);
         break;
     case 'V' + 256:
+    case 998:
         /* according to GNU standards */
         set_term(stdout);
         opt->console = CON_FILE;
-        show_version(0);
+        show_version(optc == 998 ? true : false);
         e_exit(EXIT_OK);
         break;
 
@@ -760,6 +761,11 @@ static int do_option(int optc, const char *arg) {
         opt->o_unix.force_pie = true;
         break;
 
+#if !defined(DOCTEST_CONFIG_DISABLE)
+    case 999: // doctest --dt-XXX option
+        break;
+#endif
+
     case '\0':
         return -1;
     case ':':
@@ -922,6 +928,35 @@ int main_get_options(int argc, char **argv) {
         {"8-bit", 0x10, N, 672},
         {"8mib-ram", 0x10, N, 673},
         {"8mb-ram", 0x10, N, 673},
+
+#if !defined(DOCTEST_CONFIG_DISABLE)
+        // [doctest] Query flags - the program quits after them. Available:
+        {"dt-c", 0x10, N, 999},
+        {"dt-count", 0x10, N, 999},
+        {"dt-h", 0x10, N, 999},
+        {"dt-help", 0x10, N, 999},
+        {"dt-lr", 0x10, N, 999},
+        {"dt-list-reporters", 0x10, N, 999},
+        {"dt-ltc", 0x10, N, 999},
+        {"dt-list-test-cases", 0x10, N, 999},
+        {"dt-lts", 0x10, N, 999},
+        {"dt-list-test-suites", 0x10, N, 999},
+        {"dt-v", 0x10, N, 999},
+        {"dt-version", 0x10, N, 999},
+        // [doctest] Bool options - can be used like flags and true is assumed. Available:
+        {"dt-d", 0x12, N, 999},
+        {"dt-duration", 0x12, N, 999},
+        {"dt-e", 0x12, N, 999},
+        {"dt-exit", 0x12, N, 999},
+        {"dt-m", 0x12, N, 999},
+        {"dt-minimal", 0x12, N, 999},
+        {"dt-nt", 0x12, N, 999},
+        {"dt-no-throw", 0x12, N, 999},
+        {"dt-nr", 0x12, N, 999},
+        {"dt-no-run", 0x12, N, 999},
+        {"dt-s", 0x12, N, 999},
+        {"dt-success", 0x12, N, 999},
+#endif
 
         {nullptr, 0, nullptr, 0}
     };
@@ -1100,6 +1135,8 @@ static void first_options(int argc, char **argv) {
         }
         if (strcmp(argv[i], "--version") == 0)
             do_option('V' + 256, argv[i]);
+        if (strcmp(argv[i], "--version-short") == 0)
+            do_option(998, argv[i]);
     }
     for (i = 1; i < n; i++)
         if (strcmp(argv[i], "--help") == 0)
@@ -1195,7 +1232,7 @@ int upx_main(int argc, char *argv[]) {
         e_exit(EXIT_OK);
         break;
     case CMD_VERSION:
-        show_version(1);
+        show_version();
         e_exit(EXIT_OK);
         break;
     default:

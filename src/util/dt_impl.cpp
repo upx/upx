@@ -30,11 +30,13 @@
 **************************************************************************/
 
 #define DOCTEST_CONFIG_IMPLEMENT
+#if !defined(UPX_DOCTEST_CONFIG_MULTITHREADING)
 #define DOCTEST_CONFIG_NO_MULTITHREADING
-#define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
+#endif
 #if defined(__MSDOS__) && defined(__DJGPP__)
 #define DOCTEST_CONFIG_NO_POSIX_SIGNALS
 #endif
+#define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
 #if !defined(DOCTEST_CONFIG_DISABLE)
 #include <doctest/parts/doctest.cpp>
 #endif

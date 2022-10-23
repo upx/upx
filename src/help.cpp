@@ -376,18 +376,18 @@ void show_license(void)
 //
 **************************************************************************/
 
-void show_version(int x)
+void show_version(bool one_line)
 {
     FILE *fp = stdout;
     const char *v;
-    UNUSED(x);
-    UNUSED(v);
 
     fprintf(fp, "upx %s\n", UPX_VERSION_STRING
 #if defined(UPX_VERSION_GITREV)
             "-git-" UPX_VERSION_GITREV
 #endif
            );
+    if (one_line)
+        return;
 #if (WITH_NRV)
     v = upx_nrv_version_string();
     if (v != nullptr && v[0])

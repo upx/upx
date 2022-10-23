@@ -161,7 +161,7 @@ endif()
 # "make test"
 #***********************************************************************
 
-if (NOT CMAKE_CROSSCOMPILING)
+if(NOT CMAKE_CROSSCOMPILING)
     include(CTest)
     set(exe ${CMAKE_EXECUTABLE_SUFFIX})
     set(upx_self_exe "$<TARGET_FILE:upx>")
