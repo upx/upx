@@ -415,6 +415,7 @@ xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
     mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
     DPRINTF("xfind_pages  %%x  %%p  %%d  %%p  %%p\\n", mflags, phdr, phnum, elfaddr, p_brk);
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
+        DPRINTF(" p_vaddr=%%p  p_memsz=%%p\\n", phdr->p_vaddr, phdr->p_memsz);
         if (phdr->p_vaddr < lo) {
             lo = phdr->p_vaddr;
         }
@@ -477,6 +478,7 @@ do_xmap(
         }
     }
     else { // PT_INTERP
+        DPRINTF("INTERP\\n", 0);
         reloc = xfind_pages(
             ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk, *p_reloc
 #if defined(__powerpc64__) || defined(__aarch64__)
@@ -491,6 +493,8 @@ do_xmap(
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     } else
     if (PT_LOAD==phdr->p_type) {
+        DPRINTF("LOAD p_offset=%%p  p_vaddr=%%p  p_filesz=%%p  p_memsz=%%p  p_flags=%%x\\n",
+            phdr->p_offset, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, phdr->p_flags);
         if (xi && !phdr->p_offset /*&& ET_EXEC==ehdr->e_type*/) { // 1st PT_LOAD
             // ? Compressed PT_INTERP must not overwrite values from compressed a.out?
             auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc + ehdr->e_phoff);
@@ -503,17 +507,22 @@ do_xmap(
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =         reloc + (char *)phdr->p_vaddr;
         char *haddr =           phdr->p_memsz +                  addr;
-        size_t frag  = (size_t)addr &~ PAGE_MASK;
-        mlen += frag;
-        addr -= frag;
+        unsigned lo_frag  = (unsigned)(long)addr &~ PAGE_MASK;
+        unsigned hi_frag = -(lo_frag + mlen) &~ PAGE_MASK; // distance to next page
+        mlen += lo_frag;
+        addr -= lo_frag;
 #if defined(__powerpc64__) || defined(__aarch64__)
         // Round up to hardware PAGE_SIZE; allows emulator with smaller.
+        // But (later) still need bzero when .p_filesz < .p_memsz .
         mlen += -(mlen + (size_t)addr) &~ PAGE_MASK;
+        DPRINTF("  mlen=%%p\\n", mlen);
 #endif
 
+        DPRINTF("mmap addr=%%p  len=%%p  offset=%%p  lo_frag=%%p\\n",
+            addr, mlen, phdr->p_offset - lo_frag, lo_frag);
         if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
-                (xi ? -1 : fdi), phdr->p_offset - frag) ) {
+                (xi ? -1 : fdi), phdr->p_offset - lo_frag) ) {
             err_exit(8);
         }
         if (xi) {
@@ -521,11 +530,10 @@ do_xmap(
         }
         // Linux does not fixup the low end, so neither do we.
         //if (PROT_WRITE & prot) {
-        //    bzero(addr, frag);  // fragment at lo end
+        //    bzero(addr, lo_frag);  // fragment at lo end
         //}
-        frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         if (PROT_WRITE & prot) { // note: read-only .bss not supported here
-            bzero(mlen+addr, frag);  // fragment at hi end
+            bzero(phdr->p_filesz + lo_frag + addr, hi_frag);
         }
         if (xi) {
 #if defined(__x86_64)  //{
@@ -543,8 +551,9 @@ do_xmap(
 ERR_LAB
             }
         }
-        addr += mlen + frag;  /* page boundary on hi end */
+        addr += mlen + hi_frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
+            DPRINTF("zmap addr=%%p  len=%%p\\n", addr, haddr - addr);
             if (addr != mmap(addr, haddr - addr, prot,
                     MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
                 err_exit(9);
