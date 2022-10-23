@@ -220,12 +220,10 @@ noTOC:
 #endif  //}
         mr r_exp,a0  // save &entry (.entry when BIG_ENDIAN)
 
-p_vaddr= 4+4+8
+p_memsz= 4+4+ 4*NBPW
 // Discard pages of compressed data (includes [ADRX,+LENX) )
-        ld a1,p_vaddr+szElf64_Phdr+szElf64_Ehdr(r_elfa)  // Phdr[C_TEXT= 1].p_vaddr
-        ld r0,p_vaddr             +szElf64_Ehdr(r_elfa)  // Phdr[C_BASE= 0].p_vaddr
+        ld a1,p_memsz+szElf64_Phdr+szElf64_Ehdr(r_elfa)  // Phdr[C_TEXT= 1].p_memsz
         movr a0,r_elfa  // hi elfaddr
-        subf a1,r0,a1  // length
         call munmap  # discard C_TEXT compressed data
 
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)

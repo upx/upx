@@ -36,6 +36,8 @@ NBPW= 8
 sz_Ehdr= 8*NBPW
 sz_Phdr= 7*NBPW
   p_vaddr= 4+4+8
+  p_filesz= 4+4+8+8+8
+  p_memsz=  4+4+8+8+8+8
 
 sz_l_info = 12
 sz_p_info = 12
@@ -171,10 +173,8 @@ xPMASK .req x20
         mov xfexp,x0  // entry address
 
 // Discard pages of compressed input data (includes [ADRC,+LENC) )
-        ldr x1,[xelfa,#p_vaddr+sz_Phdr+sz_Ehdr]  // Phdr[C_TEXT= 1].p_vaddr
-        ldr x2,[xelfa,#p_vaddr        +sz_Ehdr]  // Phdr[C_BASE= 0].p_vaddr
+        ldr x1,[xelfa,#p_memsz+sz_Phdr+sz_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
         mov x0,xelfa  // hi &Elf64_Ehdr
-        sub x1,x1,x2
         call munmap  // discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that munmap does not remove all references
