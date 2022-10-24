@@ -241,5 +241,49 @@ unsigned upx_zlib_crc32(const void *buf, unsigned len, unsigned crc)
 }
 #endif
 
+/*************************************************************************
+// Debug checks
+**************************************************************************/
+
+#if DEBUG && 1
+
+#include "util/membuffer.h"
+
+static bool check_zlib(const int method, const int level, const unsigned expected_c_len) {
+    const unsigned u_len = 16384;
+    const unsigned c_extra = 4096;
+    MemBuffer u_buf, c_buf, d_buf;
+    unsigned c_len, d_len;
+    upx_compress_result_t cresult;
+    int r;
+
+    u_buf.alloc(u_len);
+    memset(u_buf, 0, u_len);
+    c_buf.allocForCompression(u_len, c_extra);
+    d_buf.allocForUncompression(u_len);
+
+    c_len = c_buf.getSize() - c_extra;
+    r = upx_zlib_compress(u_buf, u_len, c_buf + c_extra, &c_len, nullptr, method, level, NULL_cconf, &cresult);
+    if (r != 0 || c_len != expected_c_len) return false;
+
+    d_len = d_buf.getSize();
+    r = upx_zlib_decompress(c_buf + c_extra, c_len, d_buf, &d_len, method, nullptr);
+    if (r != 0 || d_len != u_len) return false;
+    if (memcmp(u_buf, d_buf, u_len) != 0) return false;
+
+    // TODO: rewrite Packer::findOverlapOverhead() so that we can test it here
+    //unsigned x_len = d_len;
+    //r = upx_zlib_test_overlap(c_buf, u_buf, c_extra, c_len, &x_len, method, nullptr);
+    return true;
+}
+
+TEST_CASE("compress_zlib") {
+    CHECK(check_zlib(M_DEFLATE, 1, 89));
+    CHECK(check_zlib(M_DEFLATE, 3, 89));
+    CHECK(check_zlib(M_DEFLATE, 5, 33));
+}
+
+#endif // DEBUG
+
 
 /* vim:set ts=4 sw=4 et: */
