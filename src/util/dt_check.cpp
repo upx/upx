@@ -31,14 +31,14 @@
 // upx_doctest_check()
 **************************************************************************/
 
-bool upx_doctest_check(int argc, char **argv) {
+int upx_doctest_check(int argc, char **argv) {
 #if defined(DOCTEST_CONFIG_DISABLE)
     UNUSED(argc);
     UNUSED(argv);
 #else
     const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
     if (e && e[0] && strcmp(e, "0") != 0)
-        return true;
+        return 0;
     bool minimal = true;   // only show failing tests
     bool duration = false; // show timings
     bool success = false;  // show all tests
@@ -68,13 +68,15 @@ bool upx_doctest_check(int argc, char **argv) {
     if (argc > 0 && argv != nullptr)
         context.applyCommandLine(argc, argv);
     int r = context.run();
-    if (context.shouldExit() || r != 0)
-        return false;
+    if (r != 0)
+        return 1;
+    if (context.shouldExit())
+        return 2;
 #endif // DOCTEST_CONFIG_DISABLE
-    return true;
+    return 0;
 }
 
-bool upx_doctest_check() { return upx_doctest_check(0, nullptr); }
+int upx_doctest_check() { return upx_doctest_check(0, nullptr); }
 
 /*************************************************************************
 // compile-time checks

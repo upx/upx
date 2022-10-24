@@ -741,8 +741,8 @@ unsigned membuffer_get_size(MemBuffer &mb);
 
 // util/dt_check.cpp
 void upx_compiler_sanity_check();
-bool upx_doctest_check();
-bool upx_doctest_check(int argc, char **argv);
+int upx_doctest_check();
+int upx_doctest_check(int argc, char **argv);
 
 // main.cpp
 extern const char *progname;

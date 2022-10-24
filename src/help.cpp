@@ -408,6 +408,9 @@ void show_version(bool one_line)
     if (v != nullptr && v[0])
         fprintf(fp, "LZMA SDK version %s\n", v);
 #endif
+#if !defined(DOCTEST_CONFIG_DISABLE)
+    fprintf(fp, "doctest C++ testing framework version %s\n", DOCTEST_VERSION_STR);
+#endif
     fprintf(fp, "Copyright (C) 1996-2022 Markus Franz Xaver Johannes Oberhumer\n");
     fprintf(fp, "Copyright (C) 1996-2022 Laszlo Molnar\n");
     fprintf(fp, "Copyright (C) 2000-2022 John F. Reiser\n");
@@ -417,6 +420,9 @@ void show_version(bool one_line)
 #endif
 #if (WITH_LZMA)
     fprintf(fp, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
+#endif
+#if !defined(DOCTEST_CONFIG_DISABLE)
+    fprintf(fp, "Copyright (C) 2016" "-2021 Viktor Kirilov\n");
 #endif
     fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
 }
