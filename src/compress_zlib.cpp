@@ -29,7 +29,8 @@
 #include "conf.h"
 #include "compress.h"
 #include "util/membuffer.h"
-#include <zlib.h>
+#include <zlib/zlib.h>
+#include <zlib/deflate.h>
 
 
 void zlib_compress_config_t::reset()
@@ -102,6 +103,7 @@ int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
                       mem_level, strategy);
     if (zr != Z_OK)
         goto error;
+    assert(s.state->level == level);
     zr = deflate(&s, Z_FINISH);
     if (zr != Z_STREAM_END)
         goto error;

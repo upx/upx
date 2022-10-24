@@ -161,11 +161,8 @@ typedef unsigned char   upx_byte;
 #define WITH_ZLIB 1
 #if (WITH_UCL)
 #  define ucl_compress_config_t REAL_ucl_compress_config_t
-#  include <ucl/uclconf.h>
-#  include <ucl/ucl.h>
-#  if !defined(UCL_VERSION) || (UCL_VERSION < 0x010300L)
-#    error "please upgrade your UCL installation"
-#  endif
+#  include <ucl/include/ucl/uclconf.h>
+#  include <ucl/include/ucl/ucl.h>
 #  undef ucl_compress_config_t
 #  undef ucl_compress_config_p
 #endif
@@ -740,7 +737,7 @@ unsigned membuffer_get_size(MemBuffer &mb);
 #include "util/xspan.h"
 
 //#define DOCTEST_CONFIG_DISABLE 1
-#include <doctest/parts/doctest_fwd.h>
+#include <doctest/doctest/parts/doctest_fwd.h>
 
 // util/dt_check.cpp
 void upx_compiler_sanity_check();

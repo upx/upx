@@ -38,7 +38,7 @@
 #endif
 #define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
 #if !defined(DOCTEST_CONFIG_DISABLE)
-#include <doctest/parts/doctest.cpp>
+#include <doctest/doctest/parts/doctest.cpp>
 #endif
 
 /* vim:set ts=4 sw=4 et: */

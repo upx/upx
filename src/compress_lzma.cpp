@@ -232,9 +232,9 @@ error:
 #undef _NO_EXCEPTIONS
 #undef NULL
 #define NULL nullptr
-#include "C/Common/MyInitGuid.h"
-//#include "C/7zip/Compress/LZMA/LZMADecoder.h"
-#include "C/7zip/Compress/LZMA/LZMAEncoder.h"
+#include <lzma-sdk/C/Common/MyInitGuid.h>
+//#include <lzma-sdk/C/7zip/Compress/LZMA/LZMADecoder.h>
+#include <lzma-sdk/C/7zip/Compress/LZMA/LZMAEncoder.h>
 
 namespace MyLzma {
 
@@ -302,16 +302,16 @@ STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outS
 
 } // namespace
 
-#include "C/Common/Alloc.cpp"
-#include "C/Common/CRC.cpp"
-//#include "C/7zip/Common/InBuffer.cpp"
-#include "C/7zip/Common/OutBuffer.cpp"
-#include "C/7zip/Common/StreamUtils.cpp"
-#include "C/7zip/Compress/LZ/LZInWindow.cpp"
-//#include "C/7zip/Compress/LZ/LZOutWindow.cpp"
-//#include "C/7zip/Compress/LZMA/LZMADecoder.cpp"
-#include "C/7zip/Compress/LZMA/LZMAEncoder.cpp"
-#include "C/7zip/Compress/RangeCoder/RangeCoderBit.cpp"
+#include <lzma-sdk/C/Common/Alloc.cpp>
+#include <lzma-sdk/C/Common/CRC.cpp>
+//#include <lzma-sdk/C/7zip/Common/InBuffer.cpp>
+#include <lzma-sdk/C/7zip/Common/OutBuffer.cpp>
+#include <lzma-sdk/C/7zip/Common/StreamUtils.cpp>
+#include <lzma-sdk/C/7zip/Compress/LZ/LZInWindow.cpp>
+//#include <lzma-sdk/C/7zip/Compress/LZ/LZOutWindow.cpp>
+//#include <lzma-sdk/C/7zip/Compress/LZMA/LZMADecoder.cpp>
+#include <lzma-sdk/C/7zip/Compress/LZMA/LZMAEncoder.cpp>
+#include <lzma-sdk/C/7zip/Compress/RangeCoder/RangeCoderBit.cpp>
 #undef RC_NORMALIZE
 
 
@@ -422,8 +422,8 @@ error:
 #undef _LZMA_OUT_READ
 #undef _LZMA_PROB32
 #undef _LZMA_LOC_OPT
-#include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
-#include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
+#include <lzma-sdk/C/7zip/Compress/LZMA_C/LzmaDecode.h>
+#include <lzma-sdk/C/7zip/Compress/LZMA_C/LzmaDecode.c>
 
 int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,

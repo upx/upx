@@ -34,7 +34,7 @@
 #include "packer.h"
 #include "p_vmlinz.h"
 #include "linker.h"
-#include <zlib.h>
+#include <zlib/zlib.h>
 
 static const
 #include "stub/i386-linux.kernel.vmlinuz.h"

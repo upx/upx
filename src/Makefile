@@ -2,7 +2,8 @@
 # UPX Makefile - needs GNU make
 #
 
-# NOTE: this Makefile is deprecated, please use the CMake build instead !
+# IMPORTANT NOTE: this Makefile is deprecated and won't work
+# any longer - please use the CMake build instead!
 
 MAKEFLAGS += -r
 .SUFFIXES:
@@ -11,7 +12,7 @@ export SHELL = /bin/sh
 # build configuration options for this Makefile
 BUILD_TYPE_DEBUG    ?= 0
 BUILD_TYPE_SANITIZE ?= 0
-BUILD_USE_DEPEND    ?= 1
+BUILD_USE_DEPEND    ?= 0
 
 ifndef srcdir
   srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
@@ -25,6 +26,18 @@ ifneq ($(srcdir),.)
   vpath %.cpp .:$(srcdir)
   vpath %.h   .:$(srcdir)
 endif
+
+# redirect to CMake build
+ifeq ($(BUILD_TYPE_DEBUG),1)
+default: $(top_srcdir)/build/debug/upx
+else
+default: $(top_srcdir)/build/release/upx
+endif
+.PHONY: default
+$(top_srcdir)/build/debug/upx:
+	$(MAKE) -C $(top_srcdir) build/debug
+$(top_srcdir)/build/release/upx:
+	$(MAKE) -C $(top_srcdir) build/release
 
 # check git submodules
 ifeq ($(wildcard $(top_srcdir)/vendor/doctest/doctest/.),)
@@ -66,16 +79,8 @@ ifneq ($(GITREV_SHORT),)
 endif
 endif
 
-INCLUDES += -I$(top_srcdir)/vendor/doctest
- # we need UCL and zlib - you can set envvar UPX_UCLDIR
-ifneq ($(wildcard $(UPX_UCLDIR)/include/ucl/ucl.h),)
-  INCLUDES += -I$(UPX_UCLDIR)/include
-  LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
-else
-  # please use the CMake build
-  ##INCLUDES += -I$(top_srcdir)/vendor/ucl/include
-endif
-LIBS += -lucl -lz
+INCLUDES += -I$(top_srcdir)/vendor
+LIBS += -lupx_vendor_ucl -lupx_vendor_zlib
 
 # default flags that you can change or override
 ifeq ($(BUILD_TYPE_DEBUG),1)
@@ -136,7 +141,6 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -E $<)
 
 # object overrides
-compress_lzma$(objext) : INCLUDES += -I$(top_srcdir)/vendor/lzma-sdk
 # these are the only 2 objects that are actually speed-sensitive
 compress_lzma$(objext) : override CXXFLAGS_SANITIZE =
 filteri$(objext)       : override CXXFLAGS_SANITIZE =
@@ -146,7 +150,6 @@ ifeq ($(BUILD_USE_DEPEND),1)
 	@rm -f $@
 	@echo "Updating $@"
 	@$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -MM) $(filter %.cpp,$^) > $@
-./.depend : INCLUDES += -I$(top_srcdir)/vendor/lzma-sdk
 else
 ./.depend:
 .PHONY: ./.depend
@@ -185,7 +188,9 @@ endif
 # you also can override upx_testsuite_SRCDIR
 ifndef upx_testsuite_SRCDIR
 # search standard locations below $(top_srcdir)
-ifneq ($(wildcard $(top_srcdir)/../upx-testsuite.git/files/packed/.),)
+ifneq ($(wildcard $(top_srcdir)/../upx--upx-testsuite.git/files/packed/.),)
+upx_testsuite_SRCDIR := $(top_srcdir)/../upx--upx-testsuite.git
+else ifneq ($(wildcard $(top_srcdir)/../upx-testsuite.git/files/packed/.),)
 upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuite.git
 else ifneq ($(wildcard $(top_srcdir)/../upx-testsuite/files/packed/.),)
 upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuite
@@ -196,10 +201,11 @@ endif
 # The   actual (new) checksums are in tmp-testsuite/testsuite_1/.sha256sums.recreate
 ifneq ($(wildcard $(upx_testsuite_SRCDIR)/files/packed/.),)
 ifneq ($(wildcard $(top_srcdir)/.github/travis_testsuite_1.sh),)
-run-testsuite: export upx_exe                := ./upx$(exeext)
+run-testsuite: export upx_exe                := $(top_srcdir)/build/release/upx
 run-testsuite: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
 run-testsuite: export upx_testsuite_BUILDDIR := ./tmp-testsuite
-run-testsuite: upx$(exeext)
+run-testsuite: export UPX_DEBUG_DOCTEST_VERBOSE := 0
+run-testsuite: $(top_srcdir)/build/release/upx
 	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
 .PHONY: run-testsuite
 endif
