@@ -60,15 +60,14 @@ To compile the packer sources
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
 
-  - a Linux host system
+  - Podman/Docker: see misc/rebuild-stubs-with-podman - this
+    is the preferred way of rebuilding the stubs
 
-  - upx-stubtools - a number of cross-assemblers and cross-compilers.
-    Precompiled binaries for amd64-linux hosts are available from
-    https://github.com/upx/upx-stubtools/releases
-
-  - Perl & Python2
-
-  - NOTE: also see misc/rebuild-stubs-with-podman
+  - otherwise you will need:
+    - a Linux host system with Perl, Python2 and some older compat-libs
+    - upx-stubtools - a number of cross-assemblers and cross-compilers.
+      Precompiled binaries for amd64-linux hosts are available from
+      https://github.com/upx/upx-stubtools/releases
 
 
 Misc. notes

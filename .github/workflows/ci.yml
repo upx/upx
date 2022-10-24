@@ -80,7 +80,7 @@ jobs:
           (cd tmp/artifact && tar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
           # GitHub Actions magic: set "artifact_name" environment value for use in next step
           echo "artifact_name=$N" >> $GITHUB_ENV
-      - name: 'Upload artifact'
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.artifact_name }}
@@ -125,7 +125,7 @@ jobs:
           (cd tmp/artifact && gtar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
           # GitHub Actions magic: set "artifact_name" environment value for use in next step
           echo "artifact_name=$N" >> $GITHUB_ENV
-      - name: 'Upload artifact'
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.artifact_name }}
@@ -171,7 +171,7 @@ jobs:
           (cd build && cp -ai --parents */*/upx.exe "../tmp/artifact/$N")
           # GitHub Actions magic: set "artifact_name" environment value for use in next step
           echo "artifact_name=$N" >> $GITHUB_ENV
-      - name: 'Upload artifact'
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.artifact_name }}
@@ -247,7 +247,7 @@ jobs:
           cp -ai ../build/$C/$B/upx/upx*.exe "tmp/artifact/$N/$B"
           # GitHub Actions magic: set "artifact_name" environment value for use in next step
           echo "artifact_name=$N" >> $GITHUB_ENV
-      - name: 'Upload artifact'
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.artifact_name }}

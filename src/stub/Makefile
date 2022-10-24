@@ -4,6 +4,7 @@
 # You also will need a number of special build tools like various
 # cross-assemblers and cross-compilers - please see README.SRC
 # for details.
+# And see misc/rebuild-stubs-with-podman how to use Podman/Docker.
 #
 # Copyright (C) 1996-2022 Markus Franz Xaver Johannes Oberhumer
 #

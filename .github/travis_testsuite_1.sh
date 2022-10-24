@@ -175,10 +175,10 @@ fi
 
 export UPX="--prefer-ucl --no-color --no-progress"
 export UPX_DEBUG_DISABLE_GITREV_WARNING=1
-export UPX_DISABLE_GITREV_WARNING=1
+export UPX_DEBUG_DOCTEST_VERBOSE=0
 
 # let's go
-if ! $upx_run --version;          then echo "UPX-ERROR: FATAL: upx --version FAILED"; exit 1; fi
+if ! $upx_run --version-short;    then echo "UPX-ERROR: FATAL: upx --version-short FAILED"; exit 1; fi
 if ! $upx_run -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
 if ! $upx_run --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
 rm -rf ./testsuite_1
@@ -259,8 +259,8 @@ time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
 recreate_expected_sha256sums .sha256sums.recreate
 
 testsuite_header "UPX testsuite summary"
-if ! $upx_run --version; then
-    echo "UPX-ERROR: upx --version FAILED"
+if ! $upx_run --version-short; then
+    echo "UPX-ERROR: upx --version-short FAILED"
     exit 1
 fi
 echo

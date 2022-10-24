@@ -2,17 +2,12 @@
 # UPX Makefile - needs GNU make
 #
 
-# IMPORTANT NOTE: this Makefile is deprecated and won't work
-# any longer - please use the CMake build instead!
+# IMPORTANT NOTE: this Makefile is deprecated - please
+#   directly use the CMake build instead!
 
 MAKEFLAGS += -r
 .SUFFIXES:
 export SHELL = /bin/sh
-
-# build configuration options for this Makefile
-BUILD_TYPE_DEBUG    ?= 0
-BUILD_TYPE_SANITIZE ?= 0
-BUILD_USE_DEPEND    ?= 0
 
 ifndef srcdir
   srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
@@ -21,169 +16,29 @@ endif
 ifndef top_srcdir
   top_srcdir := $(srcdir)/..
 endif
-include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
-ifneq ($(srcdir),.)
-  vpath %.cpp .:$(srcdir)
-  vpath %.h   .:$(srcdir)
-endif
 
-# redirect to CMake build
-ifeq ($(BUILD_TYPE_DEBUG),1)
-default: $(top_srcdir)/build/debug/upx
-else
-default: $(top_srcdir)/build/release/upx
-endif
-.PHONY: default
+#
+# redirect to top-level CMake build
+#
+
+default: debug
+all: debug release
+debug: $(top_srcdir)/build/debug/upx
+release: $(top_srcdir)/build/release/upx
+
 $(top_srcdir)/build/debug/upx:
 	$(MAKE) -C $(top_srcdir) build/debug
 $(top_srcdir)/build/release/upx:
 	$(MAKE) -C $(top_srcdir) build/release
 
-# check git submodules
-ifeq ($(wildcard $(top_srcdir)/vendor/doctest/doctest/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard $(top_srcdir)/vendor/lzma-sdk/C/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard $(top_srcdir)/vendor/ucl/include/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard $(top_srcdir)/vendor/zlib/crc32.c),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
+.PHONY: default all debug release
+.PHONY: $(top_srcdir)/build/debug/upx
+.PHONY: $(top_srcdir)/build/release/upx
 
-# toolchain
-CXX    ?= g++
-CXXLD   = $(CXX)
-exeext ?= .out
-libext ?= .a
-objext ?= .o
-
-# flags composition
-override all_flags = $(mf.$1) $($1) $(EXTRA_$1) $(upx_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
-ALL_CPPFLAGS = $(strip $(call all_flags,CPPFLAGS))
-ALL_CXXFLAGS = $(strip $(call all_flags,CXXFLAGS))
-ALL_LDFLAGS  = $(strip $(call all_flags,LDFLAGS))
-ALL_LDADD    = $(strip $(call all_flags,LDADD))
-ALL_LIBS     = $(strip $(call all_flags,LIBS))
-
-upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/util/*.cpp))
-upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
-
-ifneq ($(wildcard $(top_srcdir)/.git/.),)
-GITREV_SHORT := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=12 HEAD || echo 'ERROR'))
-ifneq ($(GITREV_SHORT),)
-  GITREV_PLUS := $(strip $(shell cd '$(top_srcdir)' && git diff --quiet >/dev/null && echo '' || echo '+'))
-  DEFS += '-DUPX_VERSION_GITREV="$(GITREV_SHORT)$(GITREV_PLUS)"'
-endif
-endif
-
-INCLUDES += -I$(top_srcdir)/vendor
-LIBS += -lupx_vendor_ucl -lupx_vendor_zlib
-
-# default flags that you can change or override
-ifeq ($(BUILD_TYPE_DEBUG),1)
-  CXXFLAGS_OPTIMIZE ?= -O0 -g
-else
-  CXXFLAGS_OPTIMIZE ?= -O2
-endif
-ifeq ($(BUILD_TYPE_SANITIZE),1)
-  # full sanitizer
-  CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer
-else ifeq ($(BUILD_TYPE_SANITIZE),2)
-  # lightweight sanitizer
-  # TODO: can we make this the default for release builds?
-  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all
-else ifeq ($(BUILD_TYPE_DEBUG),1)
-  # default sanitizer for debug builds
-  #CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fstack-protector-all
-  CXXFLAGS_SANITIZE ?= -fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all
-else
-  # default sanitizer for release builds
-  #CXXFLAGS_SANITIZE ?= -fstack-protector-strong
-  CXXFLAGS_SANITIZE ?= -fstack-protector
-endif
-ifeq ($(findstring clang,$(CXX)),)
-  CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS ?= -fno-delete-null-pointer-checks
-endif
-CXXFLAGS_WERROR ?= -Werror
-
-# Mandatory Flags - DO NOT CHANGE!
-mf.CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
-mf.CXXFLAGS += -std=c++14
-mf.CXXFLAGS += $(CXXFLAGS_OPTIMIZE)
-# protect against security threats caused by misguided C++ compiler "optimizations"
-mf.CXXFLAGS += $(CXXFLAGS_NO_DELETE_NULL_POINTER_CHECKS)
-mf.CXXFLAGS += -fno-strict-aliasing -fno-strict-overflow
-mf.CXXFLAGS += -funsigned-char
-# disable overambitious auto-vectorization until this actually gains something
-mf.CXXFLAGS += -fno-tree-vectorize
-mf.CXXFLAGS += $(CXXFLAGS_SANITIZE)
-mf.CXXFLAGS += -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
-mf.CXXFLAGS += $(CXXFLAGS_WERROR)
-
-# rules
-all: upx$(exeext) | ./.depend
-.DELETE_ON_ERROR: upx$(exeext) $(upx_OBJECTS) ./.depend
-
-upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
-	$($(notdir $@).PRE_LINK_STEP)
-	$(strip $(CXXLD) $(ALL_CXXFLAGS) $(ALL_LDFLAGS) -o $@ $(upx_OBJECTS) $(ALL_LDADD) $(ALL_LIBS))
-	$($(notdir $@).POST_LINK_STEP)
-	$(CHECK_WHITESPACE)
-
-%.o : %.cpp | ./.depend
-	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -c $<)
-%.o : util/%.cpp | ./.depend
-	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -c $<)
-%.cpp.ii : %.cpp
-	$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -o $@ -E $<)
-
-# object overrides
-# these are the only 2 objects that are actually speed-sensitive
-compress_lzma$(objext) : override CXXFLAGS_SANITIZE =
-filteri$(objext)       : override CXXFLAGS_SANITIZE =
-
-ifeq ($(BUILD_USE_DEPEND),1)
-./.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
-	@rm -f $@
-	@echo "Updating $@"
-	@$(strip $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -MM) $(filter %.cpp,$^) > $@
-else
-./.depend:
-.PHONY: ./.depend
-endif
-
-CHECK_WHITESPACE =
-ifeq ($(shell uname),Linux)
-CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
-ifneq ($(wildcard $(top_srcdir)/.git/.),)
-CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)
-endif
-check-whitespace : ; $(CHECK_WHITESPACE)
-endif
-.PHONY: check-whitespace
-
-mostlyclean clean distclean maintainer-clean:
-	rm -f *.d *.ii *.map *.o *.obj *.res ./.depend upx.exe upx.out upx.ttp upx$(exeext)
-
-.PHONY: all mostlyclean clean distclean maintainer-clean
-
-ifeq ($(MAKECMDGOALS),mostlyclean)
-else ifeq ($(MAKECMDGOALS),clean)
-else ifeq ($(MAKECMDGOALS),distclean)
-else ifeq ($(MAKECMDGOALS),maintainer-clean)
-else ifeq ($(MAKECMDGOALS),clang-format)
-else ifeq ($(MAKECMDGOALS),check-whitespace)
-else
-ifeq ($(BUILD_USE_DEPEND),1)
--include ./.depend
-endif
-help$(objext): $(MAKEFILE_LIST)
-endif
-
+#
 # "make run-testsuite"
+#
+
 # search for the UPX testsuite -- git clone https://github.com/upx/upx-testsuite.git
 # you also can override upx_testsuite_SRCDIR
 ifndef upx_testsuite_SRCDIR
@@ -196,6 +51,7 @@ else ifneq ($(wildcard $(top_srcdir)/../upx-testsuite/files/packed/.),)
 upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuite
 endif
 endif
+
 # run the UPX testsuite
 # The expected (old) checksums are in $(top_srcdir)/.github/travis_testsuite_1-expected_sha256sums.sh
 # The   actual (new) checksums are in tmp-testsuite/testsuite_1/.sha256sums.recreate
@@ -204,12 +60,15 @@ ifneq ($(wildcard $(top_srcdir)/.github/travis_testsuite_1.sh),)
 run-testsuite: export upx_exe                := $(top_srcdir)/build/release/upx
 run-testsuite: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
 run-testsuite: export upx_testsuite_BUILDDIR := ./tmp-testsuite
-run-testsuite: export UPX_DEBUG_DOCTEST_VERBOSE := 0
 run-testsuite: $(top_srcdir)/build/release/upx
 	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
 .PHONY: run-testsuite
 endif
 endif
+
+#
+# "make clang-format"
+#
 
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
@@ -226,5 +85,19 @@ clang-format:
 	$(top_srcdir)/misc/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(sort $(CLANG_FORMAT_FILES)))
 .PHONY: clang-format
 endif
+
+#
+# "make check-whitespace"
+#
+
+CHECK_WHITESPACE =
+ifeq ($(shell uname),Linux)
+CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
+ifneq ($(wildcard $(top_srcdir)/.git/.),)
+CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)
+endif
+check-whitespace : ; $(CHECK_WHITESPACE)
+endif
+.PHONY: check-whitespace
 
 # vim:set ts=8 sw=8 noet:
