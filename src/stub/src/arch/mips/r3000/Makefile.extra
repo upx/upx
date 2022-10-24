@@ -94,11 +94,11 @@ lzma_d_cs.% : PP_FLAGS = -DSMALL
 
 define __test_stub_compression
 	@md5sum $1
-	$(if $2,$(call tc,readelf) -S $2 | egrep 'LzmaDecode ')
+	$(if $2,$(call tc,readelf) -S $2 | grep 'LzmaDecode ')
 	@rm -f $1.tmp.*
 	@bzip2 -9  < $1 > $1.tmp.bz2
 	@gzip -9mn < $1 > $1.tmp.gz
-	$(if $(UPX_UCL_UCLPACK),@$(UPX_UCL_UCLPACK) --nrv2b --10 $1 $1.tmp.uclpack-nrv2b | egrep ' into ')
+	$(if $(UPX_UCL_UCLPACK),@$(UPX_UCL_UCLPACK) --nrv2b --10 $1 $1.tmp.uclpack-nrv2b | grep ' into ')
 	@ls -l $1.tmp.*
 endef
 
