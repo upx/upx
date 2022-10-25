@@ -2,6 +2,8 @@
 
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
+# ...lots of outdated/unneeded stuff from the old Travis/Circle/AppVeyor CI days...
+
 #set -x # debug
 umask 022
 export GIT_PAGER=
@@ -266,15 +268,6 @@ print_settings() {
     done
     done
     ##env | LC_ALL=C sort
-}
-
-fix_home_ssh_perms() {
-    if [[ -d ~/.ssh ]]; then
-        if [[ -x /usr/sbin/restorecon ]]; then
-            /usr/sbin/restorecon -v -R ~/.ssh || true
-        fi
-        chmod -c -R go-rwx ~/.ssh || true
-    fi
 }
 
 true
