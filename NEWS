@@ -5,7 +5,7 @@ User visible changes for UPX
 Changes in 3.99 (27 Oct 2022):
   * NOTE: this is a pre-release with known regressions for some ELF formats;
     please help testing and reporting bugs, and see our GitHub Actions CI
-    page for up-to-date pre-built binaries
+    page for up-to-date pre-built binaries ("Artifacts")
     https://github.com/upx/upx/actions/workflows/ci.yml
   * SECURITY NOTES: emphasize the security context in the docs
   * Support easy building from source code with CMake

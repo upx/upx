@@ -1,7 +1,4 @@
--Ivendor/doctest
--Ivendor/lzma-sdk
--Ivendor/ucl/include
--Ivendor/zlib
+-Ivendor
 -fno-strict-aliasing
 -fno-strict-overflow
 -funsigned-char
