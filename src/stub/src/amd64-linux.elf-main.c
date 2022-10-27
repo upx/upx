@@ -231,7 +231,7 @@ make_hatch_x86_64(
 {
     unsigned xprot = 0;
     unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
+    DPRINTF("make_hatch %%p %%x %%x  %%x\\n",phdr,reloc,frag_mask, phdr->p_flags);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         if (
         // Try page fragmentation just beyond .text .
@@ -255,6 +255,7 @@ make_hatch_x86_64(
             hatch = 0;
         }
     }
+    DPRINTF("hatch=%%p\n", hatch);
     return hatch;
 }
 #elif defined(__powerpc64__)  //}{
@@ -313,7 +314,7 @@ make_hatch_arm64(
 {
     unsigned xprot = 0;
     unsigned *hatch = 0;
-    //DPRINTF((STR_make_hatch(),phdr,reloc));
+    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // The format of the 'if' is
         //  if ( ( (hatch = loc1), test_loc1 )
@@ -346,6 +347,7 @@ make_hatch_arm64(
             hatch = 0;
         }
     }
+    DPRINTF("hatch=%%p\n", hatch);
     return hatch;
 }
 #endif  //}
@@ -464,7 +466,8 @@ do_xmap(
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
         Elf64_Addr ehdr0 = *p_reloc;  // the 'hi' copy!
-        Elf64_Phdr *phdr0 = (Elf64_Phdr *)(((Elf64_Ehdr *)ehdr0)->e_phoff + ehdr0);
+        Elf64_Phdr const *phdr0 = (Elf64_Phdr const *)(
+            ((Elf64_Ehdr *)ehdr0)->e_phoff + ehdr0);
         // Clear the 'lo' space reservation for use by PT_LOADs
         ehdr0 -= phdr0[1].p_vaddr;  // the 'lo' copy
         if (ET_EXEC==ehdr->e_type) {
@@ -493,8 +496,9 @@ do_xmap(
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     } else
     if (PT_LOAD==phdr->p_type) {
-        DPRINTF("LOAD p_offset=%%p  p_vaddr=%%p  p_filesz=%%p  p_memsz=%%p  p_flags=%%x\\n",
-            phdr->p_offset, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, phdr->p_flags);
+        unsigned const prot = PF_TO_PROT(phdr->p_flags);
+        DPRINTF("LOAD p_offset=%%p  p_vaddr=%%p  p_filesz=%%p  p_memsz=%%p  p_flags=%%x  prot=%%x\\n",
+            phdr->p_offset, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, phdr->p_flags, prot);
         if (xi && !phdr->p_offset /*&& ET_EXEC==ehdr->e_type*/) { // 1st PT_LOAD
             // ? Compressed PT_INTERP must not overwrite values from compressed a.out?
             auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc + ehdr->e_phoff);
@@ -502,13 +506,12 @@ do_xmap(
             auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
             //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
         }
-        unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
-        char  *addr = xo.buf  =         reloc + (char *)phdr->p_vaddr;
-        char *haddr =           phdr->p_memsz +                  addr;
+        char  *addr = xo.buf = reloc + (char *)phdr->p_vaddr;
+        char *hi_addr = phdr->p_memsz  + addr;  // end of local .bss
+        char *addr2 = mlen + addr;  // end of local .data
         unsigned lo_frag  = (unsigned)(long)addr &~ PAGE_MASK;
-        unsigned hi_frag = -(lo_frag + mlen) &~ PAGE_MASK; // distance to next page
         mlen += lo_frag;
         addr -= lo_frag;
 #if defined(__powerpc64__) || defined(__aarch64__)
@@ -518,8 +521,8 @@ do_xmap(
         DPRINTF("  mlen=%%p\\n", mlen);
 #endif
 
-        DPRINTF("mmap addr=%%p  len=%%p  offset=%%p  lo_frag=%%p\\n",
-            addr, mlen, phdr->p_offset - lo_frag, lo_frag);
+        DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  lo_frag=%%p  prot=%%x\\n",
+            addr, mlen, phdr->p_offset - lo_frag, lo_frag, prot);
         if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
                 (xi ? -1 : fdi), phdr->p_offset - lo_frag) ) {
@@ -533,7 +536,10 @@ do_xmap(
         //    bzero(addr, lo_frag);  // fragment at lo end
         //}
         if (PROT_WRITE & prot) { // note: read-only .bss not supported here
-            bzero(phdr->p_filesz + lo_frag + addr, hi_frag);
+            // Clear to end-of-page (first part of .bss or &_end)
+            unsigned hi_frag = -(long)addr2 &~ PAGE_MASK;
+            bzero(addr2, hi_frag);
+            addr2 += hi_frag;  // will be page aligned
         }
         if (xi) {
 #if defined(__x86_64)  //{
@@ -546,15 +552,15 @@ do_xmap(
             if (0!=hatch) {
                 auxv_up((Elf64_auxv_t *)(~1 & (size_t)av), AT_NULL, (size_t)hatch);
             }
+            DPRINTF("mprotect addr=%%p  len=%%p  prot=%%x\\n", addr, mlen, prot);
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
 ERR_LAB
             }
         }
-        addr += mlen + hi_frag;  /* page boundary on hi end */
-        if (addr < haddr) { // need pages for .bss
-            DPRINTF("zmap addr=%%p  len=%%p\\n", addr, haddr - addr);
-            if (addr != mmap(addr, haddr - addr, prot,
+        if (addr2 < hi_addr) { // pages for .bss beyond last page for p_filesz
+            DPRINTF("zmap addr2=%%p  len=%%p  prot=%%x\\n", addr2, hi_addr - addr2, prot);
+            if (addr2 != mmap(addr2, hi_addr - addr2, prot,
                     MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
                 err_exit(9);
             }

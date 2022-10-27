@@ -193,13 +193,67 @@ xPMASK .req x20
         mov x0,xADRU
         mov w1,wLENU
         ldr x2,[xauxe,#NBPW - sz_auxv]  // Elf64_auxv_t[AT_NULL@.a_type].a_val
-        mov w8,#__NR_munmap  // munmap(ADRU, LENU)  unfolded stub
+
+                // paranoia: zero used registers except x0,x1,x2,x30(lr)
+        stp xzr,xzr,[sp,#-2*NBPW]!
+        mov x16,xzr
+        ldp x3,x4,[sp,#0]
+        ldp x6,x7,[sp,#0]
+        ldp x8,x9,[sp,#0]
+        ldp x20,x21,[sp,#0]
+        ldp x22,x23,[sp,#0]
+        ldp x24,x25,[sp,#0]
+        ldp x26,x27,[sp,#0]
+        ldp x28,x29,[sp],#2*NBPW
+
 #if DEBUG  //{
         ldr w3,[x2,#0]  // 1st instr
         ldr w4,[x2,#4]  // 2nd instr
         TRACE(4)
 #endif  //}
+
+#if 1  //{
+// This is a workaround for an intermittent problem. The "svc #0" in the escape hatch
+// to invoke munmap() on the unfolded stub, sometimes (20% ?) gets SIGILL despite
+// apparent good environment.  So do not unmap, which will waste 1 page.
+// Example:
+//     Program received signal SIGILL, Illegal instruction.
+// 0x0000fffff7fde974 in ?? ()
+// (gdb) info proc
+// process 748
+// cmdline = '/home/jreiser/611/hello.packed'
+// (gdb) shell cat /proc/748/maps
+// fffff7faa000-fffff7fcb000 r-xp 00000000 b3:02 8845                       /usr/lib/aarch64-linux-gnu/ld-2.31.so
+// fffff7fcb000-fffff7fdb000 ---p 00000000 00:00 0
+// fffff7fdb000-fffff7fde000 rw-p 00021000 b3:02 8845                       /usr/lib/aarch64-linux-gnu/ld-2.31.so
+// fffff7fde000-fffff7fdf000 r-xp 00000000 00:00 0   ## pc in this page; has 'r-x' permission
+// fffff7fdf000-fffff7fee000 ---p 00000000 00:00 0
+// fffff7fee000-fffff7ff0000 rw-p 00000000 00:00 0
+// fffff7ffa000-fffff7ffb000 r-xp 00000000 00:00 0   ## target of munmap [x0, +x1)
+// fffff7ffb000-fffff7ffd000 r--p 00000000 00:00 0                          [vvar]
+// fffff7ffd000-fffff7ffe000 r-xp 00000000 00:00 0                          [vdso]
+// fffff7fff000-fffff8000000 r--p 00000000 b3:02 126504                     /home/jreiser/611/hello.packed
+// fffffffdf000-1000000000000 rw-p 00000000 00:00 0                         [stack]
+// (gdb) x/2i $pc
+// => 0xfffff7fde974:   svc #0x0
+//    0xfffff7fde978:   ret
+// (gdb) info reg
+// x0             0xfffff7ffa000      0xfffff7ffa000  ## address to unmap
+// x1             0xa10               0xa10  # length to unmap
+// x2             0xfffff7fde974      0xfffff7fde974  ## address of escape hatch
+// x3 - x29       0x0                 0x0
+// x30            0xfffff7fab140      0xfffff7fab140  ## entry to ld-linux
+// sp             0xffffffffd7b0      0xffffffffd7b0
+// pc             0xfffff7fde974      0xfffff7fde974
+// cpsr           0x60000000          [ EL=0 C Z ]
+// fpsr           0x0                 0x0
+// fpcr           0x0                 0x0
+// (gdb)
+        ret  // "br lr"; just enter ld-linux, omitting the munmap of unfolded stub
+#else  //}{  This should work, but fails intermittently
+        mov w8,#__NR_munmap  // munmap(ADRU, LENU)  unfolded stub
         br x2  // goto escape hatch
+#endif  //}
 
 space3eq:
         .ascii "   ="
