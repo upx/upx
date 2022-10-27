@@ -826,18 +826,15 @@ COPYRIGHT
 
     Copyright (C) 2002-2022 Jens Medoch
 
-    This program may be used freely, and you are welcome to redistribute it
-    under certain conditions.
+    UPX is distributed with full source code under the terms of the GNU
+    General Public License v2+; either under the pure GPLv2+ (see the file
+    COPYING), or (at your option) under the GPLv+2 with special exceptions
+    and restrictions granting the free usage for all binaries including
+    commercial programs (see the file LICENSE).
 
     This program is distributed in the hope that it will be useful, but
     WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    UPX is distributed with full source code under the terms of the GNU
-    General Public License v2+; either under the pure GPLv2+ (see the file
-    COPYING), or (at your option) under the GPLv+2 with special exceptions
-    and restrictions granting the free usage for commercial programs (see
-    the file LICENSE).
 
     You should have received a copy of the UPX License Agreements along with
     this program; see the files COPYING and LICENSE. If not, visit the UPX

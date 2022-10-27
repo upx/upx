@@ -2,6 +2,10 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 4.0.0 (XX XXX 2022):
+  * Switch to semantic versioning
+  * bug fixes - see https://github.com/upx/upx/milestone/7
+
 Changes in 3.99 (27 Oct 2022):
   * NOTE: this is a pre-release with known regressions for some ELF formats;
     please help testing and reporting bugs, and see our GitHub Actions CI

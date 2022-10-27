@@ -68,9 +68,11 @@ NEWS and BUGS also contain various tidbits of information.
 THE FUTURE
 ==========
 
-  - Stay up-to-date with ongoing OS and executable format changes.
+  - Stay up-to-date with ongoing OS and executable format changes
 
-  - RISC-V 64 for Linux.
+  - RISC-V 64 for Linux
+
+  - ARM64 for Windows (help wanted)
 
   - We will *NOT* add any sort of protection and/or encryption.
     This only gives people a false feeling of security because
@@ -87,19 +89,15 @@ Copyright (C) 1996-2022 Markus Franz Xaver Johannes Oberhumer
 Copyright (C) 1996-2022 Laszlo Molnar
 Copyright (C) 2000-2022 John F. Reiser
 
-This program may be used freely, and you are welcome to
-redistribute it under certain conditions.
+UPX is distributed with full source code under the terms of the
+GNU General Public License v2+; either under the pure GPLv2+ (see
+the file COPYING), or (at your option) under the GPLv+2 with special
+exceptions and restrictions granting the free usage for all binaries
+including commercial programs (see the file LICENSE).
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-UPX is distributed with full source code under the terms of the
-GNU General Public License v2+;
-either under the pure GPLv2+ (see the file COPYING),
-or (at your option) under the GPLv+2 with special exceptions and
-restrictions granting the free usage for commercial
-programs (see the file LICENSE).
 
 You should have received a copy of the UPX License Agreements along
 with this program; see the files COPYING and LICENSE. If not,
