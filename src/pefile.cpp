@@ -39,7 +39,6 @@
 //
 **************************************************************************/
 
-#include "util/bptr.h"
 #if (WITH_SPAN >= 2) && 1
 //#define IPTR(type, var)             Span<type> var(ibuf, ibuf.getSize(), ibuf)
 //#define OPTR(type, var)             Span<type> var(obuf, obuf.getSize(), obuf)
@@ -49,6 +48,7 @@
 #define IPTR_C(type, var, first)    const Span<type> var(first, ibuf)
 #define OPTR_C(type, var, first)    const Span<type> var(first, obuf)
 #else
+#include "util/bptr.h"
 //#define IPTR(type, var)             BoundedPtr<type> var(ibuf, ibuf.getSize())
 //#define OPTR(type, var)             BoundedPtr<type> var(obuf, obuf.getSize())
 #define IPTR_I_D(type, var, disp)   BoundedPtr<type> var(ibuf + (disp), ibuf.getSize() - (disp), ibuf + (disp))

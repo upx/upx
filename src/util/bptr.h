@@ -29,9 +29,10 @@
 #ifndef UPX_BPTR_H__
 #define UPX_BPTR_H__ 1
 
+#error "this file is deprecated, please use xspan.h instead"
+
 /*************************************************************************
 // BoundedPtr
-// (deprecated, use xspan.h instead)
 **************************************************************************/
 
 template <class T>
