@@ -2,11 +2,14 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 4.0.0 (30 Oct 2022):
-  * Switch to semantic versioning
+Changes in 3.99 (27 Oct 2022):
+  * NOTE: this is a pre-release with known regressions for some ELF formats;
+    please help testing and reporting bugs, and see our GitHub Actions CI
+    page for up-to-date pre-built binaries
+    https://github.com/upx/upx/actions/workflows/ci.yml
   * SECURITY NOTES: emphasize the security context in the docs
+  * Support easy building from source code with CMake
   * Add support for EFI files (PE x86; Kornel Pal)
-  * Support building with CMake
   * bug fixes - see https://github.com/upx/upx/milestone/6
 
 Changes in 3.96 (23 Jan 2020):

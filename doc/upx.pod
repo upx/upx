@@ -27,7 +27,7 @@ because of in-place decompression.
 
 =head1 DISCLAIMER
 
-B<UPX> comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
+B<UPX> comes with ABSOLUTELY NO WARRANTY; for details see the file COPYING.
 
 Please report all problems or suggestions to the authors. Thanks.
 
@@ -945,9 +945,15 @@ redistribute it under certain conditions.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-B<UPX License Agreement> for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-You should have received a copy of the UPX License Agreement along
-with this program; see the file LICENSE. If not, visit the UPX home page.
+B<UPX> is distributed with full source code under the terms of the
+GNU General Public License v2+;
+either under the pure GPLv2+ (see the file COPYING),
+or (at your option) under the GPLv+2 with special exceptions and
+restrictions granting the free usage for commercial
+programs (see the file LICENSE).
 
+You should have received a copy of the UPX License Agreements along
+with this program; see the files COPYING and LICENSE. If not,
+visit the UPX home page.

@@ -18,10 +18,8 @@ WELCOME
 
 Welcome to UPX !
 
-Please don't forget to read the file LICENSE - UPX is distributed
-under the GNU General Public License (GPL) with special exceptions
-allowing the distribution of all compressed executables, including
-commercial programs.
+UPX is a free, secure, portable, extendable, high-performance
+executable packer for several executable formats.
 
 
 INTRODUCTION
@@ -43,7 +41,7 @@ UPX is free software distributed under the term of the GNU General
 Public License. Full source code is available.
 
 UPX may be distributed and used freely, even with commercial applications.
-See the UPX License Agreement for details.
+See the UPX License Agreements for details.
 
 
 SECURITY CONTEXT
@@ -94,11 +92,18 @@ redistribute it under certain conditions.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-UPX License Agreement for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-You should have received a copy of the UPX License Agreement along
-with this program; see the file LICENSE. If not, visit the UPX home page.
+UPX is distributed with full source code under the terms of the
+GNU General Public License v2+;
+either under the pure GPLv2+ (see the file COPYING),
+or (at your option) under the GPLv+2 with special exceptions and
+restrictions granting the free usage for commercial
+programs (see the file LICENSE).
+
+You should have received a copy of the UPX License Agreements along
+with this program; see the files COPYING and LICENSE. If not,
+visit the UPX home page.
 
 
 Share and enjoy,

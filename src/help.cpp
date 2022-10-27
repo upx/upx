@@ -348,17 +348,17 @@ void show_license(void)
         "   This program is distributed in the hope that it will be useful,\n"
         "   but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
         "   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-        "   UPX License Agreement for more details.\n"
+        "   UPX License Agreements for more details.\n"
         "\n"
-        "   You should have received a copy of the UPX License Agreement\n"
-        "   along with this program; see the file LICENSE.\n"
+        "   You should have received a copy of the UPX License Agreements\n"
+        "   along with this program; see the files COPYING and LICENSE.\n"
         "   If not, visit one of the following pages:\n"
         "\n"
     );
     int fg = con_fg(f,FG_CYAN);
     con_fprintf(f,
         "        https://upx.github.io\n"
-        "        http://www.oberhumer.com/opensource/upx/\n"
+        "        https://www.oberhumer.com/opensource/upx/\n"
     );
     (void)con_fg(f,FG_ORANGE);
     con_fprintf(f,
