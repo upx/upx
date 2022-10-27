@@ -13,6 +13,8 @@ Changes in 3.99 (27 Oct 2022):
     https://github.com/upx/upx/actions/workflows/ci.yml
   * SECURITY NOTES: emphasize the security context in the docs
   * Support easy building from source code with CMake
+  * Support easy rebuilding the stubs from source with Podman/Docker
+  * Add integrated doctest C++ testing framework
   * Add support for EFI files (PE x86; Kornel Pal)
   * bug fixes - see https://github.com/upx/upx/milestone/6
 
