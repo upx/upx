@@ -523,7 +523,10 @@ do_xmap(
 
         DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  lo_frag=%%p  prot=%%x\\n",
             addr, mlen, phdr->p_offset - lo_frag, lo_frag, prot);
-        if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
+        if (addr != mmap(addr, mlen,
+                // If compressed, then we need PROT_WRITE to de-compress;
+                // but then SELinux 'execmod' requires no PROT_EXEC for now.
+                (prot | (xi ? PROT_WRITE : 0)) &~ (xi ? PROT_EXEC : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
                 (xi ? -1 : fdi), phdr->p_offset - lo_frag) ) {
             err_exit(8);
