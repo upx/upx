@@ -16,7 +16,7 @@ RUN dpkg --add-architecture i386 \
         patchelf pax-utils rsync unzip vim zip zlib1g-dev zsh zstd \
     && true
 
-# manually install compat libs from Ubuntu 16.04
+# manually install compat libs from Ubuntu 16.04; REQUIRED
 RUN cd /root \
     && aria2c --checksum=sha-256=2605f43f8047fc972855bb909f1dd7af761bbfd35ae559ad689b0d55a4236d69 \
               'http://mirror.enzu.com/ubuntu/pool/main/g/gmp/libgmp10_6.1.0+dfsg-2_amd64.deb' \
@@ -29,7 +29,7 @@ RUN cd /root \
     && ldconfig \
     && true
 
-# install upx-stubtools into /usr/local/bin/bin-upx-20210104
+# install upx-stubtools into /usr/local/bin/bin-upx-20210104; REQUIRED
 RUN cd /root \
     && aria2c --checksum=sha-256=abcd8337cc656fe68d7bbb2ffe0f1e5ddce618688aa0e18c1ebcc40072843884 \
               'https://github.com/upx/upx-stubtools/releases/download/v20210104/bin-upx-20210104.tar.xz' \
@@ -38,7 +38,7 @@ RUN cd /root \
     && rm /root/bin-upx-20210104.tar.xz \
     && true
 
-# install previous UPX versions into /usr/local/bin
+# install pre-built binary UPX versions into /usr/local/bin; not required but convenient for testing
 RUN cd /root \
     && wget -q https://github.com/upx/upx/releases/download/v3.91/upx-3.91-amd64_linux.tar.bz2 \
     && wget -q https://github.com/upx/upx/releases/download/v3.92/upx-3.92-amd64_linux.tar.xz \
@@ -46,14 +46,16 @@ RUN cd /root \
     && wget -q https://github.com/upx/upx/releases/download/v3.94/upx-3.94-amd64_linux.tar.xz \
     && wget -q https://github.com/upx/upx/releases/download/v3.95/upx-3.95-amd64_linux.tar.xz \
     && wget -q https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz \
+    && wget -q https://github.com/upx/upx/releases/download/v4.0.0/upx-4.0.0-amd64_linux.tar.xz \
     && for f in ./upx-*.tar.*; do tar -xoaf $f; done \
     && rm ./upx-*.tar.* \
-    && d=upx-3.91-amd64_linux; ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.91 \
-    && d=upx-3.92-amd64_linux; ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.92 \
-    && d=upx-3.93-amd64_linux; ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.93 \
-    && d=upx-3.94-amd64_linux; ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.94 \
-    && d=upx-3.95-amd64_linux; ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.95 \
-    && d=upx-3.96-amd64_linux; ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.96 \
+    && d=upx-3.91-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.91 \
+    && d=upx-3.92-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.92 \
+    && d=upx-3.93-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.93 \
+    && d=upx-3.94-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.94 \
+    && d=upx-3.95-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.95 \
+    && d=upx-3.96-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.96 \
+    && d=upx-4.0.0-amd64_linux; ./$d/upx -d $d/upx -o /usr/local/bin/upx-4.0.0 \
     && rm -rf ./upx-*linux \
     && true
 
