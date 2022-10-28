@@ -632,7 +632,7 @@ void PackVmlinuxBase<T>::unpack(OutputFile *fo)
     ph.c_len = p_note0->sh_size - sizeof(word);
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
     decompress(ibuf, obuf, false);
     fo->write(obuf, ph.u_len);
     obuf.dealloc();
@@ -644,7 +644,7 @@ void PackVmlinuxBase<T>::unpack(OutputFile *fo)
     }
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
     decompress(ibuf, obuf);
 
     Filter ft(ph.level);
@@ -661,7 +661,7 @@ void PackVmlinuxBase<T>::unpack(OutputFile *fo)
     ph.c_len = p_note1->sh_size - sizeof(word);
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
     decompress(ibuf, obuf, false);
     fo->write(obuf, ph.u_len);
     obuf.dealloc();

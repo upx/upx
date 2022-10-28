@@ -122,7 +122,7 @@ unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned e
     return bytes;
 }
 
-unsigned MemBuffer::getSizeForUncompression(unsigned uncompressed_size, unsigned extra) {
+unsigned MemBuffer::getSizeForDecompression(unsigned uncompressed_size, unsigned extra) {
     size_t bytes = mem_size(1, uncompressed_size, extra); // check
     return ACC_ICONV(unsigned, bytes);
 }
@@ -132,8 +132,8 @@ void MemBuffer::allocForCompression(unsigned uncompressed_size, unsigned extra) 
     alloc(size);
 }
 
-void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra) {
-    unsigned size = getSizeForUncompression(uncompressed_size, extra);
+void MemBuffer::allocForDecompression(unsigned uncompressed_size, unsigned extra) {
+    unsigned size = getSizeForDecompression(uncompressed_size, extra);
     alloc(size);
 }
 

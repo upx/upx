@@ -689,7 +689,7 @@ int PackExe::canUnpack()
 void PackExe::unpack(OutputFile *fo)
 {
     ibuf.alloc(file_size);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
 
     // read the file
     fi->seek(ih.headsize16*16,SEEK_SET);

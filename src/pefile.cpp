@@ -3024,7 +3024,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     checkOverlay(overlay);
 
     ibuf.alloc(ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
     fi->seek(isection[1].rawdataptr - 64 + ph.buf_offset + ph.getPackHeaderSize(),SEEK_SET);
     fi->readx(ibuf, ibufgood= ph.c_len);
 

@@ -694,7 +694,7 @@ int PackTos::canUnpack() {
 
 void PackTos::unpack(OutputFile *fo) {
     ibuf.alloc(ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
 
     fi->seek(FH_SIZE + ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
     fi->readx(ibuf, ph.c_len);

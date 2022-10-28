@@ -756,7 +756,7 @@ void PackWcle::decodeObjectTable()
 
 void PackWcle::decodeImage()
 {
-    mb_oimage.allocForUncompression(ph.u_len);
+    mb_oimage.allocForDecompression(ph.u_len);
     oimage = mb_oimage;
 
     decompress(iimage + ph.buf_offset + ph.getPackHeaderSize(),oimage);

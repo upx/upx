@@ -189,7 +189,7 @@ bool PackPs1::getBkupHeader(unsigned char *p, unsigned char *dst)
 
     if (src && (src->id == '1' && src->len < SZ_IH_BKUP) && dst)
     {
-        unsigned char *unc_bh = New(unsigned char, MemBuffer::getSizeForUncompression(SZ_IH_BKUP));
+        unsigned char *unc_bh = New(unsigned char, MemBuffer::getSizeForDecompression(SZ_IH_BKUP));
 
         unsigned sz_bh = SZ_IH_BKUP;
         int r = upx_decompress((const unsigned char *)&src->ih_bkup, src->len,
@@ -716,7 +716,7 @@ void PackPs1::unpack(OutputFile *fo)
     const unsigned pad = oh.tx_len - ph.u_len;
 
     ibuf.alloc(fdata_size > PS_HDR_SIZE ? fdata_size : PS_HDR_SIZE);
-    obuf.allocForUncompression(ph.u_len, pad);
+    obuf.allocForDecompression(ph.u_len, pad);
 
     fi->seek(PS_HDR_SIZE, SEEK_SET);
     fi->readx(ibuf, fdata_size);

@@ -236,7 +236,7 @@ int PackCom::canUnpack()
 void PackCom::unpack(OutputFile *fo)
 {
     ibuf.alloc(file_size);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
 
     // read whole file
     fi->seek(0,SEEK_SET);

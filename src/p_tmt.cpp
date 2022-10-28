@@ -320,7 +320,7 @@ void PackTmt::unpack(OutputFile *fo)
     Packer::handleStub(fi,fo,adam_offset);
 
     ibuf.alloc(ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
 
     fi->seek(adam_offset + ph.buf_offset + ph.getPackHeaderSize(),SEEK_SET);
     fi->readx(ibuf,ph.c_len);

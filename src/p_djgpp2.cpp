@@ -416,7 +416,7 @@ void PackDjgpp2::unpack(OutputFile *fo)
     handleStub(fo);
 
     ibuf.alloc(ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
 
     fi->seek(coff_offset + ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
     fi->readx(ibuf, ph.c_len);

@@ -687,7 +687,7 @@ void PackVmlinuzI386::unpack(OutputFile *fo)
     // FIXME: but we could write the uncompressed "vmlinux" image
 
     ibuf.alloc(ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
 
     fi->seek(setup_size + ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
     fi->readx(ibuf, ph.c_len);
@@ -1044,7 +1044,7 @@ void PackVmlinuzARMEL::unpack(OutputFile *fo)
     // FIXME: but we could write the uncompressed "vmlinux" image
 
     ibuf.alloc(ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
+    obuf.allocForDecompression(ph.u_len);
 
     fi->seek(setup_size + ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
     fi->readx(ibuf, ph.c_len);
