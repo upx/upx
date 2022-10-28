@@ -42,7 +42,8 @@ cd / && cd "$upx_testsuite_BUILDDIR" || exit 1
 # ************************************************************************/
 
 testsuite_header() {
-    print_header "$1"
+    local x='==========='; x="$x$x$x$x$x$x$x"
+    echo -e "\n${x}\n${1}\n${x}\n"
 }
 
 testsuite_split_f() {
@@ -223,33 +224,52 @@ testsuite_check_sha $testdir
 # //   test UPX and not the compression libraries
 # ************************************************************************/
 
+case $UPX_TESTSUITE_FAST in
+    [0-7]) ;;
+    *) UPX_TESTSUITE_FAST=999 ;;
+esac
+
+if [[ $UPX_TESTSUITE_FAST -ge 1 ]]; then
 testdir=t110_compress_ucl_nrv2b_3_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2b -3 --no-filter
+fi
 
+if [[ $UPX_TESTSUITE_FAST -ge 2 ]]; then
 testdir=t120_compress_ucl_nrv2d_3_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2d -3 --no-filter
+fi
 
+if [[ $UPX_TESTSUITE_FAST -ge 3 ]]; then
 testdir=t130_compress_ucl_nrv2e_3_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2e -3 --no-filter
+fi
 
+if [[ $UPX_TESTSUITE_FAST -ge 4 ]]; then
 testdir=t140_compress_lzma_2_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --lzma -2 --no-filter
+fi
 
+if [[ $UPX_TESTSUITE_FAST -ge 5 ]]; then
 testdir=t150_compress_ucl_2_all_filters
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress -2 --all-filters
+fi
 
+if [[ $UPX_TESTSUITE_FAST -ge 6 ]]; then
 testdir=t160_compress_all_methods_1_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --all-methods -1 --no-filter
+fi
 
+if [[ $UPX_TESTSUITE_FAST -ge 7 ]]; then
 testdir=t170_compress_all_methods_no_lzma_5_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
+fi
 
 # /***********************************************************************
 # // summary
