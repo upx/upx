@@ -49,7 +49,7 @@ else()
     message(STATUS "UPX_VERSION_GITREV: not set")
 endif()
 
-project(upx VERSION 4.0.0 LANGUAGES C CXX)
+project(upx VERSION 4.0.1 LANGUAGES C CXX)
 
 # set default build type to "Release"
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)

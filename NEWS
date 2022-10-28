@@ -2,6 +2,9 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 4.0.1 (XX XXXX 2022):
+  * bug fixes - see https://github.com/upx/upx/milestone/8
+
 Changes in 4.0.0 (28 Oct 2022):
   * Switch to semantic versioning
   * SECURITY NOTES: emphasize the security context in the docs
