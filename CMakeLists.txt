@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
-# config options
+# compilation config options
 option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info.")
 option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options.")
 option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option.")
+# test config options
+option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself") # see below
 
 #***********************************************************************
 # init
@@ -160,20 +162,23 @@ endif()
 # "make test"
 #***********************************************************************
 
+include(CTest)
 if(NOT CMAKE_CROSSCOMPILING)
-    include(CTest)
+    add_test(NAME upx-version COMMAND upx --version)
+    add_test(NAME upx-help    COMMAND upx --help)
+endif()
+if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
+    # NOTE: these tests only work if the host executable format is supported by UPX
     set(exe ${CMAKE_EXECUTABLE_SUFFIX})
     set(upx_self_exe "$<TARGET_FILE:upx>")
     add_test(NAME upx-test-cleanup COMMAND rm -f ./upx.packed${exe} ./upx.unpacked${exe})
-    add_test(NAME upx-version      COMMAND upx --version)
-    add_test(NAME upx-help         COMMAND upx --help)
     add_test(NAME upx-self-pack    COMMAND upx -3 ${upx_self_exe} -o upx.packed${exe})
     add_test(NAME upx-list         COMMAND upx -l upx.packed${exe})
     add_test(NAME upx-fileinfo     COMMAND upx --fileinfo upx.packed${exe})
     add_test(NAME upx-test         COMMAND upx -t upx.packed${exe})
     add_test(NAME upx-unpack       COMMAND upx -d upx.packed${exe} -o upx.unpacked${exe})
-    add_test(NAME upx-run-unpacked COMMAND ./upx.unpacked${exe} --version)
-    add_test(NAME upx-run-packed   COMMAND ./upx.packed${exe} --version)
+    add_test(NAME upx-run-unpacked COMMAND ./upx.unpacked${exe} --version-short)
+    add_test(NAME upx-run-packed   COMMAND ./upx.packed${exe} --version-short)
 endif()
 
 # TODO: could add some more explicit test programs; but then, the integrated
@@ -194,7 +199,7 @@ include(GNUInstallDirs)
 if(DEFINED CMAKE_INSTALL_FULL_BINDIR)
     install(TARGETS upx DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
     install(FILES
-        COPYING LICENSE NEWS README doc/upx-doc.html doc/upx-doc.txt
+        COPYING LICENSE NEWS README THANKS doc/upx-doc.html doc/upx-doc.txt
         DESTINATION "${CMAKE_INSTALL_FULL_DOCDIR}"
     )
     install(FILES doc/upx.1 DESTINATION "${CMAKE_INSTALL_FULL_MANDIR}/man1")
