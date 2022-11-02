@@ -4448,7 +4448,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
             }
         }
         else  // main program, not shared library
-        if (hdr_u_len < (u64_t)x.size) {
+        if (hdr_u_len <= (u64_t)x.size) {
             if (0 == nx) { // 1st PT_LOAD64 must cover Ehdr at 0==p_offset
                 unsigned const delta = hdr_u_len;
                 if (ft.id < 0x40) {
