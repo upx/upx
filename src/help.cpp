@@ -382,11 +382,13 @@ void show_version(bool one_line)
     FILE *fp = stdout;
     const char *v;
 
-    fprintf(fp, "upx %s\n", UPX_VERSION_STRING
-#if defined(UPX_VERSION_GITREV)
-            "-git-" UPX_VERSION_GITREV
+#if defined(UPX_VERSION_GIT_DESCRIBE)
+    fprintf(fp, "upx %s\n", UPX_VERSION_GIT_DESCRIBE);
+#elif defined(UPX_VERSION_GITREV)
+    fprintf(fp, "upx %s\n", UPX_VERSION_STRING "-git-" UPX_VERSION_GITREV);
+#else
+    fprintf(fp, "upx %s\n", UPX_VERSION_STRING);
 #endif
-           );
     if (one_line)
         return;
 #if (WITH_NRV)

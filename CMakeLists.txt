@@ -23,6 +23,7 @@ endif()
 # determine git revision
 set(GITREV_SHORT "")
 set(GITREV_PLUS "")
+set(GIT_DESCRIBE "")
 find_package(Git)
 if(GIT_FOUND AND NOT UPX_CONFIG_DISABLE_GITREV)
     execute_process(
@@ -41,12 +42,25 @@ if(GIT_FOUND AND NOT UPX_CONFIG_DISABLE_GITREV)
     else()
         set(GITREV_SHORT "")
     endif()
+    execute_process(
+        RESULT_VARIABLE result
+        COMMAND "${GIT_EXECUTABLE}" describe --match "v*.*.*" --tags --dirty
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        OUTPUT_VARIABLE GIT_DESCRIBE
+    )
+    if(GIT_DESCRIBE MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)-([0-9]+)-g(.+)$")
+        set(GIT_DESCRIBE "${CMAKE_MATCH_1}-devel.${CMAKE_MATCH_2}+git-${CMAKE_MATCH_3}")
+    endif()
 endif()
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git") # extra check
     set(GITREV_SHORT "")
 endif()
 if(GITREV_SHORT)
     message(STATUS "UPX_VERSION_GITREV = \"${GITREV_SHORT}${GITREV_PLUS}\"")
+    if(GIT_DESCRIBE)
+        message(STATUS "UPX_VERSION_GIT_DESCRIBE = \"${GIT_DESCRIBE}\"")
+    endif()
 else()
     message(STATUS "UPX_VERSION_GITREV: not set")
 endif()
@@ -142,6 +156,9 @@ target_include_directories(${t} PRIVATE vendor)
 target_compile_definitions(${t} PRIVATE $<$<CONFIG:Debug>:DEBUG=1>)
 if(GITREV_SHORT)
     target_compile_definitions(${t} PRIVATE UPX_VERSION_GITREV="${GITREV_SHORT}${GITREV_PLUS}")
+    if(GIT_DESCRIBE)
+        target_compile_definitions(${t} PRIVATE UPX_VERSION_GIT_DESCRIBE="${GIT_DESCRIBE}")
+    endif()
 endif()
 if(NOT UPX_CONFIG_DISABLE_SANITIZE AND NOT MSVC)
     # default sanitizer for Debug builds
