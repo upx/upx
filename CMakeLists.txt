@@ -168,7 +168,7 @@ if(NOT CMAKE_CROSSCOMPILING)
     add_test(NAME upx-help    COMMAND upx --help)
 endif()
 if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
-    # NOTE: these tests only work if the host executable format is supported by UPX
+    # NOTE: these tests can only work if the host executable format is supported by UPX
     set(exe ${CMAKE_EXECUTABLE_SUFFIX})
     set(upx_self_exe "$<TARGET_FILE:upx>")
     add_test(NAME upx-test-cleanup COMMAND rm -f ./upx.packed${exe} ./upx.unpacked${exe})
@@ -179,6 +179,11 @@ if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     add_test(NAME upx-unpack       COMMAND upx -d upx.packed${exe} -o upx.unpacked${exe})
     add_test(NAME upx-run-unpacked COMMAND ./upx.unpacked${exe} --version-short)
     add_test(NAME upx-run-packed   COMMAND ./upx.packed${exe} --version-short)
+    # run these tests sequentially
+    set_tests_properties(
+        upx-test-cleanup upx-self-pack upx-list upx-fileinfo upx-test upx-unpack
+        upx-run-unpacked upx-run-packed PROPERTIES RUN_SERIAL TRUE
+    )
 endif()
 
 # TODO: could add some more explicit test programs; but then, the integrated
