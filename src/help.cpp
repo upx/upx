@@ -38,6 +38,7 @@
 
 static bool head_done = 0;
 
+// also see UPX_CONFIG_DISABLE_GITREV in CMakeLists.txt
 #if defined(UPX_VERSION_GITREV)
 const char gitrev[] = UPX_VERSION_GITREV;
 #else
