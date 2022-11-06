@@ -9,11 +9,11 @@ RUN dpkg --add-architecture i386 \
         aria2 ca-certificates git less libmpc3 libncurses5 make \
         ncurses-term perl-base python2-minimal wget xz-utils \
         libc6:i386 zlib1g:i386 \
-        # the following packages are not required for rebuilding the stubs,
-        # but they do make the image more convenient and also allow building
+        # the following packages are not required for rebuilding the stubs, but
+        # they do make the image much more convenient and also allow building
         # the full UPX binary inside the container via CMake:
-        bzip2 cmake elfutils file g++ libzstd-dev lzop ninja-build patch \
-        patchelf pax-utils rsync unzip vim zip zlib1g-dev zsh zstd \
+        7zip bzip2 cmake elfutils file g++ htop libzstd-dev lzip lzop ninja-build \
+        p7zip patch patchelf pax-utils rsync unzip vim zip zlib1g-dev zsh zstd \
     && true
 
 # manually install compat libs from Ubuntu 16.04; REQUIRED

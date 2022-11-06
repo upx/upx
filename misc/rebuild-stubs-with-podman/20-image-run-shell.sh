@@ -6,12 +6,12 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # run an interactive shell in the image
 # using a rootless Podman container
 
-image=upx-stubtools-20210104-v6
+image=upx-stubtools-20210104-v7
 
 flags=( -ti --read-only --rm )
-flags+=( --cap-drop=all )           # drop all capabilities
-flags+=( --network=none )           # no network needed
-flags+=( -e TERM="$TERM" )          # pass $TERM
+flags+=( --cap-drop=all )               # drop all capabilities
+flags+=( --network=none )               # no network needed
+flags+=( -e TERM="$TERM" )              # pass $TERM
 if [[ 1 == 1 ]]; then
     # run as user upx 2000:2000
     flags+=( --user 2000 )
@@ -22,7 +22,7 @@ if [[ 1 == 1 ]]; then
     # NOTE: we mount the upx top-level directory read-write under /home/upx/src/upx
     # INFO: SELinux users *may* have to add ":z" to the volume mount flags; check the docs!
     flags+=( -v "${argv0dir}/../..:/home/upx/src/upx" )
-    flags+=( -w /home/upx/src/upx ) # working directory
+    flags+=( -w /home/upx/src/upx )     # set working directory
 else
     # run as user root 0:0
     # ONLY FOR DEBUGGING THE IMAGE
@@ -44,3 +44,17 @@ podman run "${flags[@]}" "$image" bash -l
 #   # make sure that the stub files did rebuild correctly:
 #   git status .
 #   git diff .
+
+# we can also build UPX in the container:
+#   cd /home/upx/src/upx
+#   rm -rf ./build/release
+#   make build/release
+#   # run tests
+#   ./build/release/upx --version
+#   make -C build/release test
+
+# and we can also rebuild the UPX docs the container:
+#   cd /home/upx/src/upx
+#   make -C doc clean all
+#   git status doc
+#   git diff doc

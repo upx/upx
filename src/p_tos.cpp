@@ -46,7 +46,7 @@ static const CLANG_FORMAT_DUMMY_STATEMENT
 
 PackTos::PackTos(InputFile *f) : super(f) {
     bele = &N_BELE_RTP::be_policy;
-    COMPILE_TIME_ASSERT(FH_SIZE == 28);
+    COMPILE_TIME_ASSERT(FH_SIZE == 28)
     COMPILE_TIME_ASSERT_ALIGNED1(tos_header_t)
 }
 

@@ -46,7 +46,7 @@ static const
 PackTmt::PackTmt(InputFile *f) : super(f)
 {
     bele = &N_BELE_RTP::le_policy;
-    COMPILE_TIME_ASSERT(sizeof(tmt_header_t) == 44);
+    COMPILE_TIME_ASSERT(sizeof(tmt_header_t) == 44)
 }
 
 

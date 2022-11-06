@@ -49,11 +49,11 @@
 PackUnix::PackUnix(InputFile *f) :
     super(f), exetype(0), blocksize(0), overlay_offset(0), lsize(0)
 {
-    COMPILE_TIME_ASSERT(sizeof(Elf32_Ehdr) == 52);
-    COMPILE_TIME_ASSERT(sizeof(Elf32_Phdr) == 32);
-    COMPILE_TIME_ASSERT(sizeof(b_info) == 12);
-    COMPILE_TIME_ASSERT(sizeof(l_info) == 12);
-    COMPILE_TIME_ASSERT(sizeof(p_info) == 12);
+    COMPILE_TIME_ASSERT(sizeof(Elf32_Ehdr) == 52)
+    COMPILE_TIME_ASSERT(sizeof(Elf32_Phdr) == 32)
+    COMPILE_TIME_ASSERT(sizeof(b_info) == 12)
+    COMPILE_TIME_ASSERT(sizeof(l_info) == 12)
+    COMPILE_TIME_ASSERT(sizeof(p_info) == 12)
 }
 
 

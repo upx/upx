@@ -873,7 +873,7 @@ void PeFile::addStubImports()
 
 void PeFile::processImports2(unsigned myimport, unsigned) // pass 2
 {
-    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
+    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20)
 
     if (!ilinker)
         return;
@@ -2599,7 +2599,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         callProcessRelocs(rel, ic);
 
     // when the resource is put alone into section 3
-    const unsigned res_start = (ic + oam1) &~ oam1;;
+    const unsigned res_start = (ic + oam1) &~ oam1;
     if (last_section_rsrc_only)
         callProcessResources(res, ic = res_start);
 

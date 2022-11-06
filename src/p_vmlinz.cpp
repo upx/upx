@@ -56,7 +56,7 @@ PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
     , filter_len(0)
 {
     bele = &N_BELE_RTP::le_policy;
-    COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x250);
+    COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x250)
 }
 
 

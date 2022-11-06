@@ -42,9 +42,6 @@
 #if (ACC_CC_MSC && (_MSC_VER < 1900))
 #  pragma warning(disable: 4127)    // warning C4127: conditional expression is constant
 #endif
-#if (ACC_CC_INTELC_GNUC)
-#  pragma warning(error: 424)       // #424: extra ";" ignored
-#endif
 
 
 void lzma_compress_config_t::reset()

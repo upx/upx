@@ -111,7 +111,7 @@ __packed_struct(Mach_command)  // generic prefix
     Word data[2];  // because cmdsize >= 16
 #define WANT_MACH_SEGMENT_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end();
+__packed_struct_end()
 
 template <class TMachITypes>
 __packed_struct(Mach_segment_command)

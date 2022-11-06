@@ -295,9 +295,9 @@ typedef upx_int64_t upx_off_t;
 #define CLANG_FORMAT_DUMMY_STATEMENT /*empty*/
 
 #if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__) && !defined(__clang__)
-#  define attribute_format(a,b) __attribute__((__format__(__gnu_printf__,a,b)));
+#  define attribute_format(a,b) __attribute__((__format__(__gnu_printf__,a,b)))
 #elif (ACC_CC_CLANG || ACC_CC_GNUC)
-#  define attribute_format(a,b) __attribute__((__format__(__printf__,a,b)));
+#  define attribute_format(a,b) __attribute__((__format__(__printf__,a,b)))
 #else
 #  define attribute_format(a,b) /*empty*/
 #endif

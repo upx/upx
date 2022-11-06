@@ -36,9 +36,9 @@ LeFile::LeFile(InputFile *f) :
     fif(f), fof(nullptr),
     le_offset(0), exe_offset(0)
 {
-    COMPILE_TIME_ASSERT(sizeof(le_header_t) == 196);
-    COMPILE_TIME_ASSERT(sizeof(le_object_table_entry_t) == 24);
-    COMPILE_TIME_ASSERT(sizeof(le_pagemap_entry_t) == 4);
+    COMPILE_TIME_ASSERT(sizeof(le_header_t) == 196)
+    COMPILE_TIME_ASSERT(sizeof(le_object_table_entry_t) == 24)
+    COMPILE_TIME_ASSERT(sizeof(le_pagemap_entry_t) == 4)
     memset(&ih,0,sizeof ih);
     memset(&oh,0,sizeof oh);
     iobject_table = oobject_table = nullptr;

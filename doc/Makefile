@@ -12,7 +12,6 @@ empty :=
 space := $(empty) $(empty)
 tab   := $(empty)	$(empty)
 
-
 # /***********************************************************************
 # //
 # ************************************************************************/
@@ -28,22 +27,18 @@ DETAB2 := sed -e 's/$(tab)/  /g'
 
 BUILT_SOURCES = upx.1 upx-doc.html upx-doc.txt
 
+#***********************************************************************
+# targets
+#***********************************************************************
 
-###
-### targets
-###
+all: $(BUILT_SOURCES) PHONY
 
-all: $(BUILT_SOURCES)
+mostlyclean clean distclean maintainer-clean: PHONY
+	rm -f $(BUILT_SOURCES) ./pod2htm*
 
-mostlyclean clean distclean maintainer-clean:
-	rm -f $(BUILT_SOURCES) pod2htm*
-
-.PHONY: all mostlyclean clean distclean maintainer-clean
-
-
-###
-### rules
-###
+#***********************************************************************
+# rules
+#***********************************************************************
 
 .SUFFIXES: .1 .html .man .pod .ps .tex .txt
 
@@ -53,7 +48,7 @@ mostlyclean clean distclean maintainer-clean:
 
 %-doc.html : %.pod
 	pod2html --noindex $< | $(RTRIM) | $(DETAB2) > $@
-	@rm -f pod2htm*
+	@rm -f ./pod2htm*
 	test -s $@
 
 %.man : %.1
@@ -72,11 +67,10 @@ mostlyclean clean distclean maintainer-clean:
 	pod2text < $< | $(RTRIM) > $@
 	test -s $@
 
-
-###
-### dependencies
-###
+#***********************************************************************
+# dependencies
+#***********************************************************************
 
 $(BUILT_SOURCES): $(top_srcdir)/src/version.h $(MAKEFILE_LIST)
 .DELETE_ON_ERROR: $(BUILT_SOURCES)
-
+.PHONY: PHONY
