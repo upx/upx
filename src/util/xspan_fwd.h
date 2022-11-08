@@ -110,6 +110,11 @@ SPAN_FWD_TU(void *) memmove(const C<T> &a, const E<U> &b, size_t n) {
 }
 #endif
 
+template <class T>
+inline void *memset(const C<T> &a, int c, size_t n) {
+    return memset(a.raw_bytes(n), c, n);
+}
+
 /*************************************************************************
 // overloads for UPX extras
 **************************************************************************/
