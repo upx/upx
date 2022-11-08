@@ -116,9 +116,7 @@ typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
     fi->readx(shdri, e_shnum * sizeof(*shdri));
     unsigned const e_shstrndx = ehdri.e_shstrndx;
     if (e_shnum <= e_shstrndx) {
-        char msg[50]; snprintf(msg, sizeof(msg),
-                "bad .e_shstrndx %#x", e_shstrndx);
-        infoWarning(msg);
+        infoWarning("bad .e_shstrndx %#x", e_shstrndx);
         return nullptr;
     }
     Shdr const *p = &shdri[e_shstrndx];
@@ -130,9 +128,7 @@ typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
         // 10 == (1+ strlen(".shstrtab"))
     ) {
         if (p->sh_size <= p->sh_name) {
-            char msg[50]; snprintf(msg, sizeof(msg),
-                "bad .shstrtab _Shdr[%u]", (unsigned)ehdri.e_shstrndx);
-            infoWarning(msg);
+            infoWarning("bad .shstrtab _Shdr[%u]", (unsigned)ehdri.e_shstrndx);
             return nullptr;
         }
         shstrtab = new char[1+ p->sh_size];
