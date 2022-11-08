@@ -21,19 +21,21 @@ endif
 # redirect to top-level CMake build
 #
 
-default: debug
-all: debug release
-debug: $(top_srcdir)/build/debug/upx
-release: $(top_srcdir)/build/release/upx
+.DEFAULT_GOAL = build/debug
 
-$(top_srcdir)/build/debug/upx:
+build/debug:   $(top_srcdir)/build/debug/upx
+build/release: $(top_srcdir)/build/release/upx
+# shortcuts
+all: build/debug build/release
+debug: build/debug
+release: build/release
+
+$(top_srcdir)/build/debug/upx: PHONY
 	$(MAKE) -C $(top_srcdir) build/debug
-$(top_srcdir)/build/release/upx:
+$(top_srcdir)/build/release/upx: PHONY
 	$(MAKE) -C $(top_srcdir) build/release
 
-.PHONY: default all debug release
-.PHONY: $(top_srcdir)/build/debug/upx
-.PHONY: $(top_srcdir)/build/release/upx
+.PHONY: PHONY
 
 #
 # "make run-testsuite"
@@ -60,9 +62,8 @@ ifneq ($(wildcard $(top_srcdir)/.github/travis_testsuite_1.sh),)
 run-testsuite: export upx_exe                := $(top_srcdir)/build/release/upx
 run-testsuite: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
 run-testsuite: export upx_testsuite_BUILDDIR := ./tmp-testsuite
-run-testsuite: $(top_srcdir)/build/release/upx
+run-testsuite: $(top_srcdir)/build/release/upx PHONY
 	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
-.PHONY: run-testsuite
 endif
 endif
 
@@ -81,9 +82,8 @@ CLANG_FORMAT_FILES += p_tos.cpp p_tos.h
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += ui.cpp ui.h work.cpp
 CLANG_FORMAT_FILES += $(wildcard util/[a-ln-z]*.[ch]* util/mem*.[ch]*)
-clang-format:
+clang-format: PHONY
 	$(top_srcdir)/misc/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(sort $(CLANG_FORMAT_FILES)))
-.PHONY: clang-format
 endif
 
 #
@@ -96,8 +96,7 @@ CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
 CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)
 endif
-check-whitespace : ; $(CHECK_WHITESPACE)
+check-whitespace : PHONY ; $(CHECK_WHITESPACE)
 endif
-.PHONY: check-whitespace
 
 # vim:set ts=8 sw=8 noet:

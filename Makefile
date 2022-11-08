@@ -36,7 +36,7 @@ __check_cache = $(if $(wildcard $1/CMakeCache.txt),@true,)
 run_config = $(call __check_cache,$1) $(CMAKE) -S . -B $1 $(UPX_CMAKE_CONFIG_FLAGS) -DCMAKE_BUILD_TYPE=$2
 run_build  =                          $(CMAKE) --build $1 $(UPX_CMAKE_BUILD_FLAGS) --config $2
 
-default: build/release
+.DEFAULT_GOAL = build/release
 
 build/debug: PHONY
 	$(call run_config,$@,Debug)
@@ -45,6 +45,10 @@ build/debug: PHONY
 build/release: PHONY
 	$(call run_config,$@,Release)
 	$(call run_build,$@,Release)
+
+# shortcuts
+debug: build/debug
+release: build/release
 
 #***********************************************************************
 # some pre-defined build configurations
@@ -82,4 +86,4 @@ build/release-cross-mingw64: PHONY
 	$(call run_config,$@,Release)
 	$(call run_build,$@,Release)
 
-.PHONY: default PHONY
+.PHONY: PHONY
