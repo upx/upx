@@ -191,16 +191,6 @@ struct Span;
 template <class T>
 struct Ptr;
 
-template <class T>
-inline typename PtrOrSpanOrNull<T>::pointer raw_bytes(const PtrOrSpanOrNull<T> &a,
-                                                      size_t size_in_bytes);
-template <class T>
-inline typename PtrOrSpan<T>::pointer raw_bytes(const PtrOrSpan<T> &a, size_t size_in_bytes);
-template <class T>
-inline typename Span<T>::pointer raw_bytes(const Span<T> &a, size_t size_in_bytes);
-template <class T>
-inline typename Ptr<T>::pointer raw_bytes(const Ptr<T> &a, size_t size_in_bytes);
-
 class SpanInternalDummyArg; // not implemented
 
 SPAN_NAMESPACE_END

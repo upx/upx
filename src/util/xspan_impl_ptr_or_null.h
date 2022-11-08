@@ -96,6 +96,12 @@ inline typename PtrOrSpanOrNull<T>::pointer raw_bytes(const PtrOrSpanOrNull<T> &
                                                       size_t size_in_bytes) {
     return a.raw_bytes(size_in_bytes);
 }
+template <class T>
+inline typename PtrOrSpanOrNull<T>::pointer raw_index_bytes(const PtrOrSpanOrNull<T> &a,
+                                                            size_t index, size_t size_in_bytes) {
+    typedef typename PtrOrSpanOrNull<T>::element_type element_type;
+    return raw_bytes(a, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+}
 
 /*************************************************************************
 //

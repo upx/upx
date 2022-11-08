@@ -816,6 +816,13 @@ inline T *raw_bytes(T *ptr, size_t size_in_bytes) {
     return ptr;
 }
 
+// default: for any regular pointer, raw_index_bytes() is just "pointer + index"
+// NOTE: index == number of elements, *NOT* size in bytes!
+template <class T>
+inline T *raw_index_bytes(T *ptr, size_t index, size_t size_in_bytes) {
+    typedef T element_type;
+    return raw_bytes(ptr, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+}
 
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)

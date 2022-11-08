@@ -500,7 +500,7 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
     MemBuffer b(src_off + src_len);
     memcpy(b + src_off, buf + src_off, src_len);
     unsigned saved_dst_len = *dst_len;
-    int r = upx_lzma_decompress(b + src_off, src_len, b, dst_len, method, cresult);
+    int r = upx_lzma_decompress(raw_index_bytes(b, src_off, src_len), src_len, raw_bytes(b, *dst_len), dst_len, method, cresult);
     if (r != UPX_E_OK)
         return r;
     if (*dst_len != saved_dst_len)

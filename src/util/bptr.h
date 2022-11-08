@@ -40,6 +40,9 @@
 template <class T>
 class BoundedPtr {
 public:
+    typedef T element_type;
+    typedef typename std::add_pointer<T>::type pointer;
+
     ~BoundedPtr() {}
 
     BoundedPtr(void *base, size_t size_in_bytes, T *ptr = nullptr)
@@ -137,8 +140,14 @@ private:
 
 // raw_bytes overload
 template <class T>
-inline T *raw_bytes(const BoundedPtr<T> &a, size_t size_in_bytes) {
+inline typename BoundedPtr<T>::pointer raw_bytes(const BoundedPtr<T> &a, size_t size_in_bytes) {
     return a.raw_bytes(size_in_bytes);
+}
+template <class T>
+inline typename BoundedPtr<T>::pointer raw_index_bytes(const BoundedPtr<T> &a, size_t index,
+                                                       size_t size_in_bytes) {
+    typedef typename BoundedPtr<T>::element_type element_type;
+    return raw_bytes(a, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
 }
 
 #endif /* already included */

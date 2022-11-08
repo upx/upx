@@ -60,7 +60,8 @@ using SPAN_NAMESPACE_NAME::PtrOrSpan;
 using SPAN_NAMESPACE_NAME::PtrOrSpanOrNull;
 using SPAN_NAMESPACE_NAME::Span;
 // util
-using SPAN_NAMESPACE_NAME::raw_bytes; // overloaded for all classes
+using SPAN_NAMESPACE_NAME::raw_bytes;       // overloaded for all classes
+using SPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #endif
 
 #endif // WITH_SPAN

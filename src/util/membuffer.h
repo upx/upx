@@ -128,6 +128,12 @@ inline typename MemBufferBase<T>::pointer raw_bytes(const MemBufferBase<T> &mbb,
                                                     size_t size_in_bytes) {
     return mbb.raw_bytes(size_in_bytes);
 }
+template <class T>
+inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T> &mbb, size_t index,
+                                                          size_t size_in_bytes) {
+    typedef typename MemBufferBase<T>::element_type element_type;
+    return raw_bytes(mbb, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+}
 
 // global operators
 // rewrite "n + membuffer" to "membuffer + n" so that this will get checked above

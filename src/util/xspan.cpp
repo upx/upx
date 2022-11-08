@@ -96,6 +96,15 @@ TEST_CASE("basic xspan usage") {
         CHECK(cs == bp);
         CHECK(x0 == z0p);
         CHECK(xp == z0s);
+
+        CHECK(raw_bytes(c0, 4) == buf);
+        CHECK(raw_index_bytes(c0, 1, 3) == buf + 1);
+        CHECK(raw_bytes(cp, 4) == buf);
+        CHECK(raw_index_bytes(cp, 1, 3) == buf + 1);
+        CHECK(raw_bytes(cs, 4) == buf);
+        CHECK(raw_index_bytes(cs, 1, 3) == buf + 1);
+        CHECK_THROWS(raw_bytes(cs, 5));
+        CHECK_THROWS(raw_index_bytes(cs, 1, 4));
     }
 
     SUBCASE("SPAN_x_VAR") {
@@ -127,6 +136,15 @@ TEST_CASE("basic xspan usage") {
         CHECK(d0 == ds);
         CHECK(x0 == z0p);
         CHECK(xp == z0s);
+
+        CHECK(raw_bytes(c0, 4) == buf);
+        CHECK(raw_index_bytes(c0, 1, 3) == buf + 1);
+        CHECK(raw_bytes(cp, 4) == buf);
+        CHECK(raw_index_bytes(cp, 1, 3) == buf + 1);
+        CHECK(raw_bytes(cs, 4) == buf);
+        CHECK(raw_index_bytes(cs, 1, 3) == buf + 1);
+        CHECK_THROWS(raw_bytes(cs, 5));
+        CHECK_THROWS(raw_index_bytes(cs, 1, 4));
     }
 
     SUBCASE("xspan in class") {

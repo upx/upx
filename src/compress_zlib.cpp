@@ -199,7 +199,7 @@ int upx_zlib_test_overlap  ( const upx_bytep buf,
     MemBuffer b(src_off + src_len);
     memcpy(b + src_off, buf + src_off, src_len);
     unsigned saved_dst_len = *dst_len;
-    int r = upx_zlib_decompress(b + src_off, src_len, b, dst_len, method, cresult);
+    int r = upx_zlib_decompress(raw_index_bytes(b, src_off, src_len), src_len, raw_bytes(b, *dst_len), dst_len, method, cresult);
     if (r != UPX_E_OK)
         return r;
     if (*dst_len != saved_dst_len)
@@ -265,16 +265,16 @@ static bool check_zlib(const int method, const int level, const unsigned expecte
     d_buf.allocForDecompression(u_len);
 
     c_len = c_buf.getSize() - c_extra;
-    r = upx_zlib_compress(u_buf, u_len, c_buf + c_extra, &c_len, nullptr, method, level, NULL_cconf, &cresult);
+    r = upx_zlib_compress(raw_bytes(u_buf, u_len), u_len, raw_index_bytes(c_buf, c_extra, c_len), &c_len, nullptr, method, level, NULL_cconf, &cresult);
     if (r != 0 || c_len != expected_c_len) return false;
 
     d_len = d_buf.getSize();
-    r = upx_zlib_decompress(c_buf + c_extra, c_len, d_buf, &d_len, method, nullptr);
+    r = upx_zlib_decompress(raw_index_bytes(c_buf, c_extra, c_len), c_len, raw_bytes(d_buf, d_len), &d_len, method, nullptr);
     if (r != 0 || d_len != u_len) return false;
     if (memcmp(u_buf, d_buf, u_len) != 0) return false;
 
     d_len = u_len - 1;
-    r = upx_zlib_decompress(c_buf + c_extra, c_len, d_buf, &d_len, method, nullptr);
+    r = upx_zlib_decompress(raw_index_bytes(c_buf, c_extra, c_len), c_len, raw_bytes(d_buf, d_len), &d_len, method, nullptr);
     if (r == 0) return false;
 
     // TODO: rewrite Packer::findOverlapOverhead() so that we can test it here
