@@ -6,7 +6,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # run an interactive shell in the image
 # using a rootless Podman container
 
-image=upx-stubtools-20210104-v7
+image=upx-cross-compile-20221108-v7
 
 flags=( -ti --read-only --rm )
 flags+=( --cap-drop=all )               # drop all capabilities
@@ -32,29 +32,9 @@ fi
 
 podman run "${flags[@]}" "$image" bash -l
 
-# now we can rebuild the UPX stubs:
-#   cd /home/upx/src/upx/src/stub
-#   # make sure that git is clean:
-#   git status .
-#   # remove stub files and make sure that they got deleted:
-#   make maintainer-clean
-#   git status .
-#   # rebuild
-#   make all
-#   # make sure that the stub files did rebuild correctly:
-#   git status .
-#   git diff .
-
-# we can also build UPX in the container:
+# now we can cross-compile UPX for Windows:
 #   cd /home/upx/src/upx
-#   rm -rf ./build/release
-#   make build/release
-#   # run tests
-#   ./build/release/upx --version
-#   make -C build/release test
+#   rm -rf ./build/release-cross-mingw64
+#   make build/release-cross-mingw64
 
-# and we can also rebuild the UPX docs the container:
-#   cd /home/upx/src/upx
-#   make -C doc clean all
-#   git status doc
-#   git diff doc
+# lots of other cross-compilers are installed; see "ls /usr/bin/*g++*"
