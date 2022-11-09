@@ -35,6 +35,7 @@ int upx_doctest_check(int argc, char **argv) {
 #if defined(DOCTEST_CONFIG_DISABLE)
     UNUSED(argc);
     UNUSED(argv);
+    return 0;
 #else
     const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
     if (e && e[0] && strcmp(e, "0") != 0)
@@ -72,8 +73,8 @@ int upx_doctest_check(int argc, char **argv) {
         return 1;
     if (context.shouldExit())
         return 2;
-#endif // DOCTEST_CONFIG_DISABLE
     return 0;
+#endif // DOCTEST_CONFIG_DISABLE
 }
 
 int upx_doctest_check() { return upx_doctest_check(0, nullptr); }
@@ -97,6 +98,9 @@ ACC_COMPILE_TIME_ASSERT_HEADER(bswap16(0x04030201) == 0x0102)
 ACC_COMPILE_TIME_ASSERT_HEADER(bswap32(0x04030201) == 0x01020304)
 ACC_COMPILE_TIME_ASSERT_HEADER(bswap64(0x0807060504030201ull) == 0x0102030405060708ull)
 #endif
+
+ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("") == 0)
+ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("a") == 1)
 
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_eq("", ""))
 ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_eq("a", ""))

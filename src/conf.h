@@ -377,6 +377,9 @@ private:
 
 
 namespace compile_time {
+constexpr size_t string_len(const char *a) {
+    return *a == '\0' ? 0 : 1 + string_len(a + 1);
+}
 constexpr bool string_eq(const char *a, const char *b) {
     return *a == *b && (*a == '\0' || string_eq(a + 1, b + 1));
 }
