@@ -1386,11 +1386,12 @@ void PeFile::processTls1(Interval *iv,
     // ... and those dwords should be correctly aligned
     if (use_tls_callbacks)
         sotls = ALIGN_UP(sotls, cb_size) + 2 * cb_size;
+    const unsigned aligned_sotls = ALIGN_UP(sotls, (unsigned)sizeof(LEXX));
 
     // the PE loader wants this stuff uncompressed
-    mb_otls.alloc(sotls);
+    mb_otls.alloc(aligned_sotls);
     mb_otls.clear();
-    otls = mb_otls; // => SPAN_S
+    otls = mb_otls; // => otls now is a SPAN_S
     unsigned const take1 = sizeof(tls);
     unsigned const skip1 = IDADDR(PEDIR_TLS);
     memcpy(otls,ibuf.subref("bad tls %#x", skip1, take1), take1);
