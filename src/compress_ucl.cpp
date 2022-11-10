@@ -286,7 +286,7 @@ unsigned upx_ucl_crc32(const void *buf, unsigned len, unsigned crc)
 #endif
 
 /*************************************************************************
-// Debug checks
+// doctest checks
 **************************************************************************/
 
 #if DEBUG && 1
@@ -340,5 +340,42 @@ TEST_CASE("compress_ucl") {
 
 #endif // DEBUG
 
+TEST_CASE("upx_ucl_decompress") {
+    typedef const upx_byte C;
+    C *c_data;
+    upx_byte d_buf[16];
+    unsigned d_len;
+    int r;
+
+    c_data = (C*) "\x92\xff\x10\x00\x00\x00\x00\x00\x48\xff";
+    d_len = 16;
+    r = upx_ucl_decompress(c_data, 10, d_buf, &d_len, M_NRV2B_8, nullptr);
+    CHECK((r == 0 && d_len == 16));
+    r = upx_ucl_decompress(c_data, 9, d_buf, &d_len, M_NRV2B_8, nullptr);
+    CHECK(r == UPX_E_INPUT_OVERRUN);
+    d_len = 15;
+    r = upx_ucl_decompress(c_data, 10, d_buf, &d_len, M_NRV2B_8, nullptr);
+    CHECK(r == UPX_E_OUTPUT_OVERRUN);
+
+    c_data = (C*) "\x92\xff\x10\x92\x49\x24\x92\xa0\xff";
+    d_len = 16;
+    r = upx_ucl_decompress(c_data, 9, d_buf, &d_len, M_NRV2D_8, nullptr);
+    CHECK((r == 0 && d_len == 16));
+    r = upx_ucl_decompress(c_data, 8, d_buf, &d_len, M_NRV2D_8, nullptr);
+    CHECK(r == UPX_E_INPUT_OVERRUN);
+    d_len = 15;
+    r = upx_ucl_decompress(c_data, 9, d_buf, &d_len, M_NRV2D_8, nullptr);
+    CHECK(r == UPX_E_OUTPUT_OVERRUN);
+
+    c_data = (C*) "\x90\xff\xb0\x92\x49\x24\x92\xa0\xff";
+    d_len = 16;
+    r = upx_ucl_decompress(c_data, 9, d_buf, &d_len, M_NRV2E_8, nullptr);
+    CHECK((r == 0 && d_len == 16));
+    r = upx_ucl_decompress(c_data, 8, d_buf, &d_len, M_NRV2E_8, nullptr);
+    CHECK(r == UPX_E_INPUT_OVERRUN);
+    d_len = 15;
+    r = upx_ucl_decompress(c_data, 9, d_buf, &d_len, M_NRV2E_8, nullptr);
+    CHECK(r == UPX_E_OUTPUT_OVERRUN);
+}
 
 /* vim:set ts=4 sw=4 et: */

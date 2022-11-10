@@ -438,8 +438,10 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
     int r = UPX_E_ERROR;
     int rh;
 
-    if (src_len < 3)
+    if (src_len < 3) {
+        r = UPX_E_INPUT_OVERRUN;
         goto error;
+    }
     s.Properties.pb = src[0] & 7;
     s.Properties.lp = (src[1] >> 4);
     s.Properties.lc = src[1] & 15;
@@ -470,12 +472,15 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
     rh = LzmaDecode(&s, src, src_len, &src_out, dst, *dst_len, &dst_out);
     assert(src_out <=  src_len);
     assert(dst_out <= *dst_len);
-    if (rh == 0)
-    {
+    if (rh == 0) {
         r = UPX_E_OK;
         if (src_out != src_len)
             r = UPX_E_INPUT_NOT_CONSUMED;
     }
+    else if (rh == LZMA_RESULT_INPUT_OVERRUN)
+        r = UPX_E_INPUT_OVERRUN;
+    else if (rh == LZMA_RESULT_OUTPUT_OVERRUN)
+        r = UPX_E_OUTPUT_OVERRUN;
 
 error:
     *dst_len = dst_out;
@@ -533,5 +538,26 @@ const char *upx_lzma_version_string(void)
 #endif
 }
 
+/*************************************************************************
+// doctest checks
+**************************************************************************/
+
+TEST_CASE("upx_lzma_decompress") {
+    typedef const upx_byte C;
+    C *c_data;
+    upx_byte d_buf[16];
+    unsigned d_len;
+    int r;
+
+    c_data = (C*) "\x1a\x03\x00\x7f\xed\x3c\x00\x00\x00";
+    d_len = 16;
+    r = upx_lzma_decompress(c_data, 9, d_buf, &d_len, M_LZMA, nullptr);
+    CHECK((r == 0 && d_len == 16));
+    r = upx_lzma_decompress(c_data, 8, d_buf, &d_len, M_LZMA, nullptr);
+    CHECK(r == UPX_E_INPUT_OVERRUN);
+    d_len = 15;
+    r = upx_lzma_decompress(c_data, 9, d_buf, &d_len, M_LZMA, nullptr);
+    CHECK(r == UPX_E_OUTPUT_OVERRUN);
+}
 
 /* vim:set ts=4 sw=4 et: */

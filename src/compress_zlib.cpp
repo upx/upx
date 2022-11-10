@@ -48,8 +48,11 @@ static int convert_errno_from_zlib(int zr)
     switch (zr)
     {
     case Z_OK:                  return UPX_E_OK;
-    case Z_DATA_ERROR:          return UPX_E_ERROR;
     case Z_NEED_DICT:           return UPX_E_ERROR;
+    case Z_DATA_ERROR:          return UPX_E_ERROR;
+    case Z_MEM_ERROR:           return UPX_E_OUT_OF_MEMORY;
+    case Z_BUF_ERROR:           return UPX_E_OUTPUT_OVERRUN;
+    case -7:                    return UPX_E_INPUT_OVERRUN;
     }
     return UPX_E_ERROR;
 }
@@ -158,8 +161,11 @@ int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
     if (zr != Z_OK)
         goto error;
     zr = inflate(&s, Z_FINISH);
-    if (zr != Z_STREAM_END)
+    if (zr != Z_STREAM_END) {
+        if (zr == Z_BUF_ERROR && s.avail_in == 0)
+            zr = -7;
         goto error;
+    }
     zr = inflateEnd(&s);
     if (zr != Z_OK)
         goto error;
@@ -244,7 +250,7 @@ unsigned upx_zlib_crc32(const void *buf, unsigned len, unsigned crc)
 #endif
 
 /*************************************************************************
-// Debug checks
+// doctest checks
 **************************************************************************/
 
 #if DEBUG && 1
@@ -291,5 +297,22 @@ TEST_CASE("compress_zlib") {
 
 #endif // DEBUG
 
+TEST_CASE("upx_zlib_decompress") {
+    typedef const upx_byte C;
+    C *c_data;
+    upx_byte d_buf[16];
+    unsigned d_len;
+    int r;
+
+    c_data = (C*) "\xfb\xff\x1f\x15\x00\x00";
+    d_len = 16;
+    r = upx_zlib_decompress(c_data, 6, d_buf, &d_len, M_DEFLATE, nullptr);
+    CHECK((r == 0 && d_len == 16));
+    r = upx_zlib_decompress(c_data, 5, d_buf, &d_len, M_DEFLATE, nullptr);
+    CHECK(r == UPX_E_INPUT_OVERRUN);
+    d_len = 15;
+    r = upx_zlib_decompress(c_data, 6, d_buf, &d_len, M_DEFLATE, nullptr);
+    CHECK(r == UPX_E_OUTPUT_OVERRUN);
+}
 
 /* vim:set ts=4 sw=4 et: */
