@@ -38,12 +38,12 @@
 #define lsrc r1
 #define dst  r2
 #define ldst r3  /* Out: actually a reference: &len_dst */
-#define meth [sp,#0]
+#define meth [sp,#0]  /* as arg5 to f_exp: 32-bit unsigned */
 
   // bkpt  // debugging
 
 #define M_LZMA          14
-        ldrb ip,meth; cmp ip,#M_LZMA; bne not_lzma
+        ldr ip,meth; cmp ip,#M_LZMA; bne not_lzma
 
 #if defined(LINUX_ARM_CACHEFLUSH)||defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
         PUSH {dst,ldst, fp,lr}  // dst,ldst for cache flush
@@ -125,8 +125,11 @@
         mov r0,r4  // result value
 #endif  /*}*/
 
-        POP {fp,pc}
-1:
+        POP {fp,pc}  // RETURN!
+not_lzma:
+        bkpt  // we are lost
+
+1: // fall through into lzma decoding subroutine
 
   section LZMA_DEC20
 #include "lzma_d_cf.S"
@@ -140,8 +143,6 @@
 #endif  /*}*/
 
   section LZMA_DEC30
-
-not_lzma:
 
 // vi:ts=8:et
 
