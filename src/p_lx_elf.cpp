@@ -1978,7 +1978,7 @@ bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
 #include "p_elf_enum.h"
 #undef WANT_REL_ENUM
 
-int PackLinuxElf32::canUnpack()  // really 'bool'
+int PackLinuxElf32::canUnpack() // bool, except -1: format known, but not packed
 {
     if (checkEhdr(&ehdri)) {
         return false;
@@ -2409,7 +2409,7 @@ proceed: ;
     return true;
 }
 
-int PackLinuxElf64::canUnpack()  // really 'bool'
+int PackLinuxElf64::canUnpack() // bool, except -1: format known, but not packed
 {
     if (checkEhdr(&ehdri)) {
         return false;
@@ -2497,7 +2497,7 @@ PackLinuxElf64::canPack()
             max_offset = UPX_MAX(max_offset, get_te64(&phdr->p_filesz) + get_te64(&phdr->p_offset));
         }
     }
-    if (canUnpack()) {
+    if (canUnpack() > 0) {
         throwAlreadyPacked();
     }
     // We want to compress position-independent executable (gcc -pie)
@@ -5340,7 +5340,7 @@ PackLinuxElf32x86::~PackLinuxElf32x86()
 {
 }
 
-int PackLinuxElf32x86::canUnpack()  // really 'bool'
+int PackLinuxElf32x86::canUnpack() // bool, except -1: format known, but not packed
 {
     if (super::canUnpack()) {
         return true;
