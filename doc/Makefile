@@ -1,20 +1,8 @@
 #
-# UPX doc Makefile - needs GNU make
+# UPX doc Makefile - needs GNU make, pod2html, pod2man and pod2text
 #
 
-MAKEFLAGS += -rR
-.SUFFIXES:
-SHELL = /bin/sh
-
-# internal make variables
-comma := ,
-empty :=
-space := $(empty) $(empty)
-tab   := $(empty)	$(empty)
-
-# /***********************************************************************
-# //
-# ************************************************************************/
+BUILT_SOURCES = upx.1 upx-doc.html upx-doc.txt
 
 top_srcdir ?= ..
 
@@ -22,14 +10,20 @@ PACKAGE       = upx
 VERSION_DATE := $(shell sed -n 's/^.*UPX_VERSION_DATE_ISO .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 VERSION      := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 
+# internal make variables
+comma := ,
+empty :=
+space := $(empty) $(empty)
+tab   := $(empty)	$(empty)
+
 RTRIM  := sed -e 's/[ $(tab)]*$$//'
 DETAB2 := sed -e 's/$(tab)/  /g'
-
-BUILT_SOURCES = upx.1 upx-doc.html upx-doc.txt
 
 #***********************************************************************
 # targets
 #***********************************************************************
+
+.DEFAULT_GOAL = all
 
 all: $(BUILT_SOURCES) PHONY
 
@@ -40,6 +34,7 @@ mostlyclean clean distclean maintainer-clean: PHONY
 # rules
 #***********************************************************************
 
+.SUFFIXES:
 .SUFFIXES: .1 .html .man .pod .ps .tex .txt
 
 %.1 : %.pod

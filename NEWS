@@ -12,7 +12,7 @@ Changes in 4.0.0 (28 Oct 2022):
   * Support easy rebuilding the stubs from source with Podman/Docker
   * Add integrated doctest C++ testing framework
   * Add support for EFI files (PE x86; Kornel Pal)
-  * win32/pe and win64/pe: fix SizeOfHeaders in PE header
+  * win32/pe and win64/pe: set correct SizeOfHeaders in the PE header
   * bug fixes - see https://github.com/upx/upx/milestone/6
   * bug fixes - see https://github.com/upx/upx/milestone/7
 
