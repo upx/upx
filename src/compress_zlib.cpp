@@ -25,16 +25,13 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 #include "compress.h"
 #include "util/membuffer.h"
 #include <zlib/zlib.h>
 #include <zlib/deflate.h>
 
-
-void zlib_compress_config_t::reset()
-{
+void zlib_compress_config_t::reset() {
     mem_clear(this, sizeof(*this));
 
     mem_level.reset();
@@ -42,40 +39,49 @@ void zlib_compress_config_t::reset()
     strategy.reset();
 }
 
-
-static int convert_errno_from_zlib(int zr)
-{
-    switch (zr)
-    {
-    case Z_OK:                  return UPX_E_OK;
-    case Z_NEED_DICT:           return UPX_E_ERROR;
-    case Z_DATA_ERROR:          return UPX_E_ERROR;
-    case Z_MEM_ERROR:           return UPX_E_OUT_OF_MEMORY;
-    case Z_BUF_ERROR:           return UPX_E_OUTPUT_OVERRUN;
-    case -7:                    return UPX_E_INPUT_OVERRUN;
+static int convert_errno_from_zlib(int zr) {
+    switch (zr) {
+    case Z_OK:
+        return UPX_E_OK;
+    // positive values
+    case Z_STREAM_END:
+        return UPX_E_ERROR;
+    case Z_NEED_DICT:
+        return UPX_E_ERROR;
+    // negative values
+    case Z_ERRNO:
+        return UPX_E_ERROR;
+    case Z_STREAM_ERROR:
+        return UPX_E_ERROR;
+    case Z_DATA_ERROR:
+        return UPX_E_ERROR;
+    case Z_MEM_ERROR:
+        return UPX_E_OUT_OF_MEMORY;
+    case Z_BUF_ERROR:
+        return UPX_E_OUTPUT_OVERRUN;
+    case Z_VERSION_ERROR:
+        return UPX_E_ERROR;
+    case -7: // UPX extra
+        return UPX_E_INPUT_OVERRUN;
     }
     return UPX_E_ERROR;
 }
-
 
 /*************************************************************************
 //
 **************************************************************************/
 
-int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
-                                   upx_callback_p cb_parm,
-                                   int method, int level,
-                             const upx_compress_config_t *cconf_parm,
-                                   upx_compress_result_t *cresult )
-{
+int upx_zlib_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigned *dst_len,
+                      upx_callback_p cb_parm, int method, int level,
+                      const upx_compress_config_t *cconf_parm, upx_compress_result_t *cresult) {
     assert(method == M_DEFLATE);
-    assert(level > 0); assert(cresult != nullptr);
+    assert(level > 0);
+    assert(cresult != nullptr);
     UNUSED(cb_parm);
     int r = UPX_E_ERROR;
     int zr;
-    const zlib_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_zlib : nullptr;
-    zlib_compress_result_t *res = &cresult->result_zlib;
+    const zlib_compress_config_t *const lcconf = cconf_parm ? &cconf_parm->conf_zlib : nullptr;
+    zlib_compress_result_t *const res = &cresult->result_zlib;
 
     if (level == 10)
         level = 9;
@@ -84,8 +90,7 @@ int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
     zlib_compress_config_t::window_bits_t window_bits;
     zlib_compress_config_t::strategy_t strategy;
     // cconf overrides
-    if (lcconf)
-    {
+    if (lcconf) {
         oassign(mem_level, lcconf->mem_level);
         oassign(window_bits, lcconf->window_bits);
         oassign(strategy, lcconf->strategy);
@@ -102,8 +107,7 @@ int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
     s.avail_out = *dst_len;
     s.total_in = s.total_out = 0;
 
-    zr = (int)deflateInit2(&s, level, Z_DEFLATED, 0 - (int)window_bits,
-                      mem_level, strategy);
+    zr = (int) deflateInit2(&s, level, Z_DEFLATED, 0 - (int) window_bits, mem_level, strategy);
     if (zr != Z_OK)
         goto error;
     assert(s.state->level == level);
@@ -121,27 +125,22 @@ error:
     if (r == UPX_E_OK)
         r = UPX_E_ERROR;
 done:
-    if (r == UPX_E_OK)
-    {
+    if (r == UPX_E_OK) {
         if (s.avail_in != 0 || s.total_in != src_len)
             r = UPX_E_ERROR;
     }
-    assert(s.total_in  <=  src_len);
+    assert(s.total_in <= src_len);
     assert(s.total_out <= *dst_len);
     *dst_len = s.total_out;
     return r;
 }
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
-                                   int method,
-                             const upx_compress_result_t *cresult )
-{
+int upx_zlib_decompress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigned *dst_len,
+                        int method, const upx_compress_result_t *cresult) {
     assert(method == M_DEFLATE);
     UNUSED(method);
     UNUSED(cresult);
@@ -163,7 +162,7 @@ int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
     zr = inflate(&s, Z_FINISH);
     if (zr != Z_STREAM_END) {
         if (zr == Z_BUF_ERROR && s.avail_in == 0)
-            zr = -7;
+            zr = -7; // UPX extra
         goto error;
     }
     zr = inflateEnd(&s);
@@ -177,35 +176,30 @@ error:
     if (r == UPX_E_OK)
         r = UPX_E_ERROR;
 done:
-    if (r == UPX_E_OK)
-    {
+    if (r == UPX_E_OK) {
         if (s.avail_in != 0 || s.total_in != src_len)
             r = UPX_E_INPUT_NOT_CONSUMED;
     }
-    assert(s.total_in  <=  src_len);
+    assert(s.total_in <= src_len);
     assert(s.total_out <= *dst_len);
     *dst_len = s.total_out;
     return r;
 }
 
-
 /*************************************************************************
 // test_overlap - see <ucl/ucl.h> for semantics
 **************************************************************************/
 
-int upx_zlib_test_overlap  ( const upx_bytep buf,
-                             const upx_bytep tbuf,
-                                   unsigned  src_off, unsigned src_len,
-                                   unsigned* dst_len,
-                                   int method,
-                             const upx_compress_result_t *cresult )
-{
+int upx_zlib_test_overlap(const upx_bytep buf, const upx_bytep tbuf, unsigned src_off,
+                          unsigned src_len, unsigned *dst_len, int method,
+                          const upx_compress_result_t *cresult) {
     assert(method == M_DEFLATE);
 
     MemBuffer b(src_off + src_len);
     memcpy(b + src_off, buf + src_off, src_len);
     unsigned saved_dst_len = *dst_len;
-    int r = upx_zlib_decompress(raw_index_bytes(b, src_off, src_len), src_len, raw_bytes(b, *dst_len), dst_len, method, cresult);
+    int r = upx_zlib_decompress(raw_index_bytes(b, src_off, src_len), src_len,
+                                raw_bytes(b, *dst_len), dst_len, method, cresult);
     if (r != UPX_E_OK)
         return r;
     if (*dst_len != saved_dst_len)
@@ -218,33 +212,26 @@ int upx_zlib_test_overlap  ( const upx_bytep buf,
     return UPX_E_OK;
 }
 
-
 /*************************************************************************
 // misc
 **************************************************************************/
 
-int upx_zlib_init(void)
-{
+int upx_zlib_init(void) {
     if (strcmp(ZLIB_VERSION, zlibVersion()) != 0)
         return -2;
     return 0;
 }
 
-const char *upx_zlib_version_string(void)
-{
-    return zlibVersion();
-}
+const char *upx_zlib_version_string(void) { return zlibVersion(); }
 
 #if 0 /* UNUSED */
-unsigned upx_zlib_adler32(const void *buf, unsigned len, unsigned adler)
-{
+unsigned upx_zlib_adler32(const void *buf, unsigned len, unsigned adler) {
     return adler32(adler, (const Bytef *) buf, len);
 }
 #endif
 
 #if 0 /* UNUSED */
-unsigned upx_zlib_crc32(const void *buf, unsigned len, unsigned crc)
-{
+unsigned upx_zlib_crc32(const void *buf, unsigned len, unsigned crc) {
     return crc32(crc, (const Bytef *) buf, len);
 }
 #endif
@@ -271,21 +258,26 @@ static bool check_zlib(const int method, const int level, const unsigned expecte
     d_buf.allocForDecompression(u_len);
 
     c_len = c_buf.getSize() - c_extra;
-    r = upx_zlib_compress(raw_bytes(u_buf, u_len), u_len, raw_index_bytes(c_buf, c_extra, c_len), &c_len, nullptr, method, level, NULL_cconf, &cresult);
-    if (r != 0 || c_len != expected_c_len) return false;
+    r = upx_zlib_compress(raw_bytes(u_buf, u_len), u_len, raw_index_bytes(c_buf, c_extra, c_len),
+                          &c_len, nullptr, method, level, NULL_cconf, &cresult);
+    if (r != 0 || c_len != expected_c_len)
+        return false;
 
     d_len = d_buf.getSize();
-    r = upx_zlib_decompress(raw_index_bytes(c_buf, c_extra, c_len), c_len, raw_bytes(d_buf, d_len), &d_len, method, nullptr);
-    if (r != 0 || d_len != u_len) return false;
-    if (memcmp(u_buf, d_buf, u_len) != 0) return false;
+    r = upx_zlib_decompress(raw_index_bytes(c_buf, c_extra, c_len), c_len, raw_bytes(d_buf, d_len),
+                            &d_len, method, nullptr);
+    if (r != 0 || d_len != u_len || memcmp(u_buf, d_buf, u_len) != 0)
+        return false;
 
     d_len = u_len - 1;
-    r = upx_zlib_decompress(raw_index_bytes(c_buf, c_extra, c_len), c_len, raw_bytes(d_buf, d_len), &d_len, method, nullptr);
-    if (r == 0) return false;
+    r = upx_zlib_decompress(raw_index_bytes(c_buf, c_extra, c_len), c_len, raw_bytes(d_buf, d_len),
+                            &d_len, method, nullptr);
+    if (r == 0)
+        return false;
 
     // TODO: rewrite Packer::findOverlapOverhead() so that we can test it here
-    //unsigned x_len = d_len;
-    //r = upx_zlib_test_overlap(c_buf, u_buf, c_extra, c_len, &x_len, method, nullptr);
+    // unsigned x_len = d_len;
+    // r = upx_zlib_test_overlap(c_buf, u_buf, c_extra, c_len, &x_len, method, nullptr);
     return true;
 }
 
@@ -304,7 +296,7 @@ TEST_CASE("upx_zlib_decompress") {
     unsigned d_len;
     int r;
 
-    c_data = (C*) "\xfb\xff\x1f\x15\x00\x00";
+    c_data = (C *) "\xfb\xff\x1f\x15\x00\x00";
     d_len = 16;
     r = upx_zlib_decompress(c_data, 6, d_buf, &d_len, M_DEFLATE, nullptr);
     CHECK((r == 0 && d_len == 16));

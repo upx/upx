@@ -74,6 +74,7 @@ endif
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
 CLANG_FORMAT_FILES += bele.h bele_policy.h
+CLANG_FORMAT_FILES += compress_lzma.cpp compress_ucl.cpp compress_zlib.cpp
 CLANG_FORMAT_FILES += except.cpp except.h
 CLANG_FORMAT_FILES += file.cpp file.h
 CLANG_FORMAT_FILES += linker.cpp linker.h packhead.cpp packmast.cpp packmast.h
