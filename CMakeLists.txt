@@ -196,28 +196,28 @@ if(NOT CMAKE_CROSSCOMPILING)
     add_test(NAME upx-help    COMMAND upx --help)
 endif()
 if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
-    # NOTE: these tests can only work if the host executable format is supported by UPX
+    # NOTE: these tests can only work if the host executable format is supported by UPX!
+    function(upx_add_test)
+        set(name ${ARGV0})
+        list(REMOVE_AT ARGV 0)
+        add_test(NAME ${name} COMMAND ${ARGV})
+        set_tests_properties(${name} PROPERTIES RUN_SERIAL TRUE) # run these tests sequentially
+    endfunction()
     set(exe ${CMAKE_EXECUTABLE_SUFFIX})
     set(upx_self_exe "$<TARGET_FILE:upx>")
-    add_test(NAME upx-test-cleanup COMMAND rm -f ./upx.packed${exe} ./upx.unpacked${exe})
-    add_test(NAME upx-self-pack    COMMAND upx -3 ${upx_self_exe} -o upx.packed${exe})
-    add_test(NAME upx-list         COMMAND upx -l upx.packed${exe})
-    add_test(NAME upx-fileinfo     COMMAND upx --fileinfo upx.packed${exe})
-    add_test(NAME upx-test         COMMAND upx -t upx.packed${exe})
-    add_test(NAME upx-unpack       COMMAND upx -d upx.packed${exe} -o upx.unpacked${exe})
-    add_test(NAME upx-run-unpacked COMMAND ./upx.unpacked${exe} --version-short)
-    add_test(NAME upx-run-packed   COMMAND ./upx.packed${exe} --version-short)
-    # run these tests sequentially
-    set_tests_properties(
-        upx-test-cleanup upx-self-pack upx-list upx-fileinfo upx-test upx-unpack
-        upx-run-unpacked upx-run-packed PROPERTIES RUN_SERIAL TRUE
-    )
+    upx_add_test(upx-test-cleanup   rm -f ./upx-packed${exe} ./upx-unpacked${exe})
+    upx_add_test(upx-self-pack      upx -3 ${upx_self_exe} -o upx-packed${exe})
+    upx_add_test(upx-self-pack-n2b  upx -3 --nrv2b ${upx_self_exe} -f -o upx-packed-n2b${exe})
+    upx_add_test(upx-self-pack-n2d  upx -3 --nrv2d ${upx_self_exe} -f -o upx-packed-n2d${exe})
+    upx_add_test(upx-self-pack-n2e  upx -3 --nrv2e ${upx_self_exe} -f -o upx-packed-n2e${exe})
+    upx_add_test(upx-self-pack-lzma upx -3 --lzma  ${upx_self_exe} -f -o upx-packed-lzma${exe})
+    upx_add_test(upx-list           upx -l upx-packed${exe})
+    upx_add_test(upx-fileinfo       upx --fileinfo upx-packed${exe})
+    upx_add_test(upx-test           upx -t upx-packed${exe})
+    upx_add_test(upx-unpack         upx -d upx-packed${exe} -o upx-unpacked${exe})
+    upx_add_test(upx-run-unpacked   ./upx-unpacked${exe} --version-short)
+    upx_add_test(upx-run-packed     ./upx-packed${exe} --version-short)
 endif()
-
-# TODO: could add some more explicit test programs; but then, the integrated
-# "doctest" is quite convenient and already covers a number of basic
-# checks - and more complex cases better should be handled by an
-# external test suite.
 
 #***********************************************************************
 # "make install"
