@@ -221,10 +221,10 @@ error:
 
 namespace MyLzma {
 
-struct InStream : public ISequentialInStream, public CMyUnknownImp {
+struct InStream final : public ISequentialInStream, public CMyUnknownImp {
     virtual ~InStream() {}
     MY_UNKNOWN_IMP
-    const Byte *b_buf;
+    const Byte *b_buf = nullptr;
     size_t b_size;
     size_t b_pos;
     void Init(const Byte *data, size_t size) {
@@ -246,10 +246,10 @@ STDMETHODIMP InStream::Read(void *data, UInt32 size, UInt32 *processedSize) {
     return S_OK;
 }
 
-struct OutStream : public ISequentialOutStream, public CMyUnknownImp {
+struct OutStream final : public ISequentialOutStream, public CMyUnknownImp {
     virtual ~OutStream() {}
     MY_UNKNOWN_IMP
-    Byte *b_buf;
+    Byte *b_buf = nullptr;
     size_t b_size;
     size_t b_pos;
     bool overflow;
@@ -281,11 +281,11 @@ STDMETHODIMP OutStream::Write(const void *data, UInt32 size, UInt32 *processedSi
     return overflow ? E_FAIL : S_OK;
 }
 
-struct ProgressInfo : public ICompressProgressInfo, public CMyUnknownImp {
+struct ProgressInfo final : public ICompressProgressInfo, public CMyUnknownImp {
     virtual ~ProgressInfo() {}
     MY_UNKNOWN_IMP
     STDMETHOD(SetRatioInfo)(const UInt64 *inSize, const UInt64 *outSize) override;
-    upx_callback_p cb;
+    upx_callback_p cb = nullptr;
 };
 
 STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outSize) {
@@ -322,14 +322,13 @@ int upx_lzma_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsi
 
     MyLzma::InStream is;
     is.AddRef();
+    is.Init(src, src_len);
     MyLzma::OutStream os;
     os.AddRef();
-    is.Init(src, src_len);
     os.Init(dst, *dst_len);
-
     MyLzma::ProgressInfo progress;
     progress.AddRef();
-    progress.cb = cb;
+    progress.cb = cb; // progress.Init()
 
     NCompress::NLZMA::CEncoder enc;
     const PROPID propIDs[8] = {
