@@ -68,6 +68,8 @@ void do_one_file(const char *iname, char *oname) {
         else
             throwIOException(iname, errno);
     }
+    if (S_ISDIR(st.st_mode))
+        throwIOException("is a directory -- skipped");
     if (!(S_ISREG(st.st_mode)))
         throwIOException("not a regular file -- skipped");
 #if defined(__unix__)
@@ -114,22 +116,22 @@ void do_one_file(const char *iname, char *oname) {
                 throwIOException("data not written to a terminal; Use '-f' to force.");
         } else {
             char tname[ACC_FN_PATH_MAX + 1];
-            if (opt->output_name)
+            if (opt->output_name) {
                 strcpy(tname, opt->output_name);
-            else {
+                if (opt->force_overwrite || opt->force >= 2) {
+#if (HAVE_CHMOD)
+                    r = chmod(tname, 0777);
+                    IGNORE_ERROR(r);
+#endif
+                    r = unlink(tname);
+                    IGNORE_ERROR(r);
+                }
+            } else {
                 if (!maketempname(tname, sizeof(tname), iname, ".upx"))
                     throwIOException("could not create a temporary file name");
             }
-            if (opt->force >= 2) {
-#if (HAVE_CHMOD)
-                r = chmod(tname, 0777);
-                IGNORE_ERROR(r);
-#endif
-                r = unlink(tname);
-                IGNORE_ERROR(r);
-            }
             int flags = O_CREAT | O_WRONLY | O_BINARY;
-            if (opt->force)
+            if (opt->force_overwrite || opt->force)
                 flags |= O_TRUNC;
             else
                 flags |= O_EXCL;

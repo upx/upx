@@ -375,6 +375,9 @@ static int do_option(int optc, const char *arg) {
     case 'f':
         opt->force++;
         break;
+    case 529:
+        opt->force_overwrite = true;
+        break;
     case 909:
         set_cmd(CMD_FILEINFO);
         break;
@@ -799,14 +802,15 @@ int main_get_options(int argc, char **argv) {
         {"version", 0, N, 'V' + 256},  // display version number
 
         // options
-        {"force", 0, N, 'f'},          // force overwrite of output files
-        {"force-compress", 0, N, 'f'}, //   and compression of suspicious files
-        {"info", 0, N, 'i'},           // info mode
-        {"no-env", 0x10, N, 519},      // no environment var
-        {"no-mode", 0x10, N, 526},     // do not preserve mode (permissions)
-        {"no-owner", 0x10, N, 527},    // do not preserve ownership
-        {"no-progress", 0, N, 516},    // no progress bar
-        {"no-time", 0x10, N, 528},     // do not preserve timestamp
+        {"force", 0, N, 'f'},              // force overwrite of output files
+        {"force-compress", 0, N, 'f'},     //   and compression of suspicious files
+        {"force-overwrite", 0x90, N, 529}, // force overwrite of output files
+        {"info", 0, N, 'i'},               // info mode
+        {"no-env", 0x10, N, 519},          // no environment var
+        {"no-mode", 0x10, N, 526},         // do not preserve mode (permissions)
+        {"no-owner", 0x10, N, 527},        // do not preserve ownership
+        {"no-progress", 0, N, 516},        // no progress bar
+        {"no-time", 0x10, N, 528},         // do not preserve timestamp
         {"output", 0x21, N, 'o'},
         {"quiet", 0, N, 'q'},  // quiet mode
         {"silent", 0, N, 'q'}, // quiet mode
@@ -897,7 +901,7 @@ int main_get_options(int argc, char **argv) {
                                          // dos/sys
                                          // unix
         {"blocksize", 0x31, N, 660},     // --blocksize=
-        {"force-execve", 0x10, N, 661},  // force linux/386 execve format
+        {"force-execve", 0x90, N, 661},  // force linux/386 execve format
         {"is_ptinterp", 0x10, N, 663},   // linux/elf386 PT_INTERP program
         {"use_ptinterp", 0x10, N, 664},  // linux/elf386 PT_INTERP program
         {"make_ptinterp", 0x10, N, 665}, // linux/elf386 PT_INTERP program
@@ -912,7 +916,7 @@ int main_get_options(int argc, char **argv) {
         {"unmap-all-pages", 0x10, N, 674}, // linux /proc/self/exe vanishes
         {"preserve-build-id", 0, N, 675},
         {"android-shlib", 0, N, 676},
-        {"force-pie", 0, N, 677},
+        {"force-pie", 0x90, N, 677},
         // watcom/le
         {"le", 0x10, N, 620}, // produce LE output
                               // win32/pe

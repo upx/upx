@@ -69,6 +69,7 @@ struct options_t {
     int backup;
     int console;
     int force;
+    bool force_overwrite;
     int info_mode;
     bool ignorewarn;
     bool no_env;
