@@ -220,7 +220,6 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     // Mach (MacOS X PowerPC)
     D(PackDylibAMD64);
     D(PackMachPPC32);
-    D(PackMachPPC64);
     D(PackMachI386);
     D(PackMachAMD64);
     D(PackMachARMEL);
