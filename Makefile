@@ -2,7 +2,7 @@
 # UPX top-level Makefile - needs GNU make and CMake >= 3.13
 #
 
-# NOTE: if you only have CMake 3.10 then you can invoke cmake manually like this:
+# NOTE: if you only have an older CMake 3.x then you can invoke cmake manually like this:
 #   mkdir -p build/release
 #   cd build/release
 #   cmake ../..

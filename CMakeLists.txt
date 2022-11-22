@@ -1,11 +1,22 @@
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.4.3 FATAL_ERROR)
 
 # compilation config options
-option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info.")
-option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options.")
-option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option.")
-# test config options
-option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself") # see below
+if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+    # relaxed config defaults when building from tar/zip source
+    option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." ON)
+    option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." ON)
+    option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   ON)
+else()
+    # strict config defaults for devel builds
+    message(STATUS "upx info: strict config defaults enabled")
+    option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." OFF)
+    option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." OFF)
+    option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   OFF)
+endif()
+
+# test config options (see below)
+# NOTE: self-pack test can only work if the host executable format is supported by UPX!
+option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" OFF)
 
 #***********************************************************************
 # init
@@ -29,11 +40,9 @@ set(GIT_DESCRIBE "")
 find_package(Git)
 if(GIT_FOUND AND NOT UPX_CONFIG_DISABLE_GITREV)
     execute_process(
-        RESULT_VARIABLE result
         COMMAND "${GIT_EXECUTABLE}" rev-parse --short=12 HEAD
-        ERROR_QUIET
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        OUTPUT_VARIABLE GITREV_SHORT
+        RESULT_VARIABLE result ERROR_QUIET
+        OUTPUT_VARIABLE GITREV_SHORT OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     string(LENGTH "${GITREV_SHORT}" l)
     if(${result} EQUAL 0 AND ${l} EQUAL 12)
@@ -45,11 +54,9 @@ if(GIT_FOUND AND NOT UPX_CONFIG_DISABLE_GITREV)
         set(GITREV_SHORT "")
     endif()
     execute_process(
-        RESULT_VARIABLE result
         COMMAND "${GIT_EXECUTABLE}" describe --match "v*.*.*" --tags --dirty
-        ERROR_QUIET
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        OUTPUT_VARIABLE GIT_DESCRIBE
+        RESULT_VARIABLE result ERROR_QUIET
+        OUTPUT_VARIABLE GIT_DESCRIBE OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     if(GIT_DESCRIBE MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)-([0-9]+)-g(.+)$")
         set(GIT_DESCRIBE "${CMAKE_MATCH_1}-devel.${CMAKE_MATCH_2}+git-${CMAKE_MATCH_3}")
