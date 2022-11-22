@@ -41,7 +41,9 @@
 
 SPAN_NAMESPACE_BEGIN
 
+// HINT: set env-var "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
 __acc_noinline void span_fail_nullptr();
+__acc_noinline void span_fail_nullbase();
 __acc_noinline void span_fail_not_same_base();
 __acc_noinline void span_fail_range_nullptr();
 __acc_noinline void span_fail_range_nullbase();

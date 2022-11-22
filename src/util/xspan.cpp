@@ -32,12 +32,17 @@ SPAN_NAMESPACE_BEGIN
 
 unsigned long long span_check_stats_check_range = 0;
 
+// HINT: set env-var "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
 __acc_noinline void span_fail_nullptr() {
     throwCantUnpack("span unexpected NULL pointer; take care!");
+}
+__acc_noinline void span_fail_nullbase() {
+    throwCantUnpack("span unexpected NULL base; take care!");
 }
 __acc_noinline void span_fail_not_same_base() {
     throwInternalError("span unexpected base pointer; take care!");
 }
+
 __acc_noinline void span_fail_range_nullptr() {
     throwCantUnpack("span_check_range: unexpected NULL pointer; take care!");
 }
@@ -474,26 +479,63 @@ TEST_CASE("Span") {
     assert(ss_with_base.raw_base() == base_buf);
     CHECK_THROWS(ss_with_base = my_null); // nullptr assignment
 #if SPAN_CONFIG_ENABLE_SPAN_CONVERSION
-    typedef PtrOrSpanOrNull<char> Span0;
-    Span0 s0_no_base(nullptr);
-    Span0 s0_with_base(nullptr, 4, base_buf);
-    CHECK_THROWS(ss_with_base = s0_no_base);   // nullptr assignment
-    CHECK_THROWS(ss_with_base = s0_with_base); // nullptr assignment
-    typedef PtrOrSpanOrNull<char> SpanP;
-    SpanP sp_1(base_buf + 1, 3, base_buf);
-    SpanP sp_2(base_buf + 2, 2, base_buf);
-    //    SpanP sp_4(base_buf + 4, 0, base_buf);
-    SpanP sp_x(base_buf + 1, 3, base_buf + 1);
-    assert(ss_with_base.raw_base() == base_buf);
-#if 0
-    ss_with_base = sp_1;
-    assert(ss_with_base.raw_ptr() == base_buf + 1);
-    CHECK(*ss_with_base == 1);
-    ss_with_base = sp_2;
-    assert(ss_with_base.raw_ptr() == base_buf + 2);
-    CHECK_THROWS(ss_with_base = sp_x); // not same base
-    assert(ss_with_base.raw_base() == base_buf);
-#endif
+    {
+        typedef PtrOrSpanOrNull<char> Span0;
+        // v0 nullptr, b0 base, b1 base + 1
+        const Span0 v0_v0(nullptr);
+        const Span0 v0_b0(nullptr, 4, base_buf);
+        const Span0 v0_b1(nullptr, 3, base_buf + 1);
+        const Span0 b0_v0(base_buf);
+        const Span0 b0_b0(base_buf, 4, base_buf);
+        CHECK_THROWS(SPAN_0_MAKE(char, base_buf, 3, base_buf + 1)); // b0_b1
+        const Span0 b1_v0(base_buf + 1);
+        const Span0 b1_b0(base_buf + 1, 4, base_buf);
+        const Span0 b1_b1(base_buf + 1, 3, base_buf + 1);
+        CHECK_THROWS(ss_with_base = v0_v0); // nullptr assignment
+        CHECK_THROWS(ss_with_base = v0_b0); // nullptr assignment
+        CHECK_THROWS(ss_with_base = v0_b1); // nullptr assignment
+        CHECK_NOTHROW(ss_with_base = b0_v0);
+        CHECK_NOTHROW(ss_with_base = b0_b0);
+        CHECK_NOTHROW(ss_with_base = b1_v0);
+        CHECK_NOTHROW(ss_with_base = b1_b0);
+        CHECK_THROWS(ss_with_base = b1_b1); // different base
+        CHECK_THROWS(SPAN_S_MAKE(char, v0_v0));
+        CHECK_THROWS(SPAN_S_MAKE(char, v0_b0));
+        CHECK_THROWS(SPAN_S_MAKE(char, v0_b1));
+        CHECK_THROWS(SPAN_S_MAKE(char, b0_v0));
+        CHECK_NOTHROW(SPAN_S_MAKE(char, b0_b0));
+        CHECK_THROWS(SPAN_S_MAKE(char, b1_v0));
+        CHECK_NOTHROW(SPAN_S_MAKE(char, b1_b0));
+        CHECK_NOTHROW(SPAN_S_MAKE(char, b1_b1));
+        //
+        CHECK((SPAN_S_MAKE(char, b0_b0).raw_base() == base_buf));
+        CHECK((SPAN_S_MAKE(char, b1_b0).raw_base() == base_buf));
+        CHECK((SPAN_S_MAKE(char, b1_b1).raw_base() == base_buf + 1));
+    }
+    {
+        typedef PtrOrSpan<char> SpanP;
+        // v0 nullptr, b0 base, b1 base + 1
+        const SpanP b0_v0(base_buf);
+        const SpanP b0_b0(base_buf, 4, base_buf);
+        CHECK_THROWS(SPAN_P_MAKE(char, base_buf, 3, base_buf + 1)); // b0_b1
+        const SpanP b1_v0(base_buf + 1);
+        const SpanP b1_b0(base_buf + 1, 4, base_buf);
+        const SpanP b1_b1(base_buf + 1, 3, base_buf + 1);
+        CHECK_NOTHROW(ss_with_base = b0_v0);
+        CHECK_NOTHROW(ss_with_base = b0_b0);
+        CHECK_NOTHROW(ss_with_base = b1_v0);
+        CHECK_NOTHROW(ss_with_base = b1_b0);
+        CHECK_THROWS(ss_with_base = b1_b1); // different base
+        CHECK_THROWS(SPAN_S_MAKE(char, b0_v0));
+        CHECK_NOTHROW(SPAN_S_MAKE(char, b0_b0));
+        CHECK_THROWS(SPAN_S_MAKE(char, b1_v0));
+        CHECK_NOTHROW(SPAN_S_MAKE(char, b1_b0));
+        CHECK_NOTHROW(SPAN_S_MAKE(char, b1_b1));
+        //
+        CHECK((SPAN_S_MAKE(char, b0_b0).raw_base() == base_buf));
+        CHECK((SPAN_S_MAKE(char, b1_b0).raw_base() == base_buf));
+        CHECK((SPAN_S_MAKE(char, b1_b1).raw_base() == base_buf + 1));
+    }
 #endif
 }
 

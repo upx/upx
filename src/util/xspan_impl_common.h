@@ -78,7 +78,7 @@ static __acc_forceinline pointer makePtr(pointer p) {
 }
 static __acc_forceinline pointer makeBase(pointer b) {
     if __acc_cte (configRequireBase && b == nullptr)
-        span_fail_nullptr();
+        span_fail_nullbase();
     return b;
 }
 // inverse logic for ensuring valid pointers from existing objets
@@ -89,8 +89,8 @@ __acc_forceinline pointer ensurePtr() const {
 }
 __acc_forceinline pointer ensureBase() const {
     if __acc_cte (!configRequireBase && base == nullptr)
-        span_fail_nullptr();
-    return ptr;
+        span_fail_nullbase();
+    return base;
 }
 
 public:
@@ -161,13 +161,12 @@ CSelf(std::nullptr_t, size_type, std::nullptr_t) SPAN_DELETED_FUNCTION;
 CSelf(const void *, size_type, std::nullptr_t) SPAN_DELETED_FUNCTION;
 
 // unchecked constructor
-private:
+protected:
 enum ModeUnchecked { Unchecked };
 CSelf(ModeUnchecked, pointer p, size_type bytes, pointer b)
     : ptr(p), base(b), size_in_bytes(bytes) {
     assertInvariants();
 }
-#if 0
 // unchecked assignment
 Self &assign(ModeUnchecked, pointer p, size_type bytes, pointer b) {
     ptr = p;
@@ -176,6 +175,7 @@ Self &assign(ModeUnchecked, pointer p, size_type bytes, pointer b) {
     assertInvariants();
     return *this;
 }
+#if 0
 Self &assign(ModeUnchecked, const Self &other) {
     ptr = other.ptr;
     base = other.base;
