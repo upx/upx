@@ -219,6 +219,7 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
 
     // Mach (macOS)
     D(PackDylibAMD64);
+    D(PackMachPPC32); // TODO: this works with upx 3.91..3.94 but got broken in 3.95; FIXME
     D(PackMachI386);
     D(PackMachAMD64);
     D(PackMachARMEL);
