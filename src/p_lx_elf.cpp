@@ -256,7 +256,8 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     e_phnum = get_te16(&ehdri.e_phnum);
     e_shnum = get_te16(&ehdri.e_shnum);
     unsigned const e_phentsize = get_te16(&ehdri.e_phentsize);
-    if (ehdri.e_ident[Elf32_Ehdr::EI_CLASS]!=Elf32_Ehdr::ELFCLASS32
+    if (memcmp((char const *)&ehdri, "\x7f\x45\x4c\x46", 4)  // "\177ELF"
+    || ehdri.e_ident[Elf32_Ehdr::EI_CLASS]!=Elf32_Ehdr::ELFCLASS32
     || sizeof(Elf32_Phdr) != e_phentsize
     || (Elf32_Ehdr::ELFDATA2MSB == ehdri.e_ident[Elf32_Ehdr::EI_DATA]
             && &N_BELE_RTP::be_policy != bele)
@@ -761,7 +762,8 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     e_phnum = get_te16(&ehdri.e_phnum);
     e_shnum = get_te16(&ehdri.e_shnum);
     unsigned const e_phentsize = get_te16(&ehdri.e_phentsize);
-    if (ehdri.e_ident[Elf64_Ehdr::EI_CLASS]!=Elf64_Ehdr::ELFCLASS64
+    if (memcmp((char const *)&ehdri, "\x7f\x45\x4c\x46", 4)  // "\177ELF"
+    || ehdri.e_ident[Elf64_Ehdr::EI_CLASS]!=Elf64_Ehdr::ELFCLASS64
     || sizeof(Elf64_Phdr) != e_phentsize
     || (Elf64_Ehdr::ELFDATA2MSB == ehdri.e_ident[Elf64_Ehdr::EI_DATA]
             && &N_BELE_RTP::be_policy != bele)
@@ -5780,7 +5782,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         }
         if (file_size <= dt_offsets[n_off]) {
             char msg[60]; snprintf(msg, sizeof(msg), "bad DT_{%#x} = %#x (beyond EOF)",
-                dt_names[k], dt_offsets[n_off]);
+                k, dt_offsets[n_off]);
                 throwCantPack(msg);
         }
         n_off += !!dt_offsets[n_off];
