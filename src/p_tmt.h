@@ -25,24 +25,24 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #ifndef __UPX_P_TMT_H
 #define __UPX_P_TMT_H 1
-
 
 /*************************************************************************
 // tmt/adam
 **************************************************************************/
 
-class PackTmt final : public Packer
-{
+class PackTmt final : public Packer {
     typedef Packer super;
+
 public:
     PackTmt(InputFile *f);
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_TMT_ADAM; }
     virtual const char *getName() const override { return "tmt/adam"; }
-    virtual const char *getFullName(const options_t *) const override { return "i386-dos32.tmt.adam"; }
+    virtual const char *getFullName(const options_t *) const override {
+        return "i386-dos32.tmt.adam";
+    }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 
@@ -55,27 +55,24 @@ public:
 protected:
     int readFileHeader();
 
-    virtual unsigned findOverlapOverhead(const upx_bytep buf,
-                                         const upx_bytep tbuf,
+    virtual unsigned findOverlapOverhead(const upx_bytep buf, const upx_bytep tbuf,
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const override;
     virtual void buildLoader(const Filter *ft) override;
-    virtual Linker* newLinker() const override;
+    virtual Linker *newLinker() const override;
 
     unsigned adam_offset;
     int big_relocs;
 
-    struct tmt_header_t
-    {
-        char _[16];     // signature,linkerversion,minversion,exesize,imagestart
+    struct tmt_header_t {
+        char _[16]; // signature,linkerversion,minversion,exesize,imagestart
         LE32 imagesize;
-        char __[4];     // initial memory
+        char __[4]; // initial memory
         LE32 entry;
-        char ___[12];   // esp,numfixups,flags
+        char ___[12]; // esp,numfixups,flags
         LE32 relocsize;
     } ih, oh;
 };
-
 
 #endif /* already included */
 
