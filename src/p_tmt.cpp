@@ -139,7 +139,8 @@ int PackTmt::readFileHeader() {
     unsigned const imagesize = ih.imagesize;
     unsigned const entry = ih.entry;
     unsigned const relocsize = ih.relocsize;
-    if (!imagesize || file_size <= imagesize || file_size <= entry || file_size <= relocsize) {
+    if (imagesize < sizeof(ih) || entry < sizeof(ih) || file_size <= imagesize ||
+        file_size <= entry || file_size <= relocsize) {
         printWarn(getName(), "bad header; imagesize=%#x  entry=%#x  relocsize=%#x", imagesize,
                   entry, relocsize);
         return 0;
@@ -172,7 +173,7 @@ void PackTmt::pack(OutputFile *fo) {
     obuf.allocForCompression(usize + rsize + 128);
 
     MemBuffer mb_wrkmem;
-    mb_wrkmem.alloc(rsize + EXTRA_INFO); // relocations
+    mb_wrkmem.alloc(rsize + EXTRA_INFO + 4); // relocations + original entry point + relocsize
     SPAN_S_VAR(upx_byte, wrkmem, mb_wrkmem);
 
     fi->seek(adam_offset + sizeof(ih), SEEK_SET);
@@ -180,7 +181,7 @@ void PackTmt::pack(OutputFile *fo) {
     fi->readx(wrkmem + 4, rsize);
     const unsigned overlay = file_size - fi->tell();
 
-    if (find_le32(ibuf, 128, get_le32("UPX ")) >= 0)
+    if (find_le32(ibuf, UPX_MIN(128u, usize), get_le32("UPX ")) >= 0)
         throwAlreadyPacked();
     if (rsize == 0)
         throwCantPack("file is already compressed with another packer");
