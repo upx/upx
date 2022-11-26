@@ -29,18 +29,17 @@
    <jssg@users.sourceforge.net>
  */
 
-
-#ifndef __UPX_P_PS1_H
-#define __UPX_P_PS1_H 1
-
+#pragma once
+#ifndef UPX_P_PS1_H__
+#define UPX_P_PS1_H__ 1
 
 /*************************************************************************
 // ps1/exe
 **************************************************************************/
 
-class PackPs1 final : public Packer
-{
+class PackPs1 final : public Packer {
     typedef Packer super;
+
 public:
     PackPs1(InputFile *f);
     virtual int getVersion() const override { return 13; }
@@ -58,16 +57,16 @@ public:
 
 protected:
     void putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len);
-    bool getBkupHeader(unsigned char *src, unsigned char * dst);
+    bool getBkupHeader(unsigned char *src, unsigned char *dst);
     bool readBkupHeader();
     virtual void buildLoader(const Filter *ft) override;
     bool findBssSection();
-    virtual Linker* newLinker() const override;
+    virtual Linker *newLinker() const override;
 
     int readFileHeader();
     bool checkFileHeader();
 
-    __packed_struct(ps1_exe_t)
+    struct alignas(1) ps1_exe_t {
         // ident string
         char id[8];
         // is nullptr
@@ -90,26 +89,26 @@ protected:
         char origin[60];
         // backup of the original header (epc - is_len)
         // id & the upx header ...
-    __packed_struct_end()
+    };
 
     // for unpack
-    __packed_struct(ps1_exe_hb_t)
+    struct alignas(1) ps1_exe_hb_t {
         LE32 ih_bkup[10];
         // plus checksum for the backup
         LE32 ih_csum;
-    __packed_struct_end()
+    };
 
-    __packed_struct(ps1_exe_chb_t)
+    struct alignas(1) ps1_exe_chb_t {
         unsigned char id;
         unsigned char len;
-        LE16          ih_csum;
+        LE16 ih_csum;
         unsigned char ih_bkup;
-    __packed_struct_end()
+    };
 
-    __packed_struct(bss_nfo)
-        LE16    hi1, op1, lo1, op2;
-        LE16    hi2, op3, lo2, op4;
-    __packed_struct_end()
+    struct alignas(1) bss_nfo {
+        LE16 hi1, op1, lo1, op2;
+        LE16 hi2, op3, lo2, op4;
+    };
 
     ps1_exe_t ih, oh;
     ps1_exe_hb_t bh;
@@ -126,7 +125,6 @@ protected:
     // filesize-PS_HDR_SIZE
     unsigned fdata_size;
 };
-
 
 #endif /* already included */
 

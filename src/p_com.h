@@ -25,24 +25,22 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-#ifndef __UPX_P_COM_H
-#define __UPX_P_COM_H 1
-
+#pragma once
+#ifndef UPX_P_COM_H__
+#define UPX_P_COM_H__ 1
 
 /*************************************************************************
 // dos/com
 **************************************************************************/
 
-class PackCom : public Packer
-{
+class PackCom : public Packer {
     typedef Packer super;
+
 public:
     PackCom(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_DOS_COM; }
     virtual const char *getName() const override { return "dos/com"; }
-    //virtual const char *getFullName(const options_t *o) const override { return o && o->cpu == o->CPU_8086 ? "i086-dos16.com" : "i286-dos16.com"; }
     virtual const char *getFullName(const options_t *) const override { return "i086-dos16.com"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
@@ -55,14 +53,13 @@ public:
 
 protected:
     virtual unsigned getCallTrickOffset() const { return 0x100; }
-    virtual Linker* newLinker() const override;
+    virtual Linker *newLinker() const override;
 
 protected:
     virtual void buildLoader(const Filter *ft) override;
     virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned);
     virtual void addFilter16(int filter_id);
 };
-
 
 #endif /* already included */
 

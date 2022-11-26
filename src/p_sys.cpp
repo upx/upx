@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 #include "file.h"
 #include "filter.h"
@@ -34,22 +33,20 @@
 #include "p_sys.h"
 #include "linker.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i086-dos16.sys.h"
-
 
 /*************************************************************************
 //
 **************************************************************************/
 
-bool PackSys::canPack()
-{
+bool PackSys::canPack() {
     unsigned char buf[128];
 
     fi->readx(buf, sizeof(buf));
-    if (memcmp (buf,"\xff\xff\xff\xff",4) != 0)
+    if (memcmp(buf, "\xff\xff\xff\xff", 4) != 0)
         return false;
-    if (!fn_has_ext(fi->getName(),"sys"))
+    if (!fn_has_ext(fi->getName(), "sys"))
         return false;
     checkAlreadyPacked(buf, sizeof(buf));
     if (file_size < 1024)
@@ -59,15 +56,11 @@ bool PackSys::canPack()
     return true;
 }
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-void PackSys::patchLoader(OutputFile *fo,
-                          upx_byte *loader, int lsize,
-                          unsigned calls)
-{
+void PackSys::patchLoader(OutputFile *fo, upx_byte *loader, int lsize, unsigned calls) {
     const int e_len = getLoaderSectionStart("SYSCUTPO");
     const int d_len = lsize - e_len;
     assert(e_len > 0 && e_len < 128);
@@ -92,37 +85,24 @@ void PackSys::patchLoader(OutputFile *fo,
     relocateLoader();
     loader = getLoader();
 
-    patchPackHeader(loader,e_len);
+    patchPackHeader(loader, e_len);
     // write loader + compressed file
-    fo->write(loader,e_len);            // entry
-    fo->write(obuf,ph.c_len);
-    fo->write(loader+e_len,d_len);      // decompressor
+    fo->write(loader, e_len); // entry
+    fo->write(obuf, ph.c_len);
+    fo->write(loader + e_len, d_len); // decompressor
 }
 
-
-void PackSys::buildLoader(const Filter *ft)
-{
+void PackSys::buildLoader(const Filter *ft) {
     initLoader(stub_i086_dos16_sys, sizeof(stub_i086_dos16_sys));
-    addLoader("SYSMAIN1",
-              opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861",
-              "SYSMAIN2",
-              ph.first_offset_found == 1 ? "SYSSBBBP" : "",
-              ft->id ? "SYSCALLT" : "",
+    addLoader("SYSMAIN1", opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861", "SYSMAIN2",
+              ph.first_offset_found == 1 ? "SYSSBBBP" : "", ft->id ? "SYSCALLT" : "",
               "SYSMAIN3,UPX1HEAD,SYSCUTPO,NRV2B160,NRVDDONE,NRVDECO1",
-              ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
-              "NRVDECO2",
-              nullptr
-             );
-    if (ft->id)
-    {
+              ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00", "NRVDECO2", nullptr);
+    if (ft->id) {
         assert(ft->calls > 0);
         addFilter16(ft->id);
     }
-    addLoader("SYSMAIN5",
-              opt->cpu == opt->CPU_8086 ? "SYSI0862" : "SYSI2862",
-              "SYSJUMP1",
-              nullptr
-             );
+    addLoader("SYSMAIN5", opt->cpu == opt->CPU_8086 ? "SYSI0862" : "SYSI2862", "SYSJUMP1", nullptr);
 }
 
 /* vim:set ts=4 sw=4 et: */

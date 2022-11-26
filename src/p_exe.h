@@ -25,24 +25,22 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-#ifndef __UPX_P_EXE_H
-#define __UPX_P_EXE_H 1
-
+#pragma once
+#ifndef UPX_P_EXE_H__
+#define UPX_P_EXE_H__ 1
 
 /*************************************************************************
 // dos/exe
 **************************************************************************/
 
-class PackExe final : public Packer
-{
+class PackExe final : public Packer {
     typedef Packer super;
+
 public:
     PackExe(InputFile *f);
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_DOS_EXE; }
     virtual const char *getName() const override { return "dos/exe"; }
-    //virtual const char *getFullName(const options_t *o) const { return o && o->cpu == o->CPU_8086 ? "i086-dos16.exe" : "i286-dos16.exe"; }
     virtual const char *getFullName(const options_t *) const override { return "i086-dos16.exe"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
@@ -54,13 +52,11 @@ public:
     virtual int canUnpack() override;
 
     // unpacker capabilities
-    virtual bool canUnpackVersion(int version) const override
-    {
+    virtual bool canUnpackVersion(int version) const override {
         // NOTE: could adapt p_exe.cpp to support (version >= 8)
         return (version >= 10);
     }
-    virtual bool canUnpackFormat(int format) const override
-    {
+    virtual bool canUnpackFormat(int format) const override {
         return (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH);
     }
 
@@ -71,10 +67,10 @@ protected:
 
     virtual int fillExeHeader(struct exe_header_t *) const;
     virtual void buildLoader(const Filter *ft) override;
-    virtual Linker* newLinker() const override;
+    virtual Linker *newLinker() const override;
     void addLoaderEpilogue(int flag);
 
-    __packed_struct(exe_header_t)
+    struct alignas(1) exe_header_t {
         LE16 ident;
         LE16 m512;
         LE16 p512;
@@ -84,13 +80,13 @@ protected:
         LE16 max;
         LE16 ss;
         LE16 sp;
-        char _[2];              // checksum
+        char _[2]; // checksum
         LE16 ip;
         LE16 cs;
         LE16 relocoffs;
-        char __[2];             // overlnum
+        char __[2]; // overlnum
         LE32 firstreloc;
-    __packed_struct_end()
+    };
 
     exe_header_t ih, oh;
 
@@ -102,19 +98,11 @@ protected:
     bool has_9a;
     bool device_driver;
 
-    enum {
-        NORELOC = 1,
-        USEJUMP = 2,
-        SS = 4,
-        SP = 8,
-        MINMEM = 16,
-        MAXMEM = 32
-    };
+    enum { NORELOC = 1, USEJUMP = 2, SS = 4, SP = 8, MINMEM = 16, MAXMEM = 32 };
 
-    unsigned stack_for_lzma;    // stack size required for lzma
+    unsigned stack_for_lzma; // stack size required for lzma
     bool use_clear_dirty_stack;
 };
-
 
 #endif /* already included */
 

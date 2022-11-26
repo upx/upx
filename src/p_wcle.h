@@ -25,24 +25,25 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-#ifndef __UPX_P_WCLE_H
-#define __UPX_P_WCLE_H 1
-
+#pragma once
+#ifndef UPX_P_WCLE_H__
+#define UPX_P_WCLE_H__ 1
 
 /*************************************************************************
 // watcom/le
 **************************************************************************/
 
-class PackWcle final : public Packer, public LeFile
-{
+class PackWcle final : public Packer, public LeFile {
     typedef Packer super;
+
 public:
     PackWcle(InputFile *f) : super(f), LeFile(f) { bele = &N_BELE_RTP::le_policy; }
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_WATCOM_LE; }
     virtual const char *getName() const override { return "watcom/le"; }
-    virtual const char *getFullName(const options_t *) const override { return "i386-dos32.watcom.le"; }
+    virtual const char *getFullName(const options_t *) const override {
+        return "i386-dos32.watcom.le";
+    }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 
@@ -56,7 +57,7 @@ protected:
     virtual void handleStub(OutputFile *fo);
 
     virtual void buildLoader(const Filter *ft) override;
-    virtual Linker* newLinker() const override;
+    virtual Linker *newLinker() const override;
 
     virtual void readObjectTable() override;
     virtual void encodeObjectTable();
@@ -86,7 +87,6 @@ protected:
     bool has_extra_code;
     unsigned neweip;
 };
-
 
 #endif /* already included */
 
