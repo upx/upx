@@ -1,7 +1,7 @@
-# NOTE: this image is based on rebuild-stubs-with-upx/upx-stubtools-20210104-vX,
+# NOTE: this image is based on rebuild-stubs-with-upx/upx-stubtools-20210104-v8,
 #   so you have to create that image first
 # WARNING: we install many packages, so the resulting image needs A LOT of disk space!
-FROM localhost/upx-stubtools-20210104-v7
+FROM localhost/upx-stubtools-20210104-v8
 ARG DEBIAN_FRONTEND=noninteractive
 
 USER root
@@ -9,7 +9,7 @@ USER root
 # Ubuntu 22.04
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y \
-        # Linux cross compilers
+        # Linux glibc cross compilers
         g++-aarch64-linux-gnu \
         g++-alpha-linux-gnu \
         g++-arm-linux-gnueabi \
@@ -28,7 +28,7 @@ RUN apt-get update && apt-get upgrade -y \
         g++-s390x-linux-gnu \
         g++-sh4-linux-gnu \
         g++-sparc64-linux-gnu \
-        # Linux cross compilers - ILP32 on 64-bit CPUs
+        # Linux glibc cross compilers - ILP32 on 64-bit CPUs
         g++-x86-64-linux-gnux32 \
         # Windows cross compilers
         g++-mingw-w64-i686 \

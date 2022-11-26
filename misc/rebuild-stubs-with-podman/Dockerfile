@@ -12,8 +12,8 @@ RUN dpkg --add-architecture i386 \
         # the following packages are not required for rebuilding the stubs, but
         # they do make the image much more convenient and also allow building
         # the full UPX binary inside the container via CMake:
-        7zip bzip2 cmake elfutils file g++ htop libzstd-dev lzip lzop ninja-build \
-        p7zip patch patchelf pax-utils rsync unzip vim zip zlib1g-dev zsh zstd \
+        7zip bzip2 cmake elfutils file g++ htop libzstd-dev lzip lzop ninja-build p7zip \
+        patch patchelf pax-utils rsync screen unzip vim zip zlib1g-dev zsh zstd \
     && true
 
 # manually install compat libs from Ubuntu 16.04; REQUIRED
@@ -41,22 +41,10 @@ RUN cd /root \
 # install pre-built binary UPX versions into /usr/local/bin; not required but convenient for testing
 RUN cd /root \
     && wget -q https://github.com/upx/upx/releases/download/v3.91/upx-3.91-amd64_linux.tar.bz2 \
-    && wget -q https://github.com/upx/upx/releases/download/v3.92/upx-3.92-amd64_linux.tar.xz \
-    && wget -q https://github.com/upx/upx/releases/download/v3.93/upx-3.93-amd64_linux.tar.xz \
-    && wget -q https://github.com/upx/upx/releases/download/v3.94/upx-3.94-amd64_linux.tar.xz \
-    && wget -q https://github.com/upx/upx/releases/download/v3.95/upx-3.95-amd64_linux.tar.xz \
-    && wget -q https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz \
-    && wget -q https://github.com/upx/upx/releases/download/v4.0.0/upx-4.0.0-amd64_linux.tar.xz \
+    && for v in 3.92 3.93 3.94 3.95 3.96 4.0.0 4.0.1; do wget -q https://github.com/upx/upx/releases/download/v${v}/upx-${v}-amd64_linux.tar.xz; done \
     && for f in ./upx-*.tar.*; do tar -xoaf $f; done \
-    && rm ./upx-*.tar.* \
-    && d=upx-3.91-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.91 \
-    && d=upx-3.92-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.92 \
-    && d=upx-3.93-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.93 \
-    && d=upx-3.94-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.94 \
-    && d=upx-3.95-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.95 \
-    && d=upx-3.96-amd64_linux;  ./$d/upx -d $d/upx -o /usr/local/bin/upx-3.96 \
-    && d=upx-4.0.0-amd64_linux; ./$d/upx -d $d/upx -o /usr/local/bin/upx-4.0.0 \
-    && rm -rf ./upx-*linux \
+    && for v in 3.91 3.92 3.93 3.94 3.95 3.96 4.0.0 4.0.1; do d=upx-${v}-amd64_linux; ./$d/upx -qq -d $d/upx -o /usr/local/bin/upx-${v}; done \
+    && rm -r ./upx-*.tar.* ./upx-*linux \
     && true
 
 # create default user upx 2000:2000
