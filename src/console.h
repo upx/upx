@@ -25,8 +25,6 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-
 /*************************************************************************
 //
 **************************************************************************/
@@ -40,119 +38,102 @@
 #undef USE_FRAMES
 
 #if 1 && (WITH_GUI) && !defined(NO_CONSOLE)
-#  define NO_CONSOLE 1
+#define NO_CONSOLE 1
 #endif
 
 #if 1 && defined(__linux__)
-#  define USE_SCREEN 1
-#  define USE_SCREEN_VCSA 1
-#  if !(HAVE_LINUX_KD_H)
-#    undef USE_SCREEN
-#    undef USE_SCREEN_VCSA
-#  endif
-#  if !(HAVE_LINUX_KDEV_T_H) || !(HAVE_LINUX_MAJOR_H)
-#    undef USE_SCREEN
-#    undef USE_SCREEN_VCSA
-#  endif
+#define USE_SCREEN 1
+#define USE_SCREEN_VCSA 1
+#if !(HAVE_LINUX_KD_H)
+#undef USE_SCREEN
+#undef USE_SCREEN_VCSA
+#endif
+#if !(HAVE_LINUX_KDEV_T_H) || !(HAVE_LINUX_MAJOR_H)
+#undef USE_SCREEN
+#undef USE_SCREEN_VCSA
+#endif
 #endif
 
 #if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
-#  define USE_SCREEN 1
+#define USE_SCREEN 1
 #elif 1 && (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  define USE_SCREEN 1
-#  define USE_SCREEN_WIN32 1
+#define USE_SCREEN 1
+#define USE_SCREEN_WIN32 1
 #elif 1 && (ACC_OS_EMX && defined(__RSXNT__))
-#  define USE_SCREEN 1
-#  define USE_SCREEN_WIN32 1
+#define USE_SCREEN 1
+#define USE_SCREEN_WIN32 1
 #endif
-
 
 #if 0 || (NO_ANSI)
-#  undef USE_ANSI
+#undef USE_ANSI
 #endif
 #if 0 || (NO_SCREEN)
-#  undef USE_SCREEN
+#undef USE_SCREEN
 #endif
 #if 0 || (NO_FRAMES) || !(USE_SCREEN)
-#  undef USE_FRAMES
+#undef USE_FRAMES
 #endif
 #if 1
-#  undef USE_FRAMES
+#undef USE_FRAMES
 #endif
 
-
 #if 0 || (USE_ANSI) || (USE_SCREEN)
-#  define USE_CONSOLE 1
+#define USE_CONSOLE 1
 #endif
 
 #if 0 || (NO_CONSOLE) || !(USE_CONSOLE)
-#  undef USE_CONSOLE
-#  undef USE_ANSI
-#  undef USE_SCREEN
-#  undef USE_SCREEN_VCSA
-#  undef USE_SCREEN_CURSES
-#  undef USE_FRAMES
+#undef USE_CONSOLE
+#undef USE_ANSI
+#undef USE_SCREEN
+#undef USE_SCREEN_VCSA
+#undef USE_SCREEN_CURSES
+#undef USE_FRAMES
 #endif
-
 
 /*************************************************************************
 //
 **************************************************************************/
 
-enum {
-    CON_INIT,
-    CON_NONE,
-    CON_FILE,
-    CON_ANSI_MONO,
-    CON_ANSI_COLOR,
-    CON_SCREEN,
-    CON_UNUSED
-};
-
+enum { CON_INIT, CON_NONE, CON_FILE, CON_ANSI_MONO, CON_ANSI_COLOR, CON_SCREEN, CON_UNUSED };
 
 #if (USE_CONSOLE)
 
-typedef struct
-{
+typedef struct {
     int (*init)(FILE *f, int, int);
     int (*set_fg)(FILE *f, int fg);
     void (*print0)(FILE *f, const char *s);
     bool (*intro)(FILE *f);
-}
-console_t;
-
+} console_t;
 
 void con_fprintf(FILE *f, const char *format, ...) attribute_format(2, 3);
 
-
-#define FG_BLACK     0x00
-#define FG_BLUE      0x01
-#define FG_GREEN     0x02
-#define FG_CYAN      0x03
-#define FG_RED       0x04
-#define FG_VIOLET    0x05
-#define FG_ORANGE    0x06
-#define FG_LTGRAY    0x07
-#define FG_DKGRAY    0x08
-#define FG_BRTBLUE   0x09
-#define FG_BRTGREEN  0x0a
-#define FG_BRTCYAN   0x0b
-#define FG_BRTRED    0x0c
+#define FG_BLACK 0x00
+#define FG_BLUE 0x01
+#define FG_GREEN 0x02
+#define FG_CYAN 0x03
+#define FG_RED 0x04
+#define FG_VIOLET 0x05
+#define FG_ORANGE 0x06
+#define FG_LTGRAY 0x07
+#define FG_DKGRAY 0x08
+#define FG_BRTBLUE 0x09
+#define FG_BRTGREEN 0x0a
+#define FG_BRTCYAN 0x0b
+#define FG_BRTRED 0x0c
 #define FG_BRTVIOLET 0x0d
-#define FG_YELLOW    0x0e
-#define FG_WHITE     0x0f
+#define FG_YELLOW 0x0e
+#define FG_WHITE 0x0f
 
-#define BG_BLACK     0x00
-#define BG_BLUE      0x10
-#define BG_GREEN     0x20
-#define BG_CYAN      0x30
-#define BG_RED       0x40
-#define BG_VIOLET    0x50
-#define BG_ORANGE    0x60
-#define BG_WHITE     0x70
+#define BG_BLACK 0x00
+#define BG_BLUE 0x10
+#define BG_GREEN 0x20
+#define BG_CYAN 0x30
+#define BG_RED 0x40
+#define BG_VIOLET 0x50
+#define BG_ORANGE 0x60
+#define BG_WHITE 0x70
 
 #endif /* USE_CONSOLE */
-
 
 /*************************************************************************
 //
@@ -172,13 +153,12 @@ extern console_t console_ansi_mono;
 extern console_t console_ansi_color;
 extern console_t console_screen;
 
-
-#define con_fg(f,x)     con->set_fg(f,x)
+#define con_fg(f, x) con->set_fg(f, x)
 
 #else
 
-#define con_fg(f,x)     0
-#define con_fprintf     fprintf
+#define con_fg(f, x) 0
+#define con_fprintf fprintf
 
 #endif /* USE_CONSOLE */
 
