@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 #include "file.h"
 #include "filter.h"
@@ -34,55 +33,45 @@
 #include "p_armpe.h"
 #include "linker.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/arm.v4a-wince.pe.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/arm.v4t-wince.pe.h"
 
 /*************************************************************************
 //
 **************************************************************************/
 
-PackArmPe::PackArmPe(InputFile *f) : super(f)
-{
-    use_thumb_stub = false;
-}
+PackArmPe::PackArmPe(InputFile *f) : super(f) {}
 
+PackArmPe::~PackArmPe() {}
 
-PackArmPe::~PackArmPe()
-{}
-
-
-const int *PackArmPe::getCompressionMethods(int method, int level) const
-{
-    static const int m_all[]   = { M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END };
-    static const int m_lzma[]  = { M_LZMA, M_END };
-    static const int m_nrv2b[] = { M_NRV2B_8, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_END };
+const int *PackArmPe::getCompressionMethods(int method, int level) const {
+    static const int m_all[] = {M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END};
+    static const int m_lzma[] = {M_LZMA, M_END};
+    static const int m_nrv2b[] = {M_NRV2B_8, M_END};
+    static const int m_nrv2e[] = {M_NRV2E_8, M_END};
 
     if (!use_thumb_stub)
         return getDefaultCompressionMethods_8(method, level);
 
-    if (method == M_ALL)    return m_all;
-    if (M_IS_LZMA(method))  return m_lzma;
-    if (M_IS_NRV2B(method)) return m_nrv2b;
-    if (M_IS_NRV2E(method)) return m_nrv2e;
+    if (method == M_ALL)
+        return m_all;
+    if (M_IS_LZMA(method))
+        return m_lzma;
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
     return m_nrv2e;
 }
 
-
-const int *PackArmPe::getFilters() const
-{
-    static const int filters[] = { 0x50, FT_END };
+const int *PackArmPe::getFilters() const {
+    static const int filters[] = {0x50, FT_END};
     return filters;
 }
 
-
-Linker* PackArmPe::newLinker() const
-{
-    return new ElfLinkerArmLE;
-}
-
+Linker *PackArmPe::newLinker() const { return new ElfLinkerArmLE; }
 
 /*************************************************************************
 // import handling
@@ -93,17 +82,14 @@ void PackArmPe::processImports2(unsigned myimport, unsigned iat_off) // pass 2
     PeFile::processImports2(myimport, iat_off);
 
     // adjust import data
-    for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)
-    {
+    for (import_desc *im = (import_desc *) oimpdlls; im->dllname; im++) {
         im->oft = im->iat;
-        bool is_coredll = strcasecmp(kernelDll(), (char*) oimpdlls +
-                                     im->dllname - myimport) == 0;
+        bool is_coredll = strcasecmp(kernelDll(), oimpdlls + (im->dllname - myimport)) == 0;
         im->iat = is_coredll ? iat_off : iat_off + 12;
     }
 }
 
-void PackArmPe::addStubImports()
-{
+void PackArmPe::addStubImports() {
     // the order of procedure names below should match the
     // assumptions of the assembly stubs
     // WARNING! these names are sorted alphanumerically by the ImportLinker
@@ -114,20 +100,18 @@ void PackArmPe::addStubImports()
 
 void PackArmPe::processTls(Interval *) // pass 1
 {
-    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4u)) == 0)
+    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS), 4u)) == 0)
         return;
 
     // never should happen on wince
     throwCantPack("Static TLS entries found. Send a report please.");
 }
 
-
 /*************************************************************************
 // pack
 **************************************************************************/
 
-bool PackArmPe::canPack()
-{
+bool PackArmPe::canPack() {
     if (!readFileHeader() || (ih.cpu != 0x1c0 && ih.cpu != 0x1c2))
         return false;
     use_thumb_stub |= ih.cpu == 0x1c2 || (ih.entry & 1) == 1;
@@ -135,9 +119,7 @@ bool PackArmPe::canPack()
     return true;
 }
 
-
-void PackArmPe::buildLoader(const Filter *ft)
-{
+void PackArmPe::buildLoader(const Filter *ft) {
     const unsigned char *loader = use_thumb_stub ? stub_arm_v4t_wince_pe : stub_arm_v4a_wince_pe;
     unsigned size = use_thumb_stub ? sizeof(stub_arm_v4t_wince_pe) : sizeof(stub_arm_v4a_wince_pe);
 
@@ -156,7 +138,6 @@ void PackArmPe::buildLoader(const Filter *ft)
         addLoader("Call2D", nullptr);
     else if (M_IS_LZMA(ph.method))
         addLoader("+40C,CallLZMA", nullptr);
-
 
     if (ft->id == 0x50)
         addLoader("+40C,Unfilter_0x50", nullptr);
@@ -179,48 +160,38 @@ void PackArmPe::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,UPX1HEAD", nullptr);
 }
 
-bool PackArmPe::handleForceOption()
-{
-    return (ih.cpu != 0x1c0 && ih.cpu != 0x1c2)
-        || (ih.opthdrsize != 0xe0)
-        || ((ih.flags & EXECUTABLE) == 0)
-        || (ih.entry == 0 /*&& !isdll*/)
-        || (ih.ddirsentries != 16)
-//        || IDSIZE(PEDIR_EXCEPTION) // is this used on arm?
-//        || IDSIZE(PEDIR_COPYRIGHT)
-        ;
+bool PackArmPe::handleForceOption() {
+    return (ih.cpu != 0x1c0 && ih.cpu != 0x1c2) || (ih.opthdrsize != 0xe0) ||
+           ((ih.flags & EXECUTABLE) == 0) || (ih.entry == 0 /*&& !isdll*/) ||
+           (ih.ddirsentries != 16);
+    //        || IDSIZE(PEDIR_EXCEPTION) // is this used on arm?
+    //        || IDSIZE(PEDIR_COPYRIGHT)
 }
 
-void PackArmPe::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned ih_codebase)
-{
+void PackArmPe::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned ih_codebase) {
     // limit stack size needed for runtime decompression
-    upx_compress_config_t cconf; cconf.reset();
+    upx_compress_config_t cconf;
+    cconf.reset();
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
-    compressWithFilters(&ft, 2048, &cconf, filter_strategy,
-                        ih_codebase, rvamin, 0, nullptr, 0);
+    compressWithFilters(&ft, 2048, &cconf, filter_strategy, ih_codebase, rvamin, 0, nullptr, 0);
 }
 
-void PackArmPe::addNewRelocations(Reloc &rel, unsigned upxsection)
-{
-    static const char* symbols_to_relocate[] = {
-        "ONAM", "BIMP", "BREL", "FIBE", "FIBS", "ENTR", "DST0", "SRC0"
-    };
-    for (unsigned s2r = 0; s2r < TABLESIZE(symbols_to_relocate); s2r++)
-    {
+void PackArmPe::addNewRelocations(Reloc &rel, unsigned upxsection) {
+    static const char *const symbols_to_relocate[] = {"ONAM", "BIMP", "BREL", "FIBE",
+                                                      "FIBS", "ENTR", "DST0", "SRC0"};
+    for (unsigned s2r = 0; s2r < TABLESIZE(symbols_to_relocate); s2r++) {
         unsigned off = linker->getSymbolOffset(symbols_to_relocate[s2r]);
         if (off != 0xdeaddead)
             rel.add(off + upxsection, 3);
     }
 }
 
-unsigned PackArmPe::getProcessImportParam(unsigned upxsection)
-{
+unsigned PackArmPe::getProcessImportParam(unsigned upxsection) {
     return linker->getSymbolOffset("IATT") + upxsection;
 }
 
-void PackArmPe::defineSymbols(unsigned ncsection, unsigned, unsigned,
-                              unsigned ic, unsigned s1addr)
-{
+void PackArmPe::defineSymbols(unsigned ncsection, unsigned, unsigned, unsigned ic,
+                              unsigned s1addr) {
     const unsigned onam = ncsection + soxrelocs + ih.imagebase;
     linker->defineSymbol("start_of_dll_names", onam);
     linker->defineSymbol("start_of_imports", ih.imagebase + rvamin + cimports);
@@ -235,19 +206,14 @@ void PackArmPe::defineSymbols(unsigned ncsection, unsigned, unsigned,
     defineDecompressorSymbols();
 }
 
-void PackArmPe::setOhDataBase(const pe_section_t *osection)
-{
-    oh.database = osection[2].vaddr;
-}
+void PackArmPe::setOhDataBase(const pe_section_t *osection) { oh.database = osection[2].vaddr; }
 
-void PackArmPe::setOhHeaderSize(const pe_section_t *osection)
-{
+void PackArmPe::setOhHeaderSize(const pe_section_t *osection) {
     oh.headersize = osection[1].rawdataptr;
 }
 
-void PackArmPe::pack(OutputFile *fo)
-{
-    super::pack0(fo, (1u<<IMAGE_SUBSYSTEM_WINDOWS_CE_GUI), 0x10000, true);
+void PackArmPe::pack(OutputFile *fo) {
+    super::pack0(fo, (1u << IMAGE_SUBSYSTEM_WINDOWS_CE_GUI), 0x10000, true);
 }
 
 /* vim:set ts=4 sw=4 et: */

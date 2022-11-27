@@ -25,17 +25,15 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-#ifndef __UPX_P_ARMPE_H
-#define __UPX_P_ARMPE_H 1
-
+#pragma once
+#ifndef UPX_P_ARMPE_H__
+#define UPX_P_ARMPE_H__ 1
 
 /*************************************************************************
 // arm/pe
 **************************************************************************/
 
-class PackArmPe : public PeFile32
-{
+class PackArmPe final : public PeFile32 {
     typedef PeFile32 super;
 
 public:
@@ -51,9 +49,8 @@ public:
     virtual bool handleForceOption() override;
     virtual void callCompressWithFilters(Filter &, int filter_strategy,
                                          unsigned ih_codebase) override;
-    virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
-                               unsigned sizeof_oh, unsigned isize_isplit,
-                               unsigned s1addr) override;
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
+                               unsigned isize_isplit, unsigned s1addr) override;
     virtual void addNewRelocations(Reloc &, unsigned upxsection) override;
     virtual unsigned getProcessImportParam(unsigned upxsection) override;
     virtual void setOhDataBase(const pe_section_t *osection) override;
@@ -64,7 +61,7 @@ public:
 
 protected:
     virtual void buildLoader(const Filter *ft) override;
-    virtual Linker* newLinker() const override;
+    virtual Linker *newLinker() const override;
 
     virtual const char *kernelDll() const override { return "COREDLL.dll"; }
     virtual void processImports2(unsigned, unsigned) override;
@@ -72,9 +69,8 @@ protected:
 
     virtual void processTls(Interval *) override;
 
-    bool use_thumb_stub;
+    bool use_thumb_stub = false;
 };
-
 
 #endif /* already included */
 

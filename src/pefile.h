@@ -179,26 +179,26 @@ protected:
     unsigned crelocs;               // rva of preprocessed fixups
     int big_relocs;
 
-    __packed_struct(ddirs_t)
+    struct alignas(1) ddirs_t {
         LE32    vaddr;
         LE32    size;
-    __packed_struct_end()
+    };
     ddirs_t *iddirs;
     ddirs_t *oddirs;
 
-    __packed_struct(import_desc)
+    struct alignas(1) import_desc {
         LE32  oft;      // orig first thunk
         char  _[8];
         LE32  dllname;
         LE32  iat;      // import address table
-    __packed_struct_end()
+    };
 
     LE32 &IDSIZE(unsigned x);
     LE32 &IDADDR(unsigned x);
     LE32 &ODSIZE(unsigned x);
     LE32 &ODADDR(unsigned x);
 
-    __packed_struct(pe_section_t)
+    struct alignas(1) pe_section_t {
         char    name[8];
         LE32    vsize;
         LE32    vaddr;
@@ -206,7 +206,7 @@ protected:
         LE32    rawdataptr;
         char    _[12];
         LE32    flags;
-    __packed_struct_end()
+    };
 
     MemBuffer mb_isection;
     pe_section_t *isection;
@@ -420,7 +420,7 @@ protected:
 
     class Export : private noncopyable
     {
-        __packed_struct(export_dir_t)
+        struct alignas(1) export_dir_t {
             char  _[12]; // flags, timedate, version
             LE32  name;
             char  __[4]; // ordinal base
@@ -429,7 +429,7 @@ protected:
             LE32  addrtable;
             LE32  nameptrtable;
             LE32  ordinaltable;
-        __packed_struct_end()
+        };
 
         export_dir_t edir;
         char  *ename;
@@ -470,7 +470,7 @@ protected:
     virtual void processTls(Interval *) override;
     virtual void processTls(Reloc *, const Interval *, unsigned) override;
 
-    __packed_struct(pe_header_t)
+    struct alignas(1) pe_header_t {
         // 0x0
         char    _[4];               // pemagic
         LE16    cpu;
@@ -507,7 +507,7 @@ protected:
         LE32    ddirsentries;       // usually 16
 
         ddirs_t ddirs[16];
-    __packed_struct_end()
+    };
 
     pe_header_t ih, oh;
 };
@@ -532,7 +532,7 @@ protected:
     virtual void processTls(Interval *) override;
     virtual void processTls(Reloc *, const Interval *, unsigned) override;
 
-    __packed_struct(pe_header_t)
+    struct alignas(1) pe_header_t {
         // 0x0
         char    _[4];               // pemagic
         LE16    cpu;
@@ -569,7 +569,7 @@ protected:
         LE32    ddirsentries;       // usually 16
 
         ddirs_t ddirs[16];
-    __packed_struct_end()
+    };
 
     pe_header_t ih, oh;
 };

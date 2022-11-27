@@ -25,17 +25,15 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-#ifndef __UPX_P_W32PE_H
-#define __UPX_P_W32PE_H 1
-
+#pragma once
+#ifndef UPX_P_W32PE_H__
+#define UPX_P_W32PE_H__ 1
 
 /*************************************************************************
 // w32/pe
 **************************************************************************/
 
-class PackW32Pe : public PeFile32
-{
+class PackW32Pe final : public PeFile32 {
     typedef PeFile32 super;
 
 public:
@@ -48,9 +46,8 @@ public:
     virtual const int *getFilters() const override;
 
     virtual bool handleForceOption() override;
-    virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
-                               unsigned sizeof_oh, unsigned isize_isplit,
-                               unsigned s1addr) override;
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
+                               unsigned isize_isplit, unsigned s1addr) override;
     virtual void addNewRelocations(Reloc &, unsigned upxsection) override;
     virtual void setOhDataBase(const pe_section_t *osection) override;
     virtual void setOhHeaderSize(const pe_section_t *osection) override;
@@ -62,9 +59,8 @@ protected:
     virtual int readFileHeader() override;
 
     virtual void buildLoader(const Filter *ft) override;
-    virtual Linker* newLinker() const override;
+    virtual Linker *newLinker() const override;
 };
-
 
 #endif /* already included */
 

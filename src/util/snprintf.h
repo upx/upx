@@ -60,17 +60,25 @@ upx_rsize_t upx_safe_strlen(const char *);
 #define strlen upx_safe_strlen
 
 /*************************************************************************
-// some unsigned char string support functions
+// some unsigned char string support functions to avoid casts
 **************************************************************************/
 
 inline unsigned char *strcpy(unsigned char *s1, const unsigned char *s2) {
     return (unsigned char *) strcpy((char *) s1, (const char *) s2);
 }
 
+inline int strcmp(const unsigned char *s1, const char *s2) { return strcmp((const char *) s1, s2); }
+inline int strcmp(const char *s1, const unsigned char *s2) { return strcmp(s1, (const char *) s2); }
 inline int strcmp(const unsigned char *s1, const unsigned char *s2) {
     return strcmp((const char *) s1, (const char *) s2);
 }
 
+inline int strcasecmp(const unsigned char *s1, const char *s2) {
+    return strcasecmp((const char *) s1, s2);
+}
+inline int strcasecmp(const char *s1, const unsigned char *s2) {
+    return strcasecmp(s1, (const char *) s2);
+}
 inline int strcasecmp(const unsigned char *s1, const unsigned char *s2) {
     return strcasecmp((const char *) s1, (const char *) s2);
 }

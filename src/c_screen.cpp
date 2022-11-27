@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 
 #if (USE_SCREEN)
@@ -35,16 +34,14 @@
 #define mask_fg 0x0f
 #define mask_bg 0xf0
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-static int do_init(screen_t *s, int fd)
-{
+static int do_init(screen_t *s, int fd) {
     int fg, bg;
 
-    if (s->init(s,fd) != 0)
+    if (s->init(s, fd) != 0)
         return -1;
 
     if (s->getCols(s) < 80 || s->getCols(s) > 256)
@@ -59,28 +56,23 @@ static int do_init(screen_t *s, int fd)
     if (fg == (bg >> 4))
         return -1;
     if (bg != BG_BLACK)
-        if (!s->isMono(s))
-        {
-            /* return 0; */     /* we could emulate ANSI mono */
+        if (!s->isMono(s)) {
+            /* return 0; */ /* we could emulate ANSI mono */
             return -1;
         }
 
     return 0;
 }
 
-
-static screen_t *do_construct(screen_t *s, int fd)
-{
+static screen_t *do_construct(screen_t *s, int fd) {
     if (!s)
         return nullptr;
-    if (do_init(s,fd) != 0)
-    {
+    if (do_init(s, fd) != 0) {
         s->destroy(s);
         return nullptr;
     }
     return s;
 }
-
 
 /*************************************************************************
 //
@@ -88,10 +80,8 @@ static screen_t *do_construct(screen_t *s, int fd)
 
 static screen_t *screen = nullptr;
 
-static void __acc_cdecl_atexit do_destroy(void)
-{
-    if (screen)
-    {
+static void __acc_cdecl_atexit do_destroy(void) {
+    if (screen) {
         if (screen->atExit)
             screen->atExit();
         screen->destroy(screen);
@@ -99,16 +89,13 @@ static void __acc_cdecl_atexit do_destroy(void)
     }
 }
 
-
 static int mode = -1;
 static int init_fg = -1;
 static int init_bg = -1;
 static int cur_fg = -1;
 static int cur_bg = -1;
 
-
-static int init(FILE *f, int o, int now)
-{
+static int init(FILE *f, int o, int now) {
     int fd = fileno(f);
     int n;
 
@@ -117,30 +104,30 @@ static int init(FILE *f, int o, int now)
 
     if (o == CON_SCREEN)
         n = CON_SCREEN;
-    else if (o == CON_INIT)                 /* use by default */
+    else if (o == CON_INIT) /* use by default */
         n = CON_SCREEN;
-    else if (o == CON_ANSI_COLOR)           /* can emulate ANSI color */
+    else if (o == CON_ANSI_COLOR) /* can emulate ANSI color */
         n = CON_ANSI_COLOR;
-    else if (o == CON_ANSI_MONO)            /* can emulate ANSI mono */
+    else if (o == CON_ANSI_MONO) /* can emulate ANSI mono */
         n = CON_ANSI_MONO;
     else
         return CON_INIT;
 
 #if (ACC_OS_DOS32) && defined(__DJGPP__)
     if (!screen)
-        screen = do_construct(screen_djgpp2_construct(),fd);
+        screen = do_construct(screen_djgpp2_construct(), fd);
 #endif
 #if (USE_SCREEN_WIN32)
     if (!screen)
-        screen = do_construct(screen_win32_construct(),fd);
+        screen = do_construct(screen_win32_construct(), fd);
 #endif
 #if (USE_SCREEN_VCSA)
     if (!screen)
-        screen = do_construct(screen_vcsa_construct(),fd);
+        screen = do_construct(screen_vcsa_construct(), fd);
 #endif
 #if (USE_SCREEN_CURSES)
     if (!screen && o == CON_SCREEN)
-        screen = do_construct(screen_curses_construct(),fd);
+        screen = do_construct(screen_curses_construct(), fd);
 #endif
     if (!screen)
         return CON_INIT;
@@ -155,19 +142,16 @@ static int init(FILE *f, int o, int now)
     return n;
 }
 
-
-static int set_fg(FILE *f, int fg)
-{
+static int set_fg(FILE *f, int fg) {
     const int last_fg = cur_fg;
     int f1 = fg & mask_fg;
     int f2 = init_fg & mask_fg;
 
     UNUSED(f);
     cur_fg = fg;
-    if (screen->isMono(screen))
-    {
+    if (screen->isMono(screen)) {
         const int b = (init_bg & mask_bg) >> 4;
-        if (fg == -1)           /* restore startup fg */
+        if (fg == -1) /* restore startup fg */
             f1 = f2;
         else if (b == 0)
             f1 = (f2 <= 8) ? 15 : 8;
@@ -175,19 +159,15 @@ static int set_fg(FILE *f, int fg)
             f1 = (f2 == 0) ? 15 : 0;
         else
             f1 = (f2 == 0) ? 8 : 0;
-    }
-    else if (con_mode == CON_ANSI_MONO && f1 != f2)
-    {
+    } else if (con_mode == CON_ANSI_MONO && f1 != f2) {
         f1 = f2 ^ 0x08;
     }
 
-    screen->setFg(screen,f1 & mask_fg);
+    screen->setFg(screen, f1 & mask_fg);
     return last_fg;
 }
 
-
-static void print0(FILE *f, const char *ss)
-{
+static void print0(FILE *f, const char *ss) {
     int cx, cy;
     int old_cx = 0, old_cy = 0;
     const int sx = screen->getCols(screen);
@@ -199,57 +179,47 @@ static void print0(FILE *f, const char *ss)
     //   scrollUp() under Win32 is *extremely* slow.
     UNUSED(f);
 
-    screen->getCursor(screen,&old_cx,&old_cy);
-    cx = old_cx; cy = old_cy;
+    screen->getCursor(screen, &old_cx, &old_cy);
+    cx = old_cx;
+    cy = old_cy;
 
-    for (pass = 0; pass < 2; pass++)
-    {
+    for (pass = 0; pass < 2; pass++) {
         const char *s = ss;
         // char buffer for pass 2
-        char p[256+1];
+        char p[256 + 1];
         int pi = 0, px = 0, py = 0;
 
-        for (;;)
-        {
+        for (;;) {
             // walk over whitespace
-            for (;;)
-            {
-                if (*s == '\n')
-                {
+            for (;;) {
+                if (*s == '\n') {
                     cx = 0;
                     cy++;
-                }
-                else if (*s == '\r')
-                {
+                } else if (*s == '\r') {
                     cx = 0;
                     if (pass > 0 && cy < sy)
-                        screen->clearLine(screen,cy);
-                }
-                else
+                        screen->clearLine(screen, cy);
+                } else
                     break;
                 s++;
             }
             // adjust cursor
-            if (cx >= sx)
-            {
+            if (cx >= sx) {
                 cx = 0;
                 cy++;
             }
-            if (pass > 0)
-            {
+            if (pass > 0) {
                 // check if we should print something
-                if (pi > 0 && (*s == 0 || py != cy))
-                {
+                if (pi > 0 && (*s == 0 || py != cy)) {
                     p[pi] = 0;
-                    screen->putString(screen,p,px,py);
+                    screen->putString(screen, p, px, py);
                     pi = 0;
                 }
                 // check if we should scroll even more (this can happen
                 // if the string is longer than sy lines)
-                if (cy >= sy)
-                {
+                if (cy >= sy) {
                     int scroll_y = cy - sy + 1;
-                    screen->scrollUp(screen,scroll_y);
+                    screen->scrollUp(screen, scroll_y);
                     cy -= scroll_y;
                     if (cy < 0)
                         cy = 0;
@@ -258,11 +228,9 @@ static void print0(FILE *f, const char *ss)
             // done ?
             if (*s == 0)
                 break;
-            if (pass > 0)
-            {
+            if (pass > 0) {
                 // store current char
-                if (pi == 0)
-                {
+                if (pi == 0) {
                     px = cx;
                     py = cy;
                 }
@@ -273,47 +241,34 @@ static void print0(FILE *f, const char *ss)
             s++;
         }
 
-        if (pass == 0)
-        {
+        if (pass == 0) {
             // end of pass 1 - scroll up, restore cursor
-            if (cy >= sy)
-            {
+            if (cy >= sy) {
                 int scroll_y = cy - sy + 1;
-                screen->scrollUp(screen,scroll_y);
+                screen->scrollUp(screen, scroll_y);
                 cy = old_cy - scroll_y;
                 if (cy < 0)
                     cy = 0;
-            }
-            else
+            } else
                 cy = old_cy;
             cx = old_cx;
         }
     }
 
-    screen->setCursor(screen,cx,cy);
+    screen->setCursor(screen, cx, cy);
     screen->refresh(screen);
 }
 
-
-static bool intro(FILE *f)
-{
+static bool intro(FILE *f) {
     UNUSED(f);
 #if (USE_FRAMES)
     if (screen->intro)
-        return screen->intro(screen,screen_show_frames);
+        return screen->intro(screen, screen_show_frames);
 #endif
     return 0;
 }
 
-
-console_t console_screen =
-{
-    init,
-    set_fg,
-    print0,
-    intro
-};
-
+console_t console_screen = {init, set_fg, print0, intro};
 
 #endif /* USE_SCREEN */
 

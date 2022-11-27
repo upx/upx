@@ -64,14 +64,15 @@ protected:
     unsigned adam_offset;
     int big_relocs;
 
-    struct tmt_header_t {
+    struct alignas(1) tmt_header_t {
         char _[16]; // signature,linkerversion,minversion,exesize,imagestart
         LE32 imagesize;
         char __[4]; // initial memory
         LE32 entry;
         char ___[12]; // esp,numfixups,flags
         LE32 relocsize;
-    } ih, oh;
+    };
+    tmt_header_t ih, oh;
 };
 
 #endif /* already included */

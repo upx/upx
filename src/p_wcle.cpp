@@ -223,7 +223,8 @@ void PackWcle::encodeFixupPageTable() {
 }
 
 void PackWcle::encodeFixups() {
-    ofixups = New(upx_byte, sofixups = 1 * 7 + FIXUP_EXTRA);
+    sofixups = 1 * 7 + FIXUP_EXTRA;
+    ofixups = New(upx_byte, sofixups);
     memset(ofixups, 0, sofixups);
     ofixups[0] = 7;
     set_le16(ofixups + 2, (LE_STUB_EDI + neweip) & (mps - 1));
@@ -257,7 +258,7 @@ void PackWcle::preprocessFixups() {
 
     upx_byte *fix = ifixups;
     for (ic = jc = 0; ic < pages; ic++) {
-        while ((unsigned) (fix - ifixups) < get_le32(ifpage_table + ic + 1)) {
+        while (ptr_udiff_bytes(fix, ifixups) < get_le32(ifpage_table + (ic + 1))) {
             const int fixp2 = get_le16_signed(fix + 2);
             unsigned value;
 

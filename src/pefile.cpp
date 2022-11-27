@@ -148,7 +148,7 @@ bool PeFile::testUnpackVersion(int version) const
 
 int PeFile::readFileHeader()
 {
-    __packed_struct(exe_header_t)
+    struct alignas(1) exe_header_t {
         LE16 mz;
         LE16 m512;
         LE16 p512;
@@ -156,7 +156,7 @@ int PeFile::readFileHeader()
         LE16 relocoffs;
         char __[34];
         LE32 nexepos;
-    __packed_struct_end()
+    };
 
     COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 64)
     COMPILE_TIME_ASSERT_ALIGNED1(exe_header_t)
@@ -290,10 +290,10 @@ void PeFile::Interval::dump() const
 // relocation handling
 **************************************************************************/
 
-__packed_struct(PeFile::Reloc::reloc)
+struct alignas(1) PeFile::Reloc::reloc {
     LE32  pagestart;
     LE32  size;
-__packed_struct_end()
+};
 
 void PeFile::Reloc::newRelocPos(void *p)
 {
@@ -958,7 +958,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         unsigned const skip2 = (im->oft ? im->oft : im->iat);
         dlls[ic].lookupt = (LEXX*)ibuf.subref("bad dll lookupt %#x", skip2, sizeof(LEXX));
         dlls[ic].original_position = ic;
-        dlls[ic].isk32 = strcasecmp(kernelDll(), (const char*)dlls[ic].name) == 0;
+        dlls[ic].isk32 = strcasecmp(kernelDll(), dlls[ic].name) == 0;
 
         soimport += strlen(dlls[ic].name) + 1 + 4;
 
@@ -1000,7 +1000,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             // for kernel32.dll we need to put all the imported
             // ordinals into the output import table, as on
             // some versions of windows GetProcAddress does not resolve them
-            if (strcasecmp((const char*)idlls[ic]->name, "kernel32.dll"))
+            if (strcasecmp(idlls[ic]->name, "kernel32.dll"))
                 continue;
             if (idlls[ic]->ordinal)
                 for (LEXX *tarr = idlls[ic]->lookupt; *tarr; tarr++)
@@ -1284,13 +1284,13 @@ void PeFile::processExports(Export *xport,unsigned newoffs) // pass2
 template <>
 struct PeFile::tls_traits<LE32>
 {
-    __packed_struct(tls)
+    struct alignas(1) tls {
         LE32 datastart; // VA tls init data start
         LE32 dataend;   // VA tls init data end
         LE32 tlsindex;  // VA tls index
         LE32 callbacks; // VA tls callbacks
         char _[8];      // zero init, characteristics
-    __packed_struct_end()
+    };
 
     static const unsigned sotls = 24;
     static const unsigned cb_size = 4;
@@ -1302,13 +1302,13 @@ struct PeFile::tls_traits<LE32>
 template <>
 struct PeFile::tls_traits<LE64>
 {
-    __packed_struct(tls)
+    struct alignas(1) tls {
         LE64 datastart; // VA tls init data start
         LE64 dataend;   // VA tls init data end
         LE64 tlsindex;  // VA tls index
         LE64 callbacks; // VA tls callbacks
         char _[8];      // zero init, characteristics
-    __packed_struct_end()
+    };
 
     static const unsigned sotls = 40;
     static const unsigned cb_size = 8;
@@ -1520,12 +1520,12 @@ void PeFile::processLoadConf(Reloc *rel, const Interval *iv,
 // resource handling
 **************************************************************************/
 
-__packed_struct(PeFile::Resource::res_dir_entry)
+struct alignas(1) PeFile::Resource::res_dir_entry {
     LE32  tnl; // Type | Name | Language id - depending on level
     LE32  child;
-__packed_struct_end()
+};
 
-__packed_struct(PeFile::Resource::res_dir)
+struct alignas(1) PeFile::Resource::res_dir {
     char  _[12]; // flags, timedate, version
     LE16  namedentr;
     LE16  identr;
@@ -1534,13 +1534,13 @@ __packed_struct(PeFile::Resource::res_dir)
     res_dir_entry entries[1];
     // it's usually safe to assume that every res_dir contains
     // at least one res_dir_entry - check() complains otherwise
-__packed_struct_end()
+};
 
-__packed_struct(PeFile::Resource::res_data)
+struct alignas(1) PeFile::Resource::res_data {
     LE32  offset;
     LE32  size;
     char  _[8]; // codepage, reserved
-__packed_struct_end()
+};
 
 struct PeFile::Resource::upx_rnode
 {
@@ -2100,12 +2100,12 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
     if (IDADDR(PEDIR_DEBUG) == 0)
         return overlaystart;
 
-    __packed_struct(debug_dir_t)
+    struct alignas(1) debug_dir_t {
         char  _[16]; // flags, time/date, version, type
         LE32  size;
         char  __[4]; // rva
         LE32  fpos;
-    __packed_struct_end()
+    };
 
     COMPILE_TIME_ASSERT(sizeof(debug_dir_t) == 28)
     COMPILE_TIME_ASSERT_ALIGNED1(debug_dir_t)

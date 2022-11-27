@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 
 FILE *con_term = nullptr;
@@ -36,19 +35,17 @@ FILE *con_term = nullptr;
 //
 **************************************************************************/
 
-static console_t * const me = &console_init;
-console_t * con = &console_init;
+static console_t *const me = &console_init;
+console_t *con = &console_init;
 
 int con_mode = CON_INIT;
 
-
-static void try_init(console_t *c, FILE *f)
-{
+static void try_init(console_t *c, FILE *f) {
     int k;
 
     assert(c);
     assert(c->init);
-    k = c->init(f,opt->console,con_mode);
+    k = c->init(f, opt->console, con_mode);
     if (k == CON_INIT)
         return;
 #if 0
@@ -56,8 +53,7 @@ static void try_init(console_t *c, FILE *f)
         if (k != opt->console)
             return;
 #endif
-    if (k > con_mode)
-    {
+    if (k > con_mode) {
         con_mode = k;
         con = c;
         con->init = nullptr;
@@ -70,41 +66,37 @@ static void try_init(console_t *c, FILE *f)
     }
 }
 
-
-static int do_init(FILE *f)
-{
+static int do_init(FILE *f) {
     assert(con_mode == CON_INIT);
 
-    try_init(&console_none,f);
+    try_init(&console_none, f);
     assert(con != me);
     assert(con == &console_none);
     if (opt->console == CON_NONE || opt->to_stdout)
         return con_mode;
-    try_init(&console_file,f);
+    try_init(&console_file, f);
     if (!acc_isatty(STDIN_FILENO) || !acc_isatty(STDOUT_FILENO) || !acc_isatty(STDERR_FILENO))
         return con_mode;
 
 #if (USE_ANSI)
-    try_init(&console_ansi_mono,f);
-    try_init(&console_ansi_color,f);
+    try_init(&console_ansi_mono, f);
+    try_init(&console_ansi_color, f);
 #endif
 #if (USE_SCREEN)
-    try_init(&console_screen,f);
+    try_init(&console_screen, f);
 #endif
 #if (USE_AALIB)
-    try_init(&console_aalib,f);
+    try_init(&console_aalib, f);
 #endif
 
     return con_mode;
 }
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-static int init(FILE *f, int o, int now)
-{
+static int init(FILE *f, int o, int now) {
     if (con != me)
         return con_mode;
     assert(o == -1);
@@ -114,47 +106,34 @@ static int init(FILE *f, int o, int now)
     return do_init(f);
 }
 
-
-static int set_fg(FILE *f, int fg)
-{
+static int set_fg(FILE *f, int fg) {
     if (con == me)
-        init(f,-1,-1);
+        init(f, -1, -1);
     assert(con != me);
-    return con->set_fg(f,fg);
+    return con->set_fg(f, fg);
 }
 
-
-static bool intro(FILE *f)
-{
+static bool intro(FILE *f) {
     if (con == me)
-        init(f,-1,-1);
+        init(f, -1, -1);
     assert(con != me);
     return con->intro(f);
 }
 
+console_t console_init = {init, set_fg, nullptr, intro};
 
-console_t console_init =
-{
-    init,
-    set_fg,
-    nullptr,
-    intro
-};
-
-
-void con_fprintf(FILE *f, const char *format, ...)
-{
+void con_fprintf(FILE *f, const char *format, ...) {
     va_list args;
-    char buf[80*25];
+    char buf[80 * 25];
 
     va_start(args, format);
-    upx_safe_vsnprintf(buf, sizeof(buf), format,args);
+    upx_safe_vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 
     if (con == me)
-        init(f,-1,-1);
+        init(f, -1, -1);
     assert(con != me);
-    con->print0(f,buf);
+    con->print0(f, buf);
 }
 
 #endif /* USE_CONSOLE */

@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 
 #if (USE_CONSOLE)
@@ -34,58 +33,41 @@
 //
 **************************************************************************/
 
-static int init(FILE *f, int o, int now)
-{
+static int init(FILE *f, int o, int now) {
     UNUSED(f);
     UNUSED(o);
     UNUSED(now);
     return CON_FILE;
 }
 
-
-static int set_fg(FILE *f, int fg)
-{
+static int set_fg(FILE *f, int fg) {
     UNUSED(f);
     UNUSED(fg);
     return -1;
 }
 
-
-static void print0(FILE *f, const char *s)
-{
+static void print0(FILE *f, const char *s) {
 #if 1
-    fputs(s,f);
+    fputs(s, f);
 #else
     /* filter out all ANSI sequences */
     int c;
-    while ((c = *s++) != 0)
-    {
-        if (c == '\033' && *s == ']')
-        {
+    while ((c = *s++) != 0) {
+        if (c == '\033' && *s == ']') {
             while (*s && *s != 'm')
                 s++;
-        }
-        else
-            fputc(c,f);
+        } else
+            fputc(c, f);
     }
 #endif
 }
 
-
-static bool intro(FILE *f)
-{
+static bool intro(FILE *f) {
     UNUSED(f);
     return 0;
 }
 
-
-console_t console_file =
-{
-    init,
-    set_fg,
-    print0,
-    intro
-};
+console_t console_file = {init, set_fg, print0, intro};
 
 #endif /* USE_CONSOLE */
 
