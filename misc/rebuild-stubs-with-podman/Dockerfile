@@ -1,4 +1,5 @@
 FROM docker.io/library/ubuntu:22.04
+ENV UPX_CONTAINER_IMAGE_NAME=upx-stubtools-20210104-v10
 ARG DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
