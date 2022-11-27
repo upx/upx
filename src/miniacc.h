@@ -27,7 +27,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20220904L
+#define ACC_VERSION     20221127L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -2557,7 +2557,11 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  undef ACC_ABI_BIG_ENDIAN
 #  undef ACC_ABI_LITTLE_ENDIAN
 #elif !(ACC_ABI_BIG_ENDIAN) && !(ACC_ABI_LITTLE_ENDIAN)
-#if (ACC_ARCH_ALPHA) && (ACC_ARCH_CRAY_MPP)
+#if defined(__ORDER_BIG_ENDIAN__) && defined(__ORDER_LITTLE_ENDIAN__) && (__ORDER_BIG_ENDIAN__+0 != 0) && (__ORDER_LITTLE_ENDIAN__+0 != 0) && (__ORDER_BIG_ENDIAN__ != __ORDER_LITTLE_ENDIAN__) && defined(__BYTE_ORDER__) && (__BYTE_ORDER__+0 == __ORDER_BIG_ENDIAN__)
+#  define ACC_ABI_BIG_ENDIAN        1
+#elif defined(__ORDER_BIG_ENDIAN__) && defined(__ORDER_LITTLE_ENDIAN__) && (__ORDER_BIG_ENDIAN__+0 != 0) && (__ORDER_LITTLE_ENDIAN__+0 != 0) && (__ORDER_BIG_ENDIAN__ != __ORDER_LITTLE_ENDIAN__) && defined(__BYTE_ORDER__) && (__BYTE_ORDER__+0 == __ORDER_LITTLE_ENDIAN__)
+#  define ACC_ABI_LITTLE_ENDIAN     1
+#elif (ACC_ARCH_ALPHA) && (ACC_ARCH_CRAY_MPP)
 #  define ACC_ABI_BIG_ENDIAN        1
 #elif (ACC_ARCH_IA64) && (ACC_OS_POSIX_LINUX || ACC_OS_WIN64)
 #  define ACC_ABI_LITTLE_ENDIAN     1
@@ -4804,7 +4808,7 @@ typedef long acc_fallback_ptrdiff_t;
 #if defined(__SIZE_TYPE__)
 typedef __SIZE_TYPE__ acc_fallback_size_t;
 #elif defined(_WIN64)
-typedef unsigned long long acc_fallback_ptrdiff_t;
+typedef unsigned long long acc_fallback_size_t;
 #elif defined(__MIPS_PSX2__)
 typedef unsigned acc_fallback_size_t;
 #else
