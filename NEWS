@@ -16,6 +16,7 @@ Changes in 4.0.0 (28 Oct 2022):
   * Add integrated doctest C++ testing framework
   * Add support for EFI files (PE x86; Kornel Pal)
   * win32/pe and win64/pe: set correct SizeOfHeaders in the PE header
+  * Remove '--crp-ms' option
   * bug fixes - see https://github.com/upx/upx/milestone/6
   * bug fixes - see https://github.com/upx/upx/milestone/7
 
