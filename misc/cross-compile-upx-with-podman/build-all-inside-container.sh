@@ -13,7 +13,7 @@ if [[ $UPX_CONTAINER_IMAGE_NAME != upx-cross-compile-* ]]; then
 fi
 
 # go to upx top-level directory
-cd $argv0dir/../..
+cd "$argv0dir/../.." || exit 1
 pwd
 [[ -f src/version.h ]] || exit 1 # sanity check
 

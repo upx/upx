@@ -569,7 +569,7 @@ static int do_option(int optc, const char *arg) {
     case 525: // --exact
         opt->exact = true;
         break;
-    // compression runtime parameters
+    // CRP - Compression Runtime Parameters (undocumented and subject to change)
     case 801:
         getoptvar(&opt->crp.crp_ucl.c_flags, 0, 3, arg);
         break;
@@ -866,7 +866,7 @@ int main_get_options(int argc, char **argv) {
         {"filter", 0x31, N, 521}, // --filter=
         {"no-filter", 0x10, N, 522},
         {"small", 0x10, N, 520},
-        // compression runtime parameters
+        // CRP - Compression Runtime Parameters (undocumented and subject to change)
         {"crp-nrv-cf", 0x31, N, 801},
         {"crp-nrv-sl", 0x31, N, 802},
         {"crp-nrv-hl", 0x31, N, 803},

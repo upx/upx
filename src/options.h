@@ -96,7 +96,8 @@ struct options_t {
     enum { SKIP_OVERLAY = 0, COPY_OVERLAY = 1, STRIP_OVERLAY = 2 };
     int overlay;
 
-    // compression runtime parameters - see struct XXX_compress_config_t
+    // CRP - Compression Runtime Parameters (undocumented and subject to change)
+    // see struct XXX_compress_config_t
     struct crp_t {
         lzma_compress_config_t crp_lzma;
         ucl_compress_config_t crp_ucl;
