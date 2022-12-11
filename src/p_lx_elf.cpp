@@ -229,7 +229,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), e_phnum(0), dynstr(nullptr),
     sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0),
-    lg2_page(12), page_size(1u<<lg2_page), is_pie(0),
+    lg2_page(12), page_size(1u<<lg2_page), is_pie(0), is_asl(0),
     xct_off(0), xct_va(0), jni_onload_va(0),
     user_init_va(0), user_init_off(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(nullptr),
@@ -247,6 +247,12 @@ int PackLinuxElf32::is_LOAD32(Elf32_Phdr const *phdr) const
 {
     // (1+ PT_LOPROC) can confuse!
     return PT_LOAD32 == get_te32(&phdr->p_type);
+}
+
+int PackLinuxElf64::is_LOAD64(Elf64_Phdr const *phdr) const
+{
+    // (1+ PT_LOPROC) can confuse!
+    return PT_LOAD64 == get_te32(&phdr->p_type);
 }
 
 void
@@ -512,7 +518,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 if (Elf32_Shdr::SHT_REL == sh_type
                 &&  n_jmp_slot
                 &&  !strcmp(".rel.plt", get_te32(&shdr->sh_name) + shstrtab)) {
-                    unsigned f_off = elf_get_offset_from_address(plt_off);
+                    unsigned f_off = elf_get_offset_from_address(plt_va);
                     fo->seek(so_slide + f_off, SEEK_SET);  // FIXME: assumes PT_LOAD[1]
                     fo->rewrite(&file_image[f_off], n_jmp_slot * 4);
                  }
@@ -644,7 +650,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 if (Elf64_Shdr::SHT_RELA == sh_type
                 &&  n_jmp_slot
                 &&  !strcmp(".rela.plt", get_te32(&shdr->sh_name) + shstrtab)) {
-                    upx_uint64_t f_off = elf_get_offset_from_address(plt_off);
+                    upx_uint64_t f_off = elf_get_offset_from_address(plt_va);
                     fo->seek(so_slide + f_off, SEEK_SET);  // FIXME: assumes PT_LOAD[1]
                     fo->rewrite(&file_image[f_off], n_jmp_slot * 8);
                 }
@@ -806,8 +812,8 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         alloc_file_image(file_image, file_size);
         f->seek(0, SEEK_SET);
         f->readx(file_image, file_size);
-        phdri= (Elf64_Phdr *)(e_phoff + file_image);  // do not free() !!
-        shdri= (Elf64_Shdr *)(e_shoff + file_image);  // do not free() !!
+        phdri= (file_size <= (unsigned)e_phoff) ? nullptr : (Elf64_Phdr *)(e_phoff + file_image);  // do not free() !!
+        shdri= (file_size <= (unsigned)e_shoff) ? nullptr : (Elf64_Shdr *)(e_shoff + file_image);  // do not free() !!
         if (opt->cmd != CMD_COMPRESS) {
             shdri = nullptr;
         }
@@ -3262,7 +3268,7 @@ PackLinuxElf32::adjABS(Elf32_Sym *sym, unsigned delta)
 }
 
 int
-PackLinuxElf64::adjABS(Elf64_Sym *sym, unsigned delta)
+PackLinuxElf64::adjABS(Elf64_Sym *sym, unsigned long delta)
 {
     unsigned st_name = get_te32(&sym->st_name);
     for (int j = 0; abs_symbol_names[j][0]; ++j) {
@@ -3432,7 +3438,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                         throwCantPack(msg);
                     }
                     n_jmp_slot = 0;
-                    plt_off = ~0u;
+                    plt_va = ~0u;
                     Elf32_Rela *const relb = (Elf32_Rela *)lowmem.subref(
                          "bad Rela offset", sh_offset, sh_size);
                     Elf32_Rela *rela = relb;
@@ -3452,8 +3458,8 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                             }
                             if (R_ARM_JUMP_SLOT == r_type) {
                                 // .rela.plt contains offset of the "first time" target
-                                if (plt_off > r_offset) {
-                                    plt_off = r_offset;
+                                if (plt_va > r_offset) {
+                                    plt_va = r_offset;
                                 }
                                 unsigned d = elf_get_offset_from_address(r_offset);
                                 unsigned w = get_te32(&file_image[d]);
@@ -3474,7 +3480,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                         throwCantPack(msg);
                     }
                     n_jmp_slot = 0;
-                    plt_off = ~0u;
+                    plt_va = ~0u;
                     Elf32_Rel *const rel0 = (Elf32_Rel *)lowmem.subref(
                          "bad Rel offset", sh_offset, sh_size);
                     Elf32_Rel *rel = rel0;
@@ -3502,8 +3508,8 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
                                 }
                             } break;
                             case R_ARM_JUMP_SLOT: {
-                                if (plt_off > r_offset) {
-                                    plt_off = r_offset;
+                                if (plt_va > r_offset) {
+                                    plt_va = r_offset;
                                 }
                                 if (xct_off <= w) {
                                     set_te32(&file_image[d], asl_delta + w);
@@ -3821,7 +3827,7 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
                 throwCantPack(msg);
             }
             n_jmp_slot = 0;
-            plt_off = ~0ull;
+            plt_va = ~0ull;
             Elf64_Rela *const relb = (Elf64_Rela *)lowmem.subref(
                  "bad Rela offset", sh_offset, sh_size);
             Elf64_Rela *rela = relb;
@@ -3849,8 +3855,8 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
                     } break;
                     case R_AARCH64_JUMP_SLOT: {
                         // .rela.plt contains offset of the "first time" target
-                        if (plt_off > r_offset) {
-                            plt_off = r_offset;
+                        if (plt_va > r_offset) {
+                            plt_va = r_offset;
                         }
                         upx_uint64_t d = elf_get_offset_from_address(r_offset);
                         upx_uint64_t w = get_te64(&file_image[d]);
@@ -3936,9 +3942,6 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
     total_out = sz_elf_hdrs;
     total_in = xct_off;
     //xct_off += asl_delta;  // wait until ::pack3
-
-    memset(&linfo, 0, sizeof(linfo));
-    fo->write(&linfo, sizeof(linfo));
 }
 
 void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
@@ -4318,7 +4321,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 {
     Extent x;
     unsigned k;
-    unsigned const is_asl = (!!opt->o_unix.android_shlib) << 1;  // bit 1
+    is_asl = (!!opt->o_unix.android_shlib) << 1;  // bit 1
     unsigned const is_shlib = (0!=xct_off) | is_asl;
 
     // count passes, set ptload vars
@@ -4401,20 +4404,21 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
                     total_out += len;
                 }
                 if (len != x.size) {
-                    linfo.l_checksum = 0;
-                    linfo.l_magic = UPX_MAGIC_LE32;
-                    set_le16(&linfo.l_lsize, lsize);  // preliminary (0)
-                    linfo.l_version = (unsigned char)ph.version;
-                    linfo.l_format =  (unsigned char)ph.format;
-                    linfo_off = fo->tell();
-                    fo->write(&linfo, sizeof(linfo));
-                    total_out += sizeof(linfo);
-                    overlay_offset = total_out;
-
+                    if (1) {
+                        linfo.l_checksum = 0;
+                        linfo.l_magic = UPX_MAGIC_LE32;
+                        set_le16(&linfo.l_lsize, lsize);  // preliminary (0)
+                        linfo.l_version = (unsigned char)ph.version;
+                        linfo.l_format =  (unsigned char)ph.format;
+                        linfo_off = fo->tell();
+                        fo->write(&linfo, sizeof(linfo));
+                        total_out += sizeof(linfo);
+                    }
                     p_info hbuf;
                     set_te32(&hbuf.p_progid, 0);
                     set_te32(&hbuf.p_filesize, file_size);
                     set_te32(&hbuf.p_blocksize, blocksize);
+                    overlay_offset = total_out;
                     fo->write(&hbuf, sizeof(hbuf));
                     total_out += sizeof(p_info);
 
@@ -4772,8 +4776,8 @@ PackLinuxElf32::unRel32(
                 ++n_jmp_slot;
                 // .rel.plt contains offset of the "first time" target
                 unsigned d = r_offset - load_off - asl_delta;
-                if (plt_off > d) {
-                    plt_off = d;
+                if (plt_va > d) {
+                    plt_va = d;
                 }
                 unsigned w = get_te32(&ptload1[d]);
                 if (xct_off <= w) {
@@ -4788,15 +4792,14 @@ PackLinuxElf32::unRel32(
 
 void
 PackLinuxElf64::unRela64(
-    upx_uint64_t dt_rela,
-    Elf64_Rela *rela0,
-    unsigned relasz,
-    MemBuffer &ptload1,
-    upx_uint64_t const load_off,
-    upx_uint64_t old_dtinit,
-    OutputFile *fo
+    upx_uint64_t const dt_rela,
+    Elf64_Rela *const rela0,
+    unsigned const relasz,
+    upx_uint64_t const old_dtinit,
+    OutputFile *const fo
 )
 {
+    n_jmp_slot = 0;
     Elf64_Rela *rela = rela0;
     for (int k = relasz / sizeof(Elf64_Rela); --k >= 0; ++rela) {
         upx_uint64_t r_addend = get_te64(&rela->r_addend);
@@ -4807,32 +4810,45 @@ PackLinuxElf64::unRela64(
 
         upx_uint64_t r_offset = get_te64(&rela->r_offset);
         if (xct_off <= r_offset) {
-            r_offset -= asl_delta;
-            set_te64(&rela->r_offset, r_offset);
+            //r_offset -= asl_delta;  // keep compressed value vs plt_va
+            set_te64(&rela->r_offset, r_offset - asl_delta);  // uncompressed value
         }
 
+        // ElfXX_Rela (used only on 64-bit) ignores the contents of memory
+        // at the target designated by r_offset.  The target is completely
+        // overwritten by (r_addend + f_reloc(r_info)).
+        //
+        // Nevertheless, the existing targets of .rela.plt in the .got
+        // seem to have values that matter to somebody. So restore original
+        // values when is_asl.
         upx_uint64_t r_info   = get_te64(&rela->r_info);
         unsigned r_type = ELF64_R_TYPE(r_info);
-        if (Elf64_Ehdr::EM_AARCH64 == e_machine) {
+        if (is_asl && Elf64_Ehdr::EM_AARCH64 == e_machine) {
+#if 0  //{
             if (R_AARCH64_RELATIVE == r_type) {
                 if (old_dtinit == r_addend) {
-                    set_te64(&ptload1[r_offset - load_off], r_addend);
+                    set_te64(&ptload1[r_offset - plt_va], r_addend);
                 }
             }
+#endif  //}
             if (R_AARCH64_JUMP_SLOT == r_type) {
                 ++n_jmp_slot;
                 // .rela.plt contains offset of the "first time" target
-                upx_uint64_t d = r_offset - load_off;
-                if (plt_off > d) {
-                    plt_off = d;
+                if (jump_slots.getSize() < (r_offset - plt_va)) {
+                    throwInternalError("bad r_offset for jump_slots");
                 }
-                upx_uint64_t w = get_te64(&ptload1[d]);
+                upx_uint64_t *slot = (upx_uint64_t *)(r_offset - plt_va
+                        + (unsigned char *)jump_slots);
+                upx_uint64_t w = get_te64(slot);
                 if (xct_off <= w) {
-                    set_te64(&ptload1[d], w - asl_delta);
+                    set_te64(slot, w - asl_delta);
                 }
             }
         }
-    }
+        // FIXME: but what about old_dtinit?
+        (void)old_dtinit;
+
+    }  // end each RELA
     fo->seek(dt_rela, SEEK_SET);
     fo->rewrite(rela0, relasz);
 }
@@ -4870,7 +4886,7 @@ void PackLinuxElf64::un_shlib_1(
     fi->seek(0, SEEK_SET);
     unsigned const limit_dynhdr = get_te64(&dynhdr->p_offset) + get_te64(&dynhdr->p_filesz);
     fi->readx(ibuf, limit_dynhdr);
-    overlay_offset -= sizeof(linfo);
+    //overlay_offset -= sizeof(linfo);
     loader_offset = 0;
     xct_off = overlay_offset;
     e_shoff = get_te64(&ehdri.e_shoff);
@@ -4906,8 +4922,12 @@ void PackLinuxElf64::un_shlib_1(
                     set_te64(&sym->st_value, symval - asl_delta);
                 }
                 if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
-                    adjABS(sym, 0u - asl_delta);
+                    adjABS(sym, 0ul - (unsigned long)asl_delta);
                 }
+            }
+            if (0 && fo) {
+                fo->seek(off_dynsym, SEEK_SET);
+                fo->rewrite(sym0, sz_dynsym);
             }
         }
     }
@@ -4920,7 +4940,7 @@ void PackLinuxElf64::un_shlib_1(
     // rtld constant data: DT_*HASH, DT_SYMTAB, DT_STRTAB, etc.
     // New style puts eXecutable app code in second PT_LOAD
     // in order to mark Elf headers and rtld data as non-eXecutable.
-    fi->seek(xct_off, SEEK_SET);
+    fi->seek(overlay_offset - sizeof(l_info), SEEK_SET);
     struct {
         struct l_info l;
         struct p_info p;
@@ -5008,13 +5028,13 @@ void PackLinuxElf64::un_DT_INIT(
     unsigned old_dtinit,
     Elf64_Phdr const *const phdro,
     Elf64_Phdr const *const dynhdr,  // in phdri
-    OutputFile *fo,
-    unsigned is_asl
+    OutputFile *fo
 )
 {
     // DT_INIT must be restored.
     // If android_shlib, then the asl_delta relocations must be un-done.
-    upx_uint64_t dt_pltrelsz(0), dt_jmprel(0);
+    unsigned n_plt = 0;
+    upx_uint64_t dt_pltrelsz(0), dt_jmprel(0), dt_pltgot(0);
     upx_uint64_t dt_relasz(0), dt_rela(0);
     upx_uint64_t const dyn_len = get_te64(&dynhdr->p_filesz);
     upx_uint64_t const dyn_off = get_te64(&dynhdr->p_offset);
@@ -5034,10 +5054,13 @@ void PackLinuxElf64::un_DT_INIT(
         if (is_asl) switch (tag) {
         case Elf64_Dyn::DT_RELASZ:   { dt_relasz   = val; } break;
         case Elf64_Dyn::DT_RELA:     { dt_rela     = val; } break;
-        case Elf64_Dyn::DT_PLTRELSZ: { dt_pltrelsz = val; } break;
         case Elf64_Dyn::DT_JMPREL:   { dt_jmprel   = val; } break;
+        case Elf64_Dyn::DT_PLTRELSZ: { dt_pltrelsz = val;
+            n_plt = 3+ (dt_pltrelsz / sizeof(Elf64_Rela));  // FIXME: "3+"
+        };  break;
 
-        case Elf64_Dyn::DT_PLTGOT:
+        case Elf64_Dyn::DT_PLTGOT:   { plt_va = dt_pltgot = val;}
+        // FALL THROUGH
         case Elf64_Dyn::DT_PREINIT_ARRAY:
         case Elf64_Dyn::DT_INIT_ARRAY:
         case Elf64_Dyn::DT_FINI_ARRAY:
@@ -5060,17 +5083,18 @@ void PackLinuxElf64::un_DT_INIT(
                 // So changing the value will get ignored.  Do it anyway.
                 // FIXME: we must fix the Rela ?
                 Elf64_Phdr const *phdr = phdro;
-                for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
+                if (1) for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
                     upx_uint64_t vaddr = get_te64(&phdr->p_vaddr);
                     upx_uint64_t filesz = get_te64(&phdr->p_filesz);
                     if ((val - vaddr) < filesz) {
                         upx_uint64_t offset = get_te64(&phdr->p_offset);
-                        upx_uint64_t oldval;
+                        // Rela overwrites the target; assumed default is 0
+                        upx_uint64_t oldval = 0;  //set_te64(&oldval, old_dtinit);
                         // Counter-act unRel64 if asl_delta
-                        set_te64(&oldval, old_dtinit + (is_asl ? asl_delta : 0));
                         // FIXME? the in-memory copy?
                         if (fo) {
-                            fo->seek((val - vaddr) + offset, SEEK_SET);
+                            unsigned q = (val - vaddr) + offset - (is_asl ? asl_delta : 0);
+                            fo->seek(q, SEEK_SET);
                             fo->write(&oldval, sizeof(oldval));
                         }
                         break;
@@ -5091,12 +5115,40 @@ void PackLinuxElf64::un_DT_INIT(
         if (dt_relasz && dt_rela) {
             Elf64_Rela *const rela0 = (Elf64_Rela *)lowmem.subref(
                 "bad Rela offset", dt_rela, dt_relasz);
-            unRela64(dt_rela, rela0, dt_relasz, ibuf, load_va, old_dtinit, fo);
+            unRela64(dt_rela, rela0, dt_relasz, old_dtinit, fo);
         }
         if (dt_pltrelsz && dt_jmprel) { // FIXME:  overlap w/ DT_REL ?
             Elf64_Rela *const jmp0 = (Elf64_Rela *)lowmem.subref(
                 "bad Jmprel offset", dt_jmprel, dt_pltrelsz);
-            unRela64(dt_jmprel, jmp0, dt_pltrelsz, ibuf, load_va, old_dtinit, fo);
+            jump_slots.alloc(n_plt * sizeof(upx_uint64_t));
+            Elf64_Phdr const *phdr = phdri;
+            for (unsigned j = 0; j < e_phnum; ++j, ++phdr) if (is_LOAD64(phdr)) {
+                upx_uint64_t vaddr = get_te64(&phdr->p_vaddr);
+                upx_uint64_t filesz = get_te64(&phdr->p_filesz);
+                upx_uint64_t d = plt_va - vaddr;
+                if (d < filesz) {
+                    upx_uint64_t offset = get_te64(&phdr->p_offset);
+                    fi->seek(d + offset, SEEK_SET);
+                    fi->readx(jump_slots, n_plt * sizeof(upx_uint64_t));
+                    break;
+                }
+            }
+            unRela64(dt_jmprel, jmp0, dt_pltrelsz, old_dtinit, fo);
+
+            Elf64_Ehdr const *const o_ehdr = (Elf64_Ehdr const *)(void *)lowmem;
+            unsigned const o_phnum = o_ehdr->e_phnum;
+            phdr = phdro;
+            for (unsigned j = 0; j < o_phnum; ++j, ++phdr) if (is_LOAD64(phdr)) {
+                upx_uint64_t vaddr = get_te64(&phdr->p_vaddr);
+                upx_uint64_t filesz = get_te64(&phdr->p_filesz);
+                upx_uint64_t d = plt_va - vaddr - asl_delta;
+                if (d < filesz) {
+                    upx_uint64_t offset = get_te64(&phdr->p_offset);
+                    fo->seek(d + offset, SEEK_SET);
+                    fo->rewrite(jump_slots, n_plt * sizeof(upx_uint64_t));
+                    break;
+                }
+            }
         }
         // Modified relocation tables are re-written by unRela64
     }
@@ -5110,7 +5162,6 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned const c_phnum = get_te16(&ehdri.e_phnum);
     unsigned u_phnum = 0;
     upx_uint64_t old_dtinit = 0;
-    unsigned is_asl = 0;  // is Android Shared Library
 
     unsigned szb_info = sizeof(b_info);
     {
@@ -5123,10 +5174,23 @@ void PackLinuxElf64::unpack(OutputFile *fo)
 
     fi->seek(overlay_offset - sizeof(l_info), SEEK_SET);
     fi->readx(&linfo, sizeof(linfo));
-    lsize = get_te16(&linfo.l_lsize);
     if (UPX_MAGIC_LE32 != get_le32(&linfo.l_magic)) {
-        throwCantUnpack("l_info corrupted");
+        unsigned const *const lp = (unsigned const *)&linfo;
+        // Workaround for bug of extra linfo by some asl_pack2_Shdrs().
+        if (0==lp[0] && 0==lp[1] && 0==lp[2]) { // looks like blank extra
+            fi->readx(&linfo, sizeof(linfo));
+            if (UPX_MAGIC_LE32 == get_le32(&linfo.l_magic)) {
+                overlay_offset += sizeof(linfo);
+            }
+            else {
+                throwCantUnpack("l_info corrupted");
+            }
+        }
+        else {
+            throwCantUnpack("l_info corrupted");
+        }
     }
+    lsize = get_te16(&linfo.l_lsize);
     p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
@@ -5309,7 +5373,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     }
 
     if (is_shlib) {
-        un_DT_INIT(old_dtinit, (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)o_elfhdrs), dynhdr, fo, is_asl);
+        un_DT_INIT(old_dtinit, (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)o_elfhdrs), dynhdr, fo);
     }
 
     // update header with totals
@@ -6180,7 +6244,6 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     }
     unsigned const c_phnum = get_te16(&ehdri.e_phnum);
     unsigned old_dtinit = 0;
-    unsigned is_asl = 0;  // is Android Shared Library
 
     unsigned szb_info = sizeof(b_info);
     {
