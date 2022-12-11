@@ -4837,8 +4837,9 @@ PackLinuxElf64::unRela64(
                 if (jump_slots.getSize() < (r_offset - plt_va)) {
                     throwInternalError("bad r_offset for jump_slots");
                 }
-                upx_uint64_t *slot = (upx_uint64_t *)(r_offset - plt_va
-                        + (unsigned char *)jump_slots);
+                // really upx_uint64_t *, but clang makes it hard to say that
+                unsigned char *slot = r_offset - plt_va
+                    + (unsigned char *)jump_slots.getVoidPtr();
                 upx_uint64_t w = get_te64(slot);
                 if (xct_off <= w) {
                     set_te64(slot, w - asl_delta);
@@ -4925,10 +4926,12 @@ void PackLinuxElf64::un_shlib_1(
                     adjABS(sym, 0ul - (unsigned long)asl_delta);
                 }
             }
+#if 0  //{ Stupid MSVC 14.2, 14.3
             if (0 && fo) {
                 fo->seek(off_dynsym, SEEK_SET);
                 fo->rewrite(sym0, sz_dynsym);
             }
+#endif  //}
         }
     }
 
