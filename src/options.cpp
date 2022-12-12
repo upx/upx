@@ -57,7 +57,7 @@ void options_t::reset() {
 #endif
     o->verbose = 2;
 
-    opt->o_unix.osabi0 = 3; // 3 == ELFOSABI_LINUX
+    o->o_unix.osabi0 = 3; // 3 == ELFOSABI_LINUX
 
     o->win32_pe.compress_exports = 1;
     o->win32_pe.compress_icons = 2;
@@ -75,6 +75,13 @@ options_t *opt = &global_options;
 /*************************************************************************
 //
 **************************************************************************/
+
+TEST_CASE("options_t::reset") {
+    options_t local_options;
+    options_t *o = &local_options;
+    o->reset();
+    CHECK(o->o_unix.osabi0 == 3);
+}
 
 template <size_t N>
 static inline void test_options(const char *(&a)[N]) {
