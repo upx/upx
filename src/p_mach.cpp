@@ -1021,7 +1021,7 @@ off_t PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
     upx_uint64_t const zero = 0;
     off_t len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len)) + 3*sizeof(disp);
+    // len += (3& (0u-len)) + 3*sizeof(disp);
 
     disp = prev_mod_init_func;
     fo->write(&disp, sizeof(disp));  // user .init_address
