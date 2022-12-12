@@ -1,23 +1,6 @@
 #  Makefile for armpe_tester
 
-MAKEFLAGS += -rR
-.SUFFIXES:
-.SECONDEXPANSION:
-.NOTPARALLEL:
-export LC_ALL = C
-export SHELL = /bin/sh
-
-# update $PATH for our special stub build tools
-ifneq ($(wildcard $(HOME)/local/bin/bin-upx/upx-stubtools-check-version),)
-export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
-else ifneq ($(wildcard $(HOME)/.local/bin/bin-upx/upx-stubtools-check-version),)
-export PATH := $(HOME)/.local/bin/bin-upx:$(PATH)
-else ifneq ($(wildcard $(HOME)/bin/bin-upx/upx-stubtools-check-version),)
-export PATH := $(HOME)/bin/bin-upx:$(PATH)
-endif
-
-CFLAGS_W = -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
-
+CFLAGS_W = -Wall -Wextra -Wcast-align -Wcast-qual -Wwrite-strings
 
 all: armpe_tester.out
 #all: armpe_tester.exe
@@ -33,4 +16,3 @@ mostlyclean clean distclean maintainer-clean:
 	rm -f armpe_tester.exe armpe_tester.out
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
-

@@ -1,10 +1,9 @@
 # "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." --Rob Pike
 #
-# for clang-format-10.0.1 from https://github.com/upx/upx-stubtools/releases
+# for clang-format-15.0.6 from https://github.com/upx/upx-stubtools/releases
 ---
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
-#AlignConsecutiveAssignments: true
 AlwaysBreakTemplateDeclarations: true
 ColumnLimit: 100
 IndentWidth: 4

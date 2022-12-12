@@ -160,7 +160,7 @@ endif
 all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 .upx-stubtools-stamp: $(MAKEFILE_LIST)
-	upx-stubtools-check-version 20210104
+	upx-stubtools-check-version 20221212
 	@echo "timestamp" > $@
 .DELETE_ON_ERROR: .upx-stubtools-stamp
 %/.tmp-stamp:

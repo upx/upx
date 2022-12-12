@@ -32,12 +32,11 @@ jobs:
           ##export DEBIAN_FRONTEND=noninteractive
           ##sudo apt-get install -y --no-install-recommends python2-minimal
           # manually install compat libs from Ubuntu 16.04
-          wget -q 'http://mirror.enzu.com/ubuntu/pool/main/g/gmp/libgmp10_6.1.0+dfsg-2_amd64.deb'
-          wget -q 'http://mirror.enzu.com/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.4-1_amd64.deb'
-          for f in *.deb; do dpkg -x $f ./packages; done
+          wget -q 'http://archive.kernel.org/ubuntu-archive/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.6-1_amd64.deb'
+          for f in ./*.deb; do dpkg -x $f ./packages; done
           sudo mv -v -n ./packages/usr/lib/x86_64-linux-gnu/lib* /usr/lib/x86_64-linux-gnu/
           sudo ldconfig
-          wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20210104/bin-upx-20210104.tar.xz | tar -xJ
+          wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20221212/bin-upx-20221212.tar.xz | tar -xJ
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
@@ -47,7 +46,7 @@ jobs:
       - name: 'Check source code formatting'
         run: |
           bash ./misc/scripts/check_whitespace_git.sh
-          env UPX_CLANG_FORMAT="$PWD/../deps/bin-upx-20210104/clang-format-10.0.1" make -C src clang-format
+          env UPX_CLANG_FORMAT="$PWD/../deps/bin-upx-20221212/clang-format-15.0.6" make -C src clang-format
           if ! git diff --quiet; then git diff; exit 1; fi
 
   job-linux-cmake:

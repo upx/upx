@@ -4,22 +4,22 @@ set -e; set -o pipefail
 
 # "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." --Rob Pike
 
-# NOTE: we are using clang-format-10.0.1 from upx-stubtools
+# NOTE: we are using clang-format-15.0.6 from upx-stubtools
 # see https://github.com/upx/upx-stubtools/releases
 
 # NOTE: we use .clang-format config from upx.git/.clang-format
 
 if [[ ! -f $UPX_CLANG_FORMAT ]]; then
-UPX_CLANG_FORMAT="$HOME/local/bin/bin-upx/clang-format-10.0.1"
+UPX_CLANG_FORMAT="$HOME/local/bin/bin-upx/clang-format-15.0.6"
 fi
 if [[ ! -f $UPX_CLANG_FORMAT ]]; then
-UPX_CLANG_FORMAT="$HOME/.local/bin/bin-upx/clang-format-10.0.1"
+UPX_CLANG_FORMAT="$HOME/.local/bin/bin-upx/clang-format-15.0.6"
 fi
 if [[ ! -f $UPX_CLANG_FORMAT ]]; then
-UPX_CLANG_FORMAT="$HOME/bin/bin-upx/clang-format-10.0.1"
+UPX_CLANG_FORMAT="$HOME/bin/bin-upx/clang-format-15.0.6"
 fi
 if [[ ! -f $UPX_CLANG_FORMAT ]]; then
-    echo "ERROR: $0: cannot find clang-format-10.0.1"
+    echo "ERROR: $0: cannot find clang-format-15.0.6"
     echo "ERROR: $0: please visit https://github.com/upx/upx-stubtools"
     exit 1
 fi

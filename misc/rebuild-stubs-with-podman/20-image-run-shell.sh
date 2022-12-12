@@ -6,7 +6,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # run an interactive shell in the image
 # using a rootless Podman container
 
-image=upx-stubtools-20210104-v10
+image=upx-stubtools-20221212-v1
 
 flags=( -ti --read-only --rm )
 flags+=( --cap-drop=all )               # drop all capabilities
@@ -37,10 +37,10 @@ podman run "${flags[@]}" "$image" bash -l
 #   # make sure that git is clean:
 #   git status .
 #   # remove stub files and make sure that they got deleted:
-#   make maintainer-clean
+#   make maintainer-clean extra-clean
 #   git status .
 #   # rebuild
-#   make all
+#   make extra-all all
 #   # make sure that the stub files did rebuild correctly:
 #   git status .
 #   git diff .

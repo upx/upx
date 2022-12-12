@@ -45,7 +45,7 @@ if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
     elif [[ -f "$HOME/.local/bin/bin-upx/upx-stubtools-check-version" ]]; then
         bin_upx=$(readlink -en -- "$HOME/.local/bin/bin-upx")
     else
-        bin_upx=$(readlink -en -- "$upx_SRCDIR/../deps/bin-upx-20210104")
+        bin_upx=$(readlink -en -- "$upx_SRCDIR/../deps/bin-upx-20221212")
     fi
     cd / && cd "$upx_SRCDIR" || exit 1
     extra_subdirs=()
