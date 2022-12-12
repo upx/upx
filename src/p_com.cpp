@@ -35,7 +35,7 @@
 static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i086-dos16.com.h"
 
-//#define TESTING 1
+// #define TESTING 1
 
 /*************************************************************************
 //

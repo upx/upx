@@ -216,7 +216,7 @@ error:
 #undef NULL
 #define NULL nullptr
 #include <lzma-sdk/C/Common/MyInitGuid.h>
-//#include <lzma-sdk/C/7zip/Compress/LZMA/LZMADecoder.h>
+// #include <lzma-sdk/C/7zip/Compress/LZMA/LZMADecoder.h>
 #include <lzma-sdk/C/7zip/Compress/LZMA/LZMAEncoder.h>
 
 namespace MyLzma {
@@ -298,12 +298,12 @@ STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outS
 
 #include <lzma-sdk/C/Common/Alloc.cpp>
 #include <lzma-sdk/C/Common/CRC.cpp>
-//#include <lzma-sdk/C/7zip/Common/InBuffer.cpp>
+// #include <lzma-sdk/C/7zip/Common/InBuffer.cpp>
 #include <lzma-sdk/C/7zip/Common/OutBuffer.cpp>
 #include <lzma-sdk/C/7zip/Common/StreamUtils.cpp>
 #include <lzma-sdk/C/7zip/Compress/LZ/LZInWindow.cpp>
-//#include <lzma-sdk/C/7zip/Compress/LZ/LZOutWindow.cpp>
-//#include <lzma-sdk/C/7zip/Compress/LZMA/LZMADecoder.cpp>
+// #include <lzma-sdk/C/7zip/Compress/LZ/LZOutWindow.cpp>
+// #include <lzma-sdk/C/7zip/Compress/LZMA/LZMADecoder.cpp>
 #include <lzma-sdk/C/7zip/Compress/LZMA/LZMAEncoder.cpp>
 #include <lzma-sdk/C/7zip/Compress/RangeCoder/RangeCoderBit.cpp>
 #undef RC_NORMALIZE

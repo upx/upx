@@ -36,7 +36,7 @@
 static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/m68k-atari.tos.h"
 
-//#define TESTING 1
+// #define TESTING 1
 
 /*************************************************************************
 //

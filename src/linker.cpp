@@ -198,8 +198,7 @@ void ElfLinker::preprocessSections(char *start, char const *end) {
             char *n = strstr(start, name);
             n[strlen(name)] = 0;
             addSection(n, input + offset, size, align);
-
-            // printf("section %s preprocessed\n", n);
+            NO_printf("section %s preprocessed\n", n);
         }
     }
     addSection("*ABS*", nullptr, 0, 0);
@@ -224,21 +223,21 @@ void ElfLinker::preprocessSymbols(char *start, char const *end) {
             assert(offset == 0);
         }
 #if 0
-        else if (sscanf(start, "%x%*8c %1023s %*x %1023s",
+        else if (sscanf(start, "%x%*8c %1023s %*x %1023s", &offset, section, symbol) == 3)
 #else
         // work around broken scanf() implementations
         // http://bugs.winehq.org/show_bug.cgi?id=10401 (fixed in Wine 0.9.58)
-        else if (sscanf(start, "%x%*c%*c%*c%*c%*c%*c%*c%*c %1023s %*x %1023s",
+        else if (sscanf(start, "%x%*c%*c%*c%*c%*c%*c%*c%*c %1023s %*x %1023s", &offset, section,
+                        symbol) == 3)
 #endif
-                        &offset, section, symbol) == 3)
         {
-                            char *s = strstr(start, symbol);
-                            s[strlen(symbol)] = 0;
-                            if (strcmp(section, "*UND*") == 0)
-                                offset = 0xdeaddead;
-                            assert(strcmp(section, "*ABS*") != 0);
-                            addSymbol(s, section, offset);
-                        }
+            char *s = strstr(start, symbol);
+            s[strlen(symbol)] = 0;
+            if (strcmp(section, "*UND*") == 0)
+                offset = 0xdeaddead;
+            assert(strcmp(section, "*ABS*") != 0);
+            addSymbol(s, section, offset);
+        }
     }
 }
 
@@ -290,8 +289,8 @@ void ElfLinker::preprocessRelocations(char *start, char const *end) {
 
             if (section) {
                 addRelocation(section->name, offset, t, symbol, add);
-                // printf("relocation %s %s %x %llu preprocessed\n", section->name, symbol, offset,
-                // (unsigned long long) add);
+                NO_printf("relocation %s %s %x %llu preprocessed\n", section->name, symbol, offset,
+                          (unsigned long long) add);
             }
         }
     }
@@ -317,7 +316,7 @@ ElfLinker::Symbol *ElfLinker::findSymbol(const char *name, bool fatal) const {
 
 ElfLinker::Section *ElfLinker::addSection(const char *sname, const void *sdata, int slen,
                                           unsigned p2align) {
-    // printf("addSection: %s len=%d align=%d\n", sname, slen, p2align);
+    NO_printf("addSection: %s len=%d align=%d\n", sname, slen, p2align);
     if (!sdata && (!strcmp("ABS*", sname) || !strcmp("UND*", sname)))
         return nullptr;
     if (update_capacity(nsections, &nsections_capacity))
@@ -335,7 +334,7 @@ ElfLinker::Section *ElfLinker::addSection(const char *sname, const void *sdata, 
 
 ElfLinker::Symbol *ElfLinker::addSymbol(const char *name, const char *section,
                                         upx_uint64_t offset) {
-    // printf("addSymbol: %s %s 0x%x\n", name, section, offset);
+    NO_printf("addSymbol: %s %s 0x%llx\n", name, section, offset);
     if (update_capacity(nsymbols, &nsymbols_capacity))
         symbols = static_cast<Symbol **>(realloc(symbols, nsymbols_capacity * sizeof(Symbol *)));
     assert(symbols != nullptr);
@@ -410,7 +409,7 @@ int ElfLinker::addLoader(const char *sname) {
             }
             memcpy(output + outputlen, section->input, section->size);
             section->output = output + outputlen;
-            // printf("section added: 0x%04x %3d %s\n", outputlen, section->size, section->name);
+            NO_printf("section added: 0x%04x %3d %s\n", outputlen, section->size, section->name);
             outputlen += section->size;
 
             if (head) {
@@ -479,11 +478,12 @@ void ElfLinker::relocate() {
             value = rel->value->section->offset + rel->value->offset + rel->add;
         }
         upx_byte *location = rel->section->output + rel->offset;
-        // printf("%-28s %-28s %-10s %#16llx %#16llx\n", rel->section->name, rel->value->name,
-        // rel->type, (long long) value, (long long) value - rel->section->offset - rel->offset);
-        // printf("  %llx %d %llx %d %llx : %d\n", (long long) value,
-        // (int)rel->value->section->offset,
-        // rel->value->offset, rel->offset, (long long) rel->add, *location);
+        NO_printf("%-28s %-28s %-10s %#16llx %#16llx\n", rel->section->name, rel->value->name,
+                  rel->type, (long long) value,
+                  (long long) value - rel->section->offset - rel->offset);
+        NO_printf("  %llx %d %llx %d %llx :%d\n", (long long) value,
+                  (int) rel->value->section->offset, rel->value->offset, rel->offset,
+                  (long long) rel->add, *location);
         relocate1(rel, location, value, rel->type);
     }
 }

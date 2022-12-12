@@ -57,7 +57,7 @@ __acc_static_forceinline upx_uint64_t get_ne64(const void *p) {
 }
 
 __acc_static_forceinline void set_ne16(void *p, unsigned vv) {
-    upx_uint16_t v = (upx_uint16_t)(vv & 0xffff);
+    upx_uint16_t v = (upx_uint16_t) (vv & 0xffff);
     upx_memcpy_inline(p, &v, sizeof(v));
 }
 
