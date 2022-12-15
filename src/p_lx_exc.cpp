@@ -49,8 +49,6 @@
 #define DT_STRSZ    Elf32_Dyn::DT_STRSZ
 #endif
 
-#define usizeof(x)      ((unsigned) sizeof(x))
-
 
 /*************************************************************************
 // linux/386 (generic "execve" format)

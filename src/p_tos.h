@@ -25,8 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_P_TOS_H
-#define __UPX_P_TOS_H 1
+#pragma once
+#ifndef UPX_P_TOS_H__
+#define UPX_P_TOS_H__ 1
 
 /*************************************************************************
 // atari/tos

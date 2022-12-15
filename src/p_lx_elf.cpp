@@ -62,8 +62,6 @@ unsigned char PackLinuxElf::o_shstrtab[] = {  \
 /*offset 20*/   '.','s','h','s','t','r','t','a','b','\0'
 };
 
-#define usizeof(x)      ((unsigned) sizeof(x))
-
 static unsigned
 umin(unsigned a, unsigned b)
 {
@@ -5178,7 +5176,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     fi->seek(overlay_offset - sizeof(l_info), SEEK_SET);
     fi->readx(&linfo, sizeof(linfo));
     if (UPX_MAGIC_LE32 != get_le32(&linfo.l_magic)) {
-        unsigned const *const lp = (unsigned const *)(void const *)&linfo;
+        NE32 const *const lp = (NE32 const *)(void const *)&linfo;
         // Workaround for bug of extra linfo by some asl_pack2_Shdrs().
         if (0==lp[0] && 0==lp[1] && 0==lp[2]) { // looks like blank extra
             fi->readx(&linfo, sizeof(linfo));

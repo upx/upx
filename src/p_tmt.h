@@ -25,8 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_P_TMT_H
-#define __UPX_P_TMT_H 1
+#pragma once
+#ifndef UPX_P_TMT_H__
+#define UPX_P_TMT_H__ 1
 
 /*************************************************************************
 // tmt/adam

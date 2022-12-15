@@ -30,19 +30,13 @@ doc/*.ps
 doc/*.tex
 
 src/stub/**/.*-stamp
-src/stub/**/MMakefile
 src/stub/tmp*/*.bin
 src/stub/tmp*/*.bin.bindump
 src/stub/tmp*/*.bin.disasm
-src/stub/tmp*/*.d
-src/stub/tmp*/*.o
 src/stub/tmp*/*.o.disasm
 src/stub/tmp*/mips.r3000-*.[is]
 src/stub/tmp*/mipsel.r3000-*.[is]
 src/stub/src/**/tmp*/*
-
-src/stub/tools/armpe/armpe_tester.exe
-src/stub/tools/armpe/armpe_tester.out
 
 src/stub/tools/sstrip/amd64-linux-sstrip
 src/stub/tools/sstrip/i386-linux-sstrip

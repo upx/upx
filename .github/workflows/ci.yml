@@ -12,6 +12,7 @@ on:
     branches:
       - '*'
       - '!appveyor*'
+      - '!gitea*'
       - '!gitlab*'
       - '!travis*'
   workflow_dispatch:
@@ -28,13 +29,14 @@ jobs:
         run: |
           uname -a; pwd; id; umask
           cd ..; mkdir -p deps; cd deps; mkdir packages
-          # for ubuntu-22.04: install python2
+          # for ubuntu-22.04: install python2-minimal
           ##export DEBIAN_FRONTEND=noninteractive
-          ##sudo apt-get install -y --no-install-recommends python2-minimal
+          ##sudo apt-get update && sudo apt-get install -y --no-install-recommends python2-minimal
           # manually install compat libs from Ubuntu 16.04
           wget -q 'http://archive.kernel.org/ubuntu-archive/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.6-1_amd64.deb'
           for f in ./*.deb; do dpkg -x $f ./packages; done
           sudo mv -v -n ./packages/usr/lib/x86_64-linux-gnu/lib* /usr/lib/x86_64-linux-gnu/
+          rm -rf ./*.deb ./packages
           sudo ldconfig
           wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20221212/bin-upx-20221212.tar.xz | tar -xJ
       - name: 'Check out code'
@@ -43,6 +45,14 @@ jobs:
       - name: 'Rebuild and verify stubs'
         run: |
           env C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux bash ./.github/travis_build.sh
+          if ! git diff --quiet; then git diff; exit 1; fi
+      - name: 'Rebuild and verify stubs v2'
+        run: |
+          export PATH="$(readlink -fn ../deps/bin-upx-20221212/.):$PATH"
+          make -C src/stub maintainer-clean extra-clean
+          git status || true
+          make -C src/stub extra-all all
+          if ! git diff --quiet; then git diff; exit 1; fi
       - name: 'Check source code formatting'
         run: |
           bash ./misc/scripts/check_whitespace_git.sh
@@ -100,7 +110,7 @@ jobs:
       matrix:
         include:
           - { os: macos-11, gcc: gcc-10, gxx: 'g++-10' }
-          # { os: macos-12, gcc: gcc-11, gxx: 'g++-11' } # disable gcc - XCode 14.0 ld bug
+          # { os: macos-12, gcc: gcc-11, gxx: 'g++-11' } # disable gcc - XCode 14.0 ld bug; supposed to be fixed in 14.1
           - { os: macos-12 }
     steps:
       - name: 'Check out code'

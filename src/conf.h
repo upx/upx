@@ -355,6 +355,15 @@ inline const T& UPX_MAX(const T& a, const T& b) { if (a < b) return b; return a;
 template <class T>
 inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b; }
 
+template <size_t TypeSize>
+struct USizeOfTypeImpl {
+    __acc_static_forceinline constexpr unsigned value() {
+        COMPILE_TIME_ASSERT(TypeSize >= 1 && TypeSize <= 64 * 1024); // arbitrary limit
+        return ACC_ICONV(unsigned, TypeSize);
+    }
+};
+#define usizeof(type)   (USizeOfTypeImpl<sizeof(type)>::value())
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(int) == 4)
 
 // An Array allocates memory on the heap, and automatically
 // gets destructed when leaving scope or on exceptions.
