@@ -5370,7 +5370,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     &&  0==get_te64(&phdri[1].p_offset)
     &&  0==get_te64(&phdri[0].p_offset)
     &&     get_te64(&phdri[1].p_filesz) == get_te64(&phdri[1].p_memsz)) {
-        fi->seek(up4(get_te64(&phdr[1].p_memsz)), SEEK_SET);  // past the loader
+        fi->seek(up4(get_te64(&phdri[1].p_memsz)), SEEK_SET);  // past the loader
     }
     else if (is_shlib
     ||  (off_entry + up4(lsize) + ph.getPackHeaderSize() + sizeof(overlay_offset))
