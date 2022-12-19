@@ -101,6 +101,7 @@ protected:
     unsigned char ei_class;
     unsigned char ei_data;
     unsigned char ei_osabi;
+    unsigned char prev_method;
     char const *osabi_note;
     unsigned upx_dt_init;  // DT_INIT, DT_PREINIT_ARRAY, DT_INIT_ARRAY
     static unsigned const DT_NUM = 34;  // elf.h
@@ -272,7 +273,7 @@ protected:
     virtual int  canUnpack() override; // bool, except -1: format known, but not packed
 
     virtual void pack1(OutputFile *, Filter &) override;  // generate executable header
-    virtual void asl_pack2_Shdrs(OutputFile *);  // AndroidSharedLibrary processes Shdrs
+    virtual void asl_pack2_Shdrs(OutputFile *, unsigned pre_xct_top);  // AndroidSharedLibrary processes Shdrs
     virtual int  pack2(OutputFile *, Filter &) override;  // append compressed data
     virtual off_t pack3(OutputFile *, Filter &) override;  // append loader
     virtual void pack4(OutputFile *, Filter &) override;  // append pack header

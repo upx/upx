@@ -410,6 +410,7 @@ void PackUnix::packExtent(
             tmp.b_method = (unsigned char) forced_method(ph.method);
             tmp.b_extra = b_extra;
             fo->write(&tmp, sizeof(tmp));
+            total_out += sizeof(tmp);
             b_len += sizeof(b_info);
             fo->write(hdr_obuf, hdr_c_len);
             total_out += hdr_c_len;
@@ -428,6 +429,7 @@ void PackUnix::packExtent(
         }
         tmp.b_extra = b_extra;
         fo->write(&tmp, sizeof(tmp));
+        total_out += sizeof(tmp);
         b_len += sizeof(b_info);
 
         if (ft) {
@@ -436,15 +438,16 @@ void PackUnix::packExtent(
         // write compressed data
         if (ph.c_len < ph.u_len) {
             fo->write(obuf, ph.c_len);
+            total_out += ph.c_len;
             // Checks ph.u_adler after decompression, after unfiltering
             verifyOverlappingDecompression(ft);
         }
         else {
             fo->write(ibuf, ph.u_len);
+            total_out += ph.u_len;
         }
 
         total_in += ph.u_len;
-        total_out += ph.c_len;
     }
 }
 

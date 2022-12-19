@@ -93,7 +93,8 @@
         PT_NOTE    = 4,         /* Auxiliary information (esp. OpenBSD) */
         PT_PHDR    = 6          /* Entry for header table itself */
         , PT_NUM   = 8          /* Number of defined types in low range */
-        , PT_GNU_STACK = 0x6474e551      /* Indicates stack executability */
+        , PT_GNU_STACK = 0x6474e551     /* Indicates stack executability */
+        , PT_GNU_RELRO = 0x6474e552     /* Read-only after relocation */
     };
 
     enum { // p_flags

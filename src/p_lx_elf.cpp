@@ -51,6 +51,7 @@ typedef upx_uint64_t u64_t;  // easier to type; more narrow
 #define PT_NOTE64   Elf64_Phdr::PT_NOTE
 #define PT_GNU_STACK32  Elf32_Phdr::PT_GNU_STACK
 #define PT_GNU_STACK64  Elf64_Phdr::PT_GNU_STACK
+#define PT_GNU_RELRO64  Elf64_Phdr::PT_GNU_RELRO
 
 //static unsigned const EF_ARM_HASENTRY = 0x02;
 static unsigned const EF_ARM_EABI_VER4 = 0x04000000;
@@ -80,13 +81,11 @@ up4(unsigned x)
     return ~3u & (3+ x);
 }
 
-#if 0  //{ unused
 static unsigned
 up8(unsigned x)
 {
     return ~7u & (7+ x);
 }
-#endif  //}
 
 static off_t
 fpad4(OutputFile *fo)
@@ -596,9 +595,14 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 continue;
             }
             if (PT_LOAD64 == type) {
-                if ((xct_off - ioff) < len) { // Change length of compressed PT_LOAD.
-                    set_te64(&phdr->p_filesz, sz_pack2 + lsize);
-                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize);
+                if ((sz_pack2 + lsize) < page_size  // really small
+                &&  ioff <= page_size) { // first or second PT_LOAD
+                    set_te64(&phdr->p_filesz, page_size);
+                    set_te64(&phdr->p_memsz,  page_size);
+                }
+                else if ((xct_off - ioff) < len) { // Change length of compressed PT_LOAD.
+                    set_te64(&phdr->p_filesz, sz_pack2 + lsize - ioff);
+                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize - ioff);
                     if (user_init_off < xct_off) { // MIPS puts PT_DYNAMIC here
                         // Allow for DT_INIT in a new [stolen] slot
                         unsigned off2 = user_init_off - sizeof(word);
@@ -3708,7 +3712,7 @@ void PackLinuxElf64ppc::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, stub_powerpc64_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
-void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
+void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo, unsigned pre_xct_top)
 {
     // In order to pacify the runtime linker on Android "O" ("Oreo"),
     // we will splice-in a 4KiB page that contains an "extra" copy
@@ -3717,6 +3721,8 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
     //    Shdr_copy[], PT_NOTEs.hi, shstrtab.
     xct_va  += asl_delta;
     //xct_off += asl_delta;  // not until ::pack3()
+
+    total_in = pre_xct_top;
 
     // Relocate PT_DYNAMIC (in PT_LOAD with PF_W)
     Elf64_Dyn *dyn = const_cast<Elf64_Dyn *>(dynseg);
@@ -3794,9 +3800,9 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
         set_te64(&ehdr->e_entry, asl_delta + e_entry);
     }
     // Relocate Shdr; and Rela, Rel (below xct_off)
-    set_te64(&ehdr->e_shoff, xct_off);
-    memcpy(&lowmem[xct_off], shdri, e_shnum * sizeof(Elf64_Shdr));
-    Elf64_Shdr *const shdro = (Elf64_Shdr *)&lowmem[xct_off];
+    set_te64(&ehdr->e_shoff, up8(pre_xct_top));  // Shdr alignment
+    memcpy(&lowmem[pre_xct_top], shdri, e_shnum * sizeof(Elf64_Shdr));
+    Elf64_Shdr *const shdro = (Elf64_Shdr *)&lowmem[pre_xct_top];
     Elf64_Shdr *shdr = shdro;
     upx_uint64_t sz_shstrtab  = get_te64(&sec_strndx->sh_size);
     for (unsigned j = 0; j < e_shnum; ++j, ++shdr) {
@@ -3917,15 +3923,17 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
     }
     // shstrndx will move
     set_te64(&shdro[get_te16(&ehdri.e_shstrndx)].sh_offset,
-        len_notes + e_shnum * sizeof(Elf64_Shdr) + xct_off);
+        len_notes + e_shnum * sizeof(Elf64_Shdr) + pre_xct_top);
 
-    // (Re-)write all changes below xct_off
+    // ("Re-")write all changes below pre_xct_top
     fo->seek(0, SEEK_SET);
-    fo->rewrite(lowmem, xct_off);
+    fo->write(lowmem, pre_xct_top);
+    total_in = pre_xct_top;
 
     // New copy of Shdr
     Elf64_Shdr blank; memset(&blank, 0, sizeof(blank));
     set_te64(&blank.sh_offset, xct_off);  // hint for "upx -d"
+    fpad8(fo);  // Shdr alignment
     fo->write(&blank, sizeof(blank));
     fo->write(&shdro[1], (-1+ e_shnum) * sizeof(Elf64_Shdr));
 
@@ -3938,8 +3946,10 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo)
 
     sz_elf_hdrs = fpad8(fo);
     total_out = sz_elf_hdrs;
-    total_in = xct_off;
     //xct_off += asl_delta;  // wait until ::pack3
+    unsigned d = asl_delta + pre_xct_top - sz_elf_hdrs;
+    fo->seek(d, SEEK_CUR);
+    total_out += d;
 }
 
 void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
@@ -4072,6 +4082,19 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
             while (x>>=1) {
                 ++lg2_page;
             }
+        }
+        if (PT_GNU_RELRO64 == type) {
+            // .p_align can be like 2M, which is a huge over-estimate.
+            // RELRO ends on a page boundary: usually close to actual page_size
+            unsigned offset = get_te64(&phdr->p_offset);
+            unsigned filesz = get_te64(&phdr->p_filesz);
+            if (!(0xfff & (filesz + offset))) { // a 4KiB boundary
+                unsigned b = 12;
+                while (!(~(~0u << b) & (filesz + offset))) {
+                    ++b;
+                }
+                lg2_page = umin(lg2_page, -1+ b);
+                }
         }
         if (PT_GNU_STACK64 == type) {
             gnu_stack = phdr;
@@ -4319,8 +4342,9 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 {
     Extent x;
     unsigned k;
-    is_asl = (!!opt->o_unix.android_shlib) << 1;  // bit 1
+    is_asl = (!!opt->o_unix.android_shlib) << 1;  // bit 1; see is_shlib
     unsigned const is_shlib = (0!=xct_off) | is_asl;
+    unsigned pre_xct_top = 0;  // offset of end of PT_LOAD _before_ xct_off
 
     // count passes, set ptload vars
     uip->ui_total_passes = 0;
@@ -4331,11 +4355,23 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
             }
             else {
                 unsigned p_flags = get_te32(&phdri[k].p_flags);
+                unsigned p_offset = get_te64(&phdri[k].p_offset);
+                unsigned p_filesz = get_te64(&phdri[k].p_filesz);
+                if ((xct_off - p_offset) < p_filesz) { // PT_LOAD covers xct_off
+                    if (!pre_xct_top && xct_off != p_offset) {
+                        pre_xct_top = xct_off;
+                    }
+                }
+                else if (p_offset < xct_off) { // candidate for pre_xct_top
+                    unsigned top = p_filesz + p_offset;
+                    if (pre_xct_top < top) {
+                        pre_xct_top = top;
+                    }
+                }
                 if (Elf64_Phdr::PF_W & p_flags) {
                     // rtld might write, so cannot compress
                 }
                 else {
-                    upx_uint64_t p_filesz = get_te64(&phdri[k].p_filesz);
                     // First PT_LOAD (partial) only if has instructions
                     if (k || xct_off < p_filesz) {
                         uip->ui_total_passes++;
@@ -4363,12 +4399,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         memcpy(lowmem, file_image, xct_off);  // android omits Shdr here
 
         if (is_asl) { // Android shared library
-            sz_elf_hdrs = xct_off;
-            fo->write(lowmem, xct_off);  // < SHF_EXECINSTR (typ: in .plt or .init)
-            total_in  = xct_off;
-            total_out = xct_off;
-
-            asl_pack2_Shdrs(fo);
+            asl_pack2_Shdrs(fo, pre_xct_top);
         }
     }
     unsigned nk_f = 0; upx_uint64_t xsz_f = 0;
@@ -4390,52 +4421,59 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         x.offset = get_te64(&phdri[k].p_offset);
         x.size   = get_te64(&phdri[k].p_filesz);
         if (is_shlib) {
-            if (x.offset <= xct_off) { // first PT_LOAD
-                unsigned const len = umin(x.size, xct_off - x.offset);
-                if (len && !is_asl) { // asl_pack2_Shdrs aleady handled
-                    fi->seek(x.offset, SEEK_SET);
-                    fi->readx(ibuf, x.size);
-                    total_in += len;
+            if (x.offset <= xct_off) { // perhaps compressible: PT_LOAD[0] or PT_LOAD[1]
+                // Bytes below xct_off belong to rtld, so must be literal.
+                // Note that asl_pack2_Shdrs() [called above when is_asl]
+                // copies up to xct_off, then adds extra info
+                if (x.offset < xct_off) { // still copying rtld data.
+                    if (!is_asl) { // asl_pack2_Shdrs (above) already handled --android-shlib
+                        x.size = umin(x.size, xct_off - x.offset);
+                        fi->seek(x.offset, SEEK_SET);
+                        fi->readx(ibuf, x.size);
+                        total_in += x.size;
 
-                    fo->seek(x.offset, SEEK_SET);
-                    fo->write(ibuf, len);
-                    total_out += len;
-                }
-                if (len != x.size) {
-                    if (1) {
-                        linfo.l_checksum = 0;
-                        linfo.l_magic = UPX_MAGIC_LE32;
-                        set_le16(&linfo.l_lsize, lsize);  // preliminary (0)
-                        linfo.l_version = (unsigned char)ph.version;
-                        linfo.l_format =  (unsigned char)ph.format;
-                        linfo_off = fo->tell();
-                        fo->write(&linfo, sizeof(linfo));
-                        total_out += sizeof(linfo);
+                        fo->seek(x.offset, SEEK_SET);
+                        fo->write(ibuf, x.size);
+                        total_out += x.size;
                     }
+                }
+                if (pre_xct_top <= total_out && hdr_u_len) { // first time
+                    linfo.l_checksum = 0;  // preliminary
+                    linfo.l_magic = UPX_MAGIC_LE32;
+                    set_le16(&linfo.l_lsize, lsize);  // preliminary (0)
+                    linfo.l_version = (unsigned char)ph.version;
+                    linfo.l_format =  (unsigned char)ph.format;
+                    linfo_off = total_out;
+                    fo->write(&linfo, sizeof(linfo));
+                    total_out += sizeof(linfo);
+
+                    overlay_offset = total_out;
+
                     p_info hbuf;
                     set_te32(&hbuf.p_progid, 0);
                     set_te32(&hbuf.p_filesize, file_size);
                     set_te32(&hbuf.p_blocksize, blocksize);
-                    overlay_offset = total_out;
                     fo->write(&hbuf, sizeof(hbuf));
-                    total_out += sizeof(p_info);
+                    total_out += sizeof(hbuf);
 
-                    x.offset = 0;
-                    x.size = sz_elf_hdrs;
-                    if (is_asl) {
-                        x.size = hdr_u_len;
-                    }
+                    x.offset = 0;  // compress Ehdr and Phdrs
+                    x.size = hdr_u_len;
                     unsigned in_size = x.size;
                     packExtent(x, nullptr, fo, 0, 0, true);
                     total_in -= in_size;
 
-                    // The rest of first PT_LOAD (above xct_off)
+                    hdr_u_len = 0;  // no longer the first time
+                }
+                // The remainder above xct_offset in first compressible PT_LOAD
+                unsigned p_offset = get_te64(&phdri[k].p_offset);
+                unsigned p_filesz = get_te64(&phdri[k].p_filesz);
+                if (         p_filesz >= (xct_off - p_offset)) {
+                    x.size = p_filesz -  (xct_off - p_offset);
                     x.offset = xct_off;
-                    x.size = get_te64(&phdri[k].p_filesz) - len;
                     packExtent(x, &ft, fo, 0, 0, true);
                 }
             }
-            else {
+            else { // defnitely compressible unless writeable
                 if (!(Elf64_Phdr::PF_W & get_te64(&phdri[k].p_flags))) {
                     // Read-only PT_LOAD, assume not written by relocations.
                     // Also assume not the source for R_*_COPY relocation,
@@ -4482,14 +4520,15 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
             else {
                 total_in += x.size;
             }
+            hdr_u_len = 0;
         }
         else {
                 total_in += x.size;
         }
-        hdr_u_len = 0;
         ++nx;
     }
     sz_pack2a = fpad4(fo);  // MATCH01
+    total_out = up4(total_out);
 
     // Accounting only; ::pack3 will do the compression and output
     for (k = 0; k < e_phnum; ++k) {
@@ -4725,7 +4764,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         //fo->seek(xct_off, SEEK_SET);  // FIXME
         //fo->rewrite(&linfo, sizeof(linfo));
         fo->seek(linfo_off, SEEK_SET);
-        fo->rewrite(&linfo, sizeof(linfo));  // duplicate?
+        fo->rewrite(&linfo, sizeof(linfo));  // new info: l_checksum, l_size
     }
     else {
         if (PT_NOTE64 == get_te64(&elfout.phdr[C_NOTE].p_type)) {
@@ -4869,7 +4908,7 @@ PackLinuxElf64::unRela64(
 // 11. UPX runtime de-compressing loader
 // 12. compressed gaps between PT_LOADs (and EOF) above xct_off
 // 13. 32-byte pack header
-// 14. 4-byte overlay offset
+// 14. 4-byte overlay_offset
 
 void PackLinuxElf64::un_shlib_1(
     OutputFile *const fo,
@@ -4881,23 +4920,26 @@ void PackLinuxElf64::un_shlib_1(
     unsigned const szb_info
 )
 {
+    // xct_off [input side] was set by ::unpack when is_shlib
+    // yct_off [output side]
+    unsigned yct_off = xct_off;
+
     // Below xct_off is not compressed (for benefit of rtld.)
     fi->seek(0, SEEK_SET);
     unsigned const limit_dynhdr = get_te64(&dynhdr->p_offset) + get_te64(&dynhdr->p_filesz);
     fi->readx(ibuf, limit_dynhdr);
     //overlay_offset -= sizeof(linfo);
     loader_offset = 0;
-    xct_off = overlay_offset;
     e_shoff = get_te64(&ehdri.e_shoff);
     if (e_shoff && e_shnum
     &&  (e_shoff + sizeof(Elf64_Shdr) * e_shnum) <= limit_dynhdr) { // --android-shlib
+        is_asl = 1;
         ibuf.subref("bad .e_shoff %#lx for %#lx", e_shoff, sizeof(Elf64_Shdr) * e_shnum);
         shdri = (Elf64_Shdr /*const*/ *)ibuf.subref(
             "bad Shdr table", e_shoff, sizeof(Elf64_Shdr)*e_shnum);
-        upx_uint64_t xct_off2 = get_te64(&shdri->sh_offset);
-        if (e_shoff == xct_off2) {
-            xct_off = e_shoff;
-        }
+        yct_off = get_te64(&shdri->sh_offset);  // for the output file (de-compresssed)
+        xct_off = asl_delta + yct_off;  // for the input file (compressed)
+
         // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
         dynstr = (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
         sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
@@ -4965,11 +5007,13 @@ void PackLinuxElf64::un_shlib_1(
         InputFile u_fi;
         // Recover original Elf headers from current output file
         u_fi.open(fo->getName(), 0);
-        u_fi.readx((void *)o_elfhdrs,o_elfhdrs.getSize());
+        u_fi.readx((void *)o_elfhdrs, o_elfhdrs.getSize());
         u_fi.close();
 
         // Re-generate unmodified rtld data below xct_off
-        fo->write(&ibuf[ph.u_len], xct_off - ph.u_len);
+        unsigned d = yct_off - ph.u_len;
+        fo->write(&ibuf[ph.u_len], d);
+        total_out += d;
     }
 
     Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
@@ -4980,13 +5024,15 @@ void PackLinuxElf64::un_shlib_1(
         if (PT_LOAD64 != type || Elf64_Phdr::PF_W & flags) {
             continue;
         }
-        unsigned vaddr = get_te64(&o_phdr->p_vaddr);
-        if (xct_off <= vaddr) { // not first PT_LOAD must position its output
-            if (fo) {
-                unsigned o_offset = get_te64(&o_phdr->p_offset);
-                fo->seek(o_offset, SEEK_SET);
-            }
+        unsigned p_offset = get_te64(&o_phdr->p_offset);
+        unsigned p_filesz = get_te64(&o_phdr->p_filesz);
+        if ((p_filesz + p_offset) <= yct_off) {
+            continue;   // already entirely re-generated
         }
+        if (p_offset < yct_off) {
+            p_offset = yct_off;  // not at beginning of PT_LOAD
+        }
+        fo->seek(p_offset, SEEK_SET);
         // Peek at b_info to find sizes
         fi->readx(&hdr.b, sizeof(hdr.b));
         fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
@@ -5084,18 +5130,18 @@ void PackLinuxElf64::un_DT_INIT(
                 // So changing the value will get ignored.  Do it anyway.
                 // FIXME: we must fix the Rela ?
                 Elf64_Phdr const *phdr = phdro;
-                if (1) for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
+                for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
                     upx_uint64_t vaddr = get_te64(&phdr->p_vaddr);
                     upx_uint64_t filesz = get_te64(&phdr->p_filesz);
-                    if ((val - vaddr) < filesz) {
+                    unsigned q = val - (is_asl ? asl_delta : 0) - vaddr;
+                    if (q < filesz) {
                         upx_uint64_t offset = get_te64(&phdr->p_offset);
                         // Rela overwrites the target; assumed default is 0
                         upx_uint64_t oldval = 0;  //set_te64(&oldval, old_dtinit);
                         // Counter-act unRel64 if asl_delta
                         // FIXME? the in-memory copy?
                         if (fo) {
-                            unsigned q = (val - vaddr) + offset - (is_asl ? asl_delta : 0);
-                            fo->seek(q, SEEK_SET);
+                            fo->seek(q + offset, SEEK_SET);
                             fo->write(&oldval, sizeof(oldval));
                         }
                         break;
@@ -5208,6 +5254,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     ||  ph.u_len > orig_file_size)
         throwCantUnpack("b_info corrupted");
     ph.filter_cto = bhdr.b_cto8;
+    prev_method = bhdr.b_method;  // FIXME if multiple de-compressors
 
     MemBuffer u(ph.u_len);
     Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)&u[0];
@@ -5221,18 +5268,15 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     loader_offset = 0;
     MemBuffer o_elfhdrs;
     Elf64_Phdr const *const dynhdr = elf_find_ptype(Elf64_Phdr::PT_DYNAMIC, phdri, c_phnum);
-    if (dynhdr) {
-        upx_uint64_t dyn_offset = get_te64(&dynhdr->p_offset);
-        upx_uint64_t dyn_filesz = get_te64(&dynhdr->p_filesz);
-        dynseg = (Elf64_Dyn const *)ibuf.subref("bad DYNAMIC", dyn_offset, dyn_filesz);
+    // dynseg was set by PackLinuxElf64help1
+    if (dynhdr && !(Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1))) {
         // Packed shlib? (ET_DYN without -fPIE)
-        if (!(Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1))) {
-            is_shlib = 1;
-            u_phnum = get_te16(&ehdri.e_phnum);
-            o_elfhdrs.alloc(sz_elf_hdrs);
-            un_shlib_1(fo, o_elfhdrs, c_adler, u_adler, dynhdr, orig_file_size, szb_info);
-            *ehdr = ehdri;
-        }
+        is_shlib = 1;
+        xct_off = overlay_offset - sizeof(l_info);
+        u_phnum = get_te16(&ehdri.e_phnum);
+        o_elfhdrs.alloc(sz_elf_hdrs);
+        un_shlib_1(fo, o_elfhdrs, c_adler, u_adler, dynhdr, orig_file_size, szb_info);
+        *ehdr = ehdri;
     }
     else { // main executable
         // Uncompress Ehdr and Phdrs: info for control of unpacking
@@ -5285,12 +5329,22 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         }
     }
 
+    upx_uint64_t const e_entry = get_te64(&ehdri.e_entry);
+    unsigned off_entry = 0;
     phdr = phdri;
     load_va = 0;
-    for (unsigned j=0; j < c_phnum; ++j) {
+    for (unsigned j=0; j < c_phnum; ++j, ++phdr) {
         if (PT_LOAD64==get_te32(&phdr->p_type)) {
-            load_va = get_te64(&phdr->p_vaddr);
-            break;
+            upx_uint64_t offset = get_te64(&phdr->p_offset);
+            upx_uint64_t vaddr  = get_te64(&phdr->p_vaddr);
+            upx_uint64_t filesz = get_te64(&phdr->p_filesz);
+            if (!load_va) {
+                load_va = vaddr;
+            }
+            if ((e_entry - vaddr) < filesz) {
+                off_entry = (e_entry - vaddr) + offset;
+                break;
+            }
         }
     }
     unsigned d_info[6];
@@ -5309,7 +5363,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 case Elf64_Ehdr::EM_X86_64:  sz_d_info = 2 * sizeof(unsigned); break;
             }
         }
-        loader_offset = get_te64(&ehdri.e_entry) - load_va - sz_d_info;
+        loader_offset = off_entry - sz_d_info;
     }
 
     if (0x1000==get_te64(&phdri[0].p_filesz)  // detect C_BASE style
@@ -5319,8 +5373,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         fi->seek(up4(get_te64(&phdr[1].p_memsz)), SEEK_SET);  // past the loader
     }
     else if (is_shlib
-    ||  ((unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
-                ph.getPackHeaderSize() + sizeof(overlay_offset))
+    ||  (off_entry + up4(lsize) + ph.getPackHeaderSize() + sizeof(overlay_offset))
             < up4(file_size)) {
         // Loader is not at end; skip past it.
         if (loader_offset) {
@@ -5352,6 +5405,33 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                                    get_te64(&phdr[j].p_filesz);
             if (fo)
                 fo->seek(where, SEEK_SET);
+          { // Recover from some piracy [also serves as error tolerance :-) ]
+            b_info b_peek;
+            fi->readx(&b_peek, sizeof(b_peek));
+            upx_off_t pos = fi->seek(-sizeof(b_peek), SEEK_CUR);
+            if (b_peek.sz_unc != size
+            ||  b_peek.b_method != prev_method) {
+                opt->info_mode++;
+                infoWarning("bad b_info at %#zx", (size_t)pos);
+                unsigned const N_PEEK(64), H_PEEK(N_PEEK >> 1);
+                unsigned char peek_arr[N_PEEK];
+                fi->seek(pos - H_PEEK, SEEK_SET);
+                fi->readx(peek_arr, sizeof(peek_arr));
+                fi->seek(pos + H_PEEK - sizeof(peek_arr), SEEK_SET);
+                int boff = find_le32(peek_arr, sizeof(peek_arr), size);
+                unsigned word3 = *(int *)&peek_arr[2*sizeof(int) + boff];
+                if (0 <= boff  // found
+                &&  (0 == word3  // uncompressible literal
+                     || prev_method == word3)  // same method, no filter
+                ) {
+                    pos -= H_PEEK;
+                    pos += boff;
+                    infoWarning("... recovery at %#zx", (size_t)pos);
+                    fi->seek(pos, SEEK_SET);
+                }
+                opt->info_mode--;
+          }
+            }
             unpackExtent(size, fo,
                 c_adler, u_adler, false, szb_info,
                 is_shlib && ((phdr[j].p_offset != hi_offset)));
