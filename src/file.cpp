@@ -117,6 +117,7 @@ void FileBase::closex() {
         throwIOException("close failed", errno);
 }
 
+// Return value of ::seek is the resulting file offset (same as ::tell())
 upx_off_t FileBase::seek(upx_off_t off, int whence) {
     if (!isOpen())
         throwIOException("bad seek 1");
@@ -132,9 +133,11 @@ upx_off_t FileBase::seek(upx_off_t off, int whence) {
         off += _offset + _length;
         whence = SEEK_SET;
     }
-    if (::lseek(_fd, off, whence) < 0)
+    // SEEK_CUR falls through to here
+    upx_off_t rv = ::lseek(_fd, off, whence);
+    if (0 == (1+ rv))  // lazy coding to check for "-1" failure of ::lseek
         throwIOException("seek error", errno);
-    return off - _offset;
+    return rv - _offset;
 }
 
 upx_off_t FileBase::tell() const {
