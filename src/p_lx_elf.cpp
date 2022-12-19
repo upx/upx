@@ -5419,9 +5419,11 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 fi->readx(peek_arr, sizeof(peek_arr));
                 fi->seek(pos + H_PEEK - sizeof(peek_arr), SEEK_SET);
                 int boff = find_le32(peek_arr, sizeof(peek_arr), size);
-                unsigned word3 = *(int *)&peek_arr[2*sizeof(int) + boff];
+                unsigned word1 = get_te32(&peek_arr[0*sizeof(int) + boff]);
+                unsigned word2 = get_te32(&peek_arr[1*sizeof(int) + boff]);
+                unsigned word3 = get_te32(&peek_arr[2*sizeof(int) + boff]);
                 if (0 <= boff  // found
-                &&  (0 == word3  // uncompressible literal
+                &&  (((0 == word3) && (word1 == word2))  // uncompressible literal
                      || prev_method == word3)  // same method, no filter
                 ) {
                     pos -= H_PEEK;
