@@ -135,7 +135,7 @@ upx_off_t FileBase::seek(upx_off_t off, int whence) {
     }
     // SEEK_CUR falls through to here
     upx_off_t rv = ::lseek(_fd, off, whence);
-    if (0 == (1+ rv))  // lazy coding to check for "-1" failure of ::lseek
+    if (rv < 0)
         throwIOException("seek error", errno);
     return rv - _offset;
 }
