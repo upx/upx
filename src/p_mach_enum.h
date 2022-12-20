@@ -36,7 +36,7 @@
 #ifdef WANT_MACH_HEADER_ENUM  /*{*/
 #undef WANT_MACH_HEADER_ENUM
     enum : unsigned { // magic
-        MH_MAGIC = 0xfeedface
+        MH_MAGIC = 0xfeedface,
     };
     enum { // cputype
         CPU_TYPE_I386      =          7,
@@ -49,7 +49,7 @@
     enum { // cpusubtype
         CPU_SUBTYPE_ARM_ALL = 0,
         CPU_SUBTYPE_ARM_V4T = 5,
-        CPU_SUBTYPE_ARM_V6  = 6
+        CPU_SUBTYPE_ARM_V6  = 6,
     };
     enum { // filetype
         MH_OBJECT  = 1,     /* relocatable object file */
@@ -57,14 +57,14 @@
         MH_PRELOAD = 5,     /* preloaded executable */
         MH_DYLIB   = 6,     /* dynamically bound shared library */
         MH_DYLINKER= 7,     /* /usr/bin/dyld */
-        MH_BUNDLE  = 8      /* dynamically bound bundle file */
+        MH_BUNDLE  = 8,     /* dynamically bound bundle file */
     };
     enum { // flags
         MH_NOUNDEFS = 1,
         MH_DYLDLINK = 4,    /* code signing demands this */
         MH_BINDATLOAD = 0x8,   // DT_BIND_NOW
         MH_TWOLEVEL = 0x80,
-        MH_PIE      = 0x200000   // ASLR
+        MH_PIE      = 0x200000,  // ASLR
     };
 #endif  /*}*/
 
@@ -111,13 +111,12 @@
         LC_DYLD_EXPORTS_TRIE   = (0x33|LC_REQ_DYLD),  // size 4*4
         LC_DYLD_CHAINED_FIXUPS = (0x34|LC_REQ_DYLD),  // size 4*4
         LC_FILESET_ENTRY       = (0x35|LC_REQ_DYLD),  // size 6*4
-
     };
 
     enum { // maxprot
         VM_PROT_READ = 1,
         VM_PROT_WRITE = 2,
-        VM_PROT_EXECUTE = 4
+        VM_PROT_EXECUTE = 4,
     };
 #endif  /*}*/
 
@@ -151,7 +150,7 @@
         S_ATTR_DEBUG             = 0x02000000,
         S_ATTR_SOME_INSTRUCTIONS = 0x00000400,
         S_ATTR_EXT_RELOC         = 0x00000200,
-        S_ATTR_LOC_RELOC         = 0x00000100
+        S_ATTR_LOC_RELOC         = 0x00000100,
     };
 #endif  /*}*/
 
@@ -163,8 +162,8 @@
         x86_THREAD_STATE32 = 1,
         x86_THREAD_STATE64 = 4,
         i386_OLD_THREAD_STATE = -1,
-        ARM_THREAD_STATE = 1
-        , ARM_THREAD_STATE64 = 6  // also ARM_THREAD_STATE64_COUNT 68
+        ARM_THREAD_STATE = 1,
+        ARM_THREAD_STATE64 = 6,  // also ARM_THREAD_STATE64_COUNT 68
     };
 #endif  /*}*/
 

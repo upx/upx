@@ -41,15 +41,15 @@
         EI_DATA       = 5,      /* Data encoding */
         EI_VERSION    = 6,
         EI_OSABI      = 7,
-        EI_ABIVERSION = 8
+        EI_ABIVERSION = 8,
     };
     enum { // e_ident[EI_CLASS]
         ELFCLASS32 = 1,         /* 32-bit objects */
-        ELFCLASS64 = 2          /* 64-bit objects */
+        ELFCLASS64 = 2,         /* 64-bit objects */
     };
     enum { // e_ident[EI_DATA]
         ELFDATA2LSB = 1,        /* 2's complement, little endian */
-        ELFDATA2MSB = 2         /* 2's complement, big endian */
+        ELFDATA2MSB = 2,        /* 2's complement, big endian */
     };
     enum { // e_ident[EI_OSABI]
         ELFOSABI_NONE    = 0,      // == ELFOSABI_SYSV
@@ -57,28 +57,28 @@
         ELFOSABI_LINUX   = 3,
         ELFOSABI_FREEBSD = 9,
         ELFOSABI_OPENBSD = 12,
-        ELFOSABI_ARM     = 97
+        ELFOSABI_ARM     = 97,
     };
     enum { // e_type
         ET_NONE = 0,            /* No file type */
         ET_REL  = 1,            /* Relocatable file */
         ET_EXEC = 2,            /* Executable file */
         ET_DYN  = 3,            /* Shared object file */
-        ET_CORE = 4             /* Core file */
+        ET_CORE = 4,            /* Core file */
     };
     enum { // e_machine
         EM_386    = 3,
         EM_MIPS   = 8,
-        EM_MIPS_RS3_LE =  10,   /* MIPS R3000 little-endian */
+        EM_MIPS_RS3_LE = 10,    /* MIPS R3000 little-endian */
         EM_PPC    = 20,
         EM_PPC64  = 21,
         EM_ARM    = 40,
         EM_X86_64 = 62,
-        EM_AARCH64 = 183
+        EM_AARCH64 = 183,
 
     };
     enum { // e_version
-        EV_CURRENT = 1
+        EV_CURRENT = 1,
     };
 #endif
 
@@ -91,16 +91,16 @@
         PT_DYNAMIC = 2,         /* Dynamic linking information */
         PT_INTERP  = 3,         /* Name of program interpreter */
         PT_NOTE    = 4,         /* Auxiliary information (esp. OpenBSD) */
-        PT_PHDR    = 6          /* Entry for header table itself */
-        , PT_NUM   = 8          /* Number of defined types in low range */
-        , PT_GNU_STACK = 0x6474e551     /* Indicates stack executability */
-        , PT_GNU_RELRO = 0x6474e552     /* Read-only after relocation */
+        PT_PHDR    = 6,         /* Entry for header table itself */
+        PT_NUM     = 8,         /* Number of defined types in low range */
+        PT_GNU_STACK = 0x6474e551,     /* Indicates stack executability */
+        PT_GNU_RELRO = 0x6474e552,     /* Read-only after relocation */
     };
 
     enum { // p_flags
         PF_X = 1,               /* Segment is executable */
         PF_W = 2,               /* Segment is writable */
-        PF_R = 4                /* Segment is readable */
+        PF_R = 4,               /* Segment is readable */
     };
 #endif
 
@@ -126,12 +126,12 @@
         SHT_PREINIT_ARRAY = 16, /* Array of pre-constructors */
         SHT_GROUP = 17,         /* Section group */
         SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
-        SHT_GNU_LIBLIST = 0x6ffffff7    /* Prelink library list */
-        , SHT_GNU_HASH =  0x6ffffff6    /* GNU-style hash table.  */
+        SHT_GNU_LIBLIST = 0x6ffffff7, /* Prelink library list */
+        SHT_GNU_HASH =  0x6ffffff6,   /* GNU-style hash table.  */
 
-        , SHT_LOOS = 0x60000000  /* LOcal OS; SHT_ANDROID_REL{,A} is +1, +2 */
-        , SHT_LOPROC = 0x70000000/* Start of processor-specific */
-        , SHT_ARM_ATTRIBUTES = (SHT_LOPROC + 3) /* ARM attributes section.  */
+        SHT_LOOS   = 0x60000000,  /* LOcal OS; SHT_ANDROID_REL{,A} is +1, +2 */
+        SHT_LOPROC = 0x70000000, /* Start of processor-specific */
+        SHT_ARM_ATTRIBUTES = (SHT_LOPROC + 3), /* ARM attributes section.  */
     };
 
     enum { // sh_flags
@@ -141,7 +141,7 @@
         SHF_MERGE      = (1 << 4),  /* Might be merged */
         SHF_STRINGS    = (1 << 5),  /* Contains nul-terminated strings */
         SHF_INFO_LINK  = (1 << 6),  /* 'sh_info' contains SHT index */
-        SHF_LINK_ORDER = (1 << 7)   /* Preserve order after combining */
+        SHF_LINK_ORDER = (1 << 7),  /* Preserve order after combining */
     };
 #endif
 
@@ -183,11 +183,11 @@
         DT_VERSYM   = 0x6ffffff0,       /* version[] for each symbol */
         DT_FLAGS_1  = 0x6ffffffb,       /* DF_1_* */
         DT_VERDEF   = 0x6ffffffc,       /* version definitions[] */
-        DT_VERNEED  = 0x6ffffffe        /* version[] needed */
+        DT_VERNEED  = 0x6ffffffe,       /* version[] needed */
     };
     enum { // DT_FLAGS_1
         DF_1_NOW    = 0x00000001,  /* Set RTLD_NOW for this object.  */
-        DF_1_PIE    = 0x08000000   // Position-Independent Executable (main program)
+        DF_1_PIE    = 0x08000000,  // Position-Independent Executable (main program)
     };
 #endif
 
@@ -197,7 +197,7 @@
     enum { // st_bind (high 4 bits of st_info)
         STB_LOCAL   =   0,      /* Local symbol */
         STB_GLOBAL  =   1,      /* Global symbol */
-        STB_WEAK    =   2       /* Weak symbol */
+        STB_WEAK    =   2,      /* Weak symbol */
     };
 
     enum { // st_type (low 4 bits of st_info)
@@ -207,20 +207,20 @@
         STT_SECTION =   3,      /* Symbol associated with a section */
         STT_FILE    =   4,      /* Symbol's name is file name */
         STT_COMMON  =   5,      /* Symbol is a common data object */
-        STT_TLS     =   6       /* Symbol is thread-local data object*/
+        STT_TLS     =   6,      /* Symbol is thread-local data object*/
     };
 
     enum { // st_other (visibility)
         STV_DEFAULT  =  0,      /* Default symbol visibility rules */
         STV_INTERNAL =  1,      /* Processor specific hidden class */
         STV_HIDDEN   =  2,      /* Sym unavailable in other modules */
-        STV_PROTECTED=  3       /* Not preemptible, not exported */
+        STV_PROTECTED=  3,      /* Not preemptible, not exported */
     };
 
     enum { // st_shndx
         SHN_UNDEF   =   0,      /* Undefined section */
         SHN_ABS     =   0xfff1, /* Associated symbol is absolute */
-        SHN_COMMON  =   0xfff2  /* Associated symbol is common */
+        SHN_COMMON  =   0xfff2, /* Associated symbol is common */
     };
 #endif
 
@@ -247,13 +247,13 @@
         R_ARM_JUMP_SLOT = 22,
         R_PPC_JMP_SLOT = 21,
         R_PPC64_JMP_SLOT = R_PPC_JMP_SLOT,
-        R_X86_64_JUMP_SLOT = 7
+        R_X86_64_JUMP_SLOT = 7,
 
-        , R_ARM_ABS32 = 2
-        , R_ARM_GLOB_DAT = 21
+        R_ARM_ABS32 = 2,
+        R_ARM_GLOB_DAT = 21,
 
-        , R_AARCH64_ABS64 = 257
-        , R_AARCH64_GLOB_DAT = 1025
+        R_AARCH64_ABS64 = 257,
+        R_AARCH64_GLOB_DAT = 1025,
 
     };
 #endif  //}
@@ -272,7 +272,7 @@
 #define ELF_NOTE_NETBSD_NAME "NetBSD\0"
         NHDR_NETBSD_TAG = 1,
         NHDR_CHECKSUM_TAG = 2,
-        NHDR_PAX_TAG = 3
+        NHDR_PAX_TAG = 3,
     };
 
     enum { // descsz  descriptor sizes
@@ -280,20 +280,20 @@
         NETBSD_DESCSZ = 4,   // major_ver * (10**8) + minor
         OPENBSD_DESCSZ = 4,  // 32-bit zero
             // CHECKSUM_DESCSZ is 2*sizeof(short) + sizeof(checksum)
-        PAX_DESCSZ = 4  // 32-bit mask
+        PAX_DESCSZ = 4,  // 32-bit mask
     };
 
     enum { // GNU OS/version
         GNU_OS_LINUX = 0,
         GNU_OS_HURD = 1,
-        GNU_OS_SOLARIS = 2
+        GNU_OS_SOLARIS = 2,
     };
 
     enum { // NetBSD checksum methods
         CHECKSUM_CRC32 = 1,
         CHECKSUM_MD5 = 2,
         CHECKSUM_SHA1 = 3,
-        CHECKSUM_SHA256 = 4
+        CHECKSUM_SHA256 = 4,
     };
 
 #define ELF_NOTE_PAX_NAME "PaX\0"
@@ -303,7 +303,7 @@
         PAX_GUARD      = (1<<2),  /* force  enable SEGVguard */
         PAX_NOGUARD    = (1<<3),  /* force disable SEGVguard */
         PAX_ASLR       = (1<<4),  /* force  enable ASLR */
-        PAX_NOASLR     = (1<<5)   /* force disable ASLR */
+        PAX_NOASLR     = (1<<5),  /* force disable ASLR */
     };
 #endif
 
