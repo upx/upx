@@ -1,40 +1,29 @@
 #! /bin/bash
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
+argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 
-# Copyright (C) Markus Franz Xaver Johannes Oberhumer
-
-#
-# very first version of the upx-testsuite
-#
-
-if [[ $TRAVIS_OS_NAME == osx ]]; then
-    argv0=$0; argv0abs=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
-else
-    argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
-fi
-source "$argv0dir/travis_init.sh" || exit 1
-
-if [[ $BM_T =~ (^|\+)SKIP($|\+) ]]; then
-    echo "UPX testsuite SKIPPED."
-    exit 0
-fi
-if [[ $BM_X == rebuild-stubs ]]; then
-    exit 0
-fi
+# very first version of the upx-testsuite; requires:
+#   $upx_exe
+#   $upx_testsuite_SRCDIR
+#   $upx_testsuite_BUILDDIR (optional)
+#   $BM_T (optional)
 
 # convenience
+[[ -z $upx_testsuite_BUILDDIR ]] && upx_testsuite_BUILDDIR=./tmp-upx-testsuite
 [[ -f $upx_exe ]] && upx_exe=$(readlink -en -- "$upx_exe")
 
-# create dirs
-cd / || exit 1
+# make dirs absolute
+upx_testsuite_SRCDIR=$(readlink -en -- "$upx_testsuite_SRCDIR")
 if [[ ! -d "$upx_testsuite_SRCDIR/files/packed" ]]; then
     echo 'invalid or missing $upx_testsuite_SRCDIR:'
     echo '  please git clone https://github.com/upx/upx-testsuite'
     echo '  and set (export) the envvar upx_testsuite_SRCDIR to the local file path'
     exit 1
 fi
-mkbuilddirs "$upx_testsuite_BUILDDIR"
+mkdir -p "$upx_testsuite_BUILDDIR"
+upx_testsuite_BUILDDIR=$(readlink -en -- "$upx_testsuite_BUILDDIR")
+
 cd / && cd "$upx_testsuite_BUILDDIR" || exit 1
 
 # /***********************************************************************
@@ -148,8 +137,6 @@ if [[ $BM_T =~ (^|\+)ALLOW_FAIL($|\+) ]]; then
     set +e
 fi
 
-[[ -z $upx_exe && -f $upx_BUILDDIR/upx.out ]] && upx_exe=$upx_BUILDDIR/upx.out
-[[ -z $upx_exe && -f $upx_BUILDDIR/upx.exe ]] && upx_exe=$upx_BUILDDIR/upx.exe
 if [[ -z $upx_exe ]]; then exit 1; fi
 upx_run=$upx_exe
 if [[ $BM_T =~ (^|\+)qemu($|\+) && -n $upx_qemu ]]; then
@@ -170,10 +157,6 @@ if [[ $BM_T =~ (^|\+)valgrind($|\+) ]]; then
     upx_run="$upx_valgrind $upx_valgrind_flags $upx_exe"
 fi
 
-if [[ $BM_B =~ (^|\+)coverage($|\+) ]]; then
-    (cd / && cd "$upx_BUILDDIR" && lcov -d . --zerocounters)
-fi
-
 export UPX="--prefer-ucl --no-color --no-progress"
 export UPX_DEBUG_DISABLE_GITREV_WARNING=1
 export UPX_DEBUG_DOCTEST_VERBOSE=0
@@ -183,7 +166,7 @@ if ! $upx_run --version-short;    then echo "UPX-ERROR: FATAL: upx --version-sho
 if ! $upx_run -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
 if ! $upx_run --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
 rm -rf ./testsuite_1
-mkbuilddirs testsuite_1
+mkdir testsuite_1
 cd testsuite_1 || exit 1
 
 # /***********************************************************************

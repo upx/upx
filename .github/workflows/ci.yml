@@ -28,7 +28,7 @@ jobs:
       - name: 'Install extra packages'
         run: |
           uname -a; pwd; id; umask
-          cd ..; mkdir -p deps; cd deps; mkdir packages
+          mkdir ../deps; cd ../deps; mkdir packages
           # for ubuntu-22.04: install python2-minimal
           ##export DEBIAN_FRONTEND=noninteractive
           ##sudo apt-get update && sudo apt-get install -y --no-install-recommends python2-minimal
@@ -43,10 +43,6 @@ jobs:
         uses: actions/checkout@v3
         with: { submodules: true }
       - name: 'Rebuild and verify stubs'
-        run: |
-          env C=gcc X=rebuild-stubs TRAVIS_OS_NAME=linux bash ./.github/travis_build.sh
-          if ! git diff --quiet; then git diff; exit 1; fi
-      - name: 'Rebuild and verify stubs v2'
         run: |
           export PATH="$(readlink -fn ../deps/bin-upx-20221212/.):$PATH"
           make -C src/stub maintainer-clean extra-clean
@@ -80,6 +76,8 @@ jobs:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
+      - name: 'Check out test suite'
+        run: 'mkdir ../deps && git -C ../deps clone --depth=1 https://github.com/upx/upx-testsuite'
       - name: 'Build cmake debug-gcc'
         run:   'make build/debug-gcc'
       - name: 'Build cmake release-gcc'
@@ -118,6 +116,10 @@ jobs:
         run: |
           make -C build/debug-gcc-m32 test
           make -C build/release-gcc-m32 test
+      - name: 'Run test suite release-gcc'
+        run: |
+          export upx_testsuite_SRCDIR=$(readlink -en ../deps/upx-testsuite)
+          (cd build/release-gcc && env upx_exe=./upx bash ../../.github/travis_testsuite_1.sh)
 
   job-macos-cmake:
     needs: [ job-rebuild-and-verify-stubs ]
@@ -134,6 +136,8 @@ jobs:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
+      - name: 'Check out test suite'
+        run: 'mkdir ../deps && git -C ../deps clone --depth=1 https://github.com/upx/upx-testsuite'
       - name: 'Build cmake debug-gcc'
         if: ${{ matrix.gcc != '' }}
         run:   'make build/debug-gcc CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
@@ -179,6 +183,9 @@ jobs:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
+      - name: 'Check out test suite'
+        shell: bash
+        run: 'mkdir ../deps && git -C ../deps clone --depth=1 https://github.com/upx/upx-testsuite'
       - name: 'Inspect runner-image settings'
         # see https://github.com/actions/runner-images.git
         if: ${{ false }}
@@ -207,6 +214,11 @@ jobs:
         run: |
           cmake --build build/debug   --config Debug   --target RUN_TESTS
           cmake --build build/release --config Release --target RUN_TESTS
+      - name: 'Run test suite build/release'
+        shell: bash
+        run: |
+          export upx_testsuite_SRCDIR=$(readlink -en ../deps/upx-testsuite)
+          (cd build/release/Release && env upx_exe=./upx.exe bash ../../../.github/travis_testsuite_1.sh)
 
   job-windows-toolchains:
     needs: [ job-rebuild-and-verify-stubs ]
@@ -228,7 +240,7 @@ jobs:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
-      - name: 'Prepare sources'
+      - name: 'Prepare sources and Check out test suite'
         shell: cmd
         run: |
           where bash & where cat & where chmod & where cmp & where cp & where curl & where date & where file & where git & where gzip & where mkdir & where mv & where openssl & where readlink & where rm & where rmdir & where sed & where sha256sum & where sort & where ssh & where ssh-add & where ssh-agent & where ssh-keyscan & where tar & where touch
@@ -236,8 +248,7 @@ jobs:
           git --version & bash --version
           cd %H%
           md build build\%C% deps
-          cd deps
-          git clone --depth=1 https://github.com/upx/upx-testsuite
+          git -C deps clone --depth=1 https://github.com/upx/upx-testsuite
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -245,7 +256,7 @@ jobs:
       - name: 'Build'
         shell: cmd
         run: |
-          @REM setup directories following the VPATH build in travis_build.sh
+          @REM setup directories
           where cl & where link
           set BDIR=%H%\build\%C%\%B%
           md %BDIR% %BDIR%\ucl %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib
@@ -292,7 +303,9 @@ jobs:
           .\upx.exe -t upx_packed.exe
           .\upx_packed.exe --version
       - name: 'Run test suite'
+        shell: bash
         run: |
-          bash ./.github/travis_testsuite_1.sh
+          export upx_testsuite_SRCDIR=$(readlink -en ../deps/upx-testsuite)
+          (cd ../build/$C/$B/upx && env upx_exe=./upx.exe bash ../../../../upx/.github/travis_testsuite_1.sh)
 
 # vim:set ts=2 sw=2 et:
