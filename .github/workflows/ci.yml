@@ -67,9 +67,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-20.04 }
-          - { os: ubuntu-22.04 }
+          - { os: ubuntu-20.04, use_m32: false }
+          - { os: ubuntu-22.04, use_m32: true }
     steps:
+      - name: 'Install extra 32-bit packages'
+        if: ${{ matrix.use_m32 }}
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
@@ -81,6 +88,12 @@ jobs:
         run:   'make build/debug-clang'
       - name: 'Build cmake release-clang'
         run:   'make build/release-clang'
+      - name: 'Build cmake debug-gcc-m32'
+        if: ${{ matrix.use_m32 }}
+        run:   'make build/debug-gcc-m32'
+      - name: 'Build cmake release-gcc-m32'
+        if: ${{ matrix.use_m32 }}
+        run:   'make build/release-gcc-m32'
       - name: 'Make artifact'
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
@@ -100,6 +113,11 @@ jobs:
           make -C build/release-gcc test
           make -C build/debug-clang test
           make -C build/release-clang test
+      - name: 'Run basic tests 32-bit'
+        if: ${{ matrix.use_m32 }}
+        run: |
+          make -C build/debug-gcc-m32 test
+          make -C build/release-gcc-m32 test
 
   job-macos-cmake:
     needs: [ job-rebuild-and-verify-stubs ]
@@ -202,10 +220,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: amd64-win64-msvc-14.2, os: windows-2019, C: msvc-14.2-x64, A: x64 }
-          - { name: amd64-win64-msvc-14.3, os: windows-2022, C: msvc-14.3-x64, A: x64 }
-          - { name: i386-win32-msvc-14.2,  os: windows-2019, C: msvc-14.2-x86, A: x86 }
-          - { name: i386-win32-msvc-14.3,  os: windows-2022, C: msvc-14.3-x86, A: x86 }
+          - { name: amd64-win64-msvc-14.2, os: windows-2019, C: msvc-14.2-x64, A: x64 } # Visual Studio 2019
+          - { name: amd64-win64-msvc-14.3, os: windows-2022, C: msvc-14.3-x64, A: x64 } # Visual Studio 2022
+          - { name: i386-win32-msvc-14.2,  os: windows-2019, C: msvc-14.2-x86, A: x86 } # Visual Studio 2019
+          - { name: i386-win32-msvc-14.3,  os: windows-2022, C: msvc-14.3-x86, A: x86 } # Visual Studio 2022
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
