@@ -5408,7 +5408,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
           { // Recover from some piracy [also serves as error tolerance :-) ]
             b_info b_peek;
             fi->readx(&b_peek, sizeof(b_peek));
-            upx_off_t pos = fi->seek(-sizeof(b_peek), SEEK_CUR);
+            upx_off_t pos = fi->seek(0u - sizeof(b_peek), SEEK_CUR);
             if (b_peek.sz_unc != size
             ||  b_peek.b_method != prev_method) {
                 opt->info_mode++;
