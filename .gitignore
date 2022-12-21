@@ -5,11 +5,10 @@
 /maint*
 /vendor*
 
-.depend
 GNUmakefile
 MMakefile
 Makevars.local*
-tmp-testsuite*
+tmp*
 
 *.a
 *.d
