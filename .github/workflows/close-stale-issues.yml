@@ -23,7 +23,7 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/stale@v6
+      - uses: actions/stale@v7
         with:
           operations-per-run: 300
           exempt-all-milestones: true
