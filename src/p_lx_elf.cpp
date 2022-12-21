@@ -5405,34 +5405,40 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                                    get_te64(&phdr[j].p_filesz);
             if (fo)
                 fo->seek(where, SEEK_SET);
-          { // Recover from some piracy [also serves as error tolerance :-) ]
-            b_info b_peek;
-            fi->readx(&b_peek, sizeof(b_peek));
-            upx_off_t pos = fi->seek(-(off_t)sizeof(b_peek), SEEK_CUR);
-            if (b_peek.sz_unc != size
-            ||  b_peek.b_method != prev_method) {
-                opt->info_mode++;
-                infoWarning("bad b_info at %#zx", (size_t)pos);
-                unsigned const N_PEEK(64), H_PEEK(N_PEEK >> 1);
-                unsigned char peek_arr[N_PEEK];
-                fi->seek(pos - H_PEEK, SEEK_SET);
-                fi->readx(peek_arr, sizeof(peek_arr));
-                fi->seek(pos + H_PEEK - sizeof(peek_arr), SEEK_SET);
-                int boff = find_le32(peek_arr, sizeof(peek_arr), size);
-                unsigned word1 = get_te32(&peek_arr[0*sizeof(int) + boff]);
-                unsigned word2 = get_te32(&peek_arr[1*sizeof(int) + boff]);
-                unsigned word3 = get_te32(&peek_arr[2*sizeof(int) + boff]);
-                if (0 <= boff  // found
-                &&  (((0 == word3) && (word1 == word2))  // uncompressible literal
-                     || prev_method == word3)  // same method, no filter
-                ) {
-                    pos -= H_PEEK;
-                    pos += boff;
-                    infoWarning("... recovery at %#zx", (size_t)pos);
+            { // Recover from some piracy [also serves as error tolerance :-) ]
+                b_info b_peek;
+                fi->readx(&b_peek, sizeof(b_peek));
+                upx_off_t pos = fi->seek(-(off_t)sizeof(b_peek), SEEK_CUR);
+                if (get_te32(&b_peek.sz_unc) != size
+                ||  b_peek.b_method != prev_method) {
+                    opt->info_mode++;
+                    infoWarning("bad b_info at %#zx", (size_t)pos);
+                    unsigned const N_PEEK(64), H_PEEK(N_PEEK >> 1);
+                    unsigned char peek_arr[N_PEEK];
+                    fi->seek(pos - H_PEEK, SEEK_SET);
+                    fi->readx(peek_arr, sizeof(peek_arr));
                     fi->seek(pos, SEEK_SET);
+                    int boff = find_le32(peek_arr, sizeof(peek_arr), size);
+                    b_info *bp = (b_info *)(void *)&peek_arr[boff];
+
+                    unsigned sz_unc = get_te32(&bp->sz_unc);
+                    unsigned sz_cpr = get_te32(&bp->sz_cpr);
+                    unsigned word3  = get_te32(&bp->b_method);
+                    unsigned method = bp->b_method;
+                    unsigned ftid = bp->b_ftid;
+                    unsigned cto8 = bp->b_cto8;
+                    if (0 <= boff  // found
+                    &&  (((sz_unc == sz_cpr) && (0 == word3))// uncompressible literal
+                         || ((sz_cpr < sz_unc) && (method == prev_method)
+                             && (0 == ftid) && (0 == cto8)))
+                    ) {
+                        pos -= H_PEEK;
+                        pos += boff;
+                        infoWarning("... recovery at %#zx", (size_t)pos);
+                        fi->seek(pos, SEEK_SET);
+                    }
+                    opt->info_mode--;
                 }
-                opt->info_mode--;
-          }
             }
             unpackExtent(size, fo,
                 c_adler, u_adler, false, szb_info,
