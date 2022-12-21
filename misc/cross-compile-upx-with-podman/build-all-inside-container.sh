@@ -30,10 +30,12 @@ function run_config_and_build {
         # avoid link errors with Windows cross compilers; need to install some more support libs??
         i686-w64-mingw32) cmake_config_flags=-DUPX_CONFIG_DISABLE_SANITIZE=ON ;;
         x86_64-w64-mingw32) cmake_config_flags=-DUPX_CONFIG_DISABLE_SANITIZE=ON ;;
+        # avoid warnings about arm libstdc++ ABI change in gcc-7
+        arm-linux-*) CXX="$CXX -Wno-psabi" ;;
     esac
     # for all build types
     for build_type in Debug Release; do
-        bdir=build/cross/$toolchain/${build_type,,}
+        bdir=build/cross-compile-upx-with-podman/$toolchain/${build_type,,}
         mkdir -p $bdir
         # run_config
         if [[ ! -f $bdir/CMakeCache.txt ]]; then

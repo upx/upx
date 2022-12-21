@@ -83,6 +83,18 @@ build/release-gcc-m64: PHONY; $(call run_config_and_build,$@,Release)
 build/%-gcc-m64: export CC  = gcc -m64
 build/%-gcc-m64: export CXX = g++ -m64
 
+# cross compiler: Linux glibc aarch64-linux-gnu
+build/debug-cross-linux-aarch64:   PHONY ; $(call run_config_and_build,$@,Debug)
+build/release-cross-linux-aarch64: PHONY ; $(call run_config_and_build,$@,Release)
+build/%-cross-linux-aarch64: export CC  = aarch64-linux-gnu-gcc
+build/%-cross-linux-aarch64: export CXX = aarch64-linux-gnu-g++
+
+# cross compiler: Linux glibc arm-linux-gnueabihf
+build/debug-cross-linux-arm:   PHONY ; $(call run_config_and_build,$@,Debug)
+build/release-cross-linux-arm: PHONY ; $(call run_config_and_build,$@,Release)
+build/%-cross-linux-arm: export CC  = arm-linux-gnueabihf-gcc
+build/%-cross-linux-arm: export CXX = arm-linux-gnueabihf-g++ -Wno-psabi
+
 # cross compiler: Windows win32 mingw32
 build/debug-cross-mingw32:   PHONY ; $(call run_config_and_build,$@,Debug)
 build/release-cross-mingw32: PHONY ; $(call run_config_and_build,$@,Release)
