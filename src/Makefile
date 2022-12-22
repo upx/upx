@@ -87,9 +87,10 @@ CLANG_FORMAT_FILES += p_wcle.cpp p_wcle.h
 CLANG_FORMAT_FILES += packer.cpp packer.h packhead.cpp packmast.cpp packmast.h
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += ui.cpp ui.h work.cpp
-CLANG_FORMAT_FILES += $(wildcard util/[a-ln-z]*.[ch]* util/mem*.[ch]*)
-clang-format: PHONY
-	$(top_srcdir)/misc/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(sort $(CLANG_FORMAT_FILES)))
+CLANG_FORMAT_FILES += $(wildcard util/*.[ch]*)
+clang-format: PHONY $(CLANG_FORMAT_FILES)
+	@echo "running upx-clang-format"
+	@$(top_srcdir)/misc/scripts/upx-clang-format -i $(sort $(CLANG_FORMAT_FILES))
 endif
 
 #
