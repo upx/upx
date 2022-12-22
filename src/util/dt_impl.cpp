@@ -33,8 +33,12 @@
 #if !defined(UPX_DOCTEST_CONFIG_MULTITHREADING)
 #define DOCTEST_CONFIG_NO_MULTITHREADING
 #endif
-#if defined(__MSDOS__) && defined(__DJGPP__)
+#if defined(__i386__) && defined(__MSDOS__) && defined(__DJGPP__) && defined(__GNUC__)
 #define DOCTEST_CONFIG_NO_POSIX_SIGNALS
+#elif defined(__m68k__) && defined(__atarist__) && defined(__GNUC__)
+#define DOCTEST_CONFIG_COLORS_NONE
+#define DOCTEST_CONFIG_NO_POSIX_SIGNALS
+#pragma GCC diagnostic ignored "-Wshadow"
 #endif
 #define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
 #if !defined(DOCTEST_CONFIG_DISABLE)

@@ -117,6 +117,9 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #define ACC_WANT_ACC_LIB_H 1
 #define ACC_WANT_ACC_CXX_H 1
 #include "miniacc.h"
+#if (ACC_CC_MSC)
+#  include <intrin.h>
+#endif
 
 /* intergral types */
 typedef acc_int8_t      upx_int8_t;
@@ -264,12 +267,14 @@ typedef upx_int64_t upx_off_t;
 #endif
 
 // avoid warnings about shadowing global functions
+#undef _base
 #undef basename
 #undef index
 #undef outp
-#define basename            upx_basename
-#define index               upx_index
-#define outp                upx_outp
+#define _base               upx_renamed__base
+#define basename            upx_renamed_basename
+#define index               upx_renamed_index
+#define outp                upx_renamed_outp
 
 #undef PAGE_MASK
 #undef PAGE_SIZE
@@ -321,12 +326,30 @@ inline void NO_fprintf(FILE *, const char *, ...) {}
 #  define upx_memcpy_inline     memcpy
 #endif
 
+#if __has_builtin(__builtin_return_address)
+#  define upx_return_address()  __builtin_return_address(0)
+#elif defined(__GNUC__)
+#  define upx_return_address()  __builtin_return_address(0)
+#elif (ACC_CC_MSC)
+#  define upx_return_address()  _ReturnAddress()
+#else
+#  define upx_return_address()  nullptr
+#endif
+
 #define UNUSED(var)             ACC_UNUSED(var)
 #define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
 
 // TODO cleanup: we now require C++14, so remove all __packed_struct usage
 #define __packed_struct(s)      struct alignas(1) s {
 #define __packed_struct_end()   };
+
+#if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
+// hack for broken compiler
+#define upx_alignas_1       __attribute__((__aligned__(1),__packed__))
+#define upx_alignas_16      __attribute__((__aligned__(2))) // object file maximum 2 ???
+#define upx_alignas__(a)    upx_alignas_ ## a
+#define alignas(x)          upx_alignas__(x)
+#endif
 
 #define COMPILE_TIME_ASSERT_ALIGNOF_USING_SIZEOF__(a,b) { \
      typedef a acc_tmp_a_t; typedef b acc_tmp_b_t; \
@@ -730,6 +753,14 @@ struct upx_compress_result_t
 #include <new>
 #include <type_traits>
 #include <typeinfo>
+#if __STDC_NO_ATOMICS__ || 1
+// UPX currently does not use multithreading
+#define upx_std_atomic(Type)    Type
+//#define upx_std_atomic(Type)    typename std::add_volatile<Type>::type
+#else
+#include <atomic>
+#define upx_std_atomic(Type)    std::atomic<Type>
+#endif
 
 #include "options.h"
 #include "except.h"

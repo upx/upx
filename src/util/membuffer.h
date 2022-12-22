@@ -71,7 +71,7 @@ public:
     }
 };
 
-class MemBuffer : public MemBufferBase<unsigned char> {
+class MemBuffer final : public MemBufferBase<unsigned char> {
 public:
     MemBuffer() = default;
     explicit MemBuffer(upx_uint64_t size_in_bytes);
@@ -94,21 +94,37 @@ public:
 
     // util
     void fill(unsigned off, unsigned len, int value);
-    void clear(unsigned off, unsigned len) { fill(off, len, 0); }
-    void clear() { fill(0, b_size_in_bytes, 0); }
+    __acc_forceinline void clear(unsigned off, unsigned len) { fill(off, len, 0); }
+    __acc_forceinline void clear() { fill(0, b_size_in_bytes, 0); }
 
     // If the entire range [skip, skip+take) is inside the buffer,
     // then return &b[skip]; else throwCantPack(sprintf(errfmt, skip, take)).
     // This is similar to BoundedPtr, except only checks once.
     // skip == offset, take == size_in_bytes
-    pointer subref(const char *errfmt, size_t skip, size_t take) {
+    __acc_forceinline pointer subref(const char *errfmt, size_t skip, size_t take) {
         return (pointer) subref_impl(errfmt, skip, take);
     }
 
 private:
     void *subref_impl(const char *errfmt, size_t skip, size_t take);
 
-    static unsigned global_alloc_counter;
+    // static debug stats
+    struct Stats {
+        upx_std_atomic(upx_uint32_t) global_alloc_counter;
+        upx_std_atomic(upx_uint64_t) global_total_bytes;
+        upx_std_atomic(upx_uint64_t) global_total_active_bytes;
+    };
+    static Stats stats;
+#if DEBUG
+    // debugging aid
+    struct Debug {
+        void *last_return_address_alloc = nullptr;
+        void *last_return_address_dealloc = nullptr;
+        void *last_return_address_fill = nullptr;
+        void *last_return_address_subref = nullptr;
+    };
+    Debug debug;
+#endif
 
     // disable copy, assignment and move assignment
     MemBuffer(const MemBuffer &) = delete;

@@ -62,6 +62,8 @@
 #elif 1 && (ACC_OS_EMX && defined(__RSXNT__))
 #define USE_SCREEN 1
 #define USE_SCREEN_WIN32 1
+#elif 1 && (ACC_ARCH_M68K && ACC_OS_TOS)
+#define NO_CONSOLE 1
 #endif
 
 #if 0 || (NO_ANSI)

@@ -30,7 +30,7 @@
 
 SPAN_NAMESPACE_BEGIN
 
-unsigned long long span_check_stats_check_range = 0;
+upx_std_atomic(upx_uint64_t) span_check_stats_check_range_counter(0);
 
 // HINT: set env-var "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
 __acc_noinline void span_fail_nullptr() {
@@ -61,7 +61,7 @@ void span_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes) 
     ptrdiff_t off = (const char *) p - (const char *) base;
     if __acc_very_unlikely (off < 0 || off > size_in_bytes)
         span_fail_range_range();
-    span_check_stats_check_range += 1;
+    span_check_stats_check_range_counter += 1;
     // fprintf(stderr, "span_check_range done\n");
 }
 
