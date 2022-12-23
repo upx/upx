@@ -4921,7 +4921,7 @@ void PackLinuxElf64::un_shlib_1(
 )
 {
     // xct_off [input side] was set by ::unpack when is_shlib
-    // yct_off [output side]
+    // yct_off [output side] set here unless is_asl in next 'if' block
     unsigned yct_off = xct_off;
 
     // Below xct_off is not compressed (for benefit of rtld.)
@@ -4990,7 +4990,6 @@ void PackLinuxElf64::un_shlib_1(
         struct b_info b;
     } hdr;
     fi->readx(&hdr, sizeof(hdr));
-    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
     if (hdr.l.l_magic != UPX_MAGIC_LE32
     ||  hdr.l.l_lsize != (unsigned)lsize
     ||  hdr.p.p_filesize != ph.u_file_size) {
@@ -4999,18 +4998,32 @@ void PackLinuxElf64::un_shlib_1(
     ph.c_len = get_te32(&hdr.b.sz_cpr);
     ph.u_len = get_te32(&hdr.b.sz_unc);
 
+#define MAX_ELF_HDR 1024
+    if (MAX_ELF_HDR < ph.u_len) {
+        // FIXME: old-style (upx < 4.0) compresses up to xct_off
+        throwCantUnpack("ElfXX_Ehdr corrupted");
+    }
+    fi->readx(ibuf, ph.c_len);
+    fi->seek(-(off_t)(sizeof(b_info) + ph.c_len), SEEK_CUR);
+    decompress(ibuf, o_elfhdrs, false);
+    Elf64_Ehdr const *const ehdro = (Elf64_Ehdr const *)(void const *)o_elfhdrs;
+    if (ehdro->e_type   !=ehdri.e_type
+    ||  ehdro->e_machine!=ehdri.e_machine
+    ||  ehdro->e_version!=ehdri.e_version
+        // less strict for EM_PPC64 to workaround earlier bug
+    ||  !( ehdro->e_flags==ehdri.e_flags
+        || Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine))
+    ||  ehdro->e_ehsize !=ehdri.e_ehsize
+        // check EI_MAG[0-3], EI_CLASS, EI_DATA, EI_VERSION
+    ||  memcmp(ehdro->e_ident, ehdri.e_ident, Elf64_Ehdr::EI_OSABI)) {
+        throwCantUnpack("ElfXX_Ehdr corrupted");
+    }
+
     unpackExtent(ph.u_len, fo,
         c_adler, u_adler, false, szb_info);
-
-    // FIXME: what if no output file?  test mode ("-t") or list mode ("-l")
     if (fo) {
-        InputFile u_fi;
-        // Recover original Elf headers from current output file
-        u_fi.open(fo->getName(), 0);
-        u_fi.readx((void *)o_elfhdrs, o_elfhdrs.getSize());
-        u_fi.close();
-
         // Re-generate unmodified rtld data below xct_off
+        // FIXME: depends on (yct_off < limit_dynhdr)
         unsigned d = yct_off - ph.u_len;
         fo->write(&ibuf[ph.u_len], d);
         total_out += d;
