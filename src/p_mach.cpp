@@ -1515,7 +1515,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     ||  mhdri.filetype   != mhdr->filetype)
         throwCantUnpack("file header corrupted");
     unsigned const ncmds = mhdr->ncmds;
-    if (!ncmds || 24 < ncmds) { // arbitrary limit
+    if (!ncmds || 48 < ncmds) { // arbitrary limit
         char msg[40]; snprintf(msg, sizeof(msg),
             "bad Mach_header.ncmds = %d", ncmds);
         throwCantUnpack(msg);
