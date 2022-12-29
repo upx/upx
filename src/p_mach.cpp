@@ -1515,7 +1515,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     ||  mhdri.filetype   != mhdr->filetype)
         throwCantUnpack("file header corrupted");
     unsigned const ncmds = mhdr->ncmds;
-    if (!ncmds || 24 < ncmds) { // arbitrary limit
+    if (!ncmds || 256 < ncmds) { // arbitrary limit
         char msg[40]; snprintf(msg, sizeof(msg),
             "bad Mach_header.ncmds = %d", ncmds);
         throwCantUnpack(msg);
@@ -1946,8 +1946,8 @@ bool PackMachBase<T>::canPack()
         throwCantPack(buf);
     }
     if (!sz_mhcmds
-    ||  16384 < sz_mhcmds) { // somewhat arbitrary, but amd64-darwin.macho-upxmain.c
-        throwCantPack("16384 < Mach_header.sizeofcmds (or ==0)");
+    ||  32768 < sz_mhcmds) { // somewhat arbitrary, but *-darwin.macho-upxmain.c
+        throwCantPack("32768 < Mach_header.sizeofcmds (or ==0)");
     }
     rawmseg_buf.alloc(sz_mhcmds);
     rawmseg = (Mach_segment_command *)(void *)rawmseg_buf;
