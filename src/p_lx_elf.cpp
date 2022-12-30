@@ -4887,8 +4887,10 @@ PackLinuxElf64::unRela64(
         (void)old_dtinit;
 
     }  // end each RELA
-    fo->seek(dt_rela, SEEK_SET);
-    fo->rewrite(rela0, relasz);
+    if (fo) {
+        fo->seek(dt_rela, SEEK_SET);
+        fo->rewrite(rela0, relasz);
+    }
 }
 
 // File layout of compressed .so (new-style: 3 or 4 PT_LOAD) shared library:
@@ -5045,7 +5047,9 @@ void PackLinuxElf64::un_shlib_1(
         if (p_offset < yct_off) {
             p_offset = yct_off;  // not at beginning of PT_LOAD
         }
-        fo->seek(p_offset, SEEK_SET);
+        if (fo) {
+            fo->seek(p_offset, SEEK_SET);
+        }
         // Peek at b_info to find sizes
         fi->readx(&hdr.b, sizeof(hdr.b));
         fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
@@ -5204,8 +5208,10 @@ void PackLinuxElf64::un_DT_INIT(
                 upx_uint64_t d = plt_va - vaddr - asl_delta;
                 if (d < filesz) {
                     upx_uint64_t offset = get_te64(&phdr->p_offset);
-                    fo->seek(d + offset, SEEK_SET);
-                    fo->rewrite(jump_slots, n_plt * sizeof(upx_uint64_t));
+                    if (fo) {
+                        fo->seek(d + offset, SEEK_SET);
+                        fo->rewrite(jump_slots, n_plt * sizeof(upx_uint64_t));
+                    }
                     break;
                 }
             }
