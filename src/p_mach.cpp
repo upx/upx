@@ -1724,7 +1724,7 @@ int PackMachBase<T>::canUnpack()
     }
 
     int const small = 32 + sizeof(overlay_offset);
-    unsigned bufsize = 4096 + sizeof(PackHeader);
+    unsigned bufsize = my_page_size + sizeof(PackHeader) + sizeof(overlay_offset);
     if (391 == style) { // PackHeader precedes __LINKEDIT
         fi->seek(offLINK - bufsize, SEEK_SET);
     } else
@@ -1749,7 +1749,7 @@ int PackMachBase<T>::canUnpack()
     // Do not overwrite buf[]; For scratch space, then use buf3 instead.
 
     int i = bufsize;
-    while (i > small && 0 == buf[--i]) { }
+    while (i > small && 0 == buf[--i]) { } // why is this search so slow?
     i -= small;
     // allow incompressible extents
     if (i < 1 || !getPackHeader(buf + i, bufsize - i, true)) {
@@ -1761,24 +1761,25 @@ int PackMachBase<T>::canUnpack()
             fi->readx(buf3, bufsize);
             unsigned char const *b = &buf3[0];
             unsigned disp = *(TE32 const *)&b[1];
-            // Emulate the code
-            if (0xe8==b[0] && disp < bufsize
-                // This has been obsoleted by amd64-darwin.macho-entry.S
-                // searching for "executable_path=" etc.
-            &&  0x5d==b[5+disp] && 0xe8==b[6+disp]) {
-                unsigned disp2 = 0u - *(TE32 const *)&b[7+disp];
-                if (disp2 < (12+disp) && 0x5b==b[11+disp-disp2]) {
-                    struct b_info const *bptr = (struct b_info const *)&b[11+disp];
-                    // This is the folded stub.
-                    // FIXME: check b_method?
-                    if (bptr->sz_cpr < bptr->sz_unc && bptr->sz_unc < 0x1000) {
-                        b = bptr->sz_cpr + (unsigned char const *)(1+ bptr);
-                        // FIXME: check PackHeader::putPackHeader(), packhead.cpp
-                        overlay_offset = *(TE32 const *)(32 + b);
-                        if (overlay_offset < 0x1000) {
-                            return true;  // success
+            if (CPU_TYPE_X86_64 == my_cputype) { // Emulate the code
+                if (0xe8==b[0] && disp < bufsize
+                    // This has been obsoleted by amd64-darwin.macho-entry.S
+                    // searching for "executable_path=" etc.
+                &&  0x5d==b[5+disp] && 0xe8==b[6+disp]) {
+                    unsigned disp2 = 0u - *(TE32 const *)&b[7+disp];
+                    if (disp2 < (12+disp) && 0x5b==b[11+disp-disp2]) {
+                        struct b_info const *bptr = (struct b_info const *)&b[11+disp];
+                        // This is the folded stub.
+                        // FIXME: check b_method?
+                        if (bptr->sz_cpr < bptr->sz_unc && bptr->sz_unc < 0x1000) {
+                            b = bptr->sz_cpr + (unsigned char const *)(1+ bptr);
+                            // FIXME: check PackHeader::putPackHeader(), packhead.cpp
+                            overlay_offset = *(TE32 const *)(32 + b);
+                            if (overlay_offset < 0x1000) {
+                                return true;  // success
+                            }
+                            overlay_offset = 0;  // failure
                         }
-                        overlay_offset = 0;
                     }
                 }
             }
