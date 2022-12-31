@@ -271,7 +271,7 @@ unsigned upx_ucl_crc32(const void *buf, unsigned len, unsigned crc) {
 // doctest checks
 **************************************************************************/
 
-#if DEBUG && 1
+#if DEBUG && !defined(DOCTEST_CONFIG_DISABLE) && 1
 
 #include "util/membuffer.h"
 

@@ -134,61 +134,65 @@ template <class T>
 struct TestBELE {
     __acc_static_noinline bool test(void) {
         COMPILE_TIME_ASSERT_ALIGNED1(T)
-        struct alignas(1) test1_t {
-            char a;
-            T b;
-        };
-        struct alignas(1) test2_t {
-            char a;
-            T b[3];
-        };
-        test1_t t1[7];
-        UNUSED(t1);
-        test2_t t2[7];
-        UNUSED(t2);
-        COMPILE_TIME_ASSERT(sizeof(test1_t) == 1 + sizeof(T))
-        COMPILE_TIME_ASSERT_ALIGNED1(test1_t)
-        COMPILE_TIME_ASSERT(sizeof(t1) == 7 + 7 * sizeof(T))
-        COMPILE_TIME_ASSERT(sizeof(test2_t) == 1 + 3 * sizeof(T))
-        COMPILE_TIME_ASSERT_ALIGNED1(test2_t)
-        COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21 * sizeof(T))
+        {
+            struct alignas(1) test1_t {
+                char a;
+                T b;
+            };
+            struct alignas(1) test2_t {
+                char a;
+                T b[3];
+            };
+            COMPILE_TIME_ASSERT_ALIGNED1(test1_t)
+            COMPILE_TIME_ASSERT_ALIGNED1(test2_t)
+            test1_t t1[7];
+            test2_t t2[7];
+            COMPILE_TIME_ASSERT(sizeof(test1_t) == 1 + sizeof(T))
+            COMPILE_TIME_ASSERT(sizeof(t1) == 7 + 7 * sizeof(T))
+            COMPILE_TIME_ASSERT(sizeof(test2_t) == 1 + 3 * sizeof(T))
+            COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21 * sizeof(T))
+            UNUSED(t1);
+            UNUSED(t2);
+        }
 #if 1
-        T allbits;
-        allbits = 0;
-        allbits += 1;
-        allbits -= 2;
-        T v1;
-        v1 = 1;
-        v1 *= 2;
-        v1 -= 1;
-        T v2;
-        v2 = 1;
-        assert((v1 == v2));
-        assert(!(v1 != v2));
-        assert((v1 <= v2));
-        assert((v1 >= v2));
-        assert(!(v1 < v2));
-        assert(!(v1 > v2));
-        v2 ^= allbits;
-        assert(!(v1 == v2));
-        assert((v1 != v2));
-        assert((v1 <= v2));
-        assert(!(v1 >= v2));
-        assert((v1 < v2));
-        assert(!(v1 > v2));
-        v2 += 2;
-        assert(v1 == 1);
-        assert(v2 == 0);
-        v1 <<= 1;
-        v1 |= v2;
-        v1 >>= 1;
-        v2 &= v1;
-        v2 /= v1;
-        v2 *= v1;
-        assert(v1 == 1);
-        assert(v2 == 0);
-        if ((v1 ^ v2) != 1)
-            return false;
+        {
+            T allbits;
+            allbits = 0;
+            allbits += 1;
+            allbits -= 2;
+            T v1;
+            v1 = 1;
+            v1 *= 2;
+            v1 -= 1;
+            T v2;
+            v2 = 1;
+            assert((v1 == v2));
+            assert(!(v1 != v2));
+            assert((v1 <= v2));
+            assert((v1 >= v2));
+            assert(!(v1 < v2));
+            assert(!(v1 > v2));
+            v2 ^= allbits;
+            assert(!(v1 == v2));
+            assert((v1 != v2));
+            assert((v1 <= v2));
+            assert(!(v1 >= v2));
+            assert((v1 < v2));
+            assert(!(v1 > v2));
+            v2 += 2;
+            assert(v1 == 1);
+            assert(v2 == 0);
+            v1 <<= 1;
+            v1 |= v2;
+            v1 >>= 1;
+            v2 &= v1;
+            v2 /= v1;
+            v2 *= v1;
+            assert(v1 == 1);
+            assert(v2 == 0);
+            if ((v1 ^ v2) != 1)
+                return false;
+        }
 #endif
         return true;
     }
@@ -324,6 +328,20 @@ void upx_compiler_sanity_check(void) {
         set_le26(d, 0xff020304);
         assert(get_le26(d) == 0x03020304);
         assert(dd == ne32_to_le32(0xf7020304));
+    }
+    {
+        upx_uint16_t a;
+        upx_uint32_t b;
+        upx_uint64_t c;
+        set_ne16(&a, 0x04030201); // ignore upper bits
+        set_ne32(&b, 0x04030201);
+        set_ne64(&c, 0x0807060504030201ull);
+        assert(a == 0x0201);
+        assert(b == 0x04030201);
+        assert(c == 0x0807060504030201ull);
+        assert(get_ne16(&a) == 0x0201);
+        assert(get_ne32(&b) == 0x04030201);
+        assert(get_ne64(&c) == 0x0807060504030201ull);
     }
 #endif
     union {

@@ -73,24 +73,16 @@ endif
 
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
-CLANG_FORMAT_FILES += bele.h bele_policy.h
-CLANG_FORMAT_FILES += c_file.cpp c_init.cpp c_none.cpp c_screen.cpp
-CLANG_FORMAT_FILES += compress_lzma.cpp compress_ucl.cpp compress_zlib.cpp
-CLANG_FORMAT_FILES += console.h except.cpp except.h
-CLANG_FORMAT_FILES += file.cpp file.h lefile.cpp lefile.h
-CLANG_FORMAT_FILES += linker.cpp linker.h main.cpp msg.cpp options.cpp options.h
-CLANG_FORMAT_FILES += p_armpe.cpp p_armpe.h p_com.cpp p_com.h p_djgpp2.cpp p_djgpp2.h
-CLANG_FORMAT_FILES += p_exe.cpp p_exe.h p_ps1.cpp p_ps1.h p_sys.cpp p_sys.h
-CLANG_FORMAT_FILES += p_tmt.cpp p_tmt.h p_tos.cpp p_tos.h
-CLANG_FORMAT_FILES += p_w32pe.h p_w64pep.h
-CLANG_FORMAT_FILES += p_wcle.cpp p_wcle.h
-CLANG_FORMAT_FILES += packer.cpp packer.h packhead.cpp packmast.cpp packmast.h
-CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
-CLANG_FORMAT_FILES += ui.cpp ui.h work.cpp
-CLANG_FORMAT_FILES += $(wildcard util/*.[ch]*)
+# Markus loves clang-format, but John hates it; find a compromise
+CLANG_FORMAT_EXCLUDE_FILES += conf.h miniacc.h version.h
+CLANG_FORMAT_EXCLUDE_FILES += compress.cpp compress.h filter.cpp filter.h filteri.cpp help.cpp
+CLANG_FORMAT_EXCLUDE_FILES += p_elf.h p_elf_enum.h p_lx_% p_mach% p_unix% p_vmli%
+CLANG_FORMAT_EXCLUDE_FILES += p_w32pe.cpp p_w64pep.cpp packer_c.cpp packer_f.cpp pefile%
+CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* util/*.[ch]*))
+CLANG_FORMAT_FILES := $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES))
 clang-format: PHONY $(CLANG_FORMAT_FILES)
 	@echo "running upx-clang-format"
-	@$(top_srcdir)/misc/scripts/upx-clang-format -i $(sort $(CLANG_FORMAT_FILES))
+	@$(top_srcdir)/misc/scripts/upx-clang-format -i $(CLANG_FORMAT_FILES)
 endif
 
 #

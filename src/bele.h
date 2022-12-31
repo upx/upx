@@ -251,6 +251,7 @@ inline upx_int64_t get_le64_signed(const void *p) {
 **************************************************************************/
 
 struct alignas(1) BE16 {
+    typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     unsigned char d[2];
 
     BE16 &operator=(unsigned v) {
@@ -300,6 +301,7 @@ struct alignas(1) BE16 {
 };
 
 struct alignas(1) BE32 {
+    typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     unsigned char d[4];
 
     BE32 &operator=(unsigned v) {
@@ -349,6 +351,7 @@ struct alignas(1) BE32 {
 };
 
 struct alignas(1) BE64 {
+    typedef upx_uint64_t integral_conversion_type; // automatic conversion to upx_uint64_t
     unsigned char d[8];
 
     BE64 &operator=(upx_uint64_t v) {
@@ -398,6 +401,7 @@ struct alignas(1) BE64 {
 };
 
 struct alignas(1) LE16 {
+    typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     unsigned char d[2];
 
     LE16 &operator=(unsigned v) {
@@ -447,6 +451,7 @@ struct alignas(1) LE16 {
 };
 
 struct alignas(1) LE32 {
+    typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     unsigned char d[4];
 
     LE32 &operator=(unsigned v) {
@@ -496,6 +501,7 @@ struct alignas(1) LE32 {
 };
 
 struct alignas(1) LE64 {
+    typedef upx_uint64_t integral_conversion_type; // automatic conversion to upx_uint64_t
     unsigned char d[8];
 
     LE64 &operator=(upx_uint64_t v) {

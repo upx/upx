@@ -1155,6 +1155,7 @@ bool PackVmlinuxPPC32::has_valid_vmlinux_head()
     return false;
 }
 
+static const
 #include "stub/powerpc64le-linux.kernel.vmlinux-head.h"
 bool PackVmlinuxPPC64LE::has_valid_vmlinux_head()
 {
