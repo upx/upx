@@ -78,25 +78,25 @@ jobs:
         with: { submodules: true }
       - name: 'Check out test suite'
         run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
-      - name: 'Build cmake debug-gcc'
-        run:   'make build/debug-gcc'
-      - name: 'Build cmake release-gcc'
-        run:   'make build/release-gcc'
-      - name: 'Build cmake debug-clang'
-        run:   'make build/debug-clang'
-      - name: 'Build cmake release-clang'
-        run:   'make build/release-clang'
-      - name: 'Build cmake debug-gcc-m32'
+      - name: 'Build cmake extra/gcc/debug'
+        run:   'make build/extra/gcc/debug'
+      - name: 'Build cmake extra/gcc/release'
+        run:   'make build/extra/gcc/release'
+      - name: 'Build cmake extra/clang/debug'
+        run:   'make build/extra/clang/debug'
+      - name: 'Build cmake extra/clang/release'
+        run:   'make build/extra/clang/release'
+      - name: 'Build cmake extra/gcc-m32/debug'
         if: ${{ matrix.use_m32 }}
-        run:   'make build/debug-gcc-m32'
-      - name: 'Build cmake release-gcc-m32'
+        run:   'make build/extra/gcc-m32/debug'
+      - name: 'Build cmake extra/gcc-m32/release'
         if: ${{ matrix.use_m32 }}
-        run:   'make build/release-gcc-m32'
+        run:   'make build/extra/gcc-m32/release'
       - name: 'Make artifact'
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
           mkdir -p "tmp/artifact/$N"
-          (cd build && cp -ai --parents */upx "../tmp/artifact/$N")
+          (cd build/extra && cp -ai --parents */*/upx "../../tmp/artifact/$N")
           (cd tmp/artifact && tar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
           # GitHub Actions magic: set "artifact_name" environment value for use in next step
           echo "artifact_name=$N" >> $GITHUB_ENV
@@ -107,20 +107,20 @@ jobs:
           path: tmp/artifact
       - name: 'Run basic tests'
         run: |
-          make -C build/debug-gcc test
-          make -C build/release-gcc test
-          make -C build/debug-clang test
-          make -C build/release-clang test
+          make -C build/extra/gcc/debug test
+          make -C build/extra/gcc/release test
+          make -C build/extra/clang/debug test
+          make -C build/extra/clang/release test
       - name: 'Run basic tests 32-bit'
         if: ${{ matrix.use_m32 }}
         run: |
-          make -C build/debug-gcc-m32 test
-          make -C build/release-gcc-m32 test
-      - name: 'Run test suite build/release-gcc'
+          make -C build/extra/gcc-m32/debug test
+          make -C build/extra/gcc-m32/release test
+      - name: 'Run test suite build/extra/gcc/release'
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
           testsuite_1=$(readlink -en ./.github/travis_testsuite_1.sh)
-          env -C build/release-gcc upx_exe=./upx bash "$testsuite_1"
+          env -C build/extra/gcc/release upx_exe=./upx bash "$testsuite_1"
 
   job-macos-cmake:
     needs: [ job-rebuild-and-verify-stubs ]
@@ -144,21 +144,21 @@ jobs:
         with: { submodules: true }
       - name: 'Check out test suite'
         run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
-      - name: 'Build cmake debug-gcc'
+      - name: 'Build cmake extra/gcc/debug'
         if: ${{ matrix.gcc != '' }}
-        run:   'make build/debug-gcc CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
-      - name: 'Build cmake release-gcc'
+        run:   'make build/extra/gcc/debug CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
+      - name: 'Build cmake extra/gcc/release'
         if: ${{ matrix.gcc != '' }}
-        run:   'make build/release-gcc CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
-      - name: 'Build cmake debug-clang'
-        run:   'make build/debug-clang'
-      - name: 'Build cmake release-clang'
-        run:   'make build/release-clang'
+        run:   'make build/extra/gcc/release CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
+      - name: 'Build cmake extra/clang/debug'
+        run:   'make build/extra/clang/debug'
+      - name: 'Build cmake extra/clang/release'
+        run:   'make build/extra/clang/release'
       - name: 'Make artifact'
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
           mkdir -p "tmp/artifact/$N"
-          (cd build && rsync -R -a */upx "../tmp/artifact/$N/")
+          (cd build/extra && rsync -R -a */*/upx "../../tmp/artifact/$N/")
           (cd tmp/artifact && gtar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
           # GitHub Actions magic: set "artifact_name" environment value for use in next step
           echo "artifact_name=$N" >> $GITHUB_ENV
@@ -169,15 +169,15 @@ jobs:
           path: tmp/artifact
       - name: 'Run basic tests'
         run: |
-          make -C build/debug-clang test
-          make -C build/release-clang test
-      - name: 'Run test suite build/release-clang'
+          make -C build/extra/clang/debug test
+          make -C build/extra/clang/release test
+      - name: 'Run test suite build/extra/clang/release'
         if: ${{ matrix.testsuite }}
         run: |
           export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
           testsuite_1=$(readlink -en ./.github/travis_testsuite_1.sh)
-          env -C build/release-clang upx_exe=./upx bash "$testsuite_1"
+          env -C build/extra/clang/release upx_exe=./upx bash "$testsuite_1"
 
   job-windows-cmake:
     needs: [ job-rebuild-and-verify-stubs ]

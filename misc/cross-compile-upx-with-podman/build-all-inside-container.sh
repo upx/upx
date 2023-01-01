@@ -27,7 +27,7 @@ function run_config_and_build {
         # these old architectures do not support sanitize
         alpha-linux-gnu) cmake_config_flags=-DUPX_CONFIG_DISABLE_SANITIZE=ON ;;
         hppa-linux-gnu) cmake_config_flags=-DUPX_CONFIG_DISABLE_SANITIZE=ON ;;
-        # avoid link errors with Windows cross compilers; need to install some more support libs??
+        # avoid link errors with current MinGW-w64 versions
         i686-w64-mingw32) cmake_config_flags=-DUPX_CONFIG_DISABLE_SANITIZE=ON ;;
         x86_64-w64-mingw32) cmake_config_flags=-DUPX_CONFIG_DISABLE_SANITIZE=ON ;;
         # avoid warnings about arm libstdc++ ABI change in gcc-7

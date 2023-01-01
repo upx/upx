@@ -47,11 +47,11 @@ podman run "${flags[@]}" "$image" bash -l
 
 # we can also build UPX in the container:
 #   cd /home/upx/src/upx
-#   rm -rf ./build/release
-#   make build/release
+#   rm -rf ./build/extra/gcc/release
+#   make build/extra/gcc/release
 #   # run tests
-#   ./build/release/upx --version
-#   make -C build/release test
+#   ./build/extra/gcc/release/upx --version
+#   make -C build/extra/gcc/release test
 
 # and we can also rebuild the UPX docs the container:
 #   cd /home/upx/src/upx
