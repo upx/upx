@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4.3 FATAL_ERROR)
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-    # relaxed config defaults when building from tar/zip source
+    # permissive config defaults when building from source code tarball
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." ON)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." ON)
     option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   ON)
@@ -148,10 +148,15 @@ endif()
 
 function(upx_sanitize_target t)
     if(NOT UPX_CONFIG_DISABLE_SANITIZE AND NOT MSVC)
-        # default sanitizer for Debug builds
-        target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all>)
-        # default sanitizer for Release builds
-        target_compile_options(${t} PRIVATE $<$<CONFIG:Release>:-fstack-protector>)
+        if(CMAKE_C_PLATFORM_ID MATCHES "^MinGW")
+            # avoid link errors with current MinGW-w64 versions
+            # see https://www.mingw-w64.org/contribute/#sanitizers-asan-tsan-usan
+        else()
+            # default sanitizer for Debug builds
+            target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all>)
+            # default sanitizer for Release builds
+            target_compile_options(${t} PRIVATE $<$<CONFIG:Release>:-fstack-protector>)
+        endif()
     endif()
 endfunction()
 
@@ -253,27 +258,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/maint/src/CMakeLists.extra.txt")
 include("${CMAKE_CURRENT_SOURCE_DIR}/maint/src/CMakeLists.extra.txt")
 endif()
 
-function(print_var v)
-    if(${v})
-        message(STATUS "${v} = ${${v}}")
-    endif()
+function(print_var)
+    foreach(v ${ARGV})
+        if(${v})
+            message(STATUS "${v} = ${${v}}")
+        endif()
+    endforeach()
 endfunction()
-print_var(CMAKE_BUILD_TYPE)
-print_var(CMAKE_CONFIGURATION_TYPES)
-print_var(CMAKE_INSTALL_PREFIX)
+print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
+print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION)
 print_var(CMAKE_CROSSCOMPILING)
-print_var(CMAKE_C_COMPILER_ID)
-print_var(CMAKE_C_COMPILER_VERSION)
-print_var(CMAKE_C_COMPILER_ARCHITECTURE_ID)
-print_var(CMAKE_C_PLATFORM_ID)
-print_var(CMAKE_C_COMPILER_ABI)
-print_var(CMAKE_CXX_COMPILER_ID)
-print_var(CMAKE_CXX_COMPILER_VERSION)
-print_var(CMAKE_CXX_COMPILER_ARCHITECTURE_ID)
-print_var(CMAKE_CXX_PLATFORM_ID)
-print_var(CMAKE_CXX_COMPILER_ABI)
+print_var(CMAKE_C_COMPILER_ID   CMAKE_C_COMPILER_VERSION   CMAKE_C_COMPILER_ARCHITECTURE_ID   CMAKE_C_PLATFORM_ID   CMAKE_C_COMPILER_ABI)
+print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
+print_var(CMAKE_INSTALL_PREFIX)
+print_var(CMAKE_CONFIGURATION_TYPES)
+print_var(CMAKE_BUILD_TYPE)
 if (CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release)$")
     message(WARNING "WARNING: unsupported CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}; please use \"Debug\" or \"Release\"")
+endif()
+
+# final extra sanity checks; in case of problems you can remove these if you know what you are doing
+if(NOT ",${CMAKE_C_PLATFORM_ID}," STREQUAL ",${CMAKE_CXX_PLATFORM_ID},")
+    message(FATAL_ERROR "ERROR: CMAKE_C_PLATFORM_ID CMAKE_CXX_PLATFORM_ID mismatch")
+endif()
+if(NOT ",${CMAKE_C_COMPILER_ABI}," STREQUAL ",${CMAKE_CXX_COMPILER_ABI},")
+    message(FATAL_ERROR "ERROR: CMAKE_C_COMPILER_ABI CMAKE_CXX_COMPILER_ABI mismatch")
 endif()
 
 # vim:set ft=cmake ts=4 sw=4 tw=0 et:
