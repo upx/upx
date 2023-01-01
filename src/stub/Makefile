@@ -6,7 +6,7 @@
 # for details.
 # And see misc/rebuild-stubs-with-podman how to use Podman/Docker.
 #
-# Copyright (C) 1996-2022 Markus Franz Xaver Johannes Oberhumer
+# Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
 #
 
 MAKEFLAGS += -rR
