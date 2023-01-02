@@ -4861,13 +4861,13 @@ PackLinuxElf64::unRela64(
         upx_uint64_t r_info   = get_te64(&rela->r_info);
         unsigned r_type = ELF64_R_TYPE(r_info);
         if (is_asl && Elf64_Ehdr::EM_AARCH64 == e_machine) {
-#if 0  //{
             if (R_AARCH64_RELATIVE == r_type) {
+#if 0  //{ FIXME
                 if (old_dtinit == r_addend) {
                     set_te64(&ptload1[r_offset - plt_va], r_addend);
                 }
-            }
 #endif  //}
+            }
             if (R_AARCH64_JUMP_SLOT == r_type) {
                 ++n_jmp_slot;
                 // .rela.plt contains offset of the "first time" target
@@ -4890,6 +4890,47 @@ PackLinuxElf64::unRela64(
     if (fo) {
         fo->seek(dt_rela, SEEK_SET);
         fo->rewrite(rela0, relasz);
+    }
+}
+
+void
+PackLinuxElf64::un_asl_dynsym( // ibuf has the input
+    unsigned orig_file_size,
+    OutputFile *fo  // else just leave in ibuf
+)
+{
+    // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
+    dynstr = (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
+    sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
+    if (sec_dynsym) {
+        upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
+        upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
+        if (orig_file_size < sz_dynsym
+        ||  orig_file_size < off_dynsym
+        || (orig_file_size - off_dynsym) < sz_dynsym) {
+            throwCantUnpack("bad SHT_DYNSYM");
+        }
+        Elf64_Sym *const sym0 = (Elf64_Sym *)ibuf.subref(
+            "bad dynsym", off_dynsym, sz_dynsym);
+        Elf64_Sym *sym = sym0;
+        for (int j = sz_dynsym / sizeof(Elf64_Sym); --j>=0; ++sym) {
+            upx_uint64_t symval = get_te64(&sym->st_value);
+            unsigned symsec = get_te16(&sym->st_shndx);
+            if (Elf64_Sym::SHN_UNDEF != symsec
+            &&  Elf64_Sym::SHN_ABS   != symsec
+            &&  xct_off <= symval) {
+                set_te64(&sym->st_value, symval - asl_delta);
+            }
+            if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
+                adjABS(sym, 0ul - (unsigned long)asl_delta);
+            }
+        }
+        if (fo) {
+            unsigned pos = fo->tell();
+            fo->seek(off_dynsym, SEEK_SET);
+            fo->rewrite(sym0, sz_dynsym);
+            fo->seek(pos, SEEK_SET);
+        }
     }
 }
 
@@ -4931,7 +4972,6 @@ void PackLinuxElf64::un_shlib_1(
     unsigned const limit_dynhdr = get_te64(&dynhdr->p_offset) + get_te64(&dynhdr->p_filesz);
     fi->readx(ibuf, limit_dynhdr);
     //overlay_offset -= sizeof(linfo);
-    loader_offset = 0;
     e_shoff = get_te64(&ehdri.e_shoff);
     if (e_shoff && e_shnum
     &&  (e_shoff + sizeof(Elf64_Shdr) * e_shnum) <= limit_dynhdr) { // --android-shlib
@@ -4941,40 +4981,6 @@ void PackLinuxElf64::un_shlib_1(
             "bad Shdr table", e_shoff, sizeof(Elf64_Shdr)*e_shnum);
         yct_off = get_te64(&shdri->sh_offset);  // for the output file (de-compresssed)
         xct_off = asl_delta + yct_off;  // for the input file (compressed)
-
-        // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
-        dynstr = (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
-        sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
-        if (sec_dynsym) {
-            upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
-            upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
-            if (orig_file_size < sz_dynsym
-            ||  orig_file_size < off_dynsym
-            || (orig_file_size - off_dynsym) < sz_dynsym) {
-                throwCantUnpack("bad SHT_DYNSYM");
-            }
-            Elf64_Sym *const sym0 = (Elf64_Sym *)ibuf.subref(
-                "bad dynsym", off_dynsym, sz_dynsym);
-            Elf64_Sym *sym = sym0;
-            for (int j = sz_dynsym / sizeof(Elf64_Sym); --j>=0; ++sym) {
-                upx_uint64_t symval = get_te64(&sym->st_value);
-                unsigned symsec = get_te16(&sym->st_shndx);
-                if (Elf64_Sym::SHN_UNDEF != symsec
-                &&  Elf64_Sym::SHN_ABS   != symsec
-                &&  xct_off <= symval) {
-                    set_te64(&sym->st_value, symval - asl_delta);
-                }
-                if (Elf64_Sym::SHN_ABS == symsec && xct_off <= symval) {
-                    adjABS(sym, 0ul - (unsigned long)asl_delta);
-                }
-            }
-#if 0  //{ Stupid MSVC 14.2, 14.3
-            if (0 && fo) {
-                fo->seek(off_dynsym, SEEK_SET);
-                fo->rewrite(sym0, sz_dynsym);
-            }
-#endif  //}
-        }
     }
 
     // Decompress first Extent.  Old style covers [0, xct_off)
@@ -4989,7 +4995,6 @@ void PackLinuxElf64::un_shlib_1(
     struct {
         struct l_info l;
         struct p_info p;
-        struct b_info b;
     } hdr;
     fi->readx(&hdr, sizeof(hdr));
     if (hdr.l.l_magic != UPX_MAGIC_LE32
@@ -4997,17 +5002,39 @@ void PackLinuxElf64::un_shlib_1(
     ||  hdr.p.p_filesize != ph.u_file_size) {
         throwCantUnpack("corrupt l_info/p_info");
     }
-    ph.c_len = get_te32(&hdr.b.sz_cpr);
-    ph.u_len = get_te32(&hdr.b.sz_unc);
 
-#define MAX_ELF_HDR 1024
-    if (MAX_ELF_HDR < ph.u_len) {
-        // FIXME: old-style (upx < 4.0) compresses up to xct_off
-        throwCantUnpack("ElfXX_Ehdr corrupted");
+// The default layout for a shared library created by binutils-2.29
+// (Fedora 28; 2018) has two PT_LOAD: permissions r-x and rw-.
+// xct_off (the lowest address of executable instructions;
+// the highest address of read-only data used by rtld (ld-linux))
+// will be somewhere in the first PT_LOAD.
+//
+// The default layout for a shared library created by binutils-2.31
+// (Fedora 29; 2018) has four PT_LOAD: permissions r--, r-x, r--, rw-.
+// xct_off will be the base of the second [r-x] PT_LOAD.
+//
+// Bytes below xct_off cannot be compressed because they are used
+// by rtld *before* the UPX run-time de-compression stub gets control
+// via DT_INIT. Bytes in a Writeable PT_LOAD cannot be compressed
+// because they may be relocated by rtld, again before stub execution.
+//
+// We need to know which layout of PT_LOAD. It seems risky to steal
+// bits in the input ElfXX_Ehdr or ElfXX_Phdr, so we decompress
+// the first compressed block.  For an old-style shared library
+// the first compressed block covers [0, xct_off) which is redundant
+// with the interval [sz_elf_hdrs, xct_off) because those bytes
+// must be present for use by rtl  (So that is a large inefficiency.)
+// Fortunately p_info.p_blocksize fits in ibuf, and unpackExtent
+// will just decompress it all.  For new style, the first compressed
+// block covers [0, sz_elf_hdrs).
+
+    // Peek: unpack into ibuf, but do not write
+    unsigned const sz_block1 = unpackExtent(sz_elf_hdrs, nullptr,
+        c_adler, u_adler, false, szb_info, -1);
+    if (sz_block1 < sz_elf_hdrs) {
+        throwCantUnpack("corrupt b_info");
     }
-    fi->readx(ibuf, ph.c_len);
-    fi->seek(-(off_t)(sizeof(b_info) + ph.c_len), SEEK_CUR);
-    decompress(ibuf, o_elfhdrs, false);
+    memcpy(o_elfhdrs, ibuf, sz_elf_hdrs); // save de-compressed Elf headers
     Elf64_Ehdr const *const ehdro = (Elf64_Ehdr const *)(void const *)o_elfhdrs;
     if (ehdro->e_type   !=ehdri.e_type
     ||  ehdro->e_machine!=ehdri.e_machine
@@ -5020,19 +5047,13 @@ void PackLinuxElf64::un_shlib_1(
     ||  memcmp(ehdro->e_ident, ehdri.e_ident, Elf64_Ehdr::EI_OSABI)) {
         throwCantUnpack("ElfXX_Ehdr corrupted");
     }
-
-    unpackExtent(ph.u_len, fo,
-        c_adler, u_adler, false, szb_info);
     if (fo) {
-        // Re-generate unmodified rtld data below xct_off
-        // FIXME: depends on (yct_off < limit_dynhdr)
-        unsigned d = yct_off - ph.u_len;
-        fo->write(&ibuf[ph.u_len], d);
-        total_out += d;
+        fo->write(ibuf, sz_block1);
+        total_out = sz_block1;
     }
-
-    Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
+    Elf64_Phdr const *o_phdr = (Elf64_Phdr const *)(1+ ehdro);
     // Handle compressed PT_LOADs (must not have PF_W)
+    unsigned not_first_LOAD = 0;
     for (unsigned j = 0; j < e_phnum; ++j, ++o_phdr) {
         unsigned type = get_te32(&o_phdr->p_type);
         unsigned flags = get_te32(&o_phdr->p_flags);
@@ -5041,27 +5062,56 @@ void PackLinuxElf64::un_shlib_1(
         }
         unsigned p_offset = get_te64(&o_phdr->p_offset);
         unsigned p_filesz = get_te64(&o_phdr->p_filesz);
-        if ((p_filesz + p_offset) <= yct_off) {
-            continue;   // already entirely re-generated
-        }
-        if (p_offset < yct_off) {
-            p_offset = yct_off;  // not at beginning of PT_LOAD
+        unsigned wanted = p_filesz;
+        if (!not_first_LOAD++) { // first PT_LOAD
+            wanted -= sz_block1;
+            if (sz_block1 >  sz_elf_hdrs) { // old style
+                if (is_asl) {
+                    un_asl_dynsym(orig_file_size, fo);
+                }
+                p_offset += sz_block1;
+            }
+            if (sz_block1 == sz_elf_hdrs) { // new style
+                unsigned const len = yct_off - sz_elf_hdrs;
+                unsigned const ipos = fi->tell();
+                fi->seek(sz_elf_hdrs, SEEK_SET);
+                fi->readx(&ibuf[sz_elf_hdrs], len);
+                if (is_asl) {
+                    un_asl_dynsym(orig_file_size, nullptr);
+                }
+                if (fo) {
+                    fo->write(&ibuf[sz_elf_hdrs], len);
+                }
+                total_out += len;
+
+// github-issue629: (overlay_offset = 0xa500), so initially (xct_off = 0xa494).
+// But "yct_off = get_te64(&shdri->sh_offset)" so if _Shdrs are aligned (??)
+// then (0x10500 == (xct_off = asl_delta + yct_off)), and we read+write
+// more than we need.
+// So assume the excess just lives there, or is overwritten later by seek+write.
+                if (wanted < len) { // FIXME: why does this happen?
+                    wanted = 0;
+                }
+                else {
+                    wanted -= len;
+                }
+                fi->seek(ipos, SEEK_SET);
+                if (total_out == p_filesz) {
+                    continue;   // already entirely re-generated
+                }
+                p_offset = total_out;
+            }
         }
         if (fo) {
             fo->seek(p_offset, SEEK_SET);
         }
-        // Peek at b_info to find sizes
-        fi->readx(&hdr.b, sizeof(hdr.b));
-        fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR);
-        ph.c_len = get_te32(&hdr.b.sz_cpr);
-        ph.u_len = get_te32(&hdr.b.sz_unc);
-        unpackExtent(ph.u_len, fo, c_adler, u_adler, false, szb_info);
+        unpackExtent(wanted, fo, c_adler, u_adler, false, szb_info);
     }
     funpad4(fi);
     loader_offset = fi->tell();
 
     // Handle PT_LOAD with PF_W: writeable, so not compressed.  "Slide"
-    o_phdr = (Elf64_Phdr const *)(1+ (Elf64_Ehdr const *)(void const *)o_elfhdrs);
+    o_phdr = (Elf64_Phdr const *)(1+ ehdro);
     Elf64_Phdr const *i_phdr = phdri;
     for (unsigned j = 0; j < e_phnum; ++j, ++o_phdr, ++i_phdr) {
         unsigned type = get_te32(&o_phdr->p_type);

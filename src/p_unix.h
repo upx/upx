@@ -4,6 +4,7 @@
 
    Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 2000-2023 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -23,6 +24,9 @@
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */
 
 
@@ -76,9 +80,11 @@ protected:
         Filter *, OutputFile *,
         unsigned hdr_len = 0, unsigned b_extra = 0 ,
         bool inhibit_compression_check = false);
-    virtual void unpackExtent(unsigned wanted, OutputFile *fo,
+    virtual unsigned unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &c_adler, unsigned &u_adler,
-        bool first_PF_X, unsigned szb_info, bool is_rewrite = false);
+        bool first_PF_X, unsigned szb_info,
+        int is_rewrite = false  // 0(false): write; 1(true): rewrite; -1: no write
+        );
     unsigned total_in, total_out;  // unpack
 
     int exetype;
