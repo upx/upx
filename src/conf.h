@@ -29,12 +29,8 @@
 #ifndef UPX_CONF_H__
 #define UPX_CONF_H__ 1
 
-#if defined(__cplusplus)
-#  if (__cplusplus >= 201402L)
-#  elif defined(_MSC_VER) && defined(_MSVC_LANG) && (_MSVC_LANG+0 >= 201402L)
-#  else
-#    error "C++ 14 is required"
-#  endif
+#if !(__cplusplus+0 >= 201703L)
+#  error "C++ 17 is required"
 #endif
 
 #include "version.h"

@@ -1,3 +1,4 @@
+-std=gnu++17
 -Ivendor
 -fno-strict-aliasing
 -fno-strict-overflow

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -110,8 +110,8 @@ set_property(TARGET upx_vendor_zlib PROPERTY C_STANDARD 11)
 file(GLOB upx_SOURCES "src/*.cpp" "src/util/*.cpp")
 list(SORT upx_SOURCES)
 add_executable(upx ${upx_SOURCES})
-#target_compile_features(upx PRIVATE cxx_std_14)
-set_property(TARGET upx PROPERTY CXX_STANDARD 14)
+#target_compile_features(upx PRIVATE cxx_std_17)
+set_property(TARGET upx PROPERTY CXX_STANDARD 17)
 target_link_libraries(upx upx_vendor_ucl upx_vendor_zlib)
 
 if(UPX_CONFIG_DISABLE_WERROR)
@@ -190,7 +190,7 @@ if(GITREV_SHORT)
 endif()
 upx_sanitize_target(${t})
 if(MSVC)
-    target_compile_options(${t} PRIVATE -EHsc -J -W4 ${warn_WX})
+    target_compile_options(${t} PRIVATE -Zc:__cplusplus -EHsc -J -W4 ${warn_WX})
 else()
     target_compile_options(${t} PRIVATE
         -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith

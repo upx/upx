@@ -129,3 +129,5 @@ endif
 ifeq ($(wildcard ./vendor/zlib/crc32.c),)
   $(error ERROR: missing git submodule; run 'git submodule update --init')
 endif
+
+.NOTPARALLEL: # top-level Makefile is sequential, but actual builds use "cmake --parallel"
