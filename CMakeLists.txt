@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR)
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -139,7 +139,7 @@ if(MSVC)
 else()
     # protect against security threats caused by misguided compiler "optimizations"
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        add_definitions(-fno-delete-null-pointer-checks)
+        add_definitions(-fno-delete-null-pointer-checks -fno-lifetime-dse)
     endif()
     add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
     # disable overambitious auto-vectorization until this actually gains something
@@ -233,15 +233,18 @@ endif()
 
 #***********************************************************************
 # "make install"
+# "cmake --install ."
 #***********************************************************************
 
 # installation prefix and directories
 if(NOT CMAKE_INSTALL_PREFIX)
-    message(FATAL_ERROR "ERROR: CMAKE_INSTALL_PREFIX is not defined.")
+    #message(FATAL_ERROR "ERROR: CMAKE_INSTALL_PREFIX is not defined.")
+    message(WARNING "WARNING: CMAKE_INSTALL_PREFIX is not defined.")
 endif()
-include(GNUInstallDirs)
-
-if(DEFINED CMAKE_INSTALL_FULL_BINDIR)
+if(CMAKE_INSTALL_PREFIX)
+    include(GNUInstallDirs)
+endif()
+if(CMAKE_INSTALL_PREFIX AND DEFINED CMAKE_INSTALL_FULL_BINDIR)
     install(TARGETS upx DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
     install(FILES
         COPYING LICENSE NEWS README THANKS doc/upx-doc.html doc/upx-doc.txt
@@ -254,8 +257,8 @@ endif()
 # finally print some info about the build configuration
 #***********************************************************************
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/maint/src/CMakeLists.extra.txt")
-include("${CMAKE_CURRENT_SOURCE_DIR}/maint/src/CMakeLists.extra.txt")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
+include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
 endif()
 
 function(print_var)
@@ -268,7 +271,7 @@ endfunction()
 print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
 print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION)
 print_var(CMAKE_CROSSCOMPILING)
-print_var(CMAKE_C_COMPILER_ID   CMAKE_C_COMPILER_VERSION   CMAKE_C_COMPILER_ARCHITECTURE_ID   CMAKE_C_PLATFORM_ID   CMAKE_C_COMPILER_ABI)
+print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
 print_var(CMAKE_INSTALL_PREFIX)
 print_var(CMAKE_CONFIGURATION_TYPES)
@@ -277,7 +280,7 @@ if (CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release)$")
     message(WARNING "WARNING: unsupported CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}; please use \"Debug\" or \"Release\"")
 endif()
 
-# final extra sanity checks; in case of problems you can remove these if you know what you are doing
+# extra sanity checks to detect incompatible C vs CXX settings
 if(NOT ",${CMAKE_C_PLATFORM_ID}," STREQUAL ",${CMAKE_CXX_PLATFORM_ID},")
     message(FATAL_ERROR "ERROR: CMAKE_C_PLATFORM_ID CMAKE_CXX_PLATFORM_ID mismatch")
 endif()

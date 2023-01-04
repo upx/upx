@@ -34,8 +34,8 @@ podman run "${flags[@]}" "$image" bash -l
 
 # now we can cross-compile UPX for Windows:
 #   cd /home/upx/src/upx
-#   rm -rf ./build/extra/cross-mingw64/release
-#   make build/extra/cross-mingw64/release
+#   rm -rf ./build/extra/cross-windows-mingw64/release
+#   make build/extra/cross-windows-mingw64/release
 
 # lots of other cross-compilers are installed:
 #   - see "ls /usr/bin/*g++*"

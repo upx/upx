@@ -2,6 +2,8 @@
 # UPX top-level Makefile - needs GNU make and CMake >= 3.13
 #
 
+# INFO: this Makefile is just a convenience wrapper for calling CMake
+
 # NOTE: if you only have an older CMake 3.x then you can invoke cmake manually like this:
 #   mkdir -p build/release
 #   cd build/release
@@ -39,6 +41,7 @@ debug: build/debug
 release: build/release
 
 .PHONY: PHONY
+.NOTPARALLEL: # because the actual builds use "cmake --parallel"
 
 #***********************************************************************
 # extra builds: some pre-defined build configurations
@@ -97,21 +100,21 @@ build/extra/cross-linux-arm/release: PHONY; $(call run_config_and_build,$@,Relea
 build/extra/cross-linux-arm/%: export CC  = arm-linux-gnueabihf-gcc
 build/extra/cross-linux-arm/%: export CXX = arm-linux-gnueabihf-g++ -Wno-psabi
 
-# cross compiler: Windows win32 mingw32
-build/extra/cross-mingw32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
-build/extra/cross-mingw32/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-mingw32/%: export CC  = i686-w64-mingw32-gcc
-build/extra/cross-mingw32/%: export CXX = i686-w64-mingw32-g++
+# cross compiler: Windows x86 win32 MinGW
+build/extra/cross-windows-mingw32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/cross-windows-mingw32/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc
+build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++
 # disable sanitize to avoid link errors with current MinGW-w64 versions
-build/extra/cross-mingw32/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISABLE_SANITIZE=1
+build/extra/cross-windows-mingw32/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISABLE_SANITIZE=1
 
-# cross compiler: Windows win64 mingw64
-build/extra/cross-mingw64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
-build/extra/cross-mingw64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-mingw64/%: export CC  = x86_64-w64-mingw32-gcc
-build/extra/cross-mingw64/%: export CXX = x86_64-w64-mingw32-g++
+# cross compiler: Windows x64 win64 MinGW
+build/extra/cross-windows-mingw64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/cross-windows-mingw64/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc
+build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++
 # disable sanitize to avoid link errors with current MinGW-w64 versions
-build/extra/cross-mingw64/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISABLE_SANITIZE=1
+build/extra/cross-windows-mingw64/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISABLE_SANITIZE=1
 
 #***********************************************************************
 # check git submodules
@@ -129,5 +132,3 @@ endif
 ifeq ($(wildcard ./vendor/zlib/crc32.c),)
   $(error ERROR: missing git submodule; run 'git submodule update --init')
 endif
-
-.NOTPARALLEL: # top-level Makefile is sequential, but actual builds use "cmake --parallel"
