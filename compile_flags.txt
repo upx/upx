@@ -1,5 +1,6 @@
 -std=gnu++17
 -Ivendor
+-Ivendor/boost-pfr/include
 -fno-strict-aliasing
 -fno-strict-overflow
 -funsigned-char

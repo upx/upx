@@ -180,7 +180,7 @@ else()
 endif()
 
 set(t upx)
-target_include_directories(${t} PRIVATE vendor)
+target_include_directories(${t} PRIVATE vendor vendor/boost-pfr/include)
 target_compile_definitions(${t} PRIVATE $<$<CONFIG:Debug>:DEBUG=1>)
 if(GITREV_SHORT)
     target_compile_definitions(${t} PRIVATE UPX_VERSION_GITREV="${GITREV_SHORT}${GITREV_PLUS}")

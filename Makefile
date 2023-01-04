@@ -120,6 +120,9 @@ build/extra/cross-windows-mingw64/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISA
 # check git submodules
 #***********************************************************************
 
+ifeq ($(wildcard ./vendor/boost-pfr/include/.),)
+  $(error ERROR: missing git submodule; run 'git submodule update --init')
+endif
 ifeq ($(wildcard ./vendor/doctest/doctest/.),)
   $(error ERROR: missing git submodule; run 'git submodule update --init')
 endif
