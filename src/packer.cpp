@@ -1011,11 +1011,11 @@ static const char *getIdentstr(unsigned *size, int small) {
     }
 }
 
-void Packer::initLoader(const void *pdata, int plen, int small) {
+void Packer::initLoader(const void *pdata, int plen, int small, int pextra) {
     delete linker;
     linker = newLinker();
     assert(bele == linker->bele);
-    linker->init(pdata, plen);
+    linker->init(pdata, plen, pextra);
 
     unsigned size;
     char const *const ident = getIdentstr(&size, small);

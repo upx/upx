@@ -212,7 +212,7 @@ protected:
     // loader util for linker
     virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
-    virtual void initLoader(const void *pdata, int plen, int small = -1);
+    virtual void initLoader(const void *pdata, int plen, int small = -1, int pextra = 0);
 #define C const char *
     void addLoader(C);
     void addLoader(C, C);
