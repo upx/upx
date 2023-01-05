@@ -46,6 +46,7 @@ protected:
     int inputlen = 0;
     upx_byte *output = nullptr;
     int outputlen = 0;
+    unsigned output_capacity = 0;
 
     Section *head = nullptr;
     Section *tail = nullptr;

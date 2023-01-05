@@ -157,7 +157,9 @@ void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra) {
     }
     input[inputlen] = 0; // NUL terminate
 
-    output = new upx_byte[inputlen ? (inputlen + pxtra) : 0x4000];
+    output_capacity = (inputlen ? (inputlen + pxtra) : 0x4000);
+    assert(output_capacity <= (1<<16)); // LE16 l_info.l_size
+    output = new upx_byte[output_capacity];
     outputlen = 0;
 
     // FIXME: bad compare when either symbols or relocs are absent
@@ -362,7 +364,7 @@ ElfLinker::Relocation *ElfLinker::addRelocation(const char *section, unsigned of
 void ElfLinker::setLoaderAlignOffset(int phase)
 {
     //assert(phase & 0);
-    printf("\nFIXME: ElfLinker::setLoaderAlignOffset %d\n", phase);
+    NO_printf("\nFIXME: ElfLinker::setLoaderAlignOffset %d\n", phase);
 }
 #endif
 
@@ -407,8 +409,10 @@ int ElfLinker::addLoader(const char *sname) {
                     tail->size += l;
                 }
             }
+            // Section->output is not relocatable, and C++ has no realloc() anyway.
+            assert((section->size + outputlen) <= output_capacity);
             memcpy(output + outputlen, section->input, section->size);
-            section->output = output + outputlen;
+            section->output = output + outputlen; // FIXME: INVALIDATED by realloc()
             NO_printf("section added: 0x%04x %3d %s\n", outputlen, section->size, section->name);
             outputlen += section->size;
 
@@ -578,8 +582,13 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
 
     bool range_check = false;
     if (strncmp(type, "PC", 2) == 0) {
-        value -= rel->section->offset + rel->offset;
         type += 2;
+        value -= rel->section->offset + rel->offset;
+        range_check = true;
+    }
+    else if (strncmp(type, "PLT", 3) == 0) {
+        type += 3;
+        value -= rel->section->offset + rel->offset;
         range_check = true;
     }
 
