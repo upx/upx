@@ -456,13 +456,13 @@ TEST_CASE("libc snprintf") {
 #if WITH_BOOST_PFR
 TEST_CASE("Boost.PFR") {
     int i = -1;
-    CHECK_EQ(strcmp(pfr_str(i).c_str(), "-1"), 0);
+    CHECK_EQ(strcmp(pfr_str(i), "-1"), 0);
     BE32 b32;
     b32 = 1;
     LE32 l32;
     l32 = 2;
-    CHECK_EQ(strcmp(pfr_str(b32).c_str(), "1"), 0);
-    CHECK_EQ(strcmp(pfr_str(l32).c_str(), "2"), 0);
+    CHECK_EQ(strcmp(pfr_str(b32), "1"), 0);
+    CHECK_EQ(strcmp(pfr_str(l32), "2"), 0);
     struct Foo {
         BE16 b16;
         BE32 b32;
@@ -478,7 +478,7 @@ TEST_CASE("Boost.PFR") {
     foo.l16 = 4;
     foo.l32 = 5;
     foo.l64 = 6;
-    CHECK_EQ(strcmp(pfr_str("foo", "=", foo).c_str(), "foo = {1, 2, 3, 4, 5, 6}"), 0);
+    CHECK_EQ(strcmp(pfr_str("foo", "=", foo), "foo = {1, 2, 3, 4, 5, 6}"), 0);
 }
 #endif // WITH_BOOST_PFR
 

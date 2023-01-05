@@ -743,8 +743,6 @@ struct upx_compress_result_t
 // globals
 **************************************************************************/
 
-#include "util/snprintf.h"   // must get included first!
-
 #include <exception>
 #include <new>
 #include <type_traits>
@@ -757,7 +755,11 @@ struct upx_compress_result_t
 #include <atomic>
 #define upx_std_atomic(Type)    std::atomic<Type>
 #endif
+#if WITH_BOOST_PFR
+#include <sstream>
+#endif
 
+#include "util/snprintf.h"   // must get included first!
 #include "options.h"
 #include "except.h"
 #include "bele.h"
@@ -774,37 +776,6 @@ void *membuffer_get_void_ptr(MemBuffer &mb);
 unsigned membuffer_get_size(MemBuffer &mb);
 
 #include "util/xspan.h"
-
-//#define DOCTEST_CONFIG_DISABLE 1
-#include <doctest/doctest/parts/doctest_fwd.h>
-
-#if WITH_BOOST_PFR
-#include <boost/pfr/io.hpp>
-template <class A>
-__acc_noinline std::string pfr_str(const A &a) {
-    std::ostringstream ss;
-    ss << boost::pfr::io(a);
-    return ss.str();
-}
-template <class A, class B>
-__acc_noinline std::string pfr_str(const A &a, const B &b) {
-    std::ostringstream ss;
-    ss << boost::pfr::io(a);
-    ss << ' ';
-    ss << boost::pfr::io(b);
-    return ss.str();
-}
-template <class A, class B, class C>
-__acc_noinline std::string pfr_str(const A &a, const B &b, const C &c) {
-    std::ostringstream ss;
-    ss << boost::pfr::io(a);
-    ss << ' ';
-    ss << boost::pfr::io(b);
-    ss << ' ';
-    ss << boost::pfr::io(c);
-    return ss.str();
-}
-#endif // WITH_BOOST_PFR
 
 // util/dt_check.cpp
 void upx_compiler_sanity_check();
@@ -864,6 +835,57 @@ int upx_test_overlap       ( const upx_bytep buf,
                                    unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+//#define DOCTEST_CONFIG_DISABLE 1
+#include <doctest/doctest/parts/doctest_fwd.h>
+
+#if WITH_BOOST_PFR
+#include <boost/pfr/io.hpp>
+template <class A>
+__acc_noinline std::string pfr_string(const A &a) {
+    std::ostringstream ss;
+    ss << boost::pfr::io(a);
+    return ss.str();
+}
+template <class A, class B>
+__acc_noinline std::string pfr_string(const A &a, const B &b) {
+    std::ostringstream ss;
+    ss << boost::pfr::io(a);
+    ss << ' ';
+    ss << boost::pfr::io(b);
+    return ss.str();
+}
+template <class A, class B, class C>
+__acc_noinline std::string pfr_string(const A &a, const B &b, const C &c) {
+    std::ostringstream ss;
+    ss << boost::pfr::io(a);
+    ss << ' ';
+    ss << boost::pfr::io(b);
+    ss << ' ';
+    ss << boost::pfr::io(c);
+    return ss.str();
+}
+template <class A, class B, class C, class D>
+__acc_noinline std::string pfr_string(const A &a, const B &b, const C &c, const D &d) {
+    std::ostringstream ss;
+    ss << boost::pfr::io(a);
+    ss << ' ';
+    ss << boost::pfr::io(b);
+    ss << ' ';
+    ss << boost::pfr::io(c);
+    ss << ' ';
+    ss << boost::pfr::io(d);
+    return ss.str();
+}
+// note: this MUST be a macro and not a function because of implicit temporary variable
+#define pfr_str(a,...)  (pfr_string(a, ##__VA_ARGS__).c_str())
+#endif // WITH_BOOST_PFR
+
 
 /*************************************************************************
 // raw_bytes() - get underlying memory from checked buffers/pointers.
