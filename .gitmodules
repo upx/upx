@@ -1,3 +1,8 @@
+[submodule "vendor/boost-pfr"]
+    path = vendor/boost-pfr
+    url = https://github.com/upx/upx-vendor-boost-pfr.git
+    branch = upx-vendor
+    shallow = true
 [submodule "vendor/doctest"]
     path = vendor/doctest
     url = https://github.com/upx/upx-vendor-doctest.git
