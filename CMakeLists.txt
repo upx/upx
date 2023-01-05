@@ -24,14 +24,16 @@ option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" O
 
 # Disallow in-source builds. Note that you will still have to manually
 # clean up a few files if you accidentally try an in-source build.
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-if(",${CMAKE_SOURCE_DIR}," STREQUAL ",${CMAKE_BINARY_DIR},")
-    message(FATAL_ERROR "ERROR: In-source builds are not allowed, please use an extra build dir.")
+if(NOT MSVC_IDE)
+    set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+    set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
+    if(",${CMAKE_CURRENT_SOURCE_DIR}," STREQUAL ",${CMAKE_CURRENT_BINARY_DIR},")
+        message(FATAL_ERROR "ERROR: In-source builds are not allowed, please use an extra build dir.")
+    endif()
 endif()
-set(CMAKE_C_STANDARD_REQUIRED   ON)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD_REQUIRED     ON)
+set(CMAKE_CXX_STANDARD_REQUIRED   ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # determine git revision
 set(GITREV_SHORT "")

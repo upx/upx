@@ -36,6 +36,7 @@ $(top_srcdir)/build/release/upx: PHONY
 	$(MAKE) -C $(top_srcdir) build/release
 
 .PHONY: PHONY
+.NOTPARALLEL:
 
 #
 # "make run-testsuite"
