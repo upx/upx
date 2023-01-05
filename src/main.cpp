@@ -35,6 +35,10 @@
 // options
 **************************************************************************/
 
+#ifndef OPTIONS_VAR
+#define OPTIONS_VAR "UPX"
+#endif
+
 static const char *argv0 = "";
 const char *progname = "";
 
