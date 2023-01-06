@@ -6,7 +6,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # run an interactive shell in the image
 # using a rootless Podman container
 
-image=upx-cross-compile-20221212-v1
+image=upx-cross-compile-20221212-v2
 
 flags=( -ti --read-only --rm )
 flags+=( --cap-drop=all )               # drop all capabilities
@@ -37,6 +37,12 @@ podman run "${flags[@]}" "$image" bash -l
 #   rm -rf ./build/extra/cross-windows-mingw64/release
 #   make build/extra/cross-windows-mingw64/release
 
-# lots of other cross-compilers are installed:
-#   - see "ls /usr/bin/*g++*"
-#   - see misc/cross-compile-upx-with-podman/build-all-inside-container.sh
+# lots of other cross-compilers are installed; see "ls /usr/bin/*g++*"
+
+# and see misc/cross-compile-upx-with-podman/build-all-inside-container.sh; after
+# running that script you can do cool things like:
+#   cd /home/upx/src/upx/build/cross-compile-upx-with-podman/alpha-linux-gnu/debug
+#   qemu-alpha -L /usr/alpha-linux-gnu upx --version
+#   cd /home/upx/src/upx/build/cross-compile-upx-with-podman/hppa-linux-gnu/debug
+#   qemu-hppa -L /usr/hppa-linux-gnu upx --version
+#   (similar for many other archs)

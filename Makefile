@@ -88,6 +88,12 @@ build/extra/gcc-m64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-m64/%: export CC  = gcc -m64
 build/extra/gcc-m64/%: export CXX = g++ -m64
 
+# force building with gcc/g++ -mx32
+build/extra/gcc-mx32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/gcc-mx32/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/gcc-mx32/%: export CC  = gcc -mx32
+build/extra/gcc-mx32/%: export CXX = g++ -mx32
+
 # cross compiler: Linux glibc aarch64-linux-gnu
 build/extra/cross-linux-aarch64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-linux-aarch64/release: PHONY; $(call run_config_and_build,$@,Release)
