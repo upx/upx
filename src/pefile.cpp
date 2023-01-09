@@ -787,7 +787,7 @@ public:
         int osize = 4 + 2 * nsections; // upper limit for alignments
         for (unsigned ic = 0; ic < nsections; ic++)
             osize += sections[ic]->size;
-        output = New(upx_byte, osize);
+        output = New(upx_byte, output_capacity = osize);
         outputlen = 0;
 
         // sort the sections by name before adding them all
