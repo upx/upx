@@ -47,7 +47,8 @@
 **************************************************************************/
 
 PackUnix::PackUnix(InputFile *f) :
-    super(f), exetype(0), blocksize(0), overlay_offset(0), lsize(0)
+    super(f), exetype(0), blocksize(0), overlay_offset(0), lsize(0),
+    methods_used(0)
 {
     COMPILE_TIME_ASSERT(sizeof(Elf32_Ehdr) == 52)
     COMPILE_TIME_ASSERT(sizeof(Elf32_Phdr) == 32)

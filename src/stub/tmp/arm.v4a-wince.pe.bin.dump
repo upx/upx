@@ -2,65 +2,65 @@ file format elf32-littlearm
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags
-  0 DllStart      00000008  00000000  00000000  00000034  2**0  CONTENTS, RELOC, READONLY
-  1 ExeStart      00000054  00000000  00000000  0000003c  2**0  CONTENTS, RELOC, READONLY
-  2 ProcessEnd    00000004  00000000  00000000  00000090  2**0  CONTENTS, READONLY
-  3 Unfilter_0x50 0000004c  00000000  00000000  00000094  2**0  CONTENTS, RELOC, READONLY
-  4 Relocs        00000060  00000000  00000000  000000e0  2**0  CONTENTS, RELOC, READONLY
-  5 Imports       000000bc  00000000  00000000  00000140  2**0  CONTENTS, RELOC, READONLY
-  6 UPX1HEAD      00000020  00000000  00000000  000001fc  2**0  CONTENTS, READONLY
-  7 .ucl_nrv2e_decompress_8 00000114  00000000  00000000  0000021c  2**0  CONTENTS, RELOC, READONLY
-  8 Call2E        00000004  00000000  00000000  00000330  2**0  CONTENTS, RELOC, READONLY
-  9 .ucl_nrv2d_decompress_8 00000100  00000000  00000000  00000334  2**0  CONTENTS, RELOC, READONLY
- 10 Call2D        00000004  00000000  00000000  00000434  2**0  CONTENTS, RELOC, READONLY
- 11 .ucl_nrv2b_decompress_8 000000c4  00000000  00000000  00000438  2**0  CONTENTS, RELOC, READONLY
- 12 Call2B        00000004  00000000  00000000  000004fc  2**0  CONTENTS, RELOC, READONLY
- 13 CallLZMA      00000054  00000000  00000000  00000500  2**0  CONTENTS, RELOC, READONLY
- 14 LZMA_DECODE   00000000  00000000  00000000  00000554  2**0  CONTENTS, READONLY
- 15 LZMA_DEC10    00000938  00000000  00000000  00000554  2**0  CONTENTS, RELOC, READONLY
+  0 DllStart      08  0  0  034  2**0  CONTENTS
+  1 ExeStart      054  0  0  03c  2**0  CONTENTS
+  2 ProcessEnd    04  0  0  090  2**0  CONTENTS
+  3 Unfilter_0x50 04c  0  0  094  2**0  CONTENTS
+  4 Relocs        060  0  0  0e0  2**0  CONTENTS
+  5 Imports       0bc  0  0  0140  2**0  CONTENTS
+  6 UPX1HEAD      020  0  0  01fc  2**0  CONTENTS
+  7 .ucl_nrv2e_decompress_8 0114  0  0  021c  2**0  CONTENTS
+  8 Call2E        04  0  0  0330  2**0  CONTENTS
+  9 .ucl_nrv2d_decompress_8 0100  0  0  0334  2**0  CONTENTS
+ 10 Call2D        04  0  0  0434  2**0  CONTENTS
+ 11 .ucl_nrv2b_decompress_8 0c4  0  0  0438  2**0  CONTENTS
+ 12 Call2B        04  0  0  04fc  2**0  CONTENTS
+ 13 CallLZMA      054  0  0  0500  2**0  CONTENTS
+ 14 LZMA_DECODE   0  0  0  0554  2**0  CONTENTS
+ 15 LZMA_DEC10    0938  0  0  0554  2**0  CONTENTS
 SYMBOL TABLE:
-00000000 l    d  ExeStart	00000000 ExeStart
-00000000 l    d  Unfilter_0x50	00000000 Unfilter_0x50
-00000000 l    d  Relocs	00000000 Relocs
-00000000 l    d  Imports	00000000 Imports
-00000000 l    d  .ucl_nrv2e_decompress_8	00000000 .ucl_nrv2e_decompress_8
-00000000 l    d  .ucl_nrv2d_decompress_8	00000000 .ucl_nrv2d_decompress_8
-00000000 l    d  .ucl_nrv2b_decompress_8	00000000 .ucl_nrv2b_decompress_8
-00000000 l    d  CallLZMA	00000000 CallLZMA
-00000000 l    d  LZMA_DECODE	00000000 LZMA_DECODE
-00000000 l    d  LZMA_DEC10	00000000 LZMA_DEC10
-00000000 l    d  DllStart	00000000 DllStart
-00000000 l    d  ProcessEnd	00000000 ProcessEnd
-00000000 l    d  UPX1HEAD	00000000 UPX1HEAD
-00000000 l    d  Call2E	00000000 Call2E
-00000000 l    d  Call2D	00000000 Call2D
-00000000 l    d  Call2B	00000000 Call2B
-0000002c g       ExeStart	00000000 SRC0
-00000034 g       ExeStart	00000000 DST0
-0000003c g       ExeStart	00000000 IATT
-0000004c g       ExeStart	00000000 ENTR
-00000044 g       Unfilter_0x50	00000000 FIBS
-00000048 g       Unfilter_0x50	00000000 FIBE
-0000005c g       Relocs	00000000 BREL
-000000b0 g       Imports	00000000 BIMP
-000000b4 g       Imports	00000000 ONAM
-00000000         *UND*	00000000 start_of_compressed
-00000000         *UND*	00000000 compressed_length
-00000000         *UND*	00000000 start_of_uncompressed
-00000000         *UND*	00000000 uncompressed_length
-00000000         *UND*	00000000 original_entry
-00000000         *UND*	00000000 filter_buffer_start
-00000000         *UND*	00000000 filter_buffer_end
-00000000         *UND*	00000000 start_of_relocs
-00000000         *UND*	00000000 start_of_imports
-00000000         *UND*	00000000 start_of_dll_names
-00000000 g     F .ucl_nrv2e_decompress_8	00000114 ucl_nrv2e_decompress_8
-00000000 g     F .ucl_nrv2d_decompress_8	00000100 ucl_nrv2d_decompress_8
-00000000 g     F .ucl_nrv2b_decompress_8	000000c4 ucl_nrv2b_decompress_8
-00000000         *UND*	00000000 lzma_u_len
-00000000         *UND*	00000000 lzma_stack_adjust
-00000000         *UND*	00000000 lzma_c_len
-00000000         *UND*	00000000 lzma_properties
+00000000 l    d  ExeStart 0 ExeStart
+00000000 l    d  Unfilter_0x50 0 Unfilter_0x50
+00000000 l    d  Relocs 0 Relocs
+00000000 l    d  Imports 0 Imports
+00000000 l    d  .ucl_nrv2e_decompress_8 0 .ucl_nrv2e_decompress_8
+00000000 l    d  .ucl_nrv2d_decompress_8 0 .ucl_nrv2d_decompress_8
+00000000 l    d  .ucl_nrv2b_decompress_8 0 .ucl_nrv2b_decompress_8
+00000000 l    d  CallLZMA 0 CallLZMA
+00000000 l    d  LZMA_DECODE 0 LZMA_DECODE
+00000000 l    d  LZMA_DEC10 0 LZMA_DEC10
+00000000 l    d  DllStart 0 DllStart
+00000000 l    d  ProcessEnd 0 ProcessEnd
+00000000 l    d  UPX1HEAD 0 UPX1HEAD
+00000000 l    d  Call2E 0 Call2E
+00000000 l    d  Call2D 0 Call2D
+00000000 l    d  Call2B 0 Call2B
+0000002c g       ExeStart 0 SRC0
+00000034 g       ExeStart 0 DST0
+0000003c g       ExeStart 0 IATT
+0000004c g       ExeStart 0 ENTR
+00000044 g       Unfilter_0x50 0 FIBS
+00000048 g       Unfilter_0x50 0 FIBE
+0000005c g       Relocs 0 BREL
+000000b0 g       Imports 0 BIMP
+000000b4 g       Imports 0 ONAM
+00000000         *UND* 0 start_of_compressed
+00000000         *UND* 0 compressed_length
+00000000         *UND* 0 start_of_uncompressed
+00000000         *UND* 0 uncompressed_length
+00000000         *UND* 0 original_entry
+00000000         *UND* 0 filter_buffer_start
+00000000         *UND* 0 filter_buffer_end
+00000000         *UND* 0 start_of_relocs
+00000000         *UND* 0 start_of_imports
+00000000         *UND* 0 start_of_dll_names
+00000000 g     F .ucl_nrv2e_decompress_8 0114 ucl_nrv2e_decompress_8
+00000000 g     F .ucl_nrv2d_decompress_8 0100 ucl_nrv2d_decompress_8
+00000000 g     F .ucl_nrv2b_decompress_8 0c4 ucl_nrv2b_decompress_8
+00000000         *UND* 0 lzma_u_len
+00000000         *UND* 0 lzma_stack_adjust
+00000000         *UND* 0 lzma_c_len
+00000000         *UND* 0 lzma_properties
 
 RELOCATION RECORDS FOR [DllStart]:
 OFFSET   TYPE              VALUE

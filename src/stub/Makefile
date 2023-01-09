@@ -55,7 +55,9 @@ STUBS += amd64-darwin.macho-entry.h
 STUBS += amd64-darwin.macho-fold.h
 STUBS += amd64-darwin.macho-upxmain.h
 STUBS += amd64-linux.elf-entry.h
+STUBS += amd64-linux.elf-so_entry.h
 STUBS += amd64-linux.elf-fold.h
+STUBS += amd64-linux.elf-so_fold.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.shlib-init.h
@@ -265,12 +267,47 @@ tc.default.readelf    = $(call tc,m-readelf)
 # default binutils functions
 define tc.default.f-embed_objinfo
 	chmod a-x $1
-	$(call tc,objcopy) --strip-unneeded $1
+	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start $1
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
-	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) | sed -e '1s/^.*: *file format/file format/' > $1.dump
+	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) | sed \
+	  -e '1s/^.*: *file format/file format/' \
+	  -e 's/$(tab)/ /g' \
+	  -e 's/ 00*/ 0/g' \
+	  -e 's/CONTENTS.*/CONTENTS/' \
+	  > $1.dump
 	$(call tc,xstrip) --with-dump=$1.dump $1
+	cat $1.dump >> $1
+endef
+
+define tc.default.f-embed_objinfo_without_xstrip
+	chmod a-x $1
+	$(call tc,objcopy) -R .text -R .data -R .bss $1
+	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
+	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start $1
+#
+# Disassemble for human readability
+# objdump
+#   -Dr disassemble-all, with interspersed relocations
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
+#
+# Disassemble for post-processing by buildLinuxLoader()
+# objdump
+#   -r  reloc
+#   -h  section-headers
+#   -t  syms
+#   -w  (wide) do not truncate symbol names
+# sed
+#   remove filename from first line
+#   change tab to space
+#   collapse multiple leading zeroes
+#   remove everything after "CONTENTS"
+	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) | sed \
+	  -e '1s/^.*: *file format/file format/' \
+	  -e 's/	/ /g' \
+	  -e 's/ 00*/ 0/g' \
+	  -e 's/CONTENTS.*/CONTENTS/' \
+	  > $1.dump
 	cat $1.dump >> $1
 endef
 
@@ -351,7 +388,12 @@ amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds
+amd64-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds tmp/amd64-expand.o
 #	# FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
 #	####$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	multiarch-ld-2.17 --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
@@ -359,12 +401,41 @@ amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
+amd64-linux.elf-so_fold.h : tmp/$$T.o tmp/amd64-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/amd64-expand.o
+#	# FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
+#	####$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	multiarch-ld-2.17 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+#	$(call tc,f-objstrip,tmp/$T.bin)
+#	$(call tc,sstrip) tmp/$T.bin
+#
+#	$(call tc,f-embed_objinfo,tmp/$T.bin)
+# f-embed_objinfo complains:
+#   File "./../../src/stub/scripts/xstrip.py", line 163, in do_file
+#       assert e_shstrndx + 3 == e_shnum
+# Therefore use a subset of f-embed_objinfo:
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+#
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/amd64-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+
 tmp/amd64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
+tmp/amd64-linux.elf-so_fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objcopy) -R .text $@
+	$(call tc,f-objstrip,$@)
+
 tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/amd64-linux.elf-so_main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) --rename-section .text=SO_MAIN -R .comment -R .note -R .note.GNU-stack -R .reginfo $@
 	$(call tc,f-objstrip,$@)
 
 

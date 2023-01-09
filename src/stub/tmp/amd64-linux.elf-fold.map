@@ -23,19 +23,77 @@ Linker script and memory map
  *fill*         0x0000000000100255        0x3 00
  .text          0x0000000000100258      0x6ee tmp/amd64-linux.elf-main.o
                 0x00000000001007fe                upx_main
- *(.data)
  *fill*         0x0000000000100946        0x2 00
+ .text          0x0000000000100948        0x0 tmp/amd64-expand.o
+ *(.data)
  .data          0x0000000000100948        0x0 tmp/amd64-linux.elf-fold.o
  .data          0x0000000000100948        0x0 tmp/amd64-linux.elf-main.o
+ .data          0x0000000000100948        0x0 tmp/amd64-expand.o
+                0x0000000000100948                . = ALIGN (0x1)
+                0x0000000000100948                __start_EXP_HEAD = .
+
+EXP_HEAD        0x0000000000100948       0xd5
+ EXP_HEAD       0x0000000000100948       0xd5 tmp/amd64-expand.o
+                0x0000000000100a1d                __stop_EXP_HEAD = .
+                0x0000000000100a1d                . = ALIGN (0x1)
+                0x0000000000100a1d                __start_EXP_TAIL = .
+
+EXP_TAIL        0x0000000000100a1d        0xe
+ EXP_TAIL       0x0000000000100a1d        0xe tmp/amd64-expand.o
+                0x0000000000100a2b                __stop_EXP_TAIL = .
+                0x0000000000100a2b                . = ALIGN (0x1)
+                0x0000000000100a2b                __start_NRV2E = .
+
+NRV2E           0x0000000000100a2b       0xe6
+ NRV2E          0x0000000000100a2b       0xe6 tmp/amd64-expand.o
+                0x0000000000100b11                __stop_NRV2E = .
+                0x0000000000100b11                . = ALIGN (0x1)
+                0x0000000000100b11                __start_NRV2D = .
+
+NRV2D           0x0000000000100b11       0xd8
+ NRV2D          0x0000000000100b11       0xd8 tmp/amd64-expand.o
+                0x0000000000100be9                __stop_NRV2D = .
+                0x0000000000100be9                . = ALIGN (0x1)
+                0x0000000000100be9                __start_NRV2B = .
+
+NRV2B           0x0000000000100be9       0xc2
+ NRV2B          0x0000000000100be9       0xc2 tmp/amd64-expand.o
+                0x0000000000100cab                __stop_NRV2B = .
 
 .data
 
-.bss            0x0000000000100948        0x0
- .bss           0x0000000000100948        0x0 tmp/amd64-linux.elf-fold.o
- .bss           0x0000000000100948        0x0 tmp/amd64-linux.elf-main.o
+.bss            0x0000000000100cac        0x0
+ .bss           0x0000000000100cac        0x0 tmp/amd64-linux.elf-fold.o
+ .bss           0x0000000000100cac        0x0 tmp/amd64-linux.elf-main.o
+ .bss           0x0000000000100cac        0x0 tmp/amd64-expand.o
 
-.rela.dyn       0x0000000000100948        0x0
+.rela.dyn       0x0000000000100cb0        0x0
  .rela.text     0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-main.o
+LOAD tmp/amd64-expand.o
 OUTPUT(tmp/amd64-linux.elf-fold.bin elf64-x86-64)
+                0x0000000000000000                . = ALIGN (0x1)
+                0x0000000000000000                __start_LZMA_ELF00 = .
+
+LZMA_ELF00      0x0000000000000000       0x64
+ LZMA_ELF00     0x0000000000000000       0x64 tmp/amd64-expand.o
+                0x0000000000000064                __stop_LZMA_ELF00 = .
+                0x0000000000000064                . = ALIGN (0x1)
+                0x0000000000000064                __start_LZMA_DEC10 = .
+
+LZMA_DEC10      0x0000000000000000      0x9f7
+ LZMA_DEC10     0x0000000000000000      0x9f7 tmp/amd64-expand.o
+                0x00000000000009f7                __stop_LZMA_DEC10 = .
+                0x00000000000009f7                . = ALIGN (0x1)
+                0x00000000000009f7                __start_LZMA_DEC20 = .
+
+LZMA_DEC20      0x0000000000000000      0x9f7
+ LZMA_DEC20     0x0000000000000000      0x9f7 tmp/amd64-expand.o
+                0x00000000000009f7                __stop_LZMA_DEC20 = .
+                0x00000000000009f7                . = ALIGN (0x1)
+                0x00000000000009f7                __start_LZMA_DEC30 = .
+
+LZMA_DEC30      0x0000000000000000       0x18
+ LZMA_DEC30     0x0000000000000000       0x18 tmp/amd64-expand.o
+                0x0000000000000018                __stop_LZMA_DEC30 = .

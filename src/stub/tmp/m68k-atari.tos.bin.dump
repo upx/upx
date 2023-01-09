@@ -2,139 +2,139 @@ file format elf32-m68k
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags
-  0 entry         00000036  00000000  00000000  00000034  2**0  CONTENTS, RELOC, READONLY
-  1 set_up21_a6.w 00000004  00000000  00000000  0000006a  2**0  CONTENTS, RELOC, READONLY
-  2 set_up21_d4.w 00000006  00000000  00000000  0000006e  2**0  CONTENTS, RELOC, READONLY
-  3 set_up21_d4.l 00000008  00000000  00000000  00000074  2**0  CONTENTS, RELOC, READONLY
-  4 loop1_set_count.b 00000002  00000000  00000000  0000007c  2**0  CONTENTS, RELOC, READONLY
-  5 loop1_set_count.w 00000004  00000000  00000000  0000007e  2**0  CONTENTS, RELOC, READONLY
-  6 loop1_set_count.l 00000006  00000000  00000000  00000082  2**0  CONTENTS, RELOC, READONLY
-  7 loop1_label   00000000  00000000  00000000  00000088  2**0  CONTENTS, READONLY
-  8 loop1.fast    0000002a  00000000  00000000  00000088  2**0  CONTENTS, READONLY
-  9 loop1.small   00000002  00000000  00000000  000000b2  2**0  CONTENTS, READONLY
- 10 loop1_subql   00000004  00000000  00000000  000000b4  2**0  CONTENTS, RELOC, READONLY
- 11 loop1_subqw   00000004  00000000  00000000  000000b8  2**0  CONTENTS, RELOC, READONLY
- 12 loop1_dbra    00000004  00000000  00000000  000000bc  2**0  CONTENTS, RELOC, READONLY
- 13 loop2.fast    00000008  00000000  00000000  000000c0  2**0  CONTENTS, RELOC, READONLY
- 14 loop2.small   00000000  00000000  00000000  000000c8  2**0  CONTENTS, READONLY
- 15 copy_to_stack 00000016  00000000  00000000  000000c8  2**0  CONTENTS, RELOC, READONLY
- 16 nrv2b.init    0000000a  00000000  00000000  000000de  2**0  CONTENTS, READONLY
- 17 nrv2d.init    0000000a  00000000  00000000  000000e8  2**0  CONTENTS, READONLY
- 18 nrv2e.init    0000000a  00000000  00000000  000000f2  2**0  CONTENTS, READONLY
- 19 jmp_decompressor_a6.w 00000004  00000000  00000000  000000fc  2**0  CONTENTS, RELOC, READONLY
- 20 jmp_decompressor_d4.w 00000006  00000000  00000000  00000100  2**0  CONTENTS, RELOC, READONLY
- 21 jmp_decompressor_a6.w2 00000008  00000000  00000000  00000106  2**0  CONTENTS, RELOC, READONLY
- 22 jmp_decompressor_d4.l 0000000a  00000000  00000000  0000010e  2**0  CONTENTS, RELOC, READONLY
- 23 code_on_stack 00000000  00000000  00000000  00000118  2**0  CONTENTS, READONLY
- 24 clear_dirty_bss 00000000  00000000  00000000  00000118  2**0  CONTENTS, READONLY
- 25 loop3_label   00000000  00000000  00000000  00000118  2**0  CONTENTS, READONLY
- 26 loop3.small   00000002  00000000  00000000  00000118  2**0  CONTENTS, READONLY
- 27 loop3.fast    00000008  00000000  00000000  0000011a  2**0  CONTENTS, READONLY
- 28 loop3_subql   00000004  00000000  00000000  00000122  2**0  CONTENTS, RELOC, READONLY
- 29 loop3_subqw   00000004  00000000  00000000  00000126  2**0  CONTENTS, RELOC, READONLY
- 30 loop3_dbra    00000004  00000000  00000000  0000012a  2**0  CONTENTS, RELOC, READONLY
- 31 flush_cache   00000078  00000000  00000000  0000012e  2**0  CONTENTS, READONLY
- 32 restore_stack 00000004  00000000  00000000  000001a6  2**0  CONTENTS, RELOC, READONLY
- 33 clear_dirty_stack 0000000c  00000000  00000000  000001aa  2**0  CONTENTS, RELOC, READONLY
- 34 start_program 0000000c  00000000  00000000  000001b6  2**0  CONTENTS, READONLY
- 35 UPX1HEAD      00000020  00000000  00000000  000001c2  2**0  CONTENTS, READONLY
- 36 CUTPOINT      00000000  00000000  00000000  000001e2  2**0  CONTENTS, READONLY
- 37 nrv2b_8.fast  0000007c  00000000  00000000  000001e2  2**0  CONTENTS, READONLY
- 38 nrv2d_8.fast  00000090  00000000  00000000  0000025e  2**0  CONTENTS, READONLY
- 39 nrv2e_8.fast  00000098  00000000  00000000  000002ee  2**0  CONTENTS, READONLY
- 40 nrv2b_8.small 00000076  00000000  00000000  00000386  2**0  CONTENTS, READONLY
- 41 nrv2d_8.small 0000008a  00000000  00000000  000003fc  2**0  CONTENTS, READONLY
- 42 nrv2e_8.small 00000092  00000000  00000000  00000486  2**0  CONTENTS, READONLY
- 43 lzma.init     0000002e  00000000  00000000  00000518  2**0  CONTENTS, RELOC, READONLY
- 44 lzma.fast     000008ca  00000000  00000000  00000546  2**0  CONTENTS, RELOC, READONLY
- 45 lzma.small    000008ca  00000000  00000000  00000e10  2**0  CONTENTS, RELOC, READONLY
- 46 lzma.finish   00000012  00000000  00000000  000016da  2**0  CONTENTS, READONLY
- 47 reloc         0000001a  00000000  00000000  000016ec  2**0  CONTENTS, READONLY
- 48 loop3_set_count.b 00000002  00000000  00000000  00001706  2**0  CONTENTS, RELOC, READONLY
- 49 loop3_set_count.w 00000004  00000000  00000000  00001708  2**0  CONTENTS, RELOC, READONLY
- 50 loop3_set_count.l 00000006  00000000  00000000  0000170c  2**0  CONTENTS, RELOC, READONLY
- 51 jmp_stack     00000002  00000000  00000000  00001712  2**0  CONTENTS, READONLY
- 52 __mulsi3      0000001c  00000000  00000000  00001714  2**0  CONTENTS, READONLY
+  0 entry         036  0  0  034  2**0  CONTENTS
+  1 set_up21_a6.w 04  0  0  06a  2**0  CONTENTS
+  2 set_up21_d4.w 06  0  0  06e  2**0  CONTENTS
+  3 set_up21_d4.l 08  0  0  074  2**0  CONTENTS
+  4 loop1_set_count.b 02  0  0  07c  2**0  CONTENTS
+  5 loop1_set_count.w 04  0  0  07e  2**0  CONTENTS
+  6 loop1_set_count.l 06  0  0  082  2**0  CONTENTS
+  7 loop1_label   0  0  0  088  2**0  CONTENTS
+  8 loop1.fast    02a  0  0  088  2**0  CONTENTS
+  9 loop1.small   02  0  0  0b2  2**0  CONTENTS
+ 10 loop1_subql   04  0  0  0b4  2**0  CONTENTS
+ 11 loop1_subqw   04  0  0  0b8  2**0  CONTENTS
+ 12 loop1_dbra    04  0  0  0bc  2**0  CONTENTS
+ 13 loop2.fast    08  0  0  0c0  2**0  CONTENTS
+ 14 loop2.small   0  0  0  0c8  2**0  CONTENTS
+ 15 copy_to_stack 016  0  0  0c8  2**0  CONTENTS
+ 16 nrv2b.init    0a  0  0  0de  2**0  CONTENTS
+ 17 nrv2d.init    0a  0  0  0e8  2**0  CONTENTS
+ 18 nrv2e.init    0a  0  0  0f2  2**0  CONTENTS
+ 19 jmp_decompressor_a6.w 04  0  0  0fc  2**0  CONTENTS
+ 20 jmp_decompressor_d4.w 06  0  0  0100  2**0  CONTENTS
+ 21 jmp_decompressor_a6.w2 08  0  0  0106  2**0  CONTENTS
+ 22 jmp_decompressor_d4.l 0a  0  0  010e  2**0  CONTENTS
+ 23 code_on_stack 0  0  0  0118  2**0  CONTENTS
+ 24 clear_dirty_bss 0  0  0  0118  2**0  CONTENTS
+ 25 loop3_label   0  0  0  0118  2**0  CONTENTS
+ 26 loop3.small   02  0  0  0118  2**0  CONTENTS
+ 27 loop3.fast    08  0  0  011a  2**0  CONTENTS
+ 28 loop3_subql   04  0  0  0122  2**0  CONTENTS
+ 29 loop3_subqw   04  0  0  0126  2**0  CONTENTS
+ 30 loop3_dbra    04  0  0  012a  2**0  CONTENTS
+ 31 flush_cache   078  0  0  012e  2**0  CONTENTS
+ 32 restore_stack 04  0  0  01a6  2**0  CONTENTS
+ 33 clear_dirty_stack 0c  0  0  01aa  2**0  CONTENTS
+ 34 start_program 0c  0  0  01b6  2**0  CONTENTS
+ 35 UPX1HEAD      020  0  0  01c2  2**0  CONTENTS
+ 36 CUTPOINT      0  0  0  01e2  2**0  CONTENTS
+ 37 nrv2b_8.fast  07c  0  0  01e2  2**0  CONTENTS
+ 38 nrv2d_8.fast  090  0  0  025e  2**0  CONTENTS
+ 39 nrv2e_8.fast  098  0  0  02ee  2**0  CONTENTS
+ 40 nrv2b_8.small 076  0  0  0386  2**0  CONTENTS
+ 41 nrv2d_8.small 08a  0  0  03fc  2**0  CONTENTS
+ 42 nrv2e_8.small 092  0  0  0486  2**0  CONTENTS
+ 43 lzma.init     02e  0  0  0518  2**0  CONTENTS
+ 44 lzma.fast     08ca  0  0  0546  2**0  CONTENTS
+ 45 lzma.small    08ca  0  0  0e10  2**0  CONTENTS
+ 46 lzma.finish   012  0  0  016da  2**0  CONTENTS
+ 47 reloc         01a  0  0  016ec  2**0  CONTENTS
+ 48 loop3_set_count.b 02  0  0  01706  2**0  CONTENTS
+ 49 loop3_set_count.w 04  0  0  01708  2**0  CONTENTS
+ 50 loop3_set_count.l 06  0  0  0170c  2**0  CONTENTS
+ 51 jmp_stack     02  0  0  01712  2**0  CONTENTS
+ 52 __mulsi3      01c  0  0  01714  2**0  CONTENTS
 SYMBOL TABLE:
-00000000 l    d  loop1_label	00000000 loop1_label
-00000000 l    d  flush_cache	00000000 flush_cache
-00000000 l    d  loop3_label	00000000 loop3_label
-00000000 l    d  __mulsi3	00000000 __mulsi3
-00000000 l    d  entry	00000000 entry
-00000000 l    d  set_up21_a6.w	00000000 set_up21_a6.w
-00000000 l    d  set_up21_d4.w	00000000 set_up21_d4.w
-00000000 l    d  set_up21_d4.l	00000000 set_up21_d4.l
-00000000 l    d  loop1_set_count.b	00000000 loop1_set_count.b
-00000000 l    d  loop1_set_count.w	00000000 loop1_set_count.w
-00000000 l    d  loop1_set_count.l	00000000 loop1_set_count.l
-00000000 l    d  loop1.fast	00000000 loop1.fast
-00000000 l    d  loop1.small	00000000 loop1.small
-00000000 l    d  loop1_subql	00000000 loop1_subql
-00000000 l    d  loop1_subqw	00000000 loop1_subqw
-00000000 l    d  loop1_dbra	00000000 loop1_dbra
-00000000 l    d  loop2.fast	00000000 loop2.fast
-00000000 l    d  loop2.small	00000000 loop2.small
-00000000 l    d  copy_to_stack	00000000 copy_to_stack
-00000000 l    d  nrv2b.init	00000000 nrv2b.init
-00000000 l    d  nrv2d.init	00000000 nrv2d.init
-00000000 l    d  nrv2e.init	00000000 nrv2e.init
-00000000 l    d  jmp_decompressor_a6.w	00000000 jmp_decompressor_a6.w
-00000000 l    d  jmp_decompressor_d4.w	00000000 jmp_decompressor_d4.w
-00000000 l    d  jmp_decompressor_a6.w2	00000000 jmp_decompressor_a6.w2
-00000000 l    d  jmp_decompressor_d4.l	00000000 jmp_decompressor_d4.l
-00000000 l    d  code_on_stack	00000000 code_on_stack
-00000000 l    d  clear_dirty_bss	00000000 clear_dirty_bss
-00000000 l    d  loop3.small	00000000 loop3.small
-00000000 l    d  loop3.fast	00000000 loop3.fast
-00000000 l    d  loop3_subql	00000000 loop3_subql
-00000000 l    d  loop3_subqw	00000000 loop3_subqw
-00000000 l    d  loop3_dbra	00000000 loop3_dbra
-00000000 l    d  restore_stack	00000000 restore_stack
-00000000 l    d  clear_dirty_stack	00000000 clear_dirty_stack
-00000000 l    d  start_program	00000000 start_program
-00000000 l    d  UPX1HEAD	00000000 UPX1HEAD
-00000000 l    d  CUTPOINT	00000000 CUTPOINT
-00000000 l    d  nrv2b_8.fast	00000000 nrv2b_8.fast
-00000000 l    d  nrv2d_8.fast	00000000 nrv2d_8.fast
-00000000 l    d  nrv2e_8.fast	00000000 nrv2e_8.fast
-00000000 l    d  nrv2b_8.small	00000000 nrv2b_8.small
-00000000 l    d  nrv2d_8.small	00000000 nrv2d_8.small
-00000000 l    d  nrv2e_8.small	00000000 nrv2e_8.small
-00000000 l    d  lzma.init	00000000 lzma.init
-00000000 l    d  lzma.fast	00000000 lzma.fast
-00000000 l    d  lzma.small	00000000 lzma.small
-00000000 l    d  lzma.finish	00000000 lzma.finish
-00000000 l    d  reloc	00000000 reloc
-00000000 l    d  loop3_set_count.b	00000000 loop3_set_count.b
-00000000 l    d  loop3_set_count.w	00000000 loop3_set_count.w
-00000000 l    d  loop3_set_count.l	00000000 loop3_set_count.l
-00000000 l    d  jmp_stack	00000000 jmp_stack
-00000000         *UND*	00000000 orig_p_tlen
-00000000         *UND*	00000000 orig_p_dlen
-00000000         *UND*	00000000 orig_p_blen
-00000000         *UND*	00000000 up21_a6
-00000000         *UND*	00000000 up21_d4
-00000000         *UND*	00000000 loop1_count
-00000000         *UND*	00000000 loop2_count
-0000000c g       start_program	00000000 code_on_stack_end
-00000000         *UND*	00000000 copy_to_stack_len
-00000000         *UND*	00000000 flush_cache_rts_offset
-00000000         *UND*	00000000 up31_a6
-00000000         *UND*	00000000 up31_d4
-00000076 g       flush_cache	00000000 flush_cache_rts
-00000000         *UND*	00000000 clear_dirty_stack_len
-00000006 g       clear_dirty_stack	00000000 clear_dirty_stack_loop
-00000002 g       nrv2b_8.fast	00000000 nrv2b_8_fast_decompr_start
-00000002 g       nrv2d_8.fast	00000000 nrv2d_8_fast_decompr_start
-00000002 g       nrv2e_8.fast	00000000 nrv2e_8_fast_decompr_start
-00000002 g       nrv2b_8.small	00000000 nrv2b_8_small_decompr_start
-00000002 g       nrv2d_8.small	00000000 nrv2d_8_small_decompr_start
-00000002 g       nrv2e_8.small	00000000 nrv2e_8_small_decompr_start
-00000000         *UND*	00000000 lzma_stack_adjust
-00000000         *UND*	00000000 lzma_u_len
-00000000         *UND*	00000000 lzma_c_len
-00000000         *UND*	00000000 lzma_properties
-00000000         *UND*	00000000 loop3_count
+00000000 l    d  loop1_label 0 loop1_label
+00000000 l    d  flush_cache 0 flush_cache
+00000000 l    d  loop3_label 0 loop3_label
+00000000 l    d  __mulsi3 0 __mulsi3
+00000000 l    d  entry 0 entry
+00000000 l    d  set_up21_a6.w 0 set_up21_a6.w
+00000000 l    d  set_up21_d4.w 0 set_up21_d4.w
+00000000 l    d  set_up21_d4.l 0 set_up21_d4.l
+00000000 l    d  loop1_set_count.b 0 loop1_set_count.b
+00000000 l    d  loop1_set_count.w 0 loop1_set_count.w
+00000000 l    d  loop1_set_count.l 0 loop1_set_count.l
+00000000 l    d  loop1.fast 0 loop1.fast
+00000000 l    d  loop1.small 0 loop1.small
+00000000 l    d  loop1_subql 0 loop1_subql
+00000000 l    d  loop1_subqw 0 loop1_subqw
+00000000 l    d  loop1_dbra 0 loop1_dbra
+00000000 l    d  loop2.fast 0 loop2.fast
+00000000 l    d  loop2.small 0 loop2.small
+00000000 l    d  copy_to_stack 0 copy_to_stack
+00000000 l    d  nrv2b.init 0 nrv2b.init
+00000000 l    d  nrv2d.init 0 nrv2d.init
+00000000 l    d  nrv2e.init 0 nrv2e.init
+00000000 l    d  jmp_decompressor_a6.w 0 jmp_decompressor_a6.w
+00000000 l    d  jmp_decompressor_d4.w 0 jmp_decompressor_d4.w
+00000000 l    d  jmp_decompressor_a6.w2 0 jmp_decompressor_a6.w2
+00000000 l    d  jmp_decompressor_d4.l 0 jmp_decompressor_d4.l
+00000000 l    d  code_on_stack 0 code_on_stack
+00000000 l    d  clear_dirty_bss 0 clear_dirty_bss
+00000000 l    d  loop3.small 0 loop3.small
+00000000 l    d  loop3.fast 0 loop3.fast
+00000000 l    d  loop3_subql 0 loop3_subql
+00000000 l    d  loop3_subqw 0 loop3_subqw
+00000000 l    d  loop3_dbra 0 loop3_dbra
+00000000 l    d  restore_stack 0 restore_stack
+00000000 l    d  clear_dirty_stack 0 clear_dirty_stack
+00000000 l    d  start_program 0 start_program
+00000000 l    d  UPX1HEAD 0 UPX1HEAD
+00000000 l    d  CUTPOINT 0 CUTPOINT
+00000000 l    d  nrv2b_8.fast 0 nrv2b_8.fast
+00000000 l    d  nrv2d_8.fast 0 nrv2d_8.fast
+00000000 l    d  nrv2e_8.fast 0 nrv2e_8.fast
+00000000 l    d  nrv2b_8.small 0 nrv2b_8.small
+00000000 l    d  nrv2d_8.small 0 nrv2d_8.small
+00000000 l    d  nrv2e_8.small 0 nrv2e_8.small
+00000000 l    d  lzma.init 0 lzma.init
+00000000 l    d  lzma.fast 0 lzma.fast
+00000000 l    d  lzma.small 0 lzma.small
+00000000 l    d  lzma.finish 0 lzma.finish
+00000000 l    d  reloc 0 reloc
+00000000 l    d  loop3_set_count.b 0 loop3_set_count.b
+00000000 l    d  loop3_set_count.w 0 loop3_set_count.w
+00000000 l    d  loop3_set_count.l 0 loop3_set_count.l
+00000000 l    d  jmp_stack 0 jmp_stack
+00000000         *UND* 0 orig_p_tlen
+00000000         *UND* 0 orig_p_dlen
+00000000         *UND* 0 orig_p_blen
+00000000         *UND* 0 up21_a6
+00000000         *UND* 0 up21_d4
+00000000         *UND* 0 loop1_count
+00000000         *UND* 0 loop2_count
+0000000c g       start_program 0 code_on_stack_end
+00000000         *UND* 0 copy_to_stack_len
+00000000         *UND* 0 flush_cache_rts_offset
+00000000         *UND* 0 up31_a6
+00000000         *UND* 0 up31_d4
+00000076 g       flush_cache 0 flush_cache_rts
+00000000         *UND* 0 clear_dirty_stack_len
+00000006 g       clear_dirty_stack 0 clear_dirty_stack_loop
+00000002 g       nrv2b_8.fast 0 nrv2b_8_fast_decompr_start
+00000002 g       nrv2d_8.fast 0 nrv2d_8_fast_decompr_start
+00000002 g       nrv2e_8.fast 0 nrv2e_8_fast_decompr_start
+00000002 g       nrv2b_8.small 0 nrv2b_8_small_decompr_start
+00000002 g       nrv2d_8.small 0 nrv2d_8_small_decompr_start
+00000002 g       nrv2e_8.small 0 nrv2e_8_small_decompr_start
+00000000         *UND* 0 lzma_stack_adjust
+00000000         *UND* 0 lzma_u_len
+00000000         *UND* 0 lzma_c_len
+00000000         *UND* 0 lzma_properties
+00000000         *UND* 0 loop3_count
 
 RELOCATION RECORDS FOR [entry]:
 OFFSET   TYPE              VALUE

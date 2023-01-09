@@ -161,6 +161,7 @@ void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra) {
     assert(output_capacity <= (1 << 16)); // LE16 l_info.l_size
     output = new upx_byte[output_capacity];
     outputlen = 0;
+    NO_printf("\nElfLinker::init %d @%p\n", output_capacity, output);
 
     // FIXME: bad compare when either symbols or relocs are absent
     if ((int) strlen("Sections:\n"

@@ -98,6 +98,7 @@ protected:
     int sz_dynamic;
 
     unsigned b_len;  // total length of b_info blocks
+    unsigned methods_used;  // bitmask of compression methods
 
     // must agree with stub/linux.hh
     __packed_struct(b_info) // 12-byte header before each compressed block

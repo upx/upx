@@ -55,7 +55,7 @@ getoff_n2d:
         orl %edx,off; incq %rsi
         xorl $~0,off; jz eof
         sarl     off  // Carry= original low bit
-        movslq   off,disp  // XXX: 2GB
+        movslq   off,dispq  // XXX: 2GB
         jmp len_n2d-2  // CHEAT: assume tail of getnextb is "adcl len,len"
 offprev_n2d:
         getnextb(len)
@@ -67,7 +67,7 @@ lenmore_n2d:
         jnextb0n lenmore_n2d
         addl $2,len
 gotlen_n2d:
-        cmpq $-0x500,disp
+        cmpq $-0x500,dispq
         adcl $1,len  // len += 1+ (disp < -0x500);
         call copy
 bot_n2d:  // In: 0==len

@@ -2,103 +2,103 @@ file format elf32-littlemips
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags
-  0 cdb.start     00000014  00000000  00000000  00000034  2**0  CONTENTS, RELOC, READONLY
-  1 cdb.entry     0000001c  00000000  00000000  00000048  2**0  CONTENTS, RELOC, READONLY
-  2 cdb.start.lzma 00000018  00000000  00000000  00000064  2**0  CONTENTS, RELOC, READONLY
-  3 cdb.entry.lzma 00000020  00000000  00000000  0000007c  2**0  CONTENTS, RELOC, READONLY
-  4 cdb.lzma.cpr  00000008  00000000  00000000  0000009c  2**0  CONTENTS, RELOC, READONLY
-  5 cdb.dec.ptr   00000008  00000000  00000000  000000a4  2**0  CONTENTS, RELOC, READONLY
-  6 cdb.dec.ptr.hi 00000004  00000000  00000000  000000ac  2**0  CONTENTS, RELOC, READONLY
-  7 cdb.exit      00000028  00000000  00000000  000000b0  2**0  CONTENTS, RELOC, READONLY
-  8 con.start     00000030  00000000  00000000  000000d8  2**0  CONTENTS, RELOC, READONLY
-  9 con.mcpy      0000001c  00000000  00000000  00000108  2**0  CONTENTS, RELOC, READONLY
- 10 lzma.prep     00000004  00000000  00000000  00000124  2**0  CONTENTS, RELOC, READONLY
- 11 con.padcd     00000004  00000000  00000000  00000128  2**0  CONTENTS, RELOC, READONLY
- 12 dec.ptr       0000000c  00000000  00000000  0000012c  2**0  CONTENTS, RELOC, READONLY
- 13 dec.ptr.hi    00000008  00000000  00000000  00000138  2**0  CONTENTS, RELOC, READONLY
- 14 con.entry     00000000  00000000  00000000  00000140  2**0  CONTENTS, READONLY
- 15 con.exit      0000002c  00000000  00000000  00000140  2**0  CONTENTS, RELOC, READONLY
- 16 bss.cdb.start.lzma 0000001c  00000000  00000000  0000016c  2**0  CONTENTS, RELOC, READONLY
- 17 bss.cdb.entry.lzma 00000024  00000000  00000000  00000188  2**0  CONTENTS, RELOC, READONLY
- 18 bss.con.start 00000038  00000000  00000000  000001ac  2**0  CONTENTS, RELOC, READONLY
- 19 bss.exit      0000002c  00000000  00000000  000001e4  2**0  CONTENTS, RELOC, READONLY
- 20 memset.short  00000014  00000000  00000000  00000210  2**0  CONTENTS, RELOC, READONLY
- 21 memset.long   00000018  00000000  00000000  00000224  2**0  CONTENTS, RELOC, READONLY
- 22 nrv2b.8bit    000001ec  00000000  00000000  0000023c  2**0  CONTENTS, RELOC, READONLY
- 23 nrv2d.8bit    00000228  00000000  00000000  00000428  2**0  CONTENTS, RELOC, READONLY
- 24 nrv2e.8bit    00000250  00000000  00000000  00000650  2**0  CONTENTS, RELOC, READONLY
- 25 nrv2b.32bit   000001ec  00000000  00000000  000008a0  2**0  CONTENTS, RELOC, READONLY
- 26 nrv2d.32bit   00000228  00000000  00000000  00000a8c  2**0  CONTENTS, RELOC, READONLY
- 27 nrv2e.32bit   00000250  00000000  00000000  00000cb4  2**0  CONTENTS, RELOC, READONLY
- 28 8bit.sub      00000024  00000000  00000000  00000f04  2**0  CONTENTS, READONLY
- 29 32bit.sub     0000002c  00000000  00000000  00000f28  2**0  CONTENTS, READONLY
- 30 nrv2b.small   000000d4  00000000  00000000  00000f54  2**0  CONTENTS, RELOC, READONLY
- 31 nrv2d.small   000000f0  00000000  00000000  00001028  2**0  CONTENTS, RELOC, READONLY
- 32 nrv2e.small   00000100  00000000  00000000  00001118  2**0  CONTENTS, RELOC, READONLY
- 33 nrv.done      00000000  00000000  00000000  00001218  2**0  CONTENTS, READONLY
- 34 decompressor.start 00000000  00000000  00000000  00001218  2**0  CONTENTS, READONLY
- 35 lzma.init     00000050  00000000  00000000  00001218  2**0  CONTENTS, RELOC, READONLY
- 36 LZMA_DEC10    00000ad8  00000000  00000000  00001268  2**0  CONTENTS, READONLY
- 37 LZMA_DEC20    00000ad8  00000000  00000000  00001d40  2**0  CONTENTS, READONLY
- 38 UPX1HEAD      00000020  00000000  00000000  00002818  2**0  CONTENTS, READONLY
+  0 cdb.start     014  0  0  034  2**0  CONTENTS
+  1 cdb.entry     01c  0  0  048  2**0  CONTENTS
+  2 cdb.start.lzma 018  0  0  064  2**0  CONTENTS
+  3 cdb.entry.lzma 020  0  0  07c  2**0  CONTENTS
+  4 cdb.lzma.cpr  08  0  0  09c  2**0  CONTENTS
+  5 cdb.dec.ptr   08  0  0  0a4  2**0  CONTENTS
+  6 cdb.dec.ptr.hi 04  0  0  0ac  2**0  CONTENTS
+  7 cdb.exit      028  0  0  0b0  2**0  CONTENTS
+  8 con.start     030  0  0  0d8  2**0  CONTENTS
+  9 con.mcpy      01c  0  0  0108  2**0  CONTENTS
+ 10 lzma.prep     04  0  0  0124  2**0  CONTENTS
+ 11 con.padcd     04  0  0  0128  2**0  CONTENTS
+ 12 dec.ptr       0c  0  0  012c  2**0  CONTENTS
+ 13 dec.ptr.hi    08  0  0  0138  2**0  CONTENTS
+ 14 con.entry     0  0  0  0140  2**0  CONTENTS
+ 15 con.exit      02c  0  0  0140  2**0  CONTENTS
+ 16 bss.cdb.start.lzma 01c  0  0  016c  2**0  CONTENTS
+ 17 bss.cdb.entry.lzma 024  0  0  0188  2**0  CONTENTS
+ 18 bss.con.start 038  0  0  01ac  2**0  CONTENTS
+ 19 bss.exit      02c  0  0  01e4  2**0  CONTENTS
+ 20 memset.short  014  0  0  0210  2**0  CONTENTS
+ 21 memset.long   018  0  0  0224  2**0  CONTENTS
+ 22 nrv2b.8bit    01ec  0  0  023c  2**0  CONTENTS
+ 23 nrv2d.8bit    0228  0  0  0428  2**0  CONTENTS
+ 24 nrv2e.8bit    0250  0  0  0650  2**0  CONTENTS
+ 25 nrv2b.32bit   01ec  0  0  08a0  2**0  CONTENTS
+ 26 nrv2d.32bit   0228  0  0  0a8c  2**0  CONTENTS
+ 27 nrv2e.32bit   0250  0  0  0cb4  2**0  CONTENTS
+ 28 8bit.sub      024  0  0  0f04  2**0  CONTENTS
+ 29 32bit.sub     02c  0  0  0f28  2**0  CONTENTS
+ 30 nrv2b.small   0d4  0  0  0f54  2**0  CONTENTS
+ 31 nrv2d.small   0f0  0  0  01028  2**0  CONTENTS
+ 32 nrv2e.small   0100  0  0  01118  2**0  CONTENTS
+ 33 nrv.done      0  0  0  01218  2**0  CONTENTS
+ 34 decompressor.start 0  0  0  01218  2**0  CONTENTS
+ 35 lzma.init     050  0  0  01218  2**0  CONTENTS
+ 36 LZMA_DEC10    0ad8  0  0  01268  2**0  CONTENTS
+ 37 LZMA_DEC20    0ad8  0  0  01d40  2**0  CONTENTS
+ 38 UPX1HEAD      020  0  0  02818  2**0  CONTENTS
 SYMBOL TABLE:
-00000000 l    d  nrv.done	00000000 nrv.done
-00000000 l    d  decompressor.start	00000000 decompressor.start
-00000000 l    d  cdb.start	00000000 cdb.start
-00000000 l    d  cdb.entry	00000000 cdb.entry
-00000000 l    d  cdb.start.lzma	00000000 cdb.start.lzma
-00000000 l    d  cdb.entry.lzma	00000000 cdb.entry.lzma
-00000000 l    d  cdb.lzma.cpr	00000000 cdb.lzma.cpr
-00000000 l    d  cdb.dec.ptr	00000000 cdb.dec.ptr
-00000000 l    d  cdb.dec.ptr.hi	00000000 cdb.dec.ptr.hi
-00000000 l    d  cdb.exit	00000000 cdb.exit
-00000000 l    d  con.start	00000000 con.start
-00000000 l    d  con.mcpy	00000000 con.mcpy
-00000000 l    d  lzma.prep	00000000 lzma.prep
-00000000 l    d  con.padcd	00000000 con.padcd
-00000000 l    d  dec.ptr	00000000 dec.ptr
-00000000 l    d  dec.ptr.hi	00000000 dec.ptr.hi
-00000000 l    d  con.entry	00000000 con.entry
-00000000 l    d  con.exit	00000000 con.exit
-00000000 l    d  bss.cdb.start.lzma	00000000 bss.cdb.start.lzma
-00000000 l    d  bss.cdb.entry.lzma	00000000 bss.cdb.entry.lzma
-00000000 l    d  bss.con.start	00000000 bss.con.start
-00000000 l    d  bss.exit	00000000 bss.exit
-00000000 l    d  memset.short	00000000 memset.short
-00000000 l    d  memset.long	00000000 memset.long
-00000000 l    d  nrv2b.8bit	00000000 nrv2b.8bit
-00000000 l    d  nrv2d.8bit	00000000 nrv2d.8bit
-00000000 l    d  nrv2e.8bit	00000000 nrv2e.8bit
-00000000 l    d  nrv2b.32bit	00000000 nrv2b.32bit
-00000000 l    d  nrv2d.32bit	00000000 nrv2d.32bit
-00000000 l    d  nrv2e.32bit	00000000 nrv2e.32bit
-00000000 l    d  8bit.sub	00000000 8bit.sub
-00000000 l    d  32bit.sub	00000000 32bit.sub
-00000000 l    d  nrv2b.small	00000000 nrv2b.small
-00000000 l    d  nrv2d.small	00000000 nrv2d.small
-00000000 l    d  nrv2e.small	00000000 nrv2e.small
-00000000 l    d  lzma.init	00000000 lzma.init
-00000000 l    d  LZMA_DEC10	00000000 LZMA_DEC10
-00000000 l    d  LZMA_DEC20	00000000 LZMA_DEC20
-00000000 l    d  UPX1HEAD	00000000 UPX1HEAD
-00000000         *UND*	00000000 PSVR
-00000000         *UND*	00000000 CPDO
-00000000         *UND*	00000000 ldr_sz
-00000000         *UND*	00000000 lzma_cpr
-00000000         *UND*	00000000 DECO
-00000000         *UND*	00000000 entry
-00000000         *UND*	00000000 DCRT
-00000000         *UND*	00000000 lzma_init_off
-00000000         *UND*	00000000 PAD
-00000000         *UND*	00000000 wrkmem
-00000000         *UND*	00000000 SC
-00000014 g     O 8bit.sub	00000000 gb8_e
-0000001c g     O 32bit.sub	00000000 gb32_e
-00000000         *UND*	00000000 gb_e
-00000000         *UND*	00000000 lzma_stack_adjust
-00000000         *UND*	00000000 lzma_c_len
-00000000         *UND*	00000000 lzma_u_len
-00000000         *UND*	00000000 lzma_properties
+00000000 l    d  nrv.done 0 nrv.done
+00000000 l    d  decompressor.start 0 decompressor.start
+00000000 l    d  cdb.start 0 cdb.start
+00000000 l    d  cdb.entry 0 cdb.entry
+00000000 l    d  cdb.start.lzma 0 cdb.start.lzma
+00000000 l    d  cdb.entry.lzma 0 cdb.entry.lzma
+00000000 l    d  cdb.lzma.cpr 0 cdb.lzma.cpr
+00000000 l    d  cdb.dec.ptr 0 cdb.dec.ptr
+00000000 l    d  cdb.dec.ptr.hi 0 cdb.dec.ptr.hi
+00000000 l    d  cdb.exit 0 cdb.exit
+00000000 l    d  con.start 0 con.start
+00000000 l    d  con.mcpy 0 con.mcpy
+00000000 l    d  lzma.prep 0 lzma.prep
+00000000 l    d  con.padcd 0 con.padcd
+00000000 l    d  dec.ptr 0 dec.ptr
+00000000 l    d  dec.ptr.hi 0 dec.ptr.hi
+00000000 l    d  con.entry 0 con.entry
+00000000 l    d  con.exit 0 con.exit
+00000000 l    d  bss.cdb.start.lzma 0 bss.cdb.start.lzma
+00000000 l    d  bss.cdb.entry.lzma 0 bss.cdb.entry.lzma
+00000000 l    d  bss.con.start 0 bss.con.start
+00000000 l    d  bss.exit 0 bss.exit
+00000000 l    d  memset.short 0 memset.short
+00000000 l    d  memset.long 0 memset.long
+00000000 l    d  nrv2b.8bit 0 nrv2b.8bit
+00000000 l    d  nrv2d.8bit 0 nrv2d.8bit
+00000000 l    d  nrv2e.8bit 0 nrv2e.8bit
+00000000 l    d  nrv2b.32bit 0 nrv2b.32bit
+00000000 l    d  nrv2d.32bit 0 nrv2d.32bit
+00000000 l    d  nrv2e.32bit 0 nrv2e.32bit
+00000000 l    d  8bit.sub 0 8bit.sub
+00000000 l    d  32bit.sub 0 32bit.sub
+00000000 l    d  nrv2b.small 0 nrv2b.small
+00000000 l    d  nrv2d.small 0 nrv2d.small
+00000000 l    d  nrv2e.small 0 nrv2e.small
+00000000 l    d  lzma.init 0 lzma.init
+00000000 l    d  LZMA_DEC10 0 LZMA_DEC10
+00000000 l    d  LZMA_DEC20 0 LZMA_DEC20
+00000000 l    d  UPX1HEAD 0 UPX1HEAD
+00000000         *UND* 0 PSVR
+00000000         *UND* 0 CPDO
+00000000         *UND* 0 ldr_sz
+00000000         *UND* 0 lzma_cpr
+00000000         *UND* 0 DECO
+00000000         *UND* 0 entry
+00000000         *UND* 0 DCRT
+00000000         *UND* 0 lzma_init_off
+00000000         *UND* 0 PAD
+00000000         *UND* 0 wrkmem
+00000000         *UND* 0 SC
+00000014 g     O 8bit.sub 0 gb8_e
+0000001c g     O 32bit.sub 0 gb32_e
+00000000         *UND* 0 gb_e
+00000000         *UND* 0 lzma_stack_adjust
+00000000         *UND* 0 lzma_c_len
+00000000         *UND* 0 lzma_u_len
+00000000         *UND* 0 lzma_properties
 
 RELOCATION RECORDS FOR [cdb.start]:
 OFFSET   TYPE              VALUE

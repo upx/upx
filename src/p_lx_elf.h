@@ -61,7 +61,7 @@ protected:
         unsigned const brka
     ) = 0;
     virtual void defineSymbols(Filter const *);
-    virtual void addStubEntrySections(Filter const *);
+    virtual void addStubEntrySections(Filter const *, unsigned m_decompr);
     virtual void unpack(OutputFile *fo) override;
     unsigned old_data_off, old_data_len;  // un_shlib
 
@@ -568,7 +568,7 @@ protected:
     virtual void pack1(OutputFile *, Filter &) override;  // generate executable header
 
     virtual void buildLoader(const Filter *) override;
-    virtual void addStubEntrySections(Filter const *) override;
+    virtual void addStubEntrySections(Filter const *, unsigned m_decompr) override;
     virtual Linker* newLinker() const override;
     virtual void defineSymbols(Filter const *) override;
 };

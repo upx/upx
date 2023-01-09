@@ -668,14 +668,16 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 }
 
 void
-PackLinuxElf::addStubEntrySections(Filter const *)
+PackLinuxElf::addStubEntrySections(Filter const *, unsigned m_decompr)
 {
-    addLoader("ELFMAINX", nullptr);
+    (void)m_decompr;  // FIXME
+    if (hasLoaderSection("ELFMAINX")) {
+        addLoader("ELFMAINX", nullptr);
+    }
     if (hasLoaderSection("ELFMAINXu")) {
             // brk() trouble if static
         addLoader("ELFMAINXu", nullptr);
     }
-   //addLoader(getDecompressorSections(), nullptr);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
         : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
@@ -1086,8 +1088,9 @@ umax(unsigned a, unsigned b)
     return a;
 }
 
-void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
+void PackLinuxElf32x86::addStubEntrySections(Filter const *ft, unsigned m_decompr)
 {
+    (void)m_decompr;  // FIXME
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 
 // Rely on "+80CXXXX" [etc] in getDecompressorSections() packer_c.cpp */
@@ -1242,7 +1245,7 @@ PackLinuxElf32::buildLinuxLoader(
     linker->addSection("FOLDEXEC", "", 0, 0);
   }
 
-    addStubEntrySections(ft);
+    addStubEntrySections(ft, 0);
 
     if (0==xct_off)
         defineSymbols(ft);  // main program only, not for shared lib
@@ -1258,64 +1261,95 @@ PackLinuxElf64::buildLinuxLoader(
     Filter const *ft
 )
 {
-    initLoader(proto, szproto);
+    MemBuffer mb_cprLoader;
+    unsigned sz_cpr = 0;
+    unsigned sz_unc = 0;
+    unsigned method = 0;
+    upx_byte const *uncLoader = nullptr;
 
   if (0 < szfold) {
+    if (xct_off // shlib
+      &&  this->e_machine==Elf32_Ehdr::EM_X86_64  // experimental
+    ) {
+        initLoader(fold, szfold);
+// Typical layout of 'sections' in compressed stub code for shared library:
+//   SO_HEAD
+//   ptr_NEXT
+//   EXP_HEAD  NRV getbit(), copy
+//   NRV2B etc: daisy chain of de-compressor for each method used
+//   EXP_TAIL  FIXME: unfilter
+//   SO_TAIL
+//   SO_MAIN  C-language supervision based on PT_LOADs
+        char sec[120];
+        int len = 0;
+        unsigned m_decompr = (methods_used ? methods_used : (1u << ph.method));
+        len += snprintf(sec, sizeof(sec), "%s", "SO_HEAD,ptr_NEXT,EXP_HEAD");
+        if (((1u<<M_NRV2B_LE32)|(1u<<M_NRV2B_8)|(1u<<M_NRV2B_LE16)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "NRV2B");
+        }
+        if (((1u<<M_NRV2D_LE32)|(1u<<M_NRV2D_8)|(1u<<M_NRV2D_LE16)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "NRV2D");
+        }
+        if (((1u<<M_NRV2E_LE32)|(1u<<M_NRV2E_8)|(1u<<M_NRV2E_LE16)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "NRV2E");
+        }
+        if (((1u<<M_LZMA)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
+        }
+        len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "EXP_TAIL,SO_TAIL,SO_MAIN");
+        addLoader(sec, nullptr);
+        relocateLoader();
+        {
+            int sz_unc_int;
+            uncLoader = linker->getLoader(&sz_unc_int);
+            sz_unc = sz_unc_int;
+        }
+        method = M_NRV2B_LE32;
+    }
+    else {
+        cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
+        unsigned fold_hdrlen = umax(0x80, usizeof(hf->ehdr) +
+            get_te16(&hf->ehdr.e_phentsize) * get_te16(&hf->ehdr.e_phnum) +
+                sizeof(l_info) );
+        uncLoader = fold_hdrlen + fold;
+        sz_unc = ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen));
+        method = ph.method;
+    }
+
     struct b_info h; memset(&h, 0, sizeof(h));
-    unsigned fold_hdrlen = 0;
-    cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
-    fold_hdrlen = umax(0x80, usizeof(hf->ehdr) +
-        get_te16(&hf->ehdr.e_phentsize) * get_te16(&hf->ehdr.e_phnum) +
-            sizeof(l_info) );
-    h.sz_unc = ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen));
-    h.b_method = (unsigned char) ph.method;
+    h.b_method = method;
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
-    unsigned char const *const uncLoader = fold_hdrlen + fold;
 
-    MemBuffer mb_cprLoader;
-    mb_cprLoader.allocForCompression(h.sz_unc + (0==h.sz_unc));
-    h.sz_cpr = mb_cprLoader.getSize();
-    unsigned char *const cprLoader = (unsigned char *)mb_cprLoader;
+    mb_cprLoader.allocForCompression(sizeof(h) + sz_unc);
+    unsigned char *const cprLoader = (unsigned char *)mb_cprLoader;  // less typing
+
+    h.sz_unc = sz_unc;
+    h.sz_cpr = mb_cprLoader.getSize();  // max that upx_compress may use
     {
-    unsigned h_sz_cpr = h.sz_cpr;
-    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h_sz_cpr,
-        nullptr, forced_method(ph.method), 10, nullptr, nullptr );
-    h.sz_cpr = h_sz_cpr;
-    if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
-        throwInternalError("loader compression failed");
+        int r = upx_compress(uncLoader, sz_unc, sizeof(h) + cprLoader, &sz_cpr,
+            nullptr, method, 10, nullptr, nullptr );
+        h.sz_cpr = sz_cpr;  // actual length used
+        if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
+            throwInternalError("loader compression failed");
     }
-#if 0  //{  debugging only
-    if (M_IS_LZMA(ph.method)) {
-        ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
-        MemBuffer mb_tmp(tmp_len);
-        unsigned char *tmp = (unsigned char *)mb_tmp;
-        memset(tmp, 0, tmp_len);
-        int r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, nullptr);
-        if (r == UPX_E_OUT_OF_MEMORY)
-            throwOutOfMemoryException();
-        printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
-        for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
-            printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);
-        }
-    }
-#endif  //}
-    unsigned const sz_cpr = h.sz_cpr;
     set_te32(&h.sz_cpr, h.sz_cpr);
     set_te32(&h.sz_unc, h.sz_unc);
-    memcpy(cprLoader, &h, sizeof(h));
-
-    // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
-  }
-  else {
-    linker->addSection("FOLDEXEC", "", 0, 0);
+    memcpy(cprLoader, &h, sizeof(h)); // cprLoader will become FOLDEXEC
   }
 
-    addStubEntrySections(ft);
-
-    if (0==xct_off)
-        defineSymbols(ft);  // main program only, not for shared lib
+    initLoader(proto, szproto, -1, sz_cpr);
+    printf("FOLDEXEC unc=%#x  cpr=%#x\n", sz_unc, sz_cpr);
+    linker->addSection("FOLDEXEC", mb_cprLoader, sizeof(b_info) + sz_cpr, 0);
+    if (xct_off && this->e_machine==Elf32_Ehdr::EM_X86_64) { // experimental
+        addLoader("ELFMAINX,IDENTSTR,ELFMAINZ,FOLDEXEC");
+    }
+    else {
+        addStubEntrySections(ft, (methods_used ? methods_used : (1u << ph.method)) );
+        if (!xct_off) {
+            defineSymbols(ft);
+        }
+    }
     relocateLoader();
 }
 
@@ -1584,6 +1618,10 @@ static const
 static const
 #include "stub/amd64-linux.elf-fold.h"
 static const
+#include "stub/amd64-linux.elf-so_entry.h"
+static const
+#include "stub/amd64-linux.elf-so_fold.h"
+static const
 #include "stub/amd64-linux.shlib-init.h"
 
 void
@@ -1591,8 +1629,8 @@ PackLinuxElf64amd::buildLoader(const Filter *ft)
 {
     if (0!=xct_off) {  // shared library
         buildLinuxLoader(
-            stub_amd64_linux_shlib_init, sizeof(stub_amd64_linux_shlib_init),
-            nullptr,                        0,                                 ft );
+            stub_amd64_linux_elf_so_entry, sizeof(stub_amd64_linux_elf_so_entry),
+            stub_amd64_linux_elf_so_fold,  sizeof(stub_amd64_linux_elf_so_fold), ft);
         return;
     }
     buildLinuxLoader(
