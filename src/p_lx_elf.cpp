@@ -1328,7 +1328,7 @@ PackLinuxElf64::buildLinuxLoader(
     h.sz_cpr = mb_cprLoader.getSize();  // max that upx_compress may use
     {
         int r = upx_compress(uncLoader, sz_unc, sizeof(h) + cprLoader, &sz_cpr,
-            nullptr, method, 10, nullptr, nullptr );
+            nullptr, forced_method(method), 10, nullptr, nullptr );
         h.sz_cpr = sz_cpr;  // actual length used
         if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
             throwInternalError("loader compression failed");
@@ -1339,13 +1339,14 @@ PackLinuxElf64::buildLinuxLoader(
   }
 
     initLoader(proto, szproto, -1, sz_cpr);
-    printf("FOLDEXEC unc=%#x  cpr=%#x\n", sz_unc, sz_cpr);
+    NO_printf("FOLDEXEC unc=%#x  cpr=%#x\n", sz_unc, sz_cpr);
     linker->addSection("FOLDEXEC", mb_cprLoader, sizeof(b_info) + sz_cpr, 0);
     if (xct_off && this->e_machine==Elf32_Ehdr::EM_X86_64) { // experimental
         addLoader("ELFMAINX,IDENTSTR,ELFMAINZ,FOLDEXEC");
     }
     else {
-        addStubEntrySections(ft, (methods_used ? methods_used : (1u << ph.method)) );
+        addStubEntrySections(ft, (methods_used ? methods_used
+                            : (1u << forced_method(ph.method))) );
         if (!xct_off) {
             defineSymbols(ft);
         }
