@@ -158,7 +158,7 @@ void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra) {
     input[inputlen] = 0; // NUL terminate
 
     output_capacity = (inputlen ? (inputlen + pxtra) : 0x4000);
-    assert(output_capacity <= (1<<16)); // LE16 l_info.l_size
+    assert(output_capacity <= (1 << 16)); // LE16 l_info.l_size
     output = new upx_byte[output_capacity];
     outputlen = 0;
 
@@ -585,8 +585,7 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         type += 2;
         value -= rel->section->offset + rel->offset;
         range_check = true;
-    }
-    else if (strncmp(type, "PLT", 3) == 0) {
+    } else if (strncmp(type, "PLT", 3) == 0) {
         type += 3;
         value -= rel->section->offset + rel->offset;
         range_check = true;
