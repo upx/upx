@@ -30,7 +30,6 @@
 #define         UPX102  1
 #include "arch/i386/macros.S"
 
-
 // =============
 // ============= ENTRY POINT
 // =============
@@ -55,6 +54,10 @@ section         PEICONS2
                 addw    [edi + icon_offset], offset icon_delta
 section         PETLSHAK
                 mov     dword ptr [edi + tls_address], offset tls_value
+                push    [eax]   // save the TLS index
+                mov     dword ptr [eax], offset tls_value // restore compressed data overwritten by the TLS index
+                push    eax
+
 section         PEMAIN02
                 push    edi
 section         PEMAIN03
@@ -72,6 +75,11 @@ section         PEMAIN03
 // =============
 section         PEMAIN10
                 pop     esi             // load vaddr
+
+section         PETLSHAK2               // restore the TLS index
+                pop     edi
+                pop     eax
+                mov     [edi], eax
 
 // =============
 // ============= CALLTRICK

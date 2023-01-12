@@ -124,6 +124,7 @@ void PackW32Pe::buildLoader(const Filter *ft)
               "PEMAIN10",
               nullptr
              );
+    addLoader(tmp_tlsindex ? "PETLSHAK2" : "");
     if (ft->id)
     {
         const unsigned texv = ih.codebase - rvamin;
