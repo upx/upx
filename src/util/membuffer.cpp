@@ -129,6 +129,8 @@ unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned e
     bytes = umax(bytes, (z / 3 * (8 + 2 * (w - 8) / 1)) / 8);
     // NRV2E: 1 byte plus 3 bits per pair of width exceeding 7 ("ss12")
     bytes = umax(bytes, (z / 3 * (8 + 3 * (w - 7) / 2)) / 8);
+    // zstd: ZSTD_COMPRESSBOUND
+    bytes = umax(bytes, z + (z >> 8) + ((z < (128 << 10)) ? (((128 << 10) - z) >> 11) : 0));
     // extra + 256 safety for rounding
     bytes = mem_size(1, bytes, extra, 256);
     return bytes;

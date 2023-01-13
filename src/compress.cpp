@@ -118,6 +118,11 @@ int upx_compress( const upx_bytep src, unsigned  src_len,
         r = upx_ucl_compress(src, src_len, dst, dst_len,
                              cb, method, level, cconf, cresult);
 #endif
+#if (WITH_ZSTD)
+    else if (M_IS_ZSTD(method))
+        r = upx_zstd_compress(src, src_len, dst, dst_len,
+                              cb, method, level, cconf, cresult);
+#endif
     else {
         throwInternalError("unknown compression method");
     }
@@ -165,6 +170,10 @@ int upx_decompress(const upx_bytep src, unsigned  src_len,
     else if (M_IS_DEFLATE(method))
         r = upx_zlib_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
+#if (WITH_ZSTD)
+    else if (M_IS_ZSTD(method))
+        r = upx_zstd_decompress(src, src_len, dst, dst_len, method, cresult);
+#endif
     else {
         throwInternalError("unknown decompression method");
     }
@@ -207,6 +216,10 @@ int upx_test_overlap( const upx_bytep buf,
 #if (WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_ucl_test_overlap(buf, tbuf, src_off, src_len, dst_len, method, cresult);
+#endif
+#if (WITH_ZSTD)
+    else if (M_IS_ZSTD(method))
+        r = upx_zstd_test_overlap(buf, tbuf, src_off, src_len, dst_len, method, cresult);
 #endif
     else {
         throwInternalError("unknown decompression method");

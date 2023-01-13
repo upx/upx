@@ -126,6 +126,28 @@ unsigned upx_zlib_crc32  (const void *buf, unsigned len, unsigned crc);
 #endif
 
 
+#if (WITH_ZSTD)
+int upx_zstd_init(void);
+const char *upx_zstd_version_string(void);
+int upx_zstd_compress      ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_callback_p cb,
+                                   int method, int level,
+                             const upx_compress_config_t *cconf,
+                                   upx_compress_result_t *cresult );
+int upx_zstd_decompress    ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
+                                   int method,
+                             const upx_compress_result_t *cresult );
+int upx_zstd_test_overlap  ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
+                                   int method,
+                             const upx_compress_result_t *cresult );
+#endif
+
+
 #endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

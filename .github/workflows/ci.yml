@@ -259,7 +259,7 @@ jobs:
           git config --global core.autocrlf input
           git --version && bash --version
           git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite
-          mkdir -p -v build/$C/$B/{ucl,upx,zlib}
+          mkdir -p -v build/$C/$B/{ucl,upx,zlib,zstd}
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -281,12 +281,17 @@ jobs:
           cd %BDIR%\zlib
           cl -MT -J -O2 -W3 -WX %DEFS% -c %H%\vendor\zlib\*.c
           link -lib -out:zlib.lib *.obj
+          @REM ===== build zstd =====
+          cd %BDIR%\zstd
+          set s=%H%\vendor\zstd\lib
+          cl -MT -J -O2 -W4 -WX -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM %DEFS% -c %s%\common\*.c %s%\compress\*.c %s%\decompress\*.c
+          link -lib -out:zstd.lib *.obj
           @REM ===== build UPX =====
           cd %BDIR%\upx
           set s=%H%\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          cl -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %s%\*.cpp %s%\util\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
+          cl -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %s%\*.cpp %s%\util\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib /link setargv.obj
       - name: 'Make artifact'
         shell: bash
         run: |

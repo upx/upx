@@ -411,6 +411,11 @@ void show_version(bool one_line)
     if (v != nullptr && v[0])
         fprintf(fp, "LZMA SDK version %s\n", v);
 #endif
+#if (WITH_ZSTD)
+    v = upx_zstd_version_string();
+    if (v != nullptr && v[0])
+        fprintf(fp, "zstd data compression library %s\n", v);
+#endif
 #if !defined(DOCTEST_CONFIG_DISABLE)
     fprintf(fp, "doctest C++ testing framework version %s\n", DOCTEST_VERSION_STR);
 #endif
@@ -423,6 +428,10 @@ void show_version(bool one_line)
 #endif
 #if (WITH_LZMA)
     fprintf(fp, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
+#endif
+#if (WITH_ZSTD)
+    // see vendor/zstd/LICENSE; main author is Yann Collet
+    fprintf(fp, "Copyright (C) 2015" "-2023 Meta Platforms, Inc. and affiliates\n");
 #endif
 #if !defined(DOCTEST_CONFIG_DISABLE)
     fprintf(fp, "Copyright (C) 2016" "-2021 Viktor Kirilov\n");
