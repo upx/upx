@@ -28,3 +28,8 @@
     url = https://github.com/upx/upx-vendor-zlib.git
     branch = upx-vendor
     shallow = true
+[submodule "vendor/zstd"]
+    path = vendor/zstd
+    url = https://github.com/upx/upx-vendor-zstd.git
+    branch = upx-vendor
+    shallow = true
