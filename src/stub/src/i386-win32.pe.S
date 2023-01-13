@@ -53,7 +53,7 @@ section         PEICONS1
 section         PEICONS2
                 addw    [edi + icon_offset], offset icon_delta
 section         PETLSHAK
-                mov     dword ptr [edi + tls_address], offset tls_value
+                lea     eax, [edi + tls_address]
                 push    [eax]   // save the TLS index
                 mov     dword ptr [eax], offset tls_value // restore compressed data overwritten by the TLS index
                 push    eax
