@@ -25,6 +25,10 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+// work.cpp implements the central loop, and it uses class PackMaster to
+// dispatch. PackMaster by itself will instatiate a concrete subclass
+// of Packer which then does the actual work.
+
 #include "conf.h"
 #include "file.h"
 #include "packmast.h"

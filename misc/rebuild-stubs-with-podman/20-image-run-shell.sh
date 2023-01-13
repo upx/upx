@@ -53,7 +53,7 @@ podman run "${flags[@]}" "$image" bash -l
 #   ./build/extra/gcc/release/upx --version
 #   make -C build/extra/gcc/release test
 
-# and we can also rebuild UPX with -m32:
+# and we can also build UPX with -m32:
 #   cd /home/upx/src/upx
 #   rm -rf ./build/extra/gcc-m32/release
 #   make build/extra/gcc-m32/release
@@ -61,7 +61,7 @@ podman run "${flags[@]}" "$image" bash -l
 #   ./build/extra/gcc-m32/release/upx --version
 #   make -C build/extra/gcc-m32/release test
 
-# and we can also rebuild UPX with -mx32: (NOTE: needs CONFIG_X86_X32_ABI on host kernel!)
+# and we can also build UPX with -mx32: (NOTE: needs CONFIG_X86_X32_ABI on host kernel!)
 #   cd /home/upx/src/upx
 #   rm -rf ./build/extra/gcc-mx32/release
 #   make build/extra/gcc-mx32/release

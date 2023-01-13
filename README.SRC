@@ -44,7 +44,8 @@ Short overview
 Tools needed to build/modify the UPX sources
 --------------------------------------------
 
-  - A C++ compiler that supports C++ 17: clang, gcc or msvc
+  - A C++ compiler that supports C++ 17: clang 5.0, gcc 8.0 or msvc 2019 16.11
+    (older or other compilers may work, use at your own risk)
 
   - GNU make
 

@@ -105,9 +105,7 @@ __acc_static_forceinline constexpr upx_uint64_t bswap64(upx_uint64_t v) {
 __acc_static_forceinline constexpr unsigned no_bswap16(unsigned v) {
     return v & 0xffff; // needed so that this is equivalent to bswap16() above
 }
-
 __acc_static_forceinline constexpr unsigned no_bswap32(unsigned v) { return v; }
-
 __acc_static_forceinline constexpr upx_uint64_t no_bswap64(upx_uint64_t v) { return v; }
 
 #if (ACC_ABI_BIG_ENDIAN)
@@ -175,10 +173,13 @@ inline unsigned get_le26(const void *p) { return get_le32(p) & 0x03ffffff; }
 
 inline void set_le26(void *p, unsigned v) {
     // preserve the top 6 bits
-    // set_le32(p, (get_le32(p) & 0xfc000000) | (v & 0x03ffffff));
+#if 0
+    set_le32(p, (get_le32(p) & 0xfc000000) | (v & 0x03ffffff));
+#else
     // optimized version, saving a runtime bswap32
     set_ne32(p, (get_ne32(p) & ne32_to_le32(0xfc000000)) |
                     (ne32_to_le32(v) & ne32_to_le32(0x03ffffff)));
+#endif
 }
 
 /*************************************************************************
@@ -573,7 +574,6 @@ template <class T>
 inline T *operator-(T *ptr, const BE16 &v) {
     return ptr - unsigned(v);
 }
-
 template <class T>
 inline T *operator+(T *ptr, const BE32 &v) {
     return ptr + unsigned(v);
@@ -582,13 +582,6 @@ template <class T>
 inline T *operator-(T *ptr, const BE32 &v) {
     return ptr - unsigned(v);
 }
-
-// these are not implemented on purpose and will cause link-time errors
-template <class T>
-T *operator+(T *ptr, const BE64 &v);
-template <class T>
-T *operator-(T *ptr, const BE64 &v);
-
 template <class T>
 inline T *operator+(T *ptr, const LE16 &v) {
     return ptr + unsigned(v);
@@ -597,7 +590,6 @@ template <class T>
 inline T *operator-(T *ptr, const LE16 &v) {
     return ptr - unsigned(v);
 }
-
 template <class T>
 inline T *operator+(T *ptr, const LE32 &v) {
     return ptr + unsigned(v);
@@ -608,6 +600,10 @@ inline T *operator-(T *ptr, const LE32 &v) {
 }
 
 // these are not implemented on purpose and will cause link-time errors
+template <class T>
+T *operator+(T *ptr, const BE64 &v);
+template <class T>
+T *operator-(T *ptr, const BE64 &v);
 template <class T>
 T *operator+(T *ptr, const LE64 &v);
 template <class T>

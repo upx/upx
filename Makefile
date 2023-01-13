@@ -64,6 +64,12 @@ build/extra/clang-m32/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/clang-m32/%: export CC  = clang -m32
 build/extra/clang-m32/%: export CXX = clang++ -m32
 
+# force building with clang/clang++ -mx32
+build/extra/clang-mx32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/clang-mx32/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/clang-mx32/%: export CC  = clang -mx32
+build/extra/clang-mx32/%: export CXX = clang++ -mx32
+
 # force building with clang/clang++ -m64
 build/extra/clang-m64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-m64/release: PHONY; $(call run_config_and_build,$@,Release)
@@ -82,17 +88,17 @@ build/extra/gcc-m32/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-m32/%: export CC  = gcc -m32
 build/extra/gcc-m32/%: export CXX = g++ -m32
 
-# force building with gcc/g++ -m64
-build/extra/gcc-m64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
-build/extra/gcc-m64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/gcc-m64/%: export CC  = gcc -m64
-build/extra/gcc-m64/%: export CXX = g++ -m64
-
 # force building with gcc/g++ -mx32
 build/extra/gcc-mx32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/gcc-mx32/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-mx32/%: export CC  = gcc -mx32
 build/extra/gcc-mx32/%: export CXX = g++ -mx32
+
+# force building with gcc/g++ -m64
+build/extra/gcc-m64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/gcc-m64/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/gcc-m64/%: export CC  = gcc -m64
+build/extra/gcc-m64/%: export CXX = g++ -m64
 
 # cross compiler: Linux glibc aarch64-linux-gnu
 build/extra/cross-linux-aarch64/debug:   PHONY; $(call run_config_and_build,$@,Debug)

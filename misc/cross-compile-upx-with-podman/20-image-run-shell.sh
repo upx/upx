@@ -40,9 +40,9 @@ podman run "${flags[@]}" "$image" bash -l
 # lots of other cross-compilers are installed; see "ls /usr/bin/*g++*"
 
 # and see misc/cross-compile-upx-with-podman/build-all-inside-container.sh; after
-# running that script you can do cool things like:
+# running that script we can do cool things like:
 #   cd /home/upx/src/upx/build/cross-compile-upx-with-podman/alpha-linux-gnu/debug
 #   qemu-alpha -L /usr/alpha-linux-gnu upx --version
 #   cd /home/upx/src/upx/build/cross-compile-upx-with-podman/hppa-linux-gnu/debug
 #   qemu-hppa -L /usr/hppa-linux-gnu upx --version
-#   (similar for many other archs)
+# (similar for many other archs)
