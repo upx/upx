@@ -18,6 +18,11 @@
     url = https://github.com/upx/upx-vendor-ucl.git
     branch = upx-vendor
     shallow = true
+[submodule "vendor/valgrind"]
+    path = vendor/valgrind
+    url = https://github.com/upx/upx-vendor-valgrind.git
+    branch = upx-vendor
+    shallow = true
 [submodule "vendor/zlib"]
     path = vendor/zlib
     url = https://github.com/upx/upx-vendor-zlib.git
