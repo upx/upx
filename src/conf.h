@@ -175,8 +175,11 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #endif
 
 // malloc debuggers
-#if (WITH_VALGRIND)
-#  include <valgrind/memcheck.h>
+#ifndef WITH_VALGRIND
+#  define WITH_VALGRIND 1
+#endif
+#if (WITH_VALGRIND) && defined(__GNUC__) && !defined(__SANITIZE_ADDRESS__)
+#  include <valgrind/include/valgrind/memcheck.h>
 #endif
 #if !defined(VALGRIND_MAKE_MEM_DEFINED)
 #  define VALGRIND_MAKE_MEM_DEFINED(addr,len)   0
