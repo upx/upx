@@ -131,7 +131,7 @@ jobs:
       matrix:
         include:
           - { os: macos-11, gcc: gcc-10, gxx: 'g++-10', testsuite: true }
-          # { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true } # disable gcc - XCode 14.0 ld bug; supposed to be fixed in 14.1
+          # { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true } # disable gcc - XCode 14.0.1 ld bug; supposed to be fixed in 14.1
           - { os: macos-12, testsuite: true }
     steps:
       - name: 'Install brew packages'
@@ -245,10 +245,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: amd64-win64-msvc-14.2, os: windows-2019, C: msvc-14.2-x64, A: x64 } # Visual Studio 2019
-          - { name: amd64-win64-msvc-14.3, os: windows-2022, C: msvc-14.3-x64, A: x64 } # Visual Studio 2022
-          - { name: i386-win32-msvc-14.2,  os: windows-2019, C: msvc-14.2-x86, A: x86 } # Visual Studio 2019
-          - { name: i386-win32-msvc-14.3,  os: windows-2022, C: msvc-14.3-x86, A: x86 } # Visual Studio 2022
+          - { name: amd64-win64-vs2019, os: windows-2019, C: msvc-14.2-x64, arch: amd64 }
+          - { name: amd64-win64-vs2022, os: windows-2022, C: msvc-14.3-x64, arch: amd64 }
+          - { name: arm64-win64-vs2019, os: windows-2019, C: msvc-14.2-x64, arch: amd64_arm64 }
+          - { name: arm64-win64-vs2022, os: windows-2022, C: msvc-14.3-x64, arch: amd64_arm64 }
+          - { name: i386-win32-vs2019,  os: windows-2019, C: msvc-14.2-x86, arch: amd64_x86 }
+          - { name: i386-win32-vs2022,  os: windows-2022, C: msvc-14.3-x86, arch: amd64_x86 }
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -263,7 +265,7 @@ jobs:
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{ matrix.A }}
+          arch: ${{ matrix.arch }}
       - name: 'Build'
         shell: cmd
         run: |
@@ -291,7 +293,7 @@ jobs:
           set s=%H%\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          cl -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %s%\*.cpp %s%\util\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib /link setargv.obj
+          cl -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %s%\*.cpp %s%\check\*.cpp %s%\util\*.cpp %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib /link setargv.obj
       - name: 'Make artifact'
         shell: bash
         run: |
@@ -306,6 +308,7 @@ jobs:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
       - name: 'Run basic tests'
+        if: ${{ matrix.arch != 'amd64_arm64' }}
         run: |
           $ErrorActionPreference = 'stop'
           $ErrorView = 'NormalView'
@@ -318,6 +321,7 @@ jobs:
           .\upx.exe -t upx_packed.exe
           .\upx_packed.exe --version
       - name: 'Run test suite'
+        if: ${{ matrix.arch != 'amd64_arm64' }}
         shell: bash
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"

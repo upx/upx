@@ -79,7 +79,7 @@ CLANG_FORMAT_EXCLUDE_FILES += conf.h miniacc.h version.h
 CLANG_FORMAT_EXCLUDE_FILES += compress.cpp compress.h filter.cpp filter.h filteri.cpp help.cpp
 CLANG_FORMAT_EXCLUDE_FILES += p_elf.h p_elf_enum.h p_lx_% p_mach% p_unix% p_vmli%
 CLANG_FORMAT_EXCLUDE_FILES += p_w32pe.cpp p_w64pep.cpp packer_c.cpp packer_f.cpp pefile%
-CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* util/*.[ch]*))
+CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* check/*.[ch]* util/*.[ch]*))
 CLANG_FORMAT_FILES := $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES))
 clang-format: PHONY $(CLANG_FORMAT_FILES)
 	@echo "running upx-clang-format"

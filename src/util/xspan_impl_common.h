@@ -52,7 +52,7 @@ pointer base;
 size_type size_in_bytes;
 
 // debug - internal sanity check; also serves as pseudo-documentation
-#if DEBUG || 1
+#if DEBUG
 __acc_noinline void assertInvariants() const {
     if __acc_cte (configRequirePtr)
         assert(ptr != nullptr);

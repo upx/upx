@@ -6,7 +6,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # run an interactive shell in the image
 # using a rootless Podman container
 
-image=upx-stubtools-20221212-v2
+image=upx-stubtools-20221212-v3
 
 flags=( -ti --read-only --rm )
 flags+=( --cap-drop=all )               # drop all capabilities

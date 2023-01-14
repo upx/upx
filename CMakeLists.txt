@@ -6,14 +6,12 @@ if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." ON)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." ON)
     option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   ON)
-    option(UPX_CONFIG_DISABLE_ZSTD     "Do not compile with zstd; NOTE: zstd is WIP."  ON)
 else()
     # strict config defaults for devel builds
     message(STATUS "upx info: strict config defaults enabled")
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." OFF)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." OFF)
     option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   OFF)
-    option(UPX_CONFIG_DISABLE_ZSTD     "Do not compile with zstd; NOTE: zstd is WIP."  OFF)
 endif()
 
 # test config options (see below)
@@ -42,7 +40,7 @@ set(GITREV_SHORT "")
 set(GITREV_PLUS "")
 set(GIT_DESCRIBE "")
 find_package(Git)
-if(GIT_FOUND AND NOT UPX_CONFIG_DISABLE_GITREV)
+if(Git_FOUND AND NOT UPX_CONFIG_DISABLE_GITREV)
     execute_process(
         COMMAND "${GIT_EXECUTABLE}" rev-parse --short=12 HEAD
         RESULT_VARIABLE result ERROR_QUIET
@@ -101,6 +99,10 @@ endif()
 # targets and compilation flags
 #***********************************************************************
 
+#find_package(Threads)
+
+set(UPX_CONFIG_DISABLE_ZSTD ON) # zstd is currently not used; maybe in UPX version 5
+
 file(GLOB ucl_SOURCES "vendor/ucl/src/*.c")
 list(SORT ucl_SOURCES)
 add_library(upx_vendor_ucl STATIC ${ucl_SOURCES})
@@ -118,7 +120,7 @@ add_library(upx_vendor_zstd STATIC ${zstd_SOURCES})
 set_property(TARGET upx_vendor_zstd PROPERTY C_STANDARD 11)
 endif()
 
-file(GLOB upx_SOURCES "src/*.cpp" "src/util/*.cpp")
+file(GLOB upx_SOURCES "src/*.cpp" "src/check/*.cpp" "src/util/*.cpp")
 list(SORT upx_SOURCES)
 add_executable(upx ${upx_SOURCES})
 #target_compile_features(upx PRIVATE cxx_std_17)
@@ -222,6 +224,10 @@ endif()
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
     target_compile_definitions(${t} PRIVATE WITH_ZSTD=1)
     target_link_libraries(upx upx_vendor_zstd)
+endif()
+if(Threads_FOUND AND 0)
+    # for RANGELESS_FN_ENABLE_PARALLEL multithreading test
+    target_link_libraries(upx Threads::Threads)
 endif()
 
 #***********************************************************************

@@ -83,10 +83,10 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
    // don't enable before gcc-10 because of gcc bug #78010
 #  pragma GCC diagnostic error "-Wsuggest-override"
 #endif
-    // Some non-GLIBC toolchains do not use 'nullptr' everywhere when C++:
-    // openwrt-sdk-x86-64_gcc-11.2.0_musl.Linux-x86_64/staging_dir/
-    //   toolchain-x86_64_gcc-11.2.0_musl/include/fortify/stdlib.h:
-    //   51:32: error: zero as null pointer constant
+   // Some non-GLIBC toolchains do not use 'nullptr' everywhere when C++:
+   // openwrt-sdk-x86-64_gcc-11.2.0_musl.Linux-x86_64/staging_dir/
+   //   toolchain-x86_64_gcc-11.2.0_musl/include/fortify/stdlib.h:
+   //   51:32: error: zero as null pointer constant
 #if (ACC_CC_CLANG >= 0x050000)
 #  pragma clang diagnostic error "-Wzero-as-null-pointer-constant"
 #elif (ACC_CC_GNUC >= 0x040700) && defined(__GLIBC__)
@@ -115,7 +115,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #  include <intrin.h>
 #endif
 
-// C++ headers
+// C++ system headers
 #include <exception>
 #include <new>
 #include <type_traits>
@@ -128,11 +128,21 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #include <atomic>
 #define upx_std_atomic(Type)    std::atomic<Type>
 #endif
-//#define DOCTEST_CONFIG_DISABLE 1
+
+// C++ submodule headers
 #include <doctest/doctest/parts/doctest_fwd.h>
 #if WITH_BOOST_PFR
-#include <sstream>
-#include <boost/pfr/io.hpp>
+#  include <sstream>
+#  include <boost/pfr/io.hpp>
+#endif
+#if WITH_RANGELESS_FN
+#  include <rangeless/include/fn.hpp>
+#endif
+#ifndef WITH_VALGRIND
+#define WITH_VALGRIND 1
+#endif
+#if (WITH_VALGRIND) && defined(__GNUC__) && !defined(__SANITIZE_ADDRESS__)
+#  include <valgrind/include/valgrind/memcheck.h>
 #endif
 
 // IMPORTANT: unconditionally enable assertions
@@ -141,55 +151,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 
 
 /*************************************************************************
-//
+// core
 **************************************************************************/
-
-#if defined(__linux__) && !defined(__unix__)
-#  define __unix__ 1
-#endif
-
-// just in case
-#undef _
-#undef __
-#undef ___
-#undef dos
-#undef linux
-#undef small
-#undef tos
-#undef unix
-#if (ACC_OS_DOS32) && defined(__DJGPP__)
-#  undef sopen
-#  undef __unix__
-#  undef __unix
-#endif
-
-#define WITH_LZMA 0x443
-#define WITH_UCL 1
-#define WITH_ZLIB 1
-#if (WITH_UCL)
-#  define ucl_compress_config_t REAL_ucl_compress_config_t
-#  include <ucl/include/ucl/uclconf.h>
-#  include <ucl/include/ucl/ucl.h>
-#  undef ucl_compress_config_t
-#  undef ucl_compress_config_p
-#endif
-
-// malloc debuggers
-#ifndef WITH_VALGRIND
-#  define WITH_VALGRIND 1
-#endif
-#if (WITH_VALGRIND) && defined(__GNUC__) && !defined(__SANITIZE_ADDRESS__)
-#  include <valgrind/include/valgrind/memcheck.h>
-#endif
-#if !defined(VALGRIND_MAKE_MEM_DEFINED)
-#  define VALGRIND_MAKE_MEM_DEFINED(addr,len)   0
-#endif
-#if !defined(VALGRIND_MAKE_MEM_NOACCESS)
-#  define VALGRIND_MAKE_MEM_NOACCESS(addr,len)  0
-#endif
-#if !defined(VALGRIND_MAKE_MEM_UNDEFINED)
-#  define VALGRIND_MAKE_MEM_UNDEFINED(addr,len) 0
-#endif
 
 // intergral types
 typedef acc_int8_t      upx_int8_t;
@@ -226,6 +189,24 @@ typedef upx_int64_t upx_off_t;
 /*************************************************************************
 // portab
 **************************************************************************/
+
+// just in case
+#undef _
+#undef __
+#undef ___
+#undef dos
+#undef linux
+#undef small
+#undef tos
+#undef unix
+#if defined(__linux__) && !defined(__unix__)
+#  define __unix__ 1
+#endif
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
+#  undef sopen
+#  undef __unix__
+#  undef __unix
+#endif
 
 #ifndef STDIN_FILENO
 #  define STDIN_FILENO      (fileno(stdin))
@@ -307,10 +288,21 @@ typedef upx_int64_t upx_off_t;
 
 
 /*************************************************************************
-//
+// util
 **************************************************************************/
 
 #define CLANG_FORMAT_DUMMY_STATEMENT /*empty*/
+
+// malloc debuggers
+#if !defined(VALGRIND_MAKE_MEM_DEFINED)
+#  define VALGRIND_MAKE_MEM_DEFINED(addr,len)   0
+#endif
+#if !defined(VALGRIND_MAKE_MEM_NOACCESS)
+#  define VALGRIND_MAKE_MEM_NOACCESS(addr,len)  0
+#endif
+#if !defined(VALGRIND_MAKE_MEM_UNDEFINED)
+#  define VALGRIND_MAKE_MEM_UNDEFINED(addr,len) 0
+#endif
 
 #if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__) && !defined(__clang__)
 #  define attribute_format(a,b) __attribute__((__format__(__gnu_printf__,a,b)))
@@ -488,14 +480,14 @@ constexpr bool string_ge(const char *a, const char *b) {
 #define UPX_F_DOS_EXE           3
 #define UPX_F_DJGPP2_COFF       4
 #define UPX_F_WATCOM_LE         5
-#define UPX_F_VXD_LE            6               // NOT IMPLEMENTED
+//#define UPX_F_VXD_LE            6               // NOT IMPLEMENTED
 #define UPX_F_DOS_EXEH          7               // OBSOLETE
 #define UPX_F_TMT_ADAM          8
 #define UPX_F_WIN32_PE          9
 #define UPX_F_LINUX_i386        10
-#define UPX_F_WIN16_NE          11              // NOT IMPLEMENTED
+//#define UPX_F_WIN16_NE          11              // NOT IMPLEMENTED
 #define UPX_F_LINUX_ELF_i386    12
-#define UPX_F_LINUX_SEP_i386    13              // NOT IMPLEMENTED
+//#define UPX_F_LINUX_SEP_i386    13              // NOT IMPLEMENTED
 #define UPX_F_LINUX_SH_i386     14
 #define UPX_F_VMLINUZ_i386      15
 #define UPX_F_BVMLINUZ_i386     16
@@ -533,7 +525,7 @@ constexpr bool string_ge(const char *a, const char *b) {
 #define UPX_F_LINUX_ELF64_ARM   42
 
 #define UPX_F_ATARI_TOS         129
-#define UPX_F_SOLARIS_SPARC     130             // NOT IMPLEMENTED
+//#define UPX_F_SOLARIS_SPARC     130             // NOT IMPLEMENTED
 #define UPX_F_MACH_PPC32        131
 #define UPX_F_LINUX_ELFPPC32    132
 #define UPX_F_LINUX_ELF32_ARMEB 133
@@ -562,7 +554,7 @@ constexpr bool string_ge(const char *a, const char *b) {
 //#define M_CL1B_8        12
 //#define M_CL1B_LE16     13
 #define M_LZMA          14
-#define M_DEFLATE       15      /* zlib */
+#define M_DEFLATE       15      // zlib
 #define M_ZSTD          16
 // compression methods internal usage
 #define M_ALL           (-1)
@@ -588,8 +580,19 @@ constexpr bool string_ge(const char *a, const char *b) {
 
 
 /*************************************************************************
-// compression - callback_t
+// compression - setup and callback_t
 **************************************************************************/
+
+#define WITH_LZMA 0x443
+#define WITH_UCL 1
+#define WITH_ZLIB 1
+#if (WITH_UCL)
+#  define ucl_compress_config_t REAL_ucl_compress_config_t
+#  include <ucl/include/ucl/uclconf.h>
+#  include <ucl/include/ucl/ucl.h>
+#  undef ucl_compress_config_t
+#  undef ucl_compress_config_p
+#endif
 
 struct upx_callback_t;
 typedef upx_callback_t *upx_callback_p;

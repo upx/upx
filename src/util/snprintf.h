@@ -49,15 +49,15 @@ char *upx_safe_xprintf(const char *format, ...) attribute_format(1, 2);
 upx_rsize_t upx_safe_strlen(const char *);
 
 // globally redirect some functions
+#undef strlen
+#define strlen upx_safe_strlen
+
 #undef snprintf
 #undef sprintf
 #undef vsnprintf
 #define snprintf upx_safe_snprintf
 #define sprintf ERROR_sprintf_IS_DANGEROUS_USE_snprintf
 #define vsnprintf upx_safe_vsnprintf
-
-#undef strlen
-#define strlen upx_safe_strlen
 
 /*************************************************************************
 // some unsigned char string support functions to avoid casts
