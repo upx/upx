@@ -13,6 +13,11 @@
     url = https://github.com/upx/upx-vendor-lzma-sdk.git
     branch = upx-vendor
     shallow = true
+[submodule "vendor/rangeless"]
+    path = vendor/rangeless
+    url = https://github.com/upx/upx-vendor-rangeless.git
+    branch = upx-vendor
+    shallow = true
 [submodule "vendor/ucl"]
     path = vendor/ucl
     url = https://github.com/upx/upx-vendor-ucl.git
