@@ -15,6 +15,8 @@ UPX_CMAKE_BUILD_FLAGS += --parallel
 ifneq ($(VERBOSE),)
   UPX_CMAKE_BUILD_FLAGS += --verbose
 endif
+# enable this if you prefer Ninja for the actual builds:
+#UPX_CMAKE_CONFIG_FLAGS += -G Ninja
 
 #***********************************************************************
 # default
@@ -132,27 +134,7 @@ build/extra/cross-windows-mingw64/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISA
 # check git submodules
 #***********************************************************************
 
-ifeq ($(wildcard ./vendor/boost-pfr/include/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard ./vendor/doctest/doctest/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard ./vendor/lzma-sdk/C/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard ./vendor/rangeless/include/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard ./vendor/ucl/include/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard ./vendor/valgrind/include/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard ./vendor/zlib/crc32.c),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
-ifeq ($(wildcard ./vendor/zstd/lib/.),)
-  $(error ERROR: missing git submodule; run 'git submodule update --init')
-endif
+SUBMODULES = boost-pfr doctest lzma-sdk rangeless ucl valgrind zlib zstd
+
+dummy := $(foreach m,$(SUBMODULES),$(if $(wildcard vendor/$(m)/[CL]*),,\
+    $(error ERROR: missing git submodule $m; run 'git submodule update --init')))

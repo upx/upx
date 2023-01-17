@@ -8,7 +8,7 @@ if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   ON)
 else()
     # strict config defaults for devel builds
-    message(STATUS "upx info: strict config defaults enabled")
+    message(STATUS "===== UPX info: strict config defaults enabled")
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." OFF)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." OFF)
     option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   OFF)
@@ -78,6 +78,7 @@ else()
     message(STATUS "UPX_VERSION_GITREV: not set")
 endif()
 
+# CMake init
 project(upx VERSION 4.0.2 LANGUAGES C CXX)
 
 # set default build type to "Release"
@@ -159,7 +160,7 @@ else()
     add_definitions(-fno-tree-vectorize)
 endif()
 
-# compile a target with -O2 in Debug mode
+# compile a target with -O2 in Debug build
 function(upx_compile_target_debug_with_O2 t)
     if(MSVC)
         # msvc uses some Debug compile options like -RTC1 that are incompatible with -O2
@@ -244,7 +245,9 @@ if(Threads_FOUND AND 0)
 endif()
 
 #***********************************************************************
+# "ctest"
 # "make test"
+# "ninja test"
 #***********************************************************************
 
 include(CTest)
@@ -277,8 +280,9 @@ if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
 endif()
 
 #***********************************************************************
-# "make install"
 # "cmake --install ."
+# "make install"
+# "ninja install"
 #***********************************************************************
 
 # installation prefix and directories
@@ -314,13 +318,10 @@ function(print_var)
     endforeach()
 endfunction()
 print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
-print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION)
-print_var(CMAKE_CROSSCOMPILING)
+print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING)
 print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
-print_var(CMAKE_INSTALL_PREFIX)
-print_var(CMAKE_CONFIGURATION_TYPES)
-print_var(CMAKE_BUILD_TYPE)
+print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
 if (CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release)$")
     message(WARNING "WARNING: unsupported CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}; please use \"Debug\" or \"Release\"")
 endif()
