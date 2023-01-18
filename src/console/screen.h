@@ -25,8 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_SCREEN_H
-#define __UPX_SCREEN_H 1
+#pragma once
+#ifndef UPX_SCREEN_H__
+#define UPX_SCREEN_H__ 1
 
 #if (USE_SCREEN)
 

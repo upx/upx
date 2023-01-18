@@ -781,7 +781,7 @@ struct upx_compress_result_t
 #include "options.h"
 #include "except.h"
 #include "bele.h"
-#include "console.h"
+#include "console/console.h"
 #include "util/util.h"
 
 // classes

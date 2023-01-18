@@ -25,7 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#include "conf.h"
+#include "../conf.h"
 
 #if (USE_SCREEN) && (ACC_OS_DOS32) && defined(__DJGPP__)
 #if (ACC_CC_GNUC >= 0x040300ul)

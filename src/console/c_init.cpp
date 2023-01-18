@@ -25,7 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#include "conf.h"
+#include "../conf.h"
 
 FILE *con_term = nullptr;
 

@@ -25,7 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#include "conf.h"
+#include "../conf.h"
 
 #if (USE_SCREEN) && (USE_SCREEN_VCSA)
 

@@ -26,13 +26,11 @@
  */
 
 #pragma once
-#ifndef __UPX_UI_H
-#define __UPX_UI_H 1
+#ifndef UPX_UI_H__
+#define UPX_UI_H__ 1
 
-class InputFile;
 class OutputFile;
 class Packer;
-class UiPacker;
 
 /*************************************************************************
 //

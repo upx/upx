@@ -27,9 +27,9 @@
 
 #include "conf.h"
 #include "file.h"
-#include "ui.h"
-#include "screen.h"
 #include "packer.h"
+#include "ui.h"
+#include "console/screen.h"
 
 #if 1 && (USE_SCREEN)
 #define UI_USE_SCREEN 1
