@@ -583,7 +583,7 @@ constexpr bool string_ge(const char *a, const char *b) {
 // compression - setup and callback_t
 **************************************************************************/
 
-#define WITH_LZMA 0x443
+#define WITH_LZMA 1
 #define WITH_UCL 1
 #define WITH_ZLIB 1
 #if (WITH_UCL)
@@ -755,9 +755,11 @@ struct zstd_compress_result_t
 
 struct upx_compress_result_t
 {
-    // debug
-    int method, level;
-    unsigned u_len, c_len;
+    // debugging aid
+    struct {
+        int method, level;
+        unsigned u_len, c_len;
+    } debug;
 
     lzma_compress_result_t  result_lzma;
     ucl_compress_result_t   result_ucl;
@@ -765,7 +767,7 @@ struct upx_compress_result_t
     zstd_compress_result_t  result_zstd;
 
     void reset() {
-        memset(this, 0, sizeof(*this));
+        memset(&this->debug, 0, sizeof(this->debug));
         result_lzma.reset(); result_ucl.reset(); result_zlib.reset(); result_zstd.reset();
     }
 };
@@ -831,9 +833,9 @@ void show_license();
 void show_usage();
 void show_version(bool one_line=false);
 
-// compress.cpp
+// compress/compress.cpp
 unsigned upx_adler32(const void *buf, unsigned len, unsigned adler=1);
-unsigned upx_crc32(const void *buf, unsigned len, unsigned crc=0);
+unsigned upx_crc32  (const void *buf, unsigned len, unsigned crc=0);
 
 int upx_compress           ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,

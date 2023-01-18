@@ -25,13 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-#ifndef __UPX_FILTER_H
-#define __UPX_FILTER_H 1
-
-class Filter;
-class FilterImp;
-
+#pragma once
+#ifndef UPX_FILTER_H__
+#define UPX_FILTER_H__ 1
 
 /*************************************************************************
 // A filter is a reversible operation that modifies a given
@@ -50,14 +46,16 @@ class FilterImp;
 // to absolute addresses so that the buffer compresses better.
 **************************************************************************/
 
-class Filter
-{
+class Filter {
 public:
-    Filter(int level) { clevel = level; init(); }
-    void init(int id=0, unsigned addvalue=0);
+    Filter(int level) {
+        clevel = level;
+        init();
+    }
+    void init(int id = 0, unsigned addvalue = 0);
 
     bool filter(upx_byte *buf, unsigned buf_len);
-    void unfilter(upx_byte *buf, unsigned buf_len, bool verify_checksum=false);
+    void unfilter(upx_byte *buf, unsigned buf_len, bool verify_checksum = false);
     void verifyUnfilter();
     bool scan(const upx_byte *buf, unsigned buf_len);
 
@@ -79,7 +77,7 @@ public:
     const int *preferred_ctos = nullptr;
 
     // Input/output parameters used by various filters
-    unsigned char cto;              // call trick offset
+    unsigned char cto; // call trick offset
 
     // Output used by various filters. Read only.
     unsigned calls;
@@ -87,15 +85,14 @@ public:
     unsigned wrongcalls;
     unsigned firstcall;
     unsigned lastcall;
-    unsigned n_mru;  // ctojr only
+    unsigned n_mru; // ctojr only
 
     // Read only.
     int id;
 
 private:
-    int clevel;         // compression level
+    int clevel; // compression level
 };
-
 
 /*************************************************************************
 // We don't want a full OO interface here because of
@@ -104,19 +101,17 @@ private:
 // This class is private to Filter - don't look.
 **************************************************************************/
 
-class FilterImp
-{
+class FilterImpl {
     friend class Filter;
 
 private:
-    struct FilterEntry
-    {
-        int id;                             // 0 .. 255
+    struct FilterEntry {
+        int id; // 0 .. 255
         unsigned min_buf_len;
         unsigned max_buf_len;
-        int (*do_filter)(Filter *);         // filter a buffer
-        int (*do_unfilter)(Filter *);       // unfilter a buffer
-        int (*do_scan)(Filter *);           // scan a buffer
+        int (*do_filter)(Filter *);   // filter a buffer
+        int (*do_unfilter)(Filter *); // unfilter a buffer
+        int (*do_scan)(Filter *);     // scan a buffer
     };
 
     // get a specific filter entry
@@ -125,9 +120,8 @@ private:
 private:
     // strictly private filter database
     static const FilterEntry filters[];
-    static const int n_filters;             // number of filters[]
+    static const int n_filters; // number of filters[]
 };
-
 
 #endif /* already included */
 

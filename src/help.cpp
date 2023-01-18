@@ -27,9 +27,9 @@
 
 
 #include "conf.h"
-#include "compress.h"
 #include "packmast.h"
 #include "packer.h"
+#include "compress/compress.h" // upx_ucl_version_string()
 
 
 /*************************************************************************

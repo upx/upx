@@ -136,5 +136,5 @@ build/extra/cross-windows-mingw64/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISA
 
 SUBMODULES = boost-pfr doctest lzma-sdk rangeless ucl valgrind zlib zstd
 
-dummy := $(foreach m,$(SUBMODULES),$(if $(wildcard vendor/$(m)/[CL]*),,\
+dummy := $(foreach m,$(SUBMODULES),$(if $(wildcard vendor/$m/[CL]*),$m,\
     $(error ERROR: missing git submodule $m; run 'git submodule update --init')))

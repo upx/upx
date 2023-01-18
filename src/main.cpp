@@ -28,10 +28,10 @@
 // main entry, mostly boring stuff; see work.cpp for actual action
 
 #include "conf.h"
-#include "compress.h"
 #include "file.h"
 #include "packer.h"
 #include "p_elf.h"
+#include "compress/compress.h" // upx_ucl_init()
 
 /*************************************************************************
 // options
@@ -1207,6 +1207,9 @@ int upx_main(int argc, char *argv[]) {
 
     set_term(stderr);
 
+#if (WITH_BZIP2)
+    assert(upx_bzip2_init() == 0);
+#endif
     assert(upx_lzma_init() == 0);
 #if (WITH_NRV)
     assert(upx_nrv_init() == 0);

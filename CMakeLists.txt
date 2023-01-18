@@ -121,7 +121,7 @@ add_library(upx_vendor_zstd STATIC ${zstd_SOURCES})
 set_property(TARGET upx_vendor_zstd PROPERTY C_STANDARD 11)
 endif()
 
-file(GLOB upx_SOURCES "src/*.cpp" "src/check/*.cpp" "src/util/*.cpp")
+file(GLOB upx_SOURCES "src/*.cpp" "src/[cfu]*/*.cpp")
 list(SORT upx_SOURCES)
 add_executable(upx ${upx_SOURCES})
 #target_compile_features(upx PRIVATE cxx_std_17)
@@ -250,6 +250,8 @@ endif()
 # "ninja test"
 #***********************************************************************
 
+if(NOT UPX_CONFIG_CMAKE_DISABLE_TEST)
+
 include(CTest)
 if(NOT CMAKE_CROSSCOMPILING)
     add_test(NAME upx-version COMMAND upx --version)
@@ -279,11 +281,15 @@ if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     upx_add_test(upx-run-packed     ./upx-packed${exe} --version-short)
 endif()
 
+endif() # UPX_CONFIG_CMAKE_DISABLE_TEST
+
 #***********************************************************************
 # "cmake --install ."
 # "make install"
 # "ninja install"
 #***********************************************************************
+
+if(NOT UPX_CONFIG_CMAKE_DISABLE_INSTALL)
 
 # installation prefix and directories
 if(NOT CMAKE_INSTALL_PREFIX)
@@ -302,6 +308,8 @@ if(CMAKE_INSTALL_PREFIX AND DEFINED CMAKE_INSTALL_FULL_BINDIR)
     install(FILES doc/upx.1 DESTINATION "${CMAKE_INSTALL_FULL_MANDIR}/man1")
 endif()
 
+endif() # UPX_CONFIG_CMAKE_DISABLE_INSTALL
+
 #***********************************************************************
 # finally print some info about the build configuration
 #***********************************************************************
@@ -317,11 +325,13 @@ function(print_var)
         endif()
     endforeach()
 endfunction()
+if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
 print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
 print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING)
 print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
 print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
+endif() # UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO
 if (CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release)$")
     message(WARNING "WARNING: unsupported CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}; please use \"Debug\" or \"Release\"")
 endif()

@@ -1,4 +1,4 @@
-/* filteri.cpp -- filter implementation (low-level)
+/* filter_impl.cpp -- filter implementation (low-level)
 
    This file is part of the UPX executable compressor.
 
@@ -26,8 +26,8 @@
  */
 
 
-#include "conf.h"
-#include "filter.h"
+#include "../conf.h"
+#include "../filter.h"
 
 static unsigned
 umin(unsigned const a, unsigned const b)
@@ -45,20 +45,20 @@ umin(unsigned const a, unsigned const b)
 // util
 **************************************************************************/
 
-#include "filter/getcto.h"
+#include "getcto.h"
 
 
 /*************************************************************************
 // simple filters: calltrick / swaptrick / delta / ...
 **************************************************************************/
 
-#include "filter/ct.h"
-#include "filter/sw.h"
-#include "filter/ctsw.h"
+#include "ct.h"
+#include "sw.h"
+#include "ctsw.h"
 
-#include "filter/sub8.h"
-#include "filter/sub16.h"
-#include "filter/sub32.h"
+#include "sub8.h"
+#include "sub16.h"
+#include "sub32.h"
 
 
 /*************************************************************************
@@ -68,25 +68,25 @@ umin(unsigned const a, unsigned const b)
 #define COND(b,x)               (b[x] == 0xe8)
 #define F                       f_cto32_e8_bswap_le
 #define U                       u_cto32_e8_bswap_le
-#include "filter/cto.h"
+#include "cto.h"
 #define F                       s_cto32_e8_bswap_le
-#include "filter/cto.h"
+#include "cto.h"
 #undef COND
 
 #define COND(b,x)               (b[x] == 0xe9)
 #define F                       f_cto32_e9_bswap_le
 #define U                       u_cto32_e9_bswap_le
-#include "filter/cto.h"
+#include "cto.h"
 #define F                       s_cto32_e9_bswap_le
-#include "filter/cto.h"
+#include "cto.h"
 #undef COND
 
 #define COND(b,x)               (b[x] == 0xe8 || b[x] == 0xe9)
 #define F                       f_cto32_e8e9_bswap_le
 #define U                       u_cto32_e8e9_bswap_le
-#include "filter/cto.h"
+#include "cto.h"
 #define F                       s_cto32_e8e9_bswap_le
-#include "filter/cto.h"
+#include "cto.h"
 #undef COND
 
 
@@ -97,9 +97,9 @@ umin(unsigned const a, unsigned const b)
 #define COND(b,x,lastcall) (b[x] == 0xe8 || b[x] == 0xe9)
 #define F                       f_ctoj32_e8e9_bswap_le
 #define U                       u_ctoj32_e8e9_bswap_le
-#include "filter/ctoj.h"
+#include "ctoj.h"
 #define F                       s_ctoj32_e8e9_bswap_le
-#include "filter/ctoj.h"
+#include "ctoj.h"
 #undef COND
 
 
@@ -112,9 +112,9 @@ umin(unsigned const a, unsigned const b)
 #define COND(b,x,lc,id) (COND1(b,x) || ((9<=(0xf&(id))) && COND2(b,x,lc)))
 #define F                       f_ctok32_e8e9_bswap_le
 #define U                       u_ctok32_e8e9_bswap_le
-#include "filter/ctok.h"
+#include "ctok.h"
 #define F                       s_ctok32_e8e9_bswap_le
-#include "filter/ctok.h"
+#include "ctok.h"
 #undef COND
 #undef COND2
 #undef COND1
@@ -138,9 +138,9 @@ umin(unsigned const a, unsigned const b)
 
 #define F                       f_ctojr32_e8e9_bswap_le
 #define U                       u_ctojr32_e8e9_bswap_le
-#include "filter/ctojr.h"
+#include "ctojr.h"
 #define F                       s_ctojr32_e8e9_bswap_le
-#include "filter/ctojr.h"
+#include "ctojr.h"
 
 #undef CONDU
 #undef CONDF
@@ -158,9 +158,9 @@ umin(unsigned const a, unsigned const b)
 #define COND(b,x) (18==(get_be32(b+x)>>26))
 #define F                       f_ppcbxx
 #define U                       u_ppcbxx
-#include "filter/ppcbxx.h"
+#include "ppcbxx.h"
 #define F                       s_ppcbxx
-#include "filter/ppcbxx.h"
+#include "ppcbxx.h"
 #undef COND
 
 
@@ -168,7 +168,7 @@ umin(unsigned const a, unsigned const b)
 // database for use in class Filter
 **************************************************************************/
 
-const FilterImp::FilterEntry FilterImp::filters[] = {
+const FilterImpl::FilterEntry FilterImpl::filters[] = {
     // no filter
     { 0x00, 0,          0, nullptr, nullptr, nullptr },
 
@@ -261,6 +261,6 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0xd0, 8,          0, f_ppcbxx, u_ppcbxx, s_ppcbxx },
 };
 
-const int FilterImp::n_filters = TABLESIZE(filters);
+const int FilterImpl::n_filters = TABLESIZE(filters);
 
 /* vim:set ts=4 sw=4 et: */

@@ -3,7 +3,6 @@
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,18 +20,39 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
+   Markus F.X.J. Oberhumer
+   <markus@oberhumer.com>
  */
 
-
-#ifndef __UPX_COMPRESS_H
-#define __UPX_COMPRESS_H 1
-
+#pragma once
+#ifndef UPX_COMPRESS_H__
+#define UPX_COMPRESS_H__ 1
 
 /*************************************************************************
 //
 **************************************************************************/
+
+#if (WITH_BZIP2)
+int upx_bzip2_init(void);
+const char *upx_bzip2_version_string(void);
+int upx_bzip2_compress     ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_callback_p cb,
+                                   int method, int level,
+                             const upx_compress_config_t *cconf,
+                                   upx_compress_result_t *cresult );
+int upx_bzip2_decompress   ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
+                                   int method,
+                             const upx_compress_result_t *cresult );
+int upx_bzip2_test_overlap ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
+                                   int method,
+                             const upx_compress_result_t *cresult );
+#endif
+
 
 #if (WITH_LZMA)
 int upx_lzma_init(void);

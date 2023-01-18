@@ -3,7 +3,6 @@
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,13 +20,13 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
+   Markus F.X.J. Oberhumer
+   <markus@oberhumer.com>
  */
 
-#include "conf.h"
+#include "../conf.h"
 #include "compress.h"
-#include "util/membuffer.h"
+#include "../util/membuffer.h"
 
 #if (ACC_CC_CLANG)
 #pragma clang diagnostic ignored "-Wshadow"
@@ -453,7 +452,7 @@ int upx_lzma_decompress(const upx_bytep src, unsigned src_len, upx_bytep dst, un
     src_len -= 2;
 
     if (cresult) {
-        assert(cresult->method == method);
+        assert(cresult->debug.method == method);
         assert(cresult->result_lzma.pos_bits == (unsigned) s.Properties.pb);
         assert(cresult->result_lzma.lit_pos_bits == (unsigned) s.Properties.lp);
         assert(cresult->result_lzma.lit_context_bits == (unsigned) s.Properties.lc);
@@ -518,14 +517,7 @@ int upx_lzma_test_overlap(const upx_bytep buf, const upx_bytep tbuf, unsigned sr
 
 int upx_lzma_init(void) { return 0; }
 
-const char *upx_lzma_version_string(void) {
-#if (WITH_LZMA == 0x443)
-    return "4.43";
-#else
-#error "unknown WITH_LZMA version"
-    return nullptr;
-#endif
-}
+const char *upx_lzma_version_string(void) { return "4.43"; }
 
 /*************************************************************************
 // doctest checks

@@ -24,13 +24,13 @@
    <markus@oberhumer.com>
  */
 
-#include "conf.h"
+#include "../conf.h"
 
 void zstd_compress_config_t::reset() { mem_clear(this, sizeof(*this)); }
 
 #if WITH_ZSTD
 #include "compress.h"
-#include "util/membuffer.h"
+#include "../util/membuffer.h"
 #include <zstd/lib/zstd.h>
 #include <zstd/lib/zstd_errors.h>
 #include <zstd/lib/compress/hist.h>
@@ -160,8 +160,6 @@ const char *upx_zstd_version_string(void) { return ZSTD_VERSION_STRING; }
 **************************************************************************/
 
 #if DEBUG && !defined(DOCTEST_CONFIG_DISABLE) && 1
-
-#include "util/membuffer.h"
 
 static bool check_zstd(const int method, const int level, const unsigned expected_c_len) {
     const unsigned u_len = 16384;
