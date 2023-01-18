@@ -26,7 +26,7 @@
 
 #pragma once
 
-SPAN_NAMESPACE_BEGIN
+XSPAN_NAMESPACE_BEGIN
 
 /*************************************************************************
 // Span
@@ -48,7 +48,7 @@ private:
 #include "xspan_impl_common.h"
 public:
     // constructors from pointers
-    CSelf(pointer first) SPAN_DELETED_FUNCTION;
+    CSelf(pointer first) XSPAN_DELETED_FUNCTION;
 
     // constructors
     CSelf(const Self &other)
@@ -56,37 +56,37 @@ public:
         assertInvariants();
     }
     template <class U>
-    CSelf(const CSelf<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
+    CSelf(const CSelf<U> &other, XSPAN_REQUIRES_CONVERTIBLE_A)
         : ptr(other.ensurePtr()), base(other.ensureBase()), size_in_bytes(other.size_in_bytes) {
         assertInvariants();
     }
 
     // constructors from Span friends
-#if SPAN_CONFIG_ENABLE_SPAN_CONVERSION
+#if XSPAN_CONFIG_ENABLE_SPAN_CONVERSION
     template <class U>
-    CSelf(const PtrOrSpanOrNull<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
+    CSelf(const PtrOrSpanOrNull<U> &other, XSPAN_REQUIRES_CONVERTIBLE_A)
         : ptr(other.ensurePtr()), base(other.ensureBase()), size_in_bytes(other.size_in_bytes) {
         assertInvariants();
     }
     template <class U>
-    CSelf(const PtrOrSpan<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
+    CSelf(const PtrOrSpan<U> &other, XSPAN_REQUIRES_CONVERTIBLE_A)
         : ptr(other.ensurePtr()), base(other.ensureBase()), size_in_bytes(other.size_in_bytes) {
         assertInvariants();
     }
 #endif
 
     // assignment from Span friends
-#if SPAN_CONFIG_ENABLE_SPAN_CONVERSION
+#if XSPAN_CONFIG_ENABLE_SPAN_CONVERSION
     // TODO: use Unchecked to avoid double checks in both constructor and assignment
     template <class U>
-    SPAN_REQUIRES_CONVERTIBLE_R(Self &)
+    XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(const PtrOrSpan<U> &other) {
         if (other.base == nullptr)
             return assign(Self(other.ptr, size_in_bytes, base));
         return assign(Self(other.ptr, other.size_in_bytes, other.base));
     }
     template <class U>
-    SPAN_REQUIRES_CONVERTIBLE_R(Self &)
+    XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(const PtrOrSpanOrNull<U> &other) {
         if (other.base == nullptr)
             return assign(Self(other.ptr, size_in_bytes, base));
@@ -95,15 +95,15 @@ public:
 #endif
 
     // nullptr
-    CSelf(std::nullptr_t) SPAN_DELETED_FUNCTION;
-    CSelf(std::nullptr_t, SpanSizeInBytes, const void *) SPAN_DELETED_FUNCTION;
-    CSelf(std::nullptr_t, SpanCount, const void *) SPAN_DELETED_FUNCTION;
-    CSelf(std::nullptr_t, size_type, const void *) SPAN_DELETED_FUNCTION;
-    Self &operator=(std::nullptr_t) SPAN_DELETED_FUNCTION;
+    CSelf(std::nullptr_t) XSPAN_DELETED_FUNCTION;
+    CSelf(std::nullptr_t, XSpanCount, const void *) XSPAN_DELETED_FUNCTION;
+    CSelf(std::nullptr_t, XSpanSizeInBytes, const void *) XSPAN_DELETED_FUNCTION;
+    CSelf(std::nullptr_t, size_type, const void *) XSPAN_DELETED_FUNCTION;
+    Self &operator=(std::nullptr_t) XSPAN_DELETED_FUNCTION;
 #if 0
     // don't enable, this prevents generic usage
-    bool operator==(std::nullptr_t) const SPAN_DELETED_FUNCTION;
-    bool operator!=(std::nullptr_t) const SPAN_DELETED_FUNCTION;
+    bool operator==(std::nullptr_t) const XSPAN_DELETED_FUNCTION;
+    bool operator!=(std::nullptr_t) const XSPAN_DELETED_FUNCTION;
 #else
     bool operator==(std::nullptr_t) const {
         assertInvariants();
@@ -133,13 +133,13 @@ inline typename Span<T>::pointer raw_index_bytes(const Span<T> &a, size_t index,
 //
 **************************************************************************/
 
-SPAN_NAMESPACE_END
+XSPAN_NAMESPACE_END
 
-#if !SPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
+#if !XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
 
-#define C SPAN_NS(Span)
-#define D SPAN_NS(PtrOrSpanOrNull)
-#define E SPAN_NS(PtrOrSpan)
+#define C XSPAN_NS(Span)
+#define D XSPAN_NS(PtrOrSpanOrNull)
+#define E XSPAN_NS(PtrOrSpan)
 #include "xspan_fwd.h"
 #undef C
 #undef D

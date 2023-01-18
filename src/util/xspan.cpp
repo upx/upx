@@ -26,47 +26,51 @@
 
 #include "../conf.h"
 
-#if WITH_SPAN
+#if WITH_XSPAN
 
-SPAN_NAMESPACE_BEGIN
+XSPAN_NAMESPACE_BEGIN
 
-upx_std_atomic(upx_uint64_t) span_check_stats_check_range_counter(0);
+// debugging stats
+struct XSpanStats {
+    upx_std_atomic(size_t) check_range_counter;
+};
+static XSpanStats xspan_stats;
 
 // HINT: set env-var "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
-__acc_noinline void span_fail_nullptr() {
-    throwCantUnpack("span unexpected NULL pointer; take care!");
+__acc_noinline void xspan_fail_nullptr() {
+    throwCantUnpack("xspan unexpected NULL pointer; take care!");
 }
-__acc_noinline void span_fail_nullbase() {
-    throwCantUnpack("span unexpected NULL base; take care!");
+__acc_noinline void xspan_fail_nullbase() {
+    throwCantUnpack("xspan unexpected NULL base; take care!");
 }
-__acc_noinline void span_fail_not_same_base() {
-    throwInternalError("span unexpected base pointer; take care!");
-}
-
-__acc_noinline void span_fail_range_nullptr() {
-    throwCantUnpack("span_check_range: unexpected NULL pointer; take care!");
-}
-__acc_noinline void span_fail_range_nullbase() {
-    throwCantUnpack("span_check_range: unexpected NULL base; take care!");
-}
-__acc_noinline void span_fail_range_range() {
-    throwCantUnpack("span_check_range: pointer out of range; take care!");
+__acc_noinline void xspan_fail_not_same_base() {
+    throwInternalError("xspan unexpected base pointer; take care!");
 }
 
-void span_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes) {
+__acc_noinline void xspan_fail_range_nullptr() {
+    throwCantUnpack("xspan_check_range: unexpected NULL pointer; take care!");
+}
+__acc_noinline void xspan_fail_range_nullbase() {
+    throwCantUnpack("xspan_check_range: unexpected NULL base; take care!");
+}
+__acc_noinline void xspan_fail_range_range() {
+    throwCantUnpack("xspan_check_range: pointer out of range; take care!");
+}
+
+void xspan_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes) {
     if __acc_very_unlikely (p == nullptr)
-        span_fail_range_nullptr();
+        xspan_fail_range_nullptr();
     if __acc_very_unlikely (base == nullptr)
-        span_fail_range_nullbase();
+        xspan_fail_range_nullbase();
     ptrdiff_t off = (const char *) p - (const char *) base;
     if __acc_very_unlikely (off < 0 || off > size_in_bytes)
-        span_fail_range_range();
-    span_check_stats_check_range_counter += 1;
-    // fprintf(stderr, "span_check_range done\n");
+        xspan_fail_range_range();
+    xspan_stats.check_range_counter += 1;
+    // fprintf(stderr, "xspan_check_range done\n");
 }
 
-SPAN_NAMESPACE_END
+XSPAN_NAMESPACE_END
 
-#endif // WITH_SPAN
+#endif // WITH_XSPAN
 
 /* vim:set ts=4 sw=4 et: */

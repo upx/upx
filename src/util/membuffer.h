@@ -45,7 +45,7 @@ protected:
 
 public:
     // NOTE: implicit conversion to underlying pointer
-    // NOTE: for fully bound-checked pointer use SPAN_S from xspan.h
+    // NOTE: for fully bound-checked pointer use XSPAN_S from xspan.h
     operator pointer() const { return b; }
 
     template <class U,

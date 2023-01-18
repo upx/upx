@@ -26,37 +26,37 @@
 
 #pragma once
 
-#if WITH_SPAN
+#if WITH_XSPAN
 
 #if 1
-#define SPAN_NAMESPACE_NAME XSpan
-#define SPAN_NAMESPACE_BEGIN namespace SPAN_NAMESPACE_NAME {
-#define SPAN_NAMESPACE_END }
-#define SPAN_NS(x) SPAN_NAMESPACE_NAME ::x
+#define XSPAN_NAMESPACE_NAME XSpan
+#define XSPAN_NAMESPACE_BEGIN namespace XSPAN_NAMESPACE_NAME {
+#define XSPAN_NAMESPACE_END }
+#define XSPAN_NS(x) XSPAN_NAMESPACE_NAME ::x
 #else
-#define SPAN_NAMESPACE_BEGIN /*empty*/
-#define SPAN_NAMESPACE_END   /*empty*/
-#define SPAN_NS(x) ::x
+#define XSPAN_NAMESPACE_BEGIN /*empty*/
+#define XSPAN_NAMESPACE_END   /*empty*/
+#define XSPAN_NS(x) ::x
 #endif
 
-SPAN_NAMESPACE_BEGIN
+XSPAN_NAMESPACE_BEGIN
 
 // HINT: set env-var "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
-__acc_noinline void span_fail_nullptr();
-__acc_noinline void span_fail_nullbase();
-__acc_noinline void span_fail_not_same_base();
-__acc_noinline void span_fail_range_nullptr();
-__acc_noinline void span_fail_range_nullbase();
-__acc_noinline void span_fail_range_range();
-void span_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes);
+__acc_noinline void xspan_fail_nullptr();
+__acc_noinline void xspan_fail_nullbase();
+__acc_noinline void xspan_fail_not_same_base();
+__acc_noinline void xspan_fail_range_nullptr();
+__acc_noinline void xspan_fail_range_nullbase();
+__acc_noinline void xspan_fail_range_range();
+void xspan_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes);
 
 // help constructor to distinguish between number of elements and bytes
-struct SpanCount {
-    explicit SpanCount(size_t n) : count(n) {}
+struct XSpanCount {
+    explicit XSpanCount(size_t n) : count(n) {}
     size_t count; // public
 };
-struct SpanSizeInBytes {
-    explicit SpanSizeInBytes(size_t bytes) : size_in_bytes(bytes) {}
+struct XSpanSizeInBytes {
+    explicit XSpanSizeInBytes(size_t bytes) : size_in_bytes(bytes) {}
     size_t size_in_bytes; // public
 };
 
@@ -84,9 +84,9 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ValueForSizeOf<void>::value == 1)
 ACC_COMPILE_TIME_ASSERT_HEADER(ValueForSizeOf<const void>::value == 1)
 ACC_COMPILE_TIME_ASSERT_HEADER(ValueForSizeOf<int>::value == 4)
 
-#ifndef span_mem_size_impl
+#ifndef xspan_mem_size_impl
 template <class T>
-inline size_t span_mem_size_impl(size_t n) {
+inline size_t xspan_mem_size_impl(size_t n) {
 #ifdef UPX_VERSION_HEX
     // check for overflow and sane limits
     return mem_size(sizeof(T), n);
@@ -97,82 +97,82 @@ inline size_t span_mem_size_impl(size_t n) {
 #endif
 
 template <class T>
-inline size_t span_mem_size(size_t n) {
-    return span_mem_size_impl<typename TypeForSizeOf<T>::type>(n);
+inline size_t xspan_mem_size(size_t n) {
+    return xspan_mem_size_impl<typename TypeForSizeOf<T>::type>(n);
 }
 
 template <class T>
-inline void span_mem_size_assert_ptrdiff(ptrdiff_t n) {
+inline void xspan_mem_size_assert_ptrdiff(ptrdiff_t n) {
     if (n >= 0)
-        (void) span_mem_size<T>((size_t) n);
+        (void) xspan_mem_size<T>((size_t) n);
     else
-        (void) span_mem_size<T>((size_t) -n);
+        (void) xspan_mem_size<T>((size_t) -n);
 }
 
 #if 0
 template <class From, class To>
-struct Span_is_convertible : public std::is_convertible<From *, To *> {};
+struct XSpan_is_convertible : public std::is_convertible<From *, To *> {};
 #else
 
 namespace detail {
 template <class T, class U>
-struct Span_void_to_T {
+struct XSpan_void_to_T {
     typedef U type;
 };
 template <class T>
-struct Span_void_to_T<T, void> {
+struct XSpan_void_to_T<T, void> {
     typedef typename std::remove_const<T>::type type;
 };
 template <class T>
-struct Span_void_to_T<T, const void> {
+struct XSpan_void_to_T<T, const void> {
     // typedef typename std::add_const<T>::type type;
     typedef T type;
 };
 
 template <class From, class To>
-struct Span_ptr_is_convertible : public std::false_type {};
+struct XSpan_ptr_is_convertible : public std::false_type {};
 template <class T>
-struct Span_ptr_is_convertible<T, T> : public std::true_type {};
+struct XSpan_ptr_is_convertible<T, T> : public std::true_type {};
 template <class T>
-struct Span_ptr_is_convertible<T, const T> : public std::true_type {};
+struct XSpan_ptr_is_convertible<T, const T> : public std::true_type {};
 } // namespace detail
 
 template <class From, class To>
-struct Span_is_convertible
-    : public detail::Span_ptr_is_convertible<From,
-                                             typename detail::Span_void_to_T<From, To>::type> {};
+struct XSpan_is_convertible
+    : public detail::XSpan_ptr_is_convertible<From,
+                                              typename detail::XSpan_void_to_T<From, To>::type> {};
 #endif
 
 #if 1
 // char => char
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<char, char>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<char, const char>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<const char, const char>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((!Span_is_convertible<const char, char>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, char>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, const char>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<const char, const char>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const char, char>::value))
 
 // void => void
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<void, void>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<void, const void>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<const void, const void>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((!Span_is_convertible<const void, void>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<void, void>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<void, const void>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<const void, const void>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const void, void>::value))
 
 // char => void
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<char, void>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<char, const void>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((Span_is_convertible<const char, const void>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((!Span_is_convertible<const char, void>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, void>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, const void>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<const char, const void>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const char, void>::value))
 
 // void => char
-ACC_COMPILE_TIME_ASSERT_HEADER((!Span_is_convertible<void, char>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((!Span_is_convertible<void, const char>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((!Span_is_convertible<const void, const char>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((!Span_is_convertible<const void, char>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<void, char>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<void, const char>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const void, const char>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const void, char>::value))
 
 // char => int
-ACC_COMPILE_TIME_ASSERT_HEADER(!(Span_is_convertible<char, int>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER(!(Span_is_convertible<char, const int>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER(!(Span_is_convertible<const char, const int>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER((!Span_is_convertible<const char, int>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER(!(XSpan_is_convertible<char, int>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER(!(XSpan_is_convertible<char, const int>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER(!(XSpan_is_convertible<const char, const int>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const char, int>::value))
 #endif
 
 /*************************************************************************
@@ -193,44 +193,44 @@ struct Span;
 template <class T>
 struct Ptr;
 
-class SpanInternalDummyArg; // not implemented
+class XSpanInternalDummyArg; // not implemented
 
-SPAN_NAMESPACE_END
+XSPAN_NAMESPACE_END
 
-#ifndef SPAN_DELETED_FUNCTION
-#define SPAN_DELETED_FUNCTION = delete
+#ifndef XSPAN_DELETED_FUNCTION
+#define XSPAN_DELETED_FUNCTION = delete
 #endif
-#define SPAN_REQUIRES_CONVERTIBLE_UT(T, U, RType)                                                  \
-    typename std::enable_if<SPAN_NS(Span_is_convertible) < U, T>::value, RType > ::type
-#define SPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(T, U, RType)                                       \
-    typename std::enable_if<SPAN_NS(Span_is_convertible) < U, T>::value ||                         \
-        SPAN_NS(Span_is_convertible)<T, U>::value,                                                 \
+#define XSPAN_REQUIRES_CONVERTIBLE_UT(T, U, RType)                                                 \
+    typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < U, T>::value, RType > ::type
+#define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(T, U, RType)                                      \
+    typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < U, T>::value ||                       \
+        XSPAN_NS(XSpan_is_convertible)<T, U>::value,                                               \
         RType > ::type
 // note: these use "T" and "U"
-#define SPAN_REQUIRES_CONVERTIBLE_R(RType) SPAN_REQUIRES_CONVERTIBLE_UT(T, U, RType)
-#define SPAN_REQUIRES_CONVERTIBLE_A                                                                \
-    SPAN_REQUIRES_CONVERTIBLE_R(SPAN_NS(SpanInternalDummyArg) *) = nullptr
-#define SPAN_REQUIRES_CONVERTIBLE_T SPAN_REQUIRES_CONVERTIBLE_R(SPAN_NS(SpanInternalDummyArg) *)
+#define XSPAN_REQUIRES_CONVERTIBLE_R(RType) XSPAN_REQUIRES_CONVERTIBLE_UT(T, U, RType)
+#define XSPAN_REQUIRES_CONVERTIBLE_A                                                               \
+    XSPAN_REQUIRES_CONVERTIBLE_R(XSPAN_NS(XSpanInternalDummyArg) *) = nullptr
+#define XSPAN_REQUIRES_CONVERTIBLE_T XSPAN_REQUIRES_CONVERTIBLE_R(XSPAN_NS(XSpanInternalDummyArg) *)
 // note: these use "T" and "U"
-#define SPAN_REQUIRES_SIZE_1_R(RType)                                                              \
-    typename std::enable_if<SPAN_NS(Span_is_convertible) < U, T>::value &&SPAN_NS(                 \
+#define XSPAN_REQUIRES_SIZE_1_R(RType)                                                             \
+    typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < U, T>::value &&XSPAN_NS(              \
         ValueForSizeOf)<T>::value == 1 &&                                                          \
-        SPAN_NS(ValueForSizeOf)<U>::value == 1,                                                    \
+        XSPAN_NS(ValueForSizeOf)<U>::value == 1,                                                   \
         RType > ::type
-#define SPAN_REQUIRES_SIZE_1_A SPAN_REQUIRES_SIZE_1_R(SPAN_NS(SpanInternalDummyArg) *) = nullptr
+#define XSPAN_REQUIRES_SIZE_1_A XSPAN_REQUIRES_SIZE_1_R(XSPAN_NS(XSpanInternalDummyArg) *) = nullptr
 
 #include "xspan_impl_ptr_or_null.h"
 #include "xspan_impl_ptr_or_span.h"
 #include "xspan_impl_span.h"
 #include "xspan_impl_ptr.h"
-#undef SPAN_REQUIRES_CONVERTIBLE_UT
-#undef SPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
-#undef SPAN_REQUIRES_CONVERTIBLE_A
-#undef SPAN_REQUIRES_CONVERTIBLE_R
-#undef SPAN_REQUIRES_CONVERTIBLE_T
-#undef SPAN_REQUIRES_SIZE_1_A
-#undef SPAN_REQUIRES_SIZE_1_R
+#undef XSPAN_REQUIRES_CONVERTIBLE_UT
+#undef XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
+#undef XSPAN_REQUIRES_CONVERTIBLE_A
+#undef XSPAN_REQUIRES_CONVERTIBLE_R
+#undef XSPAN_REQUIRES_CONVERTIBLE_T
+#undef XSPAN_REQUIRES_SIZE_1_A
+#undef XSPAN_REQUIRES_SIZE_1_R
 
-#endif // WITH_SPAN
+#endif // WITH_XSPAN
 
 /* vim:set ts=4 sw=4 et: */

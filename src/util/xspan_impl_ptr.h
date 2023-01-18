@@ -26,7 +26,7 @@
 
 #pragma once
 
-SPAN_NAMESPACE_BEGIN
+XSPAN_NAMESPACE_BEGIN
 
 /*************************************************************************
 // Ptr
@@ -58,7 +58,7 @@ private:
     __acc_forceinline void assertInvariants() const {}
 
 public:
-#if SPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
+#if XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
     operator pointer() const { return ptr; }
 #endif
 
@@ -68,14 +68,14 @@ public:
     // constructors from pointers
     CSelf(pointer p) : ptr(makePtr(p)) { assertInvariants(); }
     template <class U>
-    CSelf(U *p, SPAN_REQUIRES_CONVERTIBLE_A) : ptr(makePtr(p)) {
+    CSelf(U *p, XSPAN_REQUIRES_CONVERTIBLE_A) : ptr(makePtr(p)) {
         assertInvariants();
     }
 
     // constructors
     CSelf(const Self &other) : ptr(other.ptr) { assertInvariants(); }
     template <class U>
-    CSelf(const CSelf<U> &other, SPAN_REQUIRES_CONVERTIBLE_A) : ptr(other.ptr) {
+    CSelf(const CSelf<U> &other, XSPAN_REQUIRES_CONVERTIBLE_A) : ptr(other.ptr) {
         assertInvariants();
     }
 
@@ -92,7 +92,7 @@ public:
 
     // FIXME: this is not called !!
     template <class U>
-    SPAN_REQUIRES_CONVERTIBLE_R(Self &)
+    XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(U *other) {
         // assert(0);
         return assign(Self(other));
@@ -100,7 +100,7 @@ public:
 
     // FIXME: this is not called !!
     template <class U>
-    SPAN_REQUIRES_CONVERTIBLE_R(Self &)
+    XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(const CSelf<U> &other) {
         // assert(0);
         return assign(Self(other));
@@ -110,12 +110,12 @@ public:
 
     bool operator==(pointer other) const { return ptr == other; }
     template <class U>
-    SPAN_REQUIRES_CONVERTIBLE_R(bool)
+    XSPAN_REQUIRES_CONVERTIBLE_R(bool)
     operator==(U *other) const {
         return ptr == other;
     }
     template <class U>
-    SPAN_REQUIRES_CONVERTIBLE_R(bool)
+    XSPAN_REQUIRES_CONVERTIBLE_R(bool)
     operator==(const Ptr<U> &other) const {
         return ptr == other.ptr;
     }
@@ -183,7 +183,7 @@ public: // raw access
         assertInvariants();
         if (bytes > 0) {
             if __acc_cte (ptr == nullptr)
-                span_fail_nullptr();
+                xspan_fail_nullptr();
         }
         return ptr;
     }
@@ -207,11 +207,11 @@ inline typename Ptr<T>::pointer raw_index_bytes(const Ptr<T> &a, size_t index,
 //
 **************************************************************************/
 
-SPAN_NAMESPACE_END
+XSPAN_NAMESPACE_END
 
 #if 1
 
-#define C SPAN_NS(Ptr)
+#define C XSPAN_NS(Ptr)
 #include "xspan_fwd.h"
 #undef C
 

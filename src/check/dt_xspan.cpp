@@ -35,22 +35,22 @@
 TEST_CASE("basic xspan usage") {
     char buf[4] = {0, 1, 2, 3};
 
-    SUBCASE("SPAN_x") {
-        SPAN_0(char) a0 = nullptr;
+    SUBCASE("XSPAN_x") {
+        XSPAN_0(char) a0 = nullptr;
 
-        SPAN_0(char) b0 = buf;
-        SPAN_P(char) bp = buf;
+        XSPAN_0(char) b0 = buf;
+        XSPAN_P(char) bp = buf;
 
-        SPAN_0(char) c0 = SPAN_0_MAKE(char, buf);
-        SPAN_P(char) cp = SPAN_P_MAKE(char, buf);
-        SPAN_S(char) cs = SPAN_S_MAKE(char, buf, sizeof(buf));
+        XSPAN_0(char) c0 = XSPAN_0_MAKE(char, buf);
+        XSPAN_P(char) cp = XSPAN_P_MAKE(char, buf);
+        XSPAN_S(char) cs = XSPAN_S_MAKE(char, buf, sizeof(buf));
 
-        SPAN_0(const char) const x0 = SPAN_0_MAKE(const char, buf);
-        SPAN_P(const char) const xp = SPAN_P_MAKE(const char, buf);
-        SPAN_S(const char) const xs = SPAN_S_MAKE(const char, buf, sizeof(buf));
-        SPAN_P(const char) const yp = xs;
-        SPAN_0(const char) const z0p = yp;
-        SPAN_0(const char) const z0s = xs;
+        XSPAN_0(const char) const x0 = XSPAN_0_MAKE(const char, buf);
+        XSPAN_P(const char) const xp = XSPAN_P_MAKE(const char, buf);
+        XSPAN_S(const char) const xs = XSPAN_S_MAKE(const char, buf, sizeof(buf));
+        XSPAN_P(const char) const yp = xs;
+        XSPAN_0(const char) const z0p = yp;
+        XSPAN_0(const char) const z0s = xs;
 
         CHECK((a0 == nullptr));
         CHECK(c0 == b0);
@@ -69,26 +69,26 @@ TEST_CASE("basic xspan usage") {
         CHECK_THROWS(raw_index_bytes(cs, 1, 4));
     }
 
-    SUBCASE("SPAN_x_VAR") {
-        SPAN_0_VAR(char, a0, nullptr);
+    SUBCASE("XSPAN_x_VAR") {
+        XSPAN_0_VAR(char, a0, nullptr);
 
-        SPAN_0_VAR(char, b0, buf);
-        SPAN_P_VAR(char, bp, buf);
+        XSPAN_0_VAR(char, b0, buf);
+        XSPAN_P_VAR(char, bp, buf);
 
-        SPAN_0_VAR(char, c0, buf, sizeof(buf));
-        SPAN_P_VAR(char, cp, buf, sizeof(buf));
-        SPAN_S_VAR(char, cs, buf, sizeof(buf));
+        XSPAN_0_VAR(char, c0, buf, sizeof(buf));
+        XSPAN_P_VAR(char, cp, buf, sizeof(buf));
+        XSPAN_S_VAR(char, cs, buf, sizeof(buf));
 
-        SPAN_0_VAR(char, d0, buf + 1, sizeof(buf), buf);
-        SPAN_P_VAR(char, dp, buf + 1, sizeof(buf), buf);
-        SPAN_S_VAR(char, ds, buf + 1, sizeof(buf), buf);
+        XSPAN_0_VAR(char, d0, buf + 1, sizeof(buf), buf);
+        XSPAN_P_VAR(char, dp, buf + 1, sizeof(buf), buf);
+        XSPAN_S_VAR(char, ds, buf + 1, sizeof(buf), buf);
 
-        SPAN_0_VAR(const char, const x0, buf, sizeof(buf));
-        SPAN_P_VAR(const char, const xp, buf, sizeof(buf));
-        SPAN_S_VAR(const char, const xs, buf, sizeof(buf));
-        SPAN_P_VAR(const char, const yp, xs);
-        SPAN_0_VAR(const char, const z0p, yp);
-        SPAN_0_VAR(const char, const z0s, xs);
+        XSPAN_0_VAR(const char, const x0, buf, sizeof(buf));
+        XSPAN_P_VAR(const char, const xp, buf, sizeof(buf));
+        XSPAN_S_VAR(const char, const xs, buf, sizeof(buf));
+        XSPAN_P_VAR(const char, const yp, xs);
+        XSPAN_0_VAR(const char, const z0p, yp);
+        XSPAN_0_VAR(const char, const z0s, xs);
 
         CHECK((a0 == nullptr));
         CHECK(c0 == b0);
@@ -111,19 +111,19 @@ TEST_CASE("basic xspan usage") {
 
     SUBCASE("xspan in class") {
         struct MyType {
-            SPAN_0(char) s0;
-            SPAN_P(char) sp;
-            SPAN_S(char) ss;
+            XSPAN_0(char) s0;
+            XSPAN_P(char) sp;
+            XSPAN_S(char) ss;
 #if __cplusplus >= 201103L
-            SPAN_0(char) x0 = nullptr;
+            XSPAN_0(char) x0 = nullptr;
 #endif
-#if WITH_SPAN >= 2
+#if WITH_XSPAN >= 2
             // much nicer syntax when using fully checked xspan:
             MyType(char *b, size_t n, bool) : s0(b, n), sp(b, n), ss(b, n) {}
 #endif
             MyType(char *b, size_t n)
-                : s0(SPAN_0_MAKE(char, b, n)), sp(SPAN_P_MAKE(char, b, n)),
-                  ss(SPAN_S_MAKE(char, b, n)) {
+                : s0(XSPAN_0_MAKE(char, b, n)), sp(XSPAN_P_MAKE(char, b, n)),
+                  ss(XSPAN_S_MAKE(char, b, n)) {
                 UNUSED(n);
             }
         };
@@ -137,7 +137,7 @@ TEST_CASE("basic xspan usage") {
 //
 **************************************************************************/
 
-#if (WITH_SPAN >= 2) && DEBUG
+#if (WITH_XSPAN >= 2) && DEBUG
 
 TEST_CASE("PtrOrSpanOrNull") {
     char real_buf[2 + 6 + 2] = {126, 127, 0, 1, 2, 3, 4, 5, 124, 125};
@@ -334,7 +334,7 @@ TEST_CASE("PtrOrSpan") {
     assert(sp_with_base.raw_base() == base_buf);
     CHECK_THROWS(sp_no_base = my_null);   // nullptr assignment
     CHECK_THROWS(sp_with_base = my_null); // nullptr assignment
-#if SPAN_CONFIG_ENABLE_SPAN_CONVERSION
+#if XSPAN_CONFIG_ENABLE_SPAN_CONVERSION
     typedef PtrOrSpanOrNull<char> Span0;
     Span0 s0_no_base(nullptr);
     Span0 s0_with_base(nullptr, 4, base_buf);
@@ -435,7 +435,7 @@ TEST_CASE("Span") {
     SpanS ss_with_base(base_buf, 4, base_buf);
     assert(ss_with_base.raw_base() == base_buf);
     CHECK_THROWS(ss_with_base = my_null); // nullptr assignment
-#if SPAN_CONFIG_ENABLE_SPAN_CONVERSION
+#if XSPAN_CONFIG_ENABLE_SPAN_CONVERSION
     {
         typedef PtrOrSpanOrNull<char> Span0;
         // v0 nullptr, b0 base, b1 base + 1
@@ -629,7 +629,7 @@ TEST_CASE("PtrOrSpan") {
 TEST_CASE("PtrOrSpan char") {
     char real_buf[2 + 8 + 2] = {126, 127, 0, 1, 2, 3, 4, 5, 6, 7, 124, 125};
     char *buf = real_buf + 2;
-    SPAN_P(char) a(buf, SpanSizeInBytes(8));
+    SPAN_P(char) a(buf, XSpanSizeInBytes(8));
     SPAN_P(char) b = a.subspan(0, 7);
     SPAN_P(char) c = (b + 1).subspan(0, 6);
     a += 1;
@@ -682,7 +682,7 @@ TEST_CASE("PtrOrSpan char") {
 
 TEST_CASE("PtrOrSpan int") {
     int buf[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    SPAN_P(int) a(buf, SpanCount(8));
+    SPAN_P(int) a(buf, XSpanCount(8));
     CHECK(a.raw_size_in_bytes() == 8 * sizeof(int));
     SPAN_P(int) b = a.subspan(0, 7);
     CHECK(b.raw_size_in_bytes() == 7 * sizeof(int));
@@ -723,17 +723,17 @@ __acc_static_noinline int foo(T p) {
 }
 
 template <class T>
-SPAN_0(T)
+XSPAN_0(T)
 make_span_0(T *ptr, size_t count) {
     return PtrOrSpanOrNull<T>(ptr, count);
 }
 template <class T>
-SPAN_P(T)
+XSPAN_P(T)
 make_span_p(T *ptr, size_t count) {
     return PtrOrSpan<T>(ptr, count);
 }
 template <class T>
-SPAN_S(T)
+XSPAN_S(T)
 make_span_s(T *ptr, size_t count) {
     return Span<T>(ptr, count);
 }
@@ -747,6 +747,6 @@ TEST_CASE("Span codegen") {
     CHECK(foo(make_span_s(buf, 8)) == 0 + 2 + 5);
 }
 
-#endif // WITH_SPAN >= 2
+#endif // WITH_XSPAN >= 2
 
 /* vim:set ts=4 sw=4 et: */

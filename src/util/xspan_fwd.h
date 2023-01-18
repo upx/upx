@@ -27,9 +27,9 @@
 // manually forward a number of well-known functions using a
 // checked "raw_bytes()" call
 
-#define SPAN_FWD_TU(RType)                                                                         \
+#define XSPAN_FWD_TU(RType)                                                                        \
     template <class T, class U>                                                                    \
-    inline SPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(T, U, RType)
+    inline XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(T, U, RType)
 
 /*************************************************************************
 // overloads for standard functions
@@ -52,16 +52,16 @@ template <class T>
 inline int memcmp(const void *a, const C<T> &b, size_t n) {
     return memcmp(a, b.raw_bytes(n), n);
 }
-SPAN_FWD_TU(int) memcmp(const C<T> &a, const C<U> &b, size_t n) {
+XSPAN_FWD_TU(int) memcmp(const C<T> &a, const C<U> &b, size_t n) {
     return memcmp(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #ifdef D
-SPAN_FWD_TU(int) memcmp(const C<T> &a, const D<U> &b, size_t n) {
+XSPAN_FWD_TU(int) memcmp(const C<T> &a, const D<U> &b, size_t n) {
     return memcmp(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #endif
 #ifdef E
-SPAN_FWD_TU(int) memcmp(const C<T> &a, const E<U> &b, size_t n) {
+XSPAN_FWD_TU(int) memcmp(const C<T> &a, const E<U> &b, size_t n) {
     return memcmp(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #endif
@@ -74,16 +74,16 @@ template <class T>
 inline void *memcpy(void *a, const C<T> &b, size_t n) {
     return memcpy(a, b.raw_bytes(n), n);
 }
-SPAN_FWD_TU(void *) memcpy(const C<T> &a, const C<U> &b, size_t n) {
+XSPAN_FWD_TU(void *) memcpy(const C<T> &a, const C<U> &b, size_t n) {
     return memcpy(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #ifdef D
-SPAN_FWD_TU(void *) memcpy(const C<T> &a, const D<U> &b, size_t n) {
+XSPAN_FWD_TU(void *) memcpy(const C<T> &a, const D<U> &b, size_t n) {
     return memcpy(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #endif
 #ifdef E
-SPAN_FWD_TU(void *) memcpy(const C<T> &a, const E<U> &b, size_t n) {
+XSPAN_FWD_TU(void *) memcpy(const C<T> &a, const E<U> &b, size_t n) {
     return memcpy(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #endif
@@ -96,16 +96,16 @@ template <class T>
 inline void *memmove(void *a, const C<T> &b, size_t n) {
     return memmove(a, b.raw_bytes(n), n);
 }
-SPAN_FWD_TU(void *) memmove(const C<T> &a, const C<U> &b, size_t n) {
+XSPAN_FWD_TU(void *) memmove(const C<T> &a, const C<U> &b, size_t n) {
     return memmove(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #ifdef D
-SPAN_FWD_TU(void *) memmove(const C<T> &a, const D<U> &b, size_t n) {
+XSPAN_FWD_TU(void *) memmove(const C<T> &a, const D<U> &b, size_t n) {
     return memmove(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #endif
 #ifdef E
-SPAN_FWD_TU(void *) memmove(const C<T> &a, const E<U> &b, size_t n) {
+XSPAN_FWD_TU(void *) memmove(const C<T> &a, const E<U> &b, size_t n) {
     return memmove(a.raw_bytes(n), b.raw_bytes(n), n);
 }
 #endif
@@ -127,16 +127,16 @@ template <class T>
 inline int ptr_diff_bytes(const void *a, const C<T> &b) {
     return ptr_diff_bytes(a, b.raw_bytes(0));
 }
-SPAN_FWD_TU(int) ptr_diff_bytes(const C<T> &a, const C<U> &b) {
+XSPAN_FWD_TU(int) ptr_diff_bytes(const C<T> &a, const C<U> &b) {
     return ptr_diff_bytes(a.raw_bytes(0), b.raw_bytes(0));
 }
 #ifdef D
-SPAN_FWD_TU(int) ptr_diff_bytes(const C<T> &a, const D<U> &b) {
+XSPAN_FWD_TU(int) ptr_diff_bytes(const C<T> &a, const D<U> &b) {
     return ptr_diff_bytes(a.raw_bytes(0), b.raw_bytes(0));
 }
 #endif
 #ifdef E
-SPAN_FWD_TU(int) ptr_diff_bytes(const C<T> &a, const E<U> &b) {
+XSPAN_FWD_TU(int) ptr_diff_bytes(const C<T> &a, const E<U> &b) {
     return ptr_diff_bytes(a.raw_bytes(0), b.raw_bytes(0));
 }
 #endif
@@ -149,16 +149,16 @@ template <class T>
 inline unsigned ptr_udiff_bytes(const void *a, const C<T> &b) {
     return ptr_udiff_bytes(a, b.raw_bytes(0));
 }
-SPAN_FWD_TU(unsigned) ptr_udiff_bytes(const C<T> &a, const C<U> &b) {
+XSPAN_FWD_TU(unsigned) ptr_udiff_bytes(const C<T> &a, const C<U> &b) {
     return ptr_udiff_bytes(a.raw_bytes(0), b.raw_bytes(0));
 }
 #ifdef D
-SPAN_FWD_TU(unsigned) ptr_udiff_bytes(const C<T> &a, const D<U> &b) {
+XSPAN_FWD_TU(unsigned) ptr_udiff_bytes(const C<T> &a, const D<U> &b) {
     return ptr_udiff_bytes(a.raw_bytes(0), b.raw_bytes(0));
 }
 #endif
 #ifdef E
-SPAN_FWD_TU(unsigned) ptr_udiff_bytes(const C<T> &a, const E<U> &b) {
+XSPAN_FWD_TU(unsigned) ptr_udiff_bytes(const C<T> &a, const E<U> &b) {
     return ptr_udiff_bytes(a.raw_bytes(0), b.raw_bytes(0));
 }
 #endif
@@ -295,6 +295,6 @@ typename std::enable_if<sizeof(T) == 1, upx_rsize_t>::type upx_safe_strlen(const
 
 #endif // UPX_VERSION_HEX
 
-#undef SPAN_FWD_TU
+#undef XSPAN_FWD_TU
 
 /* vim:set ts=4 sw=4 et: */

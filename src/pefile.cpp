@@ -39,7 +39,7 @@
 //
 **************************************************************************/
 
-#if (WITH_SPAN >= 2) && 1
+#if (WITH_XSPAN >= 2) && 1
 //#define IPTR(type, var)             Span<type> var(ibuf, ibuf.getSize(), ibuf)
 //#define OPTR(type, var)             Span<type> var(obuf, obuf.getSize(), obuf)
 #define IPTR_I_D(type, var, disp)   Span<type> var(ibuf + (disp), ibuf.getSize() - (disp), ibuf + (disp))

@@ -29,7 +29,7 @@
 #ifndef UPX_BPTR_H__
 #define UPX_BPTR_H__ 1
 
-#if WITH_SPAN >= 2
+#if WITH_XSPAN >= 2
 #error "this file is deprecated, please use xspan.h instead"
 #endif
 

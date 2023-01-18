@@ -26,7 +26,7 @@
 
 #pragma once
 
-SPAN_NAMESPACE_BEGIN
+XSPAN_NAMESPACE_BEGIN
 
 /*************************************************************************
 // PtrOrSpanOrNull
@@ -56,31 +56,31 @@ public:
         assertInvariants();
     }
     template <class U>
-    CSelf(const CSelf<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
+    CSelf(const CSelf<U> &other, XSPAN_REQUIRES_CONVERTIBLE_A)
         : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {
         assertInvariants();
     }
 
     // constructors from Span friends
     template <class U>
-    CSelf(const PtrOrSpan<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
+    CSelf(const PtrOrSpan<U> &other, XSPAN_REQUIRES_CONVERTIBLE_A)
         : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {
         assertInvariants();
     }
     template <class U>
-    CSelf(const Span<U> &other, SPAN_REQUIRES_CONVERTIBLE_A)
+    CSelf(const Span<U> &other, XSPAN_REQUIRES_CONVERTIBLE_A)
         : ptr(other.ptr), base(other.base), size_in_bytes(other.size_in_bytes) {
         assertInvariants();
     }
 
     // assignment from Span friends
     template <class U>
-    SPAN_REQUIRES_CONVERTIBLE_R(Self &)
+    XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(const PtrOrSpan<U> &other) {
         return assign(Self(other));
     }
     template <class U>
-    SPAN_REQUIRES_CONVERTIBLE_R(Self &)
+    XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(const Span<U> &other) {
         return assign(Self(other));
     }
@@ -107,13 +107,13 @@ inline typename PtrOrSpanOrNull<T>::pointer raw_index_bytes(const PtrOrSpanOrNul
 //
 **************************************************************************/
 
-SPAN_NAMESPACE_END
+XSPAN_NAMESPACE_END
 
-#if !SPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
+#if !XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
 
-#define C SPAN_NS(PtrOrSpanOrNull)
-#define D SPAN_NS(PtrOrSpan)
-#define E SPAN_NS(Span)
+#define C XSPAN_NS(PtrOrSpanOrNull)
+#define D XSPAN_NS(PtrOrSpan)
+#define E XSPAN_NS(Span)
 #include "xspan_fwd.h"
 #undef C
 #undef D

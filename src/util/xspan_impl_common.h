@@ -42,7 +42,7 @@ friend struct PtrOrSpanOrNull;
 template <class>
 friend struct Span;
 
-#if SPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION
+#if XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION
 operator pointer() const { return ptr; }
 #endif
 
@@ -59,7 +59,7 @@ __acc_noinline void assertInvariants() const {
     if __acc_cte (configRequireBase)
         assert(base != nullptr);
     if __acc_cte ((configRequirePtr || ptr != nullptr) && (configRequireBase || base != nullptr))
-        span_check_range(ptr, base, size_in_bytes);
+        xspan_check_range(ptr, base, size_in_bytes);
 }
 #else
 __acc_forceinline void assertInvariants() const {}
@@ -67,74 +67,74 @@ __acc_forceinline void assertInvariants() const {}
 
 static __acc_forceinline pointer makeNotNull(pointer p) {
     if __acc_very_unlikely (p == nullptr)
-        span_fail_nullptr();
+        xspan_fail_nullptr();
     return p;
 }
 // enforce config invariants at constructor time - static functions
 static __acc_forceinline pointer makePtr(pointer p) {
     if __acc_cte (configRequirePtr && p == nullptr)
-        span_fail_nullptr();
+        xspan_fail_nullptr();
     return p;
 }
 static __acc_forceinline pointer makeBase(pointer b) {
     if __acc_cte (configRequireBase && b == nullptr)
-        span_fail_nullbase();
+        xspan_fail_nullbase();
     return b;
 }
 // inverse logic for ensuring valid pointers from existing objets
 __acc_forceinline pointer ensurePtr() const {
     if __acc_cte (!configRequirePtr && ptr == nullptr)
-        span_fail_nullptr();
+        xspan_fail_nullptr();
     return ptr;
 }
 __acc_forceinline pointer ensureBase() const {
     if __acc_cte (!configRequireBase && base == nullptr)
-        span_fail_nullbase();
+        xspan_fail_nullbase();
     return base;
 }
 
 public:
 inline ~CSelf() {}
 // constructors from pointers
-CSelf(pointer first, SpanCount count)
-    : ptr(makePtr(first)), base(makeBase(first)), size_in_bytes(span_mem_size<T>(count.count)) {
+CSelf(pointer first, XSpanCount count)
+    : ptr(makePtr(first)), base(makeBase(first)), size_in_bytes(xspan_mem_size<T>(count.count)) {
     assertInvariants();
 }
-CSelf(pointer first, SpanSizeInBytes bytes)
+CSelf(pointer first, XSpanSizeInBytes bytes)
     : ptr(makePtr(first)), base(makeBase(first)),
-      size_in_bytes(span_mem_size<char>(bytes.size_in_bytes)) {
+      size_in_bytes(xspan_mem_size<char>(bytes.size_in_bytes)) {
     assertInvariants();
 }
 // enable this constructor only if the underlying type is char or void
 template <class U>
-CSelf(U *first, size_type count, SPAN_REQUIRES_SIZE_1_A)
-    : ptr(makePtr(first)), base(makeBase(first)), size_in_bytes(span_mem_size<T>(count)) {
+CSelf(U *first, size_type count, XSPAN_REQUIRES_SIZE_1_A)
+    : ptr(makePtr(first)), base(makeBase(first)), size_in_bytes(xspan_mem_size<T>(count)) {
     assertInvariants();
 }
-CSelf(pointer first, SpanCount count, pointer base_)
-    : ptr(makePtr(first)), base(makeBase(base_)), size_in_bytes(span_mem_size<T>(count.count)) {
+CSelf(pointer first, XSpanCount count, pointer base_)
+    : ptr(makePtr(first)), base(makeBase(base_)), size_in_bytes(xspan_mem_size<T>(count.count)) {
     // check invariants
     if __acc_cte ((configRequirePtr || ptr != nullptr) && (configRequireBase || base != nullptr))
-        span_check_range(ptr, base, size_in_bytes);
+        xspan_check_range(ptr, base, size_in_bytes);
     // double sanity check
     assertInvariants();
 }
-CSelf(pointer first, SpanSizeInBytes bytes, pointer base_)
+CSelf(pointer first, XSpanSizeInBytes bytes, pointer base_)
     : ptr(makePtr(first)), base(makeBase(base_)),
-      size_in_bytes(span_mem_size<char>(bytes.size_in_bytes)) {
+      size_in_bytes(xspan_mem_size<char>(bytes.size_in_bytes)) {
     // check invariants
     if __acc_cte ((configRequirePtr || ptr != nullptr) && (configRequireBase || base != nullptr))
-        span_check_range(ptr, base, size_in_bytes);
+        xspan_check_range(ptr, base, size_in_bytes);
     // double sanity check
     assertInvariants();
 }
 // enable this constructor only if the underlying type is char or void
 template <class U>
-CSelf(pointer first, size_type count, U *base_, SPAN_REQUIRES_SIZE_1_A)
-    : ptr(makePtr(first)), base(makeBase(base_)), size_in_bytes(span_mem_size<T>(count)) {
+CSelf(pointer first, size_type count, U *base_, XSPAN_REQUIRES_SIZE_1_A)
+    : ptr(makePtr(first)), base(makeBase(base_)), size_in_bytes(xspan_mem_size<T>(count)) {
     // check invariants
     if __acc_cte ((configRequirePtr || ptr != nullptr) && (configRequireBase || base != nullptr))
-        span_check_range(ptr, base, size_in_bytes);
+        xspan_check_range(ptr, base, size_in_bytes);
     // double sanity check
     assertInvariants();
 }
@@ -142,23 +142,23 @@ CSelf(pointer first, size_type count, U *base_, SPAN_REQUIRES_SIZE_1_A)
 // constructors from MemBuffer
 CSelf(MemBuffer &mb)
     : CSelf(makeNotNull((pointer) membuffer_get_void_ptr(mb)),
-            SpanSizeInBytes(membuffer_get_size(mb))) {}
+            XSpanSizeInBytes(membuffer_get_size(mb))) {}
 CSelf(pointer first, MemBuffer &mb)
-    : CSelf(first, SpanSizeInBytes(membuffer_get_size(mb)),
+    : CSelf(first, XSpanSizeInBytes(membuffer_get_size(mb)),
             makeNotNull((pointer) membuffer_get_void_ptr(mb))) {}
-CSelf(std::nullptr_t, MemBuffer &) SPAN_DELETED_FUNCTION;
+CSelf(std::nullptr_t, MemBuffer &) XSPAN_DELETED_FUNCTION;
 #endif
 // disable constructors from nullptr to catch compile-time misuse
 private:
-CSelf(std::nullptr_t, SpanCount) SPAN_DELETED_FUNCTION;
-CSelf(std::nullptr_t, SpanCount, std::nullptr_t) SPAN_DELETED_FUNCTION;
-CSelf(const void *, SpanCount, std::nullptr_t) SPAN_DELETED_FUNCTION;
-CSelf(std::nullptr_t, SpanSizeInBytes) SPAN_DELETED_FUNCTION;
-CSelf(std::nullptr_t, SpanSizeInBytes, std::nullptr_t) SPAN_DELETED_FUNCTION;
-CSelf(const void *, SpanSizeInBytes, std::nullptr_t) SPAN_DELETED_FUNCTION;
-CSelf(std::nullptr_t, size_type) SPAN_DELETED_FUNCTION;
-CSelf(std::nullptr_t, size_type, std::nullptr_t) SPAN_DELETED_FUNCTION;
-CSelf(const void *, size_type, std::nullptr_t) SPAN_DELETED_FUNCTION;
+CSelf(std::nullptr_t, XSpanCount) XSPAN_DELETED_FUNCTION;
+CSelf(std::nullptr_t, XSpanCount, std::nullptr_t) XSPAN_DELETED_FUNCTION;
+CSelf(const void *, XSpanCount, std::nullptr_t) XSPAN_DELETED_FUNCTION;
+CSelf(std::nullptr_t, XSpanSizeInBytes) XSPAN_DELETED_FUNCTION;
+CSelf(std::nullptr_t, XSpanSizeInBytes, std::nullptr_t) XSPAN_DELETED_FUNCTION;
+CSelf(const void *, XSpanSizeInBytes, std::nullptr_t) XSPAN_DELETED_FUNCTION;
+CSelf(std::nullptr_t, size_type) XSPAN_DELETED_FUNCTION;
+CSelf(std::nullptr_t, size_type, std::nullptr_t) XSPAN_DELETED_FUNCTION;
+CSelf(const void *, size_type, std::nullptr_t) XSPAN_DELETED_FUNCTION;
 
 // unchecked constructor
 protected:
@@ -192,7 +192,7 @@ Self &assign(pointer other) {
     assertInvariants();
     other = makePtr(other);
     if __acc_cte ((configRequirePtr || other != nullptr) && (configRequireBase || base != nullptr))
-        span_check_range(other, base, size_in_bytes);
+        xspan_check_range(other, base, size_in_bytes);
     // ok
     ptr = other;
     assertInvariants();
@@ -205,7 +205,7 @@ Self &assign(const Self &other) {
         // magic 1: if base is unset, automatically set base/size_in_bytes from other
         if __acc_cte ((configRequirePtr || other.ptr != nullptr) &&
                       (configRequireBase || other.base != nullptr))
-            span_check_range(other.ptr, other.base, other.size_in_bytes);
+            xspan_check_range(other.ptr, other.base, other.size_in_bytes);
         // ok
         ptr = other.ptr;
         base = other.base;
@@ -214,10 +214,10 @@ Self &assign(const Self &other) {
         // magic 2: assert same base (but ignore size_in_bytes !)
         if __acc_cte (configRequireBase || other.base != nullptr)
             if __acc_very_unlikely (base != other.base)
-                span_fail_not_same_base();
+                xspan_fail_not_same_base();
         if __acc_cte ((configRequirePtr || other.ptr != nullptr) &&
                       (configRequireBase || base != nullptr))
-            span_check_range(other.ptr, base, size_in_bytes);
+            xspan_check_range(other.ptr, base, size_in_bytes);
         // ok
         ptr = other.ptr;
     }
@@ -231,7 +231,7 @@ Self &operator=(const Self &other) { return assign(other); }
 
 // FIXME: this is not called??
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(Self &)
+XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
 operator=(const CSelf<U> &other) {
     // assert(0);
     return assign(Self(other));
@@ -252,65 +252,65 @@ Self subspan(ptrdiff_t offset, ptrdiff_t count) {
 
 bool operator==(pointer other) const { return ptr == other; }
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator==(U *other) const {
     return ptr == other;
 }
 bool operator!=(pointer other) const { return ptr != other; }
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator!=(U *other) const {
     return ptr != other;
 }
 
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator==(const PtrOrSpan<U> &other) const {
     return ptr == other.ptr;
 }
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator==(const PtrOrSpanOrNull<U> &other) const {
     return ptr == other.ptr;
 }
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator==(const Span<U> &other) const {
     return ptr == other.ptr;
 }
 
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator!=(const PtrOrSpan<U> &other) const {
     return !(*this == other);
 }
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator!=(const PtrOrSpanOrNull<U> &other) const {
     return !(*this == other);
 }
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator!=(const Span<U> &other) const {
     return !(*this == other);
 }
 
 // check for notNull here
-bool operator<(std::nullptr_t) const SPAN_DELETED_FUNCTION;
+bool operator<(std::nullptr_t) const XSPAN_DELETED_FUNCTION;
 bool operator<(pointer other) const { return ensurePtr() < makeNotNull(other); }
 
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator<(const PtrOrSpan<U> &other) const {
     return ensurePtr() < other.ensurePtr();
 }
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator<(const PtrOrSpanOrNull<U> &other) const {
     return ensurePtr() < other.ensurePtr();
 }
 template <class U>
-SPAN_REQUIRES_CONVERTIBLE_R(bool)
+XSPAN_REQUIRES_CONVERTIBLE_R(bool)
 operator<(const Span<U> &other) const {
     return ensurePtr() < other.ensurePtr();
 }
@@ -364,36 +364,36 @@ Self operator-(ptrdiff_t n) const {
 private:
 pointer check_deref(pointer p) const {
     if __acc_cte (!configRequirePtr && p == nullptr)
-        span_fail_nullptr();
+        xspan_fail_nullptr();
     if __acc_cte (configRequireBase || base != nullptr)
-        span_check_range(p, base, size_in_bytes - sizeof(T));
+        xspan_check_range(p, base, size_in_bytes - sizeof(T));
     assertInvariants();
     return p;
 }
 pointer check_deref(pointer p, ptrdiff_t n) const {
     if __acc_cte (!configRequirePtr && p == nullptr)
-        span_fail_nullptr();
-    span_mem_size_assert_ptrdiff<T>(n);
+        xspan_fail_nullptr();
+    xspan_mem_size_assert_ptrdiff<T>(n);
     p += n;
     if __acc_cte (configRequireBase || base != nullptr)
-        span_check_range(p, base, size_in_bytes - sizeof(T));
+        xspan_check_range(p, base, size_in_bytes - sizeof(T));
     assertInvariants();
     return p;
 }
 pointer check_add(pointer p, ptrdiff_t n) const {
     if __acc_cte (!configRequirePtr && p == nullptr)
-        span_fail_nullptr();
-    span_mem_size_assert_ptrdiff<T>(n);
+        xspan_fail_nullptr();
+    xspan_mem_size_assert_ptrdiff<T>(n);
     p += n;
     if __acc_cte (configRequireBase || base != nullptr)
-        span_check_range(p, base, size_in_bytes);
+        xspan_check_range(p, base, size_in_bytes);
     assertInvariants();
     return p;
 }
 
 // disable taking the address => force passing by reference
 // [I'm not too sure about this design decision, but we can always allow it if needed]
-Self *operator&() const SPAN_DELETED_FUNCTION;
+Self *operator&() const XSPAN_DELETED_FUNCTION;
 
 public: // raw access
 pointer raw_ptr() const { return ptr; }
@@ -404,9 +404,9 @@ pointer raw_bytes(size_t bytes) const {
     assertInvariants();
     if (bytes > 0) {
         if __acc_cte (!configRequirePtr && ptr == nullptr)
-            span_fail_nullptr();
+            xspan_fail_nullptr();
         if __acc_cte (configRequireBase || base != nullptr) {
-            span_check_range(ptr, base, size_in_bytes - bytes);
+            xspan_check_range(ptr, base, size_in_bytes - bytes);
         }
     }
     return ptr;
