@@ -102,6 +102,13 @@ build/extra/gcc-m64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-m64/%: export CC  = gcc -m64
 build/extra/gcc-m64/%: export CXX = g++ -m64
 
+# force building with clang Static Analyzer (scan-build)
+build/extra/scan-build/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/scan-build/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/scan-build/%: CMAKE := scan-build $(CMAKE)
+build/extra/scan-build/%: export CCC_CC  ?= clang
+build/extra/scan-build/%: export CCC_CXX ?= clang++
+
 # cross compiler: Linux glibc aarch64-linux-gnu
 build/extra/cross-linux-aarch64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-linux-aarch64/release: PHONY; $(call run_config_and_build,$@,Release)
@@ -119,16 +126,28 @@ build/extra/cross-windows-mingw32/debug:   PHONY; $(call run_config_and_build,$@
 build/extra/cross-windows-mingw32/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc
 build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++
-# disable sanitize to avoid link errors with current MinGW-w64 versions
-build/extra/cross-windows-mingw32/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISABLE_SANITIZE=1
 
 # cross compiler: Windows x64 win64 MinGW
 build/extra/cross-windows-mingw64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc
 build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++
-# disable sanitize to avoid link errors with current MinGW-w64 versions
-build/extra/cross-windows-mingw64/%: UPX_CMAKE_CONFIG_FLAGS += -DUPX_CONFIG_DISABLE_SANITIZE=1
+
+# advanced: generic eXtra target; usage:
+#   make UPX_XTARGET=mytarget CC="my-cc -flags" CXX="my-cxx -flags"
+#   make UPX_XTARGET=mytarget CC="my-cc -flags" CXX="my-cxx -flags" build/xtarget/mytarget/debug
+ifneq ($(UPX_XTARGET),)
+ifneq ($(CC),)
+ifneq ($(CXX),)
+UPX_XTARGET := $(UPX_XTARGET)
+$(eval .DEFAULT_GOAL = build/xtarget/$(UPX_XTARGET)/release)
+build/xtarget/$(UPX_XTARGET)/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/xtarget/$(UPX_XTARGET)/release: PHONY; $(call run_config_and_build,$@,Release)
+build/xtarget/$(UPX_XTARGET)/%: export CC
+build/xtarget/$(UPX_XTARGET)/%: export CXX
+endif
+endif
+endif
 
 #***********************************************************************
 # check git submodules

@@ -1,5 +1,5 @@
 FROM docker.io/library/ubuntu:22.04
-ENV UPX_CONTAINER_IMAGE_NAME=upx-stubtools-20221212-v3
+ENV UPX_CONTAINER_IMAGE_NAME=upx-stubtools-20221212-v4
 ARG DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
@@ -13,9 +13,9 @@ RUN dpkg --add-architecture i386 \
         # the following packages are not required for rebuilding the stubs, but
         # they do make the image much more convenient and also allow building
         # the full UPX binary inside the container via CMake:
-        7zip bfs bzip2 cmake elfutils fd-find file fzf g++ gdb htop hyperfine \
-        libzstd-dev lzip lzop ninja-build p7zip patch patchelf pax-utils ripgrep \
-        rsync screen universal-ctags unzip vim zip zlib1g-dev zsh zstd \
+        7zip bfs bzip2 cmake curl elfutils fd-find file fzf g++ gdb gojq htop hyperfine \
+        jq libzstd-dev lsb-release lzip lzop ninja-build p7zip patch patchelf pax-utils \
+        ripgrep rsync screen universal-ctags unzip vim zip zlib1g-dev zsh zstd \
         # extra packages for compiling with "gcc -m32" and and "gcc -mx32":
         gcc-multilib g++-multilib \
     && true

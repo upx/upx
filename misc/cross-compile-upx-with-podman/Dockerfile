@@ -1,8 +1,8 @@
-# NOTE: this image is based on rebuild-stubs-with-upx/upx-stubtools-20221212-v3,
+# NOTE: this image is based on rebuild-stubs-with-upx/upx-stubtools-20221212-v4,
 #   so you have to create that image first
 # WARNING: we install many packages, so the resulting image needs A LOT of disk space!
-FROM localhost/upx-stubtools-20221212-v3
-ENV UPX_CONTAINER_IMAGE_NAME=upx-cross-compile-20230115-v1
+FROM localhost/upx-stubtools-20221212-v4
+ENV UPX_CONTAINER_IMAGE_NAME=upx-cross-compile-20230115-v2
 ARG DEBIAN_FRONTEND=noninteractive
 
 USER root
@@ -42,6 +42,12 @@ RUN apt-get install -y \
         qemu-system qemu-user wine wine32 \
         # misc
         gdb lsb-release valgrind \
+    && true
+RUN cd /usr/bin \
+    # create unversioned clang symlinks
+    && for f in clang*-14 llvm-*-14 scan-*-14; do ln -s -v ../../bin/$f /usr/local/bin/${f%-14}; done \
+    && ln -s -v ../../bin/obj2yaml-14 /usr/local/bin/llvm-obj2yaml \
+    && ln -s -v ../../bin/yaml2obj-14 /usr/local/bin/llvm-yaml2obj \
     && true
 
 # switch back to default user upx 2000:2000

@@ -33,6 +33,10 @@ function run_config_and_build {
         # avoid warnings about arm libstdc++ ABI change in gcc-7
         arm-linux-*) CXX="$CXX -Wno-psabi" ;;
     esac
+    if [[ 1 == 1 ]]; then
+        # prefer building with Ninja (ninja-build)
+        cmake_config_flags="$cmake_config_flags -G Ninja -DUPX_CONFIG_CMAKE_DISABLE_INSTALL=ON"
+    fi
     # for all build types
     for build_type in Debug Release; do
         bdir=build/cross-compile-upx-with-podman/$toolchain/${build_type,,}

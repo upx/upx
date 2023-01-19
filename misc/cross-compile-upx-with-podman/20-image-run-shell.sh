@@ -6,7 +6,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # run an interactive shell in the image
 # using a rootless Podman container
 
-image=upx-cross-compile-20230115-v1
+image=upx-cross-compile-20230115-v2
 
 flags=( -ti --read-only --rm )
 flags+=( --cap-drop=all )               # drop all capabilities
@@ -37,12 +37,17 @@ podman run "${flags[@]}" "$image" bash -l
 #   rm -rf ./build/extra/cross-windows-mingw64/release
 #   make build/extra/cross-windows-mingw64/release
 
-# lots of other cross-compilers are installed; see "ls /usr/bin/*g++*"
+# and we can run the clang Static Analyzer (scan-build)
+#   cd /home/upx/src/upx
+#   rm -rf ./build/extra/scan-build/release
+#   make build/extra/scan-build/release
 
-# and see misc/cross-compile-upx-with-podman/build-all-inside-container.sh; after
-# running that script we can do cool things like:
+# and lots of other cross-compilers are installed; see "ls /usr/bin/*g++*"
+
+# and finally see misc/cross-compile-upx-with-podman/build-all-inside-container.sh
+# after running that script we can do cool things like:
 #   cd /home/upx/src/upx/build/cross-compile-upx-with-podman/alpha-linux-gnu/debug
 #   qemu-alpha -L /usr/alpha-linux-gnu upx --version
 #   cd /home/upx/src/upx/build/cross-compile-upx-with-podman/hppa-linux-gnu/debug
 #   qemu-hppa -L /usr/hppa-linux-gnu upx --version
-# (similar for many other archs)
+# (similar for many other architectures/builds)
