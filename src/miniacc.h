@@ -27,7 +27,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20221127L
+#define ACC_VERSION     20230104L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -1561,7 +1561,7 @@ extern "C" {
 #endif
 #if !defined(ACC_BLOCK_BEGIN)
 #  define ACC_BLOCK_BEGIN           do {
-#  define ACC_BLOCK_END             } while __acc_cte(0)
+#  define ACC_BLOCK_END             } while (__acc_cte(0))
 #endif
 #if !defined(ACC_UNUSED)
 #  if (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0600))
@@ -1608,7 +1608,7 @@ extern "C" {
 #  if (ACC_CC_CLANG >= 0x020800ul)
 #    define ACC_UNUSED_LABEL(l)     (__acc_gnuc_extension__ ((void) ACC_STATIC_CAST(const void *, &&l)))
 #  elif (ACC_CC_ARMCC || ACC_CC_CLANG || ACC_CC_INTELC || ACC_CC_WATCOMC)
-#    define ACC_UNUSED_LABEL(l)     if __acc_cte(0) goto l
+#    define ACC_UNUSED_LABEL(l)     if (__acc_cte(0)) goto l
 #  else
 #    define ACC_UNUSED_LABEL(l)     switch (0) case 1:goto l
 #  endif
@@ -2047,7 +2047,7 @@ extern "C" {
 #  if (ACC_CC_IBMC)
 #    define __acc_loop_forever()    ACC_BLOCK_BEGIN for (;;) { ; } ACC_BLOCK_END
 #  else
-#    define __acc_loop_forever()    do { ; } while __acc_cte(1)
+#    define __acc_loop_forever()    do { ; } while (__acc_cte(1))
 #  endif
 #endif
 #if !defined(__acc_unreachable)
@@ -2079,11 +2079,11 @@ extern "C" {
 #    define acc_unused_funcs_impl(r,f)  __acc_static_forceinline r f
 #  endif
 #endif
-#ifndef __ACC_CTA_NAME
+#ifndef ACC_CTA_INTERNAL_NAME__
 #if (ACC_CFG_USE_COUNTER)
-#  define __ACC_CTA_NAME(a)         ACC_PP_ECONCAT2(a,__COUNTER__)
+#  define ACC_CTA_INTERNAL_NAME__(a)         ACC_PP_ECONCAT2(a,__COUNTER__)
 #else
-#  define __ACC_CTA_NAME(a)         ACC_PP_ECONCAT2(a,__LINE__)
+#  define ACC_CTA_INTERNAL_NAME__(a)         ACC_PP_ECONCAT2(a,__LINE__)
 #endif
 #endif
 #if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
@@ -2092,17 +2092,17 @@ extern "C" {
 #  elif (ACC_LANG_C >= 201112L)
 #    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  _Static_assert(e, #e);
 #  elif (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int __ACC_CTA_NAME(acc_cta__)[1-!(e)]; ACC_EXTERN_C_END
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int ACC_CTA_INTERNAL_NAME__(acc_cta__)[1-!(e)]; ACC_EXTERN_C_END
 #  elif (ACC_CC_DMC || ACC_CC_SYMANTECC)
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int __ACC_CTA_NAME(acc_cta__)[1u-2*!(e)]; ACC_EXTERN_C_END
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int ACC_CTA_INTERNAL_NAME__(acc_cta__)[1u-2*!(e)]; ACC_EXTERN_C_END
 #  elif (ACC_CC_TURBOC && (__TURBOC__ == 0x0295))
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int __ACC_CTA_NAME(acc_cta__)[1-!(e)]; ACC_EXTERN_C_END
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int ACC_CTA_INTERNAL_NAME__(acc_cta__)[1-!(e)]; ACC_EXTERN_C_END
 #  elif (ACC_CC_CLANG && (ACC_CC_CLANG < 0x020900ul)) && defined(__cplusplus)
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN int __ACC_CTA_NAME(acc_cta_f__)(int [1-2*!(e)]); ACC_EXTERN_C_END
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN int ACC_CTA_INTERNAL_NAME__(acc_cta_f__)(int [1-2*!(e)]); ACC_EXTERN_C_END
 #  elif (ACC_CC_GNUC) && defined(__CHECKER__) && defined(__SPARSE_CHECKER__)
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN enum {__ACC_CTA_NAME(acc_cta_e__)=1/!!(e)} __attribute__((__unused__)); ACC_EXTERN_C_END
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN enum {ACC_CTA_INTERNAL_NAME__(acc_cta_e__)=1/!!(e)} __attribute__((__unused__)); ACC_EXTERN_C_END
 #  else
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int __ACC_CTA_NAME(acc_cta__)[1-2*!(e)]; ACC_EXTERN_C_END
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  ACC_EXTERN_C_BEGIN extern int ACC_CTA_INTERNAL_NAME__(acc_cta__)[1-2*!(e)]; ACC_EXTERN_C_END
 #  endif
 #endif
 #if !defined(ACC_COMPILE_TIME_ASSERT)
@@ -2111,23 +2111,23 @@ extern "C" {
 #  elif (ACC_LANG_C >= 201112L)
 #    define ACC_COMPILE_TIME_ASSERT(e)  {_Static_assert(e, #e);}
 #  elif (ACC_CC_AZTECC)
-#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __ACC_CTA_NAME(acc_cta_t__)[1-!(e)];}
+#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int ACC_CTA_INTERNAL_NAME__(acc_cta_t__)[1-!(e)];}
 #  elif (ACC_CC_CLANG && (ACC_CC_CLANG >= 0x030000ul))
-#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __ACC_CTA_NAME(acc_cta_t__)[1-2*!(e)] __attribute__((__unused__));}
+#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int ACC_CTA_INTERNAL_NAME__(acc_cta_t__)[1-2*!(e)] __attribute__((__unused__));}
 #  elif (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
 #  elif (ACC_CC_GNUC) && defined(__CHECKER__) && defined(__SPARSE_CHECKER__)
 #    define ACC_COMPILE_TIME_ASSERT(e)  {(void) (0/!!(e));}
 #  elif (ACC_CC_GNUC >= 0x040700ul) && (ACC_CFG_USE_COUNTER) && defined(__cplusplus)
-#    define ACC_COMPILE_TIME_ASSERT(e)  {enum {__ACC_CTA_NAME(acc_cta_e__)=1/!!(e)} __attribute__((__unused__));}
+#    define ACC_COMPILE_TIME_ASSERT(e)  {enum {ACC_CTA_INTERNAL_NAME__(acc_cta_e__)=1/!!(e)} __attribute__((__unused__));}
 #  elif (ACC_CC_GNUC >= 0x040700ul)
-#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __ACC_CTA_NAME(acc_cta_t__)[1-2*!(e)] __attribute__((__unused__));}
+#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int ACC_CTA_INTERNAL_NAME__(acc_cta_t__)[1-2*!(e)] __attribute__((__unused__));}
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
 #  elif (ACC_CC_TURBOC && (__TURBOC__ == 0x0295))
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
 #  else
-#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __ACC_CTA_NAME(acc_cta_t__)[1-2*!(e)];}
+#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int ACC_CTA_INTERNAL_NAME__(acc_cta_t__)[1-2*!(e)];}
 #  endif
 #endif
 #if (ACC_LANG_ASSEMBLER)
@@ -2737,37 +2737,14 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  define ACC_OPT_UNALIGNED64               1
 #  endif
 #elif (ACC_ARCH_ARM)
-#  if defined(__ARM_FEATURE_UNALIGNED)
-#   if ((__ARM_FEATURE_UNALIGNED)+0)
+#  if defined(__ARM_FEATURE_UNALIGNED) && (__ARM_FEATURE_UNALIGNED+0)
 #    ifndef ACC_OPT_UNALIGNED16
 #    define ACC_OPT_UNALIGNED16             1
 #    endif
 #    ifndef ACC_OPT_UNALIGNED32
 #    define ACC_OPT_UNALIGNED32             1
 #    endif
-#   endif
-#  elif 1 && (ACC_ARCH_ARM_THUMB2)
-#    ifndef ACC_OPT_UNALIGNED16
-#    define ACC_OPT_UNALIGNED16             1
-#    endif
-#    ifndef ACC_OPT_UNALIGNED32
-#    define ACC_OPT_UNALIGNED32             1
-#    endif
-#  elif 1 && defined(__ARM_ARCH) && ((__ARM_ARCH)+0 >= 7)
-#    ifndef ACC_OPT_UNALIGNED16
-#    define ACC_OPT_UNALIGNED16             1
-#    endif
-#    ifndef ACC_OPT_UNALIGNED32
-#    define ACC_OPT_UNALIGNED32             1
-#    endif
-#  elif 1 && defined(__TARGET_ARCH_ARM) && ((__TARGET_ARCH_ARM)+0 >= 7)
-#    ifndef ACC_OPT_UNALIGNED16
-#    define ACC_OPT_UNALIGNED16             1
-#    endif
-#    ifndef ACC_OPT_UNALIGNED32
-#    define ACC_OPT_UNALIGNED32             1
-#    endif
-#  elif 1 && defined(__TARGET_ARCH_ARM) && ((__TARGET_ARCH_ARM)+0 >= 6) && (defined(__TARGET_PROFILE_A) || defined(__TARGET_PROFILE_R))
+#  elif defined(__TARGET_FEATURE_UNALIGNED) && (__TARGET_FEATURE_UNALIGNED+0)
 #    ifndef ACC_OPT_UNALIGNED16
 #    define ACC_OPT_UNALIGNED16             1
 #    endif
@@ -2826,34 +2803,21 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #elif (ACC_ARCH_POWERPC)
 #  define ACC_OPT_PREFER_PREINC             1
 #  define ACC_OPT_PREFER_PREDEC             1
-#  if (ACC_ABI_BIG_ENDIAN) || (ACC_WORDSIZE == 8)
+#  if (ACC_WORDSIZE == 8) || (ACC_ABI_BIG_ENDIAN)
 #    ifndef ACC_OPT_UNALIGNED16
 #    define ACC_OPT_UNALIGNED16             1
 #    endif
 #    ifndef ACC_OPT_UNALIGNED32
 #    define ACC_OPT_UNALIGNED32             1
 #    endif
-#    if (ACC_WORDSIZE == 8)
-#      ifndef ACC_OPT_UNALIGNED64
-#      define ACC_OPT_UNALIGNED64           1
-#      endif
-#    endif
-#  endif
-#elif (ACC_ARCH_RISCV)
-#  define ACC_OPT_AVOID_UINT_INDEX          1
-# if 0
-#  ifndef ACC_OPT_UNALIGNED16
-#  define ACC_OPT_UNALIGNED16               1
-#  endif
-#  ifndef ACC_OPT_UNALIGNED32
-#  define ACC_OPT_UNALIGNED32               1
 #  endif
 #  if (ACC_WORDSIZE == 8)
 #    ifndef ACC_OPT_UNALIGNED64
 #    define ACC_OPT_UNALIGNED64             1
 #    endif
 #  endif
-# endif
+#elif (ACC_ARCH_RISCV)
+#  define ACC_OPT_AVOID_UINT_INDEX          1
 #elif (ACC_ARCH_S390)
 #  ifndef ACC_OPT_UNALIGNED16
 #  define ACC_OPT_UNALIGNED16               1
@@ -3408,7 +3372,9 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #  define HAVE_STDDEF_H 1
 #elif (ACC_LIBC_MOSTLY_FREESTANDING)
 #  define HAVE_LIMITS_H 1
+#  ifndef HAVE_SETJMP_H
 #  define HAVE_SETJMP_H 1
+#  endif
 #  define HAVE_STDARG_H 1
 #  define HAVE_STDDEF_H 1
 #  define HAVE_STDIO_H 1
@@ -3424,8 +3390,12 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #define HAVE_LIMITS_H 1
 #define HAVE_MALLOC_H 1
 #define HAVE_MEMORY_H 1
+#ifndef HAVE_SETJMP_H
 #define HAVE_SETJMP_H 1
+#endif
+#ifndef HAVE_SIGNAL_H
 #define HAVE_SIGNAL_H 1
+#endif
 #define HAVE_STDARG_H 1
 #define HAVE_STDDEF_H 1
 #define HAVE_STDIO_H 1
