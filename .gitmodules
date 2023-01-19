@@ -1,8 +1,3 @@
-[submodule "vendor/boost-pfr"]
-    path = vendor/boost-pfr
-    url = https://github.com/upx/upx-vendor-boost-pfr.git
-    branch = upx-vendor
-    shallow = true
 [submodule "vendor/doctest"]
     path = vendor/doctest
     url = https://github.com/upx/upx-vendor-doctest.git
@@ -11,11 +6,6 @@
 [submodule "vendor/lzma-sdk"]
     path = vendor/lzma-sdk
     url = https://github.com/upx/upx-vendor-lzma-sdk.git
-    branch = upx-vendor
-    shallow = true
-[submodule "vendor/rangeless"]
-    path = vendor/rangeless
-    url = https://github.com/upx/upx-vendor-rangeless.git
     branch = upx-vendor
     shallow = true
 [submodule "vendor/ucl"]
@@ -31,10 +21,5 @@
 [submodule "vendor/zlib"]
     path = vendor/zlib
     url = https://github.com/upx/upx-vendor-zlib.git
-    branch = upx-vendor
-    shallow = true
-[submodule "vendor/zstd"]
-    path = vendor/zstd
-    url = https://github.com/upx/upx-vendor-zstd.git
     branch = upx-vendor
     shallow = true

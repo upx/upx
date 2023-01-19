@@ -284,17 +284,17 @@ jobs:
           cl -MT -J -O2 -W3 -WX %DEFS% -c %H%\vendor\zlib\*.c
           link -lib -out:zlib.lib *.obj
           @REM ===== build zstd =====
-          cd %BDIR%\zstd
-          set s=%H%\vendor\zstd\lib
-          cl -MT -J -O2 -W4 -WX -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM %DEFS% -c %s%\common\*.c %s%\compress\*.c %s%\decompress\*.c
-          link -lib -out:zstd.lib *.obj
+          @rem cd %BDIR%\zstd
+          @rem set s=%H%\vendor\zstd\lib
+          @rem cl -MT -J -O2 -W4 -WX -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM %DEFS% -c %s%\common\*.c %s%\compress\*.c %s%\decompress\*.c
+          @rem link -lib -out:zstd.lib *.obj
           @REM ===== build UPX =====
           cd %BDIR%\upx
           set s=%H%\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp
-          cl -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib /link setargv.obj
+          cl -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD=0 %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
       - name: 'Make artifact'
         shell: bash
         run: |

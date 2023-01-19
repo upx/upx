@@ -24,7 +24,7 @@
    <markus@oberhumer.com>
  */
 
-#if DEBUG
+#if DEBUG && 0
 #ifndef WITH_BOOST_PFR
 #define WITH_BOOST_PFR 1
 #endif
