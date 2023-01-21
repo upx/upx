@@ -239,10 +239,6 @@ if(NOT UPX_CONFIG_DISABLE_ZSTD)
     target_compile_definitions(${t} PRIVATE WITH_ZSTD=1)
     target_link_libraries(upx upx_vendor_zstd)
 endif()
-if(Threads_FOUND AND 0)
-    # for RANGELESS_FN_ENABLE_PARALLEL multithreading test
-    target_link_libraries(upx Threads::Threads)
-endif()
 
 #***********************************************************************
 # "ctest"

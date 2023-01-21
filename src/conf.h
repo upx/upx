@@ -856,52 +856,6 @@ int upx_test_overlap       ( const upx_bytep buf,
 
 
 /*************************************************************************
-//
-**************************************************************************/
-
-#if WITH_BOOST_PFR
-template <class A>
-__acc_noinline std::string pfr_string(const A &a) {
-    std::ostringstream ss;
-    ss << boost::pfr::io(a);
-    return ss.str();
-}
-template <class A, class B>
-__acc_noinline std::string pfr_string(const A &a, const B &b) {
-    std::ostringstream ss;
-    ss << boost::pfr::io(a);
-    ss << ' ';
-    ss << boost::pfr::io(b);
-    return ss.str();
-}
-template <class A, class B, class C>
-__acc_noinline std::string pfr_string(const A &a, const B &b, const C &c) {
-    std::ostringstream ss;
-    ss << boost::pfr::io(a);
-    ss << ' ';
-    ss << boost::pfr::io(b);
-    ss << ' ';
-    ss << boost::pfr::io(c);
-    return ss.str();
-}
-template <class A, class B, class C, class D>
-__acc_noinline std::string pfr_string(const A &a, const B &b, const C &c, const D &d) {
-    std::ostringstream ss;
-    ss << boost::pfr::io(a);
-    ss << ' ';
-    ss << boost::pfr::io(b);
-    ss << ' ';
-    ss << boost::pfr::io(c);
-    ss << ' ';
-    ss << boost::pfr::io(d);
-    return ss.str();
-}
-// note: this MUST be a macro and not a function because of implicit temporary variable
-#define pfr_str(a,...)  (pfr_string(a, ##__VA_ARGS__).c_str())
-#endif // WITH_BOOST_PFR
-
-
-/*************************************************************************
 // raw_bytes() - get underlying memory from checked buffers/pointers.
 // This is overloaded by various utility classes like BoundedPtr,
 // MemBuffer and Span.
