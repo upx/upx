@@ -444,7 +444,7 @@ TEST_CASE("Span") {
         const Span0 v0_b1(nullptr, 3, base_buf + 1);
         const Span0 b0_v0(base_buf);
         const Span0 b0_b0(base_buf, 4, base_buf);
-        CHECK_THROWS(SPAN_0_MAKE(char, base_buf, 3, base_buf + 1)); // b0_b1
+        CHECK_THROWS(XSPAN_0_MAKE(char, base_buf, 3, base_buf + 1)); // b0_b1
         const Span0 b1_v0(base_buf + 1);
         const Span0 b1_b0(base_buf + 1, 4, base_buf);
         const Span0 b1_b1(base_buf + 1, 3, base_buf + 1);
@@ -456,25 +456,25 @@ TEST_CASE("Span") {
         CHECK_NOTHROW(ss_with_base = b1_v0);
         CHECK_NOTHROW(ss_with_base = b1_b0);
         CHECK_THROWS(ss_with_base = b1_b1); // different base
-        CHECK_THROWS(SPAN_S_MAKE(char, v0_v0));
-        CHECK_THROWS(SPAN_S_MAKE(char, v0_b0));
-        CHECK_THROWS(SPAN_S_MAKE(char, v0_b1));
-        CHECK_THROWS(SPAN_S_MAKE(char, b0_v0));
-        CHECK_NOTHROW(SPAN_S_MAKE(char, b0_b0));
-        CHECK_THROWS(SPAN_S_MAKE(char, b1_v0));
-        CHECK_NOTHROW(SPAN_S_MAKE(char, b1_b0));
-        CHECK_NOTHROW(SPAN_S_MAKE(char, b1_b1));
+        CHECK_THROWS(XSPAN_S_MAKE(char, v0_v0));
+        CHECK_THROWS(XSPAN_S_MAKE(char, v0_b0));
+        CHECK_THROWS(XSPAN_S_MAKE(char, v0_b1));
+        CHECK_THROWS(XSPAN_S_MAKE(char, b0_v0));
+        CHECK_NOTHROW(XSPAN_S_MAKE(char, b0_b0));
+        CHECK_THROWS(XSPAN_S_MAKE(char, b1_v0));
+        CHECK_NOTHROW(XSPAN_S_MAKE(char, b1_b0));
+        CHECK_NOTHROW(XSPAN_S_MAKE(char, b1_b1));
         //
-        CHECK((SPAN_S_MAKE(char, b0_b0).raw_base() == base_buf));
-        CHECK((SPAN_S_MAKE(char, b1_b0).raw_base() == base_buf));
-        CHECK((SPAN_S_MAKE(char, b1_b1).raw_base() == base_buf + 1));
+        CHECK((XSPAN_S_MAKE(char, b0_b0).raw_base() == base_buf));
+        CHECK((XSPAN_S_MAKE(char, b1_b0).raw_base() == base_buf));
+        CHECK((XSPAN_S_MAKE(char, b1_b1).raw_base() == base_buf + 1));
     }
     {
         typedef PtrOrSpan<char> SpanP;
         // v0 nullptr, b0 base, b1 base + 1
         const SpanP b0_v0(base_buf);
         const SpanP b0_b0(base_buf, 4, base_buf);
-        CHECK_THROWS(SPAN_P_MAKE(char, base_buf, 3, base_buf + 1)); // b0_b1
+        CHECK_THROWS(XSPAN_P_MAKE(char, base_buf, 3, base_buf + 1)); // b0_b1
         const SpanP b1_v0(base_buf + 1);
         const SpanP b1_b0(base_buf + 1, 4, base_buf);
         const SpanP b1_b1(base_buf + 1, 3, base_buf + 1);
@@ -483,15 +483,15 @@ TEST_CASE("Span") {
         CHECK_NOTHROW(ss_with_base = b1_v0);
         CHECK_NOTHROW(ss_with_base = b1_b0);
         CHECK_THROWS(ss_with_base = b1_b1); // different base
-        CHECK_THROWS(SPAN_S_MAKE(char, b0_v0));
-        CHECK_NOTHROW(SPAN_S_MAKE(char, b0_b0));
-        CHECK_THROWS(SPAN_S_MAKE(char, b1_v0));
-        CHECK_NOTHROW(SPAN_S_MAKE(char, b1_b0));
-        CHECK_NOTHROW(SPAN_S_MAKE(char, b1_b1));
+        CHECK_THROWS(XSPAN_S_MAKE(char, b0_v0));
+        CHECK_NOTHROW(XSPAN_S_MAKE(char, b0_b0));
+        CHECK_THROWS(XSPAN_S_MAKE(char, b1_v0));
+        CHECK_NOTHROW(XSPAN_S_MAKE(char, b1_b0));
+        CHECK_NOTHROW(XSPAN_S_MAKE(char, b1_b1));
         //
-        CHECK((SPAN_S_MAKE(char, b0_b0).raw_base() == base_buf));
-        CHECK((SPAN_S_MAKE(char, b1_b0).raw_base() == base_buf));
-        CHECK((SPAN_S_MAKE(char, b1_b1).raw_base() == base_buf + 1));
+        CHECK((XSPAN_S_MAKE(char, b0_b0).raw_base() == base_buf));
+        CHECK((XSPAN_S_MAKE(char, b1_b0).raw_base() == base_buf));
+        CHECK((XSPAN_S_MAKE(char, b1_b1).raw_base() == base_buf + 1));
     }
 #endif
 }
@@ -502,24 +502,24 @@ TEST_CASE("Span") {
 
 TEST_CASE("Span void ptr") {
     static char a[4] = {0, 1, 2, 3};
-    SPAN_0(void) a0(a, 4);
-    SPAN_P(void) ap(a, 4);
-    SPAN_S(void) as(a, 4);
-    SPAN_0(const void) c0(a, 4);
-    SPAN_P(const void) cp(a, 4);
-    SPAN_S(const void) cs(a, 4);
+    XSPAN_0(void) a0(a, 4);
+    XSPAN_P(void) ap(a, 4);
+    XSPAN_S(void) as(a, 4);
+    XSPAN_0(const void) c0(a, 4);
+    XSPAN_P(const void) cp(a, 4);
+    XSPAN_S(const void) cs(a, 4);
     static const char b[4] = {0, 1, 2, 3};
-    SPAN_0(const void) b0(b, 4);
-    SPAN_P(const void) bp(b, 4);
-    SPAN_S(const void) bs(b, 4);
+    XSPAN_0(const void) b0(b, 4);
+    XSPAN_P(const void) bp(b, 4);
+    XSPAN_S(const void) bs(b, 4);
 }
 
 TEST_CASE("Span deref/array/arrow") {
     static char real_a[2 + 4 + 2] = {126, 127, 0, 1, 2, 3, 124, 125};
     static char *a = real_a + 2;
-    SPAN_0(char) a0(a, 4);
-    SPAN_P(char) ap(a, 4);
-    SPAN_S(char) as(a, 4);
+    XSPAN_0(char) a0(a, 4);
+    XSPAN_P(char) ap(a, 4);
+    XSPAN_S(char) as(a, 4);
     CHECK_THROWS(a0[4]);
     CHECK_THROWS(a0[-1]);
     CHECK_THROWS(a0[-2]);
@@ -542,7 +542,7 @@ TEST_CASE("Span deref/array/arrow") {
 
 TEST_CASE("Span subspan") {
     static char buf[4] = {0, 1, 2, 3};
-    SPAN_S(char) as(buf, 4);
+    XSPAN_S(char) as(buf, 4);
     CHECK(as.subspan(1, 1)[0] == 1);
     CHECK((as + 1).subspan(1, 1)[0] == 2);
     CHECK((as + 2).subspan(0, -2)[0] == 0);
@@ -553,25 +553,25 @@ TEST_CASE("Span subspan") {
 TEST_CASE("Span constness") {
     static char buf[4] = {0, 1, 2, 3};
 
-    SPAN_0(char) b0(buf, 4);
-    SPAN_P(char) bp(buf, 4);
-    SPAN_S(char) bs(buf, 4);
+    XSPAN_0(char) b0(buf, 4);
+    XSPAN_P(char) bp(buf, 4);
+    XSPAN_S(char) bs(buf, 4);
 
-    SPAN_0(char) s0(b0);
-    SPAN_P(char) sp(bp);
-    SPAN_S(char) ss(bs);
+    XSPAN_0(char) s0(b0);
+    XSPAN_P(char) sp(bp);
+    XSPAN_S(char) ss(bs);
 
-    SPAN_0(const char) b0c(buf, 4);
-    SPAN_P(const char) bpc(buf, 4);
-    SPAN_S(const char) bsc(buf, 4);
+    XSPAN_0(const char) b0c(buf, 4);
+    XSPAN_P(const char) bpc(buf, 4);
+    XSPAN_S(const char) bsc(buf, 4);
 
-    SPAN_0(const char) s0c(b0c);
-    SPAN_P(const char) spc(bpc);
-    SPAN_S(const char) ssc(bsc);
+    XSPAN_0(const char) s0c(b0c);
+    XSPAN_P(const char) spc(bpc);
+    XSPAN_S(const char) ssc(bsc);
 
-    SPAN_0(const char) x0c(b0);
-    SPAN_P(const char) xpc(bp);
-    SPAN_S(const char) xsc(bs);
+    XSPAN_0(const char) x0c(b0);
+    XSPAN_P(const char) xpc(bp);
+    XSPAN_S(const char) xsc(bs);
 
     CHECK(ptr_diff_bytes(b0, buf) == 0);
     CHECK(ptr_diff_bytes(bp, buf) == 0);
@@ -595,21 +595,21 @@ TEST_CASE("Span constness") {
 
 #if !defined(DOCTEST_CONFIG_DISABLE)
 namespace {
-int my_memcmp_v1(SPAN_P(const void) a, SPAN_0(const void) b, size_t n) {
+int my_memcmp_v1(XSPAN_P(const void) a, XSPAN_0(const void) b, size_t n) {
     if (b == nullptr)
         return -2;
-    SPAN_0(const void) x(a);
+    XSPAN_0(const void) x(a);
     return memcmp(x, b, n);
 }
-int my_memcmp_v2(SPAN_P(const char) a, SPAN_0(const char) b, size_t n) {
+int my_memcmp_v2(XSPAN_P(const char) a, XSPAN_0(const char) b, size_t n) {
     if (a == b)
         return 0;
     if (b == nullptr)
         return -2;
     a += 1;
     b -= 1;
-    SPAN_0(const char) x(a);
-    SPAN_0(const char) y = b;
+    XSPAN_0(const char) x(a);
+    XSPAN_0(const char) y = b;
     return memcmp(x, y, n);
 }
 } // namespace
@@ -629,9 +629,9 @@ TEST_CASE("PtrOrSpan") {
 TEST_CASE("PtrOrSpan char") {
     char real_buf[2 + 8 + 2] = {126, 127, 0, 1, 2, 3, 4, 5, 6, 7, 124, 125};
     char *buf = real_buf + 2;
-    SPAN_P(char) a(buf, XSpanSizeInBytes(8));
-    SPAN_P(char) b = a.subspan(0, 7);
-    SPAN_P(char) c = (b + 1).subspan(0, 6);
+    XSPAN_P(char) a(buf, XSpanSizeInBytes(8));
+    XSPAN_P(char) b = a.subspan(0, 7);
+    XSPAN_P(char) c = (b + 1).subspan(0, 6);
     a += 1;
     CHECK(*a == 1);
     *a++ += 1;
@@ -682,11 +682,11 @@ TEST_CASE("PtrOrSpan char") {
 
 TEST_CASE("PtrOrSpan int") {
     int buf[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    SPAN_P(int) a(buf, XSpanCount(8));
+    XSPAN_P(int) a(buf, XSpanCount(8));
     CHECK(a.raw_size_in_bytes() == 8 * sizeof(int));
-    SPAN_P(int) b = a.subspan(0, 7);
+    XSPAN_P(int) b = a.subspan(0, 7);
     CHECK(b.raw_size_in_bytes() == 7 * sizeof(int));
-    SPAN_P(int) c = (b + 1).subspan(0, 6);
+    XSPAN_P(int) c = (b + 1).subspan(0, 6);
     CHECK(c.raw_size_in_bytes() == 6 * sizeof(int));
     a += 1;
     CHECK(*a == 1);

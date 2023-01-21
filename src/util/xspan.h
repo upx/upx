@@ -112,7 +112,7 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #define XSPAN_P_VAR(type, var, first, ...) XSPAN_P(type) var(first)
 #define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var(first)
 
-#else
+#else // WITH_XSPAN
 
 // unchecked regular pointers
 
@@ -146,7 +146,8 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &first) {
 
 #endif // WITH_XSPAN
 
-// old names
+#if 1
+// nicer names
 #define SPAN_0 XSPAN_0
 #define SPAN_P XSPAN_P
 #define SPAN_S XSPAN_S
@@ -156,5 +157,6 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &first) {
 #define SPAN_0_VAR XSPAN_0_VAR
 #define SPAN_P_VAR XSPAN_P_VAR
 #define SPAN_S_VAR XSPAN_S_VAR
+#endif
 
 /* vim:set ts=4 sw=4 et: */
