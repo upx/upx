@@ -1,6 +1,6 @@
 # minimal GitHub CI building UPX with clang and gcc in an Alpine Linux container
 
-name: 'Minimal CI with Alpine Linux'
+name: 'CI - Minimal CI with Alpine Linux'
 
 on: { workflow_dispatch: }
 jobs:
@@ -16,7 +16,7 @@ jobs:
         run: |
           git clone --branch devel --depth 1 https://github.com/upx/upx
           git -C upx submodule update --init
-          echo 'artifact_name=upx-minimal-ci-${{ matrix.container }}' | sed 's/:/-/g' >> $GITHUB_ENV
+          echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-minimal-ci-${{ matrix.container }}" | sed 's/:/-/g' >> $GITHUB_ENV
       - { name: 'Build clang', run: 'make -C upx build/extra/clang/release' }
       - { name: 'Build gcc',   run: 'make -C upx build/extra/gcc/release' }
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}

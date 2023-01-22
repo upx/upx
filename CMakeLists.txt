@@ -149,8 +149,8 @@ if(MSVC)
     add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    # set __cplusplus according to selected C++ standard
-    add_definitions(-Zc:__cplusplus)
+    # set __cplusplus according to selected C++ standard; use new preprocessor
+    add_definitions(-Zc:__cplusplus -Zc:preprocessor)
 else()
     # protect against security threats caused by misguided compiler "optimizations"
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU")

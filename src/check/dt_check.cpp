@@ -123,6 +123,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_ge("abc", "abz"))
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
+#if 0 // does not work with MSVC
 #if '\0' - 1 < 0
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 127)
 #else
@@ -132,6 +133,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255)
 ACC_COMPILE_TIME_ASSERT_HEADER((wchar_t) -1 < 0)
 #else
 ACC_COMPILE_TIME_ASSERT_HEADER((wchar_t) -1 > 0)
+#endif
 #endif
 
 /*************************************************************************

@@ -10,7 +10,7 @@
 #    Abandoned Issues and Pull Request".
 #   https://igorwiese.com/images/papers/Paper_BotSE_19.pdf
 
-name: 'Close inactive issues'
+name: 'GitHub - Close inactive issues'
 on:
   schedule:
     - cron: "30 6 * * 4"

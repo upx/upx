@@ -1,4 +1,4 @@
-name: 'Close pull requests'
+name: 'GitHub - Close pull requests'
 on:
   #pull_request:
   workflow_dispatch:
