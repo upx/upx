@@ -252,7 +252,7 @@ Packer *PackMaster::getUnpacker(InputFile *f) {
 }
 
 /*************************************************************************
-// delegation
+// delegation from work.cpp
 **************************************************************************/
 
 void PackMaster::pack(OutputFile *fo) {

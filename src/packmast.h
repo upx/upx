@@ -25,8 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_PACKMASTER_H
-#define __UPX_PACKMASTER_H 1
+#pragma once
+#ifndef UPX_PACKMASTER_H__
+#define UPX_PACKMASTER_H__ 1
 
 class Packer;
 class InputFile;
@@ -36,10 +37,10 @@ class OutputFile;
 // interface for work.cpp
 **************************************************************************/
 
-class PackMaster {
+class PackMaster final {
 public:
     PackMaster(InputFile *f, options_t *o = nullptr);
-    virtual ~PackMaster();
+    ~PackMaster();
 
     void pack(OutputFile *fo);
     void unpack(OutputFile *fo);

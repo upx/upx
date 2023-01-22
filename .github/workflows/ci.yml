@@ -1,5 +1,4 @@
 # Support for GitHub Actions -- https://github.com/features/actions
-# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 # note: GitHub Actions runner images are frequently updated, and
 # unfortunately this sometimes breaks builds in mysterious ways...
@@ -7,17 +6,10 @@
 
 name: 'CI'
 
-on:
-  push:
-    branches:
-      - '*'
-      - '!appveyor*'
-      - '!gitea*'
-      - '!gitlab*'
-      - '!travis*'
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 env:
+  DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
 
 jobs:
@@ -30,7 +22,6 @@ jobs:
           uname -a; pwd; id; umask
           mkdir ../deps; cd ../deps; mkdir packages
           # for ubuntu-22.04: install python2-minimal
-          ##export DEBIAN_FRONTEND=noninteractive
           ##sudo apt-get update && sudo apt-get install -y --no-install-recommends python2-minimal
           # manually install compat libs from Ubuntu 16.04
           wget -q 'http://archive.kernel.org/ubuntu-archive/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.6-1_amd64.deb'
@@ -69,7 +60,6 @@ jobs:
       - name: 'Install extra 32-bit packages'
         if: ${{ matrix.use_m32 }}
         run: |
-          export DEBIAN_FRONTEND=noninteractive
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y gcc-multilib g++-multilib
@@ -143,17 +133,18 @@ jobs:
         uses: actions/checkout@v3
         with: { submodules: true }
       - name: 'Check out test suite'
+        if: ${{ matrix.testsuite }}
         run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
+      - name: 'Build cmake extra/clang/debug'
+        run:   'make build/extra/clang/debug'
+      - name: 'Build cmake extra/clang/release'
+        run:   'make build/extra/clang/release'
       - name: 'Build cmake extra/gcc/debug'
         if: ${{ matrix.gcc != '' }}
         run:   'make build/extra/gcc/debug CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
       - name: 'Build cmake extra/gcc/release'
         if: ${{ matrix.gcc != '' }}
         run:   'make build/extra/gcc/release CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
-      - name: 'Build cmake extra/clang/debug'
-        run:   'make build/extra/clang/debug'
-      - name: 'Build cmake extra/clang/release'
-        run:   'make build/extra/clang/release'
       - name: 'Make artifact'
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
@@ -187,8 +178,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # windows-2019 used to work but got broken with the 20220821.1
-          # runner-image update; disable for now
+          # windows-2019 used to work but got broken with the 20220821.1 runner-image update;
+          # as you cannot download that image this is painful to debug; disable for now
           # see https://github.com/actions/runner-images.git
           ####- { os: windows-2019 }
           - { os: windows-2022 }
@@ -199,7 +190,7 @@ jobs:
       - name: 'Check out test suite'
         run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
       - name: 'Inspect runner-image settings'
-        # see https://github.com/actions/runner-images.git
+        # debug remote image; also see https://github.com/actions/runner-images.git
         if: ${{ false }}
         run: |
           Get-Command bash; Get-Command cmake; Get-Command make
@@ -294,7 +285,7 @@ jobs:
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp
-          cl -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD=0 %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
+          cl -MT -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD=0 %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
       - name: 'Make artifact'
         shell: bash
         run: |

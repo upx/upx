@@ -100,8 +100,7 @@ endif()
 # targets and compilation flags
 #***********************************************************************
 
-#find_package(Threads)
-
+#find_package(Threads) # multithreading is currently not used; maybe in UPX version 5
 set(UPX_CONFIG_DISABLE_ZSTD ON) # zstd is currently not used; maybe in UPX version 5
 
 file(GLOB ucl_SOURCES "vendor/ucl/src/*.c")
@@ -150,6 +149,8 @@ if(MSVC)
     add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    # set __cplusplus according to selected C++ standard
+    add_definitions(-Zc:__cplusplus)
 else()
     # protect against security threats caused by misguided compiler "optimizations"
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -190,7 +191,7 @@ upx_sanitize_target(${t})
 if(MSVC)
     target_compile_options(${t} PRIVATE -J -W4 ${warn_WX})
 else()
-    target_compile_options(${t} PRIVATE -Wall -Wextra -Wvla ${warn_Werror})
+    target_compile_options(${t} PRIVATE -Wall -Wextra -Wcast-align -Wcast-qual -Wpointer-arith -Wvla -Wwrite-strings ${warn_Werror})
 endif()
 
 set(t upx_vendor_zlib)
@@ -228,7 +229,7 @@ endif()
 #upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
 if(MSVC)
-    target_compile_options(${t} PRIVATE -Zc:__cplusplus -EHsc -J -W4 ${warn_WX})
+    target_compile_options(${t} PRIVATE -EHsc -J -W4 ${warn_WX})
 else()
     target_compile_options(${t} PRIVATE
         -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith

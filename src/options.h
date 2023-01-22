@@ -43,10 +43,10 @@ enum {
     CMD_FILEINFO,
     CMD_HELP,
     CMD_LICENSE,
-    CMD_VERSION
+    CMD_VERSION,
 };
 
-struct options_t {
+struct options_t final {
     int cmd;
 
     // compression options

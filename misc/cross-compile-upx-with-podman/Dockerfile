@@ -44,7 +44,7 @@ RUN apt-get install -y \
         gdb lsb-release valgrind \
     && true
 RUN cd /usr/bin \
-    # create unversioned clang symlinks
+    # create unversioned clang symlinks in /usr/local/bin
     && for f in clang*-14 llvm-*-14 scan-*-14; do ln -s -v ../../bin/$f /usr/local/bin/${f%-14}; done \
     && ln -s -v ../../bin/obj2yaml-14 /usr/local/bin/llvm-obj2yaml \
     && ln -s -v ../../bin/yaml2obj-14 /usr/local/bin/llvm-yaml2obj \

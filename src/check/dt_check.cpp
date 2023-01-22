@@ -122,6 +122,18 @@ ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_gt("abc", "abz"))
 ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_ge("abc", "abz"))
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 
+ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
+#if '\0' - 1 < 0
+ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 127)
+#else
+ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255)
+#endif
+#if L'\0' - 1 < 0
+ACC_COMPILE_TIME_ASSERT_HEADER((wchar_t) -1 < 0)
+#else
+ACC_COMPILE_TIME_ASSERT_HEADER((wchar_t) -1 > 0)
+#endif
+
 /*************************************************************************
 // upx_compiler_sanity_check()
 // assert a sane architecture and compiler
@@ -133,9 +145,8 @@ template <class T>
 struct TestBELE {
     __acc_static_noinline bool test(void) {
         // POD checks
-        // COMPILE_TIME_ASSERT(std::is_pod<T>::value); // deprecated in C++20
-        COMPILE_TIME_ASSERT(std::is_standard_layout<T>::value);
-        COMPILE_TIME_ASSERT(std::is_trivial<T>::value);
+        COMPILE_TIME_ASSERT(std::is_standard_layout<T>::value)
+        COMPILE_TIME_ASSERT(std::is_trivial<T>::value)
         // alignment checks
         {
             COMPILE_TIME_ASSERT_ALIGNED1(T)

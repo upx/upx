@@ -236,7 +236,7 @@ protected:
         PEDIR_BOUNDIM   = 11,
         PEDIR_IAT       = 12,
         PEDIR_DELAYIMP  = 13,           // Delay Import Descriptor
-        PEDIR_COMRT     = 14            // Com+ Runtime Header
+        PEDIR_COMRT     = 14,           // Com+ Runtime Header
     };
 
     enum {
@@ -251,7 +251,7 @@ protected:
         PEFL_SHARED     = 0x10000000,
         PEFL_EXEC       = 0x20000000,
         PEFL_READ       = 0x40000000,
-        PEFL_WRITE      = 0x80000000
+        PEFL_WRITE      = 0x80000000,
     };
 
     enum {
@@ -267,7 +267,7 @@ protected:
         REMOVABLE_SWAP  = 0x0400,
         SYSTEM_PROGRAM  = 0x1000,
         DLL_FLAG        = 0x2000,
-        FBIG_ENDIAN     = 0x8000
+        FBIG_ENDIAN     = 0x8000,
     };
 
     //NEW: DLL characteristics definition for ASLR, ... - Stefan Widmann
@@ -281,7 +281,7 @@ protected:
         IMAGE_DLLCHARACTERISTICS_NO_BIND               = 0x0800,
         IMAGE_DLLCHARACTERISTICS_WDM_DRIVER            = 0x2000,
         IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD    = 0x4000,
-        IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000
+        IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000,
     };
 
     enum {
@@ -297,7 +297,7 @@ protected:
         IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER  = 12,
         IMAGE_SUBSYSTEM_EFI_ROM  = 13,
         IMAGE_SUBSYSTEM_XBOX  = 14,
-        IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION  = 16
+        IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION  = 16,
     };
 
     // predefined resource types

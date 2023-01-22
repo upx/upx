@@ -143,31 +143,27 @@ struct XSpan_is_convertible
                                               typename detail::XSpan_void_to_T<From, To>::type> {};
 #endif
 
-#if 1
+#if DEBUG
 // char => char
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, const char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<const char, const char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const char, char>::value))
-
 // void => void
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<void, void>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<void, const void>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<const void, const void>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const void, void>::value))
-
 // char => void
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, void>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, const void>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<const char, const void>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const char, void>::value))
-
 // void => char
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<void, char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<void, const char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const void, const char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const void, char>::value))
-
 // char => int
 ACC_COMPILE_TIME_ASSERT_HEADER(!(XSpan_is_convertible<char, int>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER(!(XSpan_is_convertible<char, const int>::value))
@@ -200,14 +196,14 @@ XSPAN_NAMESPACE_END
 #ifndef XSPAN_DELETED_FUNCTION
 #define XSPAN_DELETED_FUNCTION = delete
 #endif
-#define XSPAN_REQUIRES_CONVERTIBLE_UT(T, U, RType)                                                 \
-    typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < U, T>::value, RType > ::type
-#define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(T, U, RType)                                      \
-    typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < U, T>::value ||                       \
-        XSPAN_NS(XSpan_is_convertible)<T, U>::value,                                               \
+#define XSPAN_REQUIRES_CONVERTIBLE_ONE_DIRECTION(From, To, RType)                                  \
+    typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < From, To>::value, RType > ::type
+#define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)                                      \
+    typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < A, B>::value ||                       \
+        XSPAN_NS(XSpan_is_convertible)<B, A>::value,                                               \
         RType > ::type
 // note: these use "T" and "U"
-#define XSPAN_REQUIRES_CONVERTIBLE_R(RType) XSPAN_REQUIRES_CONVERTIBLE_UT(T, U, RType)
+#define XSPAN_REQUIRES_CONVERTIBLE_R(RType) XSPAN_REQUIRES_CONVERTIBLE_ONE_DIRECTION(U, T, RType)
 #define XSPAN_REQUIRES_CONVERTIBLE_A                                                               \
     XSPAN_REQUIRES_CONVERTIBLE_R(XSPAN_NS(XSpanInternalDummyArg) *) = nullptr
 #define XSPAN_REQUIRES_CONVERTIBLE_T XSPAN_REQUIRES_CONVERTIBLE_R(XSPAN_NS(XSpanInternalDummyArg) *)
@@ -223,7 +219,7 @@ XSPAN_NAMESPACE_END
 #include "xspan_impl_ptr_or_span.h"
 #include "xspan_impl_span.h"
 #include "xspan_impl_ptr.h"
-#undef XSPAN_REQUIRES_CONVERTIBLE_UT
+#undef XSPAN_REQUIRES_CONVERTIBLE_ONE_DIRECTION
 #undef XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
 #undef XSPAN_REQUIRES_CONVERTIBLE_A
 #undef XSPAN_REQUIRES_CONVERTIBLE_R
