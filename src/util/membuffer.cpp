@@ -32,7 +32,7 @@
 void *membuffer_get_void_ptr(MemBuffer &mb) { return mb.getVoidPtr(); }
 unsigned membuffer_get_size(MemBuffer &mb) { return mb.getSize(); }
 
-MemBuffer::Stats MemBuffer::stats;
+/*static*/ MemBuffer::Stats MemBuffer::stats;
 
 #if DEBUG
 #define debug_set(var, expr) (var) = (expr)
@@ -45,23 +45,23 @@ MemBuffer::Stats MemBuffer::stats;
 **************************************************************************/
 
 #if defined(__SANITIZE_ADDRESS__)
-__acc_static_forceinline constexpr bool use_simple_mcheck() { return false; }
+static forceinline constexpr bool use_simple_mcheck() { return false; }
 #elif (WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
 static int use_simple_mcheck_flag = -1;
-__acc_static_noinline void use_simple_mcheck_init() {
+static noinline void use_simple_mcheck_init() {
     use_simple_mcheck_flag = 1;
     if (RUNNING_ON_VALGRIND) {
         use_simple_mcheck_flag = 0;
         // fprintf(stderr, "upx: detected RUNNING_ON_VALGRIND\n");
     }
 }
-__acc_static_forceinline bool use_simple_mcheck() {
-    if __acc_unlikely (use_simple_mcheck_flag < 0)
+static forceinline bool use_simple_mcheck() {
+    if very_unlikely (use_simple_mcheck_flag < 0)
         use_simple_mcheck_init();
     return (bool) use_simple_mcheck_flag;
 }
 #else
-__acc_static_forceinline constexpr bool use_simple_mcheck() { return true; }
+static forceinline constexpr bool use_simple_mcheck() { return true; }
 #endif
 
 /*************************************************************************
@@ -119,12 +119,14 @@ static unsigned width(unsigned x) {
 static inline unsigned umax(unsigned a, unsigned b) { return (a >= b) ? a : b; }
 
 unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned extra) {
-    unsigned const z = uncompressed_size;                 // fewer keystrokes and display columns
-    unsigned const w = umax(8, width(z - 1));             // ignore tiny offsets
+    if (uncompressed_size == 0)
+        throwCantPack("invalid uncompressed_size");
+    const unsigned z = uncompressed_size;                 // fewer keystrokes and display columns
+    const unsigned w = umax(8, width(z - 1));             // ignore tiny offsets
     unsigned bytes = ACC_ICONV(unsigned, mem_size(1, z)); // check
     // Worst matching: All match at max_offset, which implies 3==min_match
     // All literal: 1 bit overhead per literal byte
-    bytes = umax(bytes, bytes + z / 8);
+    bytes = umax(bytes, z + z / 8);
     // NRV2B: 1 byte plus 2 bits per width exceeding 8 ("ss11")
     bytes = umax(bytes, (z / 3 * (8 + 2 * (w - 8) / 1)) / 8);
     // NRV2E: 1 byte plus 3 bits per pair of width exceeding 7 ("ss12")
@@ -133,21 +135,28 @@ unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned e
     bytes = umax(bytes, z + (z >> 8) + ((z < (128 << 10)) ? (((128 << 10) - z) >> 11) : 0));
     // extra + 256 safety for rounding
     bytes = mem_size(1, bytes, extra, 256);
+    UNUSED(w);
     return bytes;
 }
 
 unsigned MemBuffer::getSizeForDecompression(unsigned uncompressed_size, unsigned extra) {
+    if (uncompressed_size == 0)
+        throwCantPack("invalid uncompressed_size");
     size_t bytes = mem_size(1, uncompressed_size, extra); // check
     return ACC_ICONV(unsigned, bytes);
 }
 
 void MemBuffer::allocForCompression(unsigned uncompressed_size, unsigned extra) {
+    if (uncompressed_size == 0)
+        throwCantPack("invalid uncompressed_size");
     unsigned size = getSizeForCompression(uncompressed_size, extra);
     alloc(size);
     debug_set(debug.last_return_address_alloc, upx_return_address());
 }
 
 void MemBuffer::allocForDecompression(unsigned uncompressed_size, unsigned extra) {
+    if (uncompressed_size == 0)
+        throwCantPack("invalid uncompressed_size");
     unsigned size = getSizeForDecompression(uncompressed_size, extra);
     alloc(size);
     debug_set(debug.last_return_address_alloc, upx_return_address());
@@ -254,6 +263,10 @@ TEST_CASE("MemBuffer") {
     CHECK(raw_bytes(mb, 64) != nullptr);
     CHECK(raw_bytes(mb, 64) == mb.getVoidPtr());
     CHECK_THROWS(raw_bytes(mb, 65));
+    CHECK_NOTHROW(mb + 64);
+    CHECK_NOTHROW(64 + mb);
+    CHECK_THROWS(mb + 65);
+    CHECK_THROWS(65 + mb);
     if (use_simple_mcheck()) {
         upx_byte *b = raw_bytes(mb, 0);
         unsigned magic1 = get_ne32(b - 4);
@@ -262,6 +275,16 @@ TEST_CASE("MemBuffer") {
         set_ne32(b - 4, magic1);
         mb.checkState();
     }
+}
+
+TEST_CASE("MemBuffer::getSizeForCompression") {
+    CHECK_THROWS(MemBuffer::getSizeForCompression(0));
+    CHECK_THROWS(MemBuffer::getSizeForDecompression(0));
+    CHECK(MemBuffer::getSizeForCompression(1) == 320);
+    CHECK(MemBuffer::getSizeForCompression(256) == 576);
+    CHECK(MemBuffer::getSizeForCompression(1024) == 1408);
+    // CHECK(MemBuffer::getSizeForCompression(1024 * 1024) == 0); // TODO
+    // CHECK(MemBuffer::getSizeForCompression(UPX_RSIZE_MAX) == 0); // TODO
 }
 
 /* vim:set ts=4 sw=4 et: */

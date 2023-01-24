@@ -40,31 +40,34 @@ public:
     typedef typename std::add_pointer<T>::type pointer;
 
 protected:
-    pointer b = nullptr;
-    unsigned b_size_in_bytes = 0;
+    pointer b;
+    unsigned b_size_in_bytes;
 
 public:
+    MemBufferBase() : b(nullptr), b_size_in_bytes(0) {}
+
     // NOTE: implicit conversion to underlying pointer
     // NOTE: for fully bound-checked pointer use XSPAN_S from xspan.h
     operator pointer() const { return b; }
 
-    template <class U,
-              class /*Dummy*/ = typename std::enable_if<std::is_integral<U>::value, U>::type>
-    pointer operator+(U n) const {
+    template <class U>
+    typename std::enable_if<std::is_integral<U>::value, pointer>::type operator+(U n) const {
         size_t bytes = mem_size(sizeof(T), n); // check mem_size
         return raw_bytes(bytes) + n;           // and check bytes
     }
 
+private:
     // NOT allowed; use raw_bytes() instead
-    template <class U,
-              class /*Dummy*/ = typename std::enable_if<std::is_integral<U>::value, U>::type>
-    pointer operator-(U n) const = delete;
+    template <class U>
+    typename std::enable_if<std::is_integral<U>::value, pointer>::type
+    operator-(U n) const DELETED_FUNCTION;
 
+public:
     pointer raw_bytes(size_t bytes) const {
         if (bytes > 0) {
-            if __acc_very_unlikely (b == nullptr)
+            if very_unlikely (b == nullptr)
                 throwInternalError("MemBuffer raw_bytes unexpected NULL ptr");
-            if __acc_very_unlikely (bytes > b_size_in_bytes)
+            if very_unlikely (bytes > b_size_in_bytes)
                 throwInternalError("MemBuffer raw_bytes invalid size");
         }
         return b;
@@ -73,7 +76,7 @@ public:
 
 class MemBuffer final : public MemBufferBase<unsigned char> {
 public:
-    MemBuffer() = default;
+    MemBuffer() : MemBufferBase<unsigned char>() {}
     explicit MemBuffer(upx_uint64_t size_in_bytes);
     ~MemBuffer();
 
@@ -94,14 +97,14 @@ public:
 
     // util
     void fill(unsigned off, unsigned len, int value);
-    __acc_forceinline void clear(unsigned off, unsigned len) { fill(off, len, 0); }
-    __acc_forceinline void clear() { fill(0, b_size_in_bytes, 0); }
+    forceinline void clear(unsigned off, unsigned len) { fill(off, len, 0); }
+    forceinline void clear() { fill(0, b_size_in_bytes, 0); }
 
     // If the entire range [skip, skip+take) is inside the buffer,
     // then return &b[skip]; else throwCantPack(sprintf(errfmt, skip, take)).
     // This is similar to BoundedPtr, except only checks once.
     // skip == offset, take == size_in_bytes
-    __acc_forceinline pointer subref(const char *errfmt, size_t skip, size_t take) {
+    forceinline pointer subref(const char *errfmt, size_t skip, size_t take) {
         return (pointer) subref_impl(errfmt, skip, take);
     }
 
@@ -118,24 +121,28 @@ private:
 #if DEBUG
     // debugging aid
     struct Debug {
-        void *last_return_address_alloc = nullptr;
-        void *last_return_address_dealloc = nullptr;
-        void *last_return_address_fill = nullptr;
-        void *last_return_address_subref = nullptr;
+        void *last_return_address_alloc;
+        void *last_return_address_dealloc;
+        void *last_return_address_fill;
+        void *last_return_address_subref;
+        Debug() { memset(this, 0, sizeof(*this)); }
     };
     Debug debug;
 #endif
 
-    // disable copy, assignment and move assignment
-    MemBuffer(const MemBuffer &) = delete;
-    MemBuffer &operator=(const MemBuffer &) = delete;
-    MemBuffer &operator=(MemBuffer &&) = delete;
+    // disable copy, assignment and move
+    MemBuffer(const MemBuffer &) DELETED_FUNCTION;
+    MemBuffer &operator=(const MemBuffer &) DELETED_FUNCTION;
+#if __cplusplus >= 201103L
+    MemBuffer(MemBuffer &&) DELETED_FUNCTION;
+    MemBuffer &operator=(MemBuffer &&) DELETED_FUNCTION;
+#endif
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
 
     // disable taking the address => force passing by reference
     // [I'm not too sure about this design decision, but we can always allow it if needed]
-    MemBuffer *operator&() const = delete;
+    MemBuffer *operator&() const DELETED_FUNCTION;
 };
 
 // raw_bytes overload
@@ -148,14 +155,14 @@ template <class T>
 inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T> &mbb, size_t index,
                                                           size_t size_in_bytes) {
     typedef typename MemBufferBase<T>::element_type element_type;
-    return raw_bytes(mbb, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+    return mbb.raw_bytes(mem_size(sizeof(element_type), index, size_in_bytes)) + index;
 }
 
 // global operators
 // rewrite "n + membuffer" to "membuffer + n" so that this will get checked above
-template <class T, class U,
-          class /*Dummy*/ = typename std::enable_if<std::is_integral<U>::value, U>::type>
-inline typename MemBufferBase<T>::pointer operator+(U n, const MemBufferBase<T> &mbb) {
+template <class T, class U>
+inline typename std::enable_if<std::is_integral<U>::value, typename MemBufferBase<T>::pointer>::type
+operator+(U n, const MemBufferBase<T> &mbb) {
     return mbb + n;
 }
 

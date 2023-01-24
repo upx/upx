@@ -149,6 +149,12 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #undef NDEBUG
 #include <assert.h>
 
+// <type_traits> C++20 std::is_bounded_array
+template <class T>
+struct std_is_bounded_array : public std::false_type {};
+template <class T, size_t N>
+struct std_is_bounded_array<T[N]> : public std::true_type {};
+
 
 /*************************************************************************
 // core
@@ -184,6 +190,24 @@ typedef upx_int64_t upx_off_t;
 #else
 #define off_t upx_off_t
 #endif
+
+// shortcuts
+#define forceinline     __acc_forceinline
+#if _MSC_VER
+#define noinline        __declspec(noinline)
+#undef __acc_noinline
+#define __acc_noinline  noinline
+#else
+#define noinline        __acc_noinline
+#endif
+#define likely          __acc_likely
+#define unlikely        __acc_unlikely
+#define very_likely     __acc_very_likely
+#define very_unlikely   __acc_very_unlikely
+
+#define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
+#define DELETED_FUNCTION        = delete
+#define UNUSED(var)             ACC_UNUSED(var)
 
 
 /*************************************************************************
@@ -341,19 +365,16 @@ inline void NO_fprintf(FILE *, const char *, ...) {}
 #  define upx_return_address()  nullptr
 #endif
 
-#define UNUSED(var)             ACC_UNUSED(var)
-#define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
-
 // TODO cleanup: we now require C++14, so remove all __packed_struct usage
 #define __packed_struct(s)      struct alignas(1) s {
 #define __packed_struct_end()   };
 
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
 // horrible hack for broken compiler
-#define upx_alignas_1       __attribute__((__aligned__(1),__packed__))
-#define upx_alignas_16      __attribute__((__aligned__(2))) // object file maximum 2 ???
-#define upx_alignas__(a)    upx_alignas_ ## a
-#define alignas(x)          upx_alignas__(x)
+#define upx_fake_alignas_1      __attribute__((__aligned__(1),__packed__))
+#define upx_fake_alignas_16     __attribute__((__aligned__(2))) // object file maximum 2 ???
+#define upx_fake_alignas__(a)   upx_fake_alignas_ ## a
+#define alignas(x)              upx_fake_alignas__(x)
 #endif
 
 #define COMPILE_TIME_ASSERT_ALIGNOF_USING_SIZEOF__(a,b) { \
@@ -385,7 +406,7 @@ inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b;
 
 template <size_t TypeSize>
 struct USizeOfTypeImpl {
-    __acc_static_forceinline constexpr unsigned value() {
+    static forceinline constexpr unsigned value() {
         COMPILE_TIME_ASSERT(TypeSize >= 1 && TypeSize <= 64 * 1024); // arbitrary limit
         return ACC_ICONV(unsigned, TypeSize);
     }
@@ -408,8 +429,10 @@ protected:
     inline noncopyable() {}
     inline ~noncopyable() {}
 private:
-    noncopyable(const noncopyable &); // undefined
-    const noncopyable& operator=(const noncopyable &); // undefined
+    noncopyable(const noncopyable &) DELETED_FUNCTION; // copy constuctor
+    noncopyable& operator=(const noncopyable &) DELETED_FUNCTION; // copy assignment
+    noncopyable(noncopyable &&) DELETED_FUNCTION; // move constructor
+    noncopyable& operator=(noncopyable &&) DELETED_FUNCTION; // move assignment
 };
 
 
@@ -630,25 +653,26 @@ struct OptVar
         assertValue(v);
     }
 
-    OptVar() : v(default_value), is_set(0) { }
+    OptVar() : v(default_value), is_set(false) { }
     OptVar& operator= (const T &other) {
-        v = other; is_set = 1;
-        assertValue();
+        assertValue(other);
+        v = other;
+        is_set = true;
         return *this;
     }
 
-    void reset() { v = default_value; is_set = 0; }
+    void reset() { v = default_value; is_set = false; }
     operator T () const { return v; }
 
     T v;
-    unsigned is_set;
+    bool is_set;
 };
 
 
 // optional assignments
 template <class T, T a, T b, T c>
 inline void oassign(OptVar<T,a,b,c> &self, const OptVar<T,a,b,c> &other) {
-    if (other.is_set) { self.v = other.v; self.is_set = 1; }
+    if (other.is_set) { self.v = other.v; self.is_set = true; }
 }
 template <class T, T a, T b, T c>
 inline void oassign(T &v, const OptVar<T,a,b,c> &other) {
@@ -854,32 +878,6 @@ int upx_test_overlap       ( const upx_bytep buf,
                                    int method,
                              const upx_compress_result_t *cresult );
 
-
-/*************************************************************************
-// raw_bytes() - get underlying memory from checked buffers/pointers.
-// This is overloaded by various utility classes like BoundedPtr,
-// MemBuffer and Span.
-//
-// Note that the pointer type is retained, the "_bytes" hints size_in_bytes
-**************************************************************************/
-
-// default: for any regular pointer, raw_bytes() is just the pointer itself
-template <class T>
-inline T *raw_bytes(T *ptr, size_t size_in_bytes) {
-    if (size_in_bytes > 0) {
-        if __acc_very_unlikely (ptr == nullptr)
-            throwInternalError("raw_bytes unexpected NULL ptr");
-    }
-    return ptr;
-}
-
-// default: for any regular pointer, raw_index_bytes() is just "pointer + index"
-// NOTE: index == number of elements, *NOT* size in bytes!
-template <class T>
-inline T *raw_index_bytes(T *ptr, size_t index, size_t size_in_bytes) {
-    typedef T element_type;
-    return raw_bytes(ptr, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
-}
 
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)

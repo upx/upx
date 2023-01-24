@@ -29,7 +29,34 @@
 #include "../conf.h"
 
 /*************************************************************************
-// basic
+// raw_bytes
+**************************************************************************/
+
+TEST_CASE("raw_bytes ptr") {
+    upx_uint32_t *ptr = nullptr;
+    CHECK_NOTHROW(raw_bytes(ptr, 0));
+    CHECK_THROWS(raw_bytes(ptr, 1));
+    CHECK_THROWS(raw_index_bytes(ptr, 0, 0));
+    CHECK_THROWS(raw_index_bytes(ptr, 1, 0));
+    CHECK_THROWS(raw_index_bytes(ptr, 0, 1));
+    upx_uint32_t buf[4];
+    ptr = buf;
+    CHECK(ptr_udiff_bytes(raw_index_bytes(ptr, 1, 1), ptr) == 4u);
+}
+
+TEST_CASE("raw_bytes bounded array") {
+    upx_uint32_t buf[4];
+    CHECK_NOTHROW(raw_bytes(buf, 16));
+    CHECK_THROWS(raw_bytes(buf, 17));
+    CHECK_NOTHROW(raw_index_bytes(buf, 4, 0));
+    CHECK_THROWS(raw_index_bytes(buf, 4, 1));
+    CHECK_NOTHROW(raw_index_bytes(buf, 3, 4));
+    CHECK_THROWS(raw_index_bytes(buf, 3, 5));
+    CHECK(ptr_udiff_bytes(raw_index_bytes(buf, 1, 1), buf) == 4u);
+}
+
+/*************************************************************************
+// basic xspan
 **************************************************************************/
 
 TEST_CASE("basic xspan usage") {

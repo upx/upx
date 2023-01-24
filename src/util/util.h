@@ -40,20 +40,22 @@ inline bool mem_size_valid_bytes(upx_uint64_t bytes) noexcept { return bytes <= 
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
                     upx_uint64_t extra2 = 0) noexcept;
 
-// "new" with asserted size; will throw on failure
+// "new" with asserted size; will throw on invalid size
 #define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
 
 // will throw on invalid size
 upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                      upx_uint64_t extra2 = 0);
 
+//
 // inline fast paths:
+//
 
 // will throw on invalid size
 inline upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n) {
     upx_uint64_t bytes = element_size * n;
-    if __acc_very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX ||
-                            n > UPX_RSIZE_MAX || bytes > UPX_RSIZE_MAX)
+    if very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX || n > UPX_RSIZE_MAX ||
+                      bytes > UPX_RSIZE_MAX)
         return mem_size(element_size, n, 0, 0); // this will throw
     return ACC_ICONV(upx_rsize_t, bytes);
 }

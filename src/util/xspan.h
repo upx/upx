@@ -159,4 +159,47 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &first) {
 #define SPAN_S_VAR XSPAN_S_VAR
 #endif
 
+/*************************************************************************
+// raw_bytes() - get underlying memory from checked buffers/pointers.
+// This is overloaded by various utility classes like BoundedPtr,
+// MemBuffer and XSpan.
+//
+// Note that the pointer type is retained, the "_bytes" hints size_in_bytes
+**************************************************************************/
+
+// default: for any regular pointer, raw_bytes() is just the pointer itself
+template <class T>
+inline
+    typename std::enable_if<std::is_pointer<T>::value && !std_is_bounded_array<T>::value, T>::type
+    raw_bytes(T ptr, size_t size_in_bytes) {
+    if very_unlikely (size_in_bytes > 0 && ptr == nullptr)
+        throwInternalError("raw_bytes unexpected NULL ptr");
+    return ptr;
+}
+
+// default: for any regular pointer, raw_index_bytes() is just "pointer + index"
+// NOTE: index == number of elements, *NOT* size in bytes!
+template <class T>
+inline
+    typename std::enable_if<std::is_pointer<T>::value && !std_is_bounded_array<T>::value, T>::type
+    raw_index_bytes(T ptr, size_t index, size_t size_in_bytes) {
+    if very_unlikely (ptr == nullptr)
+        throwInternalError("raw_index_bytes unexpected NULL ptr");
+    (void) mem_size(sizeof(T), index, size_in_bytes); // assert size
+    return ptr + index;
+}
+
+// same for bounded arrays
+template <class T, size_t N>
+inline T *raw_bytes(T (&a)[N], size_t size_in_bytes) {
+    if very_unlikely (size_in_bytes > mem_size(sizeof(T), N))
+        throwInternalError("raw_bytes out of range");
+    return a;
+}
+
+template <class T, size_t N>
+inline T *raw_index_bytes(T (&a)[N], size_t index, size_t size_in_bytes) {
+    return raw_bytes(a, mem_size(sizeof(T), index, size_in_bytes)) + index;
+}
+
 /* vim:set ts=4 sw=4 et: */

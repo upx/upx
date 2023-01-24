@@ -51,11 +51,11 @@ private:
     pointer ptr;
 
     // enforce config invariants at constructor time - static functions
-    static __acc_forceinline pointer makePtr(pointer p) { return p; }
+    static forceinline pointer makePtr(pointer p) { return p; }
     // inverse logic for ensuring valid pointers from existing objets
-    __acc_forceinline pointer ensurePtr() const { return ptr; }
+    forceinline pointer ensurePtr() const { return ptr; }
     // debug
-    __acc_forceinline void assertInvariants() const {}
+    forceinline void assertInvariants() const {}
 
 public:
 #if XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
@@ -172,9 +172,9 @@ public:
 #endif
 
 private:
-    __acc_forceinline pointer check_deref(pointer p) const { return p; }
-    __acc_forceinline pointer check_deref(pointer p, ptrdiff_t n) const { return p + n; }
-    __acc_forceinline pointer check_add(pointer p, ptrdiff_t n) const { return p + n; }
+    forceinline pointer check_deref(pointer p) const { return p; }
+    forceinline pointer check_deref(pointer p, ptrdiff_t n) const { return p + n; }
+    forceinline pointer check_add(pointer p, ptrdiff_t n) const { return p + n; }
 
 public: // raw access
     pointer raw_ptr() const { return ptr; }

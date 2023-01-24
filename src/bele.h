@@ -38,35 +38,35 @@
 // core - NE
 **************************************************************************/
 
-__acc_static_forceinline unsigned get_ne16(const void *p) {
+static forceinline unsigned get_ne16(const void *p) {
     upx_uint16_t v = 0;
     upx_memcpy_inline(&v, p, sizeof(v));
     return v;
 }
 
-__acc_static_forceinline unsigned get_ne32(const void *p) {
+static forceinline unsigned get_ne32(const void *p) {
     upx_uint32_t v = 0;
     upx_memcpy_inline(&v, p, sizeof(v));
     return v;
 }
 
-__acc_static_forceinline upx_uint64_t get_ne64(const void *p) {
+static forceinline upx_uint64_t get_ne64(const void *p) {
     upx_uint64_t v = 0;
     upx_memcpy_inline(&v, p, sizeof(v));
     return v;
 }
 
-__acc_static_forceinline void set_ne16(void *p, unsigned vv) {
+static forceinline void set_ne16(void *p, unsigned vv) {
     upx_uint16_t v = (upx_uint16_t) (vv & 0xffff);
     upx_memcpy_inline(p, &v, sizeof(v));
 }
 
-__acc_static_forceinline void set_ne32(void *p, unsigned vv) {
+static forceinline void set_ne32(void *p, unsigned vv) {
     upx_uint32_t v = vv;
     upx_memcpy_inline(p, &v, sizeof(v));
 }
 
-__acc_static_forceinline void set_ne64(void *p, upx_uint64_t vv) {
+static forceinline void set_ne64(void *p, upx_uint64_t vv) {
     upx_uint64_t v = vv;
     upx_memcpy_inline(p, &v, sizeof(v));
 }
@@ -79,34 +79,31 @@ __acc_static_forceinline void set_ne64(void *p, upx_uint64_t vv) {
 
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(long) == 4)
 
-__acc_static_forceinline unsigned bswap16(unsigned v) {
-    return (unsigned) _byteswap_ulong(v << 16);
-}
-__acc_static_forceinline unsigned bswap32(unsigned v) { return (unsigned) _byteswap_ulong(v); }
-__acc_static_forceinline upx_uint64_t bswap64(upx_uint64_t v) { return _byteswap_uint64(v); }
+// unfortunately *not* constexpr with MSVC
+static forceinline unsigned bswap16(unsigned v) { return (unsigned) _byteswap_ulong(v << 16); }
+static forceinline unsigned bswap32(unsigned v) { return (unsigned) _byteswap_ulong(v); }
+static forceinline upx_uint64_t bswap64(upx_uint64_t v) { return _byteswap_uint64(v); }
 
 #else
 
-__acc_static_forceinline constexpr unsigned bswap16(unsigned v) {
+static forceinline constexpr unsigned bswap16(unsigned v) {
     // return __builtin_bswap16((upx_uint16_t) (v & 0xffff));
     // return (unsigned) __builtin_bswap64((upx_uint64_t) v << 48);
     return __builtin_bswap32(v << 16);
 }
-__acc_static_forceinline constexpr unsigned bswap32(unsigned v) {
+static forceinline constexpr unsigned bswap32(unsigned v) {
     // return (unsigned) __builtin_bswap64((upx_uint64_t) v << 32);
     return __builtin_bswap32(v);
 }
-__acc_static_forceinline constexpr upx_uint64_t bswap64(upx_uint64_t v) {
-    return __builtin_bswap64(v);
-}
+static forceinline constexpr upx_uint64_t bswap64(upx_uint64_t v) { return __builtin_bswap64(v); }
 
 #endif
 
-__acc_static_forceinline constexpr unsigned no_bswap16(unsigned v) {
+static forceinline constexpr unsigned no_bswap16(unsigned v) {
     return v & 0xffff; // needed so that this is equivalent to bswap16() above
 }
-__acc_static_forceinline constexpr unsigned no_bswap32(unsigned v) { return v; }
-__acc_static_forceinline constexpr upx_uint64_t no_bswap64(upx_uint64_t v) { return v; }
+static forceinline constexpr unsigned no_bswap32(unsigned v) { return v; }
+static forceinline constexpr upx_uint64_t no_bswap64(upx_uint64_t v) { return v; }
 
 #if (ACC_ABI_BIG_ENDIAN)
 #define ne16_to_be16(v) no_bswap16(v)
@@ -186,14 +183,14 @@ inline void set_le26(void *p, unsigned v) {
 // get signed values
 **************************************************************************/
 
-__acc_static_forceinline int sign_extend(unsigned v, unsigned bits) {
+static forceinline int sign_extend(unsigned v, unsigned bits) {
     const unsigned sign_bit = 1u << (bits - 1);
     v &= sign_bit | (sign_bit - 1);
     v |= 0 - (v & sign_bit);
     return ACC_ICAST(int, v);
 }
 
-__acc_static_forceinline upx_int64_t sign_extend(upx_uint64_t v, unsigned bits) {
+static forceinline upx_int64_t sign_extend(upx_uint64_t v, unsigned bits) {
     const upx_uint64_t sign_bit = 1ull << (bits - 1);
     v &= sign_bit | (sign_bit - 1);
     v |= 0 - (v & sign_bit);
@@ -599,15 +596,15 @@ inline T *operator-(T *ptr, const LE32 &v) {
     return ptr - unsigned(v);
 }
 
-// these are not implemented on purpose and will cause link-time errors
+// these are not implemented on purpose and will cause errors
 template <class T>
-T *operator+(T *ptr, const BE64 &v);
+T *operator+(T *ptr, const BE64 &v) DELETED_FUNCTION;
 template <class T>
-T *operator-(T *ptr, const BE64 &v);
+T *operator-(T *ptr, const BE64 &v) DELETED_FUNCTION;
 template <class T>
-T *operator+(T *ptr, const LE64 &v);
+T *operator+(T *ptr, const LE64 &v) DELETED_FUNCTION;
 template <class T>
-T *operator-(T *ptr, const LE64 &v);
+T *operator-(T *ptr, const LE64 &v) DELETED_FUNCTION;
 
 /*************************************************************************
 // global overloads

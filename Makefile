@@ -8,7 +8,7 @@
 #   mkdir -p build/release
 #   cd build/release
 #   cmake ../..
-#   cmake --build .
+#   cmake --build . --parallel # (or just use "make -j" instead)
 
 CMAKE = cmake
 UPX_CMAKE_BUILD_FLAGS += --parallel
@@ -44,6 +44,7 @@ release: build/release
 
 .PHONY: PHONY
 .NOTPARALLEL: # because the actual builds use "cmake --parallel"
+.SUFFIXES:
 
 #***********************************************************************
 # extra builds: some pre-defined build configurations
@@ -133,18 +134,42 @@ build/extra/cross-windows-mingw64/release: PHONY; $(call run_config_and_build,$@
 build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc
 build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++
 
-# advanced: generic eXtra target; usage:
+# cross compiler: macOS arm64
+build/extra/cross-darwin-arm64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/cross-darwin-arm64/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/cross-darwin-arm64/%: export CC  = clang -target arm64-apple-darwin
+build/extra/cross-darwin-arm64/%: export CXX = clang++ -target arm64-apple-darwin
+
+# cross compiler: macOS x86_64
+build/extra/cross-darwin-x86_64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/cross-darwin-x86_64/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/cross-darwin-x86_64/%: export CC  = clang -target x86_64-apple-darwin
+build/extra/cross-darwin-x86_64/%: export CXX = clang++ -target x86_64-apple-darwin
+
+#***********************************************************************
+# advanced: generic eXtra target
+#***********************************************************************
+
+# usage:
 #   make UPX_XTARGET=mytarget CC="my-cc -flags" CXX="my-cxx -flags"
-#   make UPX_XTARGET=mytarget CC="my-cc -flags" CXX="my-cxx -flags" build/xtarget/mytarget/debug
+#   make UPX_XTARGET=mytarget CC="my-cc -flags" CXX="my-cxx -flags" xtarget/debug
+
 ifneq ($(UPX_XTARGET),)
 ifneq ($(CC),)
 ifneq ($(CXX),)
+
 UPX_XTARGET := $(UPX_XTARGET)
-$(eval .DEFAULT_GOAL = build/xtarget/$(UPX_XTARGET)/release)
 build/xtarget/$(UPX_XTARGET)/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/xtarget/$(UPX_XTARGET)/release: PHONY; $(call run_config_and_build,$@,Release)
 build/xtarget/$(UPX_XTARGET)/%: export CC
 build/xtarget/$(UPX_XTARGET)/%: export CXX
+# shortcuts
+xtarget/debug:   build/xtarget/$(UPX_XTARGET)/debug
+xtarget/release: build/xtarget/$(UPX_XTARGET)/release
+# set new default
+.DEFAULT_GOAL = xtarget/release
+##$(eval .DEFAULT_GOAL = build/xtarget/$(UPX_XTARGET)/release)
+
 endif
 endif
 endif

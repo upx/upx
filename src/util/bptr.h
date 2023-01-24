@@ -109,14 +109,14 @@ public:
 
 private:
     void checkNULL() const {
-        if __acc_very_unlikely (!ptr_)
+        if very_unlikely (!ptr_)
             throwCantUnpack("unexpected NULL pointer; take care!");
     }
-    __acc_forceinline void checkRange() const { checkRange(ptr_, base_, size_in_bytes_); }
-    __acc_forceinline void checkRange(const void *p) const { checkRange(p, base_, size_in_bytes_); }
+    forceinline void checkRange() const { checkRange(ptr_, base_, size_in_bytes_); }
+    forceinline void checkRange(const void *p) const { checkRange(p, base_, size_in_bytes_); }
     static void checkRange(const void *ptr, const void *base, size_t size_in_bytes) {
         size_t off = (const char *) ptr - (const char *) base;
-        if __acc_very_unlikely (off > size_in_bytes)
+        if very_unlikely (off > size_in_bytes)
             throwCantUnpack("pointer out of range; take care!");
     }
     void check() const { // check ptr_ invariant: either NULL or valid checkRange()

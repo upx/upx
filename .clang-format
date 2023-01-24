@@ -18,6 +18,8 @@ AttributeMacros:
   - __acc_noinline
   - __acc_static_noinline
   - __acc_static_forceinline
+  - forceinline
+  - noinline
 EmptyLineBeforeAccessModifier: Leave
 SortIncludes: false
 SpaceAfterCStyleCast: true

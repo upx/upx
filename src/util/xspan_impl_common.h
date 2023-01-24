@@ -53,7 +53,7 @@ size_type size_in_bytes;
 
 // debug - internal sanity check; also serves as pseudo-documentation
 #if DEBUG
-__acc_noinline void assertInvariants() const {
+noinline void assertInvariants() const {
     if __acc_cte (configRequirePtr)
         assert(ptr != nullptr);
     if __acc_cte (configRequireBase)
@@ -62,32 +62,32 @@ __acc_noinline void assertInvariants() const {
         xspan_check_range(ptr, base, size_in_bytes);
 }
 #else
-__acc_forceinline void assertInvariants() const {}
+forceinline void assertInvariants() const {}
 #endif
 
-static __acc_forceinline pointer makeNotNull(pointer p) {
-    if __acc_very_unlikely (p == nullptr)
+static forceinline pointer makeNotNull(pointer p) {
+    if very_unlikely (p == nullptr)
         xspan_fail_nullptr();
     return p;
 }
 // enforce config invariants at constructor time - static functions
-static __acc_forceinline pointer makePtr(pointer p) {
+static forceinline pointer makePtr(pointer p) {
     if __acc_cte (configRequirePtr && p == nullptr)
         xspan_fail_nullptr();
     return p;
 }
-static __acc_forceinline pointer makeBase(pointer b) {
+static forceinline pointer makeBase(pointer b) {
     if __acc_cte (configRequireBase && b == nullptr)
         xspan_fail_nullbase();
     return b;
 }
 // inverse logic for ensuring valid pointers from existing objets
-__acc_forceinline pointer ensurePtr() const {
+forceinline pointer ensurePtr() const {
     if __acc_cte (!configRequirePtr && ptr == nullptr)
         xspan_fail_nullptr();
     return ptr;
 }
-__acc_forceinline pointer ensureBase() const {
+forceinline pointer ensureBase() const {
     if __acc_cte (!configRequireBase && base == nullptr)
         xspan_fail_nullbase();
     return base;
@@ -213,7 +213,7 @@ Self &assign(const Self &other) {
     } else {
         // magic 2: assert same base (but ignore size_in_bytes !)
         if __acc_cte (configRequireBase || other.base != nullptr)
-            if __acc_very_unlikely (base != other.base)
+            if very_unlikely (base != other.base)
                 xspan_fail_not_same_base();
         if __acc_cte ((configRequirePtr || other.ptr != nullptr) &&
                       (configRequireBase || base != nullptr))

@@ -51,16 +51,16 @@ ACC_COMPILE_TIME_ASSERT_HEADER(2ull * UPX_RSIZE_MAX * 9 / 8 + 16 * 1024 * 1024 <
 upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                      upx_uint64_t extra2) {
     assert(element_size > 0);
-    if __acc_very_unlikely (element_size > UPX_RSIZE_MAX)
+    if very_unlikely (element_size > UPX_RSIZE_MAX)
         throwCantPack("mem_size 1; take care");
-    if __acc_very_unlikely (n > UPX_RSIZE_MAX)
+    if very_unlikely (n > UPX_RSIZE_MAX)
         throwCantPack("mem_size 2; take care");
-    if __acc_very_unlikely (extra1 > UPX_RSIZE_MAX)
+    if very_unlikely (extra1 > UPX_RSIZE_MAX)
         throwCantPack("mem_size 3; take care");
-    if __acc_very_unlikely (extra2 > UPX_RSIZE_MAX)
+    if very_unlikely (extra2 > UPX_RSIZE_MAX)
         throwCantPack("mem_size 4; take care");
     upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
-    if __acc_very_unlikely (bytes > UPX_RSIZE_MAX)
+    if very_unlikely (bytes > UPX_RSIZE_MAX)
         throwCantPack("mem_size 5; take care");
     return ACC_ICONV(upx_rsize_t, bytes);
 }
@@ -68,16 +68,16 @@ upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t ext
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                     upx_uint64_t extra2) noexcept {
     assert(element_size > 0);
-    if __acc_very_unlikely (element_size > UPX_RSIZE_MAX)
+    if very_unlikely (element_size > UPX_RSIZE_MAX)
         return false;
-    if __acc_very_unlikely (n > UPX_RSIZE_MAX)
+    if very_unlikely (n > UPX_RSIZE_MAX)
         return false;
-    if __acc_very_unlikely (extra1 > UPX_RSIZE_MAX)
+    if very_unlikely (extra1 > UPX_RSIZE_MAX)
         return false;
-    if __acc_very_unlikely (extra2 > UPX_RSIZE_MAX)
+    if very_unlikely (extra2 > UPX_RSIZE_MAX)
         return false;
     upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
-    if __acc_very_unlikely (bytes > UPX_RSIZE_MAX)
+    if very_unlikely (bytes > UPX_RSIZE_MAX)
         return false;
     return true;
 }
@@ -98,18 +98,18 @@ TEST_CASE("mem_size") {
 }
 
 int ptr_diff_bytes(const void *a, const void *b) {
-    if __acc_very_unlikely (a == nullptr) {
+    if very_unlikely (a == nullptr) {
         throwCantPack("ptr_diff_bytes null 1; take care");
     }
-    if __acc_very_unlikely (b == nullptr) {
+    if very_unlikely (b == nullptr) {
         throwCantPack("ptr_diff_bytes null 2; take care");
     }
     ptrdiff_t d = (const char *) a - (const char *) b;
     if (a >= b) {
-        if __acc_very_unlikely (!mem_size_valid_bytes(d))
+        if very_unlikely (!mem_size_valid_bytes(d))
             throwCantPack("ptr_diff_bytes 1; take care");
     } else {
-        if __acc_very_unlikely (!mem_size_valid_bytes(-d))
+        if very_unlikely (!mem_size_valid_bytes(-d))
             throwCantPack("ptr_diff_bytes 2; take care");
     }
     return ACC_ICONV(int, d);
@@ -117,7 +117,7 @@ int ptr_diff_bytes(const void *a, const void *b) {
 
 unsigned ptr_udiff_bytes(const void *a, const void *b) {
     int d = ptr_diff_bytes(a, b);
-    if __acc_very_unlikely (d < 0)
+    if very_unlikely (d < 0)
         throwCantPack("ptr_udiff_bytes; take care");
     return ACC_ICONV(unsigned, d);
 }
