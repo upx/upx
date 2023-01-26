@@ -139,9 +139,12 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #  include <rangeless/include/fn.hpp>
 #endif
 #ifndef WITH_VALGRIND
-#define WITH_VALGRIND 1
+#  define WITH_VALGRIND 1
 #endif
-#if (WITH_VALGRIND) && defined(__GNUC__) && !defined(__SANITIZE_ADDRESS__)
+#if defined(__SANITIZE_ADDRESS__) || defined(_WIN32) || !defined(__GNUC__)
+#  undef WITH_VALGRIND
+#endif
+#if (WITH_VALGRIND)
 #  include <valgrind/include/valgrind/memcheck.h>
 #endif
 
@@ -318,6 +321,12 @@ typedef upx_int64_t upx_off_t;
 #define CLANG_FORMAT_DUMMY_STATEMENT /*empty*/
 
 // malloc debuggers
+#if !defined(VALGRIND_CHECK_MEM_IS_ADDRESSABLE)
+#  define VALGRIND_CHECK_MEM_IS_ADDRESSABLE(addr,len)   0
+#endif
+#if !defined(VALGRIND_CHECK_MEM_IS_DEFINED)
+#  define VALGRIND_CHECK_MEM_IS_DEFINED(addr,len)   0
+#endif
 #if !defined(VALGRIND_MAKE_MEM_DEFINED)
 #  define VALGRIND_MAKE_MEM_DEFINED(addr,len)   0
 #endif

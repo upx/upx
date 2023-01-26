@@ -8,7 +8,7 @@
 #   mkdir -p build/release
 #   cd build/release
 #   cmake ../..
-#   cmake --build . --parallel # (or just use "make -j" instead)
+#   make -j     (or use "cmake --build . --parallel")
 
 CMAKE = cmake
 UPX_CMAKE_BUILD_FLAGS += --parallel
@@ -45,6 +45,8 @@ release: build/release
 .PHONY: PHONY
 .NOTPARALLEL: # because the actual builds use "cmake --parallel"
 .SUFFIXES:
+
+# END of Makefile; extra stuff follows
 
 #***********************************************************************
 # extra builds: some pre-defined build configurations
@@ -147,12 +149,12 @@ build/extra/cross-darwin-x86_64/%: export CC  = clang -target x86_64-apple-darwi
 build/extra/cross-darwin-x86_64/%: export CXX = clang++ -target x86_64-apple-darwin
 
 #***********************************************************************
-# advanced: generic eXtra target
+# advanced: generic extra target
 #***********************************************************************
 
 # usage:
-#   make UPX_XTARGET=mytarget CC="my-cc -flags" CXX="my-cxx -flags"
-#   make UPX_XTARGET=mytarget CC="my-cc -flags" CXX="my-cxx -flags" xtarget/debug
+#   make UPX_XTARGET=my-target CC="my-cc -flags" CXX="my-cxx -flags"
+#   make UPX_XTARGET=my-target CC="my-cc -flags" CXX="my-cxx -flags" xtarget/debug
 
 ifneq ($(UPX_XTARGET),)
 ifneq ($(CC),)
@@ -168,7 +170,6 @@ xtarget/debug:   build/xtarget/$(UPX_XTARGET)/debug
 xtarget/release: build/xtarget/$(UPX_XTARGET)/release
 # set new default
 .DEFAULT_GOAL = xtarget/release
-##$(eval .DEFAULT_GOAL = build/xtarget/$(UPX_XTARGET)/release)
 
 endif
 endif

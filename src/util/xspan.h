@@ -172,8 +172,12 @@ template <class T>
 inline
     typename std::enable_if<std::is_pointer<T>::value && !std_is_bounded_array<T>::value, T>::type
     raw_bytes(T ptr, size_t size_in_bytes) {
-    if very_unlikely (size_in_bytes > 0 && ptr == nullptr)
-        throwInternalError("raw_bytes unexpected NULL ptr");
+    if (size_in_bytes > 0) {
+        if very_unlikely (ptr == nullptr)
+            throwInternalError("raw_bytes unexpected NULL ptr");
+        if very_unlikely (__acc_cte(VALGRIND_CHECK_MEM_IS_ADDRESSABLE(ptr, size_in_bytes) != 0))
+            throwInternalError("raw_bytes valgrind-check-mem");
+    }
     return ptr;
 }
 
@@ -183,23 +187,29 @@ template <class T>
 inline
     typename std::enable_if<std::is_pointer<T>::value && !std_is_bounded_array<T>::value, T>::type
     raw_index_bytes(T ptr, size_t index, size_t size_in_bytes) {
+    typedef typename std::remove_pointer<T>::type element_type;
     if very_unlikely (ptr == nullptr)
         throwInternalError("raw_index_bytes unexpected NULL ptr");
-    (void) mem_size(sizeof(T), index, size_in_bytes); // assert size
+    size_in_bytes = mem_size(sizeof(element_type), index, size_in_bytes); // assert size
+    if very_unlikely (__acc_cte(VALGRIND_CHECK_MEM_IS_ADDRESSABLE(ptr, size_in_bytes) != 0))
+        throwInternalError("raw_index_bytes valgrind-check-mem");
+    UNUSED(size_in_bytes);
     return ptr + index;
 }
 
 // same for bounded arrays
 template <class T, size_t N>
 inline T *raw_bytes(T (&a)[N], size_t size_in_bytes) {
-    if very_unlikely (size_in_bytes > mem_size(sizeof(T), N))
+    typedef T element_type;
+    if very_unlikely (size_in_bytes > mem_size(sizeof(element_type), N))
         throwInternalError("raw_bytes out of range");
     return a;
 }
 
 template <class T, size_t N>
 inline T *raw_index_bytes(T (&a)[N], size_t index, size_t size_in_bytes) {
-    return raw_bytes(a, mem_size(sizeof(T), index, size_in_bytes)) + index;
+    typedef T element_type;
+    return raw_bytes(a, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
 }
 
 /* vim:set ts=4 sw=4 et: */
