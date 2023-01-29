@@ -330,7 +330,7 @@ bool PeFile::Reloc::next(unsigned &pos,unsigned &type)
 
     pos = rel->pagestart + (*rel1 & 0xfff);
     type = *rel1++ >> 12;
-    //printf("%x %d\n",pos,type);
+    NO_printf("%x %d\n",pos,type);
     if (ptr_diff_bytes(rel1,rel) >= (int) rel->size)
         newRelocPos(rel1);
     return type == 0 ? next(pos,type) : true;
@@ -434,7 +434,7 @@ void PeFile32::processRelocs() // pass1
             if (fix[ic][kc] != prev)
                 prev = fix[ic][jc++] = fix[ic][kc];
 
-        //printf("xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
+        NO_printf("xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
         xcounts[ic] = jc;
     }
 
@@ -539,7 +539,7 @@ void PeFile64::processRelocs() // pass1
             if (fix[ic][kc] != prev)
                 prev = fix[ic][jc++] = fix[ic][kc];
 
-        //printf("xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
+        NO_printf("xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
         xcounts[ic] = jc;
     }
 
@@ -1495,7 +1495,7 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
         if (pos >= lcaddr && pos < lcaddr + soloadconf)
         {
             iv->add(pos - lcaddr, type);
-            // printf("loadconf reloc detected: %x\n", pos);
+            NO_printf("loadconf reloc detected: %x\n", pos);
         }
 
     mb_oloadconf.alloc(soloadconf);
@@ -1511,8 +1511,8 @@ void PeFile::processLoadConf(Reloc *rel, const Interval *iv,
     for (unsigned ic = 0; ic < iv->ivnum; ic++)
     {
         rel->add(iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
-        //printf("loadconf reloc added: %x %d\n",
-        //       iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
+        NO_printf("loadconf reloc added: %x %d\n",
+               iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
     }
 }
 
@@ -2068,7 +2068,7 @@ void PeFile::processResources(Resource *res)
 }
 
 
-unsigned PeFile::virta2objnum(unsigned addr,pe_section_t *sect,unsigned objs)
+unsigned PeFile::virta2objnum(unsigned addr,SPAN_0(pe_section_t) sect,unsigned objs)
 {
     unsigned ic;
     for (ic = 0; ic < objs; ic++)
@@ -2087,7 +2087,7 @@ unsigned PeFile::tryremove (unsigned vaddr,unsigned objs)
     unsigned ic = virta2objnum(vaddr,isection,objs);
     if (ic && ic == objs - 1)
     {
-        //fprintf(stderr,"removed section: %d size: %lx\n",ic,(long)isection[ic].size);
+        NO_fprintf(stderr,"removed section: %d size: %lx\n",ic,(long)isection[ic].size);
         info("removed section: %d size: 0x%lx",ic,(long)isection[ic].size);
         objs--;
     }
@@ -2133,7 +2133,7 @@ void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
         return;
     }
     mb_isection.alloc(sizeof(pe_section_t) * objs);
-    isection = (pe_section_t *)mb_isection.getVoidPtr();
+    isection = mb_isection; // => isection now is a SPAN_S
     if (file_size_u < pe_offset + sizeof_ih + sizeof(pe_section_t)*objs) {
         char buf[32]; snprintf(buf, sizeof(buf), "too many sections %d", objs);
         throwCantPack(buf);
@@ -2251,8 +2251,9 @@ unsigned PeFile::readSections(unsigned objs, unsigned usize,
     ibuf.alloc(usize + xtrasize);
 
     // BOUND IMPORT support. FIXME: is this ok?
+    ibufgood = isection[0].rawdataptr;
     fi->seek(0,SEEK_SET);
-    fi->readx(ibuf,ibufgood= isection[0].rawdataptr);
+    fi->readx(ibuf, ibufgood);
 
     //Interval holes(ibuf);
 
@@ -2423,7 +2424,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     // temporary solution:
     unsigned newvsize = (isection[objs-1].vaddr + isection[objs-1].vsize + oam1) &~ oam1;
 
-    //fprintf(stderr,"newvsize=%x objs=%d\n",newvsize,objs);
+    NO_fprintf(stderr,"newvsize=%x objs=%d\n",newvsize,objs);
     if (newvsize + soimport + sorelocs > ibuf.getSize())
          throwInternalError("buffer too small 2");
     memcpy(ibuf+newvsize,oimport,soimport);
@@ -3134,21 +3135,20 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     ibuf.dealloc();
 }
 
-int PeFile::canUnpack0(unsigned max_sections, LE16 &ih_objects,
-                       LE32 &ih_entry, unsigned ihsize)
+int PeFile::canUnpack0(unsigned max_sections, unsigned objs,
+                       unsigned ih_entry, unsigned ih_size)
 {
     if (!canPack())
         return false;
 
-    unsigned objs = ih_objects;
     mb_isection.alloc(sizeof(pe_section_t) * objs);
-    isection = (pe_section_t *)mb_isection.getVoidPtr();
-    fi->seek(pe_offset + ihsize, SEEK_SET);
-    fi->readx(isection,sizeof(pe_section_t)*objs);
+    isection = mb_isection; // => isection now is a SPAN_S
+    fi->seek(pe_offset + ih_size, SEEK_SET);
+    fi->readx(isection,sizeof(pe_section_t) * objs);
     const unsigned min_sections = isefi ? 2 : 3;
-    if (ih_objects < min_sections)
+    if (objs < min_sections)
         return -1;
-    bool is_packed = (ih_objects >= min_sections && ih_objects <= max_sections &&
+    bool is_packed = (objs >= min_sections && objs <= max_sections &&
                       (IDSIZE(15) || ih_entry > isection[1].vaddr));
     bool found_ph = false;
     if (memcmp(isection[0].name,"UPX",3) == 0)

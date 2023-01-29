@@ -87,8 +87,8 @@ protected:
     virtual bool canUnpackVersion(int version) const override
         {  return (version >= 12 && version <= 13); }
 
-    int canUnpack0(unsigned max_sections, LE16 &ih_objects,
-                   LE32 &ih_entry, unsigned ihsize);
+    int canUnpack0(unsigned max_sections, unsigned objs,
+                   unsigned ih_entry, unsigned ih_size);
 
 protected:
     virtual int readFileHeader();
@@ -209,7 +209,7 @@ protected:
     };
 
     MemBuffer mb_isection;
-    pe_section_t *isection;
+    SPAN_0(pe_section_t) isection = nullptr;
     bool isdll;
     bool isrtm;
     bool isefi;
@@ -218,7 +218,7 @@ protected:
     bool use_stub_relocs;
 
 
-    static unsigned virta2objnum (unsigned, pe_section_t *, unsigned);
+    static unsigned virta2objnum (unsigned, SPAN_0(pe_section_t), unsigned);
     unsigned tryremove (unsigned, unsigned);
 
     enum {
