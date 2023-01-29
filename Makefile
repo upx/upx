@@ -40,7 +40,6 @@ build/release: PHONY
 
 # shortcuts
 all: build/debug build/release
-build: build/release
 debug: build/debug
 release: build/release
 
@@ -170,7 +169,6 @@ build/xtarget/$(UPX_XTARGET)/%: export CXX
 # shortcuts
 xtarget/debug:   build/xtarget/$(UPX_XTARGET)/debug
 xtarget/release: build/xtarget/$(UPX_XTARGET)/release
-xtarget: xtarget/release
 # set new default
 .DEFAULT_GOAL = xtarget/release
 
