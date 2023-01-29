@@ -456,6 +456,7 @@ class PeFile32 : public PeFile {
 protected:
     PeFile32(InputFile *f);
     virtual ~PeFile32();
+
     void pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t default_imagebase,
                bool last_section_rsrc_only);
     virtual void unpack(OutputFile *fo) override;
@@ -472,10 +473,10 @@ protected:
         // 0x0
         char _[4]; // pemagic
         LE16 cpu;
-        LE16 objects;
-        char __[12]; // timestamp + reserved
+        LE16 objects; // number of sections
+        char __[12];  // timestamp + reserved
         LE16 opthdrsize;
-        LE16 flags;
+        LE16 flags; // characteristics
         // optional header
         LE16 coffmagic; // NEW: Stefan Widmann
         char ___[2];    // linkerversion

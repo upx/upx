@@ -233,12 +233,11 @@ void PackW64Pep::setOhHeaderSize(const pe_section_t *osection) {
 }
 
 void PackW64Pep::pack(OutputFile *fo) {
-    super::pack0(fo,
-                 (1u << IMAGE_SUBSYSTEM_WINDOWS_GUI) | (1u << IMAGE_SUBSYSTEM_WINDOWS_CUI) |
-                     (1u << IMAGE_SUBSYSTEM_EFI_APPLICATION) |
-                     (1u << IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER) |
-                     (1u << IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER) | (1u << IMAGE_SUBSYSTEM_EFI_ROM),
-                 0x0000000140000000ULL);
+    unsigned mask = (1u << IMAGE_SUBSYSTEM_WINDOWS_GUI) | (1u << IMAGE_SUBSYSTEM_WINDOWS_CUI) |
+                    (1u << IMAGE_SUBSYSTEM_EFI_APPLICATION) |
+                    (1u << IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER) |
+                    (1u << IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER) | (1u << IMAGE_SUBSYSTEM_EFI_ROM);
+    super::pack0(fo, mask, 0x0000000140000000ULL);
 }
 
 /* vim:set ts=4 sw=4 et: */

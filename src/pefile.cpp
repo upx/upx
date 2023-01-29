@@ -816,7 +816,6 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     if (isefi) {
         if (IDSIZE(PEDIR_IMPORT))
             throwCantPack("imports not supported on EFI");
-
         return 0;
     }
 
@@ -1477,7 +1476,8 @@ unsigned PeFile::Resource::dirsize() const { return ALIGN_UP(dsize + ssize, 4u);
 
 bool PeFile::Resource::next() {
     // wow, builtin autorewind... :-)
-    return (current = current ? current->next : head) != nullptr;
+    current = current ? current->next : head;
+    return current != nullptr;
 }
 
 unsigned PeFile::Resource::itype() const { return current->parent->parent->id; }
@@ -1942,10 +1942,9 @@ unsigned PeFile::stripDebug(unsigned overlaystart) {
 **************************************************************************/
 
 void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih) {
-    if (!objs) {
+    if (objs == 0)
         return;
-    }
-    mb_isection.alloc(sizeof(pe_section_t) * objs);
+    mb_isection.alloc(mem_size(sizeof(pe_section_t), objs));
     isection = mb_isection; // => isection now is a SPAN_S
     if (file_size_u < pe_offset + sizeof_ih + sizeof(pe_section_t) * objs) {
         char buf[32];
@@ -2888,18 +2887,14 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
 }
 
 int PeFile::canUnpack0(unsigned max_sections, unsigned objs, unsigned ih_entry, unsigned ih_size) {
-    if (!canPack())
-        return false;
-
-    mb_isection.alloc(sizeof(pe_section_t) * objs);
-    isection = mb_isection; // => isection now is a SPAN_S
-    fi->seek(pe_offset + ih_size, SEEK_SET);
-    fi->readx(isection, sizeof(pe_section_t) * objs);
     const unsigned min_sections = isefi ? 2 : 3;
     if (objs < min_sections)
         return -1;
-    bool is_packed = (objs >= min_sections && objs <= max_sections &&
-                      (IDSIZE(15) || ih_entry > isection[1].vaddr));
+    mb_isection.alloc(mem_size(sizeof(pe_section_t), objs));
+    isection = mb_isection; // => isection now is a SPAN_S
+    fi->seek(pe_offset + ih_size, SEEK_SET);
+    fi->readx(isection, sizeof(pe_section_t) * objs);
+    bool is_packed = (objs <= max_sections && (IDSIZE(15) || ih_entry > isection[1].vaddr));
     bool found_ph = false;
     if (memcmp(isection[0].name, "UPX", 3) == 0) {
         // current version
@@ -2994,6 +2989,8 @@ void PeFile32::unpack(OutputFile *fo) {
 }
 
 int PeFile32::canUnpack() {
+    if (!canPack()) // this calls readFileHeader() and readPeHeader()
+        return false;
     return canUnpack0(getFormat() == UPX_F_WINCE_ARM_PE ? 4 : 3, ih.objects, ih.entry, sizeof(ih));
 }
 
@@ -3039,7 +3036,11 @@ void PeFile64::pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t defau
 
 void PeFile64::unpack(OutputFile *fo) { unpack0<pe_header_t, LE64>(fo, ih, oh, 1ULL << 63, false); }
 
-int PeFile64::canUnpack() { return canUnpack0(3, ih.objects, ih.entry, sizeof(ih)); }
+int PeFile64::canUnpack() {
+    if (!canPack()) // this calls readFileHeader() and readPeHeader()
+        return false;
+    return canUnpack0(3, ih.objects, ih.entry, sizeof(ih));
+}
 
 unsigned PeFile64::processImports() // pass 1
 {
