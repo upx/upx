@@ -126,7 +126,7 @@ template <class T>
 inline typename Span<T>::pointer raw_index_bytes(const Span<T> &a, size_t index,
                                                  size_t size_in_bytes) {
     typedef typename Span<T>::element_type element_type;
-    return raw_bytes(a, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+    return a.raw_bytes(mem_size(sizeof(element_type), index, size_in_bytes)) + index;
 }
 
 /*************************************************************************

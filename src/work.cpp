@@ -27,7 +27,7 @@
 
 // work.cpp implements the central loop, and it uses class PackMaster to
 // dispatch. PackMaster by itself will instatiate a concrete subclass
-// of Packer which then does the actual work.
+// of class Packer which then does the actual work.
 
 #include "conf.h"
 #include "file.h"
@@ -171,7 +171,7 @@ void do_one_file(const char *iname, char *oname) {
         throwInternalError("invalid command");
 
     // copy time stamp
-    if (opt->preserve_timestamp && oname[0] && fo.isOpen()) {
+    if (oname[0] && opt->preserve_timestamp && fo.isOpen()) {
 #if (USE_FTIME)
         r = setftime(fo.getFd(), &fi_ftime);
         IGNORE_ERROR(r);
@@ -190,26 +190,24 @@ void do_one_file(const char *iname, char *oname) {
 
     // rename or delete files
     if (oname[0] && !opt->output_name) {
-        // FIXME: .exe or .cof etc.
-        if (!opt->backup) {
+        if (opt->backup) {
+            char bakname[ACC_FN_PATH_MAX + 1];
+            if (!makebakname(bakname, sizeof(bakname), iname))
+                throwIOException("could not create a backup file name");
+            FileBase::rename(iname, bakname);
+        } else {
 #if (HAVE_CHMOD)
             r = chmod(iname, 0777);
             IGNORE_ERROR(r);
 #endif
             FileBase::unlink(iname);
-        } else {
-            // make backup
-            char bakname[ACC_FN_PATH_MAX + 1];
-            if (!makebakname(bakname, sizeof(bakname), iname))
-                throwIOException("could not create a backup file name");
-            FileBase::rename(iname, bakname);
         }
         FileBase::rename(oname, iname);
     }
 
     // copy file attributes
     if (oname[0]) {
-        oname[0] = 0;
+        oname[0] = 0; // done with oname
         const char *name = opt->output_name ? opt->output_name : iname;
         UNUSED(name);
 #if (USE_UTIME)
@@ -222,6 +220,13 @@ void do_one_file(const char *iname, char *oname) {
             IGNORE_ERROR(r);
         }
 #endif
+#if (HAVE_CHOWN)
+        // copy the group ownership
+        if (opt->preserve_ownership) {
+            r = chown(name, -1, st.st_gid);
+            IGNORE_ERROR(r);
+        }
+#endif
 #if (HAVE_CHMOD)
         // copy permissions
         if (opt->preserve_mode) {
@@ -230,9 +235,9 @@ void do_one_file(const char *iname, char *oname) {
         }
 #endif
 #if (HAVE_CHOWN)
-        // copy the ownership
+        // copy the user ownership
         if (opt->preserve_ownership) {
-            r = chown(name, st.st_uid, st.st_gid);
+            r = chown(name, st.st_uid, -1);
             IGNORE_ERROR(r);
         }
 #endif

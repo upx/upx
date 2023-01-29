@@ -147,8 +147,14 @@ template <class T>
 struct TestBELE {
     __acc_static_noinline bool test(void) {
         // POD checks
-        COMPILE_TIME_ASSERT(std::is_standard_layout<T>::value)
-        COMPILE_TIME_ASSERT(std::is_trivial<T>::value)
+        {
+            COMPILE_TIME_ASSERT(std::is_standard_layout<T>::value)
+            COMPILE_TIME_ASSERT(std::is_trivial<T>::value)
+            // extra checks, these are probably implied by std::is_trivial:
+            COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<T>::value)
+            COMPILE_TIME_ASSERT(std::is_trivially_copyable<T>::value)
+            COMPILE_TIME_ASSERT(std::is_trivially_default_constructible<T>::value)
+        }
         // alignment checks
         {
             COMPILE_TIME_ASSERT_ALIGNED1(T)

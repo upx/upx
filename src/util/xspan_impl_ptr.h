@@ -200,7 +200,9 @@ template <class T>
 inline typename Ptr<T>::pointer raw_index_bytes(const Ptr<T> &a, size_t index,
                                                 size_t size_in_bytes) {
     typedef typename Ptr<T>::element_type element_type;
-    return raw_bytes(a, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+    if very_unlikely (a.raw_ptr() == nullptr)
+        throwInternalError("raw_index_bytes unexpected NULL ptr");
+    return a.raw_bytes(mem_size(sizeof(element_type), index, size_in_bytes)) + index;
 }
 
 /*************************************************************************

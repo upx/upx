@@ -52,15 +52,15 @@ public:
     static Packer *visitAllPackers(visit_func_t, InputFile *f, const options_t *, void *user);
 
 private:
-    InputFile *fi;
-    Packer *p;
+    InputFile *fi = nullptr;
+    Packer *p = nullptr;
 
     static Packer *getPacker(InputFile *f);
     static Packer *getUnpacker(InputFile *f);
 
     // setup local options for each file
     options_t local_options;
-    options_t *saved_opt;
+    options_t *saved_opt = nullptr;
 };
 
 #endif /* already included */

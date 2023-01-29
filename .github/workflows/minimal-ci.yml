@@ -12,17 +12,18 @@ jobs:
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         run: 'apk update && apk upgrade && apk add bash clang cmake g++ git make'
-      - name: 'Check out code'
+      - name: ${{ format('Check out code upx-{0}', github.ref_name) }}
         run: |
-          git clone --branch devel --depth 1 https://github.com/upx/upx
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
           git -C upx submodule update --init
-          echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-minimal-ci-${{ matrix.container }}" | sed 's/:/-/g' >> $GITHUB_ENV
-      - { name: 'Build clang', run: 'make -C upx build/extra/clang/release' }
-      - { name: 'Build gcc',   run: 'make -C upx build/extra/gcc/release' }
+          echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-minimal-ci-${{ matrix.container }}" | sed 's/[:,; ]/-/g' >> $GITHUB_ENV
+      - { name: 'Build clang', run: 'make -C upx UPX_XTARGET=clang-static CC="clang -static" CXX="clang++ -static"' }
+      - { name: 'Build gcc',   run: 'make -C upx UPX_XTARGET=gcc-static   CC="gcc -static"   CXX="g++ -static"' }
+      - { name: 'Strip release binaries', run: 'strip -p --strip-unneeded upx/build/*/*/release/upx' }
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.artifact_name }}
           path: 'upx*/build/*/*/*/upx'
-      - { name: 'Run basic tests clang', run: 'make -C upx/build/extra/clang/release test' }
-      - { name: 'Run basic tests gcc',   run: 'make -C upx/build/extra/gcc/release test' }
+      - { name: 'Run basic tests clang', run: 'make -C upx/build/xtarget/clang-static/release test' }
+      - { name: 'Run basic tests gcc',   run: 'make -C upx/build/xtarget/gcc-static/release test' }

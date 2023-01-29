@@ -117,8 +117,6 @@ struct options_t final {
         CPU_286 = 2,
         CPU_386 = 3,
         CPU_486 = 4,
-        CPU_586 = 5,
-        CPU_686 = 6
     };
     int cpu;
 
@@ -134,12 +132,6 @@ struct options_t final {
         bool no_reloc;
     } dos_exe;
     struct {
-        bool boot_only;
-        bool no_align;
-        bool do_8bit;
-        bool do_8mib;
-    } ps1_exe;
-    struct {
         unsigned blocksize;
         bool force_execve;      // force the linux/386 execve format
         bool is_ptinterp;       // is PT_INTERP, so don't adjust auxv_t
@@ -151,6 +143,12 @@ struct options_t final {
         bool android_shlib;     // keep some ElfXX_Shdr for dlopen()
         bool force_pie;         // choose DF_1_PIE instead of is_shlib
     } o_unix;
+    struct {
+        bool boot_only;
+        bool no_align;
+        bool do_8bit;
+        bool do_8mib;
+    } ps1_exe;
     struct {
         bool le;
     } watcom_le;

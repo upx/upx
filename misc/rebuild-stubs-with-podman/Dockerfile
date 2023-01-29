@@ -40,7 +40,7 @@ RUN cd /root \
     && rm /root/bin-upx-20221212.tar.xz \
     && true
 
-# install pre-built binary UPX versions into /usr/local/bin; not required but convenient for testing
+# install official UPX release binaries into /usr/local/bin; not required but convenient for testing
 RUN cd /root \
     && wget -q https://github.com/upx/upx/releases/download/v3.91/upx-3.91-amd64_linux.tar.bz2 \
     && for v in 3.92 3.93 3.94 3.95 3.96 4.0.0 4.0.1; do wget -q https://github.com/upx/upx/releases/download/v${v}/upx-${v}-amd64_linux.tar.xz; done \
@@ -51,7 +51,7 @@ RUN cd /root \
 
 # create default user upx 2000:2000
 RUN useradd upx -U --uid 2000 --shell /bin/bash -m \
-    && mkdir -p /home/upx/.local/bin /home/upx/src/upx \
+    && mkdir -p /home/upx/.cache/zig /home/upx/.local/bin /home/upx/src/upx \
     && ln -s /usr/local/bin/bin-upx-20221212 /home/upx/.local/bin/bin-upx \
     && chown -R upx:upx /home/upx \
     && true

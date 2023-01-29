@@ -826,6 +826,7 @@ class MemBuffer;
 void *membuffer_get_void_ptr(MemBuffer &mb);
 unsigned membuffer_get_size(MemBuffer &mb);
 
+// xspan
 #include "util/xspan.h"
 
 // util/dt_check.cpp

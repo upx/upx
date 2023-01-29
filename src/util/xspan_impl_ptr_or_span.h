@@ -126,7 +126,7 @@ template <class T>
 inline typename PtrOrSpan<T>::pointer raw_index_bytes(const PtrOrSpan<T> &a, size_t index,
                                                       size_t size_in_bytes) {
     typedef typename PtrOrSpan<T>::element_type element_type;
-    return raw_bytes(a, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+    return a.raw_bytes(mem_size(sizeof(element_type), index, size_in_bytes)) + index;
 }
 
 /*************************************************************************

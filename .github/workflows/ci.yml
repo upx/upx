@@ -150,10 +150,14 @@ jobs:
       - name: 'Build cmake extra/gcc/release'
         if: ${{ matrix.gcc != '' }}
         run:   'make build/extra/gcc/release CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
+      - name: 'Build cmake xtarget/cross-darwin-arm64/debug'
+        run: |
+          CC="clang -target arm64-apple-darwin" CXX="clang++ -target arm64-apple-darwin" \
+          make UPX_XTARGET=cross-darwin-arm64 xtarget/debug
       - name: 'Build cmake xtarget/cross-darwin-arm64/release'
         run: |
-          export CC="clang -target arm64-apple-darwin" CXX="clang++ -target arm64-apple-darwin"
-          make UPX_XTARGET=cross-darwin-arm64
+          CC="clang -target arm64-apple-darwin" CXX="clang++ -target arm64-apple-darwin" \
+          make UPX_XTARGET=cross-darwin-arm64 xtarget/release
       - name: 'Make artifact'
         run: |
           N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}
@@ -187,8 +191,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # windows-2019 used to work but got broken with the 20220821.1 runner-image update;
-          # as you cannot download that image this is painful to debug; disable for now
+          # windows-2019 used to work but got broken with the 20220821.1 runner-image
+          # update; we cannot download that image for inspection, and debugging the
+          # remote image is painful, so disable for now
           # see https://github.com/actions/runner-images.git
           ####- { os: windows-2019 }
           - { os: windows-2022 }

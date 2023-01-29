@@ -27,8 +27,11 @@
 
 #include "conf.h"
 
+static options_t global_options;
+options_t *opt = &global_options; // also see class PackMaster
+
 /*************************************************************************
-// options
+// reset
 **************************************************************************/
 
 void options_t::reset() {
@@ -69,11 +72,8 @@ void options_t::reset() {
     o->win32_pe.keep_resource = "";
 }
 
-static options_t global_options;
-options_t *opt = &global_options;
-
 /*************************************************************************
-//
+// doctest checks
 **************************************************************************/
 
 TEST_CASE("options_t::reset") {
@@ -89,7 +89,7 @@ static inline void test_options(const char *(&a)[N]) {
 }
 
 TEST_CASE("getopt") {
-    options_t *saved_opt = opt;
+    options_t *const saved_opt = opt;
     options_t local_options;
     opt = &local_options;
     opt->reset();

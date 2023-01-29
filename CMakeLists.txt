@@ -123,10 +123,16 @@ endif()
 file(GLOB upx_SOURCES "src/*.cpp" "src/[cfu]*/*.cpp")
 list(SORT upx_SOURCES)
 add_executable(upx ${upx_SOURCES})
-#target_compile_features(upx PRIVATE cxx_std_17)
 set_property(TARGET upx PROPERTY CXX_STANDARD 17)
 target_link_libraries(upx upx_vendor_ucl upx_vendor_zlib)
 
+if(NOT MSVC)
+    # rather strict default compilation warnings
+    set(warn_strict
+        -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations
+        -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
+    )
+endif()
 if(UPX_CONFIG_DISABLE_WERROR)
     set(warn_Werror "")
     set(warn_WX "")
@@ -191,7 +197,7 @@ upx_sanitize_target(${t})
 if(MSVC)
     target_compile_options(${t} PRIVATE -J -W4 ${warn_WX})
 else()
-    target_compile_options(${t} PRIVATE -Wall -Wextra -Wcast-align -Wcast-qual -Wpointer-arith -Wvla -Wwrite-strings ${warn_Werror})
+    target_compile_options(${t} PRIVATE ${warn_strict} ${warn_Werror})
 endif()
 
 set(t upx_vendor_zlib)
@@ -213,7 +219,7 @@ target_compile_options(${t} PRIVATE -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM)
 if(MSVC)
     target_compile_options(${t} PRIVATE -J -W4 ${warn_WX})
 else()
-    target_compile_options(${t} PRIVATE -Wall -Wextra -Wcast-align -Wcast-qual -Wpointer-arith -Wvla -Wwrite-strings ${warn_Werror})
+    target_compile_options(${t} PRIVATE ${warn_strict} ${warn_Werror})
 endif()
 endif()
 
@@ -231,10 +237,7 @@ upx_sanitize_target(${t})
 if(MSVC)
     target_compile_options(${t} PRIVATE -EHsc -J -W4 ${warn_WX})
 else()
-    target_compile_options(${t} PRIVATE
-        -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith
-        -Wshadow -Wvla -Wwrite-strings ${warn_Werror}
-    )
+    target_compile_options(${t} PRIVATE ${warn_strict} ${warn_Werror})
 endif()
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
     target_compile_definitions(${t} PRIVATE WITH_ZSTD=1)
@@ -333,6 +336,7 @@ if (CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release)$")
     message(WARNING "WARNING: unsupported CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}; please use \"Debug\" or \"Release\"")
 endif()
 
+if(NOT UPX_CONFIG_CMAKE_DISABLE_PLATFORM_CHECK)
 # extra sanity checks to detect incompatible C vs CXX settings
 if(NOT ",${CMAKE_C_PLATFORM_ID}," STREQUAL ",${CMAKE_CXX_PLATFORM_ID},")
     message(FATAL_ERROR "ERROR: CMAKE_C_PLATFORM_ID CMAKE_CXX_PLATFORM_ID mismatch")
@@ -340,5 +344,6 @@ endif()
 if(NOT ",${CMAKE_C_COMPILER_ABI}," STREQUAL ",${CMAKE_CXX_COMPILER_ABI},")
     message(FATAL_ERROR "ERROR: CMAKE_C_COMPILER_ABI CMAKE_CXX_COMPILER_ABI mismatch")
 endif()
+endif() # UPX_CONFIG_CMAKE_DISABLE_PLATFORM_CHECK
 
 # vim:set ft=cmake ts=4 sw=4 tw=0 et:

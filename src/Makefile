@@ -57,13 +57,17 @@ endif
 
 # run the UPX testsuite
 # The expected (old) checksums are in $(top_srcdir)/.github/travis_testsuite_1-expected_sha256sums.sh
-# The   actual (new) checksums are in tmp-testsuite/testsuite_1/.sha256sums.recreate
+# The   actual (new) checksums are in ./tmp-testsuite/testsuite_1/.sha256sums.recreate
 ifneq ($(wildcard $(upx_testsuite_SRCDIR)/files/packed/.),)
 ifneq ($(wildcard $(top_srcdir)/.github/travis_testsuite_1.sh),)
-run-testsuite: export upx_exe                := $(top_srcdir)/build/release/upx
-run-testsuite: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
-run-testsuite: export upx_testsuite_BUILDDIR := ./tmp-testsuite
-run-testsuite: $(top_srcdir)/build/release/upx PHONY
+run-testsuite: run-testsuite-release
+run-testsuite-%: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
+run-testsuite-%: export upx_testsuite_BUILDDIR := ./tmp-testsuite
+run-testsuite-debug: export upx_exe := $(top_srcdir)/build/debug/upx
+run-testsuite-debug: PHONY $(top_srcdir)/build/debug/upx
+	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
+run-testsuite-release: export upx_exe := $(top_srcdir)/build/release/upx
+run-testsuite-release: PHONY $(top_srcdir)/build/release/upx
 	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
 endif
 endif
