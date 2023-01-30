@@ -47,6 +47,7 @@
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_MEM == UPX_RSIZE_MAX)
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_STR <= UPX_RSIZE_MAX / 256)
 ACC_COMPILE_TIME_ASSERT_HEADER(2ull * UPX_RSIZE_MAX * 9 / 8 + 16 * 1024 * 1024 < INT_MAX)
+ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX >= 65536 * 8192)
 
 upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                      upx_uint64_t extra2) {

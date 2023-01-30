@@ -178,7 +178,7 @@ int PeFile::readFileHeader() {
                                        : (h.p512 * 512 + h.m512 - h.m512 ? 512 : h.nexepos);
 
             if ((pe_offset + delta) < delta // wrap-around
-                || (pe_offset + delta) > (unsigned) file_size) {
+                || (pe_offset + delta) > file_size_u) {
                 char buf[64];
                 snprintf(buf, sizeof(buf), "bad PE delta %#x at offset %#x", delta, pe_offset);
                 throwCantPack(buf);
@@ -365,7 +365,7 @@ void PeFile32::processRelocs() // pass1
             ih.objects = tryremove(IDADDR(PEDIR_RELOC), ih.objects);
         }
         mb_orelocs.alloc(1);
-        orelocs = mb_orelocs;
+        orelocs = mb_orelocs; // => orelocs now is a SPAN_S
         sorelocs = 0;
         return;
     }
@@ -412,7 +412,7 @@ void PeFile32::processRelocs() // pass1
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
     mb_orelocs.alloc(mem_size(4, rnum, 1024)); // 1024 - safety
-    orelocs = mb_orelocs;
+    orelocs = mb_orelocs;                      // => orelocs now is a SPAN_S
     sorelocs = optimizeReloc32((upx_byte *) fix[3], xcounts[3], orelocs, ibuf + rvamin,
                                ibufgood - rvamin, true, &big_relocs);
     delete[] fix[3];
@@ -461,7 +461,7 @@ void PeFile64::processRelocs() // pass1
             ih.objects = tryremove(IDADDR(PEDIR_RELOC), ih.objects);
         }
         mb_orelocs.alloc(1);
-        orelocs = mb_orelocs;
+        orelocs = mb_orelocs; // => orelocs now is a SPAN_S
         sorelocs = 0;
         return;
     }
@@ -511,7 +511,7 @@ void PeFile64::processRelocs() // pass1
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
     mb_orelocs.alloc(mem_size(4, rnum, 1024)); // 1024 - safety
-    orelocs = mb_orelocs;
+    orelocs = mb_orelocs;                      // => orelocs now is a SPAN_S
     sorelocs = optimizeReloc64((upx_byte *) fix[10], xcounts[10], orelocs, ibuf + rvamin,
                                ibufgood - rvamin, true, &big_relocs);
 
@@ -2159,8 +2159,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     } else
         handleStub(fi, fo, pe_offset);
     unsigned overlaystart = readSections(objs, ih.imagesize, ih.filealign, ih.datasize);
-    unsigned overlay = file_size - stripDebug(overlaystart);
-    if (overlay >= (unsigned) file_size)
+    unsigned overlay = file_size_u - stripDebug(overlaystart);
+    if (overlay >= file_size_u)
         overlay = 0;
     checkOverlay(overlay);
 
@@ -2776,7 +2776,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
 
     const unsigned iobjs = ih.objects;
     const unsigned overlay =
-        file_size -
+        file_size_u -
         ALIGN_UP(isection[iobjs - 1].rawdataptr + isection[iobjs - 1].size, ih.filealign);
     checkOverlay(overlay);
 
@@ -2787,7 +2787,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
 
     // decompress
     decompress(ibuf, obuf);
-    unsigned skip = get_le32(obuf + ph.u_len - 4);
+    unsigned skip = get_le32(obuf + (ph.u_len - 4));
     unsigned take = sizeof(oh);
     SPAN_S_VAR(upx_byte, extrainfo, obuf);
     extrainfo = obuf.subref("bad extrainfo offset %#x", skip, take);

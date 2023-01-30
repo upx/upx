@@ -282,9 +282,9 @@ void PackTmt::unpack(OutputFile *fo) {
     decompress(ibuf, obuf);
 
     // decode relocations
-    const unsigned osize = ph.u_len - get_le32(obuf + ph.u_len - 4);
+    const unsigned osize = ph.u_len - get_le32(obuf + (ph.u_len - 4));
     SPAN_P_VAR(upx_byte, relocs, obuf + osize);
-    const unsigned origstart = get_le32(obuf + ph.u_len - 8);
+    const unsigned origstart = get_le32(obuf + (ph.u_len - 8));
 
     // unfilter
     if (ph.filter) {
@@ -292,7 +292,7 @@ void PackTmt::unpack(OutputFile *fo) {
         ft.init(ph.filter, 0);
         ft.cto = (unsigned char) ph.filter_cto;
         if (ph.version < 11)
-            ft.cto = (unsigned char) (get_le32(obuf + ph.u_len - 12) >> 24);
+            ft.cto = (unsigned char) (get_le32(obuf + (ph.u_len - 12)) >> 24);
         ft.unfilter(obuf, ptr_udiff_bytes(relocs, obuf));
     }
 

@@ -50,7 +50,7 @@ class PackHeader final {
     PackHeader();
 
     void putPackHeader(SPAN_S(upx_byte) p);
-    bool fillPackHeader(SPAN_S(const upx_byte) b, int blen);
+    bool decodePackHeaderFromBuf(SPAN_S(const upx_byte) b, int blen);
 
 public:
     int getPackHeaderSize() const;
@@ -76,7 +76,7 @@ public:
     unsigned saved_u_adler;
     unsigned saved_c_adler;
 
-    // info fields set by fillPackHeader()
+    // info fields set by decodePackHeaderFromBuf()
     unsigned buf_offset;
 
     // info fields set by Packer::compress()

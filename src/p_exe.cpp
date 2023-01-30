@@ -538,8 +538,9 @@ void PackExe::pack(OutputFile *fo) {
     memcpy(loader, getLoader(), lsize);
     patchPackHeader(loader, e_len);
 
-    // fprintf(stderr,"\ne_len=%x d_len=%x c_len=%x oo=%x ulen=%x destp=%x copys=%x
-    // images=%x",e_len,d_len,packedsize,ph.overlap_overhead,ph.u_len,destpara,copysize,ih_imagesize);
+    NO_fprintf(stderr, "\ne_len=%x d_len=%x c_len=%x oo=%x ulen=%x destp=%x copys=%x images=%x",
+               e_len, d_len, packedsize, ph.overlap_overhead, ph.u_len, /*destpara*/ 0, copysize,
+               ih_imagesize);
 
     // write header + write loader + compressed file
 #if TESTING
@@ -614,12 +615,14 @@ void PackExe::unpack(OutputFile *fo) {
     unsigned relocn = 0;
     SPAN_S_VAR(upx_byte, relocs, obuf + ph.u_len, obuf);
 
-    MemBuffer wrkmem;
+    MemBuffer mb_wrkmem;
+    SPAN_0_VAR(upx_byte, wrkmem, nullptr);
     if (!(flag & NORELOC)) {
-        relocs -= get_le16(obuf + ph.u_len - 2);
+        relocs -= get_le16(obuf + (ph.u_len - 2));
         ph.u_len -= 2;
 
-        wrkmem.alloc(4 * MAXRELOCS);
+        mb_wrkmem.alloc(4 * MAXRELOCS);
+        wrkmem = mb_wrkmem; // => now a SPAN_S
         unsigned es = 0, ones = get_le16(relocs);
         const unsigned seghi = get_le16(relocs + 2);
         SPAN_S_VAR(const upx_byte, p, relocs + 4);
@@ -630,17 +633,17 @@ void PackExe::unpack(OutputFile *fo) {
             bool dorel = true;
             for (p += 4; ones && di < 0x10000; p++) {
                 if (dorel) {
-                    set_le16(wrkmem + 4 * relocn, di);
-                    set_le16(wrkmem + 2 + 4 * relocn++, es);
-                    // printf ("%x\n",es*16+di);
+                    set_le16(wrkmem + (4 * relocn), di);
+                    set_le16(wrkmem + (2 + 4 * relocn++), es);
+                    NO_printf("%x\n", es * 16 + di);
                 }
                 dorel = true;
                 if (*p == 0) {
                     SPAN_S_VAR(const upx_byte, q, obuf);
-
-                    for (q = obuf + es * 16 + di; !(*q == 0x9a && get_le16(q + 3) <= seghi); q++)
-                        ;
-                    di = ptr_diff_bytes(q, obuf + es * 16) + 3;
+                    for (q = obuf + (es * 16 + di); !(*q == 0x9a && get_le16(q + 3) <= seghi);
+                         q++) {
+                    }
+                    di = ptr_diff_bytes(q, obuf + (es * 16)) + 3;
                 } else if (*p == 1) {
                     di += 254;
                     if (di < 0x10000)
@@ -659,7 +662,7 @@ void PackExe::unpack(OutputFile *fo) {
     if (relocn) {
         oh.relocs = relocn;
         while (relocn & 3)
-            set_le32(wrkmem + 4 * relocn++, 0);
+            set_le32(wrkmem + (4 * relocn++), 0);
     }
 
     unsigned outputlen = ptr_udiff_bytes(relocs, obuf) + sizeof(oh) + relocn * 4;
@@ -702,7 +705,7 @@ void PackExe::unpack(OutputFile *fo) {
     fo->write(&oh, sizeof(oh));
     if (relocn)
         fo->write(wrkmem, relocn * 4);
-    fo->write(obuf, ptr_diff_bytes(relocs, obuf));
+    fo->write(obuf, ptr_udiff_bytes(relocs, obuf));
 
     // copy the overlay
     copyOverlay(fo, ih_overlay, obuf);

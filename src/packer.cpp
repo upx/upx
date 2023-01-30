@@ -37,9 +37,8 @@
 **************************************************************************/
 
 Packer::Packer(InputFile *f)
-    : bele(nullptr), fi(f), file_size(-1), ph_format(-1), ph_version(-1), ibufgood(0), uip(nullptr),
+    : bele(nullptr), fi(f), file_size(0), ph_format(-1), ph_version(-1), ibufgood(0), uip(nullptr),
       linker(nullptr), last_patch(nullptr), last_patch_len(0), last_patch_off(0) {
-    file_size = 0;
     if (fi != nullptr)
         file_size = fi->st_size();
     mem_size_assert(1, file_size_u);
@@ -653,7 +652,7 @@ int Packer::patchPackHeader(void *b, int blen) {
 
 bool Packer::getPackHeader(const void *b, int blen, bool allow_incompressible) {
     auto bb = (const upx_byte *) b;
-    if (!ph.fillPackHeader(SPAN_S_MAKE(const upx_byte, bb, blen), blen))
+    if (!ph.decodePackHeaderFromBuf(SPAN_S_MAKE(const upx_byte, bb, blen), blen))
         return false;
 
     if (ph.version > getVersion())
@@ -705,7 +704,7 @@ void Packer::checkAlreadyPacked(const void *b, int blen) {
     //   is a real PackHeader, e.g.
     //
     // PackHeader tmp;
-    // if (!tmp.fillPackHeader((unsigned char *)b + boff, blen - boff))
+    // if (!tmp.decodePackHeaderFromBuf((unsigned char *)b + boff, blen - boff))
     //    return;
     //
     // This also would require that the buffer in 'b' holds

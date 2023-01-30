@@ -170,12 +170,12 @@ void PackHeader::putPackHeader(SPAN_S(upx_byte) p) {
 //
 **************************************************************************/
 
-bool PackHeader::fillPackHeader(SPAN_S(const upx_byte) buf, int blen) {
+bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
     int boff = find_le32(raw_bytes(buf, blen), blen, UPX_MAGIC_LE32);
     if (boff < 0)
         return false;
 
-    SPAN_S_VAR(const upx_byte, p, buf + boff);
+    SPAN_S_VAR(const upx_byte, const p, buf + boff);
     unsigned const headway = blen - boff; // bytes remaining in buf
 
     if (headway < (1 + 7))
@@ -187,8 +187,8 @@ bool PackHeader::fillPackHeader(SPAN_S(const upx_byte) buf, int blen) {
     filter_cto = 0;
 
     if (opt->debug.debug_level) {
-        fprintf(stderr, "  fillPackHeader  version=%d  format=%d  method=%d  level=%d\n", version,
-                format, method, level);
+        fprintf(stderr, "  decodePackHeaderFromBuf  version=%d  format=%d  method=%d  level=%d\n",
+                version, format, method, level);
     }
     if (0 == format || 128 == format || (format < 128 && format > UPX_F_LINUX_ELF64_ARM) ||
         (format > 128 && format > UPX_F_DYLIB_PPC64)) {
@@ -272,16 +272,15 @@ bool PackHeader::fillPackHeader(SPAN_S(const upx_byte) buf, int blen) {
 
     if (version == 0xff)
         throwCantUnpack("cannot unpack UPX ;-)");
-
     // check header_checksum
     if (version > 9) {
         unsigned const size = getPackHeaderSize(); // expected; based on format and version
         if (headway < size || p[size - 1] != get_packheader_checksum(p, size - 1))
             throwCantUnpack("header corrupted 3");
     }
-
     if (c_len < 2 || u_len < 2 || !mem_size_valid_bytes(c_len) || !mem_size_valid_bytes(u_len))
         throwCantUnpack("header corrupted 4");
+
     //
     // success
     //
