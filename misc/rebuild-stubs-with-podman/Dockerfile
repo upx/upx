@@ -43,9 +43,9 @@ RUN cd /root \
 # install official UPX release binaries into /usr/local/bin; not required but convenient for testing
 RUN cd /root \
     && wget -q https://github.com/upx/upx/releases/download/v3.91/upx-3.91-amd64_linux.tar.bz2 \
-    && for v in 3.92 3.93 3.94 3.95 3.96 4.0.0 4.0.1; do wget -q https://github.com/upx/upx/releases/download/v${v}/upx-${v}-amd64_linux.tar.xz; done \
+    && for v in 3.92 3.93 3.94 3.95 3.96 4.0.0 4.0.1 4.0.2; do wget -q https://github.com/upx/upx/releases/download/v${v}/upx-${v}-amd64_linux.tar.xz; done \
     && for f in ./upx-*.tar.*; do tar -xoaf $f; done \
-    && for v in 3.91 3.92 3.93 3.94 3.95 3.96 4.0.0 4.0.1; do d=upx-${v}-amd64_linux; ./$d/upx -qq -d $d/upx -o /usr/local/bin/upx-${v}; done \
+    && for v in 3.91 3.92 3.93 3.94 3.95 3.96 4.0.0 4.0.1 4.0.2; do d=upx-${v}-amd64_linux; ./$d/upx -qq -d $d/upx -o /usr/local/bin/upx-${v}; done \
     && rm -r ./upx-*.tar.* ./upx-*linux \
     && true
 
