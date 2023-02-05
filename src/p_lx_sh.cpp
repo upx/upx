@@ -92,7 +92,7 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
     optimizeFilter(&fold_ft, buf, sz_fold);
     unsigned fold_hdrlen = sizeof(l_info) + sizeof(Elf32_Ehdr) +
         sizeof(Elf32_Phdr) * get_te32(&((Elf32_Ehdr const *)(void *)buf)->e_phnum);
-    if (0 == get_le32(fold_hdrlen + buf)) {
+    if (0 == get_le32(buf + fold_hdrlen)) {
         // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
         fold_hdrlen = umax(0x80, fold_hdrlen);
     }

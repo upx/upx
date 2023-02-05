@@ -80,8 +80,8 @@ endif
 ifeq ($(shell uname),Linux)
 # Markus loves clang-format, but John hates it; find a compromise
 CLANG_FORMAT_EXCLUDE_FILES += conf.h miniacc.h version.h help.cpp
-CLANG_FORMAT_EXCLUDE_FILES += p_elf.h p_elf_enum.h p_lx_% p_mach% p_unix% p_vmli%
-CLANG_FORMAT_EXCLUDE_FILES += packer_c.cpp packer_f.cpp
+CLANG_FORMAT_EXCLUDE_FILES += p_elf.h p_elf_enum.h p_lx_% p_mach% p_unix% p_vmlin%
+CLANG_FORMAT_EXCLUDE_FILES += packer_c.cpp
 CLANG_FORMAT_EXCLUDE_FILES += compress/compress.h filter/filter_impl.cpp
 CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* [cu]*/*.[ch]*))
 CLANG_FORMAT_FILES := $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES))

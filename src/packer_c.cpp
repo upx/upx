@@ -25,12 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 #include "packer.h"
 #include "linker.h"
-//#include "filter.h"
-
 
 /*************************************************************************
 // compression method util
@@ -40,7 +37,7 @@ bool Packer::isValidCompressionMethod(int method)
 {
     if (M_IS_LZMA(method))
         return true;
-    return (method >= M_NRV2B_LE32 && method <= M_LZMA);
+    return method >= M_NRV2B_LE32 && method <= M_LZMA;
 }
 
 

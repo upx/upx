@@ -98,7 +98,9 @@ protected:
     };
 
     coff_header_t coff_hdr;
-    external_scnhdr_t *text, *data, *bss;
+    external_scnhdr_t *text = nullptr;
+    external_scnhdr_t *data = nullptr;
+    external_scnhdr_t *bss = nullptr;
 
     void stripDebug();
 };

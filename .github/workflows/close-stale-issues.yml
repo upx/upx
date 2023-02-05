@@ -13,7 +13,7 @@
 name: 'GitHub - Close inactive issues'
 on:
   schedule:
-    - cron: '30 6 * * 4'
+    - cron: '10 4 * * 3'
   workflow_dispatch:
 jobs:
   close-issues:

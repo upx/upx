@@ -2,7 +2,7 @@
 
 name: 'CI - Minimal CI with Alpine Linux'
 
-on: { workflow_dispatch: }
+on: [workflow_dispatch]
 jobs:
   job-alpine-cmake:
     strategy: {matrix: {container: ['alpine:3.12','alpine:3.17','alpine:edge']}}

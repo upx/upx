@@ -1,4 +1,4 @@
-/* p_com.h --
+/* p_com.h -- dos/com executable format
 
    This file is part of the UPX executable compressor.
 
@@ -52,13 +52,12 @@ public:
     virtual int canUnpack() override;
 
 protected:
-    virtual unsigned getCallTrickOffset() const { return 0x100; }
     virtual Linker *newLinker() const override;
-
-protected:
+    void addFilter16(int filter_id);
+    // dos/sys will override these:
+    virtual unsigned getCallTrickOffset() const { return 0x100; }
     virtual void buildLoader(const Filter *ft) override;
     virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned);
-    virtual void addFilter16(int filter_id);
 };
 
 #endif /* already included */

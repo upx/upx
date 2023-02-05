@@ -26,6 +26,7 @@
  */
 
 
+#define ALLOW_INT_PLUS_MEMBUFFER 1
 #include "conf.h"
 
 #include "p_elf.h"

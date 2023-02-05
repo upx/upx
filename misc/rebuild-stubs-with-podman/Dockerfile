@@ -1,5 +1,5 @@
 FROM docker.io/library/ubuntu:22.04
-ENV UPX_CONTAINER_IMAGE_NAME=upx-stubtools-20221212-v4
+ENV UPX_CONTAINER_IMAGE_NAME=upx-stubtools-20221212-v5
 ARG DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
@@ -7,17 +7,18 @@ ENV LANG=C.UTF-8
 RUN dpkg --add-architecture i386 \
     && apt-get update && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
-        aria2 ca-certificates git less libmpc3 libncurses5 make \
+        aria2 bash ca-certificates git less libmpc3 libncurses5 make \
         ncurses-term perl-base python2-minimal wget xz-utils \
         libc6:i386 zlib1g:i386 \
         # the following packages are not required for rebuilding the stubs, but
         # they do make the image much more convenient and also allow building
         # the full UPX binary inside the container via CMake:
-        7zip bfs bzip2 cmake curl elfutils fd-find file fzf g++ gdb gojq htop hyperfine \
-        jq libzstd-dev lsb-release lzip lzop ninja-build p7zip patch patchelf pax-utils \
-        ripgrep rsync screen universal-ctags unzip vim zip zlib1g-dev zsh zstd \
+        7zip bfs bzip2 chrpath cmake cpio curl elfutils fd-find file fzf g++ gdb gojq \
+        ht htop hyperfine jq libzstd-dev lsb-release lz4 lzip lzop moreutils ninja-build \
+        p7zip patch patchelf parallel pax-utils paxctl re2c ripgrep rsync \
+        screen universal-ctags unzip vim zip zlib1g-dev zsh zstd \
         # extra packages for compiling with "gcc -m32" and and "gcc -mx32":
-        gcc-multilib g++-multilib \
+        g++-multilib gcc-multilib \
     && true
 
 # manually install compat libs from Ubuntu 16.04; REQUIRED

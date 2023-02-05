@@ -85,22 +85,22 @@ void PackWcle::buildLoader(const Filter *ft) {
     // prepare loader
     initLoader(stub_i386_dos32_watcom_le, sizeof(stub_i386_dos32_watcom_le));
     addLoader("IDENTSTR,WCLEMAIN", ph.first_offset_found == 1 ? "WCLEMAIN02" : "",
-              "WCLEMAIN03,UPX1HEAD,WCLECUTP", nullptr);
+              "WCLEMAIN03,UPX1HEAD,WCLECUTP");
 
     // fake alignment for the start of the decompressor
     linker->defineSymbol("WCLECUTP", 0x1000);
 
-    addLoader(getDecompressorSections(), "WCLEMAI2", nullptr);
+    addLoader(getDecompressorSections(), "WCLEMAI2");
     if (ft->id) {
         assert(ft->calls > 0);
-        addLoader(ft->addvalue ? "WCCTTPOS" : "WCCTTNUL", nullptr);
+        addLoader(ft->addvalue ? "WCCTTPOS" : "WCCTTNUL");
         addFilter32(ft->id);
     }
 #if 1
     // FIXME: if (has_relocation)
-    { addLoader("WCRELOC1,RELOC320", big_relocs ? "REL32BIG" : "", "RELOC32J", nullptr); }
+    { addLoader("WCRELOC1,RELOC320", big_relocs ? "REL32BIG" : "", "RELOC32J"); }
 #endif
-    addLoader(has_extra_code ? "WCRELSEL" : "", "WCLEMAI4", nullptr);
+    addLoader(has_extra_code ? "WCRELSEL" : "", "WCLEMAI4");
 }
 
 /*************************************************************************

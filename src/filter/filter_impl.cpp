@@ -168,7 +168,7 @@ umin(unsigned const a, unsigned const b)
 // database for use in class Filter
 **************************************************************************/
 
-const FilterImpl::FilterEntry FilterImpl::filters[] = {
+/*static*/ const FilterImpl::FilterEntry FilterImpl::filters[] = {
     // no filter
     { 0x00, 0,          0, nullptr, nullptr, nullptr },
 
@@ -261,6 +261,6 @@ const FilterImpl::FilterEntry FilterImpl::filters[] = {
     { 0xd0, 8,          0, f_ppcbxx, u_ppcbxx, s_ppcbxx },
 };
 
-const int FilterImpl::n_filters = TABLESIZE(filters);
+/*static*/ const int FilterImpl::n_filters = TABLESIZE(filters);
 
 /* vim:set ts=4 sw=4 et: */

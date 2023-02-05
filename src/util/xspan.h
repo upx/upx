@@ -161,8 +161,7 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &first) {
 
 /*************************************************************************
 // raw_bytes() - get underlying memory from checked buffers/pointers.
-// This is overloaded by various utility classes like BoundedPtr,
-// MemBuffer and XSpan.
+// This is overloaded by various utility classes like MemBuffer and XSpan.
 //
 // Note that the pointer type is retained, the "_bytes" hints size_in_bytes
 **************************************************************************/

@@ -31,6 +31,10 @@
     template <class T, class U>                                                                    \
     inline XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(T, U, RType)
 
+template <class T, class U>
+inline typename std::enable_if<std::is_integral<U>::value, void *>::type operator+(U, const C<T> &)
+    DELETED_FUNCTION;
+
 /*************************************************************************
 // overloads for standard functions
 **************************************************************************/

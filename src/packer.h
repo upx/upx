@@ -34,7 +34,6 @@
 class InputFile;
 class OutputFile;
 class Packer;
-class PackMaster;
 class UiPacker;
 class Filter;
 

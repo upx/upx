@@ -37,18 +37,20 @@ template <class T>
 class MemBufferBase {
 public:
     typedef T element_type;
+    typedef typename std::add_lvalue_reference<T>::type reference;
     typedef typename std::add_pointer<T>::type pointer;
+    typedef unsigned size_type;
 
 protected:
-    pointer b;
-    unsigned b_size_in_bytes;
+    pointer ptr;
+    size_type size_in_bytes;
 
 public:
-    MemBufferBase() : b(nullptr), b_size_in_bytes(0) {}
+    MemBufferBase() : ptr(nullptr), size_in_bytes(0) {}
 
     // NOTE: implicit conversion to underlying pointer
     // NOTE: for fully bound-checked pointer use XSPAN_S from xspan.h
-    operator pointer() const { return b; }
+    operator pointer() const { return ptr; }
 
     template <class U>
     typename std::enable_if<std::is_integral<U>::value, pointer>::type operator+(U n) const {
@@ -59,18 +61,21 @@ public:
 private:
     // NOT allowed; use raw_bytes() instead
     template <class U>
-    typename std::enable_if<std::is_integral<U>::value, pointer>::type
-    operator-(U n) const DELETED_FUNCTION;
+    typename std::enable_if<std::is_integral<U>::value, pointer>::type operator-(U n) const
+        DELETED_FUNCTION;
 
-public:
+public: // raw access
+    pointer raw_ptr() const { return ptr; }
+    size_type raw_size_in_bytes() const { return size_in_bytes; }
+
     pointer raw_bytes(size_t bytes) const {
         if (bytes > 0) {
-            if very_unlikely (b == nullptr)
-                throwInternalError("MemBuffer raw_bytes unexpected NULL ptr");
-            if very_unlikely (bytes > b_size_in_bytes)
-                throwInternalError("MemBuffer raw_bytes invalid size");
+            if very_unlikely (ptr == nullptr)
+                throwCantPack("MemBuffer raw_bytes unexpected NULL ptr");
+            if very_unlikely (bytes > size_in_bytes)
+                throwCantPack("MemBuffer raw_bytes invalid size");
         }
-        return b;
+        return ptr;
     }
 };
 
@@ -89,19 +94,19 @@ public:
 
     void dealloc();
     void checkState() const;
-    unsigned getSize() const { return b_size_in_bytes; }
+    unsigned getSize() const { return size_in_bytes; }
 
     // explicit converstion
-    void *getVoidPtr() { return (void *) b; }
-    const void *getVoidPtr() const { return (const void *) b; }
+    void *getVoidPtr() { return (void *) ptr; }
+    const void *getVoidPtr() const { return (const void *) ptr; }
 
     // util
     void fill(unsigned off, unsigned len, int value);
     forceinline void clear(unsigned off, unsigned len) { fill(off, len, 0); }
-    forceinline void clear() { fill(0, b_size_in_bytes, 0); }
+    forceinline void clear() { fill(0, size_in_bytes, 0); }
 
     // If the entire range [skip, skip+take) is inside the buffer,
-    // then return &b[skip]; else throwCantPack(sprintf(errfmt, skip, take)).
+    // then return &ptr[skip]; else throwCantPack(sprintf(errfmt, skip, take)).
     // This is similar to BoundedPtr, except only checks once.
     // skip == offset, take == size_in_bytes
     forceinline pointer subref(const char *errfmt, size_t skip, size_t take) {
@@ -130,7 +135,7 @@ private:
     Debug debug;
 #endif
 
-    // disable copy, assignment and move
+    // disable copy and move
     MemBuffer(const MemBuffer &) DELETED_FUNCTION;
     MemBuffer &operator=(const MemBuffer &) DELETED_FUNCTION;
 #if __cplusplus >= 201103L
@@ -159,11 +164,17 @@ inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T>
 }
 
 // global operators
+#if ALLOW_INT_PLUS_MEMBUFFER
 // rewrite "n + membuffer" to "membuffer + n" so that this will get checked above
 template <class T, class U>
 inline typename std::enable_if<std::is_integral<U>::value, typename MemBufferBase<T>::pointer>::type
 operator+(U n, const MemBufferBase<T> &mbb) {
     return mbb + n;
 }
+#else
+template <class T, class U>
+inline typename std::enable_if<std::is_integral<U>::value, typename MemBufferBase<T>::pointer>::type
+operator+(U n, const MemBufferBase<T> &mbb) DELETED_FUNCTION;
+#endif
 
 /* vim:set ts=4 sw=4 et: */

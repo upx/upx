@@ -54,6 +54,8 @@ PackDjgpp2::PackDjgpp2(InputFile *f) : super(f), coff_offset(0) {
     // assert(upx_adler32(stubify_stub, sizeof(stubify_stub)) == STUBIFY_STUB_ADLER32);
 }
 
+Linker *PackDjgpp2::newLinker() const { return new ElfLinkerX86; }
+
 const int *PackDjgpp2::getCompressionMethods(int method, int level) const {
     return Packer::getDefaultCompressionMethods_le32(method, level);
 }
@@ -71,21 +73,19 @@ unsigned PackDjgpp2::findOverlapOverhead(const upx_bytep buf, const upx_bytep tb
     return o;
 }
 
-Linker *PackDjgpp2::newLinker() const { return new ElfLinkerX86; }
-
 void PackDjgpp2::buildLoader(const Filter *ft) {
     // prepare loader
     initLoader(stub_i386_dos32_djgpp2, sizeof(stub_i386_dos32_djgpp2));
     addLoader("IDENTSTR,DJ2MAIN1", ft->id ? "DJCALLT1" : "",
               ph.first_offset_found == 1 ? "DJ2MAIN2" : "",
               M_IS_LZMA(ph.method) ? "LZMA_INIT_STACK" : "", getDecompressorSections(),
-              M_IS_LZMA(ph.method) ? "LZMA_DONE_STACK" : "", "DJ2BSS00", nullptr);
+              M_IS_LZMA(ph.method) ? "LZMA_DONE_STACK" : "", "DJ2BSS00");
     if (ft->id) {
         assert(ft->calls > 0);
-        addLoader("DJCALLT2", nullptr);
+        addLoader("DJCALLT2");
         addFilter32(ft->id);
     }
-    addLoader("DJRETURN,+40C,UPX1HEAD", nullptr);
+    addLoader("DJRETURN,+40C,UPX1HEAD");
 }
 
 /*************************************************************************
@@ -99,7 +99,7 @@ void PackDjgpp2::handleStub(OutputFile *fo) {
             Packer::handleStub(fi, fo, coff_offset);
         } else {
             // "stubify" stub
-            info("Adding stub: %ld bytes", (long) sizeof(stub_i386_dos32_djgpp2_stubify));
+            info("Adding stub: %zd bytes", sizeof(stub_i386_dos32_djgpp2_stubify));
             fo->write(stub_i386_dos32_djgpp2_stubify, sizeof(stub_i386_dos32_djgpp2_stubify));
         }
     }
@@ -179,9 +179,9 @@ int PackDjgpp2::readFileHeader() {
         return 0;
     // FIXME: check for Linux etc.
 
-    text = coff_hdr.sh;
-    data = text + 1;
-    bss = data + 1;
+    text = &coff_hdr.sh[0];
+    data = &coff_hdr.sh[1];
+    bss = &coff_hdr.sh[2];
     return UPX_F_DJGPP2_COFF;
 }
 
@@ -242,7 +242,7 @@ void PackDjgpp2::pack(OutputFile *fo) {
     // read file
     const unsigned size = text->size + data->size;
     const unsigned tpos = text->scnptr;
-    const unsigned hdrsize = 20 + 28 + sizeof(external_scnhdr_t) * coff_hdr.f_nscns;
+    const unsigned hdrsize = 20 + 28 + mem_size(sizeof(external_scnhdr_t), coff_hdr.f_nscns);
     const unsigned usize = size + hdrsize;
     if (hdrsize < sizeof(coff_hdr) || hdrsize > tpos)
         throwCantPack("coff header error");
@@ -371,11 +371,14 @@ void PackDjgpp2::unpack(OutputFile *fo) {
     // decompress
     decompress(ibuf, obuf);
 
-    coff_header_t *chdr = (coff_header_t *) obuf.getVoidPtr();
-    text = chdr->sh;
-    data = text + 1;
+    coff_header_t *chdr = (coff_header_t *) raw_bytes(obuf, sizeof(coff_header_t));
+    text = &chdr->sh[0];
+    data = &chdr->sh[1];
+    bss = &chdr->sh[2];
 
-    const unsigned hdrsize = 20 + 28 + sizeof(external_scnhdr_t) * chdr->f_nscns;
+    const unsigned hdrsize = 20 + 28 + mem_size(sizeof(external_scnhdr_t), chdr->f_nscns);
+    if (hdrsize < sizeof(coff_hdr) || hdrsize > text->scnptr || hdrsize > ph.u_len)
+        throwCantUnpack("coff header error");
 
     unsigned addvalue;
     if (ph.version >= 14)

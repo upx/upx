@@ -1,4 +1,4 @@
-/* p_exe.h --
+/* p_exe.h -- dos/exe executable format
 
    This file is part of the UPX executable compressor.
 

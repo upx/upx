@@ -29,8 +29,6 @@
 #ifndef UPX_EXCEPT_H__
 #define UPX_EXCEPT_H__ 1
 
-#ifdef __cplusplus
-
 const char *prettyName(const char *n) noexcept;
 
 /*************************************************************************
@@ -64,7 +62,7 @@ private:
     ACC_CXX_DISABLE_NEW_DELETE
 
 private:
-    static unsigned long counter; // for debugging
+    static upx_std_atomic(size_t) debug_counter; // for debugging
 };
 
 // Exceptions can/should be caught
@@ -216,8 +214,6 @@ NORET void throwIOException(const char *msg = nullptr, int e = 0);
 NORET void throwEOFException(const char *msg = nullptr, int e = 0);
 
 #undef NORET
-
-#endif /* __cplusplus */
 
 #endif /* already included */
 

@@ -1,4 +1,4 @@
-/* p_sys.h --
+/* p_sys.h -- dos/sys executable format
 
    This file is part of the UPX executable compressor.
 
@@ -45,10 +45,8 @@ public:
 
     virtual bool canPack() override;
 
-protected:
+protected: // dos/com overrides
     virtual unsigned getCallTrickOffset() const override { return 0; }
-
-protected:
     virtual void buildLoader(const Filter *ft) override;
     virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned) override;
 };

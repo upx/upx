@@ -33,52 +33,29 @@
 #include "linker.h"
 
 #define FILLVAL 0
+#define import my_import // "import" is a keyword since C++20
 
 /*************************************************************************
 //
 **************************************************************************/
 
-#if (WITH_XSPAN >= 2) && 1
-// #define IPTR(type, var)             Span<type> var(ibuf, ibuf.getSize(), ibuf)
-// #define OPTR(type, var)             Span<type> var(obuf, obuf.getSize(), obuf)
-#define IPTR_I_D(type, var, disp)                                                                  \
-    Span<type> var(ibuf + (disp), ibuf.getSize() - (disp), ibuf + (disp))
-#define IPTR_I(type, var, first) Span<type> var(first, ibuf)
-#define OPTR_I(type, var, first) Span<type> var(first, obuf)
-#define IPTR_C(type, var, first) const Span<type> var(first, ibuf)
-#define OPTR_C(type, var, first) const Span<type> var(first, obuf)
-#else
-#include "util/bptr.h"
-// #define IPTR(type, var)             BoundedPtr<type> var(ibuf, ibuf.getSize())
-// #define OPTR(type, var)             BoundedPtr<type> var(obuf, obuf.getSize())
-#define IPTR_I_D(type, var, disp)                                                                  \
-    BoundedPtr<type> var(ibuf + (disp), ibuf.getSize() - (disp), ibuf + (disp))
-#define IPTR_I(type, var, first) BoundedPtr<type> var(ibuf, ibuf.getSize(), first)
-#define OPTR_I(type, var, first) BoundedPtr<type> var(obuf, obuf.getSize(), first)
-#define IPTR_C(type, var, first) const BoundedPtr<type> var(ibuf, ibuf.getSize(), first)
-#define OPTR_C(type, var, first) const BoundedPtr<type> var(obuf, obuf.getSize(), first)
-#endif
+#define IPTR_VAR(type, var, first) SPAN_S_VAR(type, var, first, ibuf)
+#define OPTR_VAR(type, var, first) SPAN_S_VAR(type, var, first, obuf)
+#define IPTR_VAR_OFFSET(type, var, offset)                                                         \
+    SPAN_S_VAR(type, var, ibuf + (offset), ibuf.getSize() - (offset), ibuf + (offset))
 
 static void xcheck(const void *p) {
-    if (!p)
+    if very_unlikely (p == nullptr)
         throwCantUnpack("xcheck unexpected nullptr pointer; take care!");
 }
 static void xcheck(const void *p, size_t plen, const void *b, size_t blen) {
     const char *pp = (const char *) p;
     const char *bb = (const char *) b;
-    if (pp < bb || pp > bb + blen || pp + plen > bb + blen)
+    if very_unlikely (pp < bb || pp > bb + blen || pp + plen > bb + blen)
         throwCantUnpack("xcheck pointer out of range; take care!");
 }
-#if 0
-static void xcheck(size_t poff, size_t plen, const void *b, size_t blen)
-{
-    ACC_UNUSED(b);
-    if (poff > blen || poff + plen > blen)
-        throwCantUnpack("xcheck pointer out of range; take care!");
-}
-#endif
-#define ICHECK(x, size) xcheck(raw_bytes(x, 0), size, ibuf, ibuf.getSize())
-#define OCHECK(x, size) xcheck(raw_bytes(x, 0), size, obuf, obuf.getSize())
+#define ICHECK(p, bytes) xcheck(raw_bytes(p, 0), bytes, ibuf, ibuf.getSize())
+#define OCHECK(p, bytes) xcheck(raw_bytes(p, 0), bytes, obuf, obuf.getSize())
 
 // #define imemset(a,b,c)      ICHECK(a,c), memset(a,b,c)
 // #define omemset(a,b,c)      OCHECK(a,c), memset(a,b,c)
@@ -892,15 +869,15 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
 
         soimport += strlen(dlls[ic].name) + 1 + 4;
 
-        for (IPTR_I(LEXX, tarr, dlls[ic].lookupt); *tarr; tarr += 1) {
+        for (IPTR_VAR(const LEXX, tarr, dlls[ic].lookupt); *tarr; tarr += 1) {
             if (*tarr & ord_mask) {
                 importbyordinal = true;
                 soimport += 2; // ordinal num: 2 bytes
                 dlls[ic].ordinal = *tarr & 0xffff;
             } else // it's an import by name
             {
-                IPTR_I(const upx_byte, n, ibuf + *tarr + 2);
-                unsigned len = strlen(n);
+                IPTR_VAR(const upx_byte, const name, ibuf + *tarr + 2);
+                unsigned len = strlen(name);
                 soimport += len + 1;
                 if (dlls[ic].shname == nullptr || len < strlen(dlls[ic].shname))
                     dlls[ic].shname = ibuf + *tarr + 2;
@@ -1462,6 +1439,7 @@ PeFile::Resource::Resource(const upx_byte *p, const upx_byte *ibufstart_,
                            const upx_byte *ibufend_) {
     ibufstart = ibufstart_;
     ibufend = ibufend_;
+    newstart = nullptr;
     init(p);
 }
 
@@ -1945,7 +1923,7 @@ void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih) {
     if (objs == 0)
         return;
     mb_isection.alloc(mem_size(sizeof(pe_section_t), objs));
-    isection = mb_isection; // => isection now is a SPAN_S
+    isection = SPAN_S_MAKE(pe_section_t, mb_isection); // => isection now is a SPAN_S
     if (file_size_u < pe_offset + sizeof_ih + sizeof(pe_section_t) * objs) {
         char buf[32];
         snprintf(buf, sizeof(buf), "too many sections %d", objs);
@@ -2599,7 +2577,7 @@ void PeFile::rebuildRelocs(SPAN_S(upx_byte) & extrainfo, unsigned bits, unsigned
 
     SPAN_S_VAR(upx_byte, const wrkmem, mb_wrkmem);
     for (unsigned ic = 0; ic < relocn; ic++) {
-        OPTR_I(upx_byte, p, obuf + get_le32(wrkmem + 4 * ic));
+        OPTR_VAR(upx_byte, const p, obuf + get_le32(wrkmem + 4 * ic));
         if (bits == 32)
             set_le32(p, get_le32(p) + imagebase + rvamin);
         else
@@ -2648,8 +2626,8 @@ void PeFile::rebuildResources(SPAN_S(upx_byte) & extrainfo, unsigned lastvaddr) 
     Resource res(r + vaddr, ibuf, ibuf + ibuf.getSize());
     while (res.next())
         if (res.offs() > vaddr) {
-            ICHECK(r + res.offs() - 4, 4);
-            unsigned origoffs = get_le32(r + res.offs() - 4);
+            ICHECK(r + (res.offs() - 4), 4);
+            unsigned origoffs = get_le32(r + (res.offs() - 4));
             res.newoffs() = origoffs;
             omemcpy(obuf + (origoffs - rvamin), r + res.offs(), res.size());
             if (icondir_count && res.itype() == RT_GROUP_ICON) {
@@ -2671,14 +2649,14 @@ void PeFile::rebuildImports(SPAN_S(upx_byte) & extrainfo, ord_mask_t ord_mask, b
     if (ODADDR(PEDIR_IMPORT) == 0 || ODSIZE(PEDIR_IMPORT) <= sizeof(import_desc))
         return;
 
-    OPTR_C(const upx_byte, idata, obuf + get_le32(extrainfo));
+    OPTR_VAR(const upx_byte, const imdata, obuf + get_le32(extrainfo));
     const unsigned inamespos = get_le32(extrainfo + 4);
     extrainfo += 8;
 
     unsigned sdllnames = 0;
 
-    IPTR_I_D(const upx_byte, import, IDADDR(PEDIR_IMPORT) - isection[2].vaddr);
-    OPTR_I(const upx_byte, p, raw_bytes(idata, 4));
+    IPTR_VAR_OFFSET(const upx_byte, const import, IDADDR(PEDIR_IMPORT) - isection[2].vaddr);
+    OPTR_VAR(const upx_byte, p, raw_bytes(imdata, 4));
 
     for (; get_le32(p) != 0; ++p) {
         const upx_byte *dname = raw_bytes(import + get_le32(p), 1);
@@ -2688,7 +2666,7 @@ void PeFile::rebuildImports(SPAN_S(upx_byte) & extrainfo, ord_mask_t ord_mask, b
         sdllnames += dlen + 1;
         for (p += 8; *p;)
             if (*p == 1)
-                p += strlen(++p) + 1;
+                p += 1 + strlen(p + 1) + 1;
             else if (*p == 0xff)
                 p += 3; // ordinal
             else
@@ -2712,7 +2690,7 @@ void PeFile::rebuildImports(SPAN_S(upx_byte) & extrainfo, ord_mask_t ord_mask, b
     SPAN_0_VAR(upx_byte, const importednames_start, importednames);
 #endif
 
-    for (p = idata; get_le32(p) != 0; ++p) {
+    for (p = imdata; get_le32(p) != 0; ++p) {
         // restore the name of the dll
         const upx_byte *dname = raw_bytes(import + get_le32(p), 1);
         const unsigned dlen = strlen(dname);
@@ -2722,7 +2700,7 @@ void PeFile::rebuildImports(SPAN_S(upx_byte) & extrainfo, ord_mask_t ord_mask, b
         if (inamespos) {
             // now I rebuild the dll names
             omemcpy(dllnames, dname, dlen + 1);
-            im->dllname = ptr_diff_bytes(dllnames, Obuf);
+            im->dllname = ptr_udiff_bytes(dllnames, Obuf);
             //;;;printf("\ndll: %s:",dllnames);
             dllnames += dlen + 1;
         } else {
@@ -2732,18 +2710,18 @@ void PeFile::rebuildImports(SPAN_S(upx_byte) & extrainfo, ord_mask_t ord_mask, b
         if (set_oft)
             im->oft = iatoffs;
 
-        OPTR_I(LEXX, newiat, (LEXX *) (Obuf + iatoffs));
+        OPTR_VAR(LEXX, newiat, (LEXX *) (Obuf + iatoffs));
 
         // restore the imported names+ordinals
         for (p += 8; *p; ++newiat)
             if (*p == 1) {
                 const unsigned ilen = strlen(++p) + 1;
                 if (inamespos) {
-                    if (ptr_diff_bytes(importednames, importednames_start) & 1)
+                    if (ptr_udiff_bytes(importednames, importednames_start) & 1)
                         importednames -= 1;
                     omemcpy(importednames + 2, p, ilen);
                     //;;;printf(" %s",importednames+2);
-                    *newiat = ptr_diff_bytes(importednames, Obuf);
+                    *newiat = ptr_udiff_bytes(importednames, Obuf);
                     importednames += 2 + ilen;
                 } else {
                     // Beware overlap!
@@ -2762,7 +2740,7 @@ void PeFile::rebuildImports(SPAN_S(upx_byte) & extrainfo, ord_mask_t ord_mask, b
         *newiat = 0;
         im++;
     }
-    // memset(idata,0,p - idata);
+    // memset(imdata, 0, ptr_udiff_bytes(p, imdata));
 }
 
 template <typename ht, typename LEXX, typename ord_mask_t>
@@ -2864,16 +2842,16 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
 
     // write decompressed file
     if (fo) {
-        unsigned ic;
-        for (ic = 0; ic < objs && osection[ic].rawdataptr == 0; ic++)
-            ;
+        unsigned ic = 0;
+        while (ic < objs && osection[ic].rawdataptr == 0)
+            ic++;
 
         ibuf.dealloc();
         ibuf.alloc(osection[ic].rawdataptr);
         ibuf.clear();
         infoHeader("[Writing uncompressed file]");
 
-        // write loader + compressed file
+        // write header + decompressed file
         fo->write(&oh, sizeof(oh));
         fo->write(osection, objs * sizeof(pe_section_t));
         fo->write(ibuf, osection[ic].rawdataptr - fo->getBytesWritten());
@@ -2891,7 +2869,7 @@ int PeFile::canUnpack0(unsigned max_sections, unsigned objs, unsigned ih_entry, 
     if (objs < min_sections)
         return -1;
     mb_isection.alloc(mem_size(sizeof(pe_section_t), objs));
-    isection = mb_isection; // => isection now is a SPAN_S
+    isection = SPAN_S_MAKE(pe_section_t, mb_isection); // => isection now is a SPAN_S
     fi->seek(pe_offset + ih_size, SEEK_SET);
     fi->readx(isection, sizeof(pe_section_t) * objs);
     bool is_packed = (objs <= max_sections && (IDSIZE(15) || ih_entry > isection[1].vaddr));

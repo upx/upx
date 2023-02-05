@@ -50,14 +50,14 @@ PackTos::PackTos(InputFile *f) : super(f) {
     COMPILE_TIME_ASSERT_ALIGNED1(tos_header_t)
 }
 
+Linker *PackTos::newLinker() const { return new ElfLinkerM68k; }
+
 const int *PackTos::getCompressionMethods(int method, int level) const {
     bool small = ih.fh_text + ih.fh_data <= 256 * 1024;
     return Packer::getDefaultCompressionMethods_8(method, level, small);
 }
 
 const int *PackTos::getFilters() const { return nullptr; }
-
-Linker *PackTos::newLinker() const { return new ElfLinkerM68k; }
 
 void PackTos::LinkerSymbols::LoopInfo::init(unsigned count_, bool allow_dbra) {
     count = value = count_;

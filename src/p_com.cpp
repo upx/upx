@@ -1,4 +1,4 @@
-/* p_com.cpp --
+/* p_com.cpp -- dos/com executable format
 
    This file is part of the UPX executable compressor.
 
@@ -35,23 +35,21 @@
 static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i086-dos16.com.h"
 
-// #define TESTING 1
-
 /*************************************************************************
 //
 **************************************************************************/
 
+Linker *PackCom::newLinker() const { return new ElfLinkerX86(); }
+
 const int *PackCom::getCompressionMethods(int method, int level) const {
     static const int m_nrv2b[] = {M_NRV2B_LE16, M_END};
-#if 0
-    static const int m_nrv2d[] = { M_NRV2D_LE16, M_END };
-#endif
     UNUSED(method);
     UNUSED(level);
     return m_nrv2b;
 }
 
 const int *PackCom::getFilters() const {
+    // see class FilterImpl
     static const int filters[] = {0x06, 0x03, 0x04, 0x01, 0x05, 0x02, FT_END};
     return filters;
 }
@@ -64,22 +62,66 @@ bool PackCom::canPack() {
     unsigned char buf[128];
 
     fi->readx(buf, sizeof(buf));
-    if (memcmp(buf, "MZ", 2) == 0 || memcmp(buf, "ZM", 2) == 0 // .exe
-        || memcmp(buf, "\xff\xff\xff\xff", 4) == 0)            // .sys
+    if (memcmp(buf, "MZ", 2) == 0 || memcmp(buf, "ZM", 2) == 0) // .exe
         return false;
-    if (!fn_has_ext(fi->getName(), "com"))
+    if (memcmp(buf, "\xff\xff\xff\xff", 4) == 0) // .sys
+        return false;
+    if (!fn_has_ext(fi->getName(), "com")) // query file name
         return false;
     checkAlreadyPacked(buf, sizeof(buf));
     if (file_size < 1024)
-        throwCantPack("file is too small");
+        throwCantPack("file is too small for dos/com");
     if (file_size > 0xFF00)
-        throwCantPack("file is too big for dos/com");
+        throwCantPack("file is too large for dos/com");
     return true;
 }
 
 /*************************************************************************
 //
 **************************************************************************/
+
+void PackCom::addFilter16(int filter_id) {
+    assert(filter_id > 0);
+    assert(isValidFilter(filter_id));
+
+    if (filter_id % 3 == 0) {
+        // clang-format off
+        addLoader("CALLTR16",
+                  filter_id < 4 ? "CT16SUB0" : "",
+                  filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I086" : "CT16I286,CT16SUB0"),
+                  "CALLTRI2",
+                  getFormat() == UPX_F_DOS_COM ? "CORETURN" : "");
+        // clang-format on
+    } else {
+        // clang-format off
+        addLoader(filter_id % 3 == 1 ? "CT16E800" : "CT16E900",
+                 "CALLTRI5",
+                 getFormat() == UPX_F_DOS_COM ? "CT16JEND" : "CT16JUL2",
+                 filter_id < 4 ? "CT16SUB1" : "",
+                 filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I087" : "CT16I287,CT16SUB1"),
+                 "CALLTRI6");
+        // clang-format on
+    }
+}
+
+void PackCom::buildLoader(const Filter *ft) {
+    initLoader(stub_i086_dos16_com, sizeof(stub_i086_dos16_com));
+    // clang-format off
+    addLoader("COMMAIN1",
+              ph.first_offset_found == 1 ? "COMSBBBP" : "",
+              "COMPSHDI",
+              ft->id ? "COMCALLT" : "",
+              "COMMAIN2,UPX1HEAD,COMCUTPO,NRV2B160",
+              ft->id ? "NRVDDONE" : "NRVDRETU",
+              "NRVDECO1",
+              ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
+              "NRVDECO2");
+    // clang-format on
+    if (ft->id) {
+        assert(ft->calls > 0);
+        addFilter16(ft->id);
+    }
+}
 
 void PackCom::patchLoader(OutputFile *fo, upx_byte *loader, int lsize, unsigned calls) {
     const int e_len = getLoaderSectionStart("COMCUTPO");
@@ -92,7 +134,7 @@ void PackCom::patchLoader(OutputFile *fo, upx_byte *loader, int lsize, unsigned 
     if (upper_end + stacksize > 0xfffe)
         stacksize = 0x56;
     if (upper_end + stacksize > 0xfffe)
-        throwCantPack("file is too big for dos/com");
+        throwCantPack("file is too large for dos/com");
 
     linker->defineSymbol("calltrick_calls", calls);
     linker->defineSymbol("sp_limit", upper_end + stacksize);
@@ -105,46 +147,15 @@ void PackCom::patchLoader(OutputFile *fo, upx_byte *loader, int lsize, unsigned 
     relocateLoader();
     loader = getLoader();
 
-    // some day we could use the relocation stuff for patchPackHeader too
+    // some day we could use the relocation stuff for patchPackHeader too..
     patchPackHeader(loader, e_len);
     // write loader + compressed file
-    fo->write(loader, e_len); // entry
-    fo->write(obuf, ph.c_len);
+    fo->write(loader, e_len);         // entry
+    fo->write(obuf, ph.c_len);        // compressed
     fo->write(loader + e_len, d_len); // decompressor
-#if 0
-    printf("%-13s: entry        : %8ld bytes\n", getName(), (long) e_len);
-    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
-    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) d_len);
-#endif
-}
-
-void PackCom::buildLoader(const Filter *ft) {
-    initLoader(stub_i086_dos16_com, sizeof(stub_i086_dos16_com));
-    addLoader("COMMAIN1", ph.first_offset_found == 1 ? "COMSBBBP" : "", "COMPSHDI",
-              ft->id ? "COMCALLT" : "", "COMMAIN2,UPX1HEAD,COMCUTPO,NRV2B160",
-              ft->id ? "NRVDDONE" : "NRVDRETU", "NRVDECO1",
-              ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00", "NRVDECO2", nullptr);
-    if (ft->id) {
-        assert(ft->calls > 0);
-        addFilter16(ft->id);
-    }
-}
-
-void PackCom::addFilter16(int filter_id) {
-    assert(filter_id > 0);
-    assert(isValidFilter(filter_id));
-
-    if (filter_id % 3 == 0)
-        addLoader("CALLTR16", filter_id < 4 ? "CT16SUB0" : "",
-                  filter_id < 4 ? ""
-                                : (opt->cpu == opt->CPU_8086 ? "CT16I086" : "CT16I286,CT16SUB0"),
-                  "CALLTRI2", getFormat() == UPX_F_DOS_COM ? "CORETURN" : "", nullptr);
-    else
-        addLoader(
-            filter_id % 3 == 1 ? "CT16E800" : "CT16E900", "CALLTRI5",
-            getFormat() == UPX_F_DOS_COM ? "CT16JEND" : "CT16JUL2", filter_id < 4 ? "CT16SUB1" : "",
-            filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I087" : "CT16I287,CT16SUB1"),
-            "CALLTRI6", nullptr);
+    NO_printf("%-13s: entry        : %8u bytes\n", getName(), e_len);
+    NO_printf("%-13s: compressed   : %8u bytes\n", getName(), ph.c_len);
+    NO_printf("%-13s: decompressor : %8u bytes\n", getName(), d_len);
 }
 
 /*************************************************************************
@@ -187,7 +198,7 @@ void PackCom::pack(OutputFile *fo) {
 **************************************************************************/
 
 int PackCom::canUnpack() {
-    if (!readPackHeader(128))
+    if (!readPackHeader(128)) // read "ph"
         return false;
     if (file_size_u <= ph.c_len)
         return false;
@@ -223,7 +234,5 @@ void PackCom::unpack(OutputFile *fo) {
     if (fo)
         fo->write(obuf, ph.u_len);
 }
-
-Linker *PackCom::newLinker() const { return new ElfLinkerX86(); }
 
 /* vim:set ts=4 sw=4 et: */

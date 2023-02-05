@@ -46,6 +46,8 @@ PackTmt::PackTmt(InputFile *f) : super(f) {
     COMPILE_TIME_ASSERT(sizeof(tmt_header_t) == 44)
 }
 
+Linker *PackTmt::newLinker() const { return new ElfLinkerX86; }
+
 const int *PackTmt::getCompressionMethods(int method, int level) const {
     return Packer::getDefaultCompressionMethods_le32(method, level);
 }
@@ -64,24 +66,22 @@ unsigned PackTmt::findOverlapOverhead(const upx_bytep buf, const upx_bytep tbuf,
     return o;
 }
 
-Linker *PackTmt::newLinker() const { return new ElfLinkerX86; }
-
 void PackTmt::buildLoader(const Filter *ft) {
     // prepare loader
     initLoader(stub_i386_dos32_tmt, sizeof(stub_i386_dos32_tmt));
     addLoader("IDENTSTR,TMTMAIN1", ph.first_offset_found == 1 ? "TMTMAIN1A" : "", "TMTMAIN1B",
-              ft->id ? "TMTCALT1" : "", "TMTMAIN2,UPX1HEAD,TMTCUTPO", nullptr);
+              ft->id ? "TMTCALT1" : "", "TMTMAIN2,UPX1HEAD,TMTCUTPO");
 
     // fake alignment for the start of the decompressor
     linker->defineSymbol("TMTCUTPO", 0x1000);
 
-    addLoader(getDecompressorSections(), "TMTMAIN5", nullptr);
+    addLoader(getDecompressorSections(), "TMTMAIN5");
     if (ft->id) {
         assert(ft->calls > 0);
-        addLoader("TMTCALT2", nullptr);
+        addLoader("TMTCALT2");
         addFilter32(ft->id);
     }
-    addLoader("TMTRELOC,RELOC320", big_relocs ? "REL32BIG" : "", "RELOC32J,TMTJUMP1", nullptr);
+    addLoader("TMTRELOC,RELOC320", big_relocs ? "REL32BIG" : "", "RELOC32J,TMTJUMP1");
 }
 
 /*************************************************************************
@@ -139,8 +139,8 @@ int PackTmt::readFileHeader() {
     unsigned const imagesize = ih.imagesize;
     unsigned const entry = ih.entry;
     unsigned const relocsize = ih.relocsize;
-    if (imagesize < sizeof(ih) || entry < sizeof(ih) || file_size <= imagesize ||
-        file_size <= entry || file_size <= relocsize) {
+    if (imagesize < sizeof(ih) || entry < sizeof(ih) || file_size_u <= imagesize ||
+        file_size_u <= entry || file_size_u <= relocsize) {
         printWarn(getName(), "bad header; imagesize=%#x  entry=%#x  relocsize=%#x", imagesize,
                   entry, relocsize);
         return 0;
@@ -202,7 +202,7 @@ void PackTmt::pack(OutputFile *fo) {
     relocsize += 4;
     set_le32(wrkmem + relocsize, relocsize + 4);
     relocsize += 4;
-    memcpy(ibuf + usize, wrkmem, relocsize);
+    memcpy(raw_index_bytes(ibuf, usize, relocsize), wrkmem, relocsize);
 
     // prepare packheader
     ph.u_len = usize + relocsize;

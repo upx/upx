@@ -1,4 +1,4 @@
-/* p_sys.cpp --
+/* p_sys.cpp -- dos/sys executable format
 
    This file is part of the UPX executable compressor.
 
@@ -46,19 +46,42 @@ bool PackSys::canPack() {
     fi->readx(buf, sizeof(buf));
     if (memcmp(buf, "\xff\xff\xff\xff", 4) != 0)
         return false;
-    if (!fn_has_ext(fi->getName(), "sys"))
+    if (!fn_has_ext(fi->getName(), "sys")) // query file name
         return false;
     checkAlreadyPacked(buf, sizeof(buf));
     if (file_size < 1024)
-        throwCantPack("file is too small");
+        throwCantPack("file is too small for dos/sys");
     if (file_size > 0x10000)
-        throwCantPack("file is too big for dos/sys");
+        throwCantPack("file is too large for dos/sys");
     return true;
 }
 
 /*************************************************************************
 //
 **************************************************************************/
+
+void PackSys::buildLoader(const Filter *ft) {
+    initLoader(stub_i086_dos16_sys, sizeof(stub_i086_dos16_sys));
+    // clang-format off
+    addLoader("SYSMAIN1",
+              opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861",
+              "SYSMAIN2",
+              ph.first_offset_found == 1 ? "SYSSBBBP" : "",
+              ft->id ? "SYSCALLT" : "",
+              "SYSMAIN3,UPX1HEAD,SYSCUTPO,NRV2B160,NRVDDONE,NRVDECO1",
+              ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
+              "NRVDECO2");
+    // clang-format on
+    if (ft->id) {
+        assert(ft->calls > 0);
+        addFilter16(ft->id);
+    }
+    // clang-format off
+    addLoader("SYSMAIN5",
+              opt->cpu == opt->CPU_8086 ? "SYSI0862" : "SYSI2862",
+              "SYSJUMP1");
+    // clang-format on
+}
 
 void PackSys::patchLoader(OutputFile *fo, upx_byte *loader, int lsize, unsigned calls) {
     const int e_len = getLoaderSectionStart("SYSCUTPO");
@@ -85,24 +108,15 @@ void PackSys::patchLoader(OutputFile *fo, upx_byte *loader, int lsize, unsigned 
     relocateLoader();
     loader = getLoader();
 
+    // some day we could use the relocation stuff for patchPackHeader too..
     patchPackHeader(loader, e_len);
     // write loader + compressed file
-    fo->write(loader, e_len); // entry
-    fo->write(obuf, ph.c_len);
+    fo->write(loader, e_len);         // entry
+    fo->write(obuf, ph.c_len);        // compressed
     fo->write(loader + e_len, d_len); // decompressor
-}
-
-void PackSys::buildLoader(const Filter *ft) {
-    initLoader(stub_i086_dos16_sys, sizeof(stub_i086_dos16_sys));
-    addLoader("SYSMAIN1", opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861", "SYSMAIN2",
-              ph.first_offset_found == 1 ? "SYSSBBBP" : "", ft->id ? "SYSCALLT" : "",
-              "SYSMAIN3,UPX1HEAD,SYSCUTPO,NRV2B160,NRVDDONE,NRVDECO1",
-              ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00", "NRVDECO2", nullptr);
-    if (ft->id) {
-        assert(ft->calls > 0);
-        addFilter16(ft->id);
-    }
-    addLoader("SYSMAIN5", opt->cpu == opt->CPU_8086 ? "SYSI0862" : "SYSI2862", "SYSJUMP1", nullptr);
+    NO_printf("%-13s: entry        : %8u bytes\n", getName(), e_len);
+    NO_printf("%-13s: compressed   : %8u bytes\n", getName(), ph.c_len);
+    NO_printf("%-13s: decompressor : %8u bytes\n", getName(), d_len);
 }
 
 /* vim:set ts=4 sw=4 et: */

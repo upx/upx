@@ -30,6 +30,7 @@
  */
 
 
+#define ALLOW_INT_PLUS_MEMBUFFER 1
 #include "conf.h"
 
 #include "file.h"

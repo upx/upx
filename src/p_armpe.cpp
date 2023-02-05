@@ -46,6 +46,8 @@ PackArmPe::PackArmPe(InputFile *f) : super(f) {}
 
 PackArmPe::~PackArmPe() {}
 
+Linker *PackArmPe::newLinker() const { return new ElfLinkerArmLE; }
+
 const int *PackArmPe::getCompressionMethods(int method, int level) const {
     static const int m_all[] = {M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END};
     static const int m_lzma[] = {M_LZMA, M_END};
@@ -70,8 +72,6 @@ const int *PackArmPe::getFilters() const {
     static const int filters[] = {0x50, FT_END};
     return filters;
 }
-
-Linker *PackArmPe::newLinker() const { return new ElfLinkerArmLE; }
 
 /*************************************************************************
 // import handling
@@ -127,37 +127,37 @@ void PackArmPe::buildLoader(const Filter *ft) {
     initLoader(loader, size);
 
     if (isdll)
-        addLoader("DllStart", nullptr);
-    addLoader("ExeStart", nullptr);
+        addLoader("DllStart");
+    addLoader("ExeStart");
 
     if (ph.method == M_NRV2E_8)
-        addLoader("Call2E", nullptr);
+        addLoader("Call2E");
     else if (ph.method == M_NRV2B_8)
-        addLoader("Call2B", nullptr);
+        addLoader("Call2B");
     else if (ph.method == M_NRV2D_8)
-        addLoader("Call2D", nullptr);
+        addLoader("Call2D");
     else if (M_IS_LZMA(ph.method))
-        addLoader("+40C,CallLZMA", nullptr);
+        addLoader("+40C,CallLZMA");
 
     if (ft->id == 0x50)
-        addLoader("+40C,Unfilter_0x50", nullptr);
+        addLoader("+40C,Unfilter_0x50");
 
     if (sorelocs)
-        addLoader("+40C,Relocs", nullptr);
+        addLoader("+40C,Relocs");
 
-    addLoader("+40C,Imports", nullptr);
-    addLoader("ProcessEnd", nullptr);
+    addLoader("+40C,Imports");
+    addLoader("ProcessEnd");
 
     if (ph.method == M_NRV2E_8)
-        addLoader(".ucl_nrv2e_decompress_8", nullptr);
+        addLoader(".ucl_nrv2e_decompress_8");
     else if (ph.method == M_NRV2B_8)
-        addLoader(".ucl_nrv2b_decompress_8", nullptr);
+        addLoader(".ucl_nrv2b_decompress_8");
     else if (ph.method == M_NRV2D_8)
-        addLoader(".ucl_nrv2d_decompress_8", nullptr);
+        addLoader(".ucl_nrv2d_decompress_8");
     else if (M_IS_LZMA(ph.method))
-        addLoader("+40C,LZMA_DECODE,LZMA_DEC10", nullptr);
+        addLoader("+40C,LZMA_DECODE,LZMA_DEC10");
 
-    addLoader("IDENTSTR,UPX1HEAD", nullptr);
+    addLoader("IDENTSTR,UPX1HEAD");
 }
 
 bool PackArmPe::handleForceOption() {

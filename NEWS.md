@@ -1,5 +1,5 @@
 ==================================================================
-User visible changes for UPX
+### User visible changes for UPX
 ==================================================================
 
 Changes in 4.0.3 (XX XXX 2023):
@@ -78,7 +78,7 @@ Changes in 3.08 (12 Dec 2011):
   * Compress shared library on ELF i386 only [ld.so threatens even this case].
   * Attempt to support ELF on QNX 6.3.0 for armel (experimental).
   * Better diagnostic when ELF -fPIC is needed.
-  * PT_NOTE improvements for *BSD.
+  * PT_NOTE improvements for BSD.
   * Preserve more ELF .e_flags on ARM.
   * Minor code improvements for ELF stubs.
   * Defend against another flavor of corrupt PE header.
@@ -258,7 +258,7 @@ Changes in 1.11 beta (20 Dec 2000):
 ==================================================================
 
 Changes in 1.25 (29 Jun 2004)
-  * INFO: http://upx.sourceforge.net is the permanent UPX home page
+  * INFO: http://upx.sourceforge.net is the new UPX home page
   * watcom/le: don't crash on files without relocations
   * win32/pe: stricter checks of some PE values
   * source code: much improved portability using ACC, the
@@ -539,6 +539,3 @@ Changes in 0.20 (05 Jul 1998)
 
 Changes in 0.05 (26 May 1998)
   * first public beta release
-
-
-# vim:set syntax=off tw=0 ts=4 sw=4 et: -*- coding: utf-8 -*-

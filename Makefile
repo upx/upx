@@ -128,14 +128,14 @@ build/extra/cross-linux-arm/%: export CXX = arm-linux-gnueabihf-g++ -Wno-psabi
 # cross compiler: Windows x86 win32 MinGW
 build/extra/cross-windows-mingw32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw32/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc
-build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++
+build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc -static
+build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++ -static
 
 # cross compiler: Windows x64 win64 MinGW
 build/extra/cross-windows-mingw64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc
-build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++
+build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc -static
+build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++ -static
 
 # cross compiler: macOS arm64
 build/extra/cross-darwin-arm64/debug:   PHONY; $(call run_config_and_build,$@,Debug)

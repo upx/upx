@@ -97,49 +97,49 @@ void PackW64Pep::buildLoader(const Filter *ft) {
               : M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E"
                                       : "UNKNOWN_COMPRESSION_METHOD",
               // getDecompressorSections(),
-              /*multipass ? "PEMULTIP" :  */ "", "PEMAIN10", nullptr);
+              /*multipass ? "PEMULTIP" :  */ "", "PEMAIN10");
     addLoader(tmp_tlsindex ? "PETLSHAK2" : "");
     if (ft->id) {
         const unsigned texv = ih.codebase - rvamin;
         assert(ft->calls > 0);
-        addLoader(texv ? "PECTTPOS" : "PECTTNUL", nullptr);
+        addLoader(texv ? "PECTTPOS" : "PECTTNUL");
         addLoader("PEFILTER49");
     }
     if (soimport)
         addLoader("PEIMPORT", importbyordinal ? "PEIBYORD" : "", kernel32ordinal ? "PEK32ORD" : "",
                   importbyordinal ? "PEIMORD1" : "", "PEIMPOR2", isdll ? "PEIERDLL" : "PEIEREXE",
-                  "PEIMDONE", nullptr);
+                  "PEIMDONE");
     if (sorelocs) {
         addLoader(soimport == 0 || soimport + cimports != crelocs ? "PERELOC1" : "PERELOC2",
-                  "PERELOC3", big_relocs ? "REL64BIG" : "", "RELOC64J", nullptr);
+                  "PERELOC3", big_relocs ? "REL64BIG" : "", "RELOC64J");
         if __acc_cte (0) {
             addLoader(big_relocs & 6 ? "PERLOHI0" : "", big_relocs & 4 ? "PERELLO0" : "",
-                      big_relocs & 2 ? "PERELHI0" : "", nullptr);
+                      big_relocs & 2 ? "PERELHI0" : "");
         }
     }
     if (use_dep_hack)
-        addLoader("PEDEPHAK", nullptr);
+        addLoader("PEDEPHAK");
 
     // NEW: TLS callback support PART 1, the callback handler installation - Stefan Widmann
     if (use_tls_callbacks)
-        addLoader("PETLSC", nullptr);
+        addLoader("PETLSC");
 
-    addLoader("PEMAIN20", nullptr);
+    addLoader("PEMAIN20");
     if (use_clear_dirty_stack)
-        addLoader("CLEARSTACK", nullptr);
-    addLoader("PEMAIN21", nullptr);
+        addLoader("CLEARSTACK");
+    addLoader("PEMAIN21");
 
     if (ih.entry && isdll)
         addLoader("PEISDLL9");
     if (isefi)
         addLoader("PEISEFI9");
-    addLoader(ih.entry || !ilinker ? "PEDOJUMP" : "PERETURN", nullptr);
+    addLoader(ih.entry || !ilinker ? "PEDOJUMP" : "PERETURN");
 
     // NEW: TLS callback support PART 2, the callback handler - Stefan Widmann
     if (use_tls_callbacks)
-        addLoader("PETLSC2", nullptr);
+        addLoader("PETLSC2");
 
-    addLoader("IDENTSTR,UPX1HEAD", nullptr);
+    addLoader("IDENTSTR,UPX1HEAD");
 }
 
 bool PackW64Pep::handleForceOption() {

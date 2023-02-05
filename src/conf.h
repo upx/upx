@@ -76,28 +76,32 @@ ACC_COMPILE_TIME_ASSERT_HEADER((-1) >> 31 == -1) // arithmetic right shift
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 
-// enable/disable some warnings
+// enable some more strict warnings for Git developer builds
+#if !UPX_CONFIG_DISABLE_WSTRICT && !UPX_CONFIG_DISABLE_WERROR
 #if (ACC_CC_CLANG >= 0x0b0000)
 #  pragma clang diagnostic error "-Wsuggest-override"
 #elif (ACC_CC_GNUC >= 0x0a0000)
    // don't enable before gcc-10 because of gcc bug #78010
 #  pragma GCC diagnostic error "-Wsuggest-override"
 #endif
+#if (ACC_CC_CLANG >= 0x050000)
+#  pragma clang diagnostic error "-Wzero-as-null-pointer-constant"
+#elif (ACC_CC_GNUC >= 0x040700) && defined(__GLIBC__)
    // Some non-GLIBC toolchains do not use 'nullptr' everywhere when C++:
    // openwrt-sdk-x86-64_gcc-11.2.0_musl.Linux-x86_64/staging_dir/
    //   toolchain-x86_64_gcc-11.2.0_musl/include/fortify/stdlib.h:
    //   51:32: error: zero as null pointer constant
-#if (ACC_CC_CLANG >= 0x050000)
-#  pragma clang diagnostic error "-Wzero-as-null-pointer-constant"
-#elif (ACC_CC_GNUC >= 0x040700) && defined(__GLIBC__)
 #  pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
 #endif
-
 #if (ACC_CC_MSC)
 #  pragma warning(error: 4127)
 #  pragma warning(error: 4146)
 #  pragma warning(error: 4319)
 #  pragma warning(error: 4805)
+#endif
+#endif // !UPX_CONFIG_DISABLE_WSTRICT && !UPX_CONFIG_DISABLE_WERROR
+// disable some warnings
+#if (ACC_CC_MSC)
 #  pragma warning(disable: 4244) // -Wconversion
 #  pragma warning(disable: 4267) // -Wconversion
 #  pragma warning(disable: 4820) // padding added after data member
@@ -124,9 +128,17 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 // UPX currently does not use multithreading
 #define upx_std_atomic(Type)    Type
 //#define upx_std_atomic(Type)    typename std::add_volatile<Type>::type
+#define upx_std_once_flag       upx_std_atomic(size_t)
+template <class NoexceptCallable>
+inline void upx_std_call_once(upx_std_once_flag &flag, NoexceptCallable &&f) {
+    if (!flag) { flag = 1; f(); }
+}
 #else
 #include <atomic>
 #define upx_std_atomic(Type)    std::atomic<Type>
+#include <mutex>
+#define upx_std_once_flag       std::once_flag
+#define upx_std_call_once       std::call_once
 #endif
 
 // C++ submodule headers
@@ -416,7 +428,7 @@ inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b;
 template <size_t TypeSize>
 struct USizeOfTypeImpl {
     static forceinline constexpr unsigned value() {
-        COMPILE_TIME_ASSERT(TypeSize >= 1 && TypeSize <= 64 * 1024); // arbitrary limit
+        COMPILE_TIME_ASSERT(TypeSize >= 1 && TypeSize <= 64 * 1024) // arbitrary limit
         return ACC_ICONV(unsigned, TypeSize);
     }
 };

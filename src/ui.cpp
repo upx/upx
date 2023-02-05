@@ -25,6 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+// INFO: not thread-safe; assumes a single UiPacker instance that
+// is exclusively called from main thread
+
 #include "conf.h"
 #include "file.h"
 #include "packer.h"
@@ -92,18 +95,13 @@ unsigned UiPacker::update_fu_len = 0;
 **************************************************************************/
 
 static const char header_line1[] = "        File size         Ratio      Format      Name\n";
-static char header_line2[] = "   --------------------   ------   -----------   -----------\n";
+static const char header_line2[] = "   --------------------   ------   -----------   -----------\n";
 
-static char progress_filler[4 + 1] = ".*[]";
+static const char progress_filler[4 + 1] = ".*[]";
 
-static void init_global_constants(void) {
+static void init_global_constants(void) noexcept {
 #if 0 && (ACC_OS_DOS16 || ACC_OS_DOS32)
     // FIXME: should test codepage here
-
-    static bool done = false;
-    if (done)
-        return;
-    done = true;
 
 #if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
     /* check for Windows NT/2000/XP */
@@ -158,7 +156,8 @@ static const char *mkline(upx_uint64_t fu_len, upx_uint64_t fc_len, upx_uint64_t
 **************************************************************************/
 
 UiPacker::UiPacker(const Packer *p_) : ui_pass(0), ui_total_passes(0), p(p_), s(nullptr) {
-    init_global_constants();
+    static upx_std_once_flag init_done;
+    upx_std_call_once(init_done, init_global_constants);
 
     cb.reset();
 

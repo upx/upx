@@ -5,12 +5,14 @@ if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     # permissive config defaults when building from source code tarball
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." ON)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." ON)
+    option(UPX_CONFIG_DISABLE_WSTRICT  "Do not compile with strict compiler warnings." ON)
     option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   ON)
 else()
-    # strict config defaults for devel builds
+    # strict config defaults for Git developer builds
     message(STATUS "===== UPX info: strict config defaults enabled")
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." OFF)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." OFF)
+    option(UPX_CONFIG_DISABLE_WSTRICT  "Do not compile with strict compiler warnings." OFF)
     option(UPX_CONFIG_DISABLE_WERROR   "Do not compile with default -Werror option."   OFF)
 endif()
 
@@ -24,7 +26,7 @@ option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" O
 
 # Disallow in-source builds. Note that you will still have to manually
 # clean up a few files if you accidentally try an in-source build.
-if(NOT MSVC_IDE)
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git" AND NOT MSVC_IDE)
     set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
     set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
     if(",${CMAKE_CURRENT_SOURCE_DIR}," STREQUAL ",${CMAKE_CURRENT_BINARY_DIR},")
@@ -35,37 +37,36 @@ set(CMAKE_C_STANDARD_REQUIRED     ON)
 set(CMAKE_CXX_STANDARD_REQUIRED   ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# determine git revision
+# determine Git revision
 set(GITREV_SHORT "")
 set(GITREV_PLUS "")
 set(GIT_DESCRIBE "")
-find_package(Git)
-if(Git_FOUND AND NOT UPX_CONFIG_DISABLE_GITREV)
-    execute_process(
-        COMMAND "${GIT_EXECUTABLE}" rev-parse --short=12 HEAD
-        RESULT_VARIABLE result ERROR_QUIET
-        OUTPUT_VARIABLE GITREV_SHORT OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    string(LENGTH "${GITREV_SHORT}" l)
-    if(${result} EQUAL 0 AND ${l} EQUAL 12)
-        execute_process(RESULT_VARIABLE result COMMAND "${GIT_EXECUTABLE}" diff --quiet)
-        if(NOT ${result} EQUAL 0)
-            set(GITREV_PLUS "+")
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git" AND NOT UPX_CONFIG_DISABLE_GITREV)
+    find_package(Git)
+    if(Git_FOUND)
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" rev-parse --short=12 HEAD
+            RESULT_VARIABLE result ERROR_QUIET
+            OUTPUT_VARIABLE GITREV_SHORT OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        string(LENGTH "${GITREV_SHORT}" l)
+        if(${result} EQUAL 0 AND ${l} EQUAL 12)
+            execute_process(RESULT_VARIABLE result COMMAND "${GIT_EXECUTABLE}" diff --quiet)
+            if(NOT ${result} EQUAL 0)
+                set(GITREV_PLUS "+")
+            endif()
+        else()
+            set(GITREV_SHORT "")
         endif()
-    else()
-        set(GITREV_SHORT "")
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" describe --match "v*.*.*" --tags --dirty
+            RESULT_VARIABLE result ERROR_QUIET
+            OUTPUT_VARIABLE GIT_DESCRIBE OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(GIT_DESCRIBE MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)-([0-9]+)-g(.+)$")
+            set(GIT_DESCRIBE "${CMAKE_MATCH_1}-devel.${CMAKE_MATCH_2}+git-${CMAKE_MATCH_3}")
+        endif()
     endif()
-    execute_process(
-        COMMAND "${GIT_EXECUTABLE}" describe --match "v*.*.*" --tags --dirty
-        RESULT_VARIABLE result ERROR_QUIET
-        OUTPUT_VARIABLE GIT_DESCRIBE OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(GIT_DESCRIBE MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)-([0-9]+)-g(.+)$")
-        set(GIT_DESCRIBE "${CMAKE_MATCH_1}-devel.${CMAKE_MATCH_2}+git-${CMAKE_MATCH_3}")
-    endif()
-endif()
-if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git") # extra check
-    set(GITREV_SHORT "")
 endif()
 if(GITREV_SHORT)
     message(STATUS "UPX_VERSION_GITREV = \"${GITREV_SHORT}${GITREV_PLUS}\"")
@@ -87,7 +88,7 @@ if(is_multi_config)
     set(c "${CMAKE_CONFIGURATION_TYPES}")
     list(INSERT c 0 "Release")
     list(INSERT c 1 "Debug")
-    if (CMAKE_BUILD_TYPE)
+    if(CMAKE_BUILD_TYPE)
         list(INSERT c 0 "${CMAKE_BUILD_TYPE}")
     endif()
     list(REMOVE_DUPLICATES c)
@@ -97,7 +98,7 @@ elseif(NOT CMAKE_BUILD_TYPE)
 endif()
 
 #***********************************************************************
-# targets and compilation flags
+# targets
 #***********************************************************************
 
 #find_package(Threads) # multithreading is currently not used; maybe in UPX version 5
@@ -126,12 +127,18 @@ add_executable(upx ${upx_SOURCES})
 set_property(TARGET upx PROPERTY CXX_STANDARD 17)
 target_link_libraries(upx upx_vendor_ucl upx_vendor_zlib)
 
-if(NOT MSVC)
-    # rather strict default compilation warnings
-    set(warn_strict
-        -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations
-        -Wpointer-arith -Wshadow -Wvla -Wwrite-strings
-    )
+#***********************************************************************
+# compilation flags
+#***********************************************************************
+
+if(UPX_CONFIG_DISABLE_WSTRICT)
+    # enable all basic warnings
+    set(warn_Wall -Wall)
+    set(warn_WN -W3)
+else()
+    # enable lots of strict warnings
+    set(warn_Wall -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings)
+    set(warn_WN -W4)
 endif()
 if(UPX_CONFIG_DISABLE_WERROR)
     set(warn_Werror "")
@@ -159,7 +166,7 @@ if(MSVC)
     add_definitions(-Zc:__cplusplus -Zc:preprocessor)
 else()
     # protect against security threats caused by misguided compiler "optimizations"
-    if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
         add_definitions(-fno-delete-null-pointer-checks -fno-lifetime-dse)
     endif()
     add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
@@ -167,7 +174,7 @@ else()
     add_definitions(-fno-tree-vectorize)
 endif()
 
-# compile a target with -O2 in Debug build
+# compile a target with -O2 even in Debug build
 function(upx_compile_target_debug_with_O2 t)
     if(MSVC)
         # msvc uses some Debug compile options like -RTC1 that are incompatible with -O2
@@ -195,9 +202,9 @@ target_include_directories(${t} PRIVATE vendor/ucl/include vendor/ucl)
 upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
 if(MSVC)
-    target_compile_options(${t} PRIVATE -J -W4 ${warn_WX})
+    target_compile_options(${t} PRIVATE -J ${warn_WN} ${warn_WX})
 else()
-    target_compile_options(${t} PRIVATE ${warn_strict} ${warn_Werror})
+    target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
 
 set(t upx_vendor_zlib)
@@ -208,7 +215,8 @@ if(MSVC)
 else()
     target_compile_options(${t} PRIVATE -DHAVE_STDARG_H -DHAVE_UNISTD_H -DHAVE_VSNPRINTF)
     # clang-15: -Wno-strict-prototypes is needed to silence the new -Wdeprecated-non-prototype warning
-    target_compile_options(${t} PRIVATE -Wall -Wextra -Wvla -Wno-strict-prototypes ${warn_Werror})
+    target_compile_options(${t} PRIVATE -Wall -Wno-strict-prototypes ${warn_Werror})
+    ##target_compile_options(${t} PRIVATE ${warn_Wall} -Wno-cast-align -Wno-cast-qual -Wno-strict-prototypes ${warn_Werror})
 endif()
 
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
@@ -217,9 +225,9 @@ upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
 target_compile_options(${t} PRIVATE -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM)
 if(MSVC)
-    target_compile_options(${t} PRIVATE -J -W4 ${warn_WX})
+    target_compile_options(${t} PRIVATE -J ${warn_WN} ${warn_WX})
 else()
-    target_compile_options(${t} PRIVATE ${warn_strict} ${warn_Werror})
+    target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
 endif()
 
@@ -232,12 +240,18 @@ if(GITREV_SHORT)
         target_compile_definitions(${t} PRIVATE UPX_VERSION_GIT_DESCRIBE="${GIT_DESCRIBE}")
     endif()
 endif()
+if(UPX_CONFIG_DISABLE_WSTRICT)
+    target_compile_definitions(${t} PRIVATE UPX_CONFIG_DISABLE_WSTRICT=1)
+endif()
+if(UPX_CONFIG_DISABLE_WERROR)
+    target_compile_definitions(${t} PRIVATE UPX_CONFIG_DISABLE_WERROR=1)
+endif()
 #upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
 if(MSVC)
-    target_compile_options(${t} PRIVATE -EHsc -J -W4 ${warn_WX})
+    target_compile_options(${t} PRIVATE -EHsc -J ${warn_WN} ${warn_WX})
 else()
-    target_compile_options(${t} PRIVATE ${warn_strict} ${warn_Werror})
+    target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
     target_compile_definitions(${t} PRIVATE WITH_ZSTD=1)
@@ -302,7 +316,7 @@ endif()
 if(CMAKE_INSTALL_PREFIX AND DEFINED CMAKE_INSTALL_FULL_BINDIR)
     install(TARGETS upx DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
     install(FILES
-        COPYING LICENSE NEWS README THANKS doc/upx-doc.html doc/upx-doc.txt
+        COPYING LICENSE NEWS.md README THANKS doc/upx-doc.html doc/upx-doc.txt
         DESTINATION "${CMAKE_INSTALL_FULL_DOCDIR}"
     )
     install(FILES doc/upx.1 DESTINATION "${CMAKE_INSTALL_FULL_MANDIR}/man1")
@@ -332,7 +346,7 @@ print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_ARCHITEC
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
 endif() # UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO
 print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
-if (CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release)$")
+if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release)$")
     message(WARNING "WARNING: unsupported CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}; please use \"Debug\" or \"Release\"")
 endif()
 
