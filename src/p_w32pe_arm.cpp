@@ -1,4 +1,4 @@
-/* p_armpe.cpp --
+/* p_w32pe_arm.cpp --
 
    This file is part of the UPX executable compressor.
 
@@ -30,25 +30,25 @@
 #include "filter.h"
 #include "packer.h"
 #include "pefile.h"
-#include "p_armpe.h"
+#include "p_w32pe_arm.h"
 #include "linker.h"
 
 static const CLANG_FORMAT_DUMMY_STATEMENT
-#include "stub/arm.v4a-wince.pe.h"
+#include "stub/arm.v4a-win32.pe.h"
 static const CLANG_FORMAT_DUMMY_STATEMENT
-#include "stub/arm.v4t-wince.pe.h"
+#include "stub/arm.v4t-win32.pe.h"
 
 /*************************************************************************
 //
 **************************************************************************/
 
-PackArmPe::PackArmPe(InputFile *f) : super(f) {}
+PackW32PeArm::PackW32PeArm(InputFile *f) : super(f) {}
 
-PackArmPe::~PackArmPe() {}
+PackW32PeArm::~PackW32PeArm() {}
 
-Linker *PackArmPe::newLinker() const { return new ElfLinkerArmLE; }
+Linker *PackW32PeArm::newLinker() const { return new ElfLinkerArmLE; }
 
-const int *PackArmPe::getCompressionMethods(int method, int level) const {
+const int *PackW32PeArm::getCompressionMethods(int method, int level) const {
     static const int m_all[] = {M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END};
     static const int m_lzma[] = {M_LZMA, M_END};
     static const int m_nrv2b[] = {M_NRV2B_8, M_END};
@@ -68,7 +68,7 @@ const int *PackArmPe::getCompressionMethods(int method, int level) const {
     return m_nrv2e;
 }
 
-const int *PackArmPe::getFilters() const {
+const int *PackW32PeArm::getFilters() const {
     static const int filters[] = {0x50, FT_END};
     return filters;
 }
@@ -77,7 +77,7 @@ const int *PackArmPe::getFilters() const {
 // import handling
 **************************************************************************/
 
-void PackArmPe::processImports2(unsigned myimport, unsigned iat_off) // pass 2
+void PackW32PeArm::processImports2(unsigned myimport, unsigned iat_off) // pass 2
 {
     PeFile::processImports2(myimport, iat_off);
 
@@ -89,7 +89,7 @@ void PackArmPe::processImports2(unsigned myimport, unsigned iat_off) // pass 2
     }
 }
 
-void PackArmPe::addStubImports() {
+void PackW32PeArm::addStubImports() {
     // the order of procedure names below should match the
     // assumptions of the assembly stubs
     // WARNING! these names are sorted alphanumerically by the ImportLinker
@@ -98,12 +98,12 @@ void PackArmPe::addStubImports() {
     addKernelImport("LoadLibraryW");
 }
 
-void PackArmPe::processTls(Interval *) // pass 1
+void PackW32PeArm::processTls(Interval *) // pass 1
 {
     if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS), 4u)) == 0)
         return;
 
-    // never should happen on wince
+    // never should happen on win32/arm
     throwCantPack("Static TLS entries found. Send a report please.");
 }
 
@@ -111,17 +111,19 @@ void PackArmPe::processTls(Interval *) // pass 1
 // pack
 **************************************************************************/
 
-bool PackArmPe::canPack() {
-    if (!readFileHeader() || (ih.cpu != 0x1c0 && ih.cpu != 0x1c2))
+bool PackW32PeArm::canPack() {
+    if (!readFileHeader())
         return false;
-    use_thumb_stub |= ih.cpu == 0x1c2 || (ih.entry & 1) == 1;
+    if (ih.cpu != IMAGE_FILE_MACHINE_ARM && ih.cpu != IMAGE_FILE_MACHINE_THUMB)
+        return false;
+    use_thumb_stub |= ih.cpu == IMAGE_FILE_MACHINE_THUMB || (ih.entry & 1) == 1;
     use_thumb_stub |= (opt->cpu == opt->CPU_8086); // FIXME
     return true;
 }
 
-void PackArmPe::buildLoader(const Filter *ft) {
-    const unsigned char *loader = use_thumb_stub ? stub_arm_v4t_wince_pe : stub_arm_v4a_wince_pe;
-    unsigned size = use_thumb_stub ? sizeof(stub_arm_v4t_wince_pe) : sizeof(stub_arm_v4a_wince_pe);
+void PackW32PeArm::buildLoader(const Filter *ft) {
+    const unsigned char *loader = use_thumb_stub ? stub_arm_v4t_win32_pe : stub_arm_v4a_win32_pe;
+    unsigned size = use_thumb_stub ? sizeof(stub_arm_v4t_win32_pe) : sizeof(stub_arm_v4a_win32_pe);
 
     // prepare loader
     initLoader(loader, size);
@@ -160,15 +162,19 @@ void PackArmPe::buildLoader(const Filter *ft) {
     addLoader("IDENTSTR,UPX1HEAD");
 }
 
-bool PackArmPe::handleForceOption() {
-    return (ih.cpu != 0x1c0 && ih.cpu != 0x1c2) || (ih.opthdrsize != 0xe0) ||
-           ((ih.flags & EXECUTABLE) == 0) || (ih.entry == 0 /*&& !isdll*/) ||
-           (ih.ddirsentries != 16);
-    //        || IDSIZE(PEDIR_EXCEPTION) // is this used on arm?
-    //        || IDSIZE(PEDIR_COPYRIGHT)
+bool PackW32PeArm::needForceOption() const {
+    // return true if we need `--force` to pack this file
+    bool r = false;
+    r |= (ih.opthdrsize != 0xe0);
+    r |= ((ih.flags & EXECUTABLE) == 0);
+    r |= (ih.entry == 0 /*&& !isdll*/);
+    r |= (ih.ddirsentries != 16);
+    //// r |= (IDSIZE(PEDIR_EXCEPTION) != 0); // is this used on arm?
+    //// r |= (IDSIZE(PEDIR_COPYRIGHT) != 0);
+    return r;
 }
 
-void PackArmPe::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned ih_codebase) {
+void PackW32PeArm::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned ih_codebase) {
     // limit stack size needed for runtime decompression
     upx_compress_config_t cconf;
     cconf.reset();
@@ -176,7 +182,7 @@ void PackArmPe::callCompressWithFilters(Filter &ft, int filter_strategy, unsigne
     compressWithFilters(&ft, 2048, &cconf, filter_strategy, ih_codebase, rvamin, 0, nullptr, 0);
 }
 
-void PackArmPe::addNewRelocations(Reloc &rel, unsigned upxsection) {
+void PackW32PeArm::addNewRelocations(Reloc &rel, unsigned upxsection) {
     static const char *const symbols_to_relocate[] = {"ONAM", "BIMP", "BREL", "FIBE",
                                                       "FIBS", "ENTR", "DST0", "SRC0"};
     for (unsigned s2r = 0; s2r < TABLESIZE(symbols_to_relocate); s2r++) {
@@ -186,12 +192,12 @@ void PackArmPe::addNewRelocations(Reloc &rel, unsigned upxsection) {
     }
 }
 
-unsigned PackArmPe::getProcessImportParam(unsigned upxsection) {
+unsigned PackW32PeArm::getProcessImportParam(unsigned upxsection) {
     return linker->getSymbolOffset("IATT") + upxsection;
 }
 
-void PackArmPe::defineSymbols(unsigned ncsection, unsigned, unsigned, unsigned ic,
-                              unsigned s1addr) {
+void PackW32PeArm::defineSymbols(unsigned ncsection, unsigned, unsigned, unsigned ic,
+                                 unsigned s1addr) {
     const unsigned onam = ncsection + soxrelocs + ih.imagebase;
     linker->defineSymbol("start_of_dll_names", onam);
     linker->defineSymbol("start_of_imports", ih.imagebase + rvamin + cimports);
@@ -206,13 +212,13 @@ void PackArmPe::defineSymbols(unsigned ncsection, unsigned, unsigned, unsigned i
     defineDecompressorSymbols();
 }
 
-void PackArmPe::setOhDataBase(const pe_section_t *osection) { oh.database = osection[2].vaddr; }
+void PackW32PeArm::setOhDataBase(const pe_section_t *osection) { oh.database = osection[2].vaddr; }
 
-void PackArmPe::setOhHeaderSize(const pe_section_t *osection) {
+void PackW32PeArm::setOhHeaderSize(const pe_section_t *osection) {
     oh.headersize = osection[1].rawdataptr;
 }
 
-void PackArmPe::pack(OutputFile *fo) {
+void PackW32PeArm::pack(OutputFile *fo) {
     super::pack0(fo, (1u << IMAGE_SUBSYSTEM_WINDOWS_CE_GUI), 0x10000, true);
 }
 

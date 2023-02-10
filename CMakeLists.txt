@@ -316,7 +316,7 @@ endif()
 if(CMAKE_INSTALL_PREFIX AND DEFINED CMAKE_INSTALL_FULL_BINDIR)
     install(TARGETS upx DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
     install(FILES
-        COPYING LICENSE NEWS.md README THANKS doc/upx-doc.html doc/upx-doc.txt
+        COPYING LICENSE NEWS README THANKS doc/upx-doc.html doc/upx-doc.txt
         DESTINATION "${CMAKE_INSTALL_FULL_DOCDIR}"
     )
     install(FILES doc/upx.1 DESTINATION "${CMAKE_INSTALL_FULL_MANDIR}/man1")

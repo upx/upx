@@ -61,11 +61,11 @@ STUBS += amd64-linux.elf-so_fold.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.shlib-init.h
-STUBS += amd64-win64.pep.h
+STUBS += amd64-win64.pe.h
 STUBS += arm.v4a-linux.elf-entry.h
 STUBS += arm.v4a-linux.elf-fold.h
-STUBS += arm.v4a-wince.pe.h
-STUBS += arm.v4t-wince.pe.h
+STUBS += arm.v4a-win32.pe.h
+STUBS += arm.v4t-win32.pe.h
 STUBS += arm.v5a-darwin.macho-entry.h
 STUBS += arm.v5a-darwin.macho-fold.h
 STUBS += arm.v5a-linux.elf-entry.h
@@ -85,6 +85,7 @@ STUBS += arm64-linux.elf-fold.h
 STUBS += arm64-linux.shlib-init.h
 STUBS += arm64-darwin.macho-entry.h
 STUBS += arm64-darwin.macho-fold.h
+STUBS += arm64-win64.pe.h
 STUBS += i086-dos16.com.h
 STUBS += i086-dos16.exe.h
 STUBS += i086-dos16.sys.h
@@ -270,6 +271,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start $1
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
 	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) | sed \
 	  -e '1s/^.*: *file format/file format/' \
 	  -e 's/$(tab)/ /g' \
@@ -304,7 +306,7 @@ define tc.default.f-embed_objinfo_without_xstrip
 #   remove everything after "CONTENTS"
 	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) | sed \
 	  -e '1s/^.*: *file format/file format/' \
-	  -e 's/	/ /g' \
+	  -e 's/$(tab)/ /g' \
 	  -e 's/ 00*/ 0/g' \
 	  -e 's/CONTENTS.*/CONTENTS/' \
 	  > $1.dump
@@ -473,19 +475,19 @@ amd64-linux.shlib-init.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // amd64-win64.pep
+# // amd64-win64.pe
 # ************************************************************************/
 
-amd64-win64.pep.h : tc_list = amd64-win64.pep default
-amd64-win64.pep.h : tc_bfdname = elf64-x86-64
-amd64-win64.pep.h : tc_objdump_disasm_options = -M intel-mnemonic
+amd64-win64.pe.h : tc_list = amd64-win64.pe default
+amd64-win64.pe.h : tc_bfdname = elf64-x86-64
+amd64-win64.pe.h : tc_objdump_disasm_options = -M intel-mnemonic
 
-tc.amd64-win64.pep.gcc  = amd64-linux-gcc-4.1.1 -m64 -nostdinc -MMD -MT $@
-tc.amd64-win64.pep.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.amd64-win64.pep.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-tc.amd64-win64.pep.objdump = multiarch-objdump-2.23.90
+tc.amd64-win64.pe.gcc  = amd64-linux-gcc-4.1.1 -m64 -nostdinc -MMD -MT $@
+tc.amd64-win64.pe.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.amd64-win64.pe.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+tc.amd64-win64.pe.objdump = multiarch-objdump-2.23.90
 
-amd64-win64.pep.h : $(srcdir)/src/$$T.S
+amd64-win64.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -669,6 +671,21 @@ arm64-linux.shlib%.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
+# // arm64-win64.pe
+# ************************************************************************/
+
+arm64-win64.pe.h : tc_list = arm64-linux.elf default
+arm64-win64.pe.h : tc_bfdname = elf64-littleaarch64
+tc.arm64-win64.pe.objcopy  = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-win64.pe.objdump  = arm64-linux-objdump-2.25
+
+arm64-win64.pe.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+
+# /***********************************************************************
 # // arm.v5a-linux.shlib (arm.v5a)
 # ************************************************************************/
 
@@ -747,23 +764,23 @@ armeb.v5a-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // arm.v4a-wince.pe (arm.v4a)
-# // arm.v4t-wince.pe (arm.v4t)
+# // arm.v4a-win32.pe (arm.v4a)
+# // arm.v4t-win32.pe (arm.v4t)
 # ************************************************************************/
 
 # info: we use the tc settings from arm.v4a-linux.elf
-arm.v4a-wince.pe.h : tc_list = arm.v4a-linux.elf default
-arm.v4t-wince.pe.h : tc_list = arm.v4a-linux.elf default
-arm.v4a-wince.pe.h : tc_bfdname = elf32-littlearm
-arm.v4t-wince.pe.h : tc_bfdname = elf32-littlearm
-arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
+arm.v4a-win32.pe.h : tc_list = arm.v4a-linux.elf default
+arm.v4t-win32.pe.h : tc_list = arm.v4a-linux.elf default
+arm.v4a-win32.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-win32.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-win32.pe.h : tc_objdump_disasm_options = -M force-thumb
 
-arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
+arm.v4a-win32.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
+arm.v4t-win32.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@

@@ -1,5 +1,5 @@
-/* arm.v4a-wince.pe.h
-   created from arm.v4a-wince.pe.bin, 14676 (0x3954) bytes
+/* arm.v4a-win32.pe.h
+   created from arm.v4a-win32.pe.bin, 14676 (0x3954) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARM_V4A_WINCE_PE_SIZE    14676
-#define STUB_ARM_V4A_WINCE_PE_ADLER32 0x3e1886fc
-#define STUB_ARM_V4A_WINCE_PE_CRC32   0x3d92a84f
+#define STUB_ARM_V4A_WIN32_PE_SIZE    14676
+#define STUB_ARM_V4A_WIN32_PE_ADLER32 0x3e1886fc
+#define STUB_ARM_V4A_WIN32_PE_CRC32   0x3d92a84f
 
-unsigned char stub_arm_v4a_wince_pe[14676] = {
+unsigned char stub_arm_v4a_win32_pe[14676] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 156, 15,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,

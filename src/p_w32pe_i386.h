@@ -1,4 +1,4 @@
-/* p_wcle.h --
+/* p_w32pe_i386.h --
 
    This file is part of the UPX executable compressor.
 
@@ -28,62 +28,36 @@
 #pragma once
 
 /*************************************************************************
-// watcom/le
+//
 **************************************************************************/
 
-class PackWcle final : public Packer, public LeFile {
-    typedef Packer super;
+class PackW32PeI386 final : public PeFile32 {
+    typedef PeFile32 super;
 
 public:
-    PackWcle(InputFile *f) : super(f), LeFile(f) { bele = &N_BELE_RTP::le_policy; }
-    virtual int getVersion() const override { return 13; }
-    virtual int getFormat() const override { return UPX_F_WATCOM_LE; }
-    virtual const char *getName() const override { return "watcom/le"; }
-    virtual const char *getFullName(const options_t *) const override {
-        return "i386-dos32.watcom.le";
-    }
+    PackW32PeI386(InputFile *f);
+    virtual ~PackW32PeI386();
+    virtual int getFormat() const override { return UPX_F_W32PE_I386; }
+    virtual const char *getName() const override { return isrtm ? "rtm32/pe" : "win32/pe"; }
+    virtual const char *getFullName(const options_t *) const override { return "i386-win32.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 
+    virtual bool needForceOption() const override;
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
+                               unsigned isize_isplit, unsigned s1addr) override;
+    virtual void addNewRelocations(Reloc &, unsigned upxsection) override;
+    virtual void setOhDataBase(const pe_section_t *osection) override;
+    virtual void setOhHeaderSize(const pe_section_t *osection) override;
     virtual void pack(OutputFile *fo) override;
-    virtual void unpack(OutputFile *fo) override;
 
     virtual bool canPack() override;
-    virtual int canUnpack() override;
 
 protected:
-    virtual void handleStub(OutputFile *fo);
+    virtual int readFileHeader() override;
 
     virtual void buildLoader(const Filter *ft) override;
     virtual Linker *newLinker() const override;
-
-    virtual void readObjectTable() override;
-    virtual void encodeObjectTable();
-    virtual void decodeObjectTable();
-
-    virtual void encodeFixupPageTable();
-    virtual void decodeFixupPageTable();
-
-    virtual void encodePageMap() override;
-
-    virtual void encodeEntryTable();
-    virtual void decodeEntryTable();
-
-    virtual void preprocessFixups();
-    virtual void encodeFixups();
-    virtual void decodeFixups();
-
-    virtual void encodeImage(Filter *ft);
-    virtual void decodeImage();
-
-    static void virt2rela(const le_object_table_entry_t *, unsigned *objn, unsigned *addr);
-
-    // temporary copy of the object descriptors
-    MemBuffer iobject_desc;
-
-    int big_relocs;
-    bool has_extra_code;
-    unsigned neweip;
 };
 
 /* vim:set ts=4 sw=4 et: */

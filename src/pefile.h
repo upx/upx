@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_PEFILE_H__
-#define UPX_PEFILE_H__ 1
 
 #include "util/membuffer.h"
 
@@ -58,7 +56,7 @@ protected:
     unsigned handleStripRelocs(upx_uint64_t ih_imagebase, upx_uint64_t default_imagebase,
                                LE16 &dllflags);
 
-    virtual bool handleForceOption() = 0;
+    virtual bool needForceOption() const = 0;
     virtual void callCompressWithFilters(Filter &, int filter_strategy, unsigned ih_codebase);
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
                                unsigned isize_isplit, unsigned s1addr) = 0;
@@ -149,12 +147,12 @@ protected:
     unsigned tlsindex;
     unsigned tlscb_ptr;
     unsigned tls_handler_offset;
-    bool use_tls_callbacks;
+    bool use_tls_callbacks = false;
 
     void processLoadConf(Reloc *, const Interval *, unsigned);
     void processLoadConf(Interval *);
     MemBuffer mb_oloadconf;
-    upx_byte *oloadconf;
+    upx_byte *oloadconf = nullptr;
     unsigned soloadconf;
 
     unsigned stripDebug(unsigned);
@@ -162,8 +160,8 @@ protected:
     unsigned icondir_offset;
     int icondir_count;
 
-    bool importbyordinal;
-    bool kernel32ordinal;
+    bool importbyordinal = false;
+    bool kernel32ordinal = false;
     unsigned rvamin;
     unsigned cimports; // rva of preprocessed imports
     unsigned crelocs;  // rva of preprocessed fixups
@@ -173,8 +171,15 @@ protected:
         LE32 vaddr;
         LE32 size;
     };
-    ddirs_t *iddirs;
-    ddirs_t *oddirs;
+    ddirs_t *iddirs = nullptr;
+    ddirs_t *oddirs = nullptr;
+
+    LE32 &IDSIZE(unsigned x);
+    LE32 &IDADDR(unsigned x);
+    LE32 &ODSIZE(unsigned x);
+    LE32 &ODADDR(unsigned x);
+    const LE32 &IDSIZE(unsigned x) const;
+    const LE32 &IDADDR(unsigned x) const;
 
     struct alignas(1) import_desc {
         LE32 oft; // orig first thunk
@@ -182,11 +187,6 @@ protected:
         LE32 dllname;
         LE32 iat; // import address table
     };
-
-    LE32 &IDSIZE(unsigned x);
-    LE32 &IDADDR(unsigned x);
-    LE32 &ODSIZE(unsigned x);
-    LE32 &ODADDR(unsigned x);
 
     struct alignas(1) pe_section_t {
         char name[8];
@@ -200,15 +200,25 @@ protected:
 
     MemBuffer mb_isection;
     SPAN_0(pe_section_t) isection = nullptr;
-    bool isdll;
-    bool isrtm;
-    bool isefi;
-    bool use_dep_hack;
-    bool use_clear_dirty_stack;
-    bool use_stub_relocs;
+    bool isdll = false;
+    bool isrtm = false;
+    bool isefi = false;
+    bool use_dep_hack = true;
+    bool use_clear_dirty_stack = true;
+    bool use_stub_relocs = true;
 
     static unsigned virta2objnum(unsigned, SPAN_0(pe_section_t), unsigned);
     unsigned tryremove(unsigned, unsigned);
+
+    enum {
+        IMAGE_FILE_MACHINE_UNKNOWN = 0x0,
+        IMAGE_FILE_MACHINE_AMD64 = 0x8664,   // win64/pe (amd64)
+        IMAGE_FILE_MACHINE_ARM = 0x1c0,      // win32/arm
+        IMAGE_FILE_MACHINE_ARM64 = 0xaa64,   // win64/arm64
+        IMAGE_FILE_MACHINE_ARM64EC = 0xa641, // win64/arm64ec
+        IMAGE_FILE_MACHINE_I386 = 0x14c,     // win32/pe (i386)
+        IMAGE_FILE_MACHINE_THUMB = 0x1c2,    // win32/arm
+    };
 
     enum {
         PEDIR_EXPORT = 0,
@@ -259,7 +269,6 @@ protected:
         FBIG_ENDIAN = 0x8000,
     };
 
-    // NEW: DLL characteristics definition for ASLR, ... - Stefan Widmann
     enum {
         IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020,
         IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE = 0x0040,
@@ -268,8 +277,9 @@ protected:
         IMAGE_DLLCHARACTERISTICS_NO_ISOLATION = 0x0200,
         IMAGE_DLLCHARACTERISTICS_NO_SEH = 0x0400,
         IMAGE_DLLCHARACTERISTICS_NO_BIND = 0x0800,
+        IMAGE_DLLCHARACTERISTICS_APPCONTAINER = 0x1000,
         IMAGE_DLLCHARACTERISTICS_WDM_DRIVER = 0x2000,
-        IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD = 0x4000,
+        IMAGE_DLLCHARACTERISTICS_GUARD_CF = 0x4000,
         IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000,
     };
 
@@ -470,14 +480,15 @@ protected:
     virtual void processTls(Reloc *, const Interval *, unsigned) override;
 
     struct alignas(1) pe_header_t {
-        // 0x0
+        // 0x00
         char _[4]; // pemagic
-        LE16 cpu;
-        LE16 objects; // number of sections
-        char __[12];  // timestamp + reserved
-        LE16 opthdrsize;
-        LE16 flags; // characteristics
-        // optional header
+        // 0x04 IMAGE_FILE_HEADER
+        LE16 cpu;        // IMAGE_FILE_MACHINE_xxx
+        LE16 objects;    // NumberOfSections
+        char __[12];     // timestamp + reserved
+        LE16 opthdrsize; // SizeOfOptionalHeader
+        LE16 flags;      // Characteristics
+        // 0x18 IMAGE_OPTIONAL_HEADER32
         LE16 coffmagic; // NEW: Stefan Widmann
         char ___[2];    // linkerversion
         LE32 codesize;
@@ -497,14 +508,14 @@ protected:
         // 0x50
         LE32 imagesize;
         LE32 headersize;
-        LE32 chksum; // should set to 0
-        LE16 subsystem;
-        LE16 dllflags;
+        LE32 chksum;    // should set to 0
+        LE16 subsystem; // IMAGE_SUBSYSTEM_xxx
+        LE16 dllflags;  // IMAGE_DLLCHARACTERISTICS_xxx
         // 0x60
         char _____[20]; // stack + heap sizes
         // 0x74
         LE32 ddirsentries; // usually 16
-
+        // 0x78
         ddirs_t ddirs[16];
     };
 
@@ -530,14 +541,15 @@ protected:
     virtual void processTls(Reloc *, const Interval *, unsigned) override;
 
     struct alignas(1) pe_header_t {
-        // 0x0
+        // 0x00
         char _[4]; // pemagic
-        LE16 cpu;
-        LE16 objects; // number of sections
-        char __[12];  // timestamp + reserved
-        LE16 opthdrsize;
-        LE16 flags; // characteristics
-        // optional header
+        // 0x04 IMAGE_FILE_HEADER
+        LE16 cpu;        // IMAGE_FILE_MACHINE_xxx
+        LE16 objects;    // NumberOfSections
+        char __[12];     // timestamp + reserved
+        LE16 opthdrsize; // SizeOfOptionalHeader
+        LE16 flags;      // Characteristics
+        // 0x18 IMAGE_OPTIONAL_HEADER64
         LE16 coffmagic; // NEW: Stefan Widmann
         char ___[2];    // linkerversion
         LE32 codesize;
@@ -557,20 +569,18 @@ protected:
         // 0x50
         LE32 imagesize;
         LE32 headersize;
-        LE32 chksum; // should set to 0
-        LE16 subsystem;
-        LE16 dllflags;
+        LE32 chksum;    // should set to 0
+        LE16 subsystem; // IMAGE_SUBSYSTEM_xxx
+        LE16 dllflags;  // IMAGE_DLLCHARACTERISTICS_xxx
         // 0x60
         char _____[36]; // stack + heap sizes + loader flag
         // 0x84
         LE32 ddirsentries; // usually 16
-
+        // 0x88
         ddirs_t ddirs[16];
     };
 
     pe_header_t ih, oh;
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

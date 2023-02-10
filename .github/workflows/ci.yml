@@ -366,8 +366,8 @@ jobs:
           - { zig_target: x86_64-macos.13-none }
           - { zig_target: x86_64-windows-gnu }
     env:
-      # 2023-02-05
-      ZIG_DIST_VERSION: 0.11.0-dev.1575+289e8fab7
+      # 2023-02-10
+      ZIG_DIST_VERSION: 0.11.0-dev.1593+d24ebf1d1
       # for zig-cc wrapper scripts (see below):
       ZIG_CPPFLAGS: -DUPX_DOCTEST_CONFIG_MULTITHREADING
       ZIG_FLAGS: ${{ matrix.zig_flags }}

@@ -1141,7 +1141,7 @@ class PackMachARMEL : public PackMachBase<MachClass_LE32>
 public:
     PackMachARMEL(InputFile *f);
 
-    virtual int getFormat() const override { return UPX_F_MACH_ARMEL; }
+    virtual int getFormat() const override { return UPX_F_MACH_ARM; }
     virtual const char *getName() const override { return "macho/arm"; }
     virtual const char *getFullName(const options_t *) const override { return "arm-darwin.macho"; }
 protected:
@@ -1194,7 +1194,7 @@ class PackMachARM64EL : public PackMachBase<MachClass_LE64>
 public:
     PackMachARM64EL(InputFile *f);
 
-    virtual int getFormat() const override { return UPX_F_MACH_ARM64EL; }
+    virtual int getFormat() const override { return UPX_F_MACH_ARM64; }
     virtual const char *getName() const override { return "macho/arm64"; }
     virtual const char *getFullName(const options_t *) const override { return "arm64-darwin.macho"; }
 protected:

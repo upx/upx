@@ -131,7 +131,7 @@ class PackVmlinuzARMEL : public Packer
 public:
     PackVmlinuzARMEL(InputFile *f);
     virtual int getVersion() const override { return 13; }
-    virtual int getFormat() const  override{ return UPX_F_VMLINUZ_ARMEL; }
+    virtual int getFormat() const  override{ return UPX_F_VMLINUZ_ARM; }
     virtual const char *getName() const override { return "vmlinuz/arm"; }
     virtual const char *getFullName(const options_t *) const override { return "arm-linux.kernel.vmlinuz"; }
     virtual const int *getCompressionMethods(int method, int level) const override;

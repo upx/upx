@@ -30,6 +30,7 @@
  */
 
 
+#pragma once
 #ifndef __UPX_P_LX_ELF_H  //{
 #define __UPX_P_LX_ELF_H 1
 
@@ -457,7 +458,7 @@ class PackLinuxElf64amd : public PackLinuxElf64Le
 public:
     PackLinuxElf64amd(InputFile *f);
     virtual ~PackLinuxElf64amd();
-    virtual int getFormat() const override { return UPX_F_LINUX_ELF64_AMD; }
+    virtual int getFormat() const override { return UPX_F_LINUX_ELF64_AMD64; }
     virtual const char *getName() const override { return "linux/amd64"; }
     virtual const char *getFullName(const options_t *) const override { return "amd64-linux.elf"; }
     virtual const int *getFilters() const override;
@@ -474,7 +475,7 @@ class PackLinuxElf64arm : public PackLinuxElf64Le
 public:
     PackLinuxElf64arm(InputFile *f);
     virtual ~PackLinuxElf64arm();
-    virtual int getFormat() const override { return UPX_F_LINUX_ELF64_ARM; }
+    virtual int getFormat() const override { return UPX_F_LINUX_ELF64_ARM64; }
     virtual const char *getName() const override { return "linux/arm64"; }
     virtual const char *getFullName(const options_t *) const override { return "arm64-linux.elf"; }
     virtual const int *getFilters() const override;
@@ -496,7 +497,7 @@ class PackLinuxElf32ppc : public PackLinuxElf32Be
 public:
     PackLinuxElf32ppc(InputFile *f);
     virtual ~PackLinuxElf32ppc();
-    virtual int getFormat() const override { return UPX_F_LINUX_ELFPPC32; }
+    virtual int getFormat() const override { return UPX_F_LINUX_ELF32_PPC32; }
     virtual const char *getName() const override { return "linux/ppc32"; }
     virtual const char *getFullName(const options_t *) const override { return "powerpc-linux.elf"; }
     virtual const int *getFilters() const override;
@@ -516,7 +517,7 @@ class PackLinuxElf64ppcle : public PackLinuxElf64Le
 public:
     PackLinuxElf64ppcle(InputFile *f);
     virtual ~PackLinuxElf64ppcle();
-    virtual int getFormat() const override { return UPX_F_LINUX_ELFPPC64LE; }
+    virtual int getFormat() const override { return UPX_F_LINUX_ELF64_PPC64LE; }
     virtual const char *getName() const override { return "linux/ppc64le"; }
     virtual const char *getFullName(const options_t *) const override { return "powerpc64le-linux.elf"; }
     virtual const int *getFilters() const override;
@@ -535,7 +536,7 @@ class PackLinuxElf64ppc : public PackLinuxElf64Be
 public:
     PackLinuxElf64ppc(InputFile *f);
     virtual ~PackLinuxElf64ppc();
-    virtual int getFormat() const override { return UPX_F_LINUX_ELFPPC64; }
+    virtual int getFormat() const override { return UPX_F_LINUX_ELF64_PPC64; }
     virtual const char *getName() const override { return "linux/ppc64"; }
     virtual const char *getFullName(const options_t *) const override { return "powerpc64-linux.elf"; }
     virtual const int *getFilters() const override;
@@ -648,7 +649,7 @@ class PackLinuxElf32armLe : public PackLinuxElf32Le
 public:
     PackLinuxElf32armLe(InputFile *f);
     virtual ~PackLinuxElf32armLe();
-    virtual int getFormat() const override { return UPX_F_LINUX_ELF32_ARMEL; }
+    virtual int getFormat() const override { return UPX_F_LINUX_ELF32_ARM; }
     virtual const char *getName() const override { return "linux/arm"; }
     virtual const char *getFullName(const options_t *) const override { return "arm-linux.elf"; }
     virtual const int *getFilters() const override;
@@ -688,7 +689,7 @@ class PackLinuxElf32mipseb : public PackLinuxElf32Be
 public:
     PackLinuxElf32mipseb(InputFile *f);
     virtual ~PackLinuxElf32mipseb();
-    virtual int getFormat() const override { return UPX_F_LINUX_ELF32_MIPSEB; }
+    virtual int getFormat() const override { return UPX_F_LINUX_ELF32_MIPS; }
     virtual const char *getName() const override { return "linux/mips"; }
     virtual const char *getFullName(const options_t *) const override { return "mips-linux.elf"; }
     virtual const int *getFilters() const override;

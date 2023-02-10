@@ -26,6 +26,7 @@
  */
 
 
+#pragma once
 #ifndef __UPX_P_ELF_H
 #define __UPX_P_ELF_H 1
 

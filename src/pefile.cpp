@@ -92,17 +92,17 @@ PeFile::PeFile(InputFile *f) : super(f) {
     sorelocs = 0;
     soxrelocs = 0;
     sotls = 0;
-    isdll = false;
     ilinker = nullptr;
     use_tls_callbacks = false;
     oloadconf = nullptr;
     soloadconf = 0;
 
+    isdll = false;
+    isrtm = false;
+    isefi = false;
     use_dep_hack = true;
     use_clear_dirty_stack = true;
     use_stub_relocs = true;
-    isrtm = false;
-    isefi = false;
 }
 
 bool PeFile::testUnpackVersion(int version) const {
@@ -530,6 +530,8 @@ LE32 &PeFile::IDSIZE(unsigned x) { return iddirs[x].size; }
 LE32 &PeFile::IDADDR(unsigned x) { return iddirs[x].vaddr; }
 LE32 &PeFile::ODSIZE(unsigned x) { return oddirs[x].size; }
 LE32 &PeFile::ODADDR(unsigned x) { return oddirs[x].vaddr; }
+const LE32 &PeFile::IDSIZE(unsigned x) const { return iddirs[x].size; }
+const LE32 &PeFile::IDADDR(unsigned x) const { return iddirs[x].vaddr; }
 
 /*
  ImportLinker: 32 and 64 bit import table building.
@@ -2076,7 +2078,7 @@ void PeFile::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned i
 }
 
 void PeFile::callProcessRelocs(Reloc &rel, unsigned &ic) {
-    // wince wants relocation data at the beginning of a section
+    // WinCE wants relocation data at the beginning of a section
     PeFile::processRelocs(&rel);
     ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
     ODSIZE(PEDIR_RELOC) = soxrelocs;
@@ -2100,7 +2102,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
 
     const unsigned objs = ih.objects;
     readSectionHeaders(objs, sizeof(ih));
-    if (!opt->force && handleForceOption())
+    if (!opt->force && needForceOption())
         throwCantPack("unexpected value in PE header (try --force)");
 
     if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY) {
@@ -2142,7 +2144,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
         overlay = 0;
     checkOverlay(overlay);
 
-    if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD) {
+    if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_GUARD_CF) {
         if (opt->force) {
             const unsigned lcsize = IDSIZE(PEDIR_LOADCONF);
             const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
@@ -2152,10 +2154,9 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
                 // and clear the rest
                 set_le32(ibuf.subref("bad guard flags at %#x", lcaddr + gfpos, sizeof(LE32)),
                          0x00000800);
-            ih.dllflags ^= IMAGE_DLLCHARACTERISTICS_CONTROL_FLOW_GUARD;
+            ih.dllflags ^= IMAGE_DLLCHARACTERISTICS_GUARD_CF;
         } else
-            throwCantPack("CFGuard enabled PE files are not supported (use "
-                          "--force to disable)");
+            throwCantPack("GUARD_CF enabled PE files are not supported (use --force to disable)");
     }
 
     Resource res(ibuf, ibuf + ibuf.getSize());
@@ -2274,7 +2275,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     // section 0 : bss
     //         1 : [ident + header] + packed_data + unpacker + tls + loadconf
     //         2 : not compressed data
-    //         3 : resource data -- wince 5 needs a new section for this
+    //         3 : resource data -- win32/arm 5 needs a new section for this
 
     // the last section should start with the resource data, because lots of lame
     // windoze codes assume that resources starts on the beginning of a section
@@ -2962,14 +2963,14 @@ void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t defau
 }
 
 void PeFile32::unpack(OutputFile *fo) {
-    bool set_oft = getFormat() == UPX_F_WINCE_ARM_PE;
+    bool set_oft = getFormat() == UPX_F_W32PE_ARM;
     unpack0<pe_header_t, LE32>(fo, ih, oh, 1U << 31, set_oft);
 }
 
 int PeFile32::canUnpack() {
     if (!canPack()) // this calls readFileHeader() and readPeHeader()
         return false;
-    return canUnpack0(getFormat() == UPX_F_WINCE_ARM_PE ? 4 : 3, ih.objects, ih.entry, sizeof(ih));
+    return canUnpack0(getFormat() == UPX_F_W32PE_ARM ? 4 : 3, ih.objects, ih.entry, sizeof(ih));
 }
 
 unsigned PeFile32::processImports() // pass 1

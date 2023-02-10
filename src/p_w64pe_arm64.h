@@ -1,4 +1,4 @@
-/* p_w32pe.h --
+/* p_w64pe_arm64.h --
 
    This file is part of the UPX executable compressor.
 
@@ -26,42 +26,53 @@
  */
 
 #pragma once
-#ifndef UPX_P_W32PE_H__
-#define UPX_P_W32PE_H__ 1
 
 /*************************************************************************
-// w32/pe
+//
 **************************************************************************/
 
-class PackW32Pe final : public PeFile32 {
-    typedef PeFile32 super;
+class PackW64PeArm64 : public PeFile64 {
+    typedef PeFile64 super;
 
 public:
-    PackW32Pe(InputFile *f);
-    virtual ~PackW32Pe();
-    virtual int getFormat() const override { return UPX_F_WIN32_PE; }
-    virtual const char *getName() const override { return isrtm ? "rtm32/pe" : "win32/pe"; }
-    virtual const char *getFullName(const options_t *) const override { return "i386-win32.pe"; }
+    PackW64PeArm64(InputFile *f);
+    virtual ~PackW64PeArm64() {}
+    virtual int getFormat() const override { return UPX_F_W64PE_ARM64; }
+    virtual const char *getName() const override { return "win64/arm64"; }
+    virtual const char *getFullName(const options_t *) const override { return "arm64-win64.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 
-    virtual bool handleForceOption() override;
+    virtual bool needForceOption() const override;
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
                                unsigned isize_isplit, unsigned s1addr) override;
-    virtual void addNewRelocations(Reloc &, unsigned upxsection) override;
-    virtual void setOhDataBase(const pe_section_t *osection) override;
+    virtual void setOhDataBase(const pe_section_t *) override {}
     virtual void setOhHeaderSize(const pe_section_t *osection) override;
     virtual void pack(OutputFile *fo) override;
 
     virtual bool canPack() override;
 
 protected:
-    virtual int readFileHeader() override;
-
     virtual void buildLoader(const Filter *ft) override;
     virtual Linker *newLinker() const override;
 };
 
-#endif /* already included */
+/*************************************************************************
+// TODO: it is unclear yet if this should be made a subclass
+//   or just get merged into the base class using a flag;
+//   maybe the difference between arm64 and arm64ec does not really affect us
+**************************************************************************/
+
+class PackW64PeArm64EC final : public PackW64PeArm64 {
+    typedef PackW64PeArm64 super;
+
+public:
+    PackW64PeArm64EC(InputFile *f) : super(f) {}
+    virtual int getFormat() const override { return UPX_F_W64PE_ARM64EC; }
+    virtual const char *getName() const override { return "win64/arm64ec"; }
+    virtual const char *getFullName(const options_t *) const override { return "arm64ec-win64.pe"; }
+
+    virtual bool canPack() override;
+};
 
 /* vim:set ts=4 sw=4 et: */

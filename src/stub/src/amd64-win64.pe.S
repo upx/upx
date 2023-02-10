@@ -1,5 +1,5 @@
 /*
-;  AMD64-win64.pep.S -- loader & decompressor for the w64/pe32+ format
+;  AMD64-win64.pe.S -- loader & decompressor for the w64/pe32+ format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

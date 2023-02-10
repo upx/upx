@@ -750,7 +750,7 @@ int PackVmlinuzARMEL::readFileHeader()
             return 0;
         }
     }
-    return UPX_F_VMLINUZ_ARMEL;
+    return UPX_F_VMLINUZ_ARM;
 }
 
 int PackVmlinuzARMEL::decompressKernel()

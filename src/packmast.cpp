@@ -29,29 +29,31 @@
 #include "file.h"
 #include "packmast.h"
 #include "packer.h"
+
 #include "lefile.h"
 #include "pefile.h"
 #include "p_elf.h"
+#include "p_unix.h"
 
 #include "p_com.h"
 #include "p_djgpp2.h"
 #include "p_exe.h"
-#include "p_unix.h"
 #include "p_lx_exc.h"
 #include "p_lx_elf.h"
-#include "p_lx_sh.h"
 #include "p_lx_interp.h"
-#include "p_sys.h"
-#include "p_tos.h"
-#include "p_wcle.h"
-#include "p_tmt.h"
-#include "p_w32pe.h"
-#include "p_w64pep.h"
-#include "p_vmlinz.h"
-#include "p_vmlinx.h"
-#include "p_ps1.h"
+#include "p_lx_sh.h"
 #include "p_mach.h"
-#include "p_armpe.h"
+#include "p_ps1.h"
+#include "p_sys.h"
+#include "p_tmt.h"
+#include "p_tos.h"
+#include "p_vmlinx.h"
+#include "p_vmlinz.h"
+#include "p_w32pe_arm.h"
+#include "p_w32pe_i386.h"
+#include "p_w64pe_amd64.h"
+#include "p_w64pe_arm64.h"
+#include "p_wcle.h"
 
 /*************************************************************************
 //
@@ -156,10 +158,12 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         D(PackDjgpp2);
         D(PackTmt);
         D(PackWcle);
-        D(PackW64Pep);
-        D(PackW32Pe);
+        D(PackW64PeAmd64);
+        D(PackW32PeI386);
     }
-    D(PackArmPe);
+    D(PackW32PeArm);
+    // D(PackW64PeArm64EC); // NOT YET IMPLEMENTED
+    // D(PackW64PeArm64); // NOT YET IMPLEMENTED
     D(PackExe);
 
     //

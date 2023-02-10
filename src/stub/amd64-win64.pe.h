@@ -1,5 +1,5 @@
-/* amd64-win64.pep.h
-   created from amd64-win64.pep.bin, 14679 (0x3957) bytes
+/* amd64-win64.pe.h
+   created from amd64-win64.pe.bin, 14679 (0x3957) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_AMD64_WIN64_PEP_SIZE    14679
-#define STUB_AMD64_WIN64_PEP_ADLER32 0x64c27601
-#define STUB_AMD64_WIN64_PEP_CRC32   0x16bb9397
+#define STUB_AMD64_WIN64_PE_SIZE    14679
+#define STUB_AMD64_WIN64_PE_ADLER32 0x64c27601
+#define STUB_AMD64_WIN64_PE_CRC32   0x16bb9397
 
-unsigned char stub_amd64_win64_pep[14679] = {
+unsigned char stub_amd64_win64_pe[14679] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 62,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0,200, 17,  0,  0,  0,  0,  0,  0,

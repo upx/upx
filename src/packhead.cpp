@@ -190,8 +190,8 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
         fprintf(stderr, "  decodePackHeaderFromBuf  version=%d  format=%d  method=%d  level=%d\n",
                 version, format, method, level);
     }
-    if (0 == format || 128 == format || (format < 128 && format > UPX_F_LINUX_ELF64_ARM) ||
-        (format > 128 && format > UPX_F_DYLIB_PPC64)) {
+    if (!((format >= 1 && format <= UPX_F_W64PE_ARM64EC) ||
+          (format >= 129 && format <= UPX_F_DYLIB_PPC64))) {
         char msg[24];
         snprintf(msg, sizeof(msg), "unknown format %d", format);
         throwCantUnpack(msg);

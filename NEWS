@@ -1,5 +1,5 @@
 ==================================================================
-### User visible changes for UPX
+User visible changes for UPX
 ==================================================================
 
 Changes in 4.0.3 (XX XXX 2023):
@@ -152,7 +152,7 @@ Changes in 2.92 beta (23 Jan 2007):
 
 Changes in 2.91 beta (29 Nov 2006):
   * assorted bug fixes
-  * arm/pe: fix "missing" icon & version info resource problem for wince 5
+  * win32/arm: fix "missing" icon & version info resource problem for WinCE 5
   * win32/pe & arm/pe: added option --compress-icons=3 to compress all icons
 
 Changes in 2.90 beta (08 Oct 2006):
@@ -206,7 +206,7 @@ Changes in 1.95 beta (09 Apr 2006):
   * win32/pe: really worked around R6002 runtime errors
 
 Changes in 1.94 beta (11 Mar 2006):
-  * new format: added support for arm/pe (ARM executables running on WinCE)
+  * new format: added support for win32/arm (ARM executables running on WinCE)
   * new format: added support for linux elf/amd64
   * new format: added support for linux elf/ppc32
   * new format: added support for mach/ppc32 (Apple Mac OS X)
@@ -539,3 +539,5 @@ Changes in 0.20 (05 Jul 1998)
 
 Changes in 0.05 (26 May 1998)
   * first public beta release
+  * based on experience gained from our previous packers DJP (1996),
+    lzop (1996) and mfxpak (atari/tos, 1990)
