@@ -37,8 +37,6 @@
 
 // static const CLANG_FORMAT_DUMMY_STATEMENT
 // #include "stub/arm64-win64.pe.h"
-//  static const CLANG_FORMAT_DUMMY_STATEMENT
-//  #include "stub/arm64ce-win64.pe.h" // TODO ???
 
 /*************************************************************************
 //

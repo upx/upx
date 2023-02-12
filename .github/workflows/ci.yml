@@ -47,6 +47,7 @@ jobs:
           if ! git diff --quiet; then git diff; exit 1; fi
 
   job-linux-cmake:
+    if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
@@ -123,6 +124,7 @@ jobs:
           env -C build/extra/gcc/release upx_exe=./upx bash "$testsuite_1"
 
   job-macos-cmake:
+    if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
     runs-on: ${{ matrix.os }}
@@ -192,8 +194,9 @@ jobs:
           env -C build/extra/clang/release upx_exe=./upx bash "$testsuite_1"
 
   job-windows-cmake:
+    if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ format('{0} cmake', matrix.os) }}
+    name: ${{ format('{0} cmake', matrix.name) }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -203,8 +206,8 @@ jobs:
           # update; we cannot download that image for inspection, and debugging the
           # remote image is painful, so disable for now
           # see https://github.com/actions/runner-images.git
-          ####- { os: windows-2019 }
-          - { os: windows-2022 }
+          ####- { name: windows-2019-amd64, os: windows-2019 }
+          - { name: windows-2022-amd64, os: windows-2022 }
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -236,10 +239,12 @@ jobs:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
       - name: 'Run basic tests'
+        if: ${{ matrix.arch != 'amd64_arm64' }}
         run: |
           cmake --build build/debug   --config Debug   --target RUN_TESTS
           cmake --build build/release --config Release --target RUN_TESTS
       - name: 'Run test suite build/release'
+        if: ${{ matrix.arch != 'amd64_arm64' }}
         shell: bash
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
@@ -247,6 +252,7 @@ jobs:
           env -C build/release/Release upx_exe=./upx bash "$testsuite_1"
 
   job-windows-toolchains:
+    if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('windows {0}', matrix.name) }}
     runs-on: ${{ matrix.os }}
@@ -258,12 +264,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: amd64-win64-vs2019, os: windows-2019, C: msvc-14.2-x64,   arch: amd64 }
-          - { name: amd64-win64-vs2022, os: windows-2022, C: msvc-14.3-x64,   arch: amd64 }
-          - { name: arm64-win64-vs2019, os: windows-2019, C: msvc-14.2-arm64, arch: amd64_arm64 }
-          - { name: arm64-win64-vs2022, os: windows-2022, C: msvc-14.3-arm64, arch: amd64_arm64 }
-          - { name: i386-win32-vs2019,  os: windows-2019, C: msvc-14.2-x86,   arch: amd64_x86 }
-          - { name: i386-win32-vs2022,  os: windows-2022, C: msvc-14.3-x86,   arch: amd64_x86 }
+          - { name: amd64-win64-vs2019,   vsversion: 2019, os: windows-2019, C: msvc-14.2-x64,     arch: amd64 }
+          - { name: amd64-win64-vs2022,   vsversion: 2022, os: windows-2022, C: msvc-14.3-x64,     arch: amd64 }
+          - { name: arm64-win64-vs2019,   vsversion: 2019, os: windows-2019, C: msvc-14.2-arm64,   arch: amd64_arm64 }
+          - { name: arm64-win64-vs2022,   vsversion: 2022, os: windows-2022, C: msvc-14.3-arm64,   arch: amd64_arm64 }
+          - { name: arm64ec-win64-vs2022, vsversion: 2022, os: windows-2022, C: msvc-14.3-arm64ec, arch: amd64_arm64, cl_extra_flags: -arm64EC, link_machine_flags: '/machine:arm64ec' }
+          ####- { name: arm64x-win64-vs2022,  vsversion: 2022, os: windows-2022, C: msvc-14.3-arm64x,  arch: amd64_arm64, cl_extra_flags: -arm64EC, link_machine_flags: '/machine:arm64x' }
+          - { name: i386-win32-vs2019,    vsversion: 2019, os: windows-2019, C: msvc-14.2-x86,     arch: amd64_x86 }
+          - { name: i386-win32-vs2022,    vsversion: 2022, os: windows-2022, C: msvc-14.3-x86,     arch: amd64_x86 }
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -279,35 +287,38 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.arch }}
+          vsversion: ${{ matrix.vsversion }}
       - name: 'Build'
         shell: cmd
         run: |
           @REM setup directories
           where cl & where link
+          set RUN_CL=cl -MT ${{ matrix.cl_extra_flags }}
+          set RUN_LIB=link -lib ${{ matrix.link_machine_flags }}
           set BDIR=%H%\build\%C%\%B%
           set DEFS=-D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
           @REM ===== build UCL =====
           cd %BDIR%\ucl
           set s=%H%\vendor\ucl
-          cl -MT -J -O2 -W4 -WX %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
-          link -lib -out:ucl.lib *.obj
+          %RUN_CL% -J -O2 -W4 -WX %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
+          %RUN_LIB% -out:ucl.lib *.obj
           @REM ===== build zlib =====
           cd %BDIR%\zlib
-          cl -MT -J -O2 -W3 -WX %DEFS% -c %H%\vendor\zlib\*.c
-          link -lib -out:zlib.lib *.obj
+          %RUN_CL% -J -O2 -W3 -WX %DEFS% -c %H%\vendor\zlib\*.c
+          %RUN_LIB% -out:zlib.lib *.obj
           @REM ===== build zstd =====
           @rem cd %BDIR%\zstd
           @rem set s=%H%\vendor\zstd\lib
-          @rem cl -MT -J -O2 -W4 -WX -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM %DEFS% -c %s%\common\*.c %s%\compress\*.c %s%\decompress\*.c
-          @rem link -lib -out:zstd.lib *.obj
+          @rem %RUN_CL% -J -O2 -W4 -WX -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM %DEFS% -c %s%\common\*.c %s%\compress\*.c %s%\decompress\*.c
+          @rem %RUN_LIB% -out:zstd.lib *.obj
           @REM ===== build UPX =====
           cd %BDIR%\upx
           set s=%H%\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp
-          cl -MT -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD=0 %DEFS% -I%H%\vendor -I%H%\vendor\boost-pfr\include -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link setargv.obj
+          %RUN_CL% -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD=0 %DEFS% -I%H%\vendor -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link ${{ matrix.link_machine_flags }} setargv.obj
       - name: 'Make artifact'
         shell: bash
         run: |
@@ -366,8 +377,8 @@ jobs:
           - { zig_target: x86_64-macos.13-none }
           - { zig_target: x86_64-windows-gnu }
     env:
-      # 2023-02-10
-      ZIG_DIST_VERSION: 0.11.0-dev.1593+d24ebf1d1
+      # 2023-02-12
+      ZIG_DIST_VERSION: 0.11.0-dev.1605+abc9530a8
       # for zig-cc wrapper scripts (see below):
       ZIG_CPPFLAGS: -DUPX_DOCTEST_CONFIG_MULTITHREADING
       ZIG_FLAGS: ${{ matrix.zig_flags }}
