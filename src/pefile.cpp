@@ -2275,7 +2275,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     // section 0 : bss
     //         1 : [ident + header] + packed_data + unpacker + tls + loadconf
     //         2 : not compressed data
-    //         3 : resource data -- win32/arm 5 needs a new section for this
+    //         3 : resource data -- wince/arm 5 needs a new section for this
 
     // the last section should start with the resource data, because lots of lame
     // windoze codes assume that resources starts on the beginning of a section
@@ -2963,14 +2963,14 @@ void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t defau
 }
 
 void PeFile32::unpack(OutputFile *fo) {
-    bool set_oft = getFormat() == UPX_F_W32PE_ARM;
+    bool set_oft = getFormat() == UPX_F_WINCE_ARM;
     unpack0<pe_header_t, LE32>(fo, ih, oh, 1U << 31, set_oft);
 }
 
 int PeFile32::canUnpack() {
     if (!canPack()) // this calls readFileHeader() and readPeHeader()
         return false;
-    return canUnpack0(getFormat() == UPX_F_W32PE_ARM ? 4 : 3, ih.objects, ih.entry, sizeof(ih));
+    return canUnpack0(getFormat() == UPX_F_WINCE_ARM ? 4 : 3, ih.objects, ih.entry, sizeof(ih));
 }
 
 unsigned PeFile32::processImports() // pass 1

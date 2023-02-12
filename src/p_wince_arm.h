@@ -1,4 +1,4 @@
-/* p_w32pe_arm.h --
+/* p_wince_arm.h --
 
    This file is part of the UPX executable compressor.
 
@@ -31,15 +31,15 @@
 //
 **************************************************************************/
 
-class PackW32PeArm final : public PeFile32 {
+class PackWinCeArm final : public PeFile32 {
     typedef PeFile32 super;
 
 public:
-    PackW32PeArm(InputFile *f);
-    virtual ~PackW32PeArm();
-    virtual int getFormat() const override { return UPX_F_W32PE_ARM; }
-    virtual const char *getName() const override { return "win32/arm"; }
-    virtual const char *getFullName(const options_t *) const override { return "arm-win32.pe"; }
+    PackWinCeArm(InputFile *f);
+    virtual ~PackWinCeArm();
+    virtual int getFormat() const override { return UPX_F_WINCE_ARM; }
+    virtual const char *getName() const override { return "wince/arm"; }
+    virtual const char *getFullName(const options_t *) const override { return "arm-wince.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
     virtual void defineFilterSymbols(const Filter *) override {}

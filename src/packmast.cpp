@@ -49,10 +49,10 @@
 #include "p_tos.h"
 #include "p_vmlinx.h"
 #include "p_vmlinz.h"
-#include "p_w32pe_arm.h"
 #include "p_w32pe_i386.h"
 #include "p_w64pe_amd64.h"
 #include "p_w64pe_arm64.h"
+#include "p_wince_arm.h"
 #include "p_wcle.h"
 
 /*************************************************************************
@@ -161,7 +161,7 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         D(PackW64PeAmd64);
         D(PackW32PeI386);
     }
-    D(PackW32PeArm);
+    D(PackWinCeArm);
     // D(PackW64PeArm64EC); // NOT YET IMPLEMENTED
     // D(PackW64PeArm64); // NOT YET IMPLEMENTED
     D(PackExe);

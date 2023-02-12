@@ -64,8 +64,8 @@ STUBS += amd64-linux.shlib-init.h
 STUBS += amd64-win64.pe.h
 STUBS += arm.v4a-linux.elf-entry.h
 STUBS += arm.v4a-linux.elf-fold.h
-STUBS += arm.v4a-win32.pe.h
-STUBS += arm.v4t-win32.pe.h
+STUBS += arm.v4a-wince.pe.h
+STUBS += arm.v4t-wince.pe.h
 STUBS += arm.v5a-darwin.macho-entry.h
 STUBS += arm.v5a-darwin.macho-fold.h
 STUBS += arm.v5a-linux.elf-entry.h
@@ -764,23 +764,23 @@ armeb.v5a-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // arm.v4a-win32.pe (arm.v4a)
-# // arm.v4t-win32.pe (arm.v4t)
+# // arm.v4a-wince.pe (arm.v4a)
+# // arm.v4t-wince.pe (arm.v4t)
 # ************************************************************************/
 
 # info: we use the tc settings from arm.v4a-linux.elf
-arm.v4a-win32.pe.h : tc_list = arm.v4a-linux.elf default
-arm.v4t-win32.pe.h : tc_list = arm.v4a-linux.elf default
-arm.v4a-win32.pe.h : tc_bfdname = elf32-littlearm
-arm.v4t-win32.pe.h : tc_bfdname = elf32-littlearm
-arm.v4t-win32.pe.h : tc_objdump_disasm_options = -M force-thumb
+arm.v4a-wince.pe.h : tc_list = arm.v4a-linux.elf default
+arm.v4t-wince.pe.h : tc_list = arm.v4a-linux.elf default
+arm.v4a-wince.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-wince.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
 
-arm.v4a-win32.pe.h : $(srcdir)/src/$$T.S
+arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-arm.v4t-win32.pe.h : $(srcdir)/src/$$T.S
+arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@

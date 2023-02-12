@@ -211,13 +211,14 @@ protected:
     unsigned tryremove(unsigned, unsigned);
 
     enum {
-        IMAGE_FILE_MACHINE_UNKNOWN = 0x0,
+        IMAGE_FILE_MACHINE_UNKNOWN = 0,
         IMAGE_FILE_MACHINE_AMD64 = 0x8664,   // win64/pe (amd64)
-        IMAGE_FILE_MACHINE_ARM = 0x1c0,      // win32/arm
+        IMAGE_FILE_MACHINE_ARM = 0x01c0,     // wince/arm (Windows CE)
         IMAGE_FILE_MACHINE_ARM64 = 0xaa64,   // win64/arm64
         IMAGE_FILE_MACHINE_ARM64EC = 0xa641, // win64/arm64ec
-        IMAGE_FILE_MACHINE_I386 = 0x14c,     // win32/pe (i386)
-        IMAGE_FILE_MACHINE_THUMB = 0x1c2,    // win32/arm
+        IMAGE_FILE_MACHINE_ARMNT = 0x01c4,   // win32/arm
+        IMAGE_FILE_MACHINE_I386 = 0x014c,    // win32/pe (i386)
+        IMAGE_FILE_MACHINE_THUMB = 0x01c2,   // wince/arm (Windows CE)
     };
 
     enum {

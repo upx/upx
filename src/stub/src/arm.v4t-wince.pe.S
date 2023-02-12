@@ -1,4 +1,4 @@
-/* arm.v4t-win32.pe.S -- ARM/PE decompressor assembly startup (thumb mode)
+/* arm.v4t-wince.pe.S -- ARM/PE decompressor assembly startup (thumb mode)
 
    This file is part of the UPX executable compressor.
 

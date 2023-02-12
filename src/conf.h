@@ -539,7 +539,7 @@ constexpr bool string_ge(const char *a, const char *b) {
 #define UPX_F_PS1_EXE           18
 #define UPX_F_VMLINUX_i386      19
 #define UPX_F_LINUX_ELFI_i386   20
-#define UPX_F_W32PE_ARM         21
+#define UPX_F_WINCE_ARM         21              // Windows CE
 #define UPX_F_LINUX_ELF64_AMD64 22
 #define UPX_F_LINUX_ELF32_ARM   23
 #define UPX_F_BSD_i386          24
