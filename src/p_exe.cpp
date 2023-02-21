@@ -241,7 +241,7 @@ bool PackExe::canPack() {
     if (!readFileHeader())
         return false;
     if (file_size < 1024)
-        throwCantPack("file is too small");
+        throwCantPack("file is too small for dos/exe");
     fi->seek(0x3c, SEEK_SET);
     LE32 offs;
     fi->readx(&offs, sizeof(offs));
@@ -249,7 +249,7 @@ bool PackExe::canPack() {
         if (opt->dos_exe.force_stub)
             opt->overlay = opt->COPY_OVERLAY;
         else
-            throwCantPack("can't pack new-exe");
+            throwCantPack("dos/exe: can't pack new-exe");
     }
     return true;
 }

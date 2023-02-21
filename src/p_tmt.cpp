@@ -35,8 +35,6 @@
 static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-dos32.tmt.h"
 
-#define EXTRA_INFO 4 // original entry point
-
 /*************************************************************************
 //
 **************************************************************************/
@@ -100,7 +98,7 @@ int PackTmt::readFileHeader() {
         fi->seek(adam_offset, SEEK_SET);
         fi->readx(h, sizeof(h));
 
-        if (memcmp(h, "MZ", 2) == 0) // dos exe
+        if (memcmp(h, "MZ", 2) == 0) // dos/exe
         {
             exe_offset = adam_offset;
             adam_offset += H(2) * 512 + H(1);
@@ -135,14 +133,15 @@ int PackTmt::readFileHeader() {
 
     fi->seek(adam_offset, SEEK_SET);
     fi->readx(&ih, sizeof(ih));
-    // FIXME: should add more checks for the values in 'ih'
-    unsigned const imagesize = ih.imagesize;
-    unsigned const entry = ih.entry;
-    unsigned const relocsize = ih.relocsize;
-    if (imagesize < sizeof(ih) || entry < sizeof(ih) || file_size_u <= imagesize ||
-        file_size_u <= entry || file_size_u <= relocsize) {
-        printWarn(getName(), "bad header; imagesize=%#x  entry=%#x  relocsize=%#x", imagesize,
-                  entry, relocsize);
+
+    // TODO: could add more checks for the values in 'ih'
+    const unsigned imagesize = ih.imagesize;
+    const unsigned entry = ih.entry;
+    const unsigned rsize = ih.relocsize;
+    if (imagesize < sizeof(ih) || imagesize >= file_size_u || entry >= file_size_u ||
+        rsize >= file_size_u) {
+        throwCantPack("%s: bad header: imagesize=%#x entry=%#x relocsize=%#x", getName(), imagesize,
+                      entry, rsize);
         return 0;
     }
 
@@ -168,44 +167,47 @@ void PackTmt::pack(OutputFile *fo) {
 
     const unsigned usize = ih.imagesize;
     const unsigned rsize = ih.relocsize;
+    const unsigned relocnum = rsize / 4;
 
     ibuf.alloc(usize + rsize + 128);
     obuf.allocForCompression(usize + rsize + 128);
 
-    MemBuffer mb_wrkmem;
-    mb_wrkmem.alloc(rsize + EXTRA_INFO + 4); // relocations + original entry point + relocsize
-    SPAN_S_VAR(upx_byte, wrkmem, mb_wrkmem);
-
     fi->seek(adam_offset + sizeof(ih), SEEK_SET);
     fi->readx(ibuf, usize);
-    fi->readx(wrkmem + 4, rsize);
-    const unsigned overlay = file_size - fi->tell();
 
     if (find_le32(ibuf, UPX_MIN(128u, usize), get_le32("UPX ")) >= 0)
         throwAlreadyPacked();
     if (rsize == 0)
         throwCantPack("file is already compressed with another packer");
 
+    MemBuffer mb_relocs(rsize);
+    SPAN_S_VAR(upx_byte, relocs, mb_relocs);
+    fi->readx(relocs, rsize);
+
+    const unsigned overlay = file_size - fi->tell();
     checkOverlay(overlay);
 
-    unsigned relocsize = 0;
-    // if (rsize)
-    {
-        for (unsigned ic = 4; ic <= rsize; ic += 4)
-            set_le32(wrkmem + ic, get_le32(wrkmem + ic) - 4);
-        relocsize =
-            optimizeReloc32(wrkmem + 4, rsize / 4, wrkmem, ibuf, file_size, true, &big_relocs);
-    }
+    for (unsigned ic = 0; ic < relocnum; ic++)
+        set_le32(relocs + ic * 4, get_le32(relocs + ic * 4) - 4);
 
-    wrkmem[relocsize++] = 0;
-    set_le32(wrkmem + relocsize, ih.entry); // save original entry point
-    relocsize += 4;
-    set_le32(wrkmem + relocsize, relocsize + 4);
-    relocsize += 4;
-    memcpy(raw_index_bytes(ibuf, usize, relocsize), wrkmem, relocsize);
+    MemBuffer mb_orelocs(4 * relocnum + 8192); // relocations + extra_info
+    SPAN_S_VAR(upx_byte, orelocs, mb_orelocs);
+    unsigned orelocsize =
+        optimizeReloc(relocnum, relocs, orelocs, ibuf, usize, 32, true, &big_relocs);
+    relocs.destroy();    // done
+    mb_relocs.dealloc(); // done
+    // extra_info
+    orelocs[orelocsize++] = 0;                // why is this needed - historical oversight ???
+    set_le32(orelocs + orelocsize, ih.entry); // save original entry point
+    orelocsize += 4;
+    set_le32(orelocs + orelocsize, orelocsize + 4); // save orelocsize
+    orelocsize += 4;
+    memcpy(raw_index_bytes(ibuf, usize, orelocsize), orelocs, orelocsize);
+    orelocs.destroy();    // done
+    mb_orelocs.dealloc(); // done
 
     // prepare packheader
-    ph.u_len = usize + relocsize;
+    ph.u_len = usize + orelocsize;
     // prepare filter
     Filter ft(ph.level);
     ft.buf_len = usize;
@@ -247,7 +249,7 @@ void PackTmt::pack(OutputFile *fo) {
     fo->write(loader, e_len);
     fo->write(obuf, ph.c_len);
     fo->write(loader + lsize - d_len, d_len); // decompressor
-    char rel_entry[4];
+    unsigned char rel_entry[4];
     set_le32(rel_entry, 5 + s_point);
     fo->write(rel_entry, sizeof(rel_entry));
 
@@ -281,10 +283,10 @@ void PackTmt::unpack(OutputFile *fo) {
     // decompress
     decompress(ibuf, obuf);
 
-    // decode relocations
-    const unsigned osize = ph.u_len - get_le32(obuf + (ph.u_len - 4));
-    SPAN_P_VAR(upx_byte, relocs, obuf + osize);
-    const unsigned origstart = get_le32(obuf + (ph.u_len - 8));
+    // read extra_info
+    const unsigned orig_entry = mem_size(1, get_le32(obuf + ph.u_len - 8));
+    const unsigned orelocsize = mem_size(1, get_le32(obuf + ph.u_len - 4));
+    const unsigned osize = mem_size(1, ph.u_len - orelocsize);
 
     // unfilter
     if (ph.filter) {
@@ -292,21 +294,23 @@ void PackTmt::unpack(OutputFile *fo) {
         ft.init(ph.filter, 0);
         ft.cto = (unsigned char) ph.filter_cto;
         if (ph.version < 11)
-            ft.cto = (unsigned char) (get_le32(obuf + (ph.u_len - 12)) >> 24);
-        ft.unfilter(obuf, ptr_udiff_bytes(relocs, obuf));
+            ft.cto = (unsigned char) (get_le32(obuf + ph.u_len - 12) >> 24);
+        ft.unfilter(obuf, osize);
     }
 
     // decode relocations
-    MemBuffer mb_wrkmem;
-    const unsigned relocn = unoptimizeReloc32(relocs, obuf, mb_wrkmem, true);
-    SPAN_S_VAR(upx_byte, wrkmem, mb_wrkmem);
-    for (unsigned ic = 0; ic < relocn; ic++)
-        set_le32(wrkmem + ic * 4, get_le32(wrkmem + ic * 4) + 4);
+    SPAN_S_VAR(const upx_byte, orelocs, raw_index_bytes(obuf, osize, orelocsize), orelocsize);
+    SPAN_S_VAR(upx_byte, reloc_image, raw_index_bytes(obuf, 0, osize), osize);
+    MemBuffer mb_relocs;
+    const unsigned relocnum = unoptimizeReloc(orelocs, mb_relocs, reloc_image, osize, 32, true);
+    SPAN_S_VAR(upx_byte, relocs, mb_relocs);
+    for (unsigned ic = 0; ic < relocnum; ic++)
+        set_le32(relocs + ic * 4, get_le32(relocs + ic * 4) + 4);
 
     memcpy(&oh, &ih, sizeof(oh));
     oh.imagesize = osize;
-    oh.entry = origstart;
-    oh.relocsize = relocn * 4;
+    oh.entry = orig_entry;
+    oh.relocsize = relocnum * 4;
 
     const unsigned overlay = file_size - adam_offset - ih.imagesize - ih.relocsize - sizeof(ih);
     checkOverlay(overlay);
@@ -315,7 +319,7 @@ void PackTmt::unpack(OutputFile *fo) {
     if (fo) {
         fo->write(&oh, sizeof(oh));
         fo->write(obuf, osize);
-        fo->write(raw_bytes(wrkmem, relocn * 4), relocn * 4);
+        fo->write(relocs, relocnum * 4);
     }
 
     // copy the overlay

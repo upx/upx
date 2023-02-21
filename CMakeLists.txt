@@ -126,6 +126,9 @@ list(SORT upx_SOURCES)
 add_executable(upx ${upx_SOURCES})
 set_property(TARGET upx PROPERTY CXX_STANDARD 17)
 target_link_libraries(upx upx_vendor_ucl upx_vendor_zlib)
+if(NOT UPX_CONFIG_DISABLE_ZSTD)
+    target_link_libraries(upx upx_vendor_zstd)
+endif()
 
 #***********************************************************************
 # compilation flags
@@ -184,8 +187,10 @@ function(upx_compile_target_debug_with_O2 t)
 endfunction()
 
 function(upx_sanitize_target t)
-    if(NOT UPX_CONFIG_DISABLE_SANITIZE AND NOT MSVC)
-        if(CMAKE_C_PLATFORM_ID MATCHES "^MinGW" OR MINGW OR CYGWIN)
+    if(NOT UPX_CONFIG_DISABLE_SANITIZE)
+        if(MSVC)
+            # msvc uses -GS (similar to -fstack-protector) by default
+        elseif(CMAKE_C_PLATFORM_ID MATCHES "^MinGW" OR MINGW OR CYGWIN)
             # avoid link errors with current MinGW-w64 versions
             # see https://www.mingw-w64.org/contribute/#sanitizers-asan-tsan-usan
         else()
@@ -246,16 +251,15 @@ endif()
 if(UPX_CONFIG_DISABLE_WERROR)
     target_compile_definitions(${t} PRIVATE UPX_CONFIG_DISABLE_WERROR=1)
 endif()
+if(NOT UPX_CONFIG_DISABLE_ZSTD)
+    target_compile_definitions(${t} PRIVATE WITH_ZSTD=1)
+endif()
 #upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
 if(MSVC)
     target_compile_options(${t} PRIVATE -EHsc -J ${warn_WN} ${warn_WX})
 else()
     target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
-endif()
-if(NOT UPX_CONFIG_DISABLE_ZSTD)
-    target_compile_definitions(${t} PRIVATE WITH_ZSTD=1)
-    target_link_libraries(upx upx_vendor_zstd)
 endif()
 
 #***********************************************************************

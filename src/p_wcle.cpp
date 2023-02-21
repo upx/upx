@@ -181,7 +181,7 @@ void PackWcle::encodeObjectTable() {
     OOT(0, base_address) = IOT(0, base_address);
 
     ic = IOT(objects - 1, my_base_address) + IOT(objects - 1, virtual_size);
-    jc = pages * mps + sofixups + 1024;
+    jc = mem_size(mps, pages, sofixups, 1024);
     if (ic < jc)
         ic = jc;
 
@@ -247,14 +247,14 @@ void PackWcle::preprocessFixups() {
         throwCantPack("files without relocations are not supported");
     }
 
-    MemBuffer rl_membuf(jc);
+    MemBuffer mb_relocs(jc);
     ByteArray(srf, counts[objects + 0] + 1);
     ByteArray(slf, counts[objects + 1] + 1);
 
-    SPAN_S_VAR(upx_byte, rl, rl_membuf);
+    SPAN_S_VAR(upx_byte, relocs, mb_relocs);
     SPAN_S_VAR(upx_byte, selector_fixups, srf_membuf);
     SPAN_S_VAR(upx_byte, selfrel_fixups, slf_membuf);
-    unsigned rc = 0;
+    unsigned relocnum = 0;
 
     upx_byte *fix = ifixups;
     for (ic = jc = 0; ic < pages; ic++) {
@@ -295,7 +295,7 @@ void PackWcle::preprocessFixups() {
                 }
                 dputc('p', stdout);
                 memcpy(iimage + jc + fixp2, fix + 5, (fix[1] & 0x10) ? 4 : 2);
-                set_le32(rl + 4 * rc++, jc + fixp2);
+                set_le32(relocs + 4 * relocnum++, jc + fixp2);
                 set_le32(iimage + jc + fixp2,
                          get_le32(iimage + jc + fixp2) + IOT(fix[4] - 1, my_base_address));
 
@@ -316,8 +316,8 @@ void PackWcle::preprocessFixups() {
 
                 // work around a pmwunlite bug: remove duplicated fixups
                 // FIXME: fix the other cases too
-                if (rc == 0 || get_le32(rl + 4 * rc - 4) != jc + fixp2) {
-                    set_le32(rl + 4 * rc++, jc + fixp2);
+                if (relocnum == 0 || get_le32(relocs + 4 * relocnum - 4) != jc + fixp2) {
+                    set_le32(relocs + 4 * relocnum++, jc + fixp2);
                     set_le32(iimage + jc + fixp2,
                              get_le32(iimage + jc + fixp2) + IOT(fix[4] - 1, my_base_address));
                 }
@@ -348,11 +348,14 @@ void PackWcle::preprocessFixups() {
     }
 
     // resize ifixups if it's too small
-    if (sofixups < 1000) {
+    if (sofixups < 4 * relocnum + 8192) {
         delete[] ifixups;
-        ifixups = new upx_byte[1000];
+        sofixups = 4 * relocnum + 8192;
+        ifixups = New(upx_byte, sofixups);
     }
-    fix = ifixups + optimizeReloc32(rl, rc, ifixups, iimage, file_size, 1, &big_relocs);
+    SPAN_S_VAR(upx_byte, orelocs, ifixups, sofixups);
+    fix =
+        ifixups + optimizeReloc(relocnum, relocs, orelocs, iimage, soimage, 32, true, &big_relocs);
     has_extra_code = ptr_udiff_bytes(selector_fixups, srf) != 0;
     // FIXME: this could be removed if has_extra_code = false
     // but then we'll need a flag
@@ -380,7 +383,7 @@ void PackWcle::encodeImage(Filter *ft) {
     ifixups = nullptr;
 
     mb_oimage.allocForCompression(isize, RESERVED + 512);
-    oimage = mb_oimage;
+    oimage = mb_oimage; // => now a SPAN_S
     // prepare packheader
     ph.u_len = isize;
     // prepare filter [already done]
@@ -424,7 +427,7 @@ void PackWcle::pack(OutputFile *fo) {
 
     preprocessFixups();
 
-    const unsigned text_size = IOT(ih.init_cs_object - 1, npages) * mps;
+    const unsigned text_size = mem_size(mps, IOT(ih.init_cs_object - 1, npages));
     const unsigned text_vaddr = IOT(ih.init_cs_object - 1, my_base_address);
 
     // attach some useful data at the end of preprocessed fixups
@@ -437,7 +440,8 @@ void PackWcle::pack(OutputFile *fo) {
     set_le32(ifixups + sofixups,
              ih.init_esp_offset + IOT(ih.init_ss_object - 1, my_base_address)); // old stack pointer
     set_le32(ifixups + sofixups + 4, ih.init_eip_offset + text_vaddr);          // real entry point
-    set_le32(ifixups + sofixups + 8, mps * pages); // virtual address of unpacked relocations
+    set_le32(ifixups + sofixups + 8,
+             mem_size(mps, pages)); // virtual address of unpacked relocations
     ifixups[sofixups + 12] = (unsigned char) (unsigned) objects;
     sofixups += 13;
 
@@ -478,7 +482,7 @@ void PackWcle::pack(OutputFile *fo) {
     linker->defineSymbol("original_entry", ih.init_eip_offset + text_vaddr);
     linker->defineSymbol("original_stack",
                          ih.init_esp_offset + IOT(ih.init_ss_object - 1, my_base_address));
-    linker->defineSymbol("start_of_relocs", mps * pages);
+    linker->defineSymbol("start_of_relocs", mem_size(mps, pages));
     defineDecompressorSymbols();
     defineFilterSymbols(&ft);
     linker->defineSymbol("filter_buffer_start", text_vaddr);
@@ -518,19 +522,17 @@ void PackWcle::pack(OutputFile *fo) {
 **************************************************************************/
 
 void PackWcle::decodeFixups() {
-    SPAN_P_VAR(upx_byte, p, oimage + soimage);
-    //    assert(p.raw_size_in_bytes() == mb_oimage.getSize()); // Span sanity check
-
     mb_iimage.dealloc();
     iimage = nullptr;
 
-    MemBuffer tmpbuf;
-    unsigned const fixupn = unoptimizeReloc32(p, oimage, tmpbuf, true);
+    SPAN_S_VAR(const upx_byte, p, oimage + soimage);
+    MemBuffer mb_relocs;
+    unsigned const fixupn = unoptimizeReloc(p, mb_relocs, oimage, soimage, 32, true);
 
     MemBuffer wrkmem(8 * fixupn + 8);
     unsigned ic, jc, o, r;
     for (ic = 0; ic < fixupn; ic++) {
-        jc = get_le32(tmpbuf + 4 * ic);
+        jc = get_le32(mb_relocs + 4 * ic);
         set_le32(wrkmem + ic * 8, jc);
         o = soobject_table;
         r = get_le32(oimage + jc);
@@ -539,13 +541,13 @@ void PackWcle::decodeFixups() {
         set_le32(oimage + jc, r);
     }
     set_le32(wrkmem + ic * 8, 0xFFFFFFFF); // end of 32-bit offset fixups
-    tmpbuf.dealloc();
+    mb_relocs.dealloc();                   // done
 
     // selector fixups then self-relative fixups
-    SPAN_P_VAR(const upx_byte, selector_fixups, p);
+    SPAN_S_VAR(const upx_byte, selector_fixups, p);
 
     // Find selfrel_fixups by skipping over selector_fixups.
-    SPAN_P_VAR(const upx_byte, q, selector_fixups);
+    SPAN_S_VAR(const upx_byte, q, selector_fixups);
     // The code is a subroutine that ends in RET (0xC3).
     while (*q != 0xC3) {
         // Defend against tampered selector_fixups; see PackWcle::preprocessFixups().
@@ -563,10 +565,9 @@ void PackWcle::decodeFixups() {
         }
         // Guard against run-away.
         static unsigned char const blank[9] = {0};
-        if (ptr_diff_bytes(oimage + ph.u_len - sizeof(blank), raw_bytes(q, 0)) <
-                0                               // catastrophic worst case
-            || !memcmp(blank, q, sizeof(blank)) // no-good early warning
-        ) {
+        // catastrophic worst case or no-good early warning
+        if (ptr_diff_bytes(oimage + ph.u_len - sizeof(blank), raw_bytes(q, 0)) < 0 ||
+            !memcmp(blank, q, sizeof(blank))) {
             char msg[50];
             snprintf(msg, sizeof(msg), "bad selector_fixups %d",
                      ptr_diff_bytes(q, selector_fixups));
@@ -575,7 +576,7 @@ void PackWcle::decodeFixups() {
         q += 9;
     }
     unsigned selectlen = ptr_udiff_bytes(q, selector_fixups) / 9;
-    SPAN_P_VAR(const upx_byte, selfrel_fixups, q + 1); // Skip the 0xC3
+    SPAN_S_VAR(const upx_byte, selfrel_fixups, q + 1); // Skip the 0xC3
 
     const unsigned fbytes = fixupn * 9 + 1000 + selectlen * 5;
     ofixups = New(upx_byte, fbytes);
@@ -611,7 +612,7 @@ void PackWcle::decodeFixups() {
             dputc('s', stdout);
         }
         // 32 bit offset fixups
-        while (get_le32(wrkmem + 4 * jc) < ic * mps) {
+        while (get_le32(wrkmem + 4 * jc) < mem_size(mps, ic)) {
             if (jc > 1 &&
                 ((get_le32(wrkmem + 4 * (jc - 2)) + 3) & (mps - 1)) < 3) // cross page fixup?
             {
@@ -770,7 +771,7 @@ void PackWcle::unpack(OutputFile *fo) {
 
     // unfilter
     if (ph.filter) {
-        const unsigned text_size = OOT(oh.init_cs_object - 1, npages) * mps;
+        const unsigned text_size = mem_size(mps, OOT(oh.init_cs_object - 1, npages));
         const unsigned text_vaddr = OOT(oh.init_cs_object - 1, my_base_address);
 
         Filter ft(ph.level);

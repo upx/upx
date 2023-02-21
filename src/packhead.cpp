@@ -174,12 +174,12 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
     int boff = find_le32(raw_bytes(buf, blen), blen, UPX_MAGIC_LE32);
     if (boff < 0)
         return false;
+    blen -= boff; // bytes remaining in buf
+    if (blen < 20)
+        throwCantUnpack("header corrupted 1");
 
     SPAN_S_VAR(const upx_byte, const p, buf + boff);
-    unsigned const headway = blen - boff; // bytes remaining in buf
 
-    if (headway < (1 + 7))
-        throwCantUnpack("header corrupted 1");
     version = p[4];
     format = p[5];
     method = p[6];
@@ -201,33 +201,25 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
     // decode the new variable length header
     //
 
-    unsigned off_filter = 0;
+    int off_filter = 0;
     if (format < 128) {
-        if (headway < 16) {
-            throwCantUnpack("header corrupted 2");
-        }
         u_adler = get_le32(p + 8);
         c_adler = get_le32(p + 12);
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS) {
-            if (headway < 20) {
-                throwCantUnpack("header corrupted 5");
-            }
             u_len = get_le16(p + 16);
             c_len = get_le16(p + 18);
             u_file_size = u_len;
             off_filter = 20;
         } else if (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH) {
-            if (headway < 25) {
+            if (blen < 25)
                 throwCantUnpack("header corrupted 6");
-            }
             u_len = get_le24(p + 16);
             c_len = get_le24(p + 19);
             u_file_size = get_le24(p + 22);
             off_filter = 25;
         } else {
-            if (headway < (3 + 28)) {
+            if (blen < 31)
                 throwCantUnpack("header corrupted 7");
-            }
             u_len = get_le32(p + 16);
             c_len = get_le32(p + 20);
             u_file_size = get_le32(p + 24);
@@ -236,9 +228,8 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
             n_mru = p[30] ? 1 + p[30] : 0;
         }
     } else {
-        if (headway < (3 + 28)) {
+        if (blen < 31)
             throwCantUnpack("header corrupted 8");
-        }
         u_len = get_be32(p + 8);
         c_len = get_be32(p + 12);
         u_adler = get_be32(p + 16);
@@ -250,9 +241,8 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
     }
 
     if (version >= 10) {
-        if (headway < (1 + off_filter)) {
+        if (blen < off_filter + 1)
             throwCantUnpack("header corrupted 9");
-        }
         filter = p[off_filter];
     } else if ((level & 128) == 0)
         filter = 0;
@@ -273,9 +263,9 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
     if (version == 0xff)
         throwCantUnpack("cannot unpack UPX ;-)");
     // check header_checksum
-    if (version > 9) {
-        unsigned const size = getPackHeaderSize(); // expected; based on format and version
-        if (headway < size || p[size - 1] != get_packheader_checksum(p, size - 1))
+    if (version >= 10) {
+        int size = getPackHeaderSize(); // expected; based on format and version
+        if (size > blen || p[size - 1] != get_packheader_checksum(p, size - 1))
             throwCantUnpack("header corrupted 3");
     }
     if (c_len < 2 || u_len < 2 || !mem_size_valid_bytes(c_len) || !mem_size_valid_bytes(u_len))

@@ -92,7 +92,7 @@ protected:
     unsigned processImports0(ord_mask_t ord_mask);
 
     template <typename LEXX, typename ord_mask_t>
-    void rebuildImports(SPAN_S(upx_byte) & extrainfo, ord_mask_t ord_mask, bool set_oft);
+    void rebuildImports(SPAN_S(upx_byte) & extra_info, ord_mask_t ord_mask, bool set_oft);
     virtual unsigned processImports() = 0;
     virtual void processImports2(unsigned, unsigned);
     MemBuffer mb_oimport;
@@ -365,7 +365,7 @@ protected:
 
     public:
         Reloc(upx_byte *, unsigned);
-        Reloc(unsigned rnum);
+        Reloc(unsigned relocnum);
         //
         bool next(unsigned &pos, unsigned &type);
         const unsigned *getcounts() const { return counts; }

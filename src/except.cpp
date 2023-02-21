@@ -143,6 +143,30 @@ void throwEOFException(const char *msg, int e) {
 //
 **************************************************************************/
 
+template <>
+void throwCantPack(const char *format, ...) {
+    char msg[1024];
+    va_list ap;
+    va_start(ap, format);
+    (void) upx_safe_vsnprintf(msg, sizeof(msg), format, ap);
+    va_end(ap);
+    throwCantPack(msg);
+}
+
+template <>
+void throwCantUnpack(const char *format, ...) {
+    char msg[1024];
+    va_list ap;
+    va_start(ap, format);
+    (void) upx_safe_vsnprintf(msg, sizeof(msg), format, ap);
+    va_end(ap);
+    throwCantUnpack(msg);
+}
+
+/*************************************************************************
+//
+**************************************************************************/
+
 const char *prettyName(const char *n) noexcept {
     if (n == nullptr)
         return "(null)";

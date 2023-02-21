@@ -49,9 +49,10 @@ public:
     MemBufferBase() : ptr(nullptr), size_in_bytes(0) {}
 
     // NOTE: implicit conversion to underlying pointer
-    // NOTE: for fully bound-checked pointer use XSPAN_S from xspan.h
+    // HINT: for fully bound-checked pointer use XSPAN_S from xspan.h
     operator pointer() const { return ptr; }
 
+    // membuffer + n -> pointer
     template <class U>
     typename std::enable_if<std::is_integral<U>::value, pointer>::type operator+(U n) const {
         size_t bytes = mem_size(sizeof(T), n); // check mem_size
@@ -59,7 +60,7 @@ public:
     }
 
 private:
-    // NOT allowed; use raw_bytes() instead
+    // membuffer - n -> pointer; not allowed - use raw_bytes() if needed
     template <class U>
     typename std::enable_if<std::is_integral<U>::value, pointer>::type operator-(U n) const
         DELETED_FUNCTION;
@@ -82,13 +83,13 @@ public: // raw access
 class MemBuffer final : public MemBufferBase<unsigned char> {
 public:
     MemBuffer() : MemBufferBase<unsigned char>() {}
-    explicit MemBuffer(upx_uint64_t size_in_bytes);
+    explicit MemBuffer(upx_uint64_t bytes);
     ~MemBuffer();
 
     static unsigned getSizeForCompression(unsigned uncompressed_size, unsigned extra = 0);
     static unsigned getSizeForDecompression(unsigned uncompressed_size, unsigned extra = 0);
 
-    void alloc(upx_uint64_t size);
+    void alloc(upx_uint64_t bytes);
     void allocForCompression(unsigned uncompressed_size, unsigned extra = 0);
     void allocForDecompression(unsigned uncompressed_size, unsigned extra = 0);
 
@@ -96,7 +97,7 @@ public:
     void checkState() const;
     unsigned getSize() const { return size_in_bytes; }
 
-    // explicit converstion
+    // explicit conversion
     void *getVoidPtr() { return (void *) ptr; }
     const void *getVoidPtr() const { return (const void *) ptr; }
 
@@ -119,6 +120,7 @@ private:
     // static debug stats
     struct Stats {
         upx_std_atomic(upx_uint32_t) global_alloc_counter;
+        upx_std_atomic(upx_uint32_t) global_dealloc_counter;
         upx_std_atomic(upx_uint64_t) global_total_bytes;
         upx_std_atomic(upx_uint64_t) global_total_active_bytes;
     };

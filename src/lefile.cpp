@@ -148,7 +148,7 @@ void LeFile::readImage() {
     soimage = pages * mps;
     mb_iimage.alloc(soimage);
     mb_iimage.clear();
-    iimage = mb_iimage;
+    iimage = mb_iimage; // => now a SPAN_S
 
     unsigned ic, jc;
     for (ic = jc = 0; ic < pages; ic++) {

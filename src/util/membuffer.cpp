@@ -179,38 +179,42 @@ void MemBuffer::fill(unsigned off, unsigned len, int value) {
 void MemBuffer::checkState() const {
     if (!ptr)
         throwInternalError("block not allocated");
+    assert(size_in_bytes > 0);
     if (use_simple_mcheck()) {
-        if (get_ne32(ptr - 4) != MAGIC1(ptr))
+        const unsigned char *p = (const unsigned char *) ptr;
+        if (get_ne32(p - 4) != MAGIC1(p))
             throwInternalError("memory clobbered before allocated block 1");
-        if (get_ne32(ptr - 8) != size_in_bytes)
+        if (get_ne32(p - 8) != size_in_bytes)
             throwInternalError("memory clobbered before allocated block 2");
-        if (get_ne32(ptr + size_in_bytes) != MAGIC2(ptr))
+        if (get_ne32(p + size_in_bytes) != MAGIC2(p))
             throwInternalError("memory clobbered past end of allocated block");
     }
 }
 
-void MemBuffer::alloc(upx_uint64_t size) {
+void MemBuffer::alloc(upx_uint64_t bytes) {
     // NOTE: we don't automatically free a used buffer
     assert(ptr == nullptr);
     assert(size_in_bytes == 0);
     //
-    assert(size > 0);
+    assert(bytes > 0);
     debug_set(debug.last_return_address_alloc, upx_return_address());
-    size_t bytes = mem_size(1, size, use_simple_mcheck() ? 32 : 0);
-    unsigned char *p = (unsigned char *) malloc(bytes);
-    NO_printf("MemBuffer::alloc %llu: %p\n", size, p);
+    size_t malloc_bytes = mem_size(1, bytes);
+    if (use_simple_mcheck())
+        malloc_bytes += 32;
+    unsigned char *p = (unsigned char *) ::malloc(malloc_bytes);
+    NO_printf("MemBuffer::alloc %llu: %p\n", bytes, p);
     if (!p)
         throwOutOfMemoryException();
-    ptr = p;
-    size_in_bytes = ACC_ICONV(unsigned, size);
+    size_in_bytes = ACC_ICONV(unsigned, bytes);
     if (use_simple_mcheck()) {
-        ptr = p + 16;
+        p += 16;
         // store magic constants to detect buffer overruns
-        set_ne32(ptr - 8, size_in_bytes);
-        set_ne32(ptr - 4, MAGIC1(ptr));
-        set_ne32(ptr + size_in_bytes, MAGIC2(ptr));
-        set_ne32(ptr + size_in_bytes + 4, stats.global_alloc_counter);
+        set_ne32(p - 8, size_in_bytes);
+        set_ne32(p - 4, MAGIC1(p));
+        set_ne32(p + size_in_bytes, MAGIC2(p));
+        set_ne32(p + size_in_bytes + 4, stats.global_alloc_counter);
     }
+    ptr = (pointer) (void *) p;
 #if !defined(__SANITIZE_ADDRESS__) && 0
     fill(0, size_in_bytes, (rand() & 0xff) | 1); // debug
     (void) VALGRIND_MAKE_MEM_UNDEFINED(ptr, size_in_bytes);
@@ -218,23 +222,29 @@ void MemBuffer::alloc(upx_uint64_t size) {
     stats.global_alloc_counter += 1;
     stats.global_total_bytes += size_in_bytes;
     stats.global_total_active_bytes += size_in_bytes;
+#if DEBUG
+    checkState();
+#endif
 }
 
 void MemBuffer::dealloc() {
     if (ptr != nullptr) {
         debug_set(debug.last_return_address_dealloc, upx_return_address());
         checkState();
+        stats.global_dealloc_counter += 1;
         stats.global_total_active_bytes -= size_in_bytes;
         if (use_simple_mcheck()) {
+            unsigned char *p = (unsigned char *) ptr;
             // clear magic constants
-            set_ne32(ptr - 8, 0);
-            set_ne32(ptr - 4, 0);
-            set_ne32(ptr + size_in_bytes, 0);
-            set_ne32(ptr + size_in_bytes + 4, 0);
+            set_ne32(p - 8, 0);
+            set_ne32(p - 4, 0);
+            set_ne32(p + size_in_bytes, 0);
+            set_ne32(p + size_in_bytes + 4, 0);
             //
-            ::free(ptr - 16);
-        } else
+            ::free(p - 16);
+        } else {
             ::free(ptr);
+        }
         ptr = nullptr;
         size_in_bytes = 0;
     } else {
@@ -263,14 +273,24 @@ TEST_CASE("MemBuffer") {
     CHECK_NOTHROW(64 + mb);
     CHECK_THROWS(65 + mb);
 #endif
+    CHECK_NOTHROW(mb.subref("", 0, 64));
+    CHECK_NOTHROW(mb.subref("", 64, 0));
+    CHECK_THROWS(mb.subref("", 1, 64));
+    CHECK_THROWS(mb.subref("", 64, 1));
     if (use_simple_mcheck()) {
-        upx_byte *b = raw_bytes(mb, 0);
-        unsigned magic1 = get_ne32(b - 4);
-        set_ne32(b - 4, magic1 ^ 1);
+        unsigned char *p = raw_bytes(mb, 0);
+        unsigned magic1 = get_ne32(p - 4);
+        set_ne32(p - 4, magic1 ^ 1);
         CHECK_THROWS(mb.checkState());
-        set_ne32(b - 4, magic1);
+        set_ne32(p - 4, magic1);
         mb.checkState();
     }
+}
+
+TEST_CASE("MemBuffer unused") {
+    MemBuffer mb;
+    CHECK(mb.raw_ptr() == nullptr);
+    CHECK(mb.raw_size_in_bytes() == 0);
 }
 
 TEST_CASE("MemBuffer::getSizeForCompression") {

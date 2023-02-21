@@ -1,10 +1,9 @@
 #
 # UPX stub Makefile - needs GNU make 3.81 or better
 #
-# You also will need a number of special build tools like various
-# cross-assemblers and cross-compilers - please see README.SRC
-# for details.
-# And see misc/rebuild-stubs-with-podman how to use Podman/Docker.
+# Preferred: see misc/rebuild-stubs-with-podman how to use Podman/Docker.
+# Otherwise you will need a number of special build tools like various
+# cross-assemblers and cross-compilers - see README.SRC.
 #
 # Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
 #
@@ -21,10 +20,6 @@ comma := ,
 empty :=
 space := $(empty) $(empty)
 tab   := $(empty)	$(empty)
-
-ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.77 3.78 3.78.1 3.79 3.79.1 3.80),)
-$(error GNU make 3.81 or better is required)
-endif
 
 ifndef srcdir
 srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
@@ -207,7 +202,7 @@ tc_objdump_disasm_options =
 ECHO_e     = /bin/echo -e
 ECHO_E     = /bin/echo -E
 PERL       = perl
-PYTHON     = python2
+PYTHON2    = python2
 UNIX2DOS  := $(PERL) -i -pe 's/$$/\r/;'
 
 # trim (strip) trailing whitespace
@@ -240,15 +235,15 @@ define tc
 endef
 
 # default tools
-tc.default.bin2h      = $(PYTHON) $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
+tc.default.bin2h      = $(PYTHON2) $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
 ##tc.default.bin2h-c    = $(call tc,bin2h) --compress=14,15,0
 tc.default.bin2h-c    = $(call tc,bin2h) --compress=0
-tc.default.brandelf   = $(PYTHON) $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
-tc.default.gpp_inc    = $(PYTHON) $(top_srcdir)/src/stub/scripts/gpp_inc.py
-tc.default.gpp_mkdep  = $(PYTHON) $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
+tc.default.brandelf   = $(PYTHON2) $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
+tc.default.gpp_inc    = $(PYTHON2) $(top_srcdir)/src/stub/scripts/gpp_inc.py
+tc.default.gpp_mkdep  = $(PYTHON2) $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
 tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
 tc.default.sstrip     = sstrip-20060518
-tc.default.xstrip     = $(PYTHON) $(top_srcdir)/src/stub/scripts/xstrip.py
+tc.default.xstrip     = $(PYTHON2) $(top_srcdir)/src/stub/scripts/xstrip.py
 
 # default multiarch-binutils
 tc.default.m-ar       = multiarch-ar-2.17

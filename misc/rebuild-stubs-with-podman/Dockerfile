@@ -15,7 +15,7 @@ RUN dpkg --add-architecture i386 \
         # the full UPX binary inside the container via CMake:
         7zip bfs bzip2 cabextract chrpath cmake cpio curl elfutils fd-find file fzf g++ gdb gojq \
         ht htop hyperfine jq libzstd-dev lsb-release lz4 lzip lzop moreutils ninja-build \
-        p7zip patch patchelf parallel pax-utils paxctl re2c ripgrep rsync \
+        p7zip parallel patch patchelf pax-utils paxctl re2c ripgrep rsync \
         screen universal-ctags unzip vim zip zlib1g-dev zsh zstd \
         # extra packages for compiling with "gcc -m32" and and "gcc -mx32":
         g++-multilib gcc-multilib \

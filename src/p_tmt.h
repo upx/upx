@@ -62,8 +62,8 @@ protected:
     virtual void buildLoader(const Filter *ft) override;
     virtual Linker *newLinker() const override;
 
-    unsigned adam_offset;
-    int big_relocs;
+    unsigned adam_offset = 0;
+    int big_relocs = 0;
 
     struct alignas(1) tmt_header_t {
         char _[16]; // signature,linkerversion,minversion,exesize,imagestart

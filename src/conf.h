@@ -131,7 +131,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #define upx_std_once_flag       upx_std_atomic(size_t)
 template <class NoexceptCallable>
 inline void upx_std_call_once(upx_std_once_flag &flag, NoexceptCallable &&f) {
-    if (!flag) { flag = 1; f(); }
+    if (__acc_unlikely(!flag)) { flag = 1; f(); }
 }
 #else
 #include <atomic>

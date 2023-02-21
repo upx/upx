@@ -271,21 +271,12 @@ protected:
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util
-    static unsigned optimizeReloc(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
-                                  SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big,
-                                  int bits);
-    static unsigned unoptimizeReloc(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
-                                    bool bswap, int bits);
-
-    static unsigned optimizeReloc32(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
-                                    SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big);
-    static unsigned unoptimizeReloc32(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
-                                      bool bswap);
-
-    static unsigned optimizeReloc64(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
-                                    SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big);
-    static unsigned unoptimizeReloc64(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
-                                      bool bswap);
+    static unsigned optimizeReloc(unsigned relocnum, SPAN_P(upx_byte) relocs, SPAN_S(upx_byte) out,
+                                  SPAN_P(upx_byte) image, unsigned image_size, int bits, bool bswap,
+                                  int *big);
+    static unsigned unoptimizeReloc(SPAN_S(const upx_byte) & in, MemBuffer &out,
+                                    SPAN_P(upx_byte) image, unsigned image_size, int bits,
+                                    bool bswap);
 
     // Target Endianness abstraction
     unsigned get_te16(const void *p) const { return bele->get16(p); }

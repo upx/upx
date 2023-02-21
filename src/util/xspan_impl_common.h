@@ -95,6 +95,12 @@ forceinline pointer ensureBase() const {
 
 public:
 inline ~CSelf() {}
+void destroy() {
+    assertInvariants();
+    base = ptr;
+    size_in_bytes = 0;
+    assertInvariants();
+}
 // constructors from pointers
 CSelf(pointer first, XSpanCount count)
     : ptr(makePtr(first)), base(makeBase(first)), size_in_bytes(xspan_mem_size<T>(count.count)) {

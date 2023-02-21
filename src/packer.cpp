@@ -60,7 +60,7 @@ void Packer::assertPacker() const {
     assert(getVersion() >= 11);
     assert(getVersion() <= 14);
     assert(strlen(getName()) <= 15);
-    // info: 36 is the limit for show_all_packers() in help.cpp
+    // info: 36 is the limit for show_all_packers() in help.cpp, but 32 should be enough
     assert(strlen(getFullName(opt)) <= 32);
     assert(strlen(getFullName(nullptr)) <= 32);
     if (bele == nullptr)
@@ -77,8 +77,9 @@ void Packer::assertPacker() const {
             fprintf(stderr, "%s\n", getName());
         assert(bele == format_bele);
     }
-#if 1
+#if DEBUG
     Linker *l = newLinker();
+    assert(l != nullptr);
     if (bele != l->bele)
         fprintf(stderr, "%s\n", getName());
     assert(bele == l->bele);
@@ -268,7 +269,7 @@ bool Packer::compress(SPAN_P(upx_byte) i_ptr, unsigned i_len, SPAN_P(upx_byte) o
         }
     }
 
-    // printf("\nPacker::compress: %d/%d: %7d -> %7d\n", method, ph.level, ph.u_len, ph.c_len);
+    NO_printf("\nPacker::compress: %d/%d: %7d -> %7d\n", method, ph.level, ph.u_len, ph.c_len);
     if (!checkCompressionRatio(ph.u_len, ph.c_len))
         return false;
     // return in any case if not compressible
@@ -298,14 +299,6 @@ bool Packer::compress(SPAN_P(upx_byte) i_ptr, unsigned i_len, SPAN_P(upx_byte) o
     return true;
 }
 
-#if 0
-bool Packer::compress(upx_bytep in, upx_bytep out,
-                      const upx_compress_config_t *cconf)
-{
-    return ph_compress(ph, in, out, cconf);
-}
-#endif
-
 bool Packer::checkDefaultCompressionRatio(unsigned u_len, unsigned c_len) const {
     assert((int) u_len > 0);
     assert((int) c_len > 0);
@@ -316,14 +309,12 @@ bool Packer::checkDefaultCompressionRatio(unsigned u_len, unsigned c_len) const 
     if (gain < 512) // need at least 512 bytes gain
         return false;
 #if 1
-    if (gain >= 4096) // ok if we have 4096 bytes gain
+    if (gain >= 4096) // ok if we have at least 4096 bytes gain
         return true;
-    if (gain >= u_len / 16) // ok if we have 6.25% gain
+#endif
+    if (gain >= u_len / 16) // ok if we have at least 6.25% gain
         return true;
     return false;
-#else
-    return true;
-#endif
 }
 
 bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const {
@@ -821,136 +812,6 @@ int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_) {
     set_le32(p, new_);
 
     return boff;
-}
-
-/*************************************************************************
-// relocation util
-**************************************************************************/
-
-unsigned Packer::optimizeReloc(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
-                               SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big,
-                               int bits) {
-    if (opt->exact)
-        throwCantPackExact();
-
-    *big = 0;
-    if (relocnum == 0)
-        return 0;
-    qsort(raw_bytes(in, 4 * relocnum), relocnum, 4, le32_compare);
-
-    unsigned jc, pc, oc;
-    SPAN_P_VAR(upx_byte, fix, out);
-
-    pc = (unsigned) -4;
-    for (jc = 0; jc < relocnum; jc++) {
-        oc = get_le32(in + jc * 4) - pc;
-        if (oc == 0)
-            continue;
-        else if ((int) oc < 4)
-            throwCantPack("overlapping fixups");
-        else if (oc < 0xF0)
-            *fix++ = (unsigned char) oc;
-        else if (oc < 0x100000) {
-            *fix++ = (unsigned char) (0xF0 + (oc >> 16));
-            *fix++ = (unsigned char) oc;
-            *fix++ = (unsigned char) (oc >> 8);
-        } else {
-            *big = 1;
-            *fix++ = 0xf0;
-            *fix++ = 0;
-            *fix++ = 0;
-            set_le32(fix, oc);
-            fix += 4;
-        }
-        pc += oc;
-        if (headway <= pc) {
-            char msg[80];
-            snprintf(msg, sizeof(msg), "bad reloc[%#x] = %#x", jc, oc);
-            throwCantPack(msg);
-        }
-        if (bswap) {
-            if (bits == 32)
-                set_be32(image + pc, get_le32(image + pc));
-            else if (bits == 64)
-                set_be64(image + pc, get_le64(image + pc));
-            else
-                throwInternalError("optimizeReloc problem");
-        }
-    }
-    *fix++ = 0;
-    return ptr_udiff_bytes(fix, out);
-}
-
-unsigned Packer::optimizeReloc32(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
-                                 SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big) {
-    return optimizeReloc(in, relocnum, out, image, headway, bswap, big, 32);
-}
-
-unsigned Packer::optimizeReloc64(SPAN_P(upx_byte) in, unsigned relocnum, SPAN_P(upx_byte) out,
-                                 SPAN_P(upx_byte) image, unsigned headway, bool bswap, int *big) {
-    return optimizeReloc(in, relocnum, out, image, headway, bswap, big, 64);
-}
-
-unsigned Packer::unoptimizeReloc(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
-                                 bool bswap, int bits) {
-    SPAN_P_VAR(upx_byte, p, in);
-    unsigned relocn = 0;
-    for (; *p; p++, relocn++)
-        if (*p >= 0xF0) {
-            if (*p == 0xF0 && get_le16(p + 1) == 0)
-                p += 4;
-            p += 2;
-        }
-    SPAN_P_VAR(upx_byte, const in_end, p);
-    // fprintf(stderr,"relocnum=%x\n",relocn);
-    out.alloc(4 * (relocn + 1)); // one extra entry
-    SPAN_S_VAR(LE32, relocs, out);
-    unsigned jc = (unsigned) -4;
-    for (p = in; p < in_end; p++) {
-        if (*p < 0xF0)
-            jc += *p;
-        else {
-            unsigned dif = (*p & 0x0F) * 0x10000 + get_le16(p + 1);
-            p += 2;
-            if (dif == 0) {
-                dif = get_le32(p + 1);
-                p += 4;
-            }
-            jc += dif;
-        }
-        *relocs++ = jc; // FIXME: range check jc
-        if (!relocn--) {
-            break;
-        }
-        if (bswap && image != nullptr) {
-            if (bits == 32) {
-                set_be32(image + jc, get_le32(image + jc));
-                if ((unsigned) ptr_diff_bytes(p, image + jc) < 4) {
-                    // data must not overlap control
-                    p = image + jc + (4 - 1); // -1: 'for' also increments
-                }
-            } else if (bits == 64) {
-                set_be64(image + jc, get_le64(image + jc));
-                if ((unsigned) ptr_diff_bytes(p, image + jc) < 8) {
-                    // data must not overlap control
-                    p = image + jc + (8 - 1); // -1: 'for' also increments
-                }
-            } else
-                throwInternalError("unoptimizeReloc problem");
-        }
-    }
-    in = p + 1;
-    return ptr_udiff_bytes(relocs, out) / 4; // return number of relocs
-}
-
-unsigned Packer::unoptimizeReloc32(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
-                                   bool bswap) {
-    return unoptimizeReloc(in, image, out, bswap, 32);
-}
-
-unsigned Packer::unoptimizeReloc64(SPAN_P(upx_byte) & in, SPAN_P(upx_byte) image, MemBuffer &out,
-                                   bool bswap) {
-    return unoptimizeReloc(in, image, out, bswap, 64);
 }
 
 /*************************************************************************

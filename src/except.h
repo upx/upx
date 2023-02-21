@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_EXCEPT_H__
-#define UPX_EXCEPT_H__ 1
 
 const char *prettyName(const char *n) noexcept;
 
@@ -213,8 +211,15 @@ NORET void throwOutOfMemoryException(const char *msg = nullptr);
 NORET void throwIOException(const char *msg = nullptr, int e = 0);
 NORET void throwEOFException(const char *msg = nullptr, int e = 0);
 
-#undef NORET
+template <class T>
+void throwCantPack(const T *, ...) = delete;
+template <>
+NORET void throwCantPack(const char *format, ...) attribute_format(1, 2);
+template <class T>
+void throwCantUnpack(const T *, ...) = delete;
+template <>
+NORET void throwCantUnpack(const char *format, ...) attribute_format(1, 2);
 
-#endif /* already included */
+#undef NORET
 
 /* vim:set ts=4 sw=4 et: */
