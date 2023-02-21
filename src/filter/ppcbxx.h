@@ -41,11 +41,11 @@ static int F(Filter *f)
 {
 #ifdef U
     // filter
-    upx_byte *b = f->buf;
+    byte *b = f->buf;
     const unsigned addvalue = f->addvalue;
 #else
     // scan
-    const upx_byte *b = f->buf;
+    const byte *b = f->buf;
 #endif
     const unsigned size  = umin(f->buf_len, 0u - (~0u<<(32 - (6+ W_CTO))));
     const unsigned size4 = size -4;
@@ -125,7 +125,7 @@ static int F(Filter *f)
 #ifdef U
 static int U(Filter *f)
 {
-    upx_byte *b = f->buf;
+    byte *b = f->buf;
     const unsigned size4 = umin(f->buf_len - 4, 0u - (~0u<<(32 - (6+ W_CTO))));
     const unsigned addvalue = f->addvalue;
 

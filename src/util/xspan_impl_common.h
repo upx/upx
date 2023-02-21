@@ -94,9 +94,15 @@ forceinline pointer ensureBase() const {
 }
 
 public:
-inline ~CSelf() {}
-void destroy() {
+inline ~CSelf() {
+#if DEBUG
+    invalidate();
+#endif
+}
+noinline void invalidate() {
     assertInvariants();
+    ptr = (pointer) (acc_uintptr_t) 16; // point to non-null invalid address
+    // ptr = (pointer) (void *) &ptr; // point to self
     base = ptr;
     size_in_bytes = 0;
     assertInvariants();

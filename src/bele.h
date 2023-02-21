@@ -143,27 +143,27 @@ inline void set_le64(void *p, upx_uint64_t v) { set_ne64(p, ne64_to_le64(v)); }
 **************************************************************************/
 
 inline unsigned get_be24(const void *p) {
-    const unsigned char *b = ACC_CCAST(const unsigned char *, p);
+    const byte *b = ACC_CCAST(const byte *, p);
     return (b[0] << 16) | (b[1] << 8) | (b[2] << 0);
 }
 
 inline unsigned get_le24(const void *p) {
-    const unsigned char *b = ACC_CCAST(const unsigned char *, p);
+    const byte *b = ACC_CCAST(const byte *, p);
     return (b[0] << 0) | (b[1] << 8) | (b[2] << 16);
 }
 
 inline void set_be24(void *p, unsigned v) {
-    unsigned char *b = ACC_PCAST(unsigned char *, p);
-    b[0] = ACC_ICONV(unsigned char, (v >> 16) & 0xff);
-    b[1] = ACC_ICONV(unsigned char, (v >> 8) & 0xff);
-    b[2] = ACC_ICONV(unsigned char, (v >> 0) & 0xff);
+    byte *b = ACC_PCAST(byte *, p);
+    b[0] = ACC_ICONV(byte, (v >> 16) & 0xff);
+    b[1] = ACC_ICONV(byte, (v >> 8) & 0xff);
+    b[2] = ACC_ICONV(byte, (v >> 0) & 0xff);
 }
 
 inline void set_le24(void *p, unsigned v) {
-    unsigned char *b = ACC_PCAST(unsigned char *, p);
-    b[0] = ACC_ICONV(unsigned char, (v >> 0) & 0xff);
-    b[1] = ACC_ICONV(unsigned char, (v >> 8) & 0xff);
-    b[2] = ACC_ICONV(unsigned char, (v >> 16) & 0xff);
+    byte *b = ACC_PCAST(byte *, p);
+    b[0] = ACC_ICONV(byte, (v >> 0) & 0xff);
+    b[1] = ACC_ICONV(byte, (v >> 8) & 0xff);
+    b[2] = ACC_ICONV(byte, (v >> 16) & 0xff);
 }
 
 inline unsigned get_le26(const void *p) { return get_le32(p) & 0x03ffffff; }
@@ -250,7 +250,7 @@ inline upx_int64_t get_le64_signed(const void *p) {
 
 struct alignas(1) BE16 {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
-    unsigned char d[2];
+    byte d[2];
 
     BE16 &operator=(unsigned v) {
         set_be16(d, v);
@@ -300,7 +300,7 @@ struct alignas(1) BE16 {
 
 struct alignas(1) BE32 {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
-    unsigned char d[4];
+    byte d[4];
 
     BE32 &operator=(unsigned v) {
         set_be32(d, v);
@@ -350,7 +350,7 @@ struct alignas(1) BE32 {
 
 struct alignas(1) BE64 {
     typedef upx_uint64_t integral_conversion_type; // automatic conversion to upx_uint64_t
-    unsigned char d[8];
+    byte d[8];
 
     BE64 &operator=(upx_uint64_t v) {
         set_be64(d, v);
@@ -400,7 +400,7 @@ struct alignas(1) BE64 {
 
 struct alignas(1) LE16 {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
-    unsigned char d[2];
+    byte d[2];
 
     LE16 &operator=(unsigned v) {
         set_le16(d, v);
@@ -450,7 +450,7 @@ struct alignas(1) LE16 {
 
 struct alignas(1) LE32 {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
-    unsigned char d[4];
+    byte d[4];
 
     LE32 &operator=(unsigned v) {
         set_le32(d, v);
@@ -500,7 +500,7 @@ struct alignas(1) LE32 {
 
 struct alignas(1) LE64 {
     typedef upx_uint64_t integral_conversion_type; // automatic conversion to upx_uint64_t
-    unsigned char d[8];
+    byte d[8];
 
     LE64 &operator=(upx_uint64_t v) {
         set_le64(d, v);

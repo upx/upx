@@ -126,10 +126,10 @@ bool PackPs1::readBkupHeader() {
     fi->readx(&bh, sizeof(bh));
 
     if (bh.ih_csum != upx_adler32(&bh, SZ_IH_BKUP)) {
-        unsigned char buf[sizeof(bh)];
+        byte buf[sizeof(bh)];
         fi->seek(sizeof(ps1_exe_t), SEEK_SET);
         fi->readx(buf, sizeof(bh));
-        if (!getBkupHeader(buf, (unsigned char *) &bh))
+        if (!getBkupHeader(buf, (byte *) &bh))
             return false;
     }
     return true;
@@ -144,11 +144,11 @@ bool PackPs1::readBkupHeader() {
     ACC_BLOCK_END
 #define ADLER16(a) (((a) >> 16) ^ ((a) &0xffff))
 
-void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len) {
+void PackPs1::putBkupHeader(const byte *src, byte *dst, unsigned *len) {
     unsigned sz_cbh = MemBuffer::getSizeForCompression(SZ_IH_BKUP);
 
     if (src && dst) {
-        unsigned char *cpr_bh = New(unsigned char, sz_cbh);
+        ByteArray(cpr_bh, sz_cbh);
 
         memset(cpr_bh, 0, sizeof(bh));
         ps1_exe_chb_t *p = (ps1_exe_chb_t *) cpr_bh;
@@ -161,7 +161,6 @@ void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsign
         *len = ALIGN_UP(sz_cbh + (unsigned) sizeof(ps1_exe_chb_t) - 1, 4u);
         p->ih_csum = ADLER16(upx_adler32(&ih.epc, SZ_IH_BKUP));
         memcpy(dst, cpr_bh, SZ_IH_BKUP);
-        delete[] cpr_bh;
     } else
         throwInternalError("header compression failed");
 }
@@ -170,15 +169,15 @@ void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsign
 #define ADLER16_LO(a, b) (((a) >> 16) ^ (b))
 #define RE_ADLER16(a, b) (ADLER16_HI(a, b) | ADLER16_LO(a, b))
 
-bool PackPs1::getBkupHeader(unsigned char *p, unsigned char *dst) {
+bool PackPs1::getBkupHeader(byte *p, byte *dst) {
     ps1_exe_chb_t *src = (ps1_exe_chb_t *) p;
 
     if (src && (src->id == '1' && src->len < SZ_IH_BKUP) && dst) {
-        unsigned char *unc_bh = New(unsigned char, MemBuffer::getSizeForDecompression(SZ_IH_BKUP));
+        ByteArray(unc_bh, MemBuffer::getSizeForDecompression(SZ_IH_BKUP));
 
         unsigned sz_bh = SZ_IH_BKUP;
-        int r = upx_decompress((const unsigned char *) &src->ih_bkup, src->len, unc_bh, &sz_bh,
-                               M_NRV2E_8, nullptr);
+        int r = upx_decompress((const byte *) &src->ih_bkup, src->len, unc_bh, &sz_bh, M_NRV2E_8,
+                               nullptr);
         if (r == UPX_E_OUT_OF_MEMORY)
             throwOutOfMemoryException();
         if (r != UPX_E_OK || sz_bh != SZ_IH_BKUP)
@@ -188,7 +187,6 @@ bool PackPs1::getBkupHeader(unsigned char *p, unsigned char *dst) {
         if (ad != RE_ADLER16(ad, ch))
             throwInternalError("backup header damaged");
         memcpy(dst, unc_bh, SZ_IH_BKUP);
-        delete[] unc_bh;
     } else
         return false;
     return true;
@@ -223,7 +221,7 @@ bool PackPs1::checkFileHeader() {
 **************************************************************************/
 
 bool PackPs1::canPack() {
-    unsigned char buf[PS_HDR_SIZE - sizeof(ps1_exe_t)];
+    byte buf[PS_HDR_SIZE - sizeof(ps1_exe_t)];
 
     if (!readFileHeader())
         return false;
@@ -295,7 +293,7 @@ void PackPs1::buildLoader(const Filter *) {
     } else {
         if (M_IS_LZMA(ph.method) && buildPart2) {
             sz_lcpr = MemBuffer::getSizeForCompression(sz_lunc);
-            unsigned char *cprLoader = New(unsigned char, sz_lcpr);
+            byte *cprLoader = New(byte, sz_lcpr); // FIXME: does this leak? => should put into class
             int r = upx_compress(getLoader(), sz_lunc, cprLoader, &sz_lcpr, nullptr, M_NRV2B_8, 10,
                                  nullptr, nullptr);
             if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
@@ -303,13 +301,12 @@ void PackPs1::buildLoader(const Filter *) {
             initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1),
                        isCon || !M_IS_LZMA(ph.method) ? 0 : 1);
             linker->addSection("lzma.exec", cprLoader, sz_lcpr, 0);
-            delete[] cprLoader;
         } else
             initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1));
 
         pad_code = ALIGN_GAP((ph.c_len + (isCon ? sz_lcpr : 0)), 4u);
         assert(pad_code < 4);
-        static const unsigned char pad_buffer[4] = {0, 0, 0, 0};
+        static const byte pad_buffer[4] = {0, 0, 0, 0};
         linker->addSection("pad.code", pad_buffer, pad_code, 0);
 
         if (isCon) {
@@ -363,7 +360,7 @@ void PackPs1::buildLoader(const Filter *) {
 #define BSS_CHK_LIMIT (18)
 
 bool PackPs1::findBssSection() {
-    unsigned char reg;
+    byte reg;
     const LE32 *const p1 = ACC_CCAST(const LE32 *, ibuf + (ih.epc - ih.tx_ptr));
 
     if ((ih.epc - ih.tx_ptr + (BSS_CHK_LIMIT * 4)) > fdata_size)
@@ -413,7 +410,7 @@ bool PackPs1::findBssSection() {
 void PackPs1::pack(OutputFile *fo) {
     ibuf.alloc(fdata_size);
     obuf.allocForCompression(fdata_size);
-    const upx_byte *p_scan = ibuf + fdata_size;
+    const byte *p_scan = ibuf + fdata_size;
 
     // read file
     fi->seek(PS_HDR_SIZE, SEEK_SET);
@@ -472,7 +469,7 @@ void PackPs1::pack(OutputFile *fo) {
     memcpy(&oh, &ih, sizeof(ih));
 
     unsigned sz_cbh;
-    putBkupHeader((const unsigned char *) &ih.epc, (unsigned char *) &bh, &sz_cbh);
+    putBkupHeader((const byte *) &ih.epc, (byte *) &bh, &sz_cbh);
 
     if (ih.is_ptr < (EXE_BS | (PS_RAM_SIZE - PS_STACK_SIZE)))
         oh.is_ptr = (EXE_BS | (PS_RAM_SIZE - 16));
@@ -529,7 +526,7 @@ void PackPs1::pack(OutputFile *fo) {
     }
 
     ibuf.clear(0, fdata_size);
-    upx_bytep paddata = ibuf;
+    byte *paddata = ibuf;
 
     if (M_IS_LZMA(ph.method)) {
         linker->defineSymbol("lzma_init_off", lzma_init);
@@ -593,7 +590,7 @@ void PackPs1::pack(OutputFile *fo) {
     printf("%-13s: bbs end       : %08X bytes\n", getName(), (unsigned int) bss_end);
     printf("%-13s: eof in mem IF : %08X bytes\n", getName(), (unsigned int) ih.tx_ptr + ih.tx_len);
     printf("%-13s: eof in mem OF : %08X bytes\n", getName(), (unsigned int) oh.tx_ptr + oh.tx_len);
-    unsigned char i = 0;
+    byte i = 0;
     if (isCon) { if (foundBss) i = 1; }
     else { i = 2; if (M_IS_LZMA(ph.method)) { if (!foundBss) i = 3; else i = 4; } }
     const char *loader_method[] = { "con/stack", "con/bss", "cdb", "cdb/stack", "cdb/bss" };

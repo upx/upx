@@ -80,9 +80,9 @@ public: // raw access
     }
 };
 
-class MemBuffer final : public MemBufferBase<unsigned char> {
+class MemBuffer final : public MemBufferBase<byte> {
 public:
-    MemBuffer() : MemBufferBase<unsigned char>() {}
+    MemBuffer() : MemBufferBase<byte>() {}
     explicit MemBuffer(upx_uint64_t bytes);
     ~MemBuffer();
 

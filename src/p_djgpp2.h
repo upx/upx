@@ -57,8 +57,7 @@ protected:
     void handleStub(OutputFile *fo);
     int readFileHeader();
 
-    virtual unsigned findOverlapOverhead(const upx_bytep buf, const upx_bytep tbuf,
-                                         unsigned range = 0,
+    virtual unsigned findOverlapOverhead(const byte *buf, const byte *tbuf, unsigned range = 0,
                                          unsigned upper_limit = ~0u) const override;
     virtual void buildLoader(const Filter *ft) override;
     virtual Linker *newLinker() const override;

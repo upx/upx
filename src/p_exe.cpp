@@ -258,12 +258,12 @@ bool PackExe::canPack() {
 //
 **************************************************************************/
 
-static unsigned optimize_relocs(upx_byte *b, const unsigned size, const upx_byte *relocs,
-                                const unsigned nrelocs, upx_byte *crel, bool *has_9a) {
+static unsigned optimize_relocs(byte *b, const unsigned size, const byte *relocs,
+                                const unsigned nrelocs, byte *crel, bool *has_9a) {
     if (opt->exact)
         throwCantPackExact();
 
-    upx_byte *const crel_save = crel;
+    byte *const crel_save = crel;
     unsigned i;
     unsigned seg_high = 0;
 #if 0
@@ -351,7 +351,7 @@ static unsigned optimize_relocs(upx_byte *b, const unsigned size, const upx_byte
                 t -= 254;
                 ones++;
             }
-            *crel++ = (unsigned char) t;
+            *crel++ = (byte) t;
             di = offs;
         }
     } while (i < nrelocs);
@@ -390,9 +390,9 @@ void PackExe::pack(OutputFile *fo) {
 
     // relocations
     has_9a = false;
-    upx_byte *w = ibuf + ih_imagesize;
+    byte *w = ibuf + ih_imagesize;
     if (ih.relocs) {
-        upx_byte *wr = w + RSFCRI;
+        byte *wr = w + RSFCRI;
 
         fi->seek(ih.relocoffs, SEEK_SET);
         fi->readx(wr, 4 * ih.relocs);
@@ -408,7 +408,7 @@ void PackExe::pack(OutputFile *fo) {
         if (relocsize > MAXRELOCS)
             throwCantPack("too many relocations");
 #if 0
-        upx_byte out[9*relocsize/8+1024];
+        byte out[9*relocsize/8+1024];
         unsigned in_len = relocsize;
         unsigned out_len = 0;
         ucl_nrv2b_99_compress(w, in_len, out, &out_len, nullptr, 9, nullptr, nullptr);
@@ -467,7 +467,7 @@ void PackExe::pack(OutputFile *fo) {
     oh.max = ic < 0xffff && ih.max != 0xffff ? ic : 0xffff;
 
     // set extra info
-    unsigned char extra_info[9];
+    byte extra_info[9];
     unsigned eisize = 0;
     if (oh.ss != ih.ss) {
         set_le16(extra_info + eisize, ih.ss);
@@ -489,7 +489,7 @@ void PackExe::pack(OutputFile *fo) {
         eisize += 2;
         flag |= MAXMEM;
     }
-    extra_info[eisize++] = (unsigned char) flag;
+    extra_info[eisize++] = (byte) flag;
 
     if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
         linker->defineSymbol("bx_magic", 0x7FFF + 0x10 * ((packedsize & 15) + 1));
@@ -608,13 +608,13 @@ void PackExe::unpack(OutputFile *fo) {
 
     unsigned imagesize = ih_imagesize;
     imagesize--;
-    const unsigned char flag = ibuf[imagesize];
+    const byte flag = ibuf[imagesize];
 
     unsigned relocn = 0;
-    SPAN_S_VAR(upx_byte, relocs, obuf + ph.u_len, obuf);
+    SPAN_S_VAR(byte, relocs, obuf + ph.u_len, obuf);
 
     MemBuffer mb_wrkmem;
-    SPAN_0_VAR(upx_byte, wrkmem, nullptr);
+    SPAN_0_VAR(byte, wrkmem, nullptr);
     if (!(flag & NORELOC)) {
         relocs -= get_le16(obuf + (ph.u_len - 2));
         ph.u_len -= 2;
@@ -623,7 +623,7 @@ void PackExe::unpack(OutputFile *fo) {
         wrkmem = mb_wrkmem; // => now a SPAN_S
         unsigned es = 0, ones = get_le16(relocs);
         const unsigned seghi = get_le16(relocs + 2);
-        SPAN_S_VAR(const upx_byte, p, relocs + 4);
+        SPAN_S_VAR(const byte, p, relocs + 4);
 
         while (ones) {
             unsigned di = get_le16(p);
@@ -637,7 +637,7 @@ void PackExe::unpack(OutputFile *fo) {
                 }
                 dorel = true;
                 if (*p == 0) {
-                    SPAN_S_VAR(const upx_byte, q, obuf);
+                    SPAN_S_VAR(const byte, q, obuf);
                     for (q = obuf + (es * 16 + di); !(*q == 0x9a && get_le16(q + 3) <= seghi);
                          q++) {
                     }

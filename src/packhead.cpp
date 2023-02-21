@@ -41,7 +41,7 @@ PackHeader::PackHeader() : version(-1), format(-1) {}
 // simple checksum for the header itself (since version 10)
 **************************************************************************/
 
-static unsigned char get_packheader_checksum(SPAN_S(const upx_byte) buf, int len) {
+static byte get_packheader_checksum(SPAN_S(const byte) buf, int len) {
     assert(len >= 4);
     assert(get_le32(buf) == UPX_MAGIC_LE32);
     // printf("1 %d\n", len);
@@ -52,7 +52,7 @@ static unsigned char get_packheader_checksum(SPAN_S(const upx_byte) buf, int len
         c += *buf++;
     c %= 251;
     // printf("2 %d\n", c);
-    return (unsigned char) c;
+    return (byte) c;
 }
 
 /*************************************************************************
@@ -92,7 +92,7 @@ int PackHeader::getPackHeaderSize() const {
 // see stub/header.ash
 **************************************************************************/
 
-void PackHeader::putPackHeader(SPAN_S(upx_byte) p) {
+void PackHeader::putPackHeader(SPAN_S(byte) p) {
     // NOTE: It is the caller's responsbility to ensure the buffer p has
     // sufficient space for the header.
     assert(get_le32(p) == UPX_MAGIC_LE32);
@@ -111,14 +111,14 @@ void PackHeader::putPackHeader(SPAN_S(upx_byte) p) {
             old_chksum = get_packheader_checksum(p, size - 1);
             set_le16(p + 16, u_len);
             set_le16(p + 18, c_len);
-            p[20] = (unsigned char) filter;
+            p[20] = (byte) filter;
         } else if (format == UPX_F_DOS_EXE) {
             size = 27;
             old_chksum = get_packheader_checksum(p, size - 1);
             set_le24(p + 16, u_len);
             set_le24(p + 19, c_len);
             set_le24(p + 22, u_file_size);
-            p[25] = (unsigned char) filter;
+            p[25] = (byte) filter;
         } else if (format == UPX_F_DOS_EXEH) {
             throwInternalError("invalid format");
         } else {
@@ -127,10 +127,10 @@ void PackHeader::putPackHeader(SPAN_S(upx_byte) p) {
             set_le32(p + 16, u_len);
             set_le32(p + 20, c_len);
             set_le32(p + 24, u_file_size);
-            p[28] = (unsigned char) filter;
-            p[29] = (unsigned char) filter_cto;
+            p[28] = (byte) filter;
+            p[29] = (byte) filter_cto;
             assert(n_mru == 0 || (n_mru >= 2 && n_mru <= 256));
-            p[30] = (unsigned char) (n_mru ? n_mru - 1 : 0);
+            p[30] = (byte) (n_mru ? n_mru - 1 : 0);
         }
         set_le32(p + 8, u_adler);
         set_le32(p + 12, c_adler);
@@ -142,16 +142,16 @@ void PackHeader::putPackHeader(SPAN_S(upx_byte) p) {
         set_be32(p + 16, u_adler);
         set_be32(p + 20, c_adler);
         set_be32(p + 24, u_file_size);
-        p[28] = (unsigned char) filter;
-        p[29] = (unsigned char) filter_cto;
+        p[28] = (byte) filter;
+        p[29] = (byte) filter_cto;
         assert(n_mru == 0 || (n_mru >= 2 && n_mru <= 256));
-        p[30] = (unsigned char) (n_mru ? n_mru - 1 : 0);
+        p[30] = (byte) (n_mru ? n_mru - 1 : 0);
     }
 
-    p[4] = (unsigned char) version;
-    p[5] = (unsigned char) format;
-    p[6] = (unsigned char) method;
-    p[7] = (unsigned char) level;
+    p[4] = (byte) version;
+    p[5] = (byte) format;
+    p[6] = (byte) method;
+    p[7] = (byte) level;
 
     // header_checksum
     assert(size == getPackHeaderSize());
@@ -170,7 +170,7 @@ void PackHeader::putPackHeader(SPAN_S(upx_byte) p) {
 //
 **************************************************************************/
 
-bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
+bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const byte) buf, int blen) {
     int boff = find_le32(raw_bytes(buf, blen), blen, UPX_MAGIC_LE32);
     if (boff < 0)
         return false;
@@ -178,7 +178,7 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
     if (blen < 20)
         throwCantUnpack("header corrupted 1");
 
-    SPAN_S_VAR(const upx_byte, const p, buf + boff);
+    SPAN_S_VAR(const byte, const p, buf + boff);
 
     version = p[4];
     format = p[5];
@@ -192,9 +192,7 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const upx_byte) buf, int blen) {
     }
     if (!((format >= 1 && format <= UPX_F_W64PE_ARM64EC) ||
           (format >= 129 && format <= UPX_F_DYLIB_PPC64))) {
-        char msg[24];
-        snprintf(msg, sizeof(msg), "unknown format %d", format);
-        throwCantUnpack(msg);
+        throwCantUnpack("unknown format %d", format);
     }
 
     //

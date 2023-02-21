@@ -298,7 +298,7 @@ bool PackTos::checkFileHeader() {
 **************************************************************************/
 
 // Check relocation for errors to make sure our loader can handle it.
-static int check_relocs(const upx_byte *relocs, unsigned rsize, unsigned isize, unsigned *nrelocs,
+static int check_relocs(const byte *relocs, unsigned rsize, unsigned isize, unsigned *nrelocs,
                         unsigned *relocsize, unsigned *overlay) {
     unsigned fixup = get_be32(relocs);
     unsigned last_fixup = fixup;
@@ -345,7 +345,7 @@ bool PackTos::canPack() {
     if (!readFileHeader())
         return false;
 
-    unsigned char buf[768];
+    byte buf[768];
     fi->readx(buf, sizeof(buf));
     checkAlreadyPacked(buf, sizeof(buf));
 

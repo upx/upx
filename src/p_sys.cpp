@@ -41,7 +41,7 @@ static const CLANG_FORMAT_DUMMY_STATEMENT
 **************************************************************************/
 
 bool PackSys::canPack() {
-    unsigned char buf[128];
+    byte buf[128];
 
     fi->readx(buf, sizeof(buf));
     if (memcmp(buf, "\xff\xff\xff\xff", 4) != 0)
@@ -83,7 +83,7 @@ void PackSys::buildLoader(const Filter *ft) {
     // clang-format on
 }
 
-void PackSys::patchLoader(OutputFile *fo, upx_byte *loader, int lsize, unsigned calls) {
+void PackSys::patchLoader(OutputFile *fo, byte *loader, int lsize, unsigned calls) {
     const int e_len = getLoaderSectionStart("SYSCUTPO");
     const int d_len = lsize - e_len;
     assert(e_len > 0 && e_len < 128);

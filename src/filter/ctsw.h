@@ -32,8 +32,8 @@
 **************************************************************************/
 
 #define CTSW16(f, cond1, cond2, addvalue, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 3; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 3; \
     do { \
         if (cond1) \
         { \
@@ -102,8 +102,8 @@ static int s_ctsw16_e9_e8(Filter *f)
 **************************************************************************/
 
 #define CTSW32(f, cond1, cond2, addvalue, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 5; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 5; \
     do { \
         if (cond1) \
         { \

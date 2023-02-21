@@ -92,13 +92,13 @@ protected:
     unsigned processImports0(ord_mask_t ord_mask);
 
     template <typename LEXX, typename ord_mask_t>
-    void rebuildImports(SPAN_S(upx_byte) & extra_info, ord_mask_t ord_mask, bool set_oft);
+    void rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool set_oft);
     virtual unsigned processImports() = 0;
     virtual void processImports2(unsigned, unsigned);
     MemBuffer mb_oimport;
-    SPAN_0(upx_byte) oimport = nullptr;
+    SPAN_0(byte) oimport = nullptr;
     unsigned soimport;
-    upx_byte *oimpdlls;
+    byte *oimpdlls;
     unsigned soimpdlls;
     ImportLinker *ilinker;
     virtual const char *kernelDll() const { return "KERNEL32.DLL"; }
@@ -108,25 +108,25 @@ protected:
 
     virtual void processRelocs() = 0;
     void processRelocs(Reloc *);
-    void rebuildRelocs(SPAN_S(upx_byte) &, unsigned bits, unsigned flags, upx_uint64_t imagebase);
+    void rebuildRelocs(SPAN_S(byte) &, unsigned bits, unsigned flags, upx_uint64_t imagebase);
     MemBuffer mb_orelocs;
-    SPAN_0(upx_byte) orelocs = nullptr;
+    SPAN_0(byte) orelocs = nullptr;
     unsigned sorelocs;
-    upx_byte *oxrelocs = nullptr;
+    byte *oxrelocs = nullptr;
     unsigned soxrelocs;
 
     void processExports(Export *);
     void processExports(Export *, unsigned);
     void rebuildExports();
     MemBuffer mb_oexport;
-    SPAN_0(upx_byte) oexport = nullptr;
+    SPAN_0(byte) oexport = nullptr;
     unsigned soexport;
 
     void processResources(Resource *);
     void processResources(Resource *, unsigned);
-    void rebuildResources(SPAN_S(upx_byte) &, unsigned);
+    void rebuildResources(SPAN_S(byte) &, unsigned);
     MemBuffer mb_oresources;
-    SPAN_0(upx_byte) oresources = nullptr;
+    SPAN_0(byte) oresources = nullptr;
     unsigned soresources;
 
     template <typename>
@@ -142,7 +142,7 @@ protected:
 
     void rebuildTls();
     MemBuffer mb_otls;
-    SPAN_0(upx_byte) otls = nullptr;
+    SPAN_0(byte) otls = nullptr;
     unsigned sotls;
     unsigned tlsindex;
     unsigned tlscb_ptr;
@@ -152,7 +152,7 @@ protected:
     void processLoadConf(Reloc *, const Interval *, unsigned);
     void processLoadConf(Interval *);
     MemBuffer mb_oloadconf;
-    upx_byte *oloadconf = nullptr;
+    byte *oloadconf = nullptr;
     unsigned soloadconf;
 
     unsigned stripDebug(unsigned);
@@ -353,7 +353,7 @@ protected:
     };
 
     class Reloc : private noncopyable {
-        upx_byte *start;
+        byte *start;
         unsigned size;
 
         void newRelocPos(void *p);
@@ -364,14 +364,14 @@ protected:
         unsigned counts[16];
 
     public:
-        Reloc(upx_byte *, unsigned);
+        Reloc(byte *, unsigned);
         Reloc(unsigned relocnum);
         //
         bool next(unsigned &pos, unsigned &type);
         const unsigned *getcounts() const { return counts; }
         //
         void add(unsigned pos, unsigned type);
-        void finish(upx_byte *&p, unsigned &size);
+        void finish(byte *&p, unsigned &size);
     };
 
     class Resource : private noncopyable {
@@ -383,50 +383,50 @@ protected:
         struct upx_rleaf;
 
         MemBuffer mb_start;
-        const upx_byte *start;
-        upx_byte *newstart;
+        const byte *start;
+        byte *newstart;
         upx_rnode *root;
         upx_rleaf *head;
         upx_rleaf *current;
         unsigned dsize;
         unsigned ssize;
 
-        const upx_byte *ibufstart;
-        const upx_byte *ibufend;
+        const byte *ibufstart;
+        const byte *ibufend;
 
         void check(const res_dir *, unsigned);
         upx_rnode *convert(const void *, upx_rnode *, unsigned);
         void build(const upx_rnode *, unsigned &, unsigned &, unsigned);
-        void clear(upx_byte *, unsigned, Interval *);
+        void clear(byte *, unsigned, Interval *);
         void dump(const upx_rnode *, unsigned) const;
         void destroy(upx_rnode *urd, unsigned level);
 
         void ibufcheck(const void *m, unsigned size);
 
     public:
-        Resource(const upx_byte *ibufstart, const upx_byte *ibufen);
-        Resource(const upx_byte *p, const upx_byte *ibufstart, const upx_byte *ibufend);
+        Resource(const byte *ibufstart, const byte *ibufen);
+        Resource(const byte *p, const byte *ibufstart, const byte *ibufend);
         ~Resource();
-        void init(const upx_byte *);
+        void init(const byte *);
 
         unsigned dirsize() const;
         bool next();
 
         unsigned itype() const;
-        const upx_byte *ntype() const;
+        const byte *ntype() const;
         unsigned size() const;
         unsigned offs() const;
         unsigned &newoffs();
 
-        upx_byte *build();
+        byte *build();
         bool clear();
 
         void dump() const;
         unsigned iname() const;
-        const upx_byte *nname() const;
+        const byte *nname() const;
         /*
          unsigned ilang() const {return current->id;}
-         const upx_byte *nlang() const {return current->name;}
+         const byte *nlang() const {return current->name;}
          */
     };
 

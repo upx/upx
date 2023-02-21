@@ -32,7 +32,7 @@
 **************************************************************************/
 
 #define SUB(f, N, T, get, set) \
-    upx_byte *b = f->buf; \
+    byte *b = f->buf; \
     unsigned l = f->buf_len / sizeof(T); \
     int i; \
     T d[N]; \
@@ -54,7 +54,7 @@
 
 
 #define ADD(f, N, T, get, set) \
-    upx_byte *b = f->buf; \
+    byte *b = f->buf; \
     unsigned l = f->buf_len / sizeof(T); \
     int i; \
     T d[N]; \

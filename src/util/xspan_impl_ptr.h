@@ -62,7 +62,17 @@ public:
     operator pointer() const { return ptr; }
 #endif
 
-    inline ~CSelf() {}
+    inline ~CSelf() {
+#if DEBUG
+        invalidate();
+#endif
+    }
+    noinline void invalidate() {
+        assertInvariants();
+        ptr = (pointer) (acc_uintptr_t) 16; // point to non-null invalid address
+        // ptr = (pointer) (void *) &ptr; // point to self
+        assertInvariants();
+    }
     inline CSelf() { assertInvariants(); }
 
     // constructors from pointers

@@ -46,28 +46,28 @@ static XSpanStats xspan_stats;
 // HINT: set env-var "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
 noinline void xspan_fail_nullptr() {
     xspan_stats.fail_nullptr += 1;
-    throwCantUnpack("xspan unexpected NULL pointer; take care!");
+    throwCantPack("xspan unexpected NULL pointer; take care!");
 }
 noinline void xspan_fail_nullbase() {
     xspan_stats.fail_nullbase += 1;
-    throwCantUnpack("xspan unexpected NULL base; take care!");
+    throwCantPack("xspan unexpected NULL base; take care!");
 }
 noinline void xspan_fail_not_same_base() {
     xspan_stats.fail_not_same_base += 1;
-    throwInternalError("xspan unexpected base pointer; take care!");
+    throwCantPack("xspan unexpected base pointer; take care!");
 }
 
 noinline void xspan_fail_range_nullptr() {
     xspan_stats.fail_range_nullptr += 1;
-    throwCantUnpack("xspan_check_range: unexpected NULL pointer; take care!");
+    throwCantPack("xspan_check_range: unexpected NULL pointer; take care!");
 }
 noinline void xspan_fail_range_nullbase() {
     xspan_stats.fail_range_nullbase += 1;
-    throwCantUnpack("xspan_check_range: unexpected NULL base; take care!");
+    throwCantPack("xspan_check_range: unexpected NULL base; take care!");
 }
 noinline void xspan_fail_range_range() {
     xspan_stats.fail_range_range += 1;
-    throwCantUnpack("xspan_check_range: pointer out of range; take care!");
+    throwCantPack("xspan_check_range: pointer out of range; take care!");
 }
 
 void xspan_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes) {

@@ -66,7 +66,7 @@ const int *PackDjgpp2::getFilters() const {
     return filters;
 }
 
-unsigned PackDjgpp2::findOverlapOverhead(const upx_bytep buf, const upx_bytep tbuf, unsigned range,
+unsigned PackDjgpp2::findOverlapOverhead(const byte *buf, const byte *tbuf, unsigned range,
                                          unsigned upper_limit) const {
     unsigned o = super::findOverlapOverhead(buf, tbuf, range, upper_limit);
     o = (o + 0x3ff) & ~0x1ff;
@@ -106,7 +106,7 @@ void PackDjgpp2::handleStub(OutputFile *fo) {
 }
 
 static bool is_dlm(InputFile *fi, unsigned coff_offset) {
-    unsigned char buf[4];
+    byte buf[4];
     unsigned off;
 
     try {
@@ -125,7 +125,7 @@ static bool is_dlm(InputFile *fi, unsigned coff_offset) {
 }
 
 static void handle_allegropak(InputFile *fi, OutputFile *fo) {
-    unsigned char b[8];
+    byte b[8];
     int pfsize = 0;
 
     try {
@@ -150,8 +150,8 @@ static void handle_allegropak(InputFile *fi, OutputFile *fo) {
 }
 
 int PackDjgpp2::readFileHeader() {
-    unsigned char hdr[0x1c];
-    unsigned char magic[8];
+    byte hdr[0x1c];
+    byte magic[8];
 
     fi->seek(0, SEEK_SET);
     fi->readx(hdr, sizeof(hdr));
@@ -390,11 +390,11 @@ void PackDjgpp2::unpack(OutputFile *fo) {
     if (ph.filter) {
         Filter ft(ph.level);
         ft.init(ph.filter, addvalue);
-        ft.cto = (unsigned char) ph.filter_cto;
+        ft.cto = (byte) ph.filter_cto;
         if (ph.version < 11) {
-            unsigned char ctobuf[4];
+            byte ctobuf[4];
             fi->readx(ctobuf, 4);
-            ft.cto = (unsigned char) (get_le32(ctobuf) >> 24);
+            ft.cto = (byte) (get_le32(ctobuf) >> 24);
         }
         ft.unfilter(obuf, ph.u_len - data->size);
     }

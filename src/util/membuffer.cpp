@@ -181,7 +181,7 @@ void MemBuffer::checkState() const {
         throwInternalError("block not allocated");
     assert(size_in_bytes > 0);
     if (use_simple_mcheck()) {
-        const unsigned char *p = (const unsigned char *) ptr;
+        const byte *p = (const byte *) ptr;
         if (get_ne32(p - 4) != MAGIC1(p))
             throwInternalError("memory clobbered before allocated block 1");
         if (get_ne32(p - 8) != size_in_bytes)
@@ -201,7 +201,7 @@ void MemBuffer::alloc(upx_uint64_t bytes) {
     size_t malloc_bytes = mem_size(1, bytes);
     if (use_simple_mcheck())
         malloc_bytes += 32;
-    unsigned char *p = (unsigned char *) ::malloc(malloc_bytes);
+    byte *p = (byte *) ::malloc(malloc_bytes);
     NO_printf("MemBuffer::alloc %llu: %p\n", bytes, p);
     if (!p)
         throwOutOfMemoryException();
@@ -234,7 +234,7 @@ void MemBuffer::dealloc() {
         stats.global_dealloc_counter += 1;
         stats.global_total_active_bytes -= size_in_bytes;
         if (use_simple_mcheck()) {
-            unsigned char *p = (unsigned char *) ptr;
+            byte *p = (byte *) ptr;
             // clear magic constants
             set_ne32(p - 8, 0);
             set_ne32(p - 4, 0);
@@ -278,7 +278,7 @@ TEST_CASE("MemBuffer") {
     CHECK_THROWS(mb.subref("", 1, 64));
     CHECK_THROWS(mb.subref("", 64, 1));
     if (use_simple_mcheck()) {
-        unsigned char *p = raw_bytes(mb, 0);
+        byte *p = raw_bytes(mb, 0);
         unsigned magic1 = get_ne32(p - 4);
         set_ne32(p - 4, magic1 ^ 1);
         CHECK_THROWS(mb.checkState());

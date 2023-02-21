@@ -89,7 +89,7 @@ void LeFile::writePageMap() {
 
 void LeFile::readResidentNames() {
     sores_names = ih.entry_table_offset - ih.resident_names_offset;
-    ires_names = New(upx_byte, sores_names);
+    ires_names = New(byte, sores_names);
     fif->seek(le_offset + ih.resident_names_offset, SEEK_SET);
     fif->readx(ires_names, sores_names);
 }
@@ -102,7 +102,7 @@ void LeFile::writeResidentNames() {
 void LeFile::readEntryTable() {
     soentries = ih.fixup_page_table_offset - ih.entry_table_offset;
     fif->seek(le_offset + ih.entry_table_offset, SEEK_SET);
-    ientries = New(upx_byte, soentries);
+    ientries = New(byte, soentries);
     fif->readx(ientries, soentries);
 }
 
@@ -125,7 +125,7 @@ void LeFile::writeFixupPageTable() {
 
 void LeFile::readFixups() {
     sofixups = get_le32(ifpage_table + pages) - get_le32(ifpage_table);
-    ifixups = New(upx_byte, sofixups);
+    ifixups = New(byte, sofixups);
     fif->seek(le_offset + ih.fixup_record_table_offset, SEEK_SET);
     fif->readx(ifixups, sofixups);
 }
@@ -171,7 +171,7 @@ void LeFile::writeImage() {
 void LeFile::readNonResidentNames() {
     if (ih.non_resident_name_table_length) {
         sononres_names = ih.non_resident_name_table_length;
-        inonres_names = New(upx_byte, sononres_names);
+        inonres_names = New(byte, sononres_names);
         fif->seek(exe_offset + ih.non_resident_name_table_offset, SEEK_SET);
         fif->readx(inonres_names, sononres_names);
     }
@@ -184,7 +184,7 @@ void LeFile::writeNonResidentNames() {
 
 bool LeFile::readFileHeader() {
 #define H(x) get_le16(header + 2 * (x))
-    upx_byte header[0x40];
+    byte header[0x40];
     le_offset = exe_offset = 0;
     int ic;
 
@@ -262,7 +262,7 @@ void LeFile::countFixups(unsigned *counts) const {
     // counts[objects]      - # of selector fixups
     // counts[objects+1]    - # of self-relative fixups
 
-    const upx_byte *fix = ifixups;
+    const byte *fix = ifixups;
     const unsigned sfixups = get_le32(ifpage_table + pages);
     unsigned ll;
 

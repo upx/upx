@@ -122,7 +122,7 @@ ElfLinker::~ElfLinker() {
 }
 
 void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra) {
-    const upx_byte *pdata = (const upx_byte *) pdata_v;
+    const byte *pdata = (const byte *) pdata_v;
     if (plen >= 16 && memcmp(pdata, "UPX#", 4) == 0) {
         // decompress pre-compressed stub-loader
         int method;
@@ -142,7 +142,7 @@ void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra) {
         }
         assert((unsigned) plen < u_len);
         inputlen = u_len;
-        input = new upx_byte[inputlen + 1];
+        input = New(byte, inputlen + 1);
         unsigned new_len = u_len;
         int r = upx_decompress(pdata, c_len, input, &new_len, method, nullptr);
         if (r == UPX_E_OUT_OF_MEMORY)
@@ -151,7 +151,7 @@ void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra) {
             throwBadLoader();
     } else {
         inputlen = plen;
-        input = new upx_byte[inputlen + 1];
+        input = New(byte, inputlen + 1);
         if (inputlen)
             memcpy(input, pdata, inputlen);
     }
@@ -159,7 +159,7 @@ void ElfLinker::init(const void *pdata_v, int plen, unsigned pxtra) {
 
     output_capacity = (inputlen ? (inputlen + pxtra) : 0x4000);
     assert(output_capacity <= (1 << 16)); // LE16 l_info.l_size
-    output = new upx_byte[output_capacity];
+    output = New(byte, output_capacity);
     outputlen = 0;
     NO_printf("\nElfLinker::init %d @%p\n", output_capacity, output);
 
@@ -456,7 +456,7 @@ int ElfLinker::getSectionSize(const char *sname) const {
     return section->size;
 }
 
-upx_byte *ElfLinker::getLoader(int *llen) const {
+byte *ElfLinker::getLoader(int *llen) const {
     if (llen)
         *llen = outputlen;
     return output;
@@ -482,7 +482,7 @@ void ElfLinker::relocate() {
         else {
             value = rel->value->section->offset + rel->value->offset + rel->add;
         }
-        upx_byte *location = rel->section->output + rel->offset;
+        byte *location = rel->section->output + rel->offset;
         NO_printf("%-28s %-28s %-10s %#16llx %#16llx\n", rel->section->name, rel->value->name,
                   rel->type, (long long) value,
                   (long long) value - rel->section->offset - rel->offset);
@@ -553,7 +553,7 @@ void ElfLinker::alignWithByte(unsigned len, unsigned char b) {
     outputlen += len;
 }
 
-void ElfLinker::relocate1(const Relocation *rel, upx_byte *, upx_uint64_t, const char *) {
+void ElfLinker::relocate1(const Relocation *rel, byte *, upx_uint64_t, const char *) {
     internal_error("unknown relocation type '%s\n'", rel->type);
 }
 
@@ -564,7 +564,7 @@ void ElfLinker::relocate1(const Relocation *rel, upx_byte *, upx_uint64_t, const
 **************************************************************************/
 
 #if 0 // FIXME
-static void check8(const Relocation *rel, const upx_byte *location, int v, int d)
+static void check8(const Relocation *rel, const byte *location, int v, int d)
 {
     if (v < -128 || v > 127)
         internal_error("value out of range (%d) in reloc %s:%x\n",
@@ -575,7 +575,7 @@ static void check8(const Relocation *rel, const upx_byte *location, int v, int d
 }
 #endif
 
-void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerAMD64::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                const char *type) {
     if (strncmp(type, "R_X86_64_", 9))
         return super::relocate1(rel, location, value, type);
@@ -608,7 +608,7 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerArmBE::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                const char *type) {
     if (!strcmp(type, "R_ARM_PC24") || !strcmp(type, "R_ARM_CALL") ||
         !strcmp(type, "R_ARM_JUMP24")) {
@@ -633,7 +633,7 @@ void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerArmLE::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                const char *type) {
     if (!strcmp(type, "R_ARM_PC24") || !strcmp(type, "R_ARM_CALL") ||
         !strcmp(type, "R_ARM_JUMP24")) {
@@ -658,7 +658,7 @@ void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerArm64LE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerArm64LE::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                  const char *type) {
     if (strncmp(type, "R_AARCH64_", 10))
         return super::relocate1(rel, location, value, type);
@@ -706,7 +706,7 @@ void ElfLinkerM68k::alignCode(unsigned len) {
     outputlen += len;
 }
 
-void ElfLinkerM68k::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerM68k::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                               const char *type) {
     if (strncmp(type, "R_68K_", 6))
         return super::relocate1(rel, location, value, type);
@@ -726,7 +726,7 @@ void ElfLinkerM68k::relocate1(const Relocation *rel, upx_byte *location, upx_uin
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerMipsBE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerMipsBE::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                 const char *type) {
 #define MIPS_HI(a) (((a) >> 16) + (((a) &0x8000) >> 15))
 #define MIPS_LO(a) ((a) &0xffff)
@@ -753,7 +753,7 @@ void ElfLinkerMipsBE::relocate1(const Relocation *rel, upx_byte *location, upx_u
 #undef MIPS_PC26
 }
 
-void ElfLinkerMipsLE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerMipsLE::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                 const char *type) {
 #define MIPS_HI(a) (((a) >> 16) + (((a) &0x8000) >> 15))
 #define MIPS_LO(a) ((a) &0xffff)
@@ -780,7 +780,7 @@ void ElfLinkerMipsLE::relocate1(const Relocation *rel, upx_byte *location, upx_u
 #undef MIPS_PC26
 }
 
-void ElfLinkerPpc32::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerPpc32::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                const char *type) {
     if (strncmp(type, "R_PPC_", 6))
         return super::relocate1(rel, location, value, type);
@@ -813,7 +813,7 @@ void ElfLinkerPpc32::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerPpc64le::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerPpc64le::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                  const char *type) {
     if (!strcmp(type, "R_PPC64_ADDR64")) {
         set_le64(location, get_le64(location) + value);
@@ -856,7 +856,7 @@ void ElfLinkerPpc64le::relocate1(const Relocation *rel, upx_byte *location, upx_
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerPpc64::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerPpc64::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                const char *type) {
     if (!strcmp(type, "R_PPC64_ADDR32")) {
         set_be32(location, get_be32(location) + value);
@@ -886,7 +886,7 @@ void ElfLinkerPpc64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+void ElfLinkerX86::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                              const char *type) {
     if (strncmp(type, "R_386_", 6))
         return super::relocate1(rel, location, value, type);

@@ -98,10 +98,10 @@ static int F(Filter *f)
 {
 #ifdef U
     // filter
-    upx_byte *const b = f->buf;
+    byte *const b = f->buf;
 #else
     // scan
-    const upx_byte *b = f->buf;
+    const byte *b = f->buf;
 #endif
     const unsigned size = f->buf_len;
 
@@ -268,7 +268,7 @@ static int U(Filter *f)
 {
     unsigned ic, jc;
 
-    upx_byte *const b = f->buf;
+    byte *const b = f->buf;
     const unsigned size5 = f->buf_len - 5;
     const unsigned cto = (unsigned)f->cto << 24;
     unsigned lastcall = 0;

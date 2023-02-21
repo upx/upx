@@ -428,10 +428,10 @@ section LXUNF000        // enter at +0 for decompression; +2 for unfiltering
         jmps decompr0
 section LXUNF002
   // 2+ address of decompress subroutine
-  // unfilter(upx_byte *, length, cto8)
+  // unfilter(byte *, length, cto8)
 lxunfilter:
         pop edx  // return address
-        pop eax  // upx_byte *, same as addvalue
+        pop eax  // byte *, same as addvalue
         pop ecx  // length
         xchg eax, edi  // edi= pointer; eax= saved_edi
         pusha  // save C-convention ebx, ebp, esi, edi; also eax, edx

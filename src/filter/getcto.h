@@ -31,7 +31,7 @@
 //
 **************************************************************************/
 
-static int getcto(Filter *f, const unsigned char *buf, const int n=256)
+static int getcto(Filter *f, const byte *buf, const int n=256)
 {
     int ic = n;
 
@@ -63,7 +63,7 @@ static int getcto(Filter *f, const unsigned char *buf, const int n=256)
         //throwCantPack("call trick problem");
         return -1;
 
-    f->cto = (unsigned char) ic;
+    f->cto = (byte) ic;
     return ic;
 }
 

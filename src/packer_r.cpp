@@ -33,12 +33,12 @@
 // returns number of bytes written to |out|
 **************************************************************************/
 
-unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(upx_byte) relocs, SPAN_S(upx_byte) out,
-                               SPAN_P(upx_byte) image, unsigned image_size, int bits, bool bswap,
+unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(byte) out,
+                               SPAN_P(byte) image, unsigned image_size, int bits, bool bswap,
                                int *big) {
     assert(bits == 32 || bits == 64);
     mem_size_assert(1, image_size);
-    SPAN_P_VAR(upx_byte, fix, out);
+    SPAN_P_VAR(byte, fix, out);
 
     *big = 0;
     if (opt->exact)
@@ -55,11 +55,11 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(upx_byte) relocs, SPAN_
         else if ((int) delta < 4)
             throwCantPack("overlapping fixups");
         else if (delta < 0xf0)
-            *fix++ = (unsigned char) delta;
+            *fix++ = (byte) delta;
         else if (delta < 0x100000) {
-            *fix++ = (unsigned char) (0xf0 + (delta >> 16));
-            *fix++ = (unsigned char) delta;
-            *fix++ = (unsigned char) (delta >> 8);
+            *fix++ = (byte) (0xf0 + (delta >> 16));
+            *fix++ = (byte) delta;
+            *fix++ = (byte) (delta >> 8);
         } else {
             *big = 1;
             *fix++ = 0xf0;
@@ -88,12 +88,11 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(upx_byte) relocs, SPAN_
 // allocates |out| and returns number of relocs written to |out|
 **************************************************************************/
 
-unsigned Packer::unoptimizeReloc(SPAN_S(const upx_byte) & in, MemBuffer &out,
-                                 SPAN_P(upx_byte) image, unsigned image_size, int bits,
-                                 bool bswap) {
+unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P(byte) image,
+                                 unsigned image_size, int bits, bool bswap) {
     assert(bits == 32 || bits == 64);
     mem_size_assert(1, image_size);
-    SPAN_S_VAR(const upx_byte, fix, in);
+    SPAN_S_VAR(const byte, fix, in);
 
     // count
     unsigned relocnum = 0;

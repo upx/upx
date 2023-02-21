@@ -127,10 +127,10 @@ protected:
     };
 
     struct alignas(1) le_pagemap_entry_t {
-        unsigned char h;
-        unsigned char m;
-        unsigned char l;
-        unsigned char type; // 0x00-legal;0x40-iterated;0x80-invalid;0xC0-zeroed
+        byte h;
+        byte m;
+        byte l;
+        byte type; // 0x00-legal;0x40-iterated;0x80-invalid;0xC0-zeroed
     };
 
     virtual void readObjectTable();
@@ -199,18 +199,18 @@ protected:
     unsigned *ofpage_table = nullptr;
     le_pagemap_entry_t *ipm_entries = nullptr;
     le_pagemap_entry_t *opm_entries = nullptr;
-    upx_byte *ires_names = nullptr;
-    upx_byte *ores_names = nullptr;
-    upx_byte *ifixups = nullptr;
-    upx_byte *ofixups = nullptr;
-    upx_byte *inonres_names = nullptr;
-    upx_byte *ononres_names = nullptr;
+    byte *ires_names = nullptr;
+    byte *ores_names = nullptr;
+    byte *ifixups = nullptr;
+    byte *ofixups = nullptr;
+    byte *inonres_names = nullptr;
+    byte *ononres_names = nullptr;
     MemBuffer mb_iimage;
-    SPAN_0(upx_byte) iimage = nullptr;
+    SPAN_0(byte) iimage = nullptr;
     MemBuffer mb_oimage;
-    SPAN_0(upx_byte) oimage = nullptr;
-    upx_byte *ientries = nullptr;
-    upx_byte *oentries = nullptr;
+    SPAN_0(byte) oimage = nullptr;
+    byte *ientries = nullptr;
+    byte *oentries = nullptr;
 
     unsigned soobject_table;
     unsigned sofpage_table;

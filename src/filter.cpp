@@ -33,7 +33,7 @@
 // util
 **************************************************************************/
 
-static void initFilter(Filter *f, upx_byte *buf, unsigned buf_len) {
+static void initFilter(Filter *f, byte *buf, unsigned buf_len) {
     f->buf = buf;
     f->buf_len = buf_len;
     // clear output parameters
@@ -45,7 +45,7 @@ static void initFilter(Filter *f, upx_byte *buf, unsigned buf_len) {
 **************************************************************************/
 
 const FilterImpl::FilterEntry *FilterImpl::getFilter(int id) {
-    static unsigned char filter_map[256];
+    static upx_uint8_t filter_map[256];
     static upx_std_once_flag init_done;
 
     upx_std_call_once(init_done, []() noexcept {
@@ -56,7 +56,7 @@ const FilterImpl::FilterEntry *FilterImpl::getFilter(int id) {
             int filter_id = filters[i].id;
             assert(filter_id >= 0 && filter_id <= 255);
             assert(filter_map[filter_id] == 0xff);
-            filter_map[filter_id] = (unsigned char) i;
+            filter_map[filter_id] = (upx_uint8_t) i;
         }
     });
 
@@ -102,8 +102,8 @@ void Filter::init(int id_, unsigned addvalue_) {
     this->n_mru = 0;
 }
 
-bool Filter::filter(SPAN_0(upx_byte) xbuf, unsigned buf_len_) {
-    upx_byte *const buf_ = raw_bytes(xbuf, buf_len_);
+bool Filter::filter(SPAN_0(byte) xbuf, unsigned buf_len_) {
+    byte *const buf_ = raw_bytes(xbuf, buf_len_);
     initFilter(this, buf_, buf_len_);
 
     const FilterImpl::FilterEntry *const fe = FilterImpl::getFilter(id);
@@ -134,8 +134,8 @@ bool Filter::filter(SPAN_0(upx_byte) xbuf, unsigned buf_len_) {
     return false;
 }
 
-void Filter::unfilter(SPAN_0(upx_byte) xbuf, unsigned buf_len_, bool verify_checksum) {
-    upx_byte *const buf_ = raw_bytes(xbuf, buf_len_);
+void Filter::unfilter(SPAN_0(byte) xbuf, unsigned buf_len_, bool verify_checksum) {
+    byte *const buf_ = raw_bytes(xbuf, buf_len_);
     initFilter(this, buf_, buf_len_);
 
     const FilterImpl::FilterEntry *const fe = FilterImpl::getFilter(id);
@@ -179,11 +179,11 @@ void Filter::verifyUnfilter() {
         unfilter(this->buf, this->buf_len, true);
 }
 
-bool Filter::scan(SPAN_0(const upx_byte) xbuf, unsigned buf_len_) {
-    const upx_byte *const buf_ = raw_bytes(xbuf, buf_len_);
+bool Filter::scan(SPAN_0(const byte) xbuf, unsigned buf_len_) {
+    const byte *const buf_ = raw_bytes(xbuf, buf_len_);
     // Note: must use const_cast here. This is fine as the scan
     //   implementations (fe->do_scan) actually don't change the buffer.
-    upx_byte *const b = const_cast<upx_byte *>(buf_);
+    byte *const b = const_cast<byte *>(buf_);
     initFilter(this, b, buf_len_);
 
     const FilterImpl::FilterEntry *const fe = FilterImpl::getFilter(id);

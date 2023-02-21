@@ -56,8 +56,8 @@ public:
     virtual int canUnpack() override;
 
 protected:
-    void putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len);
-    bool getBkupHeader(unsigned char *src, unsigned char *dst);
+    void putBkupHeader(const byte *src, byte *dst, unsigned *len);
+    bool getBkupHeader(byte *src, byte *dst);
     bool readBkupHeader();
     virtual void buildLoader(const Filter *ft) override;
     bool findBssSection();
@@ -99,10 +99,10 @@ protected:
     };
 
     struct alignas(1) ps1_exe_chb_t {
-        unsigned char id;
-        unsigned char len;
+        byte id;
+        byte len;
         LE16 ih_csum;
-        unsigned char ih_bkup;
+        byte ih_bkup;
     };
 
     struct alignas(1) bss_nfo {

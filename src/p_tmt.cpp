@@ -56,7 +56,7 @@ const int *PackTmt::getFilters() const {
     return filters;
 }
 
-unsigned PackTmt::findOverlapOverhead(const upx_bytep buf, const upx_bytep tbuf, unsigned range,
+unsigned PackTmt::findOverlapOverhead(const byte *buf, const byte *tbuf, unsigned range,
                                       unsigned upper_limit) const {
     // make sure the decompressor will be paragraph aligned
     unsigned o = super::findOverlapOverhead(buf, tbuf, range, upper_limit);
@@ -89,7 +89,7 @@ void PackTmt::buildLoader(const Filter *ft) {
 int PackTmt::readFileHeader() {
 #define H(x) get_le16(h + 2 * (x))
 #define H4(x) get_le32(h + (x))
-    unsigned char h[0x40];
+    byte h[0x40];
     int ic;
     unsigned exe_offset = 0;
     adam_offset = 0;
@@ -181,7 +181,7 @@ void PackTmt::pack(OutputFile *fo) {
         throwCantPack("file is already compressed with another packer");
 
     MemBuffer mb_relocs(rsize);
-    SPAN_S_VAR(upx_byte, relocs, mb_relocs);
+    SPAN_S_VAR(byte, relocs, mb_relocs);
     fi->readx(relocs, rsize);
 
     const unsigned overlay = file_size - fi->tell();
@@ -191,10 +191,9 @@ void PackTmt::pack(OutputFile *fo) {
         set_le32(relocs + ic * 4, get_le32(relocs + ic * 4) - 4);
 
     MemBuffer mb_orelocs(4 * relocnum + 8192); // relocations + extra_info
-    SPAN_S_VAR(upx_byte, orelocs, mb_orelocs);
+    SPAN_S_VAR(byte, orelocs, mb_orelocs);
     unsigned orelocsize =
         optimizeReloc(relocnum, relocs, orelocs, ibuf, usize, 32, true, &big_relocs);
-    relocs.destroy();    // done
     mb_relocs.dealloc(); // done
     // extra_info
     orelocs[orelocsize++] = 0;                // why is this needed - historical oversight ???
@@ -203,7 +202,6 @@ void PackTmt::pack(OutputFile *fo) {
     set_le32(orelocs + orelocsize, orelocsize + 4); // save orelocsize
     orelocsize += 4;
     memcpy(raw_index_bytes(ibuf, usize, orelocsize), orelocs, orelocsize);
-    orelocs.destroy();    // done
     mb_orelocs.dealloc(); // done
 
     // prepare packheader
@@ -249,7 +247,7 @@ void PackTmt::pack(OutputFile *fo) {
     fo->write(loader, e_len);
     fo->write(obuf, ph.c_len);
     fo->write(loader + lsize - d_len, d_len); // decompressor
-    unsigned char rel_entry[4];
+    byte rel_entry[4];
     set_le32(rel_entry, 5 + s_point);
     fo->write(rel_entry, sizeof(rel_entry));
 
@@ -292,18 +290,18 @@ void PackTmt::unpack(OutputFile *fo) {
     if (ph.filter) {
         Filter ft(ph.level);
         ft.init(ph.filter, 0);
-        ft.cto = (unsigned char) ph.filter_cto;
+        ft.cto = (byte) ph.filter_cto;
         if (ph.version < 11)
-            ft.cto = (unsigned char) (get_le32(obuf + ph.u_len - 12) >> 24);
+            ft.cto = (byte) (get_le32(obuf + ph.u_len - 12) >> 24);
         ft.unfilter(obuf, osize);
     }
 
     // decode relocations
-    SPAN_S_VAR(const upx_byte, orelocs, raw_index_bytes(obuf, osize, orelocsize), orelocsize);
-    SPAN_S_VAR(upx_byte, reloc_image, raw_index_bytes(obuf, 0, osize), osize);
+    SPAN_S_VAR(const byte, orelocs, raw_index_bytes(obuf, osize, orelocsize), orelocsize);
+    SPAN_S_VAR(byte, reloc_image, raw_index_bytes(obuf, 0, osize), osize);
     MemBuffer mb_relocs;
     const unsigned relocnum = unoptimizeReloc(orelocs, mb_relocs, reloc_image, osize, 32, true);
-    SPAN_S_VAR(upx_byte, relocs, mb_relocs);
+    SPAN_S_VAR(byte, relocs, mb_relocs);
     for (unsigned ic = 0; ic < relocnum; ic++)
         set_le32(relocs + ic * 4, get_le32(relocs + ic * 4) + 4);
 

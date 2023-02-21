@@ -32,8 +32,8 @@
 **************************************************************************/
 
 #define CT16(f, cond, addvalue, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 3; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 3; \
     do { \
         if (cond) \
         { \
@@ -211,8 +211,8 @@ static int s_ct16_e8e9_bswap_be(Filter *f)
 **************************************************************************/
 
 #define CT32(f, cond, addvalue, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 5; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 5; \
     do { \
         if (cond) \
         { \
@@ -388,8 +388,8 @@ static int s_ct32_e8e9_bswap_be(Filter *f)
 **************************************************************************/
 
 #define CT24ARM_LE(f, cond, addvalue, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 4; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 4; \
     do { \
         if (cond) \
         { \
@@ -424,8 +424,8 @@ static int s_ct24arm_le(Filter *f)
 #undef CT24ARM_LE
 
 #define CT24ARM_BE(f, cond, addvalue, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 4; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 4; \
     do { \
         if (cond) \
         { \
@@ -464,8 +464,8 @@ static int s_ct24arm_be(Filter *f)
 **************************************************************************/
 
 #define CT26ARM_LE(f, cond, addvalue, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 4; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 4; \
     do { \
         if (cond) \
         { \

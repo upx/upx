@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_PACKMASTER_H__
-#define UPX_PACKMASTER_H__ 1
 
 class Packer;
 class InputFile;
@@ -62,7 +60,5 @@ private:
     options_t local_options;
     options_t *saved_opt = nullptr;
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

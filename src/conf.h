@@ -186,8 +186,9 @@ typedef acc_int64_t     upx_int64_t;
 typedef acc_uint64_t    upx_uint64_t;
 typedef acc_uintptr_t   upx_uintptr_t;
 
-typedef unsigned char   upx_byte;
-#define upx_bytep       upx_byte *
+typedef unsigned char   byte;
+#define upx_byte        byte
+#define upx_bytep       byte *
 
 // protect against integer overflows and malicious header fields
 // see C 11 standard, Annex K
@@ -834,6 +835,7 @@ void *membuffer_get_void_ptr(MemBuffer &mb);
 unsigned membuffer_get_size(MemBuffer &mb);
 
 // xspan
+#include "util/raw_bytes.h"
 #include "util/xspan.h"
 
 // util/dt_check.cpp

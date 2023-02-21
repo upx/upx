@@ -57,7 +57,7 @@ protected:
     // dos/sys will override these:
     virtual unsigned getCallTrickOffset() const { return 0x100; }
     virtual void buildLoader(const Filter *ft) override;
-    virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned);
+    virtual void patchLoader(OutputFile *fo, byte *, int, unsigned);
 };
 
 #endif /* already included */

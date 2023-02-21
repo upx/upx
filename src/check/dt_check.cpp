@@ -301,10 +301,10 @@ void upx_compiler_sanity_check(void) {
     assert(TestBELE<BE32>::test());
     assert(TestBELE<BE64>::test());
     {
-        alignas(16) static const unsigned char dd[32] = {
+        alignas(16) static const byte dd[32] = {
             0, 0, 0, 0,    0,    0,    0,    0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8, 0,
             0, 0, 0, 0x7f, 0x7e, 0x7d, 0x7c, 0x7b, 0x7a, 0x79, 0x78, 0,    0,    0,    0,    0};
-        const unsigned char *d;
+        const byte *d;
         const N_BELE_RTP::AbstractPolicy *bele;
         d = dd + 7;
         assert(upx_adler32(d, 4) == 0x09f003f7);

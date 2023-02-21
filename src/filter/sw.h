@@ -32,8 +32,8 @@
 **************************************************************************/
 
 #define SW16(f, cond, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 3; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 3; \
     do { \
         if (cond) \
         { \
@@ -110,8 +110,8 @@ static int s_sw16_e8e9(Filter *f)
 **************************************************************************/
 
 #define SW32(f, cond, get, set) \
-    upx_byte *b = f->buf; \
-    upx_byte *b_end = b + f->buf_len - 5; \
+    byte *b = f->buf; \
+    byte *b_end = b + f->buf_len - 5; \
     do { \
         if (cond) \
         { \

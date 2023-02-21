@@ -59,7 +59,7 @@ const int *PackCom::getFilters() const {
 **************************************************************************/
 
 bool PackCom::canPack() {
-    unsigned char buf[128];
+    byte buf[128];
 
     fi->readx(buf, sizeof(buf));
     if (memcmp(buf, "MZ", 2) == 0 || memcmp(buf, "ZM", 2) == 0) // .exe
@@ -123,7 +123,7 @@ void PackCom::buildLoader(const Filter *ft) {
     }
 }
 
-void PackCom::patchLoader(OutputFile *fo, upx_byte *loader, int lsize, unsigned calls) {
+void PackCom::patchLoader(OutputFile *fo, byte *loader, int lsize, unsigned calls) {
     const int e_len = getLoaderSectionStart("COMCUTPO");
     const int d_len = lsize - e_len;
     assert(e_len > 0 && e_len < 128);

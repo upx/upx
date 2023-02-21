@@ -122,7 +122,7 @@ bool PackWinCeArm::canPack() {
 }
 
 void PackWinCeArm::buildLoader(const Filter *ft) {
-    const unsigned char *loader = use_thumb_stub ? stub_arm_v4t_wince_pe : stub_arm_v4a_wince_pe;
+    const byte *loader = use_thumb_stub ? stub_arm_v4t_wince_pe : stub_arm_v4a_wince_pe;
     unsigned size = use_thumb_stub ? sizeof(stub_arm_v4t_wince_pe) : sizeof(stub_arm_v4a_wince_pe);
 
     // prepare loader

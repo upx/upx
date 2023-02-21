@@ -180,7 +180,7 @@ int forced_method(int method) // extract the forced method
 // compress - wrap call to low-level upx_compress()
 **************************************************************************/
 
-bool Packer::compress(SPAN_P(upx_byte) i_ptr, unsigned i_len, SPAN_P(upx_byte) o_ptr,
+bool Packer::compress(SPAN_P(byte) i_ptr, unsigned i_len, SPAN_P(byte) o_ptr,
                       const upx_compress_config_t *cconf_parm) {
     ph.u_len = i_len;
     ph.c_len = 0;
@@ -331,8 +331,8 @@ bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const {
 // decompress
 **************************************************************************/
 
-void ph_decompress(PackHeader &ph, SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out,
-                   bool verify_checksum, Filter *ft) {
+void ph_decompress(PackHeader &ph, SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum,
+                   Filter *ft) {
     unsigned adler;
 
     // verify checksum of compressed data
@@ -364,8 +364,7 @@ void ph_decompress(PackHeader &ph, SPAN_P(const upx_byte) in, SPAN_P(upx_byte) o
     }
 }
 
-void Packer::decompress(SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out, bool verify_checksum,
-                        Filter *ft) {
+void Packer::decompress(SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum, Filter *ft) {
     ph_decompress(ph, in, out, verify_checksum, ft);
 }
 
@@ -373,8 +372,8 @@ void Packer::decompress(SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out, bool ve
 // overlapping decompression
 **************************************************************************/
 
-static bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_bytep buf,
-                                            const upx_bytep tbuf, unsigned overlap_overhead) {
+static bool ph_testOverlappingDecompression(const PackHeader &ph, const byte *buf, const byte *tbuf,
+                                            unsigned overlap_overhead) {
     if (ph.c_len >= ph.u_len)
         return false;
 
@@ -400,7 +399,7 @@ static bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_byte
     return (r == UPX_E_OK && new_len == ph.u_len);
 }
 
-bool Packer::testOverlappingDecompression(const upx_bytep buf, const upx_bytep tbuf,
+bool Packer::testOverlappingDecompression(const byte *buf, const byte *tbuf,
                                           unsigned overlap_overhead) const {
     return ph_testOverlappingDecompression(ph, buf, tbuf, overlap_overhead);
 }
@@ -433,7 +432,7 @@ void Packer::verifyOverlappingDecompression(Filter *ft) {
     obuf.checkState();
 }
 
-void Packer::verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Filter *ft) {
+void Packer::verifyOverlappingDecompression(byte *o_ptr, unsigned o_size, Filter *ft) {
     assert(ph.c_len < ph.u_len);
     assert((int) ph.overlap_overhead > 0);
     if (ph_skipVerify(ph))
@@ -455,7 +454,7 @@ void Packer::verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Fi
 //   - you can enforce an upper_limit (so that we can fail early)
 **************************************************************************/
 
-unsigned Packer::findOverlapOverhead(const upx_bytep buf, const upx_bytep tbuf, unsigned range,
+unsigned Packer::findOverlapOverhead(const byte *buf, const byte *tbuf, unsigned range,
                                      unsigned upper_limit) const {
     assert((int) range >= 0);
 
@@ -635,15 +634,15 @@ int Packer::patchPackHeader(void *b, int blen) {
     int boff = find_le32(b, blen, UPX_MAGIC_LE32);
     checkPatch(b, blen, boff, size);
 
-    auto bb = (upx_byte *) b;
-    ph.putPackHeader(SPAN_S_MAKE(upx_byte, bb + boff, blen, bb));
+    auto bb = (byte *) b;
+    ph.putPackHeader(SPAN_S_MAKE(byte, bb + boff, blen, bb));
 
     return boff;
 }
 
 bool Packer::getPackHeader(const void *b, int blen, bool allow_incompressible) {
-    auto bb = (const upx_byte *) b;
-    if (!ph.decodePackHeaderFromBuf(SPAN_S_MAKE(const upx_byte, bb, blen), blen))
+    auto bb = (const byte *) b;
+    if (!ph.decodePackHeaderFromBuf(SPAN_S_MAKE(const byte, bb, blen), blen))
         return false;
 
     if (ph.version > getVersion())
@@ -695,7 +694,7 @@ void Packer::checkAlreadyPacked(const void *b, int blen) {
     //   is a real PackHeader, e.g.
     //
     // PackHeader tmp;
-    // if (!tmp.decodePackHeaderFromBuf((unsigned char *)b + boff, blen - boff))
+    // if (!tmp.decodePackHeaderFromBuf((byte *)b + boff, blen - boff))
     //    return;
     //
     // This also would require that the buffer in 'b' holds
@@ -738,7 +737,7 @@ int Packer::patch_be16(void *b, int blen, unsigned old, unsigned new_) {
     int boff = find_be16(b, blen, old);
     checkPatch(b, blen, boff, 2);
 
-    unsigned char *p = (unsigned char *) b + boff;
+    byte *p = (byte *) b + boff;
     set_be16(p, new_);
 
     return boff;
@@ -748,7 +747,7 @@ int Packer::patch_be16(void *b, int blen, const void *old, unsigned new_) {
     int boff = find(b, blen, old, 2);
     checkPatch(b, blen, boff, 2);
 
-    unsigned char *p = (unsigned char *) b + boff;
+    byte *p = (byte *) b + boff;
     set_be16(p, new_);
 
     return boff;
@@ -758,7 +757,7 @@ int Packer::patch_be32(void *b, int blen, unsigned old, unsigned new_) {
     int boff = find_be32(b, blen, old);
     checkPatch(b, blen, boff, 4);
 
-    unsigned char *p = (unsigned char *) b + boff;
+    byte *p = (byte *) b + boff;
     set_be32(p, new_);
 
     return boff;
@@ -768,7 +767,7 @@ int Packer::patch_be32(void *b, int blen, const void *old, unsigned new_) {
     int boff = find(b, blen, old, 4);
     checkPatch(b, blen, boff, 4);
 
-    unsigned char *p = (unsigned char *) b + boff;
+    byte *p = (byte *) b + boff;
     set_be32(p, new_);
 
     return boff;
@@ -778,7 +777,7 @@ int Packer::patch_le16(void *b, int blen, unsigned old, unsigned new_) {
     int boff = find_le16(b, blen, old);
     checkPatch(b, blen, boff, 2);
 
-    unsigned char *p = (unsigned char *) b + boff;
+    byte *p = (byte *) b + boff;
     set_le16(p, new_);
 
     return boff;
@@ -788,7 +787,7 @@ int Packer::patch_le16(void *b, int blen, const void *old, unsigned new_) {
     int boff = find(b, blen, old, 2);
     checkPatch(b, blen, boff, 2);
 
-    unsigned char *p = (unsigned char *) b + boff;
+    byte *p = (byte *) b + boff;
     set_le16(p, new_);
 
     return boff;
@@ -798,7 +797,7 @@ int Packer::patch_le32(void *b, int blen, unsigned old, unsigned new_) {
     int boff = find_le32(b, blen, old);
     checkPatch(b, blen, boff, 4);
 
-    unsigned char *p = (unsigned char *) b + boff;
+    byte *p = (byte *) b + boff;
     set_le32(p, new_);
 
     return boff;
@@ -808,7 +807,7 @@ int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_) {
     int boff = find(b, blen, old, 4);
     checkPatch(b, blen, boff, 4);
 
-    unsigned char *p = (unsigned char *) b + boff;
+    byte *p = (byte *) b + boff;
     set_le32(p, new_);
 
     return boff;
@@ -910,9 +909,9 @@ void Packer::addLoaderVA(const char *s, ...) {
     va_end(ap);
 }
 
-upx_byte *Packer::getLoader() const {
+byte *Packer::getLoader() const {
     int size = -1;
-    upx_byte *oloader = linker->getLoader(&size);
+    byte *oloader = linker->getLoader(&size);
     if (oloader == nullptr || size <= 0)
         throwBadLoader();
     return oloader;
@@ -920,7 +919,7 @@ upx_byte *Packer::getLoader() const {
 
 int Packer::getLoaderSize() const {
     int size = -1;
-    upx_byte *oloader = linker->getLoader(&size);
+    byte *oloader = linker->getLoader(&size);
     if (oloader == nullptr || size <= 0)
         throwBadLoader();
     return size;
@@ -962,7 +961,7 @@ void Packer::relocateLoader() {
         int lsize = -1;
         int loff = getLoaderSectionStart("UPX1HEAD", &lsize);
         assert(lsize == ph.getPackHeaderSize());
-        unsigned char *p = getLoader() + loff;
+        byte *p = getLoader() + loff;
         assert(get_le32(p) == UPX_MAGIC_LE32);
         //patchPackHeader(p, lsize);
         ph.putPackHeader(p);
@@ -1093,12 +1092,12 @@ done:
     return nfilters;
 }
 
-void Packer::compressWithFilters(upx_bytep i_ptr,
-                                 unsigned const i_len,  // written and restored by filters
-                                 upx_bytep const o_ptr, // where to put compressed output
-                                 upx_bytep f_ptr,
+void Packer::compressWithFilters(byte *i_ptr,
+                                 unsigned const i_len, // written and restored by filters
+                                 byte *const o_ptr,    // where to put compressed output
+                                 byte *f_ptr,
                                  unsigned const f_len, // subset of [*i_ptr, +i_len)
-                                 upx_bytep const hdr_ptr, unsigned const hdr_len,
+                                 byte *const hdr_ptr, unsigned const hdr_len,
                                  Filter *const parm_ft, // updated
                                  unsigned const overlap_range,
                                  upx_compress_config_t const *const cconf,
@@ -1150,7 +1149,7 @@ void Packer::compressWithFilters(upx_bytep i_ptr,
     }
 
     // Working buffer for compressed data. Don't waste memory and allocate as needed.
-    upx_bytep o_tmp = o_ptr;
+    byte *o_tmp = o_ptr;
     MemBuffer o_tmp_buf;
 
     // compress using all methods/filters
@@ -1305,15 +1304,15 @@ void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
 void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
                                  upx_compress_config_t const *cconf, int filter_strategy,
                                  unsigned filter_off, unsigned ibuf_off, unsigned obuf_off,
-                                 upx_bytep const hdr_ptr, unsigned hdr_len,
+                                 byte *const hdr_ptr, unsigned hdr_len,
                                  bool inhibit_compression_check) {
     ibuf.checkState();
     obuf.checkState();
 
-    upx_bytep i_ptr = ibuf + ibuf_off;
+    byte *i_ptr = ibuf + ibuf_off;
     unsigned i_len = ph.u_len;
-    upx_bytep o_ptr = obuf + obuf_off;
-    upx_bytep f_ptr = ibuf + filter_off;
+    byte *o_ptr = obuf + obuf_off;
+    byte *f_ptr = ibuf + filter_off;
     unsigned f_len = ft->buf_len ? ft->buf_len : i_len;
 
     assert(f_ptr + f_len <= i_ptr + i_len);

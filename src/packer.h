@@ -48,8 +48,8 @@ class PackHeader final {
     // these are strictly private to friend Packer
     PackHeader();
 
-    void putPackHeader(SPAN_S(upx_byte) p);
-    bool decodePackHeaderFromBuf(SPAN_S(const upx_byte) b, int blen);
+    void putPackHeader(SPAN_S(byte) p);
+    bool decodePackHeaderFromBuf(SPAN_S(const byte) b, int blen);
 
 public:
     int getPackHeaderSize() const;
@@ -94,9 +94,9 @@ public:
 };
 
 bool ph_skipVerify(const PackHeader &ph);
-void ph_decompress(PackHeader &ph, SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out,
-                   bool verify_checksum, Filter *ft);
-bool ph_testOverlappingDecompression(const PackHeader &ph, SPAN_P(const upx_byte) buf,
+void ph_decompress(PackHeader &ph, SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum,
+                   Filter *ft);
+bool ph_testOverlappingDecompression(const PackHeader &ph, SPAN_P(const byte) buf,
                                      unsigned overlap_overhead);
 
 /*************************************************************************
@@ -161,9 +161,9 @@ public:
 
 protected:
     // main compression drivers
-    bool compress(SPAN_P(upx_byte) i_ptr, unsigned i_len, SPAN_P(upx_byte) o_ptr,
+    bool compress(SPAN_P(byte) i_ptr, unsigned i_len, SPAN_P(byte) o_ptr,
                   const upx_compress_config_t *cconf = nullptr);
-    void decompress(SPAN_P(const upx_byte) in, SPAN_P(upx_byte) out, bool verify_checksum = true,
+    void decompress(SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum = true,
                     Filter *ft = nullptr);
     virtual bool checkDefaultCompressionRatio(unsigned u_len, unsigned c_len) const;
     virtual bool checkCompressionRatio(unsigned u_len, unsigned c_len) const;
@@ -176,27 +176,27 @@ protected:
     void compressWithFilters(Filter *ft, const unsigned overlap_range,
                              const upx_compress_config_t *cconf, int filter_strategy,
                              unsigned filter_buf_off, unsigned compress_ibuf_off,
-                             unsigned compress_obuf_off, upx_bytep const hdr_ptr, unsigned hdr_len,
+                             unsigned compress_obuf_off, byte *const hdr_ptr, unsigned hdr_len,
                              bool inhibit_compression_check = false);
     // real compression driver
-    void compressWithFilters(upx_bytep i_ptr, unsigned i_len, // written and restored by filters
-                             upx_bytep o_ptr, upx_bytep f_ptr,
+    void compressWithFilters(byte *i_ptr, unsigned i_len, // written and restored by filters
+                             byte *o_ptr, byte *f_ptr,
                              unsigned f_len, // subset of [*i_ptr, +i_len)
-                             upx_bytep const hdr_ptr, unsigned hdr_len,
+                             byte *const hdr_ptr, unsigned hdr_len,
                              Filter *parm_ft, // updated
                              unsigned overlap_range, upx_compress_config_t const *cconf,
                              int filter_strategy, bool inhibit_compression_check = false);
 
     // util for verifying overlapping decompresion
     //   non-destructive test
-    virtual bool testOverlappingDecompression(const upx_bytep buf, const upx_bytep tbuf,
+    virtual bool testOverlappingDecompression(const byte *buf, const byte *tbuf,
                                               unsigned overlap_overhead) const;
     //   non-destructive find
-    virtual unsigned findOverlapOverhead(const upx_bytep buf, const upx_bytep tbuf,
-                                         unsigned range = 0, unsigned upper_limit = ~0u) const;
+    virtual unsigned findOverlapOverhead(const byte *buf, const byte *tbuf, unsigned range = 0,
+                                         unsigned upper_limit = ~0u) const;
     //   destructive decompress + verify
     void verifyOverlappingDecompression(Filter *ft = nullptr);
-    void verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Filter *ft = nullptr);
+    void verifyOverlappingDecompression(byte *o_ptr, unsigned o_size, Filter *ft = nullptr);
 
     // packheader handling
     virtual int patchPackHeader(void *b, int blen);
@@ -209,7 +209,7 @@ protected:
     virtual Linker *newLinker() const = 0;
     virtual void relocateLoader();
     // loader util for linker
-    virtual upx_byte *getLoader() const;
+    virtual byte *getLoader() const;
     virtual int getLoaderSize() const;
     virtual void initLoader(const void *pdata, int plen, int small = -1, int pextra = 0);
 #define C const char *
@@ -247,7 +247,7 @@ protected:
 
     // filter handling [see packer_f.cpp]
     virtual bool isValidFilter(int filter_id) const;
-    virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const {}
+    virtual void optimizeFilter(Filter *, const byte *, unsigned) const {}
     virtual void addFilter32(int filter_id);
     virtual void defineFilterSymbols(const Filter *ft);
 
@@ -271,12 +271,11 @@ protected:
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util
-    static unsigned optimizeReloc(unsigned relocnum, SPAN_P(upx_byte) relocs, SPAN_S(upx_byte) out,
-                                  SPAN_P(upx_byte) image, unsigned image_size, int bits, bool bswap,
+    static unsigned optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(byte) out,
+                                  SPAN_P(byte) image, unsigned image_size, int bits, bool bswap,
                                   int *big);
-    static unsigned unoptimizeReloc(SPAN_S(const upx_byte) & in, MemBuffer &out,
-                                    SPAN_P(upx_byte) image, unsigned image_size, int bits,
-                                    bool bswap);
+    static unsigned unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P(byte) image,
+                                    unsigned image_size, int bits, bool bswap);
 
     // Target Endianness abstraction
     unsigned get_te16(const void *p) const { return bele->get16(p); }

@@ -48,7 +48,7 @@ public:
 protected: // dos/com overrides
     virtual unsigned getCallTrickOffset() const override { return 0; }
     virtual void buildLoader(const Filter *ft) override;
-    virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned) override;
+    virtual void patchLoader(OutputFile *fo, byte *, int, unsigned) override;
 };
 
 #endif /* already included */
