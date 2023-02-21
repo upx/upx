@@ -76,7 +76,10 @@ int PackW32PeI386::readFileHeader() {
 **************************************************************************/
 
 bool PackW32PeI386::canPack() {
-    if (!readFileHeader() || ih.cpu < IMAGE_FILE_MACHINE_I386 || ih.cpu > 0x150)
+    if (!readFileHeader())
+        return false;
+    checkMachine(ih.cpu);
+    if (ih.cpu < IMAGE_FILE_MACHINE_I386 || ih.cpu > 0x150)
         return false;
     return true;
 }

@@ -60,7 +60,10 @@ const int *PackW64PeArm64::getFilters() const { return nullptr; }
 **************************************************************************/
 
 bool PackW64PeArm64::canPack() {
-    if (!readFileHeader() || ih.cpu != IMAGE_FILE_MACHINE_ARM64)
+    if (!readFileHeader())
+        return false;
+    checkMachine(ih.cpu);
+    if (ih.cpu != IMAGE_FILE_MACHINE_ARM64)
         return false;
     throwCantPack("not yet implemented");
     return true;

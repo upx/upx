@@ -158,12 +158,12 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         D(PackDjgpp2);
         D(PackTmt);
         D(PackWcle);
+        // D(PackW64PeArm64EC); // NOT YET IMPLEMENTED
+        // D(PackW64PeArm64); // NOT YET IMPLEMENTED
         D(PackW64PeAmd64);
         D(PackW32PeI386);
     }
     D(PackWinCeArm);
-    // D(PackW64PeArm64EC); // NOT YET IMPLEMENTED
-    // D(PackW64PeArm64); // NOT YET IMPLEMENTED
     D(PackExe);
 
     //

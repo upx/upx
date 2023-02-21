@@ -114,6 +114,7 @@ void PackWinCeArm::processTls(Interval *) // pass 1
 bool PackWinCeArm::canPack() {
     if (!readFileHeader())
         return false;
+    checkMachine(ih.cpu);
     if (ih.cpu != IMAGE_FILE_MACHINE_ARM && ih.cpu != IMAGE_FILE_MACHINE_THUMB)
         return false;
     use_thumb_stub |= ih.cpu == IMAGE_FILE_MACHINE_THUMB || (ih.entry & 1) == 1;

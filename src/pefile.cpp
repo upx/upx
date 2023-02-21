@@ -117,6 +117,34 @@ bool PeFile::testUnpackVersion(int version) const {
 // util
 **************************************************************************/
 
+// early check of machine to generate a helpful error message
+// FIXME/TODO: proper check for ARM64EC
+// FIXME/TODO: proper check for ARM64X "universal" binary
+// CHPE   Compiled Hybrid PE: Microsoft internal only?
+// CHPEV2 Compiled Hybrid PE: ARM64EC, ARM64X
+/*static*/ int PeFile::checkMachine(unsigned cpu) {
+    // known but not supported
+    if (cpu == IMAGE_FILE_MACHINE_ARMNT)
+        throwCantPack("win32/arm32 is not supported"); // obsolete
+    if (cpu == IMAGE_FILE_MACHINE_ARM64)
+        throwCantPack("win64/arm64 is not supported");
+    // FIXME: it seems that arm64ec actually uses MACHINE_AMD64 ???
+    if (cpu == IMAGE_FILE_MACHINE_ARM64EC)
+        throwCantPack("win64/arm64ec is not supported");
+
+    // supported
+    if (cpu == IMAGE_FILE_MACHINE_AMD64)
+        return UPX_F_W64PE_AMD64;
+    if (cpu == IMAGE_FILE_MACHINE_ARM || cpu == IMAGE_FILE_MACHINE_THUMB)
+        return UPX_F_WINCE_ARM;
+    if (cpu >= IMAGE_FILE_MACHINE_I386 && cpu <= 0x150) // what is this 0x150 ???
+        return UPX_F_W32PE_I386;
+
+    // other or unkown (alpha, mips, etc.)
+    throwCantPack("pefile: unsupported machine %#x", cpu);
+    return 0; // pacify msvc
+}
+
 int PeFile::readFileHeader() {
     struct alignas(1) exe_header_t {
         LE16 mz;

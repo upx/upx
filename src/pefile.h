@@ -82,6 +82,7 @@ protected:
     int canUnpack0(unsigned max_sections, unsigned objs, unsigned ih_entry, unsigned ih_size);
 
 protected:
+    static int checkMachine(unsigned cpu);
     virtual int readFileHeader();
     virtual bool testUnpackVersion(int version) const override;
     virtual void readPeHeader() = 0;

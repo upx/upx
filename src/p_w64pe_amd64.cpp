@@ -66,8 +66,10 @@ Linker *PackW64PeAmd64::newLinker() const { return new ElfLinkerAMD64; }
 **************************************************************************/
 
 bool PackW64PeAmd64::canPack() {
-    // just check if machine type is 0x8664
-    if (!readFileHeader() || ih.cpu != IMAGE_FILE_MACHINE_AMD64)
+    if (!readFileHeader())
+        return false;
+    checkMachine(ih.cpu);
+    if (ih.cpu != IMAGE_FILE_MACHINE_AMD64)
         return false;
     return true;
 }
