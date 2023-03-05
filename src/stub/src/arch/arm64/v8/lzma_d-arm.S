@@ -79,41 +79,40 @@ Literal=  (RepLenCoder + kNumLenProbs)
 
 #define call bl  /* subroutine call */
 
-#define symbol  mi
-#define mo      mi
+mi      .req w0
+  symbol  .req w0
+  mo      .req w0
+p_in    .req x1
+t1      .req w2
+t1x     .req x2
+t0      .req w3
+t0x     .req x3
 
-#define mi      w0
-#define p_in    x1
-#define t1      w2
-#define t1x     x2
-#define t0      w3
-#define t0x     x3
+bitw    .req w4
+bitx    .req x4
+i       .req w5
+ix      .req x5
+state   .req w6
+Range   .req w7
 
-#define bit     w4
-#define bitx    x4
-#define i       w5
-#define ix      x5
-#define state   w6
-#define Range   w7
+inPtr   .req x8
+outPtr  .req x9
+prob    .req x10
+p       .req x11
 
-#define inPtr   x8
-#define outPtr  x9
-#define prob    x10
-#define p       x11
+Code    .req w12
+inLim   .req x13
+outLim  .req x14
 
-#define Code    w12
-#define inLim   x13
-#define outLim  x14
+rep0    .req w15
 
-#define rep0    w15
+t2x     .req x17
 
-#define t2x     x17
-
-#define nowPos          bit  /* temporary only */
+#define nowPos          bitw /* temporary only */
 #define nowPosx         bitx /* temporary only */
-#define distance        bit
-#define numDirectBits   bit
-#define hibit           bit
+#define distance        bitw
+#define numDirectBits   bitw
+#define hibit           bitw
 #define matchB          i
 #define probLen         ix
 #define probLit         ix
@@ -252,12 +251,13 @@ L205:
 L210:  // symbol === mi === mo
         lsl matchB,matchB,#1
         add p_in,prob,#0x100<<1
-        and bit,matchB,#0x100
-        uxtw t0x,bit
+        and bitw,matchB,#0x100
+        uxtw t0x,bitw
         add p_in,p_in,t0x,lsl #1
         call rcGetBit_mi
         and t0,symbol,#1
-        cmp t0,bit,lsr #8; bne L243  // break
+        lsr t1,bitw,#8
+        cmp t0,t1; bne L243  // break
         cmp symbol,#0x100; blo L210
         b L245
 L240:  // symbol === mi === mo
@@ -520,9 +520,33 @@ rcGB1: // Code >= bound
 #undef y0tmp
 #undef bound
 #undef starp
-#undef t1x
-#undef t1
-#undef t0x
-#undef t0
 
+    .unreq mi
+    .unreq symbol
+    .unreq mo
+    .unreq p_in
+    .unreq t1
+    .unreq t1x
+    .unreq t0
+    .unreq t0x
+
+    .unreq bitw
+    .unreq bitx
+    .unreq i
+    .unreq ix
+    .unreq state
+    .unreq Range
+
+    .unreq inPtr
+    .unreq outPtr
+    .unreq prob
+    .unreq p
+
+    .unreq Code
+    .unreq inLim
+    .unreq outLim
+
+    .unreq rep0
+
+    .unreq t2x
 // vi:ts=8:et

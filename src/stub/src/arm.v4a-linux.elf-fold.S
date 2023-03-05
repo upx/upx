@@ -247,7 +247,7 @@ sweep:
         mov r7,#0
         mov r12,#0
 #endif  /*}*/
-        ldr pc,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
+        mov pc,lr
 
 proc_self_exe:
         .ascii "/proc/self/exe"  @ no terminator
@@ -450,6 +450,7 @@ mmap_privanon: .globl mmap_privanon
 
 #if 1|DEBUG  /*{*/
 
+__udivsi3: .globl __udivsi3
 div10: .globl div10
         mov ip,r0  @ extra copy used at end
         sub r1,r1,r1  @ hi

@@ -30,19 +30,19 @@
 */
 #define SAFE 0  /* 1 for src+dst bounds checking: cost 76 bytes */
 
-#define src  r0
-#define len  r1  /* overlaps 'cnt' */
-#define dst  r2
-#define tmp  r3
-#define bits r4
-#define off  r5
+src  .req r0
+len  .req r1  /* overlaps 'cnt' */
+dst  .req r2
+tmp  .req r3
+bits .req r4
+off  .req r5
 /*           r6  UNUSED in ARM code unless DEBUG mode */
-#define srclim r7
+srclim .req r7
 #if 1==SAFE  /*{*/
-#define dstlim r12
+#define dstlim r12  /* bug: .req r12 */
 #endif  /*}*/
 
-#define cnt  r1  /* overlaps 'len' while reading an offset */
+cnt  .req r1  /* overlaps 'len' while reading an offset */
 
 /* macros reduce "noise" when comparing this ARM code to corresponding THUMB code */
 #define PUSH stmdb sp!,
@@ -99,7 +99,6 @@ ucl_nrv2d_decompress_8: .globl ucl_nrv2d_decompress_8  // ARM mode
 
 #if 1==SAFE  /*{*/
 bad_dst_n2d:  # return value will be 2
-bkpt
         add src,srclim,#1
 bad_src_n2d:  # return value will be 1
         ADD2(src,#1)
@@ -190,7 +189,15 @@ copy_n2d:
 
         .size ucl_nrv2d_decompress_8, .-ucl_nrv2d_decompress_8
 
+        .unreq src
+        .unreq len
+        .unreq dst
+        .unreq tmp
+        .unreq bits
+        .unreq off
+        .unreq srclim
+//      .unreq dstlim
+        .unreq cnt
 /*
 vi:ts=8:et:nowrap
  */
-

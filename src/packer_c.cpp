@@ -210,15 +210,16 @@ const char *Packer::getDecompressorSections() const
     static const char lzma_elf_fast[] =
         "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30";
 
-    if (ph.method == M_NRV2B_LE32)
+    unsigned const method = forced_method(ph.method);
+    if (method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
-    if (ph.method == M_NRV2D_LE32)
+    if (method == M_NRV2D_LE32)
         return opt->small ? nrv2d_le32_small : nrv2d_le32_fast;
-    if (ph.method == M_NRV2E_LE32)
+    if (method == M_NRV2E_LE32)
         return opt->small ? nrv2e_le32_small : nrv2e_le32_fast;
-//    if (ph.method == M_CL1B_LE32)
+//    if (method == M_CL1B_LE32)
 //        return opt->small ? cl1b_le32_small  : cl1b_le32_fast;
-    if (M_IS_LZMA(ph.method)) {
+    if (M_IS_LZMA(method)) {
         if (callsManyTimes(ph.format)) {
             return opt->small ? lzma_elf_small  : lzma_elf_fast;
         }

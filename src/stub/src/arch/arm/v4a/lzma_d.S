@@ -34,10 +34,10 @@
   section LZMA_ELF00
 //decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
 /* Arguments according to calling convention */
-#define src  r0
-#define lsrc r1
-#define dst  r2
-#define ldst r3  /* Out: actually a reference: &len_dst */
+src  .req r0
+lsrc .req r1
+dst  .req r2
+ldst .req r3  /* Out: actually a reference: &len_dst */
 #define meth [sp,#0]  /* as arg5 to f_exp: 32-bit unsigned */
 
   // bkpt  // debugging
@@ -51,10 +51,10 @@
         PUSH {          fp,lr}
 #endif  /*}*/
 
-#define a0 r0
-#define a1 r1
-#define a2 r2
-#define a3 r3
+a0 .req r0
+#define a1 r1  // bug: a1 .req r1
+#define a2 r2  // bug: a2 .req r2
+#define a3 r3  // bug: a3 .req r3
 #define a4    [sp,#0*4] /* outp */
 #define a5    [sp,#1*4] /* outSize */
 #define a6    [sp,#2*4] /* &outSizeProcessed */
@@ -127,7 +127,7 @@
 
         POP {fp,pc}  // RETURN!
 not_lzma:
-        bkpt  // we are lost
+        b not_lzma  // bkpt  we are lost
 
 1: // fall through into lzma decoding subroutine
 

@@ -58,13 +58,17 @@ STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.shlib-init.h
 STUBS += amd64-win64.pe.h
 STUBS += arm.v4a-linux.elf-entry.h
+STUBS += arm.v4a-linux.elf-so_entry.h
 STUBS += arm.v4a-linux.elf-fold.h
+STUBS += arm.v4a-linux.elf-so_fold.h
 STUBS += arm.v4a-wince.pe.h
 STUBS += arm.v4t-wince.pe.h
 STUBS += arm.v5a-darwin.macho-entry.h
 STUBS += arm.v5a-darwin.macho-fold.h
 STUBS += arm.v5a-linux.elf-entry.h
+STUBS += arm.v5a-linux.elf-so_entry.h
 STUBS += arm.v5a-linux.elf-fold.h
+STUBS += arm.v5a-linux.elf-so_fold.h
 STUBS += arm.v5a-linux.kernel.vmlinux-head.h
 STUBS += arm.v5a-linux.kernel.vmlinux.h
 STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
@@ -76,7 +80,9 @@ STUBS += armeb.v4a-linux.elf-fold.h
 STUBS += armeb.v5a-linux.kernel.vmlinux-head.h
 STUBS += armeb.v5a-linux.kernel.vmlinux.h
 STUBS += arm64-linux.elf-entry.h
+STUBS += arm64-linux.elf-so_entry.h
 STUBS += arm64-linux.elf-fold.h
+STUBS += arm64-linux.elf-so_fold.h
 STUBS += arm64-linux.shlib-init.h
 STUBS += arm64-darwin.macho-entry.h
 STUBS += arm64-darwin.macho-fold.h
@@ -98,7 +104,9 @@ STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.tmt.h
 STUBS += i386-dos32.watcom.le.h
 STUBS += i386-linux.elf-entry.h
+STUBS += i386-linux.elf-so_entry.h
 STUBS += i386-linux.elf-fold.h
+STUBS += i386-linux.elf-so_fold.h
 STUBS += i386-linux.elf.execve-entry.h
 STUBS += i386-linux.elf.execve-fold.h
 STUBS += i386-linux.elf.interp-entry.h
@@ -263,7 +271,7 @@ tc.default.readelf    = $(call tc,m-readelf)
 # default binutils functions
 define tc.default.f-embed_objinfo
 	chmod a-x $1
-	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start $1
+	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start --keep-symbol=upx_so_main $1
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
@@ -281,7 +289,7 @@ define tc.default.f-embed_objinfo_without_xstrip
 	chmod a-x $1
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
-	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start $1
+	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start --keep-symbol=upx_so_main $1
 #
 # Disassemble for human readability
 # objdump
@@ -399,19 +407,8 @@ amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.
 	$(call tc,bin2h) tmp/$T.bin $@
 
 amd64-linux.elf-so_fold.h : tmp/$$T.o tmp/amd64-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/amd64-expand.o
-#	# FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
-#	####$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	multiarch-ld-2.17 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-#	$(call tc,f-objstrip,tmp/$T.bin)
-#	$(call tc,sstrip) tmp/$T.bin
-#
-#	$(call tc,f-embed_objinfo,tmp/$T.bin)
-# f-embed_objinfo complains:
-#   File "./../../src/stub/scripts/xstrip.py", line 163, in do_file
-#       assert e_shstrndx + 3 == e_shnum
-# Therefore use a subset of f-embed_objinfo:
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
-#
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/amd64-expand.o: $(srcdir)/src/$$T.S
@@ -434,7 +431,6 @@ tmp/amd64-linux.elf-so_main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=SO_MAIN -R .comment -R .note -R .note.GNU-stack -R .reginfo $@
 	$(call tc,f-objstrip,$@)
-
 
 # /***********************************************************************
 # // amd64-linux.kernel.vmlinux
@@ -525,27 +521,49 @@ tmp/arm.v5a-darwin.macho-main.o : $(srcdir)/src/$$T.c
 arm.v4a-linux.elf%.h : tc_list = arm.v4a-linux.elf default
 arm.v4a-linux.elf%.h : tc_bfdname = elf32-littlearm
 
-tc.arm.v4a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD -MT $@
+tc.arm.v4a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4t -nostdinc -MMD -MT $@
 tc.arm.v4a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm.v4a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 arm.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
+	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-arm.v4a-linux.elf-fold.h : tmp/$$T.o tmp/arm.v4a-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
+arm.v4a-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
+
+arm.v4a-linux.elf-fold.h : tmp/$$T.o tmp/arm.v4a-linux.elf-main.o $(srcdir)/src/$$T.lds
+	multiarch-ld-2.23.90 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
+	: $(call tc,sstrip) tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+arm.v4a-linux.elf-so_fold.h : tmp/$$T.o tmp/arm.v4a-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/arm.v4a-expand.o
+	multiarch-ld-2.23.90 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/arm.v4a-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
 
 tmp/arm.v4a-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
+tmp/arm.v4a-linux.elf-so_fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
 tmp/arm.v4a-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/arm.v4a-linux.elf-so_main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-so_main.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) --rename-section .text=SO_MAIN -R .comment -R .note -R .note.GNU-stack -R .reginfo $@
 	$(call tc,f-objstrip,$@)
 
 
@@ -586,13 +604,18 @@ arm.v5a-linux.kernel.vmlinuz-head.h : $(srcdir)/src/$$T.S
 arm.v5a-linux.elf%.h : tc_list = arm.v5a-linux.elf default
 arm.v5a-linux.elf%.h : tc_bfdname = elf32-littlearm
 
-tc.arm.v5a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.arm.v5a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5t -nostdinc -MMD -MT $@
 tc.arm.v5a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm.v5a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 arm.v5a-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv5 -c $< -o tmp/$T.bin
+	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+arm.v5a-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 arm.v5a-linux.elf-fold.h : tmp/$$T.o tmp/armel-linux.elf-main.o $(srcdir)/src/arm.v4a-linux.elf-fold.lds
@@ -601,12 +624,35 @@ arm.v5a-linux.elf-fold.h : tmp/$$T.o tmp/armel-linux.elf-main.o $(srcdir)/src/ar
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
+arm.v5a-linux.elf-so_fold.h : tmp/$$T.o tmp/arm.v5a-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/arm.v5a-expand.o
+	multiarch-ld-2.23.90 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
 tmp/arm.v5a-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
+tmp/arm.v5a-linux.elf-so_fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/arm.v5a-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+
+tmp/arm.v5a-linux.elf-so_main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) --rename-section .text=SO_MAIN -R .comment -R .note -R .note.GNU-stack -R .reginfo $@
+	$(call tc,f-objstrip,$@)
+
+# /* armel ? */
 tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/armel-linux.elf-so_main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,objcopy) --rename-section .text=SO_MAIN -R .comment -R .note -R .note.GNU-stack -R .reginfo $@
 	$(call tc,f-objstrip,$@)
 
 
@@ -621,19 +667,31 @@ tc.arm64-linux.elf.gcc  = arm64-linux-gcc-4.9.2 -nostdinc -MMD -MT $@
 tc.arm64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-tc.arm64-linux.elf-fold.ld    = arm64-linux-ld-2.25
+tc.arm64-linux.elf-fold.ld       = arm64-linux-ld-2.25
+tc.arm64-linux.elf-so_fold.ld    = arm64-linux-ld-2.25
 
-tc.arm64-linux.elf-entry.objcopy  = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
-tc.arm64-linux.elf-fold.objcopy   = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
-tc.arm64-linux.elf-main.objcopy   = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.elf-entry.objcopy     = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.elf-so_entry.objcopy  = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.elf-fold.objcopy      = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.elf-so_fold.objcopy   = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.elf-main.objcopy      = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.elf-so_main.objcopy   = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
 
-tc.arm64-linux.elf-entry.objdump  = arm64-linux-objdump-2.25
-tc.arm64-linux.elf-fold.objdump   = arm64-linux-objdump-2.25
-tc.arm64-linux.elf-main.objdump   = arm64-linux-objdump-2.25
+tc.arm64-linux.elf-entry.objdump     = arm64-linux-objdump-2.25
+tc.arm64-linux.elf-so_entry.objdump  = arm64-linux-objdump-2.25
+tc.arm64-linux.elf-fold.objdump      = arm64-linux-objdump-2.25
+tc.arm64-linux.elf-so_fold.objdump   = arm64-linux-objdump-2.25
+tc.arm64-linux.elf-main.objdump      = arm64-linux-objdump-2.25
+tc.arm64-linux.elf-so_main.objdump   = arm64-linux-objdump-2.25
 
 arm64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+arm64-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 arm64-linux.elf-fold.h : tmp/$$T.o tmp/arm64-linux.elf-main.o $(srcdir)/src/arm64-linux.elf-fold.lds
@@ -642,12 +700,30 @@ arm64-linux.elf-fold.h : tmp/$$T.o tmp/arm64-linux.elf-main.o $(srcdir)/src/arm6
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
+arm64-linux.elf-so_fold.h : tmp/$$T.o tmp/arm64-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/arm64-expand.o
+	$(call tc,ld) -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
 tmp/arm64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
+tmp/arm64-linux.elf-so_fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objcopy) -R .text $@
+	$(call tc,f-objstrip,$@)
+
+tmp/arm64-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+
 tmp/arm64-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/arm64-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/arm64-linux.elf-so_main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) --rename-section .text=SO_MAIN -R .comment -R .note -R .note.GNU-stack -R .reginfo $@
 	$(call tc,f-objstrip,$@)
 
 # /***********************************************************************
@@ -1073,6 +1149,11 @@ i386-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
+i386-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
 i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
@@ -1080,14 +1161,31 @@ i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.ld
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
+i386-linux.elf-so_fold.h : tmp/$$T.o tmp/i386-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/i386-expand.o
+	multiarch-ld-2.17 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
 tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,f-objstrip,$@)
+
+tmp/i386-linux.elf-so_fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.o
+	$(call tc,objcopy) -R .text $@
+	$(call tc,f-objstrip,$@)
+
+tmp/i386-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
 
 tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
+tmp/i386-linux.elf-so_main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) --rename-section .text=SO_MAIN -R .comment -R .note -R .note.GNU-stack -R .reginfo $@
+	$(call tc,f-objstrip,$@)
 
 # /***********************************************************************
 # // i386-linux.elf.execve

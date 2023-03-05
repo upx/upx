@@ -73,47 +73,59 @@ NBPW= 8
 #define getnextb(reg)  getnextbp(reg)
 
 // /*************************************************************************
-//   C-callable decompressor  f_expand(src, srclen, dst, &dstlen, method)
+//   C-callable decompressor  f_expand(&b_info, dst, &dstlen)
 // **************************************************************************/
 
   section EXP_HEAD
+f_expand: .globl f_expand   // start of code for actual de-compressor
         push %rbp; mov %rsp,%rbp; push %rbx  // MATCH_50  C saved registers
 
 // Calling sequence registers
-#define src    %arg1
-#define srclen %arg2
-#define dst    %arg3
-#define dstlen %arg4
-#define meth   %arg5d
-#define methb  %arg5b
-#define         arg5d r8d
+#define fx_src %rdi
+#define fx_dst %rsi
+#define fx_dstlen %rdx
+
+sz_unc= 0
+sz_cpr= 4
+b_method= 8
+b_ftid=   9
+b_cto8=  10
+b_extra= 11
+sz_binfo= 12
 
 // If unfilter will be needed, then splice a call to unfilter after de-compress
-        movl meth,%eax; movzbl %ah,%eax; test %eax,%eax; jz no_unf
-        push %rax  // ftid
-        movl meth,%eax; shr $16,%eax; push %rax  // cto8 and extra
-        push (dstlen)
-        push dst
-        call no_unf
-        pop %rdi; pop %rsi; pop %rdx; pop %rcx  // (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
-#include "arch/amd64/bxx.S"  // actual unfilter code
-        pop %rbx; pop %rbp
-        ret
+    movzbl b_ftid(fx_src),%eax; test %eax,%eax; jz no_unf
+    movzbl b_cto8(fx_src),%ecx
+      push %rax; push %ecx; push (fx_dstlen); push fx_dst
+    call no_unf
+    // decompress returns here, to fall into unfilter
+      pop %rdi; pop %rsi; pop %rdx; pop %rcx  // (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
+      push %rax  // save result from decompress
+#include "arch/amd64/bxx.S"  // unfilter code; args in registers, fall-through return
+      pop %rax  // restore result from decompress
+      pop %rbx; pop %rbp
+      ret
 no_unf:
 
-/* Working registers */
+/* NRV2 working registers */
 #define off  %eax  /* XXX: 2GB */
 #define len  %ecx  /* XXX: 2GB */
 #define lenq %rcx
 #define bits %ebx
+#define methb %dl  /* input only */
+#define src %rsi
+#define dst %rdi
 #define displ %ebp
 #define dispq %rbp
 
-        push dstlen  // MATCH_51
-        add src,srclen; push srclen  // MATCH_52  src_EOF
-        mov src,%rsi  // hardware src for movsb, lodsb
-        push dst  // MATCH_53  dst_orig
-        mov dst,%rdi  // hardware dst for movsb
+    push fx_dstlen  // MATCH_51
+    movzbl b_method(fx_src),%edx  // methb; for choosing decompression method
+    push fx_src; push fx_dst
+    pop  dst;    pop  src
+    mov sz_cpr(src),%eax; add $sz_binfo,src  // done with b_info; ready for movsb, lodsb
+    add src,%rax; push %rax  // MATCH_52  src_EOF
+    push dst  // MATCH_53  dst_orig
+
         xor bits,bits  // empty; force refill
         xor len,len  // create loop invariant
         orq $(~0),dispq  // -1: initial displacement
@@ -147,18 +159,6 @@ copy0:
 setup:
         cld
 
-  section EXP_TAIL
-eof:
-        pop %rax  // MATCH_53 dst_orig
-        sub %rax,%rdi  // dst -= original dst
-        pop %rax  // MATCH_52 src_EOF
-        pop %rcx  // MATCH_51 &dstlen
-        movl %edi,(%rcx)  // actual length used at dst  XXX: 4GB
-        sub %rsi,%rax  // src -= eof;  // return 0: good; else: bad
-
-        pop %rbx; pop %rbp
-        ret
-
 #define M_NRV2B_LE32    2
 #define M_NRV2D_LE32    5
 #define M_NRV2E_LE32    8
@@ -176,14 +176,28 @@ eof:
 
 #undef off
 #undef len
+#undef lenq
 #undef bits
 #undef displ
 #undef dispq
 
 #undef src
 #undef dst
-#undef meth
+#undef methb
 
 /* lzma has its own 'section's */
 #include "arch/amd64/lzma_d.S"
+
+  section EXP_TAIL
+eof:
+        pop %rax  // MATCH_53 dst_orig
+        sub %rax,%rdi  // dst -= original dst
+        pop %rax  // MATCH_52 src_EOF
+        pop %rcx  // MATCH_51 &dstlen
+        movl %edi,(%rcx)  // actual length used at dst  XXX: 4GB
+        sub %rsi,%rax  // src -= eof;  // return 0: good; else: bad
+
+        pop %rbx; pop %rbp
+        ret
+
 

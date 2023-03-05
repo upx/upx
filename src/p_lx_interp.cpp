@@ -205,7 +205,6 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
     Elf32_Ehdr *const ehdr = (Elf32_Ehdr *) u.buf;
     Elf32_Phdr const *phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
 
-    unsigned szb_info = sizeof(b_info);
     {
         fi->seek(0, SEEK_SET);
         fi->readx(u.buf, MAX_INTERP_HDR);

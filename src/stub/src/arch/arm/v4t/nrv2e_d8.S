@@ -30,19 +30,19 @@
 */
 #define SAFE 0  /* 1 for src+dst bounds checking: cost 40 bytes */
 
-#define src  r0
-#define len  r1  /* overlaps 'cnt' */
-#define dst  r2
-#define tmp  r3
-#define bits r4
-#define off  r5
-#define wrnk r6  /* 0x500  M2_MAX_OFFSET before "wrinkle" */
-#define srclim r7
+src  .req r0
+len  .req r1  /* overlaps 'cnt' */
+dst  .req r2
+tmp  .req r3
+bits .req r4
+off  .req r5
+wrnk .req r6  /* 0x500  M2_MAX_OFFSET before "wrinkle" */
+srclim .req r7
 #if 1==SAFE  /*{*/
-#define dstlim r12
+dstlim .req r12
 #endif  /*}*/
 
-#define cnt  r1  /* overlaps 'len' while reading an offset */
+cnt  .req r1  /* overlaps 'len' while reading an offset */
 
 #if 1==SAFE  /*{*/
 #define CHECK_SRC  cmp src,srclim; bhs bad_src_n2e
@@ -180,6 +180,15 @@ copy_n2e:
 #ifndef PURE_THUMB
         .size ucl_nrv2e_decompress_8, .-ucl_nrv2e_decompress_8
 #endif
+
+    .unreq src
+    .unreq len
+    .unreq dst
+    .unreq tmp
+    .unreq bits
+    .unreq off
+    .unreq wrnk
+    .unreq srclim
 
 /*
 vi:ts=8:et:nowrap

@@ -29,14 +29,6 @@
    <jreiser@users.sourceforge.net>
 */
 
-#define src  r0
-#define len  r1
-#define dst  r2
-#define tmp  r3
-#define bits r4
-#define off  r5
-#define g1b  r6
-#define wrnk r7  /* 0xd00  M2_MAX_OFFSET before "wrinkle" */
 
 /* r12 ("ip") is assumed to be a scratch register. */
 
@@ -50,6 +42,14 @@
 ucl_nrv2b_decompress_32: .globl ucl_nrv2b_decompress_32  @ ARM mode
         .type ucl_nrv2b_decompress_32, %function
 /* error = (*)(char const *src, int len_src, char *dst, int *plen_dst) */
+src  .req r0
+len  .req r1
+dst  .req r2
+tmp  .req r3
+bits .req r4
+off  .req r5
+g1b  .req r6
+wrnk .req r7  /* 0xd00  M2_MAX_OFFSET before "wrinkle" */
         adr r12,1+.thumb_nrv2b_d32  @ load pc-relative address
         bx  r12  @ enter THUMB mode
         .code 16  @ THUMB mode
@@ -126,6 +126,14 @@ get1b:  @ Out: Carry= next_bit
         bx lr
         .code 16  @ THUMB mode
 
+    .unreq src
+    .unreq len
+    .unreq dst
+    .unreq tmp
+    .unreq bits
+    .unreq off
+    .unreq g1b
+    .unreq wrnk
 #ifndef PURE_THUMB
         .size ucl_nrv2b_decompress_32, .-ucl_nrv2b_decompress_32
 #endif

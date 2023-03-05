@@ -109,6 +109,8 @@ f_decompress:
   section NRV_HEAD
         // empty
 
+#define NO_METHOD_CHECK 1
+
   section NRV2E
 #include "arch/arm64/v8/nrv2e_d32.S"
 

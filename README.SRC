@@ -71,6 +71,37 @@ If you want to modify the stub sources you'll also need
       https://github.com/upx/upx-stubtools/releases
 
 
+Developer quick start
+---------------------
+ 1)  $ mkdir my-upx; cd my-upx  # new directory for safety and convenience
+ 2)  $ git clone https://github.com/upx/upx.git
+ 3)  $ git clone https://github.com/upx/upx-testsuite.git
+ 4)  # Optional for re-building stubs:
+ 4a)    $ pushd upx/src/stub  # my-upx/upx/src/stub
+ 4b)    $ wget https://github.com/upx/upx-stubtools/releases/download/v20221212/bin-upx-20221212.tar.xz
+          # Extract to $HOME/bin/bin-upx or $HOME/local/bin/bin-upx.
+          # See directions in: https://github.com/upx/upx-stubtools
+ 4c)    $ make clean; make  # verify that you can re-build stubs
+ 4d)    $ popd  # my-upx
+ 5)  $ cd upx  # my-upx/upx
+ 6)  $ git submodule update --init  # compression algorithms, etc.
+        # DO NOT TOUCH vendor/...
+        # After a git merge/pull/etc, then use "git status"
+        # to check whether the vendor directory is clean;
+        # if not, then update via "git submodule update".
+        # If stuck, then reset via "rm -rf vendor; git submodule update --init".
+ 7)  $ mkdir -p build/debug build/release
+ 8)  $ pushd build/debug  # my-upx/upx/build/debug
+ 9)  $ cmake ../..  # configure cmake
+10)  $ cmake --build . --verbose  # optional "--verbose"
+        # This relies on stub/*.h, which YOU must re-build if necessary.
+        # When in doubt, then use "cd src/stub; make clean; make".
+11)  $ popd  # my-upx/upx
+12)  $ cd src  # my-upx/upx/src
+13)  $ make run-testsuite 2>&1  |  tee testsuite.log
+
+
+
 Misc. notes
 -----------
 

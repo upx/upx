@@ -32,42 +32,37 @@ Linker script and memory map
                 0x0000000000100948                . = ALIGN (0x1)
                 0x0000000000100948                __start_EXP_HEAD = .
 
-EXP_HEAD        0x0000000000100948       0xd5
- EXP_HEAD       0x0000000000100948       0xd5 tmp/amd64-expand.o
-                0x0000000000100a1d                __stop_EXP_HEAD = .
-                0x0000000000100a1d                . = ALIGN (0x1)
-                0x0000000000100a1d                __start_EXP_TAIL = .
+EXP_HEAD        0x0000000000100948       0xdc
+ EXP_HEAD       0x0000000000100948       0xdc tmp/amd64-expand.o
+                0x0000000000100948                f_expand
+                0x0000000000100a24                __stop_EXP_HEAD = .
+                0x0000000000100a24                . = ALIGN (0x1)
+                0x0000000000100a24                __start_NRV2E = .
 
-EXP_TAIL        0x0000000000100a1d        0xe
- EXP_TAIL       0x0000000000100a1d        0xe tmp/amd64-expand.o
-                0x0000000000100a2b                __stop_EXP_TAIL = .
-                0x0000000000100a2b                . = ALIGN (0x1)
-                0x0000000000100a2b                __start_NRV2E = .
+NRV2E           0x0000000000100a24       0xe5
+ NRV2E          0x0000000000100a24       0xe5 tmp/amd64-expand.o
+                0x0000000000100b09                __stop_NRV2E = .
+                0x0000000000100b09                . = ALIGN (0x1)
+                0x0000000000100b09                __start_NRV2D = .
 
-NRV2E           0x0000000000100a2b       0xe6
- NRV2E          0x0000000000100a2b       0xe6 tmp/amd64-expand.o
-                0x0000000000100b11                __stop_NRV2E = .
-                0x0000000000100b11                . = ALIGN (0x1)
-                0x0000000000100b11                __start_NRV2D = .
+NRV2D           0x0000000000100b09       0xd7
+ NRV2D          0x0000000000100b09       0xd7 tmp/amd64-expand.o
+                0x0000000000100be0                __stop_NRV2D = .
+                0x0000000000100be0                . = ALIGN (0x1)
+                0x0000000000100be0                __start_NRV2B = .
 
-NRV2D           0x0000000000100b11       0xd8
- NRV2D          0x0000000000100b11       0xd8 tmp/amd64-expand.o
-                0x0000000000100be9                __stop_NRV2D = .
-                0x0000000000100be9                . = ALIGN (0x1)
-                0x0000000000100be9                __start_NRV2B = .
-
-NRV2B           0x0000000000100be9       0xc2
- NRV2B          0x0000000000100be9       0xc2 tmp/amd64-expand.o
-                0x0000000000100cab                __stop_NRV2B = .
+NRV2B           0x0000000000100be0       0xc1
+ NRV2B          0x0000000000100be0       0xc1 tmp/amd64-expand.o
+                0x0000000000100ca1                __stop_NRV2B = .
 
 .data
 
-.bss            0x0000000000100cac        0x0
- .bss           0x0000000000100cac        0x0 tmp/amd64-linux.elf-fold.o
- .bss           0x0000000000100cac        0x0 tmp/amd64-linux.elf-main.o
- .bss           0x0000000000100cac        0x0 tmp/amd64-expand.o
+.bss            0x0000000000100ca4        0x0
+ .bss           0x0000000000100ca4        0x0 tmp/amd64-linux.elf-fold.o
+ .bss           0x0000000000100ca4        0x0 tmp/amd64-linux.elf-main.o
+ .bss           0x0000000000100ca4        0x0 tmp/amd64-expand.o
 
-.rela.dyn       0x0000000000100cb0        0x0
+.rela.dyn       0x0000000000100ca8        0x0
  .rela.text     0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-main.o
@@ -97,3 +92,9 @@ LZMA_DEC20      0x0000000000000000      0x9f7
 LZMA_DEC30      0x0000000000000000       0x18
  LZMA_DEC30     0x0000000000000000       0x18 tmp/amd64-expand.o
                 0x0000000000000018                __stop_LZMA_DEC30 = .
+                0x0000000000000018                . = ALIGN (0x1)
+                0x0000000000000018                __start_EXP_TAIL = .
+
+EXP_TAIL        0x0000000000000000        0xe
+ EXP_TAIL       0x0000000000000000        0xe tmp/amd64-expand.o
+                0x000000000000000e                __stop_EXP_TAIL = .

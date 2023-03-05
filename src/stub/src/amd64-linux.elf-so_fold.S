@@ -24,10 +24,9 @@ NBPW= 8
 fold:
     pop %rbx  // MATCH_13  ptr unfolded code
     pop %rbp  // MATCH_12  len unfolded code
-    lea f_exp(%rip),%arg1  // decompression routine
-    pop %arg2  // MATCH_14  &so_info
-    lea 2*NBPW(%rsp),%arg3  // skip MATCH_03, MATCH_02; MATCH_00  &{argc, argv, envp}
-    call upx_so_main  // (&decompress, &so_init, &{argc, argv, envp}); returns &escape_hatch
+    pop %arg1  // MATCH_14  &so_info
+    lea 2*NBPW(%rsp),%arg2  // skip MATCH_03, MATCH_02; MATCH_00  &{argc, argv, envp}
+    call upx_so_main  // (&so_info, &{argc, argv, envp}); returns &escape_hatch
 
     push %rbp; pop %arg2  // len unfolded code
     push %rbx; pop %arg1  // ptr unfolded code
@@ -43,7 +42,6 @@ fold:
         //  ret  // ==> user_DT_INIT
 
   section ptr_NEXT
-f_exp:  // start of code for actual de-compressor
 //    pop %rax; call *%rax
 // "lea f_exp(%rip)," addressing on x86_64 subsumes the need for code,
 // but keep the empty section to unify buildLinuxLoader()
@@ -71,7 +69,7 @@ eof:  // end of a compressed extent
 //
 // Subroutines and syscalls needed by upx_so_main
 //
-f_int3: .globl f_int3
+my_bkpt: .globl my_bkpt
         int3
         ret
 
@@ -94,7 +92,8 @@ memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t n)
 /* 64-bit mode only! */
 __NR_read=  0
 __NR_write= 1
-__NR_open=  2
+//__NR_open=  2
+__NR_openat= 257
 __NR_close= 3
 
 __NR_mmap=      9
@@ -141,20 +140,22 @@ sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
   pop %r9
   pop %r10
 #endif  //}
-        syscall  # failure return: -0x1000ul < $rax
+        syscall; cmp $-4096,%rax; jb 0f; int3; 0:
         ret
 
 exit: .globl exit
-        push $ __NR_exit; jmp sysgo
-munmap: .globl munmap
-        push $ __NR_munmap; jmp sysgo
-mprotect: .globl mprotect
-        push $ __NR_mprotect; jmp sysgo
+        push $ __NR_exit; 5: jmp 5f
+close: .globl close
+        push $ __NR_close; 5: jmp 5f
+openat: .globl openat
+        push $ __NR_openat; 5: jmp 5f
 write: .globl write
-        push $__NR_write
-        pop %rax
-        syscall
-        ret
-
+        push $__NR_write; 5: jmp 5f
+read: .globl read
+        push $ __NR_read; 5: jmp 5f
+munmap: .globl munmap
+        push $ __NR_munmap; 5: jmp 5f
+mprotect: .globl mprotect
+        push $ __NR_mprotect; 5: jmp sysgo
 
 // section SO_MAIN inserted here

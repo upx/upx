@@ -37,7 +37,21 @@
 
 section NRV_HEAD
         // empty ???
+#define M_NRV2B_LE32    2
+#define M_NRV2D_LE32    5
+#define M_NRV2E_LE32    8
+#define M_CL1B_LE32     11
+#define M_LZMA          14
 
+#define xsrc    x0
+#define xsrclen w1
+#define xdst    x2
+#define xdstlen x3
+#define methb   w4
+
+#define NO_METHOD_CHECK 1
+
+off     .req w5
 section NRV2B
 #include "arch/arm64/v8/nrv2b_d32.S"
 

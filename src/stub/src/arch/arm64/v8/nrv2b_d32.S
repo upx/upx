@@ -31,16 +31,6 @@
 
 #include "macros.S"
 
-#define lr   x30
-#define ip0  x16
-
-#define src  x0
-#define len  w1
-#define dst  x2
-#define dstw w2
-#define tmp  w3
-#define bits w4
-#define off  w5
 
 /* macros reduce "noise" when comparing this ARM code to corresponding THUMB code */
 #define ADD2( dst,src) add  dst,dst,src
@@ -61,6 +51,19 @@
 #define   jnextb1     GETBIT; bcs
 
 ucl_nrv2b_decompress_32: .globl ucl_nrv2b_decompress_32  // ARM mode
+lr   .req x30
+ip0  .req x16
+
+src  .req x0
+len  .req w1
+dst  .req x2
+dstw .req w2
+tmp  .req w3
+bits .req w4
+off  .req w5
+#ifndef NO_METHOD_CHECK
+        cmp methb,#M_NRV2B_LE32; bne not_n2b
+#endif
         .type ucl_nrv2b_decompress_32, %function
 /* error = (*)(char const *src, uint32_t len_src, char *dst, uint32_t *plen_dst) */
         add x1,src,len,uxtw  // x1= eof_src;
@@ -79,7 +82,9 @@ eof_n2b:
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
 cache_n2b:
-        clear_cache  // x0= lo; x1= hi; uses x2-x4
+#ifndef NO_SYNC_CACHE
+        sync_cache  // x0= lo; x1= hi; uses x2-x4
+#endif
 
         mov x0,x5  // result value
         ret
@@ -125,6 +130,20 @@ copy_n2b:  // copy 1+len bytes
         STRB3(tmp,[dst],#1); bhs copy_n2b
         b top_n2b  // exit with -1==len
 
+#ifndef NO_METHOD_CHECK
+not_n2b:
+        # fall into 'eof'
+#endif
+    .unreq lr
+    .unreq ip0
+
+    .unreq src
+    .unreq len
+    .unreq dst
+    .unreq dstw
+    .unreq tmp
+    .unreq bits
+    .unreq off
         .size ucl_nrv2b_decompress_32, .-ucl_nrv2b_decompress_32
 /*
 vi:ts=8:et:nowrap

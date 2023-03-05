@@ -90,13 +90,13 @@ section         LINUX020
 // =============
 section         ctok32.00
 //f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
-        ptr  .req r0
-        len  .req r1
-        cto  .req r2  @ unused
-        fid  .req r3
+    ptr  .req r0
+    len  .req r1
+    cto  .req r2  @ unused
+    fid  .req r3
 
-        t1   .req r2
-        t2   .req r3
+    t1   .req r2
+    t2   .req r3
 unfilter:
         and fid,fid,#0xff
 section         ctok32.50
@@ -126,10 +126,13 @@ tst_unf:
         bne top_unf
         mov pc,lr
 
-        .unreq ptr
-        .unreq len
-        .unreq cto
-        .unreq fid
+    .unreq ptr
+    .unreq len
+    .unreq cto
+    .unreq fid
+
+    .unreq t1
+    .unreq t2
 
 section         LINUX030
 decompressor:

@@ -32,20 +32,20 @@
 
 #define SAFE 0  /* 1 for src+dst bounds checking: cost 76 bytes */
 
-#define lr   x30
+lr   .req x30
 
-#define src  x0
-#define len  w1  /* overlaps 'cnt' */
-#define dst  x2
-#define dstw w2
-#define tmp  w3
-#define tmpx x3
-#define bits w4
-#define off  w5
+src  .req x0
+len  .req w1  /* overlaps 'cnt' */
+dst  .req x2
+dstw .req w2
+#define tmpw w3  /*bug: .req w3 */
+#define tmpx x3  /*bug: .req x3 */
+bits .req w4
+off  .req w5
 /*           r6  UNUSED in ARM code unless DEBUG mode */
-#define srclim x7
+srclim .req x7
 #if 1==SAFE  /*{*/
-#define dstlim x12
+dstlim .req x12
 #endif  /*}*/
 
 #define cnt  w1  /* overlaps 'len' while reading an offset */
@@ -71,7 +71,7 @@
 #if 0  /*{ DEBUG only: check newly-decompressed against original dst */
 #define CHECK_BYTE \
    ldrb  w6,[dst]; \
-   cmp   w6,tmp; beq 0f; brk #0; 0:
+   cmp   w6,tmpw; beq 0f; brk #0; 0:
 #else  /*}{*/
 #define CHECK_BYTE  /*empty*/
 #endif  /*}*/
@@ -86,6 +86,9 @@
 
 ucl_nrv2e_decompress_32: .globl ucl_nrv2e_decompress_32  // ARM mode
         .type ucl_nrv2e_decompress_32, %function
+#ifndef NO_METHOD_CHECK
+        cmp methb,#M_NRV2E_LE32; bne not_n2e
+#endif
 /* error = (*)(char const *src, uint32_t len_src, char *dst, uint32_t *plen_dst)
    Actual decompressed length is stored through plen_dst.
    For SAFE mode: at call, *plen_dst must be allowed length of output buffer.
@@ -95,8 +98,8 @@ ucl_nrv2e_decompress_32: .globl ucl_nrv2e_decompress_32  // ARM mode
 #define sp_DST0 0  /* stack offset of original dst */
         add srclim,src,len,uxtw  // srclim= eof_src;
 #if 1==SAFE  /*{*/
-        ldr tmp,[r3]  // len_dst
-        add dstlim,tmp,dst
+        ldr tmpw,[r3]  // len_dst
+        add dstlim,tmpw,dst
 #endif  /*}*/
         mov off,#-1  // off= -1 initial condition
         mov bits,#1<<31  // refill next time
@@ -118,7 +121,9 @@ eof_n2e:
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
 cache_n2e:
-        clear_cache  // x0= lo; x1= hi; uses x2-x4
+#ifndef NO_SYNC_CACHE
+        sync_cache  // x0= lo; x1= hi; uses x2-x4
+#endif
 
         mov x0,x5  // result value
         POP1(lr)
@@ -132,9 +137,9 @@ get32_n2e:  // In: Carry set [from adding 0x80000000 (1<<31) to itself]
         ret
 
 lit_n2e:
-        CHECK_SRC; LDRB3(tmp,[src],#1)
+        CHECK_SRC; LDRB3(tmpw,[src],#1)
         CHECK_BYTE
-        CHECK_DST; STRB3(tmp,[dst],#1)
+        CHECK_DST; STRB3(tmpw,[dst],#1)
 top_n2e:
         jnextb1 lit_n2e
         mov cnt,#1; b getoff_n2e
@@ -146,11 +151,11 @@ getoff_n2e:
         getnextb(cnt)
         jnextb0 off_n2e
 
-        subs tmp,cnt,#3  // set Carry
+        subs tmpw,cnt,#3  // set Carry
         mov len,#0  // Carry unaffected
         blo offprev_n2e  // cnt was 2; tests Carry only
         CHECK_SRC; LDRB3(off,[src],#1)  // low 7+1 bits
-        orr  off,off,tmp,lsl #8
+        orr  off,off,tmpw,lsl #8
         mvn off,off; cbz off,eof_n2e  // off= ~off
         tst off,#1; asr off,off,#1; bne lenlast_n2e
         b lenmore_n2e
@@ -174,23 +179,40 @@ gotlen_n2e:  // 'cmn': add the inputs, set condition codes, discard the sum
         cinc len,len,cc  // too far away, so minimum match length is 3
 near_n2e:
 #if 1==SAFE  /*{*/
-        ldr tmp,[sp,#sp_DST0]
-        SUB2( tmp,dst)
-        SUB2S(tmp,off); bhi bad_dst_n2e  // reaching back too far
+        ldr tmpw,[sp,#sp_DST0]
+        SUB2( tmpw,dst)
+        SUB2S(tmpw,off); bhi bad_dst_n2e  // reaching back too far
 
-        add tmp,dst,cnt
-        cmp tmp,dstlim; bhi bad_dst_n2e  // too much output
+        add tmpw,dst,cnt
+        cmp tmpw,dstlim; bhi bad_dst_n2e  // too much output
 #endif  /*}*/
         add tmpx,dst,len,uxtw
-        ldrb tmp,[tmpx,#-1]  // force cacheline allocate
+        ldrb tmpw,[tmpx,#-1]  // force cacheline allocate
 copy_n2e:
-        ldrb tmp,[dst,off,sxtw]
+        ldrb tmpw,[dst,off,sxtw]
         CHECK_BYTE
-        STRB3(tmp,[dst],#1)
+        STRB3(tmpw,[dst],#1)
         SUB2S(len,#1); bne copy_n2e
         b top_n2e
 
+#ifndef NO_METHOD_CHECK
+not_n2e:
+        # fall into 'eof'
+#endif
         .size ucl_nrv2e_decompress_32, .-ucl_nrv2e_decompress_32
+    .unreq lr
+    .unreq src
+    .unreq len
+    .unreq dst
+    .unreq dstw
+#undef tmpw  //    .unreq tmpw
+#undef tmpx  //    .unreq tmpx
+    .unreq bits
+    .unreq off
+    .unreq srclim
+#if 1==SAFE  //{
+    .unreq dstlim
+#endif  //}
 
 /*
 vi:ts=8:et:nowrap

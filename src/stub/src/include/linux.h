@@ -546,6 +546,7 @@ void *mmap(void *, size_t, int, int, int, off_t);
 int munmap(void *, size_t);
 int mprotect(void const *, size_t, int);
 int open(char const *, unsigned, unsigned);
+int openat(int fd, char const *, unsigned, unsigned);
 ssize_t read(int, void *, size_t);
 ssize_t write(int, void const *, size_t);
 

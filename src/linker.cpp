@@ -62,8 +62,10 @@ ElfLinker::Section::Section(const char *n, const void *i, unsigned s, unsigned a
     assert(name != nullptr);
     input = malloc(s + 1);
     assert(input != nullptr);
-    if (s != 0)
+    if (s != 0) {
+        assert(i != nullptr);
         memcpy(input, i, s);
+    }
     ((char *) input)[s] = 0;
 }
 
@@ -197,7 +199,7 @@ void ElfLinker::preprocessSections(char *start, char const *end) {
         unsigned offset, size, align;
         char name[1024];
 
-        if (sscanf(start, "%*d %1023s %x %*d %*d %x 2**%d", name, &size, &offset, &align) == 4) {
+        if (sscanf(start, "%*d %1023s %x %*x %*x %x 2**%d", name, &size, &offset, &align) == 4) {
             char *n = strstr(start, name);
             n[strlen(name)] = 0;
             addSection(n, input + offset, size, align);

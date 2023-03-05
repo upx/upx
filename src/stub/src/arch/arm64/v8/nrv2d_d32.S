@@ -32,20 +32,19 @@
 
 #define SAFE 0  /* 1 for src+dst bounds checking: cost 76 bytes */
 
-#define lr   x30
+lr   .req  x30
 
-#define src  x0
-#define len  w1  /* overlaps 'cnt' */
-#define dst  x2
-#define dstw w2
-#define tmp  w3
-#define tmpx x3
-#define bits w4
-#define off  w5
+src  .req x0
+len  .req w1  /* overlaps 'cnt' */
+dst  .req x2
+dstw .req w2
+tmp  .req w3
+bits .req w4
+off  .req w5
 /*           r6  UNUSED in ARM code unless DEBUG mode */
-#define srclim x7
+srclim .req x7
 #if 1==SAFE  /*{*/
-#define dstlim x12  /* FIXME */
+dstlim .req x12  /* FIXME */
 #endif  /*}*/
 
 #define cnt  w1  /* overlaps 'len' while reading an offset */
@@ -87,6 +86,9 @@
 
 ucl_nrv2d_decompress_32: .globl ucl_nrv2d_decompress_32  // ARM mode
         .type ucl_nrv2d_decompress_32, %function
+#ifndef NO_METHOD_CHECK
+        cmp methb,#M_NRV2D_LE32; bne not_n2d
+#endif
 /* error = (*)(char const *src, int len_src, char *dst, int *plen_dst)
    Actual decompressed length is stored through plen_dst.
    For SAFE mode: at call, *plen_dst must be allowed length of output buffer.
@@ -119,7 +121,9 @@ eof_n2d:
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
 cache_n2d:
-        clear_cache  // x0= lo; x1= hi; uses x2-x4
+#ifndef NO_SYNC_CACHE
+        sync_cache  // x0= lo; x1= hi; uses x2-x4
+#endif
 
         mov x0,x5  // result value
         POP1(lr)
@@ -185,7 +189,23 @@ copy_n2d:
         SUB2S(len,#1); bne copy_n2d
         b top_n2d
 
+#ifndef NO_METHOD_CHECK
+not_n2d:
+        # fall into 'eof'
+#endif
         .size ucl_nrv2d_decompress_32, .-ucl_nrv2d_decompress_32
+    .unreq lr
+    .unreq src
+    .unreq len
+    .unreq dst
+    .unreq dstw
+    .unreq tmp
+    .unreq bits
+    .unreq off
+    .unreq srclim
+#if 1==SAFE  //{
+    .unreq dstlim
+#endif  //}
 
 /*
 vi:ts=8:et:nowrap

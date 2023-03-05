@@ -29,14 +29,14 @@
    <jreiser@users.sourceforge.net>
 */
 
-#define src  r0
-#define len  r1
-#define dst  r2
-#define tmp  r3
-#define bits r4
-#define off  r5
+src  .req r0
+len  .req r1
+dst  .req r2
+tmp  .req r3
+bits .req r4
+off  .req r5
 /*           r6  UNUSED */
-#define wrnk r7  /* 0xd00  M2_MAX_OFFSET before "wrinkle" */
+wrnk .req r7  /* 0xd00  M2_MAX_OFFSET before "wrinkle" */
 
 /* r12 ("ip") is assumed to be a scratch register. */
 
@@ -122,6 +122,14 @@ copy_n2b:
 #ifndef PURE_THUMB
         .size ucl_nrv2b_decompress_8, .-ucl_nrv2b_decompress_8
 #endif
+
+    .unreq src
+    .unreq len
+    .unreq dst
+    .unreq tmp
+    .unreq bits
+    .unreq off
+    .unreq wrnk
 
 /*
 vi:ts=8:et:nowrap

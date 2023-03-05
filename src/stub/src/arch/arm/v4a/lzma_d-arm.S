@@ -82,25 +82,24 @@ Literal=  (RepLenCoder + kNumLenProbs)
 
 #define call bl  /* subroutine call */
 
-#define symbol  mi
-#define mo      mi
+mi      .req r0
+  symbol .req r0
+  mo     .req r0
+p_in    .req r1
+t1      .req r2
+t0      .req r3
 
-#define mi      r0
-#define p_in    r1
-#define t1      r2
-#define t0      r3
+bit     .req r4
+i       .req r5
+state   .req r6
+Range   .req r7
 
-#define bit     r4
-#define i       r5
-#define state   r6
-#define Range   r7
+inPtr   .req r8
+outPtr  .req r9
+prob    .req r10
+p       .req r11
 
-#define inPtr   r8
-#define outPtr  r9
-#define prob    r10
-#define p       r11
-
-#define Code    r12
+Code    .req r12
 
 #define nowPos          bit  /* temporary only */
 #define distance        bit
@@ -511,4 +510,22 @@ rcGetBit:  // Out: CC set on mo
 #undef starp
         mov pc,t1
 
+    .unreq mi
+    .unreq symbol
+    .unreq mo
+    .unreq p_in
+    .unreq t1
+    .unreq t0
+
+    .unreq bit
+    .unreq i
+    .unreq state
+    .unreq Range
+
+    .unreq inPtr
+    .unreq outPtr
+    .unreq prob
+    .unreq p
+
+    .unreq Code
 // vi:ts=8:et

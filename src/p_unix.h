@@ -41,6 +41,8 @@
 
 class PackUnix : public Packer
 {
+public:
+    ~PackUnix();
     typedef Packer super;
 protected:
     PackUnix(InputFile *f);
@@ -82,7 +84,7 @@ protected:
         bool inhibit_compression_check = false);
     virtual unsigned unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &c_adler, unsigned &u_adler,
-        bool first_PF_X, unsigned szb_info,
+        bool first_PF_X,
         int is_rewrite = false  // 0(false): write; 1(true): rewrite; -1: no write
         );
     unsigned total_in, total_out;  // unpack
@@ -99,6 +101,8 @@ protected:
 
     unsigned b_len;  // total length of b_info blocks
     unsigned methods_used;  // bitmask of compression methods
+    unsigned szb_info;  // 3*4 (sizeof b_info); or 2*4 if ancient
+    unsigned saved_opt_android_shlib;
 
     // must agree with stub/linux.hh
     __packed_struct(b_info) // 12-byte header before each compressed block

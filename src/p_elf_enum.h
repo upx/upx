@@ -249,9 +249,11 @@
         R_PPC64_JMP_SLOT = R_PPC_JMP_SLOT,
         R_X86_64_JUMP_SLOT = 7,
 
+        R_386_32 = 1,
         R_ARM_ABS32 = 2,
         R_ARM_GLOB_DAT = 21,
 
+        R_386_GLOB_DAT = 6,
         R_AARCH64_ABS64 = 257,
         R_AARCH64_GLOB_DAT = 1025,
 

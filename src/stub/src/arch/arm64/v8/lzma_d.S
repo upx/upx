@@ -30,6 +30,8 @@
 */
 
 #include "macros.S"
+lr .req x30
+fp .req x29
 
 #define section .section
 NBPW= 8
@@ -37,20 +39,19 @@ NBPW= 8
   section LZMA_ELF00
 //decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
 /* Arguments according to calling convention */
-src .req x0
-#define lsrc w1
-dst .req x2
-#define ldst x3  /* Out: actually a reference: &len_dst */
-#define meth w4
+src  .req x0
+lsrc .req w1
+dst  .req x2
+ldst .req x3  /* Out: actually a reference: &len_dst */
+meth .req w4
 
 #define M_LZMA          14
         cmp meth,#M_LZMA; bne not_lzma
 
-#define t0  w7
-#define t1  w8
-#define t1x x8
+t0   .req w7
+t1   .req w8
+t1x  .req x8
 
-fp .req x29
         PUSH4(x2,x3, fp,lr)  // dst,ldst, fp,lr
         mov fp,sp
 
@@ -72,13 +73,13 @@ fp .req x29
         cmp x4,t1x
         blo 1b
 
-#define a0 x0  /* &CLzmaDecoderState */
-#define a1 x1  /* inp */
-#define a2 w2  /* inSize */
-#define a3 x3  /* &inSizeProcessed */
-#define a4 x4  /* outp */
-#define a5 w5  /* outSize */
-#define a6 x6  /* &outSizeProcessed */
+a0 .req x0  /* &CLzmaDecoderState */
+a1 .req x1  /* inp */
+a2 .req w2  /* inSize */
+a3 .req x3  /* &inSizeProcessed */
+a4 .req x4  /* outp */
+a5 .req w5  /* outSize */
+a6 .req x6  /* &outSizeProcessed */
 //The target is:
 //LzmaDecode(  // from lzmaSDK/C/7zip/Compress/LZMA_C/LzmaDecode.h
 //      a0= &CLzmaDecoderState,
@@ -114,7 +115,7 @@ eof_lzma:
 
         add x1,x1,x0  // last
 cache_lzma:
-        clear_cache  // x0= lo; x1= hi; uses x2-x4
+        sync_cache  // x0= lo; x1= hi; uses x2-x4
 
         mov x0,x5  // result value
         ret
@@ -127,15 +128,22 @@ cache_lzma:
 #undef ldst
 #undef meth
 
-#undef a0
-#undef a1
-#undef a2
-#undef a3
-#undef a4
-#undef a5
-#undef a6
-
 ClangLzmaDecode:  // entry to C-lang LzmaDecode in next section
+    .unreq src
+    .unreq lsrc
+    .unreq dst
+    .unreq ldst
+    .unreq meth
+    .unreq t0
+    .unreq t1
+    .unreq t1x
+    .unreq a0
+    .unreq a1
+    .unreq a2
+    .unreq a3
+    .unreq a4
+    .unreq a5
+    .unreq a6
 
   section LZMA_DEC20
 #include "lzma_d_cf.S"

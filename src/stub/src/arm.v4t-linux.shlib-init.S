@@ -66,18 +66,18 @@ __NR_munmap =   91 + __NR_SYSCALL_BASE
 __ARM_NR_BASE  = 0xf0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 
-#define arg1 r0
-#define arg2 r1
-#define arg3 r2
-#define arg4 r3
-#define arg5 r4
+arg1 .req r0
+arg2 .req r1
+arg3 .req r2
+arg4 .req r3
+arg5 .req r4
 
-#define edi r0
-#define esi r1
-#define edx r2
-#define tmp r3
-#define eax r4
-#define ecx r5
+edi .req r0
+esi .req r1
+edx .req r2
+tmp .req r3
+eax .req r4
+ecx .req r5
 
 #define SP(d) sp,#4*(_-d)  /* stack addressing mode */
 
@@ -230,6 +230,7 @@ p_unflt=_  // 21
         lodslu; push_ eax  // method,filter,cto,junk
 
         call4 L710
+    .unreq tmp
         .arm
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
@@ -299,6 +300,7 @@ L710:
 // 11. unmap temporary pages
 // 12. goto user DT_INIT
 
+    tmp .req r3
         mov tmp,lr; sub tmp,#1; push_ tmp  // &f_decompress (ARM mode)
 o_uncpr=_  // 23
         add tmp,SP(p_unflt)+1*NBPW; push_ tmp  // &dstlen

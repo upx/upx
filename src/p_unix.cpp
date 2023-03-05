@@ -48,15 +48,23 @@
 
 PackUnix::PackUnix(InputFile *f) :
     super(f), exetype(0), blocksize(0), overlay_offset(0), lsize(0),
-    methods_used(0)
+    methods_used(0), szb_info(sizeof(b_info))
 {
     COMPILE_TIME_ASSERT(sizeof(Elf32_Ehdr) == 52)
     COMPILE_TIME_ASSERT(sizeof(Elf32_Phdr) == 32)
     COMPILE_TIME_ASSERT(sizeof(b_info) == 12)
     COMPILE_TIME_ASSERT(sizeof(l_info) == 12)
     COMPILE_TIME_ASSERT(sizeof(p_info) == 12)
+
+    // Disable --android-shlib, file-by-file; undecided how to fix.
+    saved_opt_android_shlib = opt->o_unix.android_shlib;
+    opt->o_unix.android_shlib = 0;
 }
 
+PackUnix::~PackUnix()
+{
+    opt->o_unix.android_shlib = saved_opt_android_shlib;
+}
 
 // common part of canPack(), enhanced by subclasses
 bool PackUnix::canPack()
@@ -293,11 +301,14 @@ void PackUnix::pack(OutputFile *fo)
     fi->seek(0, SEEK_SET);
     pack1(fo, ft);  // generate Elf header, etc.
 
-    p_info hbuf;
-    set_te32(&hbuf.p_progid, progid);
-    set_te32(&hbuf.p_filesize, file_size);
-    set_te32(&hbuf.p_blocksize, blocksize);
-    fo->write(&hbuf, sizeof(hbuf));
+    // Shlib probably did not generate Elf header yet.
+    if (fo->st_size()) { // Only append if pack1 actually wrote something.
+        p_info hbuf;
+        set_te32(&hbuf.p_progid, progid);
+        set_te32(&hbuf.p_filesize, file_size);
+        set_te32(&hbuf.p_blocksize, blocksize);
+        fo->write(&hbuf, sizeof(hbuf));
+    }
 
     // append the compressed body
     if (pack2(fo, ft)) {
@@ -458,7 +469,7 @@ void PackUnix::packExtent(
 // Return actual length when peeking; else 0.
 unsigned PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
     unsigned &c_adler, unsigned &u_adler,
-    bool first_PF_X, unsigned szb_info,
+    bool first_PF_X,
     int is_rewrite // 0(false): write; 1(true): rewrite; -1: no write
 )
 {
@@ -589,13 +600,12 @@ int PackUnix::find_overlay_offset(MemBuffer const &buf)
 void PackUnix::unpack(OutputFile *fo)
 {
     b_info bhdr;
-    unsigned const szb_info = (ph.version <= 11)
-        ? sizeof(bhdr.sz_unc) + sizeof(bhdr.sz_cpr)  // old style
-        : sizeof(bhdr);
-
     unsigned c_adler = upx_adler32(nullptr, 0);
     unsigned u_adler = upx_adler32(nullptr, 0);
 
+    if (ph.version <= 11) {
+        szb_info = sizeof(bhdr.sz_unc) + sizeof(bhdr.sz_cpr);  // old style
+    }
     // defaults for ph.version == 8
     unsigned orig_file_size = 0;
     blocksize = 512 * 1024;

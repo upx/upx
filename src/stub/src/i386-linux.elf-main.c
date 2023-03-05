@@ -440,7 +440,8 @@ make_hatch_arm(
         ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
                 (phdr->p_offset==0) )
         // Allocate and use a new page.
-        ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_WRITE|PROT_READ,
+        // Linux on ARM wants PROT_EXEC or else __clear_cache does not work?
+        ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_EXEC|PROT_WRITE|PROT_READ,
                 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         ) {
             hatch[0] = sys_munmap;  // syscall __NR_unmap
@@ -741,8 +742,17 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #  define LEN_OVER 0
 #endif  /*}*/
 
+        DPRINTF("    prot=%%x\n",
+#if defined(__arm__)  //{
+                    ((PF_X & phdr->p_flags) ? PROT_EXEC : 0) |
+#endif  //}
+                    PROT_WRITE | PROT_READ);
+
         if (xi) { // compresed source: mprotect(,,prot) later
             if (addr != mmap_privanon(addr, LEN_OVER + mlen,
+#if defined(__arm__)  //{
+                    ((PF_X & phdr->p_flags) ? PROT_EXEC : 0) |
+#endif  //}
                     PROT_WRITE | PROT_READ, MAP_FIXED) )
                 err_exit(6);
             unpackExtent(xi, &xo, (f_expand *)fdi,
@@ -927,9 +937,9 @@ void *upx_main(
     xj.buf = CONST_CAST(char *, bi); xj.size = sizeof(*bi) + bi->sz_cpr;
 #endif  //}
 
-    DPRINTF("upx_main av=%%p  szc=%%x  f_exp=%%p  f_unf=%%p  "
+    DPRINTF("upx_main@%%p av=%%p  szc=%%x  f_exp=%%p  f_unf=%%p  "
             "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  elfaddr=%%x\\n",
-        av, sz_compressed, f_exp, f_unf, &xo, xo.size, xo.buf,
+        upx_main, av, sz_compressed, f_exp, f_unf, &xo, xo.size, xo.buf,
         &xi, xi.size, xi.buf, elfaddr);
 
 #if defined(__mips__)  //{

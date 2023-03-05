@@ -38,7 +38,7 @@ lit_n2b:
         incq %rsi; movb %dl,(%rdi)
         incq %rdi
 top_n2b:
-        movb (%rsi),%dl  # speculate: literal, or bottom 8 bits of offset
+        movb (%rsi),%dl  # prefetch: literal, or bottom 8 bits of offset
         jnextb1yp lit_n2b
         lea 1(lenq),off  # [len= 0] off= 1
 offmore_n2b:

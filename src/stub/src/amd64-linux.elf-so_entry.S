@@ -81,7 +81,7 @@ M_NRV2E_LE32=8
 //  .long offset({l_info; p_info; b_info; compressed data})
   section ELFMAINX
 _start:
-////    int3  // DEBUG
+    nop  // int3  // DEBUG
         push %arg3  // MATCH_07  envp (glibc)
         push %arg2  // MATCH_01  argv
         push %arg1  // MATCH_00  argc
@@ -117,7 +117,7 @@ L20:
 
 // Get pages for unfolded code
         sub %arg6,%arg6  // 0
-          pop %rdx  // MATCH_08  &gitbit
+          pop %rdx  // MATCH_08  &getbit
         sub %arg5,%arg5  // 0
           movl /*sz_unc*/(%rbx),%arg2l  // dstlen
         push $MAP_PRIVATE|MAP_ANONYMOUS; pop %sys4
@@ -125,7 +125,7 @@ L20:
           push %rdx  // MATCH_15  save &getbit over syscall
         push $PROT_READ|PROT_WRITE; pop %arg3
         subl %edi,%edi  // (%arg1)dst = 0;  // kernel chooses
-        push $__NR_mmap; pop %rax; syscall
+        push $__NR_mmap; pop %rax; syscall; cmp $-4096,%rax; jb 0f; int3; 0:
 
         pop %rdx  // MATCH_15  &getbit
         push %rax  // MATCH_04  ptr unfolded_code
@@ -209,7 +209,7 @@ eof_n2b:
         push %arg2  // MATCH_12  len unfolded code
         push %arg1  // MATCH_13  ptr unfolded code
         push $PROT_EXEC|PROT_READ; pop %arg3
-        push $__NR_mprotect; pop %rax; syscall
+        push $__NR_mprotect; pop %rax; syscall; cmp $-4096,%rax; jb 0f; int3; 0:
 
 // %rsp:
 //  MATCH_13  ptr unfolded_code; for escape hatch

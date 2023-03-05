@@ -31,19 +31,31 @@
                 .arm
 
 .macro          section name
-                .section \name
+                .section \name,"ax"
 .endm
+
+/* macros reduce "noise" when comparing this ARM code to corresponding THUMB code */
+#define PUSH stmdb sp!,
+#define POP  ldmia sp!,
+.macro ADD2  dst,src; add  \dst,\dst,\src; .endm
+.macro ADD2S dst,src; adds \dst,\dst,\src; .endm
+.macro ADC2  dst,src; adc  \dst,\dst,\src; .endm
+.macro ADC2S dst,src; adcs \dst,\dst,\src; .endm
+.macro SUB2  dst,src; sub  \dst,\dst,\src; .endm
+.macro SUB2S dst,src; subs \dst,\dst,\src; .endm
+.macro LDRB3 reg,psrc,incr; ldrb \reg,\psrc,\incr; .endm
+.macro STRB3 reg,pdst,incr; strb \reg,\pdst,\incr; .endm
 
 /* The order of #if-#elif matters: ARMEL_EABI4 takes precedence over ARM_OLDABI */
 #if defined(ARMEL_DARWIN)  /*{*/
 __NR_SYSCALL_BASE = 0
-.macro          do_sys N
+.macro          do_sys N  // clobbers 'ip' register (r12)
                 mov ip,#\N
                 swi 0x80  // sets Carry iff error
                 orrcs r0,r0,#(1<<31)  // force negative on error; FIXME: needed?
                 ret
 .endm
-.macro          do_sys7t N
+.macro          do_sys7t N  // "7t": clobbers r7 as a temporary
                 do_sys \N
 .endm
 

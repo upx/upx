@@ -29,16 +29,16 @@
    <jreiser@users.sourceforge.net>
 */
 
-#define src  r0
-#define len  r1  /* overlaps 'cnt' */
-#define dst  r2
-#define tmp  r3
-#define bits r4
-#define off  r5
-#define g32  r6
-#define wrnk r7  /* 0x500  M2_MAX_OFFSET before "wrinkle" */
+src  .req r0
+len  .req r1  /* overlaps 'cnt' */
+dst  .req r2
+tmp  .req r3
+bits .req r4
+off  .req r5
+g32  .req r6
+wrnk .req r7  /* 0x500  M2_MAX_OFFSET before "wrinkle" */
 
-#define cnt  r1  /* overlaps 'len' while reading an offset */
+cnt  .req r1  /* overlaps 'len' while reading an offset */
 
 #define GETBIT \
    add bits,bits; beq 1f; 0: \
@@ -138,6 +138,16 @@ get32:  @ In: Carry set (unchanged until final adcs)
 #ifndef PURE_THUMB
         .size ucl_nrv2e_decompress_32, .-ucl_nrv2e_decompress_32
 #endif
+
+    .unreq src
+    .unreq len
+    .unreq dst
+    .unreq tmp
+    .unreq bits
+    .unreq off
+    .unreq g32
+    .unreq wrnk
+    .unreq cnt
 
 /*
 vi:ts=8:et:nowrap

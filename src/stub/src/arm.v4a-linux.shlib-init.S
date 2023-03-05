@@ -65,18 +65,18 @@ __NR_munmap =   91 + __NR_SYSCALL_BASE
 __ARM_NR_BASE  = 0xf0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 
-#define arg1 r0
-#define arg2 r1
-#define arg3 r2
-#define arg4 r3
-#define arg5 r4
+arg1 .req r0
+arg2 .req r1
+arg3 .req r2
+arg4 .req r3
+arg5 .req r4
 
-#define edi r0
-#define esi r1
-#define edx r2
-#define tmp r3
-#define eax r4
-#define ecx r5
+edi   .req r0
+esi   .req r1
+edx   .req r2
+//tmp   .req r3
+eax   .req r4
+ecx   .req r5
 
   section ELFMAINX
 //  .long offset(b_info)    src of f_exp
@@ -177,6 +177,8 @@ main:
 // 11. unmap temporary pages
 // 12. goto user DT_INIT
 
+    tmp   .req r3
+
         mov edx,lr  // &f_decompress
         add esi,edx,# _start - f_decompress - 5*4
 
@@ -211,14 +213,16 @@ p_mprot= -5*4
 o_wfrag= -6*4
 
         bl L610
-f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
-#define ptr r0
-#define len r1
-#define cto r2
-#define fid r3
+    .unreq tmp
 
-#define t1 r2
-#define t2 r3
+f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
+    ptr .req r0
+    len .req r1
+    cto .req r2
+    fid .req r3
+
+    t1 .req r2
+    t2 .req r3
 
 #ifndef FILTER_ID  /*{*/
 #define FILTER_ID 0x50  /* little-endian */
@@ -246,14 +250,15 @@ tst_unf:
         bne top_unf
         ret
 
-#undef ptr
-#undef len
-#undef cto
-#undef fid
+    .unreq ptr
+    .unreq len
+    .unreq cto
+    .unreq fid
 
-#undef t1
-#undef t2
+    .unreq t1
+    .unreq t2
 
+    tmp   .req r3
 L610:
         push lr
 o_unflt= -7*4

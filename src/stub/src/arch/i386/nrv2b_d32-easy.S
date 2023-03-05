@@ -38,7 +38,7 @@ lit_n2b:
         incl %esi; movb %dl,(%edi)
         incl %edi
 top_n2b:
-        movb (%esi),%dl  # speculate: literal, or bottom 8 bits of offset
+        movb (%esi),%dl  # prefetch: literal, or bottom 8 bits of offset
         jnextb1yp lit_n2b
         push $1; pop off
 offmore_n2b:

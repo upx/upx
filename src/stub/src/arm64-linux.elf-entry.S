@@ -118,12 +118,6 @@ xFOLD  .req x20
 // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055b/IHI0055B_aapcs64.pdf
 // x18 is CLOBBERED: "The platform register"
 
-wmeth  .req w4
-xmeth  .req x4
-ldst   .req x3
- dst   .req x2
-lsrc   .req w1
- src   .req x0
 
 #define call bl
 #define callr blr
@@ -147,6 +141,9 @@ f_decompress:
         // empty
   section NRV_TAIL
         // empty
+
+// FIXME
+#define NO_METHOD_CHECK 1
 
   section NRV2E
 #include "arch/arm64/v8/nrv2e_d32.S"
@@ -185,6 +182,12 @@ mmap:
         do_sys __NR_mmap
         ret
 
+src    .req x0
+lsrc   .req w1
+dst    .req x2
+ldst   .req x3
+xmeth  .req x4
+wmeth  .req w4
 unfold:
         mov xFOLD,lr
 // Reserve enough space to decompress the folded code of the stub
@@ -231,6 +234,13 @@ unfold:
         add xADRC,xelfa,x0  // &b_info of compressed input data
         add x0,xADRM,#4*4  // jmp over get_page_mask()
         jr x0
+
+    .unreq src
+    .unreq lsrc
+    .unreq dst
+    .unreq ldst
+    .unreq xmeth
+    .unreq wmeth
 
 #if DEBUG  //{
 TRACE_BUFLEN=1024
