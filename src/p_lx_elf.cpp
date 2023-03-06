@@ -5411,6 +5411,10 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
     set_te32(&elfout.phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
               elfout.phdr[C_TEXT].p_memsz = elfout.phdr[C_TEXT].p_filesz;
+    // ph.u_len and ph.c_len are leftover from earliest days when there was
+    // only one compressed extent.  Use a good analogy for multiple extents.
+    ph.u_len = file_size;
+    ph.c_len = total_out;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
     fo->seek(0, SEEK_SET);
