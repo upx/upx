@@ -1961,7 +1961,7 @@ unsigned PackLinuxElf32::elf_find_table_size(unsigned dt_type, unsigned sh_type)
     if (~0u != y_ndx) {
         return dt_offsets[1+ y_ndx] - dt_offsets[y_ndx];
     }
-    return ~0;
+    return ~0u;
 }
 
 void
@@ -7187,7 +7187,7 @@ unsigned PackLinuxElf64::elf_find_table_size(unsigned dt_type, unsigned sh_type)
     if (~0u != y_ndx) {
         return dt_offsets[1+ y_ndx] - dt_offsets[y_ndx];
     }
-    return ~0;
+    return ~0u;
 }
 
 void
