@@ -34,6 +34,9 @@
 #ifndef __UPX_P_LX_ELF_H  //{
 #define __UPX_P_LX_ELF_H 1
 
+typedef upx_uint32_t u32_t;  // easier to type; more narrow
+typedef upx_uint64_t u64_t;  // easier to type; more narrow
+
 class PackLinuxElf : public PackUnix
 {
     typedef PackUnix super;
@@ -75,9 +78,14 @@ protected:
     unsigned e_type;
     unsigned e_phnum;       /* Program header table entry count */
     unsigned e_shnum;
+    unsigned e_shstrndx;
     MemBuffer file_image;   // if ET_DYN investigation
     MemBuffer lowmem;  // at least including PT_LOAD[0]
     MemBuffer mb_shdr;      // Shdr might not be near Phdr
+    MemBuffer mb_dt_offsets;  // file offset of various DT_ tables
+    unsigned *dt_offsets;  // index by dt_table[]
+    unsigned symnum_end;
+    unsigned strtab_end;
     char const *dynstr;   // from DT_STRTAB
 
     unsigned sz_phdrs;  // sizeof Phdr[]
@@ -109,7 +117,7 @@ protected:
     char const *osabi_note;
     unsigned upx_dt_init;  // DT_INIT, DT_PREINIT_ARRAY, DT_INIT_ARRAY
     static unsigned const DT_NUM = 34;  // elf.h
-    unsigned dt_table[DT_NUM];  // 1+ index in PT_DYNAMIC
+    unsigned dt_table[DT_NUM];  // 1+ index of DT_xxxxx in PT_DYNAMIC
 
     MemBuffer mb_shstrtab;   // via ElfXX_Shdr
     char const *shstrtab;
@@ -191,6 +199,8 @@ protected:
     Elf32_Phdr const *elf_find_ptype(unsigned type, Elf32_Phdr const *phdr0, unsigned phnum);
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr       *elf_find_section_type(unsigned) const;
+    unsigned elf_find_table_size(unsigned dt_type, unsigned sh_type);
+    void sort_DT32_offsets(Elf32_Dyn const *const dynp0);
 
     int is_LOAD32(Elf32_Phdr const *phdr) const;  // beware confusion with (1+ LO_PROC)
     unsigned check_pt_load(Elf32_Phdr const *);
@@ -199,6 +209,7 @@ protected:
     void const *elf_find_dynamic(unsigned) const;
     Elf32_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const override;
+    unsigned find_dt_ndx(unsigned rva);
     virtual int adjABS(Elf32_Sym *sym, unsigned delta);
 
     char const *get_str_name(unsigned st_name, unsigned symnum) const;
@@ -211,7 +222,6 @@ protected:
     Elf32_Phdr const *gnu_stack;  // propagate NX
     unsigned e_phoff;
     unsigned e_shoff;
-    unsigned e_shstrndx;
     unsigned sz_dynseg;  // PT_DYNAMIC.p_memsz
     unsigned n_jmp_slot;
     unsigned plt_off;
@@ -227,8 +237,6 @@ protected:
     Elf32_Shdr const *sec_dynsym;
     Elf32_Shdr const *sec_dynstr;
     Elf32_Shdr       *sec_arm_attr;  // SHT_ARM_ATTRIBUTES;
-    unsigned symnum_end;
-    unsigned strtab_end;
 
     __packed_struct(cprElfHdr1)
         Elf32_Ehdr ehdr;
@@ -345,6 +353,8 @@ protected:
     Elf64_Phdr const *elf_find_ptype(unsigned type, Elf64_Phdr const *phdr0, unsigned phnum);
     Elf64_Shdr const *elf_find_section_name(char const *) const;
     Elf64_Shdr       *elf_find_section_type(unsigned) const;
+    unsigned elf_find_table_size(unsigned dt_type, unsigned sh_type);
+    void sort_DT64_offsets(Elf64_Dyn const *const dynp0);
     int is_LOAD64(Elf64_Phdr const *phdr) const;  // beware confusion with (1+ LO_PROC)
     upx_uint64_t check_pt_load(Elf64_Phdr const *);
     upx_uint64_t check_pt_dynamic(Elf64_Phdr const *);
@@ -352,6 +362,7 @@ protected:
     void const *elf_find_dynamic(unsigned) const;
     Elf64_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const override;
+    unsigned find_dt_ndx(u64_t rva);
     virtual int adjABS(Elf64_Sym *sym, unsigned long delta);
 
     char const *get_str_name(unsigned st_name, unsigned symnum) const;
@@ -377,8 +388,6 @@ protected:
     Elf64_Shdr       *sec_strndx;
     Elf64_Shdr const *sec_dynsym;
     Elf64_Shdr const *sec_dynstr;
-    unsigned symnum_end;
-    unsigned strtab_end;
 
     __packed_struct(cprElfHdr1)
         Elf64_Ehdr ehdr;
