@@ -1,0 +1,2 @@
+#define MAX_ELF_HDR_32 512
+#define MAX_ELF_HDR_64 1024

@@ -41,7 +41,7 @@
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-#define MAX_ELF_HDR 512  // Elf32_Ehdr + n*Elf32_Phdr must fit in this
+#include "MAX_ELF_HDR.c"
 
 
 /*************************************************************************
@@ -380,7 +380,7 @@ void *pti_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
     f_expand *(*get_fexp(int)),
-    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR+OVERHEAD]
+    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR_32+OVERHEAD]
     struct Extent xo,  // {sz_unc, ehdr}    for ELF headers
     struct Extent xi,  // {sz_cpr, &b_info} for ELF headers
     f_unfilter *(*get_funf(int))
@@ -415,7 +415,7 @@ void *pti_main(
         if (0 > fdi) {
             err_exit(18);
         }
-        if (MAX_ELF_HDR!=read(fdi, (void *)ehdr, MAX_ELF_HDR)) {
+        if (MAX_ELF_HDR_32!=read(fdi, (void *)ehdr, MAX_ELF_HDR_32)) {
 ERR_LAB
             err_exit(19);
         }

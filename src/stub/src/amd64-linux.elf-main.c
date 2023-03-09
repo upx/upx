@@ -86,8 +86,7 @@ static int dprintf(char const *fmt, ...); // forward
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-#define MAX_ELF_HDR 1024  // Elf64_Ehdr + n*Elf64_Phdr must fit in this
-
+#include "MAX_ELF_HDR.c"
 
 /*************************************************************************
 // "file" util
@@ -641,7 +640,7 @@ upx_main(  // returns entry address
         if (0 > fdi) {
             err_exit(18);
         }
-        if (MAX_ELF_HDR!=read(fdi, (void *)ehdr, MAX_ELF_HDR)) {
+        if (MAX_ELF_HDR_64!=read(fdi, (void *)ehdr, MAX_ELF_HDR_64)) {
 ERR_LAB
             err_exit(19);
         }

@@ -94,9 +94,9 @@ L50:
         call do_auxv  // move; fill new auxv slots with AT_IGNORE
 
 #define OVERHEAD 2048
-#define MAX_ELF_HDR 512
+#include "MAX_ELF_HDR.S"
 
-        sub esp, MAX_ELF_HDR + OVERHEAD  // alloca
+        sub esp, MAX_ELF_HDR_32 + OVERHEAD  // alloca
         push ebx  // start of unmap region (&Elf32_Ehdr of this stub)
 
 // Cannot pre-round .p_memsz because kernel requires PF_W to setup .bss,
@@ -127,7 +127,7 @@ L53:
         add esp, (8 +1)*4  // remove 8 params from pusha, also dynbase
         pop ecx  // end of unmap region
         pop ebx  // start of unmap region (&Elf32_Ehdr of this stub)
-        add esp, MAX_ELF_HDR + OVERHEAD  // un-alloca
+        add esp, MAX_ELF_HDR_32 + OVERHEAD  // un-alloca
         pop edx  // bread crumb size in pages
         shl edx,12
         add ebx,edx  // start of unmap region

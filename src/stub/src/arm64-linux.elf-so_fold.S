@@ -62,7 +62,6 @@ PATH_MAX= 4096
 #endif  /*}*/
 
 #define OVERHEAD 2048
-#define MAX_ELF_HDR 1024
 #define call bl
 
   section SO_HEAD

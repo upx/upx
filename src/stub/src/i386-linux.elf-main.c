@@ -215,8 +215,7 @@ done:
  }
 #endif  /*}*/
 
-#define MAX_ELF_HDR 512  // Elf32_Ehdr + n*Elf32_Phdr must fit in this
-
+#include "MAX_ELF_HDR.c"
 
 /*************************************************************************
 // "file" util
@@ -918,7 +917,7 @@ void *upx_main(
 #endif  //}
 
 #if !defined(__mips__) && !defined(__powerpc__)  /*{*/
-    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR+OVERHEAD]
+    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR_32+OVERHEAD]
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
     size_t const sz_first = xi.size;
 #endif  /*}*/
@@ -974,7 +973,7 @@ void *upx_main(
         if (0 > fdi) {
             err_exit(18);
         }
-        if (MAX_ELF_HDR!=read(fdi, (void *)ehdr, MAX_ELF_HDR)) {
+        if (MAX_ELF_HDR_32!=read(fdi, (void *)ehdr, MAX_ELF_HDR_32)) {
 ERR_LAB
             err_exit(19);
         }

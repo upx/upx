@@ -67,7 +67,7 @@ __NR_write    =   4+ __NR_Linux
 
 PATHSIZE=4096
 OVERHEAD=2048
-MAX_ELF_HDR=512
+#include "MAX_ELF_HDR.S"
 
 MAP_PRIVATE=  0x002
 MAP_ANONYMOUS=0x800  # not same as i386
@@ -161,7 +161,7 @@ L30:  // copy auxv
           addu tmp,a1,v0
         sb $0,(tmp)  # null terminate the path
 0:
-        addiu sp,-MAX_ELF_HDR  # alloca
+        addiu sp,-MAX_ELF_HDR_32  # alloca
         move t3,$r_PMASK  # page_mask
         move t2,$r_elfa  # &Elf32_Ehdr of stub
         move t1,zero  # &f_unfilter
@@ -189,7 +189,7 @@ BAL=0x04110000
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Elf32_Auxv_t *a3,
         f_decompr t0, f_unfilter t1, Elf32_Ehdr &t2, page_mask t3 )
 */
-        addiu sp,MAX_ELF_HDR  # un-alloca
+        addiu sp,MAX_ELF_HDR_32  # un-alloca
         move $r_fexp,v0  # &entry
 
 p_vaddr= 4+4

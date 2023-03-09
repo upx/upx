@@ -61,8 +61,8 @@ PATH_MAX= 4096
 #endif  /*}*/
 
 #define OVERHEAD 2048
-#define MAX_ELF_HDR 512
 #define call bl
+#include "MAX_ELF_HDR.S"
 
 mflg_data: .int MAP_PRIVATE|MAP_ANONYMOUS  @ overwritten for QNX vs Linux
 
@@ -161,7 +161,7 @@ link_ok:
         @ldr r5,[sp,#F_f_exp]
         ldmia sp!,{r4,r10,r11}  @ LENX, ADRX, elfaddr
 F_delta= 3*4
-        sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
+        sub sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ alloca
         ldr r9,[r10,#sz_cpr]  @ xi.size  of ELF headers
         mov r8,sp  @ xo.ptr
         ldr r7,[r10,#sz_unc]  @ xo.size
@@ -178,7 +178,7 @@ F_delta= 3*4
 // xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}, elfaddr
         call upx_main
         add sp,sp,#(9-4)*4
-        add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
+        add sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ un-alloca
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x14; bl trace
 #endif  //}

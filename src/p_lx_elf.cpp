@@ -52,8 +52,7 @@
 #define PT_GNU_RELRO32  Elf32_Phdr::PT_GNU_RELRO
 #define PT_GNU_RELRO64  Elf64_Phdr::PT_GNU_RELRO
 
-#define MAX_ELF_HDR_32 (2*512)
-#define MAX_ELF_HDR_64 (2*1024)
+#include "MAX_ELF_HDR.cpp"
 
 //static unsigned const EF_ARM_HASENTRY = 0x02;
 static unsigned const EF_ARM_EABI_VER4 = 0x04000000;

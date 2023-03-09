@@ -100,9 +100,6 @@ void dprint8(
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-#define MAX_ELF_HDR 1024  // Elf64_Ehdr + n*Elf64_Phdr must fit in this
-
-
 /*************************************************************************
 // util
 **************************************************************************/

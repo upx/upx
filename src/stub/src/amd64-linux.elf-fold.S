@@ -51,7 +51,6 @@ PROT_READ=     0x1
 O_RDONLY=       0
 
 OVERHEAD=2048
-MAX_ELF_HDR=1024
 
 /* 64-bit mode only! */
 __NR_read=  0

@@ -160,8 +160,8 @@ F_fd= 6*4  // frame offset to fd
         pop esi  // LENX: total_size
         pop ecx  // elfaddr
 #define OVERHEAD 2048
-#define MAX_ELF_HDR 512
-        sub esp, MAX_ELF_HDR + OVERHEAD  // alloca
+#include "MAX_ELF_HDR.S"
+        sub esp, MAX_ELF_HDR_32 + OVERHEAD  // alloca
         mov edx, esp  // &tmp
         push ecx  // elfaddr (9th arg)
         mov ebx, [   eax]  // length of uncompressed ELF headers
@@ -184,7 +184,7 @@ F_fd= 6*4  // frame offset to fd
 // Buggy programs may depend on uninit stack being 0, so clear what we used.
         mov edx,edi  // save auxv
         mov edi,esp
-        mov ecx,((8 +1)*4 + MAX_ELF_HDR + OVERHEAD) >>2  // 8 params, elfaddr, un-alloca
+        mov ecx,((8 +1)*4 + MAX_ELF_HDR_32 + OVERHEAD) >>2  // 8 params, elfaddr, un-alloca
         xor eax,eax  // 0
         rep stosd  // clear frame on exit
         mov esp,edi  // end of frame

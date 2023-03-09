@@ -75,7 +75,7 @@ PATH_MAX= 4096
 //@ are uncompressed.
 
 #define OVERHEAD 2048
-#define MAX_ELF_HDR 512
+#include "MAX_ELF_HDR.S"
 
 get_page_size:
         mov x0,#~0  // all 1's; -1
@@ -161,7 +161,7 @@ xPMASK .req x20
 /* Construct arglist for upx_main */
         mov x7,xPMASK
         mov x6,xelfa  // Elf64_Ehdr (reloc if ET_DYN and not pre-link)
-          sub sp,sp,#MAX_ELF_HDR + OVERHEAD  // alloca
+          sub sp,sp,#MAX_ELF_HDR_64 + OVERHEAD  // alloca
         adr x5,f_unfilter
         mov x4,xfexp  // &f_decompress
         mov x3,xauxv  // new &Elf64_auxv_t
@@ -169,7 +169,7 @@ xPMASK .req x20
         mov w1,wLENC  // total size of compressed data
         mov x0,xADRC  // &b_info
         call upx_main
-          add sp,sp,#MAX_ELF_HDR + OVERHEAD  // un-alloca
+          add sp,sp,#MAX_ELF_HDR_64 + OVERHEAD  // un-alloca
         mov xfexp,x0  // entry address
 
 // Discard pages of compressed input data (includes [ADRC,+LENC) )

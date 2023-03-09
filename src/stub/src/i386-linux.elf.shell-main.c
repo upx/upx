@@ -41,7 +41,7 @@
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-#define MAX_ELF_HDR 512  // Elf32_Ehdr + n*Elf32_Phdr must fit in this
+#include "MAX_ELF_HDR.c"
 
 
 /*************************************************************************
@@ -289,7 +289,7 @@ getexec(char const *const fname, Elf32_Ehdr *const ehdr, Elf32_auxv_t *const av)
         err_exit(18);
 ERR_LAB
     }
-    if (MAX_ELF_HDR!=read(fdi, (void *)ehdr, MAX_ELF_HDR)) {
+    if (MAX_ELF_HDR_32!=read(fdi, (void *)ehdr, MAX_ELF_HDR_32)) {
         err_exit(19);
     }
     return do_xmap(fdi, ehdr, av);
@@ -306,7 +306,7 @@ void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const junk,
     f_expand *const f_decompress,
-    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR]
+    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR_32]
     struct Extent xi,
     struct Extent xo
 ) __asm__("upx_main");
@@ -315,7 +315,7 @@ void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const junk,
     f_expand *const f_decompress,
-    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR]
+    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR_32]
     struct Extent xi,
     struct Extent xo
 )
