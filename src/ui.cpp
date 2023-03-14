@@ -182,7 +182,7 @@ UiPacker::UiPacker(const Packer *p_) : ui_pass(0), ui_total_passes(0), p(p_), s(
         s->mode = M_CB_SCREEN;
 }
 
-UiPacker::~UiPacker() {
+UiPacker::~UiPacker() noexcept {
     cb.reset();
     delete s;
     s = nullptr;

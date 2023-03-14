@@ -32,13 +32,13 @@ class InputFile;
 class OutputFile;
 
 /*************************************************************************
-// interface for work.cpp
+// dispatch to a concrete subclass of class Packer; see work.cpp
 **************************************************************************/
 
 class PackMaster final {
 public:
-    PackMaster(InputFile *f, options_t *o = nullptr);
-    ~PackMaster();
+    PackMaster(InputFile *f, Options *o = nullptr) noexcept;
+    ~PackMaster() noexcept;
 
     void pack(OutputFile *fo);
     void unpack(OutputFile *fo);
@@ -47,18 +47,18 @@ public:
     void fileInfo();
 
     typedef Packer *(*visit_func_t)(Packer *p, void *user);
-    static Packer *visitAllPackers(visit_func_t, InputFile *f, const options_t *, void *user);
+    static Packer *visitAllPackers(visit_func_t, InputFile *f, const Options *, void *user);
 
 private:
-    InputFile *fi = nullptr;
-    Packer *p = nullptr;
+    Packer *packer = nullptr; // owner
+    InputFile *fi = nullptr;  // reference
 
     static Packer *getPacker(InputFile *f);
     static Packer *getUnpacker(InputFile *f);
 
     // setup local options for each file
-    options_t local_options;
-    options_t *saved_opt = nullptr;
+    Options local_options;
+    Options *saved_opt = nullptr;
 };
 
 /* vim:set ts=4 sw=4 et: */

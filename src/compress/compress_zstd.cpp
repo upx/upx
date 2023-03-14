@@ -207,13 +207,12 @@ TEST_CASE("compress_zstd") {
 #endif // DEBUG
 
 TEST_CASE("upx_zstd_decompress") {
-    typedef const upx_byte C;
-    C *c_data;
-    upx_byte d_buf[32];
+    const byte *c_data;
+    byte d_buf[32];
     unsigned d_len;
     int r;
 
-    c_data = (C *) "\x28\xb5\x2f\xfd\x20\x20\x3d\x00\x00\x08\xff\x01\x00\x34\x4e\x08";
+    c_data = (const byte *) "\x28\xb5\x2f\xfd\x20\x20\x3d\x00\x00\x08\xff\x01\x00\x34\x4e\x08";
     d_len = 32;
     r = upx_zstd_decompress(c_data, 16, d_buf, &d_len, M_ZSTD, nullptr);
     CHECK((r == 0 && d_len == 32));

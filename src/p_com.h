@@ -41,7 +41,7 @@ public:
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_DOS_COM; }
     virtual const char *getName() const override { return "dos/com"; }
-    virtual const char *getFullName(const options_t *) const override { return "i086-dos16.com"; }
+    virtual const char *getFullName(const Options *) const override { return "i086-dos16.com"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 

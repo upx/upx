@@ -140,7 +140,7 @@ bool PeFile::testUnpackVersion(int version) const {
     if (cpu >= IMAGE_FILE_MACHINE_I386 && cpu <= 0x150) // what is this 0x150 ???
         return UPX_F_W32PE_I386;
 
-    // other or unkown (alpha, mips, etc.)
+    // other or unknown (alpha, mips, etc.)
     throwCantPack("pefile: unsupported machine %#x", cpu);
     return 0; // pacify msvc
 }
@@ -274,6 +274,19 @@ void PeFile::Interval::dump() const {
 // relocation handling
 **************************************************************************/
 
+namespace {
+struct FixDeleter { // don't leak memory on exceptions
+    LE32 **fix;
+    size_t n;
+    ~FixDeleter() noexcept {
+        for (size_t i = 0; i < n; i++) {
+            delete[] fix[i];
+            fix[i] = nullptr;
+        }
+    }
+};
+} // namespace
+
 struct alignas(1) PeFile::Reloc::reloc {
     LE32 pagestart;
     LE32 size;
@@ -371,17 +384,21 @@ void PeFile32::processRelocs() // pass1
         }
         mb_orelocs.alloc(1);
         orelocs = mb_orelocs; // => orelocs now is a SPAN_S
+        orelocs[0] = 0;       // clear
         sorelocs = 0;
         return;
     }
 
-    for (ic = 15; ic > 3; ic--)
+    for (ic = 4; ic < 16; ic++)
         if (counts[ic])
             infoWarning("skipping unsupported relocation type %d (%d)", ic, counts[ic]);
 
     LE32 *fix[4];
-    for (; ic; ic--)
+    FixDeleter fixdel{fix, 0}; // don't leak memory
+    for (ic = 0; ic < 4; ic++) {
         fix[ic] = New(LE32, counts[ic]);
+        fixdel.n += 1;
+    }
 
     unsigned xcounts[4];
     memset(xcounts, 0, sizeof(xcounts));
@@ -420,7 +437,6 @@ void PeFile32::processRelocs() // pass1
     orelocs = mb_orelocs;                          // => orelocs now is a SPAN_S
     sorelocs = optimizeReloc(xcounts[3], (byte *) fix[3], orelocs, ibuf + rvamin, ibufgood - rvamin,
                              32, true, &big_relocs);
-    delete[] fix[3];
 
     // Malware that hides behind UPX often has PE header info that is
     // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
@@ -433,7 +449,6 @@ void PeFile32::processRelocs() // pass1
     for (ic = 2; ic; ic--) {
         memcpy(orelocs + sorelocs, fix[ic], 4 * xcounts[ic]);
         sorelocs += 4 * xcounts[ic];
-        delete[] fix[ic];
 
         set_le32(orelocs + sorelocs, 0);
         if (xcounts[ic]) {
@@ -471,13 +486,16 @@ void PeFile64::processRelocs() // pass1
         return;
     }
 
-    for (ic = 15; ic; ic--)
+    for (ic = 0; ic < 16; ic++)
         if (ic != 10 && counts[ic])
             infoWarning("skipping unsupported relocation type %d (%d)", ic, counts[ic]);
 
     LE32 *fix[16];
-    for (ic = 15; ic; ic--)
+    FixDeleter fixdel{fix, 0}; // don't leak memory
+    for (ic = 0; ic < 16; ic++) {
         fix[ic] = New(LE32, counts[ic]);
+        fixdel.n += 1;
+    }
 
     unsigned xcounts[16];
     memset(xcounts, 0, sizeof(xcounts));
@@ -495,7 +513,7 @@ void PeFile64::processRelocs() // pass1
     }
 
     // remove duplicated records
-    for (ic = 1; ic <= 15; ic++) {
+    for (ic = 1; ic < 16; ic++) {
         qsort(fix[ic], xcounts[ic], 4, le32_compare);
         unsigned prev = ~0u;
         unsigned jc = 0;
@@ -520,9 +538,6 @@ void PeFile64::processRelocs() // pass1
     sorelocs = optimizeReloc(xcounts[10], (byte *) fix[10], orelocs, ibuf + rvamin,
                              ibufgood - rvamin, 64, true, &big_relocs);
 
-    for (ic = 15; ic; ic--)
-        delete[] fix[ic];
-
 #if 0
     // Malware that hides behind UPX often has PE header info that is
     // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
@@ -536,7 +551,6 @@ void PeFile64::processRelocs() // pass1
     {
         memcpy(orelocs + sorelocs,fix[ic],4 * xcounts[ic]);
         sorelocs += 4 * xcounts[ic];
-        delete [] fix[ic];
 
         set_le32(orelocs + sorelocs,0);
         if (xcounts[ic])
@@ -574,7 +588,7 @@ const LE32 &PeFile::IDADDR(unsigned x) const { return iddirs[x].vaddr; }
  in the sorted order.
  */
 
-class PeFile::ImportLinker : public ElfLinkerAMD64 {
+class PeFile::ImportLinker final : public ElfLinkerAMD64 {
     struct tstr : private ::noncopyable {
         char *s = nullptr;
         explicit tstr(char *str) : s(str) {}
@@ -833,7 +847,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     import_desc *const im_save = im;
     if (IDADDR(PEDIR_IMPORT)) {
         for (;; ++dllnum, ++im) {
-            unsigned const skip2 = ptr_diff_bytes(im, ibuf);
+            unsigned const skip2 = ptr_udiff_bytes(im, ibuf);
             (void) ibuf.subref("bad import %#x", skip2, sizeof(*im));
             if (!im->dllname)
                 break;
@@ -853,25 +867,17 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         static int __acc_cdecl_qsort compare(const void *p1, const void *p2) {
             const udll *u1 = *(const udll *const *) p1;
             const udll *u2 = *(const udll *const *) p2;
-            if (u1->isk32)
-                return -1;
-            if (u2->isk32)
-                return 1;
-            if (!*u1->lookupt)
-                return 1;
-            if (!*u2->lookupt)
-                return -1;
+            if (u1->isk32 != u2->isk32)
+                return u1->isk32 ? -1 : 1;
+            if ((*u1->lookupt != 0) != (*u2->lookupt != 0))
+                return (*u1->lookupt != 0) ? -1 : 1;
             int rc = strcasecmp(u1->name, u2->name);
             if (rc)
                 return rc;
-            if (u1->ordinal)
-                return -1;
-            if (u2->ordinal)
-                return 1;
-            if (!u1->shname)
-                return 1;
-            if (!u2->shname)
-                return -1;
+            if ((u1->ordinal != 0) != (u2->ordinal != 0))
+                return (u1->ordinal != 0) ? -1 : 1;
+            if ((u1->shname != nullptr) != (u2->shname != nullptr))
+                return (u1->shname != nullptr) ? -1 : 1;
             rc = (int) (upx_safe_strlen(u1->shname) - upx_safe_strlen(u2->shname));
             if (rc)
                 return rc;
@@ -904,8 +910,8 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
                 importbyordinal = true;
                 soimport += 2; // ordinal num: 2 bytes
                 dlls[ic].ordinal = *tarr & 0xffff;
-            } else // it's an import by name
-            {
+            } else {
+                // it's an import by name
                 IPTR_VAR(const byte, const name, ibuf + *tarr + 2);
                 unsigned len = strlen(name);
                 soimport += len + 1;
@@ -919,9 +925,12 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     mb_oimport.clear();
     oimport = mb_oimport;
 
-    qsort(idlls, dllnum, sizeof(udll *), udll::compare);
+    qsort(idlls, dllnum, sizeof(*idlls), udll::compare);
 
     info("Processing imports: %d DLLs", dllnum);
+    for (ic = 0; ic < dllnum; ic++) {
+        info("  DLL %3d %s %s", ic, idlls[ic]->name, idlls[ic]->shname);
+    }
 
     ilinker = new ImportLinker(sizeof(LEXX));
     // create the new import table
@@ -981,7 +990,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             }
         ppi++;
 
-        unsigned esize = ptr_diff_bytes(tarr, idlls[ic]->lookupt);
+        unsigned esize = ptr_udiff_bytes(tarr, idlls[ic]->lookupt);
         lookups.add(idlls[ic]->lookupt, esize);
         if (ptr_diff_bytes(ibuf.subref("bad import name %#x", idlls[ic]->iat, 1),
                            (char *) idlls[ic]->lookupt) != 0) {
@@ -1299,7 +1308,7 @@ void PeFile::processTls1(Interval *iv, typename tls_traits<LEXX>::cb_value_t ima
     unsigned const take1 = sizeof(tls);
     unsigned const skip1 = IDADDR(PEDIR_TLS);
     memcpy(otls, ibuf.subref("bad tls %#x", skip1, take1), take1);
-    // WARNING: this can acces data in BSS
+    // WARNING: this can access data in BSS
     unsigned const take3 = sotls - sizeof(tls);
     memcpy(otls + sizeof(tls), ibuf.subref("bad tls %#x", tlsdatastart, take3), take3);
     tlsindex = tlsp->tlsindex - imagebase;
@@ -1887,6 +1896,7 @@ void PeFile::processResources(Resource *res) {
     soresources = ptr_diff_bytes(ores, oresources);
 
     delete[] keep_icons;
+    keep_icons = nullptr;
     if (!res->clear()) {
         // The area occupied by the resource directory is not continuous
         // so to still support uncompression, I can't zero this area.
@@ -2637,6 +2647,16 @@ void PeFile::rebuildTls() {
     // this is an easy one : just do nothing ;-)
 }
 
+namespace {
+template <class T>
+struct VPtr {
+    static_assert(sizeof(T) == 1);
+    SPAN_S(T) ptr;
+    size_t vaddr;
+    auto operator+(size_t n) const { return ptr + mem_size(sizeof(T), n - vaddr); }
+};
+} // namespace
+
 void PeFile::rebuildResources(SPAN_S(byte) & extra_info, unsigned lastvaddr) {
     if (ODSIZE(PEDIR_RESOURCE) == 0 || IDSIZE(PEDIR_RESOURCE) == 0)
         return;
@@ -2646,12 +2666,13 @@ void PeFile::rebuildResources(SPAN_S(byte) & extra_info, unsigned lastvaddr) {
 
     const unsigned vaddr = IDADDR(PEDIR_RESOURCE);
 
-    if (lastvaddr > vaddr || (vaddr - lastvaddr) > ibuf.getSize())
+    if (vaddr < lastvaddr || (vaddr - lastvaddr) > ibuf.getSize())
         throwCantUnpack("corrupted PE header");
 
-    // TODO: introduce WildPtr for "virtual pointer" pointing before a buffer
-    const byte *r = ibuf.raw_bytes(0) - lastvaddr;
-    Resource res(r + vaddr, ibuf, ibuf + ibuf.getSize());
+    // INFO: use VPtr for "virtual pointer" pointing before a buffer
+    //// const byte *const r = ibuf.raw_bytes(0) - lastvaddr;
+    VPtr<const byte> const r{ibuf, lastvaddr};
+    Resource res(raw_bytes(r + vaddr, 0), ibuf, ibuf + ibuf.getSize());
     while (res.next())
         if (res.offs() > vaddr) {
             ICHECK(r + (res.offs() - 4), 4);
@@ -2702,8 +2723,9 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
     }
     sdllnames = ALIGN_UP(sdllnames, 2u);
 
-    // TODO: introduce WildPtr for "virtual pointer" pointing before a buffer
-    byte *const Obuf = obuf.raw_bytes(0) - rvamin;
+    // INFO: use VPtr for "virtual pointer" pointing before a buffer
+    //// byte *const Obuf = obuf.raw_bytes(0) - rvamin;
+    VPtr<byte> const Obuf{obuf, rvamin};
 #if 0
     import_desc * const im0 = (import_desc*) (Obuf + ODADDR(PEDIR_IMPORT));
     import_desc *im = im0;
@@ -2711,9 +2733,10 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
     byte *importednames = dllnames + sdllnames;
     byte * const importednames_start = importednames;
 #else
-    SPAN_S_VAR(import_desc, const im0, (import_desc *) (Obuf + ODADDR(PEDIR_IMPORT)), obuf);
+    SPAN_S_VAR(import_desc, const im0, (import_desc *) raw_bytes(Obuf + ODADDR(PEDIR_IMPORT), 0),
+               obuf);
     SPAN_S_VAR(import_desc, im, im0);
-    SPAN_0_VAR(byte, dllnames, inamespos ? Obuf + inamespos : nullptr, obuf);
+    SPAN_0_VAR(byte, dllnames, inamespos ? raw_bytes(Obuf + inamespos, 0) : nullptr, obuf);
     SPAN_0_VAR(byte, importednames, inamespos ? dllnames + sdllnames : nullptr);
     SPAN_0_VAR(byte, const importednames_start, importednames);
 #endif
@@ -2728,7 +2751,7 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
         if (inamespos) {
             // now I rebuild the dll names
             omemcpy(dllnames, dname, dlen + 1);
-            im->dllname = ptr_udiff_bytes(dllnames, Obuf);
+            im->dllname = ptr_udiff_bytes(dllnames, obuf) + rvamin;
             //;;;printf("\ndll: %s:",dllnames);
             dllnames += dlen + 1;
         } else {
@@ -2738,7 +2761,7 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
         if (set_oft)
             im->oft = iatoffs;
 
-        OPTR_VAR(LEXX, newiat, (LEXX *) (Obuf + iatoffs));
+        OPTR_VAR(LEXX, newiat, (LEXX *) raw_bytes(Obuf + iatoffs, 0));
 
         // restore the imported names+ordinals
         for (p += 8; *p; ++newiat)
@@ -2749,7 +2772,7 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
                         importednames -= 1;
                     omemcpy(importednames + 2, p, ilen);
                     //;;;printf(" %s",importednames+2);
-                    *newiat = ptr_udiff_bytes(importednames, Obuf);
+                    *newiat = ptr_udiff_bytes(importednames, obuf) + rvamin;
                     importednames += 2 + ilen;
                 } else {
                     // Beware overlap!
@@ -2986,7 +3009,7 @@ void PeFile32::readPeHeader() {
 void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t default_imagebase,
                      bool last_section_rsrc_only) {
     super::pack0<LE32>(fo, ih, oh, subsystem_mask, default_imagebase, last_section_rsrc_only);
-    infoWarning("End of PeFile32::pack0");
+    // infoWarning("End of PeFile32::pack0");
 }
 
 void PeFile32::unpack(OutputFile *fo) {

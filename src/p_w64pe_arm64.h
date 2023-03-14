@@ -39,7 +39,7 @@ public:
     virtual ~PackW64PeArm64() {}
     virtual int getFormat() const override { return UPX_F_W64PE_ARM64; }
     virtual const char *getName() const override { return "win64/arm64"; }
-    virtual const char *getFullName(const options_t *) const override { return "arm64-win64.pe"; }
+    virtual const char *getFullName(const Options *) const override { return "arm64-win64.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 
@@ -70,7 +70,7 @@ public:
     PackW64PeArm64EC(InputFile *f) : super(f) {}
     virtual int getFormat() const override { return UPX_F_W64PE_ARM64EC; }
     virtual const char *getName() const override { return "win64/arm64ec"; }
-    virtual const char *getFullName(const options_t *) const override { return "arm64ec-win64.pe"; }
+    virtual const char *getFullName(const Options *) const override { return "arm64ec-win64.pe"; }
 
     virtual bool canPack() override;
 };

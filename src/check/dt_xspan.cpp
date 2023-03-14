@@ -91,6 +91,17 @@ TEST_CASE("basic xspan usage") {
         CHECK_NOTHROW(raw_bytes(a0, 0));
         CHECK_THROWS(raw_bytes(a0, 1));
         CHECK_THROWS(raw_index_bytes(a0, 0, 0));
+
+        CHECK(raw_bytes(b0, 0) == buf);
+        CHECK(raw_bytes(bp, 0) == buf);
+        // info: these will fail if we ever add an overload for bounded-arrays
+#if WITH_XSPAN >= 2
+        CHECK(b0.raw_size_in_bytes() == 0u);
+        CHECK(bp.raw_size_in_bytes() == 0u);
+#endif
+        CHECK(raw_bytes(b0, 999999) == buf);
+        CHECK(raw_bytes(bp, 999999) == buf);
+
         CHECK(raw_bytes(c0, 4) == buf);
         CHECK(raw_index_bytes(c0, 1, 3) == buf + 1);
         CHECK(raw_bytes(cp, 4) == buf);
@@ -136,6 +147,17 @@ TEST_CASE("basic xspan usage") {
         CHECK_NOTHROW(raw_bytes(a0, 0));
         CHECK_THROWS(raw_bytes(a0, 1));
         CHECK_THROWS(raw_index_bytes(a0, 0, 0));
+
+        CHECK(raw_bytes(b0, 0) == buf);
+        CHECK(raw_bytes(bp, 0) == buf);
+        // info: these will fail if we ever add an overload for bounded-arrays
+#if WITH_XSPAN >= 2
+        CHECK(b0.raw_size_in_bytes() == 0u);
+        CHECK(bp.raw_size_in_bytes() == 0u);
+#endif
+        CHECK(raw_bytes(b0, 999999) == buf);
+        CHECK(raw_bytes(bp, 999999) == buf);
+
         CHECK(raw_bytes(c0, 4) == buf);
         CHECK(raw_index_bytes(c0, 1, 3) == buf + 1);
         CHECK(raw_bytes(cp, 4) == buf);

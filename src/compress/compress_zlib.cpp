@@ -287,13 +287,12 @@ TEST_CASE("compress_zlib") {
 #endif // DEBUG
 
 TEST_CASE("upx_zlib_decompress") {
-    typedef const upx_byte C;
-    C *c_data;
-    upx_byte d_buf[16];
+    const byte *c_data;
+    byte d_buf[16];
     unsigned d_len;
     int r;
 
-    c_data = (C *) "\xfb\xff\x1f\x15\x00\x00";
+    c_data = (const byte *) "\xfb\xff\x1f\x15\x00\x00";
     d_len = 16;
     r = upx_zlib_decompress(c_data, 6, d_buf, &d_len, M_DEFLATE, nullptr);
     CHECK((r == 0 && d_len == 16));

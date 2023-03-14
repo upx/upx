@@ -39,7 +39,7 @@ public:
     virtual ~PackW64PeAmd64();
     virtual int getFormat() const override { return UPX_F_W64PE_AMD64; }
     virtual const char *getName() const override { return "win64/pe"; }
-    virtual const char *getFullName(const options_t *) const override { return "amd64-win64.pe"; }
+    virtual const char *getFullName(const Options *) const override { return "amd64-win64.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 

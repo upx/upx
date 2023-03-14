@@ -269,6 +269,17 @@ void OutputFile::write(SPAN_0(const void) buf, int len) {
     if (l != len)
         throwIOException("write error", errno);
     bytes_written += len;
+#if TESTING && 0
+    static upx_std_atomic(bool) dumping;
+    if (!dumping) {
+        dumping = true;
+        char fn[64];
+        static int part = 0;
+        snprintf(fn, sizeof(fn), "upx-dump-%04d.data", part++);
+        OutputFile::dump(fn, buf, len);
+        dumping = false;
+    }
+#endif
 }
 
 upx_off_t OutputFile::st_size() const {

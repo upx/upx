@@ -146,8 +146,11 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &first) {
 
 #endif // WITH_XSPAN
 
-#if 1
+/*************************************************************************
 // nicer names
+**************************************************************************/
+
+#if 1
 #define SPAN_0 XSPAN_0
 #define SPAN_P XSPAN_P
 #define SPAN_S XSPAN_S

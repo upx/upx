@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # CMake >= 3.20.0 is recommended
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -101,8 +101,12 @@ endif()
 # targets
 #***********************************************************************
 
-#find_package(Threads) # multithreading is currently not used; maybe in UPX version 5
+set(UPX_CONFIG_DISABLE_THREADS ON) # multithreading is currently not used; maybe in UPX version 5
 set(UPX_CONFIG_DISABLE_ZSTD ON) # zstd is currently not used; maybe in UPX version 5
+
+if(NOT UPX_CONFIG_DISABLE_THREADS)
+    find_package(Threads)
+endif()
 
 file(GLOB ucl_SOURCES "vendor/ucl/src/*.c")
 list(SORT ucl_SOURCES)
@@ -128,6 +132,9 @@ set_property(TARGET upx PROPERTY CXX_STANDARD 17)
 target_link_libraries(upx upx_vendor_ucl upx_vendor_zlib)
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
     target_link_libraries(upx upx_vendor_zstd)
+endif()
+if(Threads_FOUND)
+    target_link_libraries(upx Threads::Threads)
 endif()
 
 #***********************************************************************
@@ -215,10 +222,11 @@ endif()
 set(t upx_vendor_zlib)
 upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
+target_compile_definitions(${t} PRIVATE HAVE_STDARG_H=1 HAVE_VSNPRINTF=1)
 if(MSVC)
-    target_compile_options(${t} PRIVATE -DHAVE_STDARG_H -DHAVE_VSNPRINTF -J -W3 ${warn_WX})
+    target_compile_options(${t} PRIVATE -J -W3 ${warn_WX})
 else()
-    target_compile_options(${t} PRIVATE -DHAVE_STDARG_H -DHAVE_UNISTD_H -DHAVE_VSNPRINTF)
+    target_compile_definitions(${t} PRIVATE HAVE_UNISTD_H=1)
     # clang-15: -Wno-strict-prototypes is needed to silence the new -Wdeprecated-non-prototype warning
     target_compile_options(${t} PRIVATE -Wall -Wno-strict-prototypes ${warn_Werror})
     ##target_compile_options(${t} PRIVATE ${warn_Wall} -Wno-cast-align -Wno-cast-qual -Wno-strict-prototypes ${warn_Werror})
@@ -228,7 +236,7 @@ if(NOT UPX_CONFIG_DISABLE_ZSTD)
 set(t upx_vendor_zstd)
 upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
-target_compile_options(${t} PRIVATE -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM)
+target_compile_definitions(${t} PRIVATE DYNAMIC_BMI2=0 ZSTD_DISABLE_ASM=1)
 if(MSVC)
     target_compile_options(${t} PRIVATE -J ${warn_WN} ${warn_WX})
 else()
@@ -244,6 +252,9 @@ if(GITREV_SHORT)
     if(GIT_DESCRIBE)
         target_compile_definitions(${t} PRIVATE UPX_VERSION_GIT_DESCRIBE="${GIT_DESCRIBE}")
     endif()
+endif()
+if(Threads_FOUND)
+    target_compile_definitions(${t} PRIVATE WITH_THREADS=1)
 endif()
 if(UPX_CONFIG_DISABLE_WSTRICT)
     target_compile_definitions(${t} PRIVATE UPX_CONFIG_DISABLE_WSTRICT=1)
@@ -263,9 +274,9 @@ else()
 endif()
 
 #***********************************************************************
-# "ctest"
-# "make test"
-# "ninja test"
+# ctest
+# make test
+# ninja test
 #***********************************************************************
 
 if(NOT UPX_CONFIG_CMAKE_DISABLE_TEST)
@@ -302,9 +313,9 @@ endif()
 endif() # UPX_CONFIG_CMAKE_DISABLE_TEST
 
 #***********************************************************************
-# "cmake --install ."
-# "make install"
-# "ninja install"
+# cmake --install .
+# make install
+# ninja install
 #***********************************************************************
 
 if(NOT UPX_CONFIG_CMAKE_DISABLE_INSTALL)
@@ -350,12 +361,12 @@ print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_ARCHITEC
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
 endif() # UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO
 print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
-if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release)$")
+if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|None|Release)$")
     message(WARNING "WARNING: unsupported CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}; please use \"Debug\" or \"Release\"")
 endif()
 
-if(NOT UPX_CONFIG_CMAKE_DISABLE_PLATFORM_CHECK)
 # extra sanity checks to detect incompatible C vs CXX settings
+if(NOT UPX_CONFIG_CMAKE_DISABLE_PLATFORM_CHECK)
 if(NOT ",${CMAKE_C_PLATFORM_ID}," STREQUAL ",${CMAKE_CXX_PLATFORM_ID},")
     message(FATAL_ERROR "ERROR: CMAKE_C_PLATFORM_ID CMAKE_CXX_PLATFORM_ID mismatch")
 endif()

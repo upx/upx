@@ -41,7 +41,7 @@ public:
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_DOS_SYS; }
     virtual const char *getName() const override { return "dos/sys"; }
-    virtual const char *getFullName(const options_t *) const override { return "i086-dos16.sys"; }
+    virtual const char *getFullName(const Options *) const override { return "i086-dos16.sys"; }
 
     virtual bool canPack() override;
 

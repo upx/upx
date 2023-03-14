@@ -38,35 +38,35 @@
 // core - NE
 **************************************************************************/
 
-static forceinline unsigned get_ne16(const void *p) {
+static forceinline unsigned get_ne16(const void *p) noexcept {
     upx_uint16_t v = 0;
     upx_memcpy_inline(&v, p, sizeof(v));
     return v;
 }
 
-static forceinline unsigned get_ne32(const void *p) {
+static forceinline unsigned get_ne32(const void *p) noexcept {
     upx_uint32_t v = 0;
     upx_memcpy_inline(&v, p, sizeof(v));
     return v;
 }
 
-static forceinline upx_uint64_t get_ne64(const void *p) {
+static forceinline upx_uint64_t get_ne64(const void *p) noexcept {
     upx_uint64_t v = 0;
     upx_memcpy_inline(&v, p, sizeof(v));
     return v;
 }
 
-static forceinline void set_ne16(void *p, unsigned vv) {
+static forceinline void set_ne16(void *p, unsigned vv) noexcept {
     upx_uint16_t v = (upx_uint16_t) (vv & 0xffff);
     upx_memcpy_inline(p, &v, sizeof(v));
 }
 
-static forceinline void set_ne32(void *p, unsigned vv) {
+static forceinline void set_ne32(void *p, unsigned vv) noexcept {
     upx_uint32_t v = vv;
     upx_memcpy_inline(p, &v, sizeof(v));
 }
 
-static forceinline void set_ne64(void *p, upx_uint64_t vv) {
+static forceinline void set_ne64(void *p, upx_uint64_t vv) noexcept {
     upx_uint64_t v = vv;
     upx_memcpy_inline(p, &v, sizeof(v));
 }
@@ -79,31 +79,35 @@ static forceinline void set_ne64(void *p, upx_uint64_t vv) {
 
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(long) == 4)
 
-// unfortunately *not* constexpr with MSVC
-static forceinline unsigned bswap16(unsigned v) { return (unsigned) _byteswap_ulong(v << 16); }
-static forceinline unsigned bswap32(unsigned v) { return (unsigned) _byteswap_ulong(v); }
-static forceinline upx_uint64_t bswap64(upx_uint64_t v) { return _byteswap_uint64(v); }
+// unfortunately *not* constexpr with current MSVC
+static forceinline unsigned bswap16(unsigned v) noexcept {
+    return (unsigned) _byteswap_ulong(v << 16);
+}
+static forceinline unsigned bswap32(unsigned v) noexcept { return (unsigned) _byteswap_ulong(v); }
+static forceinline upx_uint64_t bswap64(upx_uint64_t v) noexcept { return _byteswap_uint64(v); }
 
 #else
 
-static forceinline constexpr unsigned bswap16(unsigned v) {
+static forceinline constexpr unsigned bswap16(unsigned v) noexcept {
     // return __builtin_bswap16((upx_uint16_t) (v & 0xffff));
     // return (unsigned) __builtin_bswap64((upx_uint64_t) v << 48);
     return __builtin_bswap32(v << 16);
 }
-static forceinline constexpr unsigned bswap32(unsigned v) {
+static forceinline constexpr unsigned bswap32(unsigned v) noexcept {
     // return (unsigned) __builtin_bswap64((upx_uint64_t) v << 32);
     return __builtin_bswap32(v);
 }
-static forceinline constexpr upx_uint64_t bswap64(upx_uint64_t v) { return __builtin_bswap64(v); }
+static forceinline constexpr upx_uint64_t bswap64(upx_uint64_t v) noexcept {
+    return __builtin_bswap64(v);
+}
 
 #endif
 
-static forceinline constexpr unsigned no_bswap16(unsigned v) {
+static forceinline constexpr unsigned no_bswap16(unsigned v) noexcept {
     return v & 0xffff; // needed so that this is equivalent to bswap16() above
 }
-static forceinline constexpr unsigned no_bswap32(unsigned v) { return v; }
-static forceinline constexpr upx_uint64_t no_bswap64(upx_uint64_t v) { return v; }
+static forceinline constexpr unsigned no_bswap32(unsigned v) noexcept { return v; }
+static forceinline constexpr upx_uint64_t no_bswap64(upx_uint64_t v) noexcept { return v; }
 
 #if (ACC_ABI_BIG_ENDIAN)
 #define ne16_to_be16(v) no_bswap16(v)
@@ -170,30 +174,27 @@ inline unsigned get_le26(const void *p) { return get_le32(p) & 0x03ffffff; }
 
 inline void set_le26(void *p, unsigned v) {
     // preserve the top 6 bits
-#if 0
-    set_le32(p, (get_le32(p) & 0xfc000000) | (v & 0x03ffffff));
-#else
+    //   set_le32(p, (get_le32(p) & 0xfc000000) | (v & 0x03ffffff));
     // optimized version, saving a runtime bswap32
     set_ne32(p, (get_ne32(p) & ne32_to_le32(0xfc000000)) |
                     (ne32_to_le32(v) & ne32_to_le32(0x03ffffff)));
-#endif
 }
 
 /*************************************************************************
 // get signed values
 **************************************************************************/
 
-static forceinline int sign_extend(unsigned v, unsigned bits) {
+static forceinline int sign_extend(unsigned v, unsigned bits) noexcept {
     const unsigned sign_bit = 1u << (bits - 1);
     v &= sign_bit | (sign_bit - 1);
-    v |= 0 - (v & sign_bit);
+    v |= 0u - (v & sign_bit);
     return ACC_ICAST(int, v);
 }
 
-static forceinline upx_int64_t sign_extend(upx_uint64_t v, unsigned bits) {
+static forceinline upx_int64_t sign_extend(upx_uint64_t v, unsigned bits) noexcept {
     const upx_uint64_t sign_bit = 1ull << (bits - 1);
     v &= sign_bit | (sign_bit - 1);
-    v |= 0 - (v & sign_bit);
+    v |= 0ull - (v & sign_bit);
     return ACC_ICAST(upx_int64_t, v);
 }
 
@@ -252,359 +253,348 @@ struct alignas(1) BE16 {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     byte d[2];
 
-    BE16 &operator=(unsigned v) {
+    BE16 &operator=(unsigned v) noexcept {
         set_be16(d, v);
         return *this;
     }
-    BE16 &operator+=(unsigned v) {
+    BE16 &operator+=(unsigned v) noexcept {
         set_be16(d, get_be16(d) + v);
         return *this;
     }
-    BE16 &operator-=(unsigned v) {
+    BE16 &operator-=(unsigned v) noexcept {
         set_be16(d, get_be16(d) - v);
         return *this;
     }
-    BE16 &operator*=(unsigned v) {
+    BE16 &operator*=(unsigned v) noexcept {
         set_be16(d, get_be16(d) * v);
         return *this;
     }
-    BE16 &operator/=(unsigned v) {
+    BE16 &operator/=(unsigned v) noexcept {
         set_be16(d, get_be16(d) / v);
         return *this;
     }
-    BE16 &operator&=(unsigned v) {
+    BE16 &operator&=(unsigned v) noexcept {
         set_be16(d, get_be16(d) & v);
         return *this;
     }
-    BE16 &operator|=(unsigned v) {
+    BE16 &operator|=(unsigned v) noexcept {
         set_be16(d, get_be16(d) | v);
         return *this;
     }
-    BE16 &operator^=(unsigned v) {
+    BE16 &operator^=(unsigned v) noexcept {
         set_be16(d, get_be16(d) ^ v);
         return *this;
     }
-    BE16 &operator<<=(unsigned v) {
+    BE16 &operator<<=(unsigned v) noexcept {
         set_be16(d, get_be16(d) << v);
         return *this;
     }
-    BE16 &operator>>=(unsigned v) {
+    BE16 &operator>>=(unsigned v) noexcept {
         set_be16(d, get_be16(d) >> v);
         return *this;
     }
 
-    operator unsigned() const { return get_be16(d); }
+    operator unsigned() const noexcept { return get_be16(d); }
 
-    bool operator<(const BE16 &v) const { return unsigned(*this) < unsigned(v); }
+    bool operator<(const BE16 &v) const noexcept { return unsigned(*this) < unsigned(v); }
 };
 
 struct alignas(1) BE32 {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     byte d[4];
 
-    BE32 &operator=(unsigned v) {
+    BE32 &operator=(unsigned v) noexcept {
         set_be32(d, v);
         return *this;
     }
-    BE32 &operator+=(unsigned v) {
+    BE32 &operator+=(unsigned v) noexcept {
         set_be32(d, get_be32(d) + v);
         return *this;
     }
-    BE32 &operator-=(unsigned v) {
+    BE32 &operator-=(unsigned v) noexcept {
         set_be32(d, get_be32(d) - v);
         return *this;
     }
-    BE32 &operator*=(unsigned v) {
+    BE32 &operator*=(unsigned v) noexcept {
         set_be32(d, get_be32(d) * v);
         return *this;
     }
-    BE32 &operator/=(unsigned v) {
+    BE32 &operator/=(unsigned v) noexcept {
         set_be32(d, get_be32(d) / v);
         return *this;
     }
-    BE32 &operator&=(unsigned v) {
+    BE32 &operator&=(unsigned v) noexcept {
         set_be32(d, get_be32(d) & v);
         return *this;
     }
-    BE32 &operator|=(unsigned v) {
+    BE32 &operator|=(unsigned v) noexcept {
         set_be32(d, get_be32(d) | v);
         return *this;
     }
-    BE32 &operator^=(unsigned v) {
+    BE32 &operator^=(unsigned v) noexcept {
         set_be32(d, get_be32(d) ^ v);
         return *this;
     }
-    BE32 &operator<<=(unsigned v) {
+    BE32 &operator<<=(unsigned v) noexcept {
         set_be32(d, get_be32(d) << v);
         return *this;
     }
-    BE32 &operator>>=(unsigned v) {
+    BE32 &operator>>=(unsigned v) noexcept {
         set_be32(d, get_be32(d) >> v);
         return *this;
     }
 
-    operator unsigned() const { return get_be32(d); }
+    operator unsigned() const noexcept { return get_be32(d); }
 
-    bool operator<(const BE32 &v) const { return unsigned(*this) < unsigned(v); }
+    bool operator<(const BE32 &v) const noexcept { return unsigned(*this) < unsigned(v); }
 };
 
 struct alignas(1) BE64 {
     typedef upx_uint64_t integral_conversion_type; // automatic conversion to upx_uint64_t
     byte d[8];
 
-    BE64 &operator=(upx_uint64_t v) {
+    BE64 &operator=(upx_uint64_t v) noexcept {
         set_be64(d, v);
         return *this;
     }
-    BE64 &operator+=(upx_uint64_t v) {
+    BE64 &operator+=(upx_uint64_t v) noexcept {
         set_be64(d, get_be64(d) + v);
         return *this;
     }
-    BE64 &operator-=(upx_uint64_t v) {
+    BE64 &operator-=(upx_uint64_t v) noexcept {
         set_be64(d, get_be64(d) - v);
         return *this;
     }
-    BE64 &operator*=(upx_uint64_t v) {
+    BE64 &operator*=(upx_uint64_t v) noexcept {
         set_be64(d, get_be64(d) * v);
         return *this;
     }
-    BE64 &operator/=(upx_uint64_t v) {
+    BE64 &operator/=(upx_uint64_t v) noexcept {
         set_be64(d, get_be64(d) / v);
         return *this;
     }
-    BE64 &operator&=(upx_uint64_t v) {
+    BE64 &operator&=(upx_uint64_t v) noexcept {
         set_be64(d, get_be64(d) & v);
         return *this;
     }
-    BE64 &operator|=(upx_uint64_t v) {
+    BE64 &operator|=(upx_uint64_t v) noexcept {
         set_be64(d, get_be64(d) | v);
         return *this;
     }
-    BE64 &operator^=(upx_uint64_t v) {
+    BE64 &operator^=(upx_uint64_t v) noexcept {
         set_be64(d, get_be64(d) ^ v);
         return *this;
     }
-    BE64 &operator<<=(unsigned v) {
+    BE64 &operator<<=(unsigned v) noexcept {
         set_be64(d, get_be64(d) << v);
         return *this;
     }
-    BE64 &operator>>=(unsigned v) {
+    BE64 &operator>>=(unsigned v) noexcept {
         set_be64(d, get_be64(d) >> v);
         return *this;
     }
 
-    operator upx_uint64_t() const { return get_be64(d); }
+    operator upx_uint64_t() const noexcept { return get_be64(d); }
 
-    bool operator<(const BE64 &v) const { return upx_uint64_t(*this) < upx_uint64_t(v); }
+    bool operator<(const BE64 &v) const noexcept { return upx_uint64_t(*this) < upx_uint64_t(v); }
 };
 
 struct alignas(1) LE16 {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     byte d[2];
 
-    LE16 &operator=(unsigned v) {
+    LE16 &operator=(unsigned v) noexcept {
         set_le16(d, v);
         return *this;
     }
-    LE16 &operator+=(unsigned v) {
+    LE16 &operator+=(unsigned v) noexcept {
         set_le16(d, get_le16(d) + v);
         return *this;
     }
-    LE16 &operator-=(unsigned v) {
+    LE16 &operator-=(unsigned v) noexcept {
         set_le16(d, get_le16(d) - v);
         return *this;
     }
-    LE16 &operator*=(unsigned v) {
+    LE16 &operator*=(unsigned v) noexcept {
         set_le16(d, get_le16(d) * v);
         return *this;
     }
-    LE16 &operator/=(unsigned v) {
+    LE16 &operator/=(unsigned v) noexcept {
         set_le16(d, get_le16(d) / v);
         return *this;
     }
-    LE16 &operator&=(unsigned v) {
+    LE16 &operator&=(unsigned v) noexcept {
         set_le16(d, get_le16(d) & v);
         return *this;
     }
-    LE16 &operator|=(unsigned v) {
+    LE16 &operator|=(unsigned v) noexcept {
         set_le16(d, get_le16(d) | v);
         return *this;
     }
-    LE16 &operator^=(unsigned v) {
+    LE16 &operator^=(unsigned v) noexcept {
         set_le16(d, get_le16(d) ^ v);
         return *this;
     }
-    LE16 &operator<<=(unsigned v) {
+    LE16 &operator<<=(unsigned v) noexcept {
         set_le16(d, get_le16(d) << v);
         return *this;
     }
-    LE16 &operator>>=(unsigned v) {
+    LE16 &operator>>=(unsigned v) noexcept {
         set_le16(d, get_le16(d) >> v);
         return *this;
     }
 
-    operator unsigned() const { return get_le16(d); }
+    operator unsigned() const noexcept { return get_le16(d); }
 
-    bool operator<(const LE16 &v) const { return unsigned(*this) < unsigned(v); }
+    bool operator<(const LE16 &v) const noexcept { return unsigned(*this) < unsigned(v); }
 };
 
 struct alignas(1) LE32 {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     byte d[4];
 
-    LE32 &operator=(unsigned v) {
+    LE32 &operator=(unsigned v) noexcept {
         set_le32(d, v);
         return *this;
     }
-    LE32 &operator+=(unsigned v) {
+    LE32 &operator+=(unsigned v) noexcept {
         set_le32(d, get_le32(d) + v);
         return *this;
     }
-    LE32 &operator-=(unsigned v) {
+    LE32 &operator-=(unsigned v) noexcept {
         set_le32(d, get_le32(d) - v);
         return *this;
     }
-    LE32 &operator*=(unsigned v) {
+    LE32 &operator*=(unsigned v) noexcept {
         set_le32(d, get_le32(d) * v);
         return *this;
     }
-    LE32 &operator/=(unsigned v) {
+    LE32 &operator/=(unsigned v) noexcept {
         set_le32(d, get_le32(d) / v);
         return *this;
     }
-    LE32 &operator&=(unsigned v) {
+    LE32 &operator&=(unsigned v) noexcept {
         set_le32(d, get_le32(d) & v);
         return *this;
     }
-    LE32 &operator|=(unsigned v) {
+    LE32 &operator|=(unsigned v) noexcept {
         set_le32(d, get_le32(d) | v);
         return *this;
     }
-    LE32 &operator^=(unsigned v) {
+    LE32 &operator^=(unsigned v) noexcept {
         set_le32(d, get_le32(d) ^ v);
         return *this;
     }
-    LE32 &operator<<=(unsigned v) {
+    LE32 &operator<<=(unsigned v) noexcept {
         set_le32(d, get_le32(d) << v);
         return *this;
     }
-    LE32 &operator>>=(unsigned v) {
+    LE32 &operator>>=(unsigned v) noexcept {
         set_le32(d, get_le32(d) >> v);
         return *this;
     }
 
-    operator unsigned() const { return get_le32(d); }
+    operator unsigned() const noexcept { return get_le32(d); }
 
-    bool operator<(const LE32 &v) const { return unsigned(*this) < unsigned(v); }
+    bool operator<(const LE32 &v) const noexcept { return unsigned(*this) < unsigned(v); }
 };
 
 struct alignas(1) LE64 {
     typedef upx_uint64_t integral_conversion_type; // automatic conversion to upx_uint64_t
     byte d[8];
 
-    LE64 &operator=(upx_uint64_t v) {
+    LE64 &operator=(upx_uint64_t v) noexcept {
         set_le64(d, v);
         return *this;
     }
-    LE64 &operator+=(upx_uint64_t v) {
+    LE64 &operator+=(upx_uint64_t v) noexcept {
         set_le64(d, get_le64(d) + v);
         return *this;
     }
-    LE64 &operator-=(upx_uint64_t v) {
+    LE64 &operator-=(upx_uint64_t v) noexcept {
         set_le64(d, get_le64(d) - v);
         return *this;
     }
-    LE64 &operator*=(upx_uint64_t v) {
+    LE64 &operator*=(upx_uint64_t v) noexcept {
         set_le64(d, get_le64(d) * v);
         return *this;
     }
-    LE64 &operator/=(upx_uint64_t v) {
+    LE64 &operator/=(upx_uint64_t v) noexcept {
         set_le64(d, get_le64(d) / v);
         return *this;
     }
-    LE64 &operator&=(upx_uint64_t v) {
+    LE64 &operator&=(upx_uint64_t v) noexcept {
         set_le64(d, get_le64(d) & v);
         return *this;
     }
-    LE64 &operator|=(upx_uint64_t v) {
+    LE64 &operator|=(upx_uint64_t v) noexcept {
         set_le64(d, get_le64(d) | v);
         return *this;
     }
-    LE64 &operator^=(upx_uint64_t v) {
+    LE64 &operator^=(upx_uint64_t v) noexcept {
         set_le64(d, get_le64(d) ^ v);
         return *this;
     }
-    LE64 &operator<<=(unsigned v) {
+    LE64 &operator<<=(unsigned v) noexcept {
         set_le64(d, get_le64(d) << v);
         return *this;
     }
-    LE64 &operator>>=(unsigned v) {
+    LE64 &operator>>=(unsigned v) noexcept {
         set_le64(d, get_le64(d) >> v);
         return *this;
     }
 
-    operator upx_uint64_t() const { return get_le64(d); }
+    operator upx_uint64_t() const noexcept { return get_le64(d); }
 
-    bool operator<(const LE64 &v) const { return upx_uint64_t(*this) < upx_uint64_t(v); }
+    bool operator<(const LE64 &v) const noexcept { return upx_uint64_t(*this) < upx_uint64_t(v); }
 };
-
-// native types
-#if (ACC_ABI_BIG_ENDIAN)
-typedef BE16 NE16;
-typedef BE32 NE32;
-typedef BE64 NE64;
-#else
-typedef LE16 NE16;
-typedef LE32 NE32;
-typedef LE64 NE64;
-#endif
 
 /*************************************************************************
 // global operators (pointer addition/subtraction)
 **************************************************************************/
 
 template <class T>
-inline T *operator+(T *ptr, const BE16 &v) {
+inline T *operator+(T *ptr, const BE16 &v) noexcept {
     return ptr + unsigned(v);
 }
 template <class T>
-inline T *operator-(T *ptr, const BE16 &v) {
+inline T *operator-(T *ptr, const BE16 &v) noexcept {
     return ptr - unsigned(v);
 }
 template <class T>
-inline T *operator+(T *ptr, const BE32 &v) {
+inline T *operator+(T *ptr, const BE32 &v) noexcept {
     return ptr + unsigned(v);
 }
 template <class T>
-inline T *operator-(T *ptr, const BE32 &v) {
+inline T *operator-(T *ptr, const BE32 &v) noexcept {
     return ptr - unsigned(v);
 }
 template <class T>
-inline T *operator+(T *ptr, const LE16 &v) {
+inline T *operator+(T *ptr, const LE16 &v) noexcept {
     return ptr + unsigned(v);
 }
 template <class T>
-inline T *operator-(T *ptr, const LE16 &v) {
+inline T *operator-(T *ptr, const LE16 &v) noexcept {
     return ptr - unsigned(v);
 }
 template <class T>
-inline T *operator+(T *ptr, const LE32 &v) {
+inline T *operator+(T *ptr, const LE32 &v) noexcept {
     return ptr + unsigned(v);
 }
 template <class T>
-inline T *operator-(T *ptr, const LE32 &v) {
+inline T *operator-(T *ptr, const LE32 &v) noexcept {
     return ptr - unsigned(v);
 }
 
 // these are not implemented on purpose and will cause errors
 template <class T>
-T *operator+(T *ptr, const BE64 &v) DELETED_FUNCTION;
+T *operator+(T *ptr, const BE64 &v) noexcept DELETED_FUNCTION;
 template <class T>
-T *operator-(T *ptr, const BE64 &v) DELETED_FUNCTION;
+T *operator-(T *ptr, const BE64 &v) noexcept DELETED_FUNCTION;
 template <class T>
-T *operator+(T *ptr, const LE64 &v) DELETED_FUNCTION;
+T *operator+(T *ptr, const LE64 &v) noexcept DELETED_FUNCTION;
 template <class T>
-T *operator-(T *ptr, const LE64 &v) DELETED_FUNCTION;
+T *operator-(T *ptr, const LE64 &v) noexcept DELETED_FUNCTION;
 
 /*************************************************************************
 // global overloads
@@ -644,6 +634,19 @@ inline unsigned UPX_MIN(const LE32 &a, unsigned b) { return UPX_MIN(unsigned(a),
 // misc support
 **************************************************************************/
 
+template <>
+struct upx_is_integral<BE16> : public std::true_type {};
+template <>
+struct upx_is_integral<BE32> : public std::true_type {};
+template <>
+struct upx_is_integral<BE64> : public std::true_type {};
+template <>
+struct upx_is_integral<LE16> : public std::true_type {};
+template <>
+struct upx_is_integral<LE32> : public std::true_type {};
+template <>
+struct upx_is_integral<LE64> : public std::true_type {};
+
 // for use with qsort()
 extern "C" {
 int __acc_cdecl_qsort be16_compare(const void *, const void *);
@@ -663,6 +666,23 @@ int __acc_cdecl_qsort le24_compare_signed(const void *, const void *);
 int __acc_cdecl_qsort le32_compare_signed(const void *, const void *);
 int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 } // extern "C"
+
+// native types
+#if (ACC_ABI_BIG_ENDIAN)
+typedef BE16 NE16;
+typedef BE32 NE32;
+typedef BE64 NE64;
+#define ne16_compare be16_compare
+#define ne32_compare be32_compare
+#define ne64_compare be64_compare
+#else
+typedef LE16 NE16;
+typedef LE32 NE32;
+typedef LE64 NE64;
+#define ne16_compare le16_compare
+#define ne32_compare le32_compare
+#define ne64_compare le64_compare
+#endif
 
 /*************************************************************************
 // Provide namespaces and classes to abstract endianness policies.

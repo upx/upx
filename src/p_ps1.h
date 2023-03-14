@@ -45,7 +45,7 @@ public:
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_PS1_EXE; }
     virtual const char *getName() const override { return "ps1/exe"; }
-    virtual const char *getFullName(const options_t *) const override { return "mipsel.r3000-ps1"; }
+    virtual const char *getFullName(const Options *) const override { return "mipsel.r3000-ps1"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 

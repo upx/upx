@@ -28,7 +28,7 @@
 #include "conf.h"
 #include "linker.h"
 
-static unsigned hex(unsigned char c) { return (c & 0xf) + (c > '9' ? 9 : 0); }
+static unsigned hex(uchar c) { return (c & 0xf) + (c > '9' ? 9 : 0); }
 
 static bool update_capacity(unsigned size, unsigned *capacity) {
     if (size < *capacity)
@@ -67,7 +67,7 @@ ElfLinker::Section::Section(const char *n, const void *i, unsigned s, unsigned a
     ((char *) input)[s] = 0;
 }
 
-ElfLinker::Section::~Section() {
+ElfLinker::Section::~Section() noexcept {
     free(name);
     free(input);
 }
@@ -83,7 +83,7 @@ ElfLinker::Symbol::Symbol(const char *n, Section *s, upx_uint64_t o)
     assert(section != nullptr);
 }
 
-ElfLinker::Symbol::~Symbol() { free(name); }
+ElfLinker::Symbol::~Symbol() noexcept { free(name); }
 
 /*************************************************************************
 // Relocation
@@ -105,7 +105,7 @@ ElfLinker::ElfLinker()
       nsections_capacity(0), nsymbols(0), nsymbols_capacity(0), nrelocations(0),
       nrelocations_capacity(0), reloc_done(false) {}
 
-ElfLinker::~ElfLinker() {
+ElfLinker::~ElfLinker() noexcept {
     delete[] input;
     delete[] output;
 
@@ -548,7 +548,7 @@ upx_uint64_t ElfLinker::getSymbolOffset(const char *name) const {
     return symbol->section->offset + symbol->offset;
 }
 
-void ElfLinker::alignWithByte(unsigned len, unsigned char b) {
+void ElfLinker::alignWithByte(unsigned len, byte b) {
     memset(output + outputlen, b, len);
     outputlen += len;
 }
@@ -559,7 +559,7 @@ void ElfLinker::relocate1(const Relocation *rel, byte *, upx_uint64_t, const cha
 
 /*************************************************************************
 // ElfLinker arch subclasses
-// FIXME: add more displacment overflow checks
+// FIXME: add more displacement overflow checks
 // FIXME: add support for our special "ignore_reloc_overflow" section
 **************************************************************************/
 
@@ -802,12 +802,12 @@ void ElfLinkerPpc32::relocate1(const Relocation *rel, byte *location, upx_uint64
     if (strcmp(type, "24") == 0) {
         if (3 & value)
             internal_error("unaligned word diplacement");
-        // FIXME: displacment overflow?
+        // FIXME: displacement overflow?
         set_be32(location, (0xfc000003 & get_be32(location)) + (0x03fffffc & value));
     } else if (strcmp(type, "14") == 0) {
         if (3 & value)
             internal_error("unaligned word diplacement");
-        // FIXME: displacment overflow?
+        // FIXME: displacement overflow?
         set_be32(location, (0xffff0003 & get_be32(location)) + (0x0000fffc & value));
     } else
         super::relocate1(rel, location, value, type);
