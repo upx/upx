@@ -29,23 +29,30 @@
 **************************************************************************/
 
 #define DOCTEST_CONFIG_IMPLEMENT
-#if !defined(UPX_DOCTEST_CONFIG_MULTITHREADING)
-#define DOCTEST_CONFIG_NO_MULTITHREADING
-#endif
+#define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
+
+#if !defined(DOCTEST_CONFIG_DISABLE)
+
 #if defined(__i386__) && defined(__MSDOS__) && defined(__DJGPP__) && defined(__GNUC__)
+#define DOCTEST_CONFIG_NO_MULTITHREADING
 #define DOCTEST_CONFIG_NO_POSIX_SIGNALS
 #elif defined(__m68k__) && defined(__atarist__) && defined(__GNUC__)
 #define DOCTEST_CONFIG_COLORS_NONE
+#define DOCTEST_CONFIG_NO_MULTITHREADING
 #define DOCTEST_CONFIG_NO_POSIX_SIGNALS
 #pragma GCC diagnostic ignored "-Wshadow"
 #endif
-#define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
-#if !defined(DOCTEST_CONFIG_DISABLE)
+
+#if !defined(UPX_DOCTEST_CONFIG_MULTITHREADING)
+#define DOCTEST_CONFIG_NO_MULTITHREADING
+#endif
+
 #if defined(__clang__) && defined(__FAST_MATH__) && defined(__INTEL_LLVM_COMPILER)
 // warning: comparison with NaN always evaluates to false in fast floating point modes
 #pragma clang diagnostic ignored "-Wtautological-constant-compare"
 #endif
+
 #include <doctest/doctest/parts/doctest.cpp>
-#endif
+#endif // DOCTEST_CONFIG_DISABLE
 
 /* vim:set ts=4 sw=4 et: */

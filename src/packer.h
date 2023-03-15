@@ -112,7 +112,7 @@ protected:
     Packer(InputFile *f);
 
 public:
-    virtual ~Packer();
+    virtual ~Packer() noexcept;
     virtual void assertPacker() const;
 
     // getVersion() enables detecting forward incompatibility of unpack()
@@ -121,7 +121,7 @@ public:
     // A unique integer ID for this executable format. See conf.h.
     virtual int getFormat() const = 0;
     virtual const char *getName() const = 0;
-    virtual const char *getFullName(const options_t *) const = 0;
+    virtual const char *getFullName(const Options *) const = 0;
     virtual const int *getCompressionMethods(int method, int level) const = 0;
     virtual const int *getFilters() const = 0;
 
@@ -187,7 +187,7 @@ protected:
                              unsigned overlap_range, upx_compress_config_t const *cconf,
                              int filter_strategy, bool inhibit_compression_check = false);
 
-    // util for verifying overlapping decompresion
+    // util for verifying overlapping decompression
     //   non-destructive test
     virtual bool testOverlappingDecompression(const byte *buf, const byte *tbuf,
                                               unsigned overlap_overhead) const;
@@ -299,9 +299,9 @@ protected:
     int ph_version;
 
     // compression buffers
-    MemBuffer ibuf;    // input
-    MemBuffer obuf;    // output
-    unsigned ibufgood; // high-water mark in ibuf (pefile.cpp)
+    MemBuffer ibuf;        // input
+    MemBuffer obuf;        // output
+    unsigned ibufgood = 0; // high-water mark in ibuf (pefile.cpp)
 
     // UI handler
     UiPacker *uip = nullptr;

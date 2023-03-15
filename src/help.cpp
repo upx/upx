@@ -25,36 +25,33 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 #include "packmast.h"
 #include "packer.h"
 #include "compress/compress.h" // upx_ucl_version_string()
 
-
 /*************************************************************************
-//
+// header
 **************************************************************************/
-
-static bool head_done = 0;
 
 // also see UPX_CONFIG_DISABLE_GITREV in CMakeLists.txt
 #if defined(UPX_VERSION_GITREV)
 const char gitrev[] = UPX_VERSION_GITREV;
 #else
-const char gitrev[1] = { 0 };
+const char gitrev[1] = {0};
 #endif
 
-void show_head(void)
-{
+void show_header(void) {
     FILE *f = con_term;
     int fg;
 
-    if (head_done)
+    static bool header_done;
+    if (header_done)
         return;
-    head_done = 1;
+    header_done = true;
 
-    fg = con_fg(f,FG_GREEN);
+    fg = con_fg(f, FG_GREEN);
+    // clang-format off
     con_fprintf(f,
                 "                       Ultimate Packer for eXecutables\n"
                 "                          Copyright (C) 1996 - " UPX_VERSION_YEAR "\n"
@@ -71,22 +68,19 @@ void show_head(void)
                 UPX_VERSION_STRING,
 #endif
                 UPX_VERSION_DATE);
-    fg = con_fg(f,fg);
-#undef V
-
+    // clang-format on
+    fg = con_fg(f, fg);
     UNUSED(fg);
 }
 
-
 /*************************************************************************
-//
+// usage
 **************************************************************************/
 
-void show_usage(void)
-{
+void show_usage(void) {
     FILE *f = con_term;
 
-    con_fprintf(f,"Usage: %s [-123456789dlthVL] [-qvfk] [-o file] %sfile..\n", progname,
+    con_fprintf(f, "Usage: %s [-123456789dlthVL] [-qvfk] [-o file] %sfile..\n", progname,
 #if (ACC_OS_DOS32) && defined(__DJGPP__)
                 "[@]");
 #else
@@ -94,34 +88,30 @@ void show_usage(void)
 #endif
 }
 
-
 /*************************************************************************
-//
+// util
 **************************************************************************/
 
-struct PackerNames
-{
+namespace {
+struct PackerNames {
     struct Entry {
-        const char* fname;
-        const char* sname;
+        const char *fname;
+        const char *sname;
     };
     Entry names[64];
     size_t names_count;
-    const options_t *o;
-    PackerNames() : names_count(0), o(nullptr) { }
-    void add(const Packer *p)
-    {
-        p->assertPacker();
+    const Options *o;
+    PackerNames() : names_count(0), o(nullptr) {}
+    void add(const Packer *p) {
         assert(names_count < 64);
         names[names_count].fname = p->getFullName(o);
         names[names_count].sname = p->getName();
         names_count++;
     }
-    static Packer* visit(Packer *p, void *user)
-    {
+    static Packer *visit(Packer *p, void *user) {
         PackerNames *self = (PackerNames *) user;
         self->add(p);
-        delete p; p = nullptr;
+        delete p;
         return nullptr;
     }
     static int __acc_cdecl_qsort cmp_fname(const void *a, const void *b) {
@@ -132,23 +122,20 @@ struct PackerNames
     }
 };
 
-static void show_all_packers(FILE *f, int verbose)
-{
-    options_t o; o.reset();
-    PackerNames pn; pn.o = &o;
+static void show_all_packers(FILE *f, int verbose) {
+    Options o;
+    o.reset();
+    PackerNames pn;
+    pn.o = &o;
     PackMaster::visitAllPackers(PackerNames::visit, nullptr, &o, &pn);
     qsort(pn.names, pn.names_count, sizeof(PackerNames::Entry), PackerNames::cmp_fname);
     size_t pos = 0;
-    for (size_t i = 0; i < pn.names_count; ++i)
-    {
+    for (size_t i = 0; i < pn.names_count; ++i) {
         const char *fn = pn.names[i].fname;
         const char *sn = pn.names[i].sname;
-        if (verbose > 0)
-        {
+        if (verbose > 0) {
             con_fprintf(f, "    %-36s %s\n", fn, sn);
-        }
-        else
-        {
+        } else {
             size_t fl = strlen(fn);
             if (pos == 0) {
                 con_fprintf(f, "  %s", fn);
@@ -165,23 +152,23 @@ static void show_all_packers(FILE *f, int verbose)
     if (verbose <= 0 && pn.names_count)
         con_fprintf(f, "\n");
 }
-
+} // namespace
 
 /*************************************************************************
-//
+// help
 **************************************************************************/
 
-void show_help(int verbose)
-{
+void show_help(int verbose) {
     FILE *f = con_term;
     int fg;
 
-    show_head();
+    show_header();
     show_usage();
 
-    fg = con_fg(f,FG_YELLOW);
-    con_fprintf(f,"\nCommands:\n");
-    fg = con_fg(f,fg);
+    // clang-format off
+    fg = con_fg(f, FG_YELLOW);
+    con_fprintf(f, "\nCommands:\n");
+    fg = con_fg(f, fg);
     con_fprintf(f,
                 "  -1     compress faster                   -9    compress better\n"
                 "%s"
@@ -191,9 +178,9 @@ void show_help(int verbose)
                 verbose == 0 ? "" : "  --best compress best (can be slow for big files)\n",
                 verbose == 0 ? "more" : "this", verbose == 0 ? "" : "\n");
 
-    fg = con_fg(f,FG_YELLOW);
-    con_fprintf(f,"Options:\n");
-    fg = con_fg(f,fg);
+    fg = con_fg(f, FG_YELLOW);
+    con_fprintf(f, "Options:\n");
+    fg = con_fg(f, fg);
 
     con_fprintf(f,
                 "  -q     be quiet                          -v    be verbose\n"
@@ -211,72 +198,72 @@ void show_help(int verbose)
 
     if (verbose > 0)
     {
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"\nCompression tuning options:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "\nCompression tuning options:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --lzma              try LZMA [slower but tighter than NRV]\n"
                     "  --brute             try all available compression methods & filters [slow]\n"
                     "  --ultra-brute       try even more compression variants [very slow]\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Backup options:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Backup options:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  -k, --backup        keep backup files\n"
                     "  --no-backup         no backup files [default]\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Overlay options:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Overlay options:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --overlay=copy      copy any extra data attached to the file [default]\n"
                     "  --overlay=strip     strip any extra data attached to the file [DANGEROUS]\n"
                     "  --overlay=skip      don't compress a file with an overlay\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for djgpp2/coff:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for djgpp2/coff:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --coff              produce COFF output [default: EXE]\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for dos/com:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for dos/com:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --8086              make compressed com work on any 8086\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for dos/exe:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for dos/exe:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --8086              make compressed exe work on any 8086\n"
                     "  --no-reloc          put no relocations in to the exe header\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for dos/sys:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for dos/sys:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --8086              make compressed sys work on any 8086\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for ps1/exe:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for ps1/exe:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --8-bit             uses 8 bit size compression [default: 32 bit]\n"
                     "  --8mib-ram          8 megabyte memory limit [default: 2 MiB]\n"
                     "  --boot-only         disables client/host transfer compatibility\n"
                     "  --no-align          don't align to 2048 bytes [enables: --console-run]\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for watcom/le:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for watcom/le:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --le                produce LE output [default: EXE]\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for win32/pe, win64/pe & rtm32/pe:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for win32/pe, win64/pe & rtm32/pe:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --compress-exports=0    do not compress the export section\n"
                     "  --compress-exports=1    compress the export section [default]\n"
@@ -289,59 +276,55 @@ void show_help(int verbose)
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
                     "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for linux/elf:\n");
-        fg = con_fg(f,fg);
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for linux/elf:\n");
+        fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --preserve-build-id     copy .gnu.note.build-id to compressed output\n"
                     "\n");
     }
+    // clang-format on
 
     con_fprintf(f, "file..   executables to (de)compress\n");
 
-    if (verbose > 0)
-    {
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"\nThis version supports:\n");
-        fg = con_fg(f,fg);
+    if (verbose > 0) {
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "\nThis version supports:\n");
+        fg = con_fg(f, fg);
         show_all_packers(f, verbose);
-    }
-    else
-    {
-        con_fprintf(f,"\nType '%s --help' for more detailed help.\n", progname);
+    } else {
+        con_fprintf(f, "\nType '%s --help' for more detailed help.\n", progname);
     }
 
-    con_fprintf(f,"\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit https://upx.github.io\n"
-//                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type 'upx -L'.\n"
-                "");
+    con_fprintf(f, "\nUPX comes with ABSOLUTELY NO WARRANTY; "
+                   "for details visit https://upx.github.io\n");
 
 #if DEBUG || TESTING
-    fg = con_fg(f,FG_RED);
-    con_fprintf(f,"\nWARNING: this version is compiled with"
+    fg = con_fg(f, FG_RED);
+    con_fprintf(f, "\nWARNING: this version is compiled with"
 #if DEBUG
-                " -DDEBUG"
+                   " -DDEBUG"
 #endif
 #if TESTING
-                " -DTESTING"
+                   " -DTESTING"
 #endif
-                "\n");
-    fg = con_fg(f,fg);
+                   "\n");
+    fg = con_fg(f, fg);
 #endif
 
     UNUSED(fg);
 }
 
-
 /*************************************************************************
-//
+// license
 **************************************************************************/
 
-void show_license(void)
-{
+void show_license(void) {
     FILE *f = con_term;
 
-    show_head();
+    show_header();
 
+    // clang-format off
     con_fprintf(f,
         "   This program may be used freely, and you are welcome to\n"
         "   redistribute it under certain conditions.\n"
@@ -356,29 +339,27 @@ void show_license(void)
         "   If not, visit one of the following pages:\n"
         "\n"
     );
-    int fg = con_fg(f,FG_CYAN);
+    int fg = con_fg(f, FG_CYAN);
     con_fprintf(f,
         "        https://upx.github.io\n"
         "        https://www.oberhumer.com/opensource/upx/\n"
     );
-    (void)con_fg(f,FG_ORANGE);
+    (void) con_fg(f, FG_ORANGE);
     con_fprintf(f,
         "\n"
         "   Markus F.X.J. Oberhumer              Laszlo Molnar\n"
         "   <markus@oberhumer.com>               <ezerotven+github@gmail.com>\n"
     );
-    fg = con_fg(f,fg);
-
+    // clang-format on
+    fg = con_fg(f, fg);
     UNUSED(fg);
 }
 
-
 /*************************************************************************
-//
+// version
 **************************************************************************/
 
-void show_version(bool one_line)
-{
+void show_version(bool one_line) {
     FILE *fp = stdout;
     const char *v;
 
@@ -391,6 +372,7 @@ void show_version(bool one_line)
 #endif
     if (one_line)
         return;
+
 #if (WITH_NRV)
     v = upx_nrv_version_string();
     if (v != nullptr && v[0])
@@ -419,6 +401,7 @@ void show_version(bool one_line)
 #if !defined(DOCTEST_CONFIG_DISABLE)
     fprintf(fp, "doctest C++ testing framework version %s\n", DOCTEST_VERSION_STR);
 #endif
+    // clang-format off
     fprintf(fp, "Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer\n");
     fprintf(fp, "Copyright (C) 1996-2023 Laszlo Molnar\n");
     fprintf(fp, "Copyright (C) 2000-2023 John F. Reiser\n");
@@ -437,6 +420,7 @@ void show_version(bool one_line)
     fprintf(fp, "Copyright (C) 2016" "-2021 Viktor Kirilov\n");
 #endif
     fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
+    // clang-format on
 }
 
 /* vim:set ts=4 sw=4 et: */

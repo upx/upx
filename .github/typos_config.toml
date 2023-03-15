@@ -1,0 +1,34 @@
+# see https://github.com/crate-ci/typos
+
+# a generic spell-checker that works on source code is quite
+# tricky, so some false positives are fine
+
+[files]
+extend-exclude = ["LICENSE"]
+
+[default.extend-identifiers]
+# misc variable names & symbols
+acc_spawnve = "acc_spawnve"
+fo = "fo"
+fof = "fof"
+sidelen = "sidelen"
+# assembly sources
+CArry = "CArry"
+hda = "hda"
+Larg = "Larg"
+pard = "pard"
+suble = "suble"
+
+# identifiers are intelligently split into words and then checked again
+[default.extend-words]
+FO = "FO"
+fo = "fo"
+# parm is used like param
+PARM = "PARM"
+parm = "parm"
+# rela: ELF relocations
+RELA = "RELA"
+rela = "rela"
+# SEH: Structured Exception Handling
+SEH = "SEH"
+seh = "seh"

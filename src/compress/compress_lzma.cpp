@@ -116,7 +116,7 @@ static bool prepare_result(lzma_compress_result_t *res, unsigned src_len, int me
         res->lit_context_bits = (method >> 8) & 15;
     }
 #if 0
-    // DEBUG - set sizes so that we use a maxmimum amount of stack.
+    // DEBUG - set sizes so that we use a maximum amount of stack.
     //  These settings cause res->num_probs == 3147574, i.e. we will
     //  need about 6 MiB of stack during runtime decompression.
     res->lit_pos_bits     = 4;
@@ -524,13 +524,12 @@ const char *upx_lzma_version_string(void) { return "4.43"; }
 **************************************************************************/
 
 TEST_CASE("upx_lzma_decompress") {
-    typedef const upx_byte C;
-    C *c_data;
-    upx_byte d_buf[16];
+    const byte *c_data;
+    byte d_buf[16];
     unsigned d_len;
     int r;
 
-    c_data = (C *) "\x1a\x03\x00\x7f\xed\x3c\x00\x00\x00";
+    c_data = (const byte *) "\x1a\x03\x00\x7f\xed\x3c\x00\x00\x00";
     d_len = 16;
     r = upx_lzma_decompress(c_data, 9, d_buf, &d_len, M_LZMA, nullptr);
     CHECK((r == 0 && d_len == 16));

@@ -41,7 +41,7 @@ public:
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_ATARI_TOS; }
     virtual const char *getName() const override { return "atari/tos"; }
-    virtual const char *getFullName(const options_t *) const override { return "m68k-atari.tos"; }
+    virtual const char *getFullName(const Options *) const override { return "m68k-atari.tos"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 

@@ -160,7 +160,7 @@ Copyright (c) 1996-2023 Markus Oberhumer, Laszlo Molnar &amp; John Reiser
 
 <p>Info: An &quot;overlay&quot; means auxiliary data attached after the logical end of an executable, and it often contains application specific data (this is a common practice to avoid an extra data file, though it would be better to use resource sections).</p>
 
-<p><b>UPX</b> handles overlays like many other executable packers do: it simply copies the overlay after the compressed image. This works with some files, but doesn&#39;t work with others, depending on how an application actually accesses this overlayed data.</p>
+<p><b>UPX</b> handles overlays like many other executable packers do: it simply copies the overlay after the compressed image. This works with some files, but doesn&#39;t work with others, depending on how an application actually accesses this overlaid data.</p>
 
 <pre><code>--overlay=copy    Copy any extra data attached to the file. [DEFAULT]
 

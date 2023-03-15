@@ -188,15 +188,18 @@ void PackTmt::pack(OutputFile *fo) {
     checkOverlay(overlay);
 
     for (unsigned ic = 0; ic < relocnum; ic++)
-        set_le32(relocs + ic * 4, get_le32(relocs + ic * 4) - 4);
+        set_le32(relocs + 4 * ic, get_le32(relocs + 4 * ic) - 4);
 
     MemBuffer mb_orelocs(4 * relocnum + 8192); // relocations + extra_info
     SPAN_S_VAR(byte, orelocs, mb_orelocs);
     unsigned orelocsize =
         optimizeReloc(relocnum, relocs, orelocs, ibuf, usize, 32, true, &big_relocs);
     mb_relocs.dealloc(); // done
+#if 1
+    // write duplicate end marker; why is this here - historical oversight ???
+    orelocs[orelocsize++] = 0;
+#endif
     // extra_info
-    orelocs[orelocsize++] = 0;                // why is this needed - historical oversight ???
     set_le32(orelocs + orelocsize, ih.entry); // save original entry point
     orelocsize += 4;
     set_le32(orelocs + orelocsize, orelocsize + 4); // save orelocsize
@@ -303,7 +306,7 @@ void PackTmt::unpack(OutputFile *fo) {
     const unsigned relocnum = unoptimizeReloc(orelocs, mb_relocs, reloc_image, osize, 32, true);
     SPAN_S_VAR(byte, relocs, mb_relocs);
     for (unsigned ic = 0; ic < relocnum; ic++)
-        set_le32(relocs + ic * 4, get_le32(relocs + ic * 4) + 4);
+        set_le32(relocs + 4 * ic, get_le32(relocs + 4 * ic) + 4);
 
     memcpy(&oh, &ih, sizeof(oh));
     oh.imagesize = osize;

@@ -51,25 +51,25 @@ private:
     pointer ptr;
 
     // enforce config invariants at constructor time - static functions
-    static forceinline pointer makePtr(pointer p) { return p; }
-    // inverse logic for ensuring valid pointers from existing objets
-    forceinline pointer ensurePtr() const { return ptr; }
+    static inline pointer makePtr(pointer p) { return p; }
+    // inverse logic for ensuring valid pointers from existing objects
+    inline pointer ensurePtr() const { return ptr; }
     // debug
-    forceinline void assertInvariants() const {}
+    inline void assertInvariants() const noexcept {}
 
 public:
 #if XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
-    operator pointer() const { return ptr; }
+    operator pointer() const noexcept { return ptr; }
 #endif
 
-    inline ~CSelf() {
 #if DEBUG
-        invalidate();
+    inline ~CSelf() { invalidate(); }
+#else
+    inline ~CSelf() noexcept {}
 #endif
-    }
     noinline void invalidate() {
         assertInvariants();
-        ptr = (pointer) (acc_uintptr_t) 16; // point to non-null invalid address
+        ptr = (pointer) (upx_uintptr_t) 16; // point to non-null invalid address
         // ptr = (pointer) (void *) &ptr; // point to self
         assertInvariants();
     }
@@ -116,7 +116,7 @@ public:
         return assign(Self(other));
     }
 
-    // comparision
+    // comparison
 
     bool operator==(pointer other) const { return ptr == other; }
     template <class U>
@@ -187,7 +187,7 @@ private:
     forceinline pointer check_add(pointer p, ptrdiff_t n) const { return p + n; }
 
 public: // raw access
-    pointer raw_ptr() const { return ptr; }
+    pointer raw_ptr() const noexcept { return ptr; }
 
     pointer raw_bytes(size_t bytes) const {
         assertInvariants();

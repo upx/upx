@@ -1,9 +1,10 @@
 #
-# UPX Makefile - needs GNU make
+# UPX src Makefile - needs GNU make and CMake >= 3.13
 #
 
-# IMPORTANT NOTE: this Makefile is deprecated - please
-#   directly use the CMake build instead!
+# NOTE: this Makefile is deprecated - please directly use the CMake build
+# instead. And see the top-level Makefile for some pre-defined CMake
+# build configurations.
 
 MAKEFLAGS += -r
 .SUFFIXES:
@@ -21,6 +22,7 @@ endif
 # redirect to top-level CMake build
 #
 
+# note that top-level Makefile .DEFAULT_GOAL is build/release
 .DEFAULT_GOAL = build/debug
 
 build/debug:   $(top_srcdir)/build/debug/upx
@@ -35,8 +37,10 @@ $(top_srcdir)/build/debug/upx: PHONY
 $(top_srcdir)/build/release/upx: PHONY
 	$(MAKE) -C $(top_srcdir) build/release
 
+.NOTPARALLEL: # because the actual builds use "cmake --parallel"
 .PHONY: PHONY
-.NOTPARALLEL:
+.SECONDEXPANSION:
+.SUFFIXES:
 
 #
 # "make run-testsuite"
@@ -79,9 +83,8 @@ endif
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
 # Markus loves clang-format, but John hates it; find a compromise
-CLANG_FORMAT_EXCLUDE_FILES += conf.h miniacc.h version.h help.cpp
+CLANG_FORMAT_EXCLUDE_FILES += conf.h miniacc.h version.h packer_c.cpp
 CLANG_FORMAT_EXCLUDE_FILES += p_elf.h p_elf_enum.h p_lx_% p_mach% p_unix% p_vmlin%
-CLANG_FORMAT_EXCLUDE_FILES += packer_c.cpp
 CLANG_FORMAT_EXCLUDE_FILES += compress/compress.h filter/filter_impl.cpp
 CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* [cu]*/*.[ch]*))
 CLANG_FORMAT_FILES := $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES))

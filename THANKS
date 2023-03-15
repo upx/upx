@@ -41,12 +41,14 @@ Joergen Ibsen <jibz@hotmail.com> and d'b
   for the relocation & address optimization ideas
 John S. Fine <johnfine@erols.com>
   for the new version of the dos/exe decompressor
+Kornel Pal
+  for the EFI support
 Lukundoo <Lukundoo@softhome.net>
   for beta testing
 Michael Devore
   for initial dos/exe device driver support
 Oleg V. Volkov <rover@lglobus.ru>
-  for various FreeBSD specific informations
+  for various FreeBSD specific information
 The Owl & G-RoM
   for the --compress-icons fix
 Ralph Roth <RalphRoth@gmx.net>

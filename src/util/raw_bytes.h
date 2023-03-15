@@ -35,9 +35,11 @@
 
 // default: for any regular pointer, raw_bytes() is just the pointer itself
 template <class T>
-inline
-    typename std::enable_if<std::is_pointer<T>::value && !std_is_bounded_array<T>::value, T>::type
-    raw_bytes(T ptr, size_t size_in_bytes) {
+inline typename std::enable_if<std::is_pointer<T>::value && !upx_std_is_bounded_array<T>::value &&
+                                   (upx_is_integral<typename std::remove_pointer<T>::type>::value ||
+                                    std::is_void<typename std::remove_pointer<T>::type>::value),
+                               T>::type
+raw_bytes(T ptr, size_t size_in_bytes) {
     if (size_in_bytes > 0) {
         if very_unlikely (ptr == nullptr)
             throwCantPack("raw_bytes unexpected NULL ptr");
@@ -50,9 +52,10 @@ inline
 // default: for any regular pointer, raw_index_bytes() is just "pointer + index"
 // NOTE: index == number of elements, *NOT* size in bytes!
 template <class T>
-inline
-    typename std::enable_if<std::is_pointer<T>::value && !std_is_bounded_array<T>::value, T>::type
-    raw_index_bytes(T ptr, size_t index, size_t size_in_bytes) {
+inline typename std::enable_if<std::is_pointer<T>::value && !upx_std_is_bounded_array<T>::value &&
+                                   upx_is_integral<typename std::remove_pointer<T>::type>::value,
+                               T>::type
+raw_index_bytes(T ptr, size_t index, size_t size_in_bytes) {
     typedef typename std::remove_pointer<T>::type element_type;
     if very_unlikely (ptr == nullptr)
         throwCantPack("raw_index_bytes unexpected NULL ptr");

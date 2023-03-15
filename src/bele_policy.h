@@ -37,20 +37,20 @@
 // CTP - Compile-Time Polymorphism (templates)
 #define V static inline
 #define S static int __acc_cdecl_qsort
-#define C /*empty*/
+#define C noexcept
 #elif defined(BELE_RTP)
 // RTP - Run-Time Polymorphism (virtual functions)
 #define V virtual
 #define S virtual int
-#define C const
+#define C const noexcept
 #else
 #error
 #endif
 
 #if defined(BELE_RTP)
 struct AbstractPolicy {
-    inline AbstractPolicy() {}
-    virtual inline ~AbstractPolicy() {}
+    inline AbstractPolicy() noexcept {}
+    virtual inline ~AbstractPolicy() noexcept {}
     V bool isBE() C = 0;
     V bool isLE() C = 0;
 
@@ -91,7 +91,7 @@ private:
 
 #if defined(BELE_RTP)
 #undef C
-#define C const override
+#define C const noexcept override
 #endif
 
 struct BEPolicy
@@ -99,7 +99,7 @@ struct BEPolicy
     final : public AbstractPolicy
 #endif
 {
-    inline BEPolicy() {}
+    inline BEPolicy() noexcept {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::BEPolicy RTP_Policy;
 #elif defined(BELE_RTP)
@@ -160,7 +160,7 @@ struct LEPolicy
     final : public AbstractPolicy
 #endif
 {
-    inline LEPolicy() {}
+    inline LEPolicy() noexcept {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::LEPolicy RTP_Policy;
 #elif defined(BELE_RTP)
@@ -223,24 +223,6 @@ typedef BEPolicy HostPolicy;
 typedef LEPolicy HostPolicy;
 #else
 #error "ACC_ABI_ENDIAN"
-#endif
-
-#if 0 /* UNUSED */
-struct HostAlignedPolicy {
-#if defined(BELE_CTP)
-    enum { isBE = HostPolicy::isBE, isLE = HostPolicy::isLE };
-#endif
-
-    typedef upx_uint16_t U16;
-    typedef upx_uint32_t U32;
-    typedef upx_uint64_t U64;
-
-    static void compileTimeAssertions() {
-        COMPILE_TIME_ASSERT(sizeof(U16) == 2)
-        COMPILE_TIME_ASSERT(sizeof(U32) == 4)
-        COMPILE_TIME_ASSERT(sizeof(U64) == 8)
-    }
-};
 #endif
 
 #undef V

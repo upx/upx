@@ -30,7 +30,7 @@
 
 /*************************************************************************
 // sort and delta-compress relocations with optional bswap within image
-// returns number of bytes written to |out|
+// returns number of bytes written to 'out'
 **************************************************************************/
 
 unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(byte) out,
@@ -38,6 +38,10 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
                                int *big) {
     assert(bits == 32 || bits == 64);
     mem_size_assert(1, image_size);
+#if WITH_XSPAN >= 2
+    ptr_check_no_overlap(relocs.data(), relocs.size_bytes(), image.data(image_size), image_size,
+                         out.data(), out.size_bytes());
+#endif
     SPAN_P_VAR(byte, fix, out);
 
     *big = 0;
@@ -69,7 +73,7 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
             fix += 4;
         }
         pc += delta;
-        if (pc + 4 >= image_size)
+        if (pc + 4 > image_size)
             throwCantPack("bad reloc[%#x] = %#x", i, pc);
         if (bswap) {
             if (bits == 32)
@@ -84,14 +88,17 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
 
 /*************************************************************************
 // delta-decompress relocations
-// advances |in|
-// allocates |out| and returns number of relocs written to |out|
+// advances 'in'
+// allocates 'out' and returns number of relocs written to 'out'
 **************************************************************************/
 
 unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P(byte) image,
                                  unsigned image_size, int bits, bool bswap) {
     assert(bits == 32 || bits == 64);
     mem_size_assert(1, image_size);
+#if WITH_XSPAN >= 2
+    ptr_check_no_overlap(in.data(), in.size_bytes(), image.data(image_size), image_size);
+#endif
     SPAN_S_VAR(const byte, fix, in);
 
     // count
@@ -125,7 +132,7 @@ unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P
         if ((int) delta < 4)
             throwCantUnpack("overlapping fixups");
         pc += delta;
-        if (pc + 4 >= image_size)
+        if (pc + 4 > image_size)
             throwCantUnpack("bad reloc[%#x] = %#x", i, pc);
         *relocs++ = pc;
         if (bswap && image != nullptr) {

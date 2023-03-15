@@ -101,6 +101,10 @@ TEST_CASE("mem_size") {
     CHECK_THROWS(mem_size(1, 0x30000000, 0x30000000, 0x30000000));
 }
 
+/*************************************************************************
+// ptr util
+**************************************************************************/
+
 int ptr_diff_bytes(const void *a, const void *b) {
     if very_unlikely (a == nullptr) {
         throwCantPack("ptr_diff_bytes null 1; take care");
@@ -108,13 +112,13 @@ int ptr_diff_bytes(const void *a, const void *b) {
     if very_unlikely (b == nullptr) {
         throwCantPack("ptr_diff_bytes null 2; take care");
     }
-    ptrdiff_t d = (const char *) a - (const char *) b;
+    ptrdiff_t d = (const charptr) a - (const charptr) b;
     if (a >= b) {
         if very_unlikely (!mem_size_valid_bytes(d))
-            throwCantPack("ptr_diff_bytes 1; take care");
+            throwCantPack("ptr_diff_bytes-1; take care");
     } else {
         if very_unlikely (!mem_size_valid_bytes(-d))
-            throwCantPack("ptr_diff_bytes 2; take care");
+            throwCantPack("ptr_diff_bytes-2; take care");
     }
     return ACC_ICONV(int, d);
 }
@@ -127,7 +131,7 @@ unsigned ptr_udiff_bytes(const void *a, const void *b) {
 }
 
 TEST_CASE("ptr_diff") {
-    char buf[4] = {0, 1, 2, 3};
+    byte buf[4] = {0, 1, 2, 3};
     CHECK_THROWS(ptr_diff_bytes(nullptr, buf));
     CHECK_THROWS(ptr_diff_bytes(buf, nullptr));
     CHECK(ptr_diff(buf, buf) == 0);
@@ -136,6 +140,108 @@ TEST_CASE("ptr_diff") {
     CHECK(ptr_udiff(buf, buf) == 0);
     CHECK(ptr_udiff(buf + 1, buf) == 1);
     CHECK_THROWS(ptr_udiff(buf, buf + 1));
+}
+
+// check that 2 buffers do not overlap; will throw on error
+void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, size_t b_size) {
+    if very_unlikely (a == 0 || b == 0)
+        throwCantPack("ptr_check_no_overlap-nullptr");
+    upx_uintptr_t a_end = a + mem_size(1, a_size);
+    upx_uintptr_t b_end = b + mem_size(1, b_size);
+    if very_unlikely (a_end < a || b_end < b) // wrap-around
+        throwCantPack("ptr_check_no_overlap-overflow");
+    // same as (!(a >= b_end || b >= a_end))
+    if (a < b_end && b < a_end)
+        throwCantPack("ptr_check_no_overlap-ab");
+}
+
+// check that 3 buffers do not overlap; will throw on error
+void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, size_t b_size,
+                              upx_uintptr_t c, size_t c_size) {
+    if very_unlikely (a == 0 || b == 0 || c == 0)
+        throwCantPack("ptr_check_no_overlap-nullptr");
+    upx_uintptr_t a_end = a + mem_size(1, a_size);
+    upx_uintptr_t b_end = b + mem_size(1, b_size);
+    upx_uintptr_t c_end = c + mem_size(1, c_size);
+    if very_unlikely (a_end < a || b_end < b || c_end < c) // wrap-around
+        throwCantPack("ptr_check_no_overlap-overflow");
+    if (a < b_end && b < a_end)
+        throwCantPack("ptr_check_no_overlap-ab");
+    if (a < c_end && c < a_end)
+        throwCantPack("ptr_check_no_overlap-ac");
+    if (b < c_end && c < b_end)
+        throwCantPack("ptr_check_no_overlap-bc");
+}
+
+TEST_CASE("ptr_check_no_overlap 2") {
+    byte p[4] = {};
+
+    auto check_nothrow = [&p](int a, int as, int b, int bs) {
+        CHECK_NOTHROW(ptr_check_no_overlap(p + a, as, p + b, bs)); // ab
+        CHECK_NOTHROW(ptr_check_no_overlap(p + b, bs, p + a, as)); // ba
+    };
+    auto check_throws_ = [&p](int a, int as, int b, int bs) {
+        CHECK_THROWS(ptr_check_no_overlap(p + a, as, p + b, bs)); // ab
+        CHECK_THROWS(ptr_check_no_overlap(p + b, bs, p + a, as)); // ba
+    };
+
+    check_throws_(0, 1, 0, 1);
+    check_nothrow(0, 1, 1, 1);
+    check_throws_(0, 2, 1, 1);
+    check_nothrow(0, 2, 2, 1);
+    // empty buffers at edge
+    check_nothrow(0, 0, 0, 0);
+    check_nothrow(0, 0, 0, 1);
+    check_nothrow(0, 0, 1, 0);
+    // empty buffer
+    check_nothrow(0, 4, 0, 0);
+    check_throws_(0, 4, 1, 0);
+    check_throws_(0, 4, 2, 0);
+    check_throws_(0, 4, 3, 0);
+    check_nothrow(0, 4, 4, 0);
+}
+
+TEST_CASE("ptr_check_no_overlap 3") {
+    byte p[4] = {};
+
+    auto check_nothrow = [&p](int a, int as, int b, int bs, int c, int cs) {
+        CHECK_NOTHROW(ptr_check_no_overlap(p + a, as, p + b, bs, p + c, cs)); // abc
+        CHECK_NOTHROW(ptr_check_no_overlap(p + a, as, p + c, cs, p + b, bs)); // acb
+        CHECK_NOTHROW(ptr_check_no_overlap(p + b, bs, p + a, as, p + c, cs)); // bac
+        CHECK_NOTHROW(ptr_check_no_overlap(p + b, bs, p + c, cs, p + a, as)); // bca
+        CHECK_NOTHROW(ptr_check_no_overlap(p + c, cs, p + a, as, p + b, bs)); // cab
+        CHECK_NOTHROW(ptr_check_no_overlap(p + c, cs, p + b, bs, p + a, as)); // cba
+    };
+    auto check_throws_ = [&p](int a, int as, int b, int bs, int c, int cs) {
+        CHECK_THROWS(ptr_check_no_overlap(p + a, as, p + b, bs, p + c, cs)); // abc
+        CHECK_THROWS(ptr_check_no_overlap(p + a, as, p + c, cs, p + b, bs)); // acb
+        CHECK_THROWS(ptr_check_no_overlap(p + b, bs, p + a, as, p + c, cs)); // bac
+        CHECK_THROWS(ptr_check_no_overlap(p + b, bs, p + c, cs, p + a, as)); // bca
+        CHECK_THROWS(ptr_check_no_overlap(p + c, cs, p + a, as, p + b, bs)); // cab
+        CHECK_THROWS(ptr_check_no_overlap(p + c, cs, p + b, bs, p + a, as)); // cba
+    };
+
+    check_throws_(0, 1, 0, 1, 1, 1);
+    check_nothrow(0, 1, 1, 1, 2, 1);
+    check_throws_(0, 2, 1, 1, 2, 1);
+    check_nothrow(0, 2, 2, 1, 3, 1);
+    // empty buffers at edge
+    check_nothrow(0, 0, 0, 0, 0, 0);
+    check_nothrow(0, 0, 0, 0, 0, 1);
+    check_nothrow(0, 0, 0, 1, 1, 1);
+    check_nothrow(0, 0, 1, 0, 1, 1);
+    // empty buffer
+    check_nothrow(0, 4, 0, 0, 0, 0);
+    check_throws_(0, 4, 1, 0, 0, 0);
+    check_throws_(0, 4, 2, 0, 0, 0);
+    check_throws_(0, 4, 3, 0, 0, 0);
+    check_nothrow(0, 4, 4, 0, 0, 0);
+    // empty buffer
+    check_throws_(0, 4, 0, 0, 1, 0);
+    check_throws_(0, 4, 1, 0, 1, 0);
+    check_throws_(0, 4, 2, 0, 1, 0);
+    check_throws_(0, 4, 3, 0, 1, 0);
+    check_throws_(0, 4, 4, 0, 1, 0);
 }
 
 /*************************************************************************
@@ -151,6 +257,60 @@ namespace N_BELE_RTP {
 const BEPolicy be_policy;
 const LEPolicy le_policy;
 } // namespace N_BELE_RTP
+
+/*************************************************************************
+// stdlib
+**************************************************************************/
+
+void *upx_calloc(size_t n, size_t element_size) {
+    size_t bytes = mem_size(element_size, n); // assert size
+    void *p = malloc(bytes);
+    if (p != nullptr)
+        memset(p, 0, bytes);
+    return p;
+}
+
+// extremely simple stable sort: Gnomesort
+// WARNING: O(n**2) !!!!!
+void upx_stable_sort(void *base, size_t n, size_t element_size,
+                     int(__acc_cdecl_qsort *compare)(const void *, const void *)) {
+    (void) mem_size(element_size, n); // assert size
+    for (size_t i = 1; i < n;) {
+        char *a = (char *) base + element_size * i; // a = &array[i]
+        if (i == 0 || (compare(a - element_size, a) <= 0)) {
+            i += 1;
+        } else {
+            i -= 1;
+            // swap elements a[-1] <=> a[0]
+            //   upx_memswap(a - element_size, a, element_size);
+            size_t j = element_size;
+            do {
+                char tmp = *(a - element_size);
+                *(a - element_size) = *a;
+                *a++ = tmp;
+            } while (--j != 0);
+        }
+    }
+}
+
+TEST_CASE("upx_stable_sort") {
+    // TODO C++20: use std::next_permutation() to test all permutations
+    {
+        unsigned a[] = {0, 1};
+        upx_stable_sort(a, 2, sizeof(*a), ne32_compare);
+        CHECK((a[0] == 0 && a[1] == 1));
+    }
+    {
+        unsigned a[] = {1, 0};
+        upx_stable_sort(a, 2, sizeof(*a), ne32_compare);
+        CHECK((a[0] == 0 && a[1] == 1));
+    }
+    {
+        unsigned a[] = {2, 1, 0};
+        upx_stable_sort(a, 3, sizeof(*a), ne32_compare);
+        CHECK((a[0] == 0 && a[1] == 1 && a[2] == 2));
+    }
+}
 
 /*************************************************************************
 // qsort() util
@@ -258,7 +418,7 @@ int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2) {
 
 int find(const void *buf, int blen, const void *what, int wlen) {
     // nullptr is explicitly allowed here
-    if (buf == nullptr || blen <= 0 || what == nullptr || wlen <= 0)
+    if (buf == nullptr || blen < wlen || what == nullptr || wlen <= 0)
         return -1;
 
     const byte *b = (const byte *) buf;
@@ -367,7 +527,7 @@ static const char dir_sep[] = "/\\";
 #define fn_is_drive(s) (s[0] && s[1] == ':')
 #define fn_is_sep(c) (strchr(dir_sep, c) != nullptr)
 #define fn_skip_drive(s) (fn_is_drive(s) ? (s) + 2 : (s))
-#define fn_tolower(c) (tolower(((unsigned char) (c))))
+#define fn_tolower(c) (tolower(((uchar) (c))))
 
 #else
 

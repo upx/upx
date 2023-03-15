@@ -1,0 +1,16 @@
+# see https://github.com/crate-ci/typos
+
+name: 'Misc - Spell check'
+on:
+  workflow_dispatch:
+jobs:
+  job-spell-check:
+    name: 'Spell check'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: false }
+      - name: 'Spell check with crate-ci/typos'
+        uses: crate-ci/typos@master
+        with: { config: ./.github/typos_config.toml }

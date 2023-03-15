@@ -52,11 +52,11 @@ void xspan_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes)
 
 // help constructor to distinguish between number of elements and bytes
 struct XSpanCount {
-    explicit XSpanCount(size_t n) : count(n) {}
+    explicit XSpanCount(size_t n) noexcept : count(n) {}
     size_t count; // public
 };
 struct XSpanSizeInBytes {
-    explicit XSpanSizeInBytes(size_t bytes) : size_in_bytes(bytes) {}
+    explicit XSpanSizeInBytes(size_t bytes) noexcept : size_in_bytes(bytes) {}
     size_t size_in_bytes; // public
 };
 
