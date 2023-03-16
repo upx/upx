@@ -60,30 +60,30 @@ upx_rsize_t upx_safe_strlen(const char *);
 #define vsnprintf upx_safe_vsnprintf
 
 /*************************************************************************
-// some unsigned char string support functions to avoid casts
+// some uchar string support functions to avoid casts
 **************************************************************************/
 
-inline unsigned char *strcpy(unsigned char *s1, const unsigned char *s2) {
-    return (unsigned char *) strcpy((char *) s1, (const char *) s2);
+forceinline uchar *strcpy(uchar *s1, const uchar *s2) {
+    return (uchar *) strcpy((char *) s1, (const char *) s2);
 }
 
-inline int strcmp(const unsigned char *s1, const char *s2) { return strcmp((const char *) s1, s2); }
-inline int strcmp(const char *s1, const unsigned char *s2) { return strcmp(s1, (const char *) s2); }
-inline int strcmp(const unsigned char *s1, const unsigned char *s2) {
+forceinline int strcmp(const uchar *s1, const char *s2) { return strcmp((const char *) s1, s2); }
+forceinline int strcmp(const char *s1, const uchar *s2) { return strcmp(s1, (const char *) s2); }
+forceinline int strcmp(const uchar *s1, const uchar *s2) {
     return strcmp((const char *) s1, (const char *) s2);
 }
 
-inline int strcasecmp(const unsigned char *s1, const char *s2) {
+forceinline int strcasecmp(const uchar *s1, const char *s2) {
     return strcasecmp((const char *) s1, s2);
 }
-inline int strcasecmp(const char *s1, const unsigned char *s2) {
+forceinline int strcasecmp(const char *s1, const uchar *s2) {
     return strcasecmp(s1, (const char *) s2);
 }
-inline int strcasecmp(const unsigned char *s1, const unsigned char *s2) {
+forceinline int strcasecmp(const uchar *s1, const uchar *s2) {
     return strcasecmp((const char *) s1, (const char *) s2);
 }
 
-inline upx_rsize_t upx_safe_strlen(const unsigned char *s) {
+forceinline upx_rsize_t upx_safe_strlen(const uchar *s) {
     return upx_safe_strlen((const char *) s);
 }
 

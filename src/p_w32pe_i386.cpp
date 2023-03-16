@@ -62,8 +62,8 @@ Linker *PackW32PeI386::newLinker() const { return new ElfLinkerX86; }
 **************************************************************************/
 
 int PackW32PeI386::readFileHeader() {
-    if (fi->st_size() >= 0x206) {
-        char buf[6];
+    if (file_size >= 0x206) {
+        byte buf[6];
         fi->seek(0x200, SEEK_SET);
         fi->readx(buf, 6);
         isrtm = memcmp(buf, "32STUB", 6) == 0;

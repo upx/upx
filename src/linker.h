@@ -77,7 +77,7 @@ protected:
 
 public:
     ElfLinker();
-    virtual ~ElfLinker();
+    virtual ~ElfLinker() noexcept;
 
     void init(const void *pdata, int plen, unsigned pxtra = 0);
     // virtual void setLoaderAlignOffset(int phase);
@@ -98,7 +98,7 @@ public:
     void dumpSymbol(const Symbol *, unsigned flags, FILE *fp) const;
     void dumpSymbols(unsigned flags = 0, FILE *fp = nullptr) const;
 
-    void alignWithByte(unsigned len, unsigned char b);
+    void alignWithByte(unsigned len, byte b);
     virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
     virtual void alignData(unsigned len) { alignWithByte(len, 0); }
 
@@ -133,7 +133,7 @@ struct ElfLinker::Section : private noncopyable {
     Section *next = nullptr;
 
     Section(const char *n, const void *i, unsigned s, unsigned a = 0);
-    ~Section();
+    ~Section() noexcept;
 };
 
 struct ElfLinker::Symbol : private noncopyable {
@@ -142,7 +142,7 @@ struct ElfLinker::Symbol : private noncopyable {
     upx_uint64_t offset = 0;
 
     Symbol(const char *n, Section *s, upx_uint64_t o);
-    ~Symbol();
+    ~Symbol() noexcept;
 };
 
 struct ElfLinker::Relocation : private noncopyable {
@@ -153,6 +153,7 @@ struct ElfLinker::Relocation : private noncopyable {
     upx_uint64_t add; // used in .rela relocations
 
     Relocation(const Section *s, unsigned o, const char *t, const Symbol *v, upx_uint64_t a);
+    ~Relocation() noexcept {}
 };
 
 /*************************************************************************

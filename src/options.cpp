@@ -27,15 +27,19 @@
 
 #include "conf.h"
 
-static options_t global_options;
-options_t *opt = &global_options; // also see class PackMaster
+static Options global_options;
+Options *opt = &global_options; // also see class PackMaster
+
+#if WITH_THREADS
+std::mutex opt_lock_mutex;
+#endif
 
 /*************************************************************************
 // reset
 **************************************************************************/
 
-void options_t::reset() {
-    options_t *o = this;
+void Options::reset() {
+    Options *const o = this;
     mem_clear(o, sizeof(*o));
     o->crp.reset();
 
@@ -65,7 +69,7 @@ void options_t::reset() {
     o->win32_pe.compress_exports = 1;
     o->win32_pe.compress_icons = 2;
     o->win32_pe.compress_resources = -1;
-    for (unsigned i = 0; i < TABLESIZE(o->win32_pe.compress_rt); i++)
+    for (size_t i = 0; i < TABLESIZE(o->win32_pe.compress_rt); i++)
         o->win32_pe.compress_rt[i] = -1;
     o->win32_pe.compress_rt[24] = false; // 24 == RT_MANIFEST
     o->win32_pe.strip_relocs = -1;
@@ -76,9 +80,13 @@ void options_t::reset() {
 // doctest checks
 **************************************************************************/
 
-TEST_CASE("options_t::reset") {
-    options_t local_options;
-    options_t *o = &local_options;
+TEST_CASE("Options::reset") {
+    COMPILE_TIME_ASSERT(std::is_standard_layout<Options>::value)
+    COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<Options>::value)
+    COMPILE_TIME_ASSERT(std::is_trivially_copyable<Options>::value)
+
+    Options local_options;
+    Options *o = &local_options;
     o->reset();
     CHECK(o->o_unix.osabi0 == 3);
 }
@@ -89,8 +97,11 @@ static inline void test_options(const char *(&a)[N]) {
 }
 
 TEST_CASE("getopt") {
-    options_t *const saved_opt = opt;
-    options_t local_options;
+#if WITH_THREADS
+    std::lock_guard<std::mutex> lock(opt_lock_mutex);
+#endif
+    Options *const saved_opt = opt;
+    Options local_options;
     opt = &local_options;
     opt->reset();
     opt->debug.getopt_throw_instead_of_exit = true;

@@ -147,7 +147,7 @@ protected:
     unsigned sotls;
     unsigned tlsindex;
     unsigned tlscb_ptr;
-    unsigned tls_handler_offset;
+    unsigned tls_handler_offset = 0;
     bool use_tls_callbacks = false;
 
     void processLoadConf(Reloc *, const Interval *, unsigned);
@@ -288,7 +288,7 @@ protected:
     enum {
         IMAGE_SUBSYSTEM_UNKNOWN = 0,
         IMAGE_SUBSYSTEM_NATIVE = 1,
-        IMAGE_SUBSYSTEM_WINDOWS_GUI = 2, // Grapical
+        IMAGE_SUBSYSTEM_WINDOWS_GUI = 2, // Graphical
         IMAGE_SUBSYSTEM_WINDOWS_CUI = 3, // Character-mode
         IMAGE_SUBSYSTEM_WINDOWS_OS2_CUI = 5,
         IMAGE_SUBSYSTEM_WINDOWS_POSIX_CUI = 7,

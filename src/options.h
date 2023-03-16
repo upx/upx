@@ -29,6 +29,14 @@
 #ifndef UPX_OPTIONS_H__
 #define UPX_OPTIONS_H__ 1
 
+struct Options;
+extern Options *opt;
+#define options_t Options // old name
+
+#if WITH_THREADS
+extern std::mutex opt_lock_mutex;
+#endif
+
 /*************************************************************************
 // globals
 **************************************************************************/
@@ -46,7 +54,7 @@ enum {
     CMD_VERSION,
 };
 
-struct options_t final {
+struct Options final {
     int cmd;
 
     // compression options
@@ -163,8 +171,6 @@ struct options_t final {
 
     void reset();
 };
-
-extern struct options_t *opt;
 
 #endif /* already included */
 

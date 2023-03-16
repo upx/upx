@@ -40,9 +40,6 @@ inline bool mem_size_valid_bytes(upx_uint64_t bytes) noexcept { return bytes <= 
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
                     upx_uint64_t extra2 = 0) noexcept;
 
-// "new" with asserted size; will throw on invalid size
-#define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
-
 // will throw on invalid size
 upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                      upx_uint64_t extra2 = 0);
@@ -77,6 +74,27 @@ inline void mem_clear(void *p, size_t n) {
     memset(p, 0, n);
 }
 
+// "new" with asserted size; will throw on invalid size
+#if DEBUG
+template <class T>
+T *NewArray(upx_uint64_t n) {
+    size_t bytes = mem_size(sizeof(T), n); // assert size
+    T *array = new T[size_t(n)];
+    if (array) {
+        memset(array, 0xff, bytes);
+        (void) VALGRIND_MAKE_MEM_UNDEFINED(array, bytes);
+    }
+    return array;
+}
+#define New(type, n) (NewArray<type>(n))
+#else
+#define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
+#endif
+
+/*************************************************************************
+// ptr util
+**************************************************************************/
+
 // ptrdiff_t with nullptr checks and asserted size; will throw on failure
 // NOTE: returns size_in_bytes, not number of elements!
 int ptr_diff_bytes(const void *a, const void *b);
@@ -93,6 +111,30 @@ inline typename std::enable_if<sizeof(T) == 1 && sizeof(U) == 1, unsigned>::type
 ptr_udiff(const T *a, const U *b) {
     return ptr_udiff_bytes(a, b);
 }
+
+// check that buffers do not overlap; will throw on error
+noinline void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b,
+                                       size_t b_size);
+noinline void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b,
+                                       size_t b_size, upx_uintptr_t c, size_t c_size);
+
+forceinline void ptr_check_no_overlap(const void *a, size_t a_size, const void *b, size_t b_size) {
+    uintptr_check_no_overlap((upx_uintptr_t) a, a_size, (upx_uintptr_t) b, b_size);
+}
+forceinline void ptr_check_no_overlap(const void *a, size_t a_size, const void *b, size_t b_size,
+                                      const void *c, size_t c_size) {
+    uintptr_check_no_overlap((upx_uintptr_t) a, a_size, (upx_uintptr_t) b, b_size,
+                             (upx_uintptr_t) c, c_size);
+}
+
+/*************************************************************************
+// stdlib
+**************************************************************************/
+
+void *upx_calloc(size_t n, size_t element_size);
+
+void upx_stable_sort(void *base, size_t n, size_t element_size,
+                     int(__acc_cdecl_qsort *compare)(const void *, const void *));
 
 /*************************************************************************
 // misc. support functions

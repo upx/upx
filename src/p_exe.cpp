@@ -35,9 +35,8 @@
 static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i086-dos16.exe.h"
 
-#define RSFCRI 4096 // Reserved Space For Compressed Relocation Info
 #define MAXMATCH 0x2000
-#define MAXRELOCS (0x8000 - MAXMATCH)
+#define MAXRELOCSIZE (0x8000 - MAXMATCH)
 
 #define DI_LIMIT 0xff00 // see the assembly why
 
@@ -49,9 +48,6 @@ PackExe::PackExe(InputFile *f) : super(f) {
     bele = &N_BELE_RTP::le_policy;
     COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 32)
     COMPILE_TIME_ASSERT_ALIGNED1(exe_header_t)
-    ih_exesize = ih_imagesize = ih_overlay = 0;
-    stack_for_lzma = 0;
-    use_clear_dirty_stack = false;
 }
 
 Linker *PackExe::newLinker() const { return new ElfLinkerX86(); }
@@ -59,8 +55,7 @@ Linker *PackExe::newLinker() const { return new ElfLinkerX86(); }
 const int *PackExe::getCompressionMethods(int method, int level) const {
     bool small = ih_imagesize <= 256 * 1024;
     // disable lzma for "--brute" unless explicitly given "--lzma"
-    // WARNING: this side effect may persists for later files;
-    //   but note that class PackMaster creates per-file local options
+    // (note that class PackMaster creates per-file local options)
     if (opt->all_methods_use_lzma == 1 && !opt->method_lzma_seen)
         opt->all_methods_use_lzma = 0;
     return Packer::getDefaultCompressionMethods_8(method, level, small);
@@ -125,7 +120,7 @@ void PackExe::addLoaderEpilogue(int flag) {
     linker->defineSymbol("original_ss", ih.ss);
     linker->defineSymbol(
         "reloc_size",
-        (ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? 0 : MAXRELOCS) - relocsize);
+        (ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? 0 : MAXRELOCSIZE) - relocsize);
 }
 
 void PackExe::buildLoader(const Filter *) {
@@ -229,18 +224,18 @@ int PackExe::readFileHeader() {
     ih_overlay = file_size - ih_exesize;
     if (file_size_u < sizeof(ih) || ((ih.m512 | ih.p512) && ih.m512 + ih.p512 * 512u < sizeof(ih)))
         throwCantPack("illegal exe header");
-    if (file_size_u < ih_exesize || ih_imagesize <= 0 || ih_imagesize > ih_exesize)
+    if (ih_exesize > file_size_u || ih_imagesize <= 0 || ih_imagesize > ih_exesize)
         throwCantPack("exe header corrupted");
     NO_printf("dos/exe header: %d %d %d\n", ih_exesize, ih_imagesize, ih_overlay);
     return UPX_F_DOS_EXE;
 }
 
 bool PackExe::canPack() {
-    if (fn_has_ext(fi->getName(), "sys"))
+    if (fn_has_ext(fi->getName(), "sys")) // dos/sys
         return false;
     if (!readFileHeader())
         return false;
-    if (file_size < 1024)
+    if (file_size < 1024 || ih_imagesize < 512)
         throwCantPack("file is too small for dos/exe");
     fi->seek(0x3c, SEEK_SET);
     LE32 offs;
@@ -258,13 +253,17 @@ bool PackExe::canPack() {
 //
 **************************************************************************/
 
-static unsigned optimize_relocs(byte *b, const unsigned size, const byte *relocs,
-                                const unsigned nrelocs, byte *crel, bool *has_9a) {
+static unsigned optimize_relocs(SPAN_S(byte) image, const unsigned image_size,
+                                SPAN_S(const byte) relocs, const unsigned relocnum,
+                                SPAN_S(byte) crel, bool *has_9a) {
+#if WITH_XSPAN >= 2
+    ptr_check_no_overlap(image.data(image_size), image_size, relocs.data(), relocs.size_bytes(),
+                         crel.data(), crel.size_bytes());
+#endif
     if (opt->exact)
         throwCantPackExact();
 
-    byte *const crel_save = crel;
-    unsigned i;
+    SPAN_S_VAR(byte, const crel_start, crel);
     unsigned seg_high = 0;
 #if 0
     unsigned seg_low = 0xffffffff;
@@ -274,19 +273,19 @@ static unsigned optimize_relocs(byte *b, const unsigned size, const byte *relocs
     unsigned linear_high = 0;
 #endif
 
-    // pass 1 - find 0x9a bounds
-    for (i = 0; i < nrelocs; i++) {
+    // pass 1 - find 0x9a bounds in image
+    for (unsigned i = 0; i < relocnum; i++) {
         unsigned addr = get_le32(relocs + 4 * i);
-        if (addr >= size - 1)
+        if (addr >= image_size - 1)
             throwCantPack("unexpected relocation 1");
-        if (addr >= 3 && b[addr - 3] == 0x9a) {
-            unsigned seg = get_le16(b + addr);
+        if (addr >= 3 && image[addr - 3] == 0x9a) {
+            unsigned seg = get_le16(image + addr);
             if (seg > seg_high)
                 seg_high = seg;
 #if 0
             if (seg < seg_low)
                 seg_low = seg;
-            unsigned off = get_le16(b+addr-2);
+            unsigned off = get_le16(image + addr - 2);
             if (off < off_low)
                 off_low = off;
             if (off > off_high)
@@ -308,19 +307,20 @@ static unsigned optimize_relocs(byte *b, const unsigned size, const byte *relocs
     crel += 4; // to be filled in later
 
     unsigned ones = 0;
-    unsigned es = 0, di, t;
-    i = 0;
-    do {
+    unsigned es = 0;
+    for (unsigned i = 0; i < relocnum;) {
         unsigned addr = get_le32(relocs + 4 * i);
-        set_le16(crel, di = addr & 0x0f);
+        unsigned di = addr & 0x0f;
+        set_le16(crel + 0, di);
         set_le16(crel + 2, (addr >> 4) - es);
-        es = addr >> 4;
         crel += 4;
+        es = addr >> 4;
 
-        for (++i; i < nrelocs; i++) {
+        for (++i; i < relocnum; i++) {
+            unsigned t;
             addr = get_le32(relocs + 4 * i);
-            // printf ("%x\n",es*16+di);
-            if ((addr - es * 16 > 0xfffe) || (i == nrelocs - 1 && addr - es * 16 > 0xff00)) {
+            NO_printf("%x\n", es * 16 + di);
+            if ((addr - es * 16 > 0xfffe) || (i == relocnum - 1 && addr - es * 16 > 0xff00)) {
                 // segment change
                 t = 1 + (0xffff - di) / 254;
                 memset(crel, 1, t);
@@ -329,9 +329,9 @@ static unsigned optimize_relocs(byte *b, const unsigned size, const byte *relocs
                 break;
             }
             unsigned offs = addr - es * 16;
-            if (offs >= 3 && b[es * 16 + offs - 3] == 0x9a && offs > di + 3) {
+            if (offs >= 3 && image[es * 16 + offs - 3] == 0x9a && offs > di + 3) {
                 for (t = di; t < offs - 3; t++)
-                    if (b[es * 16 + t] == 0x9a && get_le16(b + es * 16 + t + 3) <= seg_high)
+                    if (image[es * 16 + t] == 0x9a && get_le16(image + es * 16 + t + 3) <= seg_high)
                         break;
                 if (t == offs - 3) {
                     // code 0: search for 0x9a
@@ -342,9 +342,8 @@ static unsigned optimize_relocs(byte *b, const unsigned size, const byte *relocs
                 }
             }
             t = offs - di;
-            if (t < 2)
+            if ((int) t < 2)
                 throwCantPack("unexpected relocation 2");
-
             while (t >= 256) {
                 // code 1: add 254, don't reloc
                 *crel++ = 1;
@@ -354,14 +353,14 @@ static unsigned optimize_relocs(byte *b, const unsigned size, const byte *relocs
             *crel++ = (byte) t;
             di = offs;
         }
-    } while (i < nrelocs);
+    }
     *crel++ = 1;
     ones++;
-    set_le16(crel_save, ones);
-    set_le16(crel_save + 2, seg_high);
+    set_le16(crel_start, ones);
+    set_le16(crel_start + 2, seg_high);
 
-    // OutputFile::dump("x.rel", crel_save, crel - crel_save);
-    return (unsigned) (crel - crel_save);
+    // OutputFile::dump("x.rel", crel_start, ptr_udiff_bytes(crel, crel_start));
+    return ptr_udiff_bytes(crel, crel_start);
 }
 
 /*************************************************************************
@@ -371,16 +370,14 @@ static unsigned optimize_relocs(byte *b, const unsigned size, const byte *relocs
 void PackExe::pack(OutputFile *fo) {
     unsigned ic;
 
-    if (ih.relocs > MAXRELOCS)
+    const unsigned relocnum = ih.relocs;
+    if (relocnum > MAXRELOCSIZE) // early check
         throwCantPack("too many relocations");
     checkOverlay(ih_overlay);
 
-    // alloc buffers
-    relocsize = RSFCRI + 4 * ih.relocs;
-    ibuf.alloc(ih_imagesize + 16 + relocsize + 2);
-    obuf.allocForCompression(ih_imagesize + 16 + relocsize + 2);
-
     // read image
+    // image + space for optimized relocs + safety/alignments
+    ibuf.alloc(ih_imagesize + 4 * relocnum + 1024);
     fi->seek(ih.headsize16 * 16, SEEK_SET);
     fi->readx(ibuf, ih_imagesize);
 
@@ -389,37 +386,41 @@ void PackExe::pack(OutputFile *fo) {
     device_driver = get_le32(ibuf) == 0xffffffffu;
 
     // relocations
+    relocsize = 0;
     has_9a = false;
-    byte *w = ibuf + ih_imagesize;
-    if (ih.relocs) {
-        byte *wr = w + RSFCRI;
-
+    if (relocnum) {
+        MemBuffer mb_relocs(4 * relocnum);
+        SPAN_S_VAR(byte, relocs, mb_relocs);
         fi->seek(ih.relocoffs, SEEK_SET);
-        fi->readx(wr, 4 * ih.relocs);
+        fi->readx(relocs, 4 * relocnum);
 
-        for (ic = 0; ic < ih.relocs; ic++) {
-            unsigned jc = get_le32(wr + 4 * ic);
-            set_le32(wr + 4 * ic, ((jc >> 16) * 16 + (jc & 0xffff)) & 0xfffff);
+        // dos/exe runs in real-mode, so convert to linear addresses
+        for (ic = 0; ic < relocnum; ic++) {
+            unsigned jc = get_le32(relocs + 4 * ic);
+            set_le32(relocs + 4 * ic, ((jc >> 16) * 16 + (jc & 0xffff)) & 0xfffff);
         }
-        qsort(wr, ih.relocs, 4, le32_compare);
-        relocsize = optimize_relocs(ibuf, ih_imagesize, wr, ih.relocs, w, &has_9a);
-        set_le16(w + relocsize, relocsize + 2);
+        qsort(raw_bytes(relocs, 4 * relocnum), relocnum, 4, le32_compare);
+
+        SPAN_S_VAR(byte, image, ibuf + 0, ih_imagesize);
+        SPAN_S_VAR(byte, crel, ibuf + ih_imagesize, ibuf);
+        relocsize = optimize_relocs(image, ih_imagesize, relocs, relocnum, crel, &has_9a);
+        set_le16(crel + relocsize, relocsize + 2);
         relocsize += 2;
-        if (relocsize > MAXRELOCS)
+        assert(relocsize >= 11);
+        if (relocsize > MAXRELOCSIZE) // optimize_relocs did not help
             throwCantPack("too many relocations");
-#if 0
-        byte out[9*relocsize/8+1024];
-        unsigned in_len = relocsize;
-        unsigned out_len = 0;
-        ucl_nrv2b_99_compress(w, in_len, out, &out_len, nullptr, 9, nullptr, nullptr);
-        printf("reloc compress: %d -> %d\n", in_len, out_len);
+#if TESTING && 0
+        unsigned rout_len = MemBuffer::getSizeForCompression(relocsize);
+        MemBuffer rout(rout_len);
+        ucl_nrv2b_99_compress(raw_bytes(crel, relocsize), relocsize, rout, &rout_len, nullptr, 9,
+                              nullptr, nullptr);
+        printf("dos/exe reloc compress: %d -> %d\n", relocsize, rout_len);
 #endif
-    } else {
-        relocsize = 0;
     }
 
     // prepare packheader
     ph.u_len = ih_imagesize + relocsize;
+    obuf.allocForCompression(ph.u_len);
     // prepare filter
     Filter ft(ph.level);
     // compress (max_match = 8192)
@@ -511,9 +512,7 @@ void PackExe::pack(OutputFile *fo) {
         oh.firstreloc = ih.cs * 0x10000 + ih.ip;
     }
 
-    // g++ 3.1 does not like the following line...
     oh.relocoffs = offsetof(exe_header_t, firstreloc);
-    // oh.relocoffs = ptr_udiff_bytes(&oh.firstreloc, &oh);
 
     linker->defineSymbol("destination_segment", oh.ss - ph.c_len / 16 - e_len / 16);
     linker->defineSymbol("source_segment", e_len / 16 + (copysize - firstcopy) / 16);
@@ -526,7 +525,7 @@ void PackExe::pack(OutputFile *fo) {
     linker->defineSymbol("attribute", get_le16(ibuf + 4));
     linker->defineSymbol("orig_strategy", get_le16(ibuf + 6));
 
-    const unsigned outputlen = sizeof(oh) + lsize + packedsize + eisize;
+    const unsigned outputlen = sizeof(oh) + e_len + packedsize + d_len + eisize;
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
 
@@ -538,20 +537,19 @@ void PackExe::pack(OutputFile *fo) {
     memcpy(loader, getLoader(), lsize);
     patchPackHeader(loader, e_len);
 
-    NO_fprintf(stderr, "\ne_len=%x d_len=%x c_len=%x oo=%x ulen=%x destp=%x copys=%x images=%x",
-               e_len, d_len, packedsize, ph.overlap_overhead, ph.u_len, /*destpara*/ 0, copysize,
-               ih_imagesize);
+    NO_fprintf(stderr, "\ne_len=%x d_len=%x c_len=%x oo=%x ulen=%x copysize=%x imagesize=%x", e_len,
+               d_len, packedsize, ph.overlap_overhead, ph.u_len, copysize, ih_imagesize);
 
     // write header + write loader + compressed file
 #if TESTING
     if (opt->debug.debug_level)
         printf("\n%d %d %d %d\n", (int) sizeof(oh), e_len, packedsize, d_len);
 #endif
-    fo->write(&oh, sizeof(oh));
-    fo->write(loader, e_len); // entry
-    fo->write(obuf, packedsize);
-    fo->write(loader + e_len, d_len); // decompressor
-    fo->write(extra_info, eisize);
+    fo->write(&oh, sizeof(oh));       // program header
+    fo->write(loader, e_len);         // entry code
+    fo->write(obuf, packedsize);      // compressed data
+    fo->write(loader + e_len, d_len); // decompressor code
+    fo->write(extra_info, eisize);    // extra info for unpacking
     assert(eisize <= 9);
     NO_printf("%-13s: program hdr  : %8u bytes\n", getName(), usizeof(oh));
     NO_printf("%-13s: entry        : %8u bytes\n", getName(), e_len);
@@ -564,7 +562,7 @@ void PackExe::pack(OutputFile *fo) {
 
     // copy the overlay
     copyOverlay(fo, ih_overlay, obuf);
-    // fprintf (stderr,"%x %x\n",relocsize,ph.u_len);
+    NO_fprintf(stderr, "dos/exe %x %x\n", relocsize, ph.u_len);
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
@@ -607,41 +605,46 @@ void PackExe::unpack(OutputFile *fo) {
     decompress(ibuf + e_len, obuf);
 
     unsigned imagesize = ih_imagesize;
-    imagesize--;
+    imagesize -= 1;
     const byte flag = ibuf[imagesize];
 
-    unsigned relocn = 0;
-    SPAN_S_VAR(byte, relocs, obuf + ph.u_len, obuf);
-
-    MemBuffer mb_wrkmem;
-    SPAN_0_VAR(byte, wrkmem, nullptr);
+    // relocations
+    unsigned relocnum = 0;
+    SPAN_S_VAR(const byte, relocstart, obuf + ph.u_len, obuf);
+    MemBuffer mb_relocs;
+    SPAN_0_VAR(byte, relocs, nullptr);
     if (!(flag & NORELOC)) {
-        relocs -= get_le16(obuf + (ph.u_len - 2));
+        mb_relocs.alloc(4 * MAXRELOCSIZE);
+        relocs = mb_relocs; // => now a SPAN_S
+
+        relocsize = get_le16(obuf + ph.u_len - 2);
         ph.u_len -= 2;
+        if (relocsize < 11 || relocsize > MAXRELOCSIZE || relocsize >= imagesize)
+            throwCantUnpack("bad relocations");
+        relocstart -= relocsize;
 
-        mb_wrkmem.alloc(4 * MAXRELOCS);
-        wrkmem = mb_wrkmem; // => now a SPAN_S
-        unsigned es = 0, ones = get_le16(relocs);
-        const unsigned seghi = get_le16(relocs + 2);
-        SPAN_S_VAR(const byte, p, relocs + 4);
-
+        // unoptimize_relocs
+        unsigned ones = get_le16(relocstart);
+        const unsigned seg_high = get_le16(relocstart + 2);
+        SPAN_S_VAR(const byte, p, relocstart + 4);
+        unsigned es = 0;
         while (ones) {
             unsigned di = get_le16(p);
             es += get_le16(p + 2);
             bool dorel = true;
             for (p += 4; ones && di < 0x10000; p++) {
                 if (dorel) {
-                    set_le16(wrkmem + (4 * relocn), di);
-                    set_le16(wrkmem + (2 + 4 * relocn++), es);
-                    NO_printf("%x\n", es * 16 + di);
+                    set_le16(relocs + (4 * relocnum + 0), di);
+                    set_le16(relocs + (4 * relocnum + 2), es);
+                    NO_printf("dos/exe unreloc %4d %6x\n", relocnum, es * 16 + di);
+                    relocnum++;
                 }
                 dorel = true;
                 if (*p == 0) {
-                    SPAN_S_VAR(const byte, q, obuf);
-                    for (q = obuf + (es * 16 + di); !(*q == 0x9a && get_le16(q + 3) <= seghi);
-                         q++) {
-                    }
-                    di = ptr_diff_bytes(q, obuf + (es * 16)) + 3;
+                    SPAN_S_VAR(const byte, q, obuf + (es * 16 + di), obuf);
+                    while (!(*q == 0x9a && get_le16(q + 3) <= seg_high))
+                        q++;
+                    di = ptr_udiff_bytes(q, obuf + (es * 16)) + 3;
                 } else if (*p == 1) {
                     di += 254;
                     if (di < 0x10000)
@@ -657,16 +660,16 @@ void PackExe::unpack(OutputFile *fo) {
     memset(&oh, 0, sizeof(oh));
     oh.ident = 'M' + 'Z' * 256;
 
-    if (relocn) {
-        oh.relocs = relocn;
-        while (relocn & 3)
-            set_le32(wrkmem + (4 * relocn++), 0);
+    if (relocnum) {
+        oh.relocs = relocnum;
+        while (relocnum & 3) // paragraph align
+            set_le32(relocs + (4 * relocnum++), 0);
     }
 
-    unsigned outputlen = ptr_udiff_bytes(relocs, obuf) + sizeof(oh) + relocn * 4;
+    unsigned outputlen = sizeof(oh) + 4 * relocnum + ptr_udiff_bytes(relocstart, obuf);
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
-    oh.headsize16 = 2 + relocn / 4;
+    oh.headsize16 = 2 + relocnum / 4;
 
     oh.max = ih.max;
     oh.min = ih.min;
@@ -701,9 +704,9 @@ void PackExe::unpack(OutputFile *fo) {
 
     // write header + relocations + uncompressed file
     fo->write(&oh, sizeof(oh));
-    if (relocn)
-        fo->write(wrkmem, relocn * 4);
-    fo->write(obuf, ptr_udiff_bytes(relocs, obuf));
+    if (relocnum)
+        fo->write(relocs, 4 * relocnum);
+    fo->write(obuf, ptr_udiff_bytes(relocstart, obuf));
 
     // copy the overlay
     copyOverlay(fo, ih_overlay, obuf);

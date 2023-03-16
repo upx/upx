@@ -74,7 +74,7 @@ MemBuffer::MemBuffer(upx_uint64_t bytes) {
     debug_set(debug.last_return_address_alloc, upx_return_address());
 }
 
-MemBuffer::~MemBuffer() { this->dealloc(); }
+MemBuffer::~MemBuffer() noexcept { this->dealloc(); }
 
 // similar to BoundedPtr, except checks only at creation
 // skip == offset, take == size_in_bytes
@@ -215,19 +215,19 @@ void MemBuffer::alloc(upx_uint64_t bytes) {
         set_ne32(p + size_in_bytes + 4, stats.global_alloc_counter);
     }
     ptr = (pointer) (void *) p;
-#if !defined(__SANITIZE_ADDRESS__) && 0
-    fill(0, size_in_bytes, (rand() & 0xff) | 1); // debug
+#if DEBUG
+    memset(ptr, 0xff, size_in_bytes);
     (void) VALGRIND_MAKE_MEM_UNDEFINED(ptr, size_in_bytes);
 #endif
     stats.global_alloc_counter += 1;
     stats.global_total_bytes += size_in_bytes;
     stats.global_total_active_bytes += size_in_bytes;
-#if DEBUG
+#if DEBUG || 1
     checkState();
 #endif
 }
 
-void MemBuffer::dealloc() {
+void MemBuffer::dealloc() noexcept {
     if (ptr != nullptr) {
         debug_set(debug.last_return_address_dealloc, upx_return_address());
         checkState();

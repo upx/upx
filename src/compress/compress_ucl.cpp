@@ -113,14 +113,14 @@ int upx_ucl_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsig
     cconf.bb_endian = 0;
     cconf.bb_size = 0;
     if (method >= M_NRV2B_LE32 && method <= M_NRV2E_LE16) {
-        static const unsigned char sizes[3] = {32, 8, 16};
+        static const upx_uint8_t sizes[3] = {32, 8, 16};
         cconf.bb_size = sizes[(method - M_NRV2B_LE32) % 3];
     } else {
         throwInternalError("unknown compression method");
         return UPX_E_ERROR;
     }
 
-    // optimize compression parms
+    // optimize compression params
     if (level <= 3 && cconf.max_offset == UCL_UINT_MAX)
         cconf.max_offset = 8 * 1024 - 1;
     else if (level == 4 && cconf.max_offset == UCL_UINT_MAX)
@@ -241,9 +241,9 @@ int upx_ucl_test_overlap(const upx_bytep buf, const upx_bytep tbuf, unsigned src
 **************************************************************************/
 
 extern "C" {
-static ucl_voidp __UCL_CDECL my_malloc(ucl_uint n) { return calloc(1, n); }
+static ucl_voidp __UCL_CDECL my_malloc(ucl_uint n) { return upx_calloc(n, 1); }
 static void __UCL_CDECL my_free(ucl_voidp p) { free(p); }
-}
+} // extern "C"
 
 int upx_ucl_init(void) {
     if (ucl_init() != UCL_E_OK)
@@ -327,13 +327,12 @@ TEST_CASE("compress_ucl") {
 #endif // DEBUG
 
 TEST_CASE("upx_ucl_decompress") {
-    typedef const upx_byte C;
-    C *c_data;
-    upx_byte d_buf[16];
+    const byte *c_data;
+    byte d_buf[16];
     unsigned d_len;
     int r;
 
-    c_data = (C *) "\x92\xff\x10\x00\x00\x00\x00\x00\x48\xff";
+    c_data = (const byte *) "\x92\xff\x10\x00\x00\x00\x00\x00\x48\xff";
     d_len = 16;
     r = upx_ucl_decompress(c_data, 10, d_buf, &d_len, M_NRV2B_8, nullptr);
     CHECK((r == 0 && d_len == 16));
@@ -343,7 +342,7 @@ TEST_CASE("upx_ucl_decompress") {
     r = upx_ucl_decompress(c_data, 10, d_buf, &d_len, M_NRV2B_8, nullptr);
     CHECK(r == UPX_E_OUTPUT_OVERRUN);
 
-    c_data = (C *) "\x92\xff\x10\x92\x49\x24\x92\xa0\xff";
+    c_data = (const byte *) "\x92\xff\x10\x92\x49\x24\x92\xa0\xff";
     d_len = 16;
     r = upx_ucl_decompress(c_data, 9, d_buf, &d_len, M_NRV2D_8, nullptr);
     CHECK((r == 0 && d_len == 16));
@@ -353,7 +352,7 @@ TEST_CASE("upx_ucl_decompress") {
     r = upx_ucl_decompress(c_data, 9, d_buf, &d_len, M_NRV2D_8, nullptr);
     CHECK(r == UPX_E_OUTPUT_OVERRUN);
 
-    c_data = (C *) "\x90\xff\xb0\x92\x49\x24\x92\xa0\xff";
+    c_data = (const byte *) "\x90\xff\xb0\x92\x49\x24\x92\xa0\xff";
     d_len = 16;
     r = upx_ucl_decompress(c_data, 9, d_buf, &d_len, M_NRV2E_8, nullptr);
     CHECK((r == 0 && d_len == 16));

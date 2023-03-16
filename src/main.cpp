@@ -626,7 +626,7 @@ static int do_option(int optc, const char *arg) {
         opt->backup = 1;
         break;
     case 541:
-        if (opt->backup != 1) // do not overide '--backup'
+        if (opt->backup != 1) // do not override '--backup'
             opt->backup = 0;
         break;
     // overlay
@@ -974,11 +974,10 @@ int main_get_options(int argc, char **argv) {
     int optc, longind;
     char shortopts[256];
 
-    prepare_shortopts(shortopts, "123456789hH?V", longopts),
-        acc_getopt_init(&mfx_getopt, 1, argc, argv);
+    prepare_shortopts(shortopts, "123456789hH?V", longopts);
+    acc_getopt_init(&mfx_getopt, 1, argc, argv);
     mfx_getopt.progname = progname;
     mfx_getopt.opterr = handle_opterr;
-    opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
     while ((optc = acc_getopt(&mfx_getopt, shortopts, longopts, &longind)) >= 0) {
         if (do_option(optc, argv[mfx_optind - 1]) != 0)
             e_usage();
@@ -1088,7 +1087,7 @@ void main_get_envoptions() {
 
     /* alloc temp argv */
     if (targc > 1)
-        targv = (const char **) calloc(targc + 1, sizeof(char *));
+        targv = (const char **) upx_calloc(targc + 1, sizeof(char *));
     if (targv == nullptr) {
         free(env);
         return;
@@ -1188,7 +1187,7 @@ int upx_main(int argc, char *argv[]) {
         char *p;
         bool allupper = true;
         for (p = prog; *p; p++)
-            if (islower((unsigned char) *p))
+            if (islower((uchar) *p))
                 allupper = false;
         if (allupper)
             fn_strlwr(prog);

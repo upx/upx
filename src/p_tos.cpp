@@ -223,11 +223,9 @@ void PackTos::buildLoader(const Filter *ft) {
 #define F_FASTLOAD 0x01 // don't zero heap
 #define F_ALTLOAD 0x02  // OK to load in alternate ram
 #define F_ALTALLOC 0x04 // OK to malloc from alt. ram
-#define F_SMALLTPA                                                                                 \
-    0x08                // used in MagiC: TPA can be allocated
-                        // as specified in the program header
-                        // rather than the biggest free memory
-                        // block
+#define F_SMALLTPA 0x08
+// used in MagiC: TPA can be allocated as specified in the program header
+// rather than the biggest free memory block
 #define F_MEMFLAGS 0xf0 // reserved for future use
 #define F_SHTEXT 0x800  // program's text may be shared
 
@@ -297,26 +295,26 @@ bool PackTos::checkFileHeader() {
 // relocs
 **************************************************************************/
 
-// Check relocation for errors to make sure our loader can handle it.
-static int check_relocs(const byte *relocs, unsigned rsize, unsigned isize, unsigned *nrelocs,
+// Check relocation for errors to make sure our loader can handle them
+static int check_relocs(const byte *relocs, unsigned rsize, unsigned image_size, unsigned *relocnum,
                         unsigned *relocsize, unsigned *overlay) {
+    assert(rsize >= 4);
+    assert(image_size >= 4);
     unsigned fixup = get_be32(relocs);
+    assert(fixup > 0);
     unsigned last_fixup = fixup;
     unsigned i = 4;
 
-    assert(isize >= 4);
-    assert(fixup > 0);
-
-    *nrelocs = 1;
+    *relocnum = 1;
     for (;;) {
         if (fixup & 1) // must be word-aligned
             return -1;
-        if (fixup + 4 > isize) // too far
+        if (fixup + 4 > image_size) // out of bounds
             return -1;
         if (i >= rsize) // premature EOF in relocs
             return -1;
         unsigned c = relocs[i++];
-        if (c == 0) // end marker
+        if (c == 0) // EOF end marker
             break;
         else if (c == 1) // increase fixup, no reloc
             fixup += 254;
@@ -328,7 +326,7 @@ static int check_relocs(const byte *relocs, unsigned rsize, unsigned isize, unsi
             if (fixup - last_fixup < 4) // overlapping relocation
                 return -1;
             last_fixup = fixup;
-            *nrelocs += 1;
+            *relocnum += 1;
         }
     }
 
@@ -352,7 +350,7 @@ bool PackTos::canPack() {
     if (!checkFileHeader())
         throwCantPack("unsupported header flags");
     if (file_size < 1024)
-        throwCantPack("program is too small");
+        throwCantPack("program is too small for atari/tos");
 
     return true;
 }
@@ -370,7 +368,7 @@ void PackTos::fileInfo() {
 
 void PackTos::pack(OutputFile *fo) {
     unsigned t;
-    unsigned nrelocs = 0;
+    unsigned relocnum = 0;
     unsigned relocsize = 0;
     unsigned overlay = 0;
 
@@ -426,14 +424,14 @@ void PackTos::pack(OutputFile *fo) {
     } else if (ih.fh_reloc != 0)
         relocsize = 0;
     else {
-        int r = check_relocs(ibuf + t, overlay, t, &nrelocs, &relocsize, &overlay);
+        int r = check_relocs(ibuf + t, overlay, t, &relocnum, &relocsize, &overlay);
         if (r != 0)
             throwCantPack("bad relocation table");
         symbols.need_reloc = true;
     }
 
 #if TESTING
-    printf("xx2: %d relocs: %d, overlay: %d, t: %d\n", nrelocs, relocsize, overlay, t);
+    printf("xx2: %d relocs: %d, overlay: %d, t: %d\n", relocnum, relocsize, overlay, t);
 #endif
 
     checkOverlay(overlay);
@@ -451,7 +449,7 @@ void PackTos::pack(OutputFile *fo) {
     // Now the data in ibuf[0..t] looks like this:
     //   text + data + relocs + original file header
     // After compression this will become the first part of the
-    // data segement. The second part will be the decompressor.
+    // data segment. The second part will be the decompressor.
 
     // alloc buffer (4096 is for decompressor and the various alignments)
     obuf.allocForCompression(t, 4096);

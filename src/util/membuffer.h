@@ -46,11 +46,12 @@ protected:
     size_type size_in_bytes;
 
 public:
-    MemBufferBase() : ptr(nullptr), size_in_bytes(0) {}
+    MemBufferBase() noexcept : ptr(nullptr), size_in_bytes(0) {}
+    inline ~MemBufferBase() noexcept {}
 
     // NOTE: implicit conversion to underlying pointer
     // HINT: for fully bound-checked pointer use XSPAN_S from xspan.h
-    operator pointer() const { return ptr; }
+    operator pointer() const noexcept { return ptr; }
 
     // membuffer + n -> pointer
     template <class U>
@@ -66,8 +67,8 @@ private:
         DELETED_FUNCTION;
 
 public: // raw access
-    pointer raw_ptr() const { return ptr; }
-    size_type raw_size_in_bytes() const { return size_in_bytes; }
+    pointer raw_ptr() const noexcept { return ptr; }
+    size_type raw_size_in_bytes() const noexcept { return size_in_bytes; }
 
     pointer raw_bytes(size_t bytes) const {
         if (bytes > 0) {
@@ -84,7 +85,7 @@ class MemBuffer final : public MemBufferBase<byte> {
 public:
     MemBuffer() : MemBufferBase<byte>() {}
     explicit MemBuffer(upx_uint64_t bytes);
-    ~MemBuffer();
+    ~MemBuffer() noexcept;
 
     static unsigned getSizeForCompression(unsigned uncompressed_size, unsigned extra = 0);
     static unsigned getSizeForDecompression(unsigned uncompressed_size, unsigned extra = 0);
@@ -93,7 +94,7 @@ public:
     void allocForCompression(unsigned uncompressed_size, unsigned extra = 0);
     void allocForDecompression(unsigned uncompressed_size, unsigned extra = 0);
 
-    void dealloc();
+    void dealloc() noexcept;
     void checkState() const;
     unsigned getSize() const { return size_in_bytes; }
 

@@ -41,7 +41,7 @@ public:
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_TMT_ADAM; }
     virtual const char *getName() const override { return "tmt/adam"; }
-    virtual const char *getFullName(const options_t *) const override {
+    virtual const char *getFullName(const Options *) const override {
         return "i386-dos32.tmt.adam";
     }
     virtual const int *getCompressionMethods(int method, int level) const override;

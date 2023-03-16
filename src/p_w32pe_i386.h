@@ -39,7 +39,7 @@ public:
     virtual ~PackW32PeI386();
     virtual int getFormat() const override { return UPX_F_W32PE_I386; }
     virtual const char *getName() const override { return isrtm ? "rtm32/pe" : "win32/pe"; }
-    virtual const char *getFullName(const options_t *) const override { return "i386-win32.pe"; }
+    virtual const char *getFullName(const Options *) const override { return "i386-win32.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
 

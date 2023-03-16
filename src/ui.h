@@ -39,7 +39,7 @@ public:
     UiPacker(const Packer *p_);
 
 public:
-    virtual ~UiPacker();
+    virtual ~UiPacker() noexcept;
 
     static void uiConfirmUpdate();
     static void uiPackTotal();

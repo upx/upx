@@ -39,7 +39,7 @@ public:
     virtual ~PackWinCeArm();
     virtual int getFormat() const override { return UPX_F_WINCE_ARM; }
     virtual const char *getName() const override { return "wince/arm"; }
-    virtual const char *getFullName(const options_t *) const override { return "arm-wince.pe"; }
+    virtual const char *getFullName(const Options *) const override { return "arm-wince.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const override;
     virtual const int *getFilters() const override;
     virtual void defineFilterSymbols(const Filter *) override {}
