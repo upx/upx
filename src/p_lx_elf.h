@@ -138,6 +138,7 @@ public:
 protected:
     virtual void PackLinuxElf32help1(InputFile *f);
     virtual int checkEhdr(Elf32_Ehdr const *ehdr) const;
+    virtual bool canPackOSABI(Elf32_Ehdr const *);
     virtual bool canPack() override;
     virtual int  canUnpack() override; // bool, except -1: format known, but not packed
 

@@ -2337,56 +2337,10 @@ int PackLinuxElf32::canUnpack() // bool, except -1: format known, but not packed
     return false;
 }
 
-bool PackLinuxElf32::canPack()
+bool  // false [often throwCantPack]: some defect;  true: good so far
+PackLinuxElf32::canPackOSABI(Elf32_Ehdr const *ehdr)
 {
-    union {
-        unsigned char buf[MAX_ELF_HDR_32];
-        //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
-    } u;
-    COMPILE_TIME_ASSERT(sizeof(u.buf) <= (2*512))
-
-// Design with "extra" Shdrs in output at xct_off DOES NOT WORK
-// because code for EM_ARM has embedded relocations
-// that are not made visible, such as:
-//    ----- glibc-2.31/sysdeps/arm/crti.S
-//            .type call_weak_fn, %function
-//    call_weak_fn:
-//            ldr r3, .LGOT
-//            ldr r2, .LGOT+4
-//    .LPIC:
-//            add r3, pc, r3
-//            ldr r2, [r3, r2]
-//            cmp r2, #0
-//            bxeq lr
-//            b PREINIT_FUNCTION
-//            .p2align 2
-//    .LGOT:
-//            .word _GLOBAL_OFFSET_TABLE_-(.LPIC+8)  // unseen reloc!
-//            .word PREINIT_FUNCTION(GOT)
-//    -----
-// So, PackUnix::PackUnix() disables (but silently accepts) --android-shlib,
-// and see if appending ARM_ATTRIBUTES Shdr is good enough.
-
-    fi->seek(0, SEEK_SET);
-    fi->readx(u.buf, sizeof(u.buf));
-    fi->seek(0, SEEK_SET);
-    Elf32_Ehdr const *const ehdr = (Elf32_Ehdr *) u.buf;
-
-    // now check the ELF header
-    if (checkEhdr(ehdr) != 0)
-        return false;
-
-    // additional requirements for linux/elf386
-    if (get_te16(&ehdr->e_ehsize) != sizeof(*ehdr)) {
-        throwCantPack("invalid Ehdr e_ehsize; try '--force-execve'");
-        return false;
-    }
-    if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
-        throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
-        return false;
-    }
-
-    unsigned char osabi0 = u.buf[Elf32_Ehdr::EI_OSABI];
+    unsigned char osabi0 = ehdr->e_ident[Elf32_Ehdr::EI_OSABI];
     // The first PT_LOAD32 must cover the beginning of the file (0==p_offset).
     Elf32_Phdr const *phdr = phdri;
     note_size = 0;
@@ -2461,9 +2415,63 @@ bool PackLinuxElf32::canPack()
     if (osabi0!=ei_osabi) {
         return false;
     }
+    return true;  // good so far
+}
 
+bool PackLinuxElf32::canPack()
+{
+    union {
+        unsigned char buf[MAX_ELF_HDR_32];
+        //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
+    } u;
+    COMPILE_TIME_ASSERT(sizeof(u.buf) <= (2*512))
+
+// My earlier design with "extra" Shdrs in output at xct_off
+// DOES NOT WORK because code for EM_ARM has embedded relocations
+// that are not made visible, such as:
+//    ----- glibc-2.31/sysdeps/arm/crti.S
+//            .type call_weak_fn, %function
+//    call_weak_fn:
+//            ldr r3, .LGOT
+//            ldr r2, .LGOT+4
+//    .LPIC:
+//            add r3, pc, r3
+//            ldr r2, [r3, r2]
+//            cmp r2, #0
+//            bxeq lr
+//            b PREINIT_FUNCTION
+//            .p2align 2
+//    .LGOT:
+//            .word _GLOBAL_OFFSET_TABLE_-(.LPIC+8)  // unseen reloc!
+//            .word PREINIT_FUNCTION(GOT)
+//    -----
+// So, PackUnix::PackUnix() disables (but silently accepts) --android-shlib,
+// and see if appending ARM_ATTRIBUTES Shdr is good enough.
+
+    fi->seek(0, SEEK_SET);
+    fi->readx(u.buf, sizeof(u.buf));
+    fi->seek(0, SEEK_SET);
+    Elf32_Ehdr const *const ehdr = (Elf32_Ehdr *) u.buf;
+
+    // now check the ELF header
+    if (checkEhdr(ehdr) != 0)
+        return false;
+
+    // additional requirements for linux/elf386
+    if (get_te16(&ehdr->e_ehsize) != sizeof(*ehdr)) {
+        throwCantPack("invalid Ehdr e_ehsize; try '--force-execve'");
+        return false;
+    }
+    if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
+        throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
+        return false;
+    }
+
+    if (!canPackOSABI((Elf32_Ehdr *)u.buf)) {
+        return false;
+    }
     upx_uint32_t max_LOADsz = 0, max_offset = 0;
-    phdr = phdri;
+    Elf32_Phdr *phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j > ((MAX_ELF_HDR_32 - sizeof(Elf32_Ehdr)) / sizeof(Elf32_Phdr))) {
             throwCantPack("too many ElfXX_Phdr; try '--force-execve'");
@@ -2795,8 +2803,9 @@ bool PackLinuxElf32::canPack()
             }
             goto proceed;  // But proper packing depends on checking xct_va.
         }
-        else
+        else {
             throwCantPack("need DT_INIT; try \"void _init(void){}\"");
+        }
 abandon:
         return false;
 proceed: ;
@@ -3004,7 +3013,7 @@ PackLinuxElf64::canPack()
         // into good positions when building the original shared library,
         // and also requires ld-linux to behave.
 
-        if (elf_find_dynamic(upx_dt_init)) {
+        if (/*jni_onload_sym ||*/ elf_find_dynamic(upx_dt_init)) {
             if (elf_has_dynamic(Elf64_Dyn::DT_TEXTREL)) {
                 throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
