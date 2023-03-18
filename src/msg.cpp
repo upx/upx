@@ -25,6 +25,8 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+#include "headers.h"
+#include <typeinfo>
 #include "conf.h"
 
 /*************************************************************************

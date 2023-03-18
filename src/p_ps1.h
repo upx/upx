@@ -68,7 +68,7 @@ protected:
 
     struct alignas(1) ps1_exe_t {
         // ident string
-        char id[8];
+        byte id[8];
         // is nullptr
         LE32 text;
         // is nullptr
@@ -86,7 +86,7 @@ protected:
         // saved regs on execution
         LE32 sp, fp, gp0, ra, k0;
         // origin Jap/USA/Europe
-        char origin[60];
+        byte origin[60];
         // backup of the original header (epc - is_len)
         // id & the upx header ...
     };

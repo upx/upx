@@ -46,7 +46,7 @@
 ;  Revision history:
 ;
 ;  93/12/05 DJ Delorie  Initial version v2.00, requires DPMI 0.9
-;  94/10/13 CW Sandmann v2.01, accumlated changes: 60K load bug, limits, cwsdpmi, optimization
+;  94/10/13 CW Sandmann v2.01, accumulated changes: 60K load bug, limits, cwsdpmi, optimization
 ;  94/10/29 CW Sandmann v2.03, M Welinder changes; cwsdpmi load anywhere, size decrease
 ;
    .copyright "The STUB.EXE stub loader is Copyright (C) 1993-1995 DJ Delorie. "

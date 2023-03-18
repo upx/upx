@@ -25,8 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+#include "../headers.h"
+#include <algorithm>
 #include "../conf.h"
-#include "util.h"
 
 #define ACC_WANT_ACC_INCI_H 1
 #include "../miniacc.h"
@@ -173,6 +174,7 @@ void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, s
         throwCantPack("ptr_check_no_overlap-bc");
 }
 
+#if DEBUG
 TEST_CASE("ptr_check_no_overlap 2") {
     byte p[4] = {};
 
@@ -243,6 +245,7 @@ TEST_CASE("ptr_check_no_overlap 3") {
     check_throws_(0, 4, 3, 0, 1, 0);
     check_throws_(0, 4, 4, 0, 1, 0);
 }
+#endif // DEBUG
 
 /*************************************************************************
 // bele.h
@@ -270,31 +273,34 @@ void *upx_calloc(size_t n, size_t element_size) {
     return p;
 }
 
-// extremely simple stable sort: Gnomesort
-// WARNING: O(n**2) !!!!!
-void upx_stable_sort(void *base, size_t n, size_t element_size,
-                     int(__acc_cdecl_qsort *compare)(const void *, const void *)) {
-    (void) mem_size(element_size, n); // assert size
-    for (size_t i = 1; i < n;) {
-        char *a = (char *) base + element_size * i; // a = &array[i]
-        if (i == 0 || (compare(a - element_size, a) <= 0)) {
-            i += 1;
-        } else {
-            i -= 1;
-            // swap elements a[-1] <=> a[0]
-            //   upx_memswap(a - element_size, a, element_size);
-            size_t j = element_size;
-            do {
-                char tmp = *(a - element_size);
-                *(a - element_size) = *a;
-                *a++ = tmp;
-            } while (--j != 0);
+// simple unoptimized memswap()
+void upx_memswap(void *a, void *b, size_t n) {
+    if (a != b && n != 0) {
+        char *x = (char *) a;
+        char *y = (char *) b;
+        do {
+            char tmp = *x;
+            *x++ = *y;
+            *y++ = tmp;
+        } while (--n != 0);
+    }
+}
+
+// extremely simple (and beautiful) stable sort: Gnomesort
+// WARNING: O(n^2) and thus very inefficient for large n
+void upx_stable_sort(void *array, size_t n, size_t element_size,
+                     int (*compare)(const void *, const void *)) {
+    for (size_t i = 1; i < n; i++) {
+        char *a = (char *) array + element_size * i; // a = &array[i]
+        if (i != 0 && compare(a - element_size, a) > 0) {
+            upx_memswap(a - element_size, a, element_size); // swap elements a[-1] <=> a[0]
+            i -= 2;
         }
     }
 }
 
+#if DEBUG
 TEST_CASE("upx_stable_sort") {
-    // TODO C++20: use std::next_permutation() to test all permutations
     {
         unsigned a[] = {0, 1};
         upx_stable_sort(a, 2, sizeof(*a), ne32_compare);
@@ -310,7 +316,19 @@ TEST_CASE("upx_stable_sort") {
         upx_stable_sort(a, 3, sizeof(*a), ne32_compare);
         CHECK((a[0] == 0 && a[1] == 1 && a[2] == 2));
     }
+#if __cplusplus >= 202002L // use C++20 std::next_permutation() to test all permutations
+    {
+        upx_uint16_t perm[5] = {0, 1, 2, 3, 4}; // 120 permutations
+        do {
+            upx_uint16_t a[5] = {};
+            memcpy(a, perm, sizeof(perm));
+            upx_stable_sort(a, 5, sizeof(*a), ne16_compare);
+            CHECK((a[0] == 0 && a[1] == 1 && a[2] == 2 && a[3] == 3 && a[4] == 4));
+        } while (std::next_permutation(perm, perm + 5));
+    }
+#endif
 }
+#endif // DEBUG
 
 /*************************************************************************
 // qsort() util

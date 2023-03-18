@@ -49,13 +49,13 @@ protected:
 
     struct alignas(1) le_header_t {
         // 0x00
-        char _[2];             // signature: 'LE' || 'LX'
-        char byte_order;       // 0 little endian
-        char word_order;       // 0 little endian
+        byte _[2];             // signature: 'LE' || 'LX'
+        byte byte_order;       // 0 little endian
+        byte word_order;       // 0 little endian
         LE32 exe_format_level; // 0
         LE16 cpu_type;         // 1->286..4->586
         LE16 target_os;        // 1->OS2
-        char _0[4];            // module_version = 0
+        byte _0[4];            // module_version = 0
         // 0x10
         LE32 module_type; // 0x200->compatible with PM windowing
         LE32 memory_pages;
@@ -68,21 +68,21 @@ protected:
         LE32 bytes_on_last_page;
         // 0x30
         LE32 fixup_size;
-        char _1[4]; // fixup_checksum = 0
+        byte _1[4]; // fixup_checksum = 0
         LE32 loader_size;
-        char _2[4]; // loader_checksum = 0
+        byte _2[4]; // loader_checksum = 0
         // 0x40
         LE32 object_table_offset;
         LE32 object_table_entries;
         LE32 object_pagemap_offset;
         LE32 object_iterate_data_map_offset;
         // 0x50
-        char _3[4]; //  resource_offset
+        byte _3[4]; //  resource_offset
         LE32 resource_entries;
         LE32 resident_names_offset;
         LE32 entry_table_offset;
         // 0x60
-        char _4[4]; //  module_directives_table_offset = 0
+        byte _4[4]; //  module_directives_table_offset = 0
         LE32 module_directives_entries;
         LE32 fixup_page_table_offset;
         LE32 fixup_record_table_offset;
@@ -90,17 +90,17 @@ protected:
         LE32 imported_modules_name_table_offset;
         LE32 imported_modules_count;
         LE32 imported_procedures_name_table_offset;
-        char _5[4]; // per_page_checksum_table_offset =  0
+        byte _5[4]; // per_page_checksum_table_offset =  0
         // 0x80
         LE32 data_pages_offset;
-        char _6[4]; // preload_page_count = 0
+        byte _6[4]; // preload_page_count = 0
         LE32 non_resident_name_table_offset;
         LE32 non_resident_name_table_length;
         // 0x90
-        char _7[4]; // non_resident_names_checksum
+        byte _7[4]; // non_resident_names_checksum
         LE32 automatic_data_object;
 #if 1
-        char _8[44];
+        byte _8[44];
 #else
         LE32 debug_info_offset;
         LE32 debug_info_length;
@@ -108,7 +108,7 @@ protected:
         LE32 preload_instance_pages;
         LE32 demand_instance_pages;
         LE32 extra_heap_alloc;
-        char reserved[12];
+        byte reserved[12];
         LE32 versioninfo;
         LE32 unknown;
         // 0xC0

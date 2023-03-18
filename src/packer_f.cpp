@@ -91,11 +91,11 @@ void Packer::addFilter32(int filter_id) {
     }
     if (0x80 == (filter_id & 0xF0)) {
         bool const x386 = (opt->cpu <= opt->CPU_386);
-        unsigned const n_mru = ph.n_mru ? 1 + ph.n_mru : 0;
+        const unsigned n_mru = ph.n_mru ? 1 + ph.n_mru : 0;
         bool const mrupwr2 = (0 != n_mru) && 0 == ((n_mru - 1) & n_mru);
-        unsigned const f_call = f80_call(filter_id);
-        unsigned const f_jmp1 = f80_jmp1(filter_id);
-        unsigned const f_jcc2 = f80_jcc2(filter_id);
+        const unsigned f_call = f80_call(filter_id);
+        const unsigned f_jmp1 = f80_jmp1(filter_id);
+        const unsigned f_jcc2 = f80_jcc2(filter_id);
 
         if (NOFILT != f_jcc2) {
             addLoader("LXJCC010");
@@ -296,9 +296,9 @@ void Packer::defineFilterSymbols(const Filter *ft) {
 
 #if 0
     if (0x80 == (ft->id & 0xF0)) {
-        int const mru = ph.n_mru ? 1 + ph.n_mru : 0;
+        const int mru = ph.n_mru ? 1 + ph.n_mru : 0;
         if (mru && mru != 256) {
-            unsigned const is_pwr2 = (0 == ((mru - 1) & mru));
+            const unsigned is_pwr2 = (0 == ((mru - 1) & mru));
             // patch_le32(0x80 + (char *) loader, lsize - 0x80, "NMRU", mru - is_pwr2);
         }
     }

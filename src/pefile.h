@@ -184,7 +184,7 @@ protected:
 
     struct alignas(1) import_desc {
         LE32 oft; // orig first thunk
-        char _[8];
+        byte _[8];
         LE32 dllname;
         LE32 iat; // import address table
     };
@@ -195,7 +195,7 @@ protected:
         LE32 vaddr;
         LE32 size;
         LE32 rawdataptr;
-        char _[12];
+        byte _[12];
         LE32 flags;
     };
 
@@ -433,9 +433,9 @@ protected:
 
     class Export : private noncopyable {
         struct alignas(1) export_dir_t {
-            char _[12]; // flags, timedate, version
+            byte _[12]; // flags, timedate, version
             LE32 name;
-            char __[4]; // ordinal base
+            byte __[4]; // ordinal base
             LE32 functions;
             LE32 names;
             LE32 addrtable;
@@ -483,16 +483,16 @@ protected:
 
     struct alignas(1) pe_header_t {
         // 0x00
-        char _[4]; // pemagic
+        byte _[4]; // pemagic
         // 0x04 IMAGE_FILE_HEADER
         LE16 cpu;        // IMAGE_FILE_MACHINE_xxx
         LE16 objects;    // NumberOfSections
-        char __[12];     // timestamp + reserved
+        byte __[12];     // timestamp + reserved
         LE16 opthdrsize; // SizeOfOptionalHeader
         LE16 flags;      // Characteristics
         // 0x18 IMAGE_OPTIONAL_HEADER32
         LE16 coffmagic; // NEW: Stefan Widmann
-        char ___[2];    // linkerversion
+        byte ___[2];    // linkerversion
         LE32 codesize;
         // 0x20
         LE32 datasize;
@@ -506,7 +506,7 @@ protected:
         LE32 objectalign;
         LE32 filealign; // should set to 0x200 ?
         // 0x40
-        char ____[16]; // versions
+        byte ____[16]; // versions
         // 0x50
         LE32 imagesize;
         LE32 headersize;
@@ -514,7 +514,7 @@ protected:
         LE16 subsystem; // IMAGE_SUBSYSTEM_xxx
         LE16 dllflags;  // IMAGE_DLLCHARACTERISTICS_xxx
         // 0x60
-        char _____[20]; // stack + heap sizes
+        byte _____[20]; // stack + heap sizes
         // 0x74
         LE32 ddirsentries; // usually 16
         // 0x78
@@ -544,16 +544,16 @@ protected:
 
     struct alignas(1) pe_header_t {
         // 0x00
-        char _[4]; // pemagic
+        byte _[4]; // pemagic
         // 0x04 IMAGE_FILE_HEADER
         LE16 cpu;        // IMAGE_FILE_MACHINE_xxx
         LE16 objects;    // NumberOfSections
-        char __[12];     // timestamp + reserved
+        byte __[12];     // timestamp + reserved
         LE16 opthdrsize; // SizeOfOptionalHeader
         LE16 flags;      // Characteristics
         // 0x18 IMAGE_OPTIONAL_HEADER64
         LE16 coffmagic; // NEW: Stefan Widmann
-        char ___[2];    // linkerversion
+        byte ___[2];    // linkerversion
         LE32 codesize;
         // 0x20
         LE32 datasize;
@@ -567,7 +567,7 @@ protected:
         LE32 objectalign;
         LE32 filealign; // should set to 0x200 ?
         // 0x40
-        char ____[16]; // versions
+        byte ____[16]; // versions
         // 0x50
         LE32 imagesize;
         LE32 headersize;
@@ -575,7 +575,7 @@ protected:
         LE16 subsystem; // IMAGE_SUBSYSTEM_xxx
         LE16 dllflags;  // IMAGE_DLLCHARACTERISTICS_xxx
         // 0x60
-        char _____[36]; // stack + heap sizes + loader flag
+        byte _____[36]; // stack + heap sizes + loader flag
         // 0x84
         LE32 ddirsentries; // usually 16
         // 0x88
