@@ -67,8 +67,8 @@ f80_jcc2(Filter const *f)
 // Adaptively remember recent destinations.
 static void
 update_mru(
-    unsigned const jc,  // destination address
-    int const kh,  // mru[kh] is slot where found
+    const unsigned jc,  // destination address
+    const int kh,  // mru[kh] is slot where found
     unsigned mru[N_MRU],  // circular buffer of most recent destinations
     int &hand,  // mru[hand] is most recent destination
     int &tail   // mru[tail] is beyond oldest destination ("cold cache" startup)
@@ -77,7 +77,7 @@ update_mru(
     if (0 > --hand) {
         hand = N_MRU -1;
     }
-    unsigned const t = mru[hand];  // entry which will be overwritten by jc
+    const unsigned t = mru[hand];  // entry which will be overwritten by jc
     if (0!=t) { // have seen at least N_MRU destinations
         mru[kh] = t;
     }
@@ -85,7 +85,7 @@ update_mru(
         if (0 > --tail) {
             tail = N_MRU -1;
         }
-        unsigned const t2 = mru[tail];
+        const unsigned t2 = mru[tail];
         mru[tail] = 0;
         mru[kh] = t2;
     }
@@ -111,9 +111,9 @@ static int F(Filter *f)
     unsigned wtally[3]; memset(wtally, 0, sizeof(wtally));
 
 #ifdef U  //{
-    unsigned const f_call = f80_call(f);
-    unsigned const f_jmp1 = f80_jmp1(f);
-    unsigned const f_jcc2 = f80_jcc2(f);
+    const unsigned f_call = f80_call(f);
+    const unsigned f_jmp1 = f80_jmp1(f);
+    const unsigned f_jcc2 = f80_jcc2(f);
 
     int hand = 0, tail = 0;
     unsigned mru[N_MRU];
@@ -273,9 +273,9 @@ static int U(Filter *f)
     const unsigned cto = (unsigned)f->cto << 24;
     unsigned lastcall = 0;
     int hand = 0, tail = 0;
-    unsigned const f_call = f80_call(f);
-    unsigned const f_jmp1 = f80_jmp1(f);
-    unsigned const f_jcc2 = f80_jcc2(f);
+    const unsigned f_call = f80_call(f);
+    const unsigned f_jmp1 = f80_jmp1(f);
+    const unsigned f_jcc2 = f80_jcc2(f);
 
     unsigned mru[N_MRU];
     memset(&mru[0], 0, sizeof(mru));

@@ -527,7 +527,7 @@ void PackWcle::decodeFixups() {
 
     SPAN_S_VAR(const byte, p, oimage + soimage);
     MemBuffer mb_relocs;
-    unsigned const fixupn = unoptimizeReloc(p, mb_relocs, oimage, soimage, 32, true);
+    const unsigned fixupn = unoptimizeReloc(p, mb_relocs, oimage, soimage, 32, true);
 
     MemBuffer wrkmem(8 * fixupn + 8);
     unsigned ic, jc, o, r;

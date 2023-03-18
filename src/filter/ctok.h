@@ -46,7 +46,7 @@ static int F(Filter *f)
 #endif
     const unsigned addvalue = f->addvalue;
     const unsigned size = f->buf_len;
-    unsigned const id = f->id;
+    const unsigned id = f->id;
 
     unsigned ic, jc, kc;
     unsigned calls = 0, noncalls = 0, noncalls2 = 0;
@@ -145,7 +145,7 @@ static int U(Filter *f)
     const unsigned size5 = f->buf_len - 5;
     const unsigned addvalue = f->addvalue;
     const unsigned cto = (unsigned)f->cto << 24;
-    unsigned const id = f->id;
+    const unsigned id = f->id;
     unsigned lastcall = 0;
 
     unsigned ic, jc;

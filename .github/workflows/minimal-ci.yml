@@ -5,22 +5,25 @@ name: 'CI - Minimal CI with Alpine Linux'
 on: [workflow_dispatch]
 jobs:
   job-alpine-cmake:
-    strategy: {matrix: {container: ['alpine:3.12','alpine:3.17','alpine:edge']}}
+    strategy:
+      fail-fast: false
+      matrix: {container: ['alpine:3.12','alpine:3.17','alpine:edge','i386/alpine:edge']}
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         run: 'apk update && apk upgrade && apk add bash clang cmake g++ git make'
-      - name: ${{ format('Check out code upx-{0}', github.ref_name) }}
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
           git -C upx submodule update --init
-          echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-minimal-ci-${{ matrix.container }}" | sed 's/[:,; ]/-/g' >> $GITHUB_ENV
+          echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-minimal-ci-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
       - { name: 'Build clang', run: 'make -C upx UPX_XTARGET=clang-static CC="clang -static" CXX="clang++ -static"' }
       - { name: 'Build gcc',   run: 'make -C upx UPX_XTARGET=gcc-static   CC="gcc -static"   CXX="g++ -static"' }
       - { name: 'Strip release binaries', run: 'strip -p --strip-unneeded upx/build/*/*/release/upx' }
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ !startsWith(matrix.container, 'i386/alpine') }} # missing nodejs
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.artifact_name }}
