@@ -229,6 +229,12 @@
 #undef WANT_REL_ENUM
     static inline unsigned ELF32_R_TYPE(unsigned     x) { return       0xff & x; }
     static inline unsigned ELF64_R_TYPE(upx_uint64_t x) { return 0xffffffff & (unsigned)x; }
+    static inline unsigned ELF32_R_SYM(unsigned     x) { return x >> 8; }
+    static inline unsigned ELF64_R_SYM(upx_uint64_t x) { return x >> 32; }
+    static inline unsigned    ELF32_R_INFO(unsigned sym, unsigned type)
+        { return (sym << 8) + (type & 0xff); }
+    static inline upx_int64_t ELF64_R_INFO(unsigned sym, unsigned type)
+        { return ((upx_uint64_t)sym << 32) + type; }
 
 #   undef R_PPC_RELATIVE
 #   undef R_PPC64_RELATIVE

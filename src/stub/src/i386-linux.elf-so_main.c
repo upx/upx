@@ -34,7 +34,7 @@
 
 extern void my_bkpt(void const *arg1, ...);
 
-#define DEBUG 0
+#define DEBUG 1
 
 void *mmap(void *, size_t, int, int, int, off_t);
 #if defined(__i386__) || defined(__mips__) || defined(__powerpc__) //{
@@ -525,37 +525,26 @@ upx_so_main(  // returns &escape_hatch
     Extent x0 = {binfo->sz_cpr + sizeof(*binfo), (char *)binfo};  // source
     unpackExtent(&x0, &x1);  // de-compress Elf headers; x0.buf is updated
 
-    // Count PT_LOAD; n_LOAD < 3 is special (old binutils PT_LOAD layout)
-    unsigned n_phdr;
-    Elf32_Phdr const *phdr;
-    n_phdr =                  ((Elf32_Ehdr *)(void *)va_load)->e_phnum;
-      phdr = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)(void *)va_load);
-    unsigned n_LOAD = 0;
-    for (; n_phdr > 0; --n_phdr, ++phdr) {
-        n_LOAD += (PT_LOAD == phdr->p_type);
-    }
-    // Old-style binutils with only 2 PT_LOAD: (r-x) and (rw-)
-    // has xct_off in middle of first PT_LOAD.
-    // New-style binutils has xct-off at beginning of 2nd PT_LOAD.
-    Elf32_Addr pfx = (n_LOAD <= 2) ? so_infc.off_xct_off : 0;
-
     // Process each read-only PT_LOAD.
     // A read+write PT_LOAD might be relocated by rtld before de-compression,
     // so it cannot be compressed.
     struct b_info al_bi;  // for aligned data from binfo
     void *hatch = nullptr;
-    unsigned not_first = 0;
 
-    n_phdr =                  ((Elf32_Ehdr *)(void *)va_load)->e_phnum;
-      phdr = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)(void *)va_load);
+    Elf32_Phdr const *phdr = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)(void *)va_load);
+    unsigned n_phdr = ((Elf32_Ehdr *)(void *)va_load)->e_phnum;
     for (; n_phdr > 0; --n_phdr, ++phdr)
-    if ( phdr->p_type == PT_LOAD
-    && !(phdr->p_flags & PF_W)
-    && (not_first++ || n_LOAD < 3)
-    ) {
-        DPRINTF("phdr@%%p .p_vaddr=%%p  .p_filesz=%%p  .p_memsz=%%p  n_LOAD=%%p  binfo=%%p\\n",
-            phdr, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, n_LOAD, x0.buf);
+    if ( phdr->p_type == PT_LOAD && !(phdr->p_flags & PF_W)) {
+        DPRINTF("phdr@%%p  p_offset=%%p  p_vaddr=%%p  p_filesz=%%p  p_memsz=%%p  binfo=%%p\\n",
+            phdr, phdr->p_offset, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, x0.buf);
 
+        if ((phdr->p_filesz + phdr->p_offset) <= so_infc.off_xct_off) {
+            continue;  // below compressed region
+        }
+        Elf32_Addr pfx = so_infc.off_xct_off - phdr->p_offset;
+        if (             so_infc.off_xct_off < phdr->p_offset) {
+            pfx = 0;  // no more partially-compressed PT_LOAD
+        }
         x0.size = sizeof(struct b_info);
         xread(&x0, (char *)&al_bi, x0.size);  // aligned binfo
         x0.buf -= sizeof(al_bi);  // back up (the xread() was a peek)
@@ -563,9 +552,11 @@ upx_so_main(  // returns &escape_hatch
             al_bi.sz_unc, al_bi.sz_cpr, *(unsigned *)(void *)&al_bi.b_method);
 
         // Using .p_memsz implicitly handles .bss via MAP_ANONYMOUS.
+        // Omit any not-compressed prefix (below xct_off)
         x1.buf =  phdr->p_vaddr + pfx + va_load;
         x1.size = phdr->p_memsz - pfx;
-        pfx = (phdr->p_vaddr + pfx) & ~PAGE_MASK;
+
+        pfx = (phdr->p_vaddr + pfx) & ~PAGE_MASK;  // lo fragment on page
         x1.buf  -= pfx;
         x1.size += pfx;
         DPRINTF("mmap(%%p %%p) xct_off=%%x pfx=%%x\\n", x1.buf, x1.size, xct_off, pfx);
@@ -575,7 +566,6 @@ upx_so_main(  // returns &escape_hatch
         x1.size = al_bi.sz_unc;
         x0.size = al_bi.sz_cpr + sizeof(struct b_info);
         unpackExtent(&x0, &x1);  // updates x0 and x1
-        pfx = 0;  // consider xct_off at most once
 
         if (!hatch && phdr->p_flags & PF_X) {
 //#define PAGE_MASK ~0xFFFull
@@ -587,8 +577,9 @@ upx_so_main(  // returns &escape_hatch
             hatch = make_hatch_i386(phdr, (Elf32_Addr)va_load);
 #endif  //}
         }
-        DPRINTF("mprotect %%p (%%p %%p)\\n", phdr, phdr->p_vaddr + va_load, phdr->p_memsz);
-        mprotect(phdr->p_vaddr + va_load, phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
+        DPRINTF("mprotect %%p (%%p %%p %%x)\\n",
+            phdr, phdr->p_vaddr + va_load, phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
+        mprotect( phdr->p_vaddr + va_load, phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
     }
 
     typedef void (*Dt_init)(int argc, char *argv[], char *envp[]);

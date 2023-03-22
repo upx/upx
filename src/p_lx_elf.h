@@ -104,6 +104,7 @@ protected:
     upx_uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
     upx_uint64_t jni_onload_va;  // runtime &JNI_OnLoad
     upx_uint64_t user_init_va;
+    void *user_init_rp;  // Elf32_Rel *, Elf64_Rela *, ...
     upx_uint64_t plt_va, plt_off;
     unsigned user_init_off;  // within file_image
     unsigned linfo_off;
@@ -200,6 +201,7 @@ protected:
     Elf32_Phdr const *elf_find_ptype(unsigned type, Elf32_Phdr const *phdr0, unsigned phnum);
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr       *elf_find_section_type(unsigned) const;
+    Elf32_Dyn        *elf_find_dynptr(unsigned) const;
     unsigned elf_find_table_size(unsigned dt_type, unsigned sh_type);
     void sort_DT32_offsets(Elf32_Dyn const *const dynp0);
 
@@ -207,7 +209,7 @@ protected:
     unsigned check_pt_load(Elf32_Phdr const *);
     unsigned check_pt_dynamic(Elf32_Phdr const *);
     void invert_pt_dynamic(Elf32_Dyn const *, unsigned dt_filesz);
-    void const *elf_find_dynamic(unsigned) const;
+    void *elf_find_dynamic(unsigned) const;
     Elf32_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const override;
     unsigned find_dt_ndx(unsigned rva);
@@ -228,7 +230,7 @@ protected:
     unsigned plt_off;
     unsigned page_mask;  // AND clears the offset-within-page
 
-    Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC
+    Elf32_Dyn          *dynseg;   // from PT_DYNAMIC
     unsigned int const *hashtab, *hashend;  // from DT_HASH
     unsigned int const *gashtab, *gashend;  // from DT_GNU_HASH
     Elf32_Sym    const *dynsym;   // from DT_SYMTAB
@@ -360,7 +362,7 @@ protected:
     upx_uint64_t check_pt_load(Elf64_Phdr const *);
     upx_uint64_t check_pt_dynamic(Elf64_Phdr const *);
     void invert_pt_dynamic(Elf64_Dyn const *, upx_uint64_t dt_filesz);
-    void const *elf_find_dynamic(unsigned) const;
+    void *elf_find_dynamic(unsigned) const;
     Elf64_Dyn const *elf_has_dynamic(unsigned) const;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const override;
     unsigned find_dt_ndx(u64_t rva);
@@ -380,7 +382,7 @@ protected:
     unsigned n_jmp_slot;
     upx_uint64_t page_mask;  // AND clears the offset-within-page
 
-    Elf64_Dyn    const *dynseg;   // from PT_DYNAMIC
+    Elf64_Dyn          *dynseg;   // from PT_DYNAMIC
     unsigned int const *hashtab, *hashend;  // from DT_HASH
     unsigned int const *gashtab, *gashend;  // from DT_GNU_HASH
     Elf64_Sym    const *dynsym;   // from DT_SYMTAB
