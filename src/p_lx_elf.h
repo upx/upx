@@ -197,7 +197,7 @@ protected:
     virtual Elf32_Sym const *elf_lookup(char const *) const;
     virtual unsigned elf_get_offset_from_address(unsigned) const;
     virtual unsigned elf_get_offset_from_Phdrs(unsigned, Elf32_Phdr const *phdr0) const;
-    virtual Elf32_Phdr *elf_find_Phdr_for_va(unsigned addr, Elf32_Phdr *phdr, unsigned phnum);
+    virtual Elf32_Phdr const *elf_find_Phdr_for_va(unsigned addr, Elf32_Phdr const *phdr, unsigned phnum);
     Elf32_Phdr const *elf_find_ptype(unsigned type, Elf32_Phdr const *phdr0, unsigned phnum);
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr       *elf_find_section_type(unsigned) const;
@@ -233,7 +233,7 @@ protected:
     Elf32_Dyn          *dynseg;   // from PT_DYNAMIC
     unsigned int const *hashtab, *hashend;  // from DT_HASH
     unsigned int const *gashtab, *gashend;  // from DT_GNU_HASH
-    Elf32_Sym    const *dynsym;   // from DT_SYMTAB
+    Elf32_Sym          *dynsym;   // DT_SYMTAB; 'const' except [0] for decompressor
     Elf32_Sym    const *jni_onload_sym;
 
     Elf32_Shdr       *sec_strndx;
@@ -385,7 +385,7 @@ protected:
     Elf64_Dyn          *dynseg;   // from PT_DYNAMIC
     unsigned int const *hashtab, *hashend;  // from DT_HASH
     unsigned int const *gashtab, *gashend;  // from DT_GNU_HASH
-    Elf64_Sym    const *dynsym;   // from DT_SYMTAB
+    Elf64_Sym          *dynsym;   // DT_SYMTAB; 'const' except [0] for decompressor
     Elf64_Sym    const *jni_onload_sym;
 
     Elf64_Shdr       *sec_strndx;

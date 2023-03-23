@@ -355,10 +355,10 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
             check_pt_load(phdr);
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
-        dynstr =      (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
-        dynsym = (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
-        gashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
-        hashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
+        dynstr =          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
+        dynsym = (Elf32_Sym /*const*/ *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
+        gashtab =     (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
+        hashtab =     (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
         if (3& ((upx_uintptr_t)dynsym | (upx_uintptr_t)gashtab | (upx_uintptr_t)hashtab)) {
             throwCantPack("unaligned DT_SYMTAB, DT_GNU_HASH, or DT_HASH/n");
         }
@@ -420,7 +420,7 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
     // FIXME: debugging aid: entry to decompressor
     if (lowmem.getSize()) {
         Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)&lowmem[0];
-        set_te32(&ehdr->e_entry, sz_pack2);
+        set_te32(&ehdr->e_entry, sz_pack2);  // hint for decomperssor
     }
     // end debugging aid
 
@@ -431,8 +431,8 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
     return total_out;
 }
 
-Elf32_Phdr *
-PackLinuxElf32::elf_find_Phdr_for_va(upx_uint32_t addr, Elf32_Phdr *phdr, unsigned phnum)
+Elf32_Phdr const *
+PackLinuxElf32::elf_find_Phdr_for_va(upx_uint32_t addr, Elf32_Phdr const *phdr, unsigned phnum)
 {
     for (unsigned j = 0; j < phnum; ++phdr) {
         if ((addr - get_te32(&phdr->p_vaddr)) < get_te32(&phdr->p_filesz)) {
@@ -526,10 +526,10 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         set_te32(&elfout.ehdr.e_entry, abrk + get_te32(&elfout.ehdr.e_entry) - vbase);
     }
     if (0!=xct_off) { // shared library
-        unsigned word = (Elf32_Ehdr::EM_ARM==e_machine) + load_va + sz_pack2;  // Thumb mode
-        set_te32(&file_image[user_init_off], word);  // set the hook
+        unsigned const cpr_entry = (Elf32_Ehdr::EM_ARM==e_machine) + load_va + sz_pack2;  // Thumb mode
+        set_te32(&file_image[user_init_off], cpr_entry);  // set the hook
 
-        Elf32_Dyn *dynp = (Elf32_Dyn *)elf_find_dynptr(Elf32_Dyn::DT_NULL);
+        Elf32_Dyn *dynp = (Elf32_Dyn *)elf_find_dynptr(Elf32_Dyn::DT_NULL);  // for decompressor
         set_te32(&dynp->d_val, (char *)user_init_rp - (char *)&file_image[0]);
 
         Elf32_Phdr *const phdr0 = (Elf32_Phdr *)lowmem.subref(
@@ -564,9 +564,9 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                     set_te32(&phdr->p_memsz,  total_out - ioff);
                     if (user_init_off < xct_off) { // MIPS puts PT_DYNAMIC here
                         // Allow for DT_INIT in a new [stolen] slot
-                        unsigned off2 = user_init_off - sizeof(word);
+                        unsigned off2 = user_init_off - sizeof(unsigned);
                         fo->seek(off2, SEEK_SET);
-                        fo->rewrite(&file_image[off2], 2*sizeof(word));
+                        fo->rewrite(&file_image[off2], 2*sizeof(unsigned));
                     }
                 }
                 else if (xct_off < ioff) { // Slide subsequent PT_LOAD.
@@ -590,7 +590,8 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 
                     if ((user_init_off - ioff) < len) {
                         fo->seek(user_init_off + so_slide, SEEK_SET);
-                        set_te32(&word, word);
+                        unsigned word = cpr_entry;
+                        set_te32(&word, cpr_entry);
                         fo->rewrite(&word, sizeof(word));
                         fo->seek(0, SEEK_END);
                     }
@@ -612,7 +613,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                     unsigned va = elf_unsigned_dynamic(Elf32_Dyn::DT_PLTGOT)
                         - (is_asl ? asl_delta : 0);
                     // Now use the old Phdrs (phdri)
-                    Elf32_Phdr *phva;
+                    Elf32_Phdr const *phva;
                     phva = elf_find_Phdr_for_va(va, phdri, e_phnum);
                     unsigned old_off = (va - get_te32(&phva->p_vaddr))
                         + get_te32(&phva->p_offset);
@@ -628,7 +629,17 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                         fo->rewrite(&file_image[old_off], n_jmp_slot * 4);
                     }
                 }
+                if (j && shdr->sh_addr == 0
+                &&  get_te32(&shdr->sh_offset) < xct_off) {
+                    // Try to be nice by sliding; but still fails if compressed.
+                    // So don't do it unless appending plain text of shstrtab.
+                    unsigned sh_off = get_te32(&shdr->sh_offset);
+                    if (xct_off < sh_off) {
+                        set_te32(&shdr->sh_offset, sh_off + so_slide);
+                    }
+                }
             }
+            // Maybe: append plain text of shstrtab strings?
             fo->seek(total_out, SEEK_SET);
             if (xct_off < e_shoff) {
                 set_te32(&((Elf32_Ehdr *)lowmem.getVoidPtr())->e_shoff, total_out);
@@ -781,7 +792,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 &&  !strcmp(".rel.plt", get_te32(&shdr->sh_name) + shstrtab)) {
                     upx_uint64_t va = elf_unsigned_dynamic(Elf64_Dyn::DT_PLTGOT) - asl_delta;
                     // Now use the old Phdrs (phdri)
-                    Elf64_Phdr *phva;
+                    Elf64_Phdr const *phva;
                     phva = elf_find_Phdr_for_va(va, phdri, e_phnum);
                     upx_uint64_t old_off = (va - get_te64(&phva->p_vaddr))
                         + get_te64(&phva->p_offset);
@@ -993,10 +1004,10 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
             check_pt_load(phdr);
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
-        dynstr =      (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
-        dynsym = (Elf64_Sym const *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
-        gashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
-        hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
+        dynstr =          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
+        dynsym = (Elf64_Sym /*const*/ *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
+        gashtab =     (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
+        hashtab =     (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
         if (3& ((upx_uintptr_t)dynsym | (upx_uintptr_t)gashtab | (upx_uintptr_t)hashtab)) {
             throwCantPack("unaligned DT_SYMTAB, DT_GNU_HASH, or DT_HASH/n");
         }
@@ -1921,7 +1932,7 @@ PackLinuxElf32::sort_DT32_offsets(Elf32_Dyn const *const dynp0)
         if (!rva) {
             continue;  // not present in input
         }
-        Elf32_Phdr *phdr = elf_find_Phdr_for_va(rva, phdri, e_phnum);
+        Elf32_Phdr const *phdr = elf_find_Phdr_for_va(rva, phdri, e_phnum);
         if (!phdr) {
             char msg[60]; snprintf(msg, sizeof(msg), "bad  DT_{%#x} = %#x (no Phdr)",
                 k, rva);
@@ -2601,7 +2612,7 @@ bool PackLinuxElf32::canPack()
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
         dynstr=          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
-        dynsym=     (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
+        dynsym= (Elf32_Sym /*const*/ *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
 
         if (opt->o_unix.force_pie
         ||      Elf32_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf32_Dyn::DT_FLAGS_1)
@@ -2703,6 +2714,8 @@ bool PackLinuxElf32::canPack()
                                     user_init_rp = rp;
                                     unsigned r_info = get_te32(&rp->r_info);
                                     unsigned r_type = ELF32_R_TYPE(r_info);
+                                    set_te32(&dynsym[0].st_name, r_va);  // for decompressor
+                                    set_te32(&dynsym[0].st_value, r_info);
                                     if (Elf32_Ehdr::EM_ARM == e_machine) {
                                         if (R_ARM_RELATIVE == r_type) {
                                             user_init_va = get_te32(&file_image[user_init_off]);
@@ -3024,7 +3037,7 @@ PackLinuxElf64::canPack()
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
         dynstr=          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
-        dynsym=     (Elf64_Sym const *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
+        dynsym= (Elf64_Sym /*const*/ *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
 
         if (opt->o_unix.force_pie
         ||       Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1)
@@ -6323,7 +6336,10 @@ void PackLinuxElf32::un_DT_INIT(
         case Elf32_Dyn::DT_RELA:     { dt_rel     = val; } break;
         case Elf32_Dyn::DT_JMPREL:   { dt_jmprel   = val; } break;
         case Elf32_Dyn::DT_PLTRELSZ: { dt_pltrelsz = val;
-            n_plt = 3+ (dt_pltrelsz / sizeof(Elf32_Rel));  // FIXME: "3+"
+            n_plt = dt_pltrelsz / sizeof(Elf32_Rel);
+            if (is_asl) {
+                n_plt += 3;  // FIXME
+            }
         };  break;
 
         case Elf32_Dyn::DT_PLTGOT:   { plt_va = dt_pltgot = val;}
@@ -6331,43 +6347,73 @@ void PackLinuxElf32::un_DT_INIT(
         case Elf32_Dyn::DT_PREINIT_ARRAY:
         case Elf32_Dyn::DT_INIT_ARRAY:
         case Elf32_Dyn::DT_FINI_ARRAY:
-        case Elf32_Dyn::DT_FINI: {
+        case Elf32_Dyn::DT_FINI: if (is_asl) {
             set_te32(&dyn->d_val, val - asl_delta);
         }; break;
         } // end switch() on tag when is_asl
         if (upx_dt_init == tag) {
-            if (Elf32_Dyn::DT_INIT == tag) {
+            if (Elf32_Dyn::DT_INIT == tag) { // the easy case
                 set_te32(&dyn->d_val, old_dtinit);
                 if (!old_dtinit) { // compressor took the slot
                     dyn->d_tag = Elf32_Dyn::DT_NULL;
                     dyn->d_val = 0;
                 }
             }
+            // Apparently the hard case is common for some Android IDEs.
             else if (Elf32_Dyn::DT_INIT_ARRAY    == tag
             ||       Elf32_Dyn::DT_PREINIT_ARRAY == tag) {
-                // The slot must have a R_*_RELATIVE relocation (is_shlib,
-                // after all), but ElfXX_Rel ignores the initial contents!
-                // So changing the value will get ignored.  Do it anyway.
-                // FIXME: we must fix the Rel ?
-                Elf32_Phdr const *phdr = phdro;
-                for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
-                    upx_uint32_t vaddr = get_te32(&phdr->p_vaddr);
-                    upx_uint32_t filesz = get_te32(&phdr->p_filesz);
-                    unsigned q = val - (is_asl ? asl_delta : 0) - vaddr;
-                    if (q < filesz) {
-                        upx_uint32_t offset = get_te32(&phdr->p_offset);
-                        // Rel overwrites the target; assumed default is 0
-                        if (old_dtinit) {
-                            upx_uint32_t oldval = 0;
-                            set_te32(&oldval, old_dtinit);
-                            // Counter-act unRel32 if asl_delta
-                            // FIXME? the in-memory copy?
-                            if (fo) {
-                                fo->seek(q + offset, SEEK_SET);
-                                fo->write(&oldval, sizeof(oldval));
-                            }
+                // 'val' is the RVA of the first slot, which is the slot that
+                // the compressor changed to be the entry to the run-time stub.
+                Elf32_Rel *rp = (Elf32_Rel *)elf_find_dynamic(Elf32_Dyn::DT_NULL);
+                ((Elf32_Dyn *)elf_find_dynptr(Elf32_Dyn::DT_NULL))->d_val = 0;
+                if (rp) {
+                    // Compressor saved the original *rp in dynsym[0]
+                    Elf32_Rel *rp_unc = (Elf32_Rel *)&dynsym[0];  // pointer
+                    rp->r_info = rp_unc->r_info;  // restore original r_info; r_offset not touched
+
+                    unsigned e_entry = get_te32(&ehdri.e_entry);
+                    unsigned init_rva = get_te32(&file_image[e_entry - 3*sizeof(unsigned)]);
+                    unsigned arr_rva = get_te32(&rp_unc->r_offset);
+                    Elf32_Phdr const *phdr = elf_find_Phdr_for_va(arr_rva, phdro, e_phnum);
+                    unsigned arr_off = (arr_rva - get_te32(&phdr->p_vaddr)) + get_te32(&phdr->p_offset);
+
+                    rp_unc->r_offset = 0;    rp_unc->r_info = 0;
+                    if (fo)  {
+                        fo->seek(elf_unsigned_dynamic(Elf32_Dyn::DT_SYMTAB), SEEK_SET);
+                        fo->rewrite(rp_unc, sizeof(Elf32_Rel));  // clear dynsym[0]
+
+                        fo->seek((char *)rp - (char *)&file_image[0], SEEK_SET);
+                        fo->rewrite(rp, sizeof(*rp));  // restore original *rp
+                    }
+
+                    // Set arr[0] to the first user init routine.
+                    unsigned r_info = get_te32(&rp->r_info);
+                    unsigned r_type = ELF32_R_TYPE(r_info);
+                    unsigned word;
+                    if (Elf32_Ehdr::EM_ARM == e_machine) {
+                        if (R_ARM_RELATIVE == r_type) {
+                            set_te32(&word, init_rva);
                         }
-                        break;
+                        else if (R_ARM_ABS32 == r_type) {
+                            word = 0;
+                        }
+                    }
+                    else if (Elf32_Ehdr::EM_386 == e_machine) {
+                        if (R_386_RELATIVE == r_type) {
+                        }
+                        else if (R_386_32 == r_type) {
+                        }
+                        if (R_386_RELATIVE == r_type) {
+                            set_te32(&word, init_rva);
+                        }
+                        else if (R_386_32 == r_type) {
+                            word = 0;
+                        }
+                    }
+                    if (fo) {
+                        fo->seek(arr_off, SEEK_SET);
+                        fo->rewrite(&word, sizeof(unsigned));
+                        fo->seek(0, SEEK_END);
                     }
                 }
             }
