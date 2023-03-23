@@ -137,10 +137,9 @@ _=-1+_  // one less word on stack
 _start: .globl _start  // in Thumb mode  (via PackLinuxElf32::pack3)
         bx pc; nop  // but switch to ARM until debugged
         .arm
-#if 1|DEBUG  //{
-        nop // bkpt  // for debugging
-#else  //}{
         nop
+#if 0|DEBUG  //{
+        bkpt
 #endif  //}
         // argc,argv,envp, r3 convenience, r4-r7 callee-saved, lr ret_addr
         stmfd sp!,{r0,r1,r2, r3, r4,r5,r6,r7, lr}
