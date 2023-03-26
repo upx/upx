@@ -30,7 +30,7 @@
 #include "../filter.h"
 
 static unsigned
-umin(unsigned const a, unsigned const b)
+umin(const unsigned a, const unsigned b)
 {
     return (a<=b) ? a : b;
 }

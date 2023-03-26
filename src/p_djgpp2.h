@@ -65,32 +65,32 @@ protected:
     unsigned coff_offset;
 
     struct alignas(1) external_scnhdr_t {
-        char _[12]; // name, paddr
+        byte _[12]; // name, paddr
         LE32 vaddr;
         LE32 size;
         LE32 scnptr;
-        char misc[12]; // relptr, lnnoptr, nreloc, nlnno
-        char __[4];    // flags
+        byte misc[12]; // relptr, lnnoptr, nreloc, nlnno
+        byte __[4];    // flags
     };
 
     struct alignas(1) coff_header_t {
         // ext_file_hdr
         LE16 f_magic;
         LE16 f_nscns;
-        char _[4]; // f_timdat
+        byte _[4]; // f_timdat
         LE32 f_symptr;
         LE32 f_nsyms;
-        char __[2]; // f_opthdr
+        byte __[2]; // f_opthdr
         LE16 f_flags;
 
         // aout_hdr
         LE16 a_magic;
-        char ___[2]; // a_vstamp
+        byte ___[2]; // a_vstamp
         LE32 a_tsize;
         LE32 a_dsize;
-        char ____[4]; //  a_bsize
+        byte ____[4]; //  a_bsize
         LE32 a_entry;
-        char _____[8]; // a_text_start a_data_start
+        byte _____[8]; // a_text_start a_data_start
 
         // section headers
         external_scnhdr_t sh[3];

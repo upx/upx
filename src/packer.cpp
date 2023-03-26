@@ -1092,13 +1092,13 @@ done:
 }
 
 void Packer::compressWithFilters(byte *i_ptr,
-                                 unsigned const i_len, // written and restored by filters
+                                 const unsigned i_len, // written and restored by filters
                                  byte *const o_ptr,    // where to put compressed output
                                  byte *f_ptr,
-                                 unsigned const f_len, // subset of [*i_ptr, +i_len)
-                                 byte *const hdr_ptr, unsigned const hdr_len,
+                                 const unsigned f_len, // subset of [*i_ptr, +i_len)
+                                 byte *const hdr_ptr, const unsigned hdr_len,
                                  Filter *const parm_ft, // updated
-                                 unsigned const overlap_range,
+                                 const unsigned overlap_range,
                                  upx_compress_config_t const *const cconf,
                                  int filter_strategy, // in+out for prepareFilters
                                  bool const inhibit_compression_check) {

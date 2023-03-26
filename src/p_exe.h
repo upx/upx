@@ -80,11 +80,11 @@ protected:
         LE16 max;
         LE16 ss;
         LE16 sp;
-        char _[2]; // checksum
+        byte _[2]; // checksum
         LE16 ip;
         LE16 cs;
         LE16 relocoffs;
-        char __[2]; // overlnum
+        byte __[2]; // overlnum
         LE32 firstreloc;
     };
 

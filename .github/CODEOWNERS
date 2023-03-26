@@ -1,0 +1,11 @@
+*                               @markus-oberhumer @jreiser
+
+/src/p_elf*                     @jreiser
+/src/p_lx_*                     @jreiser
+/src/p_mach*                    @jreiser
+/src/p_unix*                    @jreiser
+/src/p_vmlin*                   @jreiser
+
+/src/stub/src/*bsd.*            @jreiser
+/src/stub/src/*darwin.*         @jreiser
+/src/stub/src/*linux.*          @jreiser

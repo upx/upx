@@ -7,16 +7,20 @@ on:
 
 jobs:
   analyze:
-    name: Analyze
+    strategy:
+      fail-fast: false
+      matrix: {container: ['alpine:3.16','alpine:3.17','alpine:edge','i386/alpine:edge']}
+    name: ${{ format('Analyze {0}', matrix.container) }}
     runs-on: ubuntu-latest
-    container: 'alpine:edge'
+    container: ${{ matrix.container }}
     steps:
-      - name: 'Install packages'
+      - name: ${{ format('Install packages {0}', matrix.container) }}
         run: 'apk update && apk upgrade && apk add bash clang clang-analyzer cmake g++ git make'
-      - name: 'Check out code'
-        uses: actions/checkout@v3
-        with: { submodules: true }
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+        run: |
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
+          git -C upx submodule update --init
       - name: 'Perform scan-build Analysis Debug'
-        run: 'make build/extra/scan-build/debug'
+        run: 'make -C upx build/extra/scan-build/debug'
       - name: 'Perform scan-build Analysis Release'
-        run: 'make build/extra/scan-build/release'
+        run: 'make -C upx build/extra/scan-build/release'

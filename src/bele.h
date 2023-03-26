@@ -683,6 +683,9 @@ typedef BE64 NE64;
 #define ne16_compare be16_compare
 #define ne32_compare be32_compare
 #define ne64_compare be64_compare
+#define ne16_compare_signed be16_compare_signed
+#define ne32_compare_signed be32_compare_signed
+#define ne64_compare_signed be64_compare_signed
 #else
 typedef LE16 NE16;
 typedef LE32 NE32;
@@ -690,6 +693,9 @@ typedef LE64 NE64;
 #define ne16_compare le16_compare
 #define ne32_compare le32_compare
 #define ne64_compare le64_compare
+#define ne16_compare_signed le16_compare_signed
+#define ne32_compare_signed le32_compare_signed
+#define ne64_compare_signed le64_compare_signed
 #endif
 
 /*************************************************************************

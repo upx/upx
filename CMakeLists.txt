@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # CMake >= 3.20.0 is recommended
+cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # CMake >= 3.20 is recommended
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -331,7 +331,7 @@ endif()
 if(CMAKE_INSTALL_PREFIX AND DEFINED CMAKE_INSTALL_FULL_BINDIR)
     install(TARGETS upx DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
     install(FILES
-        COPYING LICENSE NEWS README THANKS doc/upx-doc.html doc/upx-doc.txt
+        COPYING LICENSE NEWS README doc/THANKS.txt doc/upx-doc.html doc/upx-doc.txt
         DESTINATION "${CMAKE_INSTALL_FULL_DOCDIR}"
     )
     install(FILES doc/upx.1 DESTINATION "${CMAKE_INSTALL_FULL_MANDIR}/man1")

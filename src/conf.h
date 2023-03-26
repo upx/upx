@@ -26,43 +26,14 @@
  */
 
 #pragma once
-#ifndef UPX_CONF_H__
-#define UPX_CONF_H__ 1
-
-#if !(__cplusplus+0 >= 201703L)
-#  error "C++ 17 is required"
-#endif
-
-#include "version.h"
-
-#if !defined(_FILE_OFFSET_BITS)
-#  define _FILE_OFFSET_BITS 64
-#endif
-#if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__)
-#  if !defined(_USE_MINGW_ANSI_STDIO)
-#    define _USE_MINGW_ANSI_STDIO 1
-#  endif
-#endif
-
 
 /*************************************************************************
-// ACC and system includes
+// init
 **************************************************************************/
 
-#ifndef ACC_CFG_USE_NEW_STYLE_CASTS
-#define ACC_CFG_USE_NEW_STYLE_CASTS 1
-#endif
-#define ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T ACC_TYPEOF_INT
-#define ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T ACC_TYPEOF_LONG_LONG
-#include "miniacc.h"
-#if !(ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_MSC)
-   // other compilers may work, but we're NOT interested into supporting them
-#  error "only clang, gcc and msvc are officially supported"
-#endif
-// UPX sanity checks for a sane compiler
-#if !defined(UINT_MAX) || (UINT_MAX != 0xffffffffL)
-#  error "UINT_MAX"
-#endif
+#include "headers.h"
+#include "version.h"
+
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(short) == 2)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(int) == 4)
@@ -101,43 +72,10 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #endif
 #endif // !UPX_CONFIG_DISABLE_WSTRICT && !UPX_CONFIG_DISABLE_WERROR
 
-// disable some warnings
-#if (ACC_CC_MSC)
-#  pragma warning(disable: 4244) // -Wconversion
-#  pragma warning(disable: 4267) // -Wconversion
-#  pragma warning(disable: 4820) // padding added after data member
-#endif
-
-#undef snprintf
-#undef vsnprintf
-#define HAVE_STDINT_H 1
-#define ACC_WANT_ACC_INCD_H 1
-#define ACC_WANT_ACC_INCE_H 1
-#define ACC_WANT_ACC_LIB_H 1
-#define ACC_WANT_ACC_CXX_H 1
-#include "miniacc.h"
-#if (ACC_CC_MSC)
-#  include <intrin.h>
-#endif
-
-// C++ system headers
-#include <exception>
-#include <new>
-#include <type_traits>
-#include <typeinfo>
-
 // multithreading (UPX currently does not use multithreading)
-#ifndef WITH_THREADS
-#  define WITH_THREADS 0
-#endif
-#if __STDC_NO_ATOMICS__
-#  undef WITH_THREADS
-#endif
 #if (WITH_THREADS)
 #define upx_thread_local        thread_local
-#include <atomic>
 #define upx_std_atomic(Type)    std::atomic<Type>
-#include <mutex>
 #define upx_std_once_flag       std::once_flag
 #define upx_std_call_once       std::call_once
 #else
@@ -149,29 +87,6 @@ inline void upx_std_call_once(upx_std_once_flag &flag, NoexceptCallable &&f) {
     if (__acc_unlikely(!flag)) { flag = 1; f(); }
 }
 #endif // WITH_THREADS
-
-// C++ submodule headers
-#include <doctest/doctest/parts/doctest_fwd.h>
-#if WITH_BOOST_PFR
-#  include <sstream>
-#  include <boost/pfr/io.hpp>
-#endif
-#if WITH_RANGELESS_FN
-#  include <rangeless/include/fn.hpp>
-#endif
-#ifndef WITH_VALGRIND
-#  define WITH_VALGRIND 1
-#endif
-#if defined(__SANITIZE_ADDRESS__) || defined(_WIN32) || !defined(__GNUC__)
-#  undef WITH_VALGRIND
-#endif
-#if (WITH_VALGRIND)
-#  include <valgrind/include/valgrind/memcheck.h>
-#endif
-
-// IMPORTANT: unconditionally enable assertions
-#undef NDEBUG
-#include <assert.h>
 
 // <type_traits> C++20 std::is_bounded_array
 template <class T>
@@ -194,7 +109,6 @@ inline constexpr bool upx_is_integral_v = upx_is_integral<T>::value;
 #define upx_fake_alignas__(a)   upx_fake_alignas_ ## a
 #define alignas(x)              upx_fake_alignas__(x)
 #endif
-
 
 /*************************************************************************
 // core
@@ -921,13 +835,5 @@ int upx_test_overlap       ( const upx_bytep buf,
 #include "util/raw_bytes.h"
 #include "util/xspan.h"
 
-
-#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
-#    error "something pulled in <windows.h>"
-#  endif
-#endif
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

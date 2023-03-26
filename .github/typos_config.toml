@@ -9,6 +9,7 @@ extend-exclude = ["LICENSE"]
 [default.extend-identifiers]
 # misc variable names & symbols
 acc_spawnve = "acc_spawnve"
+ba = "ba"
 fo = "fo"
 fof = "fof"
 sidelen = "sidelen"

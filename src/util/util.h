@@ -133,8 +133,10 @@ forceinline void ptr_check_no_overlap(const void *a, size_t a_size, const void *
 
 void *upx_calloc(size_t n, size_t element_size);
 
-void upx_stable_sort(void *base, size_t n, size_t element_size,
-                     int(__acc_cdecl_qsort *compare)(const void *, const void *));
+void upx_memswap(void *a, void *b, size_t n);
+
+void upx_stable_sort(void *array, size_t n, size_t element_size,
+                     int (*compare)(const void *, const void *));
 
 /*************************************************************************
 // misc. support functions
