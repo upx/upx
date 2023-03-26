@@ -74,7 +74,9 @@
         EM_PPC64  = 21,
         EM_ARM    = 40,
         EM_X86_64 = 62,
+        EM_AMD64  = EM_X86_64,
         EM_AARCH64 = 183,
+        EM_ARM64  = EM_AARCH64,
 
     };
     enum { // e_version
@@ -260,6 +262,7 @@
         R_ARM_GLOB_DAT = 21,
 
         R_386_GLOB_DAT = 6,
+        R_X86_64_64 = 1,
         R_AARCH64_ABS64 = 257,
         R_AARCH64_GLOB_DAT = 1025,
 

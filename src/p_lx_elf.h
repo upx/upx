@@ -155,6 +155,7 @@ protected:
     virtual int  pack2(OutputFile *, Filter &) override;  // append compressed data
     virtual off_t pack3(OutputFile *, Filter &) override;  // append loader
     virtual void pack4(OutputFile *, Filter &) override;  // append pack header
+    virtual void forward_Shdrs(OutputFile *fo);
     virtual void unpack(OutputFile *fo) override;
     virtual void un_asl_dynsym(unsigned orig_file_size, OutputFile *);
     virtual void un_shlib_1(
@@ -312,6 +313,7 @@ protected:
     virtual int  pack2(OutputFile *, Filter &) override;  // append compressed data
     virtual off_t pack3(OutputFile *, Filter &) override;  // append loader
     virtual void pack4(OutputFile *, Filter &) override;  // append pack header
+    virtual void forward_Shdrs(OutputFile *fo);
     virtual void unpack(OutputFile *fo) override;
     virtual void un_asl_dynsym(unsigned orig_file_size, OutputFile *);
     virtual void un_shlib_1(
@@ -352,10 +354,11 @@ protected:
 
     virtual Elf64_Sym const *elf_lookup(char const *) const;
     virtual upx_uint64_t elf_get_offset_from_address(upx_uint64_t) const;
-    virtual Elf64_Phdr *elf_find_Phdr_for_va(upx_uint64_t addr, Elf64_Phdr *phdr, unsigned phnum);
+    virtual Elf64_Phdr const *elf_find_Phdr_for_va(upx_uint64_t addr, Elf64_Phdr const *phdr, unsigned phnum);
     Elf64_Phdr const *elf_find_ptype(unsigned type, Elf64_Phdr const *phdr0, unsigned phnum);
     Elf64_Shdr const *elf_find_section_name(char const *) const;
     Elf64_Shdr       *elf_find_section_type(unsigned) const;
+    Elf64_Dyn        *elf_find_dynptr(unsigned) const;
     unsigned elf_find_table_size(unsigned dt_type, unsigned sh_type);
     void sort_DT64_offsets(Elf64_Dyn const *const dynp0);
     int is_LOAD64(Elf64_Phdr const *phdr) const;  // beware confusion with (1+ LO_PROC)
@@ -389,8 +392,9 @@ protected:
     Elf64_Sym    const *jni_onload_sym;
 
     Elf64_Shdr       *sec_strndx;
-    Elf64_Shdr const *sec_dynsym;
+    Elf64_Shdr       *sec_dynsym;
     Elf64_Shdr const *sec_dynstr;
+    Elf64_Shdr       *sec_arm_attr;  // SHT_ARM_ATTRIBUTES;
 
     __packed_struct(cprElfHdr1)
         Elf64_Ehdr ehdr;
