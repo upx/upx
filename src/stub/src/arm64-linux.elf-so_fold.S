@@ -165,8 +165,12 @@ readlink:
 munmap:
         do_sys __NR_munmap; ret
 
+// Sometimes Linux enforces page-aligned address
         .globl mprotect
 mprotect:
+        and x8,x0,#-1+ (1<<12)
+        sub x0,x0,x8
+        add x1,x1,x8
         do_sys __NR_mprotect; ret
 
         .globl __sync_cache_range

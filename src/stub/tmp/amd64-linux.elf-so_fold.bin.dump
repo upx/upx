@@ -2,19 +2,19 @@ file format elf64-x86-64
 
 Sections:
 Idx Name          Size      VMA               LMA               File off  Algn  Flags
-  0 SO_MAIN       0627  0  0  040  2**4  CONTENTS
-  1 EXP_HEAD      0dc  0  0  0667  2**0  CONTENTS
-  2 NRV2E         0e5  0  0  0743  2**0  CONTENTS
-  3 NRV2D         0d7  0  0  0828  2**0  CONTENTS
-  4 NRV2B         0c1  0  0  08ff  2**0  CONTENTS
-  5 SO_HEAD       01b  0  0  09c0  2**0  CONTENTS
-  6 ptr_NEXT      0  0  0  09db  2**0  CONTENTS
-  7 SO_TAIL       062  0  0  09db  2**0  CONTENTS
-  8 LZMA_ELF00    064  0  0  0a3d  2**0  CONTENTS
-  9 LZMA_DEC10    09f7  0  0  0aa1  2**0  CONTENTS
- 10 LZMA_DEC20    09f7  0  0  01498  2**0  CONTENTS
- 11 LZMA_DEC30    018  0  0  01e8f  2**0  CONTENTS
- 12 EXP_TAIL      0e  0  0  01ea7  2**0  CONTENTS
+  0 SO_MAIN       05cc  0  0  040  2**4  CONTENTS
+  1 EXP_HEAD      0dc  0  0  060c  2**0  CONTENTS
+  2 NRV2E         0e5  0  0  06e8  2**0  CONTENTS
+  3 NRV2D         0d7  0  0  07cd  2**0  CONTENTS
+  4 NRV2B         0c1  0  0  08a4  2**0  CONTENTS
+  5 SO_HEAD       01b  0  0  0965  2**0  CONTENTS
+  6 ptr_NEXT      0  0  0  0980  2**0  CONTENTS
+  7 SO_TAIL       071  0  0  0980  2**0  CONTENTS
+  8 LZMA_ELF00    064  0  0  09f1  2**0  CONTENTS
+  9 LZMA_DEC10    09f7  0  0  0a55  2**0  CONTENTS
+ 10 LZMA_DEC20    09f7  0  0  0144c  2**0  CONTENTS
+ 11 LZMA_DEC30    018  0  0  01e43  2**0  CONTENTS
+ 12 EXP_TAIL      0e  0  0  01e5b  2**0  CONTENTS
 SYMBOL TABLE:
 0000000000000000 l    d  EXP_HEAD 0 EXP_HEAD
 0000000000000000 l    d  LZMA_DEC30 0 LZMA_DEC30
@@ -43,7 +43,7 @@ SYMBOL TABLE:
 000000000000004b g       SO_TAIL 0 openat
 000000000000005e g       SO_TAIL 0 mprotect
 0000000000000047 g       SO_TAIL 0 close
-000000000000036b g     F SO_MAIN 02bc upx_so_main
+0000000000000368 g     F SO_MAIN 0264 upx_so_main
 
 RELOCATION RECORDS FOR [SO_MAIN]:
 OFFSET           TYPE              VALUE
@@ -56,14 +56,14 @@ OFFSET           TYPE              VALUE
 0000000000000268 R_X86_64_PLT32    openat+0xfffffffffffffffc
 0000000000000283 R_X86_64_PLT32    read+0xfffffffffffffffc
 0000000000000291 R_X86_64_PLT32    close+0xfffffffffffffffc
-0000000000000310 R_X86_64_PLT32    memcpy+0xfffffffffffffffc
-0000000000000331 R_X86_64_PLT32    mmap+0xfffffffffffffffc
-000000000000033f R_X86_64_PLT32    memcpy+0xfffffffffffffffc
-00000000000003de R_X86_64_PLT32    mmap+0xfffffffffffffffc
-00000000000003ef R_X86_64_PLT32    memcpy+0xfffffffffffffffc
-000000000000041c R_X86_64_PLT32    mprotect+0xfffffffffffffffc
-00000000000005df R_X86_64_PLT32    mprotect+0xfffffffffffffffc
-00000000000005f8 R_X86_64_PLT32    munmap+0xfffffffffffffffc
+000000000000030d R_X86_64_PLT32    memcpy+0xfffffffffffffffc
+000000000000032e R_X86_64_PLT32    mmap+0xfffffffffffffffc
+000000000000033c R_X86_64_PLT32    memcpy+0xfffffffffffffffc
+00000000000003d9 R_X86_64_PLT32    mmap+0xfffffffffffffffc
+00000000000003ea R_X86_64_PLT32    memcpy+0xfffffffffffffffc
+0000000000000417 R_X86_64_PLT32    mprotect+0xfffffffffffffffc
+0000000000000588 R_X86_64_PLT32    mprotect+0xfffffffffffffffc
+00000000000005a1 R_X86_64_PLT32    munmap+0xfffffffffffffffc
 
 RELOCATION RECORDS FOR [NRV2E]:
 OFFSET           TYPE              VALUE

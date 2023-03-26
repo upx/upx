@@ -152,16 +152,19 @@ mmap: .globl mmap  // oldmmap: %ebx -> 6 word parameters
   pop %e10
 #endif  //}
 
+// Sometimes linux enforces page-aligned address
+mprotect: .globl mprotect
+        mov %ebx,%eax; and $-1+ (1<<12),%eax
+        sub %eax,%ebx
+        add %eax,%ecx
+        push $ __NR_mprotect; 5: jmp 5f
 exit: .globl exit
-        push $ __NR_exit; jmp 5f
+        push $ __NR_exit; 5: jmp 5f
 munmap: .globl munmap
         push $ __NR_munmap; 5: jmp 5f
-mprotect: .globl mprotect
-        push $ __NR_mprotect; 5: jmp sysgo
 write: .globl write
-        push $__NR_write
+        push $__NR_write; 5:
         pop %eax
-sysgo:
         int $0x80
         ret
 

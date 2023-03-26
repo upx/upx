@@ -154,8 +154,13 @@ write: .globl write
 read: .globl read
         push $ __NR_read; 5: jmp 5f
 munmap: .globl munmap
-        push $ __NR_munmap; 5: jmp 5f
+        push $ __NR_munmap; 5: jmp sysgo
+
+// Sometimes Linux enforces page-aligned address for mprotect
 mprotect: .globl mprotect
+        mov %rdi,%rax; and $-1+ (1<<12),%rax
+        sub %rax,%rdi
+        add %rax,%rsi
         push $ __NR_mprotect; 5: jmp sysgo
 
 // section SO_MAIN inserted here
