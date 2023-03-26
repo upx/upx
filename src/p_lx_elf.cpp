@@ -529,7 +529,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         unsigned const cpr_entry = (Elf32_Ehdr::EM_ARM==e_machine) + load_va + sz_pack2;  // Thumb mode
         set_te32(&file_image[user_init_off], cpr_entry);  // set the hook
 
-        if (user_init_rp) { // decompressor needs hint for DT_INIT_ARRAY 
+        if (user_init_rp) { // decompressor needs hint for DT_INIT_ARRAY
             Elf32_Dyn *dynp = (Elf32_Dyn *)elf_find_dynptr(Elf32_Dyn::DT_NULL);
             set_te32(&dynp->d_val, (char *)user_init_rp - (char *)&file_image[0]);
         }
@@ -705,7 +705,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         u64_t const cpr_entry = (Elf64_Ehdr::EM_ARM==e_machine) + load_va + sz_pack2;  // Thumb mode
         set_te64(&file_image[user_init_off], cpr_entry);  // set the hook
 
-        if (user_init_rp) { // decompressor needs hint for DT_INIT_ARRAY 
+        if (user_init_rp) { // decompressor needs hint for DT_INIT_ARRAY
             Elf64_Dyn *dynp = (Elf64_Dyn *)elf_find_dynptr(Elf64_Dyn::DT_NULL);
             set_te64(&dynp->d_val, (char *)user_init_rp - (char *)&file_image[0]);
         }
@@ -5491,7 +5491,7 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
         // Discard _Shdr with (0==sh_addr), except _Shdr[0]
         // Keep ARM_ATTRIBUTES
         unsigned const want_types_mask =
-              1<<SHT_SYMTAB 
+              1<<SHT_SYMTAB
             | 1<<SHT_RELA
             | 1<<SHT_HASH
             | 1<<SHT_DYNAMIC
