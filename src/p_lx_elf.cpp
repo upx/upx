@@ -5491,20 +5491,20 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
         // Discard _Shdr with (0==sh_addr), except _Shdr[0]
         // Keep ARM_ATTRIBUTES
         unsigned const want_types_mask =
-              1<<SHT_SYMTAB
-            | 1<<SHT_RELA
-            | 1<<SHT_HASH
-            | 1<<SHT_DYNAMIC
-            | 1<<SHT_NOTE
-            | 1<<SHT_REL
-            | 1<<SHT_DYNSYM
-            | 1<<SHT_INIT_ARRAY
-            | 1<<SHT_FINI_ARRAY
-            | 1<<SHT_PREINIT_ARRAY
-            | 1<<(0x1f & SHT_GNU_versym)
-            | 1<<(0x1f & SHT_GNU_verneed)
-            | 1<<(0x1f & SHT_GNU_verdef)
-            | 1<<(0x1f & SHT_GNU_HASH);
+              1u<<SHT_SYMTAB
+            | 1u<<SHT_RELA
+            | 1u<<SHT_HASH
+            | 1u<<SHT_DYNAMIC
+            | 1u<<SHT_NOTE
+            | 1u<<SHT_REL
+            | 1u<<SHT_DYNSYM
+            | 1u<<SHT_INIT_ARRAY
+            | 1u<<SHT_FINI_ARRAY
+            | 1u<<SHT_PREINIT_ARRAY
+            | 1u<<(0x1f & SHT_GNU_versym)
+            | 1u<<(0x1f & SHT_GNU_verneed)
+            | 1u<<(0x1f & SHT_GNU_verdef)
+            | 1u<<(0x1f & SHT_GNU_HASH);
         Elf32_Ehdr *eho = (Elf32_Ehdr *)lowmem.getVoidPtr();
         MemBuffer mb_ask_for(e_shnum * sizeof(eho->e_shnum));
         memset(mb_ask_for, 0, mb_ask_for.getSize());
