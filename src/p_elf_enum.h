@@ -127,9 +127,12 @@
         SHT_FINI_ARRAY = 15,    /* Array of destructors */
         SHT_PREINIT_ARRAY = 16, /* Array of pre-constructors */
         SHT_GROUP = 17,         /* Section group */
-        SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
+        SHT_SYMTAB_SHNDX = 18,  /* Extended section indices */
+        SHT_GNU_HASH =    0x6ffffff6,   /* GNU-style hash table.  */
         SHT_GNU_LIBLIST = 0x6ffffff7, /* Prelink library list */
-        SHT_GNU_HASH =  0x6ffffff6,   /* GNU-style hash table.  */
+        SHT_GNU_verdef =  0x6ffffffd,   /* Version definition section.  */
+        SHT_GNU_verneed = 0x6ffffffe,   /* Version needs section.  */
+        SHT_GNU_versym =  0x6fffffff,   /* Version symbol table.  */
 
         SHT_LOOS   = 0x60000000,  /* LOcal OS; SHT_ANDROID_REL{,A} is +1, +2 */
         SHT_LOPROC = 0x70000000, /* Start of processor-specific */

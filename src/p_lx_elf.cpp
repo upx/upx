@@ -1660,6 +1660,7 @@ static const
 
 #define WANT_NHDR_ENUM
 #include "p_elf_enum.h"
+#undef WANT_NHDR_ENUM
 
 void
 PackNetBSDElf32x86::buildLoader(const Filter *ft)
@@ -5477,6 +5478,10 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
     PackLinuxElf32::defineSymbols(ft);
 }
 
+#define WANT_SHDR_ENUM
+#include "p_elf_enum.h"
+#undef  WANT_SHDR_ENUM
+
 void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
 {
     if (saved_opt_android_shlib) { // Forward select _Shdr
@@ -5485,6 +5490,21 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
         // Keep _Shdr for SHF_WRITE.
         // Discard _Shdr with (0==sh_addr), except _Shdr[0]
         // Keep ARM_ATTRIBUTES
+        unsigned const want_types_mask =
+              1<<SHT_SYMTAB 
+            | 1<<SHT_RELA
+            | 1<<SHT_HASH
+            | 1<<SHT_DYNAMIC
+            | 1<<SHT_NOTE
+            | 1<<SHT_REL
+            | 1<<SHT_DYNSYM
+            | 1<<SHT_INIT_ARRAY
+            | 1<<SHT_FINI_ARRAY
+            | 1<<SHT_PREINIT_ARRAY
+            | 1<<(0x1f & SHT_GNU_versym)
+            | 1<<(0x1f & SHT_GNU_verneed)
+            | 1<<(0x1f & SHT_GNU_verdef)
+            | 1<<(0x1f & SHT_GNU_HASH);
         Elf32_Ehdr *eho = (Elf32_Ehdr *)lowmem.getVoidPtr();
         MemBuffer mb_ask_for(e_shnum * sizeof(eho->e_shnum));
         memset(mb_ask_for, 0, mb_ask_for.getSize());
@@ -5501,7 +5521,8 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
         for (unsigned j = 1; j < e_shnum; ++j, ++sh_in) {
             unsigned sh_offset = get_te32(&sh_in->sh_offset);
             unsigned sh_flags  = get_te32(&sh_in->sh_flags);
-            unsigned sh_info   = get_te16(&sh_in->sh_info);
+            unsigned sh_info   = get_te32(&sh_in->sh_info);
+            unsigned sh_type   = get_te32(&sh_in->sh_type);
             if (ask_for[j]) { // Some previous _Shdr requested  me
                 // Tell them my new index
                 set_te16(&sh_out0[ask_for[j]].sh_info, n_sh_out);
@@ -5511,6 +5532,7 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
                 || (Elf32_Shdr::SHF_WRITE & sh_flags)
                 || (j == e_shstrndx)
                 || (sec_arm_attr == sh_in)
+                || (want_types_mask & (1<<(0x1f & sh_type)))
             ) {
                 *sh_out = *sh_in;
                 if (sec_arm_attr == sh_in) {
@@ -5530,8 +5552,10 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
                     fo->write(ibuf, len);
                     total_out +=    len;
                 }
-                if (Elf32_Shdr::SHF_WRITE & sh_flags) {
-                    set_te32(&sh_out->sh_offset, so_slide + get_te32(&sh_out->sh_offset));
+                if (Elf32_Shdr::SHF_WRITE & sh_flags || SHT_NOTE == sh_type) {
+                    if (sh_offset > xct_off) {
+                        set_te32(&sh_out->sh_offset, so_slide + sh_offset);
+                    }
                 }
                 ++sh_out; ++n_sh_out;
             }
