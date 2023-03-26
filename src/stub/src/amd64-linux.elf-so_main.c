@@ -386,7 +386,7 @@ get_PAGE_MASK(void)
     close(fd);
     Elf64_auxv_t *ptr; for (ptr = &data[0]; ptr < end ; ++ptr) {
         if (AT_PAGESZ == ptr->a_type) {
-            rv = ~(-1+ ptr->a_un.a_val);
+            rv = - ptr->a_un.a_val;
             break;
         }
     }
@@ -439,8 +439,10 @@ upx_so_main(  // returns &escape_hatch
 {
     unsigned long const PAGE_MASK = get_PAGE_MASK();
     char *const va_load = (char *)&so_info->off_reloc - so_info->off_reloc;
-    unsigned const xct_off = so_info->off_xct_off;
-    Elf64_Addr pfx = xct_off;  // might be zeroed later if (n_LOAD <= 2)
+    So_info so_infc;  // So_info Copy
+    memcpy(&so_infc, so_info, sizeof(so_infc));  // before de-compression overwrites
+    unsigned const xct_off = so_infc.off_xct_off;
+    (void)xct_off;  // use even if not DEBUG
 
     char *const cpr_ptr = so_info->off_info + va_load;
     unsigned const cpr_len = (char *)so_info - cpr_ptr;
@@ -482,41 +484,25 @@ upx_so_main(  // returns &escape_hatch
     Extent x0 = {binfo->sz_cpr + sizeof(*binfo), (char *)binfo};  // source
     unpackExtent(&x0, &x1);  // de-compress _Ehdr and _Phdrs; x0.buf is updated
 
-    // Count PT_LOAD; n_LOAD < 3 is special (PT_LOAD layout by binutils <= 2.29)
-    unsigned n_phdr;
-    Elf64_Phdr const *phdr;
-    n_phdr =                  ((Elf64_Ehdr *)(void *)va_load)->e_phnum;
-      phdr = (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)va_load);
-    unsigned n_LOAD = 0;
-    for (; n_phdr > 0; --n_phdr, ++phdr) {
-        n_LOAD += (PT_LOAD == phdr->p_type);
-    }
-    // binutils <= 2.29 has only 2 PT_LOAD: (r-x) and (rw-),
-    // and has xct_off in middle of first PT_LOAD.
-    // binutils >= 2.31 has xct-off at beginning of 2nd PT_LOAD.
-    if (n_LOAD <= 2) {
-        pfx = 0;
-    }
-
     // Process each read-only PT_LOAD.
     // A read+write PT_LOAD might be relocated by rtld before de-compression,
     // so it cannot be compressed.
     struct b_info al_bi;  // for aligned data from binfo
     void *hatch = nullptr;
-    unsigned not_first = 0;
 
-    n_phdr =                  ((Elf64_Ehdr *)(void *)va_load)->e_phnum;
-      phdr = (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)va_load);
+    Elf64_Phdr const *phdr = (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)va_load);
+    unsigned n_phdr = ((Elf64_Ehdr *)(void *)va_load)->e_phnum;
     for (; n_phdr > 0; --n_phdr, ++phdr)
-    if ( phdr->p_type == PT_LOAD
-    && !(phdr->p_flags & PF_W)
-    && (not_first++ || n_LOAD < 3)
-    ) {
-        DPRINTF("phdr@%%p .p_vaddr=%%p  .p_filesz=%%p  .p_memsz=%%p  n_LOAD=%%p  binfo=%%p\\n",
-            phdr, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, n_LOAD, x0.buf);
+    if ( phdr->p_type == PT_LOAD && !(phdr->p_flags & PF_W)) {
+        DPRINTF("phdr@%%p  p_offset=%%p  p_vaddr=%%p  p_filesz=%%p  p_memsz=%%p  binfo=%%p\\n",
+            phdr, phdr->p_offset, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, x0.buf);
 
-        if (xct_off >= phdr->p_offset) {
-            pfx = xct_off - phdr->p_offset;
+        if ((phdr->p_filesz + phdr->p_offset) <= so_infc.off_xct_off) {
+            continue;  // below compressed region
+        }
+        Elf64_Addr pfx = so_infc.off_xct_off - phdr->p_offset;
+        if (             so_infc.off_xct_off < phdr->p_offset) {
+            pfx = 0;  // no more partially-compressed PT_LOAD
         }
         x0.size = sizeof(struct b_info);
         xread(&x0, (char *)&al_bi, x0.size);  // aligned binfo
@@ -525,9 +511,11 @@ upx_so_main(  // returns &escape_hatch
             al_bi.sz_unc, al_bi.sz_cpr, *(unsigned *)(void *)&al_bi.b_method);
 
         // Using .p_memsz implicitly handles .bss via MAP_ANONYMOUS.
+        // Omit any non-tcompressed prefix (below xct_off)
         x1.buf =  phdr->p_vaddr + pfx + va_load;
         x1.size = phdr->p_memsz - pfx;
-        pfx = (phdr->p_vaddr + pfx) & ~PAGE_MASK;
+
+        pfx = (phdr->p_vaddr + pfx) & ~PAGE_MASK;  // lo fragment on page
         x1.buf  -= pfx;
         x1.size += pfx;
         DPRINTF("mmap(%%p %%p) xct_off=%%x pfx=%%x\\n", x1.buf, x1.size, xct_off, pfx);
@@ -537,7 +525,6 @@ upx_so_main(  // returns &escape_hatch
         x1.size = al_bi.sz_unc;
         x0.size = al_bi.sz_cpr + sizeof(struct b_info);
         unpackExtent(&x0, &x1);  // updates x0 and x1
-        pfx = 0;  // consider xct_off at most once
 
         if (!hatch && phdr->p_flags & PF_X) {
 //#define PAGE_MASK ~0xFFFull
@@ -549,11 +536,13 @@ upx_so_main(  // returns &escape_hatch
             hatch = make_hatch_arm64(phdr, (Elf64_Addr)va_load, ~PAGE_MASK);
 #endif  //}
         }
-        DPRINTF("mprotect %%p (%%p %%p)\\n", phdr, phdr->p_vaddr + va_load, phdr->p_memsz);
         // Exchange the bits with values 4 (PF_R, PROT_EXEC) and 1 (PF_X, PROT_READ)
         // Use table lookup into a PIC-string that pre-computes the result.
-        mprotect(phdr->p_vaddr + va_load, phdr->p_memsz,
-            7& addr_string("@\x04\x02\x06\x01\x05\x03\x07")[phdr->p_flags & (PF_R|PF_W|PF_X)]);
+        unsigned prot = 7& addr_string("@\x04\x02\x06\x01\x05\x03\x07")
+            [phdr->p_flags & (PF_R|PF_W|PF_X)];
+        DPRINTF("mprotect %%p (%%p %%p %%x)\\n",
+                phdr, phdr->p_vaddr + va_load, phdr->p_memsz, prot);
+        mprotect(phdr->p_vaddr + va_load, phdr->p_memsz, prot);
     }
 
     munmap(sideaddr, cpr_len);
