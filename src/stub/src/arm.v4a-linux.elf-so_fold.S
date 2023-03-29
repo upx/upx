@@ -188,15 +188,15 @@ munmap:
         do_sys __NR_munmap; ret
 
 // Sometimes Linux enforces page-aligned address
-        .globl mprotect
-mprotect:
+Pprotect: .globl Pprotect
+mprotect: .globl mprotect
         ldr r12,m_off4k
         and r12,r12,r0
         sub r0,r0,r12
         add r1,r1,r12
         do_sys __NR_mprotect; ret
 m_off4k:
-        .word -1+ (1<<12)  // offset mask for 4KiB
+        .word -1+ (1<<PAGE_SHIFT)  // offset mask for 4KiB
 
         .globl __clear_cache
 __clear_cache:

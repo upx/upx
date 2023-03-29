@@ -8,9 +8,9 @@ Linker script and memory map
 
                 0x0000000000008040                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008040      0xab0
+.text           0x0000000000008040      0xac4
  *(.text)
- .text          0x0000000000008040      0x30c tmp/arm.v4a-linux.elf-fold.o
+ .text          0x0000000000008040      0x320 tmp/arm.v4a-linux.elf-fold.o
                 0x0000000000008250                my_bkpt
                 0x0000000000008258                exit
                 0x000000000000825c                read
@@ -22,19 +22,20 @@ Linker script and memory map
                 0x000000000000828c                brk
                 0x0000000000008294                readlink
                 0x000000000000829c                munmap
+                0x00000000000082a4                Pprotect
                 0x00000000000082a4                mprotect
-                0x00000000000082ac                __clear_cache
-                0x00000000000082b8                mmap
-                0x00000000000082d0                get_sys_munmap
-                0x00000000000082d8                mmap_privanon
-                0x00000000000082f0                __udivsi3
-                0x00000000000082f0                div10
- .text          0x000000000000834c      0x7a4 tmp/arm.v4a-linux.elf-main.o
-                0x000000000000836c                get_page_mask
-                0x00000000000089bc                upx_main
+                0x00000000000082c0                __clear_cache
+                0x00000000000082cc                mmap
+                0x00000000000082e4                get_sys_munmap
+                0x00000000000082ec                mmap_privanon
+                0x0000000000008304                __udivsi3
+                0x0000000000008304                div10
+ .text          0x0000000000008360      0x7a4 tmp/arm.v4a-linux.elf-main.o
+                0x0000000000008380                get_page_mask
+                0x00000000000089d0                upx_main
  *(.data)
- .data          0x0000000000008af0        0x0 tmp/arm.v4a-linux.elf-fold.o
- .data          0x0000000000008af0        0x0 tmp/arm.v4a-linux.elf-main.o
+ .data          0x0000000000008b04        0x0 tmp/arm.v4a-linux.elf-fold.o
+ .data          0x0000000000008b04        0x0 tmp/arm.v4a-linux.elf-main.o
 
 .data
 LOAD tmp/arm.v4a-linux.elf-fold.o

@@ -9,20 +9,21 @@ Linker script and memory map
 TARGET(elf32-bigmips)
                 0x0000000000100080                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000100080      0xad0
+.text           0x0000000000100080      0xaf0
  *(.text)
- .text          0x0000000000100080      0x1a0 tmp/mips.r3000-linux.elf-fold.o
- .text          0x0000000000100220      0x930 tmp/mips.r3000-linux.elf-main.o
-                0x00000000001009b4                upx_main
+ .text          0x0000000000100080      0x1c0 tmp/mips.r3000-linux.elf-fold.o
+                0x0000000000100218                Pprotect
+ .text          0x0000000000100240      0x930 tmp/mips.r3000-linux.elf-main.o
+                0x00000000001009d4                upx_main
  *(.data)
- .data          0x0000000000100b50        0x0 tmp/mips.r3000-linux.elf-fold.o
- .data          0x0000000000100b50        0x0 tmp/mips.r3000-linux.elf-main.o
+ .data          0x0000000000100b70        0x0 tmp/mips.r3000-linux.elf-fold.o
+ .data          0x0000000000100b70        0x0 tmp/mips.r3000-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000100b50        0x0
- .bss           0x0000000000100b50        0x0 tmp/mips.r3000-linux.elf-fold.o
- .bss           0x0000000000100b50        0x0 tmp/mips.r3000-linux.elf-main.o
+.bss            0x0000000000100b70        0x0
+ .bss           0x0000000000100b70        0x0 tmp/mips.r3000-linux.elf-fold.o
+ .bss           0x0000000000100b70        0x0 tmp/mips.r3000-linux.elf-main.o
 LOAD tmp/mips.r3000-linux.elf-fold.o
 LOAD tmp/mips.r3000-linux.elf-main.o
 OUTPUT(tmp/mips.r3000-linux.elf-fold.bin elf32-bigmips)

@@ -34,6 +34,11 @@
 #endif  /*}*/
 
 #include "include/linux.h"
+// Pprotect is mprotect, but page-aligned on the lo end (Linux requirement)
+unsigned Pprotect(void *, size_t, unsigned);
+#if defined(__mips__)  //{
+  #define Pprotect mprotect
+#endif  //}
 void *mmap(void *, size_t, int, int, int, off_t);
 #if defined(__i386__) || defined(__mips__) || defined(__powerpc__) //{
 #  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
@@ -398,7 +403,7 @@ make_hatch_x86(Elf32_Phdr const *const phdr, ptrdiff_t reloc)
                 * hatch  = escape;
             }
             if (xprot) {
-                mprotect(hatch, 1*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 1*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
             DPRINTF(" hatch at %%p\\n", hatch);
         }
@@ -445,9 +450,9 @@ make_hatch_arm(
         ) {
             hatch[0] = sys_munmap;  // syscall __NR_unmap
             hatch[1] = 0xe1a0f00e;  // mov pc,lr
-            __clear_cache(&hatch[0], &hatch[2]);  // ? needed before mprotect()
+            __clear_cache(&hatch[0], &hatch[2]);  // ? needed before Pprotect()
             if (xprot) {
-                mprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -482,7 +487,7 @@ make_hatch_mips(
             hatch[1] = RS(30)|JR;  // jr $30  # s8
             hatch[2] = 0x00000000;  //   nop
             if (xprot) {
-                mprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -517,7 +522,7 @@ make_hatch_ppc32(
             hatch[0] = 0x44000002;  // sc
             hatch[1] = 0x4e800020;  // blr
             if (xprot) {
-                mprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -747,7 +752,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #endif  //}
                     PROT_WRITE | PROT_READ);
 
-        if (xi) { // compresed source: mprotect(,,prot) later
+        if (xi) { // compresed source: Pprotect(,,prot) later
             if (addr != mmap_privanon(addr, LEN_OVER + mlen,
 #if defined(__arm__)  //{
                     ((PF_X & phdr->p_flags) ? PROT_EXEC : 0) |
@@ -795,7 +800,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
                 auxv_up(av, AT_NULL, (unsigned)hatch);
             }
 #endif  /*}*/
-            if (0!=mprotect(addr, mlen, prot)) {
+            if (0!=Pprotect(addr, mlen, prot)) {
                 err_exit(10);
 ERR_LAB
             }

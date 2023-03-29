@@ -153,6 +153,18 @@ mmap: .globl mmap  // oldmmap: %ebx -> 6 word parameters
 #endif  //}
 
 // Sometimes linux enforces page-aligned address
+Pprotect: .globl Pprotect
+    xchg %ebx,1*NBPW(%esp)  // save reg, %ebx= address
+    mov %ebx,%ecx  // copy address
+    and $~0<<12,%ebx  // page align
+    sub %ebx,%ecx  // extra length
+    add 2*NBPW(%esp),%ecx  // length
+    mov 3*NBPW(%esp),%edx  // bits
+    push $__NR_mprotect; pop %eax; int $0x80
+    cmp $-0x1000,%eax; jna 0f; hlt; 0:
+    mov 1*NBPW(%esp),%ebx  // restore reg
+    ret
+
 mprotect: .globl mprotect
         mov %ebx,%eax; and $-1+ (1<<12),%eax
         sub %eax,%ebx

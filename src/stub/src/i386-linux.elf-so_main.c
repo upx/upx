@@ -36,6 +36,8 @@ extern void my_bkpt(void const *arg1, ...);
 
 #define DEBUG 0
 
+// Pprotect is mprotect, but page-aligned on the lo end (Linux requirement)
+unsigned Pprotect(void *, size_t, unsigned);
 void *mmap(void *, size_t, int, int, int, off_t);
 #if defined(__i386__) || defined(__mips__) || defined(__powerpc__) //{
 #  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
@@ -276,7 +278,7 @@ make_hatch_i386(Elf32_Phdr const *const phdr, ptrdiff_t reloc)
                 * hatch  = escape;
             }
             if (xprot) {
-                mprotect(hatch, 1*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 1*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
             DPRINTF(" hatch at %%p\\n", hatch);
         }
@@ -323,9 +325,9 @@ make_hatch_arm(
         ) {
             hatch[0] = sys_munmap;  // syscall __NR_unmap
             hatch[1] = 0xe8bd80ff;  // ldmia sp!,{r0,r1,r2,r3,r4,r5,r6,r7,pc}
-            __clear_cache(&hatch[0], &hatch[2]);  // ? needed before mprotect()
+            __clear_cache(&hatch[0], &hatch[2]);  // ? needed before Pprotect()
             if (xprot) {
-                mprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -360,7 +362,7 @@ make_hatch_mips(
             hatch[1] = RS(30)|JR;  // jr $30  # s8
             hatch[2] = 0x00000000;  //   nop
             if (xprot) {
-                mprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -395,7 +397,7 @@ make_hatch_ppc32(
             hatch[0] = 0x44000002;  // sc
             hatch[1] = 0x4e800020;  // blr
             if (xprot) {
-                mprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -432,7 +434,7 @@ get_PAGE_MASK(void)  // the mask which KEEPS the page address
     close(fd);
     Elf32_auxv_t *ptr; for (ptr = &data[0]; ptr < end ; ++ptr) {
         if (AT_PAGESZ == ptr->a_type) {
-            return ~(-1+ ptr->a_un.a_val);
+            return (0u - ptr->a_un.a_val);
         }
     }
     return ~0xfff;
@@ -509,19 +511,19 @@ upx_so_main(  // returns &escape_hatch
     // but the access permissions may be wrong and the data may be compressed.
     // Also, rtld maps the convex hull of all PT_LOAD but assumes that the
     // file supports those pages, even though the pages might lie beyond EOF.
-    // If so, then mprotect() is not enough: SIGBUS will occur.  Thus we
+    // If so, then Pprotect() is not enough: SIGBUS will occur.  Thus we
     // must mmap anonymous pages, except for first PT_LOAD with ELF headers.
     // So the general strategy (for each PT_LOAD) is:
     //   Save any contents on low end of destination page (the "prefix" pfx).
     //   mmap(,, PROT_WRITE|PROT_READ, MAP_FIXED|MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     //   Restore the prefix on the first destination page.
     //   De-compress from remaining [sideaddr, +sidelen).
-    //   mprotect(,, PF_TO_PROT(.p_flags));
+    //   Pprotect(,, PF_TO_PROT(.p_flags));
 
     // Get the uncompressed Elf32_Ehdr and Elf32_Phdr
     // The first b_info is aligned, so direct access of fields is OK.
     Extent x1 = {binfo->sz_unc, va_load};  // destination
-    mprotect(va_load, binfo->sz_unc, PROT_WRITE|PROT_READ);
+    Pprotect(va_load, binfo->sz_unc, PROT_WRITE|PROT_READ);
     Extent x0 = {binfo->sz_cpr + sizeof(*binfo), (char *)binfo};  // source
     unpackExtent(&x0, &x1);  // de-compress Elf headers; x0.buf is updated
 
@@ -579,7 +581,7 @@ upx_so_main(  // returns &escape_hatch
         }
         DPRINTF("mprotect %%p (%%p %%p %%x)\\n",
             phdr, phdr->p_vaddr + va_load, phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
-        mprotect( phdr->p_vaddr + va_load, phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
+        Pprotect( phdr->p_vaddr + va_load, phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
     }
 
     typedef void (*Dt_init)(int argc, char *argv[], char *envp[]);

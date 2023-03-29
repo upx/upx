@@ -187,6 +187,13 @@ sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
 no_fail:
         ret
 
+Pprotect: .globl Pprotect
+        movl $~PAGE_MASK,%ecx  // frag mask
+        and %edi,%ecx  // frag
+        sub %rcx,%rdi
+        add %rcx,%rsi
+        jmp mprotect
+
 exit: .globl exit
         movb $ __NR_exit,%al; 5: jmp 5f
 brk: .globl brk

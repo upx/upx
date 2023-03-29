@@ -223,6 +223,13 @@ SYS_mmap=      90
 SYS_munmap=    91
 SYS_mprotect= 125
 
+Pprotect: .globl Pprotect
+        li r0, 0xfff  // ~PAGE_MASK  (FIXME: probably use 4th arg)
+        and r0,a0,r0
+        sub a0,a0,r0
+        add a1,a1,r0
+        b mprotect
+
 mmap: .globl mmap
         li r0,SYS_mmap
 sysgo:

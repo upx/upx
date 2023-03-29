@@ -157,6 +157,7 @@ munmap: .globl munmap
         push $ __NR_munmap; 5: jmp sysgo
 
 // Sometimes Linux enforces page-aligned address for mprotect
+Pprotect: .globl Pprotect
 mprotect: .globl mprotect
         mov %rdi,%rax; and $-1+ (1<<12),%rax
         sub %rax,%rdi

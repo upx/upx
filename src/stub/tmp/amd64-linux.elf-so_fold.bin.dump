@@ -39,6 +39,7 @@ SYMBOL TABLE:
 0000000000000056 g       SO_TAIL 0 read
 0000000000000013 g       SO_TAIL 0 memset
 0000000000000011 g       SO_TAIL 0 my_bkpt
+000000000000005e g       SO_TAIL 0 Pprotect
 0000000000000043 g       SO_TAIL 0 exit
 000000000000004b g       SO_TAIL 0 openat
 000000000000005e g       SO_TAIL 0 mprotect
@@ -52,7 +53,7 @@ OFFSET           TYPE              VALUE
 000000000000002e R_X86_64_PLT32    exit+0xfffffffffffffffc
 000000000000010e R_X86_64_PLT32    f_expand+0xfffffffffffffffc
 00000000000001e0 R_X86_64_PLT32    mmap+0xfffffffffffffffc
-000000000000020a R_X86_64_PLT32    mprotect+0xfffffffffffffffc
+000000000000020a R_X86_64_PLT32    Pprotect+0xfffffffffffffffc
 0000000000000268 R_X86_64_PLT32    openat+0xfffffffffffffffc
 0000000000000283 R_X86_64_PLT32    read+0xfffffffffffffffc
 0000000000000291 R_X86_64_PLT32    close+0xfffffffffffffffc
@@ -61,8 +62,8 @@ OFFSET           TYPE              VALUE
 000000000000033c R_X86_64_PLT32    memcpy+0xfffffffffffffffc
 00000000000003d9 R_X86_64_PLT32    mmap+0xfffffffffffffffc
 00000000000003ea R_X86_64_PLT32    memcpy+0xfffffffffffffffc
-0000000000000417 R_X86_64_PLT32    mprotect+0xfffffffffffffffc
-0000000000000588 R_X86_64_PLT32    mprotect+0xfffffffffffffffc
+0000000000000417 R_X86_64_PLT32    Pprotect+0xfffffffffffffffc
+0000000000000588 R_X86_64_PLT32    Pprotect+0xfffffffffffffffc
 00000000000005a1 R_X86_64_PLT32    munmap+0xfffffffffffffffc
 
 RELOCATION RECORDS FOR [NRV2E]:

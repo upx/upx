@@ -30,6 +30,7 @@
 */
 
 #include "arch/i386/macros.S"
+NBPW= 4
 
 
 PAGE_SIZE= ( 1<<12)
@@ -55,6 +56,7 @@ __NR_munmap=   91
 __NR_open= 5
 __NR_close= 6
 __NR_mmap= 0xc0
+__NR_mprotect= 0x7d
 
 MAP_PRIVATE=   0x02
 MAP_FIXED=     0x10
@@ -234,6 +236,19 @@ L60:
 
         mov al, __NR_munmap  // eax was 0 from L60
         jmp [edi]  // unmap ourselves via escape hatch, then goto entry
+
+// Sometimes linux enforces page-aligned address
+Pprotect: .globl Pprotect
+    xchg ebx,[1*NBPW + esp]  // save reg, %ebx= address
+    mov ecx,ebx  // copy address
+    and ebx, ~0<<12  // page align
+    sub ecx,%ebx  // extra length
+    add ecx,[2*NBPW + esp]  // length
+    mov edx,[3*NBPW + esp]  // bits
+    push __NR_mprotect; pop %eax; int 0x80
+    cmp eax, -0x1000; jna 0f; hlt; 0:
+    mov ebx,[1*NBPW + esp]  // restore reg
+    ret
 
 mmap: .globl mmap  // what happened to the ebx->args_on_stack method?
         push ebp

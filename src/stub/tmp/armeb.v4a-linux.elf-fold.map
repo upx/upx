@@ -9,39 +9,40 @@ Linker script and memory map
 TARGET(elf32-bigarm)
                 0x0000000000008080                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008080      0xab0
+.text           0x0000000000008080      0xac4
  *(.text)
- .text          0x0000000000008080      0x30c tmp/armeb.v4a-linux.elf-fold.o
+ .text          0x0000000000008080      0x320 tmp/armeb.v4a-linux.elf-fold.o
                 0x00000000000082dc                munmap
-                0x0000000000008310                get_sys_munmap
+                0x0000000000008324                get_sys_munmap
                 0x00000000000082c4                getpid
                 0x00000000000082d4                readlink
-                0x0000000000008330                __udivsi3
-                0x00000000000082f8                mmap
-                0x00000000000082ec                __clear_cache
-                0x0000000000008318                mmap_privanon
+                0x0000000000008344                __udivsi3
+                0x000000000000830c                mmap
+                0x0000000000008300                __clear_cache
+                0x000000000000832c                mmap_privanon
                 0x00000000000082a4                write
                 0x000000000000829c                read
                 0x00000000000082bc                unlink
                 0x0000000000008290                my_bkpt
+                0x00000000000082e4                Pprotect
                 0x0000000000008298                exit
                 0x00000000000082cc                brk
                 0x00000000000082ac                open
-                0x0000000000008330                div10
+                0x0000000000008344                div10
                 0x00000000000082e4                mprotect
                 0x00000000000082b4                close
- .text          0x000000000000838c      0x7a4 tmp/armeb.v4a-linux.elf-main.o
-                0x00000000000083ac                get_page_mask
-                0x00000000000089fc                upx_main
+ .text          0x00000000000083a0      0x7a4 tmp/armeb.v4a-linux.elf-main.o
+                0x00000000000083c0                get_page_mask
+                0x0000000000008a10                upx_main
  *(.data)
- .data          0x0000000000008b30        0x0 tmp/armeb.v4a-linux.elf-fold.o
- .data          0x0000000000008b30        0x0 tmp/armeb.v4a-linux.elf-main.o
+ .data          0x0000000000008b44        0x0 tmp/armeb.v4a-linux.elf-fold.o
+ .data          0x0000000000008b44        0x0 tmp/armeb.v4a-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000008b30        0x0
- .bss           0x0000000000008b30        0x0 tmp/armeb.v4a-linux.elf-fold.o
- .bss           0x0000000000008b30        0x0 tmp/armeb.v4a-linux.elf-main.o
+.bss            0x0000000000008b44        0x0
+ .bss           0x0000000000008b44        0x0 tmp/armeb.v4a-linux.elf-fold.o
+ .bss           0x0000000000008b44        0x0 tmp/armeb.v4a-linux.elf-main.o
 LOAD tmp/armeb.v4a-linux.elf-fold.o
 LOAD tmp/armeb.v4a-linux.elf-main.o
 OUTPUT(tmp/armeb.v4a-linux.elf-fold.bin elf32-bigarm)

@@ -9,25 +9,26 @@ Linker script and memory map
 TARGET(elf32-i386)
                 0x0000000000c01080                . = ((0xc01000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000c01080      0x748
+.text           0x0000000000c01080      0x764
  *(.text)
- .text          0x0000000000c01080      0x15c tmp/i386-linux.elf-fold.o
-                0x0000000000c011ae                mmap
- .text          0x0000000000c011dc      0x5eb tmp/i386-linux.elf-main.o
-                0x0000000000c01304                get_page_mask
-                0x0000000000c016bd                upx_main
+ .text          0x0000000000c01080      0x184 tmp/i386-linux.elf-fold.o
+                0x0000000000c011d6                mmap
+                0x0000000000c011ae                Pprotect
+ .text          0x0000000000c01204      0x5df tmp/i386-linux.elf-main.o
+                0x0000000000c0132c                get_page_mask
+                0x0000000000c016d9                upx_main
  *(.data)
- *fill*         0x0000000000c017c7        0x1 00
- .data          0x0000000000c017c8        0x0 tmp/i386-linux.elf-fold.o
- .data          0x0000000000c017c8        0x0 tmp/i386-linux.elf-main.o
+ *fill*         0x0000000000c017e3        0x1 00
+ .data          0x0000000000c017e4        0x0 tmp/i386-linux.elf-fold.o
+ .data          0x0000000000c017e4        0x0 tmp/i386-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000c017c8        0x0
- .bss           0x0000000000c017c8        0x0 tmp/i386-linux.elf-fold.o
- .bss           0x0000000000c017c8        0x0 tmp/i386-linux.elf-main.o
+.bss            0x0000000000c017e4        0x0
+ .bss           0x0000000000c017e4        0x0 tmp/i386-linux.elf-fold.o
+ .bss           0x0000000000c017e4        0x0 tmp/i386-linux.elf-main.o
 
-.rel.dyn        0x0000000000c017c8        0x0
+.rel.dyn        0x0000000000c017e4        0x0
  .rel.text      0x0000000000000000        0x0 tmp/i386-linux.elf-fold.o
 LOAD tmp/i386-linux.elf-fold.o
 LOAD tmp/i386-linux.elf-main.o

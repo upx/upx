@@ -439,8 +439,12 @@ brk:
 munmap:
         do_sys __NR_munmap; ret
 
-        .globl mprotect
-mprotect:
+// Sometimes Linux enforces page-aligned address
+Pprotect: .globl Pprotect
+mprotect: .globl mprotect
+        and x8,x0,#-1+ (1<<12)
+        sub x0,x0,x8
+        add x1,x1,x8
         do_sys __NR_mprotect; ret
 
 bits_privanon= -4+ fold_begin  // entry stores: MAP_{PRIVATE|ANON}  QNX vs linux

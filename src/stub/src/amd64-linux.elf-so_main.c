@@ -32,6 +32,9 @@
 
 #include "include/linux.h"
 
+// Pprotect is mprotect, but page-aligned on the lo end (Linux requirement)
+unsigned Pprotect(void *, size_t, unsigned);
+
 extern void f_int3(int arg);
 
 #define DEBUG 0
@@ -239,7 +242,7 @@ make_hatch_x86_64(
             hatch[0] = 0x5e5f050f;  // syscall; pop %arg1{%rdi}; pop %arg2{%rsi}
             ((short *)hatch)[2] = 0xc35a;  // pop %arg3{%rdx}; ret
             if (xprot) {
-                mprotect(hatch, 6, PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 6, PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -286,7 +289,7 @@ make_hatch_ppc64(
             hatch[2]= 0x38800000;  // li r4,0
             hatch[3]= 0x4e800020;  // blr
             if (xprot) {
-                mprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -330,7 +333,7 @@ make_hatch_arm64(
             hatch[2] = 0xa8c207e0;  // ldp x0,x1,[sp], 4*8
             hatch[3] = 0xd61f03c0;  // br x30
             if (xprot) {
-                mprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -377,7 +380,7 @@ make_hatch_arm64(
 
 #undef PAGE_MASK
 static unsigned long
-get_PAGE_MASK(void)
+get_PAGE_MASK(void)  // the mask which KEEPS the page, discards the offset
 {
     int fd = openat(0, addr_string("/proc/self/auxv"), O_RDONLY, 0);
     unsigned long rv = ~0xffful;  // default to (PAGE_SIZE == 4KiB)
@@ -386,7 +389,7 @@ get_PAGE_MASK(void)
     close(fd);
     Elf64_auxv_t *ptr; for (ptr = &data[0]; ptr < end ; ++ptr) {
         if (AT_PAGESZ == ptr->a_type) {
-            rv = - ptr->a_un.a_val;
+            rv = (0u - ptr->a_un.a_val);
             break;
         }
     }
@@ -468,19 +471,19 @@ upx_so_main(  // returns &escape_hatch
     // but the access permissions may be wrong and the data may be compressed.
     // Also, rtld maps the convex hull of all PT_LOAD but assumes that the
     // file supports those pages, even though the pages might lie beyond EOF.
-    // If so, then mprotect() is not enough: SIGBUS will occur.  Thus we
+    // If so, then Pprotect() is not enough: SIGBUS will occur.  Thus we
     // must mmap anonymous pages, except for first PT_LOAD with ELF headers.
     // So the general strategy (for each PT_LOAD) is:
     //   Save any contents on low end of destination page (the "prefix" pfx).
     //   mmap(,, PROT_WRITE|PROT_READ, MAP_FIXED|MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     //   Restore the prefix on the first destination page.
     //   De-compress from remaining [sideaddr, +sidelen).
-    //   mprotect(,, PF_TO_PROT(.p_flags));
+    //   Pprotect(,, PF_TO_PROT(.p_flags));
 
     // Get the uncompressed Elf64_Ehdr and Elf64_Phdr
     // The first b_info is aligned, so direct access to fields is OK.
     Extent x1 = {binfo->sz_unc, va_load};  // destination
-    mprotect(va_load, binfo->sz_unc, PROT_WRITE|PROT_READ);
+    Pprotect(va_load, binfo->sz_unc, PROT_WRITE|PROT_READ);
     Extent x0 = {binfo->sz_cpr + sizeof(*binfo), (char *)binfo};  // source
     unpackExtent(&x0, &x1);  // de-compress _Ehdr and _Phdrs; x0.buf is updated
 
@@ -540,9 +543,9 @@ upx_so_main(  // returns &escape_hatch
         // Use table lookup into a PIC-string that pre-computes the result.
         unsigned prot = 7& addr_string("@\x04\x02\x06\x01\x05\x03\x07")
             [phdr->p_flags & (PF_R|PF_W|PF_X)];
-        DPRINTF("mprotect %%p (%%p %%p %%x)\\n",
+        DPRINTF("Pprotect %%p (%%p %%p %%x)\\n",
                 phdr, phdr->p_vaddr + va_load, phdr->p_memsz, prot);
-        mprotect(phdr->p_vaddr + va_load, phdr->p_memsz, prot);
+        Pprotect(phdr->p_vaddr + va_load, phdr->p_memsz, prot);
     }
 
     munmap(sideaddr, cpr_len);

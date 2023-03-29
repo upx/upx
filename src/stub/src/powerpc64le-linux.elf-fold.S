@@ -313,6 +313,14 @@ sysgo:
 no_fail:
         ret
 
+Pprotect: .globl Pprotect
+mprotect: .globl mprotect
+        li r0, 0xfff  // ~PAGE_MASK  (FIXME: probably use 4th arg)
+        and r0,a0,r0
+        sub a0,a0,r0
+        add a1,a1,r0
+        li r0,SYS_mprotect; 5: b 5f
+
 exit: .globl exit
         li r0,SYS_exit;        b 5f
 brk: .globl brk
@@ -327,8 +335,6 @@ open: .globl open
         li r0,SYS_open;     5: b 5f
 close: .globl close
         li r0,SYS_close;    5: b 5f
-mprotect: .globl mprotect
-        li r0,SYS_mprotect; 5: b 5f
 munmap: .globl munmap
         li r0,SYS_munmap;   5: b sysgo
 

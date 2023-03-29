@@ -36,7 +36,7 @@ NBPW=  4
         .set noat
         .altmacro
 
-PAGE_SHIFT= 12
+PAGE_SHIFT= 16  // 64KiB is better default than 4KiB on MIPS
 PAGE_MASK= 0xffffffffffffffff<<PAGE_SHIFT
 
 sz_Ehdr= 52
@@ -171,6 +171,7 @@ L30:  // copy auxv
         move a1,$r_LENX  # total_size
 
 BAL=0x04110000
+        .extern upx_main
 /* We need a position-independent call of upx_main, which is external.
    "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.
    ".long BAL + upx_main" then changing R_MIPS_32 to R_MIPS_PC16
@@ -243,6 +244,15 @@ p_vaddr= 4+4
           li v0,__NR_munmap
 L40:
         jr $r_fexp  # omit munmap
+          nop
+
+Pprotect: .globl Pprotect
+        li tmp,~PAGE_MASK
+        and tmp,a0
+        sub a0,tmp
+        add a1,tmp
+        li v0,__NR_mprotect; syscall
+        j ra
           nop
 
 #if 0  /*{ replaced by macros in include/linux.h because of 'bal' vs gcc */

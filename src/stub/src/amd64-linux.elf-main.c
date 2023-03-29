@@ -31,6 +31,8 @@
 
 
 #include "include/linux.h"
+// Pprotect is mprotect but uses page-aligned address (Linux requirement)
+unsigned Pprotect(void *, size_t, unsigned);
 
 #ifndef DEBUG  //{
 #define DEBUG 0
@@ -247,7 +249,7 @@ make_hatch_x86_64(
         {
             hatch[0] = 0xc35a050f;  // syscall; pop %rdx; ret
             if (xprot) {
-                mprotect(hatch, 1*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 1*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -294,7 +296,7 @@ make_hatch_ppc64(
             hatch[2]= 0x38800000;  // li r4,0
             hatch[3]= 0x4e800020;  // blr
             if (xprot) {
-                mprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -339,7 +341,7 @@ make_hatch_arm64(
             hatch[0] = 0xd4000001;  // svc #0
             hatch[1] = 0xd65f03c0;  // ret (jmp *lr)
             if (xprot) {
-                mprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -554,8 +556,8 @@ do_xmap(
             if (0!=hatch) {
                 auxv_up((Elf64_auxv_t *)(~1 & (size_t)av), AT_NULL, (size_t)hatch);
             }
-            DPRINTF("mprotect addr=%%p  len=%%p  prot=%%x\\n", addr, mlen, prot);
-            if (0!=mprotect(addr, mlen, prot)) {
+            DPRINTF("Pprotect addr=%%p  len=%%p  prot=%%x\\n", addr, mlen, prot);
+            if (0!=Pprotect(addr, mlen, prot)) {
                 err_exit(10);
 ERR_LAB
             }
