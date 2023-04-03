@@ -485,6 +485,8 @@ upx_so_main(  // returns &escape_hatch
 )
 {
     char *const va_load = (char *)&so_info->off_reloc - so_info->off_reloc;
+    Elf32_Phdr const *phdr = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)(void *)va_load);
+    Elf32_Addr const base = (Elf32_Addr)va_load - phdr->p_vaddr;
     So_info so_infc;  // So_info Copy
     memcpy(&so_infc, so_info, sizeof(so_infc));  // before de-compression overwrites
     unsigned const xct_off = so_infc.off_xct_off;
@@ -492,8 +494,8 @@ upx_so_main(  // returns &escape_hatch
 
     char *const cpr_ptr = so_infc.off_info + va_load;
     unsigned const cpr_len = (char *)so_info - cpr_ptr;
-    DPRINTF("upx_so_main@%%p  va_load=%%p  cpr_ptr=%%p  cpr_len=%%x  xct_off=%%x\\n",
-        upx_so_main, va_load, cpr_ptr, cpr_len, xct_off);
+    DPRINTF("upx_so_main@%%p  va_load=%%p  base=%%p  cpr_ptr=%%p  cpr_len=%%x  xct_off=%%x\\n",
+        upx_so_main, va_load, base, cpr_ptr, cpr_len, xct_off);
 
     // Copy compressed data before de-compression overwrites it.
     char *const sideaddr = mmap(nullptr, cpr_len, PROT_WRITE|PROT_READ,
@@ -533,7 +535,6 @@ upx_so_main(  // returns &escape_hatch
     struct b_info al_bi;  // for aligned data from binfo
     void *hatch = nullptr;
 
-    Elf32_Phdr const *phdr = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)(void *)va_load);
     unsigned n_phdr = ((Elf32_Ehdr *)(void *)va_load)->e_phnum;
     for (; n_phdr > 0; --n_phdr, ++phdr)
     if ( phdr->p_type == PT_LOAD && !(phdr->p_flags & PF_W)) {
@@ -555,7 +556,7 @@ upx_so_main(  // returns &escape_hatch
 
         // Using .p_memsz implicitly handles .bss via MAP_ANONYMOUS.
         // Omit any not-compressed prefix (below xct_off)
-        x1.buf =  phdr->p_vaddr + pfx + va_load;
+        x1.buf =  (char *)(phdr->p_vaddr + pfx + base);
         x1.size = phdr->p_memsz - pfx;
 
         pfx = (phdr->p_vaddr + pfx) & ~PAGE_MASK;  // lo fragment on page
@@ -572,16 +573,16 @@ upx_so_main(  // returns &escape_hatch
         if (!hatch && phdr->p_flags & PF_X) {
 //#define PAGE_MASK ~0xFFFull
 #if defined(__arm__)  //{
-            hatch = make_hatch_arm(phdr, (Elf32_Addr)va_load);
+            hatch = make_hatch_arm(phdr, base);
 #elif defined(__powerpc__)  //}{
-            hatch = make_hatch_ppc(phdr, (Elf32_Addr)va_load, ~PAGE_MASK);
+            hatch = make_hatch_ppc(phdr, base, ~PAGE_MASK);
 #elif defined(__i386__)  //}{
-            hatch = make_hatch_i386(phdr, (Elf32_Addr)va_load);
+            hatch = make_hatch_i386(phdr, base);
 #endif  //}
         }
         DPRINTF("mprotect %%p (%%p %%p %%x)\\n",
-            phdr, phdr->p_vaddr + va_load, phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
-        Pprotect( phdr->p_vaddr + va_load, phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
+            phdr, (char *)(phdr->p_vaddr + base), phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
+        Pprotect( (char *)(phdr->p_vaddr + base), phdr->p_memsz, PF_TO_PROT(phdr->p_flags));
     }
 
     typedef void (*Dt_init)(int argc, char *argv[], char *envp[]);

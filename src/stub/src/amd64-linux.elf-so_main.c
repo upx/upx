@@ -442,6 +442,8 @@ upx_so_main(  // returns &escape_hatch
 {
     unsigned long const PAGE_MASK = get_PAGE_MASK();
     char *const va_load = (char *)&so_info->off_reloc - so_info->off_reloc;
+    Elf64_Phdr const *phdr = (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)va_load);
+    Elf64_Addr const base = (Elf64_Addr)va_load - phdr->p_vaddr;
     So_info so_infc;  // So_info Copy
     memcpy(&so_infc, so_info, sizeof(so_infc));  // before de-compression overwrites
     unsigned const xct_off = so_infc.off_xct_off;
@@ -451,8 +453,8 @@ upx_so_main(  // returns &escape_hatch
     unsigned const cpr_len = (char *)so_info - cpr_ptr;
     typedef void (*Dt_init)(int argc, char *argv[], char *envp[]);
     Dt_init const dt_init = (Dt_init)(void *)(so_info->off_user_DT_INIT + va_load);
-    DPRINTF("upx_so_main va_load=%%p  cpr_ptr=%%p  cpr_len=%%x  xct_off=%%x\\n",
-        va_load, cpr_ptr, cpr_len, xct_off);
+    DPRINTF("upx_so_main@%%p  va_load=%%p  base=%%p  cpr_ptr=%%p  cpr_len=%%x  xct_off=%%x\\n",
+        upx_so_main, va_load, base, cpr_ptr, cpr_len, xct_off);
     // DO NOT USE *so_info AFTER THIS!!  It gets overwritten.
 
     // Copy compressed data before de-compression overwrites it.
@@ -493,7 +495,6 @@ upx_so_main(  // returns &escape_hatch
     struct b_info al_bi;  // for aligned data from binfo
     void *hatch = nullptr;
 
-    Elf64_Phdr const *phdr = (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)va_load);
     unsigned n_phdr = ((Elf64_Ehdr *)(void *)va_load)->e_phnum;
     for (; n_phdr > 0; --n_phdr, ++phdr)
     if ( phdr->p_type == PT_LOAD && !(phdr->p_flags & PF_W)) {
@@ -515,7 +516,7 @@ upx_so_main(  // returns &escape_hatch
 
         // Using .p_memsz implicitly handles .bss via MAP_ANONYMOUS.
         // Omit any non-tcompressed prefix (below xct_off)
-        x1.buf =  phdr->p_vaddr + pfx + va_load;
+        x1.buf =  (char *)(phdr->p_vaddr + pfx + base);
         x1.size = phdr->p_memsz - pfx;
 
         pfx = (phdr->p_vaddr + pfx) & ~PAGE_MASK;  // lo fragment on page
@@ -532,11 +533,11 @@ upx_so_main(  // returns &escape_hatch
         if (!hatch && phdr->p_flags & PF_X) {
 //#define PAGE_MASK ~0xFFFull
 #if defined(__x86_64)  //{
-            hatch = make_hatch_x86_64(phdr, (Elf64_Addr)va_load, ~PAGE_MASK);
+            hatch = make_hatch_x86_64(phdr, base, ~PAGE_MASK);
 #elif defined(__powerpc64__)  //}{
-            hatch = make_hatch_ppc64(phdr, (Elf64_Addr)va_load, ~PAGE_MASK);
+            hatch = make_hatch_ppc64(phdr, base, ~PAGE_MASK);
 #elif defined(__aarch64__)  //}{
-            hatch = make_hatch_arm64(phdr, (Elf64_Addr)va_load, ~PAGE_MASK);
+            hatch = make_hatch_arm64(phdr, base, ~PAGE_MASK);
 #endif  //}
         }
         // Exchange the bits with values 4 (PF_R, PROT_EXEC) and 1 (PF_X, PROT_READ)
@@ -544,8 +545,8 @@ upx_so_main(  // returns &escape_hatch
         unsigned prot = 7& addr_string("@\x04\x02\x06\x01\x05\x03\x07")
             [phdr->p_flags & (PF_R|PF_W|PF_X)];
         DPRINTF("Pprotect %%p (%%p %%p %%x)\\n",
-                phdr, phdr->p_vaddr + va_load, phdr->p_memsz, prot);
-        Pprotect(phdr->p_vaddr + va_load, phdr->p_memsz, prot);
+            phdr, (char *)(phdr->p_vaddr + base), phdr->p_memsz, prot);
+        Pprotect( (char *)(phdr->p_vaddr + base), phdr->p_memsz, prot);
     }
 
     munmap(sideaddr, cpr_len);
