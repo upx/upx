@@ -443,6 +443,7 @@ upx_so_main(  // returns &escape_hatch
     unsigned long const PAGE_MASK = get_PAGE_MASK();
     char *const va_load = (char *)&so_info->off_reloc - so_info->off_reloc;
     Elf64_Phdr const *phdr = (Elf64_Phdr *)(1+ (Elf64_Ehdr *)(void *)va_load);
+    while (phdr->p_type != PT_LOAD) ++phdr;  // skip PT_PHDR if any
     Elf64_Addr const base = (Elf64_Addr)va_load - phdr->p_vaddr;
     So_info so_infc;  // So_info Copy
     memcpy(&so_infc, so_info, sizeof(so_infc));  // before de-compression overwrites
@@ -453,8 +454,8 @@ upx_so_main(  // returns &escape_hatch
     unsigned const cpr_len = (char *)so_info - cpr_ptr;
     typedef void (*Dt_init)(int argc, char *argv[], char *envp[]);
     Dt_init const dt_init = (Dt_init)(void *)(so_info->off_user_DT_INIT + va_load);
-    DPRINTF("upx_so_main@%%p  va_load=%%p  base=%%p  cpr_ptr=%%p  cpr_len=%%x  xct_off=%%x\\n",
-        upx_so_main, va_load, base, cpr_ptr, cpr_len, xct_off);
+    DPRINTF("upx_so_main  va_load=%%p  base=%%p  so_infc=%%p  cpr_ptr=%%p  cpr_len=%%x  xct_off=%%x\\n",
+        va_load, base, &so_infc, cpr_ptr, cpr_len, xct_off);
     // DO NOT USE *so_info AFTER THIS!!  It gets overwritten.
 
     // Copy compressed data before de-compression overwrites it.

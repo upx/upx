@@ -117,14 +117,13 @@ __NR_exit=      1
 __NR_readlink= 85
 
 
-#if 0  //{ unused
-mremap: .globl mremap
-        push $ __NR_mremap; 5: jmp sys_4args
-#endif  //}
-
 mmap: .globl mmap  // oldmmap: %ebx -> 6 word parameters
     push %ebx  // save C-lang register
     lea 2*NBPW(%esp),%ebx
+    mov (%ebx),%eax  // arg1
+    and $0xfff,%eax  // lo fragment
+    sub %eax,    (%ebx)  // page align lo end
+    add %eax,NBPW(%ebx)
     push $ __NR_mmap; pop %eax
     int $0x80; cmp $-0x1000,%eax; jna 0f; hlt; 0:
     pop %ebx  // restore

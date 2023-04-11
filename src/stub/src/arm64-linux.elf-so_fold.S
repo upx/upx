@@ -168,7 +168,7 @@ munmap:
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
 mprotect: .globl mprotect
-        and x8,x0,#-1+ (1<<12)
+        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_MASK
         sub x0,x0,x8
         add x1,x1,x8
         do_sys __NR_mprotect; ret
@@ -187,6 +187,9 @@ mmap_privanon: .globl mmap_privanon
 
         .globl mmap
 mmap:
+        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_MASK
+        sub x0,x0,x8
+        add x1,x1,x8
         do_sys __NR_mmap; ret
 
 get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction

@@ -109,11 +109,10 @@ __NR_readlink= 89
 
 O_BINFO: .globl O_BINFO  # ignored dummy needed by elf-entry.o
 
-#if 0  //{ unused
-mremap: .globl mremap
-        push $ __NR_mremap; 5: jmp sys_4args
-#endif  //}
 mmap: .globl mmap
+        mov %arg1,%r10; and $0xfff,%r10
+        sub %r10,%arg1  # page align lo end
+        add %r10,%arg2
         push $ __NR_mmap
 sys_4args:
         movq %arg4,%sys4

@@ -77,7 +77,7 @@ PATH_MAX= 4096
 #define OVERHEAD 2048
 #include "MAX_ELF_HDR.S"
 
-get_page_size:
+get_page_mask:
         mov x0,#~0  // all 1's; -1
         add x1,x0,#0  // constant is modified to (1+ count)
         lsl x0,x0,x1  // generate the mask
@@ -442,7 +442,7 @@ munmap:
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
 mprotect: .globl mprotect
-        and x8,x0,#-1+ (1<<12)
+        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_SIZE
         sub x0,x0,x8
         add x1,x1,x8
         do_sys __NR_mprotect; ret
@@ -458,6 +458,9 @@ mmap_privanon: .globl mmap_privanon
 
         .globl mmap
 mmap:
+        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_SIZE
+        sub x0,x0,x8
+        add x1,x1,x8
         do_sys __NR_mmap; ret
 
         .globl unlink

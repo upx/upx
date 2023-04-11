@@ -31,7 +31,7 @@
  */
 
 .macro  section name
-        .section \name
+        .section \name,"ax"
         .align  0
 .endm
 

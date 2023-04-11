@@ -487,6 +487,7 @@ upx_so_main(  // returns &escape_hatch
     char *const va_load = (char *)&so_info->off_reloc - so_info->off_reloc;
     Elf32_Phdr const *phdr = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)(void *)va_load);
     Elf32_Addr const base = (Elf32_Addr)va_load - phdr->p_vaddr;
+    while (phdr->p_type != PT_LOAD) ++phdr;  // skip PT_PHDR if any
     So_info so_infc;  // So_info Copy
     memcpy(&so_infc, so_info, sizeof(so_infc));  // before de-compression overwrites
     unsigned const xct_off = so_infc.off_xct_off;

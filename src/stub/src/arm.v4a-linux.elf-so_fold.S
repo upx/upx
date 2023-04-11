@@ -195,13 +195,6 @@ mprotect: .globl mprotect
         sub r0,r0,r12
         add r1,r1,r12
         do_sys __NR_mprotect; ret
-m_off4k:
-        .word -1+ (1<<PAGE_SHIFT)  // offset mask for 4KiB
-
-        .globl __clear_cache
-__clear_cache:
-        mov r2,#0
-        do_sys2 __ARM_NR_cacheflush; ret
 
         .globl mmap
 mmap:
@@ -210,8 +203,20 @@ mmap:
         ldr r4,[sp,#3*4]
         mov r5,r5,lsr #12  @ convert to page number
 mmap_do:
+        ldr r12,m_off4k
+        and r12,r12,r0  // lo frag
+        sub r0,r0,r12  // page align lo end
+        add r1,r1,r12
         do_sys __NR_mmap2
         ldmia sp!,{r4,r5,pc}
+
+m_off4k:
+        .word -1+ (1<<PAGE_SHIFT)  // offset mask for 4KiB
+
+        .globl __clear_cache
+__clear_cache:
+        mov r2,#0
+        do_sys2 __ARM_NR_cacheflush; ret
 
 get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
 #if defined(ARMEL_DARWIN)  /*{*/

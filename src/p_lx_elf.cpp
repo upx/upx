@@ -695,7 +695,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         fo->seek((char *)user_init_rp - (char *)&file_image[0], SEEK_SET);
         Elf64_Rela rela(*(Elf64_Rela const *)user_init_rp);
         //u64_t r_info = get_te64(&((Elf64_Rela const *)user_init_rp)->r_info);
-        u32_t r_type = (Elf64_Ehdr::EM_AARCH64 == e_machine) ? R_AARCH64_RELATIVE 
+        u32_t r_type = (Elf64_Ehdr::EM_AARCH64 == e_machine) ? R_AARCH64_RELATIVE
                      : (Elf64_Ehdr::EM_X86_64  == e_machine) ? R_X86_64_RELATIVE
                      : (Elf64_Ehdr::EM_PPC64   == e_machine) ? R_PPC64_RELATIVE
                      : 0;
