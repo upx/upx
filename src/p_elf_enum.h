@@ -263,6 +263,7 @@
         R_386_32 = 1,
         R_ARM_ABS32 = 2,
         R_ARM_GLOB_DAT = 21,
+        R_MIPS_32 = 2,
 
         R_386_GLOB_DAT = 6,
         R_X86_64_64 = 1,

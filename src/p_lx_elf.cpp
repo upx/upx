@@ -370,6 +370,12 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     }
 }
 
+#define WANT_EHDR_ENUM
+#define WANT_REL_ENUM
+#include "p_elf_enum.h"
+#undef WANT_REL_ENUM
+#undef WANT_EHDR_ENUM
+
 off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
 {
     unsigned disp;
@@ -400,7 +406,7 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
             ? jni_onload_va
             : user_init_va);
         set_te32(&disp, firstpc_va - load_va);
-        fo->write(&disp, sizeof(disp));  // DT_INIT.d_val
+        fo->write(&disp, sizeof(disp));  // DT_INIT.d_val or DT_INIT_ARRAY[0]
         len += sizeof(disp);
 
         set_te32(&disp, xct_off);
@@ -491,6 +497,24 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
     }
 
     total_out = super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    if (fo && xct_off && Elf32_Dyn::DT_INIT != upx_dt_init) { // patch user_init_rp
+        fo->seek((char *)user_init_rp - (char *)&file_image[0], SEEK_SET);
+        Elf32_Rel rel(*(Elf32_Rel const *)user_init_rp);
+        u32_t r_info = get_te32(&((Elf32_Rel const *)user_init_rp)->r_info);
+        u32_t r_type = (Elf32_Ehdr::EM_386  == e_machine) ? R_386_RELATIVE
+                     : (Elf32_Ehdr::EM_ARM  == e_machine) ? R_ARM_RELATIVE
+                     : (Elf32_Ehdr::EM_PPC  == e_machine) ? R_PPC_RELATIVE
+                     : (Elf32_Ehdr::EM_MIPS == e_machine) ? R_MIPS_32
+                     : 0;
+        set_te32(&rel.r_info, ELF32_R_INFO(ELF32_R_SYM(r_info), r_type));
+        fo->rewrite(&rel, sizeof(rel));
+
+        fo->seek((char *)user_init_rp - (char *)&file_image[0], SEEK_SET);
+        u32_t disp; set_te32(&disp, sz_pack2);  // entry to decompressor
+        fo->rewrite(&disp, sizeof(disp));
+
+        fo->seek(0, SEEK_END);
+    }
     // NOTE: PackLinuxElf::pack3  adjusted xct_off for the extra page
 
     // Then compressed gaps (including debuginfo.)
@@ -667,6 +691,20 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
     }
 
     total_out = super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    if (fo && xct_off && Elf64_Dyn::DT_INIT != upx_dt_init) { // patch user_init_rp
+        fo->seek((char *)user_init_rp - (char *)&file_image[0], SEEK_SET);
+        Elf64_Rela rela(*(Elf64_Rela const *)user_init_rp);
+        //u64_t r_info = get_te64(&((Elf64_Rela const *)user_init_rp)->r_info);
+        u32_t r_type = (Elf64_Ehdr::EM_AARCH64 == e_machine) ? R_AARCH64_RELATIVE 
+                     : (Elf64_Ehdr::EM_X86_64  == e_machine) ? R_X86_64_RELATIVE
+                     : (Elf64_Ehdr::EM_PPC64   == e_machine) ? R_PPC64_RELATIVE
+                     : 0;
+        set_te64(&rela.r_info, ELF64_R_INFO(0 /*ELF64_R_SYM(r_info)*/, r_type));
+        set_te64(&rela.r_addend, sz_pack2);  // entry to decompressor
+        fo->rewrite(&rela, sizeof(rela));
+
+        fo->seek(0, SEEK_END);
+    }
     // NOTE: PackLinuxElf::pack3  adjusted xct_off for the extra page
 
     // Then compressed gaps (including debuginfo.)
@@ -2361,10 +2399,6 @@ bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
     return false;
 }
 
-#define WANT_REL_ENUM
-#include "p_elf_enum.h"
-#undef WANT_REL_ENUM
-
 int PackLinuxElf32::canUnpack() // bool, except -1: format known, but not packed
 {
     if (checkEhdr(&ehdri)) {
@@ -3121,7 +3155,7 @@ PackLinuxElf64::canPack()
                            &&  Elf64_Shdr::SHT_PREINIT_ARRAY==sh_type)
                         || (     Elf64_Dyn::DT_INIT_ARRAY   ==upx_dt_init
                            &&  Elf64_Shdr::SHT_INIT_ARRAY   ==sh_type) )) {
-                        unsigned user_init_ava = get_te32(&shdr->sh_addr);
+                        unsigned user_init_ava = get_te64(&shdr->sh_addr);
                         user_init_off = get_te64(&shdr->sh_offset);
                         if ((u64_t)file_size <= user_init_off) {
                             char msg[70]; snprintf(msg, sizeof(msg),
@@ -3157,19 +3191,36 @@ PackLinuxElf64::canPack()
                                     user_init_rp = rp;
                                     upx_uint64_t r_info = get_te64(&rp->r_info);
                                     unsigned r_type = ELF64_R_TYPE(r_info);
-                                    if (Elf64_Ehdr::EM_AARCH64 == e_machine
-                                    &&  R_AARCH64_RELATIVE == r_type) {
-                                        user_init_va = get_te64(&rp->r_addend);
+                                    set_te64(&dynsym[0].st_name, r_va);  // for decompressor
+                                    set_te64(&dynsym[0].st_value, r_info);
+                                    set_te64(&dynsym[0].st_size, get_te64(&rp->r_addend));
+                                    if (Elf64_Ehdr::EM_AARCH64 == e_machine) {
+                                        if (R_AARCH64_RELATIVE == r_type) {
+                                            user_init_va = get_te64(&rp->r_addend);
+                                        }
+                                        else if (R_AARCH64_ABS64 == r_type) {
+                                            user_init_va = get_te64(&dynsym[ELF64_R_SYM(r_info)].st_value);
+                                        }
+                                        else {
+                                            char msg[50]; snprintf(msg, sizeof(msg),
+                                                "bad relocation %#llx DT_INIT_ARRAY[0]",
+                                                r_info);
+                                            throwCantPack(msg);
+                                        }
                                     }
-                                    else if (Elf64_Ehdr::EM_AARCH64 == e_machine
-                                    &&  R_AARCH64_ABS64 == r_type) {
-                                        user_init_va = get_te64(&file_image[user_init_off]);
-                                    }
-                                    else {
-                                        char msg[50]; snprintf(msg, sizeof(msg),
-                                            "bad relocation %#llx DT_INIT_ARRAY[0]",
-                                            r_info);
-                                        throwCantPack(msg);
+                                    else if (Elf64_Ehdr::EM_X86_64 == e_machine) {
+                                        if (R_X86_64_RELATIVE == r_type) {
+                                            user_init_va = get_te64(&rp->r_addend);
+                                        }
+                                        else if (R_X86_64_64 == r_type) {
+                                            user_init_va = get_te64(&dynsym[ELF64_R_SYM(r_info)].st_value);
+                                        }
+                                        else {
+                                            char msg[50]; snprintf(msg, sizeof(msg),
+                                                "bad relocation %#llx DT_INIT_ARRAY[0]",
+                                                r_info);
+                                            throwCantPack(msg);
+                                        }
                                     }
                                     break;
                                 }
@@ -6735,12 +6786,13 @@ void PackLinuxElf64::un_DT_INIT(
             ||       Elf64_Dyn::DT_PREINIT_ARRAY == tag) {
                 // 'val' is the RVA of the first slot, which is the slot that
                 // the compressor changed to be the entry to the run-time stub.
-                Elf64_Rel *rp = (Elf64_Rel *)elf_find_dynamic(Elf64_Dyn::DT_NULL);
+                Elf64_Rela *rp = (Elf64_Rela *)elf_find_dynamic(Elf64_Dyn::DT_NULL);
                 ((Elf64_Dyn *)elf_find_dynptr(Elf64_Dyn::DT_NULL))->d_val = 0;
                 if (rp) {
                     // Compressor saved the original *rp in dynsym[0]
-                    Elf64_Rel *rp_unc = (Elf64_Rel *)&dynsym[0];  // pointer
+                    Elf64_Rela *rp_unc = (Elf64_Rela *)&dynsym[0];  // pointer
                     rp->r_info = rp_unc->r_info;  // restore original r_info; r_offset not touched
+                    rp->r_addend = rp_unc->r_addend;
 
                     unsigned e_entry = get_te64(&ehdri.e_entry);
                     unsigned init_rva = get_te64(&file_image[e_entry - 3*sizeof(unsigned)]);
@@ -6748,10 +6800,10 @@ void PackLinuxElf64::un_DT_INIT(
                     Elf64_Phdr const *phdr = elf_find_Phdr_for_va(arr_rva, phdro, e_phnum);
                     unsigned arr_off = (arr_rva - get_te64(&phdr->p_vaddr)) + get_te64(&phdr->p_offset);
 
-                    rp_unc->r_offset = 0;    rp_unc->r_info = 0;
+                    memset(rp_unc, 0, sizeof(*rp_unc));
                     if (fo)  {
                         fo->seek(elf_unsigned_dynamic(Elf64_Dyn::DT_SYMTAB), SEEK_SET);
-                        fo->rewrite(rp_unc, sizeof(Elf64_Rel));  // clear dynsym[0]
+                        fo->rewrite(rp_unc, sizeof(Elf64_Rela));  // clear dynsym[0]
 
                         fo->seek((char *)rp - (char *)&file_image[0], SEEK_SET);
                         fo->rewrite(rp, sizeof(*rp));  // restore original *rp
@@ -6763,7 +6815,7 @@ void PackLinuxElf64::un_DT_INIT(
                     u64_t word;
                     if (Elf64_Ehdr::EM_ARM64 == e_machine) {
                         if (R_AARCH64_RELATIVE == r_type) {
-                            set_te64(&word, init_rva);
+                            word = 0;  // Elf64_Rela overwrites *(.r_offset) !
                         }
                         else if (R_AARCH64_ABS64 == r_type) {
                             word = 0;
@@ -7421,6 +7473,29 @@ PackLinuxElf32::elf_find_dynamic(unsigned int key) const
     return nullptr;
 }
 
+void *
+PackLinuxElf64::elf_find_dynamic(unsigned int key) const
+{
+    Elf64_Dyn const *dynp= elf_find_dynptr(key);
+    if (dynp) {
+        upx_uint64_t const t= elf_get_offset_from_address(get_te64(&dynp->d_val));
+        if (t && t < (upx_uint64_t)file_size) {
+            return t + file_image;
+        }
+    }
+    return nullptr;
+}
+
+upx_uint64_t
+PackLinuxElf64::elf_unsigned_dynamic(unsigned int key) const
+{
+    Elf64_Dyn const *dynp= elf_find_dynptr(key);
+    if (dynp) {
+        return get_te64(&dynp->d_val);
+    }
+    return 0;
+}
+
 upx_uint64_t
 PackLinuxElf32::elf_unsigned_dynamic(unsigned int key) const
 {
@@ -7762,34 +7837,6 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             "bad .e_shstrndx %d >= .e_shnum %d", e_shstrndx, e_shnum);
         throwCantPack(msg);
     }
-}
-
-void *
-PackLinuxElf64::elf_find_dynamic(unsigned int key) const
-{
-    Elf64_Dyn const *dynp= dynseg;
-    if (dynp)
-    for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
-            && Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
-        upx_uint64_t const t= elf_get_offset_from_address(get_te64(&dynp->d_val));
-        if (t && t < (upx_uint64_t)file_size) {
-            return t + file_image;
-        }
-        break;
-    }
-    return nullptr;
-}
-
-upx_uint64_t
-PackLinuxElf64::elf_unsigned_dynamic(unsigned int key) const
-{
-    Elf64_Dyn const *dynp= dynseg;
-    if (dynp)
-    for (; (unsigned)((char const *)dynp - (char const *)dynseg) < sz_dynseg
-            && Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
-        return get_te64(&dynp->d_val);
-    }
-    return 0;
 }
 
 unsigned PackLinuxElf::gnu_hash(char const *q)
