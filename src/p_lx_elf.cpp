@@ -5751,7 +5751,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
                 ++sh_out; ++n_sh_out;
             }
         }
-        total_out = fpad4(fo, total_out);
+        total_out = fpad8(fo, total_out);
         set_te64(&eho->e_shoff, total_out);
         unsigned len = (char *)sh_out - (char *)mb_shdro.getVoidPtr();
         set_te16(&eho->e_shnum, len / sizeof(*sh_out));
@@ -5783,7 +5783,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
         set_te64(&shdr_aa[2].sh_size, attr_len);
         set_te64(&shdr_aa[2].sh_addralign, 1);
         fo->write(&file_image[get_te64(&sec_arm_attr->sh_offset)], attr_len);
-        total_out = fpad4(fo, total_out += attr_len);
+        total_out = fpad8(fo, total_out += attr_len);
 
         Elf64_Ehdr *eho = &elfout.ehdr;
         set_te16(&eho->e_shnum, 3);
