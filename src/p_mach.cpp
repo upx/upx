@@ -1838,7 +1838,7 @@ int PackMachBase<T>::canUnpack()
                 &&  (Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) == uptr[1]) {
                     return true;
                 }
-                unsigned const magic = get_te32(1+ (char const *)uptr);
+                unsigned const magic = get_te32(&uptr[1]);  // FIXME:  probable bug
                 if ((M_NRV2B_8 == method || M_NRV2E_8 == method)
                 && 0xfc==(0xfc & uptr[0])
                 &&  (Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) == magic) {
