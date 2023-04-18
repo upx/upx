@@ -278,7 +278,7 @@ protected:
                                     unsigned image_size, int bits, bool bswap);
 
     // Target Endianness abstraction
-#if 0
+#if 1
     // try to detect TE16 vs TE32 vs TE64 size mismatches; note that "byte" is explicitly allowed
     template <class T>
     static inline constexpr bool is_te16_type = is_same_any_v<T, byte, upx_uint16_t, BE16, LE16>;

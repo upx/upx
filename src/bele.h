@@ -171,8 +171,8 @@ inline void set_le24(void *p, unsigned v) noexcept {
 }
 
 inline unsigned get_le26(const void *p) noexcept { return get_le32(p) & 0x03ffffff; }
-inline unsigned get_le19_5(const void *p) { return 0x7ffff & (get_le32(p) >> 5); }
-inline unsigned get_le14_5(const void *p) { return 0x03fff & (get_le32(p) >> 5); }
+inline unsigned get_le19_5(const void *p) noexcept { return 0x7ffff & (get_le32(p) >> 5); }
+inline unsigned get_le14_5(const void *p) noexcept { return 0x03fff & (get_le32(p) >> 5); }
 
 inline void set_le26(void *p, unsigned v) noexcept {
     // preserve the top 6 bits
@@ -181,10 +181,10 @@ inline void set_le26(void *p, unsigned v) noexcept {
     set_ne32(p, (get_ne32(p) & ne32_to_le32(0xfc000000)) |
                     (ne32_to_le32(v) & ne32_to_le32(0x03ffffff)));
 }
-inline void set_le19_5(void *p, unsigned v) {
+inline void set_le19_5(void *p, unsigned v) noexcept {
     set_le32(p, (get_le32(p) & 0xff00001f) | ((v & 0x07ffff) << 5));
 }
-inline void set_le14_5(void *p, unsigned v) {
+inline void set_le14_5(void *p, unsigned v) noexcept {
     set_le32(p, (get_le32(p) & 0xfff8001f) | ((v & 0x003fff) << 5));
 }
 
