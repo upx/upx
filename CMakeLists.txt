@@ -187,7 +187,7 @@ endif()
 # compile a target with -O2 even in Debug build
 function(upx_compile_target_debug_with_O2 t)
     if(MSVC)
-        # msvc uses some Debug compile options like -RTC1 that are incompatible with -O2
+        # MSVC uses some Debug compile options like -RTC1 that are incompatible with -O2
     else()
         target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-O2>)
     endif()
@@ -196,7 +196,7 @@ endfunction()
 function(upx_sanitize_target t)
     if(NOT UPX_CONFIG_DISABLE_SANITIZE)
         if(MSVC)
-            # msvc uses -GS (similar to -fstack-protector) by default
+            # MSVC uses -GS (similar to -fstack-protector) by default
         elseif(CMAKE_C_PLATFORM_ID MATCHES "^MinGW" OR MINGW OR CYGWIN)
             # avoid link errors with current MinGW-w64 versions
             # see https://www.mingw-w64.org/contribute/#sanitizers-asan-tsan-usan
@@ -242,7 +242,7 @@ if(MSVC)
 else()
     target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
-endif()
+endif() # UPX_CONFIG_DISABLE_ZSTD
 
 set(t upx)
 target_include_directories(${t} PRIVATE vendor)
@@ -301,7 +301,7 @@ if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     upx_add_test(upx-self-pack-n2b  upx -3 --nrv2b ${upx_self_exe} ${fo} -o upx-packed-n2b${exe})
     upx_add_test(upx-self-pack-n2d  upx -3 --nrv2d ${upx_self_exe} ${fo} -o upx-packed-n2d${exe})
     upx_add_test(upx-self-pack-n2e  upx -3 --nrv2e ${upx_self_exe} ${fo} -o upx-packed-n2e${exe})
-    upx_add_test(upx-self-pack-lzma upx -3 --lzma  ${upx_self_exe} ${fo} -o upx-packed-lzma${exe})
+    upx_add_test(upx-self-pack-lzma upx -1 --lzma  ${upx_self_exe} ${fo} -o upx-packed-lzma${exe})
     upx_add_test(upx-list           upx -l         upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})
     upx_add_test(upx-fileinfo       upx --fileinfo upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})
     upx_add_test(upx-test           upx -t         upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})

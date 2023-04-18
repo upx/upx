@@ -167,7 +167,7 @@ bool PackWinCeArm::needForceOption() const {
     // return true if we need `--force` to pack this file
     bool r = false;
     r |= (ih.opthdrsize != 0xe0);
-    r |= ((ih.flags & EXECUTABLE) == 0);
+    r |= ((ih.flags & IMAGE_FILE_EXECUTABLE_IMAGE) == 0);
     r |= (ih.entry == 0 /*&& !isdll*/);
     r |= (ih.ddirsentries != 16);
     //// r |= (IDSIZE(PEDIR_EXCEPTION) != 0); // is this used on arm?

@@ -278,12 +278,49 @@ protected:
                                     unsigned image_size, int bits, bool bswap);
 
     // Target Endianness abstraction
-    unsigned get_te16(const void *p) const { return bele->get16(p); }
-    unsigned get_te32(const void *p) const { return bele->get32(p); }
-    upx_uint64_t get_te64(const void *p) const { return bele->get64(p); }
-    void set_te16(void *p, unsigned v) { bele->set16(p, v); }
-    void set_te32(void *p, unsigned v) { bele->set32(p, v); }
-    void set_te64(void *p, upx_uint64_t v) { bele->set64(p, v); }
+#if 0
+    // try to detect TE16 vs TE32 vs TE64 size mismatches; note that "byte" is explicitly allowed
+    template <class T>
+    static inline constexpr bool is_te16_type = is_same_any_v<T, byte, upx_uint16_t, BE16, LE16>;
+    template <class T>
+    static inline constexpr bool is_te32_type = is_same_any_v<T, byte, unsigned, BE32, LE32>;
+    template <class T>
+    static inline constexpr bool is_te64_type = is_same_any_v<T, byte, upx_uint64_t, BE64, LE64>;
+
+    template <class T, class = std::enable_if_t<is_te16_type<T>, T> >
+    inline unsigned get_te16(const T *p) const noexcept {
+        return bele->get16(p);
+    }
+    template <class T, class = std::enable_if_t<is_te32_type<T>, T> >
+    inline unsigned get_te32(const T *p) const noexcept {
+        return bele->get32(p);
+    }
+    template <class T, class = std::enable_if_t<is_te64_type<T>, T> >
+    inline upx_uint64_t get_te64(const T *p) const noexcept {
+        return bele->get64(p);
+    }
+
+    template <class T, class = std::enable_if_t<is_te16_type<T>, T> >
+    inline void set_te16(T *p, unsigned v) noexcept {
+        bele->set16(p, v);
+    }
+    template <class T, class = std::enable_if_t<is_te32_type<T>, T> >
+    inline void set_te32(T *p, unsigned v) noexcept {
+        bele->set32(p, v);
+    }
+    template <class T, class = std::enable_if_t<is_te64_type<T>, T> >
+    inline void set_te64(T *p, upx_uint64_t v) noexcept {
+        bele->set64(p, v);
+    }
+#else
+    // permissive version using "void *"
+    inline unsigned get_te16(const void *p) const noexcept { return bele->get16(p); }
+    inline unsigned get_te32(const void *p) const noexcept { return bele->get32(p); }
+    inline upx_uint64_t get_te64(const void *p) const noexcept { return bele->get64(p); }
+    inline void set_te16(void *p, unsigned v) noexcept { bele->set16(p, v); }
+    inline void set_te32(void *p, unsigned v) noexcept { bele->set32(p, v); }
+    inline void set_te64(void *p, upx_uint64_t v) noexcept { bele->set64(p, v); }
+#endif
 
 protected:
     const N_BELE_RTP::AbstractPolicy *bele = nullptr; // target endianness

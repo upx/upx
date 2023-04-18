@@ -216,10 +216,12 @@ private:
     ACC_CXX_DISABLE_NEW_DELETE
 };
 
-// native policy (aka host policy)
+// Native Endianness policy (aka host policy)
 #if (ACC_ABI_BIG_ENDIAN)
+typedef BEPolicy NEPolicy;
 typedef BEPolicy HostPolicy;
 #elif (ACC_ABI_LITTLE_ENDIAN)
+typedef LEPolicy NEPolicy;
 typedef LEPolicy HostPolicy;
 #else
 #error "ACC_ABI_ENDIAN"

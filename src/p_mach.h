@@ -26,6 +26,7 @@
  */
 
 
+#pragma once
 #ifndef __UPX_P_MACHO_H
 #define __UPX_P_MACHO_H 1
 
@@ -33,15 +34,10 @@
 
 __packed_struct(Mach_fat_header)
     BE32 magic;
-# if 0
-        enum {  // note conflict with java bytecode PackLinuxI386
+        enum : unsigned {  // note conflict with java bytecode PackLinuxI386
             FAT_MAGIC      = 0xcafebabe,
-            FAT_MAGIC_SWAB = 0xbebafeca
+            FAT_MAGIC_SWAB = 0xbebafeca,
         };
-# else
-        static const unsigned FAT_MAGIC      = 0xcafebabe;
-        static const unsigned FAT_MAGIC_SWAB = 0xbebafeca;
-# endif
     BE32 nfat_arch;  // Number of Mach_fat_arch which follow.
 __packed_struct_end()
 

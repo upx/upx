@@ -129,50 +129,50 @@ static forceinline constexpr upx_uint64_t no_bswap64(upx_uint64_t v) noexcept { 
 // get/set 16/32/64
 **************************************************************************/
 
-inline unsigned get_be16(const void *p) { return ne16_to_be16(get_ne16(p)); }
-inline unsigned get_be32(const void *p) { return ne32_to_be32(get_ne32(p)); }
-inline upx_uint64_t get_be64(const void *p) { return ne64_to_be64(get_ne64(p)); }
-inline unsigned get_le16(const void *p) { return ne16_to_le16(get_ne16(p)); }
-inline unsigned get_le32(const void *p) { return ne32_to_le32(get_ne32(p)); }
-inline upx_uint64_t get_le64(const void *p) { return ne64_to_le64(get_ne64(p)); }
-inline void set_be16(void *p, unsigned v) { set_ne16(p, ne16_to_be16(v)); }
-inline void set_be32(void *p, unsigned v) { set_ne32(p, ne32_to_be32(v)); }
-inline void set_be64(void *p, upx_uint64_t v) { set_ne64(p, ne64_to_be64(v)); }
-inline void set_le16(void *p, unsigned v) { set_ne16(p, ne16_to_le16(v)); }
-inline void set_le32(void *p, unsigned v) { set_ne32(p, ne32_to_le32(v)); }
-inline void set_le64(void *p, upx_uint64_t v) { set_ne64(p, ne64_to_le64(v)); }
+inline unsigned get_be16(const void *p) noexcept { return ne16_to_be16(get_ne16(p)); }
+inline unsigned get_be32(const void *p) noexcept { return ne32_to_be32(get_ne32(p)); }
+inline upx_uint64_t get_be64(const void *p) noexcept { return ne64_to_be64(get_ne64(p)); }
+inline unsigned get_le16(const void *p) noexcept { return ne16_to_le16(get_ne16(p)); }
+inline unsigned get_le32(const void *p) noexcept { return ne32_to_le32(get_ne32(p)); }
+inline upx_uint64_t get_le64(const void *p) noexcept { return ne64_to_le64(get_ne64(p)); }
+inline void set_be16(void *p, unsigned v) noexcept { set_ne16(p, ne16_to_be16(v)); }
+inline void set_be32(void *p, unsigned v) noexcept { set_ne32(p, ne32_to_be32(v)); }
+inline void set_be64(void *p, upx_uint64_t v) noexcept { set_ne64(p, ne64_to_be64(v)); }
+inline void set_le16(void *p, unsigned v) noexcept { set_ne16(p, ne16_to_le16(v)); }
+inline void set_le32(void *p, unsigned v) noexcept { set_ne32(p, ne32_to_le32(v)); }
+inline void set_le64(void *p, upx_uint64_t v) noexcept { set_ne64(p, ne64_to_le64(v)); }
 
 /*************************************************************************
 // get/set 24/26
 **************************************************************************/
 
-inline unsigned get_be24(const void *p) {
+inline unsigned get_be24(const void *p) noexcept {
     const byte *b = ACC_CCAST(const byte *, p);
     return (b[0] << 16) | (b[1] << 8) | (b[2] << 0);
 }
 
-inline unsigned get_le24(const void *p) {
+inline unsigned get_le24(const void *p) noexcept {
     const byte *b = ACC_CCAST(const byte *, p);
     return (b[0] << 0) | (b[1] << 8) | (b[2] << 16);
 }
 
-inline void set_be24(void *p, unsigned v) {
+inline void set_be24(void *p, unsigned v) noexcept {
     byte *b = ACC_PCAST(byte *, p);
     b[0] = ACC_ICONV(byte, (v >> 16) & 0xff);
     b[1] = ACC_ICONV(byte, (v >> 8) & 0xff);
     b[2] = ACC_ICONV(byte, (v >> 0) & 0xff);
 }
 
-inline void set_le24(void *p, unsigned v) {
+inline void set_le24(void *p, unsigned v) noexcept {
     byte *b = ACC_PCAST(byte *, p);
     b[0] = ACC_ICONV(byte, (v >> 0) & 0xff);
     b[1] = ACC_ICONV(byte, (v >> 8) & 0xff);
     b[2] = ACC_ICONV(byte, (v >> 16) & 0xff);
 }
 
-inline unsigned get_le26(const void *p) { return get_le32(p) & 0x03ffffff; }
+inline unsigned get_le26(const void *p) noexcept { return get_le32(p) & 0x03ffffff; }
 
-inline void set_le26(void *p, unsigned v) {
+inline void set_le26(void *p, unsigned v) noexcept {
     // preserve the top 6 bits
     //   set_le32(p, (get_le32(p) & 0xfc000000) | (v & 0x03ffffff));
     // optimized version, saving a runtime bswap32
@@ -198,42 +198,42 @@ static forceinline upx_int64_t sign_extend(upx_uint64_t v, unsigned bits) noexce
     return ACC_ICAST(upx_int64_t, v);
 }
 
-inline int get_be16_signed(const void *p) {
+inline int get_be16_signed(const void *p) noexcept {
     unsigned v = get_be16(p);
     return sign_extend(v, 16);
 }
 
-inline int get_be24_signed(const void *p) {
+inline int get_be24_signed(const void *p) noexcept {
     unsigned v = get_be24(p);
     return sign_extend(v, 24);
 }
 
-inline int get_be32_signed(const void *p) {
+inline int get_be32_signed(const void *p) noexcept {
     unsigned v = get_be32(p);
     return sign_extend(v, 32);
 }
 
-inline upx_int64_t get_be64_signed(const void *p) {
+inline upx_int64_t get_be64_signed(const void *p) noexcept {
     upx_uint64_t v = get_be64(p);
     return sign_extend(v, 64);
 }
 
-inline int get_le16_signed(const void *p) {
+inline int get_le16_signed(const void *p) noexcept {
     unsigned v = get_le16(p);
     return sign_extend(v, 16);
 }
 
-inline int get_le24_signed(const void *p) {
+inline int get_le24_signed(const void *p) noexcept {
     unsigned v = get_le24(p);
     return sign_extend(v, 24);
 }
 
-inline int get_le32_signed(const void *p) {
+inline int get_le32_signed(const void *p) noexcept {
     unsigned v = get_le32(p);
     return sign_extend(v, 32);
 }
 
-inline upx_int64_t get_le64_signed(const void *p) {
+inline upx_int64_t get_le64_signed(const void *p) noexcept {
     upx_uint64_t v = get_le64(p);
     return sign_extend(v, 64);
 }
@@ -249,11 +249,13 @@ inline upx_int64_t get_le64_signed(const void *p) {
 //  to have gcc bug 17519 fixed - see http://gcc.gnu.org/PR17519 ]
 **************************************************************************/
 
-struct alignas(1) BE16 {
+struct alignas(1) BE16 final {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     byte d[2];
 
-    BE16 &operator=(unsigned v) noexcept {
+    forceinline operator unsigned() const noexcept { return get_be16(d); }
+
+    forceinline BE16 &operator=(unsigned v) noexcept {
         set_be16(d, v);
         return *this;
     }
@@ -294,16 +296,17 @@ struct alignas(1) BE16 {
         return *this;
     }
 
-    operator unsigned() const noexcept { return get_be16(d); }
-
-    bool operator<(const BE16 &v) const noexcept { return unsigned(*this) < unsigned(v); }
+    bool operator==(const BE16 &x) const noexcept { return memcmp(d, x.d, sizeof(d)) == 0; }
+    bool operator<(const BE16 &x) const noexcept { return unsigned(*this) < unsigned(x); }
 };
 
-struct alignas(1) BE32 {
+struct alignas(1) BE32 final {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     byte d[4];
 
-    BE32 &operator=(unsigned v) noexcept {
+    forceinline operator unsigned() const noexcept { return get_be32(d); }
+
+    forceinline BE32 &operator=(unsigned v) noexcept {
         set_be32(d, v);
         return *this;
     }
@@ -344,16 +347,17 @@ struct alignas(1) BE32 {
         return *this;
     }
 
-    operator unsigned() const noexcept { return get_be32(d); }
-
-    bool operator<(const BE32 &v) const noexcept { return unsigned(*this) < unsigned(v); }
+    bool operator==(const BE32 &x) const noexcept { return memcmp(d, x.d, sizeof(d)) == 0; }
+    bool operator<(const BE32 &x) const noexcept { return unsigned(*this) < unsigned(x); }
 };
 
-struct alignas(1) BE64 {
+struct alignas(1) BE64 final {
     typedef upx_uint64_t integral_conversion_type; // automatic conversion to upx_uint64_t
     byte d[8];
 
-    BE64 &operator=(upx_uint64_t v) noexcept {
+    forceinline operator upx_uint64_t() const noexcept { return get_be64(d); }
+
+    forceinline BE64 &operator=(upx_uint64_t v) noexcept {
         set_be64(d, v);
         return *this;
     }
@@ -394,16 +398,17 @@ struct alignas(1) BE64 {
         return *this;
     }
 
-    operator upx_uint64_t() const noexcept { return get_be64(d); }
-
-    bool operator<(const BE64 &v) const noexcept { return upx_uint64_t(*this) < upx_uint64_t(v); }
+    bool operator==(const BE64 &x) const noexcept { return memcmp(d, x.d, sizeof(d)) == 0; }
+    bool operator<(const BE64 &x) const noexcept { return upx_uint64_t(*this) < upx_uint64_t(x); }
 };
 
-struct alignas(1) LE16 {
+struct alignas(1) LE16 final {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     byte d[2];
 
-    LE16 &operator=(unsigned v) noexcept {
+    forceinline operator unsigned() const noexcept { return get_le16(d); }
+
+    forceinline LE16 &operator=(unsigned v) noexcept {
         set_le16(d, v);
         return *this;
     }
@@ -444,16 +449,17 @@ struct alignas(1) LE16 {
         return *this;
     }
 
-    operator unsigned() const noexcept { return get_le16(d); }
-
-    bool operator<(const LE16 &v) const noexcept { return unsigned(*this) < unsigned(v); }
+    bool operator==(const LE16 &x) const noexcept { return memcmp(d, x.d, sizeof(d)) == 0; }
+    bool operator<(const LE16 &x) const noexcept { return unsigned(*this) < unsigned(x); }
 };
 
-struct alignas(1) LE32 {
+struct alignas(1) LE32 final {
     typedef unsigned integral_conversion_type; // automatic conversion to unsigned
     byte d[4];
 
-    LE32 &operator=(unsigned v) noexcept {
+    forceinline operator unsigned() const noexcept { return get_le32(d); }
+
+    forceinline LE32 &operator=(unsigned v) noexcept {
         set_le32(d, v);
         return *this;
     }
@@ -494,16 +500,17 @@ struct alignas(1) LE32 {
         return *this;
     }
 
-    operator unsigned() const noexcept { return get_le32(d); }
-
-    bool operator<(const LE32 &v) const noexcept { return unsigned(*this) < unsigned(v); }
+    bool operator==(const LE32 &x) const noexcept { return memcmp(d, x.d, sizeof(d)) == 0; }
+    bool operator<(const LE32 &x) const noexcept { return unsigned(*this) < unsigned(x); }
 };
 
-struct alignas(1) LE64 {
+struct alignas(1) LE64 final {
     typedef upx_uint64_t integral_conversion_type; // automatic conversion to upx_uint64_t
     byte d[8];
 
-    LE64 &operator=(upx_uint64_t v) noexcept {
+    forceinline operator upx_uint64_t() const noexcept { return get_le64(d); }
+
+    forceinline LE64 &operator=(upx_uint64_t v) noexcept {
         set_le64(d, v);
         return *this;
     }
@@ -544,9 +551,8 @@ struct alignas(1) LE64 {
         return *this;
     }
 
-    operator upx_uint64_t() const noexcept { return get_le64(d); }
-
-    bool operator<(const LE64 &v) const noexcept { return upx_uint64_t(*this) < upx_uint64_t(v); }
+    bool operator==(const LE64 &x) const noexcept { return memcmp(d, x.d, sizeof(d)) == 0; }
+    bool operator<(const LE64 &x) const noexcept { return upx_uint64_t(*this) < upx_uint64_t(x); }
 };
 
 /*************************************************************************
@@ -634,39 +640,6 @@ inline unsigned UPX_MIN(const LE32 &a, unsigned b) { return UPX_MIN(unsigned(a),
 // misc support
 **************************************************************************/
 
-template <>
-struct upx_is_integral<BE16> : public std::true_type {};
-template <>
-struct upx_is_integral<BE32> : public std::true_type {};
-template <>
-struct upx_is_integral<BE64> : public std::true_type {};
-template <>
-struct upx_is_integral<LE16> : public std::true_type {};
-template <>
-struct upx_is_integral<LE32> : public std::true_type {};
-template <>
-struct upx_is_integral<LE64> : public std::true_type {};
-
-// for use with qsort()
-extern "C" {
-int __acc_cdecl_qsort be16_compare(const void *, const void *);
-int __acc_cdecl_qsort be24_compare(const void *, const void *);
-int __acc_cdecl_qsort be32_compare(const void *, const void *);
-int __acc_cdecl_qsort be64_compare(const void *, const void *);
-int __acc_cdecl_qsort le16_compare(const void *, const void *);
-int __acc_cdecl_qsort le24_compare(const void *, const void *);
-int __acc_cdecl_qsort le32_compare(const void *, const void *);
-int __acc_cdecl_qsort le64_compare(const void *, const void *);
-int __acc_cdecl_qsort be16_compare_signed(const void *, const void *);
-int __acc_cdecl_qsort be24_compare_signed(const void *, const void *);
-int __acc_cdecl_qsort be32_compare_signed(const void *, const void *);
-int __acc_cdecl_qsort be64_compare_signed(const void *, const void *);
-int __acc_cdecl_qsort le16_compare_signed(const void *, const void *);
-int __acc_cdecl_qsort le24_compare_signed(const void *, const void *);
-int __acc_cdecl_qsort le32_compare_signed(const void *, const void *);
-int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
-} // extern "C"
-
 // native types
 #if (ACC_ABI_BIG_ENDIAN)
 typedef BE16 NE16;
@@ -689,6 +662,44 @@ typedef LE64 NE64;
 #define ne32_compare_signed le32_compare_signed
 #define ne64_compare_signed le64_compare_signed
 #endif
+
+// <type_traits> upx_is_integral
+#define TT_IS_INTEGRAL(T)                                                                          \
+    template <>                                                                                    \
+    struct upx_is_integral<T> : public std::true_type {};                                          \
+    template <>                                                                                    \
+    struct upx_is_integral<const T> : public std::true_type {};                                    \
+    template <>                                                                                    \
+    struct upx_is_integral<volatile T> : public std::true_type {};                                 \
+    template <>                                                                                    \
+    struct upx_is_integral<const volatile T> : public std::true_type {}
+TT_IS_INTEGRAL(BE16);
+TT_IS_INTEGRAL(BE32);
+TT_IS_INTEGRAL(BE64);
+TT_IS_INTEGRAL(LE16);
+TT_IS_INTEGRAL(LE32);
+TT_IS_INTEGRAL(LE64);
+#undef TT_IS_INTEGRAL
+
+// for use with qsort()
+extern "C" {
+int __acc_cdecl_qsort be16_compare(const void *, const void *);
+int __acc_cdecl_qsort be24_compare(const void *, const void *);
+int __acc_cdecl_qsort be32_compare(const void *, const void *);
+int __acc_cdecl_qsort be64_compare(const void *, const void *);
+int __acc_cdecl_qsort le16_compare(const void *, const void *);
+int __acc_cdecl_qsort le24_compare(const void *, const void *);
+int __acc_cdecl_qsort le32_compare(const void *, const void *);
+int __acc_cdecl_qsort le64_compare(const void *, const void *);
+int __acc_cdecl_qsort be16_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort be24_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort be32_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort be64_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort le16_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort le24_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort le32_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
+} // extern "C"
 
 /*************************************************************************
 // Provide namespaces and classes to abstract endianness policies.

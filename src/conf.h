@@ -96,7 +96,17 @@ struct upx_std_is_bounded_array<T[N]> : public std::true_type {};
 template <class T>
 inline constexpr bool upx_std_is_bounded_array_v = upx_std_is_bounded_array<T>::value;
 
-// see bele.h
+// <type_traits> is_same_all and is_same_any: std::is_same for multiple types
+template <class T, class... Ts>
+struct is_same_all : public std::conjunction<std::is_same<T, Ts>...> {};
+template <class T, class... Ts>
+inline constexpr bool is_same_all_v = is_same_all<T, Ts...>::value;
+template <class T, class... Ts>
+struct is_same_any : public std::disjunction<std::is_same<T, Ts>...> {};
+template <class T, class... Ts>
+inline constexpr bool is_same_any_v = is_same_any<T, Ts...>::value;
+
+// upx_is_integral is overloaded for BE16 & friends; see bele.h
 template <class T>
 struct upx_is_integral : public std::is_integral<T> {};
 template <class T>
@@ -148,7 +158,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(upx_charptr_unit_type) == 1)
 typedef upx_int64_t upx_off_t;
 #undef off_t
 #if 0
-// at some future point we can do this...
+// TODO cleanup: at some future point we can do this...
 #define off_t DO_NOT_USE_off_t
 #else
 #define off_t upx_off_t
@@ -593,9 +603,9 @@ template <class T, T default_value_, T min_value_, T max_value_>
 struct OptVar
 {
     typedef T value_type;
-    static const T default_value = default_value_;
-    static const T min_value = min_value_;
-    static const T max_value = max_value_;
+    static constexpr T default_value = default_value_;
+    static constexpr T min_value = min_value_;
+    static constexpr T max_value = max_value_;
 
     static void assertValue(const T &v) {
         // info: this generates annoying warnings "unsigned >= 0 is always true"

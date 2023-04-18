@@ -7,7 +7,7 @@ jobs:
   job-alpine-cmake:
     strategy:
       fail-fast: false
-      matrix: {container: ['alpine:3.12','alpine:3.17','alpine:edge','i386/alpine:edge']}
+      matrix: { container: ['alpine:3.12','alpine:3.17','alpine:edge','i386/alpine:edge'] }
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
@@ -23,7 +23,7 @@ jobs:
       - { name: 'Build gcc',   run: 'make -C upx UPX_XTARGET=gcc-static   CC="gcc -static"   CXX="g++ -static"' }
       - { name: 'Strip release binaries', run: 'strip -p --strip-unneeded upx/build/*/*/release/upx' }
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
-        if: ${{ !startsWith(matrix.container, 'i386/alpine') }} # missing nodejs
+        if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.artifact_name }}

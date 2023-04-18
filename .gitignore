@@ -22,6 +22,7 @@ tmp*
 *.py[cdo]
 *.so
 *.swp
+*.tmp
 *.ttp
 
 doc/*.man

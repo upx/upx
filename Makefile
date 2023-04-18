@@ -49,7 +49,9 @@ release: build/release
 .SECONDEXPANSION:
 .SUFFIXES:
 
+#
 # END of Makefile; extra stuff follows
+#
 
 #***********************************************************************
 # extra builds: some pre-defined build configurations
