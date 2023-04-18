@@ -81,14 +81,14 @@ T *NewArray(upx_uint64_t n) {
     size_t bytes = mem_size(sizeof(T), n); // assert size
     T *array = new T[size_t(n)];
     if (array) {
-        memset(array, 0xff, bytes);
+        memset(array, 0xfb, bytes);
         (void) VALGRIND_MAKE_MEM_UNDEFINED(array, bytes);
     }
     return array;
 }
 #define New(type, n) (NewArray<type>(n))
 #else
-#define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
+#define New(type, n) new type[mem_size_get_n(sizeof(type), (n))]
 #endif
 
 /*************************************************************************

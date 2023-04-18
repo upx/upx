@@ -24,7 +24,7 @@ RUN dpkg --add-architecture i386 \
 # manually install compat libs from Ubuntu 16.04; REQUIRED
 RUN cd /root \
     && aria2c --checksum=sha-256=de22baf3dd851a10e16fbf66a243e70149ca46e06b2939fdc79429196cefc090 \
-              'http://archive.kernel.org/ubuntu-archive/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.6-1_amd64.deb' \
+              'https://archive.kernel.org/ubuntu-archive/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.6-1_amd64.deb' \
     && mkdir packages \
     && for f in ./*.deb; do dpkg -x $f ./packages; done \
     && mv -v -n ./packages/usr/lib/x86_64-linux-gnu/lib* /usr/lib/x86_64-linux-gnu/ \

@@ -194,8 +194,8 @@ static bool prepare_result(lzma_compress_result_t *res, unsigned src_len, int me
     lzma_compress_config_t::num_fast_bytes_t::assertValue(res->num_fast_bytes);
 
     res->num_probs = 1846 + (768u << (res->lit_context_bits + res->lit_pos_bits));
-    // printf("\nlzma_compress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits,
-    //        res->lit_context_bits, res->dict_size, res->num_probs);
+    NO_printf("\nlzma_compress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits,
+              res->lit_context_bits, res->dict_size, res->num_probs);
     return true;
 
 error:
@@ -375,7 +375,7 @@ int upx_lzma_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsi
         // UPX extra stuff in first byte: 5 high bits convenience for stub decompressor
         unsigned t = res->lit_context_bits + res->lit_pos_bits;
         os.WriteByte(Byte((t << 3) | res->pos_bits));
-        os.WriteByte(Byte((res->lit_pos_bits << 4) | (res->lit_context_bits)));
+        os.WriteByte(Byte((res->lit_pos_bits << 4) | res->lit_context_bits));
 
         // compress
         rh = enc.Code(&is, &os, nullptr, nullptr, &progress);
@@ -399,10 +399,10 @@ int upx_lzma_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsi
 
 error:
     *dst_len = (unsigned) os.b_pos;
-    // printf("\nlzma_compress: %d: %u %u %u %u %u, %u - > %u\n", r, res->pos_bits,
-    // res->lit_pos_bits,
-    //        res->lit_context_bits, res->dict_size, res->num_probs, src_len, *dst_len);
-    // printf("%u %u %u\n", is.__m_RefCount, os.__m_RefCount, progress.__m_RefCount);
+    NO_printf("\nlzma_compress: %d: %u %u %u %u %u, %u - > %u\n", r, res->pos_bits,
+              res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs, src_len,
+              *dst_len);
+    NO_printf("%u %u %u\n", is.__m_RefCount, os.__m_RefCount, progress.__m_RefCount);
     return r;
 }
 
@@ -458,8 +458,8 @@ int upx_lzma_decompress(const upx_bytep src, unsigned src_len, upx_bytep dst, un
         assert(cresult->result_lzma.lit_context_bits == (unsigned) s.Properties.lc);
         assert(cresult->result_lzma.num_probs == (unsigned) LzmaGetNumProbs(&s.Properties));
         const lzma_compress_result_t *res = &cresult->result_lzma;
-        // printf("\nlzma_decompress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits,
-        //        res->lit_context_bits, res->dict_size, res->num_probs);
+        NO_printf("\nlzma_decompress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits,
+                  res->lit_context_bits, res->dict_size, res->num_probs);
         UNUSED(res);
     }
     s.Probs = (CProb *) malloc(sizeof(CProb) * LzmaGetNumProbs(&s.Properties));
