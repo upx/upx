@@ -119,16 +119,6 @@ __acc_static_noinline void e_usage(void) {
     e_exit(EXIT_USAGE);
 }
 
-#if 0  // UNUSED
-static void e_memory(void)
-{
-    show_head();
-    fflush(con_term);
-    fprintf(stderr,"%s: out of memory\n", argv0);
-    e_exit(EXIT_MEMORY);
-}
-#endif // UNUSED
-
 static void e_method(int m, int l) {
     fflush(con_term);
     fprintf(stderr, "%s: illegal method option -- %d/%d\n", argv0, m, l);
@@ -159,22 +149,13 @@ static void e_envopt(const char *n) {
 }
 #endif /* defined(OPTIONS_VAR) */
 
-#if 0  // UNUSED
-static void __acc_cdecl_sighandler e_sighandler(int signum)
-{
-    UNUSED(signum);
-    e_exit(EXIT_FATAL);
-}
-#endif // UNUSED
-
 /*************************************************************************
 // check options
 **************************************************************************/
 
 static void check_not_both(bool e1, bool e2, const char *c1, const char *c2) {
     if (e1 && e2) {
-        fprintf(stderr, "%s: ", argv0);
-        fprintf(stderr, "cannot use both '%s' and '%s'\n", c1, c2);
+        fprintf(stderr, "%s: cannot use both '%s' and '%s'\n", argv0, c1, c2);
         e_usage();
     }
 }

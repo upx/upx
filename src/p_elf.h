@@ -25,11 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #pragma once
-#ifndef __UPX_P_ELF_H
-#define __UPX_P_ELF_H 1
-
 
 /*************************************************************************
 // N_Elf
@@ -315,6 +311,7 @@ struct ElfClass_32
         COMPILE_TIME_ASSERT(sizeof(Rel)  ==  8)
         COMPILE_TIME_ASSERT(sizeof(Rela) == 12)
         COMPILE_TIME_ASSERT(sizeof(Sym)  == 16)
+        COMPILE_TIME_ASSERT(sizeof(External_Note) == 12)
         COMPILE_TIME_ASSERT_ALIGNED1(Ehdr)
         COMPILE_TIME_ASSERT_ALIGNED1(Phdr)
         COMPILE_TIME_ASSERT_ALIGNED1(Shdr)
@@ -322,6 +319,7 @@ struct ElfClass_32
         COMPILE_TIME_ASSERT_ALIGNED1(Rel)
         COMPILE_TIME_ASSERT_ALIGNED1(Rela)
         COMPILE_TIME_ASSERT_ALIGNED1(Sym)
+        COMPILE_TIME_ASSERT_ALIGNED1(External_Note)
     }
 };
 
@@ -356,6 +354,7 @@ struct ElfClass_64
         COMPILE_TIME_ASSERT(sizeof(Rel)  == 16)
         COMPILE_TIME_ASSERT(sizeof(Rela) == 24)
         COMPILE_TIME_ASSERT(sizeof(Sym)  == 24)
+        COMPILE_TIME_ASSERT(sizeof(External_Note) == 12)
         COMPILE_TIME_ASSERT_ALIGNED1(Ehdr)
         COMPILE_TIME_ASSERT_ALIGNED1(Phdr)
         COMPILE_TIME_ASSERT_ALIGNED1(Shdr)
@@ -363,6 +362,7 @@ struct ElfClass_64
         COMPILE_TIME_ASSERT_ALIGNED1(Rel)
         COMPILE_TIME_ASSERT_ALIGNED1(Rela)
         COMPILE_TIME_ASSERT_ALIGNED1(Sym)
+        COMPILE_TIME_ASSERT_ALIGNED1(External_Note)
     }
 };
 
@@ -435,8 +435,5 @@ typedef ElfClass_LE64::Rel    Elf_LE64_Rel;
 typedef ElfClass_LE64::Rela   Elf_LE64_Rela;
 typedef ElfClass_LE64::Sym    Elf_LE64_Sym;
 typedef ElfClass_LE64::External_Note    Elf_LE64_External_Note;
-
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

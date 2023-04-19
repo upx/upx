@@ -49,9 +49,10 @@
 
 // disable some pedantic warnings
 #if (ACC_CC_MSC)
-#pragma warning(disable : 4244) // -Wconversion
-#pragma warning(disable : 4267) // -Wconversion
-#pragma warning(disable : 4820) // padding added after data member
+#pragma warning(disable : 4127) // W4: conditional expression is constant
+#pragma warning(disable : 4244) // W3: conversion from 'type1' to 'type2', possible loss of data
+#pragma warning(disable : 4267) // W3: conversion from 'size_t' to 'type', possible loss of data
+#pragma warning(disable : 4820) // W4: padding added after data member
 #endif
 
 #undef snprintf
@@ -83,7 +84,7 @@
 #include <mutex>
 #endif
 
-// C++ submodule headers
+// UPX vendor git submodule headers
 #include <doctest/doctest/parts/doctest_fwd.h>
 #if WITH_BOOST_PFR
 #include <sstream>

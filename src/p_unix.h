@@ -30,6 +30,7 @@
  */
 
 
+#pragma once
 #ifndef __UPX_P_UNIX_H
 #define __UPX_P_UNIX_H 1
 

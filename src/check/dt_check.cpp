@@ -83,6 +83,7 @@ int upx_doctest_check() { return upx_doctest_check(0, nullptr); }
 // compile-time checks
 **************************************************************************/
 
+// need extra paranthesis because the C preprocessor does not understand C++ templates
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<short, upx_int16_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned short, upx_uint16_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<int, upx_int32_t>::value))
@@ -90,10 +91,25 @@ ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned, upx_uint32_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<long long, upx_int64_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned long long, upx_uint64_t>::value))
 
+ACC_COMPILE_TIME_ASSERT_HEADER((is_same_all_v<int>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((is_same_all_v<int, int>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((is_same_all_v<int, int, int>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_all_v<int, char>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_all_v<int, char, int>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_all_v<int, int, char>) )
+
+ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_any_v<int>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((is_same_any_v<int, int>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((is_same_any_v<int, char, int>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((is_same_any_v<int, int, char>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_any_v<int, char>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_any_v<int, char, char>) )
+ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_any_v<int, char, long>) )
+
 ACC_COMPILE_TIME_ASSERT_HEADER(no_bswap16(0x04030201) == 0x0201)
 ACC_COMPILE_TIME_ASSERT_HEADER(no_bswap32(0x04030201) == 0x04030201)
 ACC_COMPILE_TIME_ASSERT_HEADER(no_bswap64(0x0807060504030201ull) == 0x0807060504030201ull)
-#if !(ACC_CC_MSC)
+#if !(ACC_CC_MSC) // unfortunately *not* constexpr with current MSVC
 ACC_COMPILE_TIME_ASSERT_HEADER(bswap16(0x04030201) == 0x0102)
 ACC_COMPILE_TIME_ASSERT_HEADER(bswap32(0x04030201) == 0x01020304)
 ACC_COMPILE_TIME_ASSERT_HEADER(bswap64(0x0807060504030201ull) == 0x0102030405060708ull)
@@ -146,82 +162,99 @@ ACC_COMPILE_TIME_ASSERT_HEADER((wchar_t) -1 > 0)
 namespace {
 
 template <class T>
+struct CheckIntegral {
+    template <class U>
+    static void checkU(void) {
+#if __cplusplus < 202002L
+        COMPILE_TIME_ASSERT(std::is_pod<U>::value) // deprecated in C++20
+#endif
+        COMPILE_TIME_ASSERT(std::is_standard_layout<U>::value)
+        COMPILE_TIME_ASSERT(std::is_trivial<U>::value)
+        // extra checks, these are probably implied by std::is_trivial
+        COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<U>::value)
+        COMPILE_TIME_ASSERT(std::is_trivially_copyable<U>::value)
+        COMPILE_TIME_ASSERT(std::is_trivially_default_constructible<U>::value)
+        // UPX
+        COMPILE_TIME_ASSERT(upx_is_integral<U>::value)
+        COMPILE_TIME_ASSERT(upx_is_integral_v<U>)
+    }
+    static void check(void) {
+        checkU<T>();
+        checkU<typename std::add_const<T>::type>();
+#if !defined(__GNUC__)
+        // TODO later: "volatile" seems to be broken with some older g++/libstdc++ versions??
+        checkU<typename std::add_volatile<T>::type>();
+        checkU<typename std::add_cv<T>::type>();
+#endif
+    }
+};
+template <class T>
+struct CheckAlignment {
+    static void check(void) {
+        COMPILE_TIME_ASSERT_ALIGNED1(T)
+        struct alignas(1) Test1 {
+            char a;
+            T b;
+        };
+        struct alignas(1) Test2 {
+            char a;
+            T b[3];
+        };
+        COMPILE_TIME_ASSERT_ALIGNED1(Test1)
+        COMPILE_TIME_ASSERT_ALIGNED1(Test2)
+        Test1 t1[7];
+        Test2 t2[7];
+        COMPILE_TIME_ASSERT(sizeof(Test1) == 1 + sizeof(T))
+        COMPILE_TIME_ASSERT(sizeof(t1) == 7 + 7 * sizeof(T))
+        COMPILE_TIME_ASSERT(sizeof(Test2) == 1 + 3 * sizeof(T))
+        COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21 * sizeof(T))
+        UNUSED(t1);
+        UNUSED(t2);
+    }
+};
+template <class T>
 struct TestBELE {
     static noinline bool test(void) {
-        // POD checks
-        {
-            COMPILE_TIME_ASSERT(std::is_standard_layout<T>::value)
-            COMPILE_TIME_ASSERT(std::is_trivial<T>::value)
-            // extra checks, these are probably implied by std::is_trivial
-            COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<T>::value)
-            COMPILE_TIME_ASSERT(std::is_trivially_copyable<T>::value)
-            COMPILE_TIME_ASSERT(std::is_trivially_default_constructible<T>::value)
-            // UPX
-            COMPILE_TIME_ASSERT(upx_is_integral<T>::value)
-            COMPILE_TIME_ASSERT(upx_is_integral_v<T>)
-        }
-        // alignment checks
-        {
-            COMPILE_TIME_ASSERT_ALIGNED1(T)
-            struct alignas(1) test1_t {
-                char a;
-                T b;
-            };
-            struct alignas(1) test2_t {
-                char a;
-                T b[3];
-            };
-            COMPILE_TIME_ASSERT_ALIGNED1(test1_t)
-            COMPILE_TIME_ASSERT_ALIGNED1(test2_t)
-            test1_t t1[7];
-            test2_t t2[7];
-            COMPILE_TIME_ASSERT(sizeof(test1_t) == 1 + sizeof(T))
-            COMPILE_TIME_ASSERT(sizeof(t1) == 7 + 7 * sizeof(T))
-            COMPILE_TIME_ASSERT(sizeof(test2_t) == 1 + 3 * sizeof(T))
-            COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21 * sizeof(T))
-            UNUSED(t1);
-            UNUSED(t2);
-        }
+        CheckIntegral<T>::check();
+        CheckAlignment<T>::check();
         // arithmetic checks (modern compilers will optimize this away)
-        {
-            T allbits;
-            allbits = 0;
-            allbits += 1;
-            allbits -= 2;
-            T v1;
-            v1 = 1;
-            v1 *= 2;
-            v1 /= 1;
-            v1 -= 1;
-            T v2;
-            v2 = 1;
-            assert((v1 == v2));
-            assert(!(v1 != v2));
-            assert((v1 <= v2));
-            assert((v1 >= v2));
-            assert(!(v1 < v2));
-            assert(!(v1 > v2));
-            v2 ^= allbits;
-            assert(!(v1 == v2));
-            assert((v1 != v2));
-            assert((v1 <= v2));
-            assert(!(v1 >= v2));
-            assert((v1 < v2));
-            assert(!(v1 > v2));
-            v2 += 2;
-            assert(v1 == 1);
-            assert(v2 == 0);
-            v1 <<= 1;
-            v1 |= v2;
-            v1 >>= 1;
-            v2 &= v1;
-            v2 /= v1;
-            v2 *= v1;
-            assert(v1 == 1);
-            assert(v2 == 0);
-            if ((v1 ^ v2) != 1)
-                return false;
-        }
+        T allbits;
+        allbits = 0;
+        allbits += 1;
+        allbits -= 2;
+        T v1;
+        v1 = 1;
+        v1 *= 2;
+        v1 /= 1;
+        v1 -= 1;
+        T v2;
+        v2 = 1;
+        assert((v1 == v2));
+        assert(!(v1 != v2));
+        assert((v1 <= v2));
+        assert((v1 >= v2));
+        assert(!(v1 < v2));
+        assert(!(v1 > v2));
+        v2 ^= allbits;
+        assert(!(v1 == v2));
+        assert((v1 != v2));
+        assert((v1 <= v2));
+        assert(!(v1 >= v2));
+        assert((v1 < v2));
+        assert(!(v1 > v2));
+        v2 += 2;
+        assert(v1 == 1);
+        assert(v2 == 0);
+        v1 <<= 1;
+        v1 |= v2;
+        v1 >>= 1;
+        v2 &= v1;
+        v2 /= v1;
+        v2 *= v1;
+        assert(v1 == 1);
+        assert(v2 == 0);
+        if ((v1 ^ v2) != 1)
+            return false;
         return true;
     }
 };
@@ -277,6 +310,18 @@ void upx_compiler_sanity_check(void) {
     COMPILE_TIME_ASSERT_ALIGNED1(LE16)
     COMPILE_TIME_ASSERT_ALIGNED1(LE32)
     COMPILE_TIME_ASSERT_ALIGNED1(LE64)
+
+    CheckIntegral<char>::check();
+    CheckIntegral<signed char>::check();
+    CheckIntegral<unsigned char>::check();
+    CheckIntegral<short>::check();
+    CheckIntegral<int>::check();
+    CheckIntegral<long>::check();
+    CheckIntegral<long long>::check();
+    CheckIntegral<ptrdiff_t>::check();
+    CheckIntegral<size_t>::check();
+    CheckIntegral<upx_off_t>::check();
+    CheckIntegral<upx_uintptr_t>::check();
 
     COMPILE_TIME_ASSERT(sizeof(upx_charptr_unit_type) == 1)
     COMPILE_TIME_ASSERT_ALIGNED1(upx_charptr_unit_type)

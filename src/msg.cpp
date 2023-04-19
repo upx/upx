@@ -26,12 +26,11 @@
  */
 
 #include "headers.h"
-#include <typeinfo>
+#include <typeinfo> // typeid()
 #include "conf.h"
 
 /*************************************************************************
-// FIXME: if stdout is redirected to a file and stderr is not, should
-// we write all error messages to both stderr and stdout ?
+//
 **************************************************************************/
 
 static int pr_need_nl = 0;
@@ -112,7 +111,7 @@ void printErr(const char *iname, const Throwable *e) {
         snprintf(buf + l, sizeof(buf) - l, ": %s", strerror(e->getErrno()));
 #if 1
         // some compilers (e.g. Borland C++) put a trailing '\n'
-        // into strerror() result
+        // into the strerror() result
         l = strlen(buf);
         while (l-- > 0 && (buf[l] == '\n' || buf[l] == ' '))
             buf[l] = 0;
@@ -154,7 +153,7 @@ void printUnhandledException(const char *iname, const std::exception *e) {
 }
 
 /*************************************************************************
-// FIXME: should use colors and a consistent layout here
+// info
 **************************************************************************/
 
 static int info_header = 0;
@@ -202,10 +201,8 @@ void info(const char *format, ...) {
 }
 
 void infoWarning(const char *format, ...) {
-    if (opt->info_mode <= 0) {
-        // FIXME - should still print something here
+    if (opt->info_mode <= 0)
         return;
-    }
     va_list args;
     char buf[1024];
     va_start(args, format);

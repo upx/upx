@@ -123,14 +123,22 @@ bool PeFile::testUnpackVersion(int version) const {
 // CHPE   Compiled Hybrid PE: Microsoft internal only?
 // CHPEV2 Compiled Hybrid PE: ARM64EC, ARM64X
 /*static*/ int PeFile::checkMachine(unsigned cpu) {
-    // known but not supported
+    // unsupported
+    if (cpu == IMAGE_FILE_MACHINE_IA64)
+        throwCantPack("win64/ia64 is not supported");
+    if (cpu == IMAGE_FILE_MACHINE_LOONGARCH64)
+        throwCantPack("win64/loong64 is not supported");
+    if (cpu == IMAGE_FILE_MACHINE_RISCV64)
+        throwCantPack("win64/riscv64 is not supported");
+
+    // known but not (yet?) supported
     if (cpu == IMAGE_FILE_MACHINE_ARMNT)
-        throwCantPack("win32/arm32 is not supported"); // obsolete
+        throwCantPack("win32/armnt is not supported"); // obsolete
     if (cpu == IMAGE_FILE_MACHINE_ARM64)
-        throwCantPack("win64/arm64 is not supported");
+        throwCantPack("win64/arm64 is not yet supported");
     // FIXME: it seems that arm64ec actually uses MACHINE_AMD64 ???
     if (cpu == IMAGE_FILE_MACHINE_ARM64EC)
-        throwCantPack("win64/arm64ec is not supported");
+        throwCantPack("win64/arm64ec is not yet supported");
 
     // supported
     if (cpu == IMAGE_FILE_MACHINE_AMD64)
@@ -140,7 +148,7 @@ bool PeFile::testUnpackVersion(int version) const {
     if (cpu >= IMAGE_FILE_MACHINE_I386 && cpu <= 0x150) // what is this 0x150 ???
         return UPX_F_W32PE_I386;
 
-    // other or unknown (alpha, mips, etc.)
+    // other or unknown (alpha, mips, powerpc, sh, etc.)
     throwCantPack("pefile: unsupported machine %#x", cpu);
     return 0; // pacify msvc
 }
@@ -1339,7 +1347,7 @@ void PeFile::processTls2(Reloc *rel, const Interval *iv, unsigned newaddr,
         return;
     // add new relocation entries
 
-    if __acc_cte (tls_handler_offset > 0 && tls_handler_offset_reloc > 0)
+    if (tls_handler_offset > 0 && tls_handler_offset_reloc > 0)
         rel->add(tls_handler_offset + tls_handler_offset_reloc, reloc_type);
 
     unsigned ic;
@@ -1388,10 +1396,10 @@ void PeFile::processTls2(Reloc *rel, const Interval *iv, unsigned newaddr,
 
 void PeFile::processLoadConf(Interval *iv) // pass 1
 {
-    if (IDSIZE(PEDIR_LOADCONF) == 0)
+    if (IDSIZE(PEDIR_LOAD_CONFIG) == 0)
         return;
 
-    const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
+    const unsigned lcaddr = IDADDR(PEDIR_LOAD_CONFIG);
     const byte *const loadconf = ibuf.subref("bad loadconf %#x", lcaddr, 4);
     soloadconf = get_le32(loadconf);
     if (soloadconf == 0)
@@ -2008,7 +2016,7 @@ void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask, unsigned ih_en
         throwCantPack(buf);
     }
     // check CLR Runtime Header directory entry
-    if (IDSIZE(PEDIR_COMRT))
+    if (IDSIZE(PEDIR_COM_DESCRIPTOR))
         throwCantPack(".NET files are not yet supported");
 
     if (isection == nullptr)
@@ -2057,7 +2065,7 @@ unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase, upx_uint64_t defau
         if (!opt->force && ih_imagebase < default_imagebase)
             throwCantPack("--strip-relocs may not support this imagebase (try "
                           "with --force)");
-        return RELOCS_STRIPPED;
+        return IMAGE_FILE_RELOCS_STRIPPED;
     } else
         info("Base relocations stripping is disabled for this image");
     return 0;
@@ -2068,8 +2076,8 @@ static unsigned umax(unsigned a, unsigned b) { return (a >= b) ? a : b; }
 unsigned PeFile::readSections(unsigned objs, unsigned usize, unsigned ih_filealign,
                               unsigned ih_datasize) {
     const unsigned xtrasize = UPX_MAX(ih_datasize, 65536u) + IDSIZE(PEDIR_IMPORT) +
-                              IDSIZE(PEDIR_BOUNDIM) + IDSIZE(PEDIR_IAT) + IDSIZE(PEDIR_DELAYIMP) +
-                              IDSIZE(PEDIR_RELOC);
+                              IDSIZE(PEDIR_BOUND_IMPORT) + IDSIZE(PEDIR_IAT) +
+                              IDSIZE(PEDIR_DELAY_IMPORT) + IDSIZE(PEDIR_RELOC);
     ibuf.alloc(usize + xtrasize);
 
     // BOUND IMPORT support. FIXME: is this ok?
@@ -2086,15 +2094,15 @@ unsigned PeFile::readSections(unsigned objs, unsigned usize, unsigned ih_fileali
             overlaystart = ALIGN_UP(isection[ic].rawdataptr + isection[ic].size, ih_filealign);
         if (isection[ic].vsize == 0)
             isection[ic].vsize = isection[ic].size;
-        if ((isection[ic].flags & PEFL_BSS) || isection[ic].rawdataptr == 0 ||
-            (isection[ic].flags & PEFL_INFO)) {
+        if ((isection[ic].flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA) ||
+            isection[ic].rawdataptr == 0 || (isection[ic].flags & IMAGE_SCN_LNK_INFO)) {
             // holes.add(isection[ic].vaddr,isection[ic].vsize);
             continue;
         }
         if (isection[ic].vaddr + isection[ic].size > usize)
             throwCantPack("section size problem");
-        if (!isrtm &&
-            ((isection[ic].flags & (PEFL_WRITE | PEFL_SHARED)) == (PEFL_WRITE | PEFL_SHARED)))
+        if (!isrtm && ((isection[ic].flags & (IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_SHARED)) ==
+                       (IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_SHARED)))
             if (!opt->force)
                 throwCantPack("writable shared sections not supported (try --force)");
         if (jc && isection[ic].rawdataptr - jc > ih_filealign && !opt->force)
@@ -2155,10 +2163,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     checkHeaderValues(ih.subsystem, subsystem_mask, ih.entry, ih.filealign);
 
     // remove certificate directory entry
-    if (IDSIZE(PEDIR_SEC))
-        IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
+    if (IDSIZE(PEDIR_SECURITY))
+        IDSIZE(PEDIR_SECURITY) = IDADDR(PEDIR_SECURITY) = 0;
 
-    if (ih.flags & RELOCS_STRIPPED)
+    if (ih.flags & IMAGE_FILE_RELOCS_STRIPPED)
         opt->win32_pe.strip_relocs = true;
     else
         ih.flags |= handleStripRelocs(ih.imagebase, default_imagebase, ih.dllflags);
@@ -2187,8 +2195,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
 
     if (ih.dllflags & IMAGE_DLLCHARACTERISTICS_GUARD_CF) {
         if (opt->force) {
-            const unsigned lcsize = IDSIZE(PEDIR_LOADCONF);
-            const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
+            const unsigned lcsize = IDSIZE(PEDIR_LOAD_CONFIG);
+            const unsigned lcaddr = IDADDR(PEDIR_LOAD_CONFIG);
             const unsigned gfpos = 14 * sizeof(ih.imagebase) + 6 * sizeof(LE32) + 4 * sizeof(LE16);
             if (lcaddr && lcsize >= gfpos + sizeof(LE32))
                 // GuardFlags: Set IMAGE_GUARD_SECURITY_COOKIE_UNUSED
@@ -2218,7 +2226,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     bool allow_filter = true;
     if (/*FIXME ih.codebase == ih.database
         ||*/ ih.codebase + ih.codesize > ih.imagesize ||
-        (isection[virta2objnum(ih.codebase, isection, objs)].flags & PEFL_CODE) == 0)
+        (isection[virta2objnum(ih.codebase, isection, objs)].flags & IMAGE_SCN_CNT_CODE) == 0)
         allow_filter = false;
 
     const unsigned oam1 = ih.objectalign - 1;
@@ -2364,8 +2372,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     ODSIZE(PEDIR_DEBUG) = 0;
     ODADDR(PEDIR_IAT) = 0;
     ODSIZE(PEDIR_IAT) = 0;
-    ODADDR(PEDIR_BOUNDIM) = 0;
-    ODSIZE(PEDIR_BOUNDIM) = 0;
+    ODADDR(PEDIR_BOUND_IMPORT) = 0;
+    ODSIZE(PEDIR_BOUND_IMPORT) = 0;
 
     // tls & loadconf are put into section 1
     ic = s1addr + s1size - aligned_sotls - soloadconf;
@@ -2379,8 +2387,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     ic += aligned_sotls;
 
     processLoadConf(&rel, &loadconfiv, ic);
-    ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
-    ODSIZE(PEDIR_LOADCONF) = soloadconf;
+    ODADDR(PEDIR_LOAD_CONFIG) = soloadconf ? ic : 0;
+    ODSIZE(PEDIR_LOAD_CONFIG) = soloadconf;
     ic += soloadconf;
 
     const bool rel_at_sections_start = last_section_rsrc_only;
@@ -2467,9 +2475,11 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     }
     osection[2].rawdataptr = osection[1].rawdataptr + osection[1].size;
 
-    osection[0].flags = (unsigned) (PEFL_BSS | PEFL_EXEC | PEFL_WRITE | PEFL_READ);
-    osection[1].flags = (unsigned) (PEFL_DATA | PEFL_EXEC | PEFL_WRITE | PEFL_READ);
-    osection[2].flags = (unsigned) (PEFL_DATA | PEFL_WRITE | PEFL_READ);
+    osection[0].flags = IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ |
+                        IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_EXECUTE;
+    osection[1].flags = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE |
+                        IMAGE_SCN_MEM_EXECUTE;
+    osection[2].flags = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE;
 
     if (last_section_rsrc_only) {
         strcpy(osection[3].name, ".rsrc");
@@ -2477,8 +2487,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
         osection[3].size = (soresources + fam1) & ~fam1;
         osection[3].vsize = osection[3].size;
         osection[3].rawdataptr = osection[2].rawdataptr + osection[2].size;
-        osection[2].flags = (unsigned) (PEFL_DATA | PEFL_READ);
-        osection[3].flags = (unsigned) (PEFL_DATA | PEFL_READ);
+        osection[2].flags = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
+        osection[3].flags = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
         oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) & ~oam1;
         if (soresources == 0) {
             oh.objects = 3;
@@ -2496,10 +2506,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
         throwCantPack("object alignment too small");
 
     if (opt->win32_pe.strip_relocs)
-        oh.flags |= RELOCS_STRIPPED;
+        oh.flags |= IMAGE_FILE_RELOCS_STRIPPED;
 
-    // for (ic = 0; ic < oh.filealign; ic += 4)
-    //     set_le32(ibuf + ic,get_le32("UPX "));
     ibuf.clear(0, oh.filealign);
 
     info("Image size change: %u -> %u KiB", ih.imagesize / 1024, oh.imagesize / 1024);
@@ -2580,7 +2588,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
 void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned flags,
                            upx_uint64_t imagebase) {
     assert(bits == 32 || bits == 64);
-    if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (flags & RELOCS_STRIPPED))
+    if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (flags & IMAGE_FILE_RELOCS_STRIPPED))
         return;
 
     if (ODSIZE(PEDIR_RELOC) == 8) // some tricky dlls use this
@@ -2850,8 +2858,8 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
     }
 
     // FIXME: ih.flags is checked here because of a bug in UPX 0.92
-    if (ih.flags & RELOCS_STRIPPED) {
-        oh.flags |= RELOCS_STRIPPED;
+    if (ih.flags & IMAGE_FILE_RELOCS_STRIPPED) {
+        oh.flags |= IMAGE_FILE_RELOCS_STRIPPED;
         ODADDR(PEDIR_RELOC) = 0;
         ODSIZE(PEDIR_RELOC) = 0;
     }
@@ -2880,8 +2888,8 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
     ODSIZE(PEDIR_DEBUG) = 0;
     ODADDR(PEDIR_IAT) = 0;
     ODSIZE(PEDIR_IAT) = 0;
-    ODADDR(PEDIR_BOUNDIM) = 0;
-    ODSIZE(PEDIR_BOUNDIM) = 0;
+    ODADDR(PEDIR_BOUND_IMPORT) = 0;
+    ODSIZE(PEDIR_BOUND_IMPORT) = 0;
 
     setOhHeaderSize(osection);
     oh.chksum = 0;
@@ -2996,7 +3004,7 @@ void PeFile32::readPeHeader() {
              ((1u << IMAGE_SUBSYSTEM_EFI_APPLICATION) |
               (1u << IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER) |
               (1u << IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER) | (1u << IMAGE_SUBSYSTEM_EFI_ROM))) != 0;
-    isdll = !isefi && (ih.flags & DLL_FLAG) != 0;
+    isdll = !isefi && (ih.flags & IMAGE_FILE_DLL) != 0;
     use_dep_hack &= !isefi;
     use_clear_dirty_stack &= !isefi;
 }
@@ -3049,7 +3057,7 @@ void PeFile64::readPeHeader() {
              ((1u << IMAGE_SUBSYSTEM_EFI_APPLICATION) |
               (1u << IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER) |
               (1u << IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER) | (1u << IMAGE_SUBSYSTEM_EFI_ROM))) != 0;
-    isdll = !isefi && (ih.flags & DLL_FLAG) != 0;
+    isdll = !isefi && (ih.flags & IMAGE_FILE_DLL) != 0;
     use_dep_hack &= !isefi;
     use_clear_dirty_stack &= !isefi;
 }

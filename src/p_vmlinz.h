@@ -26,6 +26,7 @@
  */
 
 
+#pragma once
 #ifndef __UPX_P_VMLINZ_H
 #define __UPX_P_VMLINZ_H 1
 

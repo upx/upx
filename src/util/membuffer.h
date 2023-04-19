@@ -46,7 +46,7 @@ protected:
     size_type size_in_bytes;
 
 public:
-    MemBufferBase() noexcept : ptr(nullptr), size_in_bytes(0) {}
+    inline MemBufferBase() noexcept : ptr(nullptr), size_in_bytes(0) {}
     inline ~MemBufferBase() noexcept {}
 
     // NOTE: implicit conversion to underlying pointer
@@ -83,7 +83,7 @@ public: // raw access
 
 class MemBuffer final : public MemBufferBase<byte> {
 public:
-    MemBuffer() : MemBufferBase<byte>() {}
+    inline MemBuffer() noexcept : MemBufferBase<byte>() {}
     explicit MemBuffer(upx_uint64_t bytes);
     ~MemBuffer() noexcept;
 

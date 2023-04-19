@@ -103,7 +103,7 @@ CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
 CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)
 endif
-check-whitespace : PHONY ; $(CHECK_WHITESPACE)
+check-whitespace: PHONY; $(CHECK_WHITESPACE)
 endif
 
 # vim:set ts=8 sw=8 noet:

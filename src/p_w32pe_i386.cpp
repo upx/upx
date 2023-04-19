@@ -145,9 +145,9 @@ bool PackW32PeI386::needForceOption() const {
     // return true if we need `--force` to pack this file
     bool r = false;
     r |= (ih.opthdrsize != 0xe0);
-    r |= ((ih.flags & EXECUTABLE) == 0);
-    r |= ((ih.flags & BITS_32_MACHINE) == 0); // 32 bit machine flag must be set
-    r |= (ih.coffmagic != 0x10b);             // COFF magic is 0x10B in PE files
+    r |= ((ih.flags & IMAGE_FILE_EXECUTABLE_IMAGE) == 0);
+    r |= ((ih.flags & IMAGE_FILE_32BIT_MACHINE) == 0); // 32 bit machine flag must be set
+    r |= (ih.coffmagic != 0x10b);                      // COFF magic is 0x10B in PE files
     r |= (ih.entry == 0 && !isdll);
     r |= (ih.ddirsentries != 16);
     r |= (IDSIZE(PEDIR_EXCEPTION) != 0); // is this used on i386?
@@ -175,7 +175,7 @@ void PackW32PeI386::defineSymbols(unsigned ncsection, unsigned upxsection, unsig
         // UPX0 & UPX1 in the compressed files, so we have to patch the PE header
         // in the memory. And the page on which the PE header is stored is read
         // only so we must make it rw, fix the flags (i.e. clear
-        // PEFL_WRITE of osection[x].flags), and make it ro again.
+        // IMAGE_SCN_MEM_WRITE of osection[x].flags), and make it ro again.
 
         // rva of the most significant byte of member "flags" in section "UPX0"
         const unsigned swri = pe_offset + sizeof_oh + sizeof(pe_section_t) - 1;

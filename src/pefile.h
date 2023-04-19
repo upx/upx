@@ -215,11 +215,17 @@ protected:
         IMAGE_FILE_MACHINE_UNKNOWN = 0,
         IMAGE_FILE_MACHINE_AMD64 = 0x8664,   // win64/pe (amd64)
         IMAGE_FILE_MACHINE_ARM = 0x01c0,     // wince/arm (Windows CE)
+        IMAGE_FILE_MACHINE_ARMNT = 0x01c4,   // win32/arm
         IMAGE_FILE_MACHINE_ARM64 = 0xaa64,   // win64/arm64
         IMAGE_FILE_MACHINE_ARM64EC = 0xa641, // win64/arm64ec
-        IMAGE_FILE_MACHINE_ARMNT = 0x01c4,   // win32/arm
         IMAGE_FILE_MACHINE_I386 = 0x014c,    // win32/pe (i386)
-        IMAGE_FILE_MACHINE_THUMB = 0x01c2,   // wince/arm (Windows CE)
+        IMAGE_FILE_MACHINE_IA64 = 0x200,
+        IMAGE_FILE_MACHINE_LOONGARCH32 = 0x6232,
+        IMAGE_FILE_MACHINE_LOONGARCH64 = 0x6264,
+        IMAGE_FILE_MACHINE_RISCV32 = 0x5032,
+        IMAGE_FILE_MACHINE_RISCV64 = 0x5064,
+        IMAGE_FILE_MACHINE_RISCV128 = 0x5128,
+        IMAGE_FILE_MACHINE_THUMB = 0x01c2, // wince/arm (Windows CE)
     };
 
     enum {
@@ -227,48 +233,74 @@ protected:
         PEDIR_IMPORT = 1,
         PEDIR_RESOURCE = 2,
         PEDIR_EXCEPTION = 3, // Exception table
-        PEDIR_SEC = 4,       // Certificate table (file pointer)
-        PEDIR_RELOC = 5,
+        PEDIR_SECURITY = 4,  // Certificate table (file pointer)
+        PEDIR_BASERELOC = 5,
         PEDIR_DEBUG = 6,
-        PEDIR_COPYRIGHT = 7, // Architecture-specific data
-        PEDIR_GLOBALPTR = 8, // Global pointer
+        PEDIR_ARCHITECTURE = 7, // Architecture-specific data
+        PEDIR_GLOBALPTR = 8,    // Global pointer
         PEDIR_TLS = 9,
-        PEDIR_LOADCONF = 10, // Load Config Table
-        PEDIR_BOUNDIM = 11,
+        PEDIR_LOAD_CONFIG = 10, // Load Config Table
+        PEDIR_BOUND_IMPORT = 11,
         PEDIR_IAT = 12,
-        PEDIR_DELAYIMP = 13, // Delay Import Descriptor
-        PEDIR_COMRT = 14,    // Com+ Runtime Header
+        PEDIR_DELAY_IMPORT = 13,   // Delay Import Descriptor
+        PEDIR_COM_DESCRIPTOR = 14, // Com+ Runtime Header
+        PEDIR_RELOC = PEDIR_BASERELOC,
+    };
+
+    // section flags
+    enum : unsigned {
+        IMAGE_SCN_CNT_CODE = 0x00000020,
+        IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040,
+        IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080,
+        IMAGE_SCN_LNK_OTHER = 0x00000100,
+        IMAGE_SCN_LNK_INFO = 0x00000200,
+        IMAGE_SCN_LNK_REMOVE = 0x00000800,
+        IMAGE_SCN_LNK_COMDAT = 0x00001000,
+        IMAGE_SCN_GPREL = 0x00008000,
+        IMAGE_SCN_MEM_PURGEABLE = 0x00020000,
+        IMAGE_SCN_MEM_16BIT = 0x00020000,
+        IMAGE_SCN_MEM_LOCKED = 0x00040000,
+        IMAGE_SCN_MEM_PRELOAD = 0x00080000,
+        IMAGE_SCN_ALIGN_1BYTES = 0x00100000,
+        IMAGE_SCN_ALIGN_2BYTES = 0x00200000,
+        IMAGE_SCN_ALIGN_4BYTES = 0x00300000,
+        IMAGE_SCN_ALIGN_8BYTES = 0x00400000,
+        IMAGE_SCN_ALIGN_16BYTES = 0x00500000,
+        IMAGE_SCN_ALIGN_32BYTES = 0x00600000,
+        IMAGE_SCN_ALIGN_64BYTES = 0x00700000,
+        IMAGE_SCN_ALIGN_128BYTES = 0x00800000,
+        IMAGE_SCN_ALIGN_256BYTES = 0x00900000,
+        IMAGE_SCN_ALIGN_512BYTES = 0x00A00000,
+        IMAGE_SCN_ALIGN_1024BYTES = 0x00B00000,
+        IMAGE_SCN_ALIGN_2048BYTES = 0x00C00000,
+        IMAGE_SCN_ALIGN_4096BYTES = 0x00D00000,
+        IMAGE_SCN_ALIGN_8192BYTES = 0x00E00000,
+        IMAGE_SCN_LNK_NRELOC_OVFL = 0x01000000,
+        IMAGE_SCN_MEM_DISCARDABLE = 0x02000000,
+        IMAGE_SCN_MEM_NOT_CACHED = 0x04000000,
+        IMAGE_SCN_MEM_NOT_PAGED = 0x08000000,
+        IMAGE_SCN_MEM_SHARED = 0x10000000,
+        IMAGE_SCN_MEM_EXECUTE = 0x20000000,
+        IMAGE_SCN_MEM_READ = 0x40000000,
+        IMAGE_SCN_MEM_WRITE = 0x80000000,
     };
 
     enum {
-        PEFL_CODE = 0x20,
-        PEFL_DATA = 0x40,
-        PEFL_BSS = 0x80,
-        PEFL_INFO = 0x200,
-        PEFL_EXTRELS = 0x01000000, // extended relocations
-        PEFL_DISCARD = 0x02000000,
-        PEFL_NOCACHE = 0x04000000,
-        PEFL_NOPAGE = 0x08000000,
-        PEFL_SHARED = 0x10000000,
-        PEFL_EXEC = 0x20000000,
-        PEFL_READ = 0x40000000,
-        PEFL_WRITE = 0x80000000,
-    };
-
-    enum {
-        RELOCS_STRIPPED = 0x0001,
-        EXECUTABLE = 0x0002,
-        LNUM_STRIPPED = 0x0004,
-        LSYMS_STRIPPED = 0x0008,
-        AGGRESSIVE_TRIM = 0x0010,
-        TWO_GIGS_AWARE = 0x0020,
-        FLITTLE_ENDIAN = 0x0080,
-        BITS_32_MACHINE = 0x0100,
-        DEBUG_STRIPPED = 0x0200,
-        REMOVABLE_SWAP = 0x0400,
-        SYSTEM_PROGRAM = 0x1000,
-        DLL_FLAG = 0x2000,
-        FBIG_ENDIAN = 0x8000,
+        IMAGE_FILE_RELOCS_STRIPPED = 0x0001,
+        IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002,
+        IMAGE_FILE_LINE_NUMS_STRIPPED = 0x0004,
+        IMAGE_FILE_LOCAL_SYMS_STRIPPED = 0x0008,
+        IMAGE_FILE_AGGRESSIVE_WS_TRIM = 0x0010,
+        IMAGE_FILE_LARGE_ADDRESS_AWARE = 0x0020,
+        IMAGE_FILE_BYTES_REVERSED_LO = 0x0080,
+        IMAGE_FILE_32BIT_MACHINE = 0x0100,
+        IMAGE_FILE_DEBUG_STRIPPED = 0x0200,
+        IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP = 0x0400,
+        IMAGE_FILE_NET_RUN_FROM_SWAP = 0x0800,
+        IMAGE_FILE_SYSTEM = 0x1000,
+        IMAGE_FILE_DLL = 0x2000,
+        IMAGE_FILE_UP_SYSTEM_ONLY = 0x4000,
+        IMAGE_FILE_BYTES_REVERSE_HI = 0x8000,
     };
 
     enum {
@@ -288,10 +320,11 @@ protected:
     enum {
         IMAGE_SUBSYSTEM_UNKNOWN = 0,
         IMAGE_SUBSYSTEM_NATIVE = 1,
-        IMAGE_SUBSYSTEM_WINDOWS_GUI = 2, // Graphical
-        IMAGE_SUBSYSTEM_WINDOWS_CUI = 3, // Character-mode
+        IMAGE_SUBSYSTEM_WINDOWS_GUI = 2, // Graphical User Interface
+        IMAGE_SUBSYSTEM_WINDOWS_CUI = 3, // Character User Interface
         IMAGE_SUBSYSTEM_WINDOWS_OS2_CUI = 5,
         IMAGE_SUBSYSTEM_WINDOWS_POSIX_CUI = 7,
+        IMAGE_SUBSYSTEM_NATIVE_WINDOWS = 8,
         IMAGE_SUBSYSTEM_WINDOWS_CE_GUI = 9,
         IMAGE_SUBSYSTEM_EFI_APPLICATION = 10,
         IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER = 11,
@@ -489,7 +522,7 @@ protected:
         LE16 objects;    // NumberOfSections
         byte __[12];     // timestamp + reserved
         LE16 opthdrsize; // SizeOfOptionalHeader
-        LE16 flags;      // Characteristics
+        LE16 flags;      // IMAGE_FILE_xxx Characteristics
         // 0x18 IMAGE_OPTIONAL_HEADER32
         LE16 coffmagic; // NEW: Stefan Widmann
         byte ___[2];    // linkerversion
@@ -550,7 +583,7 @@ protected:
         LE16 objects;    // NumberOfSections
         byte __[12];     // timestamp + reserved
         LE16 opthdrsize; // SizeOfOptionalHeader
-        LE16 flags;      // Characteristics
+        LE16 flags;      // IMAGE_FILE_xxx Characteristics
         // 0x18 IMAGE_OPTIONAL_HEADER64
         LE16 coffmagic; // NEW: Stefan Widmann
         byte ___[2];    // linkerversion

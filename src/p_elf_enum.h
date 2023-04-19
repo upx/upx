@@ -36,7 +36,7 @@
 
 #ifdef WANT_EHDR_ENUM
 #undef WANT_EHDR_ENUM
-    enum { // e_ident[]
+    enum { // indices for e_ident[16]
         EI_CLASS      = 4,
         EI_DATA       = 5,      /* Data encoding */
         EI_VERSION    = 6,
@@ -52,12 +52,15 @@
         ELFDATA2MSB = 2,        /* 2's complement, big endian */
     };
     enum { // e_ident[EI_OSABI]
-        ELFOSABI_NONE    = 0,      // == ELFOSABI_SYSV
+        ELFOSABI_NONE    = 0,   // == ELFOSABI_SYSV
         ELFOSABI_NETBSD  = 2,
         ELFOSABI_LINUX   = 3,
+        ELFOSABI_SOLARIS = 6,
+        ELFOSABI_AIX     = 7,
         ELFOSABI_FREEBSD = 9,
         ELFOSABI_OPENBSD = 12,
         ELFOSABI_ARM     = 97,
+        ELFOSABI_STANDALONE = 255 // Standalone (embedded) application
     };
     enum { // e_type
         ET_NONE = 0,            /* No file type */
@@ -67,17 +70,18 @@
         ET_CORE = 4,            /* Core file */
     };
     enum { // e_machine
-        EM_386    = 3,
+        EM_386    = 3,          // i386
         EM_MIPS   = 8,
-        EM_MIPS_RS3_LE = 10,    /* MIPS R3000 little-endian */
+        EM_MIPS_RS3_LE = 10,    // MIPS R3000 little-endian
         EM_PPC    = 20,
         EM_PPC64  = 21,
         EM_ARM    = 40,
-        EM_X86_64 = 62,
+        EM_X86_64 = 62,         // amd64
         EM_AMD64  = EM_X86_64,
-        EM_AARCH64 = 183,
+        EM_AARCH64 = 183,       // arm64
         EM_ARM64  = EM_AARCH64,
-
+        EM_RISCV = 243,         // risc-v
+        EM_LOONGARCH = 258,
     };
     enum { // e_version
         EV_CURRENT = 1,
@@ -88,7 +92,7 @@
 #ifdef WANT_PHDR_ENUM
 #undef WANT_PHDR_ENUM
     enum { // p_type
-        PT_NULL    = 0,         /* Ingore: a "comment" */
+        PT_NULL    = 0,         /* Ignore: a "comment" */
         PT_LOAD    = 1,         /* Loadable program segment */
         PT_DYNAMIC = 2,         /* Dynamic linking information */
         PT_INTERP  = 3,         /* Name of program interpreter */

@@ -118,7 +118,7 @@ int ptr_diff_bytes(const void *a, const void *b) {
         if very_unlikely (!mem_size_valid_bytes(d))
             throwCantPack("ptr_diff_bytes-1; take care");
     } else {
-        if very_unlikely (!mem_size_valid_bytes(-d))
+        if very_unlikely (!mem_size_valid_bytes(0ll - d))
             throwCantPack("ptr_diff_bytes-2; take care");
     }
     return ACC_ICONV(int, d);
@@ -291,10 +291,10 @@ void upx_memswap(void *a, void *b, size_t n) {
 void upx_stable_sort(void *array, size_t n, size_t element_size,
                      int (*compare)(const void *, const void *)) {
     for (size_t i = 1; i < n; i++) {
-        char *a = (char *) array + element_size * i; // a = &array[i]
-        if (i != 0 && compare(a - element_size, a) > 0) {
-            upx_memswap(a - element_size, a, element_size); // swap elements a[-1] <=> a[0]
-            i -= 2;
+        char *a = (char *) array + element_size * i;        // a := &array[i]
+        if (i != 0 && compare(a - element_size, a) > 0) {   // if a[-1] > a[0] then
+            upx_memswap(a - element_size, a, element_size); //   swap elements a[-1] <=> a[0]
+            i -= 2;                                         //   and decrease i
         }
     }
 }
@@ -312,8 +312,11 @@ TEST_CASE("upx_stable_sort") {
         CHECK((a[0] == 0 && a[1] == 1));
     }
     {
-        unsigned a[] = {2, 1, 0};
-        upx_stable_sort(a, 3, sizeof(*a), ne32_compare);
+        LE64 a[3];
+        a[0] = 2;
+        a[1] = 1;
+        a[2] = 0;
+        upx_stable_sort(a, 3, sizeof(*a), le64_compare);
         CHECK((a[0] == 0 && a[1] == 1 && a[2] == 2));
     }
 #if __cplusplus >= 202002L // use C++20 std::next_permutation() to test all permutations

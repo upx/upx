@@ -205,7 +205,6 @@ jobs:
           # windows-2019 used to work but got broken with the 20220821.1 runner-image
           # update; we cannot download that image for inspection, and debugging the
           # remote image is painful, so disable for now
-          # see https://github.com/actions/runner-images.git
           ####- { name: windows-2019-amd64, os: windows-2019 }
           - { name: windows-2022-amd64, os: windows-2022 }
     steps:
@@ -215,7 +214,7 @@ jobs:
       - name: 'Check out test suite'
         run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
       - name: 'Inspect runner-image settings'
-        # debug remote image; also see https://github.com/actions/runner-images.git
+        # debug remote image; see https://github.com/actions/runner-images.git
         if: ${{ false }}
         run: |
           Get-Command bash; Get-Command cmake; Get-Command make
@@ -377,8 +376,8 @@ jobs:
           - { zig_target: x86_64-macos.13-none }
           - { zig_target: x86_64-windows-gnu }
     env:
-      # 2023-03-18
-      ZIG_DIST_VERSION: 0.11.0-dev.2157+f56f3c582
+      # 2023-04-17
+      ZIG_DIST_VERSION: 0.11.0-dev.2624+bc804eb84
       # for zig-cc wrapper scripts (see below):
       ZIG_CPPFLAGS: -DUPX_DOCTEST_CONFIG_MULTITHREADING
       ZIG_FLAGS: ${{ matrix.zig_flags }}

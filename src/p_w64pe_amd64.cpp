@@ -114,7 +114,7 @@ void PackW64PeAmd64::buildLoader(const Filter *ft) {
     if (sorelocs) {
         addLoader(soimport == 0 || soimport + cimports != crelocs ? "PERELOC1" : "PERELOC2",
                   "PERELOC3", big_relocs ? "REL64BIG" : "", "RELOC64J");
-        if __acc_cte (0) {
+        if (0) {
             addLoader(big_relocs & 6 ? "PERLOHI0" : "", big_relocs & 4 ? "PERELLO0" : "",
                       big_relocs & 2 ? "PERELHI0" : "");
         }
@@ -148,9 +148,9 @@ bool PackW64PeAmd64::needForceOption() const {
     // return true if we need `--force` to pack this file
     bool r = false;
     r |= (ih.opthdrsize != 0xf0); // optional header size is 0xF0 in PE32+ files
-    r |= ((ih.flags & EXECUTABLE) == 0);
-    r |= ((ih.flags & BITS_32_MACHINE) != 0); // 32 bit machine flag may not be set
-    r |= (ih.coffmagic != 0x20b);             // COFF magic is 0x20B in PE32+ files
+    r |= ((ih.flags & IMAGE_FILE_EXECUTABLE_IMAGE) == 0);
+    r |= ((ih.flags & IMAGE_FILE_32BIT_MACHINE) != 0); // 32 bit machine flag may not be set
+    r |= (ih.coffmagic != 0x20b);                      // COFF magic is 0x20B in PE32+ files
     r |= (ih.entry == 0 && !isdll);
     r |= (ih.ddirsentries != 16);
     return r;
@@ -176,7 +176,7 @@ void PackW64PeAmd64::defineSymbols(unsigned ncsection, unsigned upxsection, unsi
         // UPX0 & UPX1 in the compressed files, so we have to patch the PE header
         // in the memory. And the page on which the PE header is stored is read
         // only so we must make it rw, fix the flags (i.e. clear
-        // PEFL_WRITE of osection[x].flags), and make it ro again.
+        // IMAGE_SCN_MEM_WRITE of osection[x].flags), and make it ro again.
 
         // rva of the most significant byte of member "flags" in section "UPX0"
         const unsigned swri = pe_offset + sizeof_oh + sizeof(pe_section_t) - 1;

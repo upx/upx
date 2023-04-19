@@ -69,7 +69,7 @@ static forceinline constexpr bool use_simple_mcheck() { return true; }
 //
 **************************************************************************/
 
-MemBuffer::MemBuffer(upx_uint64_t bytes) {
+MemBuffer::MemBuffer(upx_uint64_t bytes) : MemBufferBase<byte>() {
     alloc(bytes);
     debug_set(debug.last_return_address_alloc, upx_return_address());
 }
@@ -198,7 +198,7 @@ void MemBuffer::alloc(upx_uint64_t bytes) {
     //
     assert(bytes > 0);
     debug_set(debug.last_return_address_alloc, upx_return_address());
-    size_t malloc_bytes = mem_size(1, bytes);
+    size_t malloc_bytes = mem_size(1, bytes); // check size
     if (use_simple_mcheck())
         malloc_bytes += 32;
     byte *p = (byte *) ::malloc(malloc_bytes);
@@ -216,7 +216,7 @@ void MemBuffer::alloc(upx_uint64_t bytes) {
     }
     ptr = (pointer) (void *) p;
 #if DEBUG
-    memset(ptr, 0xff, size_in_bytes);
+    memset(ptr, 0xfb, size_in_bytes);
     (void) VALGRIND_MAKE_MEM_UNDEFINED(ptr, size_in_bytes);
 #endif
     stats.global_alloc_counter += 1;
