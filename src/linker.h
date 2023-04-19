@@ -25,8 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef __UPX_LINKER_H
-#define __UPX_LINKER_H 1
+#pragma once
 
 /*************************************************************************
 // ElfLinker
@@ -36,7 +35,7 @@ class ElfLinker : private noncopyable {
     friend class Packer;
 
 public:
-    const N_BELE_RTP::AbstractPolicy *bele = nullptr; // target endianness
+    const N_BELE_RTP::AbstractPolicy *const bele; // target endianness
 protected:
     struct Section;
     struct Symbol;
@@ -76,7 +75,7 @@ protected:
                               const char *symbol, upx_uint64_t add);
 
 public:
-    ElfLinker();
+    ElfLinker(const N_BELE_RTP::AbstractPolicy *b = &N_BELE_RTP::le_policy) noexcept;
     virtual ~ElfLinker() noexcept;
 
     void init(const void *pdata, int plen, unsigned pxtra = 0);
@@ -113,14 +112,6 @@ protected:
     void relocate();
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type);
-
-    // target endianness abstraction
-    unsigned get_te16(const void *p) const { return bele->get16(p); }
-    unsigned get_te32(const void *p) const { return bele->get32(p); }
-    upx_uint64_t get_te64(const void *p) const { return bele->get64(p); }
-    void set_te16(void *p, unsigned v) const { bele->set16(p, v); }
-    void set_te32(void *p, unsigned v) const { bele->set32(p, v); }
-    void set_te64(void *p, upx_uint64_t v) const { bele->set64(p, v); }
 };
 
 struct ElfLinker::Section : private noncopyable {
@@ -162,28 +153,23 @@ struct ElfLinker::Relocation : private noncopyable {
 
 class ElfLinkerAMD64 : public ElfLinker {
     typedef ElfLinker super;
-
 protected:
     virtual void alignCode(unsigned len) override { alignWithByte(len, 0x90); }
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
 };
 
-class ElfLinkerARM64 final : public ElfLinker {
+class ElfLinkerArm64LE final : public ElfLinker {
     typedef ElfLinker super;
-
 protected:
-    virtual void alignCode(unsigned len) override { alignWithByte(len, 0x90); }
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
 };
 
 class ElfLinkerArmBE final : public ElfLinker {
     typedef ElfLinker super;
-
 public:
-    ElfLinkerArmBE() { bele = &N_BELE_RTP::be_policy; }
-
+    ElfLinkerArmBE() noexcept : super(&N_BELE_RTP::be_policy) {}
 protected:
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
@@ -191,15 +177,6 @@ protected:
 
 class ElfLinkerArmLE final : public ElfLinker {
     typedef ElfLinker super;
-
-protected:
-    virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
-                           const char *type) override;
-};
-
-class ElfLinkerArm64LE final : public ElfLinker {
-    typedef ElfLinker super;
-
 protected:
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
@@ -207,10 +184,8 @@ protected:
 
 class ElfLinkerM68k final : public ElfLinker {
     typedef ElfLinker super;
-
 public:
-    ElfLinkerM68k() { bele = &N_BELE_RTP::be_policy; }
-
+    ElfLinkerM68k() noexcept : super(&N_BELE_RTP::be_policy) {}
 protected:
     virtual void alignCode(unsigned len) override;
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
@@ -219,10 +194,8 @@ protected:
 
 class ElfLinkerMipsBE final : public ElfLinker {
     typedef ElfLinker super;
-
 public:
-    ElfLinkerMipsBE() { bele = &N_BELE_RTP::be_policy; }
-
+    ElfLinkerMipsBE() noexcept : super(&N_BELE_RTP::be_policy) {}
 protected:
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
@@ -230,7 +203,6 @@ protected:
 
 class ElfLinkerMipsLE final : public ElfLinker {
     typedef ElfLinker super;
-
 protected:
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
@@ -238,18 +210,8 @@ protected:
 
 class ElfLinkerPpc32 final : public ElfLinker {
     typedef ElfLinker super;
-
 public:
-    ElfLinkerPpc32() { bele = &N_BELE_RTP::be_policy; }
-
-protected:
-    virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
-                           const char *type) override;
-};
-
-class ElfLinkerPpc64le final : public ElfLinker {
-    typedef ElfLinker super;
-
+    ElfLinkerPpc32() noexcept : super(&N_BELE_RTP::be_policy) {}
 protected:
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
@@ -257,10 +219,15 @@ protected:
 
 class ElfLinkerPpc64 final : public ElfLinker {
     typedef ElfLinker super;
-
 public:
-    ElfLinkerPpc64() { bele = &N_BELE_RTP::be_policy; }
+    ElfLinkerPpc64() noexcept : super(&N_BELE_RTP::be_policy) {}
+protected:
+    virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
+                           const char *type) override;
+};
 
+class ElfLinkerPpc64le final : public ElfLinker {
+    typedef ElfLinker super;
 protected:
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
@@ -268,13 +235,10 @@ protected:
 
 class ElfLinkerX86 final : public ElfLinker {
     typedef ElfLinker super;
-
 protected:
     virtual void alignCode(unsigned len) override { alignWithByte(len, 0x90); }
     virtual void relocate1(const Relocation *, byte *location, upx_uint64_t value,
                            const char *type) override;
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

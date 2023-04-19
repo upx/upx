@@ -379,7 +379,7 @@ PackLinuxI386::buildLinuxLoader(
             (res->lit_context_bits << 0) |
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);
-        if (linker->bele->isBE()) // big endian - bswap32
+        if (bele->isBE()) // big endian - bswap32
             properties = bswap32(properties);
         linker->defineSymbol("lzma_properties", properties);
         // -2 for properties

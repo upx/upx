@@ -101,11 +101,7 @@ ElfLinker::Relocation::Relocation(const Section *s, unsigned o, const char *t, c
 // ElfLinker
 **************************************************************************/
 
-ElfLinker::ElfLinker()
-    : bele(&N_BELE_RTP::le_policy), input(nullptr), output(nullptr), head(nullptr), tail(nullptr),
-      sections(nullptr), symbols(nullptr), relocations(nullptr), nsections(0),
-      nsections_capacity(0), nsymbols(0), nsymbols_capacity(0), nrelocations(0),
-      nrelocations_capacity(0), reloc_done(false) {}
+ElfLinker::ElfLinker(const N_BELE_RTP::AbstractPolicy *b) noexcept : bele(b) {}
 
 ElfLinker::~ElfLinker() noexcept {
     delete[] input;
