@@ -83,7 +83,7 @@ int upx_doctest_check() { return upx_doctest_check(0, nullptr); }
 // compile-time checks
 **************************************************************************/
 
-// need extra paranthesis because the C preprocessor does not understand C++ templates
+// need extra parenthesis because the C preprocessor does not understand C++ templates
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<short, upx_int16_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned short, upx_uint16_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<int, upx_int32_t>::value))
