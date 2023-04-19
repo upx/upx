@@ -1210,7 +1210,8 @@ void PackLinuxElf64::updateLoader(OutputFile * /*fo*/)
         upx_byte *p = getLoader();
 
         set_te64(&p[descr], dot_entry);
-        set_te64(&elfout.ehdr.e_entry, descr + sz_pack2 + vbase);
+        // Kernel 3.16.0 (2017-09-19) uses start, not descr
+        set_te64(&elfout.ehdr.e_entry, start + sz_pack2 + vbase);
     }
     else {
         set_te64(&elfout.ehdr.e_entry, start + sz_pack2 + vbase);
