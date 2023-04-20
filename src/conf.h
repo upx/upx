@@ -48,7 +48,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 
 // enable some more strict warnings for Git developer builds
-#if !UPX_CONFIG_DISABLE_WSTRICT && !UPX_CONFIG_DISABLE_WERROR
+#if defined(UPX_CONFIG_DISABLE_WSTRICT) && (UPX_CONFIG_DISABLE_WSTRICT + 0 == 0)
+#if defined(UPX_CONFIG_DISABLE_WERROR) && (UPX_CONFIG_DISABLE_WERROR + 0 == 0)
 #if (ACC_CC_CLANG >= 0x0b0000)
 #  pragma clang diagnostic error "-Wsuggest-override"
 #elif (ACC_CC_GNUC >= 0x0a0000)
@@ -70,7 +71,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
 #  pragma warning(error: 4319)
 #  pragma warning(error: 4805)
 #endif
-#endif // !UPX_CONFIG_DISABLE_WSTRICT && !UPX_CONFIG_DISABLE_WERROR
+#endif // UPX_CONFIG_DISABLE_WSTRICT
+#endif // UPX_CONFIG_DISABLE_WERROR
 
 // multithreading (UPX currently does not use multithreading)
 #if (WITH_THREADS)

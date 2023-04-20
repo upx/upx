@@ -316,8 +316,9 @@ jobs:
           set s=%H%\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
+          set UPX_DEFS=-DUPX_CONFIG_DISABLE_WSTRICT=0 -DUPX_CONFIG_DISABLE_WERROR=0 -DWITH_ZSTD=0
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp
-          %RUN_CL% -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" -DWITH_ZSTD=0 %DEFS% -I%H%\vendor -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link ${{ matrix.link_machine_flags }} setargv.obj
+          %RUN_CL% -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %UPX_DEFS% %DEFS% -I%H%\vendor -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link ${{ matrix.link_machine_flags }} setargv.obj
       - name: 'Make artifact'
         shell: bash
         run: |
