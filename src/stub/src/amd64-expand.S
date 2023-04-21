@@ -93,19 +93,26 @@ b_cto8=  10
 b_extra= 11
 sz_binfo= 12
 
-// If unfilter will be needed, then splice a call to unfilter after de-compress
-    movzbl b_ftid(fx_src),%eax; test %eax,%eax; jz no_unf
-    movzbl b_cto8(fx_src),%ecx
-      push %rax; push %ecx; push (fx_dstlen); push fx_dst
-    call no_unf
-    // decompress returns here, to fall into unfilter
-      pop %rdi; pop %rsi; pop %rdx; pop %rcx  // (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
-      push %rax  // save result from decompress
-#include "arch/amd64/bxx.S"  // unfilter code; args in registers, fall-through return
-      pop %rax  // restore result from decompress
-      pop %rbx; pop %rbp
-      ret
+    push fx_dstlen; push fx_dst; push fx_src  // MATCH_54
+    call decompress
+    pop %rbx  // fx_src
+    pop %rdi  // fx_dst  arg1
+    pop %rsi  // MATCH_54  fx_dstlen  
+    push %rax  // MATCH_55  save result from decompress
+
+    movzbl b_ftid(%rbx),%ecx  // arg4
+    test %ecx,%ecx; jz no_unf  // 0==.ftid
+    movzbl b_cto8(%rbx),%edx  // arg3
+    movl (%rsi),%esi  // arg2= dstlen
+    call unfilter  // (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 no_unf:
+    pop %rax  // MATCH_55  restore result from decompress
+    pop %rbx; pop %rbp  // MATCH_50
+    ret
+
+unfilter:
+#include "arch/amd64/bxx.S"  // !NO_METHOD_CHECK; ordinary C call+ret
+
 
 /* NRV2 working registers */
 #define off  %eax  /* XXX: 2GB */
@@ -118,6 +125,7 @@ no_unf:
 #define displ %ebp
 #define dispq %rbp
 
+decompress:  // (fx_src= &b_info, fx_dst= dst, fx_dstlen= &dstlen)
     push fx_dstlen  // MATCH_51
     movzbl b_method(fx_src),%edx  // methb; for choosing decompression method
     push fx_src; push fx_dst
@@ -196,8 +204,4 @@ eof:
         pop %rcx  // MATCH_51 &dstlen
         movl %edi,(%rcx)  // actual length used at dst  XXX: 4GB
         sub %rsi,%rax  // src -= eof;  // return 0: good; else: bad
-
-        pop %rbx; pop %rbp
         ret
-
-

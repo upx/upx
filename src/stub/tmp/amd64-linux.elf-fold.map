@@ -33,35 +33,35 @@ Linker script and memory map
                 0x0000000000100958                . = ALIGN (0x1)
                 0x0000000000100958                __start_EXP_HEAD = .
 
-EXP_HEAD        0x0000000000100958       0xdc
- EXP_HEAD       0x0000000000100958       0xdc tmp/amd64-expand.o
+EXP_HEAD        0x0000000000100958       0xe0
+ EXP_HEAD       0x0000000000100958       0xe0 tmp/amd64-expand.o
                 0x0000000000100958                f_expand
-                0x0000000000100a34                __stop_EXP_HEAD = .
-                0x0000000000100a34                . = ALIGN (0x1)
-                0x0000000000100a34                __start_NRV2E = .
+                0x0000000000100a38                __stop_EXP_HEAD = .
+                0x0000000000100a38                . = ALIGN (0x1)
+                0x0000000000100a38                __start_NRV2E = .
 
-NRV2E           0x0000000000100a34       0xe5
- NRV2E          0x0000000000100a34       0xe5 tmp/amd64-expand.o
-                0x0000000000100b19                __stop_NRV2E = .
-                0x0000000000100b19                . = ALIGN (0x1)
-                0x0000000000100b19                __start_NRV2D = .
+NRV2E           0x0000000000100a38       0xe5
+ NRV2E          0x0000000000100a38       0xe5 tmp/amd64-expand.o
+                0x0000000000100b1d                __stop_NRV2E = .
+                0x0000000000100b1d                . = ALIGN (0x1)
+                0x0000000000100b1d                __start_NRV2D = .
 
-NRV2D           0x0000000000100b19       0xd7
- NRV2D          0x0000000000100b19       0xd7 tmp/amd64-expand.o
-                0x0000000000100bf0                __stop_NRV2D = .
-                0x0000000000100bf0                . = ALIGN (0x1)
-                0x0000000000100bf0                __start_NRV2B = .
+NRV2D           0x0000000000100b1d       0xd7
+ NRV2D          0x0000000000100b1d       0xd7 tmp/amd64-expand.o
+                0x0000000000100bf4                __stop_NRV2D = .
+                0x0000000000100bf4                . = ALIGN (0x1)
+                0x0000000000100bf4                __start_NRV2B = .
 
-NRV2B           0x0000000000100bf0       0xc1
- NRV2B          0x0000000000100bf0       0xc1 tmp/amd64-expand.o
-                0x0000000000100cb1                __stop_NRV2B = .
+NRV2B           0x0000000000100bf4       0xc1
+ NRV2B          0x0000000000100bf4       0xc1 tmp/amd64-expand.o
+                0x0000000000100cb5                __stop_NRV2B = .
 
 .data
 
-.bss            0x0000000000100cb4        0x0
- .bss           0x0000000000100cb4        0x0 tmp/amd64-linux.elf-fold.o
- .bss           0x0000000000100cb4        0x0 tmp/amd64-linux.elf-main.o
- .bss           0x0000000000100cb4        0x0 tmp/amd64-expand.o
+.bss            0x0000000000100cb8        0x0
+ .bss           0x0000000000100cb8        0x0 tmp/amd64-linux.elf-fold.o
+ .bss           0x0000000000100cb8        0x0 tmp/amd64-linux.elf-main.o
+ .bss           0x0000000000100cb8        0x0 tmp/amd64-expand.o
 
 .rela.dyn       0x0000000000100cb8        0x0
  .rela.text     0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
@@ -96,6 +96,6 @@ LZMA_DEC30      0x0000000000000000       0x18
                 0x0000000000000018                . = ALIGN (0x1)
                 0x0000000000000018                __start_EXP_TAIL = .
 
-EXP_TAIL        0x0000000000000000        0xe
- EXP_TAIL       0x0000000000000000        0xe tmp/amd64-expand.o
-                0x000000000000000e                __stop_EXP_TAIL = .
+EXP_TAIL        0x0000000000000000        0xc
+ EXP_TAIL       0x0000000000000000        0xc tmp/amd64-expand.o
+                0x000000000000000c                __stop_EXP_TAIL = .
