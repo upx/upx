@@ -97,7 +97,7 @@ sz_binfo= 12
     call decompress
     pop %rbx  // fx_src
     pop %rdi  // fx_dst  arg1
-    pop %rsi  // MATCH_54  fx_dstlen  
+    pop %rsi  // MATCH_54  fx_dstlen
     push %rax  // MATCH_55  save result from decompress
 
     movzbl b_ftid(%rbx),%ecx  // arg4
