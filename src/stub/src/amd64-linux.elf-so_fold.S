@@ -1,5 +1,6 @@
 #include "arch/amd64/regs.h"
 #include "arch/amd64/macros.S"
+#include "MAX_ELF_HDR.S"
 NBPW= 8
 
 #ifndef DEBUG  //{
@@ -26,7 +27,9 @@ fold:
     pop %rbp  // MATCH_12  len unfolded code
     pop %arg1  // MATCH_14  &so_info
     lea 2*NBPW(%rsp),%arg2  // skip MATCH_03, MATCH_02; MATCH_00  &{argc, argv, envp}
-    call upx_so_main  // (&so_info, &{argc, argv, envp}); returns &escape_hatch
+    sub $MAX_ELF_HDR_64,%rsp; mov %rsp,%arg3  // space for Elf64_Ehdr and Elf64_Phdrs
+    call upx_so_main  // (&so_info, &{argc, argv, envp}, elf_tmp); returns &escape_hatch
+    add $MAX_ELF_HDR_64,%rsp
 
     push %rbp; pop %arg2  // len unfolded code
     push %rbx; pop %arg1  // ptr unfolded code
@@ -100,6 +103,8 @@ __NR_mmap=      9
 __NR_mprotect= 10
 __NR_munmap=   11
 __NR_mremap=  216
+__NR_memfd_create= 0x13f  // 319
+__NR_ftruncate= 0x4d  // 77
 
 __NR_brk=      12
 
@@ -144,6 +149,10 @@ sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
 
 exit: .globl exit
         push $ __NR_exit; 5: jmp 5f
+ftruncate: .globl ftruncate
+        push $__NR_ftruncate; 5: jmp 5f
+memfd_create: .globl memfd_create
+        push $__NR_memfd_create; 5: jmp 5f
 close: .globl close
         push $ __NR_close; 5: jmp 5f
 openat: .globl openat
@@ -153,7 +162,7 @@ write: .globl write
 read: .globl read
         push $ __NR_read; 5: jmp 5f
 munmap: .globl munmap
-        push $ __NR_munmap; 5: jmp sysgo
+        push $__NR_munmap; 5: jmp sysgo
 
 // Sometimes Linux enforces page-aligned address for mprotect
 Pprotect: .globl Pprotect

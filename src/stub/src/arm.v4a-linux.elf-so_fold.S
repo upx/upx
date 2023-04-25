@@ -312,7 +312,7 @@ ptr  .req r5
 ulen .req r6
 pflg .req r7
 
-underlay: .globl underlay // (unsigned size, char *ptr, unsigned ulen, unsigned p_flags)  // ulen < PAGE_SIZE
+underlay: .globl underlay // (unsigned size, char *ptr, unsigned ulen, unsigned p_flags)  // ulen <= PAGE_SIZE
     stmdb sp!,{r0,r1,r2,r3,r4,r5,r6,r7, lr}
     ldmia sp!, {r4,r5,r6,r7}  // r4= r0; r5= r1; r6= r2; r7= r3;
     mov r0,sp
