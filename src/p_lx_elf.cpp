@@ -5721,7 +5721,9 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
                 // Tell them my new index
                 set_te32(&sh_out0[ask_for[j]].sh_info, n_sh_out);  // sh_info vs st_shndx
             }
-            ask_for[sh_info] = j;  // Enter my request, if any
+            if (sh_info < e_shnum) { // wild sh_info abounds!
+                ask_for[sh_info] = j;  // Enter my request, if any
+            }
             if (   (sh_offset && sh_offset < xct_off)
                 || (Elf64_Shdr::SHF_WRITE & sh_flags)
                 || (j == e_shstrndx)
