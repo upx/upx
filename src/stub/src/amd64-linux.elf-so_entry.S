@@ -31,6 +31,7 @@
 
 #include "arch/amd64/macros.S"
 #include "arch/amd64/regs.h"
+NBPW= 8
 
 sz_Ehdr= 64
 sz_Phdr= 56
@@ -56,8 +57,10 @@ MAP_ANONYMOUS= 0x20
 __NR_mmap=      9  // 64-bit mode only!  /usr/include/asm/unistd_64.h
 __NR_mprotect= 10
 __NR_munmap=   11
+__NR_memfd_create= 0x13f  // 319
 
 __NR_write=  1
+__NR_close=  3
 __NR_exit=  60
 
 PAGE_SHIFT= 12
@@ -85,8 +88,9 @@ _start:
         push %arg3  // MATCH_07  envp (glibc)
         push %arg2  // MATCH_01  argv
         push %arg1  // MATCH_00  argc
-        push %rbp  // MATCH_02  saved register
         push %rbx  // MATCH_03  saved register
+        push %rbp  // MATCH_02  saved register
+        mov %rsp,%rbp
         call L70  // MATCH_08  push $&getbit
 /* Working registers */
 #define off  %eax  /* XXX: 2GB */
@@ -111,24 +115,16 @@ refill:
         adcl bits,bits  // LSB= 1 (CarryIn); CarryOut= next bit
         ret  // infrequent (1/32)
 
-L20:
+L20:  // %rdx == &getbit
         pop %rbx  // MATCH_09  &fold_info
+        lea _start - 4*4 - getbit(%rdx),%rax  // &so_info
+        push %rax  // MATCH_14  &so_info
+
 //        cmpw $M_NRV2B_LE32|(0<<8),b_method(%rbx); je 0f; hlt; 0:  // check method and filter bytes
 
-// Get pages for unfolded code
-        sub %arg6,%arg6  // 0
-          pop %rdx  // MATCH_08  &getbit
-        sub %arg5,%arg5  // 0
-          movl /*sz_unc*/(%rbx),%arg2l  // dstlen
-        push $MAP_PRIVATE|MAP_ANONYMOUS; pop %sys4
-          push %arg2  // MATCH_10  len for escape hatch
-          push %rdx  // MATCH_15  save &getbit over syscall
-        push $PROT_READ|PROT_WRITE; pop %arg3
-        subl %edi,%edi  // (%arg1)dst = 0;  // kernel chooses
-        push $__NR_mmap; pop %rax; syscall; cmp $-4096,%rax; jb 0f; int3; 0:
-
-        pop %rdx  // MATCH_15  &getbit
-        push %rax  // MATCH_04  ptr unfolded_code
+// De-compress folded code onto the stack
+        movl /*sz_unc*/(%rbx),%eax; push %rax  // MATCH_40  len unfolded code
+        sub %rax,%rsp; and $-2*NBPW,%rsp
 
 // This is nrv2b_d32, inlined and optimized for small space (about 160 bytes).
 // The task is to de-compress the folded pieces for shared library init:
@@ -140,7 +136,8 @@ L20:
 // and compressability of C-coded de-compressors for Lzma and Zstd
 // in contrast to the simple and small assembly-coded NRV.
 
-        push %rax; pop dst  // &unfolded_code
+        push %rsp; pop dst  // &unfolded_code
+        push %rbp  // MATCH_45
         movl    sz_cpr(%rbx),len  // lsrc
         lea  sz_b_info(%rbx),src
 decompress:  // inlined: (uchar const *src, uint len, uchar *dst /*, u32 &ldst, uint method */)
@@ -150,8 +147,9 @@ decompress:  // inlined: (uchar const *src, uint len, uchar *dst /*, u32 &ldst, 
 //  MATCH_05  &input_eof
 //  MATCH_04  ptr unfolded_code
 //  MATCH_10  len unfolded_code
-//  MATCH_03  saved %rbx
+//%rbp:
 //  MATCH_02  saved %rbp
+//  MATCH_03  saved %rbx
 //  MATCH_00  argc
 //  MATCH_01  argv
 //  MATCH_07  envp
@@ -201,33 +199,57 @@ gotlen_n2b:
 eof_n2b:
         pop %rcx  // MATCH_05  &input_eof
         cmp %rcx,%rsi; je 0f; hlt; 0:  // test for ending in correct place
-        lea _start - 4*4 - getbit(%rdx),%rdx  // &so_info
 
-        pop %arg1  // MATCH_11 ptr unfolded code
-        pop %arg2  // MATCH_10 len unfolded code
-        push %rdx  // MATCH_14  &so_info
-        push %arg2  // MATCH_12  len unfolded code
-        push %arg1  // MATCH_13  ptr unfolded code
-        push $PROT_EXEC|PROT_READ; pop %arg3
-        push $__NR_mprotect; pop %rax; syscall; cmp $-4096,%rax; jb 0f; int3; 0:
+        pop %rbp  // MATCH_45
+
+        push $0; pop %arg2
+        call 0f; .asciz "upx"; 0: pop %arg1
+        mov $__NR_memfd_create,%rax; call do_sys
+
+        push %rax; pop %arg1  // mfd
+        push %rsp; pop %arg2  // buffer
+        push %rax  // MATCH_47  save mfd
+        mov -2*NBPW(%rbp),%arg3  // length
+        push $__NR_write; pop %rax; call do_sys  // scribbles %rcx !!
+
+// Map unfolded code the SELinux way
+        pop %arg5  // MATCH_47  mfd
+        lea -2*NBPW(%rbp),%rsp
+        pop %arg2; push %arg2  // MATCH_40  len unfolded code
+        sub %arg6l,%arg6l  // 0
+        push $MAP_PRIVATE; pop %sys4
+        push $PROT_READ|PROT_EXEC; pop %arg3
+        subl %edi,%edi  // (%arg1)dst = 0;  // kernel chooses addr
+        push $__NR_mmap; pop %rax; call do_sys
+        push %rax  // MATCH_11  ptr unfolded code
+
+        push %arg5; pop %arg1  // mfd
+        push $__NR_close; pop %rax; call do_sys
 
 // %rsp:
-//  MATCH_13  ptr unfolded_code; for escape hatch
-//  MATCH_12  len unfolded code; for escape hatch
+//  MATCH_11  ptr unfolded_code; for escape hatch
+//  MATCH_10  len unfolded code; for escape hatch
 //  MATCH_14  &so_info
-//  MATCH_03  saved %rbx
+// %rbp:
 //  MATCH_02  saved %rbp
+//  MATCH_03  saved %rbx
 //  MATCH_00  argc
 //  MATCH_01  argv
 //  MATCH_07  envp
 
-        pop %rax; push %rax  // MATCH_13 ptr unfolded code
+        pop %rax; push %rax  // MATCH_11 ptr unfolded code
         jmp *%rax  // enter C code
+
+do_sys:
+        syscall
+        cmp $-4096,%rax; jb 0f; int3; 0:
+        ret
 
 // IDENTSTR goes here
 
   section ELFMAINZ
 L70:
+        pop %rdx  // MATCH_08  &getbit
         call L20  // MATCH_09  push $&fold_info
 fold_info:
 //  b_info (sz_unc, sz_cpr, method) of folded code (C-language, etc.)

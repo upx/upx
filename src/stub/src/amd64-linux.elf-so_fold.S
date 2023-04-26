@@ -8,33 +8,34 @@ NBPW= 8
 #endif  //}
 
 // %rsp:
-//   MATCH_13  ptr unfolded_code; for escape hatch
-//   MATCH_12  len unfolded code; for escape hatch
+//   MATCH_11  ptr unfolded_code; for escape hatch
+//   MATCH_10  len unfolded code; for escape hatch
 //   MATCH_14  &so_info:
-//     .long offset(.)  // detect relocation
-//     .long offset(user DT_INIT)
-//     .long offset(escape_hatch)
-//     .long offset({l_info; p_info; b_info; compressed data})
-//   MATCH_03  saved %rbx
+//     .word offset(.)  // detect relocation
+//     .word offset(user DT_INIT)
+//     .word offset(escape_hatch)
+//     .word offset({l_info; p_info; b_info; compressed data})
+// %rbp:
 //   MATCH_02  saved %rbp
+//   MATCH_03  saved %rbx
 //   MATCH_00  argc
 //   MATCH_01  argv
 //   MATCH_07  envp
 
   section SO_HEAD
 fold:
-    pop %rbx  // MATCH_13  ptr unfolded code
-    pop %rbp  // MATCH_12  len unfolded code
+    pop %rbx  // MATCH_11  ptr unfolded code
+    pop %rbp  // MATCH_10  len unfolded code
     pop %arg1  // MATCH_14  &so_info
-    lea 2*NBPW(%rsp),%arg2  // skip MATCH_03, MATCH_02; MATCH_00  &{argc, argv, envp}
+    lea 2*NBPW(%rsp),%arg2  // &{argc, argv, envp}
     sub $MAX_ELF_HDR_64,%rsp; mov %rsp,%arg3  // space for Elf64_Ehdr and Elf64_Phdrs
     call upx_so_main  // (&so_info, &{argc, argv, envp}, elf_tmp); returns &escape_hatch
     add $MAX_ELF_HDR_64,%rsp
 
     push %rbp; pop %arg2  // len unfolded code
     push %rbx; pop %arg1  // ptr unfolded code
-    pop %rbx  // MATCH_03  restore
     pop %rbp  // MATCH_02  restore
+    pop %rbx  // MATCH_03  restore
     push %rax  // MATCH_30  &escape_hatch
     push $__NR_munmap; pop %rax
     ret  // MATCH_30  ==>escape_hatch:
@@ -73,7 +74,7 @@ eof:  // end of a compressed extent
 // Subroutines and syscalls needed by upx_so_main
 //
 my_bkpt: .globl my_bkpt
-        int3
+        int3  // my_bkpt
         ret
 
 memset: .globl memset  // void *memset(void *s, int c, size_t n);
