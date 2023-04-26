@@ -28,6 +28,7 @@
 //
 
 #include "arch/arm64/v8/macros.S"
+#include "MAX_ELF_HDR.S"
 NBPW= 8
 #define bkpt brk #0
 
@@ -70,7 +71,9 @@ fold:  // enter here (x0= &so_info; x1= &{argc,argv,envp,lr}
 //  MATCH_04  ptr unfolded_code
 //  MATCH_10  len unfolded_code
 //  MATCH_00  argc,argv,envp,lr(_start)
-        call upx_so_main  // (&so_info, &argc); returns &escape_hatch
+        sub sp,sp,#MAX_ELF_HDR_64; mov x2,sp  // space for Elf64_Ehdr and Elf64_Phdrs
+        call upx_so_main  // (&so_info, &argc, elf_tmp); returns &escape_hatch
+        add sp,sp,#MAX_ELF_HDR_64
         mov x2,x0  // save &escape_hatch
         POP2(x0,x1)  // F_ADRU, F_LENU  (unfolded region)
         mov w8,#__NR_munmap
@@ -124,10 +127,15 @@ __NR_unlinkat = 0x23 + __NR_SYSCALL_BASE  // 35
 __NR_mmap     = 0xde + __NR_SYSCALL_BASE  // 222
 __NR_mprotect = 0xe2 + __NR_SYSCALL_BASE  // 226
 __NR_munmap   = 0xd7 + __NR_SYSCALL_BASE  // 215
+__NR_memfd_create = 0x117 + __NR_SYSCALL_BASE  // 279
+__NR_ftruncate= 0x2e + __NR_SYSCALL_BASE  // 46
 
         .globl exit
 exit:
         do_sys __NR_exit
+
+ftruncate:    .globl ftruncate;    do_sys __NR_ftruncate;    ret
+memfd_create: .globl memfd_create; do_sys __NR_memfd_create; ret
 
         .globl read
 read:
