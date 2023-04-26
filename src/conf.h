@@ -65,14 +65,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
    //   51:32: error: zero as null pointer constant
 #  pragma GCC diagnostic error "-Wzero-as-null-pointer-constant"
 #endif
-#if (ACC_CC_MSC)
-#  pragma warning(error: 4127)
-#  pragma warning(error: 4146)
-#  pragma warning(error: 4319)
-#  pragma warning(error: 4805)
-#endif
-#endif // UPX_CONFIG_DISABLE_WSTRICT
 #endif // UPX_CONFIG_DISABLE_WERROR
+#endif // UPX_CONFIG_DISABLE_WSTRICT
 
 // multithreading (UPX currently does not use multithreading)
 #if (WITH_THREADS)
@@ -346,7 +340,7 @@ inline void NO_fprintf(FILE *, const char *, ...) {}
 #  define upx_return_address()  nullptr
 #endif
 
-// TODO cleanup: we now require C++14, so remove all __packed_struct usage
+// TODO cleanup: we now require C++17, so remove all __packed_struct usage
 #define __packed_struct(s)      struct alignas(1) s {
 #define __packed_struct_end()   };
 

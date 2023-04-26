@@ -28,9 +28,8 @@
 // main entry, mostly boring stuff; see work.cpp for actual action
 
 #include "conf.h"
-#include "file.h"
-#include "packer.h"
-#include "p_elf.h"
+#include "packer.h"            // Packer::isValidCompressionMethod()
+#include "p_elf.h"             // ELFOSABI_xxx
 #include "compress/compress.h" // upx_ucl_init()
 
 /*************************************************************************

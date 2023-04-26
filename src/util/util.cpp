@@ -248,20 +248,6 @@ TEST_CASE("ptr_check_no_overlap 3") {
 #endif // DEBUG
 
 /*************************************************************************
-// bele.h
-**************************************************************************/
-
-namespace N_BELE_CTP {
-const BEPolicy be_policy;
-const LEPolicy le_policy;
-} // namespace N_BELE_CTP
-
-namespace N_BELE_RTP {
-const BEPolicy be_policy;
-const LEPolicy le_policy;
-} // namespace N_BELE_RTP
-
-/*************************************************************************
 // stdlib
 **************************************************************************/
 
@@ -312,25 +298,47 @@ TEST_CASE("upx_stable_sort") {
         CHECK((a[0] == 0 && a[1] == 1));
     }
     {
-        LE64 a[3];
-        a[0] = 2;
-        a[1] = 1;
-        a[2] = 0;
-        upx_stable_sort(a, 3, sizeof(*a), le64_compare);
-        CHECK((a[0] == 0 && a[1] == 1 && a[2] == 2));
+        BE64 a[3];
+        a[0] = 257;
+        a[1] = 256;
+        a[2] = 255;
+        upx_stable_sort(a, 3, sizeof(*a), be64_compare);
+        CHECK((a[0] == 255 && a[1] == 256 && a[2] == 257));
     }
-#if __cplusplus >= 202002L // use C++20 std::next_permutation() to test all permutations
-    {
-        upx_uint16_t perm[5] = {0, 1, 2, 3, 4}; // 120 permutations
-        do {
-            upx_uint16_t a[5] = {};
-            memcpy(a, perm, sizeof(perm));
-            upx_stable_sort(a, 5, sizeof(*a), ne16_compare);
-            CHECK((a[0] == 0 && a[1] == 1 && a[2] == 2 && a[3] == 3 && a[4] == 4));
-        } while (std::next_permutation(perm, perm + 5));
-    }
-#endif
 }
+
+#if __cplusplus >= 202002L // use C++20 std::next_permutation() to test all permutations
+namespace {
+struct TestSortAllPermutations {
+    static upx_uint64_t test(size_t n) {
+        constexpr size_t N = 16;
+        assert(n > 0 && n <= N);
+        LE16 perm[N];
+        for (size_t i = 0; i < n; i++)
+            perm[i] = 255 + i;
+        upx_uint64_t num_perms = 0;
+        do {
+            LE16 a[N];
+            memcpy(a, perm, sizeof(*a) * n);
+            upx_stable_sort(a, n, sizeof(*a), le16_compare);
+            for (size_t i = 0; i < n; i++)
+                CHECK((a[i] == 255 + i));
+            num_perms += 1;
+        } while (std::next_permutation(perm, perm + n));
+        return num_perms;
+    }
+};
+} // namespace
+TEST_CASE("upx_stable_sort") {
+    CHECK(TestSortAllPermutations::test(1) == 1);
+    CHECK(TestSortAllPermutations::test(2) == 2);
+    CHECK(TestSortAllPermutations::test(3) == 6);
+    CHECK(TestSortAllPermutations::test(4) == 24);
+    CHECK(TestSortAllPermutations::test(5) == 120);
+    // CHECK(TestSortAllPermutations::test(6) == 720);
+    // CHECK(TestSortAllPermutations::test(7) == 5040);
+}
+#endif // C++20
 #endif // DEBUG
 
 /*************************************************************************
@@ -538,6 +546,20 @@ TEST_CASE("mem_replace") {
 }
 
 /*************************************************************************
+// bele.h globals
+**************************************************************************/
+
+namespace N_BELE_CTP {
+const BEPolicy be_policy;
+const LEPolicy le_policy;
+} // namespace N_BELE_CTP
+
+namespace N_BELE_RTP {
+const BEPolicy be_policy;
+const LEPolicy le_policy;
+} // namespace N_BELE_RTP
+
+/*************************************************************************
 // fn - FileName util
 **************************************************************************/
 
@@ -736,7 +758,7 @@ bool makebakname(char *ofilename, size_t size, const char *ifilename, bool force
 **************************************************************************/
 
 unsigned get_ratio(upx_uint64_t u_len, upx_uint64_t c_len) {
-    const unsigned n = 1000 * 1000;
+    constexpr unsigned n = 1000 * 1000;
     if (u_len == 0)
         return c_len == 0 ? 0 : n;
     upx_uint64_t x = c_len * n;

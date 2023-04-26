@@ -211,6 +211,7 @@ NORET void throwOutOfMemoryException(const char *msg = nullptr);
 NORET void throwIOException(const char *msg = nullptr, int e = 0);
 NORET void throwEOFException(const char *msg = nullptr, int e = 0);
 
+// some C++ template wizardry is needed to overload throwCantPack() for varargs
 template <class T>
 void throwCantPack(const T *, ...) = delete;
 template <>
