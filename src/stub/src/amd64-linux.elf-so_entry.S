@@ -204,13 +204,13 @@ eof_n2b:
 
         push $0; pop %arg2
         call 0f; .asciz "upx"; 0: pop %arg1
-        mov $__NR_memfd_create,%rax; call do_sys
+        push $__NR_memfd_create; call do_sys
 
         push %rax; pop %arg1  // mfd
         push %rsp; pop %arg2  // buffer
         push %rax  // MATCH_47  save mfd
         mov -2*NBPW(%rbp),%arg3  // length
-        push $__NR_write; pop %rax; call do_sys  // scribbles %rcx !!
+        push $__NR_write; call do_sys  // scribbles %rcx !!
 
 // Map unfolded code the SELinux way
         pop %arg5  // MATCH_47  mfd
@@ -220,11 +220,11 @@ eof_n2b:
         push $MAP_PRIVATE; pop %sys4
         push $PROT_READ|PROT_EXEC; pop %arg3
         subl %edi,%edi  // (%arg1)dst = 0;  // kernel chooses addr
-        push $__NR_mmap; pop %rax; call do_sys
+        push $__NR_mmap; call do_sys
         push %rax  // MATCH_11  ptr unfolded code
 
         push %arg5; pop %arg1  // mfd
-        push $__NR_close; pop %rax; call do_sys
+        push $__NR_close; call do_sys
 
 // %rsp:
 //  MATCH_11  ptr unfolded_code; for escape hatch
@@ -240,10 +240,10 @@ eof_n2b:
         pop %rax; push %rax  // MATCH_11 ptr unfolded code
         jmp *%rax  // enter C code
 
-do_sys:
-        syscall
+do_sys: // on-stack parameter: hint on error
+        mov NBPW(%rsp),%rax; syscall
         cmp $-4096,%rax; jb 0f; int3; 0:
-        ret
+        ret $NBPW
 
 // IDENTSTR goes here
 
