@@ -32,37 +32,14 @@
 NBPW= 8
 #define bkpt brk #0
 
-sz_Elf64_Ehdr = 8*4
-sz_Elf64_Phdr = 7*4
-p_vaddr= 4+4
-sz_l_info = 12
-sz_p_info = 12
-sz_b_info = 12
-  sz_unc= 0
-  sz_cpr= 4
-  b_method= 8
-
 MAP_ANONYMOUS= 0x20
 MAP_PRIVATE=   0x02
 MAP_FIXED=     0x10
 
-PROT_READ=     0x1
-PROT_WRITE=    0x2
-
-O_RDONLY=       0
-
-PAGE_SHIFT= 12
-PAGE_SIZE = -(~0<<PAGE_SHIFT)
-PATHMAX=  4096
-
-PATH_MAX= 4096
-
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
-#define TRACE_REGS r0-r12,r14,r15
 #endif  /*}*/
 
-#define OVERHEAD 2048
 #define call bl
 
   section SO_HEAD

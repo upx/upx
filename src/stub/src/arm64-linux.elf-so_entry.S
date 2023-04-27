@@ -58,7 +58,9 @@ PAGE_MASK=  (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
 
 // /usr/include/asm-generic/unistd.h
+__NR_close    = 0x39  //  57
 __NR_exit     = 0x5d  //  93
+__NR_memfd_create = 0x117  // 279
 __NR_mmap     = 0xde  // 222
 __NR_mprotect = 0xe2  // 226
 __NR_munmap   = 0xd7  // 215
@@ -91,7 +93,7 @@ arg6w .req w5
 
         .balign 4
 _start: .globl _start
-        nop  // bkpt  DEBUG
+        nop  // bkpt // DEBUG
         PUSH4 (x0,x1,x2,lr)  // MATCH_00
 
         sub sp,sp,#2*NBPW  // space for ADRU, LENU
@@ -99,33 +101,54 @@ F_ADRU= 0 * NBPW
 F_LENU= 1 * NBPW
 F_ARGC= 2 * NBPW
 
-        call L70
-L70ret:
-foldi .req lr  // &fold_info
-        mov arg6,#0  // cleanliness
-        mov arg5w,#-1  // fd
-        mov arg4w,#MAP_PRIVATE|MAP_ANONYMOUS  // modes
-        mov arg3w,#PROT_READ|PROT_WRITE  // prot
-        ldr arg2w,[foldi, #sz_unc]  // dstlen
-        str arg2,[sp, #F_LENU]
-        mov arg1,#0  // addr (kernel chooses)
-        do_sys __NR_mmap; cmn x0,#4096; bcc 0f; bkpt; 0:
-        str x0,[sp, #F_ADRU]
+old_sp  .req x15
+foldi   .req x14
+u_ptr   .req x12
+mfd     .req w11
+        bl L70
+L70_ret:
+        mov foldi,lr
 
-        add arg4,sp,#F_LENU  // &dstlen
-        mov arg3,x0  // dst
-        ldr arg2w,[foldi, #sz_cpr]  // srclen
+        mov old_sp,sp
+        ldr w0,[foldi,#sz_unc]
+        str x0,[old_sp,#F_LENU]
+        sub x0,sp,x0  // alloca
+        and sp,x0,#-2*NBPW  // align stack
+
+        add arg4,old_sp,#F_LENU  // &dstlen
+        mov arg3,sp  // dst for decompress
+        ldr arg2w,[foldi,#sz_cpr]  // srclen
         add arg1,foldi,#sz_b_info  // src
-        call f_decompress  // includes cache flush
+        bl f_decompress
 
-        ldp arg1,arg2,[sp, #F_ADRU]  // and F_LENU
-        mov arg3w,#PROT_EXEC|PROT_READ
-        do_sys __NR_mprotect
+        mov arg2w,#0
+        adr arg1,str_upx
+        do_sys __NR_memfd_create; mov mfd, w0
 
-        adr x0,_start - 4*4  // &SO_INFO
-        add x1,sp,#F_ARGC
-        ldr x2,[sp, #F_ADRU]  // invoke folded code
-        br x2
+        mov arg2,sp
+        ldr arg3,[old_sp,#F_LENU]
+        do_sys __NR_write
+        mov sp,old_sp  // de-alloca
+
+        mov arg6,#0  // beginning of file
+        mov arg5w,mfd
+        mov arg4w,#MAP_PRIVATE  // modes
+        mov arg3w,#PROT_READ|PROT_EXEC  // prot
+        ldr arg2,[sp,#F_LENU]
+        mov arg1,#0  // addr (kernel chooses)
+        do_sys __NR_mmap; str x0,[sp,#F_ADRU]
+        mov u_ptr,x0
+
+        mov arg1w,mfd
+        do_sys __NR_close
+
+        adr arg1,_start - 4*4  // &SO_INFO
+        add arg2,sp,#F_ARGC  // &{argc, argv, envp}
+        br u_ptr
+
+str_upx:
+        .asciz "upx"
+
 //%esp:
 //  MATCH_04  ptr unfolded_code
 //  MATCH_10  len unfolded_code
