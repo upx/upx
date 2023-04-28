@@ -48,12 +48,14 @@ MAP_PRIVATE= 2
 MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
 
+__NR_memfd_create= 0x164 // 356
 __NR_mmap=     90
 __NR_mprotect=125
 __NR_munmap=   91
 
-__NR_write= 4
+__NR_close= 6
 __NR_exit=  1
+__NR_write= 4
 
 PAGE_SHIFT= 12
 PAGE_MASK= (~0<<PAGE_SHIFT)
@@ -76,7 +78,7 @@ M_NRV2E_LE32=8
 //  .long offset({l_info; p_info; b_info; compressed data})
   section ELFMAINX
 _start:  // C-called: %esp: ret_addr,argc,argv,envp; must save %ebx,%esi,%edi,%ebp
-    nop  // DEBUG i386 so_entry.S
+    nop  //  int3  // DEBUG i386 so_entry.S
     pusha  // MATCH_03
     call L70  // MATCH_08  push $&getbit
 L70ret:
@@ -102,25 +104,20 @@ refill:
         adc bits,bits  // LSB= 1 (CarryIn); CarryOut= next bit
         ret  // infrequent (1/32)
 
+#define foldi %esi
+#define old_sp %ebp
 L20:
-        pop %ebx  // MATCH_09  &fold_info
-        cmpw $M_NRV2B_LE32|(0<<8),b_method(%ebx); je 0f; hlt; 0:  // check method and filter bytes
+        pop foldi  // MATCH_09  &fold_info
+        cmpw $M_NRV2B_LE32|(0<<8),b_method(foldi); je 0f; hlt; 0:  // check method and filter bytes
         lea _start - 4*NBPW - L70ret(%edx),%ecx  // &so_info
 
         push %ecx  // MATCH_14  &so_info
-        push %ebx  // MATCH_15  old_mmap destroys
+        mov /*sz_unc*/(foldi),%eax; push %eax  // MATCH_15  F_LENU
+        mov %esp,old_sp
+#define F_LENU 0*NBPW
 
-// Get pages for unfolded code
-        push $0  // arg6 offset
-        push $-1  // arg5 fd
-        push $MAP_PRIVATE|MAP_ANONYMOUS  // arg4 modes
-        push $PROT_READ|PROT_WRITE  // arg3 prot
-        push /*sz_unc*/(%ebx)  // arg2 dstlen
-        push $0  // arg1 addr (kernel chooses)
-        call old_mmap
-        pop %ebx  // MATCH_15  &fold_info
-        push /*sz_unc*/(%ebx)  // MATCH_10   len unfolded cold
-        push %eax  // MATCH_04  ptr unfolded_code
+        sub %eax,%esp  // alloca
+        and $-2*NBPW,%esp  // align stack
 
 // This is nrv2b_d32, inlined and optimized for small space (about 160 bytes).
 // The task is to de-compress the folded pieces for shared library init:
@@ -132,15 +129,19 @@ L20:
 // and compressability of C-coded de-compressors for Lzma and Zstd
 // in contrast to the simple and small assembly-coded NRV.
 
-        mov %eax,dst  // &unfolded_code
-        mov sz_cpr(%ebx),lsrc
-        lea sz_b_info(%ebx),src
+        mov %esp,dst  // &unfolded_code
+        push old_sp  // MATCH_16
+        mov    sz_cpr(foldi),lsrc
+        lea sz_b_info(foldi),src  // foldi dead
 decompress:  // inlined: (uchar const *src, uint len, uchar *dst /*, u32 &ldst, uint method */)
         add src,lsrc; push lsrc  // MATCH_05  &input_eof
 
 //%esp:
 //  MATCH_05  &input_eof
-//  MATCH_04  ptr unfolded_code
+//  MATCH_16  old_sp
+//  space for de-compressed code
+
+//old_sp:
 //  MATCH_10  len unfolded_code
 //  MATCH_14  &so_info
 //  MATCH_03  pusha regs {%edi,%esi,%ebp,%esp,%ebx,%edx,%ecx,%eax}
@@ -188,14 +189,35 @@ gotlen_n2b:
 eof_n2b:
         pop %ecx  // MATCH_05  &input_eof
         cmp %ecx,%esi; je 0f; hlt; 0:  // test for ending in correct place
+        pop old_sp  // MATCH_16
 
-        pop %ebx  // MATCH_04  arg1  ptr unfolded_code
-        pop %ecx  // MATCH_10  arg2  len unfoded_code
-          push %ecx  // MATCH_12  len unfolded code
-          push %ebx  // MATCH_13  ptr unfolded code
-        push $PROT_EXEC|PROT_READ; pop %edx  // arg3
-        push $__NR_mprotect; pop %eax; int $0x80
+        xor %ecx,%ecx  // zero
+        call 0f; .asciz "upx"; 0: pop %ebx
+        push $__NR_memfd_create; pop %eax; int $0x80
+#define mfd %edi
+        mov %eax,mfd
 
+        mov F_LENU(old_sp),%edx
+        mov %esp,%ecx
+        mov %edi,%ebx
+        push $__NR_write; pop %eax; int $0x80
+        mov old_sp,%esp  // de-alloca
+
+        push $0  // arg6
+        push mfd  // arg5
+        push $MAP_PRIVATE  // arg4
+        push $PROT_READ|PROT_EXEC  // arg3
+        push 4*NBPW(%esp)  // arg2  F_LENU
+        push $0  // arg1
+        mov %esp,%ebx
+        push $__NR_mmap; pop %eax; int $0x80; add $6*NBPW,%esp
+
+        push %eax  // MATCH_13  ptr unfolded_code
+        mov mfd,%ebx
+        push $__NR_close; pop %eax; int $0x80
+
+        pop %eax; push %eax
+        jmp *%eax
 // %esp:
 //  MATCH_13  ptr unfolded_code; for escape hatch
 //  MATCH_12  len unfolded code; for escape hatch
@@ -206,8 +228,6 @@ eof_n2b:
 //  MATCH_01  argv
 //  MATCH_07  envp
 
-        pop %eax; push %eax  // MATCH_13 ptr unfolded code
-        jmp *%eax  // enter C code
 
 old_mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
         lea 4(%esp),%ebx

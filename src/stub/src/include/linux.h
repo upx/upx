@@ -184,6 +184,7 @@ struct timespec {
 #define __NR_adjtimex           124
 #define __NR_mprotect           125
 #define __NR_nanosleep          162
+#define __NR_memfd_create       356  /*0x164*/
 
 #undef _syscall0
 #undef _syscall1
@@ -353,6 +354,7 @@ static inline _syscall2(int,ftruncate,int,fd,size_t,len)
 static inline _syscall0(pid_t,getpid)
 static inline _syscall2(int,gettimeofday,struct timeval *,tv,void *,tz)
 static inline _syscall3(off_t,lseek,int,fd,off_t,offset,int,whence)
+static inline _syscall2(int,memfd_create,char const *,name,unsigned,flags);
 static inline _syscall3(int,mprotect,void *,addr,size_t,len,int,prot)
 static inline _syscall2(int,munmap,void *,start,size_t,length)
 static inline _syscall2(int,nanosleep,const struct timespec *,rqtp,struct timespec *,rmtp)
@@ -542,6 +544,7 @@ static ssize_t write(int fd, void const *buf, size_t len)
 void *brk(void *);
 int close(int);
 void exit(int) __attribute__((__noreturn__,__nothrow__));
+int memfd_create(char const *, unsigned);
 void *mmap(void *, size_t, int, int, int, off_t);
 int munmap(void *, size_t);
 int mprotect(void const *, size_t, int);

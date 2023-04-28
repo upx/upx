@@ -1,3 +1,5 @@
+#include "MAX_ELF_HDR.S"
+
 #define section .section
 NBPW= 4
 
@@ -23,10 +25,11 @@ NBPW= 4
 fold:
     mov %esp,%eax
     mov 2*NBPW(%eax),%ecx  // &so_info
+    sub $MAX_ELF_HDR_32,%esp; push %esp  // &elf_tmp
     add $(3+8+1)*NBPW,%eax; push %eax  // &{argc,argv,envp}
     push %ecx  // &so_info
-    call upx_so_main  // (&so_info, &{argc, argv, envp}); returns &escape_hatch
-    add $2*NBPW,%esp  // remove args
+    call upx_so_main  // (&so_info, &{argc, argv, envp}, &elf_tmp); returns &escape_hatch
+    add $MAX_ELF_HDR_32 + 3*NBPW,%esp  // remove args
     mov %eax,%ebp  // save &escape_hatch
 
     pop %ebx  // MATCH_13  ptr unfolded code
@@ -106,6 +109,7 @@ __NR_write= 4
 __NR_open=  5
 __NR_close= 6
 
+__NR_memfd_create= 0x164  // 356
 __NR_mmap=     90
 __NR_mprotect=125
 __NR_munmap=   91
@@ -164,6 +168,9 @@ Pprotect: .globl Pprotect
     mov 1*NBPW(%esp),%ebx  // restore reg
     ret
 
+memfd_create: .globl memfd_create
+   int3
+        push $__NR_memfd_create; 5: jmp 5f
 mprotect: .globl mprotect
         mov %ebx,%eax; and $-1+ (1<<12),%eax
         sub %eax,%ebx
@@ -171,6 +178,8 @@ mprotect: .globl mprotect
         push $ __NR_mprotect; 5: jmp 5f
 exit: .globl exit
         push $ __NR_exit; 5: jmp 5f
+close: .globl close
+        push $__NR_close; 5: jmp 5f
 munmap: .globl munmap
         push $ __NR_munmap; 5: jmp 5f
 write: .globl write
