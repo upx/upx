@@ -67,11 +67,13 @@ PAGE_SHIFT= 12
 PAGE_MASK=  (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
 
+__NR_close=      6 + __NR_SYSCALL_BASE
 __NR_exit =      1 + __NR_SYSCALL_BASE
-__NR_write =     4 + __NR_SYSCALL_BASE
+__NR_memfd_create= 0x181 + __NR_SYSCALL_BASE  // 385
 __NR_mmap64 = 0xc0 + __NR_SYSCALL_BASE
 __NR_mprotect =125 + __NR_SYSCALL_BASE
 __NR_munmap =   91 + __NR_SYSCALL_BASE
+__NR_write =     4 + __NR_SYSCALL_BASE
 
 __ARM_NR_BASE  = 0xf0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
@@ -142,7 +144,7 @@ _start: .globl _start  // in Thumb mode  (via PackLinuxElf32::pack3)
         bkpt  // DEBUG
 #endif  //}
         // argc,argv,envp, r3 convenience, r4-r7 callee-saved, lr ret_addr
-        stmfd sp!,{r0,r1,r2, r3, r4,r5,r6,r7, lr}
+        stmfd sp!,{r0,r1,r2, r3, r4,r5,r6,r7, lr}  // MATCH_99
 
         sub sp,sp,#2*NBPW  // space for ADRU, LENU
 F_ADRU= 0 * NBPW
@@ -151,33 +153,50 @@ F_ARGC= 2 * NBPW
 
         call4 L70
 L70_ret:
-foldi .req lr  // &fold_info
-        mov arg6,#0  // cleanliness
-        mvn arg5,#~-1  // fd= -1
-        mov arg4,#MAP_PRIVATE|MAP_ANONYMOUS  // modes
-        mov arg3,#PROT_READ|PROT_WRITE  // prot
-        ldr arg2,[foldi, #sz_unc]  // dstlen
-        str arg2,[sp, #F_LENU]
-        mov arg1,#0  // addr (kernel chooses)
-      PUSH {foldi}  // defend against lr clobbered by syscall
-        do_sys7t __NR_mmap64; cmn r0,#4096; bcc 0f; bkpt; 0:
-      POP {foldi}
-        str r0,[sp, #F_ADRU]
+    foldi   .req lr  // &fold_info
+    old_sp  .req r5  // busy: lr,r5
+        mov old_sp,sp
+        ldr r0,[foldi,#sz_unc]
+        str r0,[old_sp,#F_LENU]
+        sub r0,sp,r0  // alloca
+        and sp,r0,#-2*NBPW  // align stack
 
-        add arg4,sp,#F_LENU  // &dstlen
-        mov arg3,r0  // dst
-        ldr arg2,[foldi, #sz_cpr]  // srclen
+        add arg4,old_sp,#F_LENU  // &dstlen
+        mov arg3,sp  // dst for decompress
+        ldr arg2,[foldi,#sz_cpr]  // srclen
         add arg1,foldi,#sz_b_info  // src
-        call4 f_decompress  // includes cache flush
+    .unreq foldi  // busy: r5
+        bl f_decompress
 
-        ldr arg1,[sp, #F_ADRU]
-        ldr arg2,[sp, #F_LENU]
-        mov arg3,#PROT_EXEC|PROT_READ
-        do_sys7t __NR_mprotect
+        mov arg2,#0
+        adr arg1,str_upx
+    mfd     .req r6  // busy: r6,r5
+        do_sys7t2 __NR_memfd_create; mov mfd,r0
+
+        mov arg2,sp
+        ldr arg3,[old_sp,#F_LENU]
+        do_sys __NR_write
+        mov sp,old_sp  // de-alloca
+    .unreq old_sp  // busy: r6
+
+        mov arg6,#0  // beginning of file
+        mov arg5,mfd
+        mov arg4,#MAP_PRIVATE  // modes
+        mov arg3,#PROT_READ|PROT_EXEC  // prot
+        ldr arg2,[sp,#F_LENU]
+        mov arg1,#0  // addr (kernel chooses)
+        do_sys __NR_mmap64; str r0,[sp,#F_ADRU]
+
+        mov arg1,mfd
+    .unreq mfd  // busy: empty
+        do_sys __NR_close
 
         adr r0,_start -4 *NBPW  // &SO_INFO
         add r1,sp,#F_ARGC
         ldr pc,[sp, #F_ADRU]  // invoke folded code
+
+str_upx:
+        .asciz "upx"
 
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1

@@ -101,14 +101,10 @@ F_ADRU= 0 * NBPW
 F_LENU= 1 * NBPW
 F_ARGC= 2 * NBPW
 
-old_sp  .req x15
-foldi   .req x14
-u_ptr   .req x12
-mfd     .req w11
         bl L70
 L70_ret:
-        mov foldi,lr
-
+    foldi   .req lr
+    old_sp  .req x14  // busy: lr,x14
         mov old_sp,sp
         ldr w0,[foldi,#sz_unc]
         str x0,[old_sp,#F_LENU]
@@ -119,16 +115,19 @@ L70_ret:
         mov arg3,sp  // dst for decompress
         ldr arg2w,[foldi,#sz_cpr]  // srclen
         add arg1,foldi,#sz_b_info  // src
+    .unreq foldi  // busy: x14
         bl f_decompress
 
         mov arg2w,#0
         adr arg1,str_upx
+    mfd     .req w15  // busy: x15,x14
         do_sys __NR_memfd_create; mov mfd, w0
 
         mov arg2,sp
         ldr arg3,[old_sp,#F_LENU]
         do_sys __NR_write
         mov sp,old_sp  // de-alloca
+    .unreq old_sp  // busy: x15
 
         mov arg6,#0  // beginning of file
         mov arg5w,mfd
@@ -137,14 +136,17 @@ L70_ret:
         ldr arg2,[sp,#F_LENU]
         mov arg1,#0  // addr (kernel chooses)
         do_sys __NR_mmap; str x0,[sp,#F_ADRU]
+    u_ptr   .req x14  // busy: x15,x14
         mov u_ptr,x0
 
         mov arg1w,mfd
+    .unreq mfd  // busy: x14
         do_sys __NR_close
 
         adr arg1,_start - 4*4  // &SO_INFO
         add arg2,sp,#F_ARGC  // &{argc, argv, envp}
         br u_ptr
+        .unreq u_ptr
 
 str_upx:
         .asciz "upx"

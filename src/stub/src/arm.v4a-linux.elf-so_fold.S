@@ -29,6 +29,7 @@
 
 #define ARM_OLDABI 1
 #include "arch/arm/v4a/macros.S"
+#include "MAX_ELF_HDR.S"
 #define bkpt .long 0xe7f001f0  /* reserved instr "udf #0x10"; Linux GNU eabi breakpoint */
 NBPW= 4
 
@@ -73,15 +74,9 @@ PATH_MAX= 4096
 mflg_data: .int MAP_PRIVATE|MAP_ANONYMOUS  @ overwritten for QNX vs Linux
 
 // %esp:
-//   &Elf32_Ehdr
-//   &{l_info; p_info; b_info; compressed data}
-//   &escape_hatch
 //   MATCH_13  ptr unfolded_code; for escape hatch
 //   MATCH_12  len unfolded code; for escape hatch
-//   &entry ??
-//   MATCH_00  argc
-//   MATCH_01  argv
-//   MATCH_07  envp
+//   MATCH_99  9 saved registers {r0= argc, r1= argv, r2= envp, r3-r7, lr)
 
 F_ADRU=  0 * NBPW
 F_LENU=  2 * NBPW
@@ -90,7 +85,9 @@ F_LENU=  2 * NBPW
 
   section SO_HEAD
 fold: .globl fold
+    sub sp,sp,#MAX_ELF_HDR_32; mov r2,sp  // &elf_tmp
     call upx_so_main  // (&so_info, &argc); returns &escape_hatch
+    add sp,sp,#MAX_ELF_HDR_32
     mov lr,r0  // save &escape_hatch
     ldmia sp!,{r0,r1}  // F_ADRU, F_LENU  (unfolded region)
     mov r7,#0xff & __NR_munmap  // FIXME depends on HW and ABI of OS
@@ -132,12 +129,14 @@ __NR_close =  6 + __NR_SYSCALL_BASE
 __NR_unlink= 10 + __NR_SYSCALL_BASE
 __NR_getpid= 20 + __NR_SYSCALL_BASE
 __NR_brk   = 45 + __NR_SYSCALL_BASE
-__NR_readlink=85+ __NR_SYSCALL_BASE
+__NR_readlink=  85 + __NR_SYSCALL_BASE  // 0x55
+__NR_ftruncate= 93 + __NR_SYSCALL_BASE  // 0x5d
 
 
-__NR_mmap2    = 192 + __NR_SYSCALL_BASE
-__NR_mprotect = 125 + __NR_SYSCALL_BASE
-__NR_munmap   =  91 + __NR_SYSCALL_BASE
+__NR_memfd_create= 0x181 + __NR_SYSCALL_BASE  // 385
+__NR_mmap2    = 192 + __NR_SYSCALL_BASE  // 0xc0
+__NR_mprotect = 125 + __NR_SYSCALL_BASE  // 0x7d
+__NR_munmap   =  91 + __NR_SYSCALL_BASE  // 0x5b
 
 __ARM_NR_BASE       = 0x0f0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush = 2 + __ARM_NR_BASE
@@ -186,6 +185,12 @@ readlink:
         .globl munmap
 munmap:
         do_sys __NR_munmap; ret
+
+ftruncate: .globl ftruncate
+        do_sys __NR_ftruncate; ret
+
+memfd_create: .globl memfd_create
+        do_sys7t2 __NR_memfd_create; ret
 
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect

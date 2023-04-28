@@ -72,9 +72,11 @@ __NR_SYSCALL_BASE = 0
                 mov r7,r12  // restore r7 from ip
 .endm
 .macro          do_sys7t2 N  // "7t2": two-byte N; clobbers r7 as a temporary
+                mov r12,r7  // save r7 in ip
                 mov r7,   #(\N) & 0xff  // syscall number
                 orr r7,r7,#(\N) &~0xff  // high bits
                 swi 0
+                mov r7,r12  // restore r7 from ip
 .endm
 .macro          do_sys2 N  // two-byte N; clobbers 'ip' (r12), saves r7
                 mov r12,r7  // save r7 in ip

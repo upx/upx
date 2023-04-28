@@ -435,7 +435,7 @@ get_PAGE_MASK(void)
 unsigned
 get_PAGE_MASK(void)  // the mask which KEEPS the page address
 {
-    int fd = open("/proc/self/auxv", O_RDONLY, 0);
+    int fd = open(addr_string("/proc/self/auxv"), O_RDONLY, 0);
     Elf32_auxv_t data[40];
     Elf32_auxv_t *end = &data[read(fd, data, sizeof(data)) / sizeof(data[0])];
     close(fd);
@@ -617,6 +617,7 @@ upx_so_main(  // returns &escape_hatch
             // prevent the mmap(0, ...) from stealing that address range.
             munmap(x1.buf, x1.size);  // Discard original page frames in RAM.
             x1.buf = mfd_addr;  // will add pfx soon
+            DPRINTF("mfd_addr= %%p\\n", mfd_addr);
         }
         else {
             underlay(x1.size, x1.buf, pfx, phdr->p_flags);  // also makes PROT_WRITE
