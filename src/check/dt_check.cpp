@@ -165,6 +165,12 @@ template <class T>
 struct CheckIntegral {
     template <class U>
     static void checkU(void) {
+        U a = {};
+        const U b = {};
+        constexpr U c = {};
+        UNUSED(a);
+        UNUSED(b);
+        UNUSED(c);
 #if __cplusplus < 202002L
         COMPILE_TIME_ASSERT(std::is_pod<U>::value) // deprecated in C++20
 #endif
@@ -217,15 +223,18 @@ struct TestBELE {
     static noinline bool test(void) {
         CheckIntegral<T>::check();
         CheckAlignment<T>::check();
+        // array init
+        T array[2] = {};
+        assert(array[0] == 0 && array[1] == 0);
         // arithmetic checks (modern compilers will optimize this away)
-        T allbits;
-        allbits = 0;
+        T allbits = {};
+        assert(allbits == 0);
         allbits += 1;
         allbits -= 2;
         T v1;
         v1 = 1;
-        v1 *= 2;
-        v1 /= 1;
+        v1 *= 4;
+        v1 /= 2;
         v1 -= 1;
         T v2;
         v2 = 1;
@@ -251,6 +260,8 @@ struct TestBELE {
         v2 &= v1;
         v2 /= v1;
         v2 *= v1;
+        v1 += v2;
+        v1 -= v2;
         assert(v1 == 1);
         assert(v2 == 0);
         if ((v1 ^ v2) != 1)

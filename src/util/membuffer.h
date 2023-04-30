@@ -96,11 +96,11 @@ public:
 
     void dealloc() noexcept;
     void checkState() const;
-    unsigned getSize() const { return size_in_bytes; }
+    unsigned getSize() const noexcept { return size_in_bytes; }
 
     // explicit conversion
-    void *getVoidPtr() { return (void *) ptr; }
-    const void *getVoidPtr() const { return (const void *) ptr; }
+    void *getVoidPtr() noexcept { return (void *) ptr; }
+    const void *getVoidPtr() const noexcept { return (const void *) ptr; }
 
     // util
     void fill(unsigned off, unsigned len, int value);

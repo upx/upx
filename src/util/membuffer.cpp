@@ -29,8 +29,8 @@
 #include "membuffer.h"
 
 // extra functions to reduce dependency on membuffer.h
-void *membuffer_get_void_ptr(MemBuffer &mb) { return mb.getVoidPtr(); }
-unsigned membuffer_get_size(MemBuffer &mb) { return mb.getSize(); }
+void *membuffer_get_void_ptr(MemBuffer &mb) noexcept { return mb.getVoidPtr(); }
+unsigned membuffer_get_size(MemBuffer &mb) noexcept { return mb.getSize(); }
 
 /*static*/ MemBuffer::Stats MemBuffer::stats;
 
@@ -45,7 +45,7 @@ unsigned membuffer_get_size(MemBuffer &mb) { return mb.getSize(); }
 **************************************************************************/
 
 #if defined(__SANITIZE_ADDRESS__)
-static forceinline constexpr bool use_simple_mcheck() { return false; }
+static forceinline constexpr bool use_simple_mcheck() noexcept { return false; }
 #elif (WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
 static bool use_simple_mcheck_flag;
 static noinline void init_use_simple_mcheck() noexcept {
@@ -56,13 +56,13 @@ static noinline void init_use_simple_mcheck() noexcept {
     }
     use_simple_mcheck_flag = r;
 }
-static bool use_simple_mcheck() {
+static bool use_simple_mcheck() noexcept {
     static upx_std_once_flag init_done;
     upx_std_call_once(init_done, init_use_simple_mcheck);
     return use_simple_mcheck_flag;
 }
 #else
-static forceinline constexpr bool use_simple_mcheck() { return true; }
+static forceinline constexpr bool use_simple_mcheck() noexcept { return true; }
 #endif
 
 /*************************************************************************
