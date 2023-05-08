@@ -64,7 +64,7 @@ void PackSys::buildLoader(const Filter *ft) {
     initLoader(stub_i086_dos16_sys, sizeof(stub_i086_dos16_sys));
     // clang-format off
     addLoader("SYSMAIN1",
-              opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861",
+              opt->cpu_x86 == opt->CPU_8086 ? "SYSI0861" : "SYSI2861",
               "SYSMAIN2",
               ph.first_offset_found == 1 ? "SYSSBBBP" : "",
               ft->id ? "SYSCALLT" : "",
@@ -78,7 +78,7 @@ void PackSys::buildLoader(const Filter *ft) {
     }
     // clang-format off
     addLoader("SYSMAIN5",
-              opt->cpu == opt->CPU_8086 ? "SYSI0862" : "SYSI2862",
+              opt->cpu_x86 == opt->CPU_8086 ? "SYSI0862" : "SYSI2862",
               "SYSJUMP1");
     // clang-format on
 }

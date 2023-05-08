@@ -232,9 +232,8 @@ if(MSVC_FRONTEND)
     target_compile_options(${t} PRIVATE -W3 ${warn_WX})
 else()
     target_compile_definitions(${t} PRIVATE HAVE_UNISTD_H=1)
-    # clang-15: -Wno-strict-prototypes is needed to silence the new -Wdeprecated-non-prototype warning
-    target_compile_options(${t} PRIVATE -Wall -Wno-strict-prototypes ${warn_Werror})
-    ##target_compile_options(${t} PRIVATE ${warn_Wall} -Wno-cast-align -Wno-cast-qual -Wno-strict-prototypes ${warn_Werror})
+    target_compile_options(${t} PRIVATE -Wall ${warn_Werror})
+    ##target_compile_options(${t} PRIVATE ${warn_Wall} -Wno-cast-align -Wno-cast-qual ${warn_Werror})
 endif()
 
 if(NOT UPX_CONFIG_DISABLE_ZSTD)

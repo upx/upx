@@ -186,18 +186,18 @@ void PackExe::buildLoader(const Filter *) {
     if (ph.method == M_NRV2B_8)
         addLoader("NRV2B16S", // decompressor
                   ph.u_len > DI_LIMIT ? "N2B64K01" : "", "NRV2BEX1",
-                  opt->cpu == opt->CPU_8086 ? "N2BX8601" : "N2B28601", "NRV2BEX2",
-                  opt->cpu == opt->CPU_8086 ? "N2BX8602" : "N2B28602", "NRV2BEX3",
+                  opt->cpu_x86 == opt->CPU_8086 ? "N2BX8601" : "N2B28601", "NRV2BEX2",
+                  opt->cpu_x86 == opt->CPU_8086 ? "N2BX8602" : "N2B28602", "NRV2BEX3",
                   ph.c_len > 0xffff ? "N2B64K02" : "", "NRV2BEX9");
     else if (ph.method == M_NRV2D_8)
         addLoader("NRV2D16S", ph.u_len > DI_LIMIT ? "N2D64K01" : "", "NRV2DEX1",
-                  opt->cpu == opt->CPU_8086 ? "N2DX8601" : "N2D28601", "NRV2DEX2",
-                  opt->cpu == opt->CPU_8086 ? "N2DX8602" : "N2D28602", "NRV2DEX3",
+                  opt->cpu_x86 == opt->CPU_8086 ? "N2DX8601" : "N2D28601", "NRV2DEX2",
+                  opt->cpu_x86 == opt->CPU_8086 ? "N2DX8602" : "N2D28602", "NRV2DEX3",
                   ph.c_len > 0xffff ? "N2D64K02" : "", "NRV2DEX9");
     else if (ph.method == M_NRV2E_8)
         addLoader("NRV2E16S", ph.u_len > DI_LIMIT ? "N2E64K01" : "", "NRV2EEX1",
-                  opt->cpu == opt->CPU_8086 ? "N2EX8601" : "N2E28601", "NRV2EEX2",
-                  opt->cpu == opt->CPU_8086 ? "N2EX8602" : "N2E28602", "NRV2EEX3",
+                  opt->cpu_x86 == opt->CPU_8086 ? "N2EX8601" : "N2E28601", "NRV2EEX2",
+                  opt->cpu_x86 == opt->CPU_8086 ? "N2EX8602" : "N2E28602", "NRV2EEX3",
                   ph.c_len > 0xffff ? "N2E64K02" : "", "NRV2EEX9");
     else if M_IS_LZMA (ph.method)
         return;

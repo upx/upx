@@ -90,7 +90,7 @@ void Packer::addFilter32(int filter_id) {
                       "CALLTR13");
     }
     if (0x80 == (filter_id & 0xF0)) {
-        bool const x386 = (opt->cpu <= opt->CPU_386);
+        bool const x386 = (opt->cpu_x86 <= opt->CPU_386);
         const unsigned n_mru = ph.n_mru ? 1 + ph.n_mru : 0;
         bool const mrupwr2 = (0 != n_mru) && 0 == ((n_mru - 1) & n_mru);
         const unsigned f_call = f80_call(filter_id);

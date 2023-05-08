@@ -334,7 +334,7 @@ protected:
         IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16,
     };
 
-    // predefined resource types
+    // predefined Resource Types
     enum {
         RT_CURSOR = 1,
         RT_BITMAP,

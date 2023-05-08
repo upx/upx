@@ -88,7 +88,7 @@ void PackCom::addFilter16(int filter_id) {
         // clang-format off
         addLoader("CALLTR16",
                   filter_id < 4 ? "CT16SUB0" : "",
-                  filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I086" : "CT16I286,CT16SUB0"),
+                  filter_id < 4 ? "" : (opt->cpu_x86 == opt->CPU_8086 ? "CT16I086" : "CT16I286,CT16SUB0"),
                   "CALLTRI2",
                   getFormat() == UPX_F_DOS_COM ? "CORETURN" : "");
         // clang-format on
@@ -98,7 +98,7 @@ void PackCom::addFilter16(int filter_id) {
                  "CALLTRI5",
                  getFormat() == UPX_F_DOS_COM ? "CT16JEND" : "CT16JUL2",
                  filter_id < 4 ? "CT16SUB1" : "",
-                 filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I087" : "CT16I287,CT16SUB1"),
+                 filter_id < 4 ? "" : (opt->cpu_x86 == opt->CPU_8086 ? "CT16I087" : "CT16I287,CT16SUB1"),
                  "CALLTRI6");
         // clang-format on
     }

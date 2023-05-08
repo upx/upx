@@ -27,19 +27,20 @@
 
 #pragma once
 
-/*************************************************************************
 // A MemBuffer allocates memory on the heap, and automatically
 // gets destructed when leaving scope or on exceptions.
+
+/*************************************************************************
+// provides some base functionality for treating a MemBuffer as a pointer
 **************************************************************************/
 
-// provides some base functionality for treating a MemBuffer as a pointer
 template <class T>
 class MemBufferBase {
 public:
     typedef T element_type;
     typedef typename std::add_lvalue_reference<T>::type reference;
     typedef typename std::add_pointer<T>::type pointer;
-    typedef unsigned size_type;
+    typedef unsigned size_type; // limited by UPX_RSIZE_MAX
 
 protected:
     pointer ptr;
@@ -79,7 +80,60 @@ public: // raw access
         }
         return ptr;
     }
+
+private:
+    // disable taking the address => force passing by reference
+    // [I'm not too sure about this design decision, but we can always allow it if needed]
+    MemBufferBase<T> *operator&() const DELETED_FUNCTION;
 };
+
+/*************************************************************************
+// MemBufferBase global overloads
+**************************************************************************/
+
+// global operators
+#if ALLOW_INT_PLUS_MEMBUFFER
+// rewrite "n + membuffer" to "membuffer + n" so that this will get checked above
+template <class T, class U>
+inline typename std::enable_if<std::is_integral<U>::value, typename MemBufferBase<T>::pointer>::type
+operator+(U n, const MemBufferBase<T> &mbb) {
+    return mbb + n;
+}
+#else
+// not allowed
+template <class T, class U>
+inline typename std::enable_if<std::is_integral<U>::value, typename MemBufferBase<T>::pointer>::type
+operator+(U n, const MemBufferBase<T> &mbb) DELETED_FUNCTION;
+#endif
+
+// raw_bytes overload
+template <class T>
+inline typename MemBufferBase<T>::pointer raw_bytes(const MemBufferBase<T> &mbb,
+                                                    size_t size_in_bytes) {
+    return mbb.raw_bytes(size_in_bytes);
+}
+template <class T>
+inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T> &mbb, size_t index,
+                                                          size_t size_in_bytes) {
+    typedef typename MemBufferBase<T>::element_type element_type;
+    return mbb.raw_bytes(mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+}
+
+#if 1
+// some more global overloads using a checked raw_bytes() call
+#define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)                                      \
+    typename std::enable_if<std::is_same<A, B>::value, RType>::type
+#define XSPAN_FWD_C_IS_MEMBUFFER 1
+#define C MemBufferBase
+#include "xspan_fwd.h"
+#undef C
+#undef XSPAN_FWD_C_IS_MEMBUFFER
+#undef XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
+#endif
+
+/*************************************************************************
+//
+**************************************************************************/
 
 class MemBuffer final : public MemBufferBase<byte> {
 public:
@@ -147,37 +201,6 @@ private:
 #endif
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
-
-    // disable taking the address => force passing by reference
-    // [I'm not too sure about this design decision, but we can always allow it if needed]
-    MemBuffer *operator&() const DELETED_FUNCTION;
 };
-
-// raw_bytes overload
-template <class T>
-inline typename MemBufferBase<T>::pointer raw_bytes(const MemBufferBase<T> &mbb,
-                                                    size_t size_in_bytes) {
-    return mbb.raw_bytes(size_in_bytes);
-}
-template <class T>
-inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T> &mbb, size_t index,
-                                                          size_t size_in_bytes) {
-    typedef typename MemBufferBase<T>::element_type element_type;
-    return mbb.raw_bytes(mem_size(sizeof(element_type), index, size_in_bytes)) + index;
-}
-
-// global operators
-#if ALLOW_INT_PLUS_MEMBUFFER
-// rewrite "n + membuffer" to "membuffer + n" so that this will get checked above
-template <class T, class U>
-inline typename std::enable_if<std::is_integral<U>::value, typename MemBufferBase<T>::pointer>::type
-operator+(U n, const MemBufferBase<T> &mbb) {
-    return mbb + n;
-}
-#else
-template <class T, class U>
-inline typename std::enable_if<std::is_integral<U>::value, typename MemBufferBase<T>::pointer>::type
-operator+(U n, const MemBufferBase<T> &mbb) DELETED_FUNCTION;
-#endif
 
 /* vim:set ts=4 sw=4 et: */

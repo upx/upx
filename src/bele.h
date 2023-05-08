@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_BELE_H__
-#define UPX_BELE_H__ 1
 
 // BE - Big Endian
 // LE - Little Endian
@@ -752,7 +750,5 @@ inline const N_BELE_RTP::AbstractPolicy *getRTP(const LEPolicy * /*dummy*/) {
     return &N_BELE_RTP::le_policy;
 }
 } // namespace N_BELE_CTP
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

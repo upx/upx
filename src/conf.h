@@ -144,10 +144,10 @@ typedef unsigned char   byte;
 #define upx_byte        byte
 #define upx_bytep       byte *
 typedef unsigned char   uchar;
-// use "charptr" when dealing with pointer arithmetics
+// convention: use "charptr" when dealing with abstract pointer arithmetics
 #define charptr         upx_charptr_unit_type *
 // upx_charptr_unit_type is some opaque type with sizeof(type) == 1
-struct alignas(1) upx_charptr_unit_type { char dummy; };
+struct alignas(1) upx_charptr_unit_type { char hidden__; };
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(upx_charptr_unit_type) == 1)
 
 // using the system off_t was a bad idea even back in 199x...

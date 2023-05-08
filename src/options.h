@@ -26,11 +26,9 @@
  */
 
 #pragma once
-#ifndef UPX_OPTIONS_H__
-#define UPX_OPTIONS_H__ 1
 
 struct Options;
-extern Options *opt;
+extern Options *opt;      // global options, see class PackMaster for per-file local options
 #define options_t Options // old name
 
 #if WITH_THREADS
@@ -38,10 +36,10 @@ extern std::mutex opt_lock_mutex;
 #endif
 
 /*************************************************************************
-// globals
+// command line options
 **************************************************************************/
 
-// options - command
+// main command
 enum {
     CMD_NONE,
     CMD_COMPRESS,
@@ -105,20 +103,20 @@ struct Options final {
     int overlay;
 
     // CRP - Compression Runtime Parameters (undocumented and subject to change)
-    // see struct XXX_compress_config_t
-    struct crp_t {
+    struct {
         lzma_compress_config_t crp_lzma;
         ucl_compress_config_t crp_ucl;
         zlib_compress_config_t crp_zlib;
+        zstd_compress_config_t crp_zstd;
         void reset() {
             crp_lzma.reset();
             crp_ucl.reset();
             crp_zlib.reset();
+            crp_zstd.reset();
         }
-    };
-    crp_t crp;
+    } crp;
 
-    // CPU
+    // CPU options for i086/i386
     enum {
         CPU_DEFAULT = 0,
         CPU_8086 = 1,
@@ -126,7 +124,7 @@ struct Options final {
         CPU_386 = 3,
         CPU_486 = 4,
     };
-    int cpu;
+    int cpu_x86;
 
     // options for various executable formats
     struct {
@@ -171,7 +169,5 @@ struct Options final {
 
     void reset();
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

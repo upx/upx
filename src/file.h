@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_FILE_H__
-#define UPX_FILE_H__ 1
 
 /*************************************************************************
 //
@@ -128,7 +126,5 @@ public:
 protected:
     upx_off_t bytes_written = 0;
 };
-
-#endif
 
 /* vim:set ts=4 sw=4 et: */

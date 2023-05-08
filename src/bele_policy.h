@@ -25,9 +25,7 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#ifndef UPX_BELE_H__
-#error "this is an internal include file"
-#endif
+// this is an internal include file private to bele.h
 
 /*************************************************************************
 //

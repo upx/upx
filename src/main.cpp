@@ -87,8 +87,9 @@ static void do_exit(void) {
 static bool set_eec(int ec, int *eec) {
     if (ec == EXIT_FATAL) {
         *eec = EXIT_ERROR;
-        return 1;
-    } else if (ec < 0 || ec == EXIT_ERROR) {
+        return true;
+    }
+    if (ec < 0 || ec == EXIT_ERROR) {
         *eec = EXIT_ERROR;
     } else if (ec == EXIT_WARN) {
         if (!opt->ignorewarn)
@@ -99,7 +100,7 @@ static bool set_eec(int ec, int *eec) {
     } else {
         assert(0);
     }
-    return 0;
+    return false;
 }
 
 bool main_set_exit_code(int ec) { return set_eec(ec, &exit_code); }
@@ -632,22 +633,22 @@ static int do_option(int optc, const char *arg) {
     // CPU
     case 560:
         if (mfx_optarg && strcmp(mfx_optarg, "8086") == 0)
-            opt->cpu = opt->CPU_8086;
+            opt->cpu_x86 = opt->CPU_8086;
         else if (mfx_optarg && strcmp(mfx_optarg, "386") == 0)
-            opt->cpu = opt->CPU_386;
+            opt->cpu_x86 = opt->CPU_386;
         else if (mfx_optarg && strcmp(mfx_optarg, "486") == 0)
-            opt->cpu = opt->CPU_486;
+            opt->cpu_x86 = opt->CPU_486;
         else
             e_optarg(arg);
         break;
     case 561:
-        opt->cpu = opt->CPU_8086;
+        opt->cpu_x86 = opt->CPU_8086;
         break;
     case 563:
-        opt->cpu = opt->CPU_386;
+        opt->cpu_x86 = opt->CPU_386;
         break;
     case 564:
-        opt->cpu = opt->CPU_486;
+        opt->cpu_x86 = opt->CPU_486;
         break;
     //
     case 600:
