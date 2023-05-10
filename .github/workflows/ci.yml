@@ -153,10 +153,10 @@ jobs:
         run:   'make build/extra/clang/release'
       - name: 'Build cmake extra/gcc/debug'
         if: ${{ matrix.gcc != '' }}
-        run:   'make build/extra/gcc/debug CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
+        run:   'make build/extra/gcc/debug CC="${{ matrix.gcc }} -static-libgcc" CXX="${{ matrix.gxx }} -static-libgcc -static-libstdc++"'
       - name: 'Build cmake extra/gcc/release'
         if: ${{ matrix.gcc != '' }}
-        run:   'make build/extra/gcc/release CC=${{ matrix.gcc }} CXX=${{ matrix.gxx }}'
+        run:   'make build/extra/gcc/release CC="${{ matrix.gcc }} -static-libgcc" CXX="${{ matrix.gxx }} -static-libgcc -static-libstdc++"'
       - name: 'Build cmake xtarget/cross-darwin-arm64/debug'
         run: |
           CC="clang -target arm64-apple-darwin" CXX="clang++ -target arm64-apple-darwin" \
