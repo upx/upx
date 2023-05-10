@@ -7042,7 +7042,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         // "clickhouse" ET_EXEC for amd64 has 0x200000 <= .e_entry
         // instead of 0x400000 that we checked earlier.
         if (8 == szb_info
-        &&  Elf64_Ehdr::EM_X86_64 == e_machine 
+        &&  Elf64_Ehdr::EM_X86_64 == e_machine
         &&  Elf64_Ehdr::ET_EXEC   == e_type
         &&  ph.u_len <= MAX_ELF_HDR_64
         ) {
