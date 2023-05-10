@@ -5560,7 +5560,7 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
             | 1u<<(0x1f & SHT_GNU_verneed)
             | 1u<<(0x1f & SHT_GNU_verdef)
             | 1u<<(0x1f & SHT_GNU_HASH);
-        Elf32_Ehdr *eho = (Elf32_Ehdr *)lowmem.getVoidPtr();
+        Elf32_Ehdr *eho = &elfout.ehdr;
         MemBuffer mb_ask_for(e_shnum * sizeof(eho->e_shnum));
         memset(mb_ask_for, 0, mb_ask_for.getSize());
         unsigned short *const ask_for = (unsigned short *)mb_ask_for.getVoidPtr();
@@ -5619,10 +5619,11 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
         set_te32(&eho->e_shoff, total_out);
         unsigned len = (char *)sh_out - (char *)mb_shdro.getVoidPtr();
         set_te16(&eho->e_shnum, len / sizeof(*sh_out));
+        set_te16(&eho->e_shentsize, sizeof(Elf32_Shdr));
         fo->write(mb_shdro, len);
         total_out += len;
         fo->seek(0, SEEK_SET);
-        fo->write(eho, sizeof(*eho));
+        fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
     }
     else if (sec_arm_attr) {
@@ -5651,13 +5652,14 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
 
         Elf32_Ehdr *eho = &elfout.ehdr;
         set_te16(&eho->e_shnum, 3);
+        set_te16(&eho->e_shentsize, sizeof(Elf32_Shdr));
         set_te32(&eho->e_shoff, total_out);
         set_te16(&eho->e_shstrndx, 1);
         fo->write(shdr_aa, sizeof(shdr_aa));
         total_out += sizeof(shdr_aa);
 
         fo->seek(0, SEEK_SET);
-        fo->write(eho, sizeof(*eho));
+        fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
     }
 }
@@ -5699,7 +5701,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
             | 1u<<(0x1f & SHT_GNU_verneed)
             | 1u<<(0x1f & SHT_GNU_verdef)
             | 1u<<(0x1f & SHT_GNU_HASH);
-        Elf64_Ehdr *eho = (Elf64_Ehdr *)lowmem.getVoidPtr();
+        Elf64_Ehdr *eho = &elfout.ehdr;
         MemBuffer mb_ask_for(e_shnum * sizeof(eho->e_shnum));
         memset(mb_ask_for, 0, mb_ask_for.getSize());
         unsigned short *const ask_for = (unsigned short *)mb_ask_for.getVoidPtr();
@@ -5760,6 +5762,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
         set_te64(&eho->e_shoff, total_out);
         unsigned len = (char *)sh_out - (char *)mb_shdro.getVoidPtr();
         set_te16(&eho->e_shnum, len / sizeof(*sh_out));
+        set_te16(&eho->e_shentsize, sizeof(Elf64_Shdr));
         fo->write(mb_shdro, len);
         total_out += len;
         fo->seek(0, SEEK_SET);
@@ -5792,6 +5795,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
 
         Elf64_Ehdr *eho = &elfout.ehdr;
         set_te16(&eho->e_shnum, 3);
+        set_te16(&eho->e_shentsize, sizeof(Elf64_Shdr));
         set_te64(&eho->e_shoff, total_out);
         set_te16(&eho->e_shstrndx, 1);
         fo->write(shdr_aa, sizeof(shdr_aa));
@@ -5852,7 +5856,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
             // Make it abunantly clear that there are no Elf32_Shdr in this shlib
             Elf32_Ehdr *ehdro = (Elf32_Ehdr *)lowmem.getVoidPtr();
             ehdro->e_shoff = 0;
-            ehdro->e_shentsize = sizeof(Elf32_Shdr);  // Android bug: cannot use 0
+            set_te16(&ehdro->e_shentsize, sizeof(Elf32_Shdr));  // Android bug: cannot use 0
             ehdro->e_shnum = 0;
             ehdro->e_shstrndx = 0;
         }
@@ -5935,7 +5939,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
             // Make it abunantly clear that there are no Elf64_Shdr in this shlib
             Elf64_Ehdr *ehdro = (Elf64_Ehdr *)lowmem.getVoidPtr();
             ehdro->e_shoff = 0;
-            ehdro->e_shentsize = sizeof(Elf64_Shdr);  // Android bug: cannot use 0
+            set_te16(&ehdro->e_shentsize, sizeof(Elf64_Shdr));  // Android bug: cannot use 0
             ehdro->e_shnum = 0;
             ehdro->e_shstrndx = 0;
         }
