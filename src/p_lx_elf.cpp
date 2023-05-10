@@ -5694,6 +5694,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
             | 1u<<SHT_NOTE
             | 1u<<SHT_REL
             | 1u<<SHT_DYNSYM
+            | 1u<<SHT_STRTAB
             | 1u<<SHT_INIT_ARRAY
             | 1u<<SHT_FINI_ARRAY
             | 1u<<SHT_PREINIT_ARRAY
@@ -7036,7 +7037,26 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         // Uncompress Ehdr and Phdrs: info for control of unpacking
         if (ibuf.getSize() < ph.c_len)
             throwCompressedDataViolation();
+
         fi->readx(ibuf, ph.c_len);
+        // "clickhouse" ET_EXEC for amd64 has 0x200000 <= .e_entry
+        // instead of 0x400000 that we checked earlier.
+        if (8 == szb_info
+        &&  Elf64_Ehdr::EM_X86_64 == e_machine 
+        &&  Elf64_Ehdr::ET_EXEC   == e_type
+        &&  ph.u_len <= MAX_ELF_HDR_64
+        ) {
+            unsigned b_method = ibuf[0];
+            unsigned b_extra  = ibuf[3];
+            if (M_ZSTD >= b_method && 0 == b_extra) {
+                fi->seek( -(upx_off_t)(ph.c_len + szb_info), SEEK_CUR);
+                szb_info = 12;
+                fi->readx(&bhdr, szb_info);
+                ph.filter_cto = bhdr.b_cto8;
+                prev_method = bhdr.b_method;  // FIXME if multiple de-compressors
+                fi->readx(ibuf, ph.c_len);
+            }
+        }
         decompress(ibuf, (upx_byte *)ehdr, false);
         if (ehdr->e_type   !=ehdri.e_type
         ||  ehdr->e_machine!=ehdri.e_machine
