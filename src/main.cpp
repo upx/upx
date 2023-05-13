@@ -298,9 +298,9 @@ static char *prepare_shortopts(char *buf, const char *n, const struct mfx_option
 template <class T>
 static int getoptvar(T *var, const T min_value, const T max_value, const char *arg_fatal) {
     const char *p = mfx_optarg;
-    char *endptr;
+    char *endptr = nullptr;
     int r = 0;
-    long n;
+    long long n;
     T v;
 
     if (!p || !p[0]) {
@@ -310,18 +310,14 @@ static int getoptvar(T *var, const T min_value, const T max_value, const char *a
     // avoid interpretation as octal value
     while (p[0] == '0' && isdigit(p[1]))
         p++;
-    n = strtol(p, &endptr, 0);
+    n = strtoll(p, &endptr, 0);
     if (*endptr != '\0') {
         r = -2;
         goto error;
     }
     v = (T) n;
-    if (v < min_value) {
+    if ((long long) v != n || v < min_value || v > max_value) {
         r = -3;
-        goto error;
-    }
-    if (v > max_value) {
-        r = -4;
         goto error;
     }
     *var = v;

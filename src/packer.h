@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_PACKER_H__
-#define UPX_PACKER_H__ 1
 
 #include "util/membuffer.h"
 
@@ -102,7 +100,7 @@ bool ph_testOverlappingDecompression(const PackHeader &ph, SPAN_P(const byte) bu
 /*************************************************************************
 // abstract base class for packers
 //
-// FIXME: this class is way too fat and badly needs a decomposition
+// FIXME later: this class is way too fat and badly needs a decomposition
 **************************************************************************/
 
 class Packer {
@@ -361,7 +359,5 @@ private:
 int force_method(int method);     // (0x80ul<<24)|method
 int forced_method(int method);    // (0x80ul<<24)|method ==> method
 int is_forced_method(int method); // predicate
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

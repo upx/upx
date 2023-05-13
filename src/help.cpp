@@ -407,7 +407,7 @@ void show_version(bool one_line) {
     fprintf(fp, "Copyright (C) 2000-2023 John F. Reiser\n");
     fprintf(fp, "Copyright (C) 2002-2023 Jens Medoch\n");
 #if (WITH_ZLIB)
-    fprintf(fp, "Copyright (C) 1995" "-2022 Jean-loup Gailly and Mark Adler\n");
+    fprintf(fp, "Copyright (C) 1995" "-2023 Jean-loup Gailly and Mark Adler\n");
 #endif
 #if (WITH_LZMA)
     fprintf(fp, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
@@ -417,7 +417,7 @@ void show_version(bool one_line) {
     fprintf(fp, "Copyright (C) 2015" "-2023 Meta Platforms, Inc. and affiliates\n");
 #endif
 #if !defined(DOCTEST_CONFIG_DISABLE)
-    fprintf(fp, "Copyright (C) 2016" "-2021 Viktor Kirilov\n");
+    fprintf(fp, "Copyright (C) 2016" "-2023 Viktor Kirilov\n");
 #endif
     fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
     // clang-format on

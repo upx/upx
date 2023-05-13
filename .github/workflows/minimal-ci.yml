@@ -7,7 +7,7 @@ jobs:
   job-alpine-cmake:
     strategy:
       fail-fast: false
-      matrix: { container: ['alpine:3.12','alpine:3.17','alpine:edge','i386/alpine:edge'] }
+      matrix: { container: ['alpine:3.12','alpine:3.18','alpine:edge','i386/alpine:edge'] }
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
