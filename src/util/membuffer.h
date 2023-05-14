@@ -119,17 +119,15 @@ inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T>
     return mbb.raw_bytes(mem_size(sizeof(element_type), index, size_in_bytes)) + index;
 }
 
-#if 1
 // some more global overloads using a checked raw_bytes() call
 #define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)                                      \
     typename std::enable_if<std::is_same<A, B>::value, RType>::type
-#define XSPAN_FWD_C_IS_MEMBUFFER 1
 #define C MemBufferBase
+#define XSPAN_FWD_C_IS_MEMBUFFER 1
 #include "xspan_fwd.h"
-#undef C
 #undef XSPAN_FWD_C_IS_MEMBUFFER
+#undef C
 #undef XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
-#endif
 
 /*************************************************************************
 //

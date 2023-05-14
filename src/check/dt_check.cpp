@@ -49,6 +49,8 @@ int upx_doctest_check(int argc, char **argv) {
     if (e && e[0]) {
         if (strcmp(e, "0") == 0) {
             minimal = true;
+        } else if (strcmp(e, "1") == 0) {
+            minimal = false;
         } else if (strcmp(e, "2") == 0) {
             minimal = false;
             duration = true;
@@ -185,6 +187,12 @@ struct CheckIntegral {
         COMPILE_TIME_ASSERT(upx_is_integral_v<U>)
     }
     static void check(void) {
+        T a = {};
+        const T b = {};
+        constexpr T c = {};
+        assert(a == 0);
+        assert(b == 0);
+        assert(c == 0);
         checkU<T>();
         checkU<typename std::add_const<T>::type>();
 #if !defined(__GNUC__)

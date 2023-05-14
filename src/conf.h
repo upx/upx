@@ -112,7 +112,7 @@ inline constexpr bool upx_is_integral_v = upx_is_integral<T>::value;
 // horrible hack for broken compiler
 #define upx_fake_alignas_1      __attribute__((__aligned__(1),__packed__))
 #define upx_fake_alignas_16     __attribute__((__aligned__(2))) // object file maximum 2 ???
-#define upx_fake_alignas__(a)   upx_fake_alignas_ ## a
+#define upx_fake_alignas__(x)   upx_fake_alignas_ ## x
 #define alignas(x)              upx_fake_alignas__(x)
 #endif
 
@@ -555,7 +555,7 @@ constexpr bool string_ge(const char *a, const char *b) {
 #define M_IS_ZSTD(x)    ((x) == M_ZSTD)
 
 
-// filters
+// filters internal usage
 #define FT_END          (-1)
 #define FT_NONE         (-2)
 #define FT_SKIP         (-3)

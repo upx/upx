@@ -190,17 +190,21 @@ else()
 endif()
 
 # compile a target with -O2 even in Debug build
-function(upx_compile_target_debug_with_O2 t)
-    if(MSVC_FRONTEND)
-        # MSVC uses some Debug compile options like -RTC1 that are incompatible with -O2
-    else()
-        target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-O2>)
-    endif()
+function(upx_compile_target_debug_with_O2)
+    foreach(t ${ARGV})
+        if(MSVC_FRONTEND)
+            # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
+        else()
+            target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-O2>)
+        endif()
+    endforeach()
 endfunction()
 
-function(upx_sanitize_target t)
-    if(NOT UPX_CONFIG_DISABLE_SANITIZE)
-        if(MSVC_FRONTEND)
+function(upx_sanitize_target)
+    foreach(t ${ARGV})
+        if(UPX_CONFIG_DISABLE_SANITIZE)
+            # no-op
+        elseif(MSVC_FRONTEND)
             # MSVC uses -GS (similar to -fstack-protector) by default
         elseif(CMAKE_C_PLATFORM_ID MATCHES "^MinGW" OR MINGW OR CYGWIN)
             # avoid link errors with current MinGW-w64 versions
@@ -211,7 +215,7 @@ function(upx_sanitize_target t)
             # default sanitizer for Release builds
             target_compile_options(${t} PRIVATE $<$<CONFIG:Release>:-fstack-protector>)
         endif()
-    endif()
+    endforeach()
 endfunction()
 
 set(t upx_vendor_ucl)

@@ -25,6 +25,9 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+// A MemBuffer allocates memory on the heap, and automatically
+// gets destructed when leaving scope or on exceptions.
+
 #include "../conf.h"
 #include "membuffer.h"
 
@@ -256,7 +259,7 @@ void MemBuffer::dealloc() noexcept {
 //
 **************************************************************************/
 
-TEST_CASE("MemBuffer") {
+TEST_CASE("MemBuffer core") {
     MemBuffer mb;
     CHECK_THROWS(mb.checkState());
     CHECK_THROWS(mb.alloc(0x30000000 + 1));

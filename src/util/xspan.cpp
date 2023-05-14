@@ -76,10 +76,10 @@ void xspan_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes)
     if very_unlikely (base == nullptr)
         xspan_fail_range_nullbase();
     ptrdiff_t off = (const charptr) p - (const charptr) base;
-    if very_unlikely (off < 0 || off > size_in_bytes)
+    if very_unlikely (off < 0 || off > size_in_bytes || size_in_bytes > UPX_RSIZE_MAX)
         xspan_fail_range_range();
     xspan_stats.check_range_counter += 1;
-    // fprintf(stderr, "xspan_check_range done\n");
+    NO_fprintf(stderr, "xspan_check_range done\n");
 }
 
 XSPAN_NAMESPACE_END
