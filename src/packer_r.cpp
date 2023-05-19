@@ -42,7 +42,7 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
     ptr_check_no_overlap(relocs.data(), relocs.size_bytes(), image.data(image_size), image_size,
                          out.data(), out.size_bytes());
 #endif
-    SPAN_P_VAR(byte, fix, out);
+    SPAN_S_VAR(byte, fix, out);
 
     *big = 0;
     if (opt->exact)

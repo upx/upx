@@ -144,6 +144,7 @@ struct XSpan_is_convertible
 #endif
 
 #if DEBUG
+// need extra parenthesis because the C preprocessor does not understand C++ templates
 // char => char
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((XSpan_is_convertible<char, const char>::value))
@@ -165,9 +166,9 @@ ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<void, const char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const void, const char>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const void, char>::value))
 // char => int
-ACC_COMPILE_TIME_ASSERT_HEADER(!(XSpan_is_convertible<char, int>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER(!(XSpan_is_convertible<char, const int>::value))
-ACC_COMPILE_TIME_ASSERT_HEADER(!(XSpan_is_convertible<const char, const int>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<char, int>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<char, const int>::value))
+ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const char, const int>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const char, int>::value))
 #endif
 

@@ -1030,9 +1030,19 @@ int Packer::prepareMethods(int *methods, int ph_method, const int *all_methods) 
             continue;
         if (opt->all_methods && opt->all_methods_use_lzma != 1 && M_IS_LZMA(method))
             continue;
-        // use this method
+        // check duplicate
         assert(Packer::isValidCompressionMethod(method));
+        for (int i = 0; i < nmethods; i++)
+            assert(method != methods[i]);
+        // use this method
         methods[nmethods++] = method;
+    }
+    // debug
+    if (opt->debug.use_random_method && nmethods >= 2) {
+        int method = methods[rand() % nmethods];
+        methods[0] = method;
+        nmethods = 1;
+        NO_printf("\nuse_random_method = %d\n", method);
     }
     return nmethods;
 }
@@ -1073,8 +1083,11 @@ static int prepareFilters(int *filters, int &filter_strategy, const int *all_fil
             continue;
         if (filter_id == 0)
             continue;
-        // use this filter
+        // check duplicate
         assert(Filter::isValidFilter(filter_id));
+        for (int i = 0; i < nfilters; i++)
+            assert(filter_id != filters[i]);
+        // use this filter
         filters[nfilters++] = filter_id;
         if (filter_strategy >= 0 && nfilters >= filter_strategy)
             break;
@@ -1084,10 +1097,24 @@ done:
     // filter_strategy now only means "stop after first successful filter"
     filter_strategy = (filter_strategy < 0) ? -1 : 0;
     // make sure that we have a "no filter" fallback
+    bool have_filter0 = false;
     for (int i = 0; i < nfilters; i++)
-        if (filters[i] == 0)
-            return nfilters;
-    filters[nfilters++] = 0;
+        if (filters[i] == 0) {
+            have_filter0 = true;
+            break;
+        }
+    if (!have_filter0)
+        filters[nfilters++] = 0;
+    // debug
+    if (opt->debug.use_random_filter && nfilters >= 3 && filters[nfilters - 1] == 0) {
+        int filter_id = filters[rand() % (nfilters - 1)];
+        if (filter_id > 0) {
+            filters[0] = filter_id;
+            filters[1] = 0;
+            nfilters = 2;
+            NO_printf("\nuse_random_filter = %d\n", filter_id);
+        }
+    }
     return nfilters;
 }
 

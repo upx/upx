@@ -498,6 +498,12 @@ static int do_option(int optc, const char *arg) {
     case 545:
         opt->debug.disable_random_id = true;
         break;
+    case 546:
+        opt->debug.use_random_method = true;
+        break;
+    case 547:
+        opt->debug.use_random_filter = true;
+        break;
 
     // misc
     case 512:
@@ -806,10 +812,12 @@ int main_get_options(int argc, char **argv) {
 
         // debug options
         {"debug", 0x10, N, 'D'},
-        {"dump-stub-loader", 0x31, N, 544},  // for internal debugging
-        {"fake-stub-version", 0x31, N, 542}, // for internal debugging
-        {"fake-stub-year", 0x31, N, 543},    // for internal debugging
-        {"disable-random-id", 0x10, N, 545}, // for internal debugging
+        {"dump-stub-loader", 0x31, N, 544},        // for internal debugging
+        {"fake-stub-version", 0x31, N, 542},       // for internal debugging
+        {"fake-stub-year", 0x31, N, 543},          // for internal debugging
+        {"disable-random-id", 0x90, N, 545},       // for internal debugging
+        {"debug-use-random-method", 0x90, N, 546}, // for internal debugging
+        {"debug-use-random-filter", 0x90, N, 547}, // for internal debugging
 
         // backup options
         {"backup", 0x10, N, 'k'},
@@ -984,7 +992,7 @@ void main_get_envoptions() {
         {"verbose", 0, N, 'v'},     // verbose mode
 
         // debug options
-        {"disable-random-id", 0x10, N, 545}, // for internal debugging
+        {"disable-random-id", 0x90, N, 545}, // for internal debugging
 
         // backup options
         {"backup", 0x10, N, 'k'},

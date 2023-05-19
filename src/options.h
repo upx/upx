@@ -95,7 +95,9 @@ struct Options final {
         const char *dump_stub_loader;
         char fake_stub_version[4 + 1];     // for internal debugging
         char fake_stub_year[4 + 1];        // for internal debugging
-        bool getopt_throw_instead_of_exit; // for doctest
+        bool getopt_throw_instead_of_exit; // for internal doctest checks
+        bool use_random_method;            // for internal debugging
+        bool use_random_filter;            // for internal debugging
     } debug;
 
     // overlay handling
