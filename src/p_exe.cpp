@@ -217,14 +217,13 @@ int PackExe::readFileHeader() {
     if (ih.ident != 'M' + 'Z' * 256 && ih.ident != 'Z' + 'M' * 256)
         return 0;
     ih_exesize = ih.m512 + ih.p512 * 512 - (ih.m512 ? 512 : 0);
-    if (!ih_exesize) {
+    if (ih_exesize == 0)
         ih_exesize = file_size;
-    }
     ih_imagesize = ih_exesize - ih.headsize16 * 16;
     ih_overlay = file_size - ih_exesize;
     if (file_size_u < sizeof(ih) || ((ih.m512 | ih.p512) && ih.m512 + ih.p512 * 512u < sizeof(ih)))
         throwCantPack("illegal exe header");
-    if (ih_exesize > file_size_u || ih_imagesize <= 0 || ih_imagesize > ih_exesize)
+    if (ih_exesize > file_size_u || ih_imagesize < 4 || ih_imagesize > ih_exesize)
         throwCantPack("exe header corrupted");
     NO_printf("dos/exe header: %d %d %d\n", ih_exesize, ih_imagesize, ih_overlay);
     return UPX_F_DOS_EXE;

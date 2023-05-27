@@ -25,8 +25,10 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#include "conf.h"
+// atari/tos: lots of micro-optimizations because this was written at a time
+//   where bytes and CPU cycles really mattered
 
+#include "conf.h"
 #include "file.h"
 #include "filter.h"
 #include "packer.h"
@@ -258,7 +260,7 @@ int PackTos::readFileHeader() {
     fi->readx(&ih, FH_SIZE);
     if (ih.fh_magic != 0x601a)
         return 0;
-    if (FH_SIZE + ih.fh_text + ih.fh_data + ih.fh_sym > (unsigned) file_size)
+    if (0ull + FH_SIZE + ih.fh_text + ih.fh_data + ih.fh_sym > file_size_u)
         return 0;
     return UPX_F_ATARI_TOS;
 }
@@ -295,36 +297,37 @@ bool PackTos::checkFileHeader() {
 // relocs
 **************************************************************************/
 
-// Check relocation for errors to make sure our loader can handle them
-static int check_relocs(const byte *relocs, unsigned rsize, unsigned image_size, unsigned *relocnum,
-                        unsigned *relocsize, unsigned *overlay) {
+// Check relocations for errors to make sure our loader can handle them
+static bool check_relocs(const byte *relocs, unsigned rsize, unsigned image_size,
+                         unsigned *relocnum, unsigned *relocsize, unsigned *overlay) {
     assert(rsize >= 4);
     assert(image_size >= 4);
     unsigned fixup = get_be32(relocs);
-    assert(fixup > 0);
+    if (fixup == 0 || fixup >= image_size)
+        return false;
     unsigned last_fixup = fixup;
     unsigned i = 4;
 
     *relocnum = 1;
     for (;;) {
         if (fixup & 1) // must be word-aligned
-            return -1;
+            return false;
         if (fixup + 4 > image_size) // out of bounds
-            return -1;
+            return false;
         if (i >= rsize) // premature EOF in relocs
-            return -1;
+            return false;
         unsigned c = relocs[i++];
         if (c == 0) // EOF end marker
             break;
         else if (c == 1) // increase fixup, no reloc
             fixup += 254;
         else if (c & 1) // must be word-aligned
-            return -1;
+            return false;
         else // next reloc is here
         {
             fixup += c;
             if (fixup - last_fixup < 4) // overlapping relocation
-                return -1;
+                return false;
             last_fixup = fixup;
             *relocnum += 1;
         }
@@ -332,7 +335,7 @@ static int check_relocs(const byte *relocs, unsigned rsize, unsigned image_size,
 
     *relocsize = i;
     *overlay = rsize - i;
-    return 0;
+    return true;
 }
 
 /*************************************************************************
@@ -389,7 +392,7 @@ void PackTos::pack(OutputFile *fo) {
     symbols.up31_base_a6 = 65536 + 1;
 
     // read file
-    const unsigned isize = file_size - i_sym;
+    const unsigned isize = file_size_u - i_sym;
     ibuf.alloc(isize);
     fi->seek(FH_SIZE, SEEK_SET);
     // read text + data
@@ -400,7 +403,7 @@ void PackTos::pack(OutputFile *fo) {
         throwCantPackExact();
     fi->seek(i_sym, SEEK_CUR);
     // read relocations + overlay
-    overlay = file_size - (FH_SIZE + i_text + i_data + i_sym);
+    overlay = file_size_u - (FH_SIZE + i_text + i_data + i_sym);
     fi->readx(ibuf + t, overlay);
 
 #if TESTING
@@ -424,8 +427,7 @@ void PackTos::pack(OutputFile *fo) {
     } else if (ih.fh_reloc != 0)
         relocsize = 0;
     else {
-        int r = check_relocs(ibuf + t, overlay, t, &relocnum, &relocsize, &overlay);
-        if (r != 0)
+        if (!check_relocs(ibuf + t, overlay, t, &relocnum, &relocsize, &overlay))
             throwCantPack("bad relocation table");
         symbols.need_reloc = true;
     }
@@ -702,7 +704,7 @@ void PackTos::unpack(OutputFile *fo) {
 
     // write original header & decompressed file
     if (fo) {
-        unsigned overlay = file_size - (FH_SIZE + ih.fh_text + ih.fh_data);
+        unsigned overlay = file_size_u - (FH_SIZE + ih.fh_text + ih.fh_data);
         if (ih.fh_reloc == 0 && overlay >= 4)
             overlay -= 4; // this is our empty fixup
         checkOverlay(overlay);

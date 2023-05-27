@@ -166,40 +166,39 @@ namespace {
 template <class T>
 struct CheckIntegral {
     template <class U>
+    struct TestU {
+        U a = {};
+        const U b = {};
+        static constexpr U c = {};
+    };
+    template <class U>
     static void checkU(void) {
         U a = {};
         const U b = {};
         constexpr U c = {};
-        UNUSED(a);
-        UNUSED(b);
-        UNUSED(c);
+        assert(a == 0);
+        assert(b == 0);
+        assert(c == 0);
+        TestU<U> t;
+        assert(t.a == 0);
+        assert(t.b == 0);
+        assert(t.c == 0);
 #if __cplusplus < 202002L
-        COMPILE_TIME_ASSERT(std::is_pod<U>::value) // deprecated in C++20
+        COMPILE_TIME_ASSERT(std::is_pod<U>::value) // std::is_pod is deprecated in C++20
 #endif
         COMPILE_TIME_ASSERT(std::is_standard_layout<U>::value)
         COMPILE_TIME_ASSERT(std::is_trivial<U>::value)
-        // extra checks, these are probably implied by std::is_trivial
+        // more checks, these are probably implied by std::is_trivial
         COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<U>::value)
         COMPILE_TIME_ASSERT(std::is_trivially_copyable<U>::value)
         COMPILE_TIME_ASSERT(std::is_trivially_default_constructible<U>::value)
-        // UPX
+        // UPX extras
         COMPILE_TIME_ASSERT(upx_is_integral<U>::value)
         COMPILE_TIME_ASSERT(upx_is_integral_v<U>)
     }
     static void check(void) {
-        T a = {};
-        const T b = {};
-        constexpr T c = {};
-        assert(a == 0);
-        assert(b == 0);
-        assert(c == 0);
         checkU<T>();
         checkU<typename std::add_const<T>::type>();
-#if !defined(__GNUC__)
-        // TODO later: "volatile" seems to be broken with some older g++/libstdc++ versions??
-        checkU<typename std::add_volatile<T>::type>();
-        checkU<typename std::add_cv<T>::type>();
-#endif
     }
 };
 template <class T>
@@ -439,7 +438,7 @@ void upx_compiler_sanity_check(void) {
         assert(get_ne32(&b) == 0x04030201);
         assert(get_ne64(&c) == 0x0807060504030201ull);
     }
-#endif
+#endif // DEBUG
     union {
         short v_short;
         int v_int;

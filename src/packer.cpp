@@ -686,6 +686,7 @@ bool Packer::readPackHeader(int len, bool allow_incompressible) {
 }
 
 void Packer::checkAlreadyPacked(const void *b, int blen) {
+    assert(blen >= 4);
     int boff = find_le32(b, blen, UPX_MAGIC_LE32);
     if (boff < 0)
         return;

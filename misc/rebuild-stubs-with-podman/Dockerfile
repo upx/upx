@@ -52,7 +52,7 @@ RUN cd /root \
 
 # create default user upx 2000:2000
 RUN useradd upx -U --uid 2000 --shell /bin/bash -m \
-    && mkdir -p /home/upx/.cache/zig /home/upx/.local/bin /home/upx/src/upx \
+    && mkdir -p /home/upx/.cache/zig /home/upx/.local/bin /home/upx/.wine /home/upx/src/upx \
     && ln -s /usr/local/bin/bin-upx-20221212 /home/upx/.local/bin/bin-upx \
     && chown -R upx:upx /home/upx \
     && true

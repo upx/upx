@@ -3,22 +3,24 @@ on: [workflow_dispatch]
 jobs:
   job-alpine-clang:
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
-    name: ${{ format('container {0}', matrix.container) }}
+    name: ${{ format('clang {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
       - name: ${{ format('Build clang {0}', matrix.container) }}
         run: |
-          apk update && apk upgrade && apk add clang cmake make
+          apk update && apk upgrade && apk add clang cmake g++ make
           wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-src.tar.xz
           tar -xoaf upx-4.0.2-src.tar.xz
           cd upx-4.0.2-src
-          make    build/extra/clang/release CC="clang -static" CXX="clang++ -static"
-          make -C build/extra/clang/release test
-          make -C build/extra/clang/release install DESTDIR="$PWD/Install-with-make"
+          make    build/debug   CC="clang -static" CXX="clang++ -static"
+          make    build/release CC="clang -static" CXX="clang++ -static"
+          make -C build/debug   test
+          make -C build/release test
+          make -C build/release install DESTDIR="$PWD/Install"
   job-alpine-gcc:
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
-    name: ${{ format('container {0}', matrix.container) }}
+    name: ${{ format('gcc {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
@@ -28,6 +30,8 @@ jobs:
           wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-src.tar.xz
           tar -xoaf upx-4.0.2-src.tar.xz
           cd upx-4.0.2-src
-          make    build/extra/gcc/release CC="gcc -static" CXX="g++ -static"
-          make -C build/extra/gcc/release test
-          make -C build/extra/gcc/release install DESTDIR="$PWD/Install-with-make"
+          make    build/debug   CC="gcc -static" CXX="g++ -static"
+          make    build/release CC="gcc -static" CXX="g++ -static"
+          make -C build/debug   test
+          make -C build/release test
+          make -C build/release install DESTDIR="$PWD/Install"
