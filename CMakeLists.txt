@@ -33,9 +33,12 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git" AND NOT MSVC_IDE)
         message(FATAL_ERROR "ERROR: In-source builds are not allowed, please use an extra build dir.")
     endif()
 endif()
+
+# global settings
 set(CMAKE_C_STANDARD_REQUIRED     ON)
 set(CMAKE_CXX_STANDARD_REQUIRED   ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_MSVC_RUNTIME_LIBRARY    "MultiThreaded")
 
 # determine Git revision
 set(GITREV_SHORT "")

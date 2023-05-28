@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_P_EXE_H__
-#define UPX_P_EXE_H__ 1
 
 /*************************************************************************
 // dos/exe
@@ -103,7 +101,5 @@ protected:
     unsigned stack_for_lzma = 0; // stack size required for lzma
     bool use_clear_dirty_stack = false;
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

@@ -170,19 +170,35 @@ struct CheckIntegral {
         U a = {};
         const U b = {};
         static constexpr U c = {};
+        U x[2] = {};
+        const U y[2] = {};
+        static constexpr U z[2] = {};
     };
     template <class U>
     static void checkU(void) {
-        U a = {};
-        const U b = {};
-        constexpr U c = {};
-        assert(a == 0);
-        assert(b == 0);
-        assert(c == 0);
-        TestU<U> t;
-        assert(t.a == 0);
-        assert(t.b == 0);
-        assert(t.c == 0);
+        {
+            U a = {};
+            const U b = {};
+            constexpr U c = {};
+            U x[2] = {};
+            const U y[2] = {};
+            constexpr U z[2] = {};
+            assert(a == 0);
+            assert(b == 0);
+            assert(c == 0);
+            assert(x[0] == 0 && x[1] == 0);
+            assert(y[0] == 0 && y[1] == 0);
+            assert(z[0] == 0 && z[1] == 0);
+        }
+        {
+            TestU<U> t;
+            assert(t.a == 0);
+            assert(t.b == 0);
+            assert(t.c == 0);
+            assert(t.x[0] == 0 && t.x[1] == 0);
+            assert(t.y[0] == 0 && t.y[1] == 0);
+            assert(t.z[0] == 0 && t.z[1] == 0);
+        }
 #if __cplusplus < 202002L
         COMPILE_TIME_ASSERT(std::is_pod<U>::value) // std::is_pod is deprecated in C++20
 #endif
@@ -230,9 +246,6 @@ struct TestBELE {
     static noinline bool test(void) {
         CheckIntegral<T>::check();
         CheckAlignment<T>::check();
-        // array init
-        T array[2] = {};
-        assert(array[0] == 0 && array[1] == 0);
         // arithmetic checks (modern compilers will optimize this away)
         T allbits = {};
         assert(allbits == 0);

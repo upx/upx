@@ -206,14 +206,21 @@ error:
 // compress - cruft because of pseudo-COM layer
 **************************************************************************/
 
+// ensure proper nullptr usage
+#include <cstddef>
+#undef NULL
+#define NULL nullptr
+#if defined(__GNUC__)
+#undef __null
+#define __null nullptr
+#endif
+
 #undef MSDOS
 #undef OS2
 #undef _WIN32
 #undef _WIN32_WCE
 #undef COMPRESS_MF_MT
 #undef _NO_EXCEPTIONS
-#undef NULL
-#define NULL nullptr
 #include <lzma-sdk/C/Common/MyInitGuid.h>
 // #include <lzma-sdk/C/7zip/Compress/LZMA/LZMADecoder.h>
 #include <lzma-sdk/C/7zip/Compress/LZMA/LZMAEncoder.h>

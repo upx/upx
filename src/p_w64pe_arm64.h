@@ -28,7 +28,7 @@
 #pragma once
 
 /*************************************************************************
-//
+// win64/arm64
 **************************************************************************/
 
 class PackW64PeArm64 : public PeFile64 {
@@ -58,6 +58,8 @@ protected:
 };
 
 /*************************************************************************
+// win64/arm64ec
+//
 // TODO: it is unclear yet if this should be made a subclass
 //   or just get merged into the base class using a flag;
 //   maybe the difference between arm64 and arm64ec does not really affect us

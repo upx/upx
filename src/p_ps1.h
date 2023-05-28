@@ -30,8 +30,6 @@
  */
 
 #pragma once
-#ifndef UPX_P_PS1_H__
-#define UPX_P_PS1_H__ 1
 
 /*************************************************************************
 // ps1/exe
@@ -125,7 +123,5 @@ protected:
     // filesize-PS_HDR_SIZE
     unsigned fdata_size;
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

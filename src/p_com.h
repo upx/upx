@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_P_COM_H__
-#define UPX_P_COM_H__ 1
 
 /*************************************************************************
 // dos/com
@@ -59,7 +57,5 @@ protected:
     virtual void buildLoader(const Filter *ft) override;
     virtual void patchLoader(OutputFile *fo, byte *, int, unsigned);
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

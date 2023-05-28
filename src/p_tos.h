@@ -1,4 +1,4 @@
-/* p_tos.h --
+/* p_tos.h -- atari/tos executable format
 
    This file is part of the UPX executable compressor.
 
@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_P_TOS_H__
-#define UPX_P_TOS_H__ 1
 
 /*************************************************************************
 // atari/tos
@@ -105,7 +103,5 @@ protected:
     };
     LinkerSymbols symbols;
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

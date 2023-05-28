@@ -322,7 +322,7 @@ struct TestSortAllPermutations {
             memcpy(a, perm, sizeof(*a) * n);
             upx_stable_sort(a, n, sizeof(*a), le16_compare);
             for (size_t i = 0; i < n; i++)
-                CHECK((a[i] == 255 + i));
+                assert((a[i] == 255 + i));
             num_perms += 1;
         } while (std::next_permutation(perm, perm + n));
         return num_perms;

@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_P_TMT_H__
-#define UPX_P_TMT_H__ 1
 
 /*************************************************************************
 // tmt/adam
@@ -74,7 +72,5 @@ protected:
     };
     tmt_header_t ih, oh;
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

@@ -1,4 +1,4 @@
-/* p_tos.cpp --
+/* p_tos.cpp -- atari/tos executable format
 
    This file is part of the UPX executable compressor.
 

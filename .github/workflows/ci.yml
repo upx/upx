@@ -385,7 +385,7 @@ jobs:
           - { zig_target: x86_64-windows-gnu }
     env:
       # 2023-05-27
-      ZIG_DIST_VERSION: 0.11.0-dev.3309+8f5f8090c
+      ZIG_DIST_VERSION: 0.11.0-dev.3312+ab37ab33c
       # for zig-cc wrapper scripts (see below):
       ZIG_CPPFLAGS: -DUPX_DOCTEST_CONFIG_MULTITHREADING
       ZIG_FLAGS: ${{ matrix.zig_flags }}
