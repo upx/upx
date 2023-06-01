@@ -98,6 +98,9 @@ Developer quick start
         # When in doubt, then use "cd src/stub; make clean; make".
 11)  $ popd  # my-upx/upx
 12)  $ cd src  # my-upx/upx/src
+12a)    On MacOS: install homebrew (https:://brew.sh), then "brew install coreutils"
+        and put <some_prefix>/opt/coreutils/libexec/gnubin into PATH so that
+        "readlink -en" and 'sha256sum' work.
 13)  $ make run-testsuite 2>&1  |  tee testsuite.log
 
 
