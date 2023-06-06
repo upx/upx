@@ -8,10 +8,10 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 
 image=upx-cross-compile-20230115-v3
 
-flags=( -ti --read-only --rm )
+flags=( --read-only --rm --pull=never )
 flags+=( --cap-drop=all )               # drop all capabilities
 flags+=( --network=none )               # no network needed
-flags+=( -e TERM="$TERM" )              # pass $TERM
+flags+=( -ti -e TERM="$TERM" )          # allocate an interactive pseudo-tty and pass $TERM
 if [[ 1 == 1 ]]; then
     # run as user upx 2000:2000
     flags+=( --user 2000 )

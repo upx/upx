@@ -85,14 +85,14 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #define XSPAN_S(type) Span<type>
 
 // create a value
-#define XSPAN_0_MAKE(type, first, ...) (XSPAN_0(type)(first, ##__VA_ARGS__))
-#define XSPAN_P_MAKE(type, first, ...) (XSPAN_P(type)(first, ##__VA_ARGS__))
-#define XSPAN_S_MAKE(type, first, ...) (XSPAN_S(type)(first, ##__VA_ARGS__))
+#define XSPAN_0_MAKE(type, first, ...) (XSPAN_0(type)((first), ##__VA_ARGS__))
+#define XSPAN_P_MAKE(type, first, ...) (XSPAN_P(type)((first), ##__VA_ARGS__))
+#define XSPAN_S_MAKE(type, first, ...) (XSPAN_S(type)((first), ##__VA_ARGS__))
 
 // define a variable
-#define XSPAN_0_VAR(type, var, first, ...) XSPAN_0(type) var(first, ##__VA_ARGS__)
-#define XSPAN_P_VAR(type, var, first, ...) XSPAN_P(type) var(first, ##__VA_ARGS__)
-#define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var(first, ##__VA_ARGS__)
+#define XSPAN_0_VAR(type, var, first, ...) XSPAN_0(type) var((first), ##__VA_ARGS__)
+#define XSPAN_P_VAR(type, var, first, ...) XSPAN_P(type) var((first), ##__VA_ARGS__)
+#define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var((first), ##__VA_ARGS__)
 
 #elif WITH_XSPAN >= 1
 
@@ -103,14 +103,14 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #define XSPAN_S(type) Ptr<type>
 
 // create a value
-#define XSPAN_0_MAKE(type, first, ...) (XSPAN_0(type)(first))
-#define XSPAN_P_MAKE(type, first, ...) (XSPAN_P(type)(first))
-#define XSPAN_S_MAKE(type, first, ...) (XSPAN_S(type)(first))
+#define XSPAN_0_MAKE(type, first, ...) (XSPAN_0(type)((first)))
+#define XSPAN_P_MAKE(type, first, ...) (XSPAN_P(type)((first)))
+#define XSPAN_S_MAKE(type, first, ...) (XSPAN_S(type)((first)))
 
 // define a variable
-#define XSPAN_0_VAR(type, var, first, ...) XSPAN_0(type) var(first)
-#define XSPAN_P_VAR(type, var, first, ...) XSPAN_P(type) var(first)
-#define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var(first)
+#define XSPAN_0_VAR(type, var, first, ...) XSPAN_0(type) var((first))
+#define XSPAN_P_VAR(type, var, first, ...) XSPAN_P(type) var((first))
+#define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var((first))
 
 #else // WITH_XSPAN
 
@@ -135,14 +135,14 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &first) {
 #define XSPAN_S(type) type *
 
 // create a value
-#define XSPAN_0_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, first))
-#define XSPAN_P_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, first))
-#define XSPAN_S_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, first))
+#define XSPAN_0_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, (first)))
+#define XSPAN_P_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, (first)))
+#define XSPAN_S_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, (first)))
 
 // define a variable
-#define XSPAN_0_VAR(type, var, first, ...) type *var = XSPAN_0_MAKE(type, first)
-#define XSPAN_P_VAR(type, var, first, ...) type *var = XSPAN_P_MAKE(type, first)
-#define XSPAN_S_VAR(type, var, first, ...) type *var = XSPAN_S_MAKE(type, first)
+#define XSPAN_0_VAR(type, var, first, ...) type *var = XSPAN_0_MAKE(type, (first))
+#define XSPAN_P_VAR(type, var, first, ...) type *var = XSPAN_P_MAKE(type, (first))
+#define XSPAN_S_VAR(type, var, first, ...) type *var = XSPAN_S_MAKE(type, (first))
 
 #endif // WITH_XSPAN
 

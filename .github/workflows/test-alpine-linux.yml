@@ -9,15 +9,22 @@ jobs:
     steps:
       - name: ${{ format('Build clang {0}', matrix.container) }}
         run: |
-          apk update && apk upgrade && apk add clang cmake g++ make
+          apk update && apk upgrade && apk add clang cmake make
           wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-src.tar.xz
-          tar -xoaf upx-4.0.2-src.tar.xz
-          cd upx-4.0.2-src
+          tar -xoaf upx-*-src.tar.xz
+          cd upx-*-src
           make    build/debug   CC="clang -static" CXX="clang++ -static"
           make    build/release CC="clang -static" CXX="clang++ -static"
           make -C build/debug   test
           make -C build/release test
           make -C build/release install DESTDIR="$PWD/Install"
+          echo "artifact_name=upx-test-alpine-linux-clang-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.artifact_name }}
+          path: 'upx*/build/*/upx'
   job-alpine-gcc:
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
     name: ${{ format('gcc {0}', matrix.container) }}
@@ -28,10 +35,17 @@ jobs:
         run: |
           apk update && apk upgrade && apk add cmake g++ make
           wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-src.tar.xz
-          tar -xoaf upx-4.0.2-src.tar.xz
-          cd upx-4.0.2-src
+          tar -xoaf upx-*-src.tar.xz
+          cd upx-*-src
           make    build/debug   CC="gcc -static" CXX="g++ -static"
           make    build/release CC="gcc -static" CXX="g++ -static"
           make -C build/debug   test
           make -C build/release test
           make -C build/release install DESTDIR="$PWD/Install"
+          echo "artifact_name=upx-test-alpine-linux-gcc-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.artifact_name }}
+          path: 'upx*/build/*/upx'

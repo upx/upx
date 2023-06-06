@@ -11,4 +11,5 @@ image=upx-stubtools-20221212-v5
 podman build -t "$image" -f "$argv0dir/Dockerfile" "$argv0dir"
 
 podman image list "$image"
+echo
 podman image tree "$image"

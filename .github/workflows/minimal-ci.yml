@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
 #     matrix: { container: ['alpine:3.12','alpine:3.18','alpine:edge','i386/alpine:edge'] }
-      matrix: { container: ['alpine:3.10','alpine:3.11','alpine:3.12','alpine:3.13','alpine:3.14','alpine:3.15','alpine:3.16','alpine:3.17','alpine:3.18','alpine:edge','i386/alpine:edge'] }
+      matrix: { container: ['alpine:3.9','alpine:3.10','alpine:3.11','alpine:3.12','alpine:3.13','alpine:3.14','alpine:3.15','alpine:3.16','alpine:3.17','alpine:3.18','alpine:edge','i386/alpine:edge'] }
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}

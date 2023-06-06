@@ -34,7 +34,7 @@
 #ifndef XSPAN_FWD_C_IS_MEMBUFFER
 template <class T, class U>
 inline typename std::enable_if<std::is_integral<U>::value, void *>::type operator+(U, const C<T> &)
-    DELETED_FUNCTION;
+    XSPAN_DELETED_FUNCTION;
 #endif // XSPAN_FWD_C_IS_MEMBUFFER
 
 /*************************************************************************

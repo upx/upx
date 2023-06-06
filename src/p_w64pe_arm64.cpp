@@ -65,7 +65,7 @@ bool PackW64PeArm64::canPack() {
     checkMachine(ih.cpu);
     if (ih.cpu != IMAGE_FILE_MACHINE_ARM64)
         return false;
-    throwCantPack("not yet implemented");
+    throwCantPack("win64/arm64 is not yet implemented");
     return true;
 }
 
@@ -106,9 +106,12 @@ void PackW64PeArm64::pack(OutputFile *fo) {
 **************************************************************************/
 
 bool PackW64PeArm64EC::canPack() {
-    if (!readFileHeader() || ih.cpu != IMAGE_FILE_MACHINE_ARM64EC)
+    if (!readFileHeader())
         return false;
-    throwCantPack("not yet implemented");
+    checkMachine(ih.cpu);
+    if (ih.cpu != IMAGE_FILE_MACHINE_ARM64EC)
+        return false;
+    throwCantPack("win64/arm64ec is not yet implemented");
     return true;
 }
 

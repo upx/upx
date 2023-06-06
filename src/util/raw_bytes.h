@@ -68,17 +68,17 @@ raw_index_bytes(T ptr, size_t index, size_t size_in_bytes) {
 
 // same for bounded arrays
 template <class T, size_t N>
-inline T *raw_bytes(T (&a)[N], size_t size_in_bytes) {
+inline T *raw_bytes(T (&array)[N], size_t size_in_bytes) {
     typedef T element_type;
     if very_unlikely (size_in_bytes > mem_size(sizeof(element_type), N))
         throwCantPack("raw_bytes out of range");
-    return a;
+    return array;
 }
 
 template <class T, size_t N>
-inline T *raw_index_bytes(T (&a)[N], size_t index, size_t size_in_bytes) {
+inline T *raw_index_bytes(T (&array)[N], size_t index, size_t size_in_bytes) {
     typedef T element_type;
-    return raw_bytes(a, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
+    return raw_bytes(array, mem_size(sizeof(element_type), index, size_in_bytes)) + index;
 }
 
 /* vim:set ts=4 sw=4 et: */

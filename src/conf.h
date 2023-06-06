@@ -56,7 +56,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) == 255) // -funsigned-char
    // don't enable before gcc-10 because of gcc bug #78010
 #  pragma GCC diagnostic error "-Wsuggest-override"
 #endif
-#if (ACC_CC_CLANG >= 0x050000)
+#if (ACC_CC_CLANG >= 0x080000)
+   // don't enable before clang-8 because of stddef.h issues
 #  pragma clang diagnostic error "-Wzero-as-null-pointer-constant"
 #elif (ACC_CC_GNUC >= 0x040700) && defined(__GLIBC__)
    // Some non-GLIBC toolchains do not use 'nullptr' everywhere when C++:

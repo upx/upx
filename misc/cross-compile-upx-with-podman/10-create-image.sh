@@ -14,4 +14,5 @@ image=upx-cross-compile-20230115-v3
 podman build -t "$image" -f "$argv0dir/Dockerfile" "$argv0dir"
 
 podman image list "$image"
+echo
 podman image tree "$image"
