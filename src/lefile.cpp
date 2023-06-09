@@ -34,8 +34,8 @@ LeFile::LeFile(InputFile *f) : fif(f), fof(nullptr), le_offset(0), exe_offset(0)
     COMPILE_TIME_ASSERT(sizeof(le_header_t) == 196)
     COMPILE_TIME_ASSERT(sizeof(le_object_table_entry_t) == 24)
     COMPILE_TIME_ASSERT(sizeof(le_pagemap_entry_t) == 4)
-    memset(&ih, 0, sizeof ih);
-    memset(&oh, 0, sizeof oh);
+    mem_clear(&ih);
+    mem_clear(&oh);
 }
 
 LeFile::~LeFile() {
@@ -257,7 +257,7 @@ void LeFile::writeFile(OutputFile *f, bool le) {
 
 void LeFile::countFixups(unsigned *counts) const {
     const unsigned o = objects;
-    memset(counts, 0, sizeof(unsigned) * (o + 2));
+    memset(counts, 0, mem_size(sizeof(unsigned), o + 2));
     // counts[0..objects-1] - # of 32-bit offset relocations in for that objects
     // counts[objects]      - # of selector fixups
     // counts[objects+1]    - # of self-relative fixups

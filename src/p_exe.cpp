@@ -72,7 +72,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const {
     if (ih.relocs == 0)
         flag |= NORELOC;
 
-    memset(&oh, 0, sizeof(oh));
+    mem_clear(&oh);
     oh.ident = 'M' + 'Z' * 256;
     oh.headsize16 = 2;
 
@@ -656,7 +656,7 @@ void PackExe::unpack(OutputFile *fo) {
     }
 
     // fill new exe header
-    memset(&oh, 0, sizeof(oh));
+    mem_clear(&oh);
     oh.ident = 'M' + 'Z' * 256;
 
     if (relocnum) {

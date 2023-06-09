@@ -61,7 +61,7 @@
 void do_one_file(const char *iname, char *oname) {
     int r;
     struct stat st;
-    memset(&st, 0, sizeof(st));
+    mem_clear(&st);
 #if (HAVE_LSTAT)
     r = lstat(iname, &st);
 #else
@@ -106,7 +106,7 @@ void do_one_file(const char *iname, char *oname) {
 
 #if (USE_FTIME)
     struct ftime fi_ftime;
-    memset(&fi_ftime, 0, sizeof(fi_ftime));
+    mem_clear(&fi_ftime);
     if (opt->preserve_timestamp) {
         if (getftime(fi.getFd(), &fi_ftime) != 0)
             throwIOException("cannot determine file timestamp");

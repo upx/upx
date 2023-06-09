@@ -185,7 +185,7 @@ private:
         void *last_return_address_dealloc;
         void *last_return_address_fill;
         void *last_return_address_subref;
-        Debug() noexcept { memset(this, 0, sizeof(*this)); }
+        Debug() noexcept { mem_clear(this); }
     };
     Debug debug;
 #endif

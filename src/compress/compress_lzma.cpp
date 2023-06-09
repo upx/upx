@@ -433,7 +433,7 @@ int upx_lzma_decompress(const upx_bytep src, unsigned src_len, upx_bytep dst, un
     COMPILE_TIME_ASSERT(LZMA_LIT_SIZE == 768)
 
     CLzmaDecoderState s;
-    memset(&s, 0, sizeof(s));
+    mem_clear(&s);
     SizeT src_out = 0, dst_out = 0;
     int r = UPX_E_ERROR;
     int rh;

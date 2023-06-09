@@ -40,7 +40,7 @@ std::mutex opt_lock_mutex;
 
 void Options::reset() noexcept {
     Options *const o = this;
-    mem_clear(o, sizeof(*o));
+    mem_clear(o);
     o->crp.reset();
 
     o->cmd = CMD_NONE;

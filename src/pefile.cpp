@@ -1067,7 +1067,7 @@ PeFile::Export::Export(char *_base) : base(_base), iv(_base) {
     COMPILE_TIME_ASSERT_ALIGNED1(export_dir_t)
     ename = functionptrs = ordinals = nullptr;
     names = nullptr;
-    memset(&edir, 0, sizeof(edir));
+    mem_clear(&edir);
     size = 0;
 }
 

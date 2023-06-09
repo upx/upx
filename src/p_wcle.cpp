@@ -174,8 +174,9 @@ void PackWcle::readObjectTable() {
 void PackWcle::encodeObjectTable() {
     unsigned ic, jc;
 
-    oobject_table = New(le_object_table_entry_t, soobject_table = 2);
-    memset(oobject_table, 0, soobject_table * sizeof(*oobject_table));
+    soobject_table = 2;
+    oobject_table = New(le_object_table_entry_t, soobject_table);
+    memset(oobject_table, 0, mem_size(sizeof(*oobject_table), soobject_table));
 
     // object #1:
     OOT(0, base_address) = IOT(0, base_address);

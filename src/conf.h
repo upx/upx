@@ -380,6 +380,18 @@ struct UnsignedSizeOf {
 #define usizeof(expr)   (UnsignedSizeOf<sizeof(expr)>::value)
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(int) == sizeof(int))
 
+template <class T>
+inline void mem_clear(T *object) noexcept {
+    static_assert(std::is_class_v<T>);
+    static_assert(std::is_standard_layout_v<T>);
+    static_assert(std::is_trivially_copyable_v<T>);
+    static constexpr size_t size = sizeof(*object);
+    static_assert(size >= 1 && size <= UPX_RSIZE_MAX_MEM);
+    memset((void *) object, 0, size);
+}
+template <class T, size_t N>
+inline void mem_clear(T (&array)[N]) noexcept = delete;
+
 // An Array allocates memory on the heap, and automatically
 // gets destructed when leaving scope or on exceptions.
 #define Array(type, var, n) \
@@ -582,12 +594,11 @@ typedef upx_callback_t *upx_callback_p;
 typedef void (__acc_cdecl *upx_progress_func_t)
     (upx_callback_p, unsigned, unsigned);
 
-struct upx_callback_t
-{
+struct upx_callback_t {
     upx_progress_func_t nprogress;
     void *user;
 
-    void reset() noexcept { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { mem_clear(this); }
 };
 
 
@@ -640,8 +651,7 @@ inline void oassign(T &v, const OptVar<T,a,b,c> &other) {
 }
 
 
-struct lzma_compress_config_t
-{
+struct lzma_compress_config_t {
     typedef OptVar<unsigned,  2u, 0u,   4u> pos_bits_t;             // pb
     typedef OptVar<unsigned,  0u, 0u,   4u> lit_pos_bits_t;         // lp
     typedef OptVar<unsigned,  3u, 0u,   8u> lit_context_bits_t;     // lc
@@ -661,13 +671,11 @@ struct lzma_compress_config_t
     void reset() noexcept;
 };
 
-struct ucl_compress_config_t : public REAL_ucl_compress_config_t
-{
+struct ucl_compress_config_t : public REAL_ucl_compress_config_t {
     void reset() noexcept { memset(this, 0xff, sizeof(*this)); }
 };
 
-struct zlib_compress_config_t
-{
+struct zlib_compress_config_t {
     typedef OptVar<unsigned,  8u, 1u,   9u> mem_level_t;            // ml
     typedef OptVar<unsigned, 15u, 9u,  15u> window_bits_t;          // wb
     typedef OptVar<unsigned,  0u, 0u,   4u> strategy_t;             // st
@@ -679,19 +687,18 @@ struct zlib_compress_config_t
     void reset() noexcept;
 };
 
-struct zstd_compress_config_t
-{
+struct zstd_compress_config_t {
     unsigned dummy;
 
     void reset() noexcept;
 };
 
-struct upx_compress_config_t
-{
+struct upx_compress_config_t {
     lzma_compress_config_t  conf_lzma;
     ucl_compress_config_t   conf_ucl;
     zlib_compress_config_t  conf_zlib;
     zstd_compress_config_t  conf_zstd;
+
     void reset() noexcept { conf_lzma.reset(); conf_ucl.reset(); conf_zlib.reset(); conf_zstd.reset(); }
 };
 
@@ -702,8 +709,7 @@ struct upx_compress_config_t
 // compression - result_t
 **************************************************************************/
 
-struct lzma_compress_result_t
-{
+struct lzma_compress_result_t {
     unsigned pos_bits;              // pb
     unsigned lit_pos_bits;          // lp
     unsigned lit_context_bits;      // lc
@@ -713,37 +719,35 @@ struct lzma_compress_result_t
     unsigned match_finder_cycles;
     unsigned num_probs;             // (computed result)
 
-    void reset() noexcept { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { mem_clear(this); }
 };
 
-struct ucl_compress_result_t
-{
+struct ucl_compress_result_t {
     ucl_uint result[16];
 
-    void reset() noexcept { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { mem_clear(this); }
 };
 
-struct zlib_compress_result_t
-{
+struct zlib_compress_result_t {
     unsigned dummy;
 
-    void reset() noexcept { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { mem_clear(this); }
 };
 
-struct zstd_compress_result_t
-{
+struct zstd_compress_result_t {
     unsigned dummy;
 
-    void reset() noexcept { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { mem_clear(this); }
 };
 
-struct upx_compress_result_t
-{
+struct upx_compress_result_t {
     // debugging aid
-    struct {
+    struct Debug {
         int method, level;
         unsigned u_len, c_len;
-    } debug;
+        void reset() noexcept { mem_clear(this); }
+    };
+    Debug debug;
 
     lzma_compress_result_t  result_lzma;
     ucl_compress_result_t   result_ucl;
@@ -751,7 +755,7 @@ struct upx_compress_result_t
     zstd_compress_result_t  result_zstd;
 
     void reset() noexcept {
-        memset(&this->debug, 0, sizeof(this->debug));
+        debug.reset();
         result_lzma.reset(); result_ucl.reset(); result_zlib.reset(); result_zstd.reset();
     }
 };

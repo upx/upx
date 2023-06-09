@@ -66,12 +66,6 @@ inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n) {
     (void) mem_size(element_size, n); // assert size
 }
 
-// will throw on invalid size
-inline void mem_clear(void *p, size_t n) {
-    (void) mem_size(1, n); // assert size
-    memset(p, 0, n);
-}
-
 // "new" with asserted size; will throw on invalid size
 #if DEBUG
 template <class T>

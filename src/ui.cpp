@@ -162,7 +162,7 @@ UiPacker::UiPacker(const Packer *p_) : ui_pass(0), ui_total_passes(0), p(p_), s(
     cb.reset();
 
     s = new State;
-    memset(s, 0, sizeof(*s));
+    mem_clear(s);
     s->msg_buf[0] = '\r';
 
 #if defined(UI_USE_SCREEN)
