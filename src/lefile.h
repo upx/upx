@@ -222,9 +222,11 @@ protected:
     unsigned soentries;
 
 private:
-    // disable copy and assignment
+    // disable copy and move
     LeFile(const LeFile &) = delete;
     LeFile &operator=(const LeFile &) = delete;
+    LeFile(LeFile &&) = delete;
+    LeFile &operator=(LeFile &&) = delete;
 };
 
 #endif /* already included */

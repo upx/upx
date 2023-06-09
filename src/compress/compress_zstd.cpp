@@ -26,7 +26,7 @@
 
 #include "../conf.h"
 
-void zstd_compress_config_t::reset() { mem_clear(this, sizeof(*this)); }
+void zstd_compress_config_t::reset() noexcept { mem_clear(this, sizeof(*this)); }
 
 #if WITH_ZSTD
 #include "compress.h"

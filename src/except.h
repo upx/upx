@@ -49,12 +49,11 @@ public:
 private:
     char *msg = nullptr;
     int err = 0;
-
 protected:
     bool is_warning = false; // can be set by subclasses
 
 private:
-    // disable assignment
+    // disable copy assignment
     Throwable &operator=(const Throwable &) = delete;
     // disable dynamic allocation => force throwing by value
     ACC_CXX_DISABLE_NEW_DELETE
@@ -66,7 +65,6 @@ private:
 // Exceptions can/should be caught
 class Exception : public Throwable {
     typedef Throwable super;
-
 public:
     Exception(const char *m = nullptr, int e = 0, bool w = false) noexcept : super(m, e, w) {}
 };
@@ -74,7 +72,6 @@ public:
 // Errors should not be caught (or re-thrown)
 class Error : public Throwable {
     typedef Throwable super;
-
 public:
     Error(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
@@ -85,35 +82,30 @@ public:
 
 class OutOfMemoryException : public Exception {
     typedef Exception super;
-
 public:
     OutOfMemoryException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 class IOException : public Exception {
     typedef Exception super;
-
 public:
     IOException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 class EOFException : public IOException {
     typedef IOException super;
-
 public:
     EOFException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 class FileNotFoundException : public IOException {
     typedef IOException super;
-
 public:
     FileNotFoundException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 class FileAlreadyExistsException : public IOException {
     typedef IOException super;
-
 public:
     FileAlreadyExistsException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
@@ -124,21 +116,18 @@ public:
 
 class OverlayException : public Exception {
     typedef Exception super;
-
 public:
     OverlayException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
 };
 
 class CantPackException : public Exception {
     typedef Exception super;
-
 public:
     CantPackException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
 };
 
 class UnknownExecutableFormatException : public CantPackException {
     typedef CantPackException super;
-
 public:
     UnknownExecutableFormatException(const char *m = nullptr, bool w = false) noexcept
         : super(m, w) {}
@@ -146,28 +135,24 @@ public:
 
 class AlreadyPackedException : public CantPackException {
     typedef CantPackException super;
-
 public:
     AlreadyPackedException(const char *m = nullptr) noexcept : super(m) { is_warning = true; }
 };
 
 class NotCompressibleException : public CantPackException {
     typedef CantPackException super;
-
 public:
     NotCompressibleException(const char *m = nullptr) noexcept : super(m) {}
 };
 
 class CantUnpackException : public Exception {
     typedef Exception super;
-
 public:
     CantUnpackException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
 };
 
 class NotPackedException : public CantUnpackException {
     typedef CantUnpackException super;
-
 public:
     NotPackedException(const char *m = nullptr) noexcept : super(m, true) {}
 };
@@ -178,7 +163,6 @@ public:
 
 class InternalError : public Error {
     typedef Error super;
-
 public:
     InternalError(const char *m = nullptr) noexcept : super(m, 0) {}
 };

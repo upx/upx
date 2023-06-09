@@ -382,15 +382,14 @@ ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(int) == sizeof(int))
 
 // An Array allocates memory on the heap, and automatically
 // gets destructed when leaving scope or on exceptions.
-#define Array(type, var, size) \
-    MemBuffer var ## _membuf(mem_size(sizeof(type), size)); \
+#define Array(type, var, n) \
+    MemBuffer var ## _membuf(mem_size(sizeof(type), (n))); \
     type * const var = ACC_STATIC_CAST(type *, var ## _membuf.getVoidPtr())
 
-#define ByteArray(var, size)    Array(byte, var, size)
+#define ByteArray(var, n)   Array(byte, var, (n))
 
 
-class noncopyable
-{
+class noncopyable {
 protected:
     inline noncopyable() noexcept {}
     inline ~noncopyable() noexcept {}
@@ -597,12 +596,12 @@ struct upx_callback_t
 **************************************************************************/
 
 template <class T, T default_value_, T min_value_, T max_value_>
-struct OptVar
-{
+struct OptVar {
     typedef T value_type;
     static constexpr T default_value = default_value_;
     static constexpr T min_value = min_value_;
     static constexpr T max_value = max_value_;
+    static_assert(min_value <= default_value && default_value <= max_value);
 
     static void assertValue(const T &v) {
         // info: this generates annoying warnings "unsigned >= 0 is always true"
@@ -659,12 +658,12 @@ struct lzma_compress_config_t
 
     unsigned            max_num_probs;
 
-    void reset();
+    void reset() noexcept;
 };
 
 struct ucl_compress_config_t : public REAL_ucl_compress_config_t
 {
-    void reset() { memset(this, 0xff, sizeof(*this)); }
+    void reset() noexcept { memset(this, 0xff, sizeof(*this)); }
 };
 
 struct zlib_compress_config_t
@@ -677,14 +676,14 @@ struct zlib_compress_config_t
     window_bits_t       window_bits;        // wb
     strategy_t          strategy;           // st
 
-    void reset();
+    void reset() noexcept;
 };
 
 struct zstd_compress_config_t
 {
     unsigned dummy;
 
-    void reset();
+    void reset() noexcept;
 };
 
 struct upx_compress_config_t
@@ -693,7 +692,7 @@ struct upx_compress_config_t
     ucl_compress_config_t   conf_ucl;
     zlib_compress_config_t  conf_zlib;
     zstd_compress_config_t  conf_zstd;
-    void reset() { conf_lzma.reset(); conf_ucl.reset(); conf_zlib.reset(); conf_zstd.reset(); }
+    void reset() noexcept { conf_lzma.reset(); conf_ucl.reset(); conf_zlib.reset(); conf_zstd.reset(); }
 };
 
 #define NULL_cconf  ((upx_compress_config_t *) nullptr)
@@ -714,28 +713,28 @@ struct lzma_compress_result_t
     unsigned match_finder_cycles;
     unsigned num_probs;             // (computed result)
 
-    void reset() { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { memset(this, 0, sizeof(*this)); }
 };
 
 struct ucl_compress_result_t
 {
     ucl_uint result[16];
 
-    void reset() { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { memset(this, 0, sizeof(*this)); }
 };
 
 struct zlib_compress_result_t
 {
     unsigned dummy;
 
-    void reset() { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { memset(this, 0, sizeof(*this)); }
 };
 
 struct zstd_compress_result_t
 {
     unsigned dummy;
 
-    void reset() { memset(this, 0, sizeof(*this)); }
+    void reset() noexcept { memset(this, 0, sizeof(*this)); }
 };
 
 struct upx_compress_result_t
@@ -751,7 +750,7 @@ struct upx_compress_result_t
     zlib_compress_result_t  result_zlib;
     zstd_compress_result_t  result_zstd;
 
-    void reset() {
+    void reset() noexcept {
         memset(&this->debug, 0, sizeof(this->debug));
         result_lzma.reset(); result_ucl.reset(); result_zlib.reset(); result_zstd.reset();
     }
@@ -796,7 +795,7 @@ void infoWarning(const char *format, ...) attribute_format(1, 2);
 void infoHeader(const char *format, ...) attribute_format(1, 2);
 void info(const char *format, ...) attribute_format(1, 2);
 void infoHeader();
-void infoWriting(const char *what, long size);
+void infoWriting(const char *what, upx_int64_t size);
 
 // work.cpp
 void do_one_file(const char *iname, char *oname);

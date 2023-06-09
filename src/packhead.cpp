@@ -38,17 +38,17 @@
 PackHeader::PackHeader() : version(-1), format(-1) {}
 
 /*************************************************************************
-// simple checksum for the header itself (since version 10)
+// very simple checksum for the header itself (since version 10)
 **************************************************************************/
 
-static byte get_packheader_checksum(SPAN_S(const byte) buf, int len) {
-    assert(len >= 4);
+static byte get_packheader_checksum(SPAN_S(const byte) buf, int blen) {
+    assert(blen >= 4);
     assert(get_le32(buf) == UPX_MAGIC_LE32);
-    // printf("1 %d\n", len);
+    // printf("1 %d\n", blen);
     buf += 4;
-    len -= 4;
+    blen -= 4;
     unsigned c = 0;
-    while (len-- > 0)
+    while (blen-- > 0)
         c += *buf++;
     c %= 251;
     // printf("2 %d\n", c);

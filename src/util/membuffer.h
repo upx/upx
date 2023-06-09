@@ -130,7 +130,7 @@ inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T>
 #undef XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
 
 /*************************************************************************
-//
+// MemBuffer
 **************************************************************************/
 
 class MemBuffer final : public MemBufferBase<byte> {
@@ -185,7 +185,7 @@ private:
         void *last_return_address_dealloc;
         void *last_return_address_fill;
         void *last_return_address_subref;
-        Debug() { memset(this, 0, sizeof(*this)); }
+        Debug() noexcept { memset(this, 0, sizeof(*this)); }
     };
     Debug debug;
 #endif

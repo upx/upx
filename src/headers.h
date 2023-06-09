@@ -27,7 +27,7 @@
 #pragma once
 
 #if !(__cplusplus + 0 >= 201703L)
-#error "C++ 17 is required"
+#error "C++17 is required"
 #endif
 
 #if !defined(_FILE_OFFSET_BITS)

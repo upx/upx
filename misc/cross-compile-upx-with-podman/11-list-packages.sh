@@ -16,4 +16,4 @@ echo 'Packages:'
 flags=( --read-only --rm --pull=never )
 flags+=( --cap-drop=all )               # drop all capabilities
 flags+=( --network=none )               # no network needed
-podman run "${flags[@]}" "$image" bash -c 'dpkg -l | LC_ALL=C sort'
+podman run "${flags[@]}" "$image" bash -c $'dpkg -l | sed \'s/ *$//\' | LC_ALL=C sort'

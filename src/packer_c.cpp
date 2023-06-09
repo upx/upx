@@ -33,7 +33,7 @@
 // compression method util
 **************************************************************************/
 
-bool Packer::isValidCompressionMethod(int method)
+/*static*/ bool Packer::isValidCompressionMethod(int method)
 {
     if (M_IS_LZMA(method))
         return true;

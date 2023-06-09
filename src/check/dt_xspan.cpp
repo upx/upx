@@ -742,30 +742,52 @@ TEST_CASE("PtrOrSpan char") {
 }
 
 TEST_CASE("PtrOrSpan int") {
-    int buf[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    XSPAN_P(int) a(buf, XSpanCount(8));
+    int buf[8] = {0, 11, 22, 33, 44, 55, 66, 77};
+    XSPAN_P(const int) a(buf, XSpanCount(8));
     CHECK(a.raw_size_in_bytes() == 8 * sizeof(int));
-    XSPAN_P(int) b = a.subspan(0, 7);
+    XSPAN_P(const int) b = a.subspan(0, 7);
     CHECK(b.raw_size_in_bytes() == 7 * sizeof(int));
-    XSPAN_P(int) c = (b + 1).subspan(0, 6);
+    XSPAN_P(const int) c = (b + 1).subspan(0, 6);
     CHECK(c.raw_size_in_bytes() == 6 * sizeof(int));
     a += 1;
-    CHECK(*a == 1);
-    CHECK(*a++ == 1);
-    CHECK(*++a == 3);
-    CHECK(--*a == 2);
-    CHECK(*a-- == 2);
+    CHECK(a == buf + 1);
+    CHECK(*a == 11);
+    CHECK(*a++ == 11);
+    CHECK(a == buf + 2);
+    CHECK(*a == 22);
+    CHECK(*++a == 33);
+    CHECK(a == buf + 3);
+    CHECK(*a == 33);
+    CHECK(*--a == 22);
+    CHECK(a == buf + 2);
+    CHECK(*a == 22);
+    CHECK(*a-- == 22);
+    CHECK(a == buf + 1);
+    CHECK(*a == 11);
     CHECK(*b == 0);
-    CHECK(*c == 1);
-    a = buf + 7;
+    CHECK(*c == 11);
+    a -= 1;
+    a += 7;
 #ifdef UPX_VERSION_HEX
-    CHECK(get_le32(a) == ne32_to_le32(7));
+    CHECK(get_le32(a) == ne32_to_le32(77));
 #endif
     a++;
 #ifdef UPX_VERSION_HEX
     CHECK_THROWS(get_le32(a));
 #endif
     CHECK_THROWS(raw_bytes(a, 1));
+    CHECK_THROWS(a++);
+    CHECK_THROWS(++a);
+    CHECK_THROWS(a += 1);
+    CHECK(a == buf + 8);
+    a = buf;
+    CHECK_THROWS(a--);
+    CHECK_THROWS(--a);
+    CHECK_THROWS(a -= 1);
+    CHECK_THROWS(a += 9);
+    CHECK(a == buf);
+    a += 8;
+    CHECK(a == buf + 8);
 }
 
 /*************************************************************************
@@ -779,6 +801,9 @@ __acc_static_noinline int foo(T p) {
     r += *p++;
     r += *++p;
     p += 3;
+    r += *p;
+    r += *--p;
+    r += *p--;
     r += *p;
     return r;
 }
@@ -801,11 +826,14 @@ make_span_s(T *ptr, size_t count) {
 } // namespace
 
 TEST_CASE("Span codegen") {
-    char buf[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    CHECK(foo(buf) == 0 + 2 + 5);
-    CHECK(foo(make_span_0(buf, 8)) == 0 + 2 + 5);
-    CHECK(foo(make_span_p(buf, 8)) == 0 + 2 + 5);
-    CHECK(foo(make_span_s(buf, 8)) == 0 + 2 + 5);
+    upx_uint8_t buf[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+    CHECK(foo(buf) == 0 + 2 + 5 + 4 + 4 + 3);
+    CHECK(foo(make_span_0(buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
+    CHECK(foo(make_span_p(buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
+    CHECK(foo(make_span_s(buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
+    CHECK(foo(XSPAN_0_MAKE(upx_uint8_t, buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
+    CHECK(foo(XSPAN_P_MAKE(upx_uint8_t, buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
+    CHECK(foo(XSPAN_S_MAKE(upx_uint8_t, buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
 }
 
 #endif // WITH_XSPAN >= 2

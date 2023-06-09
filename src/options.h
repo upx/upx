@@ -110,7 +110,7 @@ struct Options final {
         ucl_compress_config_t crp_ucl;
         zlib_compress_config_t crp_zlib;
         zstd_compress_config_t crp_zstd;
-        void reset() {
+        void reset() noexcept {
             crp_lzma.reset();
             crp_ucl.reset();
             crp_zlib.reset();
@@ -169,7 +169,7 @@ struct Options final {
         const char *keep_resource;
     } win32_pe;
 
-    void reset();
+    void reset() noexcept;
 };
 
 /* vim:set ts=4 sw=4 et: */

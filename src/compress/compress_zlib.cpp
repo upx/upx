@@ -30,7 +30,7 @@
 #include <zlib/zlib.h>
 #include <zlib/deflate.h>
 
-void zlib_compress_config_t::reset() {
+void zlib_compress_config_t::reset() noexcept {
     mem_clear(this, sizeof(*this));
 
     mem_level.reset();

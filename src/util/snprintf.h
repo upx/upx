@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_SNPRINTF_H__
-#define UPX_SNPRINTF_H__ 1
 
 /*************************************************************************
 // UPX version of string functions, with assertions and sane limits
@@ -86,7 +84,5 @@ forceinline int strcasecmp(const uchar *s1, const uchar *s2) {
 forceinline upx_rsize_t upx_safe_strlen(const uchar *s) {
     return upx_safe_strlen((const char *) s);
 }
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

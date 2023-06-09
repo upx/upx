@@ -33,7 +33,7 @@
 
 class FileBase {
 protected:
-    FileBase();
+    FileBase() = default;
     virtual ~FileBase();
 
 public:
@@ -49,7 +49,7 @@ public:
     virtual void set_extent(upx_off_t offset, upx_off_t length);
 
 public:
-    // static file-related util functions
+    // static file-related util functions; will throw on error
     static void chmod(const char *name, int mode);
     static void rename(const char *old_, const char *new_);
     static void unlink(const char *name);
@@ -76,7 +76,7 @@ class InputFile final : public FileBase {
     typedef FileBase super;
 
 public:
-    InputFile();
+    InputFile() = default;
     virtual ~InputFile() {}
 
     void sopen(const char *name, int flags, int shflags);
@@ -100,7 +100,7 @@ class OutputFile final : public FileBase {
     typedef FileBase super;
 
 public:
-    OutputFile();
+    OutputFile() = default;
     virtual ~OutputFile() {}
 
     void sopen(const char *name, int flags, int shflags, int mode);

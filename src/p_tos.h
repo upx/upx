@@ -99,7 +99,7 @@ protected:
         unsigned clear_dirty_stack_len;
         unsigned copy_to_stack_len;
 
-        void reset() { memset(this, 0, sizeof(*this)); }
+        void reset() noexcept { memset(this, 0, sizeof(*this)); }
     };
     LinkerSymbols symbols;
 };

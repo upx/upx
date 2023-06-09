@@ -329,9 +329,9 @@ protected:
         upx_uint64_t file_size_u;  // explicitly unsigned
     };
 
-    PackHeader ph; // must be filled by canUnpack()
-    int ph_format;
-    int ph_version;
+    PackHeader ph = {}; // must be filled by canUnpack()
+    int ph_format = 0;
+    int ph_version = 0;
 
     // compression buffers
     MemBuffer ibuf;        // input
@@ -347,13 +347,15 @@ protected:
 private:
     // private to checkPatch()
     void *last_patch = nullptr;
-    int last_patch_len;
-    int last_patch_off;
+    int last_patch_len = 0;
+    int last_patch_off = 0;
 
 private:
-    // disable copy and assignment
+    // disable copy and move
     Packer(const Packer &) = delete;
     Packer &operator=(const Packer &) = delete;
+    Packer(Packer &&) = delete;
+    Packer &operator=(Packer &&) = delete;
 };
 
 int force_method(int method);     // (0x80ul<<24)|method

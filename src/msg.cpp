@@ -211,10 +211,10 @@ void infoWarning(const char *format, ...) {
     info("[WARNING] %s\n", buf);
 }
 
-void infoWriting(const char *what, long size) {
+void infoWriting(const char *what, upx_int64_t size) {
     if (opt->info_mode <= 0)
         return;
-    info("Writing %s: %ld bytes", what, size);
+    info("Writing %s: %lld bytes", what, size);
 }
 
 /* vim:set ts=4 sw=4 et: */

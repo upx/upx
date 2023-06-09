@@ -33,6 +33,7 @@
 // returns number of bytes written to 'out'
 **************************************************************************/
 
+/*static*/
 unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(byte) out,
                                SPAN_P(byte) image, unsigned image_size, int bits, bool bswap,
                                int *big) {
@@ -92,6 +93,7 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
 // allocates 'out' and returns number of relocs written to 'out'
 **************************************************************************/
 
+/*static*/
 unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P(byte) image,
                                  unsigned image_size, int bits, bool bswap) {
     assert(bits == 32 || bits == 64);

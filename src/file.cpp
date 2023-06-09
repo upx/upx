@@ -29,10 +29,10 @@
 #include "file.h"
 
 /*************************************************************************
-// static functions
+// static file-related util functions; will throw on error
 **************************************************************************/
 
-void FileBase::chmod(const char *name, int mode) {
+/*static*/ void FileBase::chmod(const char *name, int mode) {
 #if (HAVE_CHMOD)
     if (::chmod(name, mode) != 0)
         throwIOException(name, errno);
@@ -42,7 +42,7 @@ void FileBase::chmod(const char *name, int mode) {
 #endif
 }
 
-void FileBase::rename(const char *old_, const char *new_) {
+/*static*/ void FileBase::rename(const char *old_, const char *new_) {
 #if (ACC_OS_DOS32) && defined(__DJGPP__)
     if (::_rename(old_, new_) != 0)
 #else
@@ -51,7 +51,7 @@ void FileBase::rename(const char *old_, const char *new_) {
         throwIOException("rename error", errno);
 }
 
-void FileBase::unlink(const char *name) {
+/*static*/ void FileBase::unlink(const char *name) {
     if (::unlink(name) != 0)
         throwIOException(name, errno);
 }
@@ -59,11 +59,6 @@ void FileBase::unlink(const char *name) {
 /*************************************************************************
 //
 **************************************************************************/
-
-FileBase::FileBase()
-    : _fd(-1), _flags(0), _shflags(0), _mode(0), _name(nullptr), _offset(0), _length(0) {
-    memset(&st, 0, sizeof(st));
-}
 
 FileBase::~FileBase() {
 #if 0 && defined(__GNUC__) // debug
@@ -160,8 +155,6 @@ upx_off_t FileBase::st_size() const { return _length; }
 //
 **************************************************************************/
 
-InputFile::InputFile() {}
-
 void InputFile::sopen(const char *name, int flags, int shflags) {
     close();
     _name = name;
@@ -212,8 +205,6 @@ upx_off_t InputFile::st_size_orig() const { return _length_orig; }
 //
 **************************************************************************/
 
-OutputFile::OutputFile() : bytes_written(0) {}
-
 void OutputFile::sopen(const char *name, int flags, int shflags, int mode) {
     close();
     _name = name;
@@ -261,10 +252,8 @@ void OutputFile::write(SPAN_0(const void) buf, int len) {
         return;
     mem_size_assert(1, len); // sanity check
     errno = 0;
-#if 0
-    fprintf(stderr, "write %p %zd (%p) %d\n", buf.raw_ptr(), buf.raw_size_in_bytes(),
-            buf.raw_base(), len);
-#endif
+    NO_fprintf(stderr, "write %p %zd (%p) %d\n", buf.raw_ptr(), buf.raw_size_in_bytes(),
+               buf.raw_base(), len);
     long l = acc_safe_hwrite(_fd, raw_bytes(buf, len), len);
     if (l != len)
         throwIOException("write error", errno);
@@ -347,7 +336,7 @@ upx_off_t OutputFile::unset_extent() {
     return _length;
 }
 
-void OutputFile::dump(const char *name, SPAN_P(const void) buf, int len, int flags) {
+/*static*/ void OutputFile::dump(const char *name, SPAN_P(const void) buf, int len, int flags) {
     if (flags < 0)
         flags = O_CREAT | O_TRUNC;
     flags |= O_WRONLY | O_BINARY;
@@ -355,6 +344,21 @@ void OutputFile::dump(const char *name, SPAN_P(const void) buf, int len, int fla
     f.open(name, flags, 0600);
     f.write(raw_bytes(buf, len), len);
     f.closex();
+}
+
+/*************************************************************************
+//
+**************************************************************************/
+
+TEST_CASE("file") {
+    InputFile fi;
+    CHECK(!fi.isOpen());
+    CHECK(fi.getFd() == -1);
+    CHECK(fi.st_size() == 0);
+    OutputFile fo;
+    CHECK(!fo.isOpen());
+    CHECK(fo.getFd() == -1);
+    CHECK(fo.getBytesWritten() == 0);
 }
 
 /* vim:set ts=4 sw=4 et: */

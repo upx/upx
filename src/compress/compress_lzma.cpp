@@ -41,7 +41,7 @@
 #pragma warning(disable : 4127) // warning C4127: conditional expression is constant
 #endif
 
-void lzma_compress_config_t::reset() {
+void lzma_compress_config_t::reset() noexcept {
     pos_bits.reset();
     lit_pos_bits.reset();
     lit_context_bits.reset();

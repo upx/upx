@@ -79,15 +79,15 @@ public:
     static void uiHeader();
     static void uiFooter(const char *n);
 
-    int ui_pass;
-    int ui_total_passes;
+    int ui_pass = 0;
+    int ui_total_passes = 0;
 
 protected:
     virtual void printInfo(int nl = 0);
     const Packer *p = nullptr;
 
     // callback
-    upx_callback_t cb;
+    upx_callback_t cb = {};
 
     // internal state
     struct State;

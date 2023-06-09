@@ -501,7 +501,7 @@ unsigned Packer::findOverlapOverhead(const byte *buf, const byte *tbuf, unsigned
 // file i/o utils
 **************************************************************************/
 
-void Packer::handleStub(InputFile *fif, OutputFile *fo, unsigned size) {
+/*static*/ void Packer::handleStub(InputFile *fif, OutputFile *fo, unsigned size) {
     if (fo) {
         if (size > 0) {
             // copy stub from exe

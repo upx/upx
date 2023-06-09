@@ -333,8 +333,8 @@ if(NOT UPX_CONFIG_CMAKE_DISABLE_INSTALL)
 
 # installation prefix and directories
 if(NOT CMAKE_INSTALL_PREFIX)
-    #message(FATAL_ERROR "ERROR: CMAKE_INSTALL_PREFIX is not defined.")
-    message(WARNING "WARNING: CMAKE_INSTALL_PREFIX is not defined.")
+    #message(FATAL_ERROR "ERROR: CMAKE_INSTALL_PREFIX is not defined")
+    message(WARNING "WARNING: CMAKE_INSTALL_PREFIX is not defined")
 endif()
 if(CMAKE_INSTALL_PREFIX)
     include(GNUInstallDirs)

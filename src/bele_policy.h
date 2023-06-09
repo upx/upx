@@ -78,9 +78,10 @@ struct AbstractPolicy {
     S u64_compare_signed(const void *a, const void *b) C = 0;
 
 private:
-    // disable copy, assignment and move assignment
+    // disable copy and move
     AbstractPolicy(const AbstractPolicy &) = delete;
     AbstractPolicy &operator=(const AbstractPolicy &) = delete;
+    AbstractPolicy(AbstractPolicy &&) = delete;
     AbstractPolicy &operator=(AbstractPolicy &&) = delete;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
@@ -145,9 +146,10 @@ struct BEPolicy
     }
 
 private:
-    // disable copy, assignment and move assignment
+    // disable copy and move
     BEPolicy(const BEPolicy &) = delete;
     BEPolicy &operator=(const BEPolicy &) = delete;
+    BEPolicy(BEPolicy &&) = delete;
     BEPolicy &operator=(BEPolicy &&) = delete;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
@@ -206,9 +208,10 @@ struct LEPolicy
     }
 
 private:
-    // disable copy, assignment and move assignment
+    // disable copy and move
     LEPolicy(const LEPolicy &) = delete;
     LEPolicy &operator=(const LEPolicy &) = delete;
+    LEPolicy(LEPolicy &&) = delete;
     LEPolicy &operator=(LEPolicy &&) = delete;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE

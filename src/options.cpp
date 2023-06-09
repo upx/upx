@@ -38,7 +38,7 @@ std::mutex opt_lock_mutex;
 // reset
 **************************************************************************/
 
-void Options::reset() {
+void Options::reset() noexcept {
     Options *const o = this;
     mem_clear(o, sizeof(*o));
     o->crp.reset();

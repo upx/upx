@@ -352,6 +352,7 @@ void UiPacker::endCallback(bool done) {
 // the callback
 **************************************************************************/
 
+/*static*/
 void __acc_cdecl UiPacker::progress_callback(upx_callback_p cb, unsigned isize, unsigned osize) {
     // printf("%6d %6d %d\n", isize, osize, state);
     UiPacker *self = (UiPacker *) cb->user;
@@ -471,7 +472,7 @@ void UiPacker::uiPackEnd(const OutputFile *fo) {
     printSetNl(0);
 }
 
-void UiPacker::uiPackTotal() {
+/*static*/ void UiPacker::uiPackTotal() {
     uiListTotal();
     uiFooter("Packed");
 }
@@ -502,7 +503,7 @@ void UiPacker::uiUnpackEnd(const OutputFile *fo) {
     printSetNl(0);
 }
 
-void UiPacker::uiUnpackTotal() {
+/*static*/ void UiPacker::uiUnpackTotal() {
     uiListTotal(true);
     uiFooter("Unpacked");
 }
@@ -523,7 +524,7 @@ void UiPacker::uiList() {
 
 void UiPacker::uiListEnd() { uiUpdate(); }
 
-void UiPacker::uiListTotal(bool decompress) {
+/*static*/ void UiPacker::uiListTotal(bool decompress) {
     if (opt->verbose >= 1 && total_files >= 2) {
         char name[32];
         upx_safe_snprintf(name, sizeof(name), "[ %u file%s ]", total_files_done,
@@ -558,7 +559,7 @@ void UiPacker::uiTestEnd() {
     uiUpdate();
 }
 
-void UiPacker::uiTestTotal() { uiFooter("Tested"); }
+/*static*/ void UiPacker::uiTestTotal() { uiFooter("Tested"); }
 
 /*************************************************************************
 // info
@@ -585,14 +586,14 @@ bool UiPacker::uiFileInfoStart() {
 
 void UiPacker::uiFileInfoEnd() { uiUpdate(); }
 
-void UiPacker::uiFileInfoTotal() {}
+/*static*/ void UiPacker::uiFileInfoTotal() {}
 
 /*************************************************************************
 // util
 **************************************************************************/
 
-void UiPacker::uiHeader() {
-    static bool done = false;
+/*static*/ void UiPacker::uiHeader() {
+    static upx_std_atomic(bool) done;
     if (done)
         return;
     done = true;
@@ -603,8 +604,8 @@ void UiPacker::uiHeader() {
     }
 }
 
-void UiPacker::uiFooter(const char *t) {
-    static bool done = false;
+/*static*/ void UiPacker::uiFooter(const char *t) {
+    static upx_std_atomic(bool) done;
     if (done)
         return;
     done = true;
@@ -628,7 +629,7 @@ void UiPacker::uiUpdate(upx_off_t fc_len, upx_off_t fu_len) {
     update_u_len = p->ph.u_len;
 }
 
-void UiPacker::uiConfirmUpdate() {
+/*static*/ void UiPacker::uiConfirmUpdate() {
     total_files_done++;
     total_fc_len += update_fc_len;
     total_fu_len += update_fu_len;

@@ -743,10 +743,10 @@ namespace N_BELE_RTP {
 
 // util
 namespace N_BELE_CTP {
-inline const N_BELE_RTP::AbstractPolicy *getRTP(const BEPolicy * /*dummy*/) {
+inline const N_BELE_RTP::AbstractPolicy *getRTP(const BEPolicy * /*dummy*/) noexcept {
     return &N_BELE_RTP::be_policy;
 }
-inline const N_BELE_RTP::AbstractPolicy *getRTP(const LEPolicy * /*dummy*/) {
+inline const N_BELE_RTP::AbstractPolicy *getRTP(const LEPolicy * /*dummy*/) noexcept {
     return &N_BELE_RTP::le_policy;
 }
 } // namespace N_BELE_CTP

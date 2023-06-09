@@ -445,7 +445,7 @@ int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2) {
 // find and mem_replace util
 **************************************************************************/
 
-int find(const void *buf, int blen, const void *what, int wlen) {
+int find(const void *buf, int blen, const void *what, int wlen) noexcept {
     // nullptr is explicitly allowed here
     if (buf == nullptr || blen < wlen || what == nullptr || wlen <= 0)
         return -1;
@@ -461,37 +461,37 @@ int find(const void *buf, int blen, const void *what, int wlen) {
     return -1;
 }
 
-int find_be16(const void *b, int blen, unsigned what) {
+int find_be16(const void *b, int blen, unsigned what) noexcept {
     byte w[2];
     set_be16(w, what);
     return find(b, blen, w, 2);
 }
 
-int find_be32(const void *b, int blen, unsigned what) {
+int find_be32(const void *b, int blen, unsigned what) noexcept {
     byte w[4];
     set_be32(w, what);
     return find(b, blen, w, 4);
 }
 
-int find_be64(const void *b, int blen, upx_uint64_t what) {
+int find_be64(const void *b, int blen, upx_uint64_t what) noexcept {
     byte w[8];
     set_be64(w, what);
     return find(b, blen, w, 8);
 }
 
-int find_le16(const void *b, int blen, unsigned what) {
+int find_le16(const void *b, int blen, unsigned what) noexcept {
     byte w[2];
     set_le16(w, what);
     return find(b, blen, w, 2);
 }
 
-int find_le32(const void *b, int blen, unsigned what) {
+int find_le32(const void *b, int blen, unsigned what) noexcept {
     byte w[4];
     set_le32(w, what);
     return find(b, blen, w, 4);
 }
 
-int find_le64(const void *b, int blen, upx_uint64_t what) {
+int find_le64(const void *b, int blen, upx_uint64_t what) noexcept {
     byte w[8];
     set_le64(w, what);
     return find(b, blen, w, 8);
@@ -518,7 +518,7 @@ TEST_CASE("find") {
     CHECK(find_le64(b, 15, 0x0f0e0d0c0b0a0908ULL) == -1);
 }
 
-int mem_replace(void *buf, int blen, const void *what, int wlen, const void *replacement) {
+int mem_replace(void *buf, int blen, const void *what, int wlen, const void *replacement) noexcept {
     byte *b = (byte *) buf;
     int boff = 0;
     int n = 0;

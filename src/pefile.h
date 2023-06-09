@@ -99,9 +99,9 @@ protected:
     MemBuffer mb_oimport;
     SPAN_0(byte) oimport = nullptr;
     unsigned soimport;
-    byte *oimpdlls;
+    byte *oimpdlls = nullptr;
     unsigned soimpdlls;
-    ImportLinker *ilinker;
+    ImportLinker *ilinker = nullptr;
     virtual const char *kernelDll() const { return "KERNEL32.DLL"; }
     void addKernelImport(const char *);
     virtual void addStubImports();
