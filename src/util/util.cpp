@@ -674,14 +674,14 @@ bool file_exists(const char *name) {
     }
 
     /* return true if we can stat it */
-    // memset(&st, 0, sizeof(st));
+    // mem_clear(&st);
     r = stat(name, &st);
     if (r != -1)
         return true;
 
 /* return true if we can lstat it */
 #if (HAVE_LSTAT)
-    // memset(&st, 0, sizeof(st));
+    // mem_clear(&st);
     r = lstat(name, &st);
     if (r != -1)
         return true;

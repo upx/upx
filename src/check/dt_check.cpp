@@ -117,6 +117,17 @@ ACC_COMPILE_TIME_ASSERT_HEADER(bswap32(0x04030201) == 0x01020304)
 ACC_COMPILE_TIME_ASSERT_HEADER(bswap64(0x0807060504030201ull) == 0x0102030405060708ull)
 #endif
 
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(int) == sizeof(int))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof('a') == sizeof(char))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof("") == 1)
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof("a") == 2)
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0) == sizeof(int))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0L) == sizeof(long))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0LL) == sizeof(long long))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(nullptr) == sizeof(void *))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(sizeof(0)) == sizeof(size_t))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(usizeof(0)) == sizeof(unsigned))
+
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("") == 0)
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("a") == 1)
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("ab") == 2)
@@ -165,6 +176,10 @@ namespace {
 
 template <class T>
 struct CheckIntegral {
+    struct TestT {
+        T a;
+        T x[2];
+    };
     template <class U>
     struct TestU {
         U a = {};
@@ -213,6 +228,21 @@ struct CheckIntegral {
         COMPILE_TIME_ASSERT(upx_is_integral_v<U>)
     }
     static void check(void) {
+        {
+            TestT t = {};
+            assert(t.a == 0);
+            assert(t.x[0] == 0 && t.x[1] == 0);
+        }
+        {
+            const TestT t = {};
+            assert(t.a == 0);
+            assert(t.x[0] == 0 && t.x[1] == 0);
+        }
+        {
+            constexpr TestT t = {};
+            assert(t.a == 0);
+            assert(t.x[0] == 0 && t.x[1] == 0);
+        }
         checkU<T>();
         checkU<typename std::add_const<T>::type>();
     }

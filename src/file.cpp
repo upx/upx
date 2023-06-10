@@ -252,8 +252,10 @@ void OutputFile::write(SPAN_0(const void) buf, int len) {
         return;
     mem_size_assert(1, len); // sanity check
     errno = 0;
+#if WITH_XSPAN >= 2
     NO_fprintf(stderr, "write %p %zd (%p) %d\n", buf.raw_ptr(), buf.raw_size_in_bytes(),
                buf.raw_base(), len);
+#endif
     long l = acc_safe_hwrite(_fd, raw_bytes(buf, len), len);
     if (l != len)
         throwIOException("write error", errno);

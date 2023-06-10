@@ -126,8 +126,8 @@ inline R *xspan_make_helper__(R * /*dummy*/, std::nullptr_t /*first*/) {
     return nullptr;
 }
 template <class R>
-inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &first) {
-    return (R *) membuffer_get_void_ptr(first);
+inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) {
+    return (R *) membuffer_get_void_ptr(mb);
 }
 
 #define XSPAN_0(type) type *

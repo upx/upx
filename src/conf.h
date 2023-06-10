@@ -378,17 +378,18 @@ struct UnsignedSizeOf {
     static constexpr unsigned value = unsigned(Size);
 };
 #define usizeof(expr)   (UnsignedSizeOf<sizeof(expr)>::value)
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(int) == sizeof(int))
 
 template <class T>
 inline void mem_clear(T *object) noexcept {
     static_assert(std::is_class_v<T>);
     static_assert(std::is_standard_layout_v<T>);
     static_assert(std::is_trivially_copyable_v<T>);
-    static constexpr size_t size = sizeof(*object);
+    constexpr size_t size = sizeof(*object);
     static_assert(size >= 1 && size <= UPX_RSIZE_MAX_MEM);
     memset((void *) object, 0, size);
 }
+template <class T>
+inline void mem_clear(T (&array)[]) noexcept = delete;
 template <class T, size_t N>
 inline void mem_clear(T (&array)[N]) noexcept = delete;
 
