@@ -474,6 +474,18 @@ extern void bswap(void *, unsigned);
 
 typedef size_t Addr;  // this source file is used by 32-bit and 64-bit machines
 
+void my_bkpt(void const *foo, ...)
+{
+    (void)foo;
+#if defined(__x86_64__)  //{
+    __asm__(".byte 0xcc");
+#elif  defined(__aarch64__)  //}{
+     __asm__("brk #0");
+#elif  defined(__arm__)  //}{
+     __asm__("bkpt");
+#endif  //}
+}
+
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
@@ -558,8 +570,8 @@ do_xmap(
     for ( j=0; j < mhdr->ncmds; ++j,
         (sc = (Mach_segment_command *)((sc->cmdsize>>2) + (unsigned *)sc))
     ) {
-        DPRINTF("  #%%d  cmd=%%x  cmdsize=%%x  vmsize=%%x\\n",
-                j, sc->cmd, sc->cmdsize, sc->vmsize);
+        DPRINTF("  #%%d  sc=%%x  cmd=%%x  cmdsize=%%x  vmsize=%%x\\n",
+                j, sc, sc->cmd, sc->cmdsize, sc->vmsize);
         if (LC_SEGMENT==sc->cmd) {
             struct b_info h;
             if (xi && sc->filesize) { // Find the correct compressed block.
@@ -712,7 +724,6 @@ do_xmap(
     return rv;
 }
 
-
 /*************************************************************************
 // upx_main - called by our unfolded entry code
 //
@@ -764,6 +775,7 @@ upx_main(
             err_exit(18);
         }
 fat:
+        DPRINTF("fat_offset= %%p\\n", fat_offset);
         if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
 ERR_LAB
             err_exit(19);

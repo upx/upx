@@ -56,7 +56,7 @@ L90:
         movq %r15,%arg2  // LENX
         movq %rsp,%r12  // remember for un-alloca
         movl sz_unc+sz_p_info+sz_l_info(%arg1),%arg4l  // sz_mhdr
-        movl $2048,%eax  // >= 2KiB for /usr/lib/dyld
+        movl $0x1000,%eax  // /usr/lib/dyld:  0x868 in MacOS 13 (2022)
         cmpl  %eax,%arg4l
         cmovb %eax,%arg4l  // sz_mhdr
         lea 4*NBPW(%r12),%rax  // &&Mach_header64 for arg7
