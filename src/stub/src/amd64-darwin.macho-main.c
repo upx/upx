@@ -482,7 +482,7 @@ void my_bkpt(void const *foo, ...)
 #elif  defined(__aarch64__)  //}{
      __asm__("brk #0");
 #elif  defined(__arm__)  //}{
-     __asm__("bkpt");
+     __asm__(".long 0xe7f001f0"); // "bkpt" ==> "udf #16"
 #endif  //}
 }
 
