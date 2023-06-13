@@ -115,8 +115,6 @@ TEST_CASE("basic xspan usage") {
     }
 
     SUBCASE("XSPAN_x_VAR") {
-        XSPAN_0_VAR(char, a0, nullptr);
-
         XSPAN_0_VAR(char, b0, buf);
         XSPAN_P_VAR(char, bp, buf);
 
@@ -135,7 +133,6 @@ TEST_CASE("basic xspan usage") {
         XSPAN_0_VAR(const char, const z0p, yp);
         XSPAN_0_VAR(const char, const z0s, xs);
 
-        CHECK((a0 == nullptr));
         CHECK(c0 == b0);
         CHECK(cp == bp);
         CHECK(cs == bp);
@@ -144,9 +141,13 @@ TEST_CASE("basic xspan usage") {
         CHECK(x0 == z0p);
         CHECK(xp == z0s);
 
+#if WITH_XSPAN >= 1 || __cplusplus >= 201103L
+        XSPAN_0_VAR(char, a0, nullptr);
+        CHECK((a0 == nullptr));
         CHECK_NOTHROW(raw_bytes(a0, 0));
         CHECK_THROWS(raw_bytes(a0, 1));
         CHECK_THROWS(raw_index_bytes(a0, 0, 0));
+#endif
 
         CHECK(raw_bytes(b0, 0) == buf);
         CHECK(raw_bytes(bp, 0) == buf);

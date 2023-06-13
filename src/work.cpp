@@ -40,7 +40,7 @@
 #define USE_FTIME 1
 #elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_INTELC || ACC_CC_MSC))
 #define USE__FUTIME 1
-#elif (HAVE_UTIME)
+#elif HAVE_UTIME
 #define USE_UTIME 1
 #endif
 
@@ -62,7 +62,7 @@ void do_one_file(const char *iname, char *oname) {
     int r;
     struct stat st;
     mem_clear(&st);
-#if (HAVE_LSTAT)
+#if HAVE_LSTAT
     r = lstat(iname, &st);
 #else
     r = stat(iname, &st);
@@ -104,7 +104,7 @@ void do_one_file(const char *iname, char *oname) {
     fi.st = st;
     fi.sopen(iname, O_RDONLY | O_BINARY, SH_DENYWR);
 
-#if (USE_FTIME)
+#if USE_FTIME
     struct ftime fi_ftime;
     mem_clear(&fi_ftime);
     if (opt->preserve_timestamp) {
@@ -124,7 +124,7 @@ void do_one_file(const char *iname, char *oname) {
             if (opt->output_name) {
                 strcpy(tname, opt->output_name);
                 if (opt->force_overwrite || opt->force >= 2) {
-#if (HAVE_CHMOD)
+#if HAVE_CHMOD
                     r = chmod(tname, 0777);
                     IGNORE_ERROR(r);
 #endif
@@ -173,10 +173,10 @@ void do_one_file(const char *iname, char *oname) {
 
     // copy time stamp
     if (oname[0] && opt->preserve_timestamp && fo.isOpen()) {
-#if (USE_FTIME)
+#if USE_FTIME
         r = setftime(fo.getFd(), &fi_ftime);
         IGNORE_ERROR(r);
-#elif (USE__FUTIME)
+#elif USE__FUTIME
         struct _utimbuf u;
         u.actime = st.st_atime;
         u.modtime = st.st_mtime;
@@ -197,7 +197,7 @@ void do_one_file(const char *iname, char *oname) {
                 throwIOException("could not create a backup file name");
             FileBase::rename(iname, bakname);
         } else {
-#if (HAVE_CHMOD)
+#if HAVE_CHMOD
             r = chmod(iname, 0777);
             IGNORE_ERROR(r);
 #endif
@@ -211,7 +211,7 @@ void do_one_file(const char *iname, char *oname) {
         oname[0] = 0; // done with oname
         const char *name = opt->output_name ? opt->output_name : iname;
         UNUSED(name);
-#if (USE_UTIME)
+#if USE_UTIME
         // copy time stamp
         if (opt->preserve_timestamp) {
             struct utimbuf u;
@@ -221,21 +221,21 @@ void do_one_file(const char *iname, char *oname) {
             IGNORE_ERROR(r);
         }
 #endif
-#if (HAVE_CHOWN)
+#if HAVE_CHOWN
         // copy the group ownership
         if (opt->preserve_ownership) {
             r = chown(name, -1, st.st_gid);
             IGNORE_ERROR(r);
         }
 #endif
-#if (HAVE_CHMOD)
+#if HAVE_CHMOD
         // copy permissions
         if (opt->preserve_mode) {
             r = chmod(name, st.st_mode);
             IGNORE_ERROR(r);
         }
 #endif
-#if (HAVE_CHOWN)
+#if HAVE_CHOWN
         // copy the user ownership
         if (opt->preserve_ownership) {
             r = chown(name, st.st_uid, -1);
@@ -253,7 +253,7 @@ void do_one_file(const char *iname, char *oname) {
 
 static void unlink_ofile(char *oname) {
     if (oname && oname[0]) {
-#if (HAVE_CHMOD)
+#if HAVE_CHMOD
         int r;
         r = chmod(oname, 0777);
         IGNORE_ERROR(r);

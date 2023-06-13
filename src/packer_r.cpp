@@ -145,7 +145,7 @@ unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P
         }
     }
     in = fix + 1; // advance
-    assert(relocnum == ptr_udiff_bytes(relocs, out) / 4);
+    assert(relocnum == ptr_udiff_bytes(relocs, raw_bytes(out, 0)) / 4);
     return relocnum;
 }
 

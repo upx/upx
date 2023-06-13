@@ -224,8 +224,12 @@ XSPAN_NAMESPACE_END
 #if 1
 
 #define C XSPAN_NS(Ptr)
+template <class T>
+class MemBufferBase;
+#define D MemBufferBase
 #include "xspan_fwd.h"
 #undef C
+#undef D
 
 #endif
 

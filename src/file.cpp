@@ -33,7 +33,7 @@
 **************************************************************************/
 
 /*static*/ void FileBase::chmod(const char *name, int mode) {
-#if (HAVE_CHMOD)
+#if HAVE_CHMOD
     if (::chmod(name, mode) != 0)
         throwIOException(name, errno);
 #else

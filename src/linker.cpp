@@ -799,12 +799,12 @@ void ElfLinkerPpc32::relocate1(const Relocation *rel, byte *location, upx_uint64
     // Note that original (*location).displ is ignored.
     if (strcmp(type, "24") == 0) {
         if (3 & value)
-            internal_error("unaligned word diplacement");
+            internal_error("unaligned word displacement");
         // FIXME: displacement overflow?
         set_be32(location, (0xfc000003 & get_be32(location)) + (0x03fffffc & value));
     } else if (strcmp(type, "14") == 0) {
         if (3 & value)
-            internal_error("unaligned word diplacement");
+            internal_error("unaligned word displacement");
         // FIXME: displacement overflow?
         set_be32(location, (0xffff0003 & get_be32(location)) + (0x0000fffc & value));
     } else

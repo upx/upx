@@ -566,8 +566,7 @@ unsigned Packer::getRandomId() const {
     int fd = open("/dev/urandom", O_RDONLY | O_BINARY);
     if (fd < 0)
         fd = open("/dev/random", O_RDONLY | O_BINARY);
-    if (fd >= 0)
-    {
+    if (fd >= 0) {
         if (read(fd, &id, 4) != 4)
             id = 0;
         close(fd);
@@ -583,7 +582,7 @@ unsigned Packer::getRandomId() const {
         id ^= (unsigned) tv.tv_sec;
         id ^= ((unsigned) tv.tv_usec) << 12; // shift into high-bits
 #endif
-#if (HAVE_GETPID)
+#if HAVE_GETPID
         id ^= (unsigned) getpid();
 #endif
         id ^= (unsigned) fi->st.st_ino;

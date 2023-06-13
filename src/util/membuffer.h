@@ -124,9 +124,13 @@ inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T>
     typename std::enable_if<std::is_same<A, B>::value, RType>::type
 #define C MemBufferBase
 #define XSPAN_FWD_C_IS_MEMBUFFER 1
+#if WITH_XSPAN >= 1
+#define D XSPAN_NS(Ptr)
+#endif
 #include "xspan_fwd.h"
 #undef XSPAN_FWD_C_IS_MEMBUFFER
 #undef C
+#undef D
 #undef XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
 
 /*************************************************************************

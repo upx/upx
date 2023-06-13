@@ -680,7 +680,7 @@ bool file_exists(const char *name) {
         return true;
 
 /* return true if we can lstat it */
-#if (HAVE_LSTAT)
+#if HAVE_LSTAT
     // mem_clear(&st);
     r = lstat(name, &st);
     if (r != -1)

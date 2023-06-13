@@ -202,6 +202,11 @@ typedef upx_int64_t upx_off_t;
 #  undef __unix__
 #endif
 
+#if defined(HAVE_DUP) && (HAVE_DUP + 0 == 0)
+#  undef dup
+#  define dup(x)            (-1)
+#endif
+
 #ifndef STDIN_FILENO
 #  define STDIN_FILENO      (fileno(stdin))
 #endif

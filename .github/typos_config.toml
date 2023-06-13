@@ -4,7 +4,7 @@
 # tricky, so some false positives are fine
 
 [files]
-extend-exclude = ["LICENSE"]
+extend-exclude = ["LICENSE", "misc/*/packages.txt"]
 
 [default.extend-identifiers]
 # misc variable names & symbols
@@ -12,6 +12,7 @@ acc_spawnve = "acc_spawnve"
 ba = "ba"
 fo = "fo"
 fof = "fof"
+O_WRONLY = "O_WRONLY"
 sidelen = "sidelen"
 # assembly sources
 CArry = "CArry"
@@ -22,6 +23,7 @@ suble = "suble"
 
 # identifiers are intelligently split into words and then checked again
 [default.extend-words]
+delt = "delt"
 FO = "FO"
 fo = "fo"
 # parm is used like param
@@ -30,6 +32,8 @@ parm = "parm"
 # rela: ELF relocations
 RELA = "RELA"
 rela = "rela"
+# siz is used for size
+siz = "siz"
 # SEH: Structured Exception Handling
 SEH = "SEH"
 seh = "seh"
