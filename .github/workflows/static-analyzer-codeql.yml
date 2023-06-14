@@ -1,29 +1,21 @@
 name: 'Static Analyzer - CodeQL'
 
 on:
-#  push:
-#    branches: [ 'devel', 'devel4', 'devel5', 'master' ]
-#  pull_request:
-#    # The branches below must be a subset of the branches above
-#    branches: [ 'devel', 'devel4', 'devel5' ]
-  schedule:
-    - cron: '20 4 * * 3'
+  schedule: [cron: '40 5 * * 3'] # run weekly Wednesday 05:40 UTC
   workflow_dispatch:
 
 jobs:
-  analyze:
+  job-analyze-codeql:
     name: Analyze
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
       security-events: write
-
     strategy:
       fail-fast: false
       matrix:
         language: [ 'cpp' ]
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

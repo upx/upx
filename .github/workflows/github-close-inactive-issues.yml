@@ -12,8 +12,7 @@
 
 name: 'GitHub - Close inactive issues'
 on:
-  schedule:
-    - cron: '40 3 * * 3'
+  schedule: [cron: '50 3 * * 3'] # run weekly Wednesday 03:50 UTC
   workflow_dispatch:
 jobs:
   close-issues:

@@ -1,6 +1,7 @@
 /.hg*
 /.vscode*
 /Makevars.global*
+/Testing*
 /build*
 /maint*
 /vendor*

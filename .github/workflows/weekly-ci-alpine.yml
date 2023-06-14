@@ -1,9 +1,11 @@
-# minimal GitHub CI building UPX with clang and gcc in an Alpine Linux container
+# build under various Alpine Linux versions with clang and gcc
 
-name: 'CI - Minimal CI with Alpine Linux'
+name: 'Weekly CI - Alpine Linux'
+
 on:
-  schedule: [cron: '50 3 * * 3']
+  schedule: [cron: '10 4 * * 3'] # run weekly Wednesday 04:10 UTC
   workflow_dispatch:
+
 jobs:
   job-alpine-cmake:
     strategy:
@@ -13,7 +15,7 @@ jobs:
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
-    env: { VERBOSE: 1 }
+    env: { UPX_CMAKE_CONFIG_FLAGS: '-DCMAKE_VERBOSE_MAKEFILE=ON' }
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         run: 'apk update && apk upgrade && apk add clang cmake g++ git make'
@@ -23,7 +25,7 @@ jobs:
           git -C upx submodule update --init
           x="$(apk list -I "$(apk info -Wq "$(which clang)")")"; echo "clang_package=${x%% *}" >> $GITHUB_ENV
           x="$(apk list -I "$(apk info -Wq "$(which gcc)")")"; echo "gcc_package=${x%% *}" >> $GITHUB_ENV
-          echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-minimal-ci-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
+          echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-alpine-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
       - name: ${{ format('Build clang Release with {0}', env.clang_package) }}
         run: 'make -C upx UPX_XTARGET=clang-static CC="clang -static" CXX="clang++ -static"'
       - name: ${{ format('Build clang Debug with {0}', env.clang_package) }}

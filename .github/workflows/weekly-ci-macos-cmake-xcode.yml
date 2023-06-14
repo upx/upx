@@ -1,0 +1,31 @@
+# build with "cmake -G Xcode"
+
+name: 'Weekly CI - macOS cmake Xcode'
+
+on:
+  schedule: [cron: '20 4 * * 3'] # run weekly Wednesday 04:20 UTC
+  workflow_dispatch:
+
+jobs:
+  job-macos-cmake-xcode:
+    name: ${{ format('{0} cmake Xcode', matrix.os) }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-11, run_test: true }
+          - { os: macos-12, run_test: true }
+          - { os: macos-13, run_test: false } # TODO: enable once UPX fully works on macos-13
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - { name: 'Config cmake Xcode',        run: 'cmake -S . -B build/xcode -G Xcode' }
+      - { name: 'Build cmake Xcode Debug',   run: 'cmake --build build/xcode --config Debug' }
+      - { name: 'Build cmake Xcode Release', run: 'cmake --build build/xcode --config Release' }
+      - name: 'Run basic tests'
+        if: ${{ matrix.run_test }}
+        run: |
+          ctest --test-dir build/xcode -C Debug
+          ctest --test-dir build/xcode -C Release

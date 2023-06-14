@@ -1,3 +1,7 @@
+# test minimal number of packages required for building UPX under Alpine Linux
+#   clang: apk add clang cmake make
+#   gcc:   apk add cmake g++ make
+
 name: 'Test - Minimal Alpine build'
 on: [workflow_dispatch]
 jobs:
