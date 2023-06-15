@@ -1,4 +1,12 @@
+#
+# UPX CMake file; see https://cmake.org/
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+#
+
 cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # CMake >= 3.20 is recommended
+# Build requirements:
+#   A C++ compiler that supports C++17: clang-5, gcc-8 or msvc-2019 16.11
+#   (older or other compilers may work but are unsupported, use at your own risk)
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -110,10 +118,18 @@ endif()
 #***********************************************************************
 
 set(UPX_CONFIG_DISABLE_THREADS ON) # multithreading is currently not used; maybe in UPX version 5
-set(UPX_CONFIG_DISABLE_ZSTD ON) # zstd is currently not used; maybe in UPX version 5
+set(UPX_CONFIG_DISABLE_BZIP2 ON)   # bzip2 is currently not used; we might need it to decompress linux kernels
+set(UPX_CONFIG_DISABLE_ZSTD ON)    # zstd is currently not used; maybe in UPX version 5
 
 if(NOT UPX_CONFIG_DISABLE_THREADS)
     find_package(Threads)
+endif()
+
+if(NOT UPX_CONFIG_DISABLE_BZIP2)
+file(GLOB bzip2_SOURCES "vendor/bzip2/*.c")
+list(SORT bzip2_SOURCES)
+add_library(upx_vendor_bzip2 STATIC ${bzip2_SOURCES})
+set_property(TARGET upx_vendor_bzip2 PROPERTY C_STANDARD 11)
 endif()
 
 file(GLOB ucl_SOURCES "vendor/ucl/src/*.c")
@@ -138,6 +154,9 @@ list(SORT upx_SOURCES)
 add_executable(upx ${upx_SOURCES})
 set_property(TARGET upx PROPERTY CXX_STANDARD 17)
 target_link_libraries(upx upx_vendor_ucl upx_vendor_zlib)
+if(NOT UPX_CONFIG_DISABLE_BZIP2)
+    target_link_libraries(upx upx_vendor_bzip2)
+endif()
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
     target_link_libraries(upx upx_vendor_zstd)
 endif()
@@ -225,6 +244,17 @@ function(upx_sanitize_target)
     endforeach()
 endfunction()
 
+if(NOT UPX_CONFIG_DISABLE_BZIP2)
+set(t upx_vendor_bzip2)
+upx_compile_target_debug_with_O2(${t})
+upx_sanitize_target(${t})
+if(MSVC_FRONTEND)
+    target_compile_options(${t} PRIVATE ${warn_WN} -wd4127 -wd4244 -wd4267 ${warn_WX})
+else()
+    target_compile_options(${t} PRIVATE ${warn_Wall} -Wno-implicit-fallthrough ${warn_Werror})
+endif()
+endif() # UPX_CONFIG_DISABLE_BZIP2
+
 set(t upx_vendor_ucl)
 target_include_directories(${t} PRIVATE vendor/ucl/include vendor/ucl)
 upx_compile_target_debug_with_O2(${t})
@@ -276,6 +306,9 @@ if(NOT UPX_CONFIG_DISABLE_WSTRICT)
 endif()
 if(NOT UPX_CONFIG_DISABLE_WERROR)
     target_compile_definitions(${t} PRIVATE UPX_CONFIG_DISABLE_WERROR=0)
+endif()
+if(NOT UPX_CONFIG_DISABLE_BZIP2)
+    target_compile_definitions(${t} PRIVATE WITH_BZIP2=0) # FIXME TODO
 endif()
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
     target_compile_definitions(${t} PRIVATE WITH_ZSTD=1)

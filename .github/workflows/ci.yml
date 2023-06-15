@@ -286,7 +286,7 @@ jobs:
           git config --global core.autocrlf input
           git --version && bash --version
           git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite
-          mkdir -p -v build/$C/$B/{ucl,upx,zlib,zstd}
+          mkdir -p -v build/$C/$B/{bzip2,ucl,upx,zlib,zstd}
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -302,6 +302,10 @@ jobs:
           set DEFS=-D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
           set BDIR=%H%\build\%C%\%B%
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
+          @REM ===== build bzip2 =====
+          cd %BDIR%\bzip2
+          @rem %RUN_CL% -J -O2 -W4 -wd4127 -wd4244 -wd4267 -WX %DEFS% -c %H%\vendor\bzip2\*.c
+          @rem %RUN_LIB% -out:bzip2.lib *.obj
           @REM ===== build UCL =====
           cd %BDIR%\ucl
           set s=%H%\vendor\ucl
@@ -312,8 +316,8 @@ jobs:
           %RUN_CL% -J -O2 -W3 -WX %DEFS% -c %H%\vendor\zlib\*.c
           %RUN_LIB% -out:zlib.lib *.obj
           @REM ===== build zstd =====
-          @rem cd %BDIR%\zstd
-          @rem set s=%H%\vendor\zstd\lib
+          cd %BDIR%\zstd
+          set s=%H%\vendor\zstd\lib
           @rem %RUN_CL% -J -O2 -W4 -WX -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM %DEFS% -c %s%\common\*.c %s%\compress\*.c %s%\decompress\*.c
           @rem %RUN_LIB% -out:zstd.lib *.obj
           @REM ===== build UPX =====
@@ -321,9 +325,11 @@ jobs:
           set s=%H%\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          set UPX_DEFS=-DUPX_CONFIG_DISABLE_WSTRICT=0 -DUPX_CONFIG_DISABLE_WERROR=0 -DWITH_ZSTD=0
+          set UPX_DEFS=-DUPX_CONFIG_DISABLE_WSTRICT=0 -DUPX_CONFIG_DISABLE_WERROR=0 -DWITH_BZIP2=0 -DWITH_ZSTD=0
+          set UPX_LIBS=%BDIR%\bzip2\bzip2.lib %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib
+          set UPX_LIBS=%BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp
-          %RUN_CL% -std:c++17 -Zc:__cplusplus -EHsc -J -O2 -W4 -WX -DUPX_VERSION_GITREV="""%GITREV%""" %UPX_DEFS% %DEFS% -I%H%\vendor -Feupx.exe %sources% %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib /link ${{ matrix.link_machine_flags }} setargv.obj
+          %RUN_CL% -J -O2 -W4 -WX -std:c++17 -Zc:__cplusplus -EHsc -DUPX_VERSION_GITREV="""%GITREV%""" %UPX_DEFS% %DEFS% -I%H%\vendor -Feupx.exe %sources% %UPX_LIBS% /link ${{ matrix.link_machine_flags }} setargv.obj
       - name: 'Make artifact'
         shell: bash
         run: |

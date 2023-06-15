@@ -1,5 +1,6 @@
 #
 # UPX top-level Makefile - needs GNU make and CMake >= 3.13
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
 # INFO: this Makefile is just a convenience wrapper for calling CMake
@@ -187,4 +188,4 @@ endif
 SUBMODULES = doctest lzma-sdk ucl valgrind zlib
 
 dummy := $(foreach m,$(SUBMODULES),$(if $(wildcard vendor/$m/[CL]*),$m,\
-    $(error ERROR: missing git submodule $m; run 'git submodule update --init')))
+    $(error ERROR: missing git submodule '$m'; run 'git submodule update --init')))

@@ -360,15 +360,15 @@ void show_license(void) {
 **************************************************************************/
 
 void show_version(bool one_line) {
-    FILE *fp = stdout;
+    FILE *f = stdout;
     const char *v;
 
 #if defined(UPX_VERSION_GIT_DESCRIBE)
-    fprintf(fp, "upx %s\n", UPX_VERSION_GIT_DESCRIBE);
+    fprintf(f, "upx %s\n", UPX_VERSION_GIT_DESCRIBE);
 #elif defined(UPX_VERSION_GITREV)
-    fprintf(fp, "upx %s\n", UPX_VERSION_STRING "-git-" UPX_VERSION_GITREV);
+    fprintf(f, "upx %s\n", UPX_VERSION_STRING "-git-" UPX_VERSION_GITREV);
 #else
-    fprintf(fp, "upx %s\n", UPX_VERSION_STRING);
+    fprintf(f, "upx %s\n", UPX_VERSION_STRING);
 #endif
     if (one_line)
         return;
@@ -376,50 +376,50 @@ void show_version(bool one_line) {
 #if (WITH_NRV)
     v = upx_nrv_version_string();
     if (v != nullptr && v[0])
-        fprintf(fp, "NRV data compression library %s\n", v);
+        fprintf(f, "NRV data compression library %s\n", v);
 #endif
 #if (WITH_UCL)
     v = upx_ucl_version_string();
     if (v != nullptr && v[0])
-        fprintf(fp, "UCL data compression library %s\n", v);
+        fprintf(f, "UCL data compression library %s\n", v);
 #endif
 #if (WITH_ZLIB)
     v = upx_zlib_version_string();
     if (v != nullptr && v[0])
-        fprintf(fp, "zlib data compression library %s\n", v);
+        fprintf(f, "zlib data compression library %s\n", v);
 #endif
 #if (WITH_LZMA)
     v = upx_lzma_version_string();
     if (v != nullptr && v[0])
-        fprintf(fp, "LZMA SDK version %s\n", v);
+        fprintf(f, "LZMA SDK version %s\n", v);
 #endif
 #if (WITH_ZSTD)
     v = upx_zstd_version_string();
     if (v != nullptr && v[0])
-        fprintf(fp, "zstd data compression library %s\n", v);
+        fprintf(f, "zstd data compression library %s\n", v);
 #endif
 #if !defined(DOCTEST_CONFIG_DISABLE)
-    fprintf(fp, "doctest C++ testing framework version %s\n", DOCTEST_VERSION_STR);
+    fprintf(f, "doctest C++ testing framework version %s\n", DOCTEST_VERSION_STR);
 #endif
     // clang-format off
-    fprintf(fp, "Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer\n");
-    fprintf(fp, "Copyright (C) 1996-2023 Laszlo Molnar\n");
-    fprintf(fp, "Copyright (C) 2000-2023 John F. Reiser\n");
-    fprintf(fp, "Copyright (C) 2002-2023 Jens Medoch\n");
+    fprintf(f, "Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer\n");
+    fprintf(f, "Copyright (C) 1996-2023 Laszlo Molnar\n");
+    fprintf(f, "Copyright (C) 2000-2023 John F. Reiser\n");
+    fprintf(f, "Copyright (C) 2002-2023 Jens Medoch\n");
 #if (WITH_ZLIB)
-    fprintf(fp, "Copyright (C) 1995" "-2023 Jean-loup Gailly and Mark Adler\n");
+    fprintf(f, "Copyright (C) 1995" "-2023 Jean-loup Gailly and Mark Adler\n");
 #endif
 #if (WITH_LZMA)
-    fprintf(fp, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
+    fprintf(f, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
 #endif
 #if (WITH_ZSTD)
     // see vendor/zstd/LICENSE; main author is Yann Collet
-    fprintf(fp, "Copyright (C) 2015" "-2023 Meta Platforms, Inc. and affiliates\n");
+    fprintf(f, "Copyright (C) 2015" "-2023 Meta Platforms, Inc. and affiliates\n");
 #endif
 #if !defined(DOCTEST_CONFIG_DISABLE)
-    fprintf(fp, "Copyright (C) 2016" "-2023 Viktor Kirilov\n");
+    fprintf(f, "Copyright (C) 2016" "-2023 Viktor Kirilov\n");
 #endif
-    fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
+    fprintf(f, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
     // clang-format on
 }
 

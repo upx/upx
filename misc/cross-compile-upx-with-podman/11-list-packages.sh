@@ -21,14 +21,17 @@ podman run "${flags[@]}" "$image" bash -c $'dpkg -l | sed \'s/ *$//\' | LC_ALL=C
 echo
 echo 'Packages sorted by Installed-Size:'
 podman run "${flags[@]}" "$image" bash -c $'awk \'
+BEGIN {
+    arch = "UNKNOWN"; size = 0; package = "UNKNOWN";
+}
 {
     if ($1 == "Architecture:") arch = $2;
     if ($1 == "Installed-Size:") size = $2;
-    if ($1 == "Package:") p = $2;
+    if ($1 == "Package:") package = $2;
     if ($1 == "") {
-        printf("%9d %-40s %s\\n", size, p, arch);
+        printf("%9d %-40s %s\\n", size, package, arch);
         count += 1; total += size;
-        arch = ""; size = 0; p = "";
+        arch = "UNKNOWN"; size = 0; package = "UNKNOWN";
     }
 }
 END {

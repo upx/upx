@@ -1158,7 +1158,7 @@ int upx_main(int argc, char *argv[]) {
         if (dt_res == 2)
             fprintf(stderr, "%s: doctest requested program exit; Stop.\n", argv0);
         else
-            fprintf(stderr, "%s: internal error: doctest failed\n", argv0);
+            fprintf(stderr, "%s: internal error: doctest check failed\n", argv0);
         e_exit(EXIT_INIT);
     }
 
@@ -1240,7 +1240,7 @@ int upx_main(int argc, char *argv[]) {
         e_exit(EXIT_OK);
         break;
     default:
-        /* ??? */
+        assert(false); // should not happen
         break;
     }
 

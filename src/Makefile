@@ -1,5 +1,6 @@
 #
 # UPX src Makefile - needs GNU make and CMake >= 3.13
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
 # NOTE: this Makefile is deprecated - please directly use the CMake build
@@ -7,7 +8,6 @@
 # build configurations.
 
 MAKEFLAGS += -r
-.SUFFIXES:
 export SHELL = /bin/sh
 
 ifndef srcdir

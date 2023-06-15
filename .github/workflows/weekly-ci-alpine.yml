@@ -1,5 +1,8 @@
 # build under various Alpine Linux versions with clang and gcc
 
+# info: Alpine 3.9 has clang-5, cmake-3.13.0 and gcc-8 which nicely
+#   matches our minimal build requirements
+
 name: 'Weekly CI - Alpine Linux'
 
 on:
@@ -18,7 +21,12 @@ jobs:
     env: { UPX_CMAKE_CONFIG_FLAGS: '-DCMAKE_VERBOSE_MAKEFILE=ON' }
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
-        run: 'apk update && apk upgrade && apk add clang cmake g++ git make'
+        run: |
+          apk update && apk upgrade && apk add clang cmake g++ git make
+          case ${{ matrix.container }} in
+            # clang-dev is needed on older Alpine versions for clang headers like <emmintrin.h>
+            *:3.[0-9]|*:3.10|*:3.11) apk add clang-dev ;;
+          esac
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
