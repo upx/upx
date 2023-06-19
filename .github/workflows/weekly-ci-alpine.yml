@@ -1,6 +1,6 @@
 # build under various Alpine Linux versions with clang and gcc
 
-# info: Alpine 3.9 has clang-5, cmake-3.13.0 and gcc-8 which nicely
+# info: Alpine 3.9 has clang-5, cmake-3.13.0 and gcc-8, which nicely
 #   matches our minimal build requirements
 
 name: 'Weekly CI - Alpine Linux'
@@ -34,6 +34,8 @@ jobs:
           x="$(apk list -I "$(apk info -Wq "$(which clang)")")"; echo "clang_package=${x%% *}" >> $GITHUB_ENV
           x="$(apk list -I "$(apk info -Wq "$(which gcc)")")"; echo "gcc_package=${x%% *}" >> $GITHUB_ENV
           echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-alpine-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
+
+      # build with C++17
       - name: ${{ format('Build clang Release with {0}', env.clang_package) }}
         run: 'make -C upx UPX_XTARGET=clang-static CC="clang -static" CXX="clang++ -static"'
       - name: ${{ format('Build clang Debug with {0}', env.clang_package) }}
@@ -42,6 +44,51 @@ jobs:
         run: 'make -C upx UPX_XTARGET=gcc-static   CC="gcc -static"   CXX="g++ -static"'
       - name: ${{ format('Build gcc Debug with {0}', env.gcc_package) }}
         run: 'make -C upx UPX_XTARGET=gcc-static   CC="gcc -static"   CXX="g++ -static" xtarget/debug'
+
+      # build with C++20 on alpine:edge
+      - name: ${{ format('Build clang C++20 Release with {0}', env.clang_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
+          make -C upx UPX_XTARGET=clang-cxx20-static CC="clang -static" CXX="clang++ -std=gnu++20 -static"
+      - name: ${{ format('Build clang C++20 Debug with {0}', env.clang_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
+          make -C upx UPX_XTARGET=clang-cxx20-static CC="clang -static" CXX="clang++ -std=gnu++20 -static" xtarget/debug
+      - name: ${{ format('Build gcc C++20 Release with {0}', env.gcc_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
+          make -C upx UPX_XTARGET=gcc-cxx20-static   CC="gcc -static"   CXX="g++ -std=gnu++20 -static"
+      - name: ${{ format('Build gcc C++20 Debug with {0}', env.gcc_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
+          make -C upx UPX_XTARGET=gcc-cxx20-static   CC="gcc -static"   CXX="g++ -std=gnu++20 -static" xtarget/debug
+
+      # build with C++23 on alpine:edge
+      - name: ${{ format('Build clang C++23 Release with {0}', env.clang_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
+          make -C upx UPX_XTARGET=clang-cxx23-static CC="clang -static" CXX="clang++ -std=gnu++2b -static"
+      - name: ${{ format('Build clang C++23 Debug with {0}', env.clang_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
+          make -C upx UPX_XTARGET=clang-cxx23-static CC="clang -static" CXX="clang++ -std=gnu++2b -static" xtarget/debug
+      - name: ${{ format('Build gcc C++23 Release with {0}', env.gcc_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
+          make -C upx UPX_XTARGET=gcc-cxx23-static   CC="gcc -static"   CXX="g++ -std=gnu++2b -static"
+      - name: ${{ format('Build gcc C++23 Debug with {0}', env.gcc_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
+          make -C upx UPX_XTARGET=gcc-cxx23-static   CC="gcc -static"   CXX="g++ -std=gnu++2b -static" xtarget/debug
+
       - { name: 'Strip release binaries', run: 'strip -p --strip-unneeded upx/build/*/*/release/upx' }
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host

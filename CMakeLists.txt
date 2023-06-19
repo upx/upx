@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # CMake >= 3.20 is recommended
 # Build requirements:
-#   A C++ compiler that supports C++17: clang-5, gcc-8 or msvc-2019 16.11
+#   A C++ compiler that fully implements C++17: clang-5, gcc-8 or msvc-2019 16.11
 #   (older or other compilers may work but are unsupported, use at your own risk)
 
 # compilation config options
@@ -152,7 +152,9 @@ endif()
 file(GLOB upx_SOURCES "src/*.cpp" "src/[cfu]*/*.cpp")
 list(SORT upx_SOURCES)
 add_executable(upx ${upx_SOURCES})
-set_property(TARGET upx PROPERTY CXX_STANDARD 17)
+if(NOT UPX_CONFIG_DISABLE_CXX_STANDARD)
+    set_property(TARGET upx PROPERTY CXX_STANDARD 17)
+endif()
 target_link_libraries(upx upx_vendor_ucl upx_vendor_zlib)
 if(NOT UPX_CONFIG_DISABLE_BZIP2)
     target_link_libraries(upx upx_vendor_bzip2)
