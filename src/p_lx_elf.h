@@ -155,7 +155,7 @@ protected:
     virtual int  pack2(OutputFile *, Filter &) override;  // append compressed data
     virtual off_t pack3(OutputFile *, Filter &) override;  // append loader
     virtual void pack4(OutputFile *, Filter &) override;  // append pack header
-    virtual void forward_Shdrs(OutputFile *fo);
+    virtual void forward_Shdrs(OutputFile *fo, Elf32_Ehdr *ehdro);
     virtual void unpack(OutputFile *fo) override;
     virtual void un_asl_dynsym(unsigned orig_file_size, OutputFile *);
     virtual void un_shlib_1(
@@ -313,7 +313,7 @@ protected:
     virtual int  pack2(OutputFile *, Filter &) override;  // append compressed data
     virtual off_t pack3(OutputFile *, Filter &) override;  // append loader
     virtual void pack4(OutputFile *, Filter &) override;  // append pack header
-    virtual void forward_Shdrs(OutputFile *fo);
+    virtual void forward_Shdrs(OutputFile *fo, Elf64_Ehdr *ehdro);
     virtual void unpack(OutputFile *fo) override;
     virtual void un_asl_dynsym(unsigned orig_file_size, OutputFile *);
     virtual void un_shlib_1(

@@ -5536,7 +5536,26 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
 #include "p_elf_enum.h"
 #undef  WANT_SHDR_ENUM
 
-void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
+// ::forward_Shdrs adds info for the benefit of gdb and Android dlopen().
+// De-compression (runtime and offline) ignores the added information
+// because it uses the de-compressed Ehdr etc.
+// All the added space is redundant; libbfd should take a hint:
+// if no Shdrs, then use PT_DYNAMIC instead.
+// (.ARM_attributes (ARM_ATTRIBUTES) is not redundant.)
+//
+// want_types_mask: SHT_PROGBITS is needed else gdb complains:
+//    /build/gdb-MVZsgD/gdb-10.1/gdb/symfile.c:878: internal-error: sect_index_text not initialized
+// and Continuing is not reasonable.
+// However, SHT_PROGBITS with compression gives:
+//    BFD: warning: ./libmain.so.upx has a section extending past end of file
+//    BFD: warning: ./libmain.so.upx has a section extending past end of file
+//    BFD: warning: ./libmain.so.upx has a section extending past end of file
+//    warning: Loadable section ".text" outside of ELF segments
+//    warning: Loadable section ".plt" outside of ELF segments
+// because compression gives smaller extents, with no reasonable _Shdr fields.
+// At least gdb can continue.
+
+void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
 {
     if (saved_opt_android_shlib) { // Forward select _Shdr
         // Keep _Shdr for rtld data (below xct_off).
@@ -5547,12 +5566,13 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
         unsigned const want_types_mask =
               1u<<SHT_SYMTAB
             | 1u<<SHT_RELA
-            | 1u<<SHT_PROGBITS  // see comment at PackLinuxElf64::forward_Shdrs
+            | 1u<<SHT_PROGBITS  // see comment above
             | 1u<<SHT_HASH
             | 1u<<SHT_DYNAMIC
             | 1u<<SHT_NOTE
             | 1u<<SHT_REL
             | 1u<<SHT_DYNSYM
+          //| 1u<<SHT_STRTAB  // covered by (j == e_shstrndx)
             | 1u<<SHT_INIT_ARRAY
             | 1u<<SHT_FINI_ARRAY
             | 1u<<SHT_PREINIT_ARRAY
@@ -5560,7 +5580,6 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
             | 1u<<(0x1f & SHT_GNU_verneed)
             | 1u<<(0x1f & SHT_GNU_verdef)
             | 1u<<(0x1f & SHT_GNU_HASH);
-        Elf32_Ehdr *eho = &elfout.ehdr;
         MemBuffer mb_ask_for(e_shnum * sizeof(eho->e_shnum));
         memset(mb_ask_for, 0, mb_ask_for.getSize());
         unsigned short *const ask_for = (unsigned short *)mb_ask_for.getVoidPtr();
@@ -5574,15 +5593,19 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
         ++sh_in; ++sh_out; unsigned n_sh_out = 1;
 
         for (unsigned j = 1; j < e_shnum; ++j, ++sh_in) {
-            unsigned sh_offset = get_te32(&sh_in->sh_offset);
-            unsigned sh_flags  = get_te32(&sh_in->sh_flags);
-            unsigned sh_info   = get_te32(&sh_in->sh_info);
             unsigned sh_type   = get_te32(&sh_in->sh_type);
+            unsigned sh_flags  = get_te32(&sh_in->sh_flags);
+            unsigned sh_addr   = get_te32(&sh_in->sh_addr);
+            unsigned sh_offset = get_te32(&sh_in->sh_offset);
+            unsigned sh_size   = get_te32(&sh_in->sh_size);
+            unsigned sh_info   = get_te32(&sh_in->sh_info);
             if (ask_for[j]) { // Some previous _Shdr requested  me
                 // Tell them my new index
-                set_te32(&sh_out0[ask_for[j]].sh_info, n_sh_out);
+                set_te32(&sh_out0[ask_for[j]].sh_info, n_sh_out);  // sh_info vs st_shndx
             }
-            ask_for[sh_info] = j;  // Enter my request, if any
+            if (sh_info < e_shnum) { // wild sh_info abounds!
+                ask_for[sh_info] = j;  // Enter my request, if any
+            }
             if (   (sh_offset && sh_offset < xct_off)
                 || (Elf32_Shdr::SHF_WRITE & sh_flags)
                 || (j == e_shstrndx)
@@ -5590,25 +5613,36 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
                 || (want_types_mask & (1<<(0x1f & sh_type)))
             ) {
                 *sh_out = *sh_in;
-                if (sec_arm_attr == sh_in) {
-                    set_te32(&sh_out->sh_offset, total_out);
-                    fi->seek(get_te32(&sh_in->sh_offset), SEEK_SET);
-                    unsigned len = get_te32(&sh_in->sh_size);
-                    fi->read(ibuf,  len);
-                    fo->write(ibuf, len);
-                    total_out +=    len;
+                if (sh_offset > xct_off) { // default: so_slide down
+                    set_te32(&sh_out->sh_offset, so_slide + sh_offset);
                 }
-                if (j == e_shstrndx) {
+                if (sh_addr > xct_off) { // default: so_slide down
+                    if (!(SHF_WRITE & sh_flags)) {
+                        set_te32(&sh_out->sh_addr, so_slide + sh_addr);
+                    }
+                    // BEWARE: .p_vaddr does not slide
+                }
+                if (j == e_shstrndx) { // changes Elf32_Ehdr itself
                     set_te16(&eho->e_shstrndx, sh_out - (Elf32_Shdr *)mb_shdro.getVoidPtr());
-                    set_te32(&sh_out->sh_offset, total_out);
-                    fi->seek(get_te32(&sh_in->sh_offset), SEEK_SET);
-                    unsigned len = get_te32(&sh_in->sh_size);
-                    fi->read(ibuf,  len);
-                    fo->write(ibuf, len);
-                    total_out +=    len;
                 }
-                if (Elf32_Shdr::SHF_WRITE & sh_flags || SHT_NOTE == sh_type) {
-                    if (sh_offset > xct_off) {
+                if (j == e_shstrndx
+                ||  sec_arm_attr == sh_in
+                ||  (SHT_NOTE == sh_type && xct_off < sh_offset)
+                ) { // append a copy
+                    set_te32(&sh_out->sh_offset, total_out);
+                    fi->seek((upx_off_t)sh_offset, SEEK_SET);
+                    fi->read(ibuf,  sh_size);
+                    fo->write(ibuf, sh_size);
+                    total_out +=    sh_size;
+                } else
+                if (SHT_PROGBITS == sh_type) {
+                    if (sh_offset <= xct_off
+                    &&  0 == strcmp(".text", shstrtab + get_te32(&sh_in->sh_name)) ) {
+                        // .text was compressed (but perhaps omitting some leading
+                        // portion, if less than 4 PT_LOAD)
+                        set_te32(&sh_out->sh_size, so_slide + sh_size);
+                    } else
+                    if (0 == sh_in->sh_addr) { // .gnu_debuglink etc
                         set_te32(&sh_out->sh_offset, so_slide + sh_offset);
                     }
                 }
@@ -5650,7 +5684,6 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
         fo->write(&file_image[get_te32(&sec_arm_attr->sh_offset)], attr_len);
         total_out = fpad4(fo, total_out += attr_len);
 
-        Elf32_Ehdr *eho = &elfout.ehdr;
         set_te16(&eho->e_shnum, 3);
         set_te16(&eho->e_shentsize, sizeof(Elf32_Shdr));
         set_te32(&eho->e_shoff, total_out);
@@ -5664,7 +5697,7 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo)
     }
 }
 
-void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
+void PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
 {
     if (saved_opt_android_shlib) { // Forward select _Shdr
         // Keep _Shdr for rtld data (below xct_off).
@@ -5675,26 +5708,13 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
         unsigned const want_types_mask =
               1u<<SHT_SYMTAB
             | 1u<<SHT_RELA
-
-            | 1u<<SHT_PROGBITS
-// SHT_PROGBITS is needed else gdb complains:
-//    /build/gdb-MVZsgD/gdb-10.1/gdb/symfile.c:878: internal-error: sect_index_text not initialized
-// and Continuing is not reasonable.
-// However, SHT_PROGBITS with compression gives:
-//    BFD: warning: ./libmain.so.upx has a section extending past end of file
-//    BFD: warning: ./libmain.so.upx has a section extending past end of file
-//    BFD: warning: ./libmain.so.upx has a section extending past end of file
-//    warning: Loadable section ".text" outside of ELF segments
-//    warning: Loadable section ".plt" outside of ELF segments
-// because compression gives smaller extents, with no reasonable _Shdr fields.
-// At least gdb can continue.
-
+            | 1u<<SHT_PROGBITS  // see comment above
             | 1u<<SHT_HASH
             | 1u<<SHT_DYNAMIC
             | 1u<<SHT_NOTE
             | 1u<<SHT_REL
             | 1u<<SHT_DYNSYM
-            | 1u<<SHT_STRTAB
+          //| 1u<<SHT_STRTAB  // covered by (j == e_shstrndx)
             | 1u<<SHT_INIT_ARRAY
             | 1u<<SHT_FINI_ARRAY
             | 1u<<SHT_PREINIT_ARRAY
@@ -5702,7 +5722,6 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
             | 1u<<(0x1f & SHT_GNU_verneed)
             | 1u<<(0x1f & SHT_GNU_verdef)
             | 1u<<(0x1f & SHT_GNU_HASH);
-        Elf64_Ehdr *eho = &elfout.ehdr;
         MemBuffer mb_ask_for(e_shnum * sizeof(eho->e_shnum));
         memset(mb_ask_for, 0, mb_ask_for.getSize());
         unsigned short *const ask_for = (unsigned short *)mb_ask_for.getVoidPtr();
@@ -5716,10 +5735,12 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
         ++sh_in; ++sh_out; unsigned n_sh_out = 1;
 
         for (unsigned j = 1; j < e_shnum; ++j, ++sh_in) {
-            u64_t sh_offset = get_te64(&sh_in->sh_offset);
-            u64_t sh_flags  = get_te64(&sh_in->sh_flags);
-            unsigned sh_info   = get_te32(&sh_in->sh_info);
-            unsigned sh_type   = get_te32(&sh_in->sh_type);
+            unsigned sh_type = get_te32(&sh_in->sh_type);
+            unsigned sh_info = get_te32(&sh_in->sh_info);
+            u64_t sh_flags   = get_te64(&sh_in->sh_flags);
+            u64_t sh_addr    = get_te64(&sh_in->sh_addr);
+            u64_t sh_offset  = get_te64(&sh_in->sh_offset);
+            u64_t sh_size    = get_te64(&sh_in->sh_size);
             if (ask_for[j]) { // Some previous _Shdr requested  me
                 // Tell them my new index
                 set_te32(&sh_out0[ask_for[j]].sh_info, n_sh_out);  // sh_info vs st_shndx
@@ -5734,25 +5755,36 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
                 || (want_types_mask & (1<<(0x1f & sh_type)))
             ) {
                 *sh_out = *sh_in;
-                if (sec_arm_attr == sh_in) {
-                    set_te64(&sh_out->sh_offset, total_out);
-                    fi->seek(get_te64(&sh_in->sh_offset), SEEK_SET);
-                    u64_t len = get_te64(&sh_in->sh_size);
-                    fi->read(ibuf,  len);
-                    fo->write(ibuf, len);
-                    total_out +=    len;
+                if (sh_offset > xct_off) { // default: so_slide down
+                    set_te64(&sh_out->sh_offset, so_slide + sh_offset);
                 }
-                if (j == e_shstrndx) {
+                if (sh_addr > xct_off) { // default: so_slide down
+                    if (!(SHF_WRITE & sh_flags)) {
+                        set_te64(&sh_out->sh_addr, so_slide + sh_addr);
+                    }
+                    // BEWARE: .p_vaddr does not slide
+                }
+                if (j == e_shstrndx) { // changes Elf64_Ehdr itself
                     set_te16(&eho->e_shstrndx, sh_out - (Elf64_Shdr *)mb_shdro.getVoidPtr());
-                    set_te64(&sh_out->sh_offset, total_out);
-                    fi->seek(get_te64(&sh_in->sh_offset), SEEK_SET);
-                    u64_t len = get_te64(&sh_in->sh_size);
-                    fi->read(ibuf,  len);
-                    fo->write(ibuf, len);
-                    total_out +=    len;
                 }
-                if (Elf64_Shdr::SHF_WRITE & sh_flags || SHT_NOTE == sh_type) {
-                    if (sh_offset > xct_off) {
+                if (j == e_shstrndx
+                ||  sec_arm_attr == sh_in
+                ||  (SHT_NOTE == sh_type && xct_off < sh_offset)
+                ) { // append a copy
+                    set_te64(&sh_out->sh_offset, total_out);
+                    fi->seek((upx_off_t)sh_offset, SEEK_SET);
+                    fi->read(ibuf,  sh_size);
+                    fo->write(ibuf, sh_size);
+                    total_out +=    sh_size;
+                } else
+                if (SHT_PROGBITS == sh_type) {
+                    if (sh_offset <= xct_off
+                    &&  0 == strcmp(".text", shstrtab + get_te32(&sh_in->sh_name)) ) {
+                        // .text was compressed (but perhaps omitting some leading
+                        // portion, if less than 4 PT_LOAD)
+                        set_te64(&sh_out->sh_size, so_slide + sh_size);
+                    } else
+                    if (0 == sh_in->sh_addr) { // .gnu_debuglink etc
                         set_te64(&sh_out->sh_offset, so_slide + sh_offset);
                     }
                 }
@@ -5767,7 +5799,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
         fo->write(mb_shdro, len);
         total_out += len;
         fo->seek(0, SEEK_SET);
-        fo->write(eho, sizeof(*eho));
+        fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
     }
     else if (sec_arm_attr) {
@@ -5794,7 +5826,6 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
         fo->write(&file_image[get_te64(&sec_arm_attr->sh_offset)], attr_len);
         total_out = fpad8(fo, total_out += attr_len);
 
-        Elf64_Ehdr *eho = &elfout.ehdr;
         set_te16(&eho->e_shnum, 3);
         set_te16(&eho->e_shentsize, sizeof(Elf64_Shdr));
         set_te64(&eho->e_shoff, total_out);
@@ -5803,7 +5834,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo)
         total_out += sizeof(shdr_aa);
 
         fo->seek(0, SEEK_SET);
-        fo->write(eho, sizeof(*eho));
+        fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
     }
 }
@@ -5814,7 +5845,8 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         overlay_offset = sz_elf_hdrs + sizeof(linfo);
     }
 
-    forward_Shdrs(fo);
+    Elf32_Ehdr *ehdro = (Elf32_Ehdr *)lowmem.getVoidPtr();
+    forward_Shdrs(fo, ehdro);
     if (opt->o_unix.preserve_build_id) {
         // calc e_shoff here and write shdrout, then o_shstrtab
         //NOTE: these are pushed last to ensure nothing is stepped on
@@ -5855,7 +5887,6 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         }
         if (!sec_arm_attr && !saved_opt_android_shlib) {
             // Make it abunantly clear that there are no Elf32_Shdr in this shlib
-            Elf32_Ehdr *ehdro = (Elf32_Ehdr *)lowmem.getVoidPtr();
             ehdro->e_shoff = 0;
             set_te16(&ehdro->e_shentsize, sizeof(Elf32_Shdr));  // Android bug: cannot use 0
             ehdro->e_shnum = 0;
@@ -5897,7 +5928,8 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         overlay_offset = sz_elf_hdrs + sizeof(linfo);
     }
 
-    forward_Shdrs(fo);
+    Elf64_Ehdr *ehdro = (Elf64_Ehdr *)lowmem.getVoidPtr();
+    forward_Shdrs(fo, ehdro);
     if (opt->o_unix.preserve_build_id) {
         // calc e_shoff here and write shdrout, then o_shstrtab
         //NOTE: these are pushed last to ensure nothing is stepped on
@@ -5938,7 +5970,6 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         }
         if (!sec_arm_attr && !saved_opt_android_shlib) {
             // Make it abunantly clear that there are no Elf64_Shdr in this shlib
-            Elf64_Ehdr *ehdro = (Elf64_Ehdr *)lowmem.getVoidPtr();
             ehdro->e_shoff = 0;
             set_te16(&ehdro->e_shentsize, sizeof(Elf64_Shdr));  // Android bug: cannot use 0
             ehdro->e_shnum = 0;
