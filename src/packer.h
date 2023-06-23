@@ -36,16 +36,15 @@ class UiPacker;
 class Filter;
 
 /*************************************************************************
-//
+// PackHeader
+// also see stub/src/include/header.S
 **************************************************************************/
 
-// see stub/src/include/header.S
 class PackHeader final {
     friend class Packer;
 
     // these are strictly private to friend Packer
-    PackHeader();
-
+    PackHeader() noexcept;
     void putPackHeader(SPAN_S(byte) p);
     bool decodePackHeaderFromBuf(SPAN_S(const byte) b, int blen);
 
@@ -91,7 +90,7 @@ public:
     unsigned overlap_overhead;
 };
 
-bool ph_skipVerify(const PackHeader &ph);
+bool ph_skipVerify(const PackHeader &ph) noexcept;
 void ph_decompress(PackHeader &ph, SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum,
                    Filter *ft);
 bool ph_testOverlappingDecompression(const PackHeader &ph, SPAN_P(const byte) buf,
@@ -358,8 +357,8 @@ private:
     Packer &operator=(Packer &&) = delete;
 };
 
-int force_method(int method);     // (0x80ul<<24)|method
-int forced_method(int method);    // (0x80ul<<24)|method ==> method
-int is_forced_method(int method); // predicate
+int force_method(int method) noexcept;     // (0x80ul<<24)|method
+int forced_method(int method) noexcept;    // (0x80ul<<24)|method ==> method
+int is_forced_method(int method) noexcept; // predicate
 
 /* vim:set ts=4 sw=4 et: */

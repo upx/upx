@@ -31,6 +31,7 @@
 // gets destructed when leaving scope or on exceptions.
 
 /*************************************************************************
+// MemBufferBase
 // provides some base functionality for treating a MemBuffer as a pointer
 **************************************************************************/
 
@@ -84,7 +85,7 @@ public: // raw access
 private:
     // disable taking the address => force passing by reference
     // [I'm not too sure about this design decision, but we can always allow it if needed]
-    MemBufferBase<T> *operator&() const DELETED_FUNCTION;
+    MemBufferBase<T> *operator&() const noexcept DELETED_FUNCTION;
 };
 
 /*************************************************************************

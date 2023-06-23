@@ -410,12 +410,12 @@ inline void mem_clear(T (&array)[N]) noexcept = delete;
 class noncopyable {
 protected:
     inline noncopyable() noexcept {}
-    inline ~noncopyable() noexcept {}
+    inline ~noncopyable() noexcept = default;
 private:
-    noncopyable(const noncopyable &) DELETED_FUNCTION; // copy constructor
-    noncopyable& operator=(const noncopyable &) DELETED_FUNCTION; // copy assignment
-    noncopyable(noncopyable &&) DELETED_FUNCTION; // move constructor
-    noncopyable& operator=(noncopyable &&) DELETED_FUNCTION; // move assignment
+    noncopyable(const noncopyable &) noexcept DELETED_FUNCTION; // copy constructor
+    noncopyable& operator=(const noncopyable &) noexcept DELETED_FUNCTION; // copy assignment
+    noncopyable(noncopyable &&) noexcept DELETED_FUNCTION; // move constructor
+    noncopyable& operator=(noncopyable &&) noexcept DELETED_FUNCTION; // move assignment
 };
 
 

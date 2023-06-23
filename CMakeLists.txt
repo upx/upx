@@ -3,7 +3,12 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
-cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # CMake >= 3.20 is recommended
+# CMake version check; using a somewhat current CMake version is highly recommended
+if(NOT DEFINED UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
+    cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # needed for CXX_STANDARD 17
+else()
+    cmake_minimum_required(VERSION "${UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION}" FATAL_ERROR)
+endif()
 # Build requirements:
 #   A C++ compiler that fully implements C++17: clang-5, gcc-8 or msvc-2019 16.11
 #   (older or other compilers may work but are unsupported, use at your own risk)
@@ -129,25 +134,33 @@ if(NOT UPX_CONFIG_DISABLE_BZIP2)
 file(GLOB bzip2_SOURCES "vendor/bzip2/*.c")
 list(SORT bzip2_SOURCES)
 add_library(upx_vendor_bzip2 STATIC ${bzip2_SOURCES})
-set_property(TARGET upx_vendor_bzip2 PROPERTY C_STANDARD 11)
+if(NOT UPX_CONFIG_DISABLE_C_STANDARD)
+    set_property(TARGET upx_vendor_bzip2 PROPERTY C_STANDARD 11)
 endif()
+endif() # UPX_CONFIG_DISABLE_BZIP2
 
 file(GLOB ucl_SOURCES "vendor/ucl/src/*.c")
 list(SORT ucl_SOURCES)
 add_library(upx_vendor_ucl STATIC ${ucl_SOURCES})
-set_property(TARGET upx_vendor_ucl PROPERTY C_STANDARD 11)
+if(NOT UPX_CONFIG_DISABLE_C_STANDARD)
+    set_property(TARGET upx_vendor_ucl PROPERTY C_STANDARD 11)
+endif()
 
 file(GLOB zlib_SOURCES "vendor/zlib/*.c")
 list(SORT zlib_SOURCES)
 add_library(upx_vendor_zlib STATIC ${zlib_SOURCES})
-set_property(TARGET upx_vendor_zlib PROPERTY C_STANDARD 11)
+if(NOT UPX_CONFIG_DISABLE_C_STANDARD)
+    set_property(TARGET upx_vendor_zlib PROPERTY C_STANDARD 11)
+endif()
 
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
 file(GLOB zstd_SOURCES "vendor/zstd/lib/*/*.c")
 list(SORT zstd_SOURCES)
 add_library(upx_vendor_zstd STATIC ${zstd_SOURCES})
-set_property(TARGET upx_vendor_zstd PROPERTY C_STANDARD 11)
+if(NOT UPX_CONFIG_DISABLE_C_STANDARD)
+    set_property(TARGET upx_vendor_zstd PROPERTY C_STANDARD 11)
 endif()
+endif() # UPX_CONFIG_DISABLE_ZSTD
 
 file(GLOB upx_SOURCES "src/*.cpp" "src/[cfu]*/*.cpp")
 list(SORT upx_SOURCES)

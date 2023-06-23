@@ -35,7 +35,7 @@
 // least to detect older versions, so this is a little bit messy.
 **************************************************************************/
 
-PackHeader::PackHeader() : version(-1), format(-1) {}
+PackHeader::PackHeader() noexcept : version(-1), format(-1) {}
 
 /*************************************************************************
 // very simple checksum for the header itself (since version 10)

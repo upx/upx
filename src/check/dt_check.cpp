@@ -322,7 +322,7 @@ struct TestBELE {
 
 template <class A, class B>
 struct TestNoAliasingStruct {
-    static noinline bool test(A *a, B *b) {
+    static noinline bool test(A *a, B *b) noexcept {
         *a = 0;
         *b = 0;
         *b -= 3;
@@ -330,13 +330,14 @@ struct TestNoAliasingStruct {
     }
 };
 template <class A, class B>
-static forceinline bool testNoAliasing(A *a, B *b) {
+static forceinline bool testNoAliasing(A *a, B *b) noexcept {
     return TestNoAliasingStruct<A, B>::test(a, b);
 }
 template <class T>
 struct TestIntegerWrap {
-    static inline bool inc(T x) { return x + 1 > x; }
-    static inline bool dec(T x) { return x - 1 < x; }
+    static inline bool inc_gt(const T x) noexcept { return x + 1 > x; }
+    static inline bool dec_lt(const T x) noexcept { return x - 1 < x; }
+    static inline bool neg_eq(const T x) noexcept { return T(0) - x == x; }
 };
 
 } // namespace
@@ -504,20 +505,41 @@ void upx_compiler_sanity_check(void) {
     assert(testNoAliasing(&u.v_int, &u.v_llong));
     assert(testNoAliasing(&u.v_long, &u.v_llong));
 
-    assert(TestIntegerWrap<unsigned>::inc(0));
-    assert(!TestIntegerWrap<unsigned>::inc(UINT_MAX));
-    assert(TestIntegerWrap<unsigned>::dec(1));
-    assert(!TestIntegerWrap<unsigned>::dec(0));
+    assert(TestIntegerWrap<unsigned>::inc_gt(0));
+    assert(!TestIntegerWrap<unsigned>::inc_gt(UINT_MAX));
+    assert(TestIntegerWrap<unsigned>::dec_lt(1));
+    assert(!TestIntegerWrap<unsigned>::dec_lt(0));
+    assert(TestIntegerWrap<unsigned>::neg_eq(0));
+    assert(!TestIntegerWrap<unsigned>::neg_eq(1));
+    assert(!TestIntegerWrap<unsigned>::neg_eq(UINT_MAX));
     // check working -fno-strict-overflow
-    assert(TestIntegerWrap<int>::inc(0));
-    assert(!TestIntegerWrap<int>::inc(INT_MAX));
-    assert(TestIntegerWrap<int>::dec(0));
-    assert(!TestIntegerWrap<int>::dec(INT_MIN));
+    assert(TestIntegerWrap<int>::inc_gt(0));
+    assert(!TestIntegerWrap<int>::inc_gt(INT_MAX));
+    assert(TestIntegerWrap<int>::dec_lt(0));
+    assert(!TestIntegerWrap<int>::dec_lt(INT_MIN));
+    assert(TestIntegerWrap<int>::neg_eq(0));
+    assert(!TestIntegerWrap<int>::neg_eq(1));
+    assert(!TestIntegerWrap<int>::neg_eq(INT_MAX));
+    assert(TestIntegerWrap<int>::neg_eq(INT_MIN)); // !!
 }
 
 /*************************************************************************
 // some doctest test cases
 **************************************************************************/
+
+TEST_CASE("noncopyable") {
+    struct Test : private noncopyable {
+        int v = 1;
+    };
+    Test t = {};
+    CHECK(t.v == 1);
+#if (ACC_CC_MSC) // MSVC thinks that Test is not std::is_trivially_copyable; compiler bug?
+    t.v = 0;
+#else
+    mem_clear(&t);
+#endif
+    CHECK(t.v == 0);
+}
 
 TEST_CASE("acc_vget") {
     CHECK_EQ(acc_vget_int(0, 0), 0);

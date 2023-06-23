@@ -148,7 +148,7 @@ bool Packer::testUnpackFormat(int format) const {
     return canUnpackFormat(format);
 }
 
-bool ph_skipVerify(const PackHeader &ph) {
+bool ph_skipVerify(const PackHeader &ph) noexcept {
     if (M_IS_DEFLATE(ph.method))
         return false;
     if (M_IS_LZMA(ph.method))
@@ -158,17 +158,17 @@ bool ph_skipVerify(const PackHeader &ph) {
     return true;
 }
 
-int force_method(int method) // mark as forced
+int force_method(int method) noexcept // mark as forced
 {
     return (0x80ul << 24) | method;
 }
 
-int is_forced_method(int method) // predicate
+int is_forced_method(int method) noexcept // predicate
 {
     return -0x80 == (method >> 24);
 }
 
-int forced_method(int method) // extract the forced method
+int forced_method(int method) noexcept // extract the forced method
 {
     if (is_forced_method(method))
         method &= ~(0x80ul << 24);
