@@ -11,8 +11,8 @@ on: [push, workflow_dispatch]
 env:
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-06-11
-  ZIG_DIST_VERSION: 0.11.0-dev.3395+1e7dcaa3a
+  # 2023-06-23
+  ZIG_DIST_VERSION: 0.11.0-dev.3777+64f0059cd
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -377,9 +377,10 @@ jobs:
           # only build a few targets => more targets are tested in the Weekly CI
           - { zig_target: aarch64-linux-musl }
           # { zig_target: aarch64-linux-musl, zig_pic: -fPIE }
-          - { zig_target: aarch64-macos.11-none }
-          # { zig_target: aarch64-macos.12-none }
-          # { zig_target: aarch64-macos.13-none }
+          # { zig_target: aarch64-macos-none }
+          - { zig_target: aarch64-macos.11.0-none }
+          # { zig_target: aarch64-macos.12.0-none }
+          # { zig_target: aarch64-macos.13.0-none }
           - { zig_target: aarch64-windows-gnu }
           # { zig_target: i386-linux-musl }
           - { zig_target: i386-windows-gnu }
@@ -390,9 +391,10 @@ jobs:
           # { zig_target: powerpc64le-linux-musl }
           - { zig_target: x86_64-linux-musl }
           # { zig_target: x86_64-linux-musl, zig_pic: -fPIE }
-          - { zig_target: x86_64-macos.11-none }
-          # { zig_target: x86_64-macos.12-none }
-          # { zig_target: x86_64-macos.13-none }
+          # { zig_target: x86_64-macos-none }
+          - { zig_target: x86_64-macos.11.0-none }
+          # { zig_target: x86_64-macos.12.0-none }
+          # { zig_target: x86_64-macos.13.0-none }
           - { zig_target: x86_64-windows-gnu }
     env:
       # for zig-cc wrapper scripts (see below):
@@ -469,7 +471,7 @@ jobs:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
       - name: 'Run install tests'
-        if: ${{ contains(matrix.zig_target, '-linux-') }}
+        if: ${{ contains(matrix.zig_target, '-linux') }}
         run: |
           (cd build/zig/${ZIG_TARGET}${ZIG_PIC}/release && DESTDIR=$PWD/Install-with-cmake cmake --install .)
           (cd build/zig/${ZIG_TARGET}${ZIG_PIC}/release && DESTDIR=$PWD/Install-with-make  make install)

@@ -243,6 +243,12 @@ struct CheckIntegral {
             assert(t.a == 0);
             assert(t.x[0] == 0 && t.x[1] == 0);
         }
+        {
+            TestT t;
+            mem_clear(&t);
+            assert(t.a == 0);
+            assert(t.x[0] == 0 && t.x[1] == 0);
+        }
         checkU<T>();
         checkU<typename std::add_const<T>::type>();
     }

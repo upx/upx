@@ -29,3 +29,9 @@ jobs:
         run: |
           ctest --test-dir build/xcode -C Debug
           ctest --test-dir build/xcode -C Release
+      - name: 'Run install tests'
+        run: |
+          (cd build/xcode && DESTDIR=$PWD/Install-default cmake --install .)
+          (cd build/xcode && DESTDIR=$PWD/Install-debug   cmake --install . --config Debug)
+          (cd build/xcode && DESTDIR=$PWD/Install-release cmake --install . --config Release)
+          ls -l build/xcode/Install-*/usr/local/bin/upx
