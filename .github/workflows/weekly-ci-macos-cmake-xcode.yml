@@ -1,4 +1,4 @@
-# build with "cmake -G Xcode"
+# build with 'cmake -G Xcode'
 
 name: 'Weekly CI - macOS cmake Xcode'
 

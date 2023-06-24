@@ -1,17 +1,18 @@
 #
-# UPX CMake file; see https://cmake.org/
+# UPX "CMake" build file; see https://cmake.org/
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
-# CMake version check; using a somewhat current CMake version is highly recommended
-if(NOT DEFINED UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
-    cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # needed for CXX_STANDARD 17
-else()
-    cmake_minimum_required(VERSION "${UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION}" FATAL_ERROR)
-endif()
 # Build requirements:
-#   A C++ compiler that fully implements C++17: clang-5, gcc-8 or msvc-2019 16.11
+#   A C++ compiler that fully implements C++17: clang-5, gcc-8 or msvc-2019-16.11
 #   (older or other compilers may work but are unsupported, use at your own risk)
+
+# CMake version check; using a somewhat current CMake version is highly recommended
+if(DEFINED UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
+    cmake_minimum_required(VERSION "${UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION}" FATAL_ERROR)
+else()
+    cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
+endif()
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -51,7 +52,10 @@ endif()
 set(CMAKE_C_STANDARD_REQUIRED     ON)
 set(CMAKE_CXX_STANDARD_REQUIRED   ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_MSVC_RUNTIME_LIBRARY    "MultiThreaded")
+if(${CMAKE_VERSION} VERSION_GREATER "3.14.7")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+    cmake_policy(SET CMP0091 NEW)
+endif()
 
 # determine Git revision
 set(GITREV_SHORT "")
@@ -95,11 +99,16 @@ else()
     message(STATUS "UPX_VERSION_GITREV: not set")
 endif()
 
-# CMake init
-project(upx VERSION 4.0.2 LANGUAGES C CXX)
-
-# set default build type to "Release"
+# set the default build type to "Release"
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT is_multi_config AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+endif()
+
+# CMake init
+project(upx VERSION 4.1.0 LANGUAGES C CXX)
+
+# set the default multi-config build type to "Release"
 if(is_multi_config)
     set(c "${CMAKE_CONFIGURATION_TYPES}")
     list(INSERT c 0 "Release")
@@ -109,8 +118,6 @@ if(is_multi_config)
     endif()
     list(REMOVE_DUPLICATES c)
     set(CMAKE_CONFIGURATION_TYPES "${c}" CACHE STRING "List of supported configuration types." FORCE)
-elseif(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
 set(MSVC_FRONTEND 0)
@@ -122,6 +129,7 @@ endif()
 # targets
 #***********************************************************************
 
+# internal settings
 set(UPX_CONFIG_DISABLE_THREADS ON) # multithreading is currently not used; maybe in UPX version 5
 set(UPX_CONFIG_DISABLE_BZIP2 ON)   # bzip2 is currently not used; we might need it to decompress linux kernels
 set(UPX_CONFIG_DISABLE_ZSTD ON)    # zstd is currently not used; maybe in UPX version 5
@@ -254,7 +262,9 @@ function(upx_sanitize_target)
             # default sanitizer for Debug builds
             target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all>)
             # default sanitizer for Release builds
+            target_compile_options(${t} PRIVATE $<$<CONFIG:MinSizeRel>:-fstack-protector>)
             target_compile_options(${t} PRIVATE $<$<CONFIG:Release>:-fstack-protector>)
+            target_compile_options(${t} PRIVATE $<$<CONFIG:RelWithDebInfo>:-fstack-protector>)
         endif()
     endforeach()
 endfunction()
@@ -417,7 +427,7 @@ function(print_var)
         endif()
     endforeach()
 endfunction()
-print_var(CMAKE_VERSION)
+print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
 if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
 print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
 print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING)

@@ -1,0 +1,51 @@
+# build with 'cmake -G "NMake Makefiles"'
+
+name: 'Weekly CI - Windows cmake NMake'
+
+on:
+  schedule: [cron: '30 4 * * 3'] # run weekly Wednesday 04:30 UTC
+  workflow_dispatch:
+
+jobs:
+  job-windows-cmake-nmake:
+    name: ${{ format('{0} {1}', matrix.os, matrix.arch) }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-2019, vsversion: 2019, arch: amd64 }
+          - { os: windows-2019, vsversion: 2019, arch: amd64_arm64 }
+          - { os: windows-2019, vsversion: 2019, arch: amd64_x86 }
+          - { os: windows-2022, vsversion: 2022, arch: amd64 }
+          - { os: windows-2022, vsversion: 2022, arch: amd64_arm64 }
+          - { os: windows-2022, vsversion: 2022, arch: amd64_x86 }
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Set up Developer Command Prompt'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+          vsversion: ${{ matrix.vsversion }}
+      - name: 'Build cmake NMake Debug'
+        shell: cmd
+        run: |
+          cmake -S . -B build/debug -G "NMake Makefiles" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Debug
+          cd build/debug
+          nmake
+          dir *.exe
+      - name: 'Build cmake NMake Release'
+        shell: cmd
+        run: |
+          cmake -S . -B build/release -G "NMake Makefiles" -DCMAKE_VERBOSE_MAKEFILE=ON
+          cd build/release
+          nmake
+          dir *.exe
+      - name: 'Run basic tests'
+        if: ${{ matrix.arch != 'amd64_arm64' }}
+        shell: cmd
+        run: |
+          ctest --test-dir build/debug
+          ctest --test-dir build/release

@@ -3,12 +3,12 @@
 name: 'Weekly CI - zigcc'
 
 on:
-  schedule: [cron: '30 4 * * 3'] # run weekly Wednesday 04:30 UTC
+  schedule: [cron: '40 4 * * 3'] # run weekly Wednesday 04:40 UTC
   workflow_dispatch:
 
 env:
-  # 2023-06-23
-  ZIG_DIST_VERSION: 0.11.0-dev.3777+64f0059cd
+  # 2023-06-24
+  ZIG_DIST_VERSION: 0.11.0-dev.3797+d82ab4fd8
 
 jobs:
   job-linux-zigcc:
