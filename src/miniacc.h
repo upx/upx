@@ -27,7 +27,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20230104L
+#define ACC_VERSION     20230625L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -2563,11 +2563,11 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  define ACC_ABI_LITTLE_ENDIAN     1
 #elif (ACC_ARCH_ALPHA) && (ACC_ARCH_CRAY_MPP)
 #  define ACC_ABI_BIG_ENDIAN        1
-#elif (ACC_ARCH_IA64) && (ACC_OS_POSIX_LINUX || ACC_OS_WIN64)
+#elif (ACC_ARCH_IA64) && (ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_LINUX || ACC_OS_WIN64)
 #  define ACC_ABI_LITTLE_ENDIAN     1
 #elif (ACC_ARCH_ALPHA || ACC_ARCH_AMD64 || ACC_ARCH_BLACKFIN || ACC_ARCH_CRIS || ACC_ARCH_I086 || ACC_ARCH_I386 || ACC_ARCH_MSP430 || ACC_ARCH_RISCV)
 #  define ACC_ABI_LITTLE_ENDIAN     1
-#elif (ACC_ARCH_AVR32 || ACC_ARCH_M68K || ACC_ARCH_S390 || ACC_ARCH_SPU)
+#elif (ACC_ARCH_AVR32 || ACC_ARCH_M68K || ACC_ARCH_S390 || ACC_ARCH_SPARC || ACC_ARCH_SPU)
 #  define ACC_ABI_BIG_ENDIAN        1
 #elif 1 && defined(__IAR_SYSTEMS_ICC__) && defined(__LITTLE_ENDIAN__)
 #  if (__LITTLE_ENDIAN__ == 1)
@@ -3637,13 +3637,23 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #  define HAVE_MEMSET 1
 #  define HAVE_SETJMP 1
 #else
+#ifndef HAVE_ACCESS
 #define HAVE_ACCESS 1
+#endif
+#ifndef HAVE_ALLOCA
 #define HAVE_ALLOCA 1
+#endif
+#ifndef HAVE_ATEXIT
 #define HAVE_ATEXIT 1
+#endif
 #define HAVE_ATOI 1
 #define HAVE_ATOL 1
+#ifndef HAVE_CHMOD
 #define HAVE_CHMOD 1
+#endif
+#ifndef HAVE_CHOWN
 #define HAVE_CHOWN 1
+#endif
 #define HAVE_CTIME 1
 #define HAVE_DIFFTIME 1
 #define HAVE_FILENO 1
@@ -3653,7 +3663,9 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #define HAVE_GMTIME 1
 #define HAVE_ISATTY 1
 #define HAVE_LOCALTIME 1
+#ifndef HAVE_LONGJMP
 #define HAVE_LONGJMP 1
+#endif
 #define HAVE_LSTAT 1
 #define HAVE_MEMCMP 1
 #define HAVE_MEMCPY 1
@@ -3662,10 +3674,16 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #define HAVE_MKDIR 1
 #define HAVE_MKTIME 1
 #define HAVE_QSORT 1
+#ifndef HAVE_RAISE
 #define HAVE_RAISE 1
+#endif
 #define HAVE_RMDIR 1
+#ifndef HAVE_SETJMP
 #define HAVE_SETJMP 1
+#endif
+#ifndef HAVE_SIGNAL
 #define HAVE_SIGNAL 1
+#endif
 #define HAVE_SNPRINTF 1
 #define HAVE_STAT 1
 #define HAVE_STRCHR 1
