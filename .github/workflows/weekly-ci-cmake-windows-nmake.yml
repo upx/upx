@@ -9,7 +9,7 @@ on:
 
 jobs:
   job-cmake-windows-nmake:
-    name: ${{ format('{0} {1}', matrix.os, matrix.arch) }}
+    name: ${{ format('vs{0} {1}', matrix.vsversion, matrix.arch) }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -47,7 +47,7 @@ jobs:
       - name: 'Make artifact'
         shell: bash
         run: |
-          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-nmake-${{ matrix.os }}-${{ matrix.arch }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-nmake-vs${{ matrix.vsversion }}-${{ matrix.arch }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           mkdir -p "tmp/artifact/$N"
           (cd build && cp -ai --parents */upx.exe "../tmp/artifact/$N")
           # GitHub Actions magic: set "artifact_name" environment value for use in next step
@@ -59,7 +59,10 @@ jobs:
           path: tmp/artifact
       - name: 'Run basic tests'
         if: ${{ matrix.arch != 'amd64_arm64' }}
-        shell: cmd
         run: |
           ctest --test-dir build/debug
           ctest --test-dir build/release
+      - name: 'Run install tests'
+        run: |
+          env DESTDIR=./Install-debug   cmake --install build/debug
+          env DESTDIR=./Install-release cmake --install build/release

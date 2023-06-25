@@ -131,6 +131,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(usizeof(0)) == sizeof(unsigned))
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("") == 0)
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("a") == 1)
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("ab") == 2)
+ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("abc") == 3)
 
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_eq("", ""))
 ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_eq("a", ""))

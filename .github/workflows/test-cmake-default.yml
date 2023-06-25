@@ -1,0 +1,102 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+name: 'Test - CMake default build type'
+on: [workflow_dispatch]
+jobs:
+
+  job-cmake-make:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Config, build, test and install'
+        run: |
+          cmake -S . -B build/default
+          cmake --build build/default --parallel --verbose
+          ctest --test-dir build/default
+          make -C build/default test
+          (cd build/default && DESTDIR=$PWD/Install-default cmake --install .)
+
+  job-cmake-ninja:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Config, build, test and install'
+        run: |
+          sudo apt-get install ninja-build
+          cmake -S . -B build/default -G Ninja
+          cmake --build build/default --parallel --verbose
+          ctest --test-dir build/default
+          ninja -C build/default test
+          (cd build/default && DESTDIR=$PWD/Install-default cmake --install .)
+
+  job-cmake-ninja-multi-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Config, build, test and install'
+        run: |
+          sudo apt-get install ninja-build
+          cmake -S . -B build/default -G "Ninja Multi-Config"
+          cmake --build build/default --parallel --verbose
+          # multi-config: ctest NEEDS a config
+          ctest --test-dir build/default -C Release
+          ninja -C build/default test
+          (cd build/default && DESTDIR=$PWD/Install-default cmake --install .)
+
+  job-cmake-nmake:
+    runs-on: windows-2022
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Set up Developer Command Prompt'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+          vsversion: 2022
+      - name: 'Config, build, test and install'
+        run: |
+          cmake -S . -B build/default -G "NMake Makefiles"
+          cmake --build build/default --parallel --verbose
+          ctest --test-dir build/default
+          env -C build/default nmake test
+          env DESTDIR=./Install-default cmake --install build/default
+
+  job-cmake-vsstudio-multi-config:
+    runs-on: windows-2022
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Set up Developer Command Prompt'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+          vsversion: 2022
+      - name: 'Config, build and test'
+        run: |
+          cmake -S . -B build/default
+          cmake --build build/default --parallel --verbose
+          # multi-config: ctest NEEDS a config
+          ctest --test-dir build/default -C Debug
+
+  job-cmake-xcode-multi-config:
+    runs-on: macos-12
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Config, build, test and install'
+        run: |
+          cmake -S . -B build/default -G Xcode
+          cmake --build build/default --parallel --verbose
+          # multi-config: ctest NEEDS a config
+          ctest --test-dir build/default -C Debug
+          # BUG multi-config: cmake --install defaults to "Release" !!
+          (cd build/default && DESTDIR=$PWD/Install-default cmake --install . --config Debug)

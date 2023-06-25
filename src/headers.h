@@ -30,6 +30,29 @@
 #error "C++17 is required"
 #endif
 
+#if defined(__ILP32) || defined(__ILP32__)
+static_assert(sizeof(int) == 4);
+static_assert(sizeof(long) == 4);
+static_assert(sizeof(void *) == 4);
+#endif
+#if defined(__LP64) || defined(__LP64__)
+static_assert(sizeof(int) == 4);
+static_assert(sizeof(long) == 8);
+static_assert(sizeof(void *) == 8);
+#endif
+#if defined(_WIN32)
+static_assert(sizeof(int) == 4);
+static_assert(sizeof(long) == 4);
+#if !defined(_WIN64)
+static_assert(sizeof(void *) == 4);
+#endif
+#endif
+#if defined(_WIN64)
+static_assert(sizeof(int) == 4);
+static_assert(sizeof(long) == 4);
+static_assert(sizeof(void *) == 8);
+#endif
+
 #if !defined(_FILE_OFFSET_BITS)
 #define _FILE_OFFSET_BITS 64
 #endif
