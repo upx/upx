@@ -1,3 +1,4 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 name: 'Static Analyzer - clang scan-build'
 
 on:

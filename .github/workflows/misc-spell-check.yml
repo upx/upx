@@ -1,3 +1,4 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 # see https://github.com/crate-ci/typos
 
 name: 'Misc - Spell check'

@@ -1,3 +1,4 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 # build under various Alpine Linux versions with clang and gcc
 
 # info: Alpine 3.9 has clang-5, cmake-3.13.0 and gcc-8, which nicely
@@ -33,7 +34,8 @@ jobs:
           git -C upx submodule update --init
           x="$(apk list -I "$(apk info -Wq "$(which clang)")")"; echo "clang_package=${x%% *}" >> $GITHUB_ENV
           x="$(apk list -I "$(apk info -Wq "$(which gcc)")")"; echo "gcc_package=${x%% *}" >> $GITHUB_ENV
-          echo "artifact_name=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-alpine-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-alpine-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          echo "artifact_name=$N" >> $GITHUB_ENV
 
       # build with C++17
       - name: ${{ format('Build clang Release with {0}', env.clang_package) }}
@@ -72,22 +74,22 @@ jobs:
         if: ${{ contains(matrix.container, ':edge') }}
         run: |
           export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
-          make -C upx UPX_XTARGET=clang-cxx23-static CC="clang -static" CXX="clang++ -std=gnu++2b -static"
+          make -C upx UPX_XTARGET=clang-cxx23-static CC="clang -static" CXX="clang++ -std=gnu++23 -static"
       - name: ${{ format('Build clang C++23 Debug with {0}', env.clang_package) }}
         if: ${{ contains(matrix.container, ':edge') }}
         run: |
           export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
-          make -C upx UPX_XTARGET=clang-cxx23-static CC="clang -static" CXX="clang++ -std=gnu++2b -static" xtarget/debug
+          make -C upx UPX_XTARGET=clang-cxx23-static CC="clang -static" CXX="clang++ -std=gnu++23 -static" xtarget/debug
       - name: ${{ format('Build gcc C++23 Release with {0}', env.gcc_package) }}
         if: ${{ contains(matrix.container, ':edge') }}
         run: |
           export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
-          make -C upx UPX_XTARGET=gcc-cxx23-static   CC="gcc -static"   CXX="g++ -std=gnu++2b -static"
+          make -C upx UPX_XTARGET=gcc-cxx23-static   CC="gcc -static"   CXX="g++ -std=gnu++23 -static"
       - name: ${{ format('Build gcc C++23 Debug with {0}', env.gcc_package) }}
         if: ${{ contains(matrix.container, ':edge') }}
         run: |
           export UPX_CMAKE_CONFIG_FLAGS='-DUPX_CONFIG_DISABLE_CXX_STANDARD=ON -DCMAKE_VERBOSE_MAKEFILE=ON'
-          make -C upx UPX_XTARGET=gcc-cxx23-static   CC="gcc -static"   CXX="g++ -std=gnu++2b -static" xtarget/debug
+          make -C upx UPX_XTARGET=gcc-cxx23-static   CC="gcc -static"   CXX="g++ -std=gnu++23 -static" xtarget/debug
 
       - { name: 'Strip release binaries', run: 'strip -p --strip-unneeded upx/build/*/*/release/upx' }
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}

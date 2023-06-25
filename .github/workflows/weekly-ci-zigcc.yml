@@ -1,3 +1,4 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 # build with "zig cc"; see https://ziglang.org/download/
 
 name: 'Weekly CI - zigcc'
@@ -103,7 +104,7 @@ jobs:
       - name: ${{ format('Make artifact from upx-{0}-{1}', github.ref_name, env.UPX_GITREV_SHORT) }}
         shell: bash
         run: |
-          N=upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-zigcc-${{ matrix.zig_target }}${ZIG_PIC}
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-zigcc-${{ matrix.zig_target }}${ZIG_PIC}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           mkdir -p "tmp/artifact/$N"
           (cd build && shopt -s nullglob && cp -ai --parents */upx{,.exe} */*/*/upx{,.exe} "../tmp/artifact/$N")
           (cd tmp/artifact && tar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")

@@ -1,13 +1,14 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 # build with 'cmake -G "NMake Makefiles"'
 
-name: 'Weekly CI - Windows cmake NMake'
+name: 'Weekly CI - cmake Windows NMake'
 
 on:
   schedule: [cron: '30 4 * * 3'] # run weekly Wednesday 04:30 UTC
   workflow_dispatch:
 
 jobs:
-  job-windows-cmake-nmake:
+  job-cmake-windows-nmake:
     name: ${{ format('{0} {1}', matrix.os, matrix.arch) }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -43,6 +44,19 @@ jobs:
           cd build/release
           nmake
           dir *.exe
+      - name: 'Make artifact'
+        shell: bash
+        run: |
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-nmake-${{ matrix.os }}-${{ matrix.arch }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          mkdir -p "tmp/artifact/$N"
+          (cd build && cp -ai --parents */upx.exe "../tmp/artifact/$N")
+          # GitHub Actions magic: set "artifact_name" environment value for use in next step
+          echo "artifact_name=$N" >> $GITHUB_ENV
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.artifact_name }}
+          path: tmp/artifact
       - name: 'Run basic tests'
         if: ${{ matrix.arch != 'amd64_arm64' }}
         shell: cmd

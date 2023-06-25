@@ -1,3 +1,4 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 # test minimal number of packages required for building UPX under Alpine Linux
 #   clang: apk add clang cmake make
 #   gcc:   apk add cmake g++ make
@@ -22,7 +23,8 @@ jobs:
           make -C build/debug   test
           make -C build/release test
           make -C build/release install DESTDIR="$PWD/Install"
-          echo "artifact_name=upx-test-alpine-linux-clang-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
+          N=$(echo "upx-test-alpine-linux-clang-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
         uses: actions/upload-artifact@v3
@@ -46,7 +48,8 @@ jobs:
           make -C build/debug   test
           make -C build/release test
           make -C build/release install DESTDIR="$PWD/Install"
-          echo "artifact_name=upx-test-alpine-linux-gcc-${{ matrix.container }}" | sed 's/[^=0-9a-zA-Z_.-]/-/g' >> $GITHUB_ENV
+          N=$(echo "upx-test-alpine-linux-gcc-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
         uses: actions/upload-artifact@v3

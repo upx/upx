@@ -1,3 +1,4 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 name: 'GitHub - Close pull requests'
 on:
   #pull_request:
