@@ -5558,6 +5558,7 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
 void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
 {
     if (saved_opt_android_shlib) { // Forward select _Shdr
+        unsigned penalty = total_out;
         // Keep _Shdr for rtld data (below xct_off).
         // Discard _Shdr for compressed regions.
         // Keep _Shdr for SHF_WRITE.
@@ -5659,6 +5660,7 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
         fo->seek(0, SEEK_SET);
         fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
+        info("Android penalty = %d bytes", penalty = total_out - penalty);
     }
     else if (sec_arm_attr) {
         // Forward just ARM_ATTRIBUTES
@@ -5700,6 +5702,7 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
 void PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
 {
     if (saved_opt_android_shlib) { // Forward select _Shdr
+        unsigned penalty = total_out;
         // Keep _Shdr for rtld data (below xct_off).
         // Discard _Shdr for compressed regions.
         // Keep _Shdr for SHF_WRITE.
@@ -5801,6 +5804,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
         fo->seek(0, SEEK_SET);
         fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
+        info("Android penalty = %d bytes", penalty = total_out - penalty);
     }
     else if (sec_arm_attr) {
         // Forward just ARM_ATTRIBUTES
