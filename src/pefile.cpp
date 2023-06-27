@@ -551,18 +551,16 @@ void PeFile64::processRelocs() // pass1
     // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
     // Use an extra check to avoid AccessViolation (SIGSEGV) when appending
     // the relocs into one array.
-    if ((4 * relocnum + 8192) < (sorelocs + 4*(2 + xcounts[2] + xcounts[1])))
+    if ((4 * relocnum + 8192) < (sorelocs + 4 * (2 + xcounts[2] + xcounts[1])))
         throwCantUnpack("Invalid relocs");
 
     // append relocs type "LOW" then "HIGH"
-    for (ic = 2; ic ; ic--)
-    {
-        memcpy(orelocs + sorelocs,fix[ic],4 * xcounts[ic]);
+    for (ic = 2; ic; ic--) {
+        memcpy(orelocs + sorelocs, fix[ic], 4 * xcounts[ic]);
         sorelocs += 4 * xcounts[ic];
 
-        set_le32(orelocs + sorelocs,0);
-        if (xcounts[ic])
-        {
+        set_le32(orelocs + sorelocs, 0);
+        if (xcounts[ic]) {
             sorelocs += 4;
             big_relocs |= 2 * ic;
         }
@@ -1933,8 +1931,8 @@ unsigned PeFile::virta2objnum(unsigned addr, SPAN_0(pe_section_t) sect, unsigned
 unsigned PeFile::tryremove(unsigned vaddr, unsigned objs) {
     unsigned ic = virta2objnum(vaddr, isection, objs);
     if (ic && ic == objs - 1) {
-        NO_fprintf(stderr, "removed section: %d size: %lx\n", ic, (long) isection[ic].size);
-        info("removed section: %d size: 0x%lx", ic, (long) isection[ic].size);
+        NO_fprintf(stderr, "removed section: %d size: 0x%x\n", ic, (int) isection[ic].size);
+        info("removed section: %d size: 0x%x", ic, (int) isection[ic].size);
         objs--;
     }
     return objs;
@@ -2322,6 +2320,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     const unsigned oobjs = last_section_rsrc_only ? 4 : has_ncsection ? 3 : 2;
     ////pe_section_t osection[oobjs];
     pe_section_t osection[4];
+    memset(osection, 0, sizeof(osection));
     // section 0 : bss
     //         1 : [ident + header] + packed_data + unpacker + tls + loadconf
     //         2 : not compressed data
@@ -2361,7 +2360,6 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     // new PE header
     memcpy(&oh, &ih, sizeof(oh));
     oh.filealign = oh_filealign; // identsplit depends on this
-    memset(osection, 0, sizeof(osection));
 
     oh.entry = upxsection;
     oh.objects = oobjs;
@@ -2449,7 +2447,6 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     // too idiot to use the data directories... M$ suxx 4 ever!
     // ... even worse: exploder.exe in NiceTry also depends on this to
     // locate version info
-
     strcpy(osection[2].name, !last_section_rsrc_only && soresources ? ".rsrc" : "UPX2");
 
     osection[0].vaddr = rvamin;
@@ -2556,18 +2553,18 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     }
 
 #if 0
-    printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
-    printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection[0])*oobjs);
-    printf("%-13s: ident        : %8ld bytes\n", getName(), (long) identsize);
-    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) c_len);
-    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) codesize);
-    printf("%-13s: tls          : %8ld bytes\n", getName(), (long) sotls);
-    printf("%-13s: aligned_tls  : %8ld bytes\n", getName(), (long) aligned_sotls);
-    printf("%-13s: resources    : %8ld bytes\n", getName(), (long) soresources);
-    printf("%-13s: imports      : %8ld bytes\n", getName(), (long) soimpdlls);
-    printf("%-13s: exports      : %8ld bytes\n", getName(), (long) soexport);
-    printf("%-13s: relocs       : %8ld bytes\n", getName(), (long) soxrelocs);
-    printf("%-13s: loadconf     : %8ld bytes\n", getName(), (long) soloadconf);
+    printf("%-13s: program hdr  : %8d bytes\n", getName(), (int) sizeof(oh));
+    printf("%-13s: sections     : %8d bytes\n", getName(), (int) sizeof(osection[0]) * oobjs);
+    printf("%-13s: ident        : %8d bytes\n", getName(), (int) identsize);
+    printf("%-13s: compressed   : %8d bytes\n", getName(), (int) c_len);
+    printf("%-13s: decompressor : %8d bytes\n", getName(), (int) codesize);
+    printf("%-13s: tls          : %8d bytes\n", getName(), (int) sotls);
+    printf("%-13s: aligned_tls  : %8d bytes\n", getName(), (int) aligned_sotls);
+    printf("%-13s: resources    : %8d bytes\n", getName(), (int) soresources);
+    printf("%-13s: imports      : %8d bytes\n", getName(), (int) soimpdlls);
+    printf("%-13s: exports      : %8d bytes\n", getName(), (int) soexport);
+    printf("%-13s: relocs       : %8d bytes\n", getName(), (int) soxrelocs);
+    printf("%-13s: loadconf     : %8d bytes\n", getName(), (int) soloadconf);
 #endif
 
     // verify

@@ -32,6 +32,16 @@
 // NE - Native Endianness (aka host endianness)
 // TE - Target Endianness (not used here, see various packers)
 
+#if 1
+// some platforms may provide their own system bswapXX() functions, so rename
+#undef bswap16
+#undef bswap32
+#undef bswap64
+#define bswap16 upx_bswap16
+#define bswap32 upx_bswap32
+#define bswap64 upx_bswap64
+#endif
+
 /*************************************************************************
 // core - NE
 **************************************************************************/

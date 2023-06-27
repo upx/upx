@@ -325,9 +325,9 @@ void PackDjgpp2::pack(OutputFile *fo) {
         OutputFile::dump(opt->debug.dump_stub_loader, loader, lsize);
     fo->write(obuf, data->size);
 #if 0
-    printf("%-13s: coff hdr   : %8ld bytes\n", getName(), (long) sizeof(coff_hdr));
-    printf("%-13s: loader     : %8ld bytes\n", getName(), (long) lsize);
-    printf("%-13s: compressed : %8ld bytes\n", getName(), (long) data->size);
+    printf("%-13s: coff hdr   : %8d bytes\n", getName(), (int) sizeof(coff_hdr));
+    printf("%-13s: loader     : %8d bytes\n", getName(), (int) lsize);
+    printf("%-13s: compressed : %8d bytes\n", getName(), (int) data->size);
 #endif
 
     // verify

@@ -179,8 +179,14 @@ private:
     struct Stats {
         upx_std_atomic(upx_uint32_t) global_alloc_counter;
         upx_std_atomic(upx_uint32_t) global_dealloc_counter;
+#if WITH_THREADS
+        // avoid link errors on some 32-bit platforms: undefined reference to __atomic_fetch_add_8
+        upx_std_atomic(size_t) global_total_bytes; // stats may overflow on 32-bit systems
+        upx_std_atomic(size_t) global_total_active_bytes;
+#else
         upx_std_atomic(upx_uint64_t) global_total_bytes;
         upx_std_atomic(upx_uint64_t) global_total_active_bytes;
+#endif
     };
     static Stats stats;
 #if DEBUG

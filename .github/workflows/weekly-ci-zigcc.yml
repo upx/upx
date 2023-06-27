@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  # 2023-06-24
-  ZIG_DIST_VERSION: 0.11.0-dev.3797+d82ab4fd8
+  # 2023-06-27
+  ZIG_DIST_VERSION: 0.11.0-dev.3859+88284c124
 
 jobs:
   job-linux-zigcc:

@@ -524,12 +524,12 @@ Changes in 0.40 (05 Oct 1998)
   * fixed a small but fatal bug in dos/sys introduced in 0.30
   * fixed a rare bug in dos/exe
   * worked around a bug in djgpp's strip 2.8
-  * djgpp/coff: Allegro packfile support should work now
+  * djgpp2/coff: Allegro packfile support should work now
   * added dos/exeh compression method (works on 386+)
 
 Changes in 0.30 (27 Jul 1998)
   * fixed a serious bug in the 32-bit compressors - please don't use
-    djgpp/coff and watcom/le compressed files from previous versions,
+    djgpp2/coff and watcom/le compressed files from previous versions,
     some of them are possibly damaged !
   * the 16-bit uncompressors are a little bit shorter & faster
   * fixed progress indicator for VESA and SVGA text modes
@@ -540,5 +540,5 @@ Changes in 0.20 (05 Jul 1998)
 
 Changes in 0.05 (26 May 1998)
   * first public beta release
-  * based on experience gained from our previous packers DJP (1996),
+  * based on experience gained from our previous packers DJP (djgpp2/coff, 1996),
     lzop (1996) and mfxpak (atari/tos, 1990)

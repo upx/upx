@@ -579,22 +579,33 @@ void PackPs1::pack(OutputFile *fo) {
         throwNotCompressible();
 
 #if 0
-    printf("%-13s: uncompressed  : %8ld bytes\n", getName(), (long) ph.u_len);
-    printf("%-13s: compressed    : %8ld bytes\n", getName(), (long) ph.c_len);
-    printf("%-13s: decompressor  : %8ld bytes\n", getName(), (long) lsize - h_len - pad_code);
-    printf("%-13s: header comp   : %8ld bytes\n", getName(), (long) sz_cbh);
-    printf("%-13s: overlap       : %8ld bytes\n", getName(), (long) overlap);
-    printf("%-13s: load address  : %08X bytes\n", getName(), (unsigned int) oh.tx_ptr);
-    printf("%-13s: code entry    : %08X bytes\n", getName(), (unsigned int) oh.epc);
-    printf("%-13s: bbs start     : %08X bytes\n", getName(), (unsigned int) bss_start);
-    printf("%-13s: bbs end       : %08X bytes\n", getName(), (unsigned int) bss_end);
-    printf("%-13s: eof in mem IF : %08X bytes\n", getName(), (unsigned int) ih.tx_ptr + ih.tx_len);
-    printf("%-13s: eof in mem OF : %08X bytes\n", getName(), (unsigned int) oh.tx_ptr + oh.tx_len);
+    printf("%-13s: uncompressed  : %8d bytes\n", getName(), (int) ph.u_len);
+    printf("%-13s: compressed    : %8d bytes\n", getName(), (int) ph.c_len);
+    printf("%-13s: decompressor  : %8d bytes\n", getName(), (int) lsize - h_len - pad_code);
+    printf("%-13s: header comp   : %8d bytes\n", getName(), (int) sz_cbh);
+    printf("%-13s: overlap       : %8d bytes\n", getName(), (int) overlap);
+    printf("%-13s: load address  : %08X bytes\n", getName(), (unsigned) oh.tx_ptr);
+    printf("%-13s: code entry    : %08X bytes\n", getName(), (unsigned) oh.epc);
+    printf("%-13s: bbs start     : %08X bytes\n", getName(), (unsigned) bss_start);
+    printf("%-13s: bbs end       : %08X bytes\n", getName(), (unsigned) bss_end);
+    printf("%-13s: eof in mem IF : %08X bytes\n", getName(), (unsigned) ih.tx_ptr + ih.tx_len);
+    printf("%-13s: eof in mem OF : %08X bytes\n", getName(), (unsigned) oh.tx_ptr + oh.tx_len);
     byte i = 0;
-    if (isCon) { if (foundBss) i = 1; }
-    else { i = 2; if (M_IS_LZMA(ph.method)) { if (!foundBss) i = 3; else i = 4; } }
-    const char *loader_method[] = { "con/stack", "con/bss", "cdb", "cdb/stack", "cdb/bss" };
-    char method_name[32+1]; set_method_name(method_name, sizeof(method_name), ph.method, ph.level);
+    if (isCon) {
+        if (foundBss)
+            i = 1;
+    } else {
+        i = 2;
+        if (M_IS_LZMA(ph.method)) {
+            if (!foundBss)
+                i = 3;
+            else
+                i = 4;
+        }
+    }
+    const char *loader_method[] = {"con/stack", "con/bss", "cdb", "cdb/stack", "cdb/bss"};
+    char method_name[32 + 1];
+    set_method_name(method_name, sizeof(method_name), ph.method, ph.level);
     printf("%-13s: methods       : %s, %s\n", getName(), method_name, loader_method[i]);
 #endif
 }
