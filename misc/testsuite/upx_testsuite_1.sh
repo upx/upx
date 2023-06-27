@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
 argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
@@ -8,6 +8,8 @@ argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 #   $upx_testsuite_SRCDIR
 #   $upx_testsuite_BUILDDIR (optional)
 #   $BM_T (optional)
+#
+# see https://github.com/upx/upx-testsuite.git
 
 # convenience
 [[ -z $upx_testsuite_BUILDDIR ]] && upx_testsuite_BUILDDIR=./tmp-upx-testsuite
@@ -17,7 +19,7 @@ argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 upx_testsuite_SRCDIR=$(readlink -en -- "$upx_testsuite_SRCDIR")
 if [[ ! -d "$upx_testsuite_SRCDIR/files/packed" ]]; then
     echo 'invalid or missing $upx_testsuite_SRCDIR:'
-    echo '  please git clone https://github.com/upx/upx-testsuite'
+    echo '  please git clone https://github.com/upx/upx-testsuite.git'
     echo '  and set (export) the envvar upx_testsuite_SRCDIR to the local file path'
     exit 1
 fi
@@ -121,7 +123,7 @@ recreate_expected_sha256sums() {
     echo "########## end .sha256sums.recreate" >> "$o"
 }
 
-source "$argv0dir/travis_testsuite_1-expected_sha256sums.sh" || exit 1
+source "$argv0dir/upx_testsuite_1-expected_sha256sums.sh" || exit 1
 
 # /***********************************************************************
 # // init

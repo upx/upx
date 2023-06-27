@@ -58,8 +58,8 @@ jobs:
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: amd64
           vsversion: 2022
+          arch: amd64
       - name: 'Config, build, test and install'
         run: |
           cmake -S . -B build/default -G "NMake Makefiles"
@@ -77,8 +77,8 @@ jobs:
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: amd64
           vsversion: 2022
+          arch: amd64
       - name: 'Config, build and test'
         run: |
           cmake -S . -B build/default

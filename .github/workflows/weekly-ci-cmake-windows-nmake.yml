@@ -28,8 +28,8 @@ jobs:
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{ matrix.arch }}
           vsversion: ${{ matrix.vsversion }}
+          arch: ${{ matrix.arch }}
       - name: 'Build cmake NMake Debug'
         shell: cmd
         run: |

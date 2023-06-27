@@ -123,7 +123,7 @@ jobs:
       - name: 'Run test suite build/extra/gcc/release'
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1=$(readlink -en ./.github/travis_testsuite_1.sh)
+          testsuite_1=$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)
           env -C build/extra/gcc/release upx_exe=./upx bash "$testsuite_1"
 
   job-macos-cmake:
@@ -195,7 +195,7 @@ jobs:
         run: |
           export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1=$(readlink -en ./.github/travis_testsuite_1.sh)
+          testsuite_1=$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)
           env -C build/extra/clang/release upx_exe=./upx bash "$testsuite_1"
 
   job-windows-cmake:
@@ -210,21 +210,19 @@ jobs:
           # windows-2019 used to work but got broken with the 20220821.1 runner-image
           # update; we cannot download that image for inspection, and debugging the
           # remote image is painful, so disable for now
-          ####- { name: windows-2019-amd64, os: windows-2019 }
-          - { name: windows-2022-amd64, os: windows-2022 }
+          ####- { name: windows-2019-amd64, os: windows-2019, vsversion: 2019, arch: amd64 }
+          - { name: windows-2022-amd64, os: windows-2022, vsversion: 2022, arch: amd64 }
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
       - name: 'Check out test suite'
         run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
-      - name: 'Inspect runner-image settings'
-        # debug remote image; see https://github.com/actions/runner-images.git
-        if: ${{ false }}
-        run: |
-          Get-Command bash; Get-Command cmake; Get-Command make
-          bash --version; cmake --version; make --version
-          Get-Command cl -ErrorAction SilentlyContinue
+      - name: 'Set up Developer Command Prompt'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          vsversion: ${{ matrix.vsversion }}
+          arch: ${{ matrix.arch }}
       - name: 'Build cmake debug'
         run:   'make build/debug'
       - name: 'Build cmake release'
@@ -252,7 +250,7 @@ jobs:
         shell: bash
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1=$(readlink -en ./.github/travis_testsuite_1.sh)
+          testsuite_1=$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)
           env -C build/release/Release upx_exe=./upx bash "$testsuite_1"
 
   job-windows-toolchains:
@@ -261,21 +259,21 @@ jobs:
     name: ${{ format('windows {0}', matrix.name) }}
     runs-on: ${{ matrix.os }}
     env:
-      C: ${{ matrix.C }}
+      C: ${{ matrix.name }}
       B: release
       H: 'd:\a\upx\upx'
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { name: amd64-win64-vs2019,   vsversion: 2019, os: windows-2019, C: msvc-14.2-x64,     arch: amd64 }
-          - { name: amd64-win64-vs2022,   vsversion: 2022, os: windows-2022, C: msvc-14.3-x64,     arch: amd64 }
-          - { name: arm64-win64-vs2019,   vsversion: 2019, os: windows-2019, C: msvc-14.2-arm64,   arch: amd64_arm64 }
-          - { name: arm64-win64-vs2022,   vsversion: 2022, os: windows-2022, C: msvc-14.3-arm64,   arch: amd64_arm64 }
-          - { name: arm64ec-win64-vs2022, vsversion: 2022, os: windows-2022, C: msvc-14.3-arm64ec, arch: amd64_arm64, cl_machine_flags: -arm64EC, link_machine_flags: '/machine:arm64ec' }
-          ####- { name: arm64x-win64-vs2022,  vsversion: 2022, os: windows-2022, C: msvc-14.3-arm64x,  arch: amd64_arm64, cl_machine_flags: -arm64EC, link_machine_flags: '/machine:arm64x' }
-          - { name: i386-win32-vs2019,    vsversion: 2019, os: windows-2019, C: msvc-14.2-x86,     arch: amd64_x86 }
-          - { name: i386-win32-vs2022,    vsversion: 2022, os: windows-2022, C: msvc-14.3-x86,     arch: amd64_x86 }
+          - { name: amd64-win64-vs2019,   os: windows-2019, vsversion: 2019, arch: amd64 }
+          - { name: amd64-win64-vs2022,   os: windows-2022, vsversion: 2022, arch: amd64 }
+          - { name: arm64-win64-vs2019,   os: windows-2019, vsversion: 2019, arch: amd64_arm64 }
+          - { name: arm64-win64-vs2022,   os: windows-2022, vsversion: 2022, arch: amd64_arm64 }
+          - { name: arm64ec-win64-vs2022, os: windows-2022, vsversion: 2022, arch: amd64_arm64, cl_machine_flags: -arm64EC, link_machine_flags: '/machine:arm64ec' }
+          # { name: arm64x-win64-vs2022,  os: windows-2022, vsversion: 2022, arch: amd64_arm64, cl_machine_flags: -arm64EC, link_machine_flags: '/machine:arm64x' }
+          - { name: i386-win32-vs2019,    os: windows-2019, vsversion: 2019, arch: amd64_x86 }
+          - { name: i386-win32-vs2022,    os: windows-2022, vsversion: 2022, arch: amd64_x86 }
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -290,8 +288,8 @@ jobs:
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{ matrix.arch }}
           vsversion: ${{ matrix.vsversion }}
+          arch: ${{ matrix.arch }}
       - name: 'Build'
         shell: cmd
         run: |
@@ -361,7 +359,7 @@ jobs:
         shell: bash
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1=$(readlink -en ./.github/travis_testsuite_1.sh)
+          testsuite_1=$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)
           env -C build/$C/$B/upx upx_exe=./upx.exe bash "$testsuite_1"
 
   job-linux-zigcc:
