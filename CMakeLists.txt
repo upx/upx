@@ -31,7 +31,7 @@ else()
 endif()
 
 # test config options (see below)
-# NOTE: self-pack test can only work if the host executable format is supported by UPX!
+# IMPORTANT NOTE: self-pack test can only work if the host executable format is supported by UPX!
 option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" OFF)
 
 #***********************************************************************
@@ -360,7 +360,7 @@ if(NOT CMAKE_CROSSCOMPILING)
     add_test(NAME upx-help    COMMAND upx --help)
 endif()
 if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
-    # NOTE: these tests can only work if the host executable format is supported by UPX!
+    # IMPORTANT NOTE: these tests can only work if the host executable format is supported by UPX!
     function(upx_add_test)
         set(name ${ARGV0})
         list(REMOVE_AT ARGV 0)
@@ -370,11 +370,11 @@ if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     set(exe ${CMAKE_EXECUTABLE_SUFFIX})
     set(upx_self_exe "$<TARGET_FILE:upx>")
     set(fo "--force-overwrite")
-    upx_add_test(upx-self-pack      upx -3         ${upx_self_exe} ${fo} -o upx-packed${exe})
-    upx_add_test(upx-self-pack-n2b  upx -3 --nrv2b ${upx_self_exe} ${fo} -o upx-packed-n2b${exe})
-    upx_add_test(upx-self-pack-n2d  upx -3 --nrv2d ${upx_self_exe} ${fo} -o upx-packed-n2d${exe})
-    upx_add_test(upx-self-pack-n2e  upx -3 --nrv2e ${upx_self_exe} ${fo} -o upx-packed-n2e${exe})
-    upx_add_test(upx-self-pack-lzma upx -1 --lzma  ${upx_self_exe} ${fo} -o upx-packed-lzma${exe})
+    upx_add_test(upx-self-pack      upx -3         "${upx_self_exe}" ${fo} -o upx-packed${exe})
+    upx_add_test(upx-self-pack-n2b  upx -3 --nrv2b "${upx_self_exe}" ${fo} -o upx-packed-n2b${exe})
+    upx_add_test(upx-self-pack-n2d  upx -3 --nrv2d "${upx_self_exe}" ${fo} -o upx-packed-n2d${exe})
+    upx_add_test(upx-self-pack-n2e  upx -3 --nrv2e "${upx_self_exe}" ${fo} -o upx-packed-n2e${exe})
+    upx_add_test(upx-self-pack-lzma upx -1 --lzma  "${upx_self_exe}" ${fo} -o upx-packed-lzma${exe})
     upx_add_test(upx-list           upx -l         upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})
     upx_add_test(upx-fileinfo       upx --fileinfo upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})
     upx_add_test(upx-test           upx -t         upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})

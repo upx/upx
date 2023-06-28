@@ -12,7 +12,7 @@ env:
   ZIG_DIST_VERSION: 0.11.0-dev.3859+88284c124
 
 jobs:
-  job-linux-zigcc:
+  job-linux-zigcc: # uses cmake + make
     name: ${{ format('zigcc {0} {1}', matrix.zig_target, matrix.zig_pic) }}
     runs-on: ubuntu-latest
     container: 'alpine:3.18' # older versions such as alpine:3.12 also work; no-container also works

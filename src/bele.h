@@ -179,8 +179,8 @@ inline void set_le24(void *p, unsigned v) noexcept {
 }
 
 inline unsigned get_le26(const void *p) noexcept { return get_le32(p) & 0x03ffffff; }
-inline unsigned get_le19_5(const void *p) noexcept { return 0x0007ffff & (get_le32(p) >> 5); }
-inline unsigned get_le14_5(const void *p) noexcept { return 0x00003fff & (get_le32(p) >> 5); }
+inline unsigned get_le19_5(const void *p) noexcept { return (get_le32(p) >> 5) & 0x0007ffff; }
+inline unsigned get_le14_5(const void *p) noexcept { return (get_le32(p) >> 5) & 0x00003fff; }
 
 inline void set_le26(void *p, unsigned v) noexcept {
     // preserve the top 6 bits

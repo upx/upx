@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  job-cmake-macos-xcode:
+  job-cmake-macos-xcode: # uses cmake + xcodebuild
     name: ${{ format('{0} cmake Xcode', matrix.os) }}
     runs-on: ${{ matrix.os }}
     strategy:

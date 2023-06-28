@@ -49,7 +49,7 @@ jobs:
           UPX_CLANG_FORMAT="$PWD/../deps/bin-upx-20221212/clang-format-15.0.6" make -C src clang-format
           if ! git diff --quiet; then git diff; exit 1; fi
 
-  job-linux-cmake:
+  job-linux-cmake: # uses cmake + make
     if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
@@ -123,10 +123,10 @@ jobs:
       - name: 'Run test suite build/extra/gcc/release'
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1=$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)
+          testsuite_1="$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)"
           env -C build/extra/gcc/release upx_exe=./upx bash "$testsuite_1"
 
-  job-macos-cmake:
+  job-macos-cmake: # uses cmake + make
     if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.os) }}
@@ -142,8 +142,11 @@ jobs:
       - name: 'Install brew packages'
         if: ${{ matrix.testsuite }}
         run: |
-          brew update
-          brew install coreutils
+          # testsuite needs working "readlink -en" and "sha256sum"
+          if ! test -e /usr/local/opt/coreutils/libexec/gnubin/readlink; then
+            brew update
+            brew install coreutils
+          fi
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
@@ -195,10 +198,10 @@ jobs:
         run: |
           export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1=$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)
+          testsuite_1="$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)"
           env -C build/extra/clang/release upx_exe=./upx bash "$testsuite_1"
 
-  job-windows-cmake:
+  job-windows-cmake: # uses cmake + msbuild
     if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('{0} cmake', matrix.name) }}
@@ -243,17 +246,17 @@ jobs:
       - name: 'Run basic tests'
         if: ${{ matrix.arch != 'amd64_arm64' }}
         run: |
-          cmake --build build/debug   --config Debug   --target RUN_TESTS
-          cmake --build build/release --config Release --target RUN_TESTS
+          ctest --test-dir build/debug   -C Debug
+          ctest --test-dir build/release -C Release
       - name: 'Run test suite build/release'
         if: ${{ matrix.arch != 'amd64_arm64' }}
         shell: bash
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1=$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)
+          testsuite_1="$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)"
           env -C build/release/Release upx_exe=./upx bash "$testsuite_1"
 
-  job-windows-toolchains:
+  job-windows-toolchains: # build "by hand" using cmd.exe
     if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('windows {0}', matrix.name) }}
@@ -290,7 +293,7 @@ jobs:
         with:
           vsversion: ${{ matrix.vsversion }}
           arch: ${{ matrix.arch }}
-      - name: 'Build'
+      - name: 'Build by hand'
         shell: cmd
         run: |
           @REM setup directories
@@ -359,10 +362,10 @@ jobs:
         shell: bash
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1=$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)
+          testsuite_1="$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)"
           env -C build/$C/$B/upx upx_exe=./upx.exe bash "$testsuite_1"
 
-  job-linux-zigcc:
+  job-linux-zigcc: # uses cmake + make
     if: ${{ true }}
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('zigcc {0} {1}', matrix.zig_target, matrix.zig_pic) }}

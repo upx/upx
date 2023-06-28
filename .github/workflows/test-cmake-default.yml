@@ -1,10 +1,19 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 name: 'Test - CMake default build type'
+
 on: [workflow_dispatch]
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+
 jobs:
 
-  job-cmake-make:
+#
+# single-config generators - these use and respect CMAKE_BUILD_TYPE
+#
+
+  cmake-make:
     runs-on: ubuntu-latest
     steps:
       - name: 'Check out code'
@@ -12,13 +21,16 @@ jobs:
         with: { submodules: true }
       - name: 'Config, build, test and install'
         run: |
-          cmake -S . -B build/default
+          cmake -S . -B build/default -G "Unix Makefiles"
           cmake --build build/default --parallel --verbose
           ctest --test-dir build/default
-          make -C build/default test
           (cd build/default && DESTDIR=$PWD/Install-default cmake --install .)
+          # "make test" also works
+          env -C build/default make test
+          # "make install" also works
+          env -C build/default DESTDIR=./Install-with-make make install
 
-  job-cmake-ninja:
+  cmake-ninja:
     runs-on: ubuntu-latest
     steps:
       - name: 'Check out code'
@@ -26,30 +38,17 @@ jobs:
         with: { submodules: true }
       - name: 'Config, build, test and install'
         run: |
-          sudo apt-get install ninja-build
+          test -f /usr/bin/ninja || sudo apt-get install -y ninja-build
           cmake -S . -B build/default -G Ninja
           cmake --build build/default --parallel --verbose
           ctest --test-dir build/default
-          ninja -C build/default test
           (cd build/default && DESTDIR=$PWD/Install-default cmake --install .)
+          # "ninja test" also works
+          env -C build/default ninja test
+          # "ninja install" also works
+          env -C build/default DESTDIR=./Install-with-ninja ninja install
 
-  job-cmake-ninja-multi-config:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Check out code'
-        uses: actions/checkout@v3
-        with: { submodules: true }
-      - name: 'Config, build, test and install'
-        run: |
-          sudo apt-get install ninja-build
-          cmake -S . -B build/default -G "Ninja Multi-Config"
-          cmake --build build/default --parallel --verbose
-          # multi-config: ctest NEEDS a config
-          ctest --test-dir build/default -C Release
-          ninja -C build/default test
-          (cd build/default && DESTDIR=$PWD/Install-default cmake --install .)
-
-  job-cmake-nmake:
+  cmake-nmake:
     runs-on: windows-2022
     steps:
       - name: 'Check out code'
@@ -65,10 +64,40 @@ jobs:
           cmake -S . -B build/default -G "NMake Makefiles"
           cmake --build build/default --parallel --verbose
           ctest --test-dir build/default
+          # "cmake --install" works on Windows as well, nice
+          env -C build/default DESTDIR=./Install-default cmake --install .
+          # "nmake test" also works
           env -C build/default nmake test
-          env DESTDIR=./Install-default cmake --install build/default
+          # "nmake install" also works
+          env -C build/default DESTDIR=./Install-with-nmake nmake install
 
-  job-cmake-vsstudio-multi-config:
+#
+# multi-config generators - these use CMAKE_CONFIGURATION_TYPES, but the defaults seem inconsistent
+#   => when using multi-config generators always explicitly pass the requested build-config
+#
+
+  # ninja-multi-config seems to use the *first* element of CMAKE_CONFIGURATION_TYPES; nice
+  cmake-ninja-multi-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Config, build, test and install'
+        run: |
+          test -f /usr/bin/ninja || sudo apt-get install -y ninja-build
+          cmake -S . -B build/default -G "Ninja Multi-Config"
+          cmake --build build/default --parallel --verbose
+          # multi-config: ctest NEEDS a config
+          ctest --test-dir build/default -C Release
+          (cd build/default && DESTDIR=$PWD/Install-default cmake --install .)
+          # "ninja test" also works with multi-config
+          env -C build/default ninja test
+          # "ninja install" also works with multi-config
+          env -C build/default DESTDIR=./Install-with-ninja ninja install
+
+  # vsstudio-multi-config (msbuild) seems to use "Debug" by default
+  cmake-vsstudio-multi-config:
     runs-on: windows-2022
     steps:
       - name: 'Check out code'
@@ -85,8 +114,10 @@ jobs:
           cmake --build build/default --parallel --verbose
           # multi-config: ctest NEEDS a config
           ctest --test-dir build/default -C Debug
+          # TODO: does cmake --install work?
 
-  job-cmake-xcode-multi-config:
+  # xcode-multi-config (xcodebuild) seems to use "Debug" by default, except for "cmake --install" (BUG?)
+  cmake-xcode-multi-config:
     runs-on: macos-12
     steps:
       - name: 'Check out code'
@@ -98,5 +129,5 @@ jobs:
           cmake --build build/default --parallel --verbose
           # multi-config: ctest NEEDS a config
           ctest --test-dir build/default -C Debug
-          # BUG multi-config: cmake --install defaults to "Release" !!
+          # BUG(?) multi-config: cmake --install defaults to "Release" !!
           (cd build/default && DESTDIR=$PWD/Install-default cmake --install . --config Debug)
