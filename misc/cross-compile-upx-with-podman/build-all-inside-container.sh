@@ -15,6 +15,7 @@ fi
 # go to upx top-level directory
 cd "$argv0dir/../.." || exit 1
 pwd
+test -f doc/upx.pod   || exit 1 # sanity check
 test -f src/version.h || exit 1 # sanity check
 
 function run_config_and_build {

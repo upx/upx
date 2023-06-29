@@ -14,9 +14,11 @@ ii  binutils                    2.38-4ubuntu2.2                         amd64   
 ii  binutils-common:amd64       2.38-4ubuntu2.2                         amd64        Common files for the GNU assembler, linker and binary utilities
 ii  binutils-x86-64-linux-gnu   2.38-4ubuntu2.2                         amd64        GNU binary utilities, for x86-64-linux-gnu target
 ii  bsdutils                    1:2.37.2-4ubuntu3                       amd64        basic utilities from 4.4BSD-Lite
+ii  busybox                     1:1.30.1-7ubuntu3                       amd64        Tiny utilities for small and embedded systems
 ii  bzip2                       1.0.8-5build1                           amd64        high-quality block-sorting file compressor - utilities
 ii  ca-certificates             20230311ubuntu0.22.04.1                 all          Common CA certificates
 ii  cabextract                  1.9-3                                   amd64        Microsoft Cabinet file unpacker
+ii  ccache                      4.5.1-1                                 amd64        Compiler cache for fast recompilation of C/C++ code
 ii  chrpath                     0.16-2                                  amd64        Tool to edit the rpath in ELF binaries
 ii  cmake                       3.22.1-1ubuntu1.22.04.1                 amd64        cross-platform, open-source make system
 ii  cmake-data                  3.22.1-1ubuntu1.22.04.1                 all          CMake data files (modules, templates and documentation)
@@ -43,6 +45,7 @@ ii  g++                         4:11.2.0-1ubuntu1                       amd64   
 ii  g++-11                      11.3.0-1ubuntu1~22.04.1                 amd64        GNU C++ compiler
 ii  g++-11-multilib             11.3.0-1ubuntu1~22.04.1                 amd64        GNU C++ compiler (multilib support)
 ii  g++-multilib                4:11.2.0-1ubuntu1                       amd64        GNU C++ compiler (multilib files)
+ii  gawk                        1:5.1.0-1build3                         amd64        GNU awk, a pattern scanning and processing language
 ii  gcc                         4:11.2.0-1ubuntu1                       amd64        GNU C compiler
 ii  gcc-11                      11.3.0-1ubuntu1~22.04.1                 amd64        GNU C compiler
 ii  gcc-11-base:amd64           11.3.0-1ubuntu1~22.04.1                 amd64        GCC, the GNU Compiler Collection (base package)
@@ -135,6 +138,7 @@ ii  libgomp1:amd64              12.1.0-2ubuntu1~22.04                   amd64   
 ii  libgpg-error0:amd64         1.43-3                                  amd64        GnuPG development runtime library
 ii  libgpm2:amd64               1.20.7-10build1                         amd64        General Purpose Mouse - shared library
 ii  libgssapi-krb5-2:amd64      1.19.2-2ubuntu0.2                       amd64        MIT Kerberos runtime libraries - krb5 GSS-API Mechanism
+ii  libhiredis0.14:amd64        0.14.1-2                                amd64        minimalistic C client library for Redis
 ii  libhogweed6:amd64           3.7.3-1build2                           amd64        low level cryptographic library (public-key cryptos)
 ii  libicu70:amd64              70.1-2                                  amd64        International Components for Unicode
 ii  libidn2-0:amd64             2.3.2-2build1                           amd64        Internationalized domain names (IDNA2008/TR46) library
@@ -202,6 +206,7 @@ ii  libsemanage2:amd64          3.3-1build2                             amd64   
 ii  libsensors-config           1:3.6.0-7ubuntu1                        all          lm-sensors configuration files
 ii  libsensors5:amd64           1:3.6.0-7ubuntu1                        amd64        library to read temperature/voltage/fan sensors
 ii  libsepol2:amd64             3.3-1build1                             amd64        SELinux library for manipulating binary security policies
+ii  libsigsegv2:amd64           2.13-1ubuntu3                           amd64        Library for handling page faults in a portable way
 ii  libsmartcols1:amd64         2.37.2-4ubuntu3                         amd64        smart column output alignment library
 ii  libsodium23:amd64           1.0.18-1build2                          amd64        Network communication, cryptography and signaturing library
 ii  libsource-highlight-common  3.1.9-4.1build2                         all          architecture-independent files for source highlighting library
@@ -249,7 +254,7 @@ ii  libxxhash0:amd64            0.8.1-1                                 amd64   
 ii  libyaml-0-2:amd64           0.2.2-1build2                           amd64        Fast YAML 1.1 parser and emitter library
 ii  libzstd-dev:amd64           1.4.8+dfsg-3build1                      amd64        fast lossless compression algorithm -- development files
 ii  libzstd1:amd64              1.4.8+dfsg-3build1                      amd64        fast lossless compression algorithm
-ii  linux-libc-dev:amd64        5.15.0-75.82                            amd64        Linux Kernel Headers for development
+ii  linux-libc-dev:amd64        5.15.0-76.83                            amd64        Linux Kernel Headers for development
 ii  login                       1:4.8.1-2ubuntu2.1                      amd64        system login tools
 ii  logsave                     1.46.5-2ubuntu1.1                       amd64        save the output of a command in a log file
 ii  lsb-base                    11.1.0ubuntu4                           all          Linux Standard Base init script functionality
@@ -260,6 +265,7 @@ ii  lzop                        1.04-2build2                            amd64   
 ii  make                        4.3-4.1build1                           amd64        utility for directing compilation
 ii  mawk                        1.3.4.20200120-3                        amd64        Pattern scanning and text processing language
 ii  media-types                 7.0.0                                   all          List of standard media types and their usual file extension
+ii  mksh                        59c-16                                  amd64        MirBSD Korn Shell
 ii  moreutils                   0.66-1                                  amd64        additional Unix utilities
 ii  mount                       2.37.2-4ubuntu3                         amd64        tools for mounting and manipulating filesystems
 ii  ncurses-base                6.3-2ubuntu0.1                          all          basic terminal type definitions
@@ -295,6 +301,7 @@ ii  sensible-utils              0.0.17                                  all     
 ii  sysstat                     12.5.2-2ubuntu0.2                       amd64        system performance tools for Linux
 ii  sysvinit-utils              3.01-1ubuntu1                           amd64        System-V-like utilities
 ii  tar                         1.34+dfsg-1ubuntu0.1.22.04.1            amd64        GNU version of the tar archiving utility
+ii  time                        1.9-0.1build2                           amd64        GNU time program for measuring CPU resource usage
 ii  ubuntu-keyring              2021.03.26                              all          GnuPG keys of the Ubuntu archive
 ii  ucf                         3.0043                                  all          Update Configuration File(s): preserve user changes to config files
 ii  universal-ctags             5.9.20210829.0-1                        amd64        build tag file indexes of source code definitions
@@ -307,6 +314,7 @@ ii  vim-runtime                 2:8.2.3995-1ubuntu2.8                   all     
 ii  wget                        1.21.2-2ubuntu1                         amd64        retrieves files from the web
 ii  xxd                         2:8.2.3995-1ubuntu2.8                   amd64        tool to make (or reverse) a hex dump
 ii  xz-utils                    5.2.5-2ubuntu1                          amd64        XZ-format compression utilities
+ii  yash                        2.51-1                                  amd64        yet another shell
 ii  zip                         3.0-12build2                            amd64        Archiver for .zip files
 ii  zlib1g-dev:amd64            1:1.2.11.dfsg-2ubuntu9.2                amd64        compression library - development
 ii  zlib1g:amd64                1:1.2.11.dfsg-2ubuntu9.2                amd64        compression library - runtime
@@ -319,7 +327,7 @@ ii  zstd                        1.4.8+dfsg-3build1                      amd64   
 ||/ Name                        Version                                 Architecture Description
 
 Packages sorted by Installed-Size:
-   741791 ===== TOTAL (313 packages)
+   748809 ===== TOTAL (321 packages)
     52577 gcc-11                                   amd64
     34444 libicu70                                 amd64
     32780 vim-runtime                              all
@@ -401,16 +409,20 @@ Packages sorted by Installed-Size:
      1854 aria2                                    amd64
      1750 libdb5.3                                 amd64
      1746 libunistring2                            amd64
+     1680 gawk                                     amd64
      1655 zstd                                     amd64
      1602 libsqlite3-0                             amd64
      1516 e2fsprogs                                amd64
+     1508 mksh                                     amd64
      1472 sysstat                                  amd64
      1464 bash-completion                          all
      1445 hyperfine                                amd64
+     1429 yash                                     amd64
      1429 libx11-data                              all
      1388 procps                                   amd64
      1386 libx11-6                                 amd64
      1354 libgcrypt20                              amd64
+     1343 ccache                                   amd64
      1328 libzstd-dev                              amd64
      1292 libp11-kit0                              amd64
      1138 libpam-modules                           amd64
@@ -424,6 +436,7 @@ Packages sorted by Installed-Size:
       876 libarchive13                             amd64
       846 libzstd1                                 amd64
       794 rsync                                    amd64
+      791 busybox                                  amd64
       787 libcurl4                                 amd64
       784 libbrotli1                               amd64
       771 libcurl3-gnutls                          amd64
@@ -558,6 +571,7 @@ Packages sorted by Installed-Size:
       133 init-system-helpers                      all
       132 libipt2                                  amd64
       131 libprocps8                               amd64
+      126 time                                     amd64
       125 libmpc3                                  amd64
       123 libtimedate-perl                         all
       123 libnsl2                                  amd64
@@ -583,6 +597,7 @@ Packages sorted by Installed-Size:
        96 libmspack0                               amd64
        95 libpsl5                                  amd64
        93 libsasl2-modules-db                      amd64
+       92 libhiredis0.14                           amd64
        91 libjansson4                              amd64
        90 python3                                  amd64
        83 sysvinit-utils                           amd64
@@ -608,6 +623,7 @@ Packages sorted by Installed-Size:
        51 libutempter0                             amd64
        51 hostname                                 amd64
        50 gcc                                      amd64
+       49 libsigsegv2                              amd64
        47 libkeyutils1                             amd64
        45 libgdbm-compat4                          amd64
        45 libcap-ng0                               amd64

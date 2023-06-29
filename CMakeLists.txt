@@ -416,10 +416,6 @@ endif() # UPX_CONFIG_CMAKE_DISABLE_INSTALL
 # finally print some info about the build configuration
 #***********************************************************************
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
-include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
-endif()
-
 function(print_var)
     foreach(v ${ARGV})
         if(${v})
@@ -427,6 +423,11 @@ function(print_var)
         endif()
     endforeach()
 endfunction()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
+include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
+endif()
+
 print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
 if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
 print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)

@@ -41,9 +41,11 @@ ii  binutils-sparc64-linux-gnu                2.38-4ubuntu2.2                   
 ii  binutils-x86-64-linux-gnu                 2.38-4ubuntu2.2                         amd64        GNU binary utilities, for x86-64-linux-gnu target
 ii  binutils-x86-64-linux-gnux32              2.38-4ubuntu2.2                         amd64        GNU binary utilities, for x86-64-linux-gnux32 target
 ii  bsdutils                                  1:2.37.2-4ubuntu3                       amd64        basic utilities from 4.4BSD-Lite
+ii  busybox                                   1:1.30.1-7ubuntu3                       amd64        Tiny utilities for small and embedded systems
 ii  bzip2                                     1.0.8-5build1                           amd64        high-quality block-sorting file compressor - utilities
 ii  ca-certificates                           20230311ubuntu0.22.04.1                 all          Common CA certificates
 ii  cabextract                                1.9-3                                   amd64        Microsoft Cabinet file unpacker
+ii  ccache                                    4.5.1-1                                 amd64        Compiler cache for fast recompilation of C/C++ code
 ii  chrpath                                   0.16-2                                  amd64        Tool to edit the rpath in ELF binaries
 ii  clang-14                                  1:14.0.0-1ubuntu1                       amd64        C, C++ and Objective-C compiler
 ii  clang-format-14                           1:14.0.0-1ubuntu1                       amd64        Tool to format C/C++/Obj-C code
@@ -166,6 +168,7 @@ ii  g++-s390x-linux-gnu                       4:11.2.0-1ubuntu1                 
 ii  g++-sh4-linux-gnu                         4:11.2.0--1ubuntu1                      amd64        GNU C++ compiler for the sh4 architecture
 ii  g++-sparc64-linux-gnu                     4:11.2.0--1ubuntu1                      amd64        GNU C++ compiler for the sparc64 architecture
 ii  g++-x86-64-linux-gnux32                   4:11.2.0--1ubuntu1                      amd64        GNU C++ compiler for the x32 architecture
+ii  gawk                                      1:5.1.0-1build3                         amd64        GNU awk, a pattern scanning and processing language
 ii  gcc                                       4:11.2.0-1ubuntu1                       amd64        GNU C compiler
 ii  gcc-10-cross-base-mipsen                  10.3.0-1ubuntu1cross2                   all          GCC, the GNU Compiler Collection (library base package)
 ii  gcc-10-mips-linux-gnu                     10.3.0-1ubuntu1cross2                   amd64        GNU C compiler (cross compiler for mips architecture)
@@ -628,6 +631,7 @@ ii  libgudev-1.0-0:amd64                      1:237-2build1                     
 ii  libgudev-1.0-0:i386                       1:237-2build1                           i386         GObject-based wrapper library for libudev
 ii  libharfbuzz0b:amd64                       2.7.4-1ubuntu3.1                        amd64        OpenType text shaping engine (shared library)
 ii  libharfbuzz0b:i386                        2.7.4-1ubuntu3.1                        i386         OpenType text shaping engine (shared library)
+ii  libhiredis0.14:amd64                      0.14.1-2                                amd64        minimalistic C client library for Redis
 ii  libhogweed6:amd64                         3.7.3-1build2                           amd64        low level cryptographic library (public-key cryptos)
 ii  libhogweed6:i386                          3.7.3-1build2                           i386         low level cryptographic library (public-key cryptos)
 ii  libhwasan0-arm64-cross                    12.1.0-2ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
@@ -820,6 +824,7 @@ ii  libsensors5:i386                          1:3.6.0-7ubuntu1                  
 ii  libsepol2:amd64                           3.3-1build1                             amd64        SELinux library for manipulating binary security policies
 ii  libshout3:amd64                           2.4.5-1build3                           amd64        MP3/Ogg Vorbis broadcast streaming library
 ii  libshout3:i386                            2.4.5-1build3                           i386         MP3/Ogg Vorbis broadcast streaming library
+ii  libsigsegv2:amd64                         2.13-1ubuntu3                           amd64        Library for handling page faults in a portable way
 ii  libslang2:amd64                           2.3.2-5build4                           amd64        S-Lang programming library - runtime version
 ii  libslang2:i386                            2.3.2-5build4                           i386         S-Lang programming library - runtime version
 ii  libslirp0:amd64                           4.6.1-1build1                           amd64        General purpose TCP-IP emulator library
@@ -1070,7 +1075,7 @@ ii  linux-libc-dev-s390x-cross                5.15.0-22.22cross3                
 ii  linux-libc-dev-sh4-cross                  5.15.0-22.22cross4                      all          Linux Kernel Headers for development (for cross-compiling)
 ii  linux-libc-dev-sparc64-cross              5.15.0-22.22cross4                      all          Linux Kernel Headers for development (for cross-compiling)
 ii  linux-libc-dev-x32-cross                  5.15.0-22.22cross4                      all          Linux Kernel Headers for development (for cross-compiling)
-ii  linux-libc-dev:amd64                      5.15.0-75.82                            amd64        Linux Kernel Headers for development
+ii  linux-libc-dev:amd64                      5.15.0-76.83                            amd64        Linux Kernel Headers for development
 ii  lldb-14                                   1:14.0.0-1ubuntu1                       amd64        Next generation, high-performance debugger
 ii  llvm-14                                   1:14.0.0-1ubuntu1                       amd64        Modular compiler and toolchain technologies
 ii  llvm-14-dev                               1:14.0.0-1ubuntu1                       amd64        Modular compiler and toolchain technologies, libraries and headers
@@ -1091,6 +1096,7 @@ ii  mesa-vulkan-drivers:i386                  22.2.5-0ubuntu0.1~22.04.3         
 ii  mingw-w64-common                          8.0.0-1                                 all          Common files for Mingw-w64
 ii  mingw-w64-i686-dev                        8.0.0-1                                 all          Development files for MinGW-w64 targeting Win32
 ii  mingw-w64-x86-64-dev                      8.0.0-1                                 all          Development files for MinGW-w64 targeting Win64
+ii  mksh                                      59c-16                                  amd64        MirBSD Korn Shell
 ii  moreutils                                 0.66-1                                  amd64        additional Unix utilities
 ii  mount                                     2.37.2-4ubuntu3                         amd64        tools for mounting and manipulating filesystems
 ii  msr-tools                                 1.3-4                                   amd64        Utilities for modifying MSRs from userspace
@@ -1161,6 +1167,7 @@ ii  systemd-sysv                              249.11-0ubuntu3.9                 
 ii  systemd-timesyncd                         249.11-0ubuntu3.9                       amd64        minimalistic service to synchronize local time with NTP servers
 ii  sysvinit-utils                            3.01-1ubuntu1                           amd64        System-V-like utilities
 ii  tar                                       1.34+dfsg-1ubuntu0.1.22.04.1            amd64        GNU version of the tar archiving utility
+ii  time                                      1.9-0.1build2                           amd64        GNU time program for measuring CPU resource usage
 ii  ubuntu-keyring                            2021.03.26                              all          GnuPG keys of the Ubuntu archive
 ii  ubuntu-mono                               20.10-0ubuntu2                          all          Ubuntu Mono Icon theme
 ii  ucf                                       3.0043                                  all          Update Configuration File(s): preserve user changes to config files
@@ -1181,6 +1188,7 @@ ii  xdg-user-dirs                             0.17-2ubuntu4                     
 ii  xkb-data                                  2.33-1                                  all          X Keyboard Extension (XKB) configuration data
 ii  xxd                                       2:8.2.3995-1ubuntu2.8                   amd64        tool to make (or reverse) a hex dump
 ii  xz-utils                                  5.2.5-2ubuntu1                          amd64        XZ-format compression utilities
+ii  yash                                      2.51-1                                  amd64        yet another shell
 ii  zip                                       3.0-12build2                            amd64        Archiver for .zip files
 ii  zlib1g-dev:amd64                          1:1.2.11.dfsg-2ubuntu9.2                amd64        compression library - development
 ii  zlib1g:amd64                              1:1.2.11.dfsg-2ubuntu9.2                amd64        compression library - runtime
@@ -1193,7 +1201,7 @@ ii  zstd                                      1.4.8+dfsg-3build1                
 ||/ Name                                      Version                                 Architecture Description
 
 Packages sorted by Installed-Size:
-  7715290 ===== TOTAL (1187 packages)
+  7722308 ===== TOTAL (1195 packages)
    474522 libwine                                  i386
    270993 llvm-14-dev                              amd64
    264247 qemu-efi-aarch64                         all
@@ -1549,11 +1557,13 @@ Packages sorted by Installed-Size:
      1746 libunistring2                            amd64
      1730 libsdl2-2.0-0                            amd64
      1695 libgcc-11-dev-alpha-cross                all
+     1680 gawk                                     amd64
      1655 zstd                                     amd64
      1628 libslang2                                amd64
      1602 libsqlite3-0                             amd64
      1534 libcairo2                                i386
      1516 e2fsprogs                                amd64
+     1508 mksh                                     amd64
      1487 libstdc++6-armhf-cross                   all
      1484 libsamplerate0                           amd64
      1483 libsamplerate0                           i386
@@ -1562,6 +1572,7 @@ Packages sorted by Installed-Size:
      1455 libx11-6                                 i386
      1445 hyperfine                                amd64
      1436 libobjc-11-dev                           amd64
+     1429 yash                                     amd64
      1429 libx11-data                              all
      1425 libp11-kit0                              i386
      1408 llvm-14-runtime                          amd64
@@ -1571,6 +1582,7 @@ Packages sorted by Installed-Size:
      1373 libslang2                                i386
      1354 libgcrypt20                              amd64
      1351 libcairo2                                amd64
+     1343 ccache                                   amd64
      1328 libzstd-dev                              amd64
      1292 libp11-kit0                              amd64
      1285 libasound2                               i386
@@ -1619,6 +1631,7 @@ Packages sorted by Installed-Size:
       806 libsoup2.4-1                             i386
       794 rsync                                    amd64
       793 libbrotli1                               i386
+      791 busybox                                  amd64
       787 libcurl4                                 amd64
       784 libbrotli1                               amd64
       783 libcups2                                 amd64
@@ -2035,6 +2048,7 @@ Packages sorted by Installed-Size:
       130 dbus-user-session                        amd64
       128 libtasn1-6                               i386
       128 libdrm2                                  amd64
+      126 time                                     amd64
       125 libmpc3                                  amd64
       125 libitm1-alpha-cross                      all
       123 libtimedate-perl                         all
@@ -2103,6 +2117,7 @@ Packages sorted by Installed-Size:
        94 libcairo-gobject2                        i386
        93 libsasl2-modules-db                      amd64
        92 libsasl2-modules-db                      i386
+       92 libhiredis0.14                           amd64
        92 libgsm1                                  i386
        92 libgcc-s1-sparc64-cross                  all
        92 libgcc-s1-riscv64-cross                  all
@@ -2206,6 +2221,7 @@ Packages sorted by Installed-Size:
        50 libkeyutils1                             i386
        50 glib-networking-services                 amd64
        50 gcc                                      amd64
+       49 libsigsegv2                              amd64
        48 libxtst6                                 amd64
        48 libatomic1-armel-cross                   all
        48 glib-networking-common                   all

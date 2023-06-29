@@ -6,7 +6,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # run an interactive shell in the image
 # using a rootless Podman container
 
-image=upx-cross-compile-20230115-v3
+image=upx-cross-compile-20230115-v4
 
 flags=( --read-only --rm --pull=never )
 flags+=( --cap-drop=all )               # drop all capabilities
@@ -23,6 +23,8 @@ if [[ 1 == 1 ]]; then
     # INFO: SELinux users *may* have to add ":z" to the volume mount flags; check the docs!
     flags+=( -v "${argv0dir}/../..:/home/upx/src/upx" )
     flags+=( -w /home/upx/src/upx )     # set working directory
+    flags+=( --tmpfs /home/upx/.cache:rw,exec ) # mount a writeable tmpfs
+    flags+=( --tmpfs /home/upx/.local:rw,exec ) # mount a writeable tmpfs
 else
     # run as user root 0:0
     # ONLY FOR DEBUGGING THE IMAGE
