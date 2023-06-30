@@ -266,6 +266,22 @@ static int init(screen_t *this, int fd) {
 #endif
 #endif
 
+#if 1
+    // check if we are running under Wine
+    // (this rather direct Win32 screen driver maps poorly to Unix terminals)
+    // ntdll.dll wine_get_version() was added in wine-0.9.59 (Apr 2008)
+    HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+    if (ntdll != nullptr) {
+        typedef const char *(CDECL * wine_get_version_func_t)(void);
+        wine_get_version_func_t wine_get_version;
+        wine_get_version =
+            (wine_get_version_func_t) (void *) GetProcAddress(ntdll, "wine_get_version");
+        if (wine_get_version != nullptr) {
+            return -1;
+        }
+    }
+#endif
+
     this->data->cursor_x = csbi->dwCursorPosition.X;
     this->data->cursor_y = csbi->dwCursorPosition.Y;
 
