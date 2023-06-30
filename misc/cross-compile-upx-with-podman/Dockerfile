@@ -39,7 +39,7 @@ RUN apt-get install -y \
         # clang-14 and tools
         clang-14 clang-format-14 clang-tidy-14 clang-tools-14 lldb-14 llvm-14 \
         # QEMU and Wine
-        qemu-system qemu-user wine wine32 \
+        qemu-system qemu-user wine wine32:i386 wine64 \
         # misc
         gdb lsb-release valgrind \
     && true
