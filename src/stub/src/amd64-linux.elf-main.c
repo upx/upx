@@ -496,7 +496,7 @@ do_xmap(
     if (xi && PT_PHDR==phdr->p_type) {
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     } else
-    if (PT_LOAD==phdr->p_type) {
+    if (PT_LOAD==phdr->p_type && phdr->p_memsz != 0) {
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         DPRINTF("LOAD p_offset=%%p  p_vaddr=%%p  p_filesz=%%p  p_memsz=%%p  p_flags=%%x  prot=%%x\\n",
             phdr->p_offset, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, phdr->p_flags, prot);

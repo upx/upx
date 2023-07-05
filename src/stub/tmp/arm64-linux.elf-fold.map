@@ -8,7 +8,7 @@ Linker script and memory map
 
                 0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x00000000001000bc      0xa34
+.text           0x00000000001000bc      0xa3c
  *(.text)
  .text          0x00000000001000bc      0x280 tmp/arm64-linux.elf-fold.o
                 0x0000000000100258                my_bkpt
@@ -27,26 +27,26 @@ Linker script and memory map
                 0x0000000000100304                readlink
                 0x000000000010030c                open
                 0x0000000000100328                __clear_cache
- .text          0x000000000010033c      0x7b4 tmp/arm64-linux.elf-main.o
-                0x0000000000100988                upx_main
+ .text          0x000000000010033c      0x7bc tmp/arm64-linux.elf-main.o
+                0x0000000000100990                upx_main
  *(.data)
- .data          0x0000000000100af0        0x0 tmp/arm64-linux.elf-fold.o
- .data          0x0000000000100af0        0x0 tmp/arm64-linux.elf-main.o
+ .data          0x0000000000100af8        0x0 tmp/arm64-linux.elf-fold.o
+ .data          0x0000000000100af8        0x0 tmp/arm64-linux.elf-main.o
 
-.iplt           0x0000000000100af0        0x0
- .iplt          0x0000000000100af0        0x0 tmp/arm64-linux.elf-fold.o
+.iplt           0x0000000000100af8        0x0
+ .iplt          0x0000000000100af8        0x0 tmp/arm64-linux.elf-fold.o
 
-.rela.dyn       0x0000000000100af0        0x0
- .rela.iplt     0x0000000000100af0        0x0 tmp/arm64-linux.elf-fold.o
+.rela.dyn       0x0000000000100af8        0x0
+ .rela.iplt     0x0000000000100af8        0x0 tmp/arm64-linux.elf-fold.o
 
 .data
 LOAD tmp/arm64-linux.elf-fold.o
 LOAD tmp/arm64-linux.elf-main.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
-.igot.plt       0x0000000000100af0        0x0
- .igot.plt      0x0000000000100af0        0x0 tmp/arm64-linux.elf-fold.o
+.igot.plt       0x0000000000100af8        0x0
+ .igot.plt      0x0000000000100af8        0x0 tmp/arm64-linux.elf-fold.o
 
-.bss            0x0000000000100af0        0x0
- .bss           0x0000000000100af0        0x0 tmp/arm64-linux.elf-fold.o
- .bss           0x0000000000100af0        0x0 tmp/arm64-linux.elf-main.o
+.bss            0x0000000000100af8        0x0
+ .bss           0x0000000000100af8        0x0 tmp/arm64-linux.elf-fold.o
+ .bss           0x0000000000100af8        0x0 tmp/arm64-linux.elf-main.o

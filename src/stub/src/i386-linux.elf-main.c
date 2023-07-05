@@ -714,11 +714,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     if (xi && PT_PHDR==phdr->p_type) {
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     } else
-    if (PT_LOAD==phdr->p_type
-#if defined(__arm__)  /*{*/
-         &&  phdr->p_memsz
-#endif  /*}*/
-        ) {
+    if (PT_LOAD==phdr->p_type && phdr->p_memsz != 0) {
         if (xi && !phdr->p_offset /*&& ET_EXEC==ehdr->e_type*/) { // 1st PT_LOAD
             // ? Compressed PT_INTERP must not overwrite values from compressed a.out?
             auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc + ehdr->e_phoff);

@@ -442,7 +442,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr,
             auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
         }
     }
-    else if (PT_LOAD==phdr->p_type) {
+    else if (PT_LOAD==phdr->p_type && phdr->p_memsz != 0) {
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         struct Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
