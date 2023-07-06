@@ -175,6 +175,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER((wchar_t) -1 > 0)
 /*************************************************************************
 // upx_compiler_sanity_check()
 // assert a sane architecture and compiler
+// (modern compilers will optimize away most of this code)
 **************************************************************************/
 
 namespace {
@@ -287,7 +288,7 @@ struct TestBELE {
     static noinline bool test(void) {
         CheckIntegral<T>::check();
         CheckAlignment<T>::check();
-        // arithmetic checks (modern compilers will optimize this away)
+        // arithmetic checks
         T allbits = {};
         assert(allbits == 0);
         allbits += 1;
@@ -544,7 +545,7 @@ TEST_CASE("noncopyable") {
     };
     Test t = {};
     CHECK(t.v == 1);
-#if (ACC_CC_MSC) // MSVC thinks that Test is not std::is_trivially_copyable; compiler bug?
+#if (ACC_CC_MSC) // MSVC thinks that Test is not std::is_trivially_copyable; true or compiler bug?
     t.v = 0;
 #else
     mem_clear(&t);

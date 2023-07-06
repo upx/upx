@@ -37,7 +37,9 @@ CXX="$CXX $mandatory_flags"
 # HINT: set "top_srcdir" manually if your system does not have "readlink"
 if test "x$top_srcdir" = "x"; then
     my_argv0abs="$(readlink -fn "$my_argv0")"
+    test "x$my_argv0abs" = "x" && exit 1
     my_argv0dir="$(dirname "$my_argv0abs")"
+    test "x$my_argv0dir" = "x" && exit 1
     cd "$my_argv0dir/../.." || exit 1
 else
     cd "$top_srcdir" || exit 1

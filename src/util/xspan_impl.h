@@ -52,11 +52,11 @@ void xspan_check_range(const void *p, const void *base, ptrdiff_t size_in_bytes)
 
 // help constructor to distinguish between number of elements and bytes
 struct XSpanCount {
-    explicit XSpanCount(size_t n) noexcept : count(n) {}
+    explicit forceinline XSpanCount(size_t n) noexcept : count(n) {}
     size_t count; // public
 };
 struct XSpanSizeInBytes {
-    explicit XSpanSizeInBytes(size_t bytes) noexcept : size_in_bytes(bytes) {}
+    explicit forceinline XSpanSizeInBytes(size_t bytes) noexcept : size_in_bytes(bytes) {}
     size_t size_in_bytes; // public
 };
 
@@ -109,12 +109,16 @@ inline void xspan_mem_size_assert_ptrdiff(ptrdiff_t n) {
         (void) xspan_mem_size<T>((size_t) -n);
 }
 
-#if 0
+#if __cplusplus >= 201103L && 0
+// unfortunately doesnt't work with some older versions of libstdc++
+// (TODO later: we now require C++17, so this now probably works on all supported platforms)
 template <class From, class To>
 struct XSpan_is_convertible : public std::is_convertible<From *, To *> {};
 #else
+// manual implementation
 
 namespace detail {
+// helper for "void"
 template <class T, class U>
 struct XSpan_void_to_T {
     typedef U type;
@@ -125,7 +129,6 @@ struct XSpan_void_to_T<T, void> {
 };
 template <class T>
 struct XSpan_void_to_T<T, const void> {
-    // typedef typename std::add_const<T>::type type;
     typedef T type;
 };
 
@@ -180,7 +183,6 @@ ACC_COMPILE_TIME_ASSERT_HEADER((!XSpan_is_convertible<const char, int>::value))
 **************************************************************************/
 
 // forward declarations
-
 template <class T>
 struct PtrOrSpanOrNull;
 template <class T>
@@ -190,13 +192,24 @@ struct Span;
 template <class T>
 struct Ptr;
 
-class XSpanInternalDummyArg; // not implemented
+// XSpanInternalDummyArg: some type that is hard to match by accident
+class XSpanInternalDummyArgFake; // not implemented on purpose
+#if 0
+typedef XSpanInternalDummyArgFake *XSpanInternalDummyArg;
+#define XSpanInternalDummyArgInit nullptr
+#else
+struct XSpanInternalDummyArg {
+    explicit forceinline XSpanInternalDummyArg(int, XSpanInternalDummyArgFake *) noexcept {}
+};
+#define XSpanInternalDummyArgInit (XSPAN_NS(XSpanInternalDummyArg)(0, nullptr))
+#endif
 
 XSPAN_NAMESPACE_END
 
 #ifndef XSPAN_DELETED_FUNCTION
 #define XSPAN_DELETED_FUNCTION = delete
 #endif
+// function/method constraints
 #define XSPAN_REQUIRES_CONVERTIBLE_ONE_DIRECTION(From, To, RType)                                  \
     typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < From, To>::value, RType > ::type
 #define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)                                      \
@@ -206,15 +219,16 @@ XSPAN_NAMESPACE_END
 // note: these use "T" and "U"
 #define XSPAN_REQUIRES_CONVERTIBLE_R(RType) XSPAN_REQUIRES_CONVERTIBLE_ONE_DIRECTION(U, T, RType)
 #define XSPAN_REQUIRES_CONVERTIBLE_A                                                               \
-    XSPAN_REQUIRES_CONVERTIBLE_R(XSPAN_NS(XSpanInternalDummyArg) *) = nullptr
-#define XSPAN_REQUIRES_CONVERTIBLE_T XSPAN_REQUIRES_CONVERTIBLE_R(XSPAN_NS(XSpanInternalDummyArg) *)
+    XSPAN_REQUIRES_CONVERTIBLE_R(XSPAN_NS(XSpanInternalDummyArg)) = XSpanInternalDummyArgInit
+#define XSPAN_REQUIRES_CONVERTIBLE_T XSPAN_REQUIRES_CONVERTIBLE_R(XSPAN_NS(XSpanInternalDummyArg))
 // note: these use "T" and "U"
 #define XSPAN_REQUIRES_SIZE_1_R(RType)                                                             \
     typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < U, T>::value &&XSPAN_NS(              \
         ValueForSizeOf)<T>::value == 1 &&                                                          \
         XSPAN_NS(ValueForSizeOf)<U>::value == 1,                                                   \
         RType > ::type
-#define XSPAN_REQUIRES_SIZE_1_A XSPAN_REQUIRES_SIZE_1_R(XSPAN_NS(XSpanInternalDummyArg) *) = nullptr
+#define XSPAN_REQUIRES_SIZE_1_A                                                                    \
+    XSPAN_REQUIRES_SIZE_1_R(XSPAN_NS(XSpanInternalDummyArg)) = XSpanInternalDummyArgInit
 
 #include "xspan_impl_ptr_or_null.h"
 #include "xspan_impl_ptr_or_span.h"

@@ -53,6 +53,7 @@
 #endif
 
 #include <doctest/doctest/parts/doctest.cpp>
+
 #endif // DOCTEST_CONFIG_DISABLE
 
 /* vim:set ts=4 sw=4 et: */

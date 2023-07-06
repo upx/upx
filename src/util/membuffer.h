@@ -51,7 +51,7 @@ public:
     inline MemBufferBase() noexcept : ptr(nullptr), size_in_bytes(0) {}
     inline ~MemBufferBase() noexcept {}
 
-    // NOTE: implicit conversion to underlying pointer
+    // IMPORTANT NOTE: automatic conversion to underlying pointer
     // HINT: for fully bound-checked pointer use XSPAN_S from xspan.h
     operator pointer() const noexcept { return ptr; }
 
@@ -61,7 +61,6 @@ public:
         size_t bytes = mem_size(sizeof(T), n); // check mem_size
         return raw_bytes(bytes) + n;           // and check bytes
     }
-
 private:
     // membuffer - n -> pointer; not allowed - use raw_bytes() if needed
     template <class U>
@@ -94,7 +93,7 @@ private:
 
 // global operators
 #if ALLOW_INT_PLUS_MEMBUFFER
-// rewrite "n + membuffer" to "membuffer + n" so that this will get checked above
+// rewrite "n + membuffer" to "membuffer + n" (member function) so that this will get checked above
 template <class T, class U>
 inline typename std::enable_if<std::is_integral<U>::value, typename MemBufferBase<T>::pointer>::type
 operator+(U n, const MemBufferBase<T> &mbb) {
@@ -121,8 +120,17 @@ inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T>
 }
 
 // some more global overloads using a checked raw_bytes() call
+#if __cplusplus >= 201703L
+#define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)                                      \
+    std::enable_if_t<std::is_convertible_v<A *, B *> || std::is_convertible_v<B *, A *>, RType>
+#elif __cplusplus >= 201103L
+#define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)                                      \
+    typename std::enable_if<                                                                       \
+        std::is_convertible<A *, B *>::value || std::is_convertible<B *, A *>::value, RType>::type
+#else
 #define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)                                      \
     typename std::enable_if<std::is_same<A, B>::value, RType>::type
+#endif
 #define C MemBufferBase
 #define XSPAN_FWD_C_IS_MEMBUFFER 1
 #if WITH_XSPAN >= 1

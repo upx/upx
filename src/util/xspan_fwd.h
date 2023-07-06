@@ -24,14 +24,22 @@
    <markus@oberhumer.com>
  */
 
-// manually forward a number of well-known functions using a
-// checked "raw_bytes()" call
+// manually forward a number of well-known functions using a checked "raw_bytes()" call
+//
+// uses C
+// uses optional D, E and XSPAN_FWD_C_IS_MEMBUFFER
+// needs XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
+//
+// example for a default implementation:
+//   #define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)
+//       std::enable_if_t<std::is_convertible_v<A *, B *> || std::is_convertible_v<B *, A *>, RType>
 
 #define XSPAN_FWD_TU(RType)                                                                        \
     template <class T, class U>                                                                    \
     inline XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(T, U, RType)
 
 #ifndef XSPAN_FWD_C_IS_MEMBUFFER
+// global operator: disallow "n + C" => force using "C + n" (member function) instead
 template <class T, class U>
 inline typename std::enable_if<std::is_integral<U>::value, void *>::type operator+(U, const C<T> &)
     XSPAN_DELETED_FUNCTION;

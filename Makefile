@@ -4,8 +4,9 @@
 #
 
 # INFO: this Makefile is just a convenience wrapper for calling CMake
+# (using a somewhat current CMake version is highly recommended)
 
-# NOTE: if you only have an older CMake 3.x then you can invoke cmake manually like this:
+# HINT: if you only have an older CMake 3.x then you can invoke cmake manually like this:
 #   mkdir -p build/release
 #   cd build/release
 #   cmake ../..

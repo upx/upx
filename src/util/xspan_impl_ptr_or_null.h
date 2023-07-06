@@ -86,7 +86,7 @@ public:
     }
 
     // nullptr
-    CSelf(std::nullptr_t) : ptr(nullptr), base(nullptr), size_in_bytes(0) {}
+    forceinline CSelf(std::nullptr_t) noexcept : ptr(nullptr), base(nullptr), size_in_bytes(0) {}
 #undef CSelf
 };
 

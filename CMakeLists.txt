@@ -120,10 +120,96 @@ if(is_multi_config)
     set(CMAKE_CONFIGURATION_TYPES "${c}" CACHE STRING "List of supported configuration types." FORCE)
 endif()
 
+# set MSVC_FRONTEND
 set(MSVC_FRONTEND 0)
 if(MSVC OR ",${CMAKE_C_COMPILER_FRONTEND_VARIANT}," STREQUAL ",MSVC,")
     set(MSVC_FRONTEND 1)
 endif()
+
+#***********************************************************************
+# common compilation flags
+#***********************************************************************
+
+if(UPX_CONFIG_DISABLE_WSTRICT)
+    # enable all basic warnings
+    set(warn_Wall -Wall)
+    set(warn_WN -W3)
+else()
+    # enable all basic warnings, and enable lots of strict warnings
+    set(warn_Wall -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings)
+    set(warn_WN -W4)
+endif()
+if(UPX_CONFIG_DISABLE_WERROR)
+    # warnings are just warnings
+    set(warn_Werror "")
+    set(warn_WX "")
+else()
+    # warnings are fatal errors; annoy developers to keep the source code warning-free
+    set(warn_Werror -Werror)
+    set(warn_WX -WX)
+endif()
+
+if(NOT MSVC)
+    # use -O2 instead of -O3 to reduce code size
+    string(REGEX REPLACE "(^| )-O3( |$$)" "\\1-O2\\2" a "${CMAKE_C_FLAGS_RELEASE}")
+    string(REGEX REPLACE "(^| )-O3( |$$)" "\\1-O2\\2" b "${CMAKE_CXX_FLAGS_RELEASE}")
+    set(CMAKE_C_FLAGS_RELEASE "${a}" CACHE STRING "Flags used by the C compiler during RELEASE builds." FORCE)
+    set(CMAKE_CXX_FLAGS_RELEASE "${b}" CACHE STRING "Flags used by the CXX compiler during RELEASE builds." FORCE)
+endif()
+
+if(MSVC_FRONTEND)
+    # disable silly warnings about using "deprecated" POSIX functions like fopen()
+    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
+    add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
+    add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    # use -funsigned-char; set __cplusplus according to selected C++ standard; use new preprocessor
+    add_definitions(-J -Zc:__cplusplus -Zc:preprocessor)
+else()
+    # protect against security threats caused by misguided compiler "optimizations"
+    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        add_definitions(-fno-delete-null-pointer-checks -fno-lifetime-dse)
+    endif()
+    add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
+    # disable overambitious auto-vectorization until this actually gains something
+    add_definitions(-fno-tree-vectorize)
+    # disable annoying clang warnings which get added by the Apple Xcode cmake generator
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND CMAKE_GENERATOR STREQUAL "Xcode")
+        add_definitions(-Wno-shorten-64-to-32)
+    endif()
+endif()
+
+# compile a target with -O2 even in Debug build
+function(upx_compile_target_debug_with_O2)
+    foreach(t ${ARGV})
+        if(MSVC_FRONTEND)
+            # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
+        else()
+            target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-O2>)
+        endif()
+    endforeach()
+endfunction()
+
+# sanitize a target
+function(upx_sanitize_target)
+    foreach(t ${ARGV})
+        if(UPX_CONFIG_DISABLE_SANITIZE)
+            # no-op
+        elseif(MSVC_FRONTEND)
+            # MSVC uses -GS (similar to -fstack-protector) by default
+        elseif(CMAKE_C_PLATFORM_ID MATCHES "^MinGW" OR MINGW OR CYGWIN)
+            # avoid link errors with current MinGW-w64 versions
+            # see https://www.mingw-w64.org/contribute/#sanitizers-asan-tsan-usan
+        else()
+            # default sanitizer for Debug builds
+            target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all>)
+            # default sanitizer for Release builds
+            target_compile_options(${t} PRIVATE $<$<CONFIG:MinSizeRel>:-fstack-protector>)
+            target_compile_options(${t} PRIVATE $<$<CONFIG:Release>:-fstack-protector>)
+            target_compile_options(${t} PRIVATE $<$<CONFIG:RelWithDebInfo>:-fstack-protector>)
+        endif()
+    endforeach()
+endfunction()
 
 #***********************************************************************
 # targets
@@ -188,86 +274,8 @@ if(Threads_FOUND)
 endif()
 
 #***********************************************************************
-# compilation flags
+# target compilation flags
 #***********************************************************************
-
-if(UPX_CONFIG_DISABLE_WSTRICT)
-    # enable all basic warnings
-    set(warn_Wall -Wall)
-    set(warn_WN -W3)
-else()
-    # enable lots of strict warnings
-    set(warn_Wall -Wall -Wextra -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wvla -Wwrite-strings)
-    set(warn_WN -W4)
-endif()
-if(UPX_CONFIG_DISABLE_WERROR)
-    set(warn_Werror "")
-    set(warn_WX "")
-else()
-    set(warn_Werror -Werror)
-    set(warn_WX -WX)
-endif()
-
-if(NOT MSVC)
-    # use -O2 instead of -O3 to reduce code size
-    string(REGEX REPLACE "(^| )-O3( |$$)" "\\1-O2\\2" a "${CMAKE_C_FLAGS_RELEASE}")
-    string(REGEX REPLACE "(^| )-O3( |$$)" "\\1-O2\\2" b "${CMAKE_CXX_FLAGS_RELEASE}")
-    set(CMAKE_C_FLAGS_RELEASE "${a}" CACHE STRING "Flags used by the C compiler during RELEASE builds." FORCE)
-    set(CMAKE_CXX_FLAGS_RELEASE "${b}" CACHE STRING "Flags used by the CXX compiler during RELEASE builds." FORCE)
-endif()
-
-if(MSVC_FRONTEND)
-    # disable silly warnings about using "deprecated" POSIX functions like fopen()
-    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
-    add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
-    add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    # set __cplusplus according to selected C++ standard; use new preprocessor
-    add_definitions(-J -Zc:__cplusplus -Zc:preprocessor)
-else()
-    # protect against security threats caused by misguided compiler "optimizations"
-    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        add_definitions(-fno-delete-null-pointer-checks -fno-lifetime-dse)
-    endif()
-    add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
-    # disable overambitious auto-vectorization until this actually gains something
-    add_definitions(-fno-tree-vectorize)
-    # disable annoying clang warnings which get added by the Apple Xcode cmake generator
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND CMAKE_GENERATOR STREQUAL "Xcode")
-        add_definitions(-Wno-shorten-64-to-32)
-    endif()
-endif()
-
-# compile a target with -O2 even in Debug build
-function(upx_compile_target_debug_with_O2)
-    foreach(t ${ARGV})
-        if(MSVC_FRONTEND)
-            # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
-        else()
-            target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-O2>)
-        endif()
-    endforeach()
-endfunction()
-
-function(upx_sanitize_target)
-    foreach(t ${ARGV})
-        if(UPX_CONFIG_DISABLE_SANITIZE)
-            # no-op
-        elseif(MSVC_FRONTEND)
-            # MSVC uses -GS (similar to -fstack-protector) by default
-        elseif(CMAKE_C_PLATFORM_ID MATCHES "^MinGW" OR MINGW OR CYGWIN)
-            # avoid link errors with current MinGW-w64 versions
-            # see https://www.mingw-w64.org/contribute/#sanitizers-asan-tsan-usan
-        else()
-            # default sanitizer for Debug builds
-            target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all>)
-            # default sanitizer for Release builds
-            target_compile_options(${t} PRIVATE $<$<CONFIG:MinSizeRel>:-fstack-protector>)
-            target_compile_options(${t} PRIVATE $<$<CONFIG:Release>:-fstack-protector>)
-            target_compile_options(${t} PRIVATE $<$<CONFIG:RelWithDebInfo>:-fstack-protector>)
-        endif()
-    endforeach()
-endfunction()
 
 if(NOT UPX_CONFIG_DISABLE_BZIP2)
 set(t upx_vendor_bzip2)

@@ -80,6 +80,7 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 
 // fully checked
 
+// types
 #define XSPAN_0(type) PtrOrSpanOrNull<type>
 #define XSPAN_P(type) PtrOrSpan<type>
 #define XSPAN_S(type) Span<type>
@@ -98,6 +99,7 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 
 // unchecked - just a no-op pointer wrapper, no extra functionality
 
+// types
 #define XSPAN_0(type) Ptr<type>
 #define XSPAN_P(type) Ptr<type>
 #define XSPAN_S(type) Ptr<type>
@@ -130,6 +132,7 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
     return (R *) membuffer_get_void_ptr(mb);
 }
 
+// types
 #define XSPAN_0(type) type *
 #define XSPAN_P(type) type *
 #define XSPAN_S(type) type *
@@ -151,12 +154,15 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
 **************************************************************************/
 
 #if 1
+// types
 #define SPAN_0 XSPAN_0
 #define SPAN_P XSPAN_P
 #define SPAN_S XSPAN_S
+// create a value
 #define SPAN_0_MAKE XSPAN_0_MAKE
 #define SPAN_P_MAKE XSPAN_P_MAKE
 #define SPAN_S_MAKE XSPAN_S_MAKE
+// define a variable
 #define SPAN_0_VAR XSPAN_0_VAR
 #define SPAN_P_VAR XSPAN_P_VAR
 #define SPAN_S_VAR XSPAN_S_VAR

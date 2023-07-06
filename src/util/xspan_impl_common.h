@@ -68,7 +68,7 @@ private:
             xspan_check_range(ptr, base, size_in_bytes);
     }
 #else
-inline void assertInvariants() const noexcept {}
+forceinline void assertInvariants() const noexcept {}
 #endif
 
     static inline pointer makeNotNull(pointer p) {
@@ -103,7 +103,7 @@ public:
 #if DEBUG
     inline ~CSelf() { invalidate(); }
 #else
-inline ~CSelf() noexcept {}
+forceinline ~CSelf() noexcept {}
 #endif
     noinline void invalidate() {
         assertInvariants();

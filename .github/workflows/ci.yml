@@ -11,8 +11,8 @@ on: [push, workflow_dispatch]
 env:
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-06-29
-  ZIG_DIST_VERSION: 0.11.0-dev.3886+0c1bfe271
+  # 2023-07-05
+  ZIG_DIST_VERSION: 0.11.0-dev.3937+78eb3c561
 
 jobs:
   job-rebuild-and-verify-stubs:

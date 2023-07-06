@@ -182,9 +182,9 @@ public:
 #endif
 
 private:
-    forceinline pointer check_deref(pointer p) const { return p; }
-    forceinline pointer check_deref(pointer p, ptrdiff_t n) const { return p + n; }
-    forceinline pointer check_add(pointer p, ptrdiff_t n) const { return p + n; }
+    static forceinline pointer check_deref(pointer p) noexcept { return p; }
+    static forceinline pointer check_deref(pointer p, ptrdiff_t n) noexcept { return p + n; }
+    static forceinline pointer check_add(pointer p, ptrdiff_t n) noexcept { return p + n; }
 
 public: // raw access
     pointer raw_ptr() const noexcept { return ptr; }
