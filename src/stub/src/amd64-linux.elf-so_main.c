@@ -37,7 +37,7 @@ unsigned Pprotect(void *, size_t, unsigned);
 
 extern void f_int3(int arg);
 
-#define DEBUG 0
+#define DEBUG 1
 
 #ifndef DEBUG  //{
 #define DEBUG 0
