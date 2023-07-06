@@ -379,15 +379,17 @@ make_hatch_arm64(
 static unsigned long
 get_PAGE_MASK(void)  // the mask which KEEPS the page, discards the offset
 {
-    int fd = openat(0, addr_string("/proc/self/auxv"), O_RDONLY, 0);
     unsigned long rv = ~0xffful;  // default to (PAGE_SIZE == 4KiB)
-    Elf64_auxv_t data[40];
-    Elf64_auxv_t *end = &data[read(fd, data, sizeof(data)) / sizeof(data[0])];
-    close(fd);
-    Elf64_auxv_t *ptr; for (ptr = &data[0]; ptr < end ; ++ptr) {
-        if (AT_PAGESZ == ptr->a_type) {
-            rv = (0u - ptr->a_un.a_val);
-            break;
+    int fd = openat(0, addr_string("/proc/self/auxv"), O_RDONLY, 0);
+    if (0 <= fd) {
+        Elf64_auxv_t data[40];
+        Elf64_auxv_t *end = &data[read(fd, data, sizeof(data)) / sizeof(data[0])];
+        close(fd);
+        Elf64_auxv_t *ptr; for (ptr = &data[0]; ptr < end ; ++ptr) {
+            if (AT_PAGESZ == ptr->a_type) {
+                rv = (0u - ptr->a_un.a_val);
+                break;
+            }
         }
     }
     DPRINTF("get_PAGE_MASK= %%p\\n", rv);

@@ -436,15 +436,17 @@ unsigned
 get_PAGE_MASK(void)  // the mask which KEEPS the page address
 {
     int fd = open(addr_string("/proc/self/auxv"), O_RDONLY, 0);
-    Elf32_auxv_t data[40];
-    Elf32_auxv_t *end = &data[read(fd, data, sizeof(data)) / sizeof(data[0])];
-    close(fd);
-    Elf32_auxv_t *ptr; for (ptr = &data[0]; ptr < end ; ++ptr) {
-        if (AT_PAGESZ == ptr->a_type) {
-            return (0u - ptr->a_un.a_val);
+    if (fd >= 0) {
+        Elf32_auxv_t data[40];
+        Elf32_auxv_t *end = &data[read(fd, data, sizeof(data)) / sizeof(data[0])];
+        close(fd);
+        Elf32_auxv_t *ptr; for (ptr = &data[0]; ptr < end ; ++ptr) {
+            if (AT_PAGESZ == ptr->a_type) {
+                return (0u - ptr->a_un.a_val);
+            }
         }
     }
-    return ~0xfff;
+    return ~0xFFF;
 }
 #endif  //}
 
