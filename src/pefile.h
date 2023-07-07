@@ -417,16 +417,16 @@ protected:
         struct upx_rleaf;
 
         MemBuffer mb_start;
-        const byte *start;
-        byte *newstart;
-        upx_rnode *root;
-        upx_rleaf *head;
-        upx_rleaf *current;
-        unsigned dsize;
-        unsigned ssize;
+        const byte *start = nullptr;
+        byte *newstart = nullptr;
+        upx_rnode *root = nullptr;
+        upx_rleaf *head = nullptr;
+        upx_rleaf *current = nullptr;
+        unsigned dsize = 0;
+        unsigned ssize = 0;
 
-        const byte *ibufstart;
-        const byte *ibufend;
+        const byte *ibufstart = nullptr;
+        const byte *ibufend = nullptr;
 
         void check(const res_dir *, unsigned);
         upx_rnode *convert(const void *, upx_rnode *, unsigned);

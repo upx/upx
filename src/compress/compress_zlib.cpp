@@ -27,8 +27,10 @@
 #include "../conf.h"
 #include "compress.h"
 #include "../util/membuffer.h"
+// NOLINTBEGIN(clang-analyzer-optin.performance.Padding)
 #include <zlib/zlib.h>
 #include <zlib/deflate.h>
+// NOLINTEND(clang-analyzer-optin.performance.Padding)
 
 void zlib_compress_config_t::reset() noexcept {
     mem_clear(this);

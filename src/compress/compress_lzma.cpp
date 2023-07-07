@@ -207,9 +207,12 @@ error:
 **************************************************************************/
 
 // ensure proper nullptr usage
+// TODO later: examine why we need this in the first place
 #include <cstddef>
 #undef NULL
+// NOLINTBEGIN(clang-analyzer-optin.cplusplus.*)
 #define NULL nullptr
+// NOLINTEND(clang-analyzer-optin.cplusplus.*)
 #if defined(__GNUC__)
 #undef __null
 #define __null nullptr
