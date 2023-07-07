@@ -157,6 +157,8 @@ void PackWcle::readObjectTable() {
     LeFile::readObjectTable();
 
     // temporary copy of the object descriptors
+    if (!objects) // late detection, but protect against .alloc(0)
+        throwCantPack("no objects");
     iobject_desc.alloc(objects * sizeof(*iobject_table));
     memcpy(iobject_desc, iobject_table, objects * sizeof(*iobject_table));
 

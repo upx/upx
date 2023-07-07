@@ -146,6 +146,8 @@ unsigned LeFile::getImageSize() const {
 
 void LeFile::readImage() {
     soimage = pages * mps;
+    if (!soimage) // late detection, but protect against .alloc(0)
+        throwCantPack("no soimage");
     mb_iimage.alloc(soimage);
     mb_iimage.clear();
     iimage = mb_iimage; // => now a SPAN_S
