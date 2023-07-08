@@ -26,9 +26,10 @@
  */
 
 #include "conf.h"
-#include "packmast.h"
-#include "packer.h"
 #include "compress/compress.h" // upx_ucl_version_string()
+// for list_all_packers():
+#include "packer.h"
+#include "packmast.h" // PackMaster::visitAllPackers
 
 /*************************************************************************
 // header
@@ -89,7 +90,7 @@ void show_usage(void) {
 }
 
 /*************************************************************************
-// util
+// list_all_packers()
 **************************************************************************/
 
 namespace {
@@ -121,8 +122,9 @@ struct PackerNames {
         return strcmp(((const Entry *) a)->sname, ((const Entry *) b)->sname);
     }
 };
+} // namespace
 
-static void show_all_packers(FILE *f, int verbose) {
+static void list_all_packers(FILE *f, int verbose) {
     Options o;
     o.reset();
     PackerNames pn;
@@ -152,7 +154,6 @@ static void show_all_packers(FILE *f, int verbose) {
     if (verbose <= 0 && pn.names_count)
         con_fprintf(f, "\n");
 }
-} // namespace
 
 /*************************************************************************
 // help
@@ -291,7 +292,7 @@ void show_help(int verbose) {
         fg = con_fg(f, FG_YELLOW);
         con_fprintf(f, "\nThis version supports:\n");
         fg = con_fg(f, fg);
-        show_all_packers(f, verbose);
+        list_all_packers(f, verbose);
     } else {
         con_fprintf(f, "\nType '%s --help' for more detailed help.\n", progname);
     }

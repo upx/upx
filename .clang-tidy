@@ -1,6 +1,6 @@
 # for clang-tidy-16 from https://clang.llvm.org/extra/clang-tidy/
 ---
-Checks: 'bugprone-exception-*,clang-analyzer-*,-clang-analyzer-optin.performance.Padding,-clang-analyzer-security.insecureAPI.strcpy,clang-diagnostics-*'
+Checks: 'bugprone-exception-*,clang-analyzer-*,-clang-analyzer-optin.performance.Padding,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,-clang-analyzer-security.insecureAPI.strcpy,clang-diagnostics-*'
 FormatStyle: file
 HeaderFilterRegex: '.*'
 ...

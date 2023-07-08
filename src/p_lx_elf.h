@@ -127,7 +127,7 @@ protected:
     MemBuffer note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
     int o_elf_shnum; // num output Shdrs
-    static unsigned char o_shstrtab[];
+    static const unsigned char o_shstrtab[];
 };
 
 class PackLinuxElf32 : public PackLinuxElf

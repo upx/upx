@@ -84,7 +84,7 @@ public:
 
 protected:
     virtual void printInfo(int nl = 0);
-    const Packer *p = nullptr;
+    const Packer *const p;
 
     // callback
     upx_callback_t cb = {};

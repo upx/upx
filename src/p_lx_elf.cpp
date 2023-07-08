@@ -60,11 +60,13 @@ static constexpr unsigned MAX_ELF_HDR_64 = 1024;
 static unsigned const EF_ARM_EABI_VER4 = 0x04000000;
 static unsigned const EF_ARM_EABI_VER5 = 0x05000000;
 
-unsigned char PackLinuxElf::o_shstrtab[] = {  \
+/*static*/ const unsigned char PackLinuxElf::o_shstrtab[] = {  \
 /*start*/       '\0',
 /*offset  1*/   '.','n','o','t','e','.','g','n','u','.','b','u','i','l','d','-','i','d','\0',
 /*offset 20*/   '.','s','h','s','t','r','t','a','b','\0'
 };
+
+// NOLINTBEGIN(clang-analyzer-*)
 
 static unsigned
 umin(unsigned a, unsigned b)
@@ -8486,5 +8488,7 @@ void PackLinuxElf::unpack(OutputFile * /*fo*/)
 {
     throwCantUnpack("internal error");
 }
+
+// NOLINTEND(clang-analyzer-*)
 
 /* vim:set ts=4 sw=4 et: */

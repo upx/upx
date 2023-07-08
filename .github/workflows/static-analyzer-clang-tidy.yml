@@ -1,0 +1,31 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+name: 'Static Analyzer - clang-tidy'
+
+on:
+  schedule: [cron: '30 5 * * 3'] # run weekly Wednesday 05:30 UTC
+  workflow_dispatch:
+
+jobs:
+  job-analyze-clang-tidy: # uses cmake + make
+    strategy:
+      fail-fast: false
+      matrix: {container: ['alpine:edge','i386/alpine:edge']}
+    name: ${{ format('Analyze clang-tidy {0}', matrix.container) }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    steps:
+      - name: ${{ format('Install packages {0}', matrix.container) }}
+        run: 'apk update && apk upgrade && apk add clang clang-extra-tools cmake g++ git make'
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+        run: |
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
+          git -C upx submodule update --init
+      - name: 'Perform clang-tidy Analysis Debug'
+        run: |
+          make -C upx build/extra/clang/debug
+          run-clang-tidy -p upx/build/extra/clang/debug
+      - name: 'Perform clang-tidy Analysis Release'
+        if: success() || failure() # run this step even if the previous step failed
+        run: |
+          make -C upx build/extra/clang/release
+          run-clang-tidy -p upx/build/extra/clang/release

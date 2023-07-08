@@ -33,7 +33,6 @@
 #include "conf.h"
 #include "file.h"
 #include "packmast.h"
-#include "packer.h"
 #include "ui.h"
 
 #if (ACC_OS_DOS32) && defined(__DJGPP__)

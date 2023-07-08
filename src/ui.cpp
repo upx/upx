@@ -79,6 +79,7 @@ struct UiPacker::State {
 #endif
 };
 
+// static
 unsigned UiPacker::total_files = 0;
 unsigned UiPacker::total_files_done = 0;
 upx_uint64_t UiPacker::total_c_len = 0;
@@ -155,7 +156,7 @@ static const char *mkline(upx_uint64_t fu_len, upx_uint64_t fc_len, upx_uint64_t
 //
 **************************************************************************/
 
-UiPacker::UiPacker(const Packer *p_) : ui_pass(0), ui_total_passes(0), p(p_), s(nullptr) {
+UiPacker::UiPacker(const Packer *p_) : p(p_) {
     static upx_std_once_flag init_done;
     upx_std_call_once(init_done, init_global_constants);
 
