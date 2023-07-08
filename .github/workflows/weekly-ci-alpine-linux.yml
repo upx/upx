@@ -11,7 +11,7 @@
 name: 'Weekly CI - Alpine Linux'
 
 on:
-  schedule: [cron: '10 4 * * 3'] # run weekly Wednesday 04:10 UTC
+  schedule: [cron: '05 4 * * 3'] # run weekly Wednesday 04:05 UTC
   workflow_dispatch:
 
 jobs:
@@ -90,6 +90,24 @@ jobs:
         run: |
           make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=gnu2x -static"   CXX="g++ -std=gnu++23 -static" xtarget/debug
 
+      # build with -flto=auto on alpine:edge
+      - name: ${{ format('Build clang LTO Release with {0}', env.clang_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          make -C "upx with space" UPX_XTARGET=clang-cxxlto-static CC="clang -flto=auto -static" CXX="clang++ -flto=auto -static"
+      - name: ${{ format('Build clang LTO Debug with {0}', env.clang_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          make -C "upx with space" UPX_XTARGET=clang-cxxlto-static CC="clang -flto=auto -static" CXX="clang++ -flto=auto -static" xtarget/debug
+      - name: ${{ format('Build gcc LTO Release with {0}', env.gcc_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          make -C "upx with space" UPX_XTARGET=gcc-cxxlto-static   CC="gcc -flto=auto -static"   CXX="g++ -flto=auto -static"
+      - name: ${{ format('Build gcc LTO Debug with {0}', env.gcc_package) }}
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: |
+          make -C "upx with space" UPX_XTARGET=gcc-cxxlto-static   CC="gcc -flto=auto -static"   CXX="g++ -flto=auto -static" xtarget/debug
+
       - { name: 'Strip release binaries', run: 'strip -p --strip-unneeded "upx with space"/build/*/*/release/upx' }
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
@@ -102,7 +120,7 @@ jobs:
       - { name: 'Run basic tests clang Debug',   run: 'make -C "upx with space"/build/xtarget/clang-static/debug test' }
       - { name: 'Run basic tests gcc Release',   run: 'make -C "upx with space"/build/xtarget/gcc-static/release test' }
       - { name: 'Run basic tests gcc Debug',     run: 'make -C "upx with space"/build/xtarget/gcc-static/debug test' }
-      - name: 'Run basic tests C++20 and C++23'
+      - name: 'Run basic tests C++20, C++23 and LTO'
         if: ${{ contains(matrix.container, ':edge') }}
         run: |
           for dir in "upx with space"/build/xtarget/*-cxx*/*; do
