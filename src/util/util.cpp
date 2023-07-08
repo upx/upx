@@ -56,7 +56,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_STR >= 1024)
 upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                      upx_uint64_t extra2) {
     assert(element_size > 0);
-    if very_unlikely (element_size > UPX_RSIZE_MAX)
+    if very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX)
         throwCantPack("mem_size 1; take care");
     if very_unlikely (n > UPX_RSIZE_MAX)
         throwCantPack("mem_size 2; take care");
@@ -72,8 +72,8 @@ upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t ext
 
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                     upx_uint64_t extra2) noexcept {
-    assert(element_size > 0);
-    if very_unlikely (element_size > UPX_RSIZE_MAX)
+    assert_noexcept(element_size > 0);
+    if very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX)
         return false;
     if very_unlikely (n > UPX_RSIZE_MAX)
         return false;

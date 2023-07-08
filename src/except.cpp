@@ -72,7 +72,9 @@ Throwable::~Throwable() noexcept {
 
 void throwCantPack(const char *msg) {
     // UGLY, but makes things easier
-    if (opt->cmd == CMD_COMPRESS)
+    if (opt->cmd == CMD_NONE)
+        throw CantPackException(msg);
+    else if (opt->cmd == CMD_COMPRESS)
         throw CantPackException(msg);
     else if (opt->cmd == CMD_FILEINFO)
         throw CantPackException(msg);
@@ -166,6 +168,20 @@ void throwCantUnpack(const char *format, ...) {
 /*************************************************************************
 //
 **************************************************************************/
+
+void assertFailed(const char *expr, const char *file, int line, const char *func) noexcept {
+    fflush(stdout);
+    fprintf(stderr, "Assertion failed: %s (%s: %s: %d)\n", expr, file, func, line);
+    std::terminate();
+}
+
+void throwAssertFailed(const char *expr, const char *file, int line, const char *func) {
+    if (opt->debug.debug_level >= 1) {
+        throwCantPack("corrupted file; details: %s (%s: %s: %d)", expr, file, func, line);
+    } else {
+        throwCantPack("corrupted file; try '--debug' for more details");
+    }
+}
 
 const char *prettyName(const char *n) noexcept {
     if (n == nullptr)

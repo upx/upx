@@ -29,6 +29,9 @@
 
 const char *prettyName(const char *n) noexcept;
 
+noinline void assertFailed(const char *expr, const char *file, int line, const char *func) noexcept;
+noinline void throwAssertFailed(const char *expr, const char *file, int line, const char *func);
+
 /*************************************************************************
 // exceptions
 **************************************************************************/
@@ -57,6 +60,9 @@ private:
     Throwable &operator=(const Throwable &) = delete;
     // disable dynamic allocation => force throwing by value
     ACC_CXX_DISABLE_NEW_DELETE
+    // disable taking the address => force passing by reference
+    // [I'm not too sure about this design decision, but we can always allow it if needed]
+    Throwable *operator&() const noexcept = delete;
 
 private:
     static upx_std_atomic(size_t) debug_counter; // for debugging
@@ -173,9 +179,9 @@ public:
 
 #undef NORET
 #if 1 && defined(__GNUC__)
-#define NORET __acc_noinline __attribute__((__noreturn__))
+#define NORET noinline __attribute__((__noreturn__))
 #else
-#define NORET __acc_noinline
+#define NORET noinline
 #endif
 
 NORET void throwCantPack(const char *msg);

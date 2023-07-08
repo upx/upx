@@ -35,9 +35,9 @@
 
 static int pr_need_nl = 0;
 
-void printSetNl(int need_nl) { pr_need_nl = need_nl; }
+void printSetNl(int need_nl) noexcept { pr_need_nl = need_nl; }
 
-void printClearLine(FILE *f) {
+void printClearLine(FILE *f) noexcept {
     static char clear_line_msg[1 + 79 + 1 + 1];
     if (!clear_line_msg[0]) {
         char *msg = clear_line_msg;
@@ -56,14 +56,14 @@ void printClearLine(FILE *f) {
     printSetNl(0);
 }
 
-static void pr_print(bool c, const char *msg) {
+static void pr_print(bool c, const char *msg) noexcept {
     if (c && !opt->to_stdout)
         con_fprintf(stderr, "%s", msg);
     else
         fprintf(stderr, "%s", msg);
 }
 
-static void pr_error(const char *iname, const char *msg, bool is_warning) {
+static void pr_error(const char *iname, const char *msg, bool is_warning) noexcept {
     fflush(stdout);
     fflush(stderr);
     char buf[1024];
@@ -98,17 +98,17 @@ static void pr_error(const char *iname, const char *msg, bool is_warning) {
     UNUSED(fg);
 }
 
-void printErr(const char *iname, const Throwable *e) {
+void printErr(const char *iname, const Throwable &e) noexcept {
     char buf[1024];
     size_t l;
 
-    snprintf(buf, sizeof(buf), "%s", prettyName(typeid(*e).name()));
+    snprintf(buf, sizeof(buf), "%s", prettyName(typeid(e).name()));
     l = strlen(buf);
-    if (l < sizeof(buf) && e->getMsg())
-        snprintf(buf + l, sizeof(buf) - l, ": %s", e->getMsg());
+    if (l < sizeof(buf) && e.getMsg())
+        snprintf(buf + l, sizeof(buf) - l, ": %s", e.getMsg());
     l = strlen(buf);
-    if (l < sizeof(buf) && e->getErrno()) {
-        snprintf(buf + l, sizeof(buf) - l, ": %s", strerror(e->getErrno()));
+    if (l < sizeof(buf) && e.getErrno()) {
+        snprintf(buf + l, sizeof(buf) - l, ": %s", strerror(e.getErrno()));
 #if 1
         // some compilers (e.g. Borland C++) put a trailing '\n'
         // into the strerror() result
@@ -117,10 +117,10 @@ void printErr(const char *iname, const Throwable *e) {
             buf[l] = 0;
 #endif
     }
-    pr_error(iname, buf, e->isWarning());
+    pr_error(iname, buf, e.isWarning());
 }
 
-void printErr(const char *iname, const char *format, ...) {
+void printErr(const char *iname, const char *format, ...) noexcept {
     va_list args;
     char buf[1024];
 
@@ -131,7 +131,7 @@ void printErr(const char *iname, const char *format, ...) {
     pr_error(iname, buf, false);
 }
 
-void printWarn(const char *iname, const char *format, ...) {
+void printWarn(const char *iname, const char *format, ...) noexcept {
     va_list args;
     char buf[1024];
 
@@ -142,7 +142,7 @@ void printWarn(const char *iname, const char *format, ...) {
     pr_error(iname, buf, true);
 }
 
-void printUnhandledException(const char *iname, const std::exception *e) {
+void printUnhandledException(const char *iname, const std::exception *e) noexcept {
     if (e)
         printErr(iname, "unhandled exception: %s\n", prettyName(e->what()));
     else

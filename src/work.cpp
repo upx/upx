@@ -250,7 +250,7 @@ void do_one_file(const char *iname, char *oname) {
 // process all files from the commandline
 **************************************************************************/
 
-static void unlink_ofile(char *oname) {
+static void unlink_ofile(char *oname) noexcept {
     if (oname && oname[0]) {
 #if HAVE_CHMOD
         int r;
@@ -281,12 +281,12 @@ int do_files(int i, int argc, char *argv[]) {
         } catch (const Exception &e) {
             unlink_ofile(oname);
             if (opt->verbose >= 1 || (opt->verbose >= 0 && !e.isWarning()))
-                printErr(iname, &e);
+                printErr(iname, e);
             main_set_exit_code(e.isWarning() ? EXIT_WARN : EXIT_ERROR);
             // this is not fatal, continue processing more files
         } catch (const Error &e) {
             unlink_ofile(oname);
-            printErr(iname, &e);
+            printErr(iname, e);
             main_set_exit_code(EXIT_ERROR);
             return -1; // fatal error
         } catch (std::bad_alloc *e) {

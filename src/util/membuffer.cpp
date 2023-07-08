@@ -233,7 +233,17 @@ void MemBuffer::alloc(upx_uint64_t bytes) {
 void MemBuffer::dealloc() noexcept {
     if (ptr != nullptr) {
         debug_set(debug.last_return_address_dealloc, upx_return_address());
-        checkState();
+#if DEBUG || 1
+        // info: calling checkState() here violates "noexcept", so we need a try block
+        try {
+            checkState();
+        } catch (const Throwable &e) {
+            printErr("unknown", e);
+            std::terminate();
+        } catch (...) {
+            std::terminate();
+        }
+#endif
         stats.global_dealloc_counter += 1;
         stats.global_total_active_bytes -= size_in_bytes;
         if (use_simple_mcheck()) {
@@ -251,7 +261,7 @@ void MemBuffer::dealloc() noexcept {
         ptr = nullptr;
         size_in_bytes = 0;
     } else {
-        assert(size_in_bytes == 0);
+        assert_noexcept(size_in_bytes == 0);
     }
 }
 

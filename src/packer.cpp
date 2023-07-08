@@ -172,7 +172,7 @@ int forced_method(int method) noexcept // extract the forced method
 {
     if (is_forced_method(method))
         method &= ~(0x80ul << 24);
-    assert(method > 0);
+    assert_noexcept(method > 0);
     return method;
 }
 

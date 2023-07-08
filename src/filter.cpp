@@ -50,12 +50,12 @@ static void initFilter(Filter *f, byte *buf, unsigned buf_len) {
 
     upx_std_call_once(init_done, []() noexcept {
         // init the filter_map[] (using a lambda function)
-        assert(n_filters <= 254); // as 0xff means "empty slot"
+        assert_noexcept(n_filters <= 254); // as 0xff means "empty slot"
         memset(filter_map, 0xff, sizeof(filter_map));
         for (int i = 0; i < n_filters; i++) {
             int filter_id = filters[i].id;
-            assert(filter_id >= 0 && filter_id <= 255);
-            assert(filter_map[filter_id] == 0xff);
+            assert_noexcept(filter_id >= 0 && filter_id <= 255);
+            assert_noexcept(filter_map[filter_id] == 0xff);
             filter_map[filter_id] = (upx_uint8_t) i;
         }
     });

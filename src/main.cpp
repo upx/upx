@@ -41,7 +41,7 @@
 #endif
 
 static const char *argv0 = "";
-const char *progname = "";
+const char *progname = "upx";
 
 static acc_getopt_t mfx_getopt;
 #define mfx_optarg mfx_getopt.optarg
@@ -1317,10 +1317,23 @@ int __acc_cdecl_main main(int argc, char *argv[]) {
     // srand((int) time(nullptr));
     srand((int) clock());
 
+    // info: calling upx_main() here violates implicit "noexcept", so we need a try block
+#if 0
     int r = upx_main(argc, argv);
+#else
+    int r = EXIT_INTERNAL;
+    try {
+        r = upx_main(argc, argv);
+    } catch (const Throwable &e) {
+        printErr("unknown", e);
+        std::terminate();
+    } catch (...) {
+        std::terminate();
+    }
+#endif
 
 #if 0 && defined(__GLIBC__)
-    //malloc_stats();
+    // malloc_stats();
 #endif
     return r;
 }

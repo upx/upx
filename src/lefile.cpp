@@ -217,6 +217,9 @@ bool LeFile::readFileHeader() {
         return false;
     fif->seek(le_offset, SEEK_SET);
     fif->readx(&ih, sizeof(ih));
+    if (mps < 512 || mps > 2097152 || (mps & (mps - 1)) != 0 || ih.bytes_on_last_page > mps)
+        throwCantPack("bad file header");
+    (void) mem_size(mps, pages); // assert size
     return true;
 #undef H
 }
@@ -224,7 +227,7 @@ bool LeFile::readFileHeader() {
 void LeFile::writeFile(OutputFile *f, bool le) {
     fof = f;
     memcpy(&oh, &ih,
-           (char *) &oh.memory_pages - (char *) &oh); // copy some members of the orig. header
+           (charptr) &oh.memory_pages - (charptr) &oh); // copy some members of the orig. header
     oh.memory_page_size = mps;
     oh.object_table_offset = sizeof(oh);
     oh.object_table_entries = soobject_table;

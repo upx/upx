@@ -406,6 +406,22 @@ inline void mem_clear(T (&array)[N]) noexcept = delete;
 
 #define ByteArray(var, n)   Array(byte, var, (n))
 
+// assert_noexcept()
+noinline void assertFailed(const char *expr, const char *file, int line, const char *func) noexcept;
+noinline void throwAssertFailed(const char *expr, const char *file, int line, const char *func);
+#if defined(__GNUC__)
+#undef assert
+#if DEBUG || 0
+// generate a warning if assert() is used inside a "noexcept" function
+#define assert(e)          ((void)(__acc_cte(e) || (assertFailed(#e, __FILE__, __LINE__, __func__), throw 1, 0)))
+#else
+// turn assertion failures into exceptions
+#define assert(e)          ((void)(__acc_cte(e) || (throwAssertFailed(#e, __FILE__, __LINE__, __func__), throw 1, 0)))
+#endif
+#define assert_noexcept(e) ((void)(__acc_cte(e) || (assertFailed(#e, __FILE__, __LINE__, __func__), 0)))
+#else
+#define assert_noexcept assert
+#endif
 
 class noncopyable {
 protected:
@@ -614,24 +630,25 @@ struct upx_callback_t {
 
 template <class T, T default_value_, T min_value_, T max_value_>
 struct OptVar {
+    static_assert(std::is_integral_v<T>);
     typedef T value_type;
     static constexpr T default_value = default_value_;
     static constexpr T min_value = min_value_;
     static constexpr T max_value = max_value_;
     static_assert(min_value <= default_value && default_value <= max_value);
 
-    static void assertValue(const T &v) {
+    static void assertValue(const T &v) noexcept {
         // info: this generates annoying warnings "unsigned >= 0 is always true"
-        //assert(v >= min_value);
-        assert(v == min_value || v >= min_value + 1);
-        assert(v <= max_value);
+        //assert_noexcept(v >= min_value);
+        assert_noexcept(v == min_value || v >= min_value + 1);
+        assert_noexcept(v <= max_value);
     }
-    void assertValue() const {
+    void assertValue() const noexcept {
         assertValue(v);
     }
 
     OptVar() noexcept : v(default_value), is_set(false) { }
-    OptVar& operator= (const T &other) {
+    OptVar& operator= (const T &other) noexcept {
         assertValue(other);
         v = other;
         is_set = true;
@@ -648,11 +665,11 @@ struct OptVar {
 
 // optional assignments
 template <class T, T a, T b, T c>
-inline void oassign(OptVar<T,a,b,c> &self, const OptVar<T,a,b,c> &other) {
+inline void oassign(OptVar<T,a,b,c> &self, const OptVar<T,a,b,c> &other) noexcept {
     if (other.is_set) { self.v = other.v; self.is_set = true; }
 }
 template <class T, T a, T b, T c>
-inline void oassign(T &v, const OptVar<T,a,b,c> &other) {
+inline void oassign(T &v, const OptVar<T,a,b,c> &other) noexcept {
     if (other.is_set) { v = other.v; }
 }
 
@@ -782,7 +799,7 @@ void *membuffer_get_void_ptr(MemBuffer &mb) noexcept;
 unsigned membuffer_get_size(MemBuffer &mb) noexcept;
 
 // util/dt_check.cpp
-void upx_compiler_sanity_check();
+void upx_compiler_sanity_check() noexcept;
 int upx_doctest_check();
 int upx_doctest_check(int argc, char **argv);
 
@@ -794,12 +811,12 @@ void main_get_envoptions();
 int upx_main(int argc, char *argv[]);
 
 // msg.cpp
-void printSetNl(int need_nl);
-void printClearLine(FILE *f = nullptr);
-void printErr(const char *iname, const Throwable *e);
-void printUnhandledException(const char *iname, const std::exception *e);
-void printErr(const char *iname, const char *format, ...) attribute_format(2, 3);
-void printWarn(const char *iname, const char *format, ...) attribute_format(2, 3);
+void printSetNl(int need_nl) noexcept;
+void printClearLine(FILE *f = nullptr) noexcept;
+void printErr(const char *iname, const Throwable &e) noexcept;
+void printUnhandledException(const char *iname, const std::exception *e) noexcept;
+void printErr(const char *iname, const char *format, ...) noexcept attribute_format(2, 3);
+void printWarn(const char *iname, const char *format, ...) noexcept attribute_format(2, 3);
 
 void infoWarning(const char *format, ...) attribute_format(1, 2);
 void infoHeader(const char *format, ...) attribute_format(1, 2);
