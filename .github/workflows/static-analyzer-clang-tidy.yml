@@ -15,7 +15,7 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
-        run: 'apk update && apk upgrade && apk add clang clang-extra-tools cmake g++ git make'
+        run: 'apk update && apk upgrade && apk add clang clang-extra-tools cmake g++ git make python3'
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
