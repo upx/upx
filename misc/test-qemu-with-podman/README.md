@@ -1,7 +1,7 @@
 test-qemu-with-podman
 =====================
 
-This directory provides scripts for creating and running small Alpine Linux container
+This directory provides scripts for creating and running rather small Alpine Linux container
 images, intended for testing statically-linked Linux executables with qemu-user.
 
 Very short usage instructions follow.
@@ -19,13 +19,16 @@ Very short usage instructions follow.
     mkdir -p tmp
     cd tmp
 
-    # download some official UPX release binaries
+    # download official UPX release binaries
     wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-amd64_linux.tar.xz
     wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-arm64_linux.tar.xz
+    wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-armeb_linux.tar.xz
+    wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-arm_linux.tar.xz
     wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-i386_linux.tar.xz
+    wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-mipsel_linux.tar.xz
     wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-mips_linux.tar.xz
     wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-powerpc64le_linux.tar.xz
-    # ...same for more architectures
+    wget https://github.com/upx/upx/releases/download/v4.0.2/upx-4.0.2-powerpc_linux.tar.xz
 
     # and unpack all .tar.xz files
     for f in ./upx*.tar.xz; do tar -xJf $f; done

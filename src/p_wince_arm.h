@@ -36,7 +36,7 @@ class PackWinCeArm final : public PeFile32 {
 
 public:
     PackWinCeArm(InputFile *f);
-    virtual ~PackWinCeArm();
+    virtual ~PackWinCeArm() noexcept;
     virtual int getFormat() const override { return UPX_F_WINCE_ARM; }
     virtual const char *getName() const override { return "wince/arm"; }
     virtual const char *getFullName(const Options *) const override { return "arm-wince.pe"; }

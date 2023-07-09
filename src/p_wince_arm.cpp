@@ -44,7 +44,7 @@ static const CLANG_FORMAT_DUMMY_STATEMENT
 
 PackWinCeArm::PackWinCeArm(InputFile *f) : super(f) {}
 
-PackWinCeArm::~PackWinCeArm() {}
+PackWinCeArm::~PackWinCeArm() noexcept {}
 
 Linker *PackWinCeArm::newLinker() const { return new ElfLinkerArmLE; }
 

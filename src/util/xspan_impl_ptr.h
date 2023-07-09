@@ -63,9 +63,15 @@ public:
 #endif
 
 #if DEBUG
-    inline ~CSelf() { invalidate(); }
+    ~CSelf() noexcept {
+        try {
+            invalidate();
+        } catch (...) {
+            std::terminate();
+        }
+    }
 #else
-    inline ~CSelf() noexcept {}
+    forceinline ~CSelf() noexcept {}
 #endif
     noinline void invalidate() {
         assertInvariants();

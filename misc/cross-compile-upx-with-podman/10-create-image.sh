@@ -10,6 +10,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 #   so you have to create that image first
 # WARNING: we install many packages, so the resulting image needs A LOT of disk space!
 image=upx-cross-compile-20230115-v4
+[[ $1 == --print-image ]] && echo "$image" && exit 0
 
 podman build -t "$image" -f "$argv0dir/Dockerfile" "$argv0dir"
 

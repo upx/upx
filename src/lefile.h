@@ -39,7 +39,7 @@ class OutputFile;
 class LeFile {
 protected:
     LeFile(InputFile *);
-    virtual ~LeFile();
+    virtual ~LeFile() noexcept;
 
     virtual bool readFileHeader();
     virtual void writeFile(OutputFile *, bool);
@@ -225,8 +225,8 @@ private:
     // disable copy and move
     LeFile(const LeFile &) = delete;
     LeFile &operator=(const LeFile &) = delete;
-    LeFile(LeFile &&) = delete;
-    LeFile &operator=(LeFile &&) = delete;
+    LeFile(LeFile &&) noexcept = delete;
+    LeFile &operator=(LeFile &&) noexcept = delete;
 };
 
 #endif /* already included */

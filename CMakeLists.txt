@@ -173,7 +173,7 @@ else()
     add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
     # disable overambitious auto-vectorization until this actually gains something
     add_definitions(-fno-tree-vectorize)
-    # disable annoying clang warnings which get added by the Apple Xcode cmake generator
+    # disable annoying clang warnings which get added by the macOS Xcode cmake generator
     if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND CMAKE_GENERATOR STREQUAL "Xcode")
         add_definitions(-Wno-shorten-64-to-32)
     endif()

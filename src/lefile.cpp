@@ -38,7 +38,7 @@ LeFile::LeFile(InputFile *f) : fif(f), fof(nullptr), le_offset(0), exe_offset(0)
     mem_clear(&oh);
 }
 
-LeFile::~LeFile() {
+LeFile::~LeFile() noexcept {
     delete[] iobject_table;
     delete[] oobject_table;
     delete[] ifpage_table;

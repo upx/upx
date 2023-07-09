@@ -37,7 +37,7 @@ protected:
     virtual ~FileBase();
 
 public:
-    bool close();
+    bool close() noexcept;
     void closex();
     bool isOpen() const { return _fd >= 0; }
     int getFd() const { return _fd; }
@@ -77,7 +77,6 @@ class InputFile final : public FileBase {
 
 public:
     InputFile() = default;
-    virtual ~InputFile() {}
 
     void sopen(const char *name, int flags, int shflags);
     void open(const char *name, int flags) { sopen(name, flags, -1); }
@@ -101,7 +100,6 @@ class OutputFile final : public FileBase {
 
 public:
     OutputFile() = default;
-    virtual ~OutputFile() {}
 
     void sopen(const char *name, int flags, int shflags, int mode);
     void open(const char *name, int flags, int mode) { sopen(name, flags, -1, mode); }

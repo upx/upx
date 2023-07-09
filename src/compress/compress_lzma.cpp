@@ -208,7 +208,6 @@ error:
 
 // ensure proper nullptr usage
 // TODO later: examine why we need this in the first place
-#include <cstddef>
 #undef NULL
 // NOLINTBEGIN(clang-analyzer-optin.cplusplus.*)
 #define NULL nullptr

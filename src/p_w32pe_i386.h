@@ -36,7 +36,7 @@ class PackW32PeI386 final : public PeFile32 {
 
 public:
     PackW32PeI386(InputFile *f);
-    virtual ~PackW32PeI386();
+    virtual ~PackW32PeI386() noexcept;
     virtual int getFormat() const override { return UPX_F_W32PE_I386; }
     virtual const char *getName() const override { return isrtm ? "rtm32/pe" : "win32/pe"; }
     virtual const char *getFullName(const Options *) const override { return "i386-win32.pe"; }

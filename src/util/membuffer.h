@@ -49,7 +49,7 @@ protected:
 
 public:
     inline MemBufferBase() noexcept : ptr(nullptr), size_in_bytes(0) {}
-    inline ~MemBufferBase() noexcept {}
+    forceinline ~MemBufferBase() noexcept {}
 
     // IMPORTANT NOTE: automatic conversion to underlying pointer
     // HINT: for fully bound-checked pointer use XSPAN_S from xspan.h
@@ -213,8 +213,8 @@ private:
     MemBuffer(const MemBuffer &) DELETED_FUNCTION;
     MemBuffer &operator=(const MemBuffer &) DELETED_FUNCTION;
 #if __cplusplus >= 201103L
-    MemBuffer(MemBuffer &&) DELETED_FUNCTION;
-    MemBuffer &operator=(MemBuffer &&) DELETED_FUNCTION;
+    MemBuffer(MemBuffer &&) noexcept DELETED_FUNCTION;
+    MemBuffer &operator=(MemBuffer &&) noexcept DELETED_FUNCTION;
 #endif
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE

@@ -6,9 +6,10 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # create the image from Dockerfile
 # using a rootless Podman container
 
-image=upx-test-qemu8-20230708-v1
+image=upx-test-qemu7-alpine-20230708-v1
+[[ $1 == --print-image ]] && echo "$image" && exit 0
 
-podman build -t "$image" -f "$argv0dir/Dockerfile" "$argv0dir"
+podman build --squash -t "$image" -f "$argv0dir/Dockerfile" "$argv0dir"
 
 podman image list "$image"
 echo

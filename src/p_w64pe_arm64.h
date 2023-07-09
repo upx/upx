@@ -36,7 +36,7 @@ class PackW64PeArm64 : public PeFile64 {
 
 public:
     PackW64PeArm64(InputFile *f);
-    virtual ~PackW64PeArm64() {}
+    virtual ~PackW64PeArm64() noexcept {}
     virtual int getFormat() const override { return UPX_F_W64PE_ARM64; }
     virtual const char *getName() const override { return "win64/arm64"; }
     virtual const char *getFullName(const Options *) const override { return "arm64-win64.pe"; }

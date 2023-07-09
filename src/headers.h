@@ -91,6 +91,7 @@ static_assert(sizeof(void *) == 8);
 #endif
 
 // C++ system headers
+#include <cstddef>
 #include <exception>
 #include <new>
 #include <type_traits>

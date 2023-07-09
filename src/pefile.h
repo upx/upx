@@ -46,7 +46,7 @@ protected:
     struct pe_section_t;
 
     PeFile(InputFile *f);
-    virtual ~PeFile();
+    virtual ~PeFile() noexcept;
 
     void readSectionHeaders(unsigned objs, unsigned sizeof_ih);
     unsigned readSections(unsigned objs, unsigned usize, unsigned ih_filealign,
@@ -371,7 +371,7 @@ protected:
         unsigned ivnum;
 
         Interval(void *b);
-        ~Interval();
+        ~Interval() noexcept;
 
         void add(unsigned start, unsigned len);
         void add(const void *start, unsigned len);
@@ -433,14 +433,14 @@ protected:
         void build(const upx_rnode *, unsigned &, unsigned &, unsigned);
         void clear(byte *, unsigned, Interval *);
         void dump(const upx_rnode *, unsigned) const;
-        void destroy(upx_rnode *urd, unsigned level);
+        void destroy(upx_rnode *urd, unsigned level) noexcept;
 
         void ibufcheck(const void *m, unsigned size);
 
     public:
         Resource(const byte *ibufstart, const byte *ibufen);
         Resource(const byte *p, const byte *ibufstart, const byte *ibufend);
-        ~Resource();
+        ~Resource() noexcept;
         void init(const byte *);
 
         unsigned dirsize() const;
@@ -488,7 +488,7 @@ protected:
 
     public:
         Export(char *_base);
-        ~Export();
+        ~Export() noexcept;
 
         void convert(unsigned eoffs, unsigned esize);
         void build(char *base, unsigned newoffs);
@@ -500,7 +500,7 @@ class PeFile32 : public PeFile {
     typedef PeFile super;
 protected:
     PeFile32(InputFile *f);
-    virtual ~PeFile32();
+    virtual ~PeFile32() noexcept;
 
     void pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t default_imagebase,
                bool last_section_rsrc_only);
@@ -561,7 +561,7 @@ class PeFile64 : public PeFile {
     typedef PeFile super;
 protected:
     PeFile64(InputFile *f);
-    virtual ~PeFile64();
+    virtual ~PeFile64() noexcept;
 
     void pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t default_imagebase);
 

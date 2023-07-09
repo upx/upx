@@ -353,8 +353,8 @@ private:
     // disable copy and move
     Packer(const Packer &) = delete;
     Packer &operator=(const Packer &) = delete;
-    Packer(Packer &&) = delete;
-    Packer &operator=(Packer &&) = delete;
+    Packer(Packer &&) noexcept = delete;
+    Packer &operator=(Packer &&) noexcept = delete;
 };
 
 int force_method(int method) noexcept;     // (0x80ul<<24)|method

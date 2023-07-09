@@ -42,7 +42,7 @@ static const CLANG_FORMAT_DUMMY_STATEMENT
 
 PackW32PeI386::PackW32PeI386(InputFile *f) : super(f) {}
 
-PackW32PeI386::~PackW32PeI386() {}
+PackW32PeI386::~PackW32PeI386() noexcept {}
 
 const int *PackW32PeI386::getCompressionMethods(int method, int level) const {
     bool small = ih.codesize + ih.datasize <= 256 * 1024;

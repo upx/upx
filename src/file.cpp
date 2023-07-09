@@ -93,7 +93,7 @@ bool FileBase::do_sopen() {
     return true;
 }
 
-bool FileBase::close() {
+bool FileBase::close() noexcept {
     bool ok = true;
     if (isOpen() && _fd != STDIN_FILENO && _fd != STDOUT_FILENO && _fd != STDERR_FILENO)
         if (::close(_fd) == -1)

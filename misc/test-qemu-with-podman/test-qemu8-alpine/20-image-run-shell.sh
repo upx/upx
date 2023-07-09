@@ -6,7 +6,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # run an interactive shell in the image
 # using a rootless Podman container
 
-image=upx-test-qemu6-20230708-v1
+image="$("$argv0dir/10-create-image.sh" --print-image)"
 
 flags=( --read-only --rm --pull=never )
 flags+=( --cap-drop=all )               # drop all capabilities

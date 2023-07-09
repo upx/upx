@@ -7,6 +7,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # using a rootless Podman container
 
 image=upx-stubtools-20221212-v6
+[[ $1 == --print-image ]] && echo "$image" && exit 0
 
 podman build -t "$image" -f "$argv0dir/Dockerfile" "$argv0dir"
 

@@ -101,7 +101,13 @@ forceinline void assertInvariants() const noexcept {}
 
 public:
 #if DEBUG
-    inline ~CSelf() { invalidate(); }
+    ~CSelf() noexcept {
+        try {
+            invalidate();
+        } catch (...) {
+            std::terminate();
+        }
+    }
 #else
 forceinline ~CSelf() noexcept {}
 #endif

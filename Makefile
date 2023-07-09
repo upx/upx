@@ -4,7 +4,6 @@
 #
 
 # INFO: this Makefile is just a convenience wrapper for calling CMake
-# (using a somewhat current CMake version is highly recommended)
 
 # HINT: if you only have an older CMake 3.x then you can invoke cmake manually like this:
 #   mkdir -p build/release
@@ -143,7 +142,7 @@ build/extra/cross-windows-mingw64/release: PHONY; $(call run_config_and_build,$@
 build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc -static
 build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++ -static
 
-# cross compiler: macOS arm64
+# cross compiler: macOS arm64 (aarch64)
 build/extra/cross-darwin-arm64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-darwin-arm64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-darwin-arm64/%: export CC  = clang -target arm64-apple-darwin

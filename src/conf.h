@@ -412,7 +412,7 @@ noinline void throwAssertFailed(const char *expr, const char *file, int line, co
 #if defined(__GNUC__)
 #undef assert
 #if DEBUG || 0
-// generate a warning if assert() is used inside a "noexcept" function
+// generate a warning if assert() is used inside a "noexcept" context
 #define assert(e)          ((void)(__acc_cte(e) || (assertFailed(#e, __FILE__, __LINE__, __func__), throw 1, 0)))
 #else
 // turn assertion failures into exceptions

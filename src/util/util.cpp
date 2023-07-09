@@ -27,8 +27,6 @@
 
 #include "../headers.h"
 #include <algorithm>
-#include "../conf.h"
-
 #define ACC_WANT_ACC_INCI_H 1
 #include "../miniacc.h"
 #define ACC_WANT_ACCLIB_GETOPT 1
@@ -38,6 +36,7 @@
 #define ACC_WANT_ACCLIB_WILDARGV 1
 #undef HAVE_MKDIR
 #include "../miniacc.h"
+#include "../conf.h"
 
 /*************************************************************************
 // assert sane memory buffer sizes to protect against integer overflows

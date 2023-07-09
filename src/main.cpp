@@ -1317,11 +1317,11 @@ int __acc_cdecl_main main(int argc, char *argv[]) {
     // srand((int) time(nullptr));
     srand((int) clock());
 
-    // info: calling upx_main() here violates implicit "noexcept", so we need a try block
+    // info: main() is implicitly "noexcept", so we need a try block
 #if 0
     int r = upx_main(argc, argv);
 #else
-    int r = EXIT_INTERNAL;
+    int r;
     try {
         r = upx_main(argc, argv);
     } catch (const Throwable &e) {

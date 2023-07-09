@@ -23,9 +23,9 @@ jobs:
       - name: 'Perform clang-tidy Analysis Debug'
         run: |
           make -C upx build/extra/clang/debug
-          run-clang-tidy -p upx/build/extra/clang/debug
+          python3 upx/misc/scripts/run-clang-tidy.py -p upx/build/extra/clang/debug
       - name: 'Perform clang-tidy Analysis Release'
         if: success() || failure() # run this step even if the previous step failed
         run: |
           make -C upx build/extra/clang/release
-          run-clang-tidy -p upx/build/extra/clang/release
+          python3 upx/misc/scripts/run-clang-tidy.py -p upx/build/extra/clang/release

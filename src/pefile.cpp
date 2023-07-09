@@ -215,7 +215,7 @@ int PeFile::readFileHeader() {
 
 PeFile::Interval::Interval(void *b) : capacity(0), base(b), ivarr(nullptr), ivnum(0) {}
 
-PeFile::Interval::~Interval() { free(ivarr); }
+PeFile::Interval::~Interval() noexcept { free(ivarr); }
 
 void PeFile::Interval::add(const void *start, unsigned len) {
     add(ptr_diff_bytes(start, base), len);
@@ -598,7 +598,7 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
     struct tstr : private ::noncopyable {
         char *s = nullptr;
         explicit tstr(char *str) : s(str) {}
-        ~tstr() { delete[] s; }
+        ~tstr() noexcept { delete[] s; }
         operator char *() const { return s; }
     };
 
@@ -1069,7 +1069,7 @@ PeFile::Export::Export(char *_base) : base(_base), iv(_base) {
     size = 0;
 }
 
-PeFile::Export::~Export() {
+PeFile::Export::~Export() noexcept {
     free(ename);
     delete[] functionptrs;
     delete[] ordinals;
@@ -1491,7 +1491,7 @@ PeFile::Resource::Resource(const byte *p, const byte *ibufstart_, const byte *ib
     init(p);
 }
 
-PeFile::Resource::~Resource() {
+PeFile::Resource::~Resource() noexcept {
     if (root) {
         destroy(root, 0);
         root = nullptr;
@@ -1670,7 +1670,7 @@ byte *PeFile::Resource::build() {
     return newstart;
 }
 
-void PeFile::Resource::destroy(upx_rnode *node, unsigned level) {
+void PeFile::Resource::destroy(upx_rnode *node, unsigned level) noexcept {
     xcheck(node);
     if (level == 3) {
         upx_rleaf *leaf = ACC_STATIC_CAST(upx_rleaf *, node);
@@ -2974,7 +2974,7 @@ upx_uint64_t PeFile::ilinkerGetAddress(const char *d, const char *n) const {
     return ilinker->getAddress(d, n);
 }
 
-PeFile::~PeFile() {
+PeFile::~PeFile() noexcept {
     oimpdlls = nullptr;
     delete[] oxrelocs;
     delete ilinker;
@@ -2993,7 +2993,7 @@ PeFile32::PeFile32(InputFile *f) : super(f) {
     oddirs = oh.ddirs;
 }
 
-PeFile32::~PeFile32() {}
+PeFile32::~PeFile32() noexcept {}
 
 void PeFile32::readPeHeader() {
     fi->readx(&ih, sizeof(ih));
@@ -3046,7 +3046,7 @@ PeFile64::PeFile64(InputFile *f) : super(f) {
     oddirs = oh.ddirs;
 }
 
-PeFile64::~PeFile64() {}
+PeFile64::~PeFile64() noexcept {}
 
 void PeFile64::readPeHeader() {
     fi->readx(&ih, sizeof(ih));

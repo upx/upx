@@ -81,8 +81,8 @@ private:
     // disable copy and move
     AbstractPolicy(const AbstractPolicy &) = delete;
     AbstractPolicy &operator=(const AbstractPolicy &) = delete;
-    AbstractPolicy(AbstractPolicy &&) = delete;
-    AbstractPolicy &operator=(AbstractPolicy &&) = delete;
+    AbstractPolicy(AbstractPolicy &&) noexcept = delete;
+    AbstractPolicy &operator=(AbstractPolicy &&) noexcept = delete;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
 };
@@ -149,8 +149,8 @@ private:
     // disable copy and move
     BEPolicy(const BEPolicy &) = delete;
     BEPolicy &operator=(const BEPolicy &) = delete;
-    BEPolicy(BEPolicy &&) = delete;
-    BEPolicy &operator=(BEPolicy &&) = delete;
+    BEPolicy(BEPolicy &&) noexcept = delete;
+    BEPolicy &operator=(BEPolicy &&) noexcept = delete;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
 };
@@ -211,8 +211,8 @@ private:
     // disable copy and move
     LEPolicy(const LEPolicy &) = delete;
     LEPolicy &operator=(const LEPolicy &) = delete;
-    LEPolicy(LEPolicy &&) = delete;
-    LEPolicy &operator=(LEPolicy &&) = delete;
+    LEPolicy(LEPolicy &&) noexcept = delete;
+    LEPolicy &operator=(LEPolicy &&) noexcept = delete;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
 };

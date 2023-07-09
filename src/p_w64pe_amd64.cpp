@@ -47,7 +47,7 @@ static const CLANG_FORMAT_DUMMY_STATEMENT
 
 PackW64PeAmd64::PackW64PeAmd64(InputFile *f) : super(f) { use_stub_relocs = false; }
 
-PackW64PeAmd64::~PackW64PeAmd64() {}
+PackW64PeAmd64::~PackW64PeAmd64() noexcept {}
 
 const int *PackW64PeAmd64::getCompressionMethods(int method, int level) const {
     bool small = ih.codesize + ih.datasize <= 256 * 1024;
