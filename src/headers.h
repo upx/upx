@@ -30,6 +30,7 @@
 #error "C++17 is required"
 #endif
 
+// sanity check
 #if defined(__ILP32) || defined(__ILP32__)
 static_assert(sizeof(int) == 4);
 static_assert(sizeof(long) == 4);

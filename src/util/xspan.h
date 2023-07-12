@@ -43,7 +43,7 @@
 #define XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION 0
 #endif
 // allow automatic conversion PtrOrSpanOrNull => PtrOrSpan => Span (with run-time checks)
-// choose between compile-time safety vs. possible run-time errors
+// choose between compile-time safety vs. possible run-time exceptions
 #ifndef XSPAN_CONFIG_ENABLE_SPAN_CONVERSION
 #define XSPAN_CONFIG_ENABLE_SPAN_CONVERSION 1
 #endif

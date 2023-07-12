@@ -1,6 +1,6 @@
-FROM docker.io/library/alpine:3.18
+FROM docker.io/library/alpine:3.13
 
-# install qemu 8.0.3-r0 and some utils
+# install qemu 5.2.0-r3 and some utils
 RUN apk update && apk upgrade && apk add \
         bash-completion \
         musl-dbg \

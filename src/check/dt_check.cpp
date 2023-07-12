@@ -541,18 +541,21 @@ void upx_compiler_sanity_check(void) noexcept {
 **************************************************************************/
 
 TEST_CASE("assert_noexcept") {
-    // just to make sure that our assert macros don't generate any warnings
+    // just to make sure that our own assert macros don't generate any warnings
     byte dummy = 0;
     byte *ptr1 = &dummy;
     const byte *const ptr2 = &dummy;
+    void *ptr3 = nullptr;
     assert(true);
     assert(1);
     assert(ptr1);
     assert(ptr2);
+    assert(!ptr3);
     assert_noexcept(true);
     assert_noexcept(1);
     assert_noexcept(ptr1);
     assert_noexcept(ptr2);
+    assert_noexcept(!ptr3);
 }
 
 TEST_CASE("noncopyable") {

@@ -32,6 +32,7 @@ jobs:
           sudo mv -v -n ./packages/usr/lib/x86_64-linux-gnu/lib* /usr/lib/x86_64-linux-gnu/
           rm -rf ./*.deb ./packages
           sudo ldconfig
+          # install upx-stubtools
           wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20221212/bin-upx-20221212.tar.xz | tar -xJ
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -285,8 +286,6 @@ jobs:
       - name: 'Prepare sources and Check out test suite'
         shell: bash
         run: |
-          git config --global core.autocrlf input
-          git --version && bash --version
           git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite
           mkdir -p -v build/$C/$B/{bzip2,ucl,upx,zlib,zstd}
       - name: 'Set up Developer Command Prompt'
@@ -297,7 +296,7 @@ jobs:
       - name: 'Build by hand'
         shell: cmd
         run: |
-          @REM setup directories
+          @REM ===== set vars =====
           where cl & where link
           set RUN_CL=cl ${{ matrix.cl_machine_flags }} -MT
           set RUN_LIB=link -lib ${{ matrix.link_machine_flags }}
@@ -331,7 +330,7 @@ jobs:
           set UPX_LIBS=%BDIR%\bzip2\bzip2.lib %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib
           set UPX_LIBS=%BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp
-          %RUN_CL% -J -O2 -W4 -WX -std:c++17 -Zc:__cplusplus -EHsc -DUPX_VERSION_GITREV="""%GITREV%""" %UPX_DEFS% %DEFS% -I%H%\vendor -Feupx.exe %sources% %UPX_LIBS% /link ${{ matrix.link_machine_flags }} setargv.obj
+          %RUN_CL% -J -O2 -W4 -WX -std:c++17 -Zc:__cplusplus -EHsc -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% %UPX_DEFS% -I%H%\vendor -Feupx.exe %sources% %UPX_LIBS% /link ${{ matrix.link_machine_flags }} setargv.obj
       - name: 'Make artifact'
         shell: bash
         run: |

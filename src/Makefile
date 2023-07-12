@@ -22,7 +22,7 @@ endif
 # redirect to top-level CMake build
 #
 
-# note that top-level Makefile .DEFAULT_GOAL is build/release
+# NOTE that top-level Makefile .DEFAULT_GOAL is build/release
 .DEFAULT_GOAL = build/debug
 
 build/debug:   $(top_srcdir)/build/debug/upx

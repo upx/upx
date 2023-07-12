@@ -2,7 +2,7 @@
 name: 'Static Analyzer - clang-analyzer'
 
 on:
-  schedule: [cron: '20 5 * * 3'] # run weekly Wednesday 05:20 UTC
+  schedule: [cron: '10 5 * * 3'] # run weekly Wednesday 05:10 UTC
   workflow_dispatch:
 
 jobs:

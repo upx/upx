@@ -59,6 +59,8 @@ private:
 
 public:
 #if XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
+    // Ptr always provides automatic conversion to underlying type because
+    // it has limited functionality
     operator pointer() const noexcept { return ptr; }
 #endif
 
@@ -75,6 +77,7 @@ public:
 #endif
     noinline void invalidate() {
         assertInvariants();
+        // poison the pointer
         ptr = (pointer) (upx_uintptr_t) 16; // point to non-null invalid address
         // ptr = (pointer) (void *) &ptr; // point to self
         assertInvariants();

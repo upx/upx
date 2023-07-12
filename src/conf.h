@@ -317,6 +317,7 @@ typedef upx_int64_t upx_off_t;
 #  define attribute_format(a,b) /*empty*/
 #endif
 
+// for no-op debug output
 inline void NO_printf(const char *, ...) attribute_format(1, 2);
 inline void NO_fprintf(FILE *, const char *, ...) attribute_format(2, 3);
 inline void NO_printf(const char *, ...) {}

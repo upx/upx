@@ -13,18 +13,25 @@ tmp*
 
 *.a
 *.d
+*.bz2
 *.dll
+*.dylib
 *.exe
+*.gz
 *.lib
 *.map
 *.o
 *.obj
 *.out
 *.py[cdo]
+*.rar
 *.so
 *.swp
 *.tmp
 *.ttp
+*.xz
+*.zip
+*.zst
 
 doc/*.man
 doc/*.ps

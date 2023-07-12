@@ -3,6 +3,7 @@ FROM docker.io/library/alpine:3.17
 # install qemu 7.1.0-r7 and some utils
 RUN apk update && apk upgrade && apk add \
         bash-completion \
+        musl-dbg \
         qemu-aarch64 \
         qemu-arm \
         qemu-armeb \
@@ -13,6 +14,7 @@ RUN apk update && apk upgrade && apk add \
         qemu-ppc64 \
         qemu-ppc64le \
         qemu-x86_64 \
+        strace \
     && true
 
 # create default user upx 2000:2000

@@ -6,7 +6,7 @@ argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 # list all system packages that are installed in the image
 # using a rootless Podman container
 
-image=upx-cross-compile-20230115-v4
+image="$("$argv0dir/10-create-image.sh" --print-image)"
 
 podman image list "$image"
 echo

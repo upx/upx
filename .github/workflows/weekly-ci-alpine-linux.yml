@@ -1,9 +1,9 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# build under various Alpine Linux versions with clang and gcc, and
-# also test building with C++20 and C++23
+# Build under various Alpine Linux versions with clang and gcc, and
+# also test building with C++20 and C++23.
 
-# also uses a subdirectory "upx with space" that contains whitespace in order
-# to detect possible quoting issues
+# And also uses a subdirectory "upx with space" that contains whitespace in order
+# to detect possible quoting issues.
 
 # info: Alpine 3.9 has clang-5, cmake-3.13.0 and gcc-8, which nicely
 #   matches our minimal build requirements

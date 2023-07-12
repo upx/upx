@@ -288,7 +288,7 @@ protected:
     template <class T>
     static inline constexpr bool is_te16_type = is_same_any_v<T, byte, upx_uint16_t, BE16, LE16>;
     template <class T>
-    static inline constexpr bool is_te32_type = is_same_any_v<T, byte, unsigned, BE32, LE32>;
+    static inline constexpr bool is_te32_type = is_same_any_v<T, byte, upx_uint32_t, BE32, LE32>;
     template <class T>
     static inline constexpr bool is_te64_type = is_same_any_v<T, byte, upx_uint64_t, BE64, LE64>;
 
