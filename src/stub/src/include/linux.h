@@ -431,6 +431,7 @@ static ssize_t read(int fd, void *buf, size_t len)
     return v0;
 }
 
+#if 0  //{ UNUSED
 static void *brk(void *addr)
 {
 #define __NR_brk (45+ 4000)
@@ -444,6 +445,7 @@ static void *brk(void *addr)
     );
     return v0;
 }
+#endif  //}
 
 static int close(int fd)
 {

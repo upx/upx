@@ -9,7 +9,7 @@ Linker script and memory map
 TARGET(elf32-bigarm)
                 0x0000000000008080                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008080      0xadc
+.text           0x0000000000008080      0xaa8
  *(.text)
  .text          0x0000000000008080      0x338 tmp/armeb.v4a-linux.elf-fold.o
                 0x00000000000082dc                munmap
@@ -31,18 +31,18 @@ TARGET(elf32-bigarm)
                 0x000000000000835c                div10
                 0x00000000000082e4                mprotect
                 0x00000000000082b4                close
- .text          0x00000000000083b8      0x7a4 tmp/armeb.v4a-linux.elf-main.o
+ .text          0x00000000000083b8      0x770 tmp/armeb.v4a-linux.elf-main.o
                 0x00000000000083d8                get_page_mask
-                0x0000000000008a28                upx_main
+                0x00000000000089f4                upx_main
  *(.data)
- .data          0x0000000000008b5c        0x0 tmp/armeb.v4a-linux.elf-fold.o
- .data          0x0000000000008b5c        0x0 tmp/armeb.v4a-linux.elf-main.o
+ .data          0x0000000000008b28        0x0 tmp/armeb.v4a-linux.elf-fold.o
+ .data          0x0000000000008b28        0x0 tmp/armeb.v4a-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000008b5c        0x0
- .bss           0x0000000000008b5c        0x0 tmp/armeb.v4a-linux.elf-fold.o
- .bss           0x0000000000008b5c        0x0 tmp/armeb.v4a-linux.elf-main.o
+.bss            0x0000000000008b28        0x0
+ .bss           0x0000000000008b28        0x0 tmp/armeb.v4a-linux.elf-fold.o
+ .bss           0x0000000000008b28        0x0 tmp/armeb.v4a-linux.elf-main.o
 LOAD tmp/armeb.v4a-linux.elf-fold.o
 LOAD tmp/armeb.v4a-linux.elf-main.o
 OUTPUT(tmp/armeb.v4a-linux.elf-fold.bin elf32-bigarm)

@@ -223,8 +223,10 @@ noTOC:
 p_memsz= 4+4+ 4*NBPW
 // Discard pages of compressed data (includes [ADRX,+LENX) )
         ld a1,p_memsz+szElf64_Phdr+szElf64_Ehdr(r_elfa)  // Phdr[C_TEXT= 1].p_memsz
-        movr a0,r_elfa  // hi elfaddr
-        call munmap  # discard C_TEXT compressed data
+        //lhz r0,e_type(r_elf); cmpwi r0,ET_EXEC; bne 1f  // only ET_EXEC
+        movr a0,r_elfa; call brk  // also set the brk
+1:
+        movr a0,r_elfa; call munmap  # discard C_TEXT compressed data
 
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)
         li a5,0  // offset

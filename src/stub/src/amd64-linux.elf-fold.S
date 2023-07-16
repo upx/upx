@@ -152,12 +152,16 @@ L90:
         pop %rbx  # fd
 
 sz_Ehdr= 8*NBPW
+e_type= 16
+ET_EXEC= 2
 sz_Phdr= 7*NBPW
-p_memsz= 4+4+ 4*NBPW
+p_memsz= 5*NBPW
 // Discard pages of compressed data (includes [ADRX,+LENX) )
         movq p_memsz+sz_Phdr+sz_Ehdr(%r13),%arg2  #   Phdr[C_TEXT= 1].p_memsz
-        movq %r13,%arg1  # hi elfaddr
-        call munmap  # discard C_TEXT compressed data
+        //cmpw $ET_EXEC, e_type(%r13); jne 1f
+        movq %r13,%arg1; call brk  // also sets the brk
+1:
+        movq %r13,%arg1; call munmap  # discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that the symlink does not disappear.
         subq %arg6,%arg6  # 0 offset

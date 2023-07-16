@@ -34,6 +34,8 @@ NBPW= 8
 #include "arch/arm64/v8/macros.S"
 
 sz_Ehdr= 8*NBPW
+e_type= 16
+ET_EXEC= 2
 sz_Phdr= 7*NBPW
   p_vaddr= 4+4+8
   p_filesz= 4+4+8+8+8
@@ -174,6 +176,10 @@ xPMASK .req x20
 
 // Discard pages of compressed input data (includes [ADRC,+LENC) )
         ldr x1,[xelfa,#p_memsz+sz_Phdr+sz_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
+        mov x0,xelfa  // hi &Elf64_Ehdr
+        ldrb w2,[xelfa,#e_type]; cmp w2,#ET_EXEC; bne 1f
+        call brk  // static ET_EXEC also sets the brk
+1:
         mov x0,xelfa  // hi &Elf64_Ehdr
         call munmap  // discard C_TEXT compressed data
 

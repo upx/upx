@@ -40,6 +40,8 @@ PAGE_SHIFT= 16  // 64KiB is better default than 4KiB on MIPS
 PAGE_MASK= 0xffffffffffffffff<<PAGE_SHIFT
 
 sz_Ehdr= 52
+e_type= 16
+ET_EXEC= 2
 sz_Phdr= 32
 
 sz_b_info= 12
@@ -193,12 +195,14 @@ BAL=0x04110000
         addiu sp,MAX_ELF_HDR_32  # un-alloca
         move $r_fexp,v0  # &entry
 
-p_vaddr= 4+4
+p_vaddr= 2*NBPW
+p_memsz= 5*NBPW
 // Discard pages of compressed data (includes [ADRX,+LENX) )
-        lw a1,p_vaddr+sz_Phdr+sz_Ehdr($r_elfa)  // Phdr[C_TEXT= 1].p_vaddr
-        lw v0,p_vaddr        +sz_Ehdr($r_elfa)  // Phdr[C_BASE= 0].p_vaddr
+        lw a1,p_memsz+sz_Phdr+sz_Ehdr($r_elfa)  // Phdr[C_TEXT= 1].p_memsz
         move a0,$r_elfa  // hi elfaddr
-        subu a1,a1,v0  // length
+        //lh v0,e_type($r_elfa); li at,ET_EXEC; bne at,v0,1f
+        li v0,__NR_brk; syscall
+1:
         li v0,__NR_munmap; syscall
 
 // Map 1 page of /proc/self/exe so that munmap does not remove all references

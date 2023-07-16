@@ -275,13 +275,6 @@ err_exit(int a)
 }
 #endif  //}
 
-static void *
-do_brk(void *addr)
-{
-    return brk(addr);
-}
-
-
 /*************************************************************************
 // UPX & NRV stuff
 **************************************************************************/
@@ -448,6 +441,7 @@ make_hatch_arm(
         ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_EXEC|PROT_WRITE|PROT_READ,
                 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         ) {
+            hatch = (unsigned *)(~3ul & (3+ (unsigned long)hatch));
             hatch[0] = sys_munmap;  // syscall __NR_unmap
             hatch[1] = 0xe1a0f00e;  // mov pc,lr
             __clear_cache(&hatch[0], &hatch[2]);  // ? needed before Pprotect()
@@ -481,6 +475,7 @@ make_hatch_mips(
         ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_WRITE|PROT_READ,
                 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         ) {
+            hatch = (unsigned *)(~3ul & (3+ (unsigned long)hatch));
             hatch[0]= 0x0000000c;  // syscall
 #define RS(r) ((037&(r))<<21)
 #define JR 010
@@ -519,6 +514,7 @@ make_hatch_ppc32(
         ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_WRITE|PROT_READ,
                 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         ) {
+            hatch = (unsigned *)(~3ul & (3+ (unsigned long)hatch));
             hatch[0] = 0x44000002;  // sc
             hatch[1] = 0x4e800020;  // blr
             if (xprot) {
@@ -820,7 +816,8 @@ ERR_LAB
     }
     if (xi && ET_DYN!=ehdr->e_type) {
         // Needed only if compressed shell script invokes compressed shell.
-        do_brk((void *)v_brk);
+        // Besides, fold.S needs _Ehdr that is tossed
+        // do_brk((void *)v_brk);
     }
     if (0!=p_reloc) {
         *p_reloc = reloc;

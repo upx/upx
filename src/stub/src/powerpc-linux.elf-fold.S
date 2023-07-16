@@ -167,14 +167,17 @@ L90:
         mr r_exp,a0  // save &entry
 
 sz_Ehdr= 13*NBPW
+e_type= 16
+ET_EXEC= 2
 sz_Phdr= 8*NBPW
-p_vaddr= 4+4
+p_vaddr= 2*NBPW
+p_memsz= 5*NBPW
 // Discard pages of compressed data (includes [ADRX,+LENX) )
-        lwz a1,p_vaddr+sz_Phdr+sz_Ehdr(r_elf)  // Phdr[C_TEXT= 1].p_vaddr
-        lwz r0,p_vaddr        +sz_Ehdr(r_elf)  // Phdr[C_BASE= 0].p_vaddr
-        movr a0,r_elf  // hi elfaddr
-        subf a1,r0,a1  // length
-        call munmap  # discard C_TEXT compressed data
+        lwz a1,p_memsz+sz_Phdr+sz_Ehdr(r_elf)  // Phdr[C_TEXT= 1].p_memsz
+        //lhz r0,e_type(r_elf); cmpwi r0,ET_EXEC; bne 1f  // only ET_EXEC
+        movr a0,r_elf; call brk  // also set the brk
+1:
+        movr a0,r_elf; call munmap  # discard C_TEXT compressed data
 
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)
         li a5,0  // offset

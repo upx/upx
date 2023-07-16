@@ -9,62 +9,62 @@ Linker script and memory map
 TARGET(elf64-powerpcle)
                 0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x00000000001000bc      0xbe4
+.text           0x00000000001000bc      0xbec
  *(.text)
- .text          0x00000000001000bc      0x338 tmp/powerpc64le-linux.elf-fold.o
+ .text          0x00000000001000bc      0x340 tmp/powerpc64le-linux.elf-fold.o
                 0x00000000001000bc                get_page_mask
-                0x0000000000100384                mmap
-                0x000000000010039c                Pprotect
-                0x000000000010039c                mprotect
-                0x00000000001003b4                exit
-                0x00000000001003bc                brk
-                0x00000000001003c4                readlink
-                0x00000000001003cc                read
-                0x00000000001003d4                open
-                0x00000000001003dc                close
-                0x00000000001003e4                munmap
-                0x00000000001003ec                my_bkpt
- .text          0x00000000001003f4      0x8ac tmp/powerpc64le-linux.elf-main.o
+                0x000000000010038c                mmap
+                0x00000000001003a4                Pprotect
+                0x00000000001003a4                mprotect
+                0x00000000001003bc                exit
+                0x00000000001003c4                brk
+                0x00000000001003cc                readlink
+                0x00000000001003d4                read
+                0x00000000001003dc                open
+                0x00000000001003e4                close
+                0x00000000001003ec                munmap
+                0x00000000001003f4                my_bkpt
+ .text          0x00000000001003fc      0x8ac tmp/powerpc64le-linux.elf-main.o
  *(.data)
- .data          0x0000000000100ca0        0x0 tmp/powerpc64le-linux.elf-fold.o
- .data          0x0000000000100ca0        0x0 tmp/powerpc64le-linux.elf-main.o
+ .data          0x0000000000100ca8        0x0 tmp/powerpc64le-linux.elf-fold.o
+ .data          0x0000000000100ca8        0x0 tmp/powerpc64le-linux.elf-main.o
 
-.sfpr           0x0000000000100ca0       0xa4
- .sfpr          0x0000000000100ca0       0xa4 linker stubs
-                0x0000000000100ca0                _savegpr0_14
-                0x0000000000100cc8                _savegpr0_24
-                0x0000000000100cd8                _savegpr0_28
-                0x0000000000100cf0                _restgpr0_14
-                0x0000000000100d18                _restgpr0_24
-                0x0000000000100d28                _restgpr0_28
+.sfpr           0x0000000000100ca8       0xa4
+ .sfpr          0x0000000000100ca8       0xa4 linker stubs
+                0x0000000000100ca8                _savegpr0_14
+                0x0000000000100cd0                _savegpr0_24
+                0x0000000000100ce0                _savegpr0_28
+                0x0000000000100cf8                _restgpr0_14
+                0x0000000000100d20                _restgpr0_24
+                0x0000000000100d30                _restgpr0_28
 
-.glink          0x0000000000100d48        0x0
- .glink         0x0000000000100d48        0x0 linker stubs
+.glink          0x0000000000100d50        0x0
+ .glink         0x0000000000100d50        0x0 linker stubs
 
-.eh_frame       0x0000000000100d44        0x0
- .eh_frame      0x0000000000100d44        0x0 linker stubs
+.eh_frame       0x0000000000100d4c        0x0
+ .eh_frame      0x0000000000100d4c        0x0 linker stubs
 
-.rela.dyn       0x0000000000100d48        0x0
- .rela.iplt     0x0000000000100d48        0x0 linker stubs
+.rela.dyn       0x0000000000100d50        0x0
+ .rela.iplt     0x0000000000100d50        0x0 linker stubs
 
 .data
 LOAD tmp/powerpc64le-linux.elf-fold.o
 LOAD tmp/powerpc64le-linux.elf-main.o
 OUTPUT(tmp/powerpc64le-linux.elf-fold.bin elf64-powerpcle)
 
-.branch_lt      0x0000000000100d48        0x0
- .branch_lt     0x0000000000100d48        0x0 linker stubs
+.branch_lt      0x0000000000100d50        0x0
+ .branch_lt     0x0000000000100d50        0x0 linker stubs
 
-.toc            0x0000000000100d48        0x0
- .toc           0x0000000000100d48        0x0 tmp/powerpc64le-linux.elf-main.o
+.toc            0x0000000000100d50        0x0
+ .toc           0x0000000000100d50        0x0 tmp/powerpc64le-linux.elf-main.o
 
-.opd            0x0000000000100d48       0x58
- .opd           0x0000000000100d48       0x58 tmp/powerpc64le-linux.elf-main.o
-                0x0000000000100d88                upx_main
+.opd            0x0000000000100d50       0x58
+ .opd           0x0000000000100d50       0x58 tmp/powerpc64le-linux.elf-main.o
+                0x0000000000100d90                upx_main
 
-.iplt           0x0000000000100da0        0x0
- .iplt          0x0000000000100da0        0x0 linker stubs
+.iplt           0x0000000000100da8        0x0
+ .iplt          0x0000000000100da8        0x0 linker stubs
 
-.bss            0x0000000000100da0        0x0
- .bss           0x0000000000100da0        0x0 tmp/powerpc64le-linux.elf-fold.o
- .bss           0x0000000000100da0        0x0 tmp/powerpc64le-linux.elf-main.o
+.bss            0x0000000000100da8        0x0
+ .bss           0x0000000000100da8        0x0 tmp/powerpc64le-linux.elf-fold.o
+ .bss           0x0000000000100da8        0x0 tmp/powerpc64le-linux.elf-main.o

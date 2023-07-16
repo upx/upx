@@ -27,13 +27,18 @@
 @  <jreiser@users.sourceforge.net>
 @
 
+NBPW= 4
+
 #define ARM_OLDABI 1
 #include "arch/arm/v4a/macros.S"
 #define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
 
-sz_Elf32_Ehdr = 13*4
-sz_Elf32_Phdr =  8*4
-p_vaddr= 4+4
+sz_Elf32_Ehdr = 13*NBPW
+e_type= 16
+ET_EXEC= 2
+sz_Elf32_Phdr =  8*NBPW
+p_vaddr= 2*NBPW
+p_memsz= 5*NBPW
 sz_l_info = 12
 sz_p_info = 12
 sz_b_info = 12
@@ -185,11 +190,11 @@ F_delta= 3*4
         str r0,[sp,#F_entry - F_delta]  @ entry address
 
 // Discard pages of compressed input data (includes [ADRC,+LENC) )
-        ldr r1,[r11,#p_vaddr+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_vaddr
-        ldr r2,[r11,#p_vaddr              +sz_Elf32_Ehdr]  // Phdr[C_BASE= 0].p_vaddr
-        mov r0,r11  // hi &Elf32_Ehdr
-        sub r1,r1,r2
-        call munmap  // discard C_TEXT compressed data
+        ldr r1,[r11,#p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
+        //ldrb r0,[r11,#e_type]; cmp r0,#ET_EXEC; bne 1f
+        mov r0,r11; call brk  // also sets the brk
+1:
+        mov r0,r11; call munmap  // discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that it does not disappear
         ldr r4,[sp],#4  @ pop r4,F_fd

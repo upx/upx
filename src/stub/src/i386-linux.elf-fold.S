@@ -37,6 +37,7 @@ PAGE_SIZE= ( 1<<12)
 PATH_MAX= 4096
 
 ET_DYN= 3
+ET_EXEC= 2
 sz_Elf32_Ehdr= 0x34
   e_type=   16
   e_entry=  (16 + 2*2 + 4)
@@ -57,6 +58,7 @@ __NR_open= 5
 __NR_close= 6
 __NR_mmap= 0xc0
 __NR_mprotect= 0x7d
+__NR_brk= 45
 
 MAP_PRIVATE=   0x02
 MAP_FIXED=     0x10
@@ -181,6 +183,9 @@ F_fd= 6*4  // frame offset to fd
 // Discard C_TEXT (includes [ADRC,+LENC) )
         mov ecx,[ebp+ p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
         mov ebx,ebp  // hi &Elf32_Ehdr
+        cmpw [e_type + ebp],ET_EXEC; jne 1f
+          push __NR_brk; pop %eax; int 0x80  // static __end_bss
+1:
         push __NR_munmap; pop %eax; int 0x80  // discard C_TEXT compressed data
 
 // Buggy programs may depend on uninit stack being 0, so clear what we used.
