@@ -2,14 +2,14 @@
 # build with "zig cc"; see https://ziglang.org/download/
 
 name: 'Weekly CI - zigcc'
-
 on:
   schedule: [cron: '40 4 * * 3'] # run weekly Wednesday 04:40 UTC
   workflow_dispatch:
-
 env:
-  # 2023-07-05
-  ZIG_DIST_VERSION: 0.11.0-dev.3937+78eb3c561
+  CMAKE_REQUIRED_QUIET: 0
+  DEBIAN_FRONTEND: noninteractive
+  # 2023-07-15
+  ZIG_DIST_VERSION: 0.11.0-dev.4002+7dd1cf26f
 
 jobs:
   job-linux-zigcc: # uses cmake + make

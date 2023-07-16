@@ -5,6 +5,9 @@
 
 name: 'Test - Minimal Alpine build'
 on: [workflow_dispatch]
+env:
+  CMAKE_REQUIRED_QUIET: 0
+  DEBIAN_FRONTEND: noninteractive
 
 jobs:
   job-alpine-clang: # uses cmake + make

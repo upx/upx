@@ -2,10 +2,12 @@
 # build with 'cmake -G "NMake Makefiles"'
 
 name: 'Weekly CI - cmake Windows NMake'
-
 on:
   schedule: [cron: '30 4 * * 3'] # run weekly Wednesday 04:30 UTC
   workflow_dispatch:
+env:
+  CMAKE_REQUIRED_QUIET: 0
+  DEBIAN_FRONTEND: noninteractive
 
 jobs:
   job-cmake-windows-nmake: # uses cmake + nmake

@@ -9,10 +9,12 @@
 #   matches our minimal build requirements
 
 name: 'Weekly CI - Alpine Linux'
-
 on:
   schedule: [cron: '05 4 * * 3'] # run weekly Wednesday 04:05 UTC
   workflow_dispatch:
+env:
+  CMAKE_REQUIRED_QUIET: 0
+  DEBIAN_FRONTEND: noninteractive
 
 jobs:
   job-alpine-cmake: # uses cmake + make

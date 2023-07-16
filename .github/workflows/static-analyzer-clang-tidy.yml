@@ -1,9 +1,12 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-name: 'Static Analyzer - clang-tidy'
 
+name: 'Static Analyzer - clang-tidy'
 on:
   schedule: [cron: '30 5 * * 3'] # run weekly Wednesday 05:30 UTC
   workflow_dispatch:
+env:
+  CMAKE_REQUIRED_QUIET: 0
+  DEBIAN_FRONTEND: noninteractive
 
 jobs:
   job-analyze-clang-tidy: # uses cmake + make

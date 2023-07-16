@@ -58,6 +58,9 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.14.7")
 endif()
 if(NOT DEFINED CMAKE_REQUIRED_QUIET)
     set(CMAKE_REQUIRED_QUIET ON)
+    if("$ENV{CMAKE_REQUIRED_QUIET}" MATCHES "^(0|1|OFF|ON)$")
+        set(CMAKE_REQUIRED_QUIET "$ENV{CMAKE_REQUIRED_QUIET}")
+    endif()
 endif()
 
 # determine Git revision
@@ -125,7 +128,7 @@ endif()
 
 # set MSVC_FRONTEND
 set(MSVC_FRONTEND 0)
-if(MSVC OR ",${CMAKE_C_COMPILER_FRONTEND_VARIANT}," STREQUAL ",MSVC,")
+if(MSVC OR CMAKE_C_COMPILER_FRONTEND_VARIANT MATCHES "^MSVC")
     set(MSVC_FRONTEND 1)
 endif()
 
@@ -165,14 +168,13 @@ function(upx_add_definitions)
     endforeach()
 endfunction()
 
-if(NOT MSVC)
+if(NOT CMAKE_C_COMPILER_ID MATCHES "^MSVC")
     # use -O2 instead of -O3 to reduce code size
     string(REGEX REPLACE "(^| )-O3( |$$)" "\\1-O2\\2" a "${CMAKE_C_FLAGS_RELEASE}")
     string(REGEX REPLACE "(^| )-O3( |$$)" "\\1-O2\\2" b "${CMAKE_CXX_FLAGS_RELEASE}")
     set(CMAKE_C_FLAGS_RELEASE "${a}" CACHE STRING "Flags used by the C compiler during RELEASE builds." FORCE)
     set(CMAKE_CXX_FLAGS_RELEASE "${b}" CACHE STRING "Flags used by the CXX compiler during RELEASE builds." FORCE)
 endif()
-
 if(MSVC_FRONTEND)
     # disable silly warnings about using "deprecated" POSIX functions like fopen()
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
@@ -181,19 +183,18 @@ if(MSVC_FRONTEND)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     # use -funsigned-char; set __cplusplus according to selected C++ standard
     add_definitions(-J -Zc:__cplusplus)
-    if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
+    if(CMAKE_C_COMPILER_ID MATCHES "^MSVC")
         upx_add_definitions(-Zc:preprocessor) # use new preprocessor
-    elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        upx_add_definitions(-clang:-fno-strict-aliasing -clang:-fno-strict-overflow)
     endif()
-else()
+endif()
+if(NOT CMAKE_C_COMPILER_ID MATCHES "^MSVC")
     # protect against security threats caused by misguided compiler "optimizations"
     upx_add_definitions(-fno-delete-null-pointer-checks -fno-lifetime-dse)
     upx_add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
     # disable overambitious auto-vectorization until this actually gains something
     upx_add_definitions(-fno-tree-vectorize)
     # disable annoying clang warnings which get added by the macOS Xcode cmake generator
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND CMAKE_GENERATOR STREQUAL "Xcode")
+    if(CMAKE_GENERATOR MATCHES "Xcode")
         upx_add_definitions(-Wno-shorten-64-to-32)
     endif()
 endif()
@@ -455,7 +456,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
 include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
 endif()
 
-print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
+print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION CMAKE_GENERATOR)
 if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
 print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
 print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING)

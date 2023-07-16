@@ -4,6 +4,8 @@
 name: 'Misc - Spell check'
 on:
   workflow_dispatch:
+env:
+  DEBIAN_FRONTEND: noninteractive
 jobs:
   job-spell-check:
     name: 'Spell check'

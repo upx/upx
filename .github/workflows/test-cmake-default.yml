@@ -2,8 +2,8 @@
 
 name: 'Test - CMake default build type'
 on: [workflow_dispatch]
-
 env:
+  CMAKE_REQUIRED_QUIET: 0
   DEBIAN_FRONTEND: noninteractive
 
 jobs:
