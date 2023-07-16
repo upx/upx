@@ -37,7 +37,7 @@ class PackDjgpp2 final : public Packer {
     typedef Packer super;
 
 public:
-    PackDjgpp2(InputFile *f);
+    explicit PackDjgpp2(InputFile *f);
     virtual int getVersion() const override { return 14; }
     virtual int getFormat() const override { return UPX_F_DJGPP2_COFF; }
     virtual const char *getName() const override { return "djgpp2/coff"; }

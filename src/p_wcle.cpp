@@ -690,7 +690,7 @@ void PackWcle::decodeObjectTable() {
 
 void PackWcle::decodeImage() {
     mb_oimage.allocForDecompression(ph.u_len);
-    oimage = mb_oimage;
+    oimage = mb_oimage; // => now a SPAN_S
 
     decompress(iimage + ph.buf_offset + ph.getPackHeaderSize(), oimage);
     soimage = get_le32(oimage + ph.u_len - 5);
@@ -782,7 +782,7 @@ void PackWcle::unpack(OutputFile *fo) {
         ft.cto = (byte) ph.filter_cto;
         if (ph.version < 11)
             ft.cto = (byte) (get_le32(oimage + ph.u_len - 9) >> 24);
-        ft.unfilter(raw_bytes(oimage + text_vaddr, text_size), text_size);
+        ft.unfilter(oimage + text_vaddr, text_size);
     }
 
     decodeFixupPageTable();

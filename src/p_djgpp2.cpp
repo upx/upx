@@ -371,7 +371,7 @@ void PackDjgpp2::unpack(OutputFile *fo) {
     // decompress
     decompress(ibuf, obuf);
 
-    coff_header_t *chdr = (coff_header_t *) raw_bytes(obuf, sizeof(coff_header_t));
+    coff_header_t *const chdr = (coff_header_t *) raw_bytes(obuf, sizeof(coff_header_t));
     text = &chdr->sh[0];
     data = &chdr->sh[1];
     bss = &chdr->sh[2];

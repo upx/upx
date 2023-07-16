@@ -36,7 +36,7 @@ class Packer;
 
 class UiPacker final {
 public:
-    UiPacker(const Packer *p_);
+    explicit UiPacker(const Packer *p_);
 
 public:
     virtual ~UiPacker() noexcept;
@@ -84,14 +84,14 @@ public:
 
 protected:
     virtual void printInfo(int nl = 0);
-    const Packer *const p;
+    const Packer *const p; // reference
 
     // callback
     upx_callback_t cb = {};
 
     // internal state
     struct State;
-    State *s = nullptr;
+    OwningPointer(State) s = nullptr; // owner
 
     // totals
     static unsigned total_files;

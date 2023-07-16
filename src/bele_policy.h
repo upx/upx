@@ -47,7 +47,7 @@
 
 #if defined(BELE_RTP)
 struct AbstractPolicy {
-    inline AbstractPolicy() noexcept {}
+    explicit inline AbstractPolicy() noexcept {}
     virtual inline ~AbstractPolicy() noexcept {}
     V bool isBE() C = 0;
     V bool isLE() C = 0;
@@ -79,10 +79,10 @@ struct AbstractPolicy {
 
 private:
     // disable copy and move
-    AbstractPolicy(const AbstractPolicy &) = delete;
-    AbstractPolicy &operator=(const AbstractPolicy &) = delete;
-    AbstractPolicy(AbstractPolicy &&) noexcept = delete;
-    AbstractPolicy &operator=(AbstractPolicy &&) noexcept = delete;
+    AbstractPolicy(const AbstractPolicy &) DELETED_FUNCTION;
+    AbstractPolicy &operator=(const AbstractPolicy &) DELETED_FUNCTION;
+    AbstractPolicy(AbstractPolicy &&) noexcept DELETED_FUNCTION;
+    AbstractPolicy &operator=(AbstractPolicy &&) noexcept DELETED_FUNCTION;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
 };
@@ -98,7 +98,7 @@ struct BEPolicy
     final : public AbstractPolicy
 #endif
 {
-    inline BEPolicy() noexcept {}
+    explicit inline BEPolicy() noexcept {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::BEPolicy RTP_Policy;
 #elif defined(BELE_RTP)
@@ -147,10 +147,10 @@ struct BEPolicy
 
 private:
     // disable copy and move
-    BEPolicy(const BEPolicy &) = delete;
-    BEPolicy &operator=(const BEPolicy &) = delete;
-    BEPolicy(BEPolicy &&) noexcept = delete;
-    BEPolicy &operator=(BEPolicy &&) noexcept = delete;
+    BEPolicy(const BEPolicy &) DELETED_FUNCTION;
+    BEPolicy &operator=(const BEPolicy &) DELETED_FUNCTION;
+    BEPolicy(BEPolicy &&) noexcept DELETED_FUNCTION;
+    BEPolicy &operator=(BEPolicy &&) noexcept DELETED_FUNCTION;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
 };
@@ -160,7 +160,7 @@ struct LEPolicy
     final : public AbstractPolicy
 #endif
 {
-    inline LEPolicy() noexcept {}
+    explicit inline LEPolicy() noexcept {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::LEPolicy RTP_Policy;
 #elif defined(BELE_RTP)
@@ -209,10 +209,10 @@ struct LEPolicy
 
 private:
     // disable copy and move
-    LEPolicy(const LEPolicy &) = delete;
-    LEPolicy &operator=(const LEPolicy &) = delete;
-    LEPolicy(LEPolicy &&) noexcept = delete;
-    LEPolicy &operator=(LEPolicy &&) noexcept = delete;
+    LEPolicy(const LEPolicy &) DELETED_FUNCTION;
+    LEPolicy &operator=(const LEPolicy &) DELETED_FUNCTION;
+    LEPolicy(LEPolicy &&) noexcept DELETED_FUNCTION;
+    LEPolicy &operator=(LEPolicy &&) noexcept DELETED_FUNCTION;
     // disable dynamic allocation
     ACC_CXX_DISABLE_NEW_DELETE
 };

@@ -35,7 +35,7 @@ class PackW64PeArm64 : public PeFile64 {
     typedef PeFile64 super;
 
 public:
-    PackW64PeArm64(InputFile *f);
+    explicit PackW64PeArm64(InputFile *f);
     virtual ~PackW64PeArm64() noexcept {}
     virtual int getFormat() const override { return UPX_F_W64PE_ARM64; }
     virtual const char *getName() const override { return "win64/arm64"; }
@@ -69,7 +69,7 @@ class PackW64PeArm64EC final : public PackW64PeArm64 {
     typedef PackW64PeArm64 super;
 
 public:
-    PackW64PeArm64EC(InputFile *f) : super(f) {}
+    explicit PackW64PeArm64EC(InputFile *f) : super(f) {}
     virtual int getFormat() const override { return UPX_F_W64PE_ARM64EC; }
     virtual const char *getName() const override { return "win64/arm64ec"; }
     virtual const char *getFullName(const Options *) const override { return "arm64ec-win64.pe"; }

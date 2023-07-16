@@ -35,7 +35,7 @@ class PackExe final : public Packer {
     typedef Packer super;
 
 public:
-    PackExe(InputFile *f);
+    explicit PackExe(InputFile *f);
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_DOS_EXE; }
     virtual const char *getName() const override { return "dos/exe"; }
@@ -61,9 +61,9 @@ public:
 protected:
     struct exe_header_t;
 
-    virtual int readFileHeader(void);
+    int readFileHeader(void);
 
-    virtual int fillExeHeader(struct exe_header_t *) const;
+    int fillExeHeader(struct exe_header_t *) const;
     virtual void buildLoader(const Filter *ft) override;
     virtual Linker *newLinker() const override;
     void addLoaderEpilogue(int flag);

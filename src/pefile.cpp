@@ -2530,16 +2530,16 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
         OutputFile::dump(opt->debug.dump_stub_loader, loader, codesize);
     if ((ic = fo->getBytesWritten() & (sizeof(LEXX) - 1)) != 0)
         fo->write(ibuf, sizeof(LEXX) - ic);
-    fo->write(raw_bytes(otls, aligned_sotls), aligned_sotls);
+    fo->write(otls, aligned_sotls);
     fo->write(oloadconf, soloadconf);
     if ((ic = fo->getBytesWritten() & fam1) != 0)
         fo->write(ibuf, oh.filealign - ic);
     if (!last_section_rsrc_only)
-        fo->write(raw_bytes(oresources, soresources), soresources);
+        fo->write(oresources, soresources);
     else
         fo->write(oxrelocs, soxrelocs);
     fo->write(oimpdlls, soimpdlls);
-    fo->write(raw_bytes(oexport, soexport), soexport);
+    fo->write(oexport, soexport);
     if (!last_section_rsrc_only)
         fo->write(oxrelocs, soxrelocs);
 
@@ -2547,7 +2547,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
         fo->write(ibuf, oh.filealign - ic);
 
     if (last_section_rsrc_only) {
-        fo->write(raw_bytes(oresources, soresources), soresources);
+        fo->write(oresources, soresources);
         if ((ic = fo->getBytesWritten() & fam1) != 0)
             fo->write(ibuf, oh.filealign - ic);
     }
@@ -2658,7 +2658,7 @@ void PeFile::rebuildTls() {
 
 namespace {
 template <class T>
-struct VPtr { // "virtual pointer" pointing before a buffer
+struct VPtr final { // "virtual pointer" pointing before a buffer
     static_assert(sizeof(T) == 1);
     SPAN_S(T) base;
     size_t x;

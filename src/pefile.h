@@ -27,8 +27,6 @@
 
 #pragma once
 
-#include "util/membuffer.h"
-
 /*************************************************************************
 // general/pe handling
 **************************************************************************/
@@ -45,7 +43,7 @@ protected:
     class ImportLinker;
     struct pe_section_t;
 
-    PeFile(InputFile *f);
+    explicit PeFile(InputFile *f);
     virtual ~PeFile() noexcept;
 
     void readSectionHeaders(unsigned objs, unsigned sizeof_ih);
@@ -235,6 +233,7 @@ protected:
         PEDIR_EXCEPTION = 3, // Exception table
         PEDIR_SECURITY = 4,  // Certificate table (file pointer)
         PEDIR_BASERELOC = 5,
+        PEDIR_RELOC = PEDIR_BASERELOC,
         PEDIR_DEBUG = 6,
         PEDIR_ARCHITECTURE = 7, // Architecture-specific data
         PEDIR_GLOBALPTR = 8,    // Global pointer
@@ -244,7 +243,6 @@ protected:
         PEDIR_IAT = 12,
         PEDIR_DELAY_IMPORT = 13,   // Delay Import Descriptor
         PEDIR_COM_DESCRIPTOR = 14, // Com+ Runtime Header
-        PEDIR_RELOC = PEDIR_BASERELOC,
     };
 
     // section flags
@@ -370,7 +368,7 @@ protected:
 
         unsigned ivnum;
 
-        Interval(void *b);
+        explicit Interval(void *b);
         ~Interval() noexcept;
 
         void add(unsigned start, unsigned len);
@@ -398,8 +396,8 @@ protected:
         unsigned counts[16];
 
     public:
-        Reloc(byte *, unsigned);
-        Reloc(unsigned relocnum);
+        explicit Reloc(byte *, unsigned);
+        explicit Reloc(unsigned relocnum);
         //
         bool next(unsigned &pos, unsigned &type);
         const unsigned *getcounts() const { return counts; }
@@ -438,8 +436,8 @@ protected:
         void ibufcheck(const void *m, unsigned size);
 
     public:
-        Resource(const byte *ibufstart, const byte *ibufen);
-        Resource(const byte *p, const byte *ibufstart, const byte *ibufend);
+        explicit Resource(const byte *ibufstart, const byte *ibufen);
+        explicit Resource(const byte *p, const byte *ibufstart, const byte *ibufend);
         ~Resource() noexcept;
         void init(const byte *);
 
@@ -487,7 +485,7 @@ protected:
         Interval iv;
 
     public:
-        Export(char *_base);
+        explicit Export(char *_base);
         ~Export() noexcept;
 
         void convert(unsigned eoffs, unsigned esize);
@@ -499,7 +497,7 @@ protected:
 class PeFile32 : public PeFile {
     typedef PeFile super;
 protected:
-    PeFile32(InputFile *f);
+    explicit PeFile32(InputFile *f);
     virtual ~PeFile32() noexcept;
 
     void pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t default_imagebase,
@@ -560,7 +558,7 @@ protected:
 class PeFile64 : public PeFile {
     typedef PeFile super;
 protected:
-    PeFile64(InputFile *f);
+    explicit PeFile64(InputFile *f);
     virtual ~PeFile64() noexcept;
 
     void pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t default_imagebase);

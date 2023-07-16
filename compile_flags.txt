@@ -1,5 +1,6 @@
 -std=gnu++17
 -Ivendor
+-DDEBUG
 -fno-strict-aliasing
 -fno-strict-overflow
 -funsigned-char

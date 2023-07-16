@@ -56,13 +56,15 @@ protected:
     bool is_warning = false; // can be set by subclasses
 
 private:
-    // disable copy assignment
-    Throwable &operator=(const Throwable &) = delete;
+    // disable copy assignment and move
+    Throwable &operator=(const Throwable &) DELETED_FUNCTION;
+    Throwable(Throwable &&) noexcept DELETED_FUNCTION;
+    Throwable &operator=(Throwable &&) noexcept DELETED_FUNCTION;
     // disable dynamic allocation => force throwing by value
     ACC_CXX_DISABLE_NEW_DELETE
     // disable taking the address => force passing by reference
     // [I'm not too sure about this design decision, but we can always allow it if needed]
-    Throwable *operator&() const noexcept = delete;
+    Throwable *operator&() const noexcept DELETED_FUNCTION;
 
 private:
     static upx_std_atomic(size_t) debug_counter; // for debugging
@@ -86,31 +88,31 @@ public:
 // system exception
 **************************************************************************/
 
-class OutOfMemoryException : public Exception {
+class OutOfMemoryException final : public Exception {
     typedef Exception super;
 public:
     OutOfMemoryException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
-class IOException : public Exception {
+class IOException /*not_final*/ : public Exception {
     typedef Exception super;
 public:
     IOException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
-class EOFException : public IOException {
+class EOFException final : public IOException {
     typedef IOException super;
 public:
     EOFException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
-class FileNotFoundException : public IOException {
+class FileNotFoundException final : public IOException {
     typedef IOException super;
 public:
     FileNotFoundException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
-class FileAlreadyExistsException : public IOException {
+class FileAlreadyExistsException final : public IOException {
     typedef IOException super;
 public:
     FileAlreadyExistsException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
@@ -120,13 +122,13 @@ public:
 // application exceptions
 **************************************************************************/
 
-class OverlayException : public Exception {
+class OverlayException final : public Exception {
     typedef Exception super;
 public:
     OverlayException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
 };
 
-class CantPackException : public Exception {
+class CantPackException /*not_final*/ : public Exception {
     typedef Exception super;
 public:
     CantPackException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
@@ -139,25 +141,25 @@ public:
         : super(m, w) {}
 };
 
-class AlreadyPackedException : public CantPackException {
+class AlreadyPackedException final : public CantPackException {
     typedef CantPackException super;
 public:
     AlreadyPackedException(const char *m = nullptr) noexcept : super(m) { is_warning = true; }
 };
 
-class NotCompressibleException : public CantPackException {
+class NotCompressibleException final : public CantPackException {
     typedef CantPackException super;
 public:
     NotCompressibleException(const char *m = nullptr) noexcept : super(m) {}
 };
 
-class CantUnpackException : public Exception {
+class CantUnpackException /*not_final*/ : public Exception {
     typedef Exception super;
 public:
     CantUnpackException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
 };
 
-class NotPackedException : public CantUnpackException {
+class NotPackedException final : public CantUnpackException {
     typedef CantUnpackException super;
 public:
     NotPackedException(const char *m = nullptr) noexcept : super(m, true) {}
@@ -167,7 +169,7 @@ public:
 // errors
 **************************************************************************/
 
-class InternalError : public Error {
+class InternalError final : public Error {
     typedef Error super;
 public:
     InternalError(const char *m = nullptr) noexcept : super(m, 0) {}
@@ -203,11 +205,11 @@ NORET void throwEOFException(const char *msg = nullptr, int e = 0);
 
 // some C++ template wizardry is needed to overload throwCantPack() for varargs
 template <class T>
-void throwCantPack(const T *, ...) = delete;
+void throwCantPack(const T *, ...) DELETED_FUNCTION;
 template <>
 NORET void throwCantPack(const char *format, ...) attribute_format(1, 2);
 template <class T>
-void throwCantUnpack(const T *, ...) = delete;
+void throwCantUnpack(const T *, ...) DELETED_FUNCTION;
 template <>
 NORET void throwCantUnpack(const char *format, ...) attribute_format(1, 2);
 

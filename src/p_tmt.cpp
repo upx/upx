@@ -106,12 +106,12 @@ int PackTmt::readFileHeader() {
                 adam_offset -= 512;
             if (H(0x18 / 2) == 0x40 && H4(0x3c))
                 adam_offset = H4(0x3c);
-        } else if (memcmp(h, "BW", 2) == 0)
+        } else if (memcmp(h, "BW", 2) == 0) {
             adam_offset += H(2) * 512 + H(1);
-        else if (memcmp(h, "PMW1", 4) == 0) {
+        } else if (memcmp(h, "PMW1", 4) == 0) {
             fi->seek(adam_offset + H4(0x18), SEEK_SET);
             adam_offset += H4(0x24);
-            int objs = H4(0x1c);
+            unsigned objs = H4(0x1c);
             while (objs--) {
                 fi->readx(h, 0x18);
                 adam_offset += H4(4);
@@ -123,9 +123,9 @@ int PackTmt::readFileHeader() {
             fi->readx(h, 4);
             // + data_pages_offset
             adam_offset = offs + H4(0);
-        } else if (memcmp(h, "Adam", 4) == 0)
+        } else if (memcmp(h, "Adam", 4) == 0) {
             break;
-        else
+        } else
             return 0;
     }
     if (ic == 20)

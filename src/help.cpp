@@ -103,16 +103,16 @@ struct PackerNames {
     size_t names_count;
     const Options *o;
     PackerNames() : names_count(0), o(nullptr) {}
-    void add(const Packer *p) {
+    void add(const Packer *packer) {
         assert(names_count < 64);
-        names[names_count].fname = p->getFullName(o);
-        names[names_count].sname = p->getName();
+        names[names_count].fname = packer->getFullName(o);
+        names[names_count].sname = packer->getName();
         names_count++;
     }
-    static Packer *visit(Packer *p, void *user) {
+    static Packer *visit(Packer *packer, void *user) {
         PackerNames *self = (PackerNames *) user;
-        self->add(p);
-        delete p;
+        self->add(packer);
+        delete packer;
         return nullptr;
     }
     static int __acc_cdecl_qsort cmp_fname(const void *a, const void *b) {

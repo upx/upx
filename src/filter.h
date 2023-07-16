@@ -44,13 +44,10 @@
 // to absolute addresses so that the buffer compresses better.
 **************************************************************************/
 
-class Filter {
+class Filter final {
 public:
-    Filter(int level) {
-        clevel = level;
-        init();
-    }
-    void init(int id = 0, unsigned addvalue = 0);
+    explicit Filter(int level) noexcept;
+    void init(int id = 0, unsigned addvalue = 0) noexcept;
 
     bool filter(SPAN_0(byte) buf, unsigned buf_len);
     void unfilter(SPAN_0(byte) buf, unsigned buf_len, bool verify_checksum = false);
@@ -103,6 +100,8 @@ class FilterImpl {
     friend class Filter;
 
 private:
+    explicit FilterImpl() noexcept DELETED_FUNCTION;
+
     struct FilterEntry {
         int id; // 0 .. 255
         unsigned min_buf_len;

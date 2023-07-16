@@ -394,31 +394,31 @@ public:
 
 private:
     pointer check_deref(pointer p) const {
+        assertInvariants();
         if __acc_cte (!configRequirePtr && p == nullptr)
             xspan_fail_nullptr();
         if __acc_cte (configRequireBase || base != nullptr)
             xspan_check_range(p, base, size_in_bytes - sizeof(T));
-        assertInvariants();
         return p;
     }
     pointer check_deref(pointer p, ptrdiff_t n) const {
+        assertInvariants();
         if __acc_cte (!configRequirePtr && p == nullptr)
             xspan_fail_nullptr();
         xspan_mem_size_assert_ptrdiff<T>(n);
         p += n;
         if __acc_cte (configRequireBase || base != nullptr)
             xspan_check_range(p, base, size_in_bytes - sizeof(T));
-        assertInvariants();
         return p;
     }
     pointer check_add(pointer p, ptrdiff_t n) const {
+        assertInvariants();
         if __acc_cte (!configRequirePtr && p == nullptr)
             xspan_fail_nullptr();
         xspan_mem_size_assert_ptrdiff<T>(n);
         p += n;
         if __acc_cte (configRequireBase || base != nullptr)
             xspan_check_range(p, base, size_in_bytes);
-        assertInvariants();
         return p;
     }
 

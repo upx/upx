@@ -36,9 +36,7 @@
 //
 **************************************************************************/
 
-Packer::Packer(InputFile *f)
-    : bele(nullptr), fi(f), file_size(0), ph_format(-1), ph_version(-1), ibufgood(0), uip(nullptr),
-      linker(nullptr), last_patch(nullptr), last_patch_len(0), last_patch_off(0) {
+Packer::Packer(InputFile *f) : fi(f) {
     if (fi != nullptr)
         file_size = fi->st_size();
     mem_size_assert(1, file_size_u);
@@ -47,10 +45,12 @@ Packer::Packer(InputFile *f)
 }
 
 Packer::~Packer() noexcept {
-    delete uip;
-    uip = nullptr;
-    delete linker;
-    linker = nullptr;
+    // owner
+    owner_delete(uip);
+    owner_delete(linker);
+    // references
+    bele = nullptr;
+    fi = nullptr;
 }
 
 // for PackMaster
@@ -870,7 +870,7 @@ static const char *getIdentstr(unsigned *size, int small) {
 }
 
 void Packer::initLoader(const void *pdata, int plen, int small, int pextra) {
-    delete linker;
+    owner_delete(linker);
     linker = newLinker();
     assert(bele == linker->bele);
     linker->init(pdata, plen, pextra);

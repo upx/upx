@@ -33,12 +33,12 @@
 
 class FileBase {
 protected:
-    FileBase() = default;
-    virtual ~FileBase();
+    explicit FileBase() noexcept = default;
+    virtual ~FileBase() may_throw;
 
 public:
     bool close() noexcept;
-    void closex();
+    void closex() may_throw;
     bool isOpen() const { return _fd >= 0; }
     int getFd() const { return _fd; }
     const char *getName() const { return _name; }
@@ -76,13 +76,13 @@ class InputFile final : public FileBase {
     typedef FileBase super;
 
 public:
-    InputFile() = default;
+    explicit InputFile() noexcept = default;
 
     void sopen(const char *name, int flags, int shflags);
     void open(const char *name, int flags) { sopen(name, flags, -1); }
 
-    int read(SPAN_P(void) buf, int len);
-    int readx(SPAN_P(void) buf, int len);
+    int read(SPAN_P(void) buf, upx_int64_t blen);
+    int readx(SPAN_P(void) buf, upx_int64_t blen);
 
     virtual upx_off_t seek(upx_off_t off, int whence) override;
     upx_off_t st_size_orig() const;
@@ -99,14 +99,14 @@ class OutputFile final : public FileBase {
     typedef FileBase super;
 
 public:
-    OutputFile() = default;
+    explicit OutputFile() noexcept = default;
 
     void sopen(const char *name, int flags, int shflags, int mode);
     void open(const char *name, int flags, int mode) { sopen(name, flags, -1, mode); }
     bool openStdout(int flags = 0, bool force = false);
 
-    // info: allow nullptr if len == 0
-    void write(SPAN_0(const void) buf, int len);
+    // info: allow nullptr if blen == 0
+    void write(SPAN_0(const void) buf, upx_int64_t blen);
 
     virtual upx_off_t seek(upx_off_t off, int whence) override;
     virtual upx_off_t st_size() const override; // { return _length; }
@@ -115,7 +115,7 @@ public:
 
     upx_off_t getBytesWritten() const { return bytes_written; }
 
-    // FIXME - these won't work when using the '--stdout' option
+    // FIXME - this won't work when using the '--stdout' option
     void rewrite(SPAN_P(const void) buf, int len);
 
     // util

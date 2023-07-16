@@ -60,7 +60,7 @@
 //
 **************************************************************************/
 
-FileBase::~FileBase() {
+FileBase::~FileBase() may_throw {
 #if 0 && defined(__GNUC__) // debug
     if (isOpen())
         fprintf(stderr,"%s: %s\n", _name, __PRETTY_FUNCTION__);
@@ -107,7 +107,7 @@ bool FileBase::close() noexcept {
     return ok;
 }
 
-void FileBase::closex() {
+void FileBase::closex() may_throw {
     if (!close())
         throwIOException("close failed", errno);
 }
@@ -174,10 +174,10 @@ void InputFile::sopen(const char *name, int flags, int shflags) {
     _length_orig = _length;
 }
 
-int InputFile::read(SPAN_P(void) buf, int len) {
-    if (!isOpen() || len < 0)
+int InputFile::read(SPAN_P(void) buf, upx_int64_t blen) {
+    if (!isOpen() || blen < 0)
         throwIOException("bad read");
-    mem_size_assert(1, len); // sanity check
+    int len = (int) mem_size(1, blen); // sanity check
     errno = 0;
     long l = acc_safe_hread(_fd, raw_bytes(buf, len), len);
     if (errno)
@@ -185,9 +185,9 @@ int InputFile::read(SPAN_P(void) buf, int len) {
     return (int) l;
 }
 
-int InputFile::readx(SPAN_P(void) buf, int len) {
-    int l = this->read(buf, len);
-    if (l != len)
+int InputFile::readx(SPAN_P(void) buf, upx_int64_t blen) {
+    int l = this->read(buf, blen);
+    if (l != blen)
         throwEOFException();
     return l;
 }
@@ -244,13 +244,13 @@ bool OutputFile::openStdout(int flags, bool force) {
     return true;
 }
 
-void OutputFile::write(SPAN_0(const void) buf, int len) {
-    if (!isOpen() || len < 0)
+void OutputFile::write(SPAN_0(const void) buf, upx_int64_t blen) {
+    if (!isOpen() || blen < 0)
         throwIOException("bad write");
-    // allow nullptr if len == 0
-    if (len == 0)
+    // allow nullptr if blen == 0
+    if (blen == 0)
         return;
-    mem_size_assert(1, len); // sanity check
+    int len = (int) mem_size(1, blen); // sanity check
     errno = 0;
 #if WITH_XSPAN >= 2
     NO_fprintf(stderr, "write %p %zd (%p) %d\n", buf.raw_ptr(), buf.raw_size_in_bytes(),

@@ -35,7 +35,7 @@ class PackW32PeI386 final : public PeFile32 {
     typedef PeFile32 super;
 
 public:
-    PackW32PeI386(InputFile *f);
+    explicit PackW32PeI386(InputFile *f);
     virtual ~PackW32PeI386() noexcept;
     virtual int getFormat() const override { return UPX_F_W32PE_I386; }
     virtual const char *getName() const override { return isrtm ? "rtm32/pe" : "win32/pe"; }

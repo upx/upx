@@ -35,7 +35,7 @@ class PackWcle final : public Packer, public LeFile {
     typedef Packer super;
 
 public:
-    PackWcle(InputFile *f) : super(f), LeFile(f) { bele = &N_BELE_RTP::le_policy; }
+    explicit PackWcle(InputFile *f) : super(f), LeFile(f) { bele = &N_BELE_RTP::le_policy; }
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_WATCOM_LE; }
     virtual const char *getName() const override { return "watcom/le"; }
@@ -81,9 +81,9 @@ protected:
     // temporary copy of the object descriptors
     MemBuffer iobject_desc;
 
-    int big_relocs;
-    bool has_extra_code;
-    unsigned neweip;
+    int big_relocs = 0;
+    bool has_extra_code = false;
+    unsigned neweip = 0;
 };
 
 /* vim:set ts=4 sw=4 et: */

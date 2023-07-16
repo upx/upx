@@ -22,11 +22,16 @@ jobs:
       - name: 'Install extra packages'
         run: |
           uname -a; pwd; id; umask
-          if ! test -e /usr/bin/python2; then
-            sudo apt-get update && sudo apt-get install -y --no-install-recommends python2-minimal
-          fi
           mkdir ../deps; cd ../deps; mkdir packages
-          # manually install compat libs from Ubuntu 16.04
+          if ! test -e /usr/bin/python2; then
+            ####sudo apt-get update && sudo apt-get install -y --no-install-recommends python2-minimal
+            # install python2-minimal packages from Debian-11
+            wget -q 'https://ftp.debian.org/debian/pool/main/p/python2.7/libpython2.7-minimal_2.7.18-8_amd64.deb'
+            wget -q 'https://ftp.debian.org/debian/pool/main/p/python2.7/python2.7-minimal_2.7.18-8_amd64.deb'
+            sudo dpkg -i ./*python2*.deb && rm ./*python2*.deb && sudo ldconfig
+            sudo ln -s -v python2.7 /usr/bin/python2
+          fi
+          # manually unpack and install compat libs from Ubuntu-16.04
           wget -q 'https://archive.kernel.org/ubuntu-archive/ubuntu/pool/main/m/mpfr4/libmpfr4_3.1.6-1_amd64.deb'
           for f in ./*.deb; do dpkg -x $f ./packages; done
           sudo mv -v -n ./packages/usr/lib/x86_64-linux-gnu/lib* /usr/lib/x86_64-linux-gnu/

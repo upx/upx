@@ -27,10 +27,9 @@
 
 #include "conf.h"
 #include "file.h"
-#include "util/membuffer.h"
 #include "lefile.h"
 
-LeFile::LeFile(InputFile *f) : fif(f), fof(nullptr), le_offset(0), exe_offset(0) {
+LeFile::LeFile(InputFile *f) noexcept : fif(f) {
     COMPILE_TIME_ASSERT(sizeof(le_header_t) == 196)
     COMPILE_TIME_ASSERT(sizeof(le_object_table_entry_t) == 24)
     COMPILE_TIME_ASSERT(sizeof(le_pagemap_entry_t) == 4)
@@ -159,7 +158,7 @@ void LeFile::readImage() {
                           (ipm_entries[ic].m * 0x100 + ipm_entries[ic].l - 1) * mps,
                       SEEK_SET);
             auto bytes = ic != pages - 1 ? mps : ih.bytes_on_last_page;
-            fif->readx(raw_bytes(iimage + jc, bytes), bytes);
+            fif->readx(iimage + jc, bytes);
         }
         jc += mps;
     }
@@ -167,7 +166,7 @@ void LeFile::readImage() {
 
 void LeFile::writeImage() {
     if (fof && oimage != nullptr)
-        fof->write(raw_bytes(oimage, soimage), soimage);
+        fof->write(oimage, soimage);
 }
 
 void LeFile::readNonResidentNames() {
@@ -219,7 +218,9 @@ bool LeFile::readFileHeader() {
         return false;
     fif->seek(le_offset, SEEK_SET);
     fif->readx(&ih, sizeof(ih));
-    if (mps < 512 || mps > 2097152 || (mps & (mps - 1)) != 0 || ih.bytes_on_last_page > mps)
+    if (mps < 512 || mps > 2097152 || (mps & (mps - 1)) != 0)
+        throwCantPack("file header invalid page size");
+    if (ih.bytes_on_last_page > mps || pages == 0)
         throwCantPack("bad file header");
     (void) mem_size(mps, pages); // assert size
     return true;

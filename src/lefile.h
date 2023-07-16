@@ -26,8 +26,8 @@
  */
 
 #pragma once
-#ifndef UPX_LEFILE_H__
-#define UPX_LEFILE_H__ 1
+
+#include "util/membuffer.h"
 
 class InputFile;
 class OutputFile;
@@ -38,7 +38,7 @@ class OutputFile;
 
 class LeFile {
 protected:
-    LeFile(InputFile *);
+    explicit LeFile(InputFile *) noexcept;
     virtual ~LeFile() noexcept;
 
     virtual bool readFileHeader();
@@ -187,8 +187,8 @@ protected:
 
     InputFile *fif = nullptr;
     OutputFile *fof = nullptr;
-    unsigned le_offset;
-    unsigned exe_offset;
+    unsigned le_offset = 0;
+    unsigned exe_offset = 0;
 
     le_header_t ih;
     le_header_t oh;
@@ -212,23 +212,21 @@ protected:
     byte *ientries = nullptr;
     byte *oentries = nullptr;
 
-    unsigned soobject_table;
-    unsigned sofpage_table;
-    unsigned sopm_entries;
-    unsigned sores_names;
-    unsigned sofixups;
-    unsigned sononres_names;
-    unsigned soimage;
-    unsigned soentries;
+    unsigned soobject_table = 0;
+    unsigned sofpage_table = 0;
+    unsigned sopm_entries = 0;
+    unsigned sores_names = 0;
+    unsigned sofixups = 0;
+    unsigned sononres_names = 0;
+    unsigned soimage = 0;
+    unsigned soentries = 0;
 
 private:
     // disable copy and move
-    LeFile(const LeFile &) = delete;
-    LeFile &operator=(const LeFile &) = delete;
-    LeFile(LeFile &&) noexcept = delete;
-    LeFile &operator=(LeFile &&) noexcept = delete;
+    LeFile(const LeFile &) DELETED_FUNCTION;
+    LeFile &operator=(const LeFile &) DELETED_FUNCTION;
+    LeFile(LeFile &&) noexcept DELETED_FUNCTION;
+    LeFile &operator=(LeFile &&) noexcept DELETED_FUNCTION;
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

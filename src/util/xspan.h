@@ -120,7 +120,7 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 
 // helper for implicit pointer conversions and MemBuffer overloads
 template <class R, class T>
-inline R *xspan_make_helper__(R * /*dummy*/, T *first) /*may_throw*/ {
+inline R *xspan_make_helper__(R * /*dummy*/, T *first) may_throw {
     return first; // IMPORTANT: no cast here to detect bad usage
 }
 template <class R>

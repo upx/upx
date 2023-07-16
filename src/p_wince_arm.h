@@ -35,7 +35,7 @@ class PackWinCeArm final : public PeFile32 {
     typedef PeFile32 super;
 
 public:
-    PackWinCeArm(InputFile *f);
+    explicit PackWinCeArm(InputFile *f);
     virtual ~PackWinCeArm() noexcept;
     virtual int getFormat() const override { return UPX_F_WINCE_ARM; }
     virtual const char *getName() const override { return "wince/arm"; }

@@ -44,7 +44,7 @@ class PackHeader final {
     friend class Packer;
 
     // these are strictly private to friend Packer
-    PackHeader() noexcept;
+    explicit PackHeader() noexcept;
     void putPackHeader(SPAN_S(byte) p);
     bool decodePackHeaderFromBuf(SPAN_S(const byte) b, int blen);
 
@@ -106,7 +106,7 @@ class Packer {
     friend class UiPacker;
 
 protected:
-    Packer(InputFile *f);
+    explicit Packer(InputFile *f);
 
 public:
     virtual ~Packer() noexcept;
@@ -328,9 +328,9 @@ protected:
         upx_uint64_t file_size_u;  // explicitly unsigned
     };
 
-    PackHeader ph = {}; // must be filled by canUnpack()
-    int ph_format = 0;
-    int ph_version = 0;
+    PackHeader ph = PackHeader{}; // must be filled by canUnpack()
+    int ph_format = -1;
+    int ph_version = -1;
 
     // compression buffers
     MemBuffer ibuf;        // input
@@ -338,10 +338,10 @@ protected:
     unsigned ibufgood = 0; // high-water mark in ibuf (pefile.cpp)
 
     // UI handler
-    UiPacker *uip = nullptr;
+    OwningPointer(UiPacker) uip = nullptr; // owner
 
     // linker
-    Linker *linker = nullptr;
+    OwningPointer(Linker) linker = nullptr; // owner
 
 private:
     // private to checkPatch()
@@ -351,10 +351,10 @@ private:
 
 private:
     // disable copy and move
-    Packer(const Packer &) = delete;
-    Packer &operator=(const Packer &) = delete;
-    Packer(Packer &&) noexcept = delete;
-    Packer &operator=(Packer &&) noexcept = delete;
+    Packer(const Packer &) DELETED_FUNCTION;
+    Packer &operator=(const Packer &) DELETED_FUNCTION;
+    Packer(Packer &&) noexcept DELETED_FUNCTION;
+    Packer &operator=(Packer &&) noexcept DELETED_FUNCTION;
 };
 
 int force_method(int method) noexcept;     // (0x80ul<<24)|method

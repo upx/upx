@@ -35,7 +35,7 @@ class PackSys final : public PackCom {
     typedef PackCom super;
 
 public:
-    PackSys(InputFile *f) : super(f) {}
+    explicit PackSys(InputFile *f) : super(f) {}
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_DOS_SYS; }
     virtual const char *getName() const override { return "dos/sys"; }

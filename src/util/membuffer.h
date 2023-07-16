@@ -48,7 +48,7 @@ protected:
     size_type size_in_bytes;
 
 public:
-    inline MemBufferBase() noexcept : ptr(nullptr), size_in_bytes(0) {}
+    explicit inline MemBufferBase() noexcept : ptr(nullptr), size_in_bytes(0) {}
     forceinline ~MemBufferBase() noexcept {}
 
     // IMPORTANT NOTE: automatic conversion to underlying pointer
@@ -148,7 +148,7 @@ inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T>
 
 class MemBuffer final : public MemBufferBase<byte> {
 public:
-    inline MemBuffer() noexcept : MemBufferBase<byte>() {}
+    explicit inline MemBuffer() noexcept : MemBufferBase<byte>() {}
     explicit MemBuffer(upx_uint64_t bytes);
     ~MemBuffer() noexcept;
 

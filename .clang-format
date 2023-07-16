@@ -21,6 +21,7 @@ AttributeMacros:
   - DELETED_FUNCTION
   - XSPAN_DELETED_FUNCTION
   - forceinline
+  - may_throw
   - noinline
   - static_forceinline
   - static_noinline

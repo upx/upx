@@ -130,6 +130,12 @@ endif()
 # common compilation flags
 #***********************************************************************
 
+include(CheckCCompilerFlag)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+    check_c_compiler_flag(-fno-delete-null-pointer-checks HAVE_CFLAG_FNO_DELETE_NULL_POINTER_CHECKS)
+    check_c_compiler_flag(-fno-lifetime-dse HAVE_CFLAG_FNO_LIFETIME_DSE)
+endif()
+
 if(UPX_CONFIG_DISABLE_WSTRICT)
     # enable all basic warnings
     set(warn_Wall -Wall)
@@ -167,8 +173,11 @@ if(MSVC_FRONTEND)
     add_definitions(-J -Zc:__cplusplus -Zc:preprocessor)
 else()
     # protect against security threats caused by misguided compiler "optimizations"
-    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        add_definitions(-fno-delete-null-pointer-checks -fno-lifetime-dse)
+    if(HAVE_CFLAG_FNO_DELETE_NULL_POINTER_CHECKS)
+        add_definitions(-fno-delete-null-pointer-checks)
+    endif()
+    if(HAVE_CFLAG_FNO_LIFETIME_DSE)
+        add_definitions(-fno-lifetime-dse)
     endif()
     add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
     # disable overambitious auto-vectorization until this actually gains something

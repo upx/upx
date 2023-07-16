@@ -185,8 +185,8 @@ UiPacker::UiPacker(const Packer *p_) : p(p_) {
 
 UiPacker::~UiPacker() noexcept {
     cb.reset();
-    delete s;
-    s = nullptr;
+    // owner
+    owner_delete(s);
 }
 
 /*************************************************************************

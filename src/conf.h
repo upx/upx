@@ -155,7 +155,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(upx_charptr_unit_type) == 1)
 typedef upx_int64_t upx_off_t;
 #undef off_t
 #if 0
-// TODO cleanup: at some future point we can do this...
+// TODO cleanup: at some future point we can do this:
 #define off_t DO_NOT_USE_off_t
 #else
 #define off_t upx_off_t
@@ -174,6 +174,7 @@ typedef upx_int64_t upx_off_t;
 #define unlikely        __acc_unlikely
 #define very_likely     __acc_very_likely
 #define very_unlikely   __acc_very_unlikely
+#define may_throw       noexcept(false)
 
 #define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
 #define DELETED_FUNCTION        = delete
@@ -318,10 +319,10 @@ typedef upx_int64_t upx_off_t;
 #endif
 
 // for no-op debug output
-inline void NO_printf(const char *, ...) attribute_format(1, 2);
-inline void NO_fprintf(FILE *, const char *, ...) attribute_format(2, 3);
-inline void NO_printf(const char *, ...) {}
-inline void NO_fprintf(FILE *, const char *, ...) {}
+inline void NO_printf(const char *, ...) noexcept attribute_format(1, 2);
+inline void NO_fprintf(FILE *, const char *, ...) noexcept attribute_format(2, 3);
+inline void NO_printf(const char *, ...) noexcept {}
+inline void NO_fprintf(FILE *, const char *, ...) noexcept {}
 
 #if !defined(__has_builtin)
 #  define __has_builtin(x)      0
@@ -385,6 +386,26 @@ struct UnsignedSizeOf {
 };
 #define usizeof(expr)   (UnsignedSizeOf<sizeof(expr)>::value)
 
+// simple pointer type alias to explicitly mark ownership of objects; purely
+// cosmetic to improve source code readability, no real functionality
+#if 0
+#define OwningPointer(T) T *
+#else
+template <class T> using OwningPointer = T *;
+#define OwningPointer(T) OwningPointer<T>
+#endif
+template <class T>
+inline void owner_delete(OwningPointer(T) (&object)) noexcept {
+    static_assert(std::is_class_v<T>);
+    static_assert(std::is_nothrow_destructible_v<T>);
+    delete object;
+    object = nullptr;
+}
+template <class T>
+inline void owner_delete(T (&array)[]) noexcept DELETED_FUNCTION;
+template <class T, size_t N>
+inline void owner_delete(T (&array)[N]) noexcept DELETED_FUNCTION;
+
 template <class T>
 inline void mem_clear(T *object) noexcept {
     static_assert(std::is_class_v<T>);
@@ -395,9 +416,9 @@ inline void mem_clear(T *object) noexcept {
     memset((void *) object, 0, size);
 }
 template <class T>
-inline void mem_clear(T (&array)[]) noexcept = delete;
+inline void mem_clear(T (&array)[]) noexcept DELETED_FUNCTION;
 template <class T, size_t N>
-inline void mem_clear(T (&array)[N]) noexcept = delete;
+inline void mem_clear(T (&array)[N]) noexcept DELETED_FUNCTION;
 
 // An Array allocates memory on the heap, and automatically
 // gets destructed when leaving scope or on exceptions.
@@ -630,7 +651,7 @@ struct upx_callback_t {
 **************************************************************************/
 
 template <class T, T default_value_, T min_value_, T max_value_>
-struct OptVar {
+struct OptVar final {
     static_assert(std::is_integral_v<T>);
     typedef T value_type;
     static constexpr T default_value = default_value_;

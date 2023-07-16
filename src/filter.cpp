@@ -33,7 +33,7 @@
 // util
 **************************************************************************/
 
-static void initFilter(Filter *f, byte *buf, unsigned buf_len) {
+static void initFilter(Filter *f, byte *buf, unsigned buf_len) noexcept {
     f->buf = buf;
     f->buf_len = buf_len;
     // clear output parameters
@@ -65,7 +65,7 @@ static void initFilter(Filter *f, byte *buf, unsigned buf_len) {
     unsigned index = filter_map[id];
     if (index == 0xff) // empty slot
         return nullptr;
-    assert(filters[index].id == id);
+    assert_noexcept(filters[index].id == id);
     return &filters[index];
 }
 
@@ -91,7 +91,9 @@ static void initFilter(Filter *f, byte *buf, unsigned buf_len) {
 // high level API
 **************************************************************************/
 
-void Filter::init(int id_, unsigned addvalue_) {
+Filter::Filter(int level) noexcept : clevel(level) { init(); }
+
+void Filter::init(int id_, unsigned addvalue_) noexcept {
     this->id = id_;
     initFilter(this, nullptr, 0);
     // clear input parameters

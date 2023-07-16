@@ -151,7 +151,7 @@ void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, s
     if very_unlikely (a_end < a || b_end < b) // wrap-around
         throwCantPack("ptr_check_no_overlap-overflow");
     // same as (!(a >= b_end || b >= a_end))
-    if (a < b_end && b < a_end)
+    if very_unlikely (a < b_end && b < a_end)
         throwCantPack("ptr_check_no_overlap-ab");
 }
 
@@ -165,11 +165,11 @@ void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, s
     upx_uintptr_t c_end = c + mem_size(1, c_size);
     if very_unlikely (a_end < a || b_end < b || c_end < c) // wrap-around
         throwCantPack("ptr_check_no_overlap-overflow");
-    if (a < b_end && b < a_end)
+    if very_unlikely (a < b_end && b < a_end)
         throwCantPack("ptr_check_no_overlap-ab");
-    if (a < c_end && c < a_end)
+    if very_unlikely (a < c_end && c < a_end)
         throwCantPack("ptr_check_no_overlap-ac");
-    if (b < c_end && c < b_end)
+    if very_unlikely (b < c_end && c < b_end)
         throwCantPack("ptr_check_no_overlap-bc");
 }
 

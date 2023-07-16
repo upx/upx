@@ -37,7 +37,7 @@ class OutputFile;
 
 class PackMaster final {
 public:
-    PackMaster(InputFile *f, Options *o = nullptr) noexcept;
+    explicit PackMaster(InputFile *f, Options *o = nullptr) noexcept;
     ~PackMaster() noexcept;
 
     void pack(OutputFile *fo);
@@ -50,8 +50,8 @@ public:
     static Packer *visitAllPackers(visit_func_t, InputFile *f, const Options *, void *user);
 
 private:
-    Packer *packer = nullptr; // owner
-    InputFile *fi = nullptr;  // reference
+    OwningPointer(Packer) packer = nullptr; // owner
+    InputFile *fi = nullptr;                // reference
 
     static Packer *getPacker(InputFile *f);
     static Packer *getUnpacker(InputFile *f);

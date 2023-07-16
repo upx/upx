@@ -35,7 +35,7 @@ class PackTmt final : public Packer {
     typedef Packer super;
 
 public:
-    PackTmt(InputFile *f);
+    explicit PackTmt(InputFile *f);
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_TMT_ADAM; }
     virtual const char *getName() const override { return "tmt/adam"; }
