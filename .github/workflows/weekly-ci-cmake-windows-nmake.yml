@@ -9,18 +9,21 @@ on:
 
 jobs:
   job-cmake-windows-nmake: # uses cmake + nmake
-    name: ${{ format('vs{0} {1}', matrix.vsversion, matrix.arch) }}
+    name: ${{ format('vs{0} {1} {2}', matrix.vsversion, matrix.arch, matrix.clang_cl && 'clang-cl' || '') }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          # msvc
           - { os: windows-2019, vsversion: 2019, arch: amd64 }
           - { os: windows-2019, vsversion: 2019, arch: amd64_arm64 }
           - { os: windows-2019, vsversion: 2019, arch: amd64_x86 }
           - { os: windows-2022, vsversion: 2022, arch: amd64 }
           - { os: windows-2022, vsversion: 2022, arch: amd64_arm64 }
           - { os: windows-2022, vsversion: 2022, arch: amd64_x86 }
+          # clang-cl
+          - { os: windows-2022, vsversion: 2022, arch: amd64, clang_cl: true }
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -33,21 +36,24 @@ jobs:
       - name: 'Build cmake NMake Debug'
         shell: cmd
         run: |
-          cmake -S . -B build/debug -G "NMake Makefiles" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Debug
+          set X=${{ matrix.clang_cl && '-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl' || '' }}
+          cmake -S . -B build/debug -G "NMake Makefiles" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Debug %X%
           cd build/debug
           nmake
           dir *.exe
       - name: 'Build cmake NMake Release'
         shell: cmd
         run: |
-          cmake -S . -B build/release -G "NMake Makefiles" -DCMAKE_VERBOSE_MAKEFILE=ON
+          set X=${{ matrix.clang_cl && '-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl' || '' }}
+          cmake -S . -B build/release -G "NMake Makefiles" -DCMAKE_VERBOSE_MAKEFILE=ON %X%
           cd build/release
           nmake
           dir *.exe
       - name: 'Make artifact'
         shell: bash
         run: |
-          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-nmake-vs${{ matrix.vsversion }}-${{ matrix.arch }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          X="${{ matrix.clang_cl && '-clang-cl' || '' }}"
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-nmake-vs${{ matrix.vsversion }}-${{ matrix.arch }}$X" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           mkdir -p "tmp/artifact/$N"
           (cd build && cp -ai --parents */upx.exe "../tmp/artifact/$N")
           # GitHub Actions magic: set "artifact_name" environment value for use in next step

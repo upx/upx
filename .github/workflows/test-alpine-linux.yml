@@ -5,6 +5,7 @@
 
 name: 'Test - Minimal Alpine build'
 on: [workflow_dispatch]
+
 jobs:
   job-alpine-clang: # uses cmake + make
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }

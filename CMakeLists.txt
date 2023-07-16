@@ -56,6 +56,9 @@ if(${CMAKE_VERSION} VERSION_GREATER "3.14.7")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
     cmake_policy(SET CMP0091 NEW)
 endif()
+if(NOT DEFINED CMAKE_REQUIRED_QUIET)
+    set(CMAKE_REQUIRED_QUIET ON)
+endif()
 
 # determine Git revision
 set(GITREV_SHORT "")
@@ -131,10 +134,6 @@ endif()
 #***********************************************************************
 
 include(CheckCCompilerFlag)
-if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
-    check_c_compiler_flag(-fno-delete-null-pointer-checks HAVE_CFLAG_FNO_DELETE_NULL_POINTER_CHECKS)
-    check_c_compiler_flag(-fno-lifetime-dse HAVE_CFLAG_FNO_LIFETIME_DSE)
-endif()
 
 if(UPX_CONFIG_DISABLE_WSTRICT)
     # enable all basic warnings
@@ -155,6 +154,17 @@ else()
     set(warn_WX -WX)
 endif()
 
+function(upx_add_definitions)
+    foreach(flag ${ARGV})
+        string(REGEX REPLACE "[^0-9a-zA-Z_]" "_" cache_var "HAVE_CFLAG_${flag}")
+        check_c_compiler_flag("${flag}" ${cache_var})
+        if(${cache_var})
+            #message(STATUS "add_definitions: ${flag}")
+            add_definitions("${flag}")
+        endif()
+    endforeach()
+endfunction()
+
 if(NOT MSVC)
     # use -O2 instead of -O3 to reduce code size
     string(REGEX REPLACE "(^| )-O3( |$$)" "\\1-O2\\2" a "${CMAKE_C_FLAGS_RELEASE}")
@@ -169,22 +179,22 @@ if(MSVC_FRONTEND)
     add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    # use -funsigned-char; set __cplusplus according to selected C++ standard; use new preprocessor
-    add_definitions(-J -Zc:__cplusplus -Zc:preprocessor)
+    # use -funsigned-char; set __cplusplus according to selected C++ standard
+    add_definitions(-J -Zc:__cplusplus)
+    if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
+        upx_add_definitions(-Zc:preprocessor) # use new preprocessor
+    elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+        upx_add_definitions(-clang:-fno-strict-aliasing -clang:-fno-strict-overflow)
+    endif()
 else()
     # protect against security threats caused by misguided compiler "optimizations"
-    if(HAVE_CFLAG_FNO_DELETE_NULL_POINTER_CHECKS)
-        add_definitions(-fno-delete-null-pointer-checks)
-    endif()
-    if(HAVE_CFLAG_FNO_LIFETIME_DSE)
-        add_definitions(-fno-lifetime-dse)
-    endif()
-    add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
+    upx_add_definitions(-fno-delete-null-pointer-checks -fno-lifetime-dse)
+    upx_add_definitions(-fno-strict-aliasing -fno-strict-overflow -funsigned-char)
     # disable overambitious auto-vectorization until this actually gains something
-    add_definitions(-fno-tree-vectorize)
+    upx_add_definitions(-fno-tree-vectorize)
     # disable annoying clang warnings which get added by the macOS Xcode cmake generator
     if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND CMAKE_GENERATOR STREQUAL "Xcode")
-        add_definitions(-Wno-shorten-64-to-32)
+        upx_add_definitions(-Wno-shorten-64-to-32)
     endif()
 endif()
 
@@ -451,6 +461,7 @@ print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
 print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING)
 print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_FRONTEND_VARIANT CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_FRONTEND_VARIANT CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
+print_var(CYGWIN GNUC MINGW MSVC MSVC_FRONTEND MSVC_IDE WIN32 WIN64)
 endif() # UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO
 print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
 if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|None|Release)$")

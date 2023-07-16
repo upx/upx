@@ -1,7 +1,6 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 name: 'Test - CMake default build type'
-
 on: [workflow_dispatch]
 
 env:
