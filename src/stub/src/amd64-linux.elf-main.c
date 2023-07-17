@@ -279,7 +279,7 @@ make_hatch_ppc64(
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         if (
         // Try page fragmentation just beyond .text .
-            ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+            ( (hatch = (void *)(~3ul & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
                 &&  (4*4)<=(frag_mask & -(int)(size_t)hatch) ) ) // space left on page
         // Try Elf64_Phdr[1].p_paddr (2 instr) and .p_filesz (2 instr)
