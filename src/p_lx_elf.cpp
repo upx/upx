@@ -7269,6 +7269,10 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             if (fo)
                 fo->seek(where, SEEK_SET);
             { // Recover from some piracy [also serves as error tolerance :-) ]
+              // Getting past the loader is problematic, due to unintended
+              // variances between released versions:
+              //   l_info.l_lsize might be rounded up by 8 instead of by 4, and
+              //   sz_d_info might have changed.
                 b_info b_peek, *bp = &b_peek;
                 fi->readx(bp, sizeof(b_peek));
                 upx_off_t pos = fi->seek(-(off_t)sizeof(b_peek), SEEK_CUR);
@@ -7283,23 +7287,35 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 ) {
                     opt->info_mode++;
                     infoWarning("bad b_info at %#zx", (size_t)pos);
-                    unsigned const N_PEEK(64), H_PEEK(N_PEEK >> 1);
+                    unsigned const N_PEEK(16 * sizeof(int)), H_PEEK(N_PEEK >> 1);
                     unsigned char peek_arr[N_PEEK];
                     fi->seek(pos - H_PEEK, SEEK_SET);
                     fi->readx(peek_arr, sizeof(peek_arr));
                     fi->seek(pos, SEEK_SET);
+                    bool const is_be = ELFDATA2MSB == ehdri.e_ident[EI_DATA];
+                    if (is_be) {
+                        // Does the right thing for sz_unc and sz_cpr,
+                        // but swaps b_method and b_extra.  Need find_be32() :-)
+                        for (unsigned k = 0; k < N_PEEK; k += sizeof(int)) {
+                            set_le32(&peek_arr[k], get_be32(&peek_arr[k]));
+                        }
+                    }
                     int boff = find_le32(peek_arr, sizeof(peek_arr), size);
+                    if (boff < 0) {
+                        throwCantUnpack("b_info corrupted");
+                    }
                     bp = (b_info *)(void *)&peek_arr[boff];
 
-                    sz_unc = get_te32(&bp->sz_unc);
-                    sz_cpr = get_te32(&bp->sz_cpr);
-                    word3  = get_te32(&bp->b_method);
+                    sz_unc = get_le32(&bp->sz_unc);
+                    sz_cpr = get_le32(&bp->sz_cpr);
+                    word3  = get_le32(&bp->b_method);
                     method = bp->b_method;
                     ftid = bp->b_ftid;
                     cto8 = bp->b_cto8;
                     if (0 <= boff  // found
                     && ( ((sz_cpr == sz_unc) && (0 == word3) && (size == sz_unc)) // incompressible literal
-                      || ((sz_cpr <  sz_unc) && (method == prev_method) && (0 == ftid) && (0 == cto8)))
+                      || ((sz_cpr <  sz_unc) && (0 == ftid) && (0 == cto8)
+                          && ((is_be ? bp->b_extra : bp->b_method) == prev_method)) )
                     ) {
                         pos -= H_PEEK;
                         pos += boff;
@@ -8399,6 +8415,10 @@ void PackLinuxElf32::unpack(OutputFile *fo)
             if (fo)
                 fo->seek(where, SEEK_SET);
             { // Recover from some piracy [also serves as error tolerance :-) ]
+              // Getting past the loader is problematic, due to unintended
+              // variances between released versions:
+              //   l_info.l_lsize might be rounded up by 8 instead of by 4, and
+              //   sz_d_info might have changed.
                 b_info b_peek, *bp = &b_peek;
                 fi->readx(bp, sizeof(b_peek));
                 upx_off_t pos = fi->seek(-(off_t)sizeof(b_peek), SEEK_CUR);
@@ -8413,30 +8433,35 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 ) {
                     opt->info_mode++;
                     infoWarning("bad b_info at %#zx", (size_t)pos);
-                    unsigned const N_PEEK(64), H_PEEK(N_PEEK >> 1);
+                    unsigned const N_PEEK(16 * sizeof(int)), H_PEEK(N_PEEK >> 1);
                     unsigned char peek_arr[N_PEEK];
                     fi->seek(pos - H_PEEK, SEEK_SET);
                     fi->readx(peek_arr, sizeof(peek_arr));
                     fi->seek(pos, SEEK_SET);
+                    bool const is_be = ELFDATA2MSB == ehdri.e_ident[EI_DATA];
+                    if (is_be) {
+                        // Does the right thing for sz_unc and sz_cpr,
+                        // but swaps b_method and b_extra.  Need find_be32() :-)
+                        for (unsigned k = 0; k < N_PEEK; k += sizeof(int)) {
+                            set_le32(&peek_arr[k], get_be32(&peek_arr[k]));
+                        }
+                    }
                     int boff = find_le32(peek_arr, sizeof(peek_arr), size);
                     if (boff < 0) {
-                        unsigned w; set_be32(&w, size);
-                        boff = find_le32(peek_arr, sizeof(peek_arr), w);
-                        if (boff < 0) {
-                            throwCantUnpack("b_info corrupted");
-                        }
+                        throwCantUnpack("b_info corrupted");
                     }
                     bp = (b_info *)(void *)&peek_arr[boff];
 
-                    sz_unc = get_te32(&bp->sz_unc);
-                    sz_cpr = get_te32(&bp->sz_cpr);
-                    word3  = get_te32(&bp->b_method);
+                    sz_unc = get_le32(&bp->sz_unc);
+                    sz_cpr = get_le32(&bp->sz_cpr);
+                    word3  = get_le32(&bp->b_method);
                     method = bp->b_method;
                     ftid = bp->b_ftid;
                     cto8 = bp->b_cto8;
                     if (0 <= boff  // found
                     && ( ((sz_cpr == sz_unc) && (0 == word3) && (size == sz_unc)) // incompressible literal
-                      || ((sz_cpr <  sz_unc) && (method == prev_method) && (0 == ftid) && (0 == cto8)))
+                      || ((sz_cpr <  sz_unc) && (0 == ftid) && (0 == cto8)
+                          && ((is_be ? bp->b_extra : bp->b_method) == prev_method)) )
                     ) {
                         pos -= H_PEEK;
                         pos += boff;
