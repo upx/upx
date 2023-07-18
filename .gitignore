@@ -12,8 +12,8 @@ Makevars.local*
 tmp*
 
 *.a
-*.d
 *.bz2
+*.d
 *.dll
 *.dylib
 *.exe
@@ -23,6 +23,7 @@ tmp*
 *.o
 *.obj
 *.out
+*.patch
 *.py[cdo]
 *.rar
 *.so

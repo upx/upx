@@ -50,11 +50,11 @@ RUN cd /root \
     && rm -r ./upx-*.tar.* ./upx-*linux \
     && true
 
-# create default user upx 2000:2000
+# create default user upx:upx 2000:2000
 RUN useradd upx -U --uid 2000 --shell /bin/bash -m \
     && cd /home/upx && chmod 00700 . \
     # prepare ~/.cache and ~/.local for possible tmpfs mounts
-    && mkdir -p .cache .local src/upx \
+    && mkdir -p .cache/tmp .local/bin src/upx \
     && for d in ccache fontconfig go-build mesa_shader_cache tmp wine zig; do mkdir -p .cache/$d; done \
     && for d in bin include lib share state; do mkdir -p .local/$d; done \
     && ln -s .cache/wine .wine && ln -s .cache/tmp tmp \

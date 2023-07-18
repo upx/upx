@@ -48,20 +48,48 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git" AND NOT MSVC_IDE)
     endif()
 endif()
 
+# useful for CI jobs: allow settings via environment and cache result
+function(upx_cache_bool_vars default_value)
+    list(REMOVE_AT ARGV 0)
+    foreach(var ${ARGV})
+        set(value ${default_value})
+        if(DEFINED UPX_CACHE_${var})
+            set(value "${UPX_CACHE_${var}}")
+        elseif(DEFINED ${var})
+            set(value "${${var}}")
+        elseif("$ENV{${var}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$")
+            set(value "$ENV{${var}}")
+            set(UPX_CACHE_ORIGIN_FROM_ENV_${var} TRUE CACHE INTERNAL "" FORCE)
+        endif()
+        if(value)
+            set(value ON)
+        else()
+            set(value OFF)
+        endif()
+        if(UPX_CACHE_ORIGIN_FROM_ENV_${var})
+            message(STATUS "setting from environment: ${var} = ${value}")
+        endif()
+        set(${var} "${value}" PARENT_SCOPE)
+        set(UPX_CACHE_${var} "${value}" CACHE INTERNAL "" FORCE)
+    endforeach()
+endfunction()
+
 # global settings
-set(CMAKE_C_STANDARD_REQUIRED     ON)
-set(CMAKE_CXX_STANDARD_REQUIRED   ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-if(${CMAKE_VERSION} VERSION_GREATER "3.14.7")
+if(${CMAKE_VERSION} VERSION_GREATER "3.14.7" AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
     cmake_policy(SET CMP0091 NEW)
 endif()
-if(NOT DEFINED CMAKE_REQUIRED_QUIET)
-    set(CMAKE_REQUIRED_QUIET ON)
-    if("$ENV{CMAKE_REQUIRED_QUIET}" MATCHES "^(0|1|OFF|ON)$")
-        set(CMAKE_REQUIRED_QUIET "$ENV{CMAKE_REQUIRED_QUIET}")
-    endif()
-endif()
+# global CMake settings that default to ON
+upx_cache_bool_vars(ON
+    CMAKE_C_STANDARD_REQUIRED CMAKE_CXX_STANDARD_REQUIRED
+    CMAKE_EXPORT_COMPILE_COMMANDS CMAKE_REQUIRED_QUIET
+)
+# internal UPX settings that default to OFF
+upx_cache_bool_vars(OFF
+    UPX_CONFIG_CMAKE_DISABLE_TEST UPX_CONFIG_CMAKE_DISABLE_INSTALL
+    UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO UPX_CONFIG_CMAKE_DISABLE_PLATFORM_CHECK
+    UPX_CONFIG_DISABLE_C_STANDARD UPX_CONFIG_DISABLE_CXX_STANDARD
+)
 
 # determine Git revision
 set(GITREV_SHORT "")
@@ -389,11 +417,10 @@ if(NOT CMAKE_CROSSCOMPILING)
 endif()
 if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     # IMPORTANT NOTE: these tests can only work if the host executable format is supported by UPX!
-    function(upx_add_test)
-        set(name ${ARGV0})
+    function(upx_add_test name)
         list(REMOVE_AT ARGV 0)
-        add_test(NAME ${name} COMMAND ${ARGV})
-        set_tests_properties(${name} PROPERTIES RUN_SERIAL TRUE) # run these tests sequentially
+        add_test(NAME "${name}" COMMAND ${ARGV})
+        set_tests_properties("${name}" PROPERTIES RUN_SERIAL TRUE) # run these tests sequentially
     endfunction()
     set(exe ${CMAKE_EXECUTABLE_SUFFIX})
     set(upx_self_exe "$<TARGET_FILE:upx>")
@@ -445,9 +472,9 @@ endif() # UPX_CONFIG_CMAKE_DISABLE_INSTALL
 #***********************************************************************
 
 function(print_var)
-    foreach(v ${ARGV})
-        if(${v})
-            message(STATUS "${v} = ${${v}}")
+    foreach(var ${ARGV})
+        if(${var})
+            message(STATUS "${var} = ${${var}}")
         endif()
     endforeach()
 endfunction()

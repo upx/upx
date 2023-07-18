@@ -50,5 +50,5 @@ RUN cd /usr/bin \
     && ln -s -v ../../bin/yaml2obj-14 /usr/local/bin/llvm-yaml2obj \
     && true
 
-# switch back to default user upx 2000:2000
+# switch back to default user upx:upx 2000:2000
 USER upx

@@ -308,11 +308,11 @@ ii  universal-ctags             5.9.20210829.0-1                        amd64   
 ii  unzip                       6.0-26ubuntu3.1                         amd64        De-archiver for .zip files
 ii  usrmerge                    25ubuntu2                               all          Convert the system to the merged /usr directories scheme
 ii  util-linux                  2.37.2-4ubuntu3                         amd64        miscellaneous system utilities
-ii  vim                         2:8.2.3995-1ubuntu2.8                   amd64        Vi IMproved - enhanced vi editor
-ii  vim-common                  2:8.2.3995-1ubuntu2.8                   all          Vi IMproved - Common files
-ii  vim-runtime                 2:8.2.3995-1ubuntu2.8                   all          Vi IMproved - Runtime files
+ii  vim                         2:8.2.3995-1ubuntu2.9                   amd64        Vi IMproved - enhanced vi editor
+ii  vim-common                  2:8.2.3995-1ubuntu2.9                   all          Vi IMproved - Common files
+ii  vim-runtime                 2:8.2.3995-1ubuntu2.9                   all          Vi IMproved - Runtime files
 ii  wget                        1.21.2-2ubuntu1                         amd64        retrieves files from the web
-ii  xxd                         2:8.2.3995-1ubuntu2.8                   amd64        tool to make (or reverse) a hex dump
+ii  xxd                         2:8.2.3995-1ubuntu2.9                   amd64        tool to make (or reverse) a hex dump
 ii  xz-utils                    5.2.5-2ubuntu1                          amd64        XZ-format compression utilities
 ii  yash                        2.51-1                                  amd64        yet another shell
 ii  zip                         3.0-12build2                            amd64        Archiver for .zip files

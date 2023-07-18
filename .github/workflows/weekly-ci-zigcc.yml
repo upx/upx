@@ -6,7 +6,7 @@ on:
   schedule: [cron: '40 4 * * 3'] # run weekly Wednesday 04:40 UTC
   workflow_dispatch:
 env:
-  CMAKE_REQUIRED_QUIET: 0
+  CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
   # 2023-07-15
   ZIG_DIST_VERSION: 0.11.0-dev.4002+7dd1cf26f

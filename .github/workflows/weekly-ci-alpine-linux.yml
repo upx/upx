@@ -13,7 +13,7 @@ on:
   schedule: [cron: '05 4 * * 3'] # run weekly Wednesday 04:05 UTC
   workflow_dispatch:
 env:
-  CMAKE_REQUIRED_QUIET: 0
+  CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
 
 jobs:
@@ -54,7 +54,8 @@ jobs:
 
       - name: 'Update environment'
         run: |
-          echo "UPX_CMAKE_CONFIG_FLAGS=-DCMAKE_VERBOSE_MAKEFILE=ON -DUPX_CONFIG_DISABLE_C_STANDARD=ON -DUPX_CONFIG_DISABLE_CXX_STANDARD=ON" >> $GITHUB_ENV
+          echo "UPX_CONFIG_DISABLE_C_STANDARD=ON" >> $GITHUB_ENV
+          echo "UPX_CONFIG_DISABLE_CXX_STANDARD=ON" >> $GITHUB_ENV
 
       # build with C17 and C++20 on alpine:edge
       - name: ${{ format('Build clang C++20 Release with {0}', env.clang_package) }}

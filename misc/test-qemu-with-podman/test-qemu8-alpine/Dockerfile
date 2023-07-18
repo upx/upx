@@ -1,6 +1,6 @@
 FROM docker.io/library/alpine:3.18
 
-# install qemu 8.0.3-r0 and some utils
+# install qemu-8.0.3-r0 and some utils
 RUN apk update && apk upgrade && apk add \
         bash-completion \
         musl-dbg \
@@ -17,10 +17,10 @@ RUN apk update && apk upgrade && apk add \
         strace \
     && true
 
-# create default user upx 2000:2000
+# create default user upx:upx 2000:2000
 RUN adduser upx -u 2000 -D \
     && cd /home/upx && chmod 00700 . \
-    && mkdir -p .cache .local/bin src/upx \
+    && mkdir -p .cache/tmp .local/bin src/upx \
     && chown -R upx:upx . \
     && true
 USER upx
