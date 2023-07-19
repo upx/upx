@@ -1,36 +1,98 @@
 #! /usr/bin/env bash
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
-argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
+argv0=$0; argv0abs=$(readlink -en -- "$argv0"); argv0dir=$(dirname "$argv0abs")
 
 # very first version of the upx-testsuite; requires:
 #   $upx_exe
-#   $upx_testsuite_SRCDIR
+#   $upx_testsuite_SRCDIR (semi-optional)
 #   $upx_testsuite_BUILDDIR (optional)
-#   $BM_T (optional)
+#   $upx_testsuite_verbose (optional)
 #
 # see https://github.com/upx/upx-testsuite.git
 
-# convenience
-[[ -z $upx_testsuite_BUILDDIR ]] && upx_testsuite_BUILDDIR=./tmp-upx-testsuite
-[[ -f $upx_exe ]] && upx_exe=$(readlink -en -- "$upx_exe")
+# /***********************************************************************
+# // init & checks
+# ************************************************************************/
 
-# make dirs absolute
-upx_testsuite_SRCDIR=$(readlink -en -- "$upx_testsuite_SRCDIR")
+if [[ -z $upx_exe ]]; then echo "UPX-ERROR: please set \$upx_exe"; exit 1; fi
+# convenience: try to make filename absolute
+[[ -f "$upx_exe" ]] && upx_exe=$(readlink -en -- "$upx_exe")
+# upx_exe check, part1
+if ! $upx_exe --version-short >/dev/null; then echo "UPX-ERROR: FATAL: upx --version-short FAILED"; exit 1; fi
+if ! $upx_exe -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
+if ! $upx_exe --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
+
+# upx_testsuite_SRCDIR
+if [[ -z $upx_testsuite_SRCDIR ]]; then
+    # convenience: search standard locations below upx top-level directory
+    if [[                 -d "$argv0dir/../../../upx--upx-testsuite.git/files/packed" ]]; then
+        upx_testsuite_SRCDIR="$argv0dir/../../../upx--upx-testsuite.git"
+    elif [[               -d "$argv0dir/../../../upx-testsuite.git/files/packed" ]]; then
+        upx_testsuite_SRCDIR="$argv0dir/../../../upx-testsuite.git"
+    elif [[               -d "$argv0dir/../../../upx-testsuite/files/packed" ]]; then
+        upx_testsuite_SRCDIR="$argv0dir/../../../upx-testsuite"
+    fi
+fi
 if [[ ! -d "$upx_testsuite_SRCDIR/files/packed" ]]; then
-    echo 'invalid or missing $upx_testsuite_SRCDIR:'
-    echo '  please git clone https://github.com/upx/upx-testsuite.git'
-    echo '  and set (export) the envvar upx_testsuite_SRCDIR to the local file path'
+    echo "invalid or missing \$upx_testsuite_SRCDIR:"
+    echo "  please git clone https://github.com/upx/upx-testsuite.git"
+    echo "  and set (export) the envvar upx_testsuite_SRCDIR to the local file path"
     exit 1
 fi
-mkdir -p "$upx_testsuite_BUILDDIR"
+upx_testsuite_SRCDIR=$(readlink -en -- "$upx_testsuite_SRCDIR")
+
+# upx_testsuite_BUILDDIR
+if [[ -z $upx_testsuite_BUILDDIR ]]; then
+    upx_testsuite_BUILDDIR="./tmp-upx-testsuite"
+fi
+mkdir -p "$upx_testsuite_BUILDDIR" || exit 1
 upx_testsuite_BUILDDIR=$(readlink -en -- "$upx_testsuite_BUILDDIR")
 
 cd / && cd "$upx_testsuite_BUILDDIR" || exit 1
 
+# upx_exe check, part2
+if ! $upx_exe --version-short >/dev/null; then
+    echo "UPX-ERROR: FATAL: upx --version-short FAILED"
+    echo "please make sure that \$upx_exe contains ABSOLUTE file paths and can be run from any directory"
+    exit 1
+fi
+if ! $upx_exe -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
+if ! $upx_exe --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
+
+# /***********************************************************************
+# // setup
+# ************************************************************************/
+
+#set -x # debug
+exit_code=0
+num_errors=0
+all_errors=
+
+export UPX="--prefer-ucl --no-color --no-progress"
+export UPX_DEBUG_DISABLE_GITREV_WARNING=1
+export UPX_DEBUG_DOCTEST_VERBOSE=0
+
+rm -rf ./testsuite_1
+mkdir testsuite_1 || exit 1
+cd testsuite_1 || exit 1
+
 # /***********************************************************************
 # // support functions
 # ************************************************************************/
+
+run_upx() {
+    local ec=0
+    if [[ $upx_testsuite_verbose == 1 ]]; then
+        echo "LOG: $upx_exe $@"
+    fi
+    $upx_exe "$@" || ec=$?
+    if [[ $ec != 0 ]]; then
+        echo "FATAL: $upx_exe $@"
+        echo "  (exit code was $ec)"
+        exit 42
+    fi
+}
 
 testsuite_header() {
     local x='==========='; x="$x$x$x$x$x$x$x"
@@ -43,7 +105,7 @@ testsuite_split_f() {
     fsubdir=$(basename "$fd")
     # sanity checks
     if [[ ! -f $1 || -z $fsubdir || -z $fb ]]; then
-        fd= fb= fsubdir=
+        fd=''; fb=''; fsubdir=''
     fi
 }
 
@@ -77,22 +139,22 @@ testsuite_run_compress() {
     testsuite_header $testdir
     local files f
     if [[ $testsuite_use_canonicalized == 1 ]]; then
-        files=t020_canonicalized/*/*
+        files='t020_canonicalized/*/*'
     else
-        files=t010_decompressed/*/*
+        files='t010_decompressed/*/*'
     fi
     for f in $files; do
-        testsuite_split_f $f
+        testsuite_split_f "$f"
         [[ -z $fb ]] && continue
         echo "# $f"
         mkdir -p $testdir/$fsubdir $testdir/.decompressed/$fsubdir
-        $upx_run -qq --prefer-ucl "$@" $f -o $testdir/$fsubdir/$fb
-        $upx_run -qq -d $testdir/$fsubdir/$fb -o $testdir/.decompressed/$fsubdir/$fb
+        run_upx -qq --prefer-ucl "$@" "$f" -o $testdir/$fsubdir/$fb
+        run_upx -qq -d $testdir/$fsubdir/$fb -o $testdir/.decompressed/$fsubdir/$fb
     done
     testsuite_check_sha $testdir
-    $upx_run -qq -l $testdir/*/*
-    $upx_run -qq --file-info $testdir/*/*
-    $upx_run -q -t $testdir/*/*
+    run_upx -qq -l $testdir/*/*
+    run_upx -qq --file-info $testdir/*/*
+    run_upx -q -t $testdir/*/*
     if [[ $testsuite_use_canonicalized == 1 ]]; then
         # check that after decompression the file matches the canonicalized version
         cp t020_canonicalized/.sha256sums.expected $testdir/.decompressed/
@@ -113,7 +175,7 @@ recreate_expected_sha256sums() {
     local o=$1
     local files f d
     echo "########## begin .sha256sums.recreate" > "$o"
-    files=*/.sha256sums.current
+    files='*/.sha256sums.current'
     for f in $files; do
         d=$(dirname "$f")
         echo "expected_sha256sums__${d}="'"\' >> "$o"
@@ -126,52 +188,6 @@ recreate_expected_sha256sums() {
 source "$argv0dir/upx_testsuite_1-expected_sha256sums.sh" || exit 1
 
 # /***********************************************************************
-# // init
-# ************************************************************************/
-
-#set -x # debug
-exit_code=0
-num_errors=0
-all_errors=
-
-if [[ $BM_T =~ (^|\+)ALLOW_FAIL($|\+) ]]; then
-    echo "ALLOW_FAIL"
-    set +e
-fi
-
-if [[ -z $upx_exe ]]; then exit 1; fi
-upx_run=$upx_exe
-if [[ $BM_T =~ (^|\+)qemu($|\+) && -n $upx_qemu ]]; then
-    upx_run="$upx_qemu $upx_qemu_flags -- $upx_exe"
-fi
-if [[ $BM_T =~ (^|\+)wine($|\+) && -n $upx_wine ]]; then
-    upx_run="$upx_wine $upx_wine_flags $upx_exe"
-fi
-if [[ $BM_T =~ (^|\+)valgrind($|\+) ]]; then
-    if [[ -z $upx_valgrind ]]; then
-        upx_valgrind="valgrind"
-    fi
-    if [[ -z $upx_valgrind_flags ]]; then
-        #upx_valgrind_flags="--leak-check=full --show-reachable=yes"
-        #upx_valgrind_flags="-q --leak-check=no --error-exitcode=1"
-        upx_valgrind_flags="--leak-check=no --error-exitcode=1"
-    fi
-    upx_run="$upx_valgrind $upx_valgrind_flags $upx_exe"
-fi
-
-export UPX="--prefer-ucl --no-color --no-progress"
-export UPX_DEBUG_DISABLE_GITREV_WARNING=1
-export UPX_DEBUG_DOCTEST_VERBOSE=0
-
-# let's go
-if ! $upx_run --version-short;    then echo "UPX-ERROR: FATAL: upx --version-short FAILED"; exit 1; fi
-if ! $upx_run -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
-if ! $upx_run --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
-rm -rf ./testsuite_1
-mkdir testsuite_1
-cd testsuite_1 || exit 1
-
-# /***********************************************************************
 # // decompression tests
 # ************************************************************************/
 
@@ -179,12 +195,12 @@ testdir=t010_decompressed
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 
 testsuite_header $testdir
-for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.9[15]*; do
-    testsuite_split_f $f
+for f in "$upx_testsuite_SRCDIR"/files/packed/*/upx-3.9[15]*; do
+    testsuite_split_f "$f"
     [[ -z $fb ]] && continue
     echo "# $f"
     mkdir -p $testdir/$fsubdir
-    $upx_run -qq -d $f -o $testdir/$fsubdir/$fb
+    run_upx -qq -d "$f" -o $testdir/$fsubdir/$fb
 done
 testsuite_check_sha $testdir
 
@@ -194,12 +210,12 @@ mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha2
 
 testsuite_header $testdir
 for f in t010_decompressed/*/*; do
-    testsuite_split_f $f
+    testsuite_split_f "$f"
     [[ -z $fb ]] && continue
     echo "# $f"
     mkdir -p $testdir/$fsubdir/.packed
-    $upx_run -qq --prefer-ucl -1 $f -o $testdir/$fsubdir/.packed/$fb
-    $upx_run -qq -d $testdir/$fsubdir/.packed/$fb -o $testdir/$fsubdir/$fb
+    run_upx -qq --prefer-ucl -1 "$f" -o $testdir/$fsubdir/.packed/$fb
+    run_upx -qq -d $testdir/$fsubdir/.packed/$fb -o $testdir/$fsubdir/$fb
 done
 testsuite_check_sha $testdir
 
@@ -264,24 +280,18 @@ fi
 recreate_expected_sha256sums .sha256sums.recreate
 
 testsuite_header "UPX testsuite summary"
-if ! $upx_run --version-short; then
-    echo "UPX-ERROR: upx --version-short FAILED"
-    exit 1
-fi
+run_upx --version-short
 echo
 echo "upx_exe='$upx_exe'"
-if [[ $upx_run != "$upx_exe" ]]; then
-    echo "upx_run='$upx_run'"
-fi
-if [[ -f $upx_exe ]]; then
+if [[ -f "$upx_exe" ]]; then
     ls -l "$upx_exe"
     file "$upx_exe" || true
 fi
 echo "upx_testsuite_SRCDIR='$upx_testsuite_SRCDIR'"
 echo "upx_testsuite_BUILDDIR='$upx_testsuite_BUILDDIR'"
-echo ".sha256sums.{expected,current}:"
-cat */.sha256sums.expected | LC_ALL=C sort | wc
-cat */.sha256sums.current  | LC_ALL=C sort | wc
+echo ".sha256sums.{expected,current} counts:"
+cat ./*/.sha256sums.expected | LC_ALL=C sort | wc
+cat ./*/.sha256sums.current  | LC_ALL=C sort | wc
 echo
 if [[ $exit_code == 0 ]]; then
     echo "UPX testsuite passed. All done."

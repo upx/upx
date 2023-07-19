@@ -1,8 +1,9 @@
 test-qemu-with-podman
 =====================
 
-This directory provides scripts for creating and running rather small Alpine Linux container
-images, intended for testing statically-linked Linux executables with qemu-user.
+This directory provides some simple scripts for creating and running
+quite small Alpine Linux container images, intended for testing
+statically-linked Linux executables with Podman and qemu-user.
 
 Very short usage instructions follow.
 
@@ -39,7 +40,7 @@ Very short usage instructions follow.
 ```sh
     cd /home/upx/src/upx/tmp
 
-    # check that the official binaries do work
+    # check that the official UPX release binaries do work
     qemu-i386 ./upx-4.0.2-i386_linux/upx --version
     qemu-mips ./upx-4.0.2-mips_linux/upx --version
     # ...same for more architectures

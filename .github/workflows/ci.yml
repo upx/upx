@@ -12,8 +12,8 @@ env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-07-15
-  ZIG_DIST_VERSION: 0.11.0-dev.4002+7dd1cf26f
+  # 2023-07-19
+  ZIG_DIST_VERSION: 0.11.0-dev.4009+11695745e
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -66,7 +66,7 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-22.04, use_m32: true }
-          - { os: ubuntu-20.04, use_m32: false }
+          - { os: ubuntu-20.04, use_m32: false } # use_m32 also works here, but save some CI time
     steps:
       - name: 'Install extra 32-bit and Windows packages'
         if: ${{ matrix.use_m32 }}
@@ -152,8 +152,8 @@ jobs:
           # testsuite needs working "readlink -en" and "sha256sum"
           if ! test -e /usr/local/opt/coreutils/libexec/gnubin/readlink; then
             echo "===== brew leaves:"; brew leaves; echo "===== brew list:"; brew list
-            brew update
-            brew install coreutils
+            # only run "brew update" if needed
+            if ! brew install coreutils; then brew update && brew install coreutils; fi
           fi
       - name: 'Check out code'
         uses: actions/checkout@v3

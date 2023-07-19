@@ -241,6 +241,7 @@ void PackW32PeI386::addNewRelocations(Reloc &rel, unsigned base) {
 void PackW32PeI386::setOhDataBase(const pe_section_t *osection) { oh.database = osection[2].vaddr; }
 
 void PackW32PeI386::setOhHeaderSize(const pe_section_t *osection) {
+    // SizeOfHeaders
     oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(*osection) * oh.objects, oh.filealign);
 }
 

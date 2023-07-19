@@ -87,6 +87,12 @@ build/extra/clang-m64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/clang-m64/%: export CC  = clang -m64
 build/extra/clang-m64/%: export CXX = clang++ -m64
 
+# force building with clang/clang++ -static
+build/extra/clang-static/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/clang-static/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/clang-static/%: export CC  = clang -static
+build/extra/clang-static/%: export CXX = clang++ -static
+
 # force building with gcc/g++
 build/extra/gcc/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/gcc/release: PHONY; $(call run_config_and_build,$@,Release)
@@ -110,6 +116,12 @@ build/extra/gcc-m64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/gcc-m64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-m64/%: export CC  = gcc -m64
 build/extra/gcc-m64/%: export CXX = g++ -m64
+
+# force building with gcc/g++ -static
+build/extra/gcc-static/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/gcc-static/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/gcc-static/%: export CC  = gcc -static
+build/extra/gcc-static/%: export CXX = g++ -static
 
 # force building with clang Static Analyzer (scan-build)
 build/extra/scan-build/debug:   PHONY; $(call run_config_and_build,$@,Debug)

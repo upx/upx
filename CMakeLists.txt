@@ -40,7 +40,7 @@ option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" O
 
 # Disallow in-source builds. Note that you will still have to manually
 # clean up a few files if you accidentally try an in-source build.
-if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git" AND NOT MSVC_IDE)
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
     set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
     if(",${CMAKE_CURRENT_SOURCE_DIR}," STREQUAL ",${CMAKE_CURRENT_BINARY_DIR},")
@@ -49,7 +49,8 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git" AND NOT MSVC_IDE)
 endif()
 
 # useful for CI jobs: allow settings via environment and cache result
-function(upx_cache_bool_vars default_value)
+function(upx_cache_bool_vars)
+    set(default_value "${ARGV0}")
     list(REMOVE_AT ARGV 0)
     foreach(var ${ARGV})
         set(value ${default_value})
@@ -185,15 +186,36 @@ else()
     set(warn_WX -WX)
 endif()
 
-function(upx_add_definitions)
-    foreach(flag ${ARGV})
+function(upx_add_definitions_with_prefix)
+    set(flag_prefix "${ARGV0}")
+    if(flag_prefix MATCHES "^dummy$") # need dummy to work around bug in old CMake versions
+        set(flag_prefix "")
+    endif()
+    list(REMOVE_AT ARGV 0)
+    set(failed "")
+    foreach(f ${ARGV})
+        set(flag "${flag_prefix}${f}")
         string(REGEX REPLACE "[^0-9a-zA-Z_]" "_" cache_var "HAVE_CFLAG_${flag}")
         check_c_compiler_flag("${flag}" ${cache_var})
         if(${cache_var})
             #message(STATUS "add_definitions: ${flag}")
             add_definitions("${flag}")
+        else()
+            list(APPEND failed "${f}")
         endif()
     endforeach()
+    set(failed_flags "${failed}" PARENT_SCOPE) # return value
+endfunction()
+
+function(upx_add_definitions)
+    set(failed_flags "")
+    if(MSVC_FRONTEND AND CMAKE_C_COMPILER_ID MATCHES "Clang")
+        # for clang-cl try "-clang:" flag prefix first
+        upx_add_definitions_with_prefix("-clang:" ${ARGV})
+        upx_add_definitions_with_prefix("dummy" ${failed_flags})
+    else()
+        upx_add_definitions_with_prefix("dummy" ${ARGV})
+    endif()
 endfunction()
 
 if(NOT CMAKE_C_COMPILER_ID MATCHES "^MSVC")
@@ -417,7 +439,8 @@ if(NOT CMAKE_CROSSCOMPILING)
 endif()
 if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     # IMPORTANT NOTE: these tests can only work if the host executable format is supported by UPX!
-    function(upx_add_test name)
+    function(upx_add_test)
+        set(name "${ARGV0}")
         list(REMOVE_AT ARGV 0)
         add_test(NAME "${name}" COMMAND ${ARGV})
         set_tests_properties("${name}" PROPERTIES RUN_SERIAL TRUE) # run these tests sequentially
@@ -489,6 +512,7 @@ print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
 print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING)
 print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_FRONTEND_VARIANT CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_FRONTEND_VARIANT CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
+print_var(CMAKE_POSITION_INDEPENDENT_CODE)
 print_var(CYGWIN GNUC MINGW MSVC MSVC_FRONTEND MSVC_IDE WIN32 WIN64)
 endif() # UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO
 print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)

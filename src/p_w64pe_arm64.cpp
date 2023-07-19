@@ -92,6 +92,7 @@ void PackW64PeArm64::defineSymbols(unsigned ncsection, unsigned upxsection, unsi
 }
 
 void PackW64PeArm64::setOhHeaderSize(const pe_section_t *osection) {
+    // SizeOfHeaders
     UNUSED(osection);
     throwCantPack("not yet implemented");
 }

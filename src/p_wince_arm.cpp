@@ -217,6 +217,7 @@ void PackWinCeArm::defineSymbols(unsigned ncsection, unsigned, unsigned, unsigne
 void PackWinCeArm::setOhDataBase(const pe_section_t *osection) { oh.database = osection[2].vaddr; }
 
 void PackWinCeArm::setOhHeaderSize(const pe_section_t *osection) {
+    // SizeOfHeaders
     oh.headersize = osection[1].rawdataptr;
 }
 

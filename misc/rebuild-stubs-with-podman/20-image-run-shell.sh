@@ -32,7 +32,11 @@ else
     flags+=( --user 0 )
 fi
 
-podman run "${flags[@]}" "$image" bash -l
+if [[ $# == 0 ]]; then
+    podman run "${flags[@]}" "$image" bash -l
+else
+    podman run "${flags[@]}" "$image" "$@"
+fi
 
 # now we can rebuild the UPX stubs:
 #   cd /home/upx/src/upx/src/stub
