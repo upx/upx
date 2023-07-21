@@ -1,7 +1,7 @@
 #
 # UPX stub Makefile - needs GNU make 3.81 or better
 #
-# Preferred: see misc/rebuild-stubs-with-podman how to use Podman/Docker.
+# Preferred: see misc/podman/rebuild-stubs how to use Podman/Docker.
 # Otherwise you will need a number of special build tools like various
 # cross-assemblers and cross-compilers - see README.SRC.
 #

@@ -4,10 +4,14 @@ set -e; set -o pipefail
 argv0=$0; argv0abs=$(readlink -en -- "$argv0"); argv0dir=$(dirname "$argv0abs")
 
 # very first version of the upx-testsuite; requires:
-#   $upx_exe
-#   $upx_testsuite_SRCDIR (semi-optional)
+#   $upx_exe                (required, but with convenience fallback "./upx")
+#   $upx_testsuite_SRCDIR   (required, but with convenience fallback)
 #   $upx_testsuite_BUILDDIR (optional)
-#   $upx_testsuite_verbose (optional)
+#
+# optional settings:
+#   $upx_exe_runner         (e.g. "qemu-x86_64 -cpu Westmere" or "valgrind")
+#   $UPX_TESTSUITE_VERBOSE
+#   $UPX_TESTSUITE_LEVEL
 #
 # see https://github.com/upx/upx-testsuite.git
 
@@ -15,17 +19,30 @@ argv0=$0; argv0abs=$(readlink -en -- "$argv0"); argv0dir=$(dirname "$argv0abs")
 # // init & checks
 # ************************************************************************/
 
+# upx_exe
+[[ -z $upx_exe && -f ./upx && -x ./upx ]] && upx_exe=./upx # convenience fallback
 if [[ -z $upx_exe ]]; then echo "UPX-ERROR: please set \$upx_exe"; exit 1; fi
-# convenience: try to make filename absolute
-[[ -f "$upx_exe" ]] && upx_exe=$(readlink -en -- "$upx_exe")
-# upx_exe check, part1
-if ! $upx_exe --version-short >/dev/null; then echo "UPX-ERROR: FATAL: upx --version-short FAILED"; exit 1; fi
-if ! $upx_exe -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
-if ! $upx_exe --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
+if [[ ! -f $upx_exe ]]; then echo "UPX-ERROR: file '$upx_exe' does not exist"; exit 1; fi
+upx_exe=$(readlink -en -- "$upx_exe") # make absolute
+upx_run=()
+if [[ -n $upx_exe_runner ]]; then
+    # usage examples:
+    #   export upx_exe_runner="qemu-x86_64 -cpu Westmere"
+    #   export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+    #   export upx_exe_runner="wine"
+    IFS=' ' read -r -a upx_run <<< "$upx_exe_runner" # split at spaces into array
+fi
+upx_run+=( "$upx_exe" )
+echo "upx_run='${upx_run[*]}'"
+
+# upx_run check, part1
+if ! "${upx_run[@]}" --version-short >/dev/null; then echo "UPX-ERROR: FATAL: upx --version-short FAILED"; exit 1; fi
+if ! "${upx_run[@]}" -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
+if ! "${upx_run[@]}" --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
 
 # upx_testsuite_SRCDIR
 if [[ -z $upx_testsuite_SRCDIR ]]; then
-    # convenience: search standard locations below upx top-level directory
+    # convenience fallback: search standard locations below upx top-level directory
     if [[                 -d "$argv0dir/../../../upx--upx-testsuite.git/files/packed" ]]; then
         upx_testsuite_SRCDIR="$argv0dir/../../../upx--upx-testsuite.git"
     elif [[               -d "$argv0dir/../../../upx-testsuite.git/files/packed" ]]; then
@@ -40,25 +57,35 @@ if [[ ! -d "$upx_testsuite_SRCDIR/files/packed" ]]; then
     echo "  and set (export) the envvar upx_testsuite_SRCDIR to the local file path"
     exit 1
 fi
-upx_testsuite_SRCDIR=$(readlink -en -- "$upx_testsuite_SRCDIR")
+upx_testsuite_SRCDIR=$(readlink -en -- "$upx_testsuite_SRCDIR") # make absolute
 
 # upx_testsuite_BUILDDIR
 if [[ -z $upx_testsuite_BUILDDIR ]]; then
     upx_testsuite_BUILDDIR="./tmp-upx-testsuite"
 fi
 mkdir -p "$upx_testsuite_BUILDDIR" || exit 1
-upx_testsuite_BUILDDIR=$(readlink -en -- "$upx_testsuite_BUILDDIR")
+upx_testsuite_BUILDDIR=$(readlink -en -- "$upx_testsuite_BUILDDIR") # make absolute
 
 cd / && cd "$upx_testsuite_BUILDDIR" || exit 1
 
-# upx_exe check, part2
-if ! $upx_exe --version-short >/dev/null; then
+# upx_run check, part2
+if ! "${upx_run[@]}" --version-short >/dev/null; then
     echo "UPX-ERROR: FATAL: upx --version-short FAILED"
     echo "please make sure that \$upx_exe contains ABSOLUTE file paths and can be run from any directory"
+    echo "INFO: upx_run='${upx_run[*]}'"
     exit 1
 fi
-if ! $upx_exe -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
-if ! $upx_exe --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
+if ! "${upx_run[@]}" -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
+if ! "${upx_run[@]}" --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
+
+case $UPX_TESTSUITE_LEVEL in
+    [0-8]) ;;
+    *) UPX_TESTSUITE_LEVEL=999 ;;
+esac
+if [[ $UPX_TESTSUITE_LEVEL == 0 ]]; then
+    echo "UPX testsuite SKIPPED."
+    exit 0
+fi
 
 # /***********************************************************************
 # // setup
@@ -83,12 +110,12 @@ cd testsuite_1 || exit 1
 
 run_upx() {
     local ec=0
-    if [[ $upx_testsuite_verbose == 1 ]]; then
-        echo "LOG: $upx_exe $@"
+    if [[ $UPX_TESTSUITE_VERBOSE == 1 ]]; then
+        echo "LOG: '${upx_run[*]}' $*"
     fi
-    $upx_exe "$@" || ec=$?
+    "${upx_run[@]}" "$@" || ec=$?
     if [[ $ec != 0 ]]; then
-        echo "FATAL: $upx_exe $@"
+        echo "FATAL: '${upx_run[*]}' $*"
         echo "  (exit code was $ec)"
         exit 42
     fi
@@ -110,7 +137,7 @@ testsuite_split_f() {
 }
 
 testsuite_check_sha() {
-    (cd "$1" && sha256sum -b */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
+    (cd "$1" && sha256sum -b -- */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
     echo
     cat $1/.sha256sums.current
     if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
@@ -125,7 +152,7 @@ testsuite_check_sha() {
 }
 
 testsuite_check_sha_decompressed() {
-    (cd "$1" && sha256sum -b */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
+    (cd "$1" && sha256sum -b -- */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
     if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
         cat $1/.sha256sums.current
         echo "UPX-ERROR: FATAL: $1 FAILED: decompressed checksum mismatch"
@@ -147,14 +174,14 @@ testsuite_run_compress() {
         testsuite_split_f "$f"
         [[ -z $fb ]] && continue
         echo "# $f"
-        mkdir -p $testdir/$fsubdir $testdir/.decompressed/$fsubdir
-        run_upx -qq --prefer-ucl "$@" "$f" -o $testdir/$fsubdir/$fb
-        run_upx -qq -d $testdir/$fsubdir/$fb -o $testdir/.decompressed/$fsubdir/$fb
+        mkdir -p "$testdir/$fsubdir" "$testdir/.decompressed/$fsubdir"
+        run_upx -qq --prefer-ucl "$@" "$f" -o "$testdir/$fsubdir/$fb"
+        run_upx -qq -d "$testdir/$fsubdir/$fb" -o "$testdir/.decompressed/$fsubdir/$fb"
     done
     testsuite_check_sha $testdir
-    run_upx -qq -l $testdir/*/*
-    run_upx -qq --file-info $testdir/*/*
-    run_upx -q -t $testdir/*/*
+    run_upx -qq -l "$testdir"/*/*
+    run_upx -qq --file-info "$testdir"/*/*
+    run_upx -q -t "$testdir"/*/*
     if [[ $testsuite_use_canonicalized == 1 ]]; then
         # check that after decompression the file matches the canonicalized version
         cp t020_canonicalized/.sha256sums.expected $testdir/.decompressed/
@@ -172,7 +199,7 @@ testsuite_run_compress() {
 # ************************************************************************/
 
 recreate_expected_sha256sums() {
-    local o=$1
+    local o="$1"
     local files f d
     echo "########## begin .sha256sums.recreate" > "$o"
     files='*/.sha256sums.current'
@@ -199,8 +226,8 @@ for f in "$upx_testsuite_SRCDIR"/files/packed/*/upx-3.9[15]*; do
     testsuite_split_f "$f"
     [[ -z $fb ]] && continue
     echo "# $f"
-    mkdir -p $testdir/$fsubdir
-    run_upx -qq -d "$f" -o $testdir/$fsubdir/$fb
+    mkdir -p "$testdir/$fsubdir"
+    run_upx -qq -d "$f" -o "$testdir/$fsubdir/$fb"
 done
 testsuite_check_sha $testdir
 
@@ -213,9 +240,9 @@ for f in t010_decompressed/*/*; do
     testsuite_split_f "$f"
     [[ -z $fb ]] && continue
     echo "# $f"
-    mkdir -p $testdir/$fsubdir/.packed
-    run_upx -qq --prefer-ucl -1 "$f" -o $testdir/$fsubdir/.packed/$fb
-    run_upx -qq -d $testdir/$fsubdir/.packed/$fb -o $testdir/$fsubdir/$fb
+    mkdir -p "$testdir/$fsubdir/.packed"
+    run_upx -qq --prefer-ucl -1 "$f" -o "$testdir/$fsubdir/.packed/$fb"
+    run_upx -qq -d "$testdir/$fsubdir/.packed/$fb" -o "$testdir/$fsubdir/$fb"
 done
 testsuite_check_sha $testdir
 
@@ -225,48 +252,43 @@ testsuite_check_sha $testdir
 # //   test UPX and not the compression libraries
 # ************************************************************************/
 
-case $UPX_TESTSUITE_FAST in
-    [0-7]) ;;
-    *) UPX_TESTSUITE_FAST=999 ;;
-esac
-
-if [[ $UPX_TESTSUITE_FAST -ge 1 ]]; then
+if [[ $UPX_TESTSUITE_LEVEL -ge 2 ]]; then
 testdir=t110_compress_ucl_nrv2b_3_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2b -3 --no-filter
 fi
 
-if [[ $UPX_TESTSUITE_FAST -ge 2 ]]; then
+if [[ $UPX_TESTSUITE_LEVEL -ge 3 ]]; then
 testdir=t120_compress_ucl_nrv2d_3_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2d -3 --no-filter
 fi
 
-if [[ $UPX_TESTSUITE_FAST -ge 3 ]]; then
+if [[ $UPX_TESTSUITE_LEVEL -ge 4 ]]; then
 testdir=t130_compress_ucl_nrv2e_3_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2e -3 --no-filter
 fi
 
-if [[ $UPX_TESTSUITE_FAST -ge 4 ]]; then
+if [[ $UPX_TESTSUITE_LEVEL -ge 5 ]]; then
 testdir=t140_compress_lzma_2_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --lzma -2 --no-filter
 fi
 
-if [[ $UPX_TESTSUITE_FAST -ge 5 ]]; then
+if [[ $UPX_TESTSUITE_LEVEL -ge 6 ]]; then
 testdir=t150_compress_ucl_2_all_filters
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress -2 --all-filters
 fi
 
-if [[ $UPX_TESTSUITE_FAST -ge 6 ]]; then
+if [[ $UPX_TESTSUITE_LEVEL -ge 7 ]]; then
 testdir=t160_compress_all_methods_1_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --all-methods -1 --no-filter
 fi
 
-if [[ $UPX_TESTSUITE_FAST -ge 7 ]]; then
+if [[ $UPX_TESTSUITE_LEVEL -ge 8 ]]; then
 testdir=t170_compress_all_methods_no_lzma_5_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
@@ -283,10 +305,11 @@ testsuite_header "UPX testsuite summary"
 run_upx --version-short
 echo
 echo "upx_exe='$upx_exe'"
-if [[ -f "$upx_exe" ]]; then
+if [[ -f $upx_exe ]]; then
     ls -l "$upx_exe"
     file "$upx_exe" || true
 fi
+echo "upx_run='${upx_run[*]}'"
 echo "upx_testsuite_SRCDIR='$upx_testsuite_SRCDIR'"
 echo "upx_testsuite_BUILDDIR='$upx_testsuite_BUILDDIR'"
 echo ".sha256sums.{expected,current} counts:"

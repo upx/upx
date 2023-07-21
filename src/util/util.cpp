@@ -151,6 +151,7 @@ void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, s
     if very_unlikely (a_end < a || b_end < b) // wrap-around
         throwCantPack("ptr_check_no_overlap-overflow");
     // same as (!(a >= b_end || b >= a_end))
+    // same as (!(a_end <= b || b_end <= a))
     if very_unlikely (a < b_end && b < a_end)
         throwCantPack("ptr_check_no_overlap-ab");
 }

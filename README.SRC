@@ -61,7 +61,7 @@ To compile the packer sources
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
 
-  - Podman/Docker: see misc/rebuild-stubs-with-podman - this
+  - Podman/Docker: see misc/podman/rebuild-stubs - this
     is the preferred way of rebuilding the stubs
 
   - otherwise you will need:

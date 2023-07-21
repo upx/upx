@@ -401,8 +401,10 @@ inline void owner_delete(OwningPointer(T) (&object)) noexcept {
     delete object;
     object = nullptr;
 }
+#if defined(__clang__) || __GNUC__ != 7
 template <class T>
 inline void owner_delete(T (&array)[]) noexcept DELETED_FUNCTION;
+#endif
 template <class T, size_t N>
 inline void owner_delete(T (&array)[N]) noexcept DELETED_FUNCTION;
 
@@ -415,8 +417,10 @@ inline void mem_clear(T *object) noexcept {
     static_assert(size >= 1 && size <= UPX_RSIZE_MAX_MEM);
     memset((void *) object, 0, size);
 }
+#if defined(__clang__) || __GNUC__ != 7
 template <class T>
 inline void mem_clear(T (&array)[]) noexcept DELETED_FUNCTION;
+#endif
 template <class T, size_t N>
 inline void mem_clear(T (&array)[N]) noexcept DELETED_FUNCTION;
 
@@ -821,9 +825,9 @@ void *membuffer_get_void_ptr(MemBuffer &mb) noexcept;
 unsigned membuffer_get_size(MemBuffer &mb) noexcept;
 
 // util/dt_check.cpp
-void upx_compiler_sanity_check() noexcept;
+noinline void upx_compiler_sanity_check() noexcept;
+noinline int upx_doctest_check(int argc, char **argv);
 int upx_doctest_check();
-int upx_doctest_check(int argc, char **argv);
 
 // main.cpp
 extern const char *progname;

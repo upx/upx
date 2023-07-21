@@ -352,6 +352,25 @@ struct TestIntegerWrap {
     static inline bool neg_eq(const T x) noexcept { return T(0) - x == x; }
 };
 
+static noinline void throwSomeValue(int x) {
+    if (x < 0)
+        throw int(x);
+    else
+        throw size_t(x);
+}
+
+static noinline void check_basic_cxx_exception_handling(void (*func)(int)) noexcept {
+    bool cxx_exception_handling_works = false;
+    try {
+        func(42);
+    } catch (const size_t &e) {
+        if (e == 42)
+            cxx_exception_handling_works = true;
+    } catch (...) {
+    }
+    assert_noexcept(cxx_exception_handling_works);
+}
+
 } // namespace
 
 #define ACC_WANT_ACC_CHK_CH 1
@@ -359,6 +378,9 @@ struct TestIntegerWrap {
 #include "../miniacc.h"
 
 void upx_compiler_sanity_check(void) noexcept {
+    // first check C++ exception handling to catch toolchain/qemu/wine/etc problems
+    check_basic_cxx_exception_handling(throwSomeValue);
+
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
 #define ACCCHK_ASSERT(expr) ACC_COMPILE_TIME_ASSERT(expr)
