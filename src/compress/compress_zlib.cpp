@@ -28,6 +28,7 @@
 #include "compress.h"
 #include "../util/membuffer.h"
 // NOLINTBEGIN(clang-analyzer-optin.performance.Padding)
+#define ZLIB_CONST 1
 #include <zlib/zlib.h>
 #include <zlib/deflate.h>
 // NOLINTEND(clang-analyzer-optin.performance.Padding)
@@ -101,7 +102,7 @@ int upx_zlib_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsi
     z_stream s;
     s.zalloc = (alloc_func) nullptr;
     s.zfree = (free_func) nullptr;
-    s.next_in = ACC_UNCONST_CAST(upx_bytep, src);
+    s.next_in = src;
     s.avail_in = src_len;
     s.next_out = dst;
     s.avail_out = *dst_len;
@@ -150,7 +151,7 @@ int upx_zlib_decompress(const upx_bytep src, unsigned src_len, upx_bytep dst, un
     z_stream s;
     s.zalloc = (alloc_func) nullptr;
     s.zfree = (free_func) nullptr;
-    s.next_in = ACC_UNCONST_CAST(upx_bytep, src);
+    s.next_in = src;
     s.avail_in = src_len;
     s.next_out = dst;
     s.avail_out = *dst_len;

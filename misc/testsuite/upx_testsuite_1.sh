@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
-argv0=$0; argv0abs=$(readlink -en -- "$argv0"); argv0dir=$(dirname "$argv0abs")
+argv0=$0; argv0abs=$(readlink -fn "$argv0"); argv0dir=$(dirname "$argv0abs")
 
 # very first version of the upx-testsuite; requires:
 #   $upx_exe                (required, but with convenience fallback "./upx")
@@ -23,7 +23,8 @@ argv0=$0; argv0abs=$(readlink -en -- "$argv0"); argv0dir=$(dirname "$argv0abs")
 [[ -z $upx_exe && -f ./upx && -x ./upx ]] && upx_exe=./upx # convenience fallback
 if [[ -z $upx_exe ]]; then echo "UPX-ERROR: please set \$upx_exe"; exit 1; fi
 if [[ ! -f $upx_exe ]]; then echo "UPX-ERROR: file '$upx_exe' does not exist"; exit 1; fi
-upx_exe=$(readlink -en -- "$upx_exe") # make absolute
+upx_exe=$(readlink -fn "$upx_exe") # make absolute
+[[ -f $upx_exe ]] || exit 1
 upx_run=()
 if [[ -n $upx_exe_runner ]]; then
     # usage examples:
@@ -57,14 +58,16 @@ if [[ ! -d "$upx_testsuite_SRCDIR/files/packed" ]]; then
     echo "  and set (export) the envvar upx_testsuite_SRCDIR to the local file path"
     exit 1
 fi
-upx_testsuite_SRCDIR=$(readlink -en -- "$upx_testsuite_SRCDIR") # make absolute
+upx_testsuite_SRCDIR=$(readlink -fn "$upx_testsuite_SRCDIR") # make absolute
+[[ -d $upx_testsuite_SRCDIR ]] || exit 1
 
 # upx_testsuite_BUILDDIR
 if [[ -z $upx_testsuite_BUILDDIR ]]; then
     upx_testsuite_BUILDDIR="./tmp-upx-testsuite"
 fi
 mkdir -p "$upx_testsuite_BUILDDIR" || exit 1
-upx_testsuite_BUILDDIR=$(readlink -en -- "$upx_testsuite_BUILDDIR") # make absolute
+upx_testsuite_BUILDDIR=$(readlink -fn "$upx_testsuite_BUILDDIR") # make absolute
+[[ -d $upx_testsuite_BUILDDIR ]] || exit 1
 
 cd / && cd "$upx_testsuite_BUILDDIR" || exit 1
 
@@ -137,7 +140,7 @@ testsuite_split_f() {
 }
 
 testsuite_check_sha() {
-    (cd "$1" && sha256sum -b -- */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
+    (cd "$1" && sha256sum -b [0-9a-zA-Z]*/* | LC_ALL=C sort -k2) > $1/.sha256sums.current
     echo
     cat $1/.sha256sums.current
     if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
@@ -152,7 +155,7 @@ testsuite_check_sha() {
 }
 
 testsuite_check_sha_decompressed() {
-    (cd "$1" && sha256sum -b -- */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
+    (cd "$1" && sha256sum -b [0-9a-zA-Z]*/* | LC_ALL=C sort -k2) > $1/.sha256sums.current
     if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
         cat $1/.sha256sums.current
         echo "UPX-ERROR: FATAL: $1 FAILED: decompressed checksum mismatch"
@@ -301,12 +304,12 @@ fi
 # recreate checksums from current version for an easy update in case of changes
 recreate_expected_sha256sums .sha256sums.recreate
 
-testsuite_header "UPX testsuite summary"
+testsuite_header "UPX testsuite summary: level $UPX_TESTSUITE_LEVEL"
 run_upx --version-short
 echo
 echo "upx_exe='$upx_exe'"
-if [[ -f $upx_exe ]]; then
-    ls -l "$upx_exe"
+ls -l "$upx_exe"
+if command -v file >/dev/null; then
     file "$upx_exe" || true
 fi
 echo "upx_run='${upx_run[*]}'"

@@ -97,7 +97,7 @@ if check_submodule ucl; then
 fi
 if check_submodule zlib; then
     for f in "$rel_top_srcdir"/vendor/zlib/*.c; do
-        run "CC  $f" $CC -DHAVE_STDARG_H -DHAVE_VSNPRINTF -DHAVE_UNISTD_H -c "$f"
+        run "CC  $f" $CC -DHAVE_UNISTD_H -DHAVE_VSNPRINTF -c "$f"
     done
 fi
 if check_submodule zstd; then

@@ -12,8 +12,8 @@ env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-07-19
-  ZIG_DIST_VERSION: 0.11.0-dev.4009+11695745e
+  # 2023-07-20
+  ZIG_DIST_VERSION: 0.11.0-dev.4059+17255bed4
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -149,7 +149,7 @@ jobs:
       - name: 'Install brew packages'
         if: ${{ matrix.testsuite }}
         run: |
-          # testsuite needs working "readlink -en" and "sha256sum"
+          # testsuite needs working "readlink -en" and "sha256sum -b"
           if ! test -e /usr/local/opt/coreutils/libexec/gnubin/readlink; then
             echo "===== brew leaves:"; brew leaves; echo "===== brew list:"; brew list
             # only run "brew update" if needed
@@ -320,12 +320,12 @@ jobs:
           %RUN_LIB% -out:ucl.lib *.obj
           @REM ===== build zlib =====
           cd %BDIR%\zlib
-          %RUN_CL% -J -O2 -W3 -WX %DEFS% -c %H%\vendor\zlib\*.c
+          %RUN_CL% -J -O2 -W3 -WX %DEFS% -DHAVE_VSNPRINTF -c %H%\vendor\zlib\*.c
           %RUN_LIB% -out:zlib.lib *.obj
           @REM ===== build zstd =====
           cd %BDIR%\zstd
           set s=%H%\vendor\zstd\lib
-          @rem %RUN_CL% -J -O2 -W4 -WX -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM %DEFS% -c %s%\common\*.c %s%\compress\*.c %s%\decompress\*.c
+          @rem %RUN_CL% -J -O2 -W4 -WX %DEFS% -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM -c %s%\common\*.c %s%\compress\*.c %s%\decompress\*.c
           @rem %RUN_LIB% -out:zstd.lib *.obj
           @REM ===== build UPX =====
           cd %BDIR%\upx

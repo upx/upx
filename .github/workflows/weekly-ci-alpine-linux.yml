@@ -15,6 +15,7 @@ on:
 env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
+  UPX_TESTSUITE_LEVEL: 2
 
 jobs:
   job-alpine-cmake: # uses cmake + make
@@ -140,5 +141,16 @@ jobs:
           (cd "upx with space"/build/xtarget/gcc-static/debug     && DESTDIR="$PWD/Install with make"  make install)
           (cd "upx with space"/build/xtarget/gcc-static/release   && DESTDIR="$PWD/Install with cmake" cmake --install .)
           (cd "upx with space"/build/xtarget/gcc-static/release   && DESTDIR="$PWD/Install with make"  make install)
+
+      # test suite
+      - name: ${{ format('Run test suite level {0}', env.UPX_TESTSUITE_LEVEL) }}
+        run: |
+          # use a directory that contains whitespace to detect possible quoting issues
+          git clone --depth=1 https://github.com/upx/upx-testsuite "upx-testsuite with space"
+          export upx_testsuite_SRCDIR="$(readlink -fn "upx-testsuite with space")"
+          testsuite_1="$(readlink -fn "upx with space"/misc/testsuite/upx_testsuite_1.sh)"
+          # testsuite needs bash and working "readlink -en" and "sha256sum -b"
+          apk add bash coreutils
+          (cd "upx with space"/build/xtarget/gcc-static/release && upx_exe=./upx bash "$testsuite_1")
 
 # vim:set ts=2 sw=2 et:
