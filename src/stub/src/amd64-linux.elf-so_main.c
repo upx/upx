@@ -39,7 +39,7 @@ int Punmap(void *, size_t);
 
 extern void f_int3(int arg);
 
-#define DEBUG 1
+#define DEBUG 0
 
 #ifndef DEBUG  //{
 #define DEBUG 0
