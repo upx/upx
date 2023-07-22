@@ -146,8 +146,11 @@ brk:
 readlink:
         do_sys __NR_readlink; ret
 
-        .globl munmap
-munmap:
+Punmap: .globl Punmap
+        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_MASK
+        sub x0,x0,x8
+        add x1,x1,x8
+munmap: .globl munmap
         do_sys __NR_munmap; ret
 
 // Sometimes Linux enforces page-aligned address
@@ -170,11 +173,11 @@ mmap_privanon: .globl mmap_privanon
         mov x5,#0  // offset= 0
         // FALL THROUGH to mmap
 
-        .globl mmap
-mmap:
+Pmap: .globl Pmap
         and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_MASK
         sub x0,x0,x8
         add x1,x1,x8
+mmap: .globl mmap
         do_sys __NR_mmap; ret
 
 get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction

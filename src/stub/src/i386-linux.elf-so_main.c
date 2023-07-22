@@ -39,6 +39,9 @@ extern void my_bkpt(void const *arg1, ...);
 // Pprotect is mprotect, but page-aligned on the lo end (Linux requirement)
 unsigned Pprotect(void *, size_t, unsigned);
 void *mmap(void *, size_t, int, int, int, off_t);
+void *Pmap(void *, size_t, int, int, int, off_t);
+int Punmap(void *, size_t);
+
 #if defined(__i386__) || defined(__mips__) || defined(__powerpc__) //{
 #  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
         MAP_PRIVATE|MAP_ANONYMOUS|(flgs),-1,0)
@@ -581,10 +584,9 @@ upx_so_main(  // returns &escape_hatch
         if ((phdr->p_filesz + phdr->p_offset) <= so_infc.off_xct_off) {
             continue;  // below compressed region
         }
-        Elf32_Addr pfx = so_infc.off_xct_off - phdr->p_offset;
-        if (             so_infc.off_xct_off < phdr->p_offset) {
-            pfx = 0;  // no more partially-compressed PT_LOAD
-        }
+        Elf32_Addr const pfx = (so_infc.off_xct_off < phdr->p_offset)
+            ? 0  // entire PT_LOAD is compressed
+            : so_infc.off_xct_off - phdr->p_offset ;  // below xct_off is not
         x0.size = sizeof(struct b_info);
         xread(&x0, (char *)&al_bi, x0.size);  // aligned binfo
         x0.buf -= sizeof(al_bi);  // back up (the xread() was a peek)
@@ -596,10 +598,10 @@ upx_so_main(  // returns &escape_hatch
         x1.buf =  (char *)(phdr->p_vaddr + pfx + base);
         x1.size = phdr->p_memsz - pfx;
 
-        pfx = (phdr->p_vaddr + pfx) & ~page_mask;  // lo fragment on page
-        x1.buf  -= pfx;
-        x1.size += pfx;
-        DPRINTF("phdr(%%p %%p) xct_off=%%x pfx=%%x\\n", x1.buf, x1.size, xct_off, pfx);
+        unsigned const frag = (phdr->p_vaddr + pfx) & ~page_mask;  // lo fragment on page
+        x1.buf  -= frag;
+        x1.size += frag;
+        DPRINTF("phdr(%%p %%p) xct_off=%%x frag=%%x\\n", x1.buf, x1.size, xct_off, frag);
 
         int mfd = 0;
         char *mfd_addr = 0;
@@ -609,7 +611,7 @@ upx_so_main(  // returns &escape_hatch
             // to hold the contents.
             mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             ftruncate(mfd, x1.size);  // Allocate the pages in the file.
-            write(mfd, x1.buf, pfx);  // Save lo fragment of contents on first page.
+            write(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
             mfd_addr = mmap(0, x1.size, PROT_READ|PROT_WRITE, MAP_SHARED, mfd, 0);
             DPRINTF("mfd_addr= %%p\\n", mfd_addr);  // Now "somewhere" in RAM,
             // and ready to receive de-compressed bytes, and remember them in the
@@ -619,13 +621,12 @@ upx_so_main(  // returns &escape_hatch
             // prevent the mmap(0, ...) from stealing that address range.
             munmap(x1.buf, x1.size);  // Discard original page frames in RAM.
             x1.buf = mfd_addr;  // will add pfx soon
-            DPRINTF("mfd_addr= %%p\\n", mfd_addr);
         }
         else {
-            underlay(x1.size, x1.buf, pfx, phdr->p_flags);  // also makes PROT_WRITE
+            underlay(x1.size, x1.buf, frag, phdr->p_flags);  // also makes PROT_WRITE
         }
 
-        x1.buf += pfx;
+        x1.buf += frag;
         x1.size = al_bi.sz_unc;
         x0.size = al_bi.sz_cpr + sizeof(struct b_info);
         DPRINTF("befor unpack x0=(%%p %%p  x1=(%%p %%p)\\n", x0.size, x0.buf, x1.size, x1.buf);
@@ -647,7 +648,7 @@ upx_so_main(  // returns &escape_hatch
             // Map the contents of mfd as per *phdr.
             DPRINTF("mfd mmap addr=%%p  len=%%p\\n", (phdr->p_vaddr + base + pfx), al_bi.sz_unc);
             munmap(mfd_addr, pfx + al_bi.sz_unc);  // Discard RW mapping; mfd has the bytes
-            mmap((char *)(phdr->p_vaddr + base + pfx), al_bi.sz_unc, PF_to_PROT(phdr),
+            Pmap((char *)(phdr->p_vaddr + base + pfx), al_bi.sz_unc, PF_to_PROT(phdr),
                 MAP_FIXED|MAP_PRIVATE, mfd, 0);
             close(mfd);
         }

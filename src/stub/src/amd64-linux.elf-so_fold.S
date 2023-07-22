@@ -115,10 +115,11 @@ __NR_readlink= 89
 
 O_BINFO: .globl O_BINFO  # ignored dummy needed by elf-entry.o
 
+Pmap: .globl Pmap
+        mov %arg1,%rax; and $0xfff,%eax
+        sub %rax,%arg1  # page align lo end
+        add %rax,%arg2
 mmap: .globl mmap
-        mov %arg1,%r10; and $0xfff,%r10
-        sub %r10,%arg1  # page align lo end
-        add %r10,%arg2
         push $ __NR_mmap
 sys_4args:
         movq %arg4,%sys4
@@ -148,6 +149,12 @@ sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
         syscall; cmp $-4096,%rax; jb 0f; int3; 0:
         ret
 
+Punmap: .globl Punmap  // page-align the lo end
+        mov %arg1,%rax; and $0xfff,%eax
+        sub %rax,%arg1
+        add %rax,%arg2
+munmap: .globl munmap
+        push $__NR_munmap; 5: jmp sysgo
 exit: .globl exit
         push $ __NR_exit; 5: jmp 5f
 ftruncate: .globl ftruncate
@@ -162,15 +169,13 @@ write: .globl write
         push $__NR_write; 5: jmp 5f
 read: .globl read
         push $ __NR_read; 5: jmp 5f
-munmap: .globl munmap
-        push $__NR_munmap; 5: jmp sysgo
 
 // Sometimes Linux enforces page-aligned address for mprotect
 Pprotect: .globl Pprotect
-mprotect: .globl mprotect
         mov %rdi,%rax; and $-1+ (1<<12),%rax
         sub %rax,%rdi
         add %rax,%rsi
+mprotect: .globl mprotect
         push $ __NR_mprotect; 5: jmp sysgo
 
 // section SO_MAIN inserted here

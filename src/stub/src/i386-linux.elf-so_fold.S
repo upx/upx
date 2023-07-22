@@ -121,6 +121,7 @@ __NR_exit=      1
 __NR_readlink= 85
 
 
+Pmap: .globl Pmap
 mmap: .globl mmap  // oldmmap: %ebx -> 6 word parameters
     push %ebx  // save C-lang register
     lea 2*NBPW(%esp),%ebx
@@ -156,7 +157,7 @@ mmap: .globl mmap  // oldmmap: %ebx -> 6 word parameters
 #endif  //}
 
 // Sometimes linux enforces page-aligned address
-Pprotect: .globl Pprotect
+Pprotect: .globl Pprotect  // from C
     xchg %ebx,1*NBPW(%esp)  // save reg, %ebx= address
     mov %ebx,%ecx  // copy address
     and $~0<<12,%ebx  // page align
@@ -166,6 +167,19 @@ Pprotect: .globl Pprotect
     push $__NR_mprotect; pop %eax; int $0x80
     cmp $-0x1000,%eax; jna 0f; hlt; 0:
     mov 1*NBPW(%esp),%ebx  // restore reg
+    ret
+
+Punmap: .globl Punmap  // from C
+    push %ebp; mov %esp,%ebp
+    push %ebx
+    mov (0+2)*NBPW(%ebp),%ebx  // addr
+    mov %ebx,%eax; and $-1+ (1<<12),%eax
+    sub %eax,%ebx
+    mov (1+2)*NBPW(%ebp),%ecx  // len
+    add %eax,%ecx
+    push $__NR_munmap; pop %eax; int $0x80
+    cmp $-0x1000,%eax; jna 0f; hlt; 0:
+    pop %ebx; pop %ebp
     ret
 
 memfd_create: .globl memfd_create

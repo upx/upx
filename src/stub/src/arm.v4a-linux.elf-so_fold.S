@@ -182,10 +182,6 @@ brk:
 readlink:
         do_sys __NR_readlink; ret
 
-        .globl munmap
-munmap:
-        do_sys __NR_munmap; ret
-
 ftruncate: .globl ftruncate
         do_sys __NR_ftruncate; ret
 
@@ -194,15 +190,19 @@ memfd_create: .globl memfd_create
 
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
-mprotect: .globl mprotect
         ldr r12,m_off4k
         and r12,r12,r0
         sub r0,r0,r12
         add r1,r1,r12
+mprotect: .globl mprotect
         do_sys __NR_mprotect; ret
 
-        .globl mmap
-mmap:
+Pmap: .globl Pmap
+        ldr r12,m_off4k
+        and r12,r12,r0
+        sub r0,r0,r12
+        add r1,r1,r12
+mmap: .globl mmap
         stmdb sp!,{r4,r5,lr}
         ldr r5,[sp,#4*4]
         ldr r4,[sp,#3*4]
@@ -214,6 +214,14 @@ mmap_do:
         add r1,r1,r12
         do_sys __NR_mmap2
         ldmia sp!,{r4,r5,pc}
+
+Punmap: .globl Punmap
+        ldr r12,m_off4k
+        and r12,r12,r0
+        sub r0,r0,r12
+        add r1,r1,r12
+munmap: .globl munmap
+        do_sys __NR_munmap; ret
 
 m_off4k:
         .word -1+ (1<<PAGE_SHIFT)  // offset mask for 4KiB
