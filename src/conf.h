@@ -386,31 +386,9 @@ struct UnsignedSizeOf {
 };
 #define usizeof(expr)   (UnsignedSizeOf<sizeof(expr)>::value)
 
-// simple pointer type alias to explicitly mark ownership of objects; purely
-// cosmetic to improve source code readability, no real functionality
-#if 0
-#define OwningPointer(T) T *
-#else
-template <class T> using OwningPointer = T *;
-#define OwningPointer(T) OwningPointer<T>
-#endif
-template <class T>
-inline void owner_delete(OwningPointer(T) (&object)) noexcept {
-    static_assert(std::is_class_v<T>);
-    static_assert(std::is_nothrow_destructible_v<T>);
-    delete object;
-    object = nullptr;
-}
-#if defined(__clang__) || __GNUC__ != 7
-template <class T>
-inline void owner_delete(T (&array)[]) noexcept DELETED_FUNCTION;
-#endif
-template <class T, size_t N>
-inline void owner_delete(T (&array)[N]) noexcept DELETED_FUNCTION;
-
 template <class T>
 inline void mem_clear(T *object) noexcept {
-    static_assert(std::is_class_v<T>);
+    static_assert(std::is_class_v<T>); // UPX convention
     static_assert(std::is_standard_layout_v<T>);
     static_assert(std::is_trivially_copyable_v<T>);
     constexpr size_t size = sizeof(*object);

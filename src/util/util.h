@@ -131,6 +131,70 @@ void upx_stable_sort(void *array, size_t n, size_t element_size,
                      int (*compare)(const void *, const void *));
 
 /*************************************************************************
+// OwningPointer(T)
+// simple pointer type alias to explicitly mark ownership of objects; purely
+// cosmetic to improve source code readability, no real functionality
+**************************************************************************/
+
+#if 0
+
+// this works
+#define OwningPointer(T) T *
+
+#elif 1
+
+// this also works
+template <class T>
+using OwningPointer = T *;
+#define OwningPointer(T) OwningPointer<T>
+
+#else
+
+// simple class with just a number of no-ops
+template <class T>
+struct OwningPointer {
+    static_assert(std::is_class_v<T>); // UPX convention
+    typedef typename std::add_lvalue_reference<T>::type reference;
+    typedef typename std::add_lvalue_reference<const T>::type const_reference;
+    typedef typename std::add_pointer<T>::type pointer;
+    typedef typename std::add_pointer<const T>::type const_pointer;
+    pointer ptr;
+    inline OwningPointer(pointer p) noexcept : ptr(p) {}
+    inline operator pointer() noexcept { return ptr; }
+    inline operator const_pointer() const noexcept { return ptr; }
+    inline reference operator*() noexcept { return *ptr; }
+    inline const_reference operator*() const noexcept { return *ptr; }
+    inline pointer operator->() noexcept { return ptr; }
+    inline const_pointer operator->() const noexcept { return ptr; }
+};
+// overload mem_clear()
+template <class T>
+inline void mem_clear(OwningPointer<T> object) noexcept {
+    mem_clear((T *) object);
+}
+#define OwningPointer(T) OwningPointer<T>
+
+#endif
+
+template <class T>
+inline void owner_delete(OwningPointer(T)(&object)) noexcept {
+    static_assert(std::is_class_v<T>); // UPX convention
+    static_assert(std::is_nothrow_destructible_v<T>);
+    if (object != nullptr) {
+        delete (T *) object;
+        object = nullptr;
+    }
+}
+
+// disable some overloads
+#if defined(__clang__) || __GNUC__ != 7
+template <class T>
+inline void owner_delete(T (&array)[]) noexcept DELETED_FUNCTION;
+#endif
+template <class T, size_t N>
+inline void owner_delete(T (&array)[N]) noexcept DELETED_FUNCTION;
+
+/*************************************************************************
 // misc. support functions
 **************************************************************************/
 

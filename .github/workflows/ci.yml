@@ -12,8 +12,8 @@ env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-07-20
-  ZIG_DIST_VERSION: 0.11.0-dev.4059+17255bed4
+  # 2023-07-24
+  ZIG_DIST_VERSION: 0.11.0-dev.4195+7f3fdd2ff
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -333,8 +333,8 @@ jobs:
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
           set UPX_DEFS=-DUPX_CONFIG_DISABLE_WSTRICT=0 -DUPX_CONFIG_DISABLE_WERROR=0 -DWITH_BZIP2=0 -DWITH_ZSTD=0
-          set UPX_LIBS=%BDIR%\bzip2\bzip2.lib %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib
           set UPX_LIBS=%BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib
+          @rem set UPX_LIBS=%BDIR%\bzip2\bzip2.lib %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp
           %RUN_CL% -J -O2 -W4 -WX -std:c++17 -Zc:__cplusplus -EHsc -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% %UPX_DEFS% -I%H%\vendor -Feupx.exe %sources% %UPX_LIBS% /link ${{ matrix.link_machine_flags }} setargv.obj
       - name: 'Make artifact'
@@ -389,6 +389,7 @@ jobs:
           # { zig_target: aarch64-macos.12.0-none }
           # { zig_target: aarch64-macos.13.0-none }
           - { zig_target: aarch64-windows-gnu }
+          - { zig_target: arm-linux-musleabihf }
           # { zig_target: i386-linux-musl }
           - { zig_target: i386-windows-gnu }
           # { zig_target: mips-linux-musl }

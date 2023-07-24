@@ -48,6 +48,7 @@ Packer::~Packer() noexcept {
     // owner
     owner_delete(uip);
     owner_delete(linker);
+    assert_noexcept(linker == nullptr);
     // references
     bele = nullptr;
     fi = nullptr;
