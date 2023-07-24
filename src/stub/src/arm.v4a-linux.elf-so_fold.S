@@ -154,8 +154,9 @@ exit:
 read:
         do_sys __NR_read; ret
 
-        .globl write
-write:
+Pwrite: .globl Pwrite
+        //int3
+write: .globl write
         do_sys __NR_write; ret
 
         .globl open

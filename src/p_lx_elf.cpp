@@ -502,6 +502,7 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 
     total_out = super::pack3(fo, ft);  // loader follows compressed PT_LOADs
     if (fo && xct_off && Elf32_Dyn::DT_INIT != upx_dt_init) { // patch user_init_rp
+        // init_array[0] must have R_$(ARCH)_RELATIVE relocation.
         fo->seek((char *)user_init_rp - (char *)&file_image[0], SEEK_SET);
         Elf32_Rel rel(*(Elf32_Rel const *)user_init_rp);
         u32_t r_info = get_te32(&((Elf32_Rel const *)user_init_rp)->r_info);
@@ -512,12 +513,10 @@ off_t PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                      : 0;
         set_te32(&rel.r_info, ELF32_R_INFO(ELF32_R_SYM(r_info), r_type));
         fo->rewrite(&rel, sizeof(rel));
-
-        fo->seek((char *)user_init_rp - (char *)&file_image[0], SEEK_SET);
-        u32_t disp; set_te32(&disp, sz_pack2);  // entry to decompressor
-        fo->rewrite(&disp, sizeof(disp));
-
         fo->seek(0, SEEK_END);
+
+        // Value of init_array[0] will be changed later.
+        // See write() of 'cpr_entry' below.
     }
     // NOTE: PackLinuxElf::pack3  adjusted xct_off for the extra page
 

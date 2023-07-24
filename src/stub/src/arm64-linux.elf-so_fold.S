@@ -118,6 +118,7 @@ memfd_create: .globl memfd_create; do_sys __NR_memfd_create; ret
 read:
         do_sys __NR_read; ret
 
+Pwrite: .globl Pwrite
         .globl write
 write:
         do_sys __NR_write; ret

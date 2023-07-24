@@ -33,9 +33,11 @@
 #include "include/linux.h"
 
 // Pprotect is mprotect, but page-aligned on the lo end (Linux requirement)
-unsigned Pprotect(void *, size_t, unsigned);
-void *Pmap(void *, size_t, unsigned, unsigned, int, size_t);
-int Punmap(void *, size_t);
+extern unsigned Pprotect(void *, size_t, unsigned);
+extern void *Pmap(void *, size_t, unsigned, unsigned, int, size_t);
+extern int Punmap(void *, size_t);
+extern size_t Pwrite(unsigned, void const *, size_t);
+extern int ftruncate(int fd, off_t length);
 
 extern void f_int3(int arg);
 
@@ -245,29 +247,26 @@ extern int memfd_create(const char *name, unsigned int flags);
 static char *
 make_hatch_x86_64(
     Elf64_Phdr const *const phdr,
-    char *base,
     char *next_unc,
-    char *mfd_addr,
     unsigned frag_mask
 )
 {
     char *hatch = 0;
-    DPRINTF("make_hatch %%p %%p %%p %%p %%x\\n", phdr, base, next_unc, mfd_addr, frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
-        frag_mask &= -(long)next_unc;  // bytes left on pge
+        frag_mask &= -(long)next_unc;  // bytes left on page
         if (6 <= frag_mask) {
             hatch = next_unc;
             (( long *)hatch)[0] = 0x5e5f050f;  // syscall; pop %arg1{%rdi}; pop %arg2{%rsi}
             ((short *)hatch)[2] = 0xc35a;  // pop %arg3{%rdx}; ret
-            hatch += phdr->p_vaddr + (base - mfd_addr);  // relocate to eventual address
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            write(mfd, addr_string("\x0f\x05\x5f\x5e\x5a\xc3"), 6);
-            mfd_addr = mmap(0, 6, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            ftruncate(mfd, 6);
+            Pwrite(mfd, addr_string("\x0f\x05\x5f\x5e\x5a\xc3"), 6);
+            hatch = Pmap(0, 6, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
-            hatch = mfd_addr;
         }
     }
     DPRINTF("hatch=%%p\\n", hatch);
@@ -283,9 +282,7 @@ ORRX(unsigned ra, unsigned rs, unsigned rb) // or ra,rs,rb
 static char *
 make_hatch_ppc64(
     Elf64_Phdr const *const phdr,
-    char *base,
     char *next_unc,
-    char *mfd_addr,
     unsigned frag_mask
 )
 {
@@ -296,25 +293,23 @@ make_hatch_ppc64(
         0x4e800020,  // blr
     };
     unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%p %%p %%p %%x\\n", phdr, base, next_unc, mfd_addr, frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
-        frag_mask &= -(long)next_unc;  // bytes left on pge
+        frag_mask &= -(long)next_unc;  // bytes left on page
         if (4*4 <= frag_mask) {
-            hatch = (unsigned *)(void *)next_unc;
+            hatch = (unsigned *)(void *)(~3ul & (long)(3+ next_unc);
             hatch[0]= code[0];
             hatch[1]= code[1];
             hatch[2]= code[2];
             hatch[3]= code[3];
-            char *t = (phdr->p_vaddr + base) + ((char *)hatch - mfd_addr);
-            hatch = (unsigned *)(void *)t;
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            write(mfd, code, sizeof(code));
-            mfd_addr = mmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            ftruncate(mfd,sizeof(code));
+            Pwrite(mfd, code, sizeof(code));
+            hatch = Pmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
-            hatch = mfd_addr;
         }
     }
     DPRINTF("hatch=%%p\\n", hatch);
@@ -324,9 +319,7 @@ make_hatch_ppc64(
 static char *
 make_hatch_arm64(
     Elf64_Phdr const *const phdr,
-    char *base,
     char *next_unc,
-    char *mfd_addr,
     unsigned frag_mask
 )
 {
@@ -337,25 +330,26 @@ make_hatch_arm64(
         0xd61f03c0,  // br x30
     };
     unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%p %%p %%p %%x\\n", phdr, base, next_unc, mfd_addr, frag_mask);
+    DPRINTF("make_hatch phdr=%%p  next_unc=%%p  frag_mask= %%x\\n",
+        phdr, next_unc, frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
-        frag_mask &= -(long)next_unc;  // bytes left on pge
+        frag_mask &= -(long)next_unc;  // bytes left on page
         if (4*4 <= frag_mask) {
-            hatch = (unsigned *)(void *)next_unc;
+            hatch = (unsigned *)(void *)(~3ul & (long)(3+ next_unc));
             hatch[0]= code[0];
             hatch[1]= code[1];
             hatch[2]= code[2];
             hatch[3]= code[3];
-            char *t = (phdr->p_vaddr + base) + ((char *)hatch - mfd_addr);
-            hatch = (unsigned *)(void *)t;
+            hatch = (unsigned *)&hatch[0];
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            write(mfd, code, sizeof(code));
-            mfd_addr = mmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            ftruncate(mfd, sizeof(code));
+            Pwrite(mfd, code, sizeof(code));
+            void *mfd_addr = Pmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
-            hatch = (unsigned *)(void *)mfd_addr;
+            hatch = (unsigned *)mfd_addr;
         }
     }
     DPRINTF("hatch=%%p\\n", hatch);
@@ -417,8 +411,6 @@ underlay(unsigned size, char *ptr, unsigned len)  // len <= PAGE_SIZE
 extern void
 underlay(unsigned size, char *ptr, unsigned len);
 #endif  //}
-
-extern int ftruncate(int fd, off_t length);
 
 // Exchange the bits with values 4 (PF_R, PROT_EXEC) and 1 (PF_X, PROT_READ)
 // Use table lookup into a PIC-string that pre-computes the result.
@@ -506,12 +498,13 @@ upx_so_main(  // returns &escape_hatch
     if (phdr->p_flags & PF_X) {
         int mfd = memfd_create(addr_string("upx"), 0);
         unsigned mfd_len = 0ul - PAGE_MASK;
-        write(mfd, elf_tmp, binfo->sz_unc);  // de-compressed Elf_Ehdr and Elf_Phdrs
-        write(mfd, binfo->sz_unc + va_load, mfd_len - binfo->sz_unc);  // rest of 1st page
+        ftruncate(mfd, mfd_len);
+        Pwrite(mfd, elf_tmp, binfo->sz_unc);  // de-compressed Elf_Ehdr and Elf_Phdrs
+        Pwrite(mfd, binfo->sz_unc + va_load, mfd_len - binfo->sz_unc);  // rest of 1st page
 
-        munmap(va_load, mfd_len);  // make SELinux forget any previous protection
-        Elf64_Addr va_mfd = (Elf64_Addr)mmap(va_load, mfd_len, PF_to_PROT(phdr),
-            MAP_FIXED|MAP_PRIVATE|MAP_ANONYMOUS, mfd, 0); (void)va_mfd;
+        Punmap(va_load, mfd_len);  // make SELinux forget any previous protection
+        Elf64_Addr va_mfd = (Elf64_Addr)Pmap(va_load, mfd_len, PF_to_PROT(phdr),
+            MAP_FIXED|MAP_SHARED, mfd, 0); (void)va_mfd;
         close(mfd);
     }
 
@@ -556,16 +549,10 @@ upx_so_main(  // returns &escape_hatch
             // to hold the contents.
             mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             ftruncate(mfd, x1.size);  // Allocate the pages in the file.
-            write(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
-            mfd_addr = mmap(0, x1.size, PROT_READ|PROT_WRITE, MAP_SHARED, mfd, 0);
-            DPRINTF("mfd_addr= %%p\\n", mfd_addr);  // Now "somewhere" in RAM,
-            // and ready to receive de-compressed bytes, and remember them in the
-            // file (MAP_SHARED) so that they can be mmap() according to *phdr.
-
-            // Must keep the original compressed data until now, in order to
-            // prevent the mmap(0, ...) from stealing that address range.
-            Punmap(x1.buf, x1.size);  // Discard original page frames in RAM.
-            x1.buf = mfd_addr;  // will add frag soon
+            Pwrite(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
+            Punmap(x1.buf, x1.size);
+            mfd_addr = Pmap(x1.buf, x1.size, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0);
+            DPRINTF("mfd_addr= %%p\\n", mfd_addr);  // Re-use the address space
         }
         else {
             underlay(x1.size, x1.buf, frag);  // also makes PROT_WRITE
@@ -580,20 +567,20 @@ upx_so_main(  // returns &escape_hatch
 
         if (!hatch && phdr->p_flags & PF_X) {
 #if defined(__x86_64)  //{
-            hatch = make_hatch_x86_64(phdr, (char *)base, x1.buf, mfd_addr, ~PAGE_MASK);
+            hatch = make_hatch_x86_64(phdr, x1.buf, ~PAGE_MASK);
 #elif defined(__powerpc64__)  //}{
-            hatch = make_hatch_ppc64(phdr, (char *)base, x1.buf, mfd_addr, ~PAGE_MASK);
+            hatch = make_hatch_ppc64(phdr, x1.buf, ~PAGE_MASK);
 #elif defined(__aarch64__)  //}{
-            hatch = make_hatch_arm64(phdr, (char *)base, x1.buf, mfd_addr, ~PAGE_MASK);
+            hatch = make_hatch_arm64(phdr, x1.buf, ~PAGE_MASK);
 #endif  //}
         }
 
         if (phdr->p_flags & PF_X) { // SELinux
             // Map the contents of mfd as per *phdr.
             DPRINTF("mfd mmap addr=%%p  len=%%p\\n", (phdr->p_vaddr + base + pfx), al_bi.sz_unc);
-            munmap(mfd_addr, frag + al_bi.sz_unc);  // Discard RW mapping; mfd has the bytes
+            Punmap(mfd_addr, frag + al_bi.sz_unc);  // Discard RW mapping; mfd has the bytes
             Pmap((char *)(phdr->p_vaddr + base + pfx), al_bi.sz_unc, PF_to_PROT(phdr),
-                MAP_FIXED|MAP_PRIVATE, mfd, 0);
+                MAP_FIXED|MAP_SHARED, mfd, 0);
             close(mfd);
         }
         else { // easy
@@ -601,7 +588,7 @@ upx_so_main(  // returns &escape_hatch
         }
     }
 
-    munmap(sideaddr, cpr_len);
+    Punmap(sideaddr, cpr_len);
     DPRINTF("calling user DT_INIT %%p\\n", dt_init);
     dt_init(so_args->argc, so_args->argv, so_args->envp);
 

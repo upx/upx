@@ -183,7 +183,6 @@ Punmap: .globl Punmap  // from C
     ret
 
 memfd_create: .globl memfd_create
-   int3
         push $__NR_memfd_create; 5: jmp 5f
 mprotect: .globl mprotect
         mov %ebx,%eax; and $-1+ (1<<12),%eax
@@ -196,6 +195,7 @@ close: .globl close
         push $__NR_close; 5: jmp 5f
 munmap: .globl munmap
         push $ __NR_munmap; 5: jmp 5f
+Pwrite: .globl Pwrite
 write: .globl write
         push $__NR_write; 5:
         pop %eax
