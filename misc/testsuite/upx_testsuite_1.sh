@@ -70,6 +70,7 @@ upx_testsuite_BUILDDIR=$(readlink -fn "$upx_testsuite_BUILDDIR") # make absolute
 [[ -d $upx_testsuite_BUILDDIR ]] || exit 1
 
 cd / && cd "$upx_testsuite_BUILDDIR" || exit 1
+: > ./.mfxnobackup
 
 # upx_run check, part2
 if ! "${upx_run[@]}" --version-short >/dev/null; then

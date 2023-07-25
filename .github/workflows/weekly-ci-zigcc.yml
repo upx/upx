@@ -8,8 +8,8 @@ on:
 env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
-  # 2023-07-24
-  ZIG_DIST_VERSION: 0.11.0-dev.4195+7f3fdd2ff
+  # 2023-07-25
+  ZIG_DIST_VERSION: 0.11.0-dev.4228+aea29afc4
 
 jobs:
   job-linux-zigcc: # uses cmake + make
