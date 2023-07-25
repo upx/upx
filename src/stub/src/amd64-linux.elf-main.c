@@ -296,7 +296,7 @@ make_hatch_ppc64(
             hatch[2]= 0x38800000;  // li r4,0
             hatch[3]= 0x4e800020;  // blr
             if (xprot) {
-                Pprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, 4*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
