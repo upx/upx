@@ -93,7 +93,7 @@ arg6w .req w5
 
         .balign 4
 _start: .globl _start
-        bkpt // DEBUG // ???
+        nop  // bkpt // DEBUG
         PUSH4 (x0,x1,x2,lr)  // MATCH_00
 
         sub sp,sp,#2*NBPW  // space for ADRU, LENU
