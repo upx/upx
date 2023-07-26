@@ -66,8 +66,6 @@ static unsigned const EF_ARM_EABI_VER5 = 0x05000000;
 /*offset 20*/   '.','s','h','s','t','r','t','a','b','\0'
 };
 
-// NOLINTBEGIN(clang-analyzer-*)
-
 static unsigned
 umin(unsigned a, unsigned b)
 {
@@ -1567,6 +1565,7 @@ PackLinuxElf64::buildLinuxLoader(
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
         }
         len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "EXP_TAIL,SO_TAIL,SO_MAIN");
+        (void)len;
         addLoader(sec, nullptr);
         relocateLoader();
         {
@@ -6746,7 +6745,7 @@ void PackLinuxElf32::un_DT_INIT(
             }
         };  break;
 
-        case Elf32_Dyn::DT_PLTGOT:   { plt_va = dt_pltgot = val;}
+        case Elf32_Dyn::DT_PLTGOT:   { plt_va = dt_pltgot = val; (void)dt_pltgot; }
         // FALL THROUGH
         case Elf32_Dyn::DT_PREINIT_ARRAY:
         case Elf32_Dyn::DT_INIT_ARRAY:
@@ -8526,7 +8525,5 @@ void PackLinuxElf::unpack(OutputFile * /*fo*/)
 {
     throwCantUnpack("internal error");
 }
-
-// NOLINTEND(clang-analyzer-*)
 
 /* vim:set ts=4 sw=4 et: */

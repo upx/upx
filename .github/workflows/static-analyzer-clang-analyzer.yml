@@ -23,8 +23,8 @@ jobs:
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
           git -C upx submodule update --init
-      - name: 'Perform clang scan-build Analysis Debug'
-        run: 'make -C upx build/extra/scan-build/debug'
-      - name: 'Perform clang scan-build Analysis Release'
+      - name: 'Perform clang-analyzer scan-build Analysis Debug'
+        run: 'make -C upx build/analyze/clang-analyzer/debug'
+      - name: 'Perform clang-analyzer scan-build Analysis Release'
         if: success() || failure() # run this step even if the previous step failed
-        run: 'make -C upx build/extra/scan-build/release'
+        run: 'make -C upx build/analyze/clang-analyzer/release'

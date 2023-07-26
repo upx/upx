@@ -123,24 +123,17 @@ build/extra/gcc-static/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-static/%: export CC  = gcc -static
 build/extra/gcc-static/%: export CXX = g++ -static
 
-# force building with clang Static Analyzer (scan-build)
-build/extra/scan-build/debug:   PHONY; $(call run_config_and_build,$@,Debug)
-build/extra/scan-build/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/scan-build/%: CMAKE := scan-build $(CMAKE)
-build/extra/scan-build/%: export CCC_CC  ?= clang
-build/extra/scan-build/%: export CCC_CXX ?= clang++
-
 # cross compiler: Linux glibc aarch64-linux-gnu (arm64)
-build/extra/cross-linux-aarch64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
-build/extra/cross-linux-aarch64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-linux-aarch64/%: export CC  = aarch64-linux-gnu-gcc
-build/extra/cross-linux-aarch64/%: export CXX = aarch64-linux-gnu-g++
+build/extra/cross-linux-gnu-aarch64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/cross-linux-gnu-aarch64/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/cross-linux-gnu-aarch64/%: export CC  = aarch64-linux-gnu-gcc
+build/extra/cross-linux-gnu-aarch64/%: export CXX = aarch64-linux-gnu-g++
 
 # cross compiler: Linux glibc arm-linux-gnueabihf
-build/extra/cross-linux-arm/debug:   PHONY; $(call run_config_and_build,$@,Debug)
-build/extra/cross-linux-arm/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-linux-arm/%: export CC  = arm-linux-gnueabihf-gcc
-build/extra/cross-linux-arm/%: export CXX = arm-linux-gnueabihf-g++ -Wno-psabi
+build/extra/cross-linux-gnu-arm-eabihf/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/cross-linux-gnu-arm-eabihf/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/cross-linux-gnu-arm-eabihf/%: export CC  = arm-linux-gnueabihf-gcc
+build/extra/cross-linux-gnu-arm-eabihf/%: export CXX = arm-linux-gnueabihf-g++ -Wno-psabi
 
 # cross compiler: Windows x86 win32 MinGW (i386)
 build/extra/cross-windows-mingw32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
@@ -165,6 +158,27 @@ build/extra/cross-darwin-x86_64/debug:   PHONY; $(call run_config_and_build,$@,D
 build/extra/cross-darwin-x86_64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-darwin-x86_64/%: export CC  = clang -target x86_64-apple-darwin
 build/extra/cross-darwin-x86_64/%: export CXX = clang++ -target x86_64-apple-darwin
+
+#***********************************************************************
+# C++ static analyzers
+#***********************************************************************
+
+# force building with clang Static Analyzer (scan-build)
+build/analyze/clang-analyzer/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/analyze/clang-analyzer/release: PHONY; $(call run_config_and_build,$@,Release)
+build/analyze/clang-analyzer/%: CMAKE := scan-build $(CMAKE)
+build/analyze/clang-analyzer/%: export CCC_CC  ?= clang
+build/analyze/clang-analyzer/%: export CCC_CXX ?= clang++
+
+# run clang-tidy (uses file compile_commands.json from an existing clang build)
+build/analyze/clang-tidy/debug:   build/extra/clang/debug PHONY
+	python3 ./misc/scripts/run-clang-tidy.py -p $<
+build/analyze/clang-tidy/release: build/extra/clang/release PHONY
+	python3 ./misc/scripts/run-clang-tidy.py -p $<
+
+# OLD names
+build/extra/scan-build/debug:   build/analyze/clang-analyzer/debug
+build/extra/scan-build/release: build/analyze/clang-analyzer/release
 
 #***********************************************************************
 # advanced: generic extra target

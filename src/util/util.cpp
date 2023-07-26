@@ -265,7 +265,9 @@ void upx_memswap(void *a, void *b, size_t n) {
         char *x = (char *) a;
         char *y = (char *) b;
         do {
-            char tmp = *x;
+            // strange clang-analyzer-15 false positive when compiling in Debug mode
+            // clang-analyzer-core.uninitialized.Assign
+            char tmp = *x; // NOLINT(*core.uninitialized.Assign) // bogus clang-analyzer warning
             *x++ = *y;
             *y++ = tmp;
         } while (--n != 0);

@@ -150,9 +150,9 @@ using OwningPointer = T *;
 
 #else
 
-// simple class with just a number of no-ops
+// also works: a simple class with just a number of no-ops
 template <class T>
-struct OwningPointer {
+struct OwningPointer final {
     static_assert(std::is_class_v<T>); // UPX convention
     typedef typename std::add_lvalue_reference<T>::type reference;
     typedef typename std::add_lvalue_reference<const T>::type const_reference;
@@ -167,7 +167,7 @@ struct OwningPointer {
     inline pointer operator->() noexcept { return ptr; }
     inline const_pointer operator->() const noexcept { return ptr; }
 };
-// overload mem_clear()
+// must overload mem_clear()
 template <class T>
 inline void mem_clear(OwningPointer<T> object) noexcept {
     mem_clear((T *) object);

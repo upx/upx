@@ -8,8 +8,8 @@ on:
 env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
-  # 2023-07-25
-  ZIG_DIST_VERSION: 0.11.0-dev.4228+aea29afc4
+  # 2023-07-26
+  ZIG_DIST_VERSION: 0.11.0-dev.4246+71dfce31b
 
 jobs:
   job-linux-zigcc: # uses cmake + make
@@ -28,6 +28,7 @@ jobs:
           - { zig_target: aarch64-macos.13.0-none }
           - { zig_target: aarch64-windows-gnu }
           - { zig_target: arm-linux-musleabihf }
+          - { zig_target: arm-linux-musleabihf, zig_pic: -fPIE }
           - { zig_target: i386-linux-musl }
           - { zig_target: i386-windows-gnu }
           - { zig_target: mips-linux-musl }
