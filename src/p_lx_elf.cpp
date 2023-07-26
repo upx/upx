@@ -5904,8 +5904,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         overlay_offset = sz_elf_hdrs + sizeof(linfo);
     }
 
-    Elf32_Ehdr *ehdro = (Elf32_Ehdr *)lowmem.getVoidPtr();
-    forward_Shdrs(fo, ehdro);
+    forward_Shdrs(fo, &elfout.ehdr);
     if (opt->o_unix.preserve_build_id) {
         // calc e_shoff here and write shdrout, then o_shstrtab
         //NOTE: these are pushed last to ensure nothing is stepped on
@@ -5946,10 +5945,10 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         }
         if (!sec_arm_attr && !saved_opt_android_shlib) {
             // Make it abunantly clear that there are no Elf32_Shdr in this shlib
-            ehdro->e_shoff = 0;
-            set_te16(&ehdro->e_shentsize, sizeof(Elf32_Shdr));  // Android bug: cannot use 0
-            ehdro->e_shnum = 0;
-            ehdro->e_shstrndx = 0;
+            elfout.ehdr.e_shoff = 0;
+            set_te16(&elfout.ehdr.e_shentsize, sizeof(Elf32_Shdr));  // Android bug: cannot use 0
+            elfout.ehdr.e_shnum = 0;
+            elfout.ehdr.e_shstrndx = 0;
         }
         fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(*phdri));
         fo->seek(linfo_off, SEEK_SET);
@@ -5987,8 +5986,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         overlay_offset = sz_elf_hdrs + sizeof(linfo);
     }
 
-    Elf64_Ehdr *ehdro = (Elf64_Ehdr *)lowmem.getVoidPtr();
-    forward_Shdrs(fo, ehdro);
+    forward_Shdrs(fo, &elfout.ehdr);
     if (opt->o_unix.preserve_build_id) {
         // calc e_shoff here and write shdrout, then o_shstrtab
         //NOTE: these are pushed last to ensure nothing is stepped on
@@ -6029,10 +6027,10 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         }
         if (!sec_arm_attr && !saved_opt_android_shlib) {
             // Make it abunantly clear that there are no Elf64_Shdr in this shlib
-            ehdro->e_shoff = 0;
-            set_te16(&ehdro->e_shentsize, sizeof(Elf64_Shdr));  // Android bug: cannot use 0
-            ehdro->e_shnum = 0;
-            ehdro->e_shstrndx = 0;
+            elfout.ehdr.e_shoff = 0;
+            set_te16(&elfout.ehdr.e_shentsize, sizeof(Elf64_Shdr));  // Android bug: cannot use 0
+            elfout.ehdr.e_shnum = 0;
+            elfout.ehdr.e_shstrndx = 0;
         }
 
         fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(*phdri));
