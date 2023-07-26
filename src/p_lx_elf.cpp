@@ -106,6 +106,9 @@ static off_t
 fpad4(OutputFile *fo, unsigned pos)
 {
     (void)pos;  // debug: compare 'pos' with "shell grep pos /proc/PID/fdinfo/FD"
+    if (!fo) { // --test, --list
+        return 0;
+    }
     off_t len = fo->st_size();
     unsigned d = 3u & (0 - len);
     if (d) {
@@ -119,6 +122,9 @@ static off_t
 fpad8(OutputFile *fo, unsigned pos)
 {
     (void)pos;  // debug: compare 'pos' with "shell grep pos /proc/PID/fdinfo/FD"
+    if (!fo) { // --test, --list
+        return 0;
+    }
     off_t len = fo->st_size();
     unsigned d = 7u & (0 - len);
     if (d) {
@@ -4111,6 +4117,9 @@ void PackLinuxElf64ppc::pack1(OutputFile *fo, Filter &ft)
 
 void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo, unsigned pre_xct_top)
 {
+    if (!fo) {
+        return;
+    }
     // In order to pacify the runtime linker on Android "O" ("Oreo"),
     // we will splice-in a 4KiB page that contains an "extra" copy
     // of the Shdr, any PT_NOTE above xct_off, and shstrtab.
@@ -4351,6 +4360,9 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo, unsigned pre_xct_top)
 
 void PackLinuxElf32::asl_pack2_Shdrs(OutputFile *fo, unsigned pre_xct_top)
 {
+    if (!fo) {
+        return;
+    }
     // In order to pacify the runtime linker on Android "O" ("Oreo"),
     // we will splice-in a 4KiB page that contains an "extra" copy
     // of the Shdr, any PT_NOTE above xct_off, and shstrtab.
@@ -5564,6 +5576,9 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
 
 void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
 {
+    if (!fo) {
+        return;
+    }
     if (saved_opt_android_shlib) { // Forward select _Shdr
         unsigned penalty = total_out;
         // Keep _Shdr for rtld data (below xct_off).
@@ -5691,7 +5706,7 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
         fo->seek(0, SEEK_SET);
         fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
-        info("Android penalty = %d bytes", penalty = total_out - penalty);
+        info("Android penalty = %d bytes", penalty = total_out - penalty); (void)penalty;
     }
     else if (sec_arm_attr) {
         // Forward just ARM_ATTRIBUTES
@@ -5732,6 +5747,9 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
 
 void PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
 {
+    if (!fo) {
+        return;
+    }
     if (saved_opt_android_shlib) { // Forward select _Shdr
         unsigned penalty = total_out;
         // Keep _Shdr for rtld data (below xct_off).
@@ -5859,7 +5877,7 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
         fo->seek(0, SEEK_SET);
         fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
-        info("Android penalty = %d bytes", penalty = total_out - penalty);
+        info("Android penalty = %d bytes", penalty = total_out - penalty); (void)penalty;
     }
     else if (sec_arm_attr) {
         // Forward just ARM_ATTRIBUTES
@@ -7306,7 +7324,6 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                     sz_unc = get_le32(&bp->sz_unc);
                     sz_cpr = get_le32(&bp->sz_cpr);
                     word3  = get_le32(&bp->b_method);
-                    method = bp->b_method;
                     ftid = bp->b_ftid;
                     cto8 = bp->b_cto8;
                     if (0 <= boff  // found
@@ -8452,7 +8469,6 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                     sz_unc = get_le32(&bp->sz_unc);
                     sz_cpr = get_le32(&bp->sz_cpr);
                     word3  = get_le32(&bp->b_method);
-                    method = bp->b_method;
                     ftid = bp->b_ftid;
                     cto8 = bp->b_cto8;
                     if (0 <= boff  // found
