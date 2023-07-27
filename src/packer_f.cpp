@@ -255,7 +255,7 @@ void Packer::addFilter32(int filter_id) {
                 addLoader("MRUBYTE2");
             } else if (mrupwr2) {
                 addLoader("MRUBITS2");
-            } else if (n_mru) {
+            } else {
                 addLoader("MRUARB20");
             }
             addLoader("LXMRU057");

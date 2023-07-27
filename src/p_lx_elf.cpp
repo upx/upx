@@ -386,6 +386,9 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
 
 off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
 {
+    if (!fo) {
+        return 0;
+    }
     unsigned disp;
     unsigned len = sz_pack2a;  // after headers and all PT_LOAD
 
@@ -4030,7 +4033,7 @@ void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
 
 void PackBSDElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
-    PackLinuxElf32::pack1(fo, ft);
+    super::pack1(fo, ft);
     if (0!=xct_off) // shared library
         return;
     generateElfHdr(fo, stub_i386_bsd_elf_fold, getbrk(phdri, e_phnum) );
