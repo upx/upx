@@ -165,6 +165,7 @@ close: .globl close
         push $ __NR_close; 5: jmp 5f
 openat: .globl openat
         push $ __NR_openat; 5: jmp 5f
+Pwrite: .globl Pwrite
 write: .globl write
         push $__NR_write; 5: jmp 5f
 read: .globl read
