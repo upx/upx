@@ -5924,13 +5924,17 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         overlay_offset = sz_elf_hdrs + sizeof(linfo);
     }
 
-    forward_Shdrs(fo, &elfout.ehdr);
+    cprElfHdr4 *eho = !xct_off
+            ? (cprElfHdr4 *)(void *)&elfout  // not shlib  FIXME: ugly casting
+            : (cprElfHdr4 *)lowmem.getVoidPtr();  // shlib
+    forward_Shdrs(fo, &eho->ehdr);
+
     if (opt->o_unix.preserve_build_id) {
         // calc e_shoff here and write shdrout, then o_shstrtab
         //NOTE: these are pushed last to ensure nothing is stepped on
         //for the UPX structure.
         unsigned const len = fpad4(fo, total_out);
-        set_te32(&elfout.ehdr.e_shoff,len);
+        set_te32(&eho->ehdr.e_shoff,len);
 
         int const ssize = sizeof(shdrout);
 
@@ -5946,8 +5950,8 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
     // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
     // tries to make .bss, which requires PF_W.
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
-    set_te32(&elfout.phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
-              elfout.phdr[C_TEXT].p_memsz = elfout.phdr[C_TEXT].p_filesz;
+    set_te32(&eho->phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
+              eho->phdr[C_TEXT].p_memsz = eho->phdr[C_TEXT].p_filesz;
 
     // ph.u_len and ph.c_len are leftover from earliest days when there was
     // only one compressed extent.  Use a good analogy for multiple extents.
@@ -5959,23 +5963,23 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
     if (0!=xct_off) {  // shared library
         { // Shouldn't this special case be handled earlier?
             if (overlay_offset < xct_off) {
-                Elf32_Phdr *phdro = (Elf32_Phdr *)(&lowmem[sizeof(Elf32_Ehdr)]);
+                Elf32_Phdr *phdro = (Elf32_Phdr *)&eho->phdr;
                 set_te32(&phdro->p_flags, Elf32_Phdr::PF_X | get_te32(&phdro->p_flags));
             }
         }
         if (!sec_arm_attr && !saved_opt_android_shlib) {
             // Make it abunantly clear that there are no Elf32_Shdr in this shlib
-            elfout.ehdr.e_shoff = 0;
-            set_te16(&elfout.ehdr.e_shentsize, sizeof(Elf32_Shdr));  // Android bug: cannot use 0
-            elfout.ehdr.e_shnum = 0;
-            elfout.ehdr.e_shstrndx = 0;
+            eho->ehdr.e_shoff = 0;
+            set_te16(&eho->ehdr.e_shentsize, sizeof(Elf32_Shdr));  // Android bug: cannot use 0
+            eho->ehdr.e_shnum = 0;
+            eho->ehdr.e_shstrndx = 0;
         }
-        fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(*phdri));
+        fo->rewrite(eho, sizeof(ehdri) + e_phnum * sizeof(*phdri));
         fo->seek(linfo_off, SEEK_SET);
         fo->rewrite(&linfo, sizeof(linfo));  // new info: l_checksum, l_size
 
-        if (jni_onload_va) { // FIXME Does this apply to 64-bit, too?
-            unsigned tmp = sz_pack2 + get_te32(&elfout.phdr[C_TEXT].p_vaddr);
+        if (jni_onload_va) {
+            unsigned tmp = sz_pack2 + get_te32(&eho->phdr[C_TEXT].p_vaddr);
             tmp |= (Elf32_Ehdr::EM_ARM==e_machine);  // THUMB mode
             set_te32(&tmp, tmp);
             fo->seek(ptr_udiff_bytes(&jni_onload_sym->st_value, file_image), SEEK_SET);
@@ -5983,18 +5987,18 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         }
     }
     else { // not shlib
-        Elf32_Phdr *phdr = &elfout.phdr[C_NOTE];
+        Elf32_Phdr *phdr = &eho->phdr[C_NOTE];
         if (PT_NOTE32== get_te32(&phdr->p_type)) {
-            upx_uint32_t const reloc = get_te32(&elfout.phdr[C_TEXT].p_vaddr);
+            upx_uint32_t const reloc = get_te32(&eho->phdr[C_TEXT].p_vaddr);
             set_te32(            &phdr->p_vaddr,
                 reloc + get_te32(&phdr->p_vaddr));
             set_te32(            &phdr->p_paddr,
                 reloc + get_te32(&phdr->p_paddr));
-            fo->rewrite(&elfout, sz_elf_hdrs);
+            fo->rewrite(eho, sz_elf_hdrs);
             // FIXME   fo->rewrite(&elfnote, sizeof(elfnote));
         }
         else {
-            fo->rewrite(&elfout, sz_elf_hdrs);
+            fo->rewrite(eho, sz_elf_hdrs);
         }
         fo->rewrite(&linfo, sizeof(linfo));
     }
@@ -6006,13 +6010,17 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         overlay_offset = sz_elf_hdrs + sizeof(linfo);
     }
 
-    forward_Shdrs(fo, &elfout.ehdr);
+    cprElfHdr4 *eho = !xct_off
+            ? &elfout  // not shlib
+            : (cprElfHdr4 *)lowmem.getVoidPtr();  // shlib
+    forward_Shdrs(fo, &eho->ehdr);
+
     if (opt->o_unix.preserve_build_id) {
         // calc e_shoff here and write shdrout, then o_shstrtab
         //NOTE: these are pushed last to ensure nothing is stepped on
         //for the UPX structure.
         unsigned const len = fpad4(fo, total_out);
-        set_te64(&elfout.ehdr.e_shoff,len);
+        set_te64(&eho->ehdr.e_shoff,len);
 
         int const ssize = sizeof(shdrout);
 
@@ -6028,8 +6036,8 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
     // tries to make .bss, which requires PF_W.
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
-    set_te64(&elfout.phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
-              elfout.phdr[C_TEXT].p_memsz = elfout.phdr[C_TEXT].p_filesz;
+    set_te64(&eho->phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
+              eho->phdr[C_TEXT].p_memsz = eho->phdr[C_TEXT].p_filesz;
 
     // ph.u_len and ph.c_len are leftover from earliest days when there was
     // only one compressed extent.  Use a good analogy for multiple extents.
@@ -6041,43 +6049,43 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     if (0!=xct_off) {  // shared library
         { // Shouldn't this special case be handled earlier?
             if (overlay_offset < xct_off) {
-                Elf64_Phdr *phdro = (Elf64_Phdr *)(&lowmem[sizeof(Elf64_Ehdr)]);
+                Elf64_Phdr *phdro = (Elf64_Phdr *)(&eho->phdr);
                 set_te32(&phdro->p_flags, Elf64_Phdr::PF_X | get_te32(&phdro->p_flags));
             }
         }
         if (!sec_arm_attr && !saved_opt_android_shlib) {
             // Make it abunantly clear that there are no Elf64_Shdr in this shlib
-            elfout.ehdr.e_shoff = 0;
-            set_te16(&elfout.ehdr.e_shentsize, sizeof(Elf64_Shdr));  // Android bug: cannot use 0
-            elfout.ehdr.e_shnum = 0;
-            elfout.ehdr.e_shstrndx = 0;
+            eho->ehdr.e_shoff = 0;
+            set_te16(&eho->ehdr.e_shentsize, sizeof(Elf64_Shdr));  // Android bug: cannot use 0
+            eho->ehdr.e_shnum = 0;
+            eho->ehdr.e_shstrndx = 0;
         }
 
-        fo->rewrite(&lowmem[0], sizeof(ehdri) + e_phnum * sizeof(*phdri));
+        fo->rewrite(eho, sizeof(ehdri) + e_phnum * sizeof(*phdri));
         fo->seek(linfo_off, SEEK_SET);
         fo->rewrite(&linfo, sizeof(linfo));  // new info: l_checksum, l_size
 
         if (jni_onload_va) { // FIXME Does this apply to 64-bit, too?
-            upx_uint64_t tmp = sz_pack2 + get_te64(&elfout.phdr[C_TEXT].p_vaddr);
+            upx_uint64_t tmp = sz_pack2 + get_te64(&eho->phdr[C_TEXT].p_vaddr);
             tmp |= (Elf64_Ehdr::EM_ARM==e_machine);  // THUMB mode; no-op for 64-bit
             set_te64(&tmp, tmp);
             fo->seek(ptr_udiff_bytes(&jni_onload_sym->st_value, file_image), SEEK_SET);
             fo->rewrite(&tmp, sizeof(tmp));
         }
     }
-    else {
-        Elf64_Phdr *phdr = &elfout.phdr[C_NOTE];
+    else { // not shlib
+        Elf64_Phdr *phdr = &eho->phdr[C_NOTE];
         if (PT_NOTE64 == get_te32(&phdr->p_type)) {
-            upx_uint64_t const reloc = get_te64(&elfout.phdr[C_TEXT].p_vaddr);
+            upx_uint64_t const reloc = get_te64(&eho->phdr[C_TEXT].p_vaddr);
             set_te64(            &phdr->p_vaddr,
                 reloc + get_te64(&phdr->p_vaddr));
             set_te64(            &phdr->p_paddr,
                 reloc + get_te64(&phdr->p_paddr));
-            fo->rewrite(&elfout, sz_elf_hdrs);
+            fo->rewrite(eho, sz_elf_hdrs);
             // FIXME   fo->rewrite(&elfnote, sizeof(elfnote));
         }
         else {
-            fo->rewrite(&elfout, sz_elf_hdrs);
+            fo->rewrite(eho, sz_elf_hdrs);
         }
         fo->rewrite(&linfo, sizeof(linfo));
     }

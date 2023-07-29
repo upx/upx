@@ -260,6 +260,12 @@ protected:
         l_info linfo;
     __packed_struct_end()
 
+    __packed_struct(cprElfHdr4)
+        Elf32_Ehdr ehdr;
+        Elf32_Phdr phdr[4];
+        l_info linfo;
+    __packed_struct_end()
+
     __packed_struct(cprElfHdrNetBSD)
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[4];
