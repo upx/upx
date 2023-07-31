@@ -744,7 +744,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #endif  //}
                     PROT_WRITE | PROT_READ);
 
-        if (xi) { // compresed source: Pprotect(,,prot) later
+        if (xi) { // compressed source: Pprotect(,,prot) later
             if (addr != mmap_privanon(addr, LEN_OVER + mlen,
 #if defined(__arm__)  //{
                     ((PF_X & phdr->p_flags) ? PROT_EXEC : 0) |

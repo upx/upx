@@ -353,7 +353,7 @@ L620:  // Implant escape hatch at end of .text
 
 movsl_subr:
         ldr ecx,[rsi,#-4]  // 'bl <over>' instruction word
-        bic ecx,ecx,#0xff<<24  // displacment field
+        bic ecx,ecx,#0xff<<24  // displacement field
 movsl:  // rdi= 4-byte aligned dst; rsi= 4-byte aligned src; ecx= word count
         tbz ecx,#0,5f  // goto 5f if ecx is even
         ldr w3,[rsi],#4
@@ -416,7 +416,7 @@ L220:
 
 wlen_subr:  // rdx+= nwords of inline subr at *tmp
         ldr w3,[x3,#-4]  // 'bl <over>' instruction word
-        bic w3,w3,#0xff<<24  // displacment field
+        bic w3,w3,#0xff<<24  // displacement field
         add rdx,rdx,x3
         ret
 

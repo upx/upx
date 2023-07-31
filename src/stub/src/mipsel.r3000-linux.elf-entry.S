@@ -318,7 +318,7 @@ unfold:  // IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
         lw $r_szuf,sz_unc($r_FOLD)  // sz_unc of fold
           li a3,MAP_PRIVATE|MAP_ANONYMOUS
         sub $r_elfa,$r_elfa,$r_LENX  // $r_elfa= &Elf32_Ehdr of this stub
-          li a0,0  // kenrel chooses addr
+          li a0,0  // kernel chooses addr
         move a1,$r_szuf
         bal mmapRW0
           sw a1,F_LENU(sp)

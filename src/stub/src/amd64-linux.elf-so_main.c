@@ -561,9 +561,9 @@ upx_so_main(  // returns &escape_hatch
         x1.buf += frag;
         x1.size = al_bi.sz_unc;
         x0.size = al_bi.sz_cpr + sizeof(struct b_info);
-        DPRINTF("befor unpack x0=(%%p %%p  x1=(%%p %%p)\\n", x0.size, x0.buf, x1.size, x1.buf);
+        DPRINTF("before unpack x0=(%%p %%p  x1=(%%p %%p)\\n", x0.size, x0.buf, x1.size, x1.buf);
         unpackExtent(&x0, &x1);  // updates x0 and x1
-        DPRINTF("after unpack x0=(%%p %%p  x1=(%%p %%p)\\n", x0.size, x0.buf, x1.size, x1.buf);
+        DPRINTF(" after unpack x0=(%%p %%p  x1=(%%p %%p)\\n", x0.size, x0.buf, x1.size, x1.buf);
 
         if (!hatch && phdr->p_flags & PF_X) {
 #if defined(__x86_64)  //{

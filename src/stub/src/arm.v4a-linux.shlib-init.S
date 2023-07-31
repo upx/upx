@@ -355,7 +355,7 @@ L620:  // Implant escape hatch at end of .text
 
 movsl_subr:
         ldr ecx,[esi,#-4]  // 'bl <over>' instruction word
-        bic ecx,ecx,#0xff<<24  // displacment field
+        bic ecx,ecx,#0xff<<24  // displacement field
         add ecx,ecx,#1  // displ omits one word
 // FALL THROUGH to the part of 'movsl' that trims to a multiple of 8 words.
 // 7/8 of the time this is faster; 1/8 of the time it's slower.
@@ -434,7 +434,7 @@ get4u:
 
 wlen_subr:  // edx+= nwords of inline subr at *tmp
         ldr tmp,[tmp,#-4]  // 'bl <over>' instruction word
-        bic tmp,tmp,#0xff<<24  // displacment field
+        bic tmp,tmp,#0xff<<24  // displacement field
         add tmp,tmp,#1  // displ omits one word
         add edx,edx,tmp
         ret

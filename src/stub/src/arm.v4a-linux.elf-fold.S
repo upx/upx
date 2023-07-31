@@ -236,7 +236,7 @@ F_delta= 3*4
 sweep:
         ldr r7,[sp],#-(1<<5)  @ extend stack; read allocate 32 bytes
         str r7,[sp]  @ make it dirty
-        ldr r7,[sp]  @ read alocate again in case dirtying caused COW split
+        ldr r7,[sp]  @ read allocate again in case dirtying caused COW split
         cmp r12,sp; blo sweep
 
         add sp,sp,#(1<<18)  @ pop stack

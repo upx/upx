@@ -94,7 +94,7 @@ static const
 // end of processing by dyld.  Relocation, loading of dependent libraries,
 // etc., already have taken place before decompression.  So the Mach-o
 // headers, the __IMPORT segment, the __LINKEDIT segment, anything
-// that is modifed by relocation, etc., cannot be compressed.
+// that is modified by relocation, etc., cannot be compressed.
 // We simplify arbitrarily by compressing only the __TEXT segment,
 // which must be the first segment.
 
@@ -2034,7 +2034,7 @@ bool PackMachBase<T>::canPack()
             if (vma_max < t) {
                 vma_max = t;
             }
-            // Segments need not be contigous (esp. "rust"/"go")
+            // Segments need not be contiguous (esp. "rust"/"go")
             sz_segment = msegcmd[j].filesize + msegcmd[j].fileoff - msegcmd[0].fileoff;
         }
     }

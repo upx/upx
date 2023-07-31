@@ -458,7 +458,7 @@ init_sz = . - init_sz
         .if (1 == 1)
             b       \ret
             nop
-        .else               // works on real hdw, allmost fail on sim
+        .else               // works on real hdw, almost fail on sim
             bal     t
             addiu   ra, (\ret + 4) - (. + 4)
         .endif

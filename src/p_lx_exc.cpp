@@ -446,7 +446,7 @@ int PackLinuxI386::getLoaderPrefixSize() const
 
 
 /*************************************************************************
-// some ELF utitlity functions
+// some ELF utility functions
 **************************************************************************/
 
 // basic check of a Linux ELF Ehdr
