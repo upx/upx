@@ -4308,7 +4308,7 @@ void PackLinuxElf64::asl_pack2_Shdrs(OutputFile *fo, unsigned pre_xct_top)
         }; break;
         case Elf64_Shdr::SHT_NOTE: {
             if (!(Elf64_Shdr::SHF_ALLOC & get_te64(&shdr->sh_flags))) {
-                // example: version numer of 'gold' linker (static binder)
+                // example: version number of 'gold' linker (static binder)
                 if (sizeof(buf_notes) < (sh_size + len_notes)) {
                     throwCantPack("SHT_NOTEs too big");
                 }
@@ -4636,7 +4636,7 @@ void PackLinuxElf32::asl_pack2_Shdrs(OutputFile *fo, unsigned pre_xct_top)
         }; break;  // end Elf32_Shdr::SHT_REL
         case Elf32_Shdr::SHT_NOTE: {
             if (!(Elf32_Shdr::SHF_ALLOC & get_te32(&shdr->sh_flags))) {
-                // example: version numer of 'gold' linker (static binder)
+                // example: version number of 'gold' linker (static binder)
                 if (sizeof(buf_notes) < (sh_size + len_notes)) {
                     throwCantPack("SHT_NOTEs too big");
                 }
@@ -5144,7 +5144,7 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
                 if ((off_t)delta == x.size) { // PT_LOAD[0] with ElfXX.Ehdr only
                     // QBE backend - http://c9x.me/compile/
                     hdr_u_len = 0;  // no fiddling necessary!
-                    // &ft arg to packExtent will be zero becaue (k != nk_f)
+                    // &ft arg to packExtent will be zero because (k != nk_f)
                 }
                 else {
                     total_in += delta - hdr_u_len;
@@ -5401,7 +5401,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
                 if ((off_t)delta == x.size) { // PT_LOAD[0] with ElfXX.Ehdr only
                     // QBE backend - http://c9x.me/compile/
                     hdr_u_len = 0;  // no fiddling necessary!
-                    // &ft arg to packExtent will be zero becaue (k != nk_f)
+                    // &ft arg to packExtent will be zero because (k != nk_f)
                 }
                 else {
                     total_in += delta - hdr_u_len;
@@ -6343,8 +6343,8 @@ void PackLinuxElf64::un_shlib_1(
     fi->readx(ibuf, umin(blocksize, file_size));
 
     // Determine if the extra page with copy of _Shdrs was spliced in.
-    // This used to be the result of --anroid-shlib.
-    // But in 2023-02 the fowarding of ARM_ATTRIBUTES (by appending)
+    // This used to be the result of --android-shlib.
+    // But in 2023-02 the forwarding of ARM_ATTRIBUTES (by appending)
     // takes care of this, so the 5th word before e_entry does not
     // have the low bit 1, so is_asl should not be set.
     // However, .so that were compressed before 2023-03
@@ -6362,7 +6362,7 @@ void PackLinuxElf64::un_shlib_1(
             mb_shdr.alloc(   sizeof(Elf64_Shdr) * e_shnum);
             shdri = (Elf64_Shdr *)mb_shdr.getVoidPtr();
             fi->readx(shdri, sizeof(Elf64_Shdr) * e_shnum);
-            yct_off = get_te64(&shdri->sh_offset);  // for the output file (de-compresssed)
+            yct_off = get_te64(&shdri->sh_offset);  // for the output file (de-compressed)
             xct_off = asl_delta + yct_off;  // for the input file (compressed)
         }
     }
@@ -6539,8 +6539,8 @@ void PackLinuxElf32::un_shlib_1(
     fi->readx(ibuf, umin(blocksize, file_size));
 
     // Determine if the extra page with copy of _Shdrs was spliced in.
-    // This used to be the result of --anroid-shlib.
-    // But in 2023-02 the fowarding of ARM_ATTRIBUTES (by appending)
+    // This used to be the result of --android-shlib.
+    // But in 2023-02 the forwarding of ARM_ATTRIBUTES (by appending)
     // takes care of this, so the 5th word before e_entry does not
     // have the low bit 1, so is_asl should not be set.
     // However, .so that were compressed before 2023-03
@@ -6558,7 +6558,7 @@ void PackLinuxElf32::un_shlib_1(
             mb_shdr.alloc(   sizeof(Elf32_Shdr) * e_shnum);
             shdri = (Elf32_Shdr *)mb_shdr.getVoidPtr();
             fi->readx(shdri, sizeof(Elf32_Shdr) * e_shnum);
-            yct_off = get_te32(&shdri->sh_offset);  // for the output file (de-compresssed)
+            yct_off = get_te32(&shdri->sh_offset);  // for the output file (de-compressed)
             xct_off = asl_delta + yct_off;  // for the input file (compressed)
         }
     }
@@ -8145,7 +8145,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
     // 2021-12-25  FIXME: Some Rust programs use
     //    (1==n_bucket && 0==buckets[0] && 1==n_bitmask && 0==bitmask[0])
     // to minimize space in DT_GNU_HASH. This causes the fancy lookup to fail.
-    // Is a fallback to linear seach assumed?
+    // Is a fallback to linear search assumed?
     // 2022-03-12  Some Rust programs have 0==n_bucket.
     return nullptr;
 
@@ -8229,7 +8229,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
     // 2021-12-25  FIXME: Some Rust programs use
     //    (1==n_bucket && 0==buckets[0] && 1==n_bitmask && 0==bitmask[0])
     // to minimize space in DT_GNU_HASH. This causes the fancy lookup to fail.
-    // Is a fallback to linear seach assumed?
+    // Is a fallback to linear search assumed?
     // 2022-03-12  Some Rust programs have 0==n_bucket.
     return nullptr;
 
