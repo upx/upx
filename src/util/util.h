@@ -141,7 +141,7 @@ void upx_stable_sort(void *array, size_t n, size_t element_size,
 // this works
 #define OwningPointer(T) T *
 
-#elif 1
+#elif !(DEBUG)
 
 // this also works
 template <class T>
@@ -150,7 +150,7 @@ using OwningPointer = T *;
 
 #else
 
-// also works: a simple class with just a number of no-ops
+// also works: a trivial class with just a number of no-ops
 template <class T>
 struct OwningPointer final {
     static_assert(std::is_class_v<T>); // UPX convention

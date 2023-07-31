@@ -28,6 +28,12 @@
 
 /*************************************************************************
 // upx_doctest_check()
+//
+// honors environment variables:
+//   UPX_DEBUG_DOCTEST_DISABLE
+//   UPX_DEBUG_DOCTEST_VERBOSE
+//
+// HINT: set "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
 **************************************************************************/
 
 int upx_doctest_check(int argc, char **argv) {
@@ -40,9 +46,10 @@ int upx_doctest_check(int argc, char **argv) {
     if (e && e[0] && strcmp(e, "0") != 0)
         return 0;
     bool minimal = true;   // don't show summary
-    bool duration = false; // show timings
-    bool success = false;  // show all tests
+    bool duration = false; // don't show timings
+    bool success = false;  // don't show all succeeding tests
 #if DEBUG
+    // default for debug builds: do show the [doctest] summary
     minimal = false;
 #endif
     e = getenv("UPX_DEBUG_DOCTEST_VERBOSE");
@@ -227,6 +234,7 @@ struct CheckIntegral {
         COMPILE_TIME_ASSERT(std::is_trivial<U>::value)
         // more checks, these are probably implied by std::is_trivial
         COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<U>::value)
+        COMPILE_TIME_ASSERT(std::is_nothrow_destructible<U>::value)
         COMPILE_TIME_ASSERT(std::is_trivially_copyable<U>::value)
         COMPILE_TIME_ASSERT(std::is_trivially_default_constructible<U>::value)
         // UPX extras
@@ -378,8 +386,14 @@ static noinline void check_basic_cxx_exception_handling(void (*func)(int)) noexc
 #include "../miniacc.h"
 
 void upx_compiler_sanity_check(void) noexcept {
-    // first check C++ exception handling to catch toolchain/qemu/wine/etc problems
-    check_basic_cxx_exception_handling(throwSomeValue);
+    const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
+    if (e && e[0] && strcmp(e, "0") != 0) {
+        // If UPX_DEBUG_DOCTEST_DISABLE is set then we don't want to throw any
+        // exceptions in order to improve debugging experience.
+    } else {
+        // check working C++ exception handling to catch toolchain/qemu/wine/etc problems
+        check_basic_cxx_exception_handling(throwSomeValue);
+    }
 
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
@@ -555,7 +569,7 @@ void upx_compiler_sanity_check(void) noexcept {
     assert_noexcept(TestIntegerWrap<int>::neg_eq(0));
     assert_noexcept(!TestIntegerWrap<int>::neg_eq(1));
     assert_noexcept(!TestIntegerWrap<int>::neg_eq(INT_MAX));
-    assert_noexcept(TestIntegerWrap<int>::neg_eq(INT_MIN)); // !!
+    assert_noexcept(TestIntegerWrap<int>::neg_eq(INT_MIN)); // special case
 }
 
 /*************************************************************************

@@ -52,9 +52,7 @@
 #pragma clang diagnostic ignored "-Wtautological-constant-compare"
 #endif
 
-// NOLINTBEGIN(bugprone-exception-escape)
 #include <doctest/doctest/parts/doctest.cpp>
-// NOLINTEND(bugprone-exception-escape)
 
 #endif // DOCTEST_CONFIG_DISABLE
 

@@ -160,7 +160,7 @@ build/extra/cross-darwin-x86_64/%: export CC  = clang -target x86_64-apple-darwi
 build/extra/cross-darwin-x86_64/%: export CXX = clang++ -target x86_64-apple-darwin
 
 #***********************************************************************
-# C++ static analyzers
+# C/C++ static analyzers
 #***********************************************************************
 
 # force building with clang Static Analyzer (scan-build)
@@ -171,10 +171,23 @@ build/analyze/clang-analyzer/%: export CCC_CC  ?= clang
 build/analyze/clang-analyzer/%: export CCC_CXX ?= clang++
 
 # run clang-tidy (uses file compile_commands.json from an existing clang build)
-build/analyze/clang-tidy/debug:   build/extra/clang/debug PHONY
-	python3 ./misc/scripts/run-clang-tidy.py -p $<
-build/analyze/clang-tidy/release: build/extra/clang/release PHONY
-	python3 ./misc/scripts/run-clang-tidy.py -p $<
+RUN_CLANG_TIDY = time python3 ./misc/analyze/clang-tidy/run-clang-tidy.py -p $<
+RUN_CLANG_TIDY_WERROR = $(RUN_CLANG_TIDY) '-warnings-as-errors=*'
+build/analyze/clang-tidy-upx/debug build/analyze/clang-tidy-upx/release: build/extra/clang/$$(notdir $$@) PHONY
+	$(RUN_CLANG_TIDY_WERROR) -config-file ./.clang-tidy '/src/.*\.cpp'
+build/analyze/clang-tidy-bzip2/debug build/analyze/clang-tidy-bzip2/release: build/extra/clang/$$(notdir $$@) PHONY
+	$(RUN_CLANG_TIDY)        -config-file ./misc/analyze/clang-tidy/clang-tidy-bzip2.yml /vendor/bzip2/
+build/analyze/clang-tidy-ucl/debug build/analyze/clang-tidy-ucl/release: build/extra/clang/$$(notdir $$@) PHONY
+	$(RUN_CLANG_TIDY_WERROR) -config-file ./misc/analyze/clang-tidy/clang-tidy-ucl.yml   /vendor/ucl/
+build/analyze/clang-tidy-zlib/debug build/analyze/clang-tidy-zlib/release: build/extra/clang/$$(notdir $$@) PHONY
+	$(RUN_CLANG_TIDY_WERROR) -config-file ./misc/analyze/clang-tidy/clang-tidy-zlib.yml  /vendor/zlib/
+build/analyze/clang-tidy-zstd/debug build/analyze/clang-tidy-zstd/release: build/extra/clang/$$(notdir $$@) PHONY
+	$(RUN_CLANG_TIDY)        -config-file ./misc/analyze/clang-tidy/clang-tidy-zstd.yml  /vendor/zstd/
+build/analyze/clang-tidy/debug build/analyze/clang-tidy/release: build/analyze/clang-tidy-upx/$$(notdir $$@)
+build/analyze/clang-tidy/debug build/analyze/clang-tidy/release: build/analyze/clang-tidy-bzip2/$$(notdir $$@)
+build/analyze/clang-tidy/debug build/analyze/clang-tidy/release: build/analyze/clang-tidy-ucl/$$(notdir $$@)
+build/analyze/clang-tidy/debug build/analyze/clang-tidy/release: build/analyze/clang-tidy-zlib/$$(notdir $$@)
+build/analyze/clang-tidy/debug build/analyze/clang-tidy/release: build/analyze/clang-tidy-zstd/$$(notdir $$@)
 
 # OLD names
 build/extra/scan-build/debug:   build/analyze/clang-analyzer/debug

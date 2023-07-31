@@ -113,8 +113,8 @@ forceinline ~CSelf() noexcept {}
 #endif
     noinline void invalidate() {
         assertInvariants();
-        // poison the pointer
-        ptr = (pointer) (upx_uintptr_t) 16; // point to non-null invalid address
+        // poison the pointer: point to non-null invalid address
+        ptr = (pointer) (void *) (upx_uintptr_t) 16; // NOLINT(performance-no-int-to-ptr)
         // ptr = (pointer) (void *) &ptr; // point to self
         base = ptr;
         size_in_bytes = 0;

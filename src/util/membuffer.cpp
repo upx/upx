@@ -306,14 +306,10 @@ TEST_CASE("MemBuffer global overloads") {
     mb.clear();
     mb4.clear();
     CHECK(memcmp(mb, "\x00", 1) == 0);
-    // NOLINTNEXTLINE(bugprone-unused-return-value)
-    CHECK_THROWS(memcmp(mb, "\x00\x00", 2));
-    // NOLINTNEXTLINE(bugprone-unused-return-value)
-    CHECK_THROWS(memcmp("\x00\x00", mb, 2));
-    // NOLINTNEXTLINE(bugprone-unused-return-value)
-    CHECK_THROWS(memcmp(mb, mb4, 2));
-    // NOLINTNEXTLINE(bugprone-unused-return-value)
-    CHECK_THROWS(memcmp(mb4, mb, 2));
+    CHECK_THROWS(memcmp(mb, "\x00\x00", 2)); // NOLINT(bugprone-unused-return-value)
+    CHECK_THROWS(memcmp("\x00\x00", mb, 2)); // NOLINT(bugprone-unused-return-value)
+    CHECK_THROWS(memcmp(mb, mb4, 2));        // NOLINT(bugprone-unused-return-value)
+    CHECK_THROWS(memcmp(mb4, mb, 2));        // NOLINT(bugprone-unused-return-value)
     CHECK_NOTHROW(memset(mb, 255, 1));
     CHECK_THROWS(memset(mb, 254, 2));
     CHECK(mb[0] == 255);

@@ -615,6 +615,8 @@ TEST_CASE("Span subspan") {
 TEST_CASE("Span constness") {
     static char buf[4] = {0, 1, 2, 3};
 
+    // NOLINTBEGIN(performance-unnecessary-copy-initialization)
+
     XSPAN_0(char) b0(buf, 4);
     XSPAN_P(char) bp(buf, 4);
     XSPAN_S(char) bs(buf, 4);
@@ -634,6 +636,8 @@ TEST_CASE("Span constness") {
     XSPAN_0(const char) x0c(b0);
     XSPAN_P(const char) xpc(bp);
     XSPAN_S(const char) xsc(bs);
+
+    // NOLINTEND(performance-unnecessary-copy-initialization)
 
     CHECK(ptr_diff_bytes(b0, buf) == 0);
     CHECK(ptr_diff_bytes(bp, buf) == 0);

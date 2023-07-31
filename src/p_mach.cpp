@@ -1663,8 +1663,8 @@ int PackMachBase<T>::canUnpack()
         unsigned const cmd = ptr->cmd;
         unsigned const cmdsize = ptr->cmdsize;
         if (is_bad_linker_command(cmd, cmdsize, headway, lc_seg, sizeof(Addr))) {
-                infoWarning("bad Mach_command[%u]{@0x%lx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx",
-                    j, (unsigned long) (sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg)), headway,
+                infoWarning("bad Mach_command[%u]{@0x%zx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx",
+                    j, (sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg)), headway,
                     (unsigned long) file_size, (unsigned long)ptr->cmdsize);
                 throwCantUnpack("file corrupted");
         }
@@ -1673,9 +1673,9 @@ int PackMachBase<T>::canUnpack()
             if ((unsigned long)file_size < segptr->filesize
             ||  (unsigned long)file_size < segptr->fileoff
             ||  (unsigned long)file_size < (segptr->filesize + segptr->fileoff)) {
-                infoWarning("bad Mach_segment_command[%u]{@0x%lx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx"
+                infoWarning("bad Mach_segment_command[%u]{@0x%zx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx"
                       "  filesize=0x%lx  fileoff=0x%lx",
-                    j, (unsigned long) (sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg)), headway,
+                    j, (sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg)), headway,
                     (unsigned long) file_size, (unsigned long)ptr->cmdsize,
                     (unsigned long)segptr->filesize, (unsigned long)segptr->fileoff);
                 throwCantUnpack("file corrupted");

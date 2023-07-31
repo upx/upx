@@ -391,6 +391,27 @@ def main():
         )
         tmpdir = tempfile.mkdtemp()
 
+    # Load the database and extract all files.
+    database = json.load(open(os.path.join(build_path, db_path)))
+    files = set(
+        [make_absolute(entry["file"], entry["directory"]) for entry in database]
+    )
+
+    # Build up a big regexy filter from all command line arguments.
+    file_name_re = re.compile("|".join(args.files))
+
+    # filter files with mo.group(0), and sort files
+    matched_files = []
+    for name in files:
+        mo = file_name_re.search(name)
+        if mo and mo.group(0):
+            matched_files.append(name)
+    files = sorted(matched_files)
+    if not files:
+        if tmpdir:
+            shutil.rmtree(tmpdir)
+        sys.exit(0)
+
     try:
         invocation = get_tidy_invocation(
             "",
@@ -422,19 +443,9 @@ def main():
         print("Unable to run clang-tidy.", file=sys.stderr)
         sys.exit(1)
 
-    # Load the database and extract all files.
-    database = json.load(open(os.path.join(build_path, db_path)))
-    files = set(
-        [make_absolute(entry["file"], entry["directory"]) for entry in database]
-    )
-    files = sorted(list(files))
-
     max_task = args.j
     if max_task == 0:
         max_task = multiprocessing.cpu_count()
-
-    # Build up a big regexy filter from all command line arguments.
-    file_name_re = re.compile("|".join(args.files))
 
     return_code = 0
     try:

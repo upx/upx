@@ -29,11 +29,11 @@
 
 // BE - Big Endian
 // LE - Little Endian
-// NE - Native Endianness (aka host endianness)
+// NE - Native Endianness (aka Host Endianness aka CPU Endianness)
 // TE - Target Endianness (not used here, see various packers)
 
 #if 1
-// some platforms may provide their own system bswapXX() functions, so rename
+// some platforms may provide their own system bswapXX() functions, so rename to avoid conflicts
 #undef bswap16
 #undef bswap32
 #undef bswap64
@@ -112,7 +112,8 @@ static forceinline constexpr upx_uint64_t bswap64(upx_uint64_t v) noexcept {
 #endif
 
 static forceinline constexpr unsigned no_bswap16(unsigned v) noexcept {
-    return v & 0xffff; // needed so that this is equivalent to bswap16() above
+    // mask is needed so that for all v: bswap16(bswap16(v)) == no_bswap16(v)
+    return v & 0xffff;
 }
 static forceinline constexpr unsigned no_bswap32(unsigned v) noexcept { return v; }
 static forceinline constexpr upx_uint64_t no_bswap64(upx_uint64_t v) noexcept { return v; }

@@ -3,24 +3,18 @@
 Checks: >
   -*,
   bugprone-*,
-    -bugprone-assignment-in-if-condition,
     -bugprone-branch-clone,
     -bugprone-easily-swappable-parameters,
     -bugprone-implicit-widening-of-multiplication-result,
     -bugprone-macro-parentheses,
     -bugprone-narrowing-conversions,
     -bugprone-reserved-identifier,
-    -bugprone-sizeof-expression,
-    -bugprone-suspicious-include,
-    -bugprone-suspicious-memory-comparison,
-    -bugprone-suspicious-string-compare,
   clang-analyzer-*,
-    -clang-analyzer-optin.performance.Padding,
-    -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+    -clang-analyzer-core.UndefinedBinaryOperatorResult,
+    -clang-analyzer-core.uninitialized.Assign,
     -clang-analyzer-security.insecureAPI.strcpy,
   clang-diagnostics-*',
   performance-*,
-    -performance-unnecessary-value-param,
 FormatStyle: file
 HeaderFilterRegex: '.*'
 InheritParentConfig: false

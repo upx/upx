@@ -24,7 +24,7 @@ jobs:
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
           git -C upx submodule update --init
       - name: 'Perform clang-tidy Analysis Debug'
-        run: 'make -C upx build/analyze/clang-tidy/debug'
+        run: 'make -k -C upx build/analyze/clang-tidy/debug'
       - name: 'Perform clang-tidy Analysis Release'
         if: success() || failure() # run this step even if the previous step failed
-        run: 'make -C upx build/analyze/clang-tidy/release'
+        run: 'make -k -C upx build/analyze/clang-tidy/release'
