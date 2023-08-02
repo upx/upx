@@ -321,7 +321,7 @@ upx_off_t OutputFile::seek(upx_off_t off, int whence) {
 void OutputFile::set_extent(upx_off_t offset, upx_off_t length) {
     super::set_extent(offset, length);
     bytes_written = 0;
-    if (0 == offset && ~(upx_off_t) 0 == length) {
+    if (0 == offset && 0xffffffffLL == length) {
         if (::fstat(_fd, &st) != 0)
             throwIOException(_name, errno);
         _length = st.st_size - offset;
