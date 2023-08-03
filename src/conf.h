@@ -85,7 +85,7 @@ inline void upx_std_call_once(upx_std_once_flag &flag, NoexceptCallable &&f) {
 }
 #endif // WITH_THREADS
 
-// <type_traits> C++20 std::is_bounded_array
+// <type_traits> upx_std_is_bounded_array: same as C++20 std::is_bounded_array
 template <class T>
 struct upx_std_is_bounded_array : public std::false_type {};
 template <class T, size_t N>
@@ -93,7 +93,13 @@ struct upx_std_is_bounded_array<T[N]> : public std::true_type {};
 template <class T>
 inline constexpr bool upx_std_is_bounded_array_v = upx_std_is_bounded_array<T>::value;
 
-// <type_traits> is_same_all and is_same_any: std::is_same for multiple types
+// <type_traits> upx_is_integral is overloaded for BE16 & friends; see bele.h
+template <class T>
+struct upx_is_integral : public std::is_integral<T> {};
+template <class T>
+inline constexpr bool upx_is_integral_v = upx_is_integral<T>::value;
+
+// <type_traits> util: is_same_all and is_same_any means std::is_same for multiple types
 template <class T, class... Ts>
 struct is_same_all : public std::conjunction<std::is_same<T, Ts>...> {};
 template <class T, class... Ts>
@@ -102,12 +108,6 @@ template <class T, class... Ts>
 struct is_same_any : public std::disjunction<std::is_same<T, Ts>...> {};
 template <class T, class... Ts>
 inline constexpr bool is_same_any_v = is_same_any<T, Ts...>::value;
-
-// upx_is_integral is overloaded for BE16 & friends; see bele.h
-template <class T>
-struct upx_is_integral : public std::is_integral<T> {};
-template <class T>
-inline constexpr bool upx_is_integral_v = upx_is_integral<T>::value;
 
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
 // horrible hack for broken compiler
@@ -461,7 +461,7 @@ constexpr bool string_le(const char *a, const char *b) {
 constexpr bool string_ge(const char *a, const char *b) {
     return !string_lt(a, b);
 }
-}
+} // namespace compile_time
 
 /*************************************************************************
 // constants

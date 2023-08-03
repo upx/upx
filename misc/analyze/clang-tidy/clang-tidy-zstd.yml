@@ -11,6 +11,7 @@ Checks: >
     -bugprone-misplaced-widening-cast,
     -bugprone-narrowing-conversions,
     -bugprone-reserved-identifier,
+    -bugprone-switch-missing-default-case,
   clang-analyzer-*,
     -clang-analyzer-core.UndefinedBinaryOperatorResult,
     -clang-analyzer-deadcode.DeadStores,

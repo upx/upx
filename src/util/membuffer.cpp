@@ -62,6 +62,7 @@ static noinline void init_use_simple_mcheck() noexcept {
 static bool use_simple_mcheck() noexcept {
     static upx_std_once_flag init_done;
     upx_std_call_once(init_done, init_use_simple_mcheck);
+    // NOTE: clang-analyzer-unix.Malloc does not know that this flag is "constant"
     return use_simple_mcheck_flag;
 }
 #else
@@ -195,7 +196,7 @@ void MemBuffer::checkState() const {
 }
 
 void MemBuffer::alloc(upx_uint64_t bytes) {
-    // NOTE: we don't automatically free a used buffer
+    // INFO: we don't automatically free a used buffer
     assert(ptr == nullptr);
     assert(size_in_bytes == 0);
     //
@@ -254,9 +255,9 @@ void MemBuffer::dealloc() noexcept {
             set_ne32(p + size_in_bytes, 0);
             set_ne32(p + size_in_bytes + 4, 0);
             //
-            ::free(p - 16);
+            ::free(p - 16); // NOLINT(clang-analyzer-unix.Malloc) // see NOTE above
         } else {
-            ::free(ptr);
+            ::free(ptr); // NOLINT(clang-analyzer-unix.Malloc) // see NOTE above
         }
         ptr = nullptr;
         size_in_bytes = 0;

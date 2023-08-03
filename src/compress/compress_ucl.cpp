@@ -56,6 +56,8 @@ static int convert_errno_from_ucl(int r) {
     // UCL extra:
     case UCL_E_OVERLAP_OVERRUN:
         return UPX_E_ERROR;
+    default:
+        break;
     }
     return UPX_E_ERROR;
 }

@@ -76,7 +76,11 @@ void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_byte
         xspan_fail_range_nullptr();
     if very_unlikely (base == nullptr)
         xspan_fail_range_nullbase();
-    ptrdiff_t off = (const charptr) ptr - (const charptr) base;
+#if defined(__SANITIZE_ADDRESS__)
+    const acc_intptr_t off = (acc_uintptr_t) ptr - (acc_uintptr_t) base;
+#else
+    const ptrdiff_t off = (const charptr) ptr - (const charptr) base;
+#endif
     if very_unlikely (off < 0 || off > size_in_bytes || size_in_bytes > UPX_RSIZE_MAX)
         xspan_fail_range_range();
     NO_fprintf(stderr, "xspan_check_range done\n");

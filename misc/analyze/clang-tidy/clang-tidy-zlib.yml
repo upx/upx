@@ -9,6 +9,7 @@ Checks: >
     -bugprone-macro-parentheses,
     -bugprone-narrowing-conversions,
     -bugprone-reserved-identifier,
+    -bugprone-switch-missing-default-case,
   clang-analyzer-*,
     -clang-analyzer-optin.performance.Padding,
     -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,

@@ -129,10 +129,10 @@ upx_off_t FileBase::seek(upx_off_t off, int whence) {
         whence = SEEK_SET;
     }
     // SEEK_CUR falls through to here
-    upx_off_t rv = ::lseek(_fd, off, whence);
-    if (rv < 0)
+    upx_off_t l = ::lseek(_fd, off, whence);
+    if (l < 0)
         throwIOException("seek error", errno);
-    return rv - _offset;
+    return l - _offset;
 }
 
 upx_off_t FileBase::tell() const {
@@ -321,7 +321,7 @@ upx_off_t OutputFile::seek(upx_off_t off, int whence) {
 void OutputFile::set_extent(upx_off_t offset, upx_off_t length) {
     super::set_extent(offset, length);
     bytes_written = 0;
-    if (0 == offset && 0xffffffffLL == length) {
+    if (0 == offset && 0xffffffffLL == length) { // TODO: check all callers of this method
         if (::fstat(_fd, &st) != 0)
             throwIOException(_name, errno);
         _length = st.st_size - offset;

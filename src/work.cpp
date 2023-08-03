@@ -100,7 +100,6 @@ void do_one_file(const char *iname, char *oname) {
     }
 
     InputFile fi;
-    fi.st = st;
     fi.sopen(iname, O_RDONLY | O_BINARY, SH_DENYWR);
 
 #if USE_FTIME

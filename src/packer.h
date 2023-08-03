@@ -291,29 +291,35 @@ protected:
     static inline constexpr bool is_te32_type = is_same_any_v<T, byte, upx_uint32_t, BE32, LE32>;
     template <class T>
     static inline constexpr bool is_te64_type = is_same_any_v<T, byte, upx_uint64_t, BE64, LE64>;
+    template <class T>
+    using enable_if_te16 = std::enable_if_t<is_te16_type<T>, T>;
+    template <class T>
+    using enable_if_te32 = std::enable_if_t<is_te32_type<T>, T>;
+    template <class T>
+    using enable_if_te64 = std::enable_if_t<is_te64_type<T>, T>;
 
-    template <class T, class = std::enable_if_t<is_te16_type<T>, T> >
+    template <class T, class = enable_if_te16<T> >
     inline unsigned get_te16(const T *p) const noexcept {
         return bele->get16(p);
     }
-    template <class T, class = std::enable_if_t<is_te32_type<T>, T> >
+    template <class T, class = enable_if_te32<T> >
     inline unsigned get_te32(const T *p) const noexcept {
         return bele->get32(p);
     }
-    template <class T, class = std::enable_if_t<is_te64_type<T>, T> >
+    template <class T, class = enable_if_te64<T> >
     inline upx_uint64_t get_te64(const T *p) const noexcept {
         return bele->get64(p);
     }
 
-    template <class T, class = std::enable_if_t<is_te16_type<T>, T> >
+    template <class T, class = enable_if_te16<T> >
     inline void set_te16(T *p, unsigned v) noexcept {
         bele->set16(p, v);
     }
-    template <class T, class = std::enable_if_t<is_te32_type<T>, T> >
+    template <class T, class = enable_if_te32<T> >
     inline void set_te32(T *p, unsigned v) noexcept {
         bele->set32(p, v);
     }
-    template <class T, class = std::enable_if_t<is_te64_type<T>, T> >
+    template <class T, class = enable_if_te64<T> >
     inline void set_te64(T *p, upx_uint64_t v) noexcept {
         bele->set64(p, v);
     }

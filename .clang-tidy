@@ -6,6 +6,7 @@ Checks: >
     -bugprone-assignment-in-if-condition,
     -bugprone-branch-clone,
     -bugprone-easily-swappable-parameters,
+    -bugprone-empty-catch,
     -bugprone-implicit-widening-of-multiplication-result,
     -bugprone-macro-parentheses,
     -bugprone-narrowing-conversions,
@@ -14,12 +15,14 @@ Checks: >
     -bugprone-suspicious-include,
     -bugprone-suspicious-memory-comparison,
     -bugprone-suspicious-string-compare,
+    -bugprone-switch-missing-default-case,
   clang-analyzer-*,
     -clang-analyzer-optin.performance.Padding,
     -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
     -clang-analyzer-security.insecureAPI.strcpy,
   clang-diagnostics-*',
   performance-*,
+    -performance-avoid-endl,
     -performance-unnecessary-value-param,
 FormatStyle: file
 HeaderFilterRegex: '.*'

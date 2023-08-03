@@ -197,7 +197,7 @@ int PeFile::readFileHeader() {
                 throwCantPack(buf);
             }
             pe_offset += delta;
-        } else if (get_le32(&h) == 'P' + 'E' * 256)
+        } else if (get_le32((const byte *) &h) == 'P' + 'E' * 256)
             break;
         else
             return 0;

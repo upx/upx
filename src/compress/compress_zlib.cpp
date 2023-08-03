@@ -64,6 +64,8 @@ static int convert_errno_from_zlib(int zr) {
         return UPX_E_ERROR;
     case -7: // UPX extra
         return UPX_E_INPUT_OVERRUN;
+    default:
+        break;
     }
     return UPX_E_ERROR;
 }

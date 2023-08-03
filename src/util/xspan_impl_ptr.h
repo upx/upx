@@ -78,7 +78,7 @@ public:
     noinline void invalidate() {
         assertInvariants();
         // poison the pointer: point to non-null invalid address
-        ptr = (pointer) (void *) (upx_uintptr_t) 16; // NOLINT(performance-no-int-to-ptr)
+        ptr = (pointer) XSPAN_GET_POISON_VOID_PTR();
         // ptr = (pointer) (void *) &ptr; // point to self
         assertInvariants();
     }
