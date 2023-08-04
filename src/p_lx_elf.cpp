@@ -5023,7 +5023,6 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
             ? 0
             : e_shnum * sizeof(Elf32_Shdr))));
         memcpy(lowmem, file_image, xct_off);  // android omits Shdr here
-
     }
     unsigned nk_f = 0; upx_uint32_t xsz_f = 0;
     for (k = 0; k < e_phnum; ++k)
@@ -5576,15 +5575,15 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
 // because compression gives smaller extents, with no reasonable _Shdr fields.
 // At least gdb can continue.
 
-void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
+unsigned PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
 {
     if (!fo) {
-        return;
+        return 0;
     }
+    unsigned penalty = total_out;
     if (saved_opt_android_shlib) { // Forward select _Shdr
-        unsigned penalty = total_out;
         // Keep _Shdr for rtld data (below xct_off).
-        // Discard _Shdr for compressed regions, except ".text" for gdb
+        // Discard _Shdr for compressed regions, except ".text" for gdb.
         // Keep _Shdr for SHF_WRITE.
         // Discard _Shdr with (0==sh_addr), except _Shdr[0]
         // Keep ARM_ATTRIBUTES
@@ -5708,7 +5707,6 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
         fo->seek(0, SEEK_SET);
         fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
-        info("Android penalty = %d bytes", penalty = total_out - penalty); (void)penalty;
     }
     else if (sec_arm_attr) {
         // Forward just ARM_ATTRIBUTES
@@ -5745,15 +5743,18 @@ void PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
         fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
     }
+    penalty = total_out - penalty;
+    info("Android penalty = %d bytes", penalty);
+    return penalty;
 }
 
-void PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
+unsigned PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
 {
     if (!fo) {
-        return;
+        return 0;
     }
+    unsigned penalty = total_out;
     if (saved_opt_android_shlib) { // Forward select _Shdr
-        unsigned penalty = total_out;
         // Keep _Shdr for rtld data (below xct_off).
         // Discard _Shdr for compressed regions, except ".text" for gdb.
         // Keep _Shdr for SHF_WRITE.
@@ -5879,7 +5880,6 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
         fo->seek(0, SEEK_SET);
         fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
-        info("Android penalty = %d bytes", penalty = total_out - penalty); (void)penalty;
     }
     else if (sec_arm_attr) {
         // Forward just ARM_ATTRIBUTES
@@ -5916,6 +5916,9 @@ void PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
         fo->rewrite(eho, sizeof(*eho));
         fo->seek(0, SEEK_END);
     }
+    penalty = total_out - penalty;
+    info("Android penalty = %d bytes", penalty);
+    return penalty;
 }
 
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
@@ -5927,31 +5930,27 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
     cprElfHdr4 *eho = !xct_off
             ? (cprElfHdr4 *)(void *)&elfout  // not shlib  FIXME: ugly casting
             : (cprElfHdr4 *)lowmem.getVoidPtr();  // shlib
-    forward_Shdrs(fo, &eho->ehdr);
+    unsigned penalty = forward_Shdrs(fo, &eho->ehdr); (void)penalty;
 
-    if (opt->o_unix.preserve_build_id) {
+    if (opt->o_unix.preserve_build_id) { // FIXME: co-ordinate with forward_Shdrs
         // calc e_shoff here and write shdrout, then o_shstrtab
         //NOTE: these are pushed last to ensure nothing is stepped on
         //for the UPX structure.
-        unsigned const len = fpad4(fo, total_out);
-        set_te32(&eho->ehdr.e_shoff,len);
+        total_out = fpad4(fo, total_out);
+        set_te32(&eho->ehdr.e_shoff, total_out);
 
-        int const ssize = sizeof(shdrout);
+        unsigned const ssize = sizeof(shdrout);
+        unsigned const ssize1 = get_te32(&shdrout.shdr[1].sh_size);
+        unsigned const ssize2 = get_te32(&shdrout.shdr[2].sh_size);
 
-        shdrout.shdr[2].sh_offset = len+ssize;
-        shdrout.shdr[1].sh_offset = shdrout.shdr[2].sh_offset+shdrout.shdr[2].sh_size;
+        set_te32(&shdrout.shdr[2].sh_offset,          ssize + total_out);
+        set_te32(&shdrout.shdr[1].sh_offset, ssize2 + ssize + total_out);
 
-        fo->write(&shdrout, ssize);
+        fo->write(&shdrout, ssize); total_out += ssize;
 
-        fo->write(o_shstrtab,shdrout.shdr[2].sh_size);
-        fo->write(buildid_data,shdrout.shdr[1].sh_size);
+        fo->write(o_shstrtab, ssize2); total_out += ssize2;
+        fo->write(buildid_data, ssize1); total_out += ssize1;
     }
-
-    // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
-    // tries to make .bss, which requires PF_W.
-    // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
-    set_te32(&eho->phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
-              eho->phdr[C_TEXT].p_memsz = eho->phdr[C_TEXT].p_filesz;
 
     // ph.u_len and ph.c_len are leftover from earliest days when there was
     // only one compressed extent.  Use a good analogy for multiple extents.
@@ -5968,7 +5967,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
             }
         }
         if (!sec_arm_attr && !saved_opt_android_shlib) {
-            // Make it abunantly clear that there are no Elf32_Shdr in this shlib
+            // Make it abundantly clear that there are no Elf32_Shdr in this shlib
             eho->ehdr.e_shoff = 0;
             set_te16(&eho->ehdr.e_shentsize, sizeof(Elf32_Shdr));  // Android bug: cannot use 0
             eho->ehdr.e_shnum = 0;
@@ -5987,6 +5986,12 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         }
     }
     else { // not shlib
+        // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
+        // tries to make .bss, which requires PF_W.
+        // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
+        set_te32(&eho->phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
+                  eho->phdr[C_TEXT].p_memsz = eho->phdr[C_TEXT].p_filesz;
+
         Elf32_Phdr *phdr = &eho->phdr[C_NOTE];
         if (PT_NOTE32== get_te32(&phdr->p_type)) {
             upx_uint32_t const reloc = get_te32(&eho->phdr[C_TEXT].p_vaddr);
@@ -5994,12 +5999,9 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
                 reloc + get_te32(&phdr->p_vaddr));
             set_te32(            &phdr->p_paddr,
                 reloc + get_te32(&phdr->p_paddr));
-            fo->rewrite(eho, sz_elf_hdrs);
             // FIXME   fo->rewrite(&elfnote, sizeof(elfnote));
         }
-        else {
-            fo->rewrite(eho, sz_elf_hdrs);
-        }
+        fo->rewrite(eho, sz_elf_hdrs);
         fo->rewrite(&linfo, sizeof(linfo));
     }
 }
@@ -6013,31 +6015,27 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     cprElfHdr4 *eho = !xct_off
             ? &elfout  // not shlib
             : (cprElfHdr4 *)lowmem.getVoidPtr();  // shlib
-    forward_Shdrs(fo, &eho->ehdr);
+    unsigned penalty = forward_Shdrs(fo, &eho->ehdr); (void)penalty;
 
-    if (opt->o_unix.preserve_build_id) {
+    if (opt->o_unix.preserve_build_id) { // FIXME: co-ordinate with forward_Shdrs
         // calc e_shoff here and write shdrout, then o_shstrtab
         //NOTE: these are pushed last to ensure nothing is stepped on
         //for the UPX structure.
-        unsigned const len = fpad4(fo, total_out);
-        set_te64(&eho->ehdr.e_shoff,len);
+        total_out = fpad4(fo, total_out);
+        set_te64(&eho->ehdr.e_shoff, total_out);
 
-        int const ssize = sizeof(shdrout);
+        unsigned const ssize = sizeof(shdrout);
+        unsigned const ssize1 = get_te64(&shdrout.shdr[1].sh_size);
+        unsigned const ssize2 = get_te64(&shdrout.shdr[2].sh_size);
 
-        shdrout.shdr[2].sh_offset = len+ssize;
-        shdrout.shdr[1].sh_offset = shdrout.shdr[2].sh_offset+shdrout.shdr[2].sh_size;
+        set_te64(&shdrout.shdr[2].sh_offset,          ssize + total_out);
+        set_te64(&shdrout.shdr[1].sh_offset, ssize2 + ssize + total_out);
 
-        fo->write(&shdrout, ssize);
+        fo->write(&shdrout, ssize); total_out += ssize;
 
-        fo->write(o_shstrtab,shdrout.shdr[2].sh_size);
-        fo->write(buildid_data,shdrout.shdr[1].sh_size);
+        fo->write(o_shstrtab, ssize2); total_out += ssize2;
+        fo->write(buildid_data, ssize1); total_out += ssize1;
     }
-
-    // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
-    // tries to make .bss, which requires PF_W.
-    // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
-    set_te64(&eho->phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
-              eho->phdr[C_TEXT].p_memsz = eho->phdr[C_TEXT].p_filesz;
 
     // ph.u_len and ph.c_len are leftover from earliest days when there was
     // only one compressed extent.  Use a good analogy for multiple extents.
@@ -6054,7 +6052,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
             }
         }
         if (!sec_arm_attr && !saved_opt_android_shlib) {
-            // Make it abunantly clear that there are no Elf64_Shdr in this shlib
+            // Make it abundantly clear that there are no Elf64_Shdr in this shlib
             eho->ehdr.e_shoff = 0;
             set_te16(&eho->ehdr.e_shentsize, sizeof(Elf64_Shdr));  // Android bug: cannot use 0
             eho->ehdr.e_shnum = 0;
@@ -6074,6 +6072,12 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         }
     }
     else { // not shlib
+        // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
+        // tries to make .bss, which requires PF_W.
+        // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
+        set_te64(&eho->phdr[C_TEXT].p_filesz, sz_pack2 + lsize);
+                  eho->phdr[C_TEXT].p_memsz = eho->phdr[C_TEXT].p_filesz;
+
         Elf64_Phdr *phdr = &eho->phdr[C_NOTE];
         if (PT_NOTE64 == get_te32(&phdr->p_type)) {
             upx_uint64_t const reloc = get_te64(&eho->phdr[C_TEXT].p_vaddr);
@@ -6081,12 +6085,9 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
                 reloc + get_te64(&phdr->p_vaddr));
             set_te64(            &phdr->p_paddr,
                 reloc + get_te64(&phdr->p_paddr));
-            fo->rewrite(eho, sz_elf_hdrs);
             // FIXME   fo->rewrite(&elfnote, sizeof(elfnote));
         }
-        else {
-            fo->rewrite(eho, sz_elf_hdrs);
-        }
+        fo->rewrite(eho, sz_elf_hdrs);
         fo->rewrite(&linfo, sizeof(linfo));
     }
 }
@@ -6981,12 +6982,14 @@ void PackLinuxElf64::un_DT_INIT(
                     }
 
                     // Set arr[0] to the first user init routine.
+                    // Elf64_Rela overwrites anyway, so this is a redundancy
+                    // or a Don't Care.
                     unsigned r_info = get_te64(&rp->r_info);
                     unsigned r_type = ELF64_R_TYPE(r_info);
                     u64_t word;
                     if (Elf64_Ehdr::EM_ARM64 == e_machine) {
                         if (R_AARCH64_RELATIVE == r_type) {
-                            word = 0;  // Elf64_Rela overwrites *(.r_offset) !
+                            set_te64(&word, init_rva);  // old_dtinit ?
                         }
                         else if (R_AARCH64_ABS64 == r_type) {
                             word = 0;
