@@ -212,8 +212,8 @@ XSPAN_NAMESPACE_END
 // - this should play nice with runtime checkers like ASAN, valgrind, etc.
 // - this should play nice with static analyzers like clang-tidy
 static forceinline void *XSPAN_GET_POISON_VOID_PTR() {
-    // return (void *) (upx_uintptr_t) 16; // NOLINT(performance-no-int-to-ptr)
-    return (void *) 16;
+    // return (void *) (upx_uintptr_t) 251; // NOLINT(performance-no-int-to-ptr)
+    return (void *) 251;
 }
 
 #ifndef XSPAN_DELETED_FUNCTION

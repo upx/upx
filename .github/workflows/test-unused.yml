@@ -1,0 +1,15 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+name: 'Test - Unused'
+on: [workflow_dispatch]
+env:
+  CMAKE_REQUIRED_QUIET: OFF
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  job-unused: # uses cmake + make
+    if: ${{ true }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          true

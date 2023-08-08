@@ -12,8 +12,8 @@ env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-07-30
-  ZIG_DIST_VERSION: 0.11.0-dev.4320+6f0a613b6
+  # 2023-08-07
+  ZIG_DIST_VERSION: 0.12.0-dev.21+ac95cfe44
 
 jobs:
   job-rebuild-and-verify-stubs:

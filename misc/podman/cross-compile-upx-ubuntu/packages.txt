@@ -10,36 +10,36 @@ ii  alsa-ucm-conf                             1.2.6.3-1ubuntu1.7                
 ii  apt                                       2.4.9                                   amd64        commandline package manager
 ii  aria2                                     1.36.0-1                                amd64        High speed download utility
 ii  at-spi2-core                              2.44.0-3                                amd64        Assistive Technology Service Provider Interface (dbus core)
-ii  base-files                                12ubuntu4.3                             amd64        Debian base system miscellaneous files
+ii  base-files                                12ubuntu4.4                             amd64        Debian base system miscellaneous files
 ii  base-passwd                               3.5.52build1                            amd64        Debian base system master password and group files
 ii  bash                                      5.1-6ubuntu1                            amd64        GNU Bourne Again SHell
 ii  bash-completion                           1:2.11-5ubuntu1                         all          programmable completion for the bash shell
 ii  bfs                                       2.3.1-1                                 amd64        Breadth-first version of find(1)
 ii  binfmt-support                            2.2.1-2                                 amd64        Support for extra binary formats
-ii  binutils                                  2.38-4ubuntu2.2                         amd64        GNU assembler, linker and binary utilities
-ii  binutils-aarch64-linux-gnu                2.38-4ubuntu2.2                         amd64        GNU binary utilities, for aarch64-linux-gnu target
-ii  binutils-alpha-linux-gnu                  2.38-4ubuntu2.2                         amd64        GNU binary utilities, for alpha-linux-gnu target
-ii  binutils-arm-linux-gnueabi                2.38-4ubuntu2.2                         amd64        GNU binary utilities, for arm-linux-gnueabi target
-ii  binutils-arm-linux-gnueabihf              2.38-4ubuntu2.2                         amd64        GNU binary utilities, for arm-linux-gnueabihf target
-ii  binutils-common:amd64                     2.38-4ubuntu2.2                         amd64        Common files for the GNU assembler, linker and binary utilities
-ii  binutils-hppa-linux-gnu                   2.38-4ubuntu2.2                         amd64        GNU binary utilities, for hppa-linux-gnu target
-ii  binutils-i686-linux-gnu                   2.38-4ubuntu2.2                         amd64        GNU binary utilities, for i686-linux-gnu target
-ii  binutils-m68k-linux-gnu                   2.38-4ubuntu2.2                         amd64        GNU binary utilities, for m68k-linux-gnu target
+ii  binutils                                  2.38-4ubuntu2.3                         amd64        GNU assembler, linker and binary utilities
+ii  binutils-aarch64-linux-gnu                2.38-4ubuntu2.3                         amd64        GNU binary utilities, for aarch64-linux-gnu target
+ii  binutils-alpha-linux-gnu                  2.38-4ubuntu2.3                         amd64        GNU binary utilities, for alpha-linux-gnu target
+ii  binutils-arm-linux-gnueabi                2.38-4ubuntu2.3                         amd64        GNU binary utilities, for arm-linux-gnueabi target
+ii  binutils-arm-linux-gnueabihf              2.38-4ubuntu2.3                         amd64        GNU binary utilities, for arm-linux-gnueabihf target
+ii  binutils-common:amd64                     2.38-4ubuntu2.3                         amd64        Common files for the GNU assembler, linker and binary utilities
+ii  binutils-hppa-linux-gnu                   2.38-4ubuntu2.3                         amd64        GNU binary utilities, for hppa-linux-gnu target
+ii  binutils-i686-linux-gnu                   2.38-4ubuntu2.3                         amd64        GNU binary utilities, for i686-linux-gnu target
+ii  binutils-m68k-linux-gnu                   2.38-4ubuntu2.3                         amd64        GNU binary utilities, for m68k-linux-gnu target
 ii  binutils-mingw-w64-i686                   2.38-3ubuntu1+9build1                   amd64        Cross-binutils for Win32 (x86) using MinGW-w64
 ii  binutils-mingw-w64-x86-64                 2.38-3ubuntu1+9build1                   amd64        Cross-binutils for Win64 (x64) using MinGW-w64
 ii  binutils-mips-linux-gnu                   2.38-1ubuntu1cross2                     amd64        GNU binary utilities, for mips-linux-gnu target
 ii  binutils-mips64-linux-gnuabi64            2.38-1ubuntu1cross2                     amd64        GNU binary utilities, for mips64-linux-gnuabi64 target
 ii  binutils-mips64el-linux-gnuabi64          2.38-1ubuntu1cross2                     amd64        GNU binary utilities, for mips64el-linux-gnuabi64 target
 ii  binutils-mipsel-linux-gnu                 2.38-1ubuntu1cross2                     amd64        GNU binary utilities, for mipsel-linux-gnu target
-ii  binutils-powerpc-linux-gnu                2.38-4ubuntu2.2                         amd64        GNU binary utilities, for powerpc-linux-gnu target
-ii  binutils-powerpc64-linux-gnu              2.38-4ubuntu2.2                         amd64        GNU binary utilities, for powerpc64-linux-gnu target
-ii  binutils-powerpc64le-linux-gnu            2.38-4ubuntu2.2                         amd64        GNU binary utilities, for powerpc64le-linux-gnu target
-ii  binutils-riscv64-linux-gnu                2.38-4ubuntu2.2                         amd64        GNU binary utilities, for riscv64-linux-gnu target
-ii  binutils-s390x-linux-gnu                  2.38-4ubuntu2.2                         amd64        GNU binary utilities, for s390x-linux-gnu target
-ii  binutils-sh4-linux-gnu                    2.38-4ubuntu2.2                         amd64        GNU binary utilities, for sh4-linux-gnu target
-ii  binutils-sparc64-linux-gnu                2.38-4ubuntu2.2                         amd64        GNU binary utilities, for sparc64-linux-gnu target
-ii  binutils-x86-64-linux-gnu                 2.38-4ubuntu2.2                         amd64        GNU binary utilities, for x86-64-linux-gnu target
-ii  binutils-x86-64-linux-gnux32              2.38-4ubuntu2.2                         amd64        GNU binary utilities, for x86-64-linux-gnux32 target
+ii  binutils-powerpc-linux-gnu                2.38-4ubuntu2.3                         amd64        GNU binary utilities, for powerpc-linux-gnu target
+ii  binutils-powerpc64-linux-gnu              2.38-4ubuntu2.3                         amd64        GNU binary utilities, for powerpc64-linux-gnu target
+ii  binutils-powerpc64le-linux-gnu            2.38-4ubuntu2.3                         amd64        GNU binary utilities, for powerpc64le-linux-gnu target
+ii  binutils-riscv64-linux-gnu                2.38-4ubuntu2.3                         amd64        GNU binary utilities, for riscv64-linux-gnu target
+ii  binutils-s390x-linux-gnu                  2.38-4ubuntu2.3                         amd64        GNU binary utilities, for s390x-linux-gnu target
+ii  binutils-sh4-linux-gnu                    2.38-4ubuntu2.3                         amd64        GNU binary utilities, for sh4-linux-gnu target
+ii  binutils-sparc64-linux-gnu                2.38-4ubuntu2.3                         amd64        GNU binary utilities, for sparc64-linux-gnu target
+ii  binutils-x86-64-linux-gnu                 2.38-4ubuntu2.3                         amd64        GNU binary utilities, for x86-64-linux-gnu target
+ii  binutils-x86-64-linux-gnux32              2.38-4ubuntu2.3                         amd64        GNU binary utilities, for x86-64-linux-gnux32 target
 ii  bsdutils                                  1:2.37.2-4ubuntu3                       amd64        basic utilities from 4.4BSD-Lite
 ii  busybox                                   1:1.30.1-7ubuntu3                       amd64        Tiny utilities for small and embedded systems
 ii  bzip2                                     1.0.8-5build1                           amd64        high-quality block-sorting file compressor - utilities
@@ -47,10 +47,10 @@ ii  ca-certificates                           20230311ubuntu0.22.04.1           
 ii  cabextract                                1.9-3                                   amd64        Microsoft Cabinet file unpacker
 ii  ccache                                    4.5.1-1                                 amd64        Compiler cache for fast recompilation of C/C++ code
 ii  chrpath                                   0.16-2                                  amd64        Tool to edit the rpath in ELF binaries
-ii  clang-14                                  1:14.0.0-1ubuntu1                       amd64        C, C++ and Objective-C compiler
-ii  clang-format-14                           1:14.0.0-1ubuntu1                       amd64        Tool to format C/C++/Obj-C code
-ii  clang-tidy-14                             1:14.0.0-1ubuntu1                       amd64        clang-based C++ linter tool
-ii  clang-tools-14                            1:14.0.0-1ubuntu1                       amd64        clang-based tools for C/C++ developments
+ii  clang-14                                  1:14.0.0-1ubuntu1.1                     amd64        C, C++ and Objective-C compiler
+ii  clang-format-14                           1:14.0.0-1ubuntu1.1                     amd64        Tool to format C/C++/Obj-C code
+ii  clang-tidy-14                             1:14.0.0-1ubuntu1.1                     amd64        clang-based C++ linter tool
+ii  clang-tools-14                            1:14.0.0-1ubuntu1.1                     amd64        clang-based tools for C/C++ developments
 ii  cmake                                     3.22.1-1ubuntu1.22.04.1                 amd64        cross-platform, open-source make system
 ii  cmake-data                                3.22.1-1ubuntu1.22.04.1                 all          CMake data files (modules, templates and documentation)
 ii  coreutils                                 8.32-4.1ubuntu1                         amd64        GNU core utilities
@@ -60,22 +60,22 @@ ii  cpp-10-mips-linux-gnu                     10.3.0-1ubuntu1cross2             
 ii  cpp-10-mips64-linux-gnuabi64              10.3.0-1ubuntu1cross2                   amd64        GNU C preprocessor
 ii  cpp-10-mips64el-linux-gnuabi64            10.3.0-1ubuntu1cross2                   amd64        GNU C preprocessor
 ii  cpp-10-mipsel-linux-gnu                   10.3.0-1ubuntu1cross2                   amd64        GNU C preprocessor
-ii  cpp-11                                    11.3.0-1ubuntu1~22.04.1                 amd64        GNU C preprocessor
-ii  cpp-11-aarch64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-alpha-linux-gnu                    11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-arm-linux-gnueabi                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-arm-linux-gnueabihf                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-hppa-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-i686-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-m68k-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-powerpc-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-powerpc64-linux-gnu                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-powerpc64le-linux-gnu              11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-riscv64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-s390x-linux-gnu                    11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-sh4-linux-gnu                      11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-sparc64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
-ii  cpp-11-x86-64-linux-gnux32                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C preprocessor
+ii  cpp-11                                    11.4.0-1ubuntu1~22.04                   amd64        GNU C preprocessor
+ii  cpp-11-aarch64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-alpha-linux-gnu                    11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-arm-linux-gnueabi                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-arm-linux-gnueabihf                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-hppa-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-i686-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-m68k-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-powerpc-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-powerpc64-linux-gnu                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-powerpc64le-linux-gnu              11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-riscv64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-s390x-linux-gnu                    11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-sh4-linux-gnu                      11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-sparc64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
+ii  cpp-11-x86-64-linux-gnux32                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C preprocessor
 ii  cpp-aarch64-linux-gnu                     4:11.2.0-1ubuntu1                       amd64        GNU C preprocessor (cpp) for the arm64 architecture
 ii  cpp-alpha-linux-gnu                       4:11.2.0--1ubuntu1                      amd64        GNU C preprocessor (cpp) for the alpha architecture
 ii  cpp-arm-linux-gnueabi                     4:11.2.0-1ubuntu1                       amd64        GNU C preprocessor (cpp) for the armel architecture
@@ -126,23 +126,23 @@ ii  g++-10-mips-linux-gnu                     10.3.0-1ubuntu1cross2             
 ii  g++-10-mips64-linux-gnuabi64              10.3.0-1ubuntu1cross2                   amd64        GNU C++ compiler (cross compiler for mips64 architecture)
 ii  g++-10-mips64el-linux-gnuabi64            10.3.0-1ubuntu1cross2                   amd64        GNU C++ compiler (cross compiler for mips64el architecture)
 ii  g++-10-mipsel-linux-gnu                   10.3.0-1ubuntu1cross2                   amd64        GNU C++ compiler (cross compiler for mipsel architecture)
-ii  g++-11                                    11.3.0-1ubuntu1~22.04.1                 amd64        GNU C++ compiler
-ii  g++-11-aarch64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for arm64 architecture)
-ii  g++-11-alpha-linux-gnu                    11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for alpha architecture)
-ii  g++-11-arm-linux-gnueabi                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for armel architecture)
-ii  g++-11-arm-linux-gnueabihf                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for armhf architecture)
-ii  g++-11-hppa-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for hppa architecture)
-ii  g++-11-i686-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for i386 architecture)
-ii  g++-11-m68k-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for m68k architecture)
-ii  g++-11-multilib                           11.3.0-1ubuntu1~22.04.1                 amd64        GNU C++ compiler (multilib support)
-ii  g++-11-powerpc-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for powerpc architecture)
-ii  g++-11-powerpc64-linux-gnu                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for ppc64 architecture)
-ii  g++-11-powerpc64le-linux-gnu              11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for ppc64el architecture)
-ii  g++-11-riscv64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for riscv64 architecture)
-ii  g++-11-s390x-linux-gnu                    11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for s390x architecture)
-ii  g++-11-sh4-linux-gnu                      11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for sh4 architecture)
-ii  g++-11-sparc64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for sparc64 architecture)
-ii  g++-11-x86-64-linux-gnux32                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C++ compiler (cross compiler for x32 architecture)
+ii  g++-11                                    11.4.0-1ubuntu1~22.04                   amd64        GNU C++ compiler
+ii  g++-11-aarch64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for arm64 architecture)
+ii  g++-11-alpha-linux-gnu                    11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for alpha architecture)
+ii  g++-11-arm-linux-gnueabi                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for armel architecture)
+ii  g++-11-arm-linux-gnueabihf                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for armhf architecture)
+ii  g++-11-hppa-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for hppa architecture)
+ii  g++-11-i686-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for i386 architecture)
+ii  g++-11-m68k-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for m68k architecture)
+ii  g++-11-multilib                           11.4.0-1ubuntu1~22.04                   amd64        GNU C++ compiler (multilib support)
+ii  g++-11-powerpc-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for powerpc architecture)
+ii  g++-11-powerpc64-linux-gnu                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for ppc64 architecture)
+ii  g++-11-powerpc64le-linux-gnu              11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for ppc64el architecture)
+ii  g++-11-riscv64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for riscv64 architecture)
+ii  g++-11-s390x-linux-gnu                    11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for s390x architecture)
+ii  g++-11-sh4-linux-gnu                      11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for sh4 architecture)
+ii  g++-11-sparc64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for sparc64 architecture)
+ii  g++-11-x86-64-linux-gnux32                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C++ compiler (cross compiler for x32 architecture)
 ii  g++-aarch64-linux-gnu                     4:11.2.0-1ubuntu1                       amd64        GNU C++ compiler for the arm64 architecture
 ii  g++-alpha-linux-gnu                       4:11.2.0--1ubuntu1                      amd64        GNU C++ compiler for the alpha architecture
 ii  g++-arm-linux-gnueabi                     4:11.2.0-1ubuntu1                       amd64        GNU C++ compiler for the armel architecture
@@ -179,45 +179,45 @@ ii  gcc-10-mips64el-linux-gnuabi64            10.3.0-1ubuntu1cross2             
 ii  gcc-10-mips64el-linux-gnuabi64-base:amd64 10.3.0-1ubuntu1cross2                   amd64        GCC, the GNU Compiler Collection (base package)
 ii  gcc-10-mipsel-linux-gnu                   10.3.0-1ubuntu1cross2                   amd64        GNU C compiler (cross compiler for mipsel architecture)
 ii  gcc-10-mipsel-linux-gnu-base:amd64        10.3.0-1ubuntu1cross2                   amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11                                    11.3.0-1ubuntu1~22.04.1                 amd64        GNU C compiler
-ii  gcc-11-aarch64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for arm64 architecture)
-ii  gcc-11-aarch64-linux-gnu-base:amd64       11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-alpha-linux-gnu                    11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for alpha architecture)
-ii  gcc-11-alpha-linux-gnu-base:amd64         11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-arm-linux-gnueabi                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for armel architecture)
-ii  gcc-11-arm-linux-gnueabi-base:amd64       11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-arm-linux-gnueabihf                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for armhf architecture)
-ii  gcc-11-arm-linux-gnueabihf-base:amd64     11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-base:amd64                         11.3.0-1ubuntu1~22.04.1                 amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-cross-base                         11.3.0-1ubuntu1~22.04.1cross1           all          GCC, the GNU Compiler Collection (library base package)
-ii  gcc-11-cross-base-ports                   11.3.0-1ubuntu1~22.04.1cross1           all          GCC, the GNU Compiler Collection (library base package)
-ii  gcc-11-hppa-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for hppa architecture)
-ii  gcc-11-hppa-linux-gnu-base:amd64          11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-i686-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for i386 architecture)
-ii  gcc-11-i686-linux-gnu-base:amd64          11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-m68k-linux-gnu                     11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for m68k architecture)
-ii  gcc-11-m68k-linux-gnu-base:amd64          11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-multilib                           11.3.0-1ubuntu1~22.04.1                 amd64        GNU C compiler (multilib support)
-ii  gcc-11-powerpc-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for powerpc architecture)
-ii  gcc-11-powerpc-linux-gnu-base:amd64       11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-powerpc64-linux-gnu                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for ppc64 architecture)
-ii  gcc-11-powerpc64-linux-gnu-base:amd64     11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-powerpc64le-linux-gnu              11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for ppc64el architecture)
-ii  gcc-11-powerpc64le-linux-gnu-base:amd64   11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-riscv64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for riscv64 architecture)
-ii  gcc-11-riscv64-linux-gnu-base:amd64       11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-s390x-linux-gnu                    11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for s390x architecture)
-ii  gcc-11-s390x-linux-gnu-base:amd64         11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-sh4-linux-gnu                      11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for sh4 architecture)
-ii  gcc-11-sh4-linux-gnu-base:amd64           11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-sparc64-linux-gnu                  11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for sparc64 architecture)
-ii  gcc-11-sparc64-linux-gnu-base:amd64       11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-11-x86-64-linux-gnux32                11.3.0-1ubuntu1~22.04.1cross1           amd64        GNU C compiler (cross compiler for x32 architecture)
-ii  gcc-11-x86-64-linux-gnux32-base:amd64     11.3.0-1ubuntu1~22.04.1cross1           amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-12-base:amd64                         12.1.0-2ubuntu1~22.04                   amd64        GCC, the GNU Compiler Collection (base package)
-ii  gcc-12-base:i386                          12.1.0-2ubuntu1~22.04                   i386         GCC, the GNU Compiler Collection (base package)
-ii  gcc-12-cross-base                         12.1.0-2ubuntu1~22.04cross1             all          GCC, the GNU Compiler Collection (library base package)
-ii  gcc-12-cross-base-ports                   12.1.0-2ubuntu1~22.04cross1             all          GCC, the GNU Compiler Collection (library base package)
+ii  gcc-11                                    11.4.0-1ubuntu1~22.04                   amd64        GNU C compiler
+ii  gcc-11-aarch64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for arm64 architecture)
+ii  gcc-11-aarch64-linux-gnu-base:amd64       11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-alpha-linux-gnu                    11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for alpha architecture)
+ii  gcc-11-alpha-linux-gnu-base:amd64         11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-arm-linux-gnueabi                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for armel architecture)
+ii  gcc-11-arm-linux-gnueabi-base:amd64       11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-arm-linux-gnueabihf                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for armhf architecture)
+ii  gcc-11-arm-linux-gnueabihf-base:amd64     11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-base:amd64                         11.4.0-1ubuntu1~22.04                   amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-cross-base                         11.4.0-1ubuntu1~22.04cross1             all          GCC, the GNU Compiler Collection (library base package)
+ii  gcc-11-cross-base-ports                   11.4.0-1ubuntu1~22.04cross1             all          GCC, the GNU Compiler Collection (library base package)
+ii  gcc-11-hppa-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for hppa architecture)
+ii  gcc-11-hppa-linux-gnu-base:amd64          11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-i686-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for i386 architecture)
+ii  gcc-11-i686-linux-gnu-base:amd64          11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-m68k-linux-gnu                     11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for m68k architecture)
+ii  gcc-11-m68k-linux-gnu-base:amd64          11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-multilib                           11.4.0-1ubuntu1~22.04                   amd64        GNU C compiler (multilib support)
+ii  gcc-11-powerpc-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for powerpc architecture)
+ii  gcc-11-powerpc-linux-gnu-base:amd64       11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-powerpc64-linux-gnu                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for ppc64 architecture)
+ii  gcc-11-powerpc64-linux-gnu-base:amd64     11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-powerpc64le-linux-gnu              11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for ppc64el architecture)
+ii  gcc-11-powerpc64le-linux-gnu-base:amd64   11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-riscv64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for riscv64 architecture)
+ii  gcc-11-riscv64-linux-gnu-base:amd64       11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-s390x-linux-gnu                    11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for s390x architecture)
+ii  gcc-11-s390x-linux-gnu-base:amd64         11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-sh4-linux-gnu                      11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for sh4 architecture)
+ii  gcc-11-sh4-linux-gnu-base:amd64           11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-sparc64-linux-gnu                  11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for sparc64 architecture)
+ii  gcc-11-sparc64-linux-gnu-base:amd64       11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-11-x86-64-linux-gnux32                11.4.0-1ubuntu1~22.04cross1             amd64        GNU C compiler (cross compiler for x32 architecture)
+ii  gcc-11-x86-64-linux-gnux32-base:amd64     11.4.0-1ubuntu1~22.04cross1             amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-12-base:amd64                         12.3.0-1ubuntu1~22.04                   amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-12-base:i386                          12.3.0-1ubuntu1~22.04                   i386         GCC, the GNU Compiler Collection (base package)
+ii  gcc-12-cross-base                         12.3.0-1ubuntu1~22.04cross1             all          GCC, the GNU Compiler Collection (library base package)
+ii  gcc-12-cross-base-ports                   12.3.0-1ubuntu1~22.04cross1             all          GCC, the GNU Compiler Collection (library base package)
 ii  gcc-aarch64-linux-gnu                     4:11.2.0-1ubuntu1                       amd64        GNU C compiler for the arm64 architecture
 ii  gcc-alpha-linux-gnu                       4:11.2.0--1ubuntu1                      amd64        GNU C compiler for the alpha architecture
 ii  gcc-arm-linux-gnueabi                     4:11.2.0-1ubuntu1                       amd64        GNU C compiler for the armel architecture
@@ -258,12 +258,12 @@ ii  gojq                                      0.12.6-1                          
 ii  gpgv                                      2.2.27-3ubuntu2.1                       amd64        GNU privacy guard - signature verification tool
 ii  grep                                      3.7-1build1                             amd64        GNU grep, egrep and fgrep
 ii  gsettings-desktop-schemas                 42.0-1ubuntu1                           all          GSettings desktop-wide schemas
-ii  gstreamer1.0-plugins-base:amd64           1.20.1-1                                amd64        GStreamer plugins from the "base" set
-ii  gstreamer1.0-plugins-base:i386            1.20.1-1                                i386         GStreamer plugins from the "base" set
-ii  gstreamer1.0-plugins-good:amd64           1.20.3-0ubuntu1                         amd64        GStreamer plugins from the "good" set
-ii  gstreamer1.0-plugins-good:i386            1.20.3-0ubuntu1                         i386         GStreamer plugins from the "good" set
-ii  gstreamer1.0-x:amd64                      1.20.1-1                                amd64        GStreamer plugins for X11 and Pango
-ii  gstreamer1.0-x:i386                       1.20.1-1                                i386         GStreamer plugins for X11 and Pango
+ii  gstreamer1.0-plugins-base:amd64           1.20.1-1ubuntu0.1                       amd64        GStreamer plugins from the "base" set
+ii  gstreamer1.0-plugins-base:i386            1.20.1-1ubuntu0.1                       i386         GStreamer plugins from the "base" set
+ii  gstreamer1.0-plugins-good:amd64           1.20.3-0ubuntu1.1                       amd64        GStreamer plugins from the "good" set
+ii  gstreamer1.0-plugins-good:i386            1.20.3-0ubuntu1.1                       i386         GStreamer plugins from the "good" set
+ii  gstreamer1.0-x:amd64                      1.20.1-1ubuntu0.1                       amd64        GStreamer plugins for X11 and Pango
+ii  gstreamer1.0-x:i386                       1.20.1-1ubuntu0.1                       i386         GStreamer plugins for X11 and Pango
 ii  gtk-update-icon-cache                     3.24.33-1ubuntu2                        amd64        icon theme caching utility
 ii  gzip                                      1.10-4ubuntu4.1                         amd64        GNU compression utilities
 ii  hicolor-icon-theme                        0.17-2                                  all          default fallback theme for FreeDesktop.org icon themes
@@ -281,16 +281,16 @@ ii  iso-codes                                 4.9.0-1                           
 ii  jq                                        1.6-2.1ubuntu3                          amd64        lightweight and flexible command-line JSON processor
 ii  krb5-locales                              1.19.2-2ubuntu0.2                       all          internationalization support for MIT Kerberos
 ii  less                                      590-1ubuntu0.22.04.1                    amd64        pager program similar to more
-ii  lib32asan6                                11.3.0-1ubuntu1~22.04.1                 amd64        AddressSanitizer -- a fast memory error detector (32bit)
-ii  lib32atomic1                              12.1.0-2ubuntu1~22.04                   amd64        support library providing __atomic built-in functions (32bit)
-ii  lib32gcc-11-dev                           11.3.0-1ubuntu1~22.04.1                 amd64        GCC support library (32 bit development files)
-ii  lib32gcc-s1                               12.1.0-2ubuntu1~22.04                   amd64        GCC support library (32 bit Version)
-ii  lib32gomp1                                12.1.0-2ubuntu1~22.04                   amd64        GCC OpenMP (GOMP) support library (32bit)
-ii  lib32itm1                                 12.1.0-2ubuntu1~22.04                   amd64        GNU Transactional Memory Library (32bit)
-ii  lib32quadmath0                            12.1.0-2ubuntu1~22.04                   amd64        GCC Quad-Precision Math Library (32bit)
-ii  lib32stdc++-11-dev                        11.3.0-1ubuntu1~22.04.1                 amd64        GNU Standard C++ Library v3 (development files)
-ii  lib32stdc++6                              12.1.0-2ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (32 bit Version)
-ii  lib32ubsan1                               12.1.0-2ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (32bit)
+ii  lib32asan6                                11.4.0-1ubuntu1~22.04                   amd64        AddressSanitizer -- a fast memory error detector (32bit)
+ii  lib32atomic1                              12.3.0-1ubuntu1~22.04                   amd64        support library providing __atomic built-in functions (32bit)
+ii  lib32gcc-11-dev                           11.4.0-1ubuntu1~22.04                   amd64        GCC support library (32 bit development files)
+ii  lib32gcc-s1                               12.3.0-1ubuntu1~22.04                   amd64        GCC support library (32 bit Version)
+ii  lib32gomp1                                12.3.0-1ubuntu1~22.04                   amd64        GCC OpenMP (GOMP) support library (32bit)
+ii  lib32itm1                                 12.3.0-1ubuntu1~22.04                   amd64        GNU Transactional Memory Library (32bit)
+ii  lib32quadmath0                            12.3.0-1ubuntu1~22.04                   amd64        GCC Quad-Precision Math Library (32bit)
+ii  lib32stdc++-11-dev                        11.4.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (development files)
+ii  lib32stdc++6                              12.3.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (32 bit Version)
+ii  lib32ubsan1                               12.3.0-1ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (32bit)
 ii  libaa1:amd64                              1.4p5-50build1                          amd64        ASCII art library
 ii  libaa1:i386                               1.4p5-50build1                          i386         ASCII art library
 ii  libacl1:amd64                             2.3.1-1                                 amd64        access control list - shared library
@@ -301,18 +301,18 @@ ii  libapt-pkg6.0:amd64                       2.4.9                             
 ii  libarchive13:amd64                        3.6.0-1ubuntu1                          amd64        Multi-format archive and compression library (shared library)
 ii  libargon2-1:amd64                         0~20171227-0.3                          amd64        memory-hard hashing function - runtime library
 ii  libaria2-0:amd64                          1.36.0-1                                amd64        C++ library interface to aria2
-ii  libasan6-arm64-cross                      11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-armel-cross                      11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-armhf-cross                      11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-i386-cross                       11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-powerpc-cross                    11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-ppc64-cross                      11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-ppc64el-cross                    11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-riscv64-cross                    11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-s390x-cross                      11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-sparc64-cross                    11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6-x32-cross                        11.3.0-1ubuntu1~22.04.1cross1           all          AddressSanitizer -- a fast memory error detector
-ii  libasan6:amd64                            11.3.0-1ubuntu1~22.04.1                 amd64        AddressSanitizer -- a fast memory error detector
+ii  libasan6-arm64-cross                      11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-armel-cross                      11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-armhf-cross                      11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-i386-cross                       11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-powerpc-cross                    11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-ppc64-cross                      11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-ppc64el-cross                    11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-riscv64-cross                    11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-s390x-cross                      11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-sparc64-cross                    11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6-x32-cross                        11.4.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libasan6:amd64                            11.4.0-1ubuntu1~22.04                   amd64        AddressSanitizer -- a fast memory error detector
 ii  libasm1:amd64                             0.186-1build1                           amd64        library with a programmable assembler interface
 ii  libasound2-data                           1.2.6.1-1ubuntu1                        all          Configuration files and profiles for ALSA drivers
 ii  libasound2-plugins:amd64                  1.2.6-1                                 amd64        ALSA library additional plugins
@@ -324,27 +324,27 @@ ii  libasyncns0:i386                          0.8-6build2                       
 ii  libatk-bridge2.0-0:amd64                  2.38.0-3                                amd64        AT-SPI 2 toolkit bridge - shared library
 ii  libatk1.0-0:amd64                         2.36.0-3build1                          amd64        ATK accessibility toolkit
 ii  libatk1.0-data                            2.36.0-3build1                          all          Common files for the ATK accessibility toolkit
-ii  libatomic1-alpha-cross                    12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-arm64-cross                    12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-armel-cross                    12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-armhf-cross                    12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-hppa-cross                     12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-i386-cross                     12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-m68k-cross                     12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-alpha-cross                    12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-arm64-cross                    12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-armel-cross                    12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-armhf-cross                    12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-hppa-cross                     12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-i386-cross                     12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-m68k-cross                     12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
 ii  libatomic1-mips-cross                     10.3.0-1ubuntu1cross2                   all          support library providing __atomic built-in functions
 ii  libatomic1-mips64-cross                   10.3.0-1ubuntu1cross2                   all          support library providing __atomic built-in functions
 ii  libatomic1-mips64el-cross                 10.3.0-1ubuntu1cross2                   all          support library providing __atomic built-in functions
 ii  libatomic1-mipsel-cross                   10.3.0-1ubuntu1cross2                   all          support library providing __atomic built-in functions
-ii  libatomic1-powerpc-cross                  12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-ppc64-cross                    12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-ppc64el-cross                  12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-riscv64-cross                  12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-s390x-cross                    12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-sh4-cross                      12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-sparc64-cross                  12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1-x32-cross                      12.1.0-2ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
-ii  libatomic1:amd64                          12.1.0-2ubuntu1~22.04                   amd64        support library providing __atomic built-in functions
-ii  libatomic1:i386                           12.1.0-2ubuntu1~22.04                   i386         support library providing __atomic built-in functions
+ii  libatomic1-powerpc-cross                  12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-ppc64-cross                    12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-ppc64el-cross                  12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-riscv64-cross                  12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-s390x-cross                    12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-sh4-cross                      12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-sparc64-cross                  12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1-x32-cross                      12.3.0-1ubuntu1~22.04cross1             all          support library providing __atomic built-in functions
+ii  libatomic1:amd64                          12.3.0-1ubuntu1~22.04                   amd64        support library providing __atomic built-in functions
+ii  libatomic1:i386                           12.3.0-1ubuntu1~22.04                   i386         support library providing __atomic built-in functions
 ii  libatspi2.0-0:amd64                       2.44.0-3                                amd64        Assistive Technology Service Provider Interface - shared library
 ii  libattr1:amd64                            1:2.5.1-1build1                         amd64        extended attribute handling - shared library
 ii  libaudit-common                           1:3.0.7-1build1                         all          Dynamic library for security auditing - common files
@@ -358,7 +358,7 @@ ii  libavahi-common3:i386                     0.8-5ubuntu5.1                    
 ii  libavc1394-0:amd64                        0.5.4-5build2                           amd64        control IEEE 1394 audio/video devices
 ii  libavc1394-0:i386                         0.5.4-5build2                           i386         control IEEE 1394 audio/video devices
 ii  libbabeltrace1:amd64                      1.5.8-2build1                           amd64        Babeltrace conversion libraries
-ii  libbinutils:amd64                         2.38-4ubuntu2.2                         amd64        GNU binary utilities (private shared library)
+ii  libbinutils:amd64                         2.38-4ubuntu2.3                         amd64        GNU binary utilities (private shared library)
 ii  libblkid1:amd64                           2.37.2-4ubuntu3                         amd64        block device ID library
 ii  libblkid1:i386                            2.37.2-4ubuntu3                         i386         block device ID library
 ii  libboost-iostreams1.74.0:amd64            1.74.0-14ubuntu3                        amd64        Boost.Iostreams Library
@@ -433,12 +433,12 @@ ii  libcap2:amd64                             1:2.44-1ubuntu0.22.04.1           
 ii  libcap2:i386                              1:2.44-1ubuntu0.22.04.1                 i386         POSIX 1003.1e capabilities (library)
 ii  libcapi20-3:amd64                         1:3.27-3                                amd64        ISDN utilities - CAPI support libraries
 ii  libcapi20-3:i386                          1:3.27-3                                i386         ISDN utilities - CAPI support libraries
-ii  libcc1-0:amd64                            12.1.0-2ubuntu1~22.04                   amd64        GCC cc1 plugin for GDB
+ii  libcc1-0:amd64                            12.3.0-1ubuntu1~22.04                   amd64        GCC cc1 plugin for GDB
 ii  libcdparanoia0:amd64                      3.10.2+debian-14build2                  amd64        audio extraction tool for sampling CDs (library)
 ii  libcdparanoia0:i386                       3.10.2+debian-14build2                  i386         audio extraction tool for sampling CDs (library)
-ii  libclang-common-14-dev                    1:14.0.0-1ubuntu1                       amd64        Clang library - Common development package
-ii  libclang-cpp14                            1:14.0.0-1ubuntu1                       amd64        C++ interface to the Clang library
-ii  libclang1-14                              1:14.0.0-1ubuntu1                       amd64        C interface to the Clang library
+ii  libclang-common-14-dev                    1:14.0.0-1ubuntu1.1                     amd64        Clang library - Common development package
+ii  libclang-cpp14                            1:14.0.0-1ubuntu1.1                     amd64        C++ interface to the Clang library
+ii  libclang1-14                              1:14.0.0-1ubuntu1.1                     amd64        C interface to the Clang library
 ii  libcolord2:amd64                          1.4.6-1                                 amd64        system service to manage device colour profiles -- runtime
 ii  libcom-err2:amd64                         1.46.5-2ubuntu1.1                       amd64        common error description library
 ii  libcom-err2:i386                          1.46.5-2ubuntu1.1                       i386         common error description library
@@ -446,8 +446,8 @@ ii  libcrypt-dev:amd64                        1:4.4.27-1                        
 ii  libcrypt1:amd64                           1:4.4.27-1                              amd64        libcrypt shared library
 ii  libcrypt1:i386                            1:4.4.27-1                              i386         libcrypt shared library
 ii  libcryptsetup12:amd64                     2:2.4.3-1ubuntu1.1                      amd64        disk encryption support - shared library
-ii  libctf-nobfd0:amd64                       2.38-4ubuntu2.2                         amd64        Compact C Type Format library (runtime, no BFD dependency)
-ii  libctf0:amd64                             2.38-4ubuntu2.2                         amd64        Compact C Type Format library (runtime, BFD dependency)
+ii  libctf-nobfd0:amd64                       2.38-4ubuntu2.3                         amd64        Compact C Type Format library (runtime, no BFD dependency)
+ii  libctf0:amd64                             2.38-4ubuntu2.3                         amd64        Compact C Type Format library (runtime, BFD dependency)
 ii  libcups2:amd64                            2.4.1op1-1ubuntu4.4                     amd64        Common UNIX Printing System(tm) - Core library
 ii  libcups2:i386                             2.4.1op1-1ubuntu4.4                     i386         Common UNIX Printing System(tm) - Core library
 ii  libcurl3-gnutls:amd64                     7.81.0-1ubuntu1.13                      amd64        easy-to-use client-side URL transfer library (GnuTLS flavour)
@@ -475,6 +475,7 @@ ii  libdrm-amdgpu1:amd64                      2.4.113-2~ubuntu0.22.04.1         
 ii  libdrm-amdgpu1:i386                       2.4.113-2~ubuntu0.22.04.1               i386         Userspace interface to amdgpu-specific kernel DRM services -- runtime
 ii  libdrm-common                             2.4.113-2~ubuntu0.22.04.1               all          Userspace interface to kernel DRM services -- common files
 ii  libdrm-intel1:amd64                       2.4.113-2~ubuntu0.22.04.1               amd64        Userspace interface to intel-specific kernel DRM services -- runtime
+ii  libdrm-intel1:i386                        2.4.113-2~ubuntu0.22.04.1               i386         Userspace interface to intel-specific kernel DRM services -- runtime
 ii  libdrm-nouveau2:amd64                     2.4.113-2~ubuntu0.22.04.1               amd64        Userspace interface to nouveau-specific kernel DRM services -- runtime
 ii  libdrm-nouveau2:i386                      2.4.113-2~ubuntu0.22.04.1               i386         Userspace interface to nouveau-specific kernel DRM services -- runtime
 ii  libdrm-radeon1:amd64                      2.4.113-2~ubuntu0.22.04.1               amd64        Userspace interface to radeon-specific kernel DRM services -- runtime
@@ -511,50 +512,50 @@ ii  libfreetype6:i386                         2.11.1+dfsg-1ubuntu0.2            
 ii  libfribidi0:amd64                         1.0.8-2ubuntu3.1                        amd64        Free Implementation of the Unicode BiDi algorithm
 ii  libfribidi0:i386                          1.0.8-2ubuntu3.1                        i386         Free Implementation of the Unicode BiDi algorithm
 ii  libfuse3-3:amd64                          3.10.5-1build1                          amd64        Filesystem in Userspace (library) (3.x version)
-ii  libgbm1:amd64                             22.2.5-0ubuntu0.1~22.04.3               amd64        generic buffer management API -- runtime
-ii  libgbm1:i386                              22.2.5-0ubuntu0.1~22.04.3               i386         generic buffer management API -- runtime
+ii  libgbm1:amd64                             23.0.4-0ubuntu1~22.04.1                 amd64        generic buffer management API -- runtime
+ii  libgbm1:i386                              23.0.4-0ubuntu1~22.04.1                 i386         generic buffer management API -- runtime
 ii  libgc1:amd64                              1:8.0.6-1.1build1                       amd64        conservative garbage collector for C and C++
 ii  libgcc-10-dev-mips-cross                  10.3.0-1ubuntu1cross2                   all          GCC support library (development files)
 ii  libgcc-10-dev-mips64-cross                10.3.0-1ubuntu1cross2                   all          GCC support library (development files)
 ii  libgcc-10-dev-mips64el-cross              10.3.0-1ubuntu1cross2                   all          GCC support library (development files)
 ii  libgcc-10-dev-mipsel-cross                10.3.0-1ubuntu1cross2                   all          GCC support library (development files)
-ii  libgcc-11-dev-alpha-cross                 11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-arm64-cross                 11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-armel-cross                 11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-armhf-cross                 11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-hppa-cross                  11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-i386-cross                  11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-m68k-cross                  11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-powerpc-cross               11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-ppc64-cross                 11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-ppc64el-cross               11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-riscv64-cross               11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-s390x-cross                 11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-sh4-cross                   11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-sparc64-cross               11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev-x32-cross                   11.3.0-1ubuntu1~22.04.1cross1           all          GCC support library (development files)
-ii  libgcc-11-dev:amd64                       11.3.0-1ubuntu1~22.04.1                 amd64        GCC support library (development files)
-ii  libgcc-s1-alpha-cross                     12.1.0-2ubuntu1~22.04cross1             all          GCC support library (alpha)
-ii  libgcc-s1-arm64-cross                     12.1.0-2ubuntu1~22.04cross1             all          GCC support library (arm64)
-ii  libgcc-s1-armel-cross                     12.1.0-2ubuntu1~22.04cross1             all          GCC support library (armel)
-ii  libgcc-s1-armhf-cross                     12.1.0-2ubuntu1~22.04cross1             all          GCC support library (armhf)
-ii  libgcc-s1-i386-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC support library (i386)
+ii  libgcc-11-dev-alpha-cross                 11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-arm64-cross                 11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-armel-cross                 11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-armhf-cross                 11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-hppa-cross                  11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-i386-cross                  11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-m68k-cross                  11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-powerpc-cross               11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-ppc64-cross                 11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-ppc64el-cross               11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-riscv64-cross               11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-s390x-cross                 11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-sh4-cross                   11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-sparc64-cross               11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev-x32-cross                   11.4.0-1ubuntu1~22.04cross1             all          GCC support library (development files)
+ii  libgcc-11-dev:amd64                       11.4.0-1ubuntu1~22.04                   amd64        GCC support library (development files)
+ii  libgcc-s1-alpha-cross                     12.3.0-1ubuntu1~22.04cross1             all          GCC support library (alpha)
+ii  libgcc-s1-arm64-cross                     12.3.0-1ubuntu1~22.04cross1             all          GCC support library (arm64)
+ii  libgcc-s1-armel-cross                     12.3.0-1ubuntu1~22.04cross1             all          GCC support library (armel)
+ii  libgcc-s1-armhf-cross                     12.3.0-1ubuntu1~22.04cross1             all          GCC support library (armhf)
+ii  libgcc-s1-i386-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC support library (i386)
 ii  libgcc-s1-mips-cross                      10.3.0-1ubuntu1cross2                   all          GCC support library (mips)
 ii  libgcc-s1-mips64-cross                    10.3.0-1ubuntu1cross2                   all          GCC support library (mips64)
 ii  libgcc-s1-mips64el-cross                  10.3.0-1ubuntu1cross2                   all          GCC support library (mips64el)
 ii  libgcc-s1-mipsel-cross                    10.3.0-1ubuntu1cross2                   all          GCC support library (mipsel)
-ii  libgcc-s1-powerpc-cross                   12.1.0-2ubuntu1~22.04cross1             all          GCC support library (powerpc)
-ii  libgcc-s1-ppc64-cross                     12.1.0-2ubuntu1~22.04cross1             all          GCC support library (ppc64)
-ii  libgcc-s1-ppc64el-cross                   12.1.0-2ubuntu1~22.04cross1             all          GCC support library (ppc64el)
-ii  libgcc-s1-riscv64-cross                   12.1.0-2ubuntu1~22.04cross1             all          GCC support library (riscv64)
-ii  libgcc-s1-s390x-cross                     12.1.0-2ubuntu1~22.04cross1             all          GCC support library (s390x)
-ii  libgcc-s1-sh4-cross                       12.1.0-2ubuntu1~22.04cross1             all          GCC support library (sh4)
-ii  libgcc-s1-sparc64-cross                   12.1.0-2ubuntu1~22.04cross1             all          GCC support library (sparc64)
-ii  libgcc-s1-x32-cross                       12.1.0-2ubuntu1~22.04cross1             all          GCC support library (x32)
-ii  libgcc-s1:amd64                           12.1.0-2ubuntu1~22.04                   amd64        GCC support library
-ii  libgcc-s1:i386                            12.1.0-2ubuntu1~22.04                   i386         GCC support library
-ii  libgcc-s2-m68k-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC support library (m68k)
-ii  libgcc-s4-hppa-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC support library (hppa)
+ii  libgcc-s1-powerpc-cross                   12.3.0-1ubuntu1~22.04cross1             all          GCC support library (powerpc)
+ii  libgcc-s1-ppc64-cross                     12.3.0-1ubuntu1~22.04cross1             all          GCC support library (ppc64)
+ii  libgcc-s1-ppc64el-cross                   12.3.0-1ubuntu1~22.04cross1             all          GCC support library (ppc64el)
+ii  libgcc-s1-riscv64-cross                   12.3.0-1ubuntu1~22.04cross1             all          GCC support library (riscv64)
+ii  libgcc-s1-s390x-cross                     12.3.0-1ubuntu1~22.04cross1             all          GCC support library (s390x)
+ii  libgcc-s1-sh4-cross                       12.3.0-1ubuntu1~22.04cross1             all          GCC support library (sh4)
+ii  libgcc-s1-sparc64-cross                   12.3.0-1ubuntu1~22.04cross1             all          GCC support library (sparc64)
+ii  libgcc-s1-x32-cross                       12.3.0-1ubuntu1~22.04cross1             all          GCC support library (x32)
+ii  libgcc-s1:amd64                           12.3.0-1ubuntu1~22.04                   amd64        GCC support library
+ii  libgcc-s1:i386                            12.3.0-1ubuntu1~22.04                   i386         GCC support library
+ii  libgcc-s2-m68k-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC support library (m68k)
+ii  libgcc-s4-hppa-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC support library (hppa)
 ii  libgcrypt20:amd64                         1.9.4-3ubuntu3                          amd64        LGPL Crypto library - runtime library
 ii  libgcrypt20:i386                          1.9.4-3ubuntu3                          i386         LGPL Crypto library - runtime library
 ii  libgd3:amd64                              2.3.0-2ubuntu2                          amd64        GD Graphics Library
@@ -569,47 +570,47 @@ ii  libgfapi0:amd64                           10.1-1ubuntu0.1                   
 ii  libgfrpc0:amd64                           10.1-1ubuntu0.1                         amd64        GlusterFS libgfrpc shared library
 ii  libgfxdr0:amd64                           10.1-1ubuntu0.1                         amd64        GlusterFS libgfxdr shared library
 ii  libgirepository-1.0-1:amd64               1.72.0-1                                amd64        Library for handling GObject introspection data (runtime library)
-ii  libgl1-amber-dri:amd64                    21.3.7-0ubuntu1                         amd64        free implementation of the OpenGL API -- DRI modules
-ii  libgl1-mesa-dri:amd64                     22.2.5-0ubuntu0.1~22.04.3               amd64        free implementation of the OpenGL API -- DRI modules
-ii  libgl1-mesa-dri:i386                      22.2.5-0ubuntu0.1~22.04.3               i386         free implementation of the OpenGL API -- DRI modules
+ii  libgl1-amber-dri:amd64                    21.3.9-0ubuntu1~22.04.1                 amd64        free implementation of the OpenGL API -- Amber DRI modules
+ii  libgl1-mesa-dri:amd64                     23.0.4-0ubuntu1~22.04.1                 amd64        free implementation of the OpenGL API -- DRI modules
+ii  libgl1-mesa-dri:i386                      23.0.4-0ubuntu1~22.04.1                 i386         free implementation of the OpenGL API -- DRI modules
 ii  libgl1:amd64                              1.4.0-1                                 amd64        Vendor neutral GL dispatch library -- legacy GL support
 ii  libgl1:i386                               1.4.0-1                                 i386         Vendor neutral GL dispatch library -- legacy GL support
-ii  libglapi-mesa:amd64                       22.2.5-0ubuntu0.1~22.04.3               amd64        free implementation of the GL API -- shared library
-ii  libglapi-mesa:i386                        22.2.5-0ubuntu0.1~22.04.3               i386         free implementation of the GL API -- shared library
+ii  libglapi-mesa:amd64                       23.0.4-0ubuntu1~22.04.1                 amd64        free implementation of the GL API -- shared library
+ii  libglapi-mesa:i386                        23.0.4-0ubuntu1~22.04.1                 i386         free implementation of the GL API -- shared library
 ii  libglib2.0-0:amd64                        2.72.4-0ubuntu2.2                       amd64        GLib library of C routines
 ii  libglib2.0-0:i386                         2.72.4-0ubuntu2.2                       i386         GLib library of C routines
 ii  libglib2.0-data                           2.72.4-0ubuntu2.2                       all          Common files for GLib library
 ii  libglusterfs0:amd64                       10.1-1ubuntu0.1                         amd64        GlusterFS shared library
 ii  libglvnd0:amd64                           1.4.0-1                                 amd64        Vendor neutral GL dispatch library
 ii  libglvnd0:i386                            1.4.0-1                                 i386         Vendor neutral GL dispatch library
-ii  libglx-mesa0:amd64                        22.2.5-0ubuntu0.1~22.04.3               amd64        free implementation of the OpenGL API -- GLX vendor library
-ii  libglx-mesa0:i386                         22.2.5-0ubuntu0.1~22.04.3               i386         free implementation of the OpenGL API -- GLX vendor library
+ii  libglx-mesa0:amd64                        23.0.4-0ubuntu1~22.04.1                 amd64        free implementation of the OpenGL API -- GLX vendor library
+ii  libglx-mesa0:i386                         23.0.4-0ubuntu1~22.04.1                 i386         free implementation of the OpenGL API -- GLX vendor library
 ii  libglx0:amd64                             1.4.0-1                                 amd64        Vendor neutral GL dispatch library -- GLX support
 ii  libglx0:i386                              1.4.0-1                                 i386         Vendor neutral GL dispatch library -- GLX support
 ii  libgmp10:amd64                            2:6.2.1+dfsg-3ubuntu1                   amd64        Multiprecision arithmetic library
 ii  libgmp10:i386                             2:6.2.1+dfsg-3ubuntu1                   i386         Multiprecision arithmetic library
 ii  libgnutls30:amd64                         3.7.3-4ubuntu1.2                        amd64        GNU TLS library - main runtime library
 ii  libgnutls30:i386                          3.7.3-4ubuntu1.2                        i386         GNU TLS library - main runtime library
-ii  libgomp1-alpha-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-arm64-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-armel-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-armhf-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-hppa-cross                       12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-i386-cross                       12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-m68k-cross                       12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-alpha-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-arm64-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-armel-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-armhf-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-hppa-cross                       12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-i386-cross                       12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-m68k-cross                       12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
 ii  libgomp1-mips-cross                       10.3.0-1ubuntu1cross2                   all          GCC OpenMP (GOMP) support library
 ii  libgomp1-mips64-cross                     10.3.0-1ubuntu1cross2                   all          GCC OpenMP (GOMP) support library
 ii  libgomp1-mips64el-cross                   10.3.0-1ubuntu1cross2                   all          GCC OpenMP (GOMP) support library
 ii  libgomp1-mipsel-cross                     10.3.0-1ubuntu1cross2                   all          GCC OpenMP (GOMP) support library
-ii  libgomp1-powerpc-cross                    12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-ppc64-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-ppc64el-cross                    12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-riscv64-cross                    12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-s390x-cross                      12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-sh4-cross                        12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-sparc64-cross                    12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1-x32-cross                        12.1.0-2ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
-ii  libgomp1:amd64                            12.1.0-2ubuntu1~22.04                   amd64        GCC OpenMP (GOMP) support library
+ii  libgomp1-powerpc-cross                    12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-ppc64-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-ppc64el-cross                    12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-riscv64-cross                    12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-s390x-cross                      12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-sh4-cross                        12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-sparc64-cross                    12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1-x32-cross                        12.3.0-1ubuntu1~22.04cross1             all          GCC OpenMP (GOMP) support library
+ii  libgomp1:amd64                            12.3.0-1ubuntu1~22.04                   amd64        GCC OpenMP (GOMP) support library
 ii  libgpg-error-l10n                         1.43-3                                  all          library of error values and messages in GnuPG (localization files)
 ii  libgpg-error0:amd64                       1.43-3                                  amd64        GnuPG development runtime library
 ii  libgpg-error0:i386                        1.43-3                                  i386         GnuPG development runtime library
@@ -626,10 +627,10 @@ ii  libgsm1:amd64                             1.0.19-1                          
 ii  libgsm1:i386                              1.0.19-1                                i386         Shared libraries for GSM speech compressor
 ii  libgssapi-krb5-2:amd64                    1.19.2-2ubuntu0.2                       amd64        MIT Kerberos runtime libraries - krb5 GSS-API Mechanism
 ii  libgssapi-krb5-2:i386                     1.19.2-2ubuntu0.2                       i386         MIT Kerberos runtime libraries - krb5 GSS-API Mechanism
-ii  libgstreamer-plugins-base1.0-0:amd64      1.20.1-1                                amd64        GStreamer libraries from the "base" set
-ii  libgstreamer-plugins-base1.0-0:i386       1.20.1-1                                i386         GStreamer libraries from the "base" set
-ii  libgstreamer-plugins-good1.0-0:amd64      1.20.3-0ubuntu1                         amd64        GStreamer development files for libraries from the "good" set
-ii  libgstreamer-plugins-good1.0-0:i386       1.20.3-0ubuntu1                         i386         GStreamer development files for libraries from the "good" set
+ii  libgstreamer-plugins-base1.0-0:amd64      1.20.1-1ubuntu0.1                       amd64        GStreamer libraries from the "base" set
+ii  libgstreamer-plugins-base1.0-0:i386       1.20.1-1ubuntu0.1                       i386         GStreamer libraries from the "base" set
+ii  libgstreamer-plugins-good1.0-0:amd64      1.20.3-0ubuntu1.1                       amd64        GStreamer development files for libraries from the "good" set
+ii  libgstreamer-plugins-good1.0-0:i386       1.20.3-0ubuntu1.1                       i386         GStreamer development files for libraries from the "good" set
 ii  libgstreamer1.0-0:amd64                   1.20.3-0ubuntu1                         amd64        Core GStreamer libraries and elements
 ii  libgstreamer1.0-0:i386                    1.20.3-0ubuntu1                         i386         Core GStreamer libraries and elements
 ii  libgtk-3-0:amd64                          3.24.33-1ubuntu2                        amd64        GTK graphical user interface library
@@ -642,7 +643,7 @@ ii  libharfbuzz0b:i386                        2.7.4-1ubuntu3.1                  
 ii  libhiredis0.14:amd64                      0.14.1-2                                amd64        minimalistic C client library for Redis
 ii  libhogweed6:amd64                         3.7.3-1build2                           amd64        low level cryptographic library (public-key cryptos)
 ii  libhogweed6:i386                          3.7.3-1build2                           i386         low level cryptographic library (public-key cryptos)
-ii  libhwasan0-arm64-cross                    12.1.0-2ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
+ii  libhwasan0-arm64-cross                    12.3.0-1ubuntu1~22.04cross1             all          AddressSanitizer -- a fast memory error detector
 ii  libibverbs1:amd64                         39.0-1                                  amd64        Library for direct userspace use of RDMA (InfiniBand/iWARP)
 ii  libicu-dev:amd64                          70.1-2                                  amd64        Development files for International Components for Unicode
 ii  libicu70:amd64                            70.1-2                                  amd64        International Components for Unicode
@@ -657,16 +658,16 @@ ii  libipc-run-perl                           20200505.0-1                      
 ii  libipt2                                   2.0.5-1                                 amd64        Intel Processor Trace Decoder Library
 ii  libiscsi7:amd64                           1.19.0-3build2                          amd64        iSCSI client shared library
 ii  libisl23:amd64                            0.24-2build1                            amd64        manipulating sets and relations of integer points bounded by linear constraints
-ii  libitm1-alpha-cross                       12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1-arm64-cross                       12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1-i386-cross                        12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1-ppc64-cross                       12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1-ppc64el-cross                     12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1-s390x-cross                       12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1-sh4-cross                         12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1-sparc64-cross                     12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1-x32-cross                         12.1.0-2ubuntu1~22.04cross1             all          GNU Transactional Memory Library
-ii  libitm1:amd64                             12.1.0-2ubuntu1~22.04                   amd64        GNU Transactional Memory Library
+ii  libitm1-alpha-cross                       12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1-arm64-cross                       12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1-i386-cross                        12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1-ppc64-cross                       12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1-ppc64el-cross                     12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1-s390x-cross                       12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1-sh4-cross                         12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1-sparc64-cross                     12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1-x32-cross                         12.3.0-1ubuntu1~22.04cross1             all          GNU Transactional Memory Library
+ii  libitm1:amd64                             12.3.0-1ubuntu1~22.04                   amd64        GNU Transactional Memory Library
 ii  libjack-jackd2-0:amd64                    1.9.20~dfsg-1                           amd64        JACK Audio Connection Kit (libraries)
 ii  libjack-jackd2-0:i386                     1.9.20~dfsg-1                           i386         JACK Audio Connection Kit (libraries)
 ii  libjansson4:amd64                         2.13.1-1.1build3                        amd64        C library for encoding, decoding and manipulating JSON data
@@ -690,17 +691,17 @@ ii  libkrb5support0:amd64                     1.19.2-2ubuntu0.2                 
 ii  libkrb5support0:i386                      1.19.2-2ubuntu0.2                       i386         MIT Kerberos runtime libraries - Support library
 ii  liblcms2-2:amd64                          2.12~rc1-2build2                        amd64        Little CMS 2 color management library
 ii  liblcms2-2:i386                           2.12~rc1-2build2                        i386         Little CMS 2 color management library
-ii  libldap-2.5-0:amd64                       2.5.14+dfsg-0ubuntu0.22.04.2            amd64        OpenLDAP libraries
-ii  libldap-2.5-0:i386                        2.5.14+dfsg-0ubuntu0.22.04.2            i386         OpenLDAP libraries
-ii  libldap-common                            2.5.14+dfsg-0ubuntu0.22.04.2            all          OpenLDAP common files for libraries
-ii  liblldb-14                                1:14.0.0-1ubuntu1                       amd64        Next generation, high-performance debugger, library
-ii  libllvm14:amd64                           1:14.0.0-1ubuntu1                       amd64        Modular compiler and toolchain technologies, runtime library
-ii  libllvm15:amd64                           1:15.0.7-0ubuntu0.22.04.2               amd64        Modular compiler and toolchain technologies, runtime library
-ii  libllvm15:i386                            1:15.0.7-0ubuntu0.22.04.2               i386         Modular compiler and toolchain technologies, runtime library
-ii  liblsan0-arm64-cross                      12.1.0-2ubuntu1~22.04cross1             all          LeakSanitizer -- a memory leak detector (runtime)
-ii  liblsan0-ppc64-cross                      12.1.0-2ubuntu1~22.04cross1             all          LeakSanitizer -- a memory leak detector (runtime)
-ii  liblsan0-ppc64el-cross                    12.1.0-2ubuntu1~22.04cross1             all          LeakSanitizer -- a memory leak detector (runtime)
-ii  liblsan0:amd64                            12.1.0-2ubuntu1~22.04                   amd64        LeakSanitizer -- a memory leak detector (runtime)
+ii  libldap-2.5-0:amd64                       2.5.15+dfsg-0ubuntu0.22.04.1            amd64        OpenLDAP libraries
+ii  libldap-2.5-0:i386                        2.5.15+dfsg-0ubuntu0.22.04.1            i386         OpenLDAP libraries
+ii  libldap-common                            2.5.15+dfsg-0ubuntu0.22.04.1            all          OpenLDAP common files for libraries
+ii  liblldb-14                                1:14.0.0-1ubuntu1.1                     amd64        Next generation, high-performance debugger, library
+ii  libllvm14:amd64                           1:14.0.0-1ubuntu1.1                     amd64        Modular compiler and toolchain technologies, runtime library
+ii  libllvm15:amd64                           1:15.0.7-0ubuntu0.22.04.3               amd64        Modular compiler and toolchain technologies, runtime library
+ii  libllvm15:i386                            1:15.0.7-0ubuntu0.22.04.3               i386         Modular compiler and toolchain technologies, runtime library
+ii  liblsan0-arm64-cross                      12.3.0-1ubuntu1~22.04cross1             all          LeakSanitizer -- a memory leak detector (runtime)
+ii  liblsan0-ppc64-cross                      12.3.0-1ubuntu1~22.04cross1             all          LeakSanitizer -- a memory leak detector (runtime)
+ii  liblsan0-ppc64el-cross                    12.3.0-1ubuntu1~22.04cross1             all          LeakSanitizer -- a memory leak detector (runtime)
+ii  liblsan0:amd64                            12.3.0-1ubuntu1~22.04                   amd64        LeakSanitizer -- a memory leak detector (runtime)
 ii  libltdl7:amd64                            2.4.6-15build2                          amd64        System independent dlopen wrapper for GNU libtool
 ii  libltdl7:i386                             2.4.6-15build2                          i386         System independent dlopen wrapper for GNU libtool
 ii  liblz4-1:amd64                            1.9.3-2build2                           amd64        Fast LZ compression algorithm library - runtime
@@ -742,8 +743,8 @@ ii  libnspr4:amd64                            2:4.32-3build1                    
 ii  libnss-systemd:amd64                      249.11-0ubuntu3.9                       amd64        nss module providing dynamic user and group name resolution
 ii  libnss3:amd64                             2:3.68.2-0ubuntu1.2                     amd64        Network Security Service libraries
 ii  libnuma1:amd64                            2.0.14-3ubuntu2                         amd64        Libraries for controlling NUMA policy
-ii  libobjc-11-dev:amd64                      11.3.0-1ubuntu1~22.04.1                 amd64        Runtime library for GNU Objective-C applications (development files)
-ii  libobjc4:amd64                            12.1.0-2ubuntu1~22.04                   amd64        Runtime library for GNU Objective-C applications
+ii  libobjc-11-dev:amd64                      11.4.0-1ubuntu1~22.04                   amd64        Runtime library for GNU Objective-C applications (development files)
+ii  libobjc4:amd64                            12.3.0-1ubuntu1~22.04                   amd64        Runtime library for GNU Objective-C applications
 ii  libodbc2:amd64                            2.3.9-5                                 amd64        ODBC Driver Manager library for Unix
 ii  libodbc2:i386                             2.3.9-5                                 i386         ODBC Driver Manager library for Unix
 ii  libogg0:amd64                             1.3.5-0ubuntu3                          amd64        Ogg bitstream library
@@ -756,8 +757,8 @@ ii  libopus0:amd64                            1.3.1-0.1build2                   
 ii  libopus0:i386                             1.3.1-0.1build2                         i386         Opus codec runtime library
 ii  liborc-0.4-0:amd64                        1:0.4.32-2                              amd64        Library of Optimized Inner Loops Runtime Compiler
 ii  liborc-0.4-0:i386                         1:0.4.32-2                              i386         Library of Optimized Inner Loops Runtime Compiler
-ii  libosmesa6:amd64                          22.2.5-0ubuntu0.1~22.04.3               amd64        Mesa Off-screen rendering extension
-ii  libosmesa6:i386                           22.2.5-0ubuntu0.1~22.04.3               i386         Mesa Off-screen rendering extension
+ii  libosmesa6:amd64                          23.0.4-0ubuntu1~22.04.1                 amd64        Mesa Off-screen rendering extension
+ii  libosmesa6:i386                           23.0.4-0ubuntu1~22.04.1                 i386         Mesa Off-screen rendering extension
 ii  libp11-kit0:amd64                         0.24.0-6build1                          amd64        library for loading and coordinating access to PKCS#11 modules - runtime
 ii  libp11-kit0:i386                          0.24.0-6build1                          i386         library for loading and coordinating access to PKCS#11 modules - runtime
 ii  libpam-cap:amd64                          1:2.44-1ubuntu0.22.04.1                 amd64        POSIX 1003.1e capabilities (PAM module)
@@ -775,11 +776,12 @@ ii  libpangoft2-1.0-0:i386                    1.50.6+ds-2ubuntu1                
 ii  libpcap0.8:amd64                          1.10.1-4build1                          amd64        system interface for user-level packet capture
 ii  libpcap0.8:i386                           1.10.1-4build1                          i386         system interface for user-level packet capture
 ii  libpciaccess0:amd64                       0.16-3                                  amd64        Generic PCI access library for X
+ii  libpciaccess0:i386                        0.16-3                                  i386         Generic PCI access library for X
 ii  libpcre2-8-0:amd64                        10.39-3ubuntu0.1                        amd64        New Perl Compatible Regular Expression Library- 8 bit runtime files
 ii  libpcre2-8-0:i386                         10.39-3ubuntu0.1                        i386         New Perl Compatible Regular Expression Library- 8 bit runtime files
 ii  libpcre3:amd64                            2:8.39-13ubuntu0.22.04.1                amd64        Old Perl 5 Compatible Regular Expression Library - runtime files
 ii  libpcre3:i386                             2:8.39-13ubuntu0.22.04.1                i386         Old Perl 5 Compatible Regular Expression Library - runtime files
-ii  libpcsclite1:amd64                        1.9.5-3                                 amd64        Middleware to access a smart card using PC/SC (library)
+ii  libpcsclite1:amd64                        1.9.5-3ubuntu1                          amd64        Middleware to access a smart card using PC/SC (library)
 ii  libperl5.34:amd64                         5.34.0-3ubuntu1.2                       amd64        shared Perl library
 ii  libpfm4:amd64                             4.11.1+git32-gd0b85fb-1ubuntu0.1        amd64        Library to program the performance monitoring events
 ii  libpipeline1:amd64                        1.5.5-1                                 amd64        Unix process pipeline manipulation library
@@ -799,22 +801,22 @@ ii  libpulse0:amd64                           1:15.99.1+dfsg1-1ubuntu2.1        
 ii  libpulse0:i386                            1:15.99.1+dfsg1-1ubuntu2.1              i386         PulseAudio client libraries
 ii  libpython2.7-minimal:amd64                2.7.18-13ubuntu1.1                      amd64        Minimal subset of the Python language (version 2.7)
 ii  libpython3-stdlib:amd64                   3.10.6-1~22.04                          amd64        interactive high-level object-oriented language (default python3 version)
-ii  libpython3.10-minimal:amd64               3.10.6-1~22.04.2ubuntu1.1               amd64        Minimal subset of the Python language (version 3.10)
-ii  libpython3.10-stdlib:amd64                3.10.6-1~22.04.2ubuntu1.1               amd64        Interactive high-level object-oriented language (standard library, version 3.10)
-ii  libpython3.10:amd64                       3.10.6-1~22.04.2ubuntu1.1               amd64        Shared Python runtime library (version 3.10)
-ii  libquadmath0-i386-cross                   12.1.0-2ubuntu1~22.04cross1             all          GCC Quad-Precision Math Library
-ii  libquadmath0-ppc64el-cross                12.1.0-2ubuntu1~22.04cross1             all          GCC Quad-Precision Math Library
-ii  libquadmath0-x32-cross                    12.1.0-2ubuntu1~22.04cross1             all          GCC Quad-Precision Math Library
-ii  libquadmath0:amd64                        12.1.0-2ubuntu1~22.04                   amd64        GCC Quad-Precision Math Library
-ii  librados2                                 17.2.5-0ubuntu0.22.04.3                 amd64        RADOS distributed object store client library
+ii  libpython3.10-minimal:amd64               3.10.12-1~22.04.2                       amd64        Minimal subset of the Python language (version 3.10)
+ii  libpython3.10-stdlib:amd64                3.10.12-1~22.04.2                       amd64        Interactive high-level object-oriented language (standard library, version 3.10)
+ii  libpython3.10:amd64                       3.10.12-1~22.04.2                       amd64        Shared Python runtime library (version 3.10)
+ii  libquadmath0-i386-cross                   12.3.0-1ubuntu1~22.04cross1             all          GCC Quad-Precision Math Library
+ii  libquadmath0-ppc64el-cross                12.3.0-1ubuntu1~22.04cross1             all          GCC Quad-Precision Math Library
+ii  libquadmath0-x32-cross                    12.3.0-1ubuntu1~22.04cross1             all          GCC Quad-Precision Math Library
+ii  libquadmath0:amd64                        12.3.0-1ubuntu1~22.04                   amd64        GCC Quad-Precision Math Library
+ii  librados2                                 17.2.6-0ubuntu0.22.04.1                 amd64        RADOS distributed object store client library
 ii  libraw1394-11:amd64                       2.1.2-2build2                           amd64        library for direct access to IEEE 1394 bus (aka FireWire)
 ii  libraw1394-11:i386                        2.1.2-2build2                           i386         library for direct access to IEEE 1394 bus (aka FireWire)
-ii  librbd1                                   17.2.5-0ubuntu0.22.04.3                 amd64        RADOS block device client library
+ii  librbd1                                   17.2.6-0ubuntu0.22.04.1                 amd64        RADOS block device client library
 ii  librdmacm1:amd64                          39.0-1                                  amd64        Library for managing RDMA connections
 ii  libreadline8:amd64                        8.1.2-1                                 amd64        GNU readline and history libraries, run-time libraries
 ii  librhash0:amd64                           1.4.2-1ubuntu1                          amd64        shared library for hash functions computing
-ii  librsvg2-2:amd64                          2.52.5+dfsg-3                           amd64        SAX-based renderer library for SVG files (runtime)
-ii  librsvg2-common:amd64                     2.52.5+dfsg-3                           amd64        SAX-based renderer library for SVG files (extra runtime)
+ii  librsvg2-2:amd64                          2.52.5+dfsg-3ubuntu0.2                  amd64        SAX-based renderer library for SVG files (runtime)
+ii  librsvg2-common:amd64                     2.52.5+dfsg-3ubuntu0.2                  amd64        SAX-based renderer library for SVG files (extra runtime)
 ii  librtmp1:amd64                            2.4+20151223.gitfa8646d.1-2build4       amd64        toolkit for RTMP streams (shared library)
 ii  librtmp1:i386                             2.4+20151223.gitfa8646d.1-2build4       i386         toolkit for RTMP streams (shared library)
 ii  libsamplerate0:amd64                      0.2.2-1build1                           amd64        Audio sample rate conversion library
@@ -869,43 +871,43 @@ ii  libstdc++-10-dev-mips-cross               10.3.0-1ubuntu1cross2             
 ii  libstdc++-10-dev-mips64-cross             10.3.0-1ubuntu1cross2                   all          GNU Standard C++ Library v3 (development files) (mips64)
 ii  libstdc++-10-dev-mips64el-cross           10.3.0-1ubuntu1cross2                   all          GNU Standard C++ Library v3 (development files) (mips64el)
 ii  libstdc++-10-dev-mipsel-cross             10.3.0-1ubuntu1cross2                   all          GNU Standard C++ Library v3 (development files) (mipsel)
-ii  libstdc++-11-dev-alpha-cross              11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (alpha)
-ii  libstdc++-11-dev-arm64-cross              11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (arm64)
-ii  libstdc++-11-dev-armel-cross              11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (armel)
-ii  libstdc++-11-dev-armhf-cross              11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (armhf)
-ii  libstdc++-11-dev-hppa-cross               11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (hppa)
-ii  libstdc++-11-dev-i386-cross               11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (i386)
-ii  libstdc++-11-dev-m68k-cross               11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (m68k)
-ii  libstdc++-11-dev-powerpc-cross            11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (powerpc)
-ii  libstdc++-11-dev-ppc64-cross              11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (ppc64)
-ii  libstdc++-11-dev-ppc64el-cross            11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (ppc64el)
-ii  libstdc++-11-dev-riscv64-cross            11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (riscv64)
-ii  libstdc++-11-dev-s390x-cross              11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (s390x)
-ii  libstdc++-11-dev-sh4-cross                11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (sh4)
-ii  libstdc++-11-dev-sparc64-cross            11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (sparc64)
-ii  libstdc++-11-dev-x32-cross                11.3.0-1ubuntu1~22.04.1cross1           all          GNU Standard C++ Library v3 (development files) (x32)
-ii  libstdc++-11-dev:amd64                    11.3.0-1ubuntu1~22.04.1                 amd64        GNU Standard C++ Library v3 (development files)
-ii  libstdc++6-alpha-cross                    12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (alpha)
-ii  libstdc++6-arm64-cross                    12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (arm64)
-ii  libstdc++6-armel-cross                    12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (armel)
-ii  libstdc++6-armhf-cross                    12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (armhf)
-ii  libstdc++6-hppa-cross                     12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (hppa)
-ii  libstdc++6-i386-cross                     12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (i386)
-ii  libstdc++6-m68k-cross                     12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (m68k)
+ii  libstdc++-11-dev-alpha-cross              11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (alpha)
+ii  libstdc++-11-dev-arm64-cross              11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (arm64)
+ii  libstdc++-11-dev-armel-cross              11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (armel)
+ii  libstdc++-11-dev-armhf-cross              11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (armhf)
+ii  libstdc++-11-dev-hppa-cross               11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (hppa)
+ii  libstdc++-11-dev-i386-cross               11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (i386)
+ii  libstdc++-11-dev-m68k-cross               11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (m68k)
+ii  libstdc++-11-dev-powerpc-cross            11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (powerpc)
+ii  libstdc++-11-dev-ppc64-cross              11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (ppc64)
+ii  libstdc++-11-dev-ppc64el-cross            11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (ppc64el)
+ii  libstdc++-11-dev-riscv64-cross            11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (riscv64)
+ii  libstdc++-11-dev-s390x-cross              11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (s390x)
+ii  libstdc++-11-dev-sh4-cross                11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (sh4)
+ii  libstdc++-11-dev-sparc64-cross            11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (sparc64)
+ii  libstdc++-11-dev-x32-cross                11.4.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (development files) (x32)
+ii  libstdc++-11-dev:amd64                    11.4.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (development files)
+ii  libstdc++6-alpha-cross                    12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (alpha)
+ii  libstdc++6-arm64-cross                    12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (arm64)
+ii  libstdc++6-armel-cross                    12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (armel)
+ii  libstdc++6-armhf-cross                    12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (armhf)
+ii  libstdc++6-hppa-cross                     12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (hppa)
+ii  libstdc++6-i386-cross                     12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (i386)
+ii  libstdc++6-m68k-cross                     12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (m68k)
 ii  libstdc++6-mips-cross                     10.3.0-1ubuntu1cross2                   all          GNU Standard C++ Library v3 (mips)
 ii  libstdc++6-mips64-cross                   10.3.0-1ubuntu1cross2                   all          GNU Standard C++ Library v3 (mips64)
 ii  libstdc++6-mips64el-cross                 10.3.0-1ubuntu1cross2                   all          GNU Standard C++ Library v3 (mips64el)
 ii  libstdc++6-mipsel-cross                   10.3.0-1ubuntu1cross2                   all          GNU Standard C++ Library v3 (mipsel)
-ii  libstdc++6-powerpc-cross                  12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (powerpc)
-ii  libstdc++6-ppc64-cross                    12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (ppc64)
-ii  libstdc++6-ppc64el-cross                  12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (ppc64el)
-ii  libstdc++6-riscv64-cross                  12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (riscv64)
-ii  libstdc++6-s390x-cross                    12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (s390x)
-ii  libstdc++6-sh4-cross                      12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (sh4)
-ii  libstdc++6-sparc64-cross                  12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (sparc64)
-ii  libstdc++6-x32-cross                      12.1.0-2ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (x32)
-ii  libstdc++6:amd64                          12.1.0-2ubuntu1~22.04                   amd64        GNU Standard C++ Library v3
-ii  libstdc++6:i386                           12.1.0-2ubuntu1~22.04                   i386         GNU Standard C++ Library v3
+ii  libstdc++6-powerpc-cross                  12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (powerpc)
+ii  libstdc++6-ppc64-cross                    12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (ppc64)
+ii  libstdc++6-ppc64el-cross                  12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (ppc64el)
+ii  libstdc++6-riscv64-cross                  12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (riscv64)
+ii  libstdc++6-s390x-cross                    12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (s390x)
+ii  libstdc++6-sh4-cross                      12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (sh4)
+ii  libstdc++6-sparc64-cross                  12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (sparc64)
+ii  libstdc++6-x32-cross                      12.3.0-1ubuntu1~22.04cross1             all          GNU Standard C++ Library v3 (x32)
+ii  libstdc++6:amd64                          12.3.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3
+ii  libstdc++6:i386                           12.3.0-1ubuntu1~22.04                   i386         GNU Standard C++ Library v3
 ii  libsystemd0:amd64                         249.11-0ubuntu3.9                       amd64        systemd utility library
 ii  libsystemd0:i386                          249.11-0ubuntu3.9                       i386         systemd utility library
 ii  libtag1v5-vanilla:amd64                   1.11.1+dfsg.1-3ubuntu3                  amd64        audio meta-data library - vanilla flavour
@@ -930,29 +932,29 @@ ii  libtinfo6:i386                            6.3-2ubuntu0.1                    
 ii  libtirpc-common                           1.3.2-2ubuntu0.1                        all          transport-independent RPC library - common files
 ii  libtirpc-dev:amd64                        1.3.2-2ubuntu0.1                        amd64        transport-independent RPC library - development files
 ii  libtirpc3:amd64                           1.3.2-2ubuntu0.1                        amd64        transport-independent RPC library
-ii  libtsan0-arm64-cross                      11.3.0-1ubuntu1~22.04.1cross1           all          ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
-ii  libtsan0-ppc64-cross                      11.3.0-1ubuntu1~22.04.1cross1           all          ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
-ii  libtsan0-ppc64el-cross                    11.3.0-1ubuntu1~22.04.1cross1           all          ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
-ii  libtsan0:amd64                            11.3.0-1ubuntu1~22.04.1                 amd64        ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
+ii  libtsan0-arm64-cross                      11.4.0-1ubuntu1~22.04cross1             all          ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
+ii  libtsan0-ppc64-cross                      11.4.0-1ubuntu1~22.04cross1             all          ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
+ii  libtsan0-ppc64el-cross                    11.4.0-1ubuntu1~22.04cross1             all          ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
+ii  libtsan0:amd64                            11.4.0-1ubuntu1~22.04                   amd64        ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
 ii  libtwolame0:amd64                         0.4.0-2build2                           amd64        MPEG Audio Layer 2 encoding library
 ii  libtwolame0:i386                          0.4.0-2build2                           i386         MPEG Audio Layer 2 encoding library
-ii  libubsan1-arm64-cross                     12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-armel-cross                     12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-armhf-cross                     12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-i386-cross                      12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-powerpc-cross                   12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-ppc64-cross                     12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-ppc64el-cross                   12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-s390x-cross                     12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-sparc64-cross                   12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1-x32-cross                       12.1.0-2ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
-ii  libubsan1:amd64                           12.1.0-2ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-arm64-cross                     12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-armel-cross                     12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-armhf-cross                     12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-i386-cross                      12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-powerpc-cross                   12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-ppc64-cross                     12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-ppc64el-cross                   12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-s390x-cross                     12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-sparc64-cross                   12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1-x32-cross                       12.3.0-1ubuntu1~22.04cross1             all          UBSan -- undefined behaviour sanitizer (runtime)
+ii  libubsan1:amd64                           12.3.0-1ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (runtime)
 ii  libudev1:amd64                            249.11-0ubuntu3.9                       amd64        libudev shared library
 ii  libudev1:i386                             249.11-0ubuntu3.9                       i386         libudev shared library
 ii  libunistring2:amd64                       1.0-1                                   amd64        Unicode string library for C
 ii  libunistring2:i386                        1.0-1                                   i386         Unicode string library for C
-ii  libunwind8:amd64                          1.3.2-2build2                           amd64        library to determine the call-chain of a program - runtime
-ii  libunwind8:i386                           1.3.2-2build2                           i386         library to determine the call-chain of a program - runtime
+ii  libunwind8:amd64                          1.3.2-2build2.1                         amd64        library to determine the call-chain of a program - runtime
+ii  libunwind8:i386                           1.3.2-2build2.1                         i386         library to determine the call-chain of a program - runtime
 ii  liburing2:amd64                           2.1-2build1                             amd64        Linux kernel io_uring access library - shared library
 ii  libusb-1.0-0:amd64                        2:1.0.25-1ubuntu2                       amd64        userspace USB programming library
 ii  libusb-1.0-0:i386                         2:1.0.25-1ubuntu2                       i386         userspace USB programming library
@@ -999,16 +1001,16 @@ ii  libx11-6:i386                             2:1.7.5-1ubuntu0.2                
 ii  libx11-data                               2:1.7.5-1ubuntu0.2                      all          X11 client-side library
 ii  libx11-xcb1:amd64                         2:1.7.5-1ubuntu0.2                      amd64        Xlib/XCB interface library
 ii  libx11-xcb1:i386                          2:1.7.5-1ubuntu0.2                      i386         Xlib/XCB interface library
-ii  libx32asan6                               11.3.0-1ubuntu1~22.04.1                 amd64        AddressSanitizer -- a fast memory error detector (x32)
-ii  libx32atomic1                             12.1.0-2ubuntu1~22.04                   amd64        support library providing __atomic built-in functions (x32)
-ii  libx32gcc-11-dev                          11.3.0-1ubuntu1~22.04.1                 amd64        GCC support library (x32 development files)
-ii  libx32gcc-s1                              12.1.0-2ubuntu1~22.04                   amd64        GCC support library (x32)
-ii  libx32gomp1                               12.1.0-2ubuntu1~22.04                   amd64        GCC OpenMP (GOMP) support library (x32)
-ii  libx32itm1                                12.1.0-2ubuntu1~22.04                   amd64        GNU Transactional Memory Library (x32)
-ii  libx32quadmath0                           12.1.0-2ubuntu1~22.04                   amd64        GCC Quad-Precision Math Library (x32)
-ii  libx32stdc++-11-dev                       11.3.0-1ubuntu1~22.04.1                 amd64        GNU Standard C++ Library v3 (development files)
-ii  libx32stdc++6                             12.1.0-2ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (x32)
-ii  libx32ubsan1                              12.1.0-2ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (x32)
+ii  libx32asan6                               11.4.0-1ubuntu1~22.04                   amd64        AddressSanitizer -- a fast memory error detector (x32)
+ii  libx32atomic1                             12.3.0-1ubuntu1~22.04                   amd64        support library providing __atomic built-in functions (x32)
+ii  libx32gcc-11-dev                          11.4.0-1ubuntu1~22.04                   amd64        GCC support library (x32 development files)
+ii  libx32gcc-s1                              12.3.0-1ubuntu1~22.04                   amd64        GCC support library (x32)
+ii  libx32gomp1                               12.3.0-1ubuntu1~22.04                   amd64        GCC OpenMP (GOMP) support library (x32)
+ii  libx32itm1                                12.3.0-1ubuntu1~22.04                   amd64        GNU Transactional Memory Library (x32)
+ii  libx32quadmath0                           12.3.0-1ubuntu1~22.04                   amd64        GCC Quad-Precision Math Library (x32)
+ii  libx32stdc++-11-dev                       11.4.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (development files)
+ii  libx32stdc++6                             12.3.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (x32)
+ii  libx32ubsan1                              12.3.0-1ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (x32)
 ii  libxau6:amd64                             1:1.0.9-1build5                         amd64        X11 authorisation library
 ii  libxau6:i386                              1:1.0.9-1build5                         i386         X11 authorisation library
 ii  libxcb-dri2-0:amd64                       1.14-3ubuntu3                           amd64        X C Binding, dri2 extension
@@ -1096,13 +1098,13 @@ ii  linux-libc-dev-s390x-cross                5.15.0-22.22cross3                
 ii  linux-libc-dev-sh4-cross                  5.15.0-22.22cross4                      all          Linux Kernel Headers for development (for cross-compiling)
 ii  linux-libc-dev-sparc64-cross              5.15.0-22.22cross4                      all          Linux Kernel Headers for development (for cross-compiling)
 ii  linux-libc-dev-x32-cross                  5.15.0-22.22cross4                      all          Linux Kernel Headers for development (for cross-compiling)
-ii  linux-libc-dev:amd64                      5.15.0-76.83                            amd64        Linux Kernel Headers for development
-ii  lldb-14                                   1:14.0.0-1ubuntu1                       amd64        Next generation, high-performance debugger
-ii  llvm-14                                   1:14.0.0-1ubuntu1                       amd64        Modular compiler and toolchain technologies
-ii  llvm-14-dev                               1:14.0.0-1ubuntu1                       amd64        Modular compiler and toolchain technologies, libraries and headers
-ii  llvm-14-linker-tools                      1:14.0.0-1ubuntu1                       amd64        Modular compiler and toolchain technologies - Plugins
-ii  llvm-14-runtime                           1:14.0.0-1ubuntu1                       amd64        Modular compiler and toolchain technologies, IR interpreter
-ii  llvm-14-tools                             1:14.0.0-1ubuntu1                       amd64        Modular compiler and toolchain technologies, tools
+ii  linux-libc-dev:amd64                      5.15.0-78.85                            amd64        Linux Kernel Headers for development
+ii  lldb-14                                   1:14.0.0-1ubuntu1.1                     amd64        Next generation, high-performance debugger
+ii  llvm-14                                   1:14.0.0-1ubuntu1.1                     amd64        Modular compiler and toolchain technologies
+ii  llvm-14-dev                               1:14.0.0-1ubuntu1.1                     amd64        Modular compiler and toolchain technologies, libraries and headers
+ii  llvm-14-linker-tools                      1:14.0.0-1ubuntu1.1                     amd64        Modular compiler and toolchain technologies - Plugins
+ii  llvm-14-runtime                           1:14.0.0-1ubuntu1.1                     amd64        Modular compiler and toolchain technologies, IR interpreter
+ii  llvm-14-tools                             1:14.0.0-1ubuntu1.1                     amd64        Modular compiler and toolchain technologies, tools
 ii  login                                     1:4.8.1-2ubuntu2.1                      amd64        system login tools
 ii  logsave                                   1.46.5-2ubuntu1.1                       amd64        save the output of a command in a log file
 ii  lsb-base                                  11.1.0ubuntu4                           all          Linux Standard Base init script functionality
@@ -1113,8 +1115,8 @@ ii  lzop                                      1.04-2build2                      
 ii  make                                      4.3-4.1build1                           amd64        utility for directing compilation
 ii  mawk                                      1.3.4.20200120-3                        amd64        Pattern scanning and text processing language
 ii  media-types                               7.0.0                                   all          List of standard media types and their usual file extension
-ii  mesa-vulkan-drivers:amd64                 22.2.5-0ubuntu0.1~22.04.3               amd64        Mesa Vulkan graphics drivers
-ii  mesa-vulkan-drivers:i386                  22.2.5-0ubuntu0.1~22.04.3               i386         Mesa Vulkan graphics drivers
+ii  mesa-vulkan-drivers:amd64                 23.0.4-0ubuntu1~22.04.1                 amd64        Mesa Vulkan graphics drivers
+ii  mesa-vulkan-drivers:i386                  23.0.4-0ubuntu1~22.04.1                 i386         Mesa Vulkan graphics drivers
 ii  mingw-w64-common                          8.0.0-1                                 all          Common files for Mingw-w64
 ii  mingw-w64-i686-dev                        8.0.0-1                                 all          Development files for MinGW-w64 targeting Win32
 ii  mingw-w64-x86-64-dev                      8.0.0-1                                 all          Development files for MinGW-w64 targeting Win64
@@ -1148,14 +1150,14 @@ ii  python2.7-minimal                         2.7.18-13ubuntu1.1                
 ii  python3                                   3.10.6-1~22.04                          amd64        interactive high-level object-oriented language (default python3 version)
 ii  python3-dbus                              1.2.18-3build1                          amd64        simple interprocess messaging system (Python 3 interface)
 ii  python3-gi                                3.42.1-0ubuntu1                         amd64        Python 3 bindings for gobject-introspection libraries
-ii  python3-lldb-14                           1:14.0.0-1ubuntu1                       amd64        Next generation, high-performance debugger, python3 lib
+ii  python3-lldb-14                           1:14.0.0-1ubuntu1.1                     amd64        Next generation, high-performance debugger, python3 lib
 ii  python3-minimal                           3.10.6-1~22.04                          amd64        minimal subset of the Python language (default python3 version)
 ii  python3-pkg-resources                     59.6.0-1.2ubuntu0.22.04.1               all          Package Discovery and Resource Access using pkg_resources
 ii  python3-pygments                          2.11.2+dfsg-2                           all          syntax highlighting package written in Python 3
 ii  python3-six                               1.16.0-3ubuntu1                         all          Python 2 and 3 compatibility library (Python 3 interface)
 ii  python3-yaml                              5.4.1-1ubuntu1                          amd64        YAML parser and emitter for Python3
-ii  python3.10                                3.10.6-1~22.04.2ubuntu1.1               amd64        Interactive high-level object-oriented language (version 3.10)
-ii  python3.10-minimal                        3.10.6-1~22.04.2ubuntu1.1               amd64        Minimal subset of the Python language (version 3.10)
+ii  python3.10                                3.10.12-1~22.04.2                       amd64        Interactive high-level object-oriented language (version 3.10)
+ii  python3.10-minimal                        3.10.12-1~22.04.2                       amd64        Minimal subset of the Python language (version 3.10)
 ii  qemu-block-extra                          1:6.2+dfsg-2ubuntu6.12                  amd64        extra block backend modules for qemu-system and qemu-utils
 ii  qemu-efi-aarch64                          2022.02-3ubuntu0.22.04.1                all          UEFI firmware for 64-bit ARM virtual machines
 ii  qemu-efi-arm                              2022.02-3ubuntu0.22.04.1                all          UEFI firmware for 32-bit ARM virtual machines
@@ -1200,9 +1202,9 @@ ii  usrmerge                                  25ubuntu2                         
 ii  util-linux                                2.37.2-4ubuntu3                         amd64        miscellaneous system utilities
 ii  uuid-runtime                              2.37.2-4ubuntu3                         amd64        runtime components for the Universally Unique ID library
 ii  valgrind                                  1:3.18.1-1ubuntu2                       amd64        instrumentation framework for building dynamic analysis tools
-ii  vim                                       2:8.2.3995-1ubuntu2.9                   amd64        Vi IMproved - enhanced vi editor
-ii  vim-common                                2:8.2.3995-1ubuntu2.9                   all          Vi IMproved - Common files
-ii  vim-runtime                               2:8.2.3995-1ubuntu2.9                   all          Vi IMproved - Runtime files
+ii  vim                                       2:8.2.3995-1ubuntu2.10                  amd64        Vi IMproved - enhanced vi editor
+ii  vim-common                                2:8.2.3995-1ubuntu2.10                  all          Vi IMproved - Common files
+ii  vim-runtime                               2:8.2.3995-1ubuntu2.10                  all          Vi IMproved - Runtime files
 ii  wget                                      1.21.2-2ubuntu1                         amd64        retrieves files from the web
 ii  wine                                      6.0.3~repack-1                          all          Windows API implementation - standard suite
 ii  wine32:i386                               6.0.3~repack-1                          i386         Windows API implementation - 32-bit binary loader
@@ -1210,7 +1212,7 @@ ii  wine64                                    6.0.3~repack-1                    
 ii  x11-common                                1:7.7+23ubuntu2                         all          X Window System (X.Org) infrastructure
 ii  xdg-user-dirs                             0.17-2ubuntu4                           amd64        tool to manage well known user directories
 ii  xkb-data                                  2.33-1                                  all          X Keyboard Extension (XKB) configuration data
-ii  xxd                                       2:8.2.3995-1ubuntu2.9                   amd64        tool to make (or reverse) a hex dump
+ii  xxd                                       2:8.2.3995-1ubuntu2.10                  amd64        tool to make (or reverse) a hex dump
 ii  xz-utils                                  5.2.5-2ubuntu1                          amd64        XZ-format compression utilities
 ii  yash                                      2.51-1                                  amd64        yet another shell
 ii  zip                                       3.0-12build2                            amd64        Archiver for .zip files
@@ -1225,15 +1227,15 @@ ii  zstd                                      1.4.8+dfsg-3build1                
 ||/ Name                                      Version                                 Architecture Description
 
 Packages sorted by Installed-Size:
-  8312149 ===== TOTAL (1219 packages)
+  8369138 ===== TOTAL (1221 packages)
    545062 libwine                                  amd64
    474522 libwine                                  i386
-   270993 llvm-14-dev                              amd64
+   270995 llvm-14-dev                              amd64
    264247 qemu-efi-aarch64                         all
    180575 qemu-system-misc                         amd64
    131117 qemu-efi-arm                             all
-   124559 libllvm15                                i386
-   114207 libllvm15                                amd64
+   124560 libllvm15                                i386
+   114208 libllvm15                                amd64
    113028 qemu-user                                amd64
    106918 libllvm14                                amd64
    102338 gcc-mingw-w64-x86-64-win32               amd64
@@ -1246,122 +1248,121 @@ Packages sorted by Installed-Size:
     71589 mingw-w64-i686-dev                       all
     62394 gcc-mingw-w64-x86-64-posix-runtime       amd64
     62269 gcc-mingw-w64-x86-64-win32-runtime       amd64
-    59580 gcc-11-x86-64-linux-gnux32               amd64
-    59580 gcc-11-i686-linux-gnu                    amd64
+    59762 gcc-11-x86-64-linux-gnux32               amd64
+    59762 gcc-11-i686-linux-gnu                    amd64
     59002 qemu-system-mips                         amd64
     58528 mingw-w64-common                         all
-    58413 gcc-11-aarch64-linux-gnu                 amd64
+    58483 gcc-11-aarch64-linux-gnu                 amd64
     57248 libclang-cpp14                           amd64
-    52577 gcc-11                                   amd64
-    52328 gcc-11-arm-linux-gnueabihf               amd64
-    52328 gcc-11-arm-linux-gnueabi                 amd64
+    52747 gcc-11                                   amd64
+    52414 gcc-11-arm-linux-gnueabihf               amd64
+    52414 gcc-11-arm-linux-gnueabi                 amd64
+    52082 gcc-11-powerpc64le-linux-gnu             amd64
+    52067 gcc-11-powerpc64-linux-gnu               amd64
+    52042 gcc-11-powerpc-linux-gnu                 amd64
     52006 g++-mingw-w64-x86-64-posix               amd64
     51923 g++-mingw-w64-x86-64-win32               amd64
-    51896 gcc-11-powerpc64le-linux-gnu             amd64
-    51881 gcc-11-powerpc64-linux-gnu               amd64
-    51856 gcc-11-powerpc-linux-gnu                 amd64
     50357 gcc-mingw-w64-i686-posix-runtime         amd64
     50237 g++-mingw-w64-i686-posix                 amd64
     50224 gcc-mingw-w64-i686-win32-runtime         amd64
     50160 g++-mingw-w64-i686-win32                 amd64
     48066 llvm-14                                  amd64
     46016 libicu-dev                               amd64
-    45069 gcc-11-s390x-linux-gnu                   amd64
-    44503 gcc-11-riscv64-linux-gnu                 amd64
-    44432 gcc-11-sh4-linux-gnu                     amd64
+    45319 mesa-vulkan-drivers                      i386
+    45247 gcc-11-s390x-linux-gnu                   amd64
+    44618 gcc-11-sh4-linux-gnu                     amd64
+    44577 mesa-vulkan-drivers                      amd64
+    44569 gcc-11-riscv64-linux-gnu                 amd64
     44045 gcc-10-mipsel-linux-gnu                  amd64
     44045 gcc-10-mips64el-linux-gnuabi64           amd64
     44045 gcc-10-mips64-linux-gnuabi64             amd64
     44045 gcc-10-mips-linux-gnu                    amd64
-    43425 gcc-11-sparc64-linux-gnu                 amd64
-    41017 gcc-11-hppa-linux-gnu                    amd64
-    40877 gcc-11-alpha-linux-gnu                   amd64
-    40869 gcc-11-m68k-linux-gnu                    amd64
-    40437 libstdc++-11-dev-riscv64-cross           all
+    43619 gcc-11-sparc64-linux-gnu                 amd64
+    41207 gcc-11-hppa-linux-gnu                    amd64
+    41062 gcc-11-alpha-linux-gnu                   amd64
+    41059 gcc-11-m68k-linux-gnu                    amd64
+    40439 libstdc++-11-dev-riscv64-cross           all
     38713 qemu-system-arm                          amd64
     37635 qemu-system-x86                          amd64
     34707 libicu70                                 i386
     34444 libicu70                                 amd64
     33103 qemu-system-ppc                          amd64
-    32780 vim-runtime                              all
-    31754 g++-11-x86-64-linux-gnux32               amd64
-    31754 g++-11-i686-linux-gnu                    amd64
-    31142 g++-11-aarch64-linux-gnu                 amd64
+    32781 vim-runtime                              all
+    31850 g++-11-x86-64-linux-gnux32               amd64
+    31850 g++-11-i686-linux-gnu                    amd64
+    31553 libgl1-mesa-dri                          i386
+    31190 g++-11-aarch64-linux-gnu                 amd64
     29966 libclang1-14                             amd64
-    29119 cpp-11-x86-64-linux-gnux32               amd64
-    29119 cpp-11-i686-linux-gnu                    amd64
-    28795 g++-11                                   amd64
+    29552 libgl1-mesa-dri                          amd64
+    29203 cpp-11-x86-64-linux-gnux32               amd64
+    29203 cpp-11-i686-linux-gnu                    amd64
+    28891 g++-11                                   amd64
     28620 clang-tools-14                           amd64
-    28531 cpp-11-aarch64-linux-gnu                 amd64
+    28559 cpp-11-aarch64-linux-gnu                 amd64
     28441 libperl5.34                              amd64
-    28112 g++-11-arm-linux-gnueabihf               amd64
-    28112 g++-11-arm-linux-gnueabi                 amd64
-    27901 g++-11-powerpc64le-linux-gnu             amd64
-    27897 g++-11-powerpc64-linux-gnu               amd64
-    27893 g++-11-powerpc-linux-gnu                 amd64
-    26212 cpp-11                                   amd64
-    26112 libgl1-mesa-dri                          i386
-    25501 cpp-11-arm-linux-gnueabihf               amd64
-    25501 cpp-11-arm-linux-gnueabi                 amd64
+    28164 g++-11-arm-linux-gnueabihf               amd64
+    28164 g++-11-arm-linux-gnueabi                 amd64
+    27997 g++-11-powerpc64le-linux-gnu             amd64
+    27997 g++-11-powerpc64-linux-gnu               amd64
+    27989 g++-11-powerpc-linux-gnu                 amd64
+    26284 cpp-11                                   amd64
+    25533 cpp-11-arm-linux-gnueabihf               amd64
+    25533 cpp-11-arm-linux-gnueabi                 amd64
     25431 binutils-mingw-w64-x86-64                amd64
-    25282 cpp-11-powerpc64le-linux-gnu             amd64
-    25282 cpp-11-powerpc64-linux-gnu               amd64
-    25274 cpp-11-powerpc-linux-gnu                 amd64
-    24894 mesa-vulkan-drivers                      i386
-    24551 libgl1-mesa-dri                          amd64
-    24507 g++-11-s390x-linux-gnu                   amd64
-    24202 g++-11-riscv64-linux-gnu                 amd64
-    24159 g++-11-sh4-linux-gnu                     amd64
-    23679 g++-11-sparc64-linux-gnu                 amd64
-    23550 mesa-vulkan-drivers                      amd64
+    25370 cpp-11-powerpc64le-linux-gnu             amd64
+    25366 cpp-11-powerpc64-linux-gnu               amd64
+    25362 cpp-11-powerpc-linux-gnu                 amd64
+    24599 g++-11-s390x-linux-gnu                   amd64
+    24259 g++-11-sh4-linux-gnu                     amd64
+    24230 g++-11-riscv64-linux-gnu                 amd64
+    23779 g++-11-sparc64-linux-gnu                 amd64
     23344 g++-10-mipsel-linux-gnu                  amd64
     23344 g++-10-mips64el-linux-gnuabi64           amd64
     23344 g++-10-mips64-linux-gnuabi64             amd64
     23344 g++-10-mips-linux-gnu                    amd64
-    22494 g++-11-hppa-linux-gnu                    amd64
-    22417 g++-11-m68k-linux-gnu                    amd64
-    22411 g++-11-alpha-linux-gnu                   amd64
-    21888 cpp-11-s390x-linux-gnu                   amd64
+    22586 g++-11-hppa-linux-gnu                    amd64
+    22525 g++-11-m68k-linux-gnu                    amd64
+    22510 g++-11-alpha-linux-gnu                   amd64
+    21972 cpp-11-s390x-linux-gnu                   amd64
+    21620 cpp-11-sh4-linux-gnu                     amd64
     21610 binutils-mingw-w64-i686                  amd64
-    21583 cpp-11-riscv64-linux-gnu                 amd64
-    21544 cpp-11-sh4-linux-gnu                     amd64
+    21603 cpp-11-riscv64-linux-gnu                 amd64
     21312 cpp-10-mipsel-linux-gnu                  amd64
     21312 cpp-10-mips64el-linux-gnuabi64           amd64
     21312 cpp-10-mips64-linux-gnuabi64             amd64
     21312 cpp-10-mips-linux-gnu                    amd64
     21164 qemu-system-sparc                        amd64
-    21064 cpp-11-sparc64-linux-gnu                 amd64
+    21144 cpp-11-sparc64-linux-gnu                 amd64
     20742 cmake                                    amd64
-    20701 libstdc++-11-dev-alpha-cross             all
+    20735 libstdc++-11-dev-alpha-cross             all
     20660 humanity-icon-theme                      all
-    20232 libstdc++-11-dev-ppc64el-cross           all
-    20100 libstdc++-11-dev-ppc64-cross             all
-    19840 cpp-11-hppa-linux-gnu                    amd64
-    19798 cpp-11-m68k-linux-gnu                    amd64
-    19791 cpp-11-alpha-linux-gnu                   amd64
+    20259 libstdc++-11-dev-ppc64el-cross           all
+    20141 libstdc++-11-dev-ppc64-cross             all
+    19960 cpp-11-hppa-linux-gnu                    amd64
+    19890 cpp-11-m68k-linux-gnu                    amd64
+    19879 cpp-11-alpha-linux-gnu                   amd64
     19769 iso-codes                                all
     19526 binutils-aarch64-linux-gnu               amd64
     19276 libstdc++-10-dev-mips64-cross            all
     19270 libstdc++-10-dev-mips64el-cross          all
-    19090 libstdc++-11-dev-sparc64-cross           all
-    19064 libstdc++-11-dev-s390x-cross             all
-    19013 libgcc-11-dev-riscv64-cross              all
-    18936 libstdc++-11-dev-arm64-cross             all
-    18721 libstdc++-11-dev                         amd64
-    18506 libstdc++-11-dev-armel-cross             all
+    19130 libstdc++-11-dev-sparc64-cross           all
+    19104 libstdc++-11-dev-s390x-cross             all
+    19015 libgcc-11-dev-riscv64-cross              all
+    18976 libstdc++-11-dev-arm64-cross             all
+    18759 libstdc++-11-dev                         amd64
+    18548 libstdc++-11-dev-armel-cross             all
     18468 git                                      amd64
     18248 libc6-dbg                                amd64
-    18039 libstdc++-11-dev-powerpc-cross           all
-    17961 libstdc++-11-dev-i386-cross              all
-    17938 libstdc++-11-dev-armhf-cross             all
-    17700 libstdc++-11-dev-x32-cross               all
+    18081 libstdc++-11-dev-powerpc-cross           all
+    18002 libstdc++-11-dev-i386-cross              all
+    17981 libstdc++-11-dev-armhf-cross             all
+    17740 libstdc++-11-dev-x32-cross               all
     17671 perl-modules-5.34                        all
-    17508 libstdc++-11-dev-hppa-cross              all
-    17112 libstdc++-11-dev-sh4-cross               all
-    17072 libstdc++-11-dev-m68k-cross              all
+    17548 libstdc++-11-dev-hppa-cross              all
+    17152 libstdc++-11-dev-sh4-cross               all
+    17115 libstdc++-11-dev-m68k-cross              all
     17021 libstdc++-10-dev-mips-cross              all
     17019 libstdc++-10-dev-mipsel-cross            all
-    16805 libgl1-amber-dri                         amd64
     16434 binutils-mips64el-linux-gnuabi64         amd64
     16433 binutils-mips64-linux-gnuabi64           amd64
     16432 binutils-mipsel-linux-gnu                amd64
@@ -1373,55 +1374,56 @@ Packages sorted by Installed-Size:
     15848 binutils-arm-linux-gnueabihf             amd64
     15848 binutils-arm-linux-gnueabi               amd64
     15600 libz3-4                                  amd64
+    15592 libgl1-amber-dri                         amd64
     15318 binutils-x86-64-linux-gnux32             amd64
     15307 binutils-i686-linux-gnu                  amd64
     15301 liblldb-14                               amd64
     15293 zsh-common                               all
     14923 ovmf                                     all
-    14334 librbd1                                  amd64
-    14099 librados2                                amd64
-    13894 libgcc-11-dev                            amd64
+    14347 librbd1                                  amd64
+    14122 librados2                                amd64
+    13895 libgcc-11-dev                            amd64
     13592 libc6                                    amd64
     13037 libc6-dev                                amd64
-    12827 binutils-sparc64-linux-gnu               amd64
+    12823 binutils-sparc64-linux-gnu               amd64
     12817 binutils-s390x-linux-gnu                 amd64
     12561 libc6-x32                                amd64
     12479 libc6                                    i386
+    12295 libosmesa6                               i386
     12200 libc6-i386                               amd64
-    12061 libosmesa6                               i386
-    11829 libgcc-11-dev-ppc64el-cross              all
-    11628 libgcc-11-dev-ppc64-cross                all
-    11375 libosmesa6                               amd64
+    11818 libgcc-11-dev-ppc64el-cross              all
+    11632 libgcc-11-dev-ppc64-cross                all
+    11597 libosmesa6                               amd64
     11311 gdb                                      amd64
-    11180 libgcc-11-dev-arm64-cross                all
-    11084 librsvg2-2                               amd64
-    10876 lib32stdc++-11-dev                       amd64
+    11214 libgcc-11-dev-arm64-cross                all
+    10877 lib32stdc++-11-dev                       amd64
+    10760 librsvg2-2                               amd64
     10439 binutils-x86-64-linux-gnu                amd64
-    10391 libx32stdc++-11-dev                      amd64
+    10390 libx32stdc++-11-dev                      amd64
     10280 libgtk-3-0                               amd64
-    10163 libgcc-11-dev-i386-cross                 all
+    10166 libgcc-11-dev-i386-cross                 all
      9918 qemu-system-s390x                        amd64
      9866 cmake-data                               all
      9512 clang-tidy-14                            amd64
-     9202 libgcc-11-dev-x32-cross                  all
+     9203 libgcc-11-dev-x32-cross                  all
      9153 qemu-system-common                       amd64
      8871 binutils-riscv64-linux-gnu               amd64
      8427 libasan6-riscv64-cross                   all
      8248 libc6-dev-x32                            amd64
-     8198 libasan6-ppc64-cross                     all
+     8197 libasan6-ppc64-cross                     all
+     8119 libpython3.10-stdlib                     amd64
      8064 qemu-system-data                         all
-     8040 libpython3.10-stdlib                     amd64
-     7958 libasan6-ppc64el-cross                   all
-     7947 lib32gcc-11-dev                          amd64
+     7954 libasan6-ppc64el-cross                   all
+     7948 lib32gcc-11-dev                          amd64
      7900 libtsan0-ppc64-cross                     all
      7730 perl-base                                amd64
-     7672 libtsan0-ppc64el-cross                   all
+     7669 libtsan0-ppc64el-cross                   all
      7653 libasan6-s390x-cross                     all
-     7621 libgcc-11-dev-armel-cross                all
-     7544 gstreamer1.0-plugins-good                i386
+     7622 libgcc-11-dev-armel-cross                all
+     7540 gstreamer1.0-plugins-good                i386
      7532 libasan6-arm64-cross                     all
      7518 libasan6                                 amd64
-     7300 libtsan0-arm64-cross                     all
+     7299 libtsan0-arm64-cross                     all
      7261 libc6-dev-i386                           amd64
      7255 libtsan0                                 amd64
      7204 libasan6-armel-cross                     all
@@ -1433,11 +1435,11 @@ Packages sorted by Installed-Size:
      7072 qemu-utils                               amd64
      6988 libx32gcc-11-dev                         amd64
      6821 libasan6-armhf-cross                     all
-     6752 gstreamer1.0-plugins-good                amd64
+     6748 gstreamer1.0-plugins-good                amd64
      6734 linux-libc-dev                           amd64
      6733 dpkg                                     amd64
-     6659 lib32asan6                               amd64
-     6657 libasan6-i386-cross                      all
+     6667 lib32asan6                               amd64
+     6665 libasan6-i386-cross                      all
      6572 libasan6-x32-cross                       all
      6570 libx32asan6                              amd64
      6243 linux-libc-dev-x32-cross                 all
@@ -1459,18 +1461,18 @@ Packages sorted by Installed-Size:
      6068 linux-libc-dev-m68k-cross                all
      6050 linux-libc-dev-sh4-cross                 all
      6035 linux-libc-dev-riscv64-cross             all
-     5902 python3.10-minimal                       amd64
+     5905 python3.10-minimal                       amd64
      5850 libssl3                                  i386
      5824 libssl3                                  amd64
-     5780 libpython3.10                            amd64
+     5768 libpython3.10                            amd64
      5587 ubuntu-mono                              all
-     5575 libgcc-11-dev-sparc64-cross              all
+     5576 libgcc-11-dev-sparc64-cross              all
      5575 libgcc-11-dev-s390x-cross                all
      5234 adwaita-icon-theme                       all
      5169 binutils-sh4-linux-gnu                   amd64
-     5093 libpython3.10-minimal                    amd64
+     5103 libpython3.10-minimal                    amd64
      5038 binutils-m68k-linux-gnu                  amd64
-     4974 libgcc-11-dev-powerpc-cross              all
+     4978 libgcc-11-dev-powerpc-cross              all
      4962 binutils-alpha-linux-gnu                 amd64
      4890 binutils-hppa-linux-gnu                  amd64
      4866 ipxe-qemu                                all
@@ -1484,7 +1486,7 @@ Packages sorted by Installed-Size:
      4147 ripgrep                                  amd64
      4082 libglib2.0-0                             amd64
      4024 python3-pygments                         all
-     3923 vim                                      amd64
+     3924 vim                                      amd64
      3804 libnss3                                  amd64
      3689 lldb-14                                  amd64
      3643 python2.7-minimal                        amd64
@@ -1495,7 +1497,7 @@ Packages sorted by Installed-Size:
      3399 util-linux                               amd64
      3347 libaria2-0                               amd64
      3333 libxml2-dev                              amd64
-     3260 liblsan0-ppc64-cross                     all
+     3261 liblsan0-ppc64-cross                     all
      3247 libstdc++6-ppc64-cross                   all
      3181 libapt-pkg6.0                            amd64
      3142 libvpx7                                  i386
@@ -1508,48 +1510,48 @@ Packages sorted by Installed-Size:
      2964 libgstreamer-plugins-base1.0-0           i386
      2961 liblsan0                                 amd64
      2954 fonts-dejavu-core                        all
-     2949 liblsan0-arm64-cross                     all
+     2945 liblsan0-arm64-cross                     all
      2943 parallel                                 all
      2924 libubsan1-ppc64-cross                    all
      2893 libgcc-10-dev-mipsel-cross               all
      2891 libgcc-10-dev-mips-cross                 all
-     2862 libubsan1-ppc64el-cross                  all
+     2861 libubsan1-ppc64el-cross                  all
      2801 elfutils                                 amd64
-     2786 libstdc++6                               i386
+     2787 libstdc++6                               i386
      2784 libpython2.7-minimal                     amd64
      2776 libbinutils                              amd64
-     2746 libstdc++6                               amd64
+     2755 libstdc++6                               amd64
      2744 shared-mime-info                         amd64
      2740 libgstreamer-plugins-base1.0-0           amd64
      2725 libstdc++6-alpha-cross                   all
      2721 libubsan1-s390x-cross                    all
      2698 libubsan1-powerpc-cross                  all
-     2678 libubsan1-arm64-cross                    all
-     2675 libubsan1                                amd64
+     2686 libubsan1-arm64-cross                    all
+     2676 libubsan1                                amd64
      2662 lib32stdc++6                             amd64
      2651 libstdc++6-powerpc-cross                 all
      2640 gstreamer1.0-plugins-base                i386
-     2618 libubsan1-armel-cross                    all
+     2619 libubsan1-armel-cross                    all
      2588 libpfm4                                  amd64
      2556 libgphoto2-6                             amd64
      2552 libgnutls30                              i386
      2545 libubsan1-sparc64-cross                  all
-     2537 libstdc++6-s390x-cross                   all
      2537 libc-bin                                 amd64
+     2534 libstdc++6-s390x-cross                   all
      2528 libgphoto2-6                             i386
      2519 libubsan1-x32-cross                      all
      2518 libx32ubsan1                             amd64
      2510 fd-find                                  amd64
      2500 libubsan1-i386-cross                     all
-     2500 lib32ubsan1                              amd64
+     2499 lib32ubsan1                              amd64
      2468 zsh                                      amd64
-     2457 libubsan1-armhf-cross                    all
-     2438 libx32stdc++6                            amd64
+     2456 libubsan1-armhf-cross                    all
+     2450 libx32stdc++6                            amd64
      2428 fzf                                      amd64
      2400 gstreamer1.0-plugins-base                amd64
      2396 7zip                                     amd64
      2351 libncurses-dev                           amd64
-     2336 libstdc++6-hppa-cross                    all
+     2337 libstdc++6-hppa-cross                    all
      2325 passwd                                   amd64
      2284 libgnutls30                              amd64
      2260 libstdc++6-i386-cross                    all
@@ -1558,16 +1560,16 @@ Packages sorted by Installed-Size:
      2204 libstdc++6-sparc64-cross                 all
      2191 ht                                       amd64
      2177 libboost-thread1.74.0                    amd64
-     2161 libstdc++6-arm64-cross                   all
      2159 libisl23                                 amd64
+     2149 libstdc++6-arm64-cross                   all
      2137 libboost-iostreams1.74.0                 amd64
      2097 libxml2                                  amd64
      2089 fonts-liberation                         all
      2053 openssl                                  amd64
      2051 libstdc++6-sh4-cross                     all
      2046 libstdc++6-m68k-cross                    all
+     2044 libstdc++6-x32-cross                     all
      2039 libxml2                                  i386
-     2032 libstdc++6-x32-cross                     all
      2009 universal-ctags                          amd64
      1997 libdb5.3                                 i386
      1996 libstdc++6-mips-cross                    all
@@ -1576,8 +1578,8 @@ Packages sorted by Installed-Size:
      1912 llvm-14-tools                            amd64
      1912 libstdc++6-riscv64-cross                 all
      1864 bash                                     amd64
-     1855 libstdc++6-armel-cross                   all
      1854 aria2                                    amd64
+     1851 libstdc++6-armel-cross                   all
      1837 libsdl2-2.0-0                            i386
      1796 libsqlite3-0                             i386
      1750 libdb5.3                                 amd64
@@ -1645,7 +1647,7 @@ Packages sorted by Installed-Size:
       960 tar                                      amd64
       959 libopenal1                               amd64
       949 libglusterfs0                            amd64
-      905 libgcc-11-dev-hppa-cross                 all
+      906 libgcc-11-dev-hppa-cross                 all
       889 libfreetype6                             i386
       888 login                                    amd64
       876 libarchive13                             amd64
@@ -1684,7 +1686,7 @@ Packages sorted by Installed-Size:
       678 icu-devtools                             amd64
       677 gir1.2-glib-2.0                          amd64
       676 libtheora0                               i386
-      669 libgcc-11-dev-m68k-cross                 all
+      670 libgcc-11-dev-m68k-cross                 all
       660 wine32                                   i386
       653 libgl1                                   amd64
       651 libtheora0                               amd64
@@ -1692,8 +1694,8 @@ Packages sorted by Installed-Size:
       648 libpam-systemd                           amd64
       646 ncurses-bin                              amd64
       638 libsndfile1                              i386
+      632 python3.10                               amd64
       621 libpcre2-8-0                             amd64
-      620 python3.10                               amd64
       620 findutils                                amd64
       616 libcolord2                               amd64
       615 libonig5                                 amd64
@@ -1701,7 +1703,7 @@ Packages sorted by Installed-Size:
       608 adduser                                  all
       606 libtiff5                                 i386
       606 libjpeg-turbo8                           i386
-      602 libglx-mesa0                             i386
+      600 libglx-mesa0                             i386
       599 libldap-2.5-0                            i386
       598 libpango-1.0-0                           i386
       595 libthai-data                             all
@@ -1715,10 +1717,10 @@ Packages sorted by Installed-Size:
       572 libcryptsetup12                          amd64
       571 libtiff5                                 amd64
       569 libvte-2.91-0                            amd64
+      566 libglx-mesa0                             amd64
       565 libldap-2.5-0                            amd64
       564 libssh-4                                 i386
       563 libpango-1.0-0                           amd64
-      560 libglx-mesa0                             amd64
       560 alsa-ucm-conf                            all
       558 libtinfo6                                amd64
       558 libodbc2                                 i386
@@ -1861,67 +1863,67 @@ Packages sorted by Installed-Size:
       309 libv4lconvert0                           i386
       308 libgphoto2-port12                        amd64
       308 libgomp1-mips64el-cross                  all
+      308 libglapi-mesa                            amd64
       308 gsettings-desktop-schemas                all
       307 libsource-highlight-common               all
       307 libk5crypto3                             i386
       306 libx32gomp1                              amd64
-      306 libglapi-mesa                            amd64
       304 libv4lconvert0                           amd64
       304 libgomp1-mips64-cross                    all
       302 libxkbcommon0                            amd64
       300 libsemanage2                             amd64
       298 libc-dev-bin                             amd64
       296 libquadmath0                             amd64
+      295 libx32quadmath0                          amd64
       294 libgomp1-mipsel-cross                    all
       294 libgomp1-mips-cross                      all
+      293 libquadmath0-x32-cross                   all
       293 liblzma5                                 i386
       292 libk5crypto3                             amd64
-      291 libx32quadmath0                          amd64
       290 pax-utils                                amd64
       290 liblzma5                                 amd64
-      289 libquadmath0-x32-cross                   all
       289 libgomp1-x32-cross                       all
-      286 libgomp1-arm64-cross                     all
+      282 libgomp1-arm64-cross                     all
       282 libfuse3-3                               amd64
       282 libflac8                                 amd64
       281 libflac8                                 i386
+      278 xxd                                      amd64
       278 libz-mingw-w64                           all
-      277 xxd                                      amd64
       277 libgomp1-armel-cross                     all
       276 at-spi2-core                             amd64
       275 libgfrpc0                                amd64
       273 libgomp1-sparc64-cross                   all
+      273 gcc-11-x86-64-linux-gnux32-base          amd64
+      273 gcc-11-sparc64-linux-gnu-base            amd64
+      273 gcc-11-sh4-linux-gnu-base                amd64
+      273 gcc-11-s390x-linux-gnu-base              amd64
+      273 gcc-11-riscv64-linux-gnu-base            amd64
+      273 gcc-11-powerpc64le-linux-gnu-base        amd64
+      273 gcc-11-powerpc64-linux-gnu-base          amd64
+      273 gcc-11-powerpc-linux-gnu-base            amd64
+      273 gcc-11-m68k-linux-gnu-base               amd64
+      273 gcc-11-i686-linux-gnu-base               amd64
+      273 gcc-11-hppa-linux-gnu-base               amd64
+      273 gcc-11-base                              amd64
+      273 gcc-11-arm-linux-gnueabihf-base          amd64
+      273 gcc-11-arm-linux-gnueabi-base            amd64
+      273 gcc-11-alpha-linux-gnu-base              amd64
+      273 gcc-11-aarch64-linux-gnu-base            amd64
       273 dmsetup                                  amd64
-      271 gcc-11-x86-64-linux-gnux32-base          amd64
-      271 gcc-11-sparc64-linux-gnu-base            amd64
-      271 gcc-11-sh4-linux-gnu-base                amd64
-      271 gcc-11-s390x-linux-gnu-base              amd64
-      271 gcc-11-riscv64-linux-gnu-base            amd64
-      271 gcc-11-powerpc64le-linux-gnu-base        amd64
-      271 gcc-11-powerpc64-linux-gnu-base          amd64
-      271 gcc-11-powerpc-linux-gnu-base            amd64
-      271 gcc-11-m68k-linux-gnu-base               amd64
-      271 gcc-11-i686-linux-gnu-base               amd64
-      271 gcc-11-hppa-linux-gnu-base               amd64
-      271 gcc-11-base                              amd64
-      271 gcc-11-arm-linux-gnueabihf-base          amd64
-      271 gcc-11-arm-linux-gnueabi-base            amd64
-      271 gcc-11-alpha-linux-gnu-base              amd64
-      271 gcc-11-aarch64-linux-gnu-base            amd64
+      272 gcc-12-base                              i386
+      272 gcc-12-base                              amd64
       268 systemd-timesyncd                        amd64
-      266 gcc-12-base                              i386
-      266 gcc-12-base                              amd64
+      266 gcc-11-cross-base-ports                  all
+      266 gcc-11-cross-base                        all
+      265 gcc-12-cross-base-ports                  all
+      265 gcc-12-cross-base                        all
       265 gcc-10-mipsel-linux-gnu-base             amd64
       265 gcc-10-mips64el-linux-gnuabi64-base      amd64
       265 gcc-10-mips64-linux-gnuabi64-base        amd64
       265 gcc-10-mips-linux-gnu-base               amd64
-      264 gcc-11-cross-base-ports                  all
-      264 gcc-11-cross-base                        all
       263 libedit2                                 i386
       261 libspeex1                                i386
       260 libedit2                                 amd64
-      260 gcc-12-cross-base-ports                  all
-      260 gcc-12-cross-base                        all
       258 gcc-10-cross-base-mipsen                 all
       255 libatspi2.0-0                            amd64
       253 g++-mingw-w64-x86-64                     all
@@ -1937,21 +1939,21 @@ Packages sorted by Installed-Size:
       247 libv4l-0                                 amd64
       247 libgcc-s1-mipsel-cross                   all
       245 rpcsvc-proto                             amd64
+      243 libglapi-mesa                            i386
       243 debianutils                              amd64
       243 base-passwd                              amd64
       240 moreutils                                amd64
       240 libv4l-0                                 i386
       240 gzip                                     amd64
+      239 libgomp1-m68k-cross                      all
       239 libctf0                                  amd64
       238 libgfapi0                                amd64
-      237 libglapi-mesa                            i386
       236 glib-networking                          i386
       236 clang-format-14                          amd64
       235 libpam0g                                 amd64
       235 libjsoncpp25                             amd64
       234 libnghttp2-14                            i386
       232 ucf                                      all
-      231 libgomp1-m68k-cross                      all
       230 lz4                                      amd64
       229 patch                                    amd64
       229 mawk                                     amd64
@@ -1971,6 +1973,7 @@ Packages sorted by Installed-Size:
       216 libwavpack1                              i386
       214 dash                                     amd64
       211 libobjc4                                 amd64
+      210 libgomp1-riscv64-cross                   all
       209 libsmartcols1                            amd64
       209 librdmacm1                               amd64
       208 libgpg-error0                            i386
@@ -1979,9 +1982,9 @@ Packages sorted by Installed-Size:
       206 libxcb1                                  amd64
       206 libvorbis0a                              amd64
       206 libitm1-ppc64-cross                      all
-      206 libgomp1-riscv64-cross                   all
       205 libpangoft2-1.0-0                        i386
       205 libiscsi7                                amd64
+      205 libdrm-intel1                            i386
       203 libnghttp2-14                            amd64
       201 libwavpack1                              amd64
       201 libvorbis0a                              i386
@@ -2046,18 +2049,18 @@ Packages sorted by Installed-Size:
       152 libtwolame0                              i386
       151 ocl-icd-libopencl1                       i386
       151 librtmp1                                 i386
+      150 libgbm1                                  i386
       150 libaa1                                   i386
       149 libtwolame0                              amd64
       147 libgcc-s1-ppc64el-cross                  all
       147 libgcc-s1-ppc64-cross                    all
       147 libgcc-s1-armhf-cross                    all
-      147 libgbm1                                  i386
+      147 libgbm1                                  amd64
       146 libgcc-s1-powerpc-cross                  all
       145 libslirp0                                amd64
       145 libseccomp2                              amd64
       145 libproxy1v5                              amd64
       145 liblz4-1                                 amd64
-      145 libgbm1                                  amd64
       144 libyaml-0-2                              amd64
       144 libusb-1.0-0                             amd64
       144 libcdparanoia0                           i386
@@ -2218,6 +2221,7 @@ Packages sorted by Installed-Size:
        68 qemu-user-binfmt                         amd64
        68 libxrender1                              amd64
        68 libpipeline1                             amd64
+       68 libpciaccess0                            i386
        68 libgudev-1.0-0                           i386
        68 libgpm2                                  i386
        67 libacl1                                  amd64

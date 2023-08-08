@@ -1,0 +1,62 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+# see https://github.com/mstorsjo/llvm-mingw
+
+name: 'Weekly CI - llvm-mingw'
+on:
+  schedule: [cron: '40 4 * * 3'] # run weekly Wednesday 04:40 UTC
+  workflow_dispatch:
+env:
+  CMAKE_REQUIRED_QUIET: OFF
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  job-llvm-mingw: # uses cmake+make
+    if: ${{ true }}
+    name: 'llvm-mingw-20230614'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with: { submodules: true }
+      - name: 'Install llvm-mingw-20230614'
+        run: |
+          mkdir -p -v ~/.local/bin
+          cd ~/.local/bin
+          wget 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-msvcrt-ubuntu-20.04-x86_64.tar.xz'
+          wget 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64.tar.xz'
+          for f in ./llvm-mingw-*tar.xz; do tar -xoaf $f; done
+          rm ./llvm-mingw-*tar.xz
+      - name: 'Build msvcrt'
+        run: |
+          export PATH="$HOME/.local/bin/llvm-mingw-20230614-msvcrt-ubuntu-20.04-x86_64/bin:$PATH"
+          export CC="aarch64-w64-mingw32-clang -static" CXX="aarch64-w64-mingw32-clang++ -static"
+          make UPX_XTARGET=aarch64-w64-mingw32-clang-msvcrt
+          export CC="armv7-w64-mingw32-clang -static" CXX="armv7-w64-mingw32-clang++ -static"
+          make UPX_XTARGET=armv7-w64-mingw32-clang-msvcrt
+          export CC="i686-w64-mingw32-clang -static" CXX="i686-w64-mingw32-clang++ -static"
+          make UPX_XTARGET=i686-w64-mingw32-clang-msvcrt
+          export CC="x86_64-w64-mingw32-clang -static" CXX="x86_64-w64-mingw32-clang++ -static"
+          make UPX_XTARGET=x86_64-w64-mingw32-clang-msvcrt
+      - name: 'Build ucrt'
+        run: |
+          export PATH="$HOME/.local/bin/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64/bin:$PATH"
+          export CC="aarch64-w64-mingw32-clang -static" CXX="aarch64-w64-mingw32-clang++ -static"
+          make UPX_XTARGET=aarch64-w64-mingw32-clang-ucrt
+          export CC="armv7-w64-mingw32-clang -static" CXX="armv7-w64-mingw32-clang++ -static"
+          make UPX_XTARGET=armv7-w64-mingw32-clang-ucrt
+          export CC="i686-w64-mingw32-clang -static" CXX="i686-w64-mingw32-clang++ -static"
+          make UPX_XTARGET=i686-w64-mingw32-clang-ucrt
+          export CC="x86_64-w64-mingw32-clang -static" CXX="x86_64-w64-mingw32-clang++ -static"
+          make UPX_XTARGET=x86_64-w64-mingw32-clang-ucrt
+      - name: 'Make artifact'
+        run: |
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-llvm-mingw-20230614" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          mkdir -p "tmp/artifact/$N"
+          (cd build && cp -ai --parents */*/*/upx.exe "../tmp/artifact/$N")
+          # GitHub Actions magic: set "artifact_name" environment value for use in next step
+          echo "artifact_name=$N" >> $GITHUB_ENV
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.artifact_name }}
+          path: tmp/artifact
