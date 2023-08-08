@@ -3,22 +3,26 @@
 # HINT: check settings with
 #   git ls-files | git check-attr --stdin --all
 
-# tell GitHub and other diff-tools that these files are automatically generated
+#
+# tell diff tools that these files are generated automatically
+#
 
-doc/upx.1                               linguist-generated
-doc/upx-doc.*                           linguist-generated
+/doc/upx.1                              linguist-generated
+/doc/upx-doc.*                          linguist-generated
 
-src/stub/*.h                            linguist-generated
-src/stub/src/arch/**/lzma_d_c[fns].S    linguist-generated
-src/stub/tmp/**                         linguist-generated
+/src/stub/*.h                           linguist-generated
+/src/stub/src/arch/**/lzma_d_c[fns].S   linguist-generated
+/src/stub/tmp/**                        linguist-generated
 
+#
 # make GitHub language detection more accurate
+#
 
-src/*.h             linguist-language=C++
-src/*/*.h           linguist-language=C++
+/src/*.h                                linguist-language=C++
+/src/*/*.h                              linguist-language=C++
 
-src/stub/**/*.ash   linguist-language=Assembly
-src/stub/**/*.asm   linguist-language=Assembly
-src/stub/**/*.S     linguist-language=Assembly
+/src/stub/**/*.ash                      linguist-language=Assembly
+/src/stub/**/*.asm                      linguist-language=Assembly
+/src/stub/**/*.S                        linguist-language=Assembly
 
-src/stub/tmp/**     linguist-vendored
+/src/stub/tmp/**                        linguist-vendored

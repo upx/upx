@@ -170,7 +170,8 @@ build/analyze/clang-analyzer/%: CMAKE := scan-build $(CMAKE)
 build/analyze/clang-analyzer/%: export CCC_CC  ?= clang
 build/analyze/clang-analyzer/%: export CCC_CXX ?= clang++
 
-# run clang-tidy (uses file compile_commands.json from an existing clang build)
+# run clang-tidy: uses file compile_commands.json from an existing clang build
+# does not create any actual files, so purely PHONY
 RUN_CLANG_TIDY = time python3 ./misc/analyze/clang-tidy/run-clang-tidy.py -p $<
 RUN_CLANG_TIDY_WERROR = $(RUN_CLANG_TIDY) '-warnings-as-errors=*'
 build/analyze/clang-tidy-upx/debug build/analyze/clang-tidy-upx/release: build/extra/clang/$$(notdir $$@) PHONY
