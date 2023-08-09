@@ -12,45 +12,58 @@ env:
 jobs:
   job-llvm-mingw: # uses cmake+make
     if: ${{ true }}
-    name: 'llvm-mingw-20230614'
+    name: ${{ format('{0} {1}', matrix.name, matrix.llvm_version) }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: llvm-mingw-20230614-msvcrt
+            llvm_version: 16.0.6
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-msvcrt-ubuntu-20.04-x86_64.tar.xz'
+          - name: llvm-mingw-20230614-ucrt
+            llvm_version: 16.0.6
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64.tar.xz'
+          - name: llvm-mingw-20230730-msvcrt
+            llvm_version: 17.0.0rc1
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230730/llvm-mingw-20230730-msvcrt-ubuntu-20.04-x86_64.tar.xz'
+          - name: llvm-mingw-20230730-ucrt
+            llvm_version: 17.0.0rc1
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230730/llvm-mingw-20230730-ucrt-ubuntu-20.04-x86_64.tar.xz'
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
         with: { submodules: true }
-      - name: 'Install llvm-mingw-20230614'
+      - name: ${{ format('Install {0} {1}', matrix.name, matrix.llvm_version) }}
         run: |
           mkdir -p -v ~/.local/bin
           cd ~/.local/bin
-          wget 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-msvcrt-ubuntu-20.04-x86_64.tar.xz'
-          wget 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64.tar.xz'
-          for f in ./llvm-mingw-*tar.xz; do tar -xoaf $f; done
-          rm ./llvm-mingw-*tar.xz
-      - name: 'Build msvcrt'
+          wget -q '${{ matrix.url }}'
+          ls -l ./llvm-mingw*.tar.*
+          tar -xoaf ./llvm-mingw*.tar.*
+          rm ./llvm-mingw*tar.*
+          # update PATH
+          cd ./llvm-mingw*/bin
+          echo "PATH=$PWD:$PATH" >> $GITHUB_ENV
+      - name: 'Build aarch64'
         run: |
-          export PATH="$HOME/.local/bin/llvm-mingw-20230614-msvcrt-ubuntu-20.04-x86_64/bin:$PATH"
           export CC="aarch64-w64-mingw32-clang -static" CXX="aarch64-w64-mingw32-clang++ -static"
-          make UPX_XTARGET=aarch64-w64-mingw32-clang-msvcrt
-          export CC="armv7-w64-mingw32-clang -static" CXX="armv7-w64-mingw32-clang++ -static"
-          make UPX_XTARGET=armv7-w64-mingw32-clang-msvcrt
-          export CC="i686-w64-mingw32-clang -static" CXX="i686-w64-mingw32-clang++ -static"
-          make UPX_XTARGET=i686-w64-mingw32-clang-msvcrt
-          export CC="x86_64-w64-mingw32-clang -static" CXX="x86_64-w64-mingw32-clang++ -static"
-          make UPX_XTARGET=x86_64-w64-mingw32-clang-msvcrt
-      - name: 'Build ucrt'
+          make UPX_XTARGET=aarch64-w64-mingw32-clang xtarget/debug xtarget/release
+      - name: 'Build armv7'
         run: |
-          export PATH="$HOME/.local/bin/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64/bin:$PATH"
-          export CC="aarch64-w64-mingw32-clang -static" CXX="aarch64-w64-mingw32-clang++ -static"
-          make UPX_XTARGET=aarch64-w64-mingw32-clang-ucrt
           export CC="armv7-w64-mingw32-clang -static" CXX="armv7-w64-mingw32-clang++ -static"
-          make UPX_XTARGET=armv7-w64-mingw32-clang-ucrt
+          make UPX_XTARGET=armv7-w64-mingw32-clang xtarget/debug xtarget/release
+      - name: 'Build i686'
+        run: |
           export CC="i686-w64-mingw32-clang -static" CXX="i686-w64-mingw32-clang++ -static"
-          make UPX_XTARGET=i686-w64-mingw32-clang-ucrt
+          make UPX_XTARGET=i686-w64-mingw32-clang xtarget/debug xtarget/release
+      - name: 'Build x86_64'
+        run: |
           export CC="x86_64-w64-mingw32-clang -static" CXX="x86_64-w64-mingw32-clang++ -static"
-          make UPX_XTARGET=x86_64-w64-mingw32-clang-ucrt
+          make UPX_XTARGET=x86_64-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Make artifact'
         run: |
-          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-llvm-mingw-20230614" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-${{ matrix.name }}-${{ matrix.llvm_version }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           mkdir -p "tmp/artifact/$N"
           (cd build && cp -ai --parents */*/*/upx.exe "../tmp/artifact/$N")
           # GitHub Actions magic: set "artifact_name" environment value for use in next step
