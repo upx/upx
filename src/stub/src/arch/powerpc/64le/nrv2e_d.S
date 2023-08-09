@@ -68,7 +68,7 @@
 /* rotate next bit into bottom bit of reg */
 #define getnextb(reg)              addc. bits,bits,bits; beql- get32; adde reg,reg,reg
 
-get32:  // IN: CArry set
+get32:  // IN: Carry set
                 // fetch 4 bytes unaligned and LITTLE ENDIAN
 #if 0  /*{ clean; but 4 instr larger, and 3 cycles longer */
         lbz bits,1(src)  // lo8
@@ -85,10 +85,10 @@ get32:  // IN: CArry set
         addi src,src,4
 #endif  /*}*/
 
-        adde  bits,bits,bits  // shift in CArry
+        adde  bits,bits,bits  // shift in Carry
         sldi  bits,bits,32-1  // left justify 33-bit result of 'adde'
         cmpld bits,hibit  // cr0  for   jnextb
-        addc  bits,bits,bits  // CArry for getnextb
+        addc  bits,bits,bits  // Carry for getnextb
         ret
 
 lit_n2e:
@@ -108,14 +108,14 @@ getoff_n2e:
         getnextb(off)
         jnextb0n off_n2e
 
-        addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
+        addic. off,off,-3  // Carry set [and ignored], but no 'addi.'
         li len,0
         blt- offprev_n2e  // (off < 3) ==> (2==off) ==> use previous
         lbzu t1,1(src)
         sldi  off,off,32+8
         sradi off,off,32  // net: off<<=8, and sign extend 32==>64
         nor. disp,off,t1  // disp = -(1+ (off|t1));
-        sradi disp,disp,1  // shift off low bit (sets CArry; ignored)
+        sradi disp,disp,1  // shift off low bit (sets Carry; ignored)
         beq- eof_nrv
         andi. t1,t1,1  // complement of low bit of unshifted disp
         beq+ lenlast_n2e // low bit was 1
@@ -135,7 +135,7 @@ len_n2e:
 lenlast_n2e:
         getnextb(len)  // 0,1,2,3
 gotlen_n2e:
-        subfic t1,disp,(~0)+(-0x500)  // want CArry only
+        subfic t1,disp,(~0)+(-0x500)  // want Carry only
         addi  len,len,2
         addze len,len  // len += (disp < -0x500);
 

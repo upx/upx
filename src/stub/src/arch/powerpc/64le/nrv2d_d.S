@@ -88,7 +88,7 @@ get32d:
 
         rldicr  bits,bits,32,31        // upper bits
         cmpld   bits,hibit  // cr0  for   jnextb
-        addc    bits,bits,bits  // CArry for getnextb
+        addc    bits,bits,bits  // Carry for getnextb
         li      t2,1  // flag bit on upper bit pos
         rldicr  t2,t2,32,31
         or      bits,bits,t2  // the flag bit
@@ -112,12 +112,12 @@ getoff_n2d:
         jnextb0n off_n2d
 
         li len,0
-        addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
+        addic. off,off,-3  // Carry set [and ignored], but no 'addi.'
         rlwinm off,off,8,0,31-8  // off<<=8;
         blt- offprev_n2d
         lbzu r0,1(src)
         nor. disp,off,r0  // disp = -(1+ (off|r0));
-        srawi disp,disp,1  // shift off low bit (sets CArry)
+        srawi disp,disp,1  // shift off low bit (sets Carry)
         cmpdi disp,0  // test result of srawi instead of nor.
         beq-  eof_nrv  //
         b len_n2d -4  // CHEAT [getnextb ends "adde. len,len,len"]: bit from srawi
@@ -133,7 +133,7 @@ lenmore_n2d:
 gotlen_n2d:
 
 #define tmp off
-        subfic tmp,disp,(~0)+(-0x500)  // want CArry only
+        subfic tmp,disp,(~0)+(-0x500)  // want Carry only
 #undef tmp
         addi len,len,1
         addze len,len  // len += (disp < -0x500);

@@ -3,7 +3,7 @@
 
 name: 'Weekly CI - cmake macOS Xcode'
 on:
-  schedule: [cron: '20 4 * * 3'] # run weekly Wednesday 04:20 UTC
+  schedule: [cron: '20 3 * * 3'] # run weekly Wednesday 03:20 UTC
   workflow_dispatch:
 env:
   CMAKE_REQUIRED_QUIET: OFF

@@ -67,11 +67,11 @@
 #define getnextb(reg) call get1; adde. reg,reg,reg
 
 get2:
-        adde  bits,bits,bits  // shift in CArry from 'addc' below
+        adde  bits,bits,bits  // shift in Carry from 'addc' below
         sldi bits,bits,32-1  // left justify 33-bit result
 get1:
         cmpld bits,hibit  // cr0  for   jnextb
-        addc  bits,bits,bits  // CArry for getnextb
+        addc  bits,bits,bits  // Carry for getnextb
         bnelr+ cr0  // return if reload not needed; likely 31/32
 
                 // fetch 4 bytes unaligned and LITTLE ENDIAN
@@ -103,7 +103,7 @@ offmore_n2b:
         getnextb(off)
         jnextb0n offmore_n2b
 
-        addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
+        addic. off,off,-3  // Carry set [and ignored], but no 'addi.'
         li len,0
         blt- offprev_n2b
         lbzu t1,1(src)
@@ -121,7 +121,7 @@ lenmore_n2b:
         getnextb(len)
         jnextb0n lenmore_n2b
 gotlen_n2b:
-        subfic t1,disp,(~0)+(-0xd00)  // want CArry only
+        subfic t1,disp,(~0)+(-0xd00)  // want Carry only
         adde len,len,off  // len += off + (disp < -0xd00);
 
 copy:

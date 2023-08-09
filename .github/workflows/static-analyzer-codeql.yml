@@ -2,7 +2,7 @@
 
 name: 'Static Analyzer - CodeQL'
 on:
-  schedule: [cron: '50 5 * * 3'] # run weekly Wednesday 05:50 UTC
+  schedule: [cron: '50 4 * * 3'] # run weekly Wednesday 04:50 UTC
   workflow_dispatch:
 env:
   CMAKE_REQUIRED_QUIET: OFF

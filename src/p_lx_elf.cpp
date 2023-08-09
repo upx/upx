@@ -5114,7 +5114,7 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
                 }
 
             }
-            else { // defnitely compressible unless writeable
+            else { // definitely compressible unless writeable
                 if (!(Elf32_Phdr::PF_W & get_te32(&phdri[k].p_flags))) {
                     // Read-only PT_LOAD, assume not written by relocations.
                     // Also assume not the source for R_*_COPY relocation,
@@ -5371,7 +5371,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
                     packExtent(x, &ft, fo, 0, 0, true);
                 }
             }
-            else { // defnitely compressible unless writeable
+            else { // definitely compressible unless writeable
                 if (!(Elf64_Phdr::PF_W & get_te32(&phdri[k].p_flags))) {
                     // Read-only PT_LOAD, assume not written by relocations.
                     // Also assume not the source for R_*_COPY relocation,

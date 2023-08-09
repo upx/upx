@@ -2,7 +2,7 @@
 
 name: 'Static Analyzer - clang-tidy'
 on:
-  schedule: [cron: '30 5 * * 3'] # run weekly Wednesday 05:30 UTC
+  schedule: [cron: '30 4 * * 3'] # run weekly Wednesday 04:30 UTC
   workflow_dispatch:
 env:
   CMAKE_REQUIRED_QUIET: OFF
@@ -24,7 +24,7 @@ jobs:
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
           git -C upx submodule update --init
       - name: 'Perform clang-tidy Analysis Debug'
-        run: 'make -k -C upx build/analyze/clang-tidy/debug'
+        run: 'make -C upx -k build/analyze/clang-tidy/debug'
       - name: 'Perform clang-tidy Analysis Release'
         if: success() || failure() # run this step even if the previous step failed
-        run: 'make -k -C upx build/analyze/clang-tidy/release'
+        run: 'make -C upx -k build/analyze/clang-tidy/release'

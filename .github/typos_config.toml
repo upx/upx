@@ -4,7 +4,7 @@
 # tricky, so some false positives are fine
 
 [files]
-extend-exclude = ["LICENSE", "misc/*/packages.txt", "misc/*/*/packages.txt"]
+extend-exclude = ["LICENSE", "misc/*podman*/*/packages.txt"]
 
 [default.extend-identifiers]
 # misc variable names & symbols
@@ -13,12 +13,13 @@ ba = "ba"
 fo = "fo"
 fof = "fof"
 O_WRONLY = "O_WRONLY"
-# clang-analyzer-optin.cplusplus
+# optin: clang-analyzer-optin.cplusplus
 optin = "optin"
 sidelen = "sidelen"
+# macOS 11 "Big Sur"
+Sur = "Sur"
 tpos = "tpos"
 # assembly sources
-CArry = "CArry"
 hda = "hda"
 Larg = "Larg"
 pard = "pard"

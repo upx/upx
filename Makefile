@@ -190,7 +190,7 @@ build/analyze/clang-tidy/debug build/analyze/clang-tidy/release: build/analyze/c
 build/analyze/clang-tidy/debug build/analyze/clang-tidy/release: build/analyze/clang-tidy-zlib/$$(notdir $$@)
 build/analyze/clang-tidy/debug build/analyze/clang-tidy/release: build/analyze/clang-tidy-zstd/$$(notdir $$@)
 
-# OLD names
+# OLD names [deprecated]
 build/extra/scan-build/debug:   build/analyze/clang-analyzer/debug
 build/extra/scan-build/release: build/analyze/clang-analyzer/release
 

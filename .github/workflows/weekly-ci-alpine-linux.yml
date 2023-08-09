@@ -10,7 +10,7 @@
 
 name: 'Weekly CI - Alpine Linux'
 on:
-  schedule: [cron: '05 4 * * 3'] # run weekly Wednesday 04:05 UTC
+  schedule: [cron: '05 3 * * 3'] # run weekly Wednesday 03:05 UTC
   workflow_dispatch:
 env:
   CMAKE_REQUIRED_QUIET: OFF

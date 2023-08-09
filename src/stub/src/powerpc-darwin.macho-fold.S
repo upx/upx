@@ -84,7 +84,7 @@ L100:
         lwz r0,   srr0(a0); mtctr r0  # entry address
                 /* Next 3 lines probably are not needed, but ... */
         lwz r0, reg_cr(a0); mtcr  r0  # condition code
-        lwz r0,reg_xer(a0); mtxer r0  # extended error reg (CArry, etc.)
+        lwz r0,reg_xer(a0); mtxer r0  # extended error reg (Carry, etc.)
         lwz r0, reg_lr(a0); mtlr  r0  # link register
 
         lmw 4,4*4+reg0(3)  # reg 4 thru 31
