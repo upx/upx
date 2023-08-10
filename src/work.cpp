@@ -27,7 +27,7 @@
 
 // This file implements the central loop, and it uses class PackMaster to
 // dispatch. PackMaster by itself will instantiate a concrete subclass
-// of class Packer which then does the actual work.
+// of class PackerBase which then does the actual work.
 // And see p_com.cpp for a simple executable format.
 
 #include "conf.h"

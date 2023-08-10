@@ -28,7 +28,7 @@
 #pragma once
 
 class OutputFile;
-class Packer;
+class PackerBase;
 
 /*************************************************************************
 //
@@ -36,7 +36,7 @@ class Packer;
 
 class UiPacker final {
 public:
-    explicit UiPacker(const Packer *p_);
+    explicit UiPacker(const PackerBase *);
 
 public:
     virtual ~UiPacker() noexcept;
@@ -84,7 +84,7 @@ public:
 
 protected:
     virtual void printInfo(int nl = 0);
-    const Packer *const p; // reference
+    const PackerBase *const pb; // reference, required
 
     // callback
     upx_callback_t cb = {};

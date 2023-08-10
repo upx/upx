@@ -27,12 +27,12 @@
 
 #pragma once
 
-class Packer;
+class PackerBase;
 class InputFile;
 class OutputFile;
 
 /*************************************************************************
-// dispatch to a concrete subclass of class Packer; see work.cpp
+// dispatch to a concrete subclass of class PackerBase; see work.cpp
 **************************************************************************/
 
 class PackMaster final {
@@ -46,15 +46,16 @@ public:
     void list();
     void fileInfo();
 
-    typedef Packer *(*visit_func_t)(Packer *p, void *user);
-    static Packer *visitAllPackers(visit_func_t, InputFile *f, const Options *, void *user);
+    typedef bool (*visit_func_t)(PackerBase *pb, void *user);
+    static PackerBase *visitAllPackers(visit_func_t, InputFile *f, const Options *, void *user)
+        may_throw;
 
 private:
-    OwningPointer(Packer) packer = nullptr; // owner
-    InputFile *fi = nullptr;                // reference
+    OwningPointer(PackerBase) packer = nullptr; // owner
+    InputFile *fi = nullptr;                    // reference
 
-    static Packer *getPacker(InputFile *f);
-    static Packer *getUnpacker(InputFile *f);
+    static PackerBase *getPacker(InputFile *f);
+    static PackerBase *getUnpacker(InputFile *f);
 
     // setup local options for each file
     Options local_options;

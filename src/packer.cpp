@@ -36,7 +36,7 @@
 //
 **************************************************************************/
 
-Packer::Packer(InputFile *f) : fi(f) {
+Packer::Packer(InputFile *f) : PackerBase(f) {
     if (fi != nullptr)
         file_size = fi->st_size();
     mem_size_assert(1, file_size_u);

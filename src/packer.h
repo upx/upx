@@ -31,6 +31,7 @@
 
 class InputFile;
 class OutputFile;
+class PackerBase;
 class Packer;
 class UiPacker;
 class Filter;
@@ -41,9 +42,10 @@ class Filter;
 **************************************************************************/
 
 class PackHeader final {
+    friend class PackerBase;
     friend class Packer;
 
-    // these are strictly private to friend Packer
+    // these are strictly private to friends PackerBase and Packer
     explicit PackHeader() noexcept;
     void putPackHeader(SPAN_S(byte) p);
     bool decodePackHeaderFromBuf(SPAN_S(const byte) b, int blen);
@@ -97,21 +99,17 @@ bool ph_testOverlappingDecompression(const PackHeader &ph, SPAN_P(const byte) bu
                                      unsigned overlap_overhead);
 
 /*************************************************************************
-// abstract base class for packers
+// purely abstract minimal base class for all packers
 //
-// FIXME later: this class is way too fat and badly needs a decomposition
+// clients: PackMaster, UiPacker
 **************************************************************************/
 
-class Packer {
+class PackerBase {
     friend class UiPacker;
-
 protected:
-    explicit Packer(InputFile *f);
-
+    explicit PackerBase(InputFile *f) noexcept : fi(f) {}
 public:
-    virtual ~Packer() noexcept;
-    virtual void assertPacker() const;
-
+    virtual ~PackerBase() noexcept {}
     // getVersion() enables detecting forward incompatibility of unpack()
     // by old upx when newer upx changes the format of compressed output.
     virtual int getVersion() const = 0;
@@ -122,14 +120,55 @@ public:
     virtual const int *getCompressionMethods(int method, int level) const = 0;
     virtual const int *getFilters() const = 0;
 
+    // canPack() should throw a cantPackException eplaining why it
+    // cannot pack a recognized format.
+    virtual bool canPack() = 0;
+    // canUnpack() can return -1 meaning "format recognized, but file
+    // is definitely not packed". See packmast.cpp try_unpack().
+    virtual int canUnpack() = 0;
+
     // PackMaster entries
-    void initPackHeader();
-    void updatePackHeader();
-    void doPack(OutputFile *fo);
-    void doUnpack(OutputFile *fo);
-    void doTest();
-    void doList();
-    void doFileInfo();
+    virtual void assertPacker() const = 0;
+    virtual void initPackHeader() = 0;
+    virtual void updatePackHeader() = 0;
+    virtual void doPack(OutputFile *fo) = 0;
+    virtual void doUnpack(OutputFile *fo) = 0;
+    virtual void doTest() = 0;
+    virtual void doList() = 0;
+    virtual void doFileInfo() = 0;
+
+protected:
+    InputFile *fi = nullptr;
+    union {                        // unnamed union
+        upx_int64_t file_size = 0; // must get set by constructor
+        upx_uint64_t file_size_u;  // explicitly unsigned
+    };
+    PackHeader ph = PackHeader{}; // must be filled by canUnpack()
+};
+
+/*************************************************************************
+// abstract default implementation class for packers
+//
+// Packer can be viewed as "PackerDefaultImplV1"; it is grown historically
+// and still would benefit from a decomposition
+**************************************************************************/
+
+class Packer : public PackerBase {
+protected:
+    explicit Packer(InputFile *f);
+
+public:
+    virtual ~Packer() noexcept;
+
+    // PackMaster entries
+    virtual void assertPacker() const override;
+    virtual void initPackHeader() final override;
+    virtual void updatePackHeader() final override;
+    virtual void doPack(OutputFile *fo) final override;
+    virtual void doUnpack(OutputFile *fo) final override;
+    virtual void doTest() final override;
+    virtual void doList() final override;
+    virtual void doFileInfo() final override;
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const { return (version >= 8); }
@@ -147,14 +186,6 @@ protected:
     virtual void test();
     virtual void list();
     virtual void fileInfo();
-
-public:
-    // canPack() should throw a cantPackException eplaining why it
-    // cannot pack a recognized format.
-    virtual bool canPack() = 0;
-    // canUnpack() can return -1 meaning "format recognized, but file
-    // is definitely not packed". See packmast.cpp try_unpack().
-    virtual int canUnpack() = 0;
 
 protected:
     // main compression drivers
@@ -327,14 +358,8 @@ protected:
 
 protected:
     const N_BELE_RTP::AbstractPolicy *bele = nullptr; // target endianness
-    InputFile *fi = nullptr;
 
-    union {                        // unnamed union
-        upx_int64_t file_size = 0; // will get set by constructor
-        upx_uint64_t file_size_u;  // explicitly unsigned
-    };
-
-    PackHeader ph = PackHeader{}; // must be filled by canUnpack()
+    // PackHeader
     int ph_format = -1;
     int ph_version = -1;
 

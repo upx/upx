@@ -25,6 +25,8 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+#include "headers.h"
+#include <memory>
 #include "conf.h"
 #include "file.h"
 #include "packmast.h"
@@ -87,35 +89,32 @@ PackMaster::~PackMaster() noexcept {
 //
 **************************************************************************/
 
-static Packer *try_can_pack(Packer *p, void *user) {
+static bool try_can_pack(PackerBase *pb, void *user) may_throw {
     InputFile *f = (InputFile *) user;
     try {
-        p->initPackHeader();
+        pb->initPackHeader();
         f->seek(0, SEEK_SET);
-        if (p->canPack()) {
+        if (pb->canPack()) {
             if (opt->cmd == CMD_COMPRESS)
-                p->updatePackHeader();
+                pb->updatePackHeader();
             f->seek(0, SEEK_SET);
-            return p;
+            return true;
         }
     } catch (const IOException &) {
-    } catch (...) {
-        delete p;
-        throw;
+        // ignored
     }
-    delete p;
-    return nullptr;
+    return false;
 }
 
-static Packer *try_can_unpack(Packer *p, void *user) {
+static bool try_can_unpack(PackerBase *pb, void *user) may_throw {
     InputFile *f = (InputFile *) user;
     try {
-        p->initPackHeader();
+        pb->initPackHeader();
         f->seek(0, SEEK_SET);
-        int r = p->canUnpack();
+        int r = pb->canUnpack();
         if (r > 0) {
             f->seek(0, SEEK_SET);
-            return p;
+            return true;
         }
         if (r < 0) {
             // FIXME - could stop testing all other unpackers at this time
@@ -123,12 +122,8 @@ static Packer *try_can_unpack(Packer *p, void *user) {
         }
     } catch (const IOException &) {
         // ignored
-    } catch (...) {
-        delete p;
-        throw;
     }
-    delete p;
-    return nullptr;
+    return false;
 }
 
 /*************************************************************************
@@ -136,19 +131,18 @@ static Packer *try_can_unpack(Packer *p, void *user) {
 **************************************************************************/
 
 /*static*/
-Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const Options *o, void *user) {
-
+PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const Options *o,
+                                        void *user) may_throw {
 #define D(Klass)                                                                                   \
     ACC_BLOCK_BEGIN                                                                                \
     COMPILE_TIME_ASSERT(std::is_nothrow_destructible_v<Klass>)                                     \
-    Klass *kp = new Klass(f);                                                                      \
-    kp->assertPacker();                                                                            \
+    auto pb = std::unique_ptr<PackerBase>(new Klass(f));                                           \
+    pb->assertPacker();                                                                            \
     if (o->debug.debug_level)                                                                      \
-        fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", kp->getVersion(),               \
-                kp->getFormat(), #Klass);                                                          \
-    Packer *p = func(kp, user);                                                                    \
-    if (p != nullptr)                                                                              \
-        return p;                                                                                  \
+        fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", pb->getVersion(),               \
+                pb->getFormat(), #Klass);                                                          \
+    if (func(pb.get(), user))                                                                      \
+        return pb.release();                                                                       \
     ACC_BLOCK_END
 
     // NOTE: order of tries is important !!!
@@ -235,18 +229,18 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const Optio
 #undef D
 }
 
-/*static*/ Packer *PackMaster::getPacker(InputFile *f) {
-    Packer *p = visitAllPackers(try_can_pack, f, opt, f);
-    if (!p)
+/*static*/ PackerBase *PackMaster::getPacker(InputFile *f) {
+    PackerBase *pb = visitAllPackers(try_can_pack, f, opt, f);
+    if (!pb)
         throwUnknownExecutableFormat();
-    return p;
+    return pb;
 }
 
-/*static*/ Packer *PackMaster::getUnpacker(InputFile *f) {
-    Packer *p = visitAllPackers(try_can_unpack, f, opt, f);
-    if (!p)
+/*static*/ PackerBase *PackMaster::getUnpacker(InputFile *f) {
+    PackerBase *pb = visitAllPackers(try_can_unpack, f, opt, f);
+    if (!pb)
         throwNotPacked();
-    return p;
+    return pb;
 }
 
 /*************************************************************************

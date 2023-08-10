@@ -103,17 +103,16 @@ struct PackerNames {
     size_t names_count;
     const Options *o;
     PackerNames() : names_count(0), o(nullptr) {}
-    void add(const Packer *packer) {
+    void add(const PackerBase *pb) {
         assert(names_count < 64);
-        names[names_count].fname = packer->getFullName(o);
-        names[names_count].sname = packer->getName();
+        names[names_count].fname = pb->getFullName(o);
+        names[names_count].sname = pb->getName();
         names_count++;
     }
-    static Packer *visit(Packer *packer, void *user) {
+    static bool visit(PackerBase *pb, void *user) {
         PackerNames *self = (PackerNames *) user;
-        self->add(packer);
-        delete packer;
-        return nullptr;
+        self->add(pb);
+        return false;
     }
     static int __acc_cdecl_qsort cmp_fname(const void *a, const void *b) {
         return strcmp(((const Entry *) a)->fname, ((const Entry *) b)->fname);
@@ -129,7 +128,7 @@ static void list_all_packers(FILE *f, int verbose) {
     o.reset();
     PackerNames pn;
     pn.o = &o;
-    PackMaster::visitAllPackers(PackerNames::visit, nullptr, &o, &pn);
+    (void) PackMaster::visitAllPackers(PackerNames::visit, nullptr, &o, &pn);
     qsort(pn.names, pn.names_count, sizeof(PackerNames::Entry), PackerNames::cmp_fname);
     size_t pos = 0;
     for (size_t i = 0; i < pn.names_count; ++i) {
