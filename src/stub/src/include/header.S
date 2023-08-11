@@ -27,32 +27,40 @@
 ;
 */
 
+// see PackHeader::putPackHeader()
 
 section         UPX1HEAD
 
                 .byte   85,80,88,33     //  0  UPX_MAGIC_LE32
-                .byte   161,216,208,213 //     UPX_MAGIC2_LE32
+#if 0
+                .byte   161,216,208,213 //  4  UPX_MAGIC2_LE32
+#else
+                .byte   161             //  4  version
+                .byte   216             //  5  format
+                .byte   208             //  6  method
+                .byte   213             //  7  level
+#endif
                 .long   0               //  8  uncompressed adler32
                 .long   0               // 12  compressed adler32
 
 #ifdef COM
                 .short  0               // 16  uncompressed len
                 .short  0               // 18  compressed len
-                .byte   0               // 20  filter
+                .byte   0               // 20  filter id
                 .byte   45              // 21  header checksum
 #elif defined(EXE)
                 .byte   0,0,0           // 16  uncompressed len
                 .byte   0,0,0           // 19  compressed len
                 .byte   0,0,0           // 22  original file size
-                .byte   0               // 25  filter
+                .byte   0               // 25  filter id
                 .byte   45              // 26  header checksum
 #else
                 .long   0               // 16  uncompressed len
                 .long   0               // 20  compressed len
                 .long   0               // 24  original file size
                 .byte   0               // 28  filter id
-                .byte   0               // 29  filter cto
-                .byte   0               //  unused
+                .byte   0               // 29  filter_cto
+                .byte   0               // 30  filter_misc / n_mru
                 .byte   45              // 31  header checksum
 #endif
 

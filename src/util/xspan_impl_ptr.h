@@ -109,7 +109,7 @@ public:
     // assignment
     Self &operator=(const Self &other) { return assign(other); }
 
-    // FIXME: this is not called !!
+    // FIXME: this is not called??
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(U *other) {
@@ -117,7 +117,7 @@ public:
         return assign(Self(other));
     }
 
-    // FIXME: this is not called !!
+    // FIXME: this is not called??
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(Self &)
     operator=(const CSelf<U> &other) {

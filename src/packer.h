@@ -44,7 +44,7 @@ class Filter;
 class PackerBase {
     friend class UiPacker;
 protected:
-    explicit PackerBase(InputFile *f) noexcept : fi(f) {}
+    explicit PackerBase(InputFile *f);
 public:
     virtual ~PackerBase() noexcept {}
     // getVersion() enables detecting forward incompatibility of unpack()
@@ -75,12 +75,12 @@ public:
     virtual void doFileInfo() = 0;
 
 protected:
-    InputFile *fi = nullptr;
-    union {                        // unnamed union
-        upx_int64_t file_size = 0; // must get set by constructor
-        upx_uint64_t file_size_u;  // explicitly unsigned
+    InputFile *const fi;                // reference
+    union {                             // unnamed union
+        const upx_int64_t file_size;    // must get set by constructor
+        const upx_uint64_t file_size_u; // explicitly unsigned
     };
-    PackHeader ph = PackHeader{}; // must be filled by canUnpack()
+    PackHeader ph; // must be filled by canUnpack()
 };
 
 /*************************************************************************

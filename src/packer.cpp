@@ -36,13 +36,12 @@
 //
 **************************************************************************/
 
-Packer::Packer(InputFile *f) : PackerBase(f) {
-    if (fi != nullptr)
-        file_size = fi->st_size();
-    mem_size_assert(1, file_size_u);
-    uip = new UiPacker(this);
-    mem_clear(&ph);
+PackerBase::PackerBase(InputFile *f) : fi(f), file_size(f ? f->st.st_size : 0) {
+    ph.reset();
+    mem_size_assert(1, file_size);
 }
+
+Packer::Packer(InputFile *f) : PackerBase(f) { uip = new UiPacker(this); }
 
 Packer::~Packer() noexcept {
     // owner
@@ -51,7 +50,6 @@ Packer::~Packer() noexcept {
     assert_noexcept(linker == nullptr);
     // references
     bele = nullptr;
-    fi = nullptr;
 }
 
 // for PackMaster

@@ -36,23 +36,28 @@
 // least to detect older versions, so this is a little bit messy.
 **************************************************************************/
 
-PackHeader::PackHeader() noexcept : version(-1), format(-1) {}
+PackHeader::PackHeader() noexcept { reset(); }
+
+void PackHeader::reset() noexcept {
+    mem_clear(this);
+    version = -1;
+    format = -1;
+    compress_result.reset();
+}
 
 /*************************************************************************
-// very simple checksum for the header itself (since version 10)
+// extremely simple checksum for the header itself (since version 10)
 **************************************************************************/
 
 static byte get_packheader_checksum(SPAN_S(const byte) buf, int blen) {
     assert(blen >= 4);
     assert(get_le32(buf) == UPX_MAGIC_LE32);
-    // printf("1 %d\n", blen);
     buf += 4;
     blen -= 4;
     unsigned c = 0;
     while (blen-- > 0)
         c += *buf++;
     c %= 251;
-    // printf("2 %d\n", c);
     return (byte) c;
 }
 
@@ -98,7 +103,7 @@ void PackHeader::putPackHeader(SPAN_S(byte) p) const {
     // sufficient space for the header.
     assert(get_le32(p) == UPX_MAGIC_LE32);
     if (get_le32(p + 4) != UPX_MAGIC2_LE32) {
-        // fprintf(stderr, "MAGIC2_LE32: %x %x\n", get_le32(p+4), UPX_MAGIC2_LE32);
+        NO_fprintf(stderr, "MAGIC2_LE32: %x %x\n", get_le32(p + 4), UPX_MAGIC2_LE32);
         throwBadLoader();
     }
 

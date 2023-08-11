@@ -34,21 +34,22 @@ class Filter;
 // also see stub/src/include/header.S
 **************************************************************************/
 
-class PackHeader final {
-public:
+struct PackHeader final {
     explicit PackHeader() noexcept;
     ~PackHeader() noexcept = default;
+
+    void reset() noexcept;
 
     void putPackHeader(SPAN_S(byte) p) const;
     bool decodePackHeaderFromBuf(SPAN_S(const byte) b, int blen);
 
     int getPackHeaderSize() const;
 
-    // fields stored in compressed file => see header.S
+    // fields stored in compressed file => see stub/src/include/header.S
     // enum { magic = UPX_MAGIC_LE32 };
     int version;
-    int format; // executable format
-    int method; // compresison method
+    int format; // executable format UPX_F_xxx
+    int method; // compresison method M_xxx
     int level;  // compresison level 1..10
     unsigned u_len;
     unsigned c_len;
@@ -57,7 +58,10 @@ public:
     unsigned u_file_size;
     int filter;
     int filter_cto;
-    int n_mru; // FIXME: rename to filter_misc
+    union {
+        int filter_misc; // generic name
+        int n_mru;       // specific name for filter ctojr
+    };
     int header_checksum;
 
     // support fields for verifying decompression
