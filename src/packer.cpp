@@ -149,34 +149,6 @@ bool Packer::testUnpackFormat(int format) const {
     return canUnpackFormat(format);
 }
 
-bool ph_skipVerify(const PackHeader &ph) noexcept {
-    if (M_IS_DEFLATE(ph.method))
-        return false;
-    if (M_IS_LZMA(ph.method))
-        return false;
-    if (ph.level > 1)
-        return false;
-    return true;
-}
-
-int force_method(int method) noexcept // mark as forced
-{
-    return (0x80ul << 24) | method;
-}
-
-int is_forced_method(int method) noexcept // predicate
-{
-    return -0x80 == (method >> 24);
-}
-
-int forced_method(int method) noexcept // extract the forced method
-{
-    if (is_forced_method(method))
-        method &= ~(0x80ul << 24);
-    assert_noexcept(method > 0);
-    return method;
-}
-
 /*************************************************************************
 // compress - wrap call to low-level upx_compress()
 **************************************************************************/
@@ -203,7 +175,7 @@ bool Packer::compress(SPAN_P(byte) i_ptr, unsigned i_len, SPAN_P(byte) o_ptr,
     if (cconf_parm)
         cconf = *cconf_parm;
     // cconf options
-    int method = forced_method(ph.method);
+    int method = ph_forced_method(ph.method);
     if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method)) {
         if (opt->crp.crp_ucl.c_flags != -1)
             cconf.conf_ucl.c_flags = opt->crp.crp_ucl.c_flags;
@@ -332,39 +304,6 @@ bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const {
 // decompress
 **************************************************************************/
 
-void ph_decompress(PackHeader &ph, SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum,
-                   Filter *ft) {
-    unsigned adler;
-
-    // verify checksum of compressed data
-    if (verify_checksum) {
-        adler = upx_adler32(raw_bytes(in, ph.c_len), ph.c_len, ph.saved_c_adler);
-        if (adler != ph.c_adler)
-            throwChecksumError();
-    }
-
-    // decompress
-    if (ph.u_len < ph.c_len) {
-        throwCantUnpack("header corrupted");
-    }
-    unsigned new_len = ph.u_len;
-    int r = upx_decompress(raw_bytes(in, ph.c_len), ph.c_len, raw_bytes(out, ph.u_len), &new_len,
-                           forced_method(ph.method), &ph.compress_result);
-    if (r == UPX_E_OUT_OF_MEMORY)
-        throwOutOfMemoryException();
-    if (r != UPX_E_OK || new_len != ph.u_len)
-        throwCompressedDataViolation();
-
-    // verify checksum of decompressed data
-    if (verify_checksum) {
-        if (ft)
-            ft->unfilter(raw_bytes(out, ph.u_len), ph.u_len);
-        adler = upx_adler32(raw_bytes(out, ph.u_len), ph.u_len, ph.saved_u_adler);
-        if (adler != ph.u_adler)
-            throwChecksumError();
-    }
-}
-
 void Packer::decompress(SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum, Filter *ft) {
     ph_decompress(ph, in, out, verify_checksum, ft);
 }
@@ -372,33 +311,6 @@ void Packer::decompress(SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_che
 /*************************************************************************
 // overlapping decompression
 **************************************************************************/
-
-static bool ph_testOverlappingDecompression(const PackHeader &ph, const byte *buf, const byte *tbuf,
-                                            unsigned overlap_overhead) {
-    if (ph.c_len >= ph.u_len)
-        return false;
-
-    assert((int) overlap_overhead >= 0);
-    assert((int) (ph.u_len + overlap_overhead) >= 0);
-
-    // Because upx_test_overlap() does not use the asm_fast decompressor
-    // we must account for extra 3 bytes that asm_fast does use,
-    // or else we may fail at runtime decompression.
-    unsigned extra = 0;
-    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
-        extra = 3;
-    if (overlap_overhead <= 4 + extra) // don't waste time here
-        return false;
-    overlap_overhead -= extra;
-
-    unsigned src_off = ph.u_len + overlap_overhead - ph.c_len;
-    unsigned new_len = ph.u_len;
-    int r = upx_test_overlap(buf - src_off, tbuf, src_off, ph.c_len, &new_len,
-                             forced_method(ph.method), &ph.compress_result);
-    if (r == UPX_E_OUT_OF_MEMORY)
-        throwOutOfMemoryException();
-    return (r == UPX_E_OK && new_len == ph.u_len);
-}
 
 bool Packer::testOverlappingDecompression(const byte *buf, const byte *tbuf,
                                           unsigned overlap_overhead) const {
@@ -1020,7 +932,7 @@ void Packer::relocateLoader() {
 int Packer::prepareMethods(int *methods, int ph_method, const int *all_methods) const {
     int nmethods = 0;
     if (!opt->all_methods || all_methods == nullptr || (-0x80 == (ph_method >> 24))) {
-        methods[nmethods++] = forced_method(ph_method);
+        methods[nmethods++] = ph_forced_method(ph_method);
         return nmethods;
     }
     for (int mm = 0; all_methods[mm] != M_END; ++mm) {
@@ -1166,7 +1078,7 @@ void Packer::compressWithFilters(byte *i_ptr,
 #endif
 
     // update total_passes; previous (ui_total_passes > 0) means incremental
-    if (!is_forced_method(ph.method)) {
+    if (!ph_is_forced_method(ph.method)) {
         if (uip->ui_total_passes > 0)
             uip->ui_total_passes -= 1;
         if (filter_strategy < 0)

@@ -27,76 +27,13 @@
 
 #pragma once
 
+#include "packhead.h"
 #include "util/membuffer.h"
 
 class InputFile;
 class OutputFile;
-class PackerBase;
-class Packer;
 class UiPacker;
 class Filter;
-
-/*************************************************************************
-// PackHeader
-// also see stub/src/include/header.S
-**************************************************************************/
-
-class PackHeader final {
-    friend class PackerBase;
-    friend class Packer;
-
-    // these are strictly private to friends PackerBase and Packer
-    explicit PackHeader() noexcept;
-    void putPackHeader(SPAN_S(byte) p);
-    bool decodePackHeaderFromBuf(SPAN_S(const byte) b, int blen);
-
-public:
-    int getPackHeaderSize() const;
-
-public:
-    // fields stored in compressed file
-    // enum { magic = UPX_MAGIC_LE32 };
-    int version;
-    int format; // executable format
-    int method; // compresison method
-    int level;  // compresison level 1..10
-    unsigned u_len;
-    unsigned c_len;
-    unsigned u_adler;
-    unsigned c_adler;
-    unsigned u_file_size;
-    int filter;
-    int filter_cto;
-    int n_mru; // FIXME: rename to filter_misc
-    int header_checksum;
-
-    // support fields for verifying decompression
-    unsigned saved_u_adler;
-    unsigned saved_c_adler;
-
-    // info fields set by decodePackHeaderFromBuf()
-    unsigned buf_offset;
-
-    // info fields set by Packer::compress()
-    upx_compress_result_t compress_result;
-    // unsigned min_offset_found;
-    unsigned max_offset_found;
-    // unsigned min_match_found;
-    unsigned max_match_found;
-    // unsigned min_run_found;
-    unsigned max_run_found;
-    unsigned first_offset_found;
-    // unsigned same_match_offsets_found;
-
-    // info fields set by Packer::compressWithFilters()
-    unsigned overlap_overhead;
-};
-
-bool ph_skipVerify(const PackHeader &ph) noexcept;
-void ph_decompress(PackHeader &ph, SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum,
-                   Filter *ft);
-bool ph_testOverlappingDecompression(const PackHeader &ph, SPAN_P(const byte) buf,
-                                     unsigned overlap_overhead);
 
 /*************************************************************************
 // purely abstract minimal base class for all packers
@@ -387,9 +324,5 @@ private:
     Packer(Packer &&) noexcept DELETED_FUNCTION;
     Packer &operator=(Packer &&) noexcept DELETED_FUNCTION;
 };
-
-int force_method(int method) noexcept;     // (0x80ul<<24)|method
-int forced_method(int method) noexcept;    // (0x80ul<<24)|method ==> method
-int is_forced_method(int method) noexcept; // predicate
 
 /* vim:set ts=4 sw=4 et: */

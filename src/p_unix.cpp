@@ -406,7 +406,7 @@ void PackUnix::packExtent(
             MemBuffer hdr_obuf;
             hdr_obuf.allocForCompression(hdr_u_len);
             int r = upx_compress(hdr_ibuf, hdr_u_len, hdr_obuf, &hdr_c_len, nullptr,
-                forced_method(ph.method), 10, nullptr, nullptr);
+                ph_forced_method(ph.method), 10, nullptr, nullptr);
             if (r != UPX_E_OK)
                 throwInternalError("header compression failed");
             if (hdr_c_len >= hdr_u_len)
@@ -419,7 +419,7 @@ void PackUnix::packExtent(
             memset(&tmp, 0, sizeof(tmp));
             set_te32(&tmp.sz_unc, hdr_u_len);
             set_te32(&tmp.sz_cpr, hdr_c_len);
-            tmp.b_method = (unsigned char) forced_method(ph.method);
+            tmp.b_method = (unsigned char) ph_forced_method(ph.method);
             tmp.b_extra = b_extra;
             fo->write(&tmp, sizeof(tmp));
             total_out += sizeof(tmp);

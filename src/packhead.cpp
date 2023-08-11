@@ -26,7 +26,8 @@
  */
 
 #include "conf.h"
-#include "packer.h"
+#include "packhead.h"
+#include "filter.h" // for ft->unfilter()
 
 /*************************************************************************
 // PackHeader
@@ -92,7 +93,7 @@ int PackHeader::getPackHeaderSize() const {
 // see stub/header.ash
 **************************************************************************/
 
-void PackHeader::putPackHeader(SPAN_S(byte) p) {
+void PackHeader::putPackHeader(SPAN_S(byte) p) const {
     // NOTE: It is the caller's responsbility to ensure the buffer p has
     // sufficient space for the header.
     assert(get_le32(p) == UPX_MAGIC_LE32);
@@ -275,6 +276,104 @@ bool PackHeader::decodePackHeaderFromBuf(SPAN_S(const byte) buf, int blen) {
 
     this->buf_offset = boff;
     return true;
+}
+
+/*************************************************************************
+// ph method util
+**************************************************************************/
+
+bool ph_is_forced_method(int method) noexcept // predicate
+{
+    return (method >> 24) == -0x80;
+}
+
+int ph_force_method(int method) noexcept // mark as forced
+{
+    return method | (0x80u << 24);
+}
+
+int ph_forced_method(int method) noexcept // extract the forced method
+{
+    if (ph_is_forced_method(method))
+        method &= ~(0x80u << 24);
+    assert_noexcept(method > 0);
+    return method;
+}
+
+bool ph_skipVerify(const PackHeader &ph) noexcept {
+    if (M_IS_DEFLATE(ph.method))
+        return false;
+    if (M_IS_LZMA(ph.method))
+        return false;
+    if (ph.level > 1)
+        return false;
+    return true;
+}
+
+/*************************************************************************
+// ph decompress util
+**************************************************************************/
+
+void ph_decompress(PackHeader &ph, SPAN_P(const byte) in, SPAN_P(byte) out, bool verify_checksum,
+                   Filter *ft) {
+    // verify checksum of compressed data
+    if (verify_checksum) {
+        unsigned adler = upx_adler32(raw_bytes(in, ph.c_len), ph.c_len, ph.saved_c_adler);
+        if (adler != ph.c_adler)
+            throwChecksumError();
+    }
+
+    // decompress
+    if (ph.u_len < ph.c_len)
+        throwCantUnpack("header corrupted");
+    unsigned new_len = ph.u_len;
+    int r = upx_decompress(raw_bytes(in, ph.c_len), ph.c_len, raw_bytes(out, ph.u_len), &new_len,
+                           ph_forced_method(ph.method), &ph.compress_result);
+    if (r == UPX_E_OUT_OF_MEMORY)
+        throwOutOfMemoryException();
+    if (r != UPX_E_OK || new_len != ph.u_len)
+        throwCompressedDataViolation();
+
+    // verify checksum of decompressed data
+    if (verify_checksum) {
+        if (ft)
+            ft->unfilter(out, ph.u_len);
+        unsigned adler = upx_adler32(raw_bytes(out, ph.u_len), ph.u_len, ph.saved_u_adler);
+        if (adler != ph.u_adler)
+            throwChecksumError();
+    }
+}
+
+/*************************************************************************
+// ph overlapping decompression util
+**************************************************************************/
+
+bool ph_testOverlappingDecompression(const PackHeader &ph, const byte *buf, const byte *tbuf,
+                                     unsigned overlap_overhead) {
+    if (ph.c_len >= ph.u_len)
+        return false;
+
+    assert((int) overlap_overhead >= 0);
+    assert((int) (ph.u_len + overlap_overhead) >= 0);
+    const int method = ph_forced_method(ph.method);
+
+    // Because upx_test_overlap() does not use the asm_fast decompressor
+    // we must account for extra 3 bytes that asm_fast does use,
+    // or else we may fail at runtime decompression.
+    unsigned extra = 0;
+    if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
+        extra = 3;
+    if (overlap_overhead <= 4 + extra) // don't waste time here
+        return false;
+    overlap_overhead -= extra;
+
+    unsigned src_off = ph.u_len + overlap_overhead - ph.c_len;
+    unsigned new_len = ph.u_len;
+    int r = upx_test_overlap(buf - src_off, tbuf, src_off, ph.c_len, &new_len, method,
+                             &ph.compress_result);
+    if (r == UPX_E_OUT_OF_MEMORY)
+        throwOutOfMemoryException();
+    return (r == UPX_E_OK && new_len == ph.u_len);
 }
 
 /* vim:set ts=4 sw=4 et: */

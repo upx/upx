@@ -1493,7 +1493,7 @@ PackLinuxElf32::buildLinuxLoader(
     h.sz_cpr = mb_cprLoader.getSize();  // max that upx_compress may use
     {
         int r = upx_compress(uncLoader, sz_unc, sizeof(h) + cprLoader, &sz_cpr,
-            nullptr, forced_method(method), 10, nullptr, nullptr );
+            nullptr, ph_forced_method(method), 10, nullptr, nullptr );
         h.sz_cpr = sz_cpr;  // actual length used
         if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
             throwInternalError("loader compression failed");
@@ -1514,7 +1514,7 @@ PackLinuxElf32::buildLinuxLoader(
     }
     else {
         addStubEntrySections(ft, (methods_used ? methods_used
-                            : (1u << forced_method(ph.method))) );
+                            : (1u << ph_forced_method(ph.method))) );
         if (!xct_off) {
             defineSymbols(ft);
         }
@@ -1599,7 +1599,7 @@ PackLinuxElf64::buildLinuxLoader(
     h.sz_cpr = mb_cprLoader.getSize();  // max that upx_compress may use
     {
         int r = upx_compress(uncLoader, sz_unc, sizeof(h) + cprLoader, &sz_cpr,
-            nullptr, forced_method(method), 10, nullptr, nullptr );
+            nullptr, ph_forced_method(method), 10, nullptr, nullptr );
         h.sz_cpr = sz_cpr;  // actual length used
         if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
             throwInternalError("loader compression failed");
@@ -1620,7 +1620,7 @@ PackLinuxElf64::buildLinuxLoader(
     }
     else {
         addStubEntrySections(ft, (methods_used ? methods_used
-                            : (1u << forced_method(ph.method))) );
+                            : (1u << ph_forced_method(ph.method))) );
         if (!xct_off) {
             defineSymbols(ft);
         }
@@ -3900,7 +3900,7 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter &ft)
                         fi->readx(ibuf, filesz);
                         ft = orig_ft;
                         ph = orig_ph;
-                        ph.method = force_method(methods[k]);
+                        ph.method = ph_force_method(methods[k]);
                         ph.u_len = filesz;
                         compressWithFilters(&ft, OVERHEAD, NULL_cconf, 10, true);
                         sz_this += ph.c_len;
@@ -3913,7 +3913,7 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter &ft)
                 fi->readx(ibuf, sz_tail);
                 ft = orig_ft;
                 ph = orig_ph;
-                ph.method = force_method(methods[k]);
+                ph.method = ph_force_method(methods[k]);
                 ph.u_len = sz_tail;
                 compressWithFilters(&ft, OVERHEAD, NULL_cconf, 10, true);
                 sz_this += ph.c_len;
@@ -3926,7 +3926,7 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter &ft)
         }
         ft = orig_ft;
         ph = orig_ph;
-        ph.method = force_method(method_best);
+        ph.method = ph_force_method(method_best);
     }
 
     note_size = 0;
@@ -4782,7 +4782,7 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
                         fi->readx(ibuf, filesz);
                         ft = orig_ft;
                         ph = orig_ph;
-                        ph.method = force_method(methods[k]);
+                        ph.method = ph_force_method(methods[k]);
                         ph.u_len = filesz;
                         compressWithFilters(&ft, OVERHEAD, NULL_cconf, 10, true);
                         sz_this += ph.c_len;
@@ -4795,7 +4795,7 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
                 fi->readx(ibuf, sz_tail);
                 ft = orig_ft;
                 ph = orig_ph;
-                ph.method = force_method(methods[k]);
+                ph.method = ph_force_method(methods[k]);
                 ph.u_len = sz_tail;
                 compressWithFilters(&ft, OVERHEAD, NULL_cconf, 10, true);
                 sz_this += ph.c_len;
@@ -4808,7 +4808,7 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
         }
         ft = orig_ft;
         ph = orig_ph;
-        ph.method = force_method(method_best);
+        ph.method = ph_force_method(method_best);
     }
 
     note_size = 0;
