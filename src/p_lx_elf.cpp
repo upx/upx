@@ -2687,7 +2687,7 @@ tribool PackLinuxElf32::canPack()
                                  (int)elf_unsigned_dynamic(Elf32_Dyn::DT_RELSZ))
         ||  calls_crt1((Elf32_Rel const *)elf_find_dynamic(Elf32_Dyn::DT_JMPREL),
                                  (int)elf_unsigned_dynamic(Elf32_Dyn::DT_PLTRELSZ))) {
-            is_pie = true;
+            is_pie = true;  // UNUSED except to ignore is_shlib and xct_off
             goto proceed;  // calls C library init for main program
         }
 
@@ -3122,7 +3122,7 @@ PackLinuxElf64::canPack()
                                   (int)elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ))
         ||  calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL),
                                   (int)elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ))) {
-            is_pie = true;
+            is_pie = true;  // UNUSED except to ignore is_shlib and xct_off
             goto proceed;  // calls C library init for main program
         }
 
@@ -5596,7 +5596,7 @@ unsigned PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
             | 1u<<SHT_NOTE
             | 1u<<SHT_REL
             | 1u<<SHT_DYNSYM
-          //| 1u<<SHT_STRTAB  // covered by (j == e_shstrndx)
+            | 1u<<SHT_STRTAB  // .shstrtab and .dynstr
             | 1u<<SHT_INIT_ARRAY
             | 1u<<SHT_FINI_ARRAY
             | 1u<<SHT_PREINIT_ARRAY
@@ -5769,7 +5769,7 @@ unsigned PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
             | 1u<<SHT_NOTE
             | 1u<<SHT_REL
             | 1u<<SHT_DYNSYM
-          //| 1u<<SHT_STRTAB  // covered by (j == e_shstrndx)
+            | 1u<<SHT_STRTAB  // .shstrtab and .dynstr
             | 1u<<SHT_INIT_ARRAY
             | 1u<<SHT_FINI_ARRAY
             | 1u<<SHT_PREINIT_ARRAY
@@ -5804,6 +5804,8 @@ unsigned PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
         ++sh_in; ++sh_out; unsigned n_sh_out = 1;
 
         for (unsigned j = 1; j < e_shnum; ++j, ++sh_in) {
+            char const *sh_name = &shstrtab[get_te32(&sh_in->sh_name)];
+            (void)sh_name;  // debugging
             unsigned sh_type = get_te32(&sh_in->sh_type);
             unsigned sh_info = get_te32(&sh_in->sh_info);
             u64_t sh_flags   = get_te64(&sh_in->sh_flags);
@@ -5867,6 +5869,51 @@ unsigned PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
                         set_te64(&sh_out->sh_offset, so_slide + sh_offset);
                     }
                 }
+                // Exploration for updating Shdrs from Dynamic, to pacify Android.
+                // Motivated by --force-pie with an input shared library;
+                // see https://github.com/upx/upx/issues/694
+                // But then realized that the pointed-to regions typically were
+                // just above Elfhdrs (overlay_offset), so the data would be
+                // incorrect because occupied by compressed PT_LOADS.
+                // But don't lose the code, so comment-out via "if (0)".
+                if (0) switch(sh_type) { // start {Shdr, Dynamic} pairs
+                case SHT_DYNSYM: {
+                    set_te64(&sh_out->sh_addr, elf_unsigned_dynamic(Elf64_Dyn::DT_SYMTAB));
+                    sh_out->sh_offset = sh_out->sh_addr;
+                } break;
+                case SHT_STRTAB: {
+                    if (e_shstrndx != j) {
+                        set_te64(&sh_out->sh_addr, elf_unsigned_dynamic(Elf64_Dyn::DT_STRTAB));
+                        sh_out->sh_offset = sh_out->sh_addr;
+                    }
+                } break;
+                case SHT_GNU_versym: {
+                    set_te64(&sh_out->sh_addr, elf_unsigned_dynamic(Elf64_Dyn::DT_VERSYM));
+                    sh_out->sh_offset = sh_out->sh_addr;
+                } break;
+                case SHT_GNU_verneed: {
+                    set_te64(&sh_out->sh_addr, elf_unsigned_dynamic(Elf64_Dyn::DT_VERNEED));
+                    sh_out->sh_offset = sh_out->sh_addr;
+                } break;
+                case SHT_GNU_HASH: {
+                    set_te64(&sh_out->sh_addr, elf_unsigned_dynamic(Elf64_Dyn::DT_GNU_HASH));
+                    sh_out->sh_offset = sh_out->sh_addr;
+                } break;
+                case SHT_HASH: {
+                    set_te64(&sh_out->sh_addr, elf_unsigned_dynamic(Elf64_Dyn::DT_HASH));
+                    sh_out->sh_offset = sh_out->sh_addr;
+                } break;
+                case SHT_RELA: {
+                    if (0==strcmp(".rela.dyn", sh_name)) {
+                        set_te64(&sh_out->sh_addr, elf_unsigned_dynamic(Elf64_Dyn::DT_RELA));
+                        sh_out->sh_offset = sh_out->sh_addr;
+                    }
+                    if (0==strcmp(".rela.plt", sh_name)) {
+                        set_te64(&sh_out->sh_addr, elf_unsigned_dynamic(Elf64_Dyn::DT_JMPREL));
+                        sh_out->sh_offset = sh_out->sh_addr;
+                    }
+                } break;
+                } // end {Shdr, Dynamic} pairs
                 ++sh_out; ++n_sh_out;
             }
         }
