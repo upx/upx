@@ -197,7 +197,7 @@ void PackDjgpp2::stripDebug() {
 //
 **************************************************************************/
 
-bool PackDjgpp2::canPack() {
+tribool PackDjgpp2::canPack() {
     if (!readFileHeader())
         return false;
     if (is_dlm(fi, coff_offset))
@@ -346,7 +346,7 @@ void PackDjgpp2::pack(OutputFile *fo) {
 //
 **************************************************************************/
 
-int PackDjgpp2::canUnpack() {
+tribool PackDjgpp2::canUnpack() {
     if (!readFileHeader())
         return false;
     if (is_dlm(fi, coff_offset))

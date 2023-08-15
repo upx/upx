@@ -122,7 +122,7 @@ bool PackLinuxI386sh::getShellName(char *buf)
         return false;
     for (int j = 0; nullptr != shname[j]; ++j) {
         if (0 == strcmp(shname[j], bname + 1)) {
-            bool const s = super::canPack();
+            bool const s = bool(super::canPack());
             if (s) {
                 opt->o_unix.blocksize = blocksize = file_size;
             }
@@ -138,7 +138,7 @@ bool PackLinuxI386sh::getShellName(char *buf)
 }
 
 
-bool PackLinuxI386sh::canPack()
+tribool PackLinuxI386sh::canPack()
 {
 #if defined(__linux__)  //{
     // only compress i386sh scripts when running under Linux

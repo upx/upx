@@ -220,7 +220,7 @@ bool PackPs1::checkFileHeader() {
 //
 **************************************************************************/
 
-bool PackPs1::canPack() {
+tribool PackPs1::canPack() {
     byte buf[PS_HDR_SIZE - sizeof(ps1_exe_t)];
 
     if (!readFileHeader())
@@ -614,7 +614,7 @@ void PackPs1::pack(OutputFile *fo) {
 //
 **************************************************************************/
 
-int PackPs1::canUnpack() {
+tribool PackPs1::canUnpack() {
     if (!readFileHeader())
         return false;
     if (!readPackHeader(CD_SEC))

@@ -111,7 +111,7 @@ void PackWinCeArm::processTls(Interval *) // pass 1
 // pack
 **************************************************************************/
 
-bool PackWinCeArm::canPack() {
+tribool PackWinCeArm::canPack() {
     if (!readFileHeader())
         return false;
     checkMachine(ih.cpu);

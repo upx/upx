@@ -55,8 +55,8 @@ public:
     virtual void pack(OutputFile *fo) override;
     virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack() override;
-    virtual int  canUnpack() override; // bool, except -1: format known, but not packed
+    virtual tribool canPack() override;
+    virtual tribool canUnpack() override; // bool, except -1: format known, but not packed
     int find_overlay_offset(MemBuffer const &buf);
 
 protected:

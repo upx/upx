@@ -49,7 +49,7 @@ public:
     virtual const char *getName() const override { return "linux/elfi386"; }
     virtual const char *getFullName(const options_t *) const override { return "i386-linux.elf.interp"; }
 
-    virtual bool canPack() override;
+    virtual tribool canPack() override;
     virtual void unpack(OutputFile *fo) override;
 
 protected:

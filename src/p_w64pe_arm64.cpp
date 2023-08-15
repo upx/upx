@@ -59,7 +59,7 @@ const int *PackW64PeArm64::getFilters() const { return nullptr; }
 // pack
 **************************************************************************/
 
-bool PackW64PeArm64::canPack() {
+tribool PackW64PeArm64::canPack() {
     if (!readFileHeader())
         return false;
     checkMachine(ih.cpu);
@@ -106,7 +106,7 @@ void PackW64PeArm64::pack(OutputFile *fo) {
 // pack
 **************************************************************************/
 
-bool PackW64PeArm64EC::canPack() {
+tribool PackW64PeArm64EC::canPack() {
     if (!readFileHeader())
         return false;
     checkMachine(ih.cpu);

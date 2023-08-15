@@ -89,37 +89,38 @@ PackMaster::~PackMaster() noexcept {
 //
 **************************************************************************/
 
-static bool try_can_pack(PackerBase *pb, void *user) may_throw {
+static tribool try_can_pack(PackerBase *pb, void *user) may_throw {
     InputFile *f = (InputFile *) user;
     try {
         pb->initPackHeader();
         f->seek(0, SEEK_SET);
-        if (pb->canPack()) {
+        tribool r = pb->canPack();
+        if (r) {
             if (opt->cmd == CMD_COMPRESS)
                 pb->updatePackHeader();
             f->seek(0, SEEK_SET);
-            return true;
+            return true; // success
         }
+        if (r.isOther()) // aka "-1"
+            return r;    // canPack() says the format is recognized and we should stop early
     } catch (const IOException &) {
         // ignored
     }
     return false;
 }
 
-static bool try_can_unpack(PackerBase *pb, void *user) may_throw {
+static tribool try_can_unpack(PackerBase *pb, void *user) may_throw {
     InputFile *f = (InputFile *) user;
     try {
         pb->initPackHeader();
         f->seek(0, SEEK_SET);
-        int r = pb->canUnpack();
-        if (r > 0) {
+        tribool r = pb->canUnpack();
+        if (r) {
             f->seek(0, SEEK_SET);
-            return true;
+            return true; // success
         }
-        if (r < 0) {
-            // FIXME - could stop testing all other unpackers at this time
-            // see canUnpack() in packer.h
-        }
+        if (r.isOther()) // aka "-1"
+            return r;    // canUnpack() says the format is recognized and we should stop early
     } catch (const IOException &) {
         // ignored
     }
@@ -141,8 +142,11 @@ PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const O
     if (o->debug.debug_level)                                                                      \
         fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", pb->getVersion(),               \
                 pb->getFormat(), #Klass);                                                          \
-    if (func(pb.get(), user))                                                                      \
-        return pb.release();                                                                       \
+    tribool r = func(pb.get(), user);                                                              \
+    if (r)                                                                                         \
+        return pb.release(); /* success */                                                         \
+    if (r.isOther())                                                                               \
+        return nullptr; /* stop early */                                                           \
     ACC_BLOCK_END
 
     // NOTE: order of tries is important !!!

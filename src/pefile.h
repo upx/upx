@@ -503,7 +503,7 @@ protected:
     void pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t default_imagebase,
                bool last_section_rsrc_only);
     virtual void unpack(OutputFile *fo) override;
-    virtual int canUnpack() override;
+    virtual tribool canUnpack() override;
 
     virtual void readPeHeader() override;
 
@@ -564,7 +564,7 @@ protected:
     void pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t default_imagebase);
 
     virtual void unpack(OutputFile *fo) override;
-    virtual int canUnpack() override;
+    virtual tribool canUnpack() override;
 
     virtual void readPeHeader() override;
 

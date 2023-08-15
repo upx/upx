@@ -150,7 +150,7 @@ int PackTmt::readFileHeader() {
 #undef H
 }
 
-bool PackTmt::canPack() {
+tribool PackTmt::canPack() {
     if (!readFileHeader())
         return false;
     return true;
@@ -265,7 +265,7 @@ void PackTmt::pack(OutputFile *fo) {
         throwNotCompressible();
 }
 
-int PackTmt::canUnpack() {
+tribool PackTmt::canUnpack() {
     if (!readFileHeader())
         return false;
     fi->seek(adam_offset, SEEK_SET);

@@ -863,11 +863,11 @@ int upx_test_overlap       ( const upx_bytep buf,
 
 
 #include "util/snprintf.h"   // must get included first!
+#include "util/util.h"
 #include "options.h"
 #include "except.h"
 #include "bele.h"
 #include "console/console.h"
-#include "util/util.h"
 // xspan
 #include "util/raw_bytes.h"
 #include "util/xspan.h"

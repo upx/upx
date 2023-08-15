@@ -495,7 +495,7 @@ int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
 //
 **************************************************************************/
 
-bool PackLinuxI386::canPack()
+tribool PackLinuxI386::canPack()
 {
     if (exetype != 0)
         return super::canPack();

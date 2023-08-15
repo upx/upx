@@ -40,7 +40,7 @@ static const CLANG_FORMAT_DUMMY_STATEMENT
 //
 **************************************************************************/
 
-bool PackSys::canPack() {
+tribool PackSys::canPack() {
     byte buf[128];
 
     fi->readx(buf, sizeof(buf));

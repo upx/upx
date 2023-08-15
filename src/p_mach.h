@@ -756,8 +756,8 @@ public:
     virtual void pack1_setup_threado(OutputFile *const fo) = 0;
     virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack() override;
-    virtual int canUnpack() override;
+    virtual tribool canPack() override;
+    virtual tribool canUnpack() override;
     virtual upx_uint64_t get_mod_init_func(Mach_segment_command const *segptr);
     virtual unsigned find_SEGMENT_gap(unsigned const k, unsigned pos_eof);
 
@@ -1257,8 +1257,8 @@ protected:
     virtual void list() override;
 
 public:
-    virtual bool canPack() override;
-    virtual int canUnpack() override;
+    virtual tribool canPack() override;
+    virtual tribool canUnpack() override;
 
 protected:
     // loader core

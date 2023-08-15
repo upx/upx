@@ -1795,14 +1795,14 @@ void PeFile::processResources(Resource *res) {
         return;
 
     // setup default options for resource compression
-    if (opt->win32_pe.compress_resources < 0)
+    if (opt->win32_pe.compress_resources.isOther())
         opt->win32_pe.compress_resources = !isefi;
     if (!opt->win32_pe.compress_resources) {
         opt->win32_pe.compress_icons = false;
         for (int i = 0; i < RT_LAST; i++)
             opt->win32_pe.compress_rt[i] = false;
     }
-    if (opt->win32_pe.compress_rt[RT_STRING] < 0) {
+    if (opt->win32_pe.compress_rt[RT_STRING].isOther()) {
         // by default, don't compress RT_STRINGs of screensavers (".scr")
         opt->win32_pe.compress_rt[RT_STRING] = true;
         if (fn_has_ext(fi->getName(), "scr"))
@@ -3017,7 +3017,7 @@ void PeFile32::unpack(OutputFile *fo) {
     unpack0<pe_header_t, LE32>(fo, ih, oh, 1U << 31, set_oft);
 }
 
-int PeFile32::canUnpack() {
+tribool PeFile32::canUnpack() {
     if (!canPack()) // this calls readFileHeader() and readPeHeader()
         return false;
     return canUnpack0(getFormat() == UPX_F_WINCE_ARM ? 4 : 3, ih.objects, ih.entry, sizeof(ih));
@@ -3065,7 +3065,7 @@ void PeFile64::pack0(OutputFile *fo, unsigned subsystem_mask, upx_uint64_t defau
 
 void PeFile64::unpack(OutputFile *fo) { unpack0<pe_header_t, LE64>(fo, ih, oh, 1ULL << 63, false); }
 
-int PeFile64::canUnpack() {
+tribool PeFile64::canUnpack() {
     if (!canPack()) // this calls readFileHeader() and readPeHeader()
         return false;
     return canUnpack0(3, ih.objects, ih.entry, sizeof(ih));

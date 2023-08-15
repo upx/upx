@@ -50,7 +50,7 @@ public:
     virtual void setOhHeaderSize(const pe_section_t *osection) override;
     virtual void pack(OutputFile *fo) override;
 
-    virtual bool canPack() override;
+    virtual tribool canPack() override;
 
 protected:
     virtual void buildLoader(const Filter *ft) override;

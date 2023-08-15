@@ -46,7 +46,7 @@ public:
     void list();
     void fileInfo();
 
-    typedef bool (*visit_func_t)(PackerBase *pb, void *user);
+    typedef tribool (*visit_func_t)(PackerBase *pb, void *user);
     static PackerBase *visitAllPackers(visit_func_t, InputFile *f, const Options *, void *user)
         may_throw;
 

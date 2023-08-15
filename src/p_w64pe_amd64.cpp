@@ -65,7 +65,7 @@ Linker *PackW64PeAmd64::newLinker() const { return new ElfLinkerAMD64; }
 // pack
 **************************************************************************/
 
-bool PackW64PeAmd64::canPack() {
+tribool PackW64PeAmd64::canPack() {
     if (!readFileHeader())
         return false;
     checkMachine(ih.cpu);

@@ -64,7 +64,7 @@ PackLinuxElf32x86interp::~PackLinuxElf32x86interp()
 {
 }
 
-bool PackLinuxElf32x86interp::canPack()
+tribool PackLinuxElf32x86interp::canPack()
 {
     if (opt->o_unix.make_ptinterp) {
         return true;

@@ -163,8 +163,8 @@ struct Options final {
     struct {
         int compress_exports;
         int compress_icons;
-        int compress_resources;
-        signed char compress_rt[25]; // 25 == RT_LAST
+        TriBool<upx_int8_t> compress_resources;
+        TriBool<upx_int8_t> compress_rt[25]; // 25 == RT_LAST
         int strip_relocs;
         const char *keep_resource;
     } win32_pe;

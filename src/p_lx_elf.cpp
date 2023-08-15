@@ -2411,7 +2411,7 @@ bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
     return false;
 }
 
-int PackLinuxElf32::canUnpack() // bool, except -1: format known, but not packed
+tribool PackLinuxElf32::canUnpack() // bool, except -1: format known, but not packed
 {
     if (checkEhdr(&ehdri)) {
         return false;
@@ -2506,7 +2506,7 @@ PackLinuxElf32::canPackOSABI(Elf32_Ehdr const *ehdr)
     return true;  // good so far
 }
 
-bool PackLinuxElf32::canPack()
+tribool PackLinuxElf32::canPack()
 {
     union {
         unsigned char buf[MAX_ELF_HDR_32];
@@ -2589,7 +2589,7 @@ bool PackLinuxElf32::canPack()
             max_offset = UPX_MAX(max_offset, get_te32(&phdr->p_filesz) + get_te32(&phdr->p_offset));
         }
     }
-    if (canUnpack() > 0) {
+    if (canUnpack()) {
         throwAlreadyPacked();
     }
     // We want to compress position-independent executable (gcc -pie)
@@ -2952,7 +2952,7 @@ proceed: ;
     return true;
 }
 
-int PackLinuxElf64::canUnpack() // bool, except -1: format known, but not packed
+tribool PackLinuxElf64::canUnpack() // bool, except -1: format known, but not packed
 {
     if (checkEhdr(&ehdri)) {
         return false;
@@ -2966,7 +2966,7 @@ int PackLinuxElf64::canUnpack() // bool, except -1: format known, but not packed
     return false;
 }
 
-bool
+tribool
 PackLinuxElf64::canPack()
 {
     union {
@@ -3024,7 +3024,7 @@ PackLinuxElf64::canPack()
             max_offset = UPX_MAX(max_offset, get_te64(&phdr->p_filesz) + get_te64(&phdr->p_offset));
         }
     }
-    if (canUnpack() > 0) {
+    if (canUnpack()) {
         throwAlreadyPacked();
     }
     // We want to compress position-independent executable (gcc -pie)
@@ -7407,7 +7407,7 @@ PackLinuxElf32x86::~PackLinuxElf32x86()
 {
 }
 
-int PackLinuxElf32x86::canUnpack() // bool, except -1: format known, but not packed
+tribool PackLinuxElf32x86::canUnpack() // bool, except -1: format known, but not packed
 {
     if (super::canUnpack()) {
         return true;

@@ -229,7 +229,7 @@ int PackExe::readFileHeader() {
     return UPX_F_DOS_EXE;
 }
 
-bool PackExe::canPack() {
+tribool PackExe::canPack() {
     if (fn_has_ext(fi->getName(), "sys")) // dos/sys
         return false;
     if (!readFileHeader())
@@ -572,7 +572,7 @@ void PackExe::pack(OutputFile *fo) {
 //
 **************************************************************************/
 
-int PackExe::canUnpack() {
+tribool PackExe::canUnpack() {
     if (!readFileHeader())
         return false;
     const unsigned off = ih.headsize16 * 16;

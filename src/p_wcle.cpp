@@ -112,7 +112,7 @@ void PackWcle::handleStub(OutputFile *fo) {
         Packer::handleStub(fi, fo, le_offset);
 }
 
-bool PackWcle::canPack() {
+tribool PackWcle::canPack() {
     if (!LeFile::readFileHeader())
         return false;
     return true;
@@ -731,7 +731,7 @@ void PackWcle::decodeEntryTable() {
     ientries = nullptr;
 }
 
-int PackWcle::canUnpack() {
+tribool PackWcle::canUnpack() {
     if (!LeFile::readFileHeader())
         return false;
     fi->seek(exe_offset + ih.data_pages_offset, SEEK_SET);

@@ -41,7 +41,7 @@ public:
     virtual const char *getName() const override { return "dos/sys"; }
     virtual const char *getFullName(const Options *) const override { return "i086-dos16.sys"; }
 
-    virtual bool canPack() override;
+    virtual tribool canPack() override;
 
 protected: // dos/com overrides
     virtual unsigned getCallTrickOffset() const override { return 0; }

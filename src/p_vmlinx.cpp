@@ -143,7 +143,7 @@ typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
 }
 
 template <class T>
-bool PackVmlinuxBase<T>::canPack()
+tribool PackVmlinuxBase<T>::canPack()
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -553,7 +553,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
 }
 
 template <class T>
-int PackVmlinuxBase<T>::canUnpack()
+tribool PackVmlinuxBase<T>::canUnpack()
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));

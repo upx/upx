@@ -93,7 +93,7 @@ int PackVmlinuzI386::getStrategy(Filter &/*ft*/)
 }
 
 
-bool PackVmlinuzI386::canPack()
+tribool PackVmlinuzI386::canPack()
 {
     return readFileHeader() == getFormat();
 }
@@ -671,7 +671,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 // unpack
 **************************************************************************/
 
-int PackVmlinuzI386::canUnpack()
+tribool PackVmlinuzI386::canUnpack()
 {
     if (readFileHeader() != getFormat())
         return false;
@@ -735,7 +735,7 @@ int PackVmlinuzARMEL::getStrategy(Filter &/*ft*/)
     return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
 }
 
-bool PackVmlinuzARMEL::canPack()
+tribool PackVmlinuzARMEL::canPack()
 {
     return readFileHeader() == getFormat();
 }
@@ -1029,7 +1029,7 @@ void PackVmlinuzARMEL::pack(OutputFile *fo)
         throwNotCompressible();
 }
 
-int PackVmlinuzARMEL::canUnpack()
+tribool PackVmlinuzARMEL::canUnpack()
 {
     if (readFileHeader() != getFormat())
         return false;

@@ -195,6 +195,49 @@ template <class T, size_t N>
 inline void owner_delete(T (&array)[N]) noexcept DELETED_FUNCTION;
 
 /*************************************************************************
+// TriBool - tri-state bool
+**************************************************************************/
+
+template <class T = int, T TOther = -1> // an enum with an underlying type and 3 values
+class TriBool {
+public:
+    // types
+    typedef T underlying_type;
+    static_assert(std::is_integral_v<underlying_type>);
+    typedef decltype(T(0) + T(0)) promoted_type;
+    static_assert(std::is_integral_v<promoted_type>);
+    static_assert(TOther != 0 && TOther != 1);
+    enum value_type : underlying_type { False = 0, True = 1, Other = TOther };
+    // constructors
+    forceinline TriBool() noexcept = default;
+    forceinline ~TriBool() noexcept = default;
+    constexpr TriBool(value_type x) noexcept : value(x) {}
+    constexpr TriBool(promoted_type x) noexcept : value(x == 0 ? False : (x == 1 ? True : Other)) {}
+    // access
+    value_type getValue() const noexcept { return value; }
+    // checks for > 0, so TOther determines if Other is false (the default) or true
+    explicit operator bool() const noexcept { return value > False; }
+    // query; this is NOT the same as operator bool()
+    bool isStrictFalse() const noexcept { return value == False; }
+    bool isStrictTrue() const noexcept { return value == True; }
+    bool isStrictBool() const noexcept { return value == False || value == True; }
+    bool isOther() const noexcept { return value != False && value != True; }
+    // "other" can mean many things, depending on usage context, so provide some alternative names:
+    // forceinline bool isDefault() const noexcept { return isOther(); } // might be misleading
+    forceinline bool isIndeterminate() const noexcept { return isOther(); }
+    forceinline bool isUndecided() const noexcept { return isOther(); }
+    // forceinline bool isUnset() const noexcept { return isOther(); } // might be misleading
+    constexpr bool operator==(TriBool other) const noexcept { return value == other.value; }
+    constexpr bool operator==(value_type other) const noexcept { return value == other; }
+    constexpr bool operator==(promoted_type other) const noexcept { return value == other; }
+protected:
+    // value
+    value_type value = False;
+};
+
+typedef TriBool<> tribool;
+
+/*************************************************************************
 // misc. support functions
 **************************************************************************/
 

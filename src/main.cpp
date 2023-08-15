@@ -679,8 +679,11 @@ static int do_option(int optc, const char *arg) {
         break;
     case 632:
         opt->win32_pe.compress_resources = 1;
-        if (mfx_optarg && mfx_optarg[0])
-            getoptvar(&opt->win32_pe.compress_resources, 0, 1, arg);
+        if (mfx_optarg && mfx_optarg[0]) {
+            int value;
+            getoptvar(&value, 0, 1, arg);
+            opt->win32_pe.compress_resources = bool(value);
+        }
         // printf("compress_resources: %d\n", opt->win32_pe.compress_resources);
         break;
     case 633:

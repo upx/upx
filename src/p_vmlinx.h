@@ -83,9 +83,9 @@ protected:
     virtual int getStrategy(Filter &/*ft*/);
     virtual bool is_valid_e_entry(Addr) = 0;
     virtual bool has_valid_vmlinux_head() = 0;
-    virtual bool canPack() override;
+    virtual tribool canPack() override;
     virtual void pack(OutputFile *fo) override;
-    virtual int canUnpack() override;  // bool, except -1: format known, but not packed
+    virtual tribool canUnpack() override;  // bool, except -1: format known, but not packed
     virtual void unpack(OutputFile *fo) override;
     virtual unsigned write_vmlinux_head(
         OutputFile *fo,

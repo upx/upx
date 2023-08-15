@@ -54,7 +54,7 @@ public:
     virtual void pack1(OutputFile *fo, Filter &ft) override;
     virtual off_t pack3(OutputFile *fo, Filter &ft) override;
 
-    virtual bool canPack() override;
+    virtual tribool canPack() override;
     // virtual void unpack(OutputFile *fo) { super::unpack(fo); }
     virtual bool canUnpackVersion(int version) const override
         { return (version >= 11); }

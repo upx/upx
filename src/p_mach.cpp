@@ -1615,7 +1615,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
 
 // The prize is the value of overlay_offset: the offset of compressed data
 template <class T>
-int PackMachBase<T>::canUnpack()
+tribool PackMachBase<T>::canUnpack()
 {
     unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     fi->seek(0, SEEK_SET);
@@ -1924,7 +1924,7 @@ upx_uint64_t PackMachBase<T>::get_mod_init_func(Mach_segment_command const *segp
 }
 
 template <class T>
-bool PackMachBase<T>::canPack()
+tribool PackMachBase<T>::canPack()
 {
     unsigned const lc_seg = lc_seg_info[sizeof(Addr)>>3].segment_cmd;
     fi->seek(0, SEEK_SET);
@@ -2484,7 +2484,7 @@ void PackMachFat::unpack(OutputFile *fo)
     }
 }
 
-bool PackMachFat::canPack()
+tribool PackMachFat::canPack()
 {
     struct Mach_fat_arch const *const arch = &fat_head.arch[0];
 
@@ -2552,7 +2552,7 @@ bool PackMachFat::canPack()
     return true;
 }
 
-int PackMachFat::canUnpack()
+tribool PackMachFat::canUnpack()
 {
     struct Mach_fat_arch const *const arch = &fat_head.arch[0];
 

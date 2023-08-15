@@ -57,12 +57,14 @@ public:
     virtual const int *getCompressionMethods(int method, int level) const = 0;
     virtual const int *getFilters() const = 0;
 
-    // canPack() should throw a cantPackException eplaining why it
-    // cannot pack a recognized format.
-    virtual bool canPack() = 0;
-    // canUnpack() can return -1 meaning "format recognized, but file
-    // is definitely not packed". See packmast.cpp try_unpack().
-    virtual int canUnpack() = 0;
+    // canPack() should throw a cantPackException eplaining why it cannot pack
+    // a recognized format.
+    // canPack() can return -1 to stop early; see class PackMaster
+    virtual tribool canPack() = 0;
+    // canUnpack() should throw a cantUnpackException eplaining why it cannot pack
+    // a recognized format.
+    // canUnpack() can return -1 to stop early; see class PackMaster
+    virtual tribool canUnpack() = 0;
 
     // PackMaster entries
     virtual void assertPacker() const = 0;
@@ -164,10 +166,10 @@ protected:
     void verifyOverlappingDecompression(byte *o_ptr, unsigned o_size, Filter *ft = nullptr);
 
     // packheader handling
-    virtual int patchPackHeader(void *b, int blen);
-    virtual bool getPackHeader(const void *b, int blen, bool allow_incompressible = false);
-    virtual bool readPackHeader(int len, bool allow_incompressible = false);
-    virtual void checkAlreadyPacked(const void *b, int blen);
+    virtual int patchPackHeader(void *b, int blen) final;
+    virtual bool getPackHeader(const void *b, int blen, bool allow_incompressible = false) final;
+    virtual bool readPackHeader(int len, bool allow_incompressible = false) final;
+    virtual void checkAlreadyPacked(const void *b, int blen) final;
 
     // loader core
     virtual void buildLoader(const Filter *ft) = 0;

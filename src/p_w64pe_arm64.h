@@ -50,7 +50,7 @@ public:
     virtual void setOhHeaderSize(const pe_section_t *osection) override;
     virtual void pack(OutputFile *fo) override;
 
-    virtual bool canPack() override;
+    virtual tribool canPack() override;
 
 protected:
     virtual void buildLoader(const Filter *ft) override;
@@ -74,7 +74,7 @@ public:
     virtual const char *getName() const override { return "win64/arm64ec"; }
     virtual const char *getFullName(const Options *) const override { return "arm64ec-win64.pe"; }
 
-    virtual bool canPack() override;
+    virtual tribool canPack() override;
 };
 
 /* vim:set ts=4 sw=4 et: */

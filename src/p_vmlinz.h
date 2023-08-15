@@ -51,8 +51,8 @@ public:
     virtual void pack(OutputFile *fo) override;
     virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack() override;
-    virtual int canUnpack() override;
+    virtual tribool canPack() override;
+    virtual tribool canUnpack() override;
 
 protected:
     virtual int readFileHeader();
@@ -142,8 +142,8 @@ public:
     virtual void pack(OutputFile *fo) override;
     virtual void unpack(OutputFile *fo) override;
 
-    virtual bool canPack() override;
-    virtual int canUnpack() override;
+    virtual tribool canPack() override;
+    virtual tribool canUnpack() override;
 
 protected:
     virtual int readFileHeader();

@@ -46,7 +46,7 @@ public:
     /*virtual void buildLoader(const Filter *);*/
     virtual int getVersion() const override { return 14; } // upx-3.96 cannot upack, for instance
     virtual bool canUnpackVersion(int version) const override { return (version >= 11); }
-    virtual int  canUnpack() override { return super::canUnpack(); } // bool, except -1: format known, but not packed
+    virtual tribool canUnpack() override { return super::canUnpack(); } // bool, except -1: format known, but not packed
 
 protected:
     virtual const int *getCompressionMethods(int method, int level) const override;
@@ -140,8 +140,8 @@ protected:
     virtual void PackLinuxElf32help1(InputFile *f);
     virtual int checkEhdr(Elf32_Ehdr const *ehdr) const;
     virtual bool canPackOSABI(Elf32_Ehdr const *);
-    virtual bool canPack() override;
-    virtual int  canUnpack() override; // bool, except -1: format known, but not packed
+    virtual tribool canPack() override;
+    virtual tribool canUnpack() override; // bool, except -1: format known, but not packed
 
     // These ARM routines are essentially common to big/little endian,
     // but the class hierarchy splits after this class.
@@ -311,8 +311,8 @@ public:
 protected:
     virtual void PackLinuxElf64help1(InputFile *f);
     virtual int checkEhdr(Elf64_Ehdr const *ehdr) const;
-    virtual bool canPack() override;
-    virtual int  canUnpack() override; // bool, except -1: format known, but not packed
+    virtual tribool canPack() override;
+    virtual tribool canUnpack() override; // bool, except -1: format known, but not packed
 
     virtual void pack1(OutputFile *, Filter &) override;  // generate executable header
     virtual void asl_pack2_Shdrs(OutputFile *, unsigned pre_xct_top);  // AndroidSharedLibrary processes Shdrs
@@ -606,7 +606,7 @@ public:
     virtual const char *getName() const override { return "linux/i386"; }
     virtual const char *getFullName(const options_t *) const override { return "i386-linux.elf"; }
     virtual const int *getFilters() const override;
-    virtual int  canUnpack() override; // bool, except -1: format known, but not packed
+    virtual tribool canUnpack() override; // bool, except -1: format known, but not packed
 
 protected:
     virtual void pack1(OutputFile *, Filter &) override;  // generate executable header

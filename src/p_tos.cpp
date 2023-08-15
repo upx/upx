@@ -342,7 +342,7 @@ static bool check_relocs(const byte *relocs, unsigned rsize, unsigned image_size
 //
 **************************************************************************/
 
-bool PackTos::canPack() {
+tribool PackTos::canPack() {
     if (!readFileHeader())
         return false;
 
@@ -673,7 +673,7 @@ void PackTos::pack(OutputFile *fo) {
 //
 **************************************************************************/
 
-int PackTos::canUnpack() {
+tribool PackTos::canUnpack() {
     if (!readFileHeader())
         return false;
     if (!readPackHeader(768))

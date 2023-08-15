@@ -58,7 +58,7 @@ const int *PackCom::getFilters() const {
 //
 **************************************************************************/
 
-bool PackCom::canPack() {
+tribool PackCom::canPack() {
     byte buf[128];
 
     fi->readx(buf, sizeof(buf));
@@ -197,7 +197,7 @@ void PackCom::pack(OutputFile *fo) {
 //
 **************************************************************************/
 
-int PackCom::canUnpack() {
+tribool PackCom::canUnpack() {
     if (!readPackHeader(128)) // read "ph"
         return false;
     if (file_size_u <= ph.c_len)

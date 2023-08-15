@@ -67,7 +67,7 @@ PackUnix::~PackUnix()
 }
 
 // common part of canPack(), enhanced by subclasses
-bool PackUnix::canPack()
+tribool PackUnix::canPack()
 {
     if (exetype == 0)
         return false;
@@ -555,7 +555,7 @@ unsigned PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
 **************************************************************************/
 
 // The prize is the value of overlay_offset: the offset of compressed data
-int PackUnix::canUnpack()
+tribool PackUnix::canUnpack()
 {
     int const small = 32 + sizeof(overlay_offset);
     // Allow zero-filled last page, for Mac OS X code signing.

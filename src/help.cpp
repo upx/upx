@@ -109,7 +109,7 @@ struct PackerNames {
         names[names_count].sname = pb->getName();
         names_count++;
     }
-    static bool visit(PackerBase *pb, void *user) {
+    static tribool visit(PackerBase *pb, void *user) {
         PackerNames *self = (PackerNames *) user;
         self->add(pb);
         return false;

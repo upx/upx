@@ -75,7 +75,7 @@ int PackW32PeI386::readFileHeader() {
 // pack
 **************************************************************************/
 
-bool PackW32PeI386::canPack() {
+tribool PackW32PeI386::canPack() {
     if (!readFileHeader())
         return false;
     checkMachine(ih.cpu);
