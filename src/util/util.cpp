@@ -787,6 +787,7 @@ TEST_CASE("get_ratio") {
     CHECK(get_ratio(2 * UPX_RSIZE_MAX, 1024ull * UPX_RSIZE_MAX) == 9999999);
 }
 
+namespace {
 template <class T>
 struct TestTriBool {
     static void test(bool expect_true, int x) noexcept {
@@ -831,9 +832,14 @@ struct TestTriBool {
         CHECK(a.isOther());
     }
 };
+} // namespace
 
 TEST_CASE("TriBool") {
+    static_assert(!tribool(false));
+    static_assert(tribool(true));
+    static_assert(!tribool(tribool::Other));
     TestTriBool<tribool>::test(false, -1);
+    //
     TestTriBool<TriBool<upx_int8_t> >::test(false, -1);
     TestTriBool<TriBool<upx_int64_t> >::test(false, -1);
     //

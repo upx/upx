@@ -44,16 +44,14 @@ PackerBase::PackerBase(InputFile *f) : fi(f), file_size(f ? f->st.st_size : 0) {
 Packer::Packer(InputFile *f) : PackerBase(f) { uip = new UiPacker(this); }
 
 Packer::~Packer() noexcept {
-    // owner
     owner_delete(uip);
     owner_delete(linker);
     assert_noexcept(linker == nullptr);
-    // references
-    bele = nullptr;
 }
 
 // for PackMaster
 void Packer::assertPacker() const {
+#if DEBUG
     assert(getFormat() > 0);
     assert(getFormat() < 255);
     assert(getVersion() >= 11);
@@ -76,7 +74,6 @@ void Packer::assertPacker() const {
             fprintf(stderr, "%s\n", getName());
         assert(bele == format_bele);
     }
-#if DEBUG
     Linker *l = newLinker();
     assert(l != nullptr);
     if (bele != l->bele)
@@ -509,7 +506,7 @@ unsigned Packer::getRandomId() const {
 
 // this is called directly after the constructor from class PackMaster
 void Packer::initPackHeader() {
-    mem_clear(&ph);
+    ph.reset();
     ph.version = getVersion();
     ph.format = getFormat();
     ph.method = M_NONE;

@@ -6,8 +6,8 @@
 [files]
 extend-exclude = ["LICENSE", "misc/*podman*/*/packages.txt"]
 
-[default.extend-identifiers]
 # misc variable names & symbols
+[default.extend-identifiers]
 acc_spawnve = "acc_spawnve"
 ba = "ba"
 fo = "fo"

@@ -59,11 +59,11 @@ public:
 
     // canPack() should throw a cantPackException eplaining why it cannot pack
     // a recognized format.
-    // canPack() can return -1 to stop early; see class PackMaster
+    // canPack() can return -1 to fail early; see class PackMaster
     virtual tribool canPack() = 0;
     // canUnpack() should throw a cantUnpackException eplaining why it cannot pack
     // a recognized format.
-    // canUnpack() can return -1 to stop early; see class PackMaster
+    // canUnpack() can return -1 to fail early; see class PackMaster
     virtual tribool canUnpack() = 0;
 
     // PackMaster entries
@@ -82,7 +82,7 @@ protected:
         const upx_int64_t file_size;    // must get set by constructor
         const upx_uint64_t file_size_u; // explicitly unsigned
     };
-    PackHeader ph; // must be filled by canUnpack()
+    PackHeader ph; // must be filled by canUnpack(); also used by UiPacker
 };
 
 /*************************************************************************

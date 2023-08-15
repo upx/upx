@@ -52,7 +52,7 @@ public:
 
 private:
     OwningPointer(PackerBase) packer = nullptr; // owner
-    InputFile *fi = nullptr;                    // reference
+    InputFile *const fi;                        // reference, required
 
     static PackerBase *getPacker(InputFile *f);
     static PackerBase *getUnpacker(InputFile *f);

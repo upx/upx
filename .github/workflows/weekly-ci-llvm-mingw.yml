@@ -24,12 +24,12 @@ jobs:
           - name: llvm-mingw-20230614-ucrt
             llvm_version: 16.0.6
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64.tar.xz'
-          - name: llvm-mingw-20230730-msvcrt
+          - name: llvm-mingw-20230811-msvcrt
             llvm_version: 17.0.0rc1
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230730/llvm-mingw-20230730-msvcrt-ubuntu-20.04-x86_64.tar.xz'
-          - name: llvm-mingw-20230730-ucrt
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230811/llvm-mingw-20230811-msvcrt-ubuntu-20.04-x86_64.tar.xz'
+          - name: llvm-mingw-20230811-ucrt
             llvm_version: 17.0.0rc1
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230730/llvm-mingw-20230730-ucrt-ubuntu-20.04-x86_64.tar.xz'
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230811/llvm-mingw-20230811-ucrt-ubuntu-20.04-x86_64.tar.xz'
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3

@@ -46,7 +46,7 @@ enum {
     M_CB_SCREEN // 2 line callback using screen
 };
 
-struct UiPacker::State {
+struct UiPacker::State final {
     int mode;
 
     unsigned u_len;

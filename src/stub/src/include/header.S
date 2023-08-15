@@ -31,10 +31,11 @@
 
 section         UPX1HEAD
 
-                .byte   85,80,88,33     //  0  UPX_MAGIC_LE32
+                .byte   85,80,88,33     //  0  UPX_MAGIC_LE32 aka "UPX!"
 #if 0
                 .byte   161,216,208,213 //  4  UPX_MAGIC2_LE32
 #else
+                // these will get set to actual values; initialized with some arbitrary numbers
                 .byte   161             //  4  version
                 .byte   216             //  5  format
                 .byte   208             //  6  method

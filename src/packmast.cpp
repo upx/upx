@@ -26,7 +26,7 @@
  */
 
 #include "headers.h"
-#include <memory>
+#include <memory> // std::unique_ptr
 #include "conf.h"
 #include "file.h"
 #include "packmast.h"
@@ -102,7 +102,7 @@ static tribool try_can_pack(PackerBase *pb, void *user) may_throw {
             return true; // success
         }
         if (r.isOther()) // aka "-1"
-            return r;    // canPack() says the format is recognized and we should stop early
+            return r;    // canPack() says the format is recognized and we should fail early
     } catch (const IOException &) {
         // ignored
     }
@@ -120,7 +120,7 @@ static tribool try_can_unpack(PackerBase *pb, void *user) may_throw {
             return true; // success
         }
         if (r.isOther()) // aka "-1"
-            return r;    // canUnpack() says the format is recognized and we should stop early
+            return r;    // canUnpack() says the format is recognized and we should fail early
     } catch (const IOException &) {
         // ignored
     }
@@ -138,15 +138,15 @@ PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const O
     ACC_BLOCK_BEGIN                                                                                \
     COMPILE_TIME_ASSERT(std::is_nothrow_destructible_v<Klass>)                                     \
     auto pb = std::unique_ptr<PackerBase>(new Klass(f));                                           \
-    pb->assertPacker();                                                                            \
     if (o->debug.debug_level)                                                                      \
         fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", pb->getVersion(),               \
                 pb->getFormat(), #Klass);                                                          \
+    pb->assertPacker();                                                                            \
     tribool r = func(pb.get(), user);                                                              \
     if (r)                                                                                         \
         return pb.release(); /* success */                                                         \
     if (r.isOther())                                                                               \
-        return nullptr; /* stop early */                                                           \
+        return nullptr; /* stop and fail early */                                                  \
     ACC_BLOCK_END
 
     // NOTE: order of tries is important !!!

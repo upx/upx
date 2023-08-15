@@ -577,7 +577,7 @@ void upx_compiler_sanity_check(void) noexcept {
 **************************************************************************/
 
 TEST_CASE("assert_noexcept") {
-    // just to make sure that our own assert macros don't generate any warnings
+    // just to make sure that our own assert() macros don't generate any warnings
     byte dummy = 0;
     byte *ptr1 = &dummy;
     const byte *const ptr2 = &dummy;

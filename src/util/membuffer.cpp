@@ -62,7 +62,7 @@ static noinline void init_use_simple_mcheck() noexcept {
 static bool use_simple_mcheck() noexcept {
     static upx_std_once_flag init_done;
     upx_std_call_once(init_done, init_use_simple_mcheck);
-    // NOTE: clang-analyzer-unix.Malloc does not know that this flag is "constant"
+    // NOTE: clang-analyzer-unix.Malloc does not know that this flag is "constant"; see below
     return use_simple_mcheck_flag;
 }
 #else
@@ -176,9 +176,10 @@ void MemBuffer::fill(unsigned off, unsigned len, int value) {
 //
 **************************************************************************/
 
-#define PTR_BITS(p) ((unsigned) ((upx_uintptr_t) (p) &0xffffffff))
-#define MAGIC1(p) ((PTR_BITS(p) ^ 0xfefdbeeb) | 1)
-#define MAGIC2(p) ((PTR_BITS(p) ^ 0xfefdbeeb ^ 0x80024011) | 1)
+// for use_simple_mcheck()
+#define PTR_BITS32(p) ((unsigned) ((upx_uintptr_t) (p) &0xffffffff))
+#define MAGIC1(p) ((PTR_BITS32(p) ^ 0xfefdbeeb) | 1)
+#define MAGIC2(p) ((PTR_BITS32(p) ^ 0xfefdbeeb ^ 0x88224411) | 1)
 
 void MemBuffer::checkState() const {
     if (!ptr)
@@ -215,7 +216,7 @@ void MemBuffer::alloc(upx_uint64_t bytes) {
         // store magic constants to detect buffer overruns
         set_ne32(p - 8, size_in_bytes);
         set_ne32(p - 4, MAGIC1(p));
-        set_ne32(p + size_in_bytes, MAGIC2(p));
+        set_ne32(p + size_in_bytes + 0, MAGIC2(p));
         set_ne32(p + size_in_bytes + 4, stats.global_alloc_counter);
     }
     ptr = (pointer) (void *) p;
