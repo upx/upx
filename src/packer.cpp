@@ -44,8 +44,8 @@ PackerBase::PackerBase(InputFile *f) : fi(f), file_size(f ? f->st.st_size : 0) {
 Packer::Packer(InputFile *f) : PackerBase(f) { uip = new UiPacker(this); }
 
 Packer::~Packer() noexcept {
-    owner_delete(uip);
-    owner_delete(linker);
+    upx::owner_delete(uip);
+    upx::owner_delete(linker);
     assert_noexcept(linker == nullptr);
 }
 
@@ -778,7 +778,7 @@ static const char *getIdentstr(unsigned *size, int small) {
 }
 
 void Packer::initLoader(const void *pdata, int plen, int small, int pextra) {
-    owner_delete(linker);
+    upx::owner_delete(linker);
     linker = newLinker();
     assert(bele == linker->bele);
     linker->init(pdata, plen, pextra);

@@ -96,7 +96,7 @@ private:
 // This class is private to Filter - don't look.
 **************************************************************************/
 
-class FilterImpl {
+class FilterImpl final {
     friend class Filter;
 
 private:

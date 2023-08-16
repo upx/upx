@@ -40,8 +40,8 @@
 #include "p_com.h"
 #include "p_djgpp2.h"
 #include "p_exe.h"
-#include "p_lx_exc.h"
 #include "p_lx_elf.h"
+#include "p_lx_exc.h"
 #include "p_lx_interp.h"
 #include "p_lx_sh.h"
 #include "p_mach.h"
@@ -54,8 +54,8 @@
 #include "p_w32pe_i386.h"
 #include "p_w64pe_amd64.h"
 #include "p_w64pe_arm64.h"
-#include "p_wince_arm.h"
 #include "p_wcle.h"
+#include "p_wince_arm.h"
 
 /*************************************************************************
 //
@@ -74,7 +74,7 @@ PackMaster::PackMaster(InputFile *f, Options *o) noexcept : fi(f) {
 }
 
 PackMaster::~PackMaster() noexcept {
-    owner_delete(packer);
+    upx::owner_delete(packer);
     // restore global options
     if (saved_opt != nullptr) {
 #if WITH_THREADS
@@ -101,7 +101,7 @@ static tribool try_can_pack(PackerBase *pb, void *user) may_throw {
             f->seek(0, SEEK_SET);
             return true; // success
         }
-        if (r.isOther()) // aka "-1"
+        if (r.isThird()) // aka "-1"
             return r;    // canPack() says the format is recognized and we should fail early
     } catch (const IOException &) {
         // ignored
@@ -119,7 +119,7 @@ static tribool try_can_unpack(PackerBase *pb, void *user) may_throw {
             f->seek(0, SEEK_SET);
             return true; // success
         }
-        if (r.isOther()) // aka "-1"
+        if (r.isThird()) // aka "-1"
             return r;    // canUnpack() says the format is recognized and we should fail early
     } catch (const IOException &) {
         // ignored
@@ -145,7 +145,7 @@ PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const O
     tribool r = func(pb.get(), user);                                                              \
     if (r)                                                                                         \
         return pb.release(); /* success */                                                         \
-    if (r.isOther())                                                                               \
+    if (r.isThird())                                                                               \
         return nullptr; /* stop and fail early */                                                  \
     ACC_BLOCK_END
 

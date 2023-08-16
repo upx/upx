@@ -34,6 +34,9 @@
 #include "headers.h"
 #include "version.h"
 
+// reserve name "upx" for namespace
+namespace upx {}
+
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(short) == 2)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(int) == 4)
@@ -85,29 +88,11 @@ inline void upx_std_call_once(upx_std_once_flag &flag, NoexceptCallable &&f) {
 }
 #endif // WITH_THREADS
 
-// <type_traits> upx_std_is_bounded_array: same as C++20 std::is_bounded_array
-template <class T>
-struct upx_std_is_bounded_array : public std::false_type {};
-template <class T, size_t N>
-struct upx_std_is_bounded_array<T[N]> : public std::true_type {};
-template <class T>
-inline constexpr bool upx_std_is_bounded_array_v = upx_std_is_bounded_array<T>::value;
-
 // <type_traits> upx_is_integral is overloaded for BE16 & friends; see bele.h
 template <class T>
 struct upx_is_integral : public std::is_integral<T> {};
 template <class T>
 inline constexpr bool upx_is_integral_v = upx_is_integral<T>::value;
-
-// <type_traits> util: is_same_all and is_same_any means std::is_same for multiple types
-template <class T, class... Ts>
-struct is_same_all : public std::conjunction<std::is_same<T, Ts>...> {};
-template <class T, class... Ts>
-inline constexpr bool is_same_all_v = is_same_all<T, Ts...>::value;
-template <class T, class... Ts>
-struct is_same_any : public std::disjunction<std::is_same<T, Ts>...> {};
-template <class T, class... Ts>
-inline constexpr bool is_same_any_v = is_same_any<T, Ts...>::value;
 
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
 // horrible hack for broken compiler
@@ -379,13 +364,6 @@ inline const T& UPX_MAX(const T& a, const T& b) { if (a < b) return b; return a;
 template <class T>
 inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b; }
 
-template <size_t Size>
-struct UnsignedSizeOf {
-    static_assert(Size >= 1 && Size <= UPX_RSIZE_MAX_MEM);
-    static constexpr unsigned value = unsigned(Size);
-};
-#define usizeof(expr)   (UnsignedSizeOf<sizeof(expr)>::value)
-
 template <class T>
 inline void mem_clear(T *object) noexcept {
     static_assert(std::is_class_v<T>); // UPX convention
@@ -427,41 +405,13 @@ noinline void throwAssertFailed(const char *expr, const char *file, int line, co
 #define assert_noexcept assert
 #endif
 
-class noncopyable {
-protected:
-    inline noncopyable() noexcept {}
-    inline ~noncopyable() noexcept = default;
-private:
-    noncopyable(const noncopyable &) noexcept DELETED_FUNCTION; // copy constructor
-    noncopyable& operator=(const noncopyable &) noexcept DELETED_FUNCTION; // copy assignment
-    noncopyable(noncopyable &&) noexcept DELETED_FUNCTION; // move constructor
-    noncopyable& operator=(noncopyable &&) noexcept DELETED_FUNCTION; // move assignment
-};
+#include "util/cxxlib.h"
+using upx::is_same_any_v;
+using upx::noncopyable;
+using upx::tribool;
+using upx::OptVar;
+#define usizeof(expr)   (upx::UnsignedSizeOf<sizeof(expr)>::value)
 
-
-namespace compile_time {
-constexpr size_t string_len(const char *a) {
-    return *a == '\0' ? 0 : 1 + string_len(a + 1);
-}
-constexpr bool string_eq(const char *a, const char *b) {
-    return *a == *b && (*a == '\0' || string_eq(a + 1, b + 1));
-}
-constexpr bool string_lt(const char *a, const char *b) {
-    return (uchar)*a < (uchar)*b || (*a != '\0' && *a == *b && string_lt(a + 1, b + 1));
-}
-constexpr bool string_ne(const char *a, const char *b) {
-    return !string_eq(a, b);
-}
-constexpr bool string_gt(const char *a, const char *b) {
-    return string_lt(b, a);
-}
-constexpr bool string_le(const char *a, const char *b) {
-    return !string_lt(b, a);
-}
-constexpr bool string_ge(const char *a, const char *b) {
-    return !string_lt(a, b);
-}
-} // namespace compile_time
 
 /*************************************************************************
 // constants
@@ -631,52 +581,6 @@ struct upx_callback_t {
 /*************************************************************************
 // compression - config_t
 **************************************************************************/
-
-template <class T, T default_value_, T min_value_, T max_value_>
-struct OptVar final {
-    static_assert(std::is_integral_v<T>);
-    typedef T value_type;
-    static constexpr T default_value = default_value_;
-    static constexpr T min_value = min_value_;
-    static constexpr T max_value = max_value_;
-    static_assert(min_value <= default_value && default_value <= max_value);
-
-    static void assertValue(const T &v) noexcept {
-        // info: this generates annoying warnings "unsigned >= 0 is always true"
-        //assert_noexcept(v >= min_value);
-        assert_noexcept(v == min_value || v >= min_value + 1);
-        assert_noexcept(v <= max_value);
-    }
-    void assertValue() const noexcept {
-        assertValue(v);
-    }
-
-    OptVar() noexcept : v(default_value), is_set(false) { }
-    OptVar& operator= (const T &other) noexcept {
-        assertValue(other);
-        v = other;
-        is_set = true;
-        return *this;
-    }
-
-    void reset() noexcept { v = default_value; is_set = false; }
-    operator T () const noexcept { return v; }
-
-    T v;
-    bool is_set;
-};
-
-
-// optional assignments
-template <class T, T a, T b, T c>
-inline void oassign(OptVar<T,a,b,c> &self, const OptVar<T,a,b,c> &other) noexcept {
-    if (other.is_set) { self.v = other.v; self.is_set = true; }
-}
-template <class T, T a, T b, T c>
-inline void oassign(T &v, const OptVar<T,a,b,c> &other) noexcept {
-    if (other.is_set) { v = other.v; }
-}
-
 
 struct lzma_compress_config_t {
     typedef OptVar<unsigned,  2u, 0u,   4u> pos_bits_t;             // pb

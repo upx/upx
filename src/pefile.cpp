@@ -1795,14 +1795,14 @@ void PeFile::processResources(Resource *res) {
         return;
 
     // setup default options for resource compression
-    if (opt->win32_pe.compress_resources.isOther())
+    if (opt->win32_pe.compress_resources.isThird())
         opt->win32_pe.compress_resources = !isefi;
     if (!opt->win32_pe.compress_resources) {
         opt->win32_pe.compress_icons = false;
         for (int i = 0; i < RT_LAST; i++)
             opt->win32_pe.compress_rt[i] = false;
     }
-    if (opt->win32_pe.compress_rt[RT_STRING].isOther()) {
+    if (opt->win32_pe.compress_rt[RT_STRING].isThird()) {
         // by default, don't compress RT_STRINGs of screensavers (".scr")
         opt->win32_pe.compress_rt[RT_STRING] = true;
         if (fn_has_ext(fi->getName(), "scr"))

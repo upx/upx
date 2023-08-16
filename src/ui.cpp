@@ -186,7 +186,7 @@ UiPacker::UiPacker(const PackerBase *pb_) : pb(pb_) {
 UiPacker::~UiPacker() noexcept {
     cb.reset();
     // owner
-    owner_delete(s);
+    upx::owner_delete(s);
 }
 
 /*************************************************************************

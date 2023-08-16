@@ -100,21 +100,6 @@ ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned, upx_uint32_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<long long, upx_int64_t>::value))
 ACC_COMPILE_TIME_ASSERT_HEADER((std::is_same<unsigned long long, upx_uint64_t>::value))
 
-ACC_COMPILE_TIME_ASSERT_HEADER((is_same_all_v<int>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((is_same_all_v<int, int>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((is_same_all_v<int, int, int>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_all_v<int, char>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_all_v<int, char, int>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_all_v<int, int, char>) )
-
-ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_any_v<int>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((is_same_any_v<int, int>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((is_same_any_v<int, char, int>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((is_same_any_v<int, int, char>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_any_v<int, char>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_any_v<int, char, char>) )
-ACC_COMPILE_TIME_ASSERT_HEADER((!is_same_any_v<int, char, long>) )
-
 ACC_COMPILE_TIME_ASSERT_HEADER(no_bswap16(0x04030201) == 0x0201)
 ACC_COMPILE_TIME_ASSERT_HEADER(no_bswap32(0x04030201) == 0x04030201)
 ACC_COMPILE_TIME_ASSERT_HEADER(no_bswap64(0x0807060504030201ull) == 0x0807060504030201ull)
@@ -127,43 +112,6 @@ ACC_COMPILE_TIME_ASSERT_HEADER(bswap32(bswap32(0xf4f3f2f1)) == no_bswap32(0xf4f3
 ACC_COMPILE_TIME_ASSERT_HEADER(bswap64(bswap64(0xf8f7f6f5f4f3f2f1ull)) ==
                                no_bswap64(0xf8f7f6f5f4f3f2f1ull))
 #endif
-
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(int) == sizeof(int))
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof('a') == sizeof(char))
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof("") == 1)
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof("a") == 2)
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0) == sizeof(int))
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0L) == sizeof(long))
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0LL) == sizeof(long long))
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(nullptr) == sizeof(void *))
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(sizeof(0)) == sizeof(size_t))
-ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(usizeof(0)) == sizeof(unsigned))
-
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("") == 0)
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("a") == 1)
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("ab") == 2)
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("abc") == 3)
-
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_eq("", ""))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_eq("a", ""))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_eq("", "a"))
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_eq("abc", "abc"))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_eq("ab", "abc"))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_eq("abc", "ab"))
-
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_lt("", ""))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_lt("a", ""))
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_lt("", "a"))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_lt("abc", "abc"))
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_lt("ab", "abc"))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_lt("abc", "ab"))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_lt("abc", "aba"))
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_lt("abc", "abz"))
-
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_ne("abc", "abz"))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_gt("abc", "abz"))
-ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_ge("abc", "abz"))
-ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
 #if 0 // does not work with MSVC
@@ -592,20 +540,6 @@ TEST_CASE("assert_noexcept") {
     assert_noexcept(ptr1);
     assert_noexcept(ptr2);
     assert_noexcept(!ptr3);
-}
-
-TEST_CASE("noncopyable") {
-    struct Test : private noncopyable {
-        int v = 1;
-    };
-    Test t = {};
-    CHECK(t.v == 1);
-#if (ACC_CC_MSC) // MSVC thinks that Test is not std::is_trivially_copyable; true or compiler bug?
-    t.v = 0;
-#else
-    mem_clear(&t);
-#endif
-    CHECK(t.v == 0);
 }
 
 TEST_CASE("acc_vget") {

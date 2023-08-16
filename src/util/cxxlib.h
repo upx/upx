@@ -1,0 +1,256 @@
+/* cxxlib.h --
+
+   This file is part of the UPX executable compressor.
+
+   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
+   All Rights Reserved.
+
+   UPX and the UCL library are free software; you can redistribute them
+   and/or modify them under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of
+   the License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation, Inc.,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+   Markus F.X.J. Oberhumer
+   <markus@oberhumer.com>
+ */
+
+#pragma once
+
+// #include <stddef.h>
+// #include <type_traits>
+
+namespace upx {
+
+/*************************************************************************
+// type_traits
+**************************************************************************/
+
+// <type_traits> is_bounded_array: same as C++20 std::is_bounded_array
+template <class T>
+struct is_bounded_array : public std::false_type {};
+template <class T, size_t N>
+struct is_bounded_array<T[N]> : public std::true_type {};
+template <class T>
+inline constexpr bool is_bounded_array_v = is_bounded_array<T>::value;
+
+// <type_traits> util: is_same_all and is_same_any means std::is_same for multiple types
+template <class T, class... Ts>
+struct is_same_all : public std::conjunction<std::is_same<T, Ts>...> {};
+template <class T, class... Ts>
+inline constexpr bool is_same_all_v = is_same_all<T, Ts...>::value;
+template <class T, class... Ts>
+struct is_same_any : public std::disjunction<std::is_same<T, Ts>...> {};
+template <class T, class... Ts>
+inline constexpr bool is_same_any_v = is_same_any<T, Ts...>::value;
+
+/*************************************************************************
+// util
+**************************************************************************/
+
+template <size_t Size>
+struct UnsignedSizeOf {
+    static_assert(Size >= 1 && Size <= UPX_RSIZE_MAX_MEM);
+    static constexpr unsigned value = unsigned(Size);
+};
+
+class noncopyable {
+protected:
+    inline noncopyable() noexcept {}
+    inline ~noncopyable() noexcept = default;
+private:
+    noncopyable(const noncopyable &) noexcept DELETED_FUNCTION;            // copy constructor
+    noncopyable &operator=(const noncopyable &) noexcept DELETED_FUNCTION; // copy assignment
+    noncopyable(noncopyable &&) noexcept DELETED_FUNCTION;                 // move constructor
+    noncopyable &operator=(noncopyable &&) noexcept DELETED_FUNCTION;      // move assignment
+};
+
+namespace compile_time {
+constexpr size_t string_len(const char *a) { return *a == '\0' ? 0 : 1 + string_len(a + 1); }
+constexpr bool string_eq(const char *a, const char *b) {
+    return *a == *b && (*a == '\0' || string_eq(a + 1, b + 1));
+}
+constexpr bool string_lt(const char *a, const char *b) {
+    return (uchar) *a < (uchar) *b || (*a != '\0' && *a == *b && string_lt(a + 1, b + 1));
+}
+constexpr bool string_ne(const char *a, const char *b) { return !string_eq(a, b); }
+constexpr bool string_gt(const char *a, const char *b) { return string_lt(b, a); }
+constexpr bool string_le(const char *a, const char *b) { return !string_lt(b, a); }
+constexpr bool string_ge(const char *a, const char *b) { return !string_lt(a, b); }
+} // namespace compile_time
+
+/*************************************************************************
+// TriBool - tri-state bool
+// an enum with an underlying type and 3 values
+// bool() checks for > 0, so ThirdValue determines if Third is false or true
+**************************************************************************/
+
+template <class T = int, T ThirdValue = -1> // ThirdValue is false by default
+struct TriBool final {
+    // types
+    typedef T underlying_type;
+    static_assert(std::is_integral_v<underlying_type>);
+    typedef decltype(T(0) + T(0)) promoted_type;
+    static_assert(std::is_integral_v<promoted_type>);
+    static_assert(ThirdValue != 0 && ThirdValue != 1);
+    enum value_type : underlying_type { False = 0, True = 1, Third = ThirdValue };
+    // constructors
+    forceinline constexpr TriBool() noexcept : value(False) {}
+    forceinline constexpr TriBool(value_type x) noexcept : value(x) {}
+    constexpr TriBool(promoted_type x) noexcept : value(x == 0 ? False : (x == 1 ? True : Third)) {}
+    forceinline ~TriBool() noexcept = default;
+    // access
+    constexpr value_type getValue() const noexcept { return value; }
+    // checks for > 0, so ThirdValue determines if Third is false (the default) or true
+    explicit constexpr operator bool() const noexcept { return value > False; }
+    // query; this is NOT the same as operator bool()
+    constexpr bool isStrictFalse() const noexcept { return value == False; }
+    constexpr bool isStrictTrue() const noexcept { return value == True; }
+    constexpr bool isStrictBool() const noexcept { return value == False || value == True; }
+    constexpr bool isThird() const noexcept { return value != False && value != True; }
+    constexpr bool operator==(TriBool other) const noexcept { return value == other.value; }
+    constexpr bool operator==(value_type other) const noexcept { return value == other; }
+    constexpr bool operator==(promoted_type other) const noexcept { return value == other; }
+
+    // "third" can mean many things, depending on usage context, so provide some alternative names:
+    // constexpr bool isDefault() const noexcept { return isThird(); } // might be misleading
+    constexpr bool isIndeterminate() const noexcept { return isThird(); }
+    constexpr bool isOther() const noexcept { return isThird(); }
+    constexpr bool isUndecided() const noexcept { return isThird(); }
+    // constexpr bool isUnset() const noexcept { return isThird(); } // might be misleading
+
+    // protected:
+    value_type value;
+};
+
+typedef TriBool<> tribool;
+
+/*************************************************************************
+// OptVar and oassign
+**************************************************************************/
+
+template <class T, T default_value_, T min_value_, T max_value_>
+struct OptVar final {
+    static_assert(std::is_integral_v<T>);
+    typedef T value_type;
+    static constexpr T default_value = default_value_;
+    static constexpr T min_value = min_value_;
+    static constexpr T max_value = max_value_;
+    static_assert(min_value <= default_value && default_value <= max_value);
+
+    static void assertValue(const T &value) noexcept {
+        // info: this generates annoying warnings "unsigned >= 0 is always true"
+        // assert_noexcept(value >= min_value);
+        assert_noexcept(value == min_value || value >= min_value + 1);
+        assert_noexcept(value <= max_value);
+    }
+    void assertValue() const noexcept { assertValue(value); }
+
+    constexpr OptVar() noexcept : value(default_value), is_set(false) {}
+    OptVar &operator=(const T &other) noexcept {
+        assertValue(other);
+        value = other;
+        is_set = true;
+        return *this;
+    }
+
+    void reset() noexcept {
+        value = default_value;
+        is_set = false;
+    }
+    constexpr operator T() const noexcept { return value; }
+
+    // protected:
+    T value;
+    bool is_set;
+};
+
+// optional assignments
+template <class T, T a, T b, T c>
+inline void oassign(OptVar<T, a, b, c> &self, const OptVar<T, a, b, c> &other) noexcept {
+    if (other.is_set) {
+        self.value = other.value;
+        self.is_set = true;
+    }
+}
+template <class T, T a, T b, T c>
+inline void oassign(T &v, const OptVar<T, a, b, c> &other) noexcept {
+    if (other.is_set) {
+        v = other.value;
+    }
+}
+
+/*************************************************************************
+// OwningPointer(T)
+// simple pointer type alias to explicitly mark ownership of objects; purely
+// cosmetic to improve source code readability, no real functionality
+**************************************************************************/
+
+#if 0
+
+// this works
+#define OwningPointer(T) T *
+
+#elif !(DEBUG)
+
+// this also works
+template <class T>
+using OwningPointer = T *;
+#define OwningPointer(T) upx::OwningPointer<T>
+
+#else
+
+// also works: a trivial class with just a number of no-ops
+template <class T>
+struct OwningPointer final {
+    static_assert(std::is_class_v<T>); // UPX convention
+    typedef typename std::add_lvalue_reference<T>::type reference;
+    typedef typename std::add_lvalue_reference<const T>::type const_reference;
+    typedef typename std::add_pointer<T>::type pointer;
+    typedef typename std::add_pointer<const T>::type const_pointer;
+    pointer ptr;
+    inline OwningPointer(pointer p) noexcept : ptr(p) {}
+    inline operator pointer() noexcept { return ptr; }
+    inline operator const_pointer() const noexcept { return ptr; }
+    inline reference operator*() noexcept { return *ptr; }
+    inline const_reference operator*() const noexcept { return *ptr; }
+    inline pointer operator->() noexcept { return ptr; }
+    inline const_pointer operator->() const noexcept { return ptr; }
+};
+// must overload mem_clear()
+template <class T>
+inline void mem_clear(OwningPointer<T> object) noexcept {
+    mem_clear((T *) object);
+}
+#define OwningPointer(T) upx::OwningPointer<T>
+
+#endif
+
+template <class T>
+inline void owner_delete(OwningPointer(T)(&object)) noexcept {
+    static_assert(std::is_class_v<T>); // UPX convention
+    static_assert(std::is_nothrow_destructible_v<T>);
+    if (object != nullptr) {
+        delete (T *) object;
+        object = nullptr;
+    }
+}
+
+// disable some overloads
+#if defined(__clang__) || __GNUC__ != 7
+template <class T>
+inline void owner_delete(T (&array)[]) noexcept DELETED_FUNCTION;
+#endif
+template <class T, size_t N>
+inline void owner_delete(T (&array)[N]) noexcept DELETED_FUNCTION;
+
+} // namespace upx

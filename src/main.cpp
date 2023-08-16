@@ -680,7 +680,7 @@ static int do_option(int optc, const char *arg) {
     case 632:
         opt->win32_pe.compress_resources = 1;
         if (mfx_optarg && mfx_optarg[0]) {
-            int value;
+            int value = 0;
             getoptvar(&value, 0, 1, arg);
             opt->win32_pe.compress_resources = bool(value);
         }
