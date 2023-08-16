@@ -703,7 +703,7 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
         int rc = strcmp(s1->name, s2->name);
         if (rc != 0)
             return rc;
-        return s1 < s2 ? -1 : 1; // make sort order deterministic/stable
+        return p1 < p2 ? -1 : 1; // make sort order deterministic/stable
     }
 
     virtual void alignCode(unsigned len) override { alignWithByte(len, 0); }
@@ -751,7 +751,8 @@ public:
         int osize = 4 + 2 * nsections; // upper limit for alignments
         for (unsigned ic = 0; ic < nsections; ic++)
             osize += sections[ic]->size;
-        output = New(byte, output_capacity = osize);
+        output_capacity = osize;
+        output = New(byte, output_capacity);
         outputlen = 0;
 
         // sort the sections by name before adding them all
@@ -892,7 +893,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
                     return rc;
             } else if ((u1->shname != nullptr) != (u2->shname != nullptr))
                 return (u1->shname != nullptr) ? -1 : 1;
-            return u1 < u2 ? -1 : 1; // make sort order deterministic/stable
+            return p1 < p2 ? -1 : 1; // make sort order deterministic/stable
         }
     };
 
