@@ -70,6 +70,7 @@
 
 #ifdef WANT_MACH_SEGMENT_ENUM  /*{*/
 #undef WANT_MACH_SEGMENT_ENUM
+// <Apple>/Library/Developer/CommandLineTools/SDKs/MacOS13.1.sdk/usr/include/mach-o/loader.h
     enum { // cmd
         LC_REQ_DYLD      = 0x80000000,  // OR'ed ==> must not ignore
         LC_SEGMENT       = 0x1,
