@@ -392,6 +392,7 @@ jobs:
           - { zig_target: arm-linux-musleabihf }
           # { zig_target: arm-linux-musleabihf, zig_pic: -fPIE }
           # { zig_target: i386-linux-musl }
+          # { zig_target: i386-linux-musl, zig_pic: -fPIE }
           - { zig_target: i386-windows-gnu }
           # { zig_target: mips-linux-musl }
           # { zig_target: mipsel-linux-musl }

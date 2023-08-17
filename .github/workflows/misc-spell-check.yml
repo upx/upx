@@ -3,6 +3,7 @@
 
 name: 'Misc - Spell check'
 on:
+  schedule: [cron: '55 0 * * 3'] # run weekly Wednesday 00:55 UTC
   workflow_dispatch:
 env:
   DEBIAN_FRONTEND: noninteractive

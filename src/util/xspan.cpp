@@ -71,13 +71,13 @@ void xspan_fail_range_range() {
 }
 
 void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_bytes) {
-    // info: pointers are out of range deliberatly during internal doctest checks; see dt_xspan.cpp
     xspan_stats.check_range_counter += 1;
     if very_unlikely (ptr == nullptr)
         xspan_fail_range_nullptr();
     if very_unlikely (base == nullptr)
         xspan_fail_range_nullbase();
 #if defined(__SANITIZE_ADDRESS__)
+    // info: pointers are out of range deliberately during internal doctest checks; see dt_xspan.cpp
     const acc_intptr_t off = (acc_uintptr_t) ptr - (acc_uintptr_t) base;
 #else
     const ptrdiff_t off = (const charptr) ptr - (const charptr) base;
