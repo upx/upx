@@ -1,9 +1,11 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
+# CompilationCheck: test llvm-mingw
+
 # see https://github.com/mstorsjo/llvm-mingw
 
-name: 'Weekly CI - llvm-mingw'
+name: 'Weekly CI CC - llvm-mingw'
 on:
-  schedule: [cron: '40 3 * * 3'] # run weekly Wednesday 03:40 UTC
+  schedule: [cron: '20 2 * * 3'] # run weekly Wednesday 02:20 UTC
   workflow_dispatch:
 env:
   CMAKE_REQUIRED_QUIET: OFF
@@ -12,8 +14,6 @@ env:
 jobs:
   job-llvm-mingw: # uses cmake+make
     if: ${{ true }}
-    name: ${{ format('{0} {1}', matrix.name, matrix.llvm_version) }}
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -25,11 +25,13 @@ jobs:
             llvm_version: 16.0.6
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64.tar.xz'
           - name: llvm-mingw-20230811-msvcrt
-            llvm_version: 17.0.0rc1
+            llvm_version: 17.0.0rc2
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230811/llvm-mingw-20230811-msvcrt-ubuntu-20.04-x86_64.tar.xz'
           - name: llvm-mingw-20230811-ucrt
-            llvm_version: 17.0.0rc1
+            llvm_version: 17.0.0rc2
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230811/llvm-mingw-20230811-ucrt-ubuntu-20.04-x86_64.tar.xz'
+    name: ${{ format('{0} {1}', matrix.name, matrix.llvm_version) }}
+    runs-on: ubuntu-latest
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3

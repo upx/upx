@@ -21,10 +21,12 @@ jobs:
         run: 'apk update && apk upgrade && apk add clang clang-extra-tools cmake g++ git make python3'
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
-          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx
-          git -C upx submodule update --init
+          # this seems to be needed when running in a container (beause of UID mismatch??)
+          git config --global --add safe.directory '*'
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx .
+          git submodule update --init
       - name: 'Perform clang-tidy Analysis Debug'
-        run: 'make -C upx -k build/analyze/clang-tidy/debug'
+        run: 'make -k build/analyze/clang-tidy/debug'
       - name: 'Perform clang-tidy Analysis Release'
         if: success() || failure() # run this step even if the previous step failed
-        run: 'make -C upx -k build/analyze/clang-tidy/release'
+        run: 'make -k build/analyze/clang-tidy/release'

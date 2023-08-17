@@ -571,6 +571,7 @@ TEST_CASE("working -fno-strict-aliasing") {
     *pi = -1;
     ok = *pl != 0;
     CHECK(ok);
+    UNUSED(ok);
 }
 
 TEST_CASE("working -fno-strict-overflow") {
@@ -588,6 +589,7 @@ TEST_CASE("working -fno-strict-overflow") {
     i -= 1;
     ok = i == INT_MAX;
     CHECK(ok);
+    UNUSED(ok);
 }
 
 TEST_CASE("libc snprintf") {

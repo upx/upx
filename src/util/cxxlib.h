@@ -104,12 +104,11 @@ struct TriBool final {
     static_assert(ThirdValue != 0 && ThirdValue != 1);
     enum value_type : underlying_type { False = 0, True = 1, Third = ThirdValue };
     // constructors
-    forceinline constexpr TriBool() noexcept : value(False) {}
+    forceinline constexpr TriBool() noexcept {}
     forceinline constexpr TriBool(value_type x) noexcept : value(x) {}
     constexpr TriBool(promoted_type x) noexcept : value(x == 0 ? False : (x == 1 ? True : Third)) {}
     forceinline ~TriBool() noexcept = default;
-    // access
-    constexpr value_type getValue() const noexcept { return value; }
+    // explicit conversion to bool
     // checks for > 0, so ThirdValue determines if Third is false (the default) or true
     explicit constexpr operator bool() const noexcept { return value > False; }
     // query; this is NOT the same as operator bool()
@@ -117,19 +116,22 @@ struct TriBool final {
     constexpr bool isStrictTrue() const noexcept { return value == True; }
     constexpr bool isStrictBool() const noexcept { return value == False || value == True; }
     constexpr bool isThird() const noexcept { return value != False && value != True; }
+    // access
+    constexpr value_type getValue() const noexcept { return value; }
+    // equality
     constexpr bool operator==(TriBool other) const noexcept { return value == other.value; }
     constexpr bool operator==(value_type other) const noexcept { return value == other; }
     constexpr bool operator==(promoted_type other) const noexcept { return value == other; }
 
-    // "third" can mean many things, depending on usage context, so provide some alternative names:
+    // "Third" can mean many things, depending on usage context, so provide some alternative names:
     // constexpr bool isDefault() const noexcept { return isThird(); } // might be misleading
     constexpr bool isIndeterminate() const noexcept { return isThird(); }
     constexpr bool isOther() const noexcept { return isThird(); }
     constexpr bool isUndecided() const noexcept { return isThird(); }
     // constexpr bool isUnset() const noexcept { return isThird(); } // might be misleading
 
-    // protected:
-    value_type value;
+private:
+    value_type value = False; // the actual value of this type
 };
 
 typedef TriBool<> tribool;
@@ -147,6 +149,9 @@ struct OptVar final {
     static constexpr T max_value = max_value_;
     static_assert(min_value <= default_value && default_value <= max_value);
 
+    // automatic conversion
+    constexpr operator T() const noexcept { return value; }
+
     static void assertValue(const T &value) noexcept {
         // info: this generates annoying warnings "unsigned >= 0 is always true"
         // assert_noexcept(value >= min_value);
@@ -155,7 +160,7 @@ struct OptVar final {
     }
     void assertValue() const noexcept { assertValue(value); }
 
-    constexpr OptVar() noexcept : value(default_value), is_set(false) {}
+    constexpr OptVar() noexcept {}
     OptVar &operator=(const T &other) noexcept {
         assertValue(other);
         value = other;
@@ -167,11 +172,9 @@ struct OptVar final {
         value = default_value;
         is_set = false;
     }
-    constexpr operator T() const noexcept { return value; }
 
-    // protected:
-    T value;
-    bool is_set;
+    value_type value = default_value;
+    bool is_set = false;
 };
 
 // optional assignments
@@ -184,9 +187,8 @@ inline void oassign(OptVar<T, a, b, c> &self, const OptVar<T, a, b, c> &other) n
 }
 template <class T, T a, T b, T c>
 inline void oassign(T &v, const OptVar<T, a, b, c> &other) noexcept {
-    if (other.is_set) {
+    if (other.is_set)
         v = other.value;
-    }
 }
 
 /*************************************************************************

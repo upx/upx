@@ -11,7 +11,7 @@
 if(DEFINED UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
     cmake_minimum_required(VERSION "${UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION}" FATAL_ERROR)
 else()
-    cmake_minimum_required(VERSION 3.8.0 FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
+    cmake_minimum_required(VERSION 3.8 FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
 endif()
 
 # compilation config options

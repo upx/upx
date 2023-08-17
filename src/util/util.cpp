@@ -140,6 +140,7 @@ TEST_CASE("ptr_diff") {
     CHECK(ptr_udiff(buf, buf) == 0);
     CHECK(ptr_udiff(buf + 1, buf) == 1);
     CHECK_THROWS(ptr_udiff(buf, buf + 1));
+    UNUSED(buf);
 }
 
 // check that 2 buffers do not overlap; will throw on error
@@ -174,7 +175,7 @@ void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, s
         throwCantPack("ptr_check_no_overlap-bc");
 }
 
-#if DEBUG
+#if !defined(DOCTEST_CONFIG_DISABLE) && DEBUG
 TEST_CASE("ptr_check_no_overlap 2") {
     byte p[4] = {};
 
@@ -287,7 +288,7 @@ void upx_stable_sort(void *array, size_t n, size_t element_size,
     }
 }
 
-#if DEBUG
+#if !defined(DOCTEST_CONFIG_DISABLE) && DEBUG
 TEST_CASE("upx_stable_sort") {
     {
         unsigned a[] = {0, 1};
@@ -518,6 +519,7 @@ TEST_CASE("find") {
     CHECK(find_le64(b, 16, 0x0f0e0d0c0b0a0908ULL) == 8);
     CHECK(find_be64(b, 15, 0x08090a0b0c0d0e0fULL) == -1);
     CHECK(find_le64(b, 15, 0x0f0e0d0c0b0a0908ULL) == -1);
+    UNUSED(b);
 }
 
 int mem_replace(void *buf, int blen, const void *what, int wlen, const void *replacement) noexcept {
@@ -545,6 +547,7 @@ TEST_CASE("mem_replace") {
     CHECK(mem_replace(b + 8, 8, "bbb", 3, "efg") == 2);
     CHECK(mem_replace(b, 16, "b", 1, "h") == 2);
     CHECK(strcmp(b, "cdcdcdcdefgefghh") == 0);
+    UNUSED(b);
 }
 
 /*************************************************************************

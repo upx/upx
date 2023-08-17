@@ -547,6 +547,7 @@ TEST_CASE("upx_lzma_decompress") {
     d_len = 15;
     r = upx_lzma_decompress(c_data, 9, d_buf, &d_len, M_LZMA, nullptr);
     CHECK(r == UPX_E_OUTPUT_OVERRUN);
+    UNUSED(r);
 }
 
 /* vim:set ts=4 sw=4 et: */

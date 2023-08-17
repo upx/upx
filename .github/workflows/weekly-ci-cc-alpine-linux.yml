@@ -1,16 +1,18 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
+# CompilationCheck: test various clang and gcc versions
+
 # Build under various Alpine Linux versions with clang and gcc, and
 # also test building with C++20 and C++23.
 
 # And also uses a subdirectory "upx with space" that contains whitespace in order
 # to detect possible quoting issues.
 
-# info: Alpine 3.9 has clang-5, cmake-3.13.0 and gcc-8, which nicely
-#   matches our minimal build requirements
+# info: Alpine Linux 3.9 (released Jan 2019) has clang-5, cmake-3.13.0
+#   and gcc-8, which nicely matches our minimal build requirements
 
-name: 'Weekly CI - Alpine Linux'
+name: 'Weekly CI CC - Alpine Linux'
 on:
-  schedule: [cron: '05 3 * * 3'] # run weekly Wednesday 03:05 UTC
+  schedule: [cron: '00 2 * * 3'] # run weekly Wednesday 02:00 UTC
   workflow_dispatch:
 env:
   CMAKE_REQUIRED_QUIET: OFF

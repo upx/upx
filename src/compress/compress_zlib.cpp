@@ -305,6 +305,7 @@ TEST_CASE("upx_zlib_decompress") {
     d_len = 15;
     r = upx_zlib_decompress(c_data, 6, d_buf, &d_len, M_DEFLATE, nullptr);
     CHECK(r == UPX_E_OUTPUT_OVERRUN);
+    UNUSED(r);
 }
 
 /* vim:set ts=4 sw=4 et: */

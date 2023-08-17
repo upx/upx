@@ -209,8 +209,8 @@ XSPAN_NAMESPACE_END
 // poison a pointer: point to a non-null invalid address
 // - resulting pointer should crash on dereference
 // - this should be efficient (so no mmap() guard page etc.)
-// - this should play nice with runtime checkers like ASAN, valgrind, etc.
-// - this should play nice with static analyzers like clang-tidy
+// - this should play nice with runtime checkers like ASAN, MSAN, valgrind, etc.
+// - this should play nice with static analyzers like clang-tidy etc.
 static forceinline void *XSPAN_GET_POISON_VOID_PTR() {
     // return (void *) (upx_uintptr_t) 251; // NOLINT(performance-no-int-to-ptr)
     return (void *) 251;

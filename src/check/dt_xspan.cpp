@@ -43,6 +43,7 @@ TEST_CASE("raw_bytes ptr") {
     ptr = buf;
     CHECK(ptr_udiff_bytes(raw_index_bytes(ptr, 1, 1), ptr) == 2u);
     CHECK(ptr_udiff_bytes(raw_index_bytes(ptr, 4, 0), ptr) == 8u);
+    UNUSED(ptr);
 }
 
 TEST_CASE("raw_bytes bounded array") {
@@ -55,6 +56,7 @@ TEST_CASE("raw_bytes bounded array") {
     CHECK_THROWS(raw_index_bytes(buf, 3, 3));
     CHECK(ptr_udiff_bytes(raw_index_bytes(buf, 1, 1), buf) == 2u);
     CHECK(ptr_udiff_bytes(raw_index_bytes(buf, 4, 0), buf) == 8u);
+    UNUSED(buf);
 }
 
 /*************************************************************************
@@ -405,6 +407,7 @@ TEST_CASE("PtrOrSpan") {
     CHECK_THROWS(sp_with_base = s0_no_base);   // nullptr assignment
     CHECK_THROWS(sp_with_base = s0_with_base); // nullptr assignment
 #endif
+    UNUSED(my_null);
 }
 
 /*************************************************************************
@@ -556,6 +559,7 @@ TEST_CASE("Span") {
         CHECK((XSPAN_S_MAKE(char, b1_b1).raw_base() == base_buf + 1));
     }
 #endif
+    UNUSED(my_null);
 }
 
 /*************************************************************************
@@ -686,6 +690,7 @@ TEST_CASE("PtrOrSpan") {
     CHECK(my_memcmp_v1(buf, nullptr, 4) == -2);
     CHECK(my_memcmp_v2(buf + 4, buf + 4, 999) == 0);
     CHECK(my_memcmp_v2(buf, buf + 2, 3) == 0);
+    UNUSED(buf);
 }
 
 /*************************************************************************
@@ -839,6 +844,7 @@ TEST_CASE("Span codegen") {
     CHECK(foo(XSPAN_0_MAKE(upx_uint8_t, buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
     CHECK(foo(XSPAN_P_MAKE(upx_uint8_t, buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
     CHECK(foo(XSPAN_S_MAKE(upx_uint8_t, buf, 8)) == 0 + 2 + 5 + 4 + 4 + 3);
+    UNUSED(buf);
 }
 
 #endif // WITH_XSPAN >= 2

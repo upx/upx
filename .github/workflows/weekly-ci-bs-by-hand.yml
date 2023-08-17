@@ -1,0 +1,83 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+# BuildSystem: build "by hand" using a POSIX-compliant shell
+
+name: 'Weekly CI BS - By Hand'
+on:
+  schedule: [cron: '00 1 * * 3'] # run weekly Wednesday 01:00 UTC
+  workflow_dispatch:
+env:
+  CMAKE_REQUIRED_QUIET: OFF
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  job-alpine-by-hand: # uses a POSIX-compliant shell
+    # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
+    # ...and also uses ccache as we are running the same build-script again and again
+    if: ${{ true }}
+    strategy: { matrix: { container: ['alpine:3.9','alpine:edge'] } }
+    name: ${{ format('gcc by-hand {0}', matrix.container) }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    steps:
+      - name: ${{ format('Install packages {0}', matrix.container) }}
+        run: |
+          # install ccache, g++, git and various POSIX shells
+          shells="bash dash loksh mksh zsh"
+          case ${{ matrix.container }} in
+            *:edge) shells="$shells oksh yash" ;;
+          esac
+          echo "installing shells: $shells"
+          apk update && apk upgrade && apk add ccache g++ git $shells
+          # enable ccache
+          echo -e "CC=ccache gcc\nCXX=ccache g++ -std=gnu++17" >> $GITHUB_ENV
+          # this seems to be needed when running in a container (beause of UID mismatch??)
+          git config --global --add safe.directory '*'
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          path: 'upx with space'
+      - name: 'Build by-hand with bash'
+        run: 'bash "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with bash --posix'
+        run: 'bash --posix "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with busybox ash'
+        run: 'busybox ash "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with busybox sh'
+        run: 'busybox sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with dash'
+        run: 'dash "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with loksh'
+        run: 'ksh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with loksh -o posix'
+        run: 'ksh -o posix "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with loksh -o sh'
+        run: 'ksh -o sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with mksh'
+        run: 'mksh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with mksh -o posix'
+        run: 'mksh -o posix "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with mksh -o sh'
+        run: 'mksh -o sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with oksh'
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: 'oksh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with oksh -o posix'
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: 'oksh -o posix "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with oksh -o sh'
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: 'oksh -o sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with yash'
+        if: ${{ contains(matrix.container, ':edge') }}
+        run: 'yash "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with zsh'
+        run: 'zsh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with zsh --emulate ksh'
+        run: 'zsh --emulate ksh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with zsh --emulate sh'
+        run: 'zsh --emulate sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Show ccache stats'
+        run: |
+          ccache -s
+          ccache -p
