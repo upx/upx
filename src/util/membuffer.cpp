@@ -321,6 +321,7 @@ TEST_CASE("MemBuffer::getSizeForCompression") {
     CHECK(MemBuffer::getSizeForCompression(1024 * 1024) == 1180160);         // 0x00100000
     CHECK(MemBuffer::getSizeForCompression(64 * 1024 * 1024) == 75497984);   // 0x04000000
     CHECK(MemBuffer::getSizeForCompression(512 * 1024 * 1024) == 603980288); // 0x20000000
+    // "640 MiB Ought to be Enough for Anyone" --Markus F.X.J. Oberhumer, 1981 ;-)
     CHECK(MemBuffer::getSizeForCompression(640 * 1024 * 1024) == 754975232); // 0x28000000
 }
 

@@ -42,6 +42,9 @@
 // assert sane memory buffer sizes to protect against integer overflows
 // and malicious header fields
 // see C 11 standard, Annex K
+//
+// this limits uncompressed_size to about 640 MiB which is perfectly fine:
+//   "640 MiB Ought to be Enough for Anyone" --Markus F.X.J. Oberhumer, 1981 ;-)
 **************************************************************************/
 
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_MEM == UPX_RSIZE_MAX)
