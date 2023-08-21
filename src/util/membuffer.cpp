@@ -205,13 +205,18 @@ void MemBuffer::dealloc() noexcept {
         debug_set(debug.last_return_address_dealloc, upx_return_address());
 #if DEBUG || 1
         // info: calling checkState() here violates "noexcept", so we need a try block
-        try {
-            checkState();
-        } catch (const Throwable &e) {
-            printErr("unknown", e);
-            std::terminate();
-        } catch (...) {
-            std::terminate();
+        bool shall_check = true;
+        // bool shall_check = (std::uncaught_exceptions() == 0); // only if not unwinding
+        // TODO later: add a priority() method to class Throwable
+        if (shall_check) {
+            try {
+                checkState();
+            } catch (const Throwable &e) {
+                printErr("unknown", e);
+                std::terminate();
+            } catch (...) {
+                std::terminate();
+            }
         }
 #endif
         stats.global_dealloc_counter += 1;

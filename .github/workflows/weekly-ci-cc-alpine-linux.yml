@@ -17,7 +17,7 @@ on:
 env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
-  UPX_TESTSUITE_LEVEL: 2
+  UPX_TESTSUITE_LEVEL: 4
 
 jobs:
   job-alpine-cmake: # uses cmake + make

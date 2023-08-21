@@ -93,7 +93,10 @@ jobs:
           export upx_exe_runner="${{ matrix.qemu }}"
           env -C build/xtarget/clang-static/$release "$PWD"/misc/testsuite/upx_testsuite_1.sh
       - name: 'Run testsuite clang-static - Valgrind'
-        if: ${{ true }} # very slow (takes about 30 minutes on current GitHub CI)
+        if: ${{ true }} # very slow
         run: |
           export upx_exe_runner="valgrind --error-exitcode=1 --quiet"
+          # on current GitHub CI, takes about 30 minutes for release and 80 mins for debug
+          # reduce time for debug builds
+          test $release = debug && export UPX_TESTSUITE_LEVEL=4
           env -C build/xtarget/clang-static/$release "$PWD"/misc/testsuite/upx_testsuite_1.sh

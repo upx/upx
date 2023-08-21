@@ -114,6 +114,14 @@ struct TestTriBool {
         static_assert(std::is_nothrow_destructible<T>::value);
         static_assert(std::is_standard_layout<T>::value);
         static_assert(std::is_trivially_copyable<T>::value);
+        static_assert(sizeof(typename T::value_type) == sizeof(typename T::underlying_type));
+        static_assert(alignof(typename T::value_type) == alignof(typename T::underlying_type));
+#if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
+        // broken compiler
+#else
+        static_assert(sizeof(T) == sizeof(typename T::underlying_type));
+        static_assert(alignof(T) == alignof(typename T::underlying_type));
+#endif
         static_assert(T(false) == T::False);
         static_assert(T(true) == T::True);
         static_assert(T(T::False) == T::False);
@@ -123,6 +131,7 @@ struct TestTriBool {
         static_assert(array[0].isStrictFalse());
         static_assert(array[1].isStrictTrue());
         static_assert(array[2].isThird());
+        static_assert(sizeof(array) == 3 * sizeof(T));
         T a;
         CHECK(!a);
         CHECK(a.isStrictFalse());

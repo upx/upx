@@ -66,9 +66,10 @@ FileBase::~FileBase() may_throw {
         fprintf(stderr,"%s: %s\n", _name, __PRETTY_FUNCTION__);
 #endif
 
-    // FIXME: we should use close() during exception unwinding but
-    //        closex() otherwise
-    closex();
+    if (std::uncaught_exceptions() == 0)
+        closex(); // may_throw
+    else
+        close_noexcept(); // currently in exception unwinding, use noexcept variant
 }
 
 bool FileBase::do_sopen() {
@@ -93,7 +94,7 @@ bool FileBase::do_sopen() {
     return true;
 }
 
-bool FileBase::close() noexcept {
+bool FileBase::close_noexcept() noexcept {
     bool ok = true;
     if (isOpen() && _fd != STDIN_FILENO && _fd != STDOUT_FILENO && _fd != STDERR_FILENO)
         if (::close(_fd) == -1)
@@ -108,7 +109,7 @@ bool FileBase::close() noexcept {
 }
 
 void FileBase::closex() may_throw {
-    if (!close())
+    if (!close_noexcept())
         throwIOException("close failed", errno);
 }
 
@@ -156,7 +157,7 @@ upx_off_t FileBase::st_size() const { return _length; }
 **************************************************************************/
 
 void InputFile::sopen(const char *name, int flags, int shflags) {
-    close();
+    closex();
     _name = name;
     _flags = flags;
     _shflags = shflags;
@@ -206,7 +207,7 @@ upx_off_t InputFile::st_size_orig() const { return _length_orig; }
 **************************************************************************/
 
 void OutputFile::sopen(const char *name, int flags, int shflags, int mode) {
-    close();
+    closex();
     _name = name;
     _flags = flags;
     _shflags = shflags;
@@ -228,7 +229,7 @@ void OutputFile::sopen(const char *name, int flags, int shflags, int mode) {
 }
 
 bool OutputFile::openStdout(int flags, bool force) {
-    close();
+    closex();
     int fd = STDOUT_FILENO;
     if (!force && acc_isatty(fd))
         return false;

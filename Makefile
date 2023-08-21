@@ -212,6 +212,7 @@ build/xtarget/$(UPX_XTARGET)/release: PHONY; $(call run_config_and_build,$@,Rele
 build/xtarget/$(UPX_XTARGET)/%: export CC
 build/xtarget/$(UPX_XTARGET)/%: export CXX
 # shortcuts
+xtarget/all:     xtarget/debug xtarget/release
 xtarget/debug:   build/xtarget/$(UPX_XTARGET)/debug
 xtarget/release: build/xtarget/$(UPX_XTARGET)/release
 # set new default

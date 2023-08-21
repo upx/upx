@@ -92,6 +92,7 @@ int upx_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigned 
     cresult->debug.c_len = 0;
 #endif
 
+    const unsigned orig_dst_len = *dst_len;
     if (__acc_cte(false)) {
     }
 #if (WITH_LZMA)
@@ -118,6 +119,7 @@ int upx_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigned 
     // debugging aid
     cresult->debug.c_len = *dst_len;
 #endif
+    assert_noexcept(*dst_len <= orig_dst_len);
     return r;
 }
 
@@ -135,6 +137,7 @@ int upx_decompress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigne
     if (cresult && cresult->debug.method == 0)
         cresult = nullptr;
 
+    const unsigned orig_dst_len = *dst_len;
     if (__acc_cte(false)) {
     }
 #if (WITH_LZMA)
@@ -161,6 +164,7 @@ int upx_decompress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigne
         throwInternalError("unknown decompression method");
     }
 
+    assert_noexcept(*dst_len <= orig_dst_len);
     return r;
 }
 
@@ -180,6 +184,7 @@ int upx_test_overlap(const upx_bytep buf, const upx_bytep tbuf, unsigned src_off
     unsigned overlap_overhead = src_off + src_len - *dst_len;
     assert((int) overlap_overhead > 0);
 
+    const unsigned orig_dst_len = *dst_len;
     if (__acc_cte(false)) {
     }
 #if (WITH_LZMA)
@@ -202,6 +207,7 @@ int upx_test_overlap(const upx_bytep buf, const upx_bytep tbuf, unsigned src_off
         throwInternalError("unknown decompression method");
     }
 
+    assert_noexcept(*dst_len <= orig_dst_len);
     return r;
 }
 
