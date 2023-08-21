@@ -96,51 +96,19 @@ void *MemBuffer::subref_impl(const char *errfmt, size_t skip, size_t take) {
     return ptr + skip;
 }
 
-static unsigned width(unsigned x) {
-    unsigned w = 0;
-    if ((~0u << 16) & x) {
-        w += 16;
-        x >>= 16;
-    }
-    if ((~0u << 8) & x) {
-        w += 8;
-        x >>= 8;
-    }
-    if ((~0u << 4) & x) {
-        w += 4;
-        x >>= 4;
-    }
-    if ((~0u << 2) & x) {
-        w += 2;
-        x >>= 2;
-    }
-    if ((~0u << 1) & x) {
-        w += 1;
-        // x >>= 1;
-    }
-    return 1 + w;
-}
-
 static forceinline size_t umax(size_t a, size_t b) { return (a >= b) ? a : b; }
 
 unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned extra) {
     if (uncompressed_size == 0)
         throwCantPack("invalid uncompressed_size");
-    const size_t z = uncompressed_size;     // fewer keystrokes and display columns
-    const size_t w = umax(8, width(z - 1)); // ignore tiny offsets
-    size_t bytes = mem_size(1, z);          // check size
-    // Worst matching: All match at max_offset, which implies 3==min_match
+    const size_t z = uncompressed_size; // fewer keystrokes and display columns
+    size_t bytes = mem_size(1, z);      // check size
     // All literal: 1 bit overhead per literal byte; from UCL documentation
     bytes = umax(bytes, z + z / 8 + 256);
-    // NRV2B: 1 byte plus 2 bits per width exceeding 8 ("ss11")
-    bytes = umax(bytes, (z / 3 * (8 + 2 * (w - 8) / 1)) / 8);
-    // NRV2E: 1 byte plus 3 bits per pair of width exceeding 7 ("ss12")
-    bytes = umax(bytes, (z / 3 * (8 + 3 * (w - 7) / 2)) / 8);
     // zstd: ZSTD_COMPRESSBOUND
     bytes = umax(bytes, z + (z >> 8) + ((z < (128 << 10)) ? (((128 << 10) - z) >> 11) : 0));
     // add extra and 256 safety for various rounding/alignments
     bytes = mem_size(1, bytes, extra, 256);
-    UNUSED(w);
     return ACC_ICONV(unsigned, bytes);
 }
 
@@ -345,8 +313,10 @@ TEST_CASE("MemBuffer::getSizeForCompression") {
     CHECK(MemBuffer::getSizeForCompression(1) == 513);
     CHECK(MemBuffer::getSizeForCompression(256) == 800);
     CHECK(MemBuffer::getSizeForCompression(1024) == 1664);
-    // CHECK(MemBuffer::getSizeForCompression(1024 * 1024) == 0); // TODO
-    // CHECK(MemBuffer::getSizeForCompression(UPX_RSIZE_MAX) == 0); // TODO
+    CHECK(MemBuffer::getSizeForCompression(1024 * 1024) == 1180160);         // 0x00100000
+    CHECK(MemBuffer::getSizeForCompression(64 * 1024 * 1024) == 75497984);   // 0x04000000
+    CHECK(MemBuffer::getSizeForCompression(512 * 1024 * 1024) == 603980288); // 0x20000000
+    CHECK(MemBuffer::getSizeForCompression(640 * 1024 * 1024) == 754975232); // 0x28000000
 }
 
 /* vim:set ts=4 sw=4 et: */
