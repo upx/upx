@@ -1,5 +1,5 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# RunTime test
+# RT RunTime checks
 
 # runs ASAN, MSAN, qemu and valgrind checkers; slow!
 
@@ -58,7 +58,7 @@ jobs:
           export CC="clang $flags" CXX="clang++ $flags"
           make UPX_XTARGET=clang-asan xtarget/$release
       - name: 'Build clang-msan'
-        if: ${{ !startsWith(matrix.container, 'i386/') }} # MSAN i386: not supported
+        if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: MSAN not supported
         run: |
           # unfortunately MSAN does not support static linking
           flags="-fsanitize=memory -fsanitize=undefined -fno-omit-frame-pointer -D__SANITIZE_ADDRESS__=1 -DDOCTEST_CONFIG_DISABLE=1"
@@ -96,7 +96,7 @@ jobs:
         if: ${{ true }} # very slow
         run: |
           export upx_exe_runner="valgrind --error-exitcode=1 --quiet"
-          # on current GitHub CI, takes about 30 minutes for release and 80 mins for debug
-          # reduce time for debug builds
+          # on current GitHub CI, takes about 30 minutes for release and 80 minutes for debug builds
+          # reduce time for debug builds to about 30 minutes
           test $release = debug && export UPX_TESTSUITE_LEVEL=4
           env -C build/xtarget/clang-static/$release "$PWD"/misc/testsuite/upx_testsuite_1.sh

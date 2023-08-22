@@ -1,5 +1,5 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# CompilationCheck: test various clang and gcc versions
+# CC CompilationCheck: test various clang and gcc versions
 
 # Build under various Alpine Linux versions with clang and gcc, and
 # also test building with C++20 and C++23.
@@ -10,7 +10,7 @@
 # info: Alpine Linux 3.9 (released Jan 2019) has clang-5, cmake-3.13.0
 #   and gcc-8, which nicely matches our minimal build requirements
 
-name: 'Weekly CI CC - Alpine Linux'
+name: 'Weekly CI CC - Alpine Linux C++23'
 on:
   schedule: [cron: '00 2 * * 3'] # run weekly Wednesday 02:00 UTC
   workflow_dispatch:
@@ -115,6 +115,7 @@ jobs:
           make -C "upx with space" UPX_XTARGET=gcc-cxxlto-static   CC="gcc -flto=auto -static"   CXX="g++ -flto=auto -static" xtarget/debug
 
       - { name: 'Strip release binaries', run: 'strip -p --strip-unneeded "upx with space"/build/*/*/release/upx' }
+
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
         uses: actions/upload-artifact@v3
@@ -147,12 +148,12 @@ jobs:
       # test suite
       - name: ${{ format('Run test suite level {0}', env.UPX_TESTSUITE_LEVEL) }}
         run: |
+          # testsuite needs bash and working "readlink -en" and "sha256sum -b"
+          apk add bash coreutils
           # use a directory that contains whitespace to detect possible quoting issues
           git clone --depth=1 https://github.com/upx/upx-testsuite "upx-testsuite with space"
           export upx_testsuite_SRCDIR="$(readlink -fn "upx-testsuite with space")"
           testsuite_1="$(readlink -fn "upx with space"/misc/testsuite/upx_testsuite_1.sh)"
-          # testsuite needs bash and working "readlink -en" and "sha256sum -b"
-          apk add bash coreutils
           (cd "upx with space"/build/xtarget/gcc-static/release && upx_exe=./upx bash "$testsuite_1")
 
 # vim:set ts=2 sw=2 et:

@@ -1,5 +1,5 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# CompilationCheck: test llvm-mingw
+# CC CompilationCheck: test llvm-mingw
 
 # see https://github.com/mstorsjo/llvm-mingw
 

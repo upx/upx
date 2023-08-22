@@ -1,5 +1,5 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# BuildSystem: build "by hand" using a POSIX-compliant shell
+# BS BuildSystem: build "by hand" using a POSIX-compliant shell
 
 name: 'Weekly CI BS - By Hand'
 on:

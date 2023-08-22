@@ -1,5 +1,5 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# BuildSystem: build with 'cmake -G "NMake Makefiles"'
+# BS BuildSystem: build with 'cmake -G "NMake Makefiles"'
 
 # also tests "clang-cl"
 
