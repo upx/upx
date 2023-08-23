@@ -1046,11 +1046,14 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         if (!(opt->cmd == CMD_COMPRESS && e_shoff < (upx_uint64_t)file_size && mb_shdr.getSize() == 0)) {
             shdri = nullptr;
         }
-        else {
+        else if (e_shnum && e_shoff && ehdri.e_shentsize) {
             fi->seek(e_shoff, SEEK_SET);
             mb_shdr.alloc(   sizeof(Elf64_Shdr) * e_shnum);
             shdri = (Elf64_Shdr *)mb_shdr.getVoidPtr();
             fi->readx(shdri, sizeof(Elf64_Shdr) * e_shnum);
+        }
+        else {
+            shdri = nullptr;
         }
         sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
         if (sec_dynsym) {
