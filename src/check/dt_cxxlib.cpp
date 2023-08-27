@@ -117,7 +117,7 @@ struct TestTriBool {
         static_assert(sizeof(typename T::value_type) == sizeof(typename T::underlying_type));
         static_assert(alignof(typename T::value_type) == alignof(typename T::underlying_type));
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
-        // broken compiler
+        // broken compiler or broken ABI
 #else
         static_assert(sizeof(T) == sizeof(typename T::underlying_type));
         static_assert(alignof(T) == alignof(typename T::underlying_type));
@@ -127,6 +127,14 @@ struct TestTriBool {
         static_assert(T(T::False) == T::False);
         static_assert(T(T::True) == T::True);
         static_assert(T(T::Third) == T::Third);
+        static_assert(T(T::Third) == T(9));
+        static_assert(T(8) == T(9));
+        static_assert(!(T(0) == T(9)));
+        static_assert(!(T(1) == T(9)));
+        static_assert(T(T::Third) == 9);
+        static_assert(T(8) == 9);
+        static_assert(!(T(0) == 9));
+        static_assert(!(T(1) == 9));
         constexpr T array[] = {false, true, T::Third};
         static_assert(array[0].isStrictFalse());
         static_assert(array[1].isStrictTrue());

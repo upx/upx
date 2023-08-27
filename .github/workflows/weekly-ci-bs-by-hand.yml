@@ -13,7 +13,7 @@ jobs:
   job-alpine-by-hand: # uses a POSIX-compliant shell
     # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
     # ...and also uses ccache as we are running the same build-script again and again
-    if: ${{ true }}
+    if: github.repository_owner == 'upx'
     strategy: { matrix: { container: ['alpine:3.9','alpine:edge'] } }
     name: ${{ format('gcc by-hand {0}', matrix.container) }}
     runs-on: ubuntu-latest

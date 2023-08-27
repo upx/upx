@@ -121,7 +121,9 @@ struct TriBool final {
     // equality
     constexpr bool operator==(TriBool other) const noexcept { return value == other.value; }
     constexpr bool operator==(value_type other) const noexcept { return value == other; }
-    constexpr bool operator==(promoted_type other) const noexcept { return value == other; }
+    constexpr bool operator==(promoted_type other) const noexcept {
+        return value == TriBool(other).value;
+    }
 
     // "Third" can mean many things, depending on usage context, so provide some alternative names:
     // constexpr bool isDefault() const noexcept { return isThird(); } // might be misleading

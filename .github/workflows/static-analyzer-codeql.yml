@@ -10,6 +10,7 @@ env:
 
 jobs:
   job-analyze-codeql:
+    if: github.repository_owner == 'upx'
     name: Analyze
     runs-on: ubuntu-latest
     permissions:

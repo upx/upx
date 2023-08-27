@@ -57,13 +57,13 @@ public:
     virtual const int *getCompressionMethods(int method, int level) const = 0;
     virtual const int *getFilters() const = 0;
 
-    // canPack() should throw a cantPackException eplaining why it cannot pack
+    // canPack() should throw a cantPackException explaining why it cannot pack
     // a recognized format.
-    // canPack() can return -1 to fail early; see class PackMaster
+    // canPack() can also return -1 to fail early; see class PackMaster
     virtual tribool canPack() = 0;
-    // canUnpack() should throw a cantUnpackException eplaining why it cannot pack
+    // canUnpack() should throw a cantUnpackException explaining why it cannot pack
     // a recognized format.
-    // canUnpack() can return -1 to fail early; see class PackMaster
+    // canUnpack() can also return -1 to fail early; see class PackMaster
     virtual tribool canUnpack() = 0;
 
     // PackMaster entries
@@ -80,7 +80,7 @@ protected:
     InputFile *const fi;                // reference
     union {                             // unnamed union
         const upx_int64_t file_size;    // must get set by constructor
-        const upx_uint64_t file_size_u; // explicitly unsigned
+        const upx_uint64_t file_size_u; // (explicitly unsigned)
     };
     PackHeader ph; // must be filled by canUnpack(); also used by UiPacker
 };

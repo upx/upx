@@ -11,7 +11,7 @@ env:
 
 jobs:
   job-alpine-clang: # uses cmake + make
-    if: ${{ true }}
+    if: true
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
     name: ${{ format('clang {0}', matrix.container) }}
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
           path: 'upx*/build/*/upx'
 
   job-alpine-gcc: # uses cmake + make
-    if: ${{ true }}
+    if: true
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
     name: ${{ format('gcc {0}', matrix.container) }}
     runs-on: ubuntu-latest

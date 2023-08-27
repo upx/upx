@@ -11,6 +11,7 @@ env:
 
 jobs:
   job-cmake-macos-xcode: # uses cmake + xcodebuild
+    if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
       matrix:

@@ -9,6 +9,7 @@ env:
   DEBIAN_FRONTEND: noninteractive
 jobs:
   job-spell-check:
+    if: github.repository_owner == 'upx'
     name: 'Spell check'
     runs-on: ubuntu-latest
     steps:

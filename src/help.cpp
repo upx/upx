@@ -104,7 +104,7 @@ struct PackerNames {
     const Options *o;
     PackerNames() : names_count(0), o(nullptr) {}
     void add(const PackerBase *pb) {
-        assert(names_count < 64);
+        assert_noexcept(names_count < 64);
         names[names_count].fname = pb->getFullName(o);
         names[names_count].sname = pb->getName();
         names_count++;

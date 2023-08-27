@@ -17,7 +17,8 @@ on:
   schedule: [cron: '50 0 * * 3'] # run weekly Wednesday 00:50 UTC
   workflow_dispatch:
 jobs:
-  close-issues:
+  job-close-inactive-issues:
+    if: github.repository_owner == 'upx'
     name: 'Close inactive issues'
     runs-on: ubuntu-latest
     permissions:

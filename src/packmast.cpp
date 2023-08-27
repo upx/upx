@@ -65,6 +65,7 @@ PackMaster::PackMaster(InputFile *f, Options *o) noexcept : fi(f) {
     // replace global options with local options
     if (o != nullptr) {
 #if WITH_THREADS
+        // TODO later: check for possible "noexcept" violation here
         std::lock_guard<std::mutex> lock(opt_lock_mutex);
 #endif
         saved_opt = o;
@@ -78,6 +79,7 @@ PackMaster::~PackMaster() noexcept {
     // restore global options
     if (saved_opt != nullptr) {
 #if WITH_THREADS
+        // TODO later: check for possible "noexcept" violation here
         std::lock_guard<std::mutex> lock(opt_lock_mutex);
 #endif
         opt = saved_opt;

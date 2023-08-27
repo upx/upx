@@ -10,9 +10,10 @@ env:
 
 jobs:
   job-analyze-clang-tidy: # uses cmake + make
+    if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
-      matrix: {container: ['alpine:edge','i386/alpine:edge']}
+      matrix: {container: ['alpine:3.18','alpine:edge','i386/alpine:edge']}
     name: ${{ format('Analyze clang-tidy {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}

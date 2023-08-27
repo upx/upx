@@ -10,6 +10,7 @@ env:
 
 jobs:
   job-analyze-clang-analyzer: # uses cmake + make
+    if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
       matrix: {container: ['alpine:3.16','alpine:3.17','alpine:3.18','alpine:edge','i386/alpine:edge']}
