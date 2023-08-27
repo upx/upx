@@ -321,8 +321,11 @@ TEST_CASE("MemBuffer::getSizeForCompression") {
     CHECK(MemBuffer::getSizeForCompression(1024 * 1024) == 1180160);         // 0x00100000
     CHECK(MemBuffer::getSizeForCompression(64 * 1024 * 1024) == 75497984);   // 0x04000000
     CHECK(MemBuffer::getSizeForCompression(512 * 1024 * 1024) == 603980288); // 0x20000000
-    // "640 MiB Ought to be Enough for Anyone" --Markus F.X.J. Oberhumer, 1981 ;-)
     CHECK(MemBuffer::getSizeForCompression(640 * 1024 * 1024) == 754975232); // 0x28000000
+    // "682 MiB Ought to be Enough for Anyone" --Markus F.X.J. Oberhumer, 2023 ;-)
+    CHECK(MemBuffer::getSizeForCompression(682 * 1024 * 1024) == 804520448); // 0x2aa00000
+    CHECK(MemBuffer::getSizeForCompression(715827428) == UPX_RSIZE_MAX);     // 0x2aaaa8e4
+    CHECK_THROWS(MemBuffer::getSizeForCompression(715827428 + 1));           // 0x2aaaa8e4 + 1
 }
 
 /* vim:set ts=4 sw=4 et: */

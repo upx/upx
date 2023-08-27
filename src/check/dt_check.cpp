@@ -113,6 +113,17 @@ ACC_COMPILE_TIME_ASSERT_HEADER(bswap64(bswap64(0xf8f7f6f5f4f3f2f1ull)) ==
                                no_bswap64(0xf8f7f6f5f4f3f2f1ull))
 #endif
 
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 0, 8) == 0)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 1, 8) == 1)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 127, 8) == 127)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 128, 8) == -128)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u - 1, 8) == -1)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 256, 8) == 0)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 257, 8) == 1)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 383, 8) == 127)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 384, 8) == -128)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 511, 8) == -1)
+
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
 #if 0 // does not work with MSVC
 #if '\0' - 1 < 0

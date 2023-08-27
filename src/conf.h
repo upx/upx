@@ -109,8 +109,7 @@ inline constexpr bool upx_is_integral_v = upx_is_integral<T>::value;
 // protect against integer overflows and malicious header fields
 // see C 11 standard, Annex K
 //
-// this limits uncompressed_size to about 640 MiB which is perfectly fine:
-//   "640 MiB Ought to be Enough for Anyone" --Markus F.X.J. Oberhumer, 1981 ;-)
+// this limits uncompressed_size to about 682 MiB (715_128_832 bytes)
 typedef size_t upx_rsize_t;
 #define UPX_RSIZE_MAX       UPX_RSIZE_MAX_MEM
 #define UPX_RSIZE_MAX_MEM   (768 * 1024 * 1024)   // DO NOT CHANGE !!!

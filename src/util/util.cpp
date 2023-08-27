@@ -43,8 +43,7 @@
 // and malicious header fields
 // see C 11 standard, Annex K
 //
-// this limits uncompressed_size to about 640 MiB which is perfectly fine:
-//   "640 MiB Ought to be Enough for Anyone" --Markus F.X.J. Oberhumer, 1981 ;-)
+// this limits uncompressed_size to about 682 MiB (715_128_832 bytes)
 **************************************************************************/
 
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_MEM == UPX_RSIZE_MAX)
