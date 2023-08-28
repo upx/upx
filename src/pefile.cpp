@@ -703,6 +703,7 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
         int rc = strcmp(s1->name, s2->name);
         if (rc != 0)
             return rc;
+        // What could remain?
         return p1 < p2 ? -1 : 1; // make sort order deterministic/stable
     }
 
@@ -893,6 +894,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
                     return rc;
             } else if ((u1->shname != nullptr) != (u2->shname != nullptr))
                 return (u1->shname != nullptr) ? -1 : 1;
+            // What could remain?
             return p1 < p2 ? -1 : 1; // make sort order deterministic/stable
         }
     };

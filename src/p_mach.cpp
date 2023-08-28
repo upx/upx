@@ -575,7 +575,7 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
     if (a->vmsize)             return -1;  // 'a' is first
     if (b->vmsize)             return  1;  // 'a' is last
     // What could remain?
-    return 0;
+    return aa < bb ? -1 : 1; // make sort order deterministic/stable
 }
 
 // At 2013-02-03 part of the source for codesign was
