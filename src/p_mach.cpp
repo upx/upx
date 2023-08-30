@@ -562,7 +562,8 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
     unsigned const xb = b->cmd - lc_seg;
            if (xa < xb)        return -1;  // LC_SEGMENT first
            if (xa > xb)        return  1;
-           if (0 != xa)        return  0;  // not LC_SEGMENT
+// mfx @jreiser: we do not want to return 0; please check
+////       if (0 != xa)        return  0;  // not LC_SEGMENT
     // Ascending by .fileoff so that find_SEGMENT_gap works
     if (a->fileoff < b->fileoff)
                                return -1;
@@ -572,10 +573,24 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
     if (a->vmaddr < b->vmaddr) return -1;
     if (a->vmaddr > b->vmaddr) return  1;
     // Descending by .vmsize
+// mfx @jreiser: I think this may violate cmp(a,b) == -cmp(b,a); please check
+//    if ((a->vmsize != 0) != (b->vmsize != 0))
+//        return (a->vmsize != 0) ? -1 : 1;
     if (a->vmsize)             return -1;  // 'a' is first
     if (b->vmsize)             return  1;  // 'a' is last
     // What could remain?
-    return aa < bb ? -1 : 1; // make sort order deterministic/stable
+#define CMP(field) \
+    if (a->field != b->field) return a->field < b->field ? -1 : 1
+    // try to make sort order deterministic and just compare more fields
+    CMP(vmsize);
+    CMP(cmdsize);
+    CMP(filesize);
+    CMP(maxprot);
+    CMP(initprot);
+    CMP(nsects);
+    CMP(flags);
+#undef CMP
+    return 0;
 }
 
 // At 2013-02-03 part of the source for codesign was

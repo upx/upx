@@ -99,7 +99,17 @@ PackVmlinuxBase<T>::compare_Phdr(void const *aa, void const *bb)
     if (a->p_paddr < b->p_paddr) return -1;  // ascending by .p_paddr
     if (a->p_paddr > b->p_paddr) return  1;
     // What could remain?
-    return aa < bb ? -1 : 1; // make sort order deterministic/stable
+    // try to make sort order deterministic and just compare more fields
+#define CMP(field) \
+    if (a->field != b->field) return a->field < b->field ? -1 : 1
+    CMP(p_offset);
+    CMP(p_vaddr);
+    CMP(p_filesz);
+    CMP(p_memsz);
+    CMP(p_flags);
+    CMP(p_align);
+#undef CMP
+    return 0;
 }
 
 template <class T>

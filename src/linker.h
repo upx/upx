@@ -119,6 +119,7 @@ struct ElfLinker::Section : private noncopyable {
     void *input = nullptr;
     byte *output = nullptr;
     unsigned size = 0;
+    unsigned sort_id = 0; // for qsort()
     upx_uint64_t offset = 0;
     unsigned p2align = 0; // log2
     Section *next = nullptr;

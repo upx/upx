@@ -697,14 +697,15 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
             infoWarning("empty import: %s", dll);
     }
 
-    static int __acc_cdecl_qsort compare(const void *p1, const void *p2) {
-        const Section *s1 = *(const Section *const *) p1;
-        const Section *s2 = *(const Section *const *) p2;
-        int rc = strcmp(s1->name, s2->name);
+    static int __acc_cdecl_qsort compare(const void *aa, const void *bb) {
+        const Section *a = *(const Section *const *) aa;
+        const Section *b = *(const Section *const *) bb;
+        int rc = strcmp(a->name, b->name);
         if (rc != 0)
             return rc;
         // What could remain?
-        return p1 < p2 ? -1 : 1; // make sort order deterministic/stable
+        assert_noexcept(a->sort_id != b->sort_id);
+        return a->sort_id < b->sort_id ? -1 : 1; // make sort order deterministic
     }
 
     virtual void alignCode(unsigned len) override { alignWithByte(len, 0); }
@@ -873,29 +874,31 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         unsigned original_position;
         bool isk32;
 
-        static int __acc_cdecl_qsort compare(const void *p1, const void *p2) {
-            const udll *u1 = *(const udll *const *) p1;
-            const udll *u2 = *(const udll *const *) p2;
-            if (u1->isk32 != u2->isk32)
-                return u1->isk32 ? -1 : 1;
-            if ((*u1->lookupt != 0) != (*u2->lookupt != 0))
-                return (*u1->lookupt != 0) ? -1 : 1;
-            int rc = strcasecmp(u1->name, u2->name);
+        static int __acc_cdecl_qsort compare(const void *aa, const void *bb) {
+            const udll *a = *(const udll *const *) aa;
+            const udll *b = *(const udll *const *) bb;
+            if (a->isk32 != b->isk32)
+                return a->isk32 ? -1 : 1;
+            if ((*a->lookupt != 0) != (*b->lookupt != 0))
+                return (*a->lookupt != 0) ? -1 : 1;
+            int rc = strcasecmp(a->name, b->name);
             if (rc != 0)
                 return rc;
-            if ((u1->ordinal != 0) != (u2->ordinal != 0))
-                return (u1->ordinal != 0) ? -1 : 1;
-            if (u1->shname && u2->shname) {
-                rc = (int) (upx_safe_strlen(u1->shname) - upx_safe_strlen(u2->shname));
+            if ((a->ordinal != 0) != (b->ordinal != 0))
+                return (a->ordinal != 0) ? -1 : 1;
+            if (a->shname && b->shname) {
+                rc = (int) (upx_safe_strlen(a->shname) - upx_safe_strlen(b->shname));
                 if (rc != 0)
                     return rc;
-                rc = strcmp(u1->shname, u2->shname);
+                rc = strcmp(a->shname, b->shname);
                 if (rc != 0)
                     return rc;
-            } else if ((u1->shname != nullptr) != (u2->shname != nullptr))
-                return (u1->shname != nullptr) ? -1 : 1;
+            } else if ((a->shname != nullptr) != (b->shname != nullptr))
+                return (a->shname != nullptr) ? -1 : 1;
             // What could remain?
-            return p1 < p2 ? -1 : 1; // make sort order deterministic/stable
+            // make sort order deterministic
+            assert_noexcept(a->original_position != b->original_position);
+            return a->original_position < b->original_position ? -1 : 1;
         }
     };
 

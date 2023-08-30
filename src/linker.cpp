@@ -329,6 +329,7 @@ ElfLinker::Section *ElfLinker::addSection(const char *sname, const void *sdata, 
     assert(sname[strlen(sname) - 1] != ':');
     assert(findSection(sname, false) == nullptr);
     Section *sec = new Section(sname, sdata, slen, p2align);
+    sec->sort_id = nsections;
     sections[nsections++] = sec;
     return sec;
 }
