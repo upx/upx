@@ -4,6 +4,7 @@ User visible changes for UPX
 
 Changes in 4.2.0 (XX XXX 2023):
   * bug fixes - see https://github.com/upx/upx/milestone/13
+  * add support for NO_COLOR env var; see https://no-color.org/
 
 Changes in 4.1.0 (08 Aug 2023):
   * ELF: handle shared libraries with more than 2 PT_LOAD segments

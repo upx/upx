@@ -53,6 +53,7 @@ void Options::reset() noexcept {
     o->preserve_mode = true;
     o->preserve_ownership = true;
     o->preserve_timestamp = true;
+    o->verbose = 2;
 
     o->console = CON_FILE;
 #if (ACC_OS_DOS32) && defined(__DJGPP__)
@@ -62,7 +63,11 @@ void Options::reset() noexcept {
 #elif 1 && defined(__linux__)
     o->console = CON_INIT;
 #endif
-    o->verbose = 2;
+    // support NO_COLOR, see https://no-color.org/
+    // "... when present and not an empty string (regardless of its value)"
+    const char *e = getenv("NO_COLOR");
+    if (e && e[0])
+        o->console = CON_FILE;
 
     o->o_unix.osabi0 = 3; // 3 == ELFOSABI_LINUX
 
