@@ -263,7 +263,6 @@ make_hatch_x86_64(
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            ftruncate(mfd, 6);
             Pwrite(mfd, addr_string("\x0f\x05\x5f\x5e\x5a\xc3"), 6);
             hatch = Pmap(0, 6, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
@@ -306,7 +305,6 @@ make_hatch_ppc64(
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            ftruncate(mfd,sizeof(code));
             Pwrite(mfd, code, sizeof(code));
             hatch = Pmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
@@ -345,7 +343,6 @@ make_hatch_arm64(
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            ftruncate(mfd, sizeof(code));
             Pwrite(mfd, code, sizeof(code));
             void *mfd_addr = Pmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
@@ -498,7 +495,6 @@ upx_so_main(  // returns &escape_hatch
     if (phdr->p_flags & PF_X) {
         int mfd = memfd_create(addr_string("upx"), 0);
         unsigned mfd_len = 0ul - PAGE_MASK;
-        ftruncate(mfd, mfd_len);
         Pwrite(mfd, elf_tmp, binfo->sz_unc);  // de-compressed Elf_Ehdr and Elf_Phdrs
         Pwrite(mfd, binfo->sz_unc + va_load, mfd_len - binfo->sz_unc);  // rest of 1st page
 

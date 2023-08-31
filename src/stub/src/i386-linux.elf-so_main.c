@@ -287,7 +287,6 @@ make_hatch_i386(
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            //ftruncate(mfd, 4);
             write(mfd, &escape, 4);
             hatch = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
@@ -325,7 +324,6 @@ make_hatch_arm32(
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            //ftruncate(mfd, 2*4);
             write(mfd, &code, 2*4);
             hatch = Pmap(0, 2*4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
@@ -555,7 +553,6 @@ upx_so_main(  // returns &escape_hatch
     if (phdr->p_flags & PF_X) {
         int mfd = memfd_create(addr_string("upx"), 0);
         unsigned mfd_len = 0ul - page_mask;
-        ftruncate(mfd, mfd_len);
         Pwrite(mfd, elf_tmp, binfo->sz_unc);  // de-compressed Elf_Ehdr and Elf_Phdrs
         Pwrite(mfd, binfo->sz_unc + va_load, mfd_len - binfo->sz_unc);  // rest of 1st page
 
