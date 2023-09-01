@@ -43,6 +43,8 @@ int upx_doctest_check(int argc, char **argv) {
     return 0;
 #else
     const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
+    if (!e)
+        e = getenv("UPX_DEBUG_DISABLE_DOCTEST"); // allow alternate spelling
     if (e && e[0] && strcmp(e, "0") != 0)
         return 0;
     bool minimal = true;   // don't show summary
@@ -319,7 +321,7 @@ struct TestIntegerWrap {
     static inline bool neg_eq(const T x) noexcept { return T(0) - x == x; }
 };
 
-static noinline void throwSomeValue(int x) {
+static noinline void throwSomeValue(int x) may_throw {
     if (x < 0)
         throw int(x);
     else
@@ -346,6 +348,8 @@ static noinline void check_basic_cxx_exception_handling(void (*func)(int)) noexc
 
 void upx_compiler_sanity_check(void) noexcept {
     const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
+    if (!e)
+        e = getenv("UPX_DEBUG_DISABLE_DOCTEST"); // allow alternate spelling
     if (e && e[0] && strcmp(e, "0") != 0) {
         // If UPX_DEBUG_DOCTEST_DISABLE is set then we don't want to throw any
         // exceptions in order to improve debugging experience.
@@ -620,6 +624,38 @@ TEST_CASE("libc snprintf") {
     CHECK_EQ(strcmp(buf, "-6.0.0.0.0.0.0.0.6.ffffffffffffffff"), 0);
     snprintf(buf, sizeof(buf), "%d.%d.%d.%d.%d.%d.%d.%d.%d.%#jx", -7, 0, 0, 0, 0, 0, 0, 0, 7, um);
     CHECK_EQ(strcmp(buf, "-7.0.0.0.0.0.0.0.7.0xffffffffffffffff"), 0);
+}
+
+TEST_CASE("libc qsort") {
+    // runtime check that libc qsort() never compares identical objects
+    struct Elem {
+        upx_uint16_t id;
+        upx_uint16_t value;
+        static int compare(const void *aa, const void *bb) noexcept {
+            const Elem *a = (const Elem *) aa;
+            const Elem *b = (const Elem *) bb;
+            assert_noexcept(a->id != b->id); // check not IDENTICAL
+            return a->value < b->value ? -1 : (a->value == b->value ? 0 : 1);
+        }
+        static bool qsort_check(Elem *e, size_t n) {
+            upx_uint32_t x = n + 5381;
+            for (size_t i = 0; i < n; i++) {
+                e[i].id = (upx_uint16_t) i;
+                x = x * 33 + (i & 255);
+                e[i].value = (upx_uint16_t) x;
+            }
+            qsort(e, n, sizeof(*e), Elem::compare);
+            bool sorted_ok = true;
+            for (size_t i = 1; i < n; i++)
+                sorted_ok &= e[i - 1].value <= e[i].value;
+            return sorted_ok;
+        }
+    };
+
+    constexpr size_t N = 4096;
+    Elem e[N];
+    for (size_t n = 1; n <= N; n <<= 1)
+        CHECK(Elem::qsort_check(e, n));
 }
 
 /* vim:set ts=4 sw=4 et: */

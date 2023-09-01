@@ -91,7 +91,7 @@ PackMaster::~PackMaster() noexcept {
 //
 **************************************************************************/
 
-static tribool try_can_pack(PackerBase *pb, void *user) may_throw {
+static noinline tribool try_can_pack(PackerBase *pb, void *user) may_throw {
     InputFile *f = (InputFile *) user;
     try {
         pb->initPackHeader();
@@ -111,7 +111,7 @@ static tribool try_can_pack(PackerBase *pb, void *user) may_throw {
     return false;
 }
 
-static tribool try_can_unpack(PackerBase *pb, void *user) may_throw {
+static noinline tribool try_can_unpack(PackerBase *pb, void *user) may_throw {
     InputFile *f = (InputFile *) user;
     try {
         pb->initPackHeader();

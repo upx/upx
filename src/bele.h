@@ -69,7 +69,7 @@ struct LE32;
 struct LE64;
 
 // Note:
-//   void is explicitly allowed, but there is no automatic pointer conversion because of template
+//   void is explicitly allowed (but there is no automatic pointer conversion because of template!)
 //   char is explicitly allowed
 //   byte is explicitly allowed
 template <class T>
@@ -161,13 +161,19 @@ static forceinline upx_uint64_t bswap64(upx_uint64_t v) noexcept { return _bytes
 #else
 
 static forceinline constexpr unsigned bswap16(unsigned v) noexcept {
+#if defined(__riscv) && __riscv_xlen == 64
+    return (unsigned) __builtin_bswap64((upx_uint64_t) v << 48);
+#else
     // return __builtin_bswap16((upx_uint16_t) (v & 0xffff));
-    // return (unsigned) __builtin_bswap64((upx_uint64_t) v << 48);
     return __builtin_bswap32(v << 16);
+#endif
 }
 static forceinline constexpr unsigned bswap32(unsigned v) noexcept {
-    // return (unsigned) __builtin_bswap64((upx_uint64_t) v << 32);
+#if defined(__riscv) && __riscv_xlen == 64
+    return (unsigned) __builtin_bswap64((upx_uint64_t) v << 32);
+#else
     return __builtin_bswap32(v);
+#endif
 }
 static forceinline constexpr upx_uint64_t bswap64(upx_uint64_t v) noexcept {
     return __builtin_bswap64(v);

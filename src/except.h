@@ -186,32 +186,32 @@ public:
 #define NORET noinline
 #endif
 
-NORET void throwCantPack(const char *msg);
-NORET void throwCantPackExact();
-NORET void throwUnknownExecutableFormat(const char *msg = nullptr, bool warn = false);
-NORET void throwNotCompressible(const char *msg = nullptr);
-NORET void throwAlreadyPacked(const char *msg = nullptr);
-NORET void throwAlreadyPackedByUPX(const char *msg = nullptr);
-NORET void throwCantUnpack(const char *msg);
-NORET void throwNotPacked(const char *msg = nullptr);
-NORET void throwFilterException();
-NORET void throwBadLoader();
-NORET void throwChecksumError();
-NORET void throwCompressedDataViolation();
-NORET void throwInternalError(const char *msg);
-NORET void throwOutOfMemoryException(const char *msg = nullptr);
-NORET void throwIOException(const char *msg = nullptr, int e = 0);
-NORET void throwEOFException(const char *msg = nullptr, int e = 0);
+NORET void throwCantPack(const char *msg) may_throw;
+NORET void throwCantPackExact() may_throw;
+NORET void throwUnknownExecutableFormat(const char *msg = nullptr, bool warn = false) may_throw;
+NORET void throwNotCompressible(const char *msg = nullptr) may_throw;
+NORET void throwAlreadyPacked(const char *msg = nullptr) may_throw;
+NORET void throwAlreadyPackedByUPX(const char *msg = nullptr) may_throw;
+NORET void throwCantUnpack(const char *msg) may_throw;
+NORET void throwNotPacked(const char *msg = nullptr) may_throw;
+NORET void throwFilterException() may_throw;
+NORET void throwBadLoader() may_throw;
+NORET void throwChecksumError() may_throw;
+NORET void throwCompressedDataViolation() may_throw;
+NORET void throwInternalError(const char *msg) may_throw;
+NORET void throwOutOfMemoryException(const char *msg = nullptr) may_throw;
+NORET void throwIOException(const char *msg = nullptr, int e = 0) may_throw;
+NORET void throwEOFException(const char *msg = nullptr, int e = 0) may_throw;
 
 // some C++ template wizardry is needed to overload throwCantPack() for varargs
 template <class T>
 void throwCantPack(const T *, ...) DELETED_FUNCTION;
 template <>
-NORET void throwCantPack(const char *format, ...) attribute_format(1, 2);
+NORET void throwCantPack(const char *format, ...) may_throw attribute_format(1, 2);
 template <class T>
 void throwCantUnpack(const T *, ...) DELETED_FUNCTION;
 template <>
-NORET void throwCantUnpack(const char *format, ...) attribute_format(1, 2);
+NORET void throwCantUnpack(const char *format, ...) may_throw attribute_format(1, 2);
 
 #undef NORET
 

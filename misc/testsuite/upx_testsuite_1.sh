@@ -103,6 +103,7 @@ all_errors=
 export UPX="--prefer-ucl --no-color --no-progress"
 export UPX_DEBUG_DISABLE_GITREV_WARNING=1
 export UPX_DEBUG_DOCTEST_VERBOSE=0
+export NO_COLOR=1
 
 rm -rf ./testsuite_1
 mkdir testsuite_1 || exit 1

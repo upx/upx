@@ -704,8 +704,9 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
         if (rc != 0)
             return rc;
         // What could remain?
+        // make sort order deterministic
         assert_noexcept(a->sort_id != b->sort_id);
-        return a->sort_id < b->sort_id ? -1 : 1; // make sort order deterministic
+        return a->sort_id < b->sort_id ? -1 : 1;
     }
 
     virtual void alignCode(unsigned len) override { alignWithByte(len, 0); }
