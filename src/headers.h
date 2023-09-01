@@ -81,11 +81,11 @@ static_assert(sizeof(void *) == 8);
 
 #undef snprintf
 #undef vsnprintf
-#define HAVE_STDINT_H 1
+#define HAVE_STDINT_H       1
 #define ACC_WANT_ACC_INCD_H 1
 #define ACC_WANT_ACC_INCE_H 1
-#define ACC_WANT_ACC_LIB_H 1
-#define ACC_WANT_ACC_CXX_H 1
+#define ACC_WANT_ACC_LIB_H  1
+#define ACC_WANT_ACC_CXX_H  1
 #include "miniacc.h"
 #if (ACC_CC_MSC)
 #include <intrin.h>

@@ -44,7 +44,7 @@
 #endif
 
 #if 1 && defined(__linux__)
-#define USE_SCREEN 1
+#define USE_SCREEN      1
 #define USE_SCREEN_VCSA 1
 #if !(HAVE_LINUX_KD_H)
 #undef USE_SCREEN
@@ -59,10 +59,10 @@
 #if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
 #define USE_SCREEN 1
 #elif 1 && (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64)
-#define USE_SCREEN 1
+#define USE_SCREEN       1
 #define USE_SCREEN_WIN32 1
 #elif 1 && (ACC_OS_EMX && defined(__RSXNT__))
-#define USE_SCREEN 1
+#define USE_SCREEN       1
 #define USE_SCREEN_WIN32 1
 #elif 1 && (ACC_ARCH_M68K && ACC_OS_TOS)
 #define NO_CONSOLE 1
@@ -111,31 +111,31 @@ typedef struct {
 
 void con_fprintf(FILE *f, const char *format, ...) attribute_format(2, 3);
 
-#define FG_BLACK 0x00
-#define FG_BLUE 0x01
-#define FG_GREEN 0x02
-#define FG_CYAN 0x03
-#define FG_RED 0x04
-#define FG_VIOLET 0x05
-#define FG_ORANGE 0x06
-#define FG_LTGRAY 0x07
-#define FG_DKGRAY 0x08
-#define FG_BRTBLUE 0x09
-#define FG_BRTGREEN 0x0a
-#define FG_BRTCYAN 0x0b
-#define FG_BRTRED 0x0c
+#define FG_BLACK     0x00
+#define FG_BLUE      0x01
+#define FG_GREEN     0x02
+#define FG_CYAN      0x03
+#define FG_RED       0x04
+#define FG_VIOLET    0x05
+#define FG_ORANGE    0x06
+#define FG_LTGRAY    0x07
+#define FG_DKGRAY    0x08
+#define FG_BRTBLUE   0x09
+#define FG_BRTGREEN  0x0a
+#define FG_BRTCYAN   0x0b
+#define FG_BRTRED    0x0c
 #define FG_BRTVIOLET 0x0d
-#define FG_YELLOW 0x0e
-#define FG_WHITE 0x0f
+#define FG_YELLOW    0x0e
+#define FG_WHITE     0x0f
 
-#define BG_BLACK 0x00
-#define BG_BLUE 0x10
-#define BG_GREEN 0x20
-#define BG_CYAN 0x30
-#define BG_RED 0x40
+#define BG_BLACK  0x00
+#define BG_BLUE   0x10
+#define BG_GREEN  0x20
+#define BG_CYAN   0x30
+#define BG_RED    0x40
 #define BG_VIOLET 0x50
 #define BG_ORANGE 0x60
-#define BG_WHITE 0x70
+#define BG_WHITE  0x70
 
 #endif /* USE_CONSOLE */
 
@@ -162,7 +162,7 @@ extern console_t console_screen;
 #else
 
 #define con_fg(f, x) 0
-#define con_fprintf fprintf
+#define con_fprintf  fprintf
 
 #endif /* USE_CONSOLE */
 

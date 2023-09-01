@@ -146,8 +146,8 @@ void MemBuffer::fill(unsigned off, unsigned len, int value) {
 
 // for use_simple_mcheck()
 #define PTR_BITS32(p) ((unsigned) ((upx_uintptr_t) (p) &0xffffffff))
-#define MAGIC1(p) ((PTR_BITS32(p) ^ 0xfefdbeeb) | 1)
-#define MAGIC2(p) ((PTR_BITS32(p) ^ 0xfefdbeeb ^ 0x88224411) | 1)
+#define MAGIC1(p)     ((PTR_BITS32(p) ^ 0xfefdbeeb) | 1)
+#define MAGIC2(p)     ((PTR_BITS32(p) ^ 0xfefdbeeb ^ 0x88224411) | 1)
 
 void MemBuffer::checkState() const {
     if (!ptr)

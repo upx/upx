@@ -33,7 +33,7 @@
 #include "linker.h"
 
 #define FILLVAL 0
-#define import my_import // "import" is a keyword since C++20
+#define import  my_import // "import" is a keyword since C++20
 
 /*************************************************************************
 //
@@ -60,7 +60,7 @@ static void xcheck(const void *p, size_t plen, const void *b, size_t blen) {
 // #define imemset(a,b,c)      ICHECK(a,c), memset(a,b,c)
 // #define omemset(a,b,c)      OCHECK(a,c), memset(a,b,c)
 // #define imemcpy(a,b,c)      ICHECK(a,c), memcpy(a,b,c)
-#define omemcpy(a, b, c) OCHECK(a, c), memcpy(a, b, c)
+#define omemcpy(a, b, c)  OCHECK(a, c), memcpy(a, b, c)
 #define omemmove(a, b, c) OCHECK(a, c), memmove(a, b, c)
 
 /*************************************************************************

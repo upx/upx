@@ -55,8 +55,8 @@ LeFile::~LeFile() noexcept {
 }
 
 #define objects ih.object_table_entries
-#define pages ih.memory_pages
-#define mps ih.memory_page_size
+#define pages   ih.memory_pages
+#define mps     ih.memory_page_size
 
 void LeFile::readObjectTable() {
     soobject_table = objects;

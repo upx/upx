@@ -55,7 +55,7 @@
 #include <sys/farptr.h>
 #include <sys/movedata.h>
 #define dossel _go32_info_block.selector_for_linear_memory
-#define co80 _go32_info_block.linear_address_of_primary_screen
+#define co80   _go32_info_block.linear_address_of_primary_screen
 #undef kbhit
 
 #define Cell upx_uint16_t

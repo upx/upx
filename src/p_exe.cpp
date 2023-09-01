@@ -35,7 +35,7 @@
 static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i086-dos16.exe.h"
 
-#define MAXMATCH 0x2000
+#define MAXMATCH     0x2000
 #define MAXRELOCSIZE (0x8000 - MAXMATCH)
 
 #define DI_LIMIT 0xff00 // see the assembly why

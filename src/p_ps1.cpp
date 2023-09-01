@@ -39,24 +39,24 @@
 static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/mipsel.r3000-ps1.h"
 
-#define CD_SEC 2048
-#define PS_HDR_SIZE CD_SEC
-#define PS_RAM_SIZE ram_size
-#define PS_MIN_SIZE (PS_HDR_SIZE * 3)
-#define PS_MAX_SIZE ((PS_RAM_SIZE * 95) / 100)
+#define CD_SEC        2048
+#define PS_HDR_SIZE   CD_SEC
+#define PS_RAM_SIZE   ram_size
+#define PS_MIN_SIZE   (PS_HDR_SIZE * 3)
+#define PS_MAX_SIZE   ((PS_RAM_SIZE * 95) / 100)
 #define PS_STACK_SIZE (PS_RAM_SIZE / 256)
 
-#define SZ_IH_BKUP (10 * sizeof(LE32))
+#define SZ_IH_BKUP  (10 * sizeof(LE32))
 #define HD_CODE_OFS (sizeof(ps1_exe_t) + sz_cbh)
 
-#define K0_BS (0x80000000)
-#define K1_BS (0xa0000000)
-#define EXE_BS (ih.epc & K0_BS)
+#define K0_BS    (0x80000000)
+#define K1_BS    (0xa0000000)
+#define EXE_BS   (ih.epc & K0_BS)
 #define FIX_PSVR ((K1_BS - EXE_BS) + (PS_HDR_SIZE - HD_CODE_OFS))
 
 // lui / addiu
-#define MIPS_HI(a) (((a) >> 16) + (((a) &0x8000) >> 15))
-#define MIPS_LO(a) ((a) &0xffff)
+#define MIPS_HI(a)   (((a) >> 16) + (((a) &0x8000) >> 15))
+#define MIPS_LO(a)   ((a) &0xffff)
 #define MIPS_PC16(a) ((a) >> 2)
 #define MIPS_PC26(a) (((a) &0x0fffffff) >> 2)
 
@@ -340,21 +340,21 @@ void PackPs1::buildLoader(const Filter *) {
 
 #define OPTYPE(x) (((x) >> 13) & 0x7)
 #define OPCODE(x) (((x) >> 10) & 0x7)
-#define REG1(x) (((x) >> 5) & 0x1f)
-#define REG2(x) ((x) &0x1f)
+#define REG1(x)   (((x) >> 5) & 0x1f)
+#define REG2(x)   ((x) &0x1f)
 
 #define MIPS_IMM(a, b) ((((a) - (((b) &0x8000) >> 15)) << 16) | (b))
 
 // Type
 #define REGIMM 1
-#define STORE 5
+#define STORE  5
 // Op
-#define LUI 7
-#define ADDIU 1
-#define SW 3
+#define LUI    7
+#define ADDIU  1
+#define SW     3
 
-#define IS_LUI(a) ((OPTYPE(a) == REGIMM && OPCODE(a) == LUI))
-#define IS_ADDIU(a) ((OPTYPE(a) == REGIMM && OPCODE(a) == ADDIU))
+#define IS_LUI(a)     ((OPTYPE(a) == REGIMM && OPCODE(a) == LUI))
+#define IS_ADDIU(a)   ((OPTYPE(a) == REGIMM && OPCODE(a) == ADDIU))
 #define IS_SW_ZERO(a) ((OPTYPE(a) == STORE && OPCODE(a) == SW) && REG2(a) == 0)
 
 #define BSS_CHK_LIMIT (18)

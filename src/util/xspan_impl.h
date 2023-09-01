@@ -29,14 +29,14 @@
 #if WITH_XSPAN
 
 #if 1
-#define XSPAN_NAMESPACE_NAME XSpan
+#define XSPAN_NAMESPACE_NAME  XSpan
 #define XSPAN_NAMESPACE_BEGIN namespace XSPAN_NAMESPACE_NAME {
-#define XSPAN_NAMESPACE_END }
-#define XSPAN_NS(x) XSPAN_NAMESPACE_NAME ::x
+#define XSPAN_NAMESPACE_END   }
+#define XSPAN_NS(x)           XSPAN_NAMESPACE_NAME ::x
 #else
 #define XSPAN_NAMESPACE_BEGIN /*empty*/
 #define XSPAN_NAMESPACE_END   /*empty*/
-#define XSPAN_NS(x) ::x
+#define XSPAN_NS(x)           ::x
 #endif
 
 XSPAN_NAMESPACE_BEGIN

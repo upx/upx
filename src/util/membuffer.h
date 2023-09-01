@@ -131,7 +131,7 @@ inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T>
 #define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)                                      \
     typename std::enable_if<std::is_same<A, B>::value, RType>::type
 #endif
-#define C MemBufferBase
+#define C                        MemBufferBase
 #define XSPAN_FWD_C_IS_MEMBUFFER 1
 #if WITH_XSPAN >= 1
 #define D XSPAN_NS(Ptr)

@@ -53,8 +53,8 @@ upx_rsize_t upx_safe_strlen(const char *);
 #undef snprintf
 #undef sprintf
 #undef vsnprintf
-#define snprintf upx_safe_snprintf
-#define sprintf ERROR_sprintf_IS_DANGEROUS_USE_snprintf
+#define snprintf  upx_safe_snprintf
+#define sprintf   ERROR_sprintf_IS_DANGEROUS_USE_snprintf
 #define vsnprintf upx_safe_vsnprintf
 
 /*************************************************************************

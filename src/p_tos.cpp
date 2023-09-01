@@ -223,13 +223,13 @@ void PackTos::buildLoader(const Filter *ft) {
 /* flags for curproc->memflags */
 /* also used for program headers fh_flag */
 #define F_FASTLOAD 0x01 // don't zero heap
-#define F_ALTLOAD 0x02  // OK to load in alternate ram
+#define F_ALTLOAD  0x02 // OK to load in alternate ram
 #define F_ALTALLOC 0x04 // OK to malloc from alt. ram
 #define F_SMALLTPA 0x08
 // used in MagiC: TPA can be allocated as specified in the program header
 // rather than the biggest free memory block
-#define F_MEMFLAGS 0xf0 // reserved for future use
-#define F_SHTEXT 0x800  // program's text may be shared
+#define F_MEMFLAGS 0xf0  // reserved for future use
+#define F_SHTEXT   0x800 // program's text may be shared
 
 #define F_MINALT 0xf0000000 // used to decide which type of RAM to load in
 
@@ -243,11 +243,11 @@ void PackTos::buildLoader(const Filter *ft) {
 /* flags for curproc->memflags (that is, fh_flag) and also Mxalloc mode.  */
 /* (Actually, when users call Mxalloc, they add 0x10 to what you see here) */
 #define F_PROTMODE 0xf0 // protection mode bits
-#define F_PROT_P 0x00   // no read or write
-#define F_PROT_G 0x10   // any access OK
-#define F_PROT_S 0x20   // any super access OK
-#define F_PROT_PR 0x30  // any read OK, no write
-#define F_PROT_I 0x40   // invalid page
+#define F_PROT_P   0x00 // no read or write
+#define F_PROT_G   0x10 // any access OK
+#define F_PROT_S   0x20 // any super access OK
+#define F_PROT_PR  0x30 // any read OK, no write
+#define F_PROT_I   0x40 // invalid page
 
 /*************************************************************************
 // util

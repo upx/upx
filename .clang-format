@@ -8,6 +8,7 @@ IndentWidth: 4
 ---
 Language: Cpp
 AccessModifierOffset: -4
+AlignConsecutiveMacros: AcrossComments
 AlwaysBreakTemplateDeclarations: true
 AttributeMacros:
   - __acc_cdecl

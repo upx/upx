@@ -36,11 +36,11 @@
 static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-dos32.watcom.le.h"
 
-#define LEOF_READ (1 << 0)
-#define LEOF_WRITE (1 << 1)
-#define LEOF_EXEC (1 << 2)
+#define LEOF_READ    (1 << 0)
+#define LEOF_WRITE   (1 << 1)
+#define LEOF_EXEC    (1 << 2)
 #define LEOF_PRELOAD (1 << 6)
-#define LEOF_HUGE32 (1 << 13)
+#define LEOF_HUGE32  (1 << 13)
 
 #define IOT(x, y) iobject_table[x].y
 #define OOT(x, y) oobject_table[x].y
@@ -56,14 +56,14 @@ static const CLANG_FORMAT_DUMMY_STATEMENT
 #define Opt_debug opt->debug.debug_level
 #else
 #define dputc(x, y) ((void) 0)
-#define Opt_debug 0
+#define Opt_debug   0
 #endif
 
 #define my_base_address reserved
-#define objects ih.object_table_entries
-#define pages ih.memory_pages
-#define mps ih.memory_page_size
-#define opages oh.memory_pages
+#define objects         ih.object_table_entries
+#define pages           ih.memory_pages
+#define mps             ih.memory_page_size
+#define opages          oh.memory_pages
 
 /*************************************************************************
 //

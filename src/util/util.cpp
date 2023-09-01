@@ -29,10 +29,10 @@
 #include <algorithm>
 #define ACC_WANT_ACC_INCI_H 1
 #include "../miniacc.h"
-#define ACC_WANT_ACCLIB_GETOPT 1
-#define ACC_WANT_ACCLIB_HSREAD 1
-#define ACC_WANT_ACCLIB_MISC 1
-#define ACC_WANT_ACCLIB_VGET 1
+#define ACC_WANT_ACCLIB_GETOPT   1
+#define ACC_WANT_ACCLIB_HSREAD   1
+#define ACC_WANT_ACCLIB_MISC     1
+#define ACC_WANT_ACCLIB_VGET     1
 #define ACC_WANT_ACCLIB_WILDARGV 1
 #undef HAVE_MKDIR
 #include "../miniacc.h"
@@ -645,18 +645,18 @@ const LEPolicy le_policy;
      ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 
 static const char dir_sep[] = "/\\";
-#define fn_is_drive(s) (s[0] && s[1] == ':')
-#define fn_is_sep(c) (strchr(dir_sep, c) != nullptr)
+#define fn_is_drive(s)   (s[0] && s[1] == ':')
+#define fn_is_sep(c)     (strchr(dir_sep, c) != nullptr)
 #define fn_skip_drive(s) (fn_is_drive(s) ? (s) + 2 : (s))
-#define fn_tolower(c) (tolower(((uchar) (c))))
+#define fn_tolower(c)    (tolower(((uchar) (c))))
 
 #else
 
 // static const char dir_sep[] = "/";
-#define fn_is_drive(s) (0)
-#define fn_is_sep(c) ((c) == '/')
+#define fn_is_drive(s)   (0)
+#define fn_is_sep(c)     ((c) == '/')
 #define fn_skip_drive(s) (s)
-#define fn_tolower(c) (c)
+#define fn_tolower(c)    (c)
 
 #endif
 

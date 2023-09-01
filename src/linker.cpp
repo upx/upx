@@ -727,8 +727,8 @@ void ElfLinkerM68k::relocate1(const Relocation *rel, byte *location, upx_uint64_
 
 void ElfLinkerMipsBE::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                 const char *type) {
-#define MIPS_HI(a) (((a) >> 16) + (((a) &0x8000) >> 15))
-#define MIPS_LO(a) ((a) &0xffff)
+#define MIPS_HI(a)   (((a) >> 16) + (((a) &0x8000) >> 15))
+#define MIPS_LO(a)   ((a) &0xffff)
 #define MIPS_PC16(a) ((a) >> 2)
 #define MIPS_PC26(a) (((a) &0x0fffffff) >> 2)
 
@@ -754,8 +754,8 @@ void ElfLinkerMipsBE::relocate1(const Relocation *rel, byte *location, upx_uint6
 
 void ElfLinkerMipsLE::relocate1(const Relocation *rel, byte *location, upx_uint64_t value,
                                 const char *type) {
-#define MIPS_HI(a) (((a) >> 16) + (((a) &0x8000) >> 15))
-#define MIPS_LO(a) ((a) &0xffff)
+#define MIPS_HI(a)   (((a) >> 16) + (((a) &0x8000) >> 15))
+#define MIPS_LO(a)   ((a) &0xffff)
 #define MIPS_PC16(a) ((a) >> 2)
 #define MIPS_PC26(a) (((a) &0x0fffffff) >> 2)
 

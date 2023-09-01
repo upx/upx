@@ -100,14 +100,14 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 // unchecked - just a no-op pointer wrapper, no extra functionality
 
 // types
-#define XSPAN_0(type) Ptr<type>
-#define XSPAN_P(type) Ptr<type>
-#define XSPAN_S(type) Ptr<type>
+#define XSPAN_0(type)                      Ptr<type>
+#define XSPAN_P(type)                      Ptr<type>
+#define XSPAN_S(type)                      Ptr<type>
 
 // create a value
-#define XSPAN_0_MAKE(type, first, ...) (XSPAN_0(type)((first)))
-#define XSPAN_P_MAKE(type, first, ...) (XSPAN_P(type)((first)))
-#define XSPAN_S_MAKE(type, first, ...) (XSPAN_S(type)((first)))
+#define XSPAN_0_MAKE(type, first, ...)     (XSPAN_0(type)((first)))
+#define XSPAN_P_MAKE(type, first, ...)     (XSPAN_P(type)((first)))
+#define XSPAN_S_MAKE(type, first, ...)     (XSPAN_S(type)((first)))
 
 // define a variable
 #define XSPAN_0_VAR(type, var, first, ...) XSPAN_0(type) var((first))
@@ -133,14 +133,14 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
 }
 
 // types
-#define XSPAN_0(type) type *
-#define XSPAN_P(type) type *
-#define XSPAN_S(type) type *
+#define XSPAN_0(type)                      type *
+#define XSPAN_P(type)                      type *
+#define XSPAN_S(type)                      type *
 
 // create a value
-#define XSPAN_0_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, (first)))
-#define XSPAN_P_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, (first)))
-#define XSPAN_S_MAKE(type, first, ...) (xspan_make_helper__((type *) nullptr, (first)))
+#define XSPAN_0_MAKE(type, first, ...)     (xspan_make_helper__((type *) nullptr, (first)))
+#define XSPAN_P_MAKE(type, first, ...)     (xspan_make_helper__((type *) nullptr, (first)))
+#define XSPAN_S_MAKE(type, first, ...)     (xspan_make_helper__((type *) nullptr, (first)))
 
 // define a variable
 #define XSPAN_0_VAR(type, var, first, ...) type *var = XSPAN_0_MAKE(type, (first))
@@ -155,17 +155,17 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
 
 #if 1
 // types
-#define SPAN_0 XSPAN_0
-#define SPAN_P XSPAN_P
-#define SPAN_S XSPAN_S
+#define SPAN_0      XSPAN_0
+#define SPAN_P      XSPAN_P
+#define SPAN_S      XSPAN_S
 // create a value
 #define SPAN_0_MAKE XSPAN_0_MAKE
 #define SPAN_P_MAKE XSPAN_P_MAKE
 #define SPAN_S_MAKE XSPAN_S_MAKE
 // define a variable
-#define SPAN_0_VAR XSPAN_0_VAR
-#define SPAN_P_VAR XSPAN_P_VAR
-#define SPAN_S_VAR XSPAN_S_VAR
+#define SPAN_0_VAR  XSPAN_0_VAR
+#define SPAN_P_VAR  XSPAN_P_VAR
+#define SPAN_S_VAR  XSPAN_S_VAR
 #endif
 
 /* vim:set ts=4 sw=4 et: */

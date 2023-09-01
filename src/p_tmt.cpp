@@ -87,7 +87,7 @@ void PackTmt::buildLoader(const Filter *ft) {
 **************************************************************************/
 
 int PackTmt::readFileHeader() {
-#define H(x) get_le16(h + 2 * (x))
+#define H(x)  get_le16(h + 2 * (x))
 #define H4(x) get_le32(h + (x))
     byte h[0x40];
     int ic;
