@@ -277,21 +277,70 @@ void upx_memswap(void *a, void *b, size_t n) {
     }
 }
 
+// somewhat better memswap(), optimized for our use cases in sort functions
+static void memswap_no_overlap(char *a, char *b, size_t n) {
+#if defined(__clang__) && __clang_major__ < 15 && 1
+    // avoid a clang ICE; sigh
+    upx_memswap(a, b, n);
+#else // clang bug
+    alignas(16) char tmpbuf[16];
+#define SWAP(x)                                                                                    \
+    ACC_BLOCK_BEGIN                                                                                \
+    upx_memcpy_inline(tmpbuf, a, x);                                                               \
+    upx_memcpy_inline(a, b, x);                                                                    \
+    upx_memcpy_inline(b, tmpbuf, x);                                                               \
+    a += x;                                                                                        \
+    b += x;                                                                                        \
+    ACC_BLOCK_END
+
+    for (; n >= 16; n -= 16)
+        SWAP(16);
+    if (n & 8)
+        SWAP(8);
+    if (n & 4)
+        SWAP(4);
+    if (n & 2)
+        SWAP(2);
+    if (n & 1)
+        SWAP(1);
+    UNUSED(a); // avoid pedantic warning about final assignment
+    UNUSED(b); // avoid pedantic warning about final assignment
+#undef SWAP
+#endif // clang bug
+}
+
+// simple Shell sort using Knuth's gap; NOT stable
+void upx_shellsort(void *array, size_t n, size_t element_size,
+                   int (*compare)(const void *, const void *)) {
+    mem_size_assert(element_size, n); // check size
+    size_t gap = 1;
+    while (gap * 3 <= n) // cannot overflow
+        gap = gap * 3 + 1;
+    for (; gap > 0; gap = (gap - 1) / 3) {
+        const size_t gap_bytes = element_size * gap;
+        char *g = (char *) array + gap_bytes; // g := &array[gap]
+        char *ii = g;
+        for (size_t i = gap; i < n; i += gap, ii += gap_bytes)
+            for (char *a = ii; a >= g && compare(a - gap_bytes, a) > 0; a -= gap_bytes)
+                memswap_no_overlap(a - gap_bytes, a, element_size);
+    }
+}
+
 // extremely simple (and beautiful) stable sort: Gnomesort
 // WARNING: O(n^2) and thus very inefficient for large n
 void upx_stable_sort(void *array, size_t n, size_t element_size,
                      int (*compare)(const void *, const void *)) {
     for (size_t i = 1; i < n; i++) {
-        char *a = (char *) array + element_size * i;        // a := &array[i]
-        if (i != 0 && compare(a - element_size, a) > 0) {   // if a[-1] > a[0] then
-            upx_memswap(a - element_size, a, element_size); //   swap elements a[-1] <=> a[0]
-            i -= 2;                                         //   and decrease i
+        char *a = (char *) array + element_size * i;               // a := &array[i]
+        if (i != 0 && compare(a - element_size, a) > 0) {          // if a[-1] > a[0] then
+            memswap_no_overlap(a - element_size, a, element_size); //   swap elements a[-1] <=> a[0]
+            i -= 2;                                                //   and decrease i
         }
     }
 }
 
 #if !defined(DOCTEST_CONFIG_DISABLE) && DEBUG
-TEST_CASE("upx_stable_sort") {
+TEST_CASE("basic upx_stable_sort") {
     {
         unsigned a[] = {0, 1};
         upx_stable_sort(a, 2, sizeof(*a), ne32_compare);
@@ -314,18 +363,21 @@ TEST_CASE("upx_stable_sort") {
 
 #if __cplusplus >= 202002L // use C++20 std::next_permutation() to test all permutations
 namespace {
+typedef int (*compare_func)(const void *, const void *);
+typedef void (*sort_func)(void *array, size_t n, size_t element_size, compare_func compare);
+template <class ElementType, compare_func CompareFunc>
 struct TestSortAllPermutations {
-    static upx_uint64_t test(size_t n) {
+    static noinline upx_uint64_t test(sort_func sort, size_t n) {
         constexpr size_t N = 16;
         assert(n > 0 && n <= N);
-        LE16 perm[N];
+        ElementType perm[N];
         for (size_t i = 0; i < n; i++)
             perm[i] = 255 + i;
         upx_uint64_t num_perms = 0;
         do {
-            LE16 a[N];
+            ElementType a[N];
             memcpy(a, perm, sizeof(*a) * n);
-            upx_stable_sort(a, n, sizeof(*a), le16_compare);
+            sort(a, n, sizeof(*a), CompareFunc);
             for (size_t i = 0; i < n; i++)
                 assert((a[i] == 255 + i));
             num_perms += 1;
@@ -334,14 +386,33 @@ struct TestSortAllPermutations {
     }
 };
 } // namespace
+TEST_CASE("upx_shellsort") {
+    // typedef TestSortAllPermutations<BE64, be64_compare> TestSort;
+    typedef TestSortAllPermutations<LE16, le16_compare> TestSort;
+    CHECK(TestSort::test(upx_shellsort, 1) == 1);
+    CHECK(TestSort::test(upx_shellsort, 2) == 2);
+    CHECK(TestSort::test(upx_shellsort, 3) == 6);
+    CHECK(TestSort::test(upx_shellsort, 4) == 24);
+    CHECK(TestSort::test(upx_shellsort, 5) == 120);
+    // CHECK(TestSort::test(upx_shellsort, 6) == 720);
+    // CHECK(TestSort::test(upx_shellsort, 7) == 5040);
+    // CHECK(TestSort::test(upx_shellsort, 8) == 40320);
+    // CHECK(TestSort::test(upx_shellsort, 9) == 362880);
+    // CHECK(TestSort::test(upx_shellsort, 10) == 3628800);
+}
 TEST_CASE("upx_stable_sort") {
-    CHECK(TestSortAllPermutations::test(1) == 1);
-    CHECK(TestSortAllPermutations::test(2) == 2);
-    CHECK(TestSortAllPermutations::test(3) == 6);
-    CHECK(TestSortAllPermutations::test(4) == 24);
-    CHECK(TestSortAllPermutations::test(5) == 120);
-    // CHECK(TestSortAllPermutations::test(6) == 720);
-    // CHECK(TestSortAllPermutations::test(7) == 5040);
+    // typedef TestSortAllPermutations<BE64, be64_compare> TestSort;
+    typedef TestSortAllPermutations<LE16, le16_compare> TestSort;
+    CHECK(TestSort::test(upx_stable_sort, 1) == 1);
+    CHECK(TestSort::test(upx_stable_sort, 2) == 2);
+    CHECK(TestSort::test(upx_stable_sort, 3) == 6);
+    CHECK(TestSort::test(upx_stable_sort, 4) == 24);
+    CHECK(TestSort::test(upx_stable_sort, 5) == 120);
+    // CHECK(TestSort::test(upx_stable_sort, 6) == 720);
+    // CHECK(TestSort::test(upx_stable_sort, 7) == 5040);
+    // CHECK(TestSort::test(upx_stable_sort, 8) == 40320);
+    // CHECK(TestSort::test(upx_stable_sort, 9) == 362880);
+    // CHECK(TestSort::test(upx_stable_sort, 10) == 3628800);
 }
 #endif // C++20
 #endif // DEBUG

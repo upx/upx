@@ -93,6 +93,22 @@ build/extra/clang-static/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/clang-static/%: export CC  = clang -static
 build/extra/clang-static/%: export CXX = clang++ -static
 
+# force building with clang/clang++ C17/C++20
+build/extra/clang-std-cxx20/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/clang-std-cxx20/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/clang-std-cxx20/%: export CC  = clang -std=gnu17
+build/extra/clang-std-cxx20/%: export CXX = clang++ -std=gnu++20
+build/extra/clang-std-cxx20/%: export UPX_CONFIG_DISABLE_C_STANDARD=ON
+build/extra/clang-std-cxx20/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
+
+# force building with clang/clang++ C23/C++23
+build/extra/clang-std-cxx23/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/clang-std-cxx23/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/clang-std-cxx23/%: export CC  = clang -std=gnu2x
+build/extra/clang-std-cxx23/%: export CXX = clang++ -std=gnu++2b
+build/extra/clang-std-cxx23/%: export UPX_CONFIG_DISABLE_C_STANDARD=ON
+build/extra/clang-std-cxx23/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
+
 # force building with gcc/g++
 build/extra/gcc/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/gcc/release: PHONY; $(call run_config_and_build,$@,Release)
@@ -122,6 +138,22 @@ build/extra/gcc-static/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/gcc-static/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-static/%: export CC  = gcc -static
 build/extra/gcc-static/%: export CXX = g++ -static
+
+# force building with gcc/g++ C17/C++20
+build/extra/gcc-std-cxx20/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/gcc-std-cxx20/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/gcc-std-cxx20/%: export CC  = gcc -std=gnu17
+build/extra/gcc-std-cxx20/%: export CXX = g++ -std=gnu++20
+build/extra/gcc-std-cxx20/%: export UPX_CONFIG_DISABLE_C_STANDARD=ON
+build/extra/gcc-std-cxx20/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
+
+# force building with gcc/g++ C23/C++23
+build/extra/gcc-std-cxx23/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/gcc-std-cxx23/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/gcc-std-cxx23/%: export CC  = gcc -std=gnu2x
+build/extra/gcc-std-cxx23/%: export CXX = g++ -std=gnu++23
+build/extra/gcc-std-cxx23/%: export UPX_CONFIG_DISABLE_C_STANDARD=ON
+build/extra/gcc-std-cxx23/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
 
 # cross compiler: Linux glibc aarch64-linux-gnu (arm64)
 build/extra/cross-linux-gnu-aarch64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
