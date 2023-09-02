@@ -280,7 +280,7 @@ void upx_memswap(void *a, void *b, size_t n) {
 // somewhat better memswap(), optimized for our use cases in sort functions
 static void memswap_no_overlap(char *a, char *b, size_t n) {
 #if defined(__clang__) && __clang_major__ < 15 && 1
-    // avoid a clang ICE; sigh
+    // work around a clang ICE (Internal Compiler Error); sigh
     upx_memswap(a, b, n);
 #else // clang bug
     alignas(16) char tmpbuf[16];
@@ -301,35 +301,34 @@ static void memswap_no_overlap(char *a, char *b, size_t n) {
         SWAP(4);
     if (n & 2)
         SWAP(2);
-    if (n & 1)
-        SWAP(1);
-    UNUSED(a); // avoid pedantic warning about final assignment
-    UNUSED(b); // avoid pedantic warning about final assignment
+    if (n & 1) {
+        char tmp = *a;
+        *a = *b;
+        *b = tmp;
+    }
 #undef SWAP
 #endif // clang bug
 }
 
 // simple Shell sort using Knuth's gap; NOT stable
-void upx_shellsort(void *array, size_t n, size_t element_size,
-                   int (*compare)(const void *, const void *)) {
+void upx_shellsort(void *array, size_t n, size_t element_size, upx_compare_func_t compare) {
     mem_size_assert(element_size, n); // check size
-    size_t gap = 1;
-    while (gap * 3 <= n) // cannot overflow
+    size_t gap = 0;
+    while (gap * 3 + 1 < n) // cannot overflow
         gap = gap * 3 + 1;
     for (; gap > 0; gap = (gap - 1) / 3) {
         const size_t gap_bytes = element_size * gap;
-        char *g = (char *) array + gap_bytes; // g := &array[gap]
-        char *ii = g;
+        char *const gbase = (char *) array + gap_bytes; // gbase := &array[gap]
+        char *ii = gbase;
         for (size_t i = gap; i < n; i += gap, ii += gap_bytes)
-            for (char *a = ii; a >= g && compare(a - gap_bytes, a) > 0; a -= gap_bytes)
+            for (char *a = ii; a >= gbase && compare(a - gap_bytes, a) > 0; a -= gap_bytes)
                 memswap_no_overlap(a - gap_bytes, a, element_size);
     }
 }
 
 // extremely simple (and beautiful) stable sort: Gnomesort
 // WARNING: O(n^2) and thus very inefficient for large n
-void upx_stable_sort(void *array, size_t n, size_t element_size,
-                     int (*compare)(const void *, const void *)) {
+void upx_stable_sort(void *array, size_t n, size_t element_size, upx_compare_func_t compare) {
     for (size_t i = 1; i < n; i++) {
         char *a = (char *) array + element_size * i;               // a := &array[i]
         if (i != 0 && compare(a - element_size, a) > 0) {          // if a[-1] > a[0] then
@@ -363,11 +362,9 @@ TEST_CASE("basic upx_stable_sort") {
 
 #if __cplusplus >= 202002L // use C++20 std::next_permutation() to test all permutations
 namespace {
-typedef int (*compare_func)(const void *, const void *);
-typedef void (*sort_func)(void *array, size_t n, size_t element_size, compare_func compare);
-template <class ElementType, compare_func CompareFunc>
+template <class ElementType, upx_compare_func_t CompareFunc>
 struct TestSortAllPermutations {
-    static noinline upx_uint64_t test(sort_func sort, size_t n) {
+    static noinline upx_uint64_t test(upx_sort_func_t sort, size_t n) {
         constexpr size_t N = 16;
         assert(n > 0 && n <= N);
         ElementType perm[N];

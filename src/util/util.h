@@ -127,11 +127,12 @@ void *upx_calloc(size_t n, size_t element_size);
 
 void upx_memswap(void *a, void *b, size_t n);
 
-void upx_shellsort(void *array, size_t n, size_t element_size,
-                   int (*compare)(const void *, const void *));
+typedef int(__acc_cdecl_qsort *upx_compare_func_t)(const void *, const void *);
+typedef void (*upx_sort_func_t)(void *array, size_t n, size_t element_size, upx_compare_func_t);
 
-void upx_stable_sort(void *array, size_t n, size_t element_size,
-                     int (*compare)(const void *, const void *));
+void upx_shellsort(void *array, size_t n, size_t element_size, upx_compare_func_t compare);
+
+void upx_stable_sort(void *array, size_t n, size_t element_size, upx_compare_func_t compare);
 
 /*************************************************************************
 // misc. support functions

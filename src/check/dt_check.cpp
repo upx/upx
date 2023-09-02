@@ -626,8 +626,11 @@ TEST_CASE("libc snprintf") {
     CHECK_EQ(strcmp(buf, "-7.0.0.0.0.0.0.0.7.0xffffffffffffffff"), 0);
 }
 
+#if 0
 TEST_CASE("libc qsort") {
     // runtime check that libc qsort() never compares identical objects
+    // UPDATE: while only poor implementations of qsort() would actually do
+    //   this, it is probably allowed by the standard; so skip this test case
     struct Elem {
         upx_uint16_t id;
         upx_uint16_t value;
@@ -637,25 +640,29 @@ TEST_CASE("libc qsort") {
             assert_noexcept(a->id != b->id); // check not IDENTICAL
             return a->value < b->value ? -1 : (a->value == b->value ? 0 : 1);
         }
-        static bool qsort_check(Elem *e, size_t n) {
-            upx_uint32_t x = n + 5381;
+        static bool check_sort(upx_sort_func_t sort, Elem *e, size_t n) {
+            upx_uint32_t x = 5381 + n + ((upx_uintptr_t) e & 0xff);
             for (size_t i = 0; i < n; i++) {
                 e[i].id = (upx_uint16_t) i;
-                x = x * 33 + (i & 255);
+                x = x * 33 + 1 + (i & 255);
                 e[i].value = (upx_uint16_t) x;
             }
-            qsort(e, n, sizeof(*e), Elem::compare);
-            bool sorted_ok = true;
+            sort(e, n, sizeof(*e), Elem::compare);
             for (size_t i = 1; i < n; i++)
-                sorted_ok &= e[i - 1].value <= e[i].value;
-            return sorted_ok;
+                if very_unlikely (e[i - 1].value > e[i].value)
+                    return false;
+            return true;
         }
     };
 
     constexpr size_t N = 4096;
     Elem e[N];
-    for (size_t n = 1; n <= N; n <<= 1)
-        CHECK(Elem::qsort_check(e, n));
+    for (size_t n = 0; n <= N; n = 2 * n + 1) {
+        CHECK(Elem::check_sort(qsort, e, n));
+        // CHECK(Elem::check_sort(upx_shellsort, e, n));
+        // CHECK(Elem::check_sort(upx_stable_sort, e, n));
+    }
 }
+#endif
 
 /* vim:set ts=4 sw=4 et: */

@@ -700,12 +700,13 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
     static int __acc_cdecl_qsort compare(const void *aa, const void *bb) {
         const Section *a = *(const Section *const *) aa;
         const Section *b = *(const Section *const *) bb;
+        if (a->sort_id == b->sort_id) // identical object, poor qsort() implementation
+            return 0;
         int rc = strcmp(a->name, b->name);
         if (rc != 0)
             return rc;
         // What could remain?
         // make sort order deterministic
-        assert_noexcept(a->sort_id != b->sort_id);
         return a->sort_id < b->sort_id ? -1 : 1;
     }
 
@@ -878,6 +879,8 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         static int __acc_cdecl_qsort compare(const void *aa, const void *bb) {
             const udll *a = *(const udll *const *) aa;
             const udll *b = *(const udll *const *) bb;
+            if (a->original_position == b->original_position) // identical object, poor qsort()
+                return 0;
             if (a->isk32 != b->isk32)
                 return a->isk32 ? -1 : 1;
             if ((*a->lookupt != 0) != (*b->lookupt != 0))
@@ -898,7 +901,6 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
                 return (a->shname != nullptr) ? -1 : 1;
             // What could remain?
             // make sort order deterministic
-            assert_noexcept(a->original_position != b->original_position);
             return a->original_position < b->original_position ? -1 : 1;
         }
     };
