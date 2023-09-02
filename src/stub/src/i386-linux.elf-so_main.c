@@ -297,6 +297,9 @@ make_hatch_i386(
 }
 #elif defined(__arm__)  /*}{*/
 extern unsigned get_sys_munmap(void);
+extern int upxfd_create(void);  // early 32-bit Android lacks memfd_create
+extern size_t lseek(int fd, size_t offset, int whence);
+#define SEEK_SET 0
 
 static void *
 make_hatch_arm32(
@@ -323,7 +326,7 @@ make_hatch_arm32(
             __clear_cache(&hatch[0], &hatch[2]);
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
+            int mfd = upxfd_create();  // the directory entry
             write(mfd, &code, 2*4);
             hatch = Pmap(0, 2*4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
@@ -551,7 +554,11 @@ upx_so_main(  // returns &escape_hatch
     DPRINTF("base=%%p\\n", base);
 
     if (phdr->p_flags & PF_X) {
+#if defined(__arm__)  //{
+        int mfd = upxfd_create();
+#else  //}{
         int mfd = memfd_create(addr_string("upx"), 0);
+#endif  //}
         unsigned mfd_len = 0ul - page_mask;
         Pwrite(mfd, elf_tmp, binfo->sz_unc);  // de-compressed Elf_Ehdr and Elf_Phdrs
         Pwrite(mfd, binfo->sz_unc + va_load, mfd_len - binfo->sz_unc);  // rest of 1st page
@@ -602,8 +609,21 @@ upx_so_main(  // returns &escape_hatch
             // Cannot set PROT_EXEC except via mmap() into a region (Linux "vma")
             // that has never had PROT_WRITE.  So use a Linux-only "memory file"
             // to hold the contents.
+#if defined(__arm__)  //{ Emulate: Android "ABI" has inconsistent __NR_ftruncate.
+            mfd = upxfd_create();  // anonymous file in /dev/shm with 0700 permission
+            size_t goal = x1.size;
+            while (0 < goal) { // /dev/shm limits to 8KiB at a time!!
+                ssize_t len = Pwrite(mfd, x1.buf, goal);
+                if (len < 0) {
+                    break;  // give up: will SIGSEGV or SIGBUS later
+                }
+                goal -= len;
+            }
+            lseek(mfd, 0, SEEK_SET);
+#else  //}{
             mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             ftruncate(mfd, x1.size);  // Allocate the pages in the file.
+#endif  //}
             Pwrite(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
             Punmap(x1.buf, x1.size);
             mfd_addr = Pmap(x1.buf, x1.size, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0);

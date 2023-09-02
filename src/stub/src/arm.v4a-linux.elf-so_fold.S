@@ -127,6 +127,7 @@ __NR_write =  4 + __NR_SYSCALL_BASE
 __NR_open  =  5 + __NR_SYSCALL_BASE
 __NR_close =  6 + __NR_SYSCALL_BASE
 __NR_unlink= 10 + __NR_SYSCALL_BASE
+__NR_lseek=  19 + __NR_SYSCALL_BASE
 __NR_getpid= 20 + __NR_SYSCALL_BASE
 __NR_brk   = 45 + __NR_SYSCALL_BASE
 __NR_readlink=  85 + __NR_SYSCALL_BASE  // 0x55
@@ -155,9 +156,11 @@ read:
         do_sys __NR_read; ret
 
 Pwrite: .globl Pwrite
-        //int3
 write: .globl write
         do_sys __NR_write; ret
+
+lseek: .globl lseek
+        do_sys __NR_lseek; ret
 
         .globl open
 open:
@@ -188,6 +191,21 @@ ftruncate: .globl ftruncate
 
 memfd_create: .globl memfd_create
         do_sys7t2 __NR_memfd_create; ret
+
+O_RDWR= 2
+O_DIRECTORY= 040000
+O_TMPFILE= 020000000
+        .balign 4
+table3:
+        .word O_RDWR | O_DIRECTORY | O_TMPFILE
+        .word 0700
+        .asciz "/dev/shm"; .balign 4
+
+upxfd_create: .globl upxfd_create
+        adr r0,table3
+        ldmia r0!,{r1,r2}
+        do_sys7t2 __NR_open
+        ret
 
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect

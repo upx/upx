@@ -67,6 +67,7 @@ PAGE_SHIFT= 12
 PAGE_MASK=  (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
 
+__NR_open=       5 + __NR_SYSCALL_BASE
 __NR_close=      6 + __NR_SYSCALL_BASE
 __NR_exit =      1 + __NR_SYSCALL_BASE
 __NR_memfd_create= 0x181 + __NR_SYSCALL_BASE  // 385
@@ -168,16 +169,25 @@ L70_ret:
     .unreq foldi  // busy: r5
         bl f_decompress
 
-        mov arg2,#0
-        adr arg1,str_upx
     mfd     .req r6  // busy: r6,r5
-        do_sys7t2 __NR_memfd_create; mov mfd,r0
+O_RDWR= 2
+O_DIRECTORY= 040000
+O_TMPFILE= 020000000
+
+        bl L110
+        .word O_RDWR | O_DIRECTORY | O_TMPFILE
+        .word 0700
+        .asciz "/dev/shm"; .balign 4
+L110:
+        mov r0,lr
+        ldmia r0!,{r1,r2}
+        do_sys7t2 __NR_open; mov mfd,r0
 
         mov arg2,sp
         ldr arg3,[old_sp,#F_LENU]
         do_sys __NR_write
         mov sp,old_sp  // de-alloca
-    .unreq old_sp  // busy: r6
+    .unreq old_sp  // busy: r6(mfd)
 
         mov arg6,#0  // beginning of file
         mov arg5,mfd
@@ -195,8 +205,8 @@ L70_ret:
         add r1,sp,#F_ARGC
         ldr pc,[sp, #F_ADRU]  // invoke folded code
 
-str_upx:
-        .asciz "upx"
+devshm:
+        .asciz "/dev/shm"; .balign 4
 
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
