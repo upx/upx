@@ -34,6 +34,7 @@
 #include "file.h"
 #include "packmast.h"
 #include "ui.h"
+#include "util/membuffer.h"
 
 #if (ACC_OS_DOS32) && defined(__DJGPP__)
 #define USE_FTIME 1
@@ -50,16 +51,94 @@
 #define SH_DENYWR (-1)
 #endif
 
+/*************************************************************************
+// util
+**************************************************************************/
+
 // ignore errors in some cases and silence __attribute__((__warn_unused_result__))
 #define IGNORE_ERROR(var) ACC_UNUSED(var)
+
+enum WronlyOpenMode { WOM_MUST_EXIST_TRUNCATE, WOM_MUST_CREATE, WOM_CREATE_OR_TRUNCATE };
+
+static constexpr int get_wronly_open_flags(WronlyOpenMode mode) noexcept {
+    constexpr int flags = O_WRONLY | O_BINARY;
+    if (mode == WOM_MUST_EXIST_TRUNCATE)
+        return flags | O_TRUNC; // will cause an error if file does not exist
+    if (mode == WOM_MUST_CREATE)
+        return flags | O_CREAT | O_EXCL; // will cause an error if file already exists
+    // create if not exists, otherwise truncate
+    return flags | O_CREAT | O_TRUNC;
+}
+
+static void copy_file_contents(const char *iname, const char *oname, WronlyOpenMode mode)
+    may_throw {
+    InputFile fi;
+    fi.sopen(iname, O_RDONLY | O_BINARY, SH_DENYWR);
+    fi.seek(0, SEEK_SET);
+    int flags = get_wronly_open_flags(mode);
+    int shmode = SH_DENYWR;
+    int omode = 0600; // affected by umask; ignored unless O_CREAT
+    OutputFile fo;
+    fo.sopen(oname, flags, shmode, omode);
+    fo.seek(0, SEEK_SET);
+    MemBuffer buf(256 * 1024 * 1024);
+    for (;;) {
+        size_t bytes = fi.read(buf, buf.getSize());
+        if (bytes == 0)
+            break;
+        fo.write(buf, bytes);
+    }
+    fi.closex();
+    fo.closex();
+}
+
+static void copy_file_attributes(const struct stat *st, const char *oname, bool preserve_mode,
+                                 bool preserve_ownership, bool preserve_timestamp) noexcept {
+#if USE_UTIME
+    // copy time stamp
+    if (preserve_timestamp) {
+        struct utimbuf u;
+        u.actime = st->st_atime;
+        u.modtime = st->st_mtime;
+        int r = utime(oname, &u);
+        IGNORE_ERROR(r);
+    }
+#endif
+#if HAVE_CHOWN
+    // copy the group ownership
+    if (preserve_ownership) {
+        int r = chown(oname, -1, st->st_gid);
+        IGNORE_ERROR(r);
+    }
+#endif
+#if HAVE_CHMOD
+    // copy permissions
+    if (preserve_mode) {
+        int r = chmod(oname, st->st_mode);
+        IGNORE_ERROR(r);
+    }
+#endif
+#if HAVE_CHOWN
+    // copy the user ownership
+    if (preserve_ownership) {
+        int r = chown(oname, st->st_uid, -1);
+        IGNORE_ERROR(r);
+    }
+#endif
+    // maybe unused
+    UNUSED(oname);
+    UNUSED(preserve_mode);
+    UNUSED(preserve_ownership);
+    UNUSED(preserve_timestamp);
+}
 
 /*************************************************************************
 // process one file
 **************************************************************************/
 
-void do_one_file(const char *iname, char *oname) {
+void do_one_file(const char *const iname, char *const oname) may_throw {
     int r;
-    struct stat st;
+    struct stat st; // stat of iname
     mem_clear(&st);
 #if HAVE_LSTAT
     r = lstat(iname, &st);
@@ -99,6 +178,7 @@ void do_one_file(const char *iname, char *oname) {
             throwIOException("file is write protected -- skipped");
     }
 
+    // open input file
     InputFile fi;
     fi.sopen(iname, O_RDONLY | O_BINARY, SH_DENYWR);
 
@@ -113,6 +193,7 @@ void do_one_file(const char *iname, char *oname) {
 
     // open output file
     OutputFile fo;
+    bool copy_timestamp_only = false;
     if (opt->cmd == CMD_COMPRESS || opt->cmd == CMD_DECOMPRESS) {
         if (opt->to_stdout) {
             if (!fo.openStdout(1, opt->force ? true : false))
@@ -121,33 +202,30 @@ void do_one_file(const char *iname, char *oname) {
             char tname[ACC_FN_PATH_MAX + 1];
             if (opt->output_name) {
                 strcpy(tname, opt->output_name);
-                if (opt->force_overwrite || opt->force >= 2) {
-#if HAVE_CHMOD
-                    r = chmod(tname, 0777);
-                    IGNORE_ERROR(r);
-#endif
-                    r = unlink(tname);
-                    IGNORE_ERROR(r);
-                }
+                if ((opt->force_overwrite || opt->force >= 2) && !opt->preserve_link)
+                    FileBase::unlink(tname, false);
             } else {
                 if (!maketempname(tname, sizeof(tname), iname, ".upx"))
                     throwIOException("could not create a temporary file name");
             }
-            int flags = O_CREAT | O_WRONLY | O_BINARY;
-            if (opt->force_overwrite || opt->force)
-                flags |= O_TRUNC;
-            else
-                flags |= O_EXCL;
+            int flags = get_wronly_open_flags(WOM_MUST_CREATE);
+            if (opt->output_name && opt->preserve_link) {
+                flags = get_wronly_open_flags(WOM_CREATE_OR_TRUNCATE);
+                if (file_exists(opt->output_name)) {
+                    flags = get_wronly_open_flags(WOM_MUST_EXIST_TRUNCATE);
+                    copy_timestamp_only = true;
+                }
+            } else if (opt->force_overwrite || opt->force)
+                flags = get_wronly_open_flags(WOM_CREATE_OR_TRUNCATE);
             int shmode = SH_DENYWR;
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
+            // TODO later: check current mintlib if this hack is still needed
             flags |= O_TRUNC;
             shmode = O_DENYRW;
 #endif
             // cannot rely on open() because of umask
             // int omode = st.st_mode | 0600;
-            int omode = 0600;
-            if (!opt->preserve_mode)
-                omode = 0666;
+            int omode = opt->preserve_mode ? 0600 : 0666; // affected by umask; only for O_CREAT
             fo.sopen(tname, flags, shmode, omode);
             // open succeeded - now set oname[]
             strcpy(oname, tname);
@@ -187,59 +265,45 @@ void do_one_file(const char *iname, char *oname) {
     fo.closex();
     fi.closex();
 
-    // rename or delete files
+    // rename or copy files
+    // NOTE: only use "preserve_link" if you really need it, e.g. it can fail
+    //   with ETXTBSY and other unexpected errors; renaming files is much safer
     if (oname[0] && !opt->output_name) {
+        // both iname and oname do exist; rename oname to iname
         if (opt->backup) {
             char bakname[ACC_FN_PATH_MAX + 1];
             if (!makebakname(bakname, sizeof(bakname), iname))
                 throwIOException("could not create a backup file name");
-            FileBase::rename(iname, bakname);
+            if (opt->preserve_link) {
+                copy_file_contents(iname, bakname, WOM_MUST_CREATE);
+                copy_file_attributes(&st, bakname, true, true, true);
+                copy_file_contents(oname, iname, WOM_MUST_EXIST_TRUNCATE);
+                FileBase::unlink(oname);
+                copy_timestamp_only = true;
+            } else {
+                FileBase::rename(iname, bakname);
+                FileBase::rename(oname, iname);
+            }
+        } else if (opt->preserve_link) {
+            copy_file_contents(oname, iname, WOM_MUST_EXIST_TRUNCATE);
+            FileBase::unlink(oname);
+            copy_timestamp_only = true;
         } else {
-#if HAVE_CHMOD
-            r = chmod(iname, 0777);
-            IGNORE_ERROR(r);
-#endif
             FileBase::unlink(iname);
+            FileBase::rename(oname, iname);
         }
-        FileBase::rename(oname, iname);
+        // now iname is the new packed/unpacked file and oname does not exist any longer
     }
 
     // copy file attributes
     if (oname[0]) {
         oname[0] = 0; // done with oname
         const char *name = opt->output_name ? opt->output_name : iname;
-        UNUSED(name);
-#if USE_UTIME
-        // copy time stamp
-        if (opt->preserve_timestamp) {
-            struct utimbuf u;
-            u.actime = st.st_atime;
-            u.modtime = st.st_mtime;
-            r = utime(name, &u);
-            IGNORE_ERROR(r);
-        }
-#endif
-#if HAVE_CHOWN
-        // copy the group ownership
-        if (opt->preserve_ownership) {
-            r = chown(name, -1, st.st_gid);
-            IGNORE_ERROR(r);
-        }
-#endif
-#if HAVE_CHMOD
-        // copy permissions
-        if (opt->preserve_mode) {
-            r = chmod(name, st.st_mode);
-            IGNORE_ERROR(r);
-        }
-#endif
-#if HAVE_CHOWN
-        // copy the user ownership
-        if (opt->preserve_ownership) {
-            r = chown(name, st.st_uid, -1);
-            IGNORE_ERROR(r);
-        }
-#endif
+        if (copy_timestamp_only)
+            copy_file_attributes(&st, name, false, false, opt->preserve_timestamp);
+        else
+            copy_file_attributes(&st, name, opt->preserve_mode, opt->preserve_ownership,
+                                 opt->preserve_timestamp);
     }
 
     UiPacker::uiConfirmUpdate();
@@ -251,17 +315,12 @@ void do_one_file(const char *iname, char *oname) {
 
 static void unlink_ofile(char *oname) noexcept {
     if (oname && oname[0]) {
-#if HAVE_CHMOD
-        int r;
-        r = chmod(oname, 0777);
-        IGNORE_ERROR(r);
-#endif
-        if (unlink(oname) == 0)
-            oname[0] = 0; // done with oname
+        FileBase::unlink(oname, false);
+        oname[0] = 0; // done with oname
     }
 }
 
-int do_files(int i, int argc, char *argv[]) {
+int do_files(int i, int argc, char *argv[]) may_throw {
     upx_compiler_sanity_check();
     if (opt->verbose >= 1) {
         show_header();
@@ -271,7 +330,7 @@ int do_files(int i, int argc, char *argv[]) {
     for (; i < argc; i++) {
         infoHeader();
 
-        const char *iname = argv[i];
+        const char *const iname = argv[i];
         char oname[ACC_FN_PATH_MAX + 1];
         oname[0] = 0;
 

@@ -160,7 +160,7 @@ static void check_not_both(bool e1, bool e2, const char *c1, const char *c2) {
     }
 }
 
-static void check_options(int i, int argc) {
+static void check_and_update_options(int i, int argc) {
     assert(i <= argc);
 
     if (opt->cmd != CMD_COMPRESS) {
@@ -179,6 +179,7 @@ static void check_options(int i, int argc) {
         opt->overlay = opt->COPY_OVERLAY;
 
     check_not_both(opt->exact, opt->overlay == opt->STRIP_OVERLAY, "--exact", "--overlay=strip");
+    check_not_both(opt->force_overwrite, opt->preserve_link, "--force-overwrite", "--link");
 
     // set default backup option
     if (opt->backup < 0)
@@ -198,6 +199,13 @@ static void check_options(int i, int argc) {
             e_usage();
         }
     }
+
+#if defined(__unix__) && !defined(__MSYS2__)
+#else
+    // preserve_link is currently silently ignored on non-Unix platforms
+    // (we may revisit this decision later if there is some actual use-case)
+    opt->preserve_link = false;
+#endif
 }
 
 /*************************************************************************
@@ -521,6 +529,14 @@ static int do_option(int optc, const char *arg) {
     case 519:
         opt->no_env = true;
         break;
+    case 530:
+        // NOTE: only use "preserve_link" if you really need it, e.g. it can fail
+        //   with ETXTBSY and other unexpected errors; renaming files is much safer
+        opt->preserve_link = true;
+        break;
+    case 531:
+        opt->preserve_link = false;
+        break;
     case 526:
         opt->preserve_mode = false;
         break;
@@ -797,8 +813,10 @@ int main_get_options(int argc, char **argv) {
         {"force", 0, N, 'f'},              // force overwrite of output files
         {"force-compress", 0, N, 'f'},     //   and compression of suspicious files
         {"force-overwrite", 0x90, N, 529}, // force overwrite of output files
+        {"link", 0x90, N, 530},            // preserve hard link
         {"info", 0, N, 'i'},               // info mode
         {"no-env", 0x10, N, 519},          // no environment var
+        {"no-link", 0x90, N, 531},         // do not preserve hard link [default]
         {"no-mode", 0x10, N, 526},         // do not preserve mode (permissions)
         {"no-owner", 0x10, N, 527},        // do not preserve ownership
         {"no-progress", 0, N, 516},        // no progress bar
@@ -1147,7 +1165,7 @@ static void first_options(int argc, char **argv) {
 // main entry point
 **************************************************************************/
 
-int upx_main(int argc, char *argv[]) {
+int upx_main(int argc, char *argv[]) may_throw {
     int i;
     static char default_argv0[] = "upx";
     assert(argc >= 1); // sanity check
@@ -1251,7 +1269,7 @@ int upx_main(int argc, char *argv[]) {
     if (argc == 1)
         e_help();
     set_term(stderr);
-    check_options(i, argc);
+    check_and_update_options(i, argc);
     int num_files = argc - i;
     if (num_files < 1) {
         if (opt->verbose >= 2)

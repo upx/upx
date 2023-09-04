@@ -33,6 +33,7 @@
 **************************************************************************/
 
 /*static*/ void FileBase::chmod(const char *name, int mode) {
+    assert(name != nullptr && name[0] != 0);
 #if HAVE_CHMOD
     if (::chmod(name, mode) != 0)
         throwIOException(name, errno);
@@ -51,9 +52,16 @@
         throwIOException("rename error", errno);
 }
 
-/*static*/ void FileBase::unlink(const char *name) {
-    if (::unlink(name) != 0)
+/*static*/ bool FileBase::unlink(const char *name, bool check) {
+    assert(name != nullptr && name[0] != 0);
+    bool success = ::unlink(name) == 0;
+#if HAVE_CHMOD
+    if (!success)
+        success = (::chmod(name, 0666) == 0 && ::unlink(name) == 0);
+#endif
+    if (check && !success)
         throwIOException(name, errno);
+    return success;
 }
 
 /*************************************************************************
@@ -122,14 +130,14 @@ upx_off_t FileBase::seek(upx_off_t off, int whence) {
         if (off < 0)
             throwIOException("bad seek 2");
         off += _offset;
-    }
-    if (whence == SEEK_END) {
+    } else if (whence == SEEK_END) {
         if (off > 0)
             throwIOException("bad seek 3");
         off += _offset + _length;
         whence = SEEK_SET;
-    }
-    // SEEK_CUR falls through to here
+    } else if (whence == SEEK_CUR) {
+    } else
+        throwInternalError("bad seek: whence");
     upx_off_t l = ::lseek(_fd, off, whence);
     if (l < 0)
         throwIOException("seek error", errno);

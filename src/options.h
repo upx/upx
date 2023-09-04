@@ -81,6 +81,7 @@ struct Options final {
     bool no_env;
     bool no_progress;
     const char *output_name;
+    bool preserve_link;
     bool preserve_mode;
     bool preserve_ownership;
     bool preserve_timestamp;

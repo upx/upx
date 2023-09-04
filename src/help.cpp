@@ -185,7 +185,6 @@ void show_help(int verbose) {
     con_fprintf(f,
                 "  -q     be quiet                          -v    be verbose\n"
                 "  -oFILE write output to 'FILE'\n"
-                //"  -f     force overwrite of output files and compression of suspicious files\n"
                 "  -f     force compression of suspicious files\n"
                 "%s%s"
                 , (verbose == 0) ? "  -k     keep backup files\n" : ""
@@ -220,6 +219,19 @@ void show_help(int verbose) {
                     "  --overlay=copy      copy any extra data attached to the file [default]\n"
                     "  --overlay=strip     strip any extra data attached to the file [DANGEROUS]\n"
                     "  --overlay=skip      don't compress a file with an overlay\n"
+                    "\n");
+        fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "File system options:\n");
+        fg = con_fg(f, fg);
+        con_fprintf(f,
+                    "  --force-overwrite   force overwrite of output files\n"
+#if defined(__unix__) && !defined(__MSYS2__)
+                    "  --link              preserve hard links (Unix only) [USE WITH CARE]\n"
+                    "  --no-link           do not preserve hard links but rename files [default]\n"
+#endif
+                    "  --no-mode           do not preserve file mode (aka permissions)\n"
+                    "  --no-owner          do not preserve file ownership\n"
+                    "  --no-time           do not preserve file timestamp\n"
                     "\n");
         fg = con_fg(f, FG_YELLOW);
         con_fprintf(f, "Options for djgpp2/coff:\n");
