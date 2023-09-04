@@ -1550,7 +1550,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     }
 
     // Put LC_SEGMENT together at the beginning
-    qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
+    upx_qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
     n_segment = 0;
     for (unsigned j= 0; j < ncmds; ++j) {
         n_segment += (lc_seg==msegcmd[j].cmd);
@@ -2025,7 +2025,7 @@ tribool PackMachBase<T>::canPack()
     }
 
     // Put LC_SEGMENT together at the beginning
-    qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
+    upx_qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
 
     if (lc_seg==msegcmd[0].cmd && 0==msegcmd[0].vmaddr
     &&  !strcmp("__PAGEZERO", msegcmd[0].segname)) {

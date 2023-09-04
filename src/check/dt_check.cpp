@@ -647,20 +647,26 @@ TEST_CASE("libc qsort") {
                 x = x * 33 + 1 + (i & 255);
                 e[i].value = (upx_uint16_t) x;
             }
-            sort(e, n, sizeof(*e), Elem::compare);
+            sort(e, n, sizeof(Elem), Elem::compare);
             for (size_t i = 1; i < n; i++)
                 if very_unlikely (e[i - 1].value > e[i].value)
                     return false;
             return true;
         }
     };
-
     constexpr size_t N = 4096;
     Elem e[N];
     for (size_t n = 0; n <= N; n = 2 * n + 1) {
         CHECK(Elem::check_sort(qsort, e, n));
-        // CHECK(Elem::check_sort(upx_shellsort, e, n));
-        // CHECK(Elem::check_sort(upx_stable_sort, e, n));
+        CHECK(Elem::check_sort(upx_gnomesort, e, n));
+        CHECK(Elem::check_sort(upx_shellsort_memswap, e, n));
+        CHECK(Elem::check_sort(upx_shellsort_memcpy, e, n));
+#if UPX_QSORT_IS_STABLE_SORT
+        upx_sort_func_t wrap_stable_sort = [](void *aa, size_t nn, size_t, upx_compare_func_t cc) {
+            upx_std_stable_sort<sizeof(Elem)>(aa, nn, cc);
+        };
+        CHECK(Elem::check_sort(wrap_stable_sort, e, n));
+#endif
     }
 }
 #endif

@@ -129,7 +129,7 @@ static void list_all_packers(FILE *f, int verbose) {
     PackerNames pn;
     pn.o = &o;
     (void) PackMaster::visitAllPackers(PackerNames::visit, nullptr, &o, &pn);
-    qsort(pn.names, pn.names_count, sizeof(PackerNames::Entry), PackerNames::cmp_fname);
+    upx_qsort(pn.names, pn.names_count, sizeof(PackerNames::Entry), PackerNames::cmp_fname);
     size_t pos = 0;
     for (size_t i = 0; i < pn.names_count; ++i) {
         const char *fn = pn.names[i].fname;

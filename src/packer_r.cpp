@@ -50,7 +50,7 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
         throwCantPackExact();
     if (relocnum == 0)
         return 0;
-    qsort(raw_bytes(relocs, 4 * relocnum), relocnum, 4, le32_compare);
+    upx_qsort(raw_bytes(relocs, 4 * relocnum), relocnum, 4, le32_compare);
 
     unsigned pc = (unsigned) -4;
     for (unsigned i = 0; i < relocnum; i++) {

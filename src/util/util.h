@@ -130,9 +130,22 @@ void upx_memswap(void *a, void *b, size_t n);
 typedef int(__acc_cdecl_qsort *upx_compare_func_t)(const void *, const void *);
 typedef void (*upx_sort_func_t)(void *array, size_t n, size_t element_size, upx_compare_func_t);
 
-void upx_shellsort(void *array, size_t n, size_t element_size, upx_compare_func_t compare);
+void upx_gnomesort(void *array, size_t n, size_t element_size, upx_compare_func_t compare);
+void upx_shellsort_memswap(void *array, size_t n, size_t element_size, upx_compare_func_t compare);
+void upx_shellsort_memcpy(void *array, size_t n, size_t element_size, upx_compare_func_t compare);
 
-void upx_stable_sort(void *array, size_t n, size_t element_size, upx_compare_func_t compare);
+// this wraps std::stable_sort()
+template <size_t ElementSize>
+void upx_std_stable_sort(void *array, size_t n, upx_compare_func_t compare);
+
+#if 1
+// use libc qsort()
+#define upx_qsort qsort
+#else
+// use std::stable_sort()
+#define upx_qsort(a, b, c, d)    upx_std_stable_sort<(c)>(a, b, d)
+#define UPX_QSORT_IS_STABLE_SORT 1
+#endif
 
 /*************************************************************************
 // misc. support functions

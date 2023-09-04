@@ -97,10 +97,16 @@ inline constexpr bool upx_is_integral_v = upx_is_integral<T>::value;
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
 // horrible hack for broken compiler / ABI
 #define upx_fake_alignas_1      __attribute__((__aligned__(1),__packed__))
+#define upx_fake_alignas_4      __attribute__((__aligned__(2)))
 #define upx_fake_alignas_16     __attribute__((__aligned__(2))) // object file maximum 2 ???
 #define upx_fake_alignas__(x)   upx_fake_alignas_ ## x
 #define alignas(x)              upx_fake_alignas__(x)
+#define upx_alignas_max         upx_fake_alignas_4
 #endif
+#ifndef upx_alignas_max
+#define upx_alignas_max         alignas(std::max_align_t)
+#endif
+
 
 /*************************************************************************
 // core

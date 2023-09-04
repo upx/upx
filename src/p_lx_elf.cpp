@@ -2022,7 +2022,7 @@ PackLinuxElf32::sort_DT32_offsets(Elf32_Dyn const *const dynp0)
         n_off += !!dt_offsets[n_off];
     }
     dt_offsets[n_off++] = file_size;  // sentinel
-    qsort(dt_offsets, n_off, sizeof(dt_offsets[0]), qcmp_unsigned);
+    upx_qsort(dt_offsets, n_off, sizeof(dt_offsets[0]), qcmp_unsigned);
 }
 
 unsigned PackLinuxElf32::find_dt_ndx(unsigned rva)
@@ -7878,7 +7878,7 @@ PackLinuxElf64::sort_DT64_offsets(Elf64_Dyn const *const dynp0)
         n_off += !!dt_offsets[n_off];
     }
     dt_offsets[n_off++] = file_size;  // sentinel
-    qsort(dt_offsets, n_off, sizeof(dt_offsets[0]), qcmp_unsigned);
+    upx_qsort(dt_offsets, n_off, sizeof(dt_offsets[0]), qcmp_unsigned);
 }
 
 unsigned PackLinuxElf64::find_dt_ndx(u64_t rva)

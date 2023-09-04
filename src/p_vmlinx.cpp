@@ -205,7 +205,7 @@ tribool PackVmlinuxBase<T>::canPack()
     fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
 
     // Put PT_LOAD together at the beginning, ascending by .p_paddr.
-    qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr);
+    upx_qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr);
 
     // Find convex hull of physical addresses, and count the PT_LOAD.
     // Ignore ".bss": .p_filesz < .p_memsz

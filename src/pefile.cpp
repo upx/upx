@@ -254,7 +254,7 @@ void PeFile::Interval::add(const Interval *iv) {
 void PeFile::Interval::flatten() {
     if (!ivnum)
         return;
-    qsort(ivarr, ivnum, sizeof(interval), Interval::compare);
+    upx_qsort(ivarr, ivnum, sizeof(interval), Interval::compare);
     for (unsigned ic = 0; ic < ivnum - 1; ic++) {
         unsigned jc;
         for (jc = ic + 1; jc < ivnum && ivarr[ic].start + ivarr[ic].len >= ivarr[jc].start; jc++)
@@ -342,7 +342,7 @@ void PeFile::Reloc::add(unsigned pos, unsigned type) {
 void PeFile::Reloc::finish(byte *&p, unsigned &siz) {
     unsigned prev = 0xffffffff;
     set_le32(start + 1024 + 4 * counts[0]++, 0xf0000000);
-    qsort(start + 1024, counts[0], 4, le32_compare);
+    upx_qsort(start + 1024, counts[0], 4, le32_compare);
 
     rel = (reloc *) start;
     rel1 = (LE16 *) start;
@@ -422,7 +422,7 @@ void PeFile32::processRelocs() // pass1
 
     // remove duplicated records
     for (ic = 1; ic <= 3; ic++) {
-        qsort(fix[ic], xcounts[ic], 4, le32_compare);
+        upx_qsort(fix[ic], xcounts[ic], 4, le32_compare);
         unsigned prev = ~0u;
         unsigned jc = 0;
         for (unsigned kc = 0; kc < xcounts[ic]; kc++)
@@ -522,7 +522,7 @@ void PeFile64::processRelocs() // pass1
 
     // remove duplicated records
     for (ic = 1; ic < 16; ic++) {
-        qsort(fix[ic], xcounts[ic], 4, le32_compare);
+        upx_qsort(fix[ic], xcounts[ic], 4, le32_compare);
         unsigned prev = ~0u;
         unsigned jc = 0;
         for (unsigned kc = 0; kc < xcounts[ic]; kc++)
@@ -760,7 +760,7 @@ public:
         outputlen = 0;
 
         // sort the sections by name before adding them all
-        qsort(sections, nsections, sizeof(Section *), ImportLinker::compare);
+        upx_qsort(sections, nsections, sizeof(Section *), ImportLinker::compare);
 
         for (unsigned ic = 0; ic < nsections; ic++)
             addLoader(sections[ic]->name);
@@ -945,7 +945,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     mb_oimport.clear();
     oimport = mb_oimport;
 
-    qsort(idlls, dllnum, sizeof(*idlls), udll::compare);
+    upx_qsort(idlls, dllnum, sizeof(*idlls), udll::compare);
 
     info("Processing imports: %d DLLs", dllnum);
     for (unsigned ic = 0; ic < dllnum; ic++) {
