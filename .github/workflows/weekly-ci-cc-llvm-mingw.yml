@@ -5,7 +5,7 @@
 
 name: 'Weekly CI CC - llvm-mingw'
 on:
-  schedule: [cron: '20 2 * * 3'] # run weekly Wednesday 02:20 UTC
+  schedule: [cron: '30 2 * * 3'] # run weekly Wednesday 02:30 UTC
   workflow_dispatch:
 env:
   CMAKE_REQUIRED_QUIET: OFF

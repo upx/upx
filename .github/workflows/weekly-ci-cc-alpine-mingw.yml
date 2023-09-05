@@ -1,0 +1,91 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+# CC CompilationCheck: test various gcc+mingw versions
+
+name: 'Weekly CI CC - Alpine Linux MinGW'
+on:
+  schedule: [cron: '20 2 * * 3'] # run weekly Wednesday 02:20 UTC
+  workflow_dispatch:
+env:
+  CMAKE_REQUIRED_QUIET: OFF
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  job-alpine-mingw: # uses cmake + make
+    if: github.repository_owner == 'upx'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { container: 'alpine:3.11', wine: false, i686_mingw: false } # skip testsuite; TODO: internal error: doctest check failed
+          - { container: 'alpine:3.12', wine: false, i686_mingw: false } # skip testsuite; TODO: internal error: doctest check failed
+          - { container: 'alpine:3.13', wine: true,  i686_mingw: false }
+          - { container: 'alpine:3.14', wine: true,  i686_mingw: false }
+          - { container: 'alpine:3.15', wine: true,  i686_mingw: false }
+          - { container: 'alpine:3.16', wine: true,  i686_mingw: false }
+          - { container: 'alpine:3.17', wine: true,  i686_mingw: false }
+          - { container: 'alpine:3.18', wine: true,  i686_mingw: true }
+          - { container: 'alpine:edge', wine: true,  i686_mingw: true }
+    name: ${{ format('container {0}', matrix.container) }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    env: { UPX_CMAKE_CONFIG_FLAGS: '-DCMAKE_VERBOSE_MAKEFILE=ON' }
+    steps:
+      - name: ${{ format('Install packages {0}', matrix.container) }}
+        run: |
+          apk update && apk upgrade && apk add bash cmake coreutils git make tar
+          apk add mingw-w64-gcc
+          test "${{ matrix.i686_mingw }}" = "true" && apk add i686-mingw-w64-gcc
+          test "${{ matrix.wine }}" = "true" && apk add wine
+          true
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+        run: |
+          # this seems to be needed when running in a container (beause of UID mismatch??)
+          mkdir ~/.wine
+          # this seems to be needed when running in a container (beause of UID mismatch??)
+          git config --global --add safe.directory '*'
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx .
+          git submodule update --init
+      - name: 'Build cmake extra/cross-windows-mingw32/debug'
+        if: ${{ matrix.i686_mingw }}
+        run:   'make build/extra/cross-windows-mingw32/debug'
+      - name: 'Build cmake extra/cross-windows-mingw32/release'
+        if: ${{ matrix.i686_mingw }}
+        run:   'make build/extra/cross-windows-mingw32/release'
+      - name: 'Build cmake extra/cross-windows-mingw64/debug'
+        # on Alpine 3.11 and 3.12 CMake does not find AR; Alpine >= 3.13 (with CMake 3.18) works
+########run:   'make build/extra/cross-windows-mingw64/debug'
+        run:   'make build/extra/cross-windows-mingw64/debug UPX_CMAKE_CONFIG_FLAGS="$UPX_CMAKE_CONFIG_FLAGS -DCMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar"'
+      - name: 'Build cmake extra/cross-windows-mingw64/release'
+        # on Alpine 3.11 and 3.12 CMake does not find AR
+########run:   'make build/extra/cross-windows-mingw64/release'
+        run:   'make build/extra/cross-windows-mingw64/release UPX_CMAKE_CONFIG_FLAGS="$UPX_CMAKE_CONFIG_FLAGS -DCMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar"'
+      - name: 'Make artifact'
+        shell: bash
+        run: |
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-alpine-mingw-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          mkdir -p "tmp/artifact/$N"
+          (cd build && shopt -s nullglob && cp -ai --parents */upx{,.exe} */*/*/upx{,.exe} "../tmp/artifact/$N")
+          (cd tmp/artifact && tar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
+          # GitHub Actions magic: set "artifact_name" environment value for use in next step
+          echo "artifact_name=$N" >> $GITHUB_ENV
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.artifact_name }}
+          path: tmp/artifact
+      - name: ${{ format('Run test suite level {0}', env.UPX_TESTSUITE_LEVEL) }}
+        if: ${{ matrix.wine }}
+        run: |
+          git clone --depth=1 https://github.com/upx/upx-testsuite ../upx-testsuite
+          testsuite_1="$(readlink -fn ./misc/testsuite/upx_testsuite_1.sh)"
+          export upx_exe_runner="wine64"
+          if test "${{ matrix.i686_mingw }}" = "true"; then
+          UPX_TESTSUITE_LEVEL=2 \
+          env -C build/extra/cross-windows-mingw32/debug   upx_exe=./upx.exe bash "$testsuite_1"
+          UPX_TESTSUITE_LEVEL=4 \
+          env -C build/extra/cross-windows-mingw32/release upx_exe=./upx.exe bash "$testsuite_1"
+          fi
+          UPX_TESTSUITE_LEVEL=2 \
+          env -C build/extra/cross-windows-mingw64/debug   upx_exe=./upx.exe bash "$testsuite_1"
+          UPX_TESTSUITE_LEVEL=4 \
+          env -C build/extra/cross-windows-mingw64/release upx_exe=./upx.exe bash "$testsuite_1"
