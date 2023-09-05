@@ -127,6 +127,9 @@ jobs:
         run: |
           make -C build/extra/gcc-m32/debug test
           make -C build/extra/gcc-m32/release test
+      - name: 'Run file system test suite'
+        run: |
+          env -C build/extra/gcc/release bash "$PWD"/misc/testsuite/test_symlinks.sh
       - name: 'Run test suite build/extra/gcc/release'
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
@@ -142,6 +145,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # NOTE: macos does not have "env -C"; only with coreutils
+          # NOTE: macos-11 does not have "readlink -f"; only on macos >= 12 or with coreutils
           - { os: macos-11, gcc: gcc-10, gxx: 'g++-10', testsuite: true }
           - { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true }
           - { os: macos-13, gcc: gcc-12, gxx: 'g++-12', testsuite: true }
@@ -201,6 +206,14 @@ jobs:
         run: |
           make -C build/extra/clang/debug test
           make -C build/extra/clang/release test
+      - name: 'Run file system test suite'
+        if: ${{ matrix.testsuite }} # for coreutils readlink
+        run: |
+          ## macos-11 does not have "readlink -f"
+          ##   testsuite="$(readlink -fn ./misc/testsuite/test_symlinks.sh)"
+          ##   (cd build/extra/clang/release && upx_exe=./upx bash "$testsuite")
+          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+          env -C build/extra/clang/release bash "$PWD"/misc/testsuite/test_symlinks.sh
       - name: 'Run test suite build/extra/clang/release'
         if: ${{ matrix.testsuite }}
         run: |

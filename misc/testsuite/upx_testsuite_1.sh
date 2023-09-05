@@ -15,9 +15,9 @@ argv0=$0; argv0abs=$(readlink -fn "$argv0"); argv0dir=$(dirname "$argv0abs")
 #
 # see https://github.com/upx/upx-testsuite.git
 
-# /***********************************************************************
-# // init & checks
-# ************************************************************************/
+#***********************************************************************
+# init & checks
+#***********************************************************************
 
 # upx_exe
 [[ -z $upx_exe && -f ./upx && -x ./upx ]] && upx_exe=./upx # convenience fallback
@@ -91,9 +91,9 @@ if [[ $UPX_TESTSUITE_LEVEL == 0 ]]; then
     exit 0
 fi
 
-# /***********************************************************************
-# // setup
-# ************************************************************************/
+#***********************************************************************
+# setup
+#***********************************************************************
 
 #set -x # debug
 exit_code=0
@@ -103,15 +103,14 @@ all_errors=
 export UPX="--prefer-ucl --no-color --no-progress"
 export UPX_DEBUG_DISABLE_GITREV_WARNING=1
 export UPX_DEBUG_DOCTEST_VERBOSE=0
-export NO_COLOR=1
 
 rm -rf ./testsuite_1
 mkdir testsuite_1 || exit 1
 cd testsuite_1 || exit 1
 
-# /***********************************************************************
-# // support functions
-# ************************************************************************/
+#***********************************************************************
+# support functions
+#***********************************************************************
 
 run_upx() {
     local ec=0
@@ -195,13 +194,13 @@ testsuite_run_compress() {
     fi
 }
 
-# /***********************************************************************
-# // expected checksums
-# //
-# // To ease maintenance of this script in case of updates this section
-# // can be automatically re-created from the current checksums -
-# // see call of function recreate_expected_sha256sums below.
-# ************************************************************************/
+#***********************************************************************
+# expected checksums
+#
+# To ease maintenance of this script in case of updates this section
+# can be automatically re-created from the current checksums -
+# see call of function recreate_expected_sha256sums below.
+#***********************************************************************
 
 recreate_expected_sha256sums() {
     local o="$1"
@@ -219,9 +218,9 @@ recreate_expected_sha256sums() {
 
 source "$argv0dir/upx_testsuite_1-expected_sha256sums.sh" || exit 1
 
-# /***********************************************************************
-# // decompression tests
-# ************************************************************************/
+#***********************************************************************
+# decompression tests
+#***********************************************************************
 
 testdir=t010_decompressed
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
@@ -251,11 +250,11 @@ for f in t010_decompressed/*/*; do
 done
 testsuite_check_sha $testdir
 
-# /***********************************************************************
-# // compression tests
-# // info: we use fast compression levels because we want to
-# //   test UPX and not the compression libraries
-# ************************************************************************/
+#***********************************************************************
+# compression tests
+# info: we use fast compression levels because we want to
+#   test UPX and not the compression libraries
+#***********************************************************************
 
 if [[ $UPX_TESTSUITE_LEVEL -ge 2 ]]; then
 testdir=t110_compress_ucl_nrv2b_3_no_filter
@@ -299,9 +298,9 @@ mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha2
 time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
 fi
 
-# /***********************************************************************
-# // summary
-# ************************************************************************/
+#***********************************************************************
+# summary
+#***********************************************************************
 
 # recreate checksums from current version for an easy update in case of changes
 recreate_expected_sha256sums .sha256sums.recreate

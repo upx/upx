@@ -146,6 +146,14 @@ jobs:
           (cd "upx with space"/build/xtarget/gcc-static/release   && DESTDIR="$PWD/Install with cmake" cmake --install .)
           (cd "upx with space"/build/xtarget/gcc-static/release   && DESTDIR="$PWD/Install with make"  make install)
 
+      - name: 'Run file system test suite (busybox)'
+        run: |
+          apk add bash sudo
+          testsuite="$(readlink -fn "upx with space"/misc/testsuite/test_symlinks.sh)"
+          cd "upx with space"/build/xtarget/gcc-static/release
+          # IMPORTANT: do NOT run as user root!
+          chmod a+w . && sudo -u operator bash "$testsuite"
+
       # test suite
       - name: ${{ format('Run test suite level {0}', env.UPX_TESTSUITE_LEVEL) }}
         run: |
@@ -156,3 +164,11 @@ jobs:
           export upx_testsuite_SRCDIR="$(readlink -fn "upx-testsuite with space")"
           testsuite_1="$(readlink -fn "upx with space"/misc/testsuite/upx_testsuite_1.sh)"
           (cd "upx with space"/build/xtarget/gcc-static/release && upx_exe=./upx bash "$testsuite_1")
+
+      - name: 'Run file system test suite (coreutils)'
+        run: |
+          apk add bash coreutils sudo
+          testsuite="$(readlink -fn "upx with space"/misc/testsuite/test_symlinks.sh)"
+          cd "upx with space"/build/xtarget/gcc-static/release
+          # IMPORTANT: do NOT run as user root!
+          chmod a+w . && sudo -u operator bash "$testsuite"

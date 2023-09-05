@@ -225,7 +225,7 @@ void show_help(int verbose) {
         fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --force-overwrite   force overwrite of output files\n"
-#if defined(__unix__) && !defined(__MSYS2__)
+#if defined(__unix__)
                     "  --link              preserve hard links (Unix only) [USE WITH CARE]\n"
                     "  --no-link           do not preserve hard links but rename files [default]\n"
 #endif

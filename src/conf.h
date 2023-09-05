@@ -187,13 +187,15 @@ typedef upx_int64_t upx_off_t;
 #undef small
 #undef tos
 #undef unix
-#if defined(__linux__) && !defined(__unix__)
+#if (ACC_OS_POSIX) && !defined(__unix__)
 #  define __unix__ 1
+#endif
+#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
+#  undef __unix
+#  undef __unix__
 #endif
 #if (ACC_OS_DOS32) && defined(__DJGPP__)
 #  undef sopen
-#  undef __unix
-#  undef __unix__
 #endif
 
 #if defined(HAVE_DUP) && (HAVE_DUP + 0 == 0)

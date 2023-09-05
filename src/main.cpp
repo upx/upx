@@ -201,7 +201,8 @@ static void check_and_update_options(int i, int argc) {
     check_not_both(opt->force_overwrite, opt->preserve_link, "--force-overwrite", "--link");
     check_not_both(opt->to_stdout, opt->preserve_link, "--stdout", "--link");
 
-#if defined(__unix__) && !defined(__MSYS2__)
+#if defined(__unix__)
+    static_assert(HAVE_LSTAT);
 #else
     // preserve_link is currently silently ignored on non-Unix platforms
     // (we may revisit this decision later if there is some actual use-case)
