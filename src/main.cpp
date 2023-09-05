@@ -179,7 +179,6 @@ static void check_and_update_options(int i, int argc) {
         opt->overlay = opt->COPY_OVERLAY;
 
     check_not_both(opt->exact, opt->overlay == opt->STRIP_OVERLAY, "--exact", "--overlay=strip");
-    check_not_both(opt->force_overwrite, opt->preserve_link, "--force-overwrite", "--link");
 
     // set default backup option
     if (opt->backup < 0)
@@ -199,6 +198,8 @@ static void check_and_update_options(int i, int argc) {
             e_usage();
         }
     }
+    check_not_both(opt->force_overwrite, opt->preserve_link, "--force-overwrite", "--link");
+    check_not_both(opt->to_stdout, opt->preserve_link, "--stdout", "--link");
 
 #if defined(__unix__) && !defined(__MSYS2__)
 #else

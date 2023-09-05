@@ -137,20 +137,26 @@ static void copy_file_attributes(const struct stat *st, const char *oname, bool 
 **************************************************************************/
 
 void do_one_file(const char *const iname, char *const oname) may_throw {
-    int r;
-    struct stat st; // stat of iname
+    oname[0] = 0; // make empty
+
+    // check iname stat
+    struct stat st;
     mem_clear(&st);
 #if HAVE_LSTAT
-    r = lstat(iname, &st);
+    int rr = lstat(iname, &st);
 #else
-    r = stat(iname, &st);
+    int rr = stat(iname, &st);
 #endif
-    if (r != 0) {
+    if (rr != 0) {
         if (errno == ENOENT)
             throw FileNotFoundException(iname, errno);
         else
             throwIOException(iname, errno);
     }
+#if HAVE_LSTAT
+    if (S_ISLNK(st.st_mode))
+        throwIOException("is a symlink -- skipped");
+#endif
     if (S_ISDIR(st.st_mode))
         throwIOException("is a directory -- skipped");
     if (!(S_ISREG(st.st_mode)))
@@ -192,26 +198,46 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
 #endif
 
     // open output file
+    // NOTE: only use "preserve_link" if you really need it, e.g. it can fail
+    //   with ETXTBSY and other unexpected errors; renaming files is much safer
     OutputFile fo;
+    bool preserve_link = opt->preserve_link;
     bool copy_timestamp_only = false;
     if (opt->cmd == CMD_COMPRESS || opt->cmd == CMD_DECOMPRESS) {
         if (opt->to_stdout) {
+            preserve_link = false; // not needed
             if (!fo.openStdout(1, opt->force ? true : false))
                 throwIOException("data not written to a terminal; Use '-f' to force.");
         } else {
             char tname[ACC_FN_PATH_MAX + 1];
             if (opt->output_name) {
                 strcpy(tname, opt->output_name);
-                if ((opt->force_overwrite || opt->force >= 2) && !opt->preserve_link)
+                if ((opt->force_overwrite || opt->force >= 2) && !preserve_link)
                     FileBase::unlink(tname, false);
             } else {
+                if (st.st_nlink < 2)
+                    preserve_link = false; // not needed
                 if (!maketempname(tname, sizeof(tname), iname, ".upx"))
                     throwIOException("could not create a temporary file name");
             }
             int flags = get_wronly_open_flags(WOM_MUST_CREATE);
-            if (opt->output_name && opt->preserve_link) {
+            if (opt->output_name && preserve_link) {
                 flags = get_wronly_open_flags(WOM_CREATE_OR_TRUNCATE);
-                if (file_exists(opt->output_name)) {
+#if HAVE_LSTAT
+                struct stat ost;
+                mem_clear(&ost);
+                int r = lstat(tname, &ost);
+                if (r == 0 && S_ISREG(ost.st_mode)) {
+                    preserve_link = ost.st_nlink >= 2;
+                } else if (r == 0 && S_ISLNK(ost.st_mode)) {
+                    // output_name is a symlink (valid or dangling)
+                    FileBase::unlink(tname, false);
+                    preserve_link = false; // not needed
+                } else {
+                    preserve_link = false; // not needed
+                }
+#endif
+                if (preserve_link) {
                     flags = get_wronly_open_flags(WOM_MUST_EXIST_TRUNCATE);
                     copy_timestamp_only = true;
                 }
@@ -250,13 +276,13 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
     // copy time stamp
     if (oname[0] && opt->preserve_timestamp && fo.isOpen()) {
 #if USE_FTIME
-        r = setftime(fo.getFd(), &fi_ftime);
+        int r = setftime(fo.getFd(), &fi_ftime);
         IGNORE_ERROR(r);
 #elif USE__FUTIME
         struct _utimbuf u;
         u.actime = st.st_atime;
         u.modtime = st.st_mtime;
-        r = _futime(fo.getFd(), &u);
+        int r = _futime(fo.getFd(), &u);
         IGNORE_ERROR(r);
 #endif
     }
@@ -266,15 +292,13 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
     fi.closex();
 
     // rename or copy files
-    // NOTE: only use "preserve_link" if you really need it, e.g. it can fail
-    //   with ETXTBSY and other unexpected errors; renaming files is much safer
     if (oname[0] && !opt->output_name) {
         // both iname and oname do exist; rename oname to iname
         if (opt->backup) {
             char bakname[ACC_FN_PATH_MAX + 1];
             if (!makebakname(bakname, sizeof(bakname), iname))
                 throwIOException("could not create a backup file name");
-            if (opt->preserve_link) {
+            if (preserve_link) {
                 copy_file_contents(iname, bakname, WOM_MUST_CREATE);
                 copy_file_attributes(&st, bakname, true, true, true);
                 copy_file_contents(oname, iname, WOM_MUST_EXIST_TRUNCATE);
@@ -284,7 +308,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                 FileBase::rename(iname, bakname);
                 FileBase::rename(oname, iname);
             }
-        } else if (opt->preserve_link) {
+        } else if (preserve_link) {
             copy_file_contents(oname, iname, WOM_MUST_EXIST_TRUNCATE);
             FileBase::unlink(oname);
             copy_timestamp_only = true;
