@@ -58,24 +58,25 @@
 // ignore errors in some cases and silence __attribute__((__warn_unused_result__))
 #define IGNORE_ERROR(var) ACC_UNUSED(var)
 
-enum WronlyOpenMode { WOM_MUST_EXIST_TRUNCATE, WOM_MUST_CREATE, WOM_CREATE_OR_TRUNCATE };
+enum OpenMode { RO_MUST_EXIST, WO_MUST_EXIST_TRUNCATE, WO_MUST_CREATE, WO_CREATE_OR_TRUNCATE };
 
-static constexpr int get_wronly_open_flags(WronlyOpenMode mode) noexcept {
-    constexpr int flags = O_WRONLY | O_BINARY;
-    if (mode == WOM_MUST_EXIST_TRUNCATE)
-        return flags | O_TRUNC; // will cause an error if file does not exist
-    if (mode == WOM_MUST_CREATE)
-        return flags | O_CREAT | O_EXCL; // will cause an error if file already exists
-    // create if not exists, otherwise truncate
-    return flags | O_CREAT | O_TRUNC;
+static constexpr int get_open_flags(OpenMode om) noexcept {
+    constexpr int wo_flags = O_WRONLY | O_BINARY;
+    if (om == WO_MUST_EXIST_TRUNCATE)
+        return wo_flags | O_TRUNC; // will cause an error if file does not exist
+    if (om == WO_MUST_CREATE)
+        return wo_flags | O_CREAT | O_EXCL; // will cause an error if file already exists
+    if (om == WO_CREATE_OR_TRUNCATE)
+        return wo_flags | O_CREAT | O_TRUNC; // create if not exists, otherwise truncate
+    // RO_MUST_EXIST
+    return O_RDONLY | O_BINARY;
 }
 
-static void copy_file_contents(const char *iname, const char *oname, WronlyOpenMode mode)
-    may_throw {
+static void copy_file_contents(const char *iname, const char *oname, OpenMode om) may_throw {
     InputFile fi;
-    fi.sopen(iname, O_RDONLY | O_BINARY, SH_DENYWR);
+    fi.sopen(iname, get_open_flags(RO_MUST_EXIST), SH_DENYWR);
     fi.seek(0, SEEK_SET);
-    int flags = get_wronly_open_flags(mode);
+    int flags = get_open_flags(om);
     int shmode = SH_DENYWR;
     int omode = 0600; // affected by umask; ignored unless O_CREAT
     OutputFile fo;
@@ -186,7 +187,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
 
     // open input file
     InputFile fi;
-    fi.sopen(iname, O_RDONLY | O_BINARY, SH_DENYWR);
+    fi.sopen(iname, get_open_flags(RO_MUST_EXIST), SH_DENYWR);
 
 #if USE_FTIME
     struct ftime fi_ftime;
@@ -220,9 +221,9 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                 if (!maketempname(tname, sizeof(tname), iname, ".upx"))
                     throwIOException("could not create a temporary file name");
             }
-            int flags = get_wronly_open_flags(WOM_MUST_CREATE);
+            int flags = get_open_flags(WO_MUST_CREATE);
             if (opt->output_name && preserve_link) {
-                flags = get_wronly_open_flags(WOM_CREATE_OR_TRUNCATE);
+                flags = get_open_flags(WO_CREATE_OR_TRUNCATE);
 #if HAVE_LSTAT
                 struct stat ost;
                 mem_clear(&ost);
@@ -238,11 +239,11 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                 }
 #endif
                 if (preserve_link) {
-                    flags = get_wronly_open_flags(WOM_MUST_EXIST_TRUNCATE);
+                    flags = get_open_flags(WO_MUST_EXIST_TRUNCATE);
                     copy_timestamp_only = true;
                 }
             } else if (opt->force_overwrite || opt->force)
-                flags = get_wronly_open_flags(WOM_CREATE_OR_TRUNCATE);
+                flags = get_open_flags(WO_CREATE_OR_TRUNCATE);
             int shmode = SH_DENYWR;
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
             // TODO later: check current mintlib if this hack is still needed
@@ -299,9 +300,9 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
             if (!makebakname(bakname, sizeof(bakname), iname))
                 throwIOException("could not create a backup file name");
             if (preserve_link) {
-                copy_file_contents(iname, bakname, WOM_MUST_CREATE);
+                copy_file_contents(iname, bakname, WO_MUST_CREATE);
                 copy_file_attributes(&st, bakname, true, true, true);
-                copy_file_contents(oname, iname, WOM_MUST_EXIST_TRUNCATE);
+                copy_file_contents(oname, iname, WO_MUST_EXIST_TRUNCATE);
                 FileBase::unlink(oname);
                 copy_timestamp_only = true;
             } else {
@@ -309,7 +310,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                 FileBase::rename(oname, iname);
             }
         } else if (preserve_link) {
-            copy_file_contents(oname, iname, WOM_MUST_EXIST_TRUNCATE);
+            copy_file_contents(oname, iname, WO_MUST_EXIST_TRUNCATE);
             FileBase::unlink(oname);
             copy_timestamp_only = true;
         } else {
