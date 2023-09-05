@@ -36,7 +36,7 @@
 //
 **************************************************************************/
 
-PackerBase::PackerBase(InputFile *f) : fi(f), file_size(f ? f->st.st_size : 0) {
+PackerBase::PackerBase(InputFile *f) : fi(f), file_size(f ? f->st_size() : 0) {
     ph.reset();
     mem_size_assert(1, file_size);
 }
