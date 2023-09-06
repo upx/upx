@@ -14,7 +14,7 @@ jobs:
     # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
     # ...and also uses ccache as we are running the same build-script again and again
     if: github.repository_owner == 'upx'
-    strategy: { matrix: { container: ['alpine:3.9','alpine:edge'] } }
+    strategy: { matrix: { container: ['alpine:3.9','alpine:3.18','alpine:edge'] } }
     name: ${{ format('gcc by-hand {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
@@ -24,7 +24,7 @@ jobs:
           # install ccache, g++, git and various POSIX shells
           shells="bash dash loksh mksh zsh"
           case ${{ matrix.container }} in
-            *:edge) shells="$shells oksh yash" ;;
+            *:3.18 | *:edge) shells="$shells oksh yash" ;;
           esac
           echo "installing shells: $shells"
           apk update && apk upgrade && apk add ccache g++ git $shells
@@ -60,16 +60,16 @@ jobs:
       - name: 'Build by-hand with mksh -o sh'
         run: 'mksh -o sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Build by-hand with oksh'
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':3.18') || endsWith(matrix.container, ':edge')
         run: 'oksh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Build by-hand with oksh -o posix'
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':3.18') || endsWith(matrix.container, ':edge')
         run: 'oksh -o posix "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Build by-hand with oksh -o sh'
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':3.18') || endsWith(matrix.container, ':edge')
         run: 'oksh -o sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Build by-hand with yash'
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':3.18') || endsWith(matrix.container, ':edge')
         run: 'yash "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Build by-hand with zsh'
         run: 'zsh "./upx with space/misc/scripts/build_upx_by_hand.sh"'

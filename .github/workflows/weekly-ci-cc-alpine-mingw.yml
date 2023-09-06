@@ -32,15 +32,15 @@ jobs:
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         run: |
-          apk update && apk upgrade && apk add bash cmake coreutils git make tar
+          apk update && apk upgrade && apk add bash cmake coreutils file git make tar xz
           apk add mingw-w64-gcc
           test "${{ matrix.i686_mingw }}" = "true" && apk add i686-mingw-w64-gcc
           test "${{ matrix.wine }}" = "true" && apk add wine
           true
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
-          # this seems to be needed when running in a container (beause of UID mismatch??)
-          mkdir ~/.wine
+          # this seems to be needed for Wine when running in a container (beause of UID mismatch??)
+          mkdir -p -v ~/.wine
           # this seems to be needed when running in a container (beause of UID mismatch??)
           git config --global --add safe.directory '*'
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx .
@@ -73,7 +73,7 @@ jobs:
         with:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
-      - name: ${{ format('Run test suite level {0}', env.UPX_TESTSUITE_LEVEL) }}
+      - name: ${{ format('Run test suite') }}
         if: ${{ matrix.wine }}
         run: |
           git clone --depth=1 https://github.com/upx/upx-testsuite ../upx-testsuite
@@ -89,3 +89,75 @@ jobs:
           env -C build/extra/cross-windows-mingw64/debug   upx_exe=./upx.exe bash "$testsuite_1"
           UPX_TESTSUITE_LEVEL=4 \
           env -C build/extra/cross-windows-mingw64/release upx_exe=./upx.exe bash "$testsuite_1"
+
+      - name: 'Run basic tests under Wine - mingw32/debug'
+        if: ${{ matrix.wine && matrix.i686_mingw }}
+        shell: bash
+        run: |
+          set -ex -o pipefail
+          cd build/extra/cross-windows-mingw32/debug
+          [[ -f upx && ! -f upx.exe ]] && mv -i -v upx upx.exe
+          pwd; file ./upx.exe
+          wine=wine64
+          tt='./upx.exe'
+          $wine ./upx.exe --version-short
+          $wine ./upx.exe -3 $tt -o tt.packed.exe
+          $wine ./upx.exe -l tt.packed.exe
+          $wine ./upx.exe -t tt.packed.exe
+          $wine ./upx.exe -d tt.packed.exe -o tt.unpacked.exe
+          $wine ./tt.packed.exe --version-short
+          $wine ./tt.unpacked.exe --version-short
+
+      - name: 'Run basic tests under Wine - mingw32/release'
+        if: ${{ matrix.wine && matrix.i686_mingw }}
+        shell: bash
+        run: |
+          set -ex -o pipefail
+          cd build/extra/cross-windows-mingw32/release
+          [[ -f upx && ! -f upx.exe ]] && mv -i -v upx upx.exe
+          pwd; file ./upx.exe
+          wine=wine64
+          tt='./upx.exe'
+          $wine ./upx.exe --version-short
+          $wine ./upx.exe -3 $tt -o tt.packed.exe
+          $wine ./upx.exe -l tt.packed.exe
+          $wine ./upx.exe -t tt.packed.exe
+          $wine ./upx.exe -d tt.packed.exe -o tt.unpacked.exe
+          $wine ./tt.packed.exe --version-short
+          $wine ./tt.unpacked.exe --version-short
+
+      - name: 'Run basic tests under Wine - mingw64/debug'
+        if: ${{ matrix.wine }}
+        shell: bash
+        run: |
+          set -ex -o pipefail
+          cd build/extra/cross-windows-mingw64/debug
+          [[ -f upx && ! -f upx.exe ]] && mv -i -v upx upx.exe
+          pwd; file ./upx.exe
+          wine=wine64
+          tt='./upx.exe'
+          $wine ./upx.exe --version-short
+          $wine ./upx.exe -3 $tt -o tt.packed.exe
+          $wine ./upx.exe -l tt.packed.exe
+          $wine ./upx.exe -t tt.packed.exe
+          $wine ./upx.exe -d tt.packed.exe -o tt.unpacked.exe
+          $wine ./tt.packed.exe --version-short
+          $wine ./tt.unpacked.exe --version-short
+
+      - name: 'Run basic tests under Wine - mingw64/release'
+        if: ${{ matrix.wine }}
+        shell: bash
+        run: |
+          set -ex -o pipefail
+          cd build/extra/cross-windows-mingw64/release
+          [[ -f upx && ! -f upx.exe ]] && mv -i -v upx upx.exe
+          pwd; file ./upx.exe
+          wine=wine64
+          tt='./upx.exe'
+          $wine ./upx.exe --version-short
+          $wine ./upx.exe -3 $tt -o tt.packed.exe
+          $wine ./upx.exe -l tt.packed.exe
+          $wine ./upx.exe -t tt.packed.exe
+          $wine ./upx.exe -d tt.packed.exe -o tt.unpacked.exe
+          $wine ./tt.packed.exe --version-short
+          $wine ./tt.unpacked.exe --version-short
