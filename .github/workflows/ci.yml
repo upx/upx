@@ -41,7 +41,7 @@ jobs:
           # install upx-stubtools
           wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20221212/bin-upx-20221212.tar.xz | tar -xJ
       - name: 'Check out code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with: { submodules: true }
       - name: 'Rebuild and verify stubs'
         run: |
@@ -75,7 +75,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y g++-multilib g++-mingw-w64-i686 g++-mingw-w64-x86-64
       - name: 'Check out code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with: { submodules: true }
       - name: 'Check out test suite'
         run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
@@ -161,7 +161,7 @@ jobs:
             if ! brew install coreutils; then brew update && brew install coreutils; fi
           fi
       - name: 'Check out code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with: { submodules: true }
       - name: 'Check out test suite'
         if: ${{ matrix.testsuite }}
@@ -238,7 +238,7 @@ jobs:
           - { name: windows-2022-amd64, os: windows-2022, vsversion: 2022, arch: amd64 }
     steps:
       - name: 'Check out code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with: { submodules: true }
       - name: 'Check out test suite'
         run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
@@ -300,7 +300,7 @@ jobs:
           - { name: i386-win32-vs2022,    os: windows-2022, vsversion: 2022, arch: amd64_x86 }
     steps:
       - name: 'Check out code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with: { submodules: true }
       - name: 'Prepare sources and Check out test suite'
         shell: bash
@@ -436,7 +436,7 @@ jobs:
           # this seems to be needed when running in a container (beause of UID mismatch??)
           git config --global --add safe.directory '*'
       - name: 'Check out code'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with: { submodules: true }
       - name: ${{ format('Install Zig {0}', env.ZIG_DIST_VERSION) }}
         shell: bash
