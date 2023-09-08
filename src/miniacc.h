@@ -984,6 +984,9 @@
 #elif defined(__ia64__) || defined(__ia64) || defined(_M_IA64)
 #  define ACC_ARCH_IA64             1
 #  define ACC_INFO_ARCH             "ia64"
+#elif defined(__loongarch__) || defined(__loongarch64)
+#  define ACC_ARCH_LOONGARCH        1
+#  define ACC_INFO_ARCH             "loongarch"
 #elif (UINT_MAX == ACC_0xffffL) && defined(__m32c__)
 #  define ACC_ARCH_M16C             1
 #  define ACC_INFO_ARCH             "m16c"
@@ -2565,7 +2568,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  define ACC_ABI_BIG_ENDIAN        1
 #elif (ACC_ARCH_IA64) && (ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_LINUX || ACC_OS_WIN64)
 #  define ACC_ABI_LITTLE_ENDIAN     1
-#elif (ACC_ARCH_ALPHA || ACC_ARCH_AMD64 || ACC_ARCH_BLACKFIN || ACC_ARCH_CRIS || ACC_ARCH_I086 || ACC_ARCH_I386 || ACC_ARCH_MSP430 || ACC_ARCH_RISCV)
+#elif (ACC_ARCH_ALPHA || ACC_ARCH_AMD64 || ACC_ARCH_BLACKFIN || ACC_ARCH_CRIS || ACC_ARCH_I086 || ACC_ARCH_I386 || ACC_ARCH_LOONGARCH || ACC_ARCH_MSP430 || ACC_ARCH_RISCV)
 #  define ACC_ABI_LITTLE_ENDIAN     1
 #elif (ACC_ARCH_AVR32 || ACC_ARCH_M68K || ACC_ARCH_S390 || ACC_ARCH_SPARC || ACC_ARCH_SPU)
 #  define ACC_ABI_BIG_ENDIAN        1
@@ -2787,6 +2790,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  define ACC_OPT_AVOID_INT_INDEX           1
 #  define ACC_OPT_AVOID_UINT_INDEX          1
 #  define ACC_OPT_PREFER_POSTINC            1
+#elif (ACC_ARCH_LOONGARCH)
+#  define ACC_OPT_AVOID_UINT_INDEX          1
 #elif (ACC_ARCH_M68K)
 #  define ACC_OPT_PREFER_POSTINC            1
 #  define ACC_OPT_PREFER_PREDEC             1
