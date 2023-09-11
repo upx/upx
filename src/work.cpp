@@ -69,7 +69,7 @@ static constexpr int get_open_flags(OpenMode om) noexcept {
     if (om == WO_CREATE_OR_TRUNCATE)
         return wo_flags | O_CREAT | O_TRUNC; // create if not exists, otherwise truncate
     // RO_MUST_EXIST
-    return O_RDONLY | O_BINARY;
+    return O_RDONLY | O_BINARY; // will cause an error if file does not exist
 }
 
 static void copy_file_contents(const char *iname, const char *oname, OpenMode om) may_throw {
@@ -127,6 +127,7 @@ static void copy_file_attributes(const struct stat *st, const char *oname, bool 
     }
 #endif
     // maybe unused
+    UNUSED(st);
     UNUSED(oname);
     UNUSED(preserve_mode);
     UNUSED(preserve_ownership);
@@ -221,7 +222,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                 if (!maketempname(tname, sizeof(tname), iname, ".upx"))
                     throwIOException("could not create a temporary file name");
             }
-            int flags = get_open_flags(WO_MUST_CREATE);
+            int flags = get_open_flags(WO_MUST_CREATE); // don't overwrite files by default
             if (opt->output_name && preserve_link) {
                 flags = get_open_flags(WO_CREATE_OR_TRUNCATE);
 #if HAVE_LSTAT
@@ -289,8 +290,8 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
     }
 
     // close files
-    fo.closex();
     fi.closex();
+    fo.closex();
 
     // rename or copy files
     if (oname[0] && !opt->output_name) {

@@ -8,7 +8,7 @@ set -e
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
-# uses optional environment variables: AR, CC, CXX, OPTIMIZE, top_srcdir
+# uses optional environment variables: AR, CC, CXX, OPTIMIZE, VERBOSE, top_srcdir
 
 # shell init
 ### set -x # enable logging
@@ -62,7 +62,12 @@ run() {
     fi
     # print short info and run command
     test "x$1" != "x" && test "x$1" != "x+" && echo "$1"
-    shift; "$@"
+    shift
+    if test "x$VERBOSE" != "x" && test "x$VERBOSE" != "x0"; then
+        # print full command
+        echo "  $@"
+    fi
+    "$@"
 }
 
 # helper function

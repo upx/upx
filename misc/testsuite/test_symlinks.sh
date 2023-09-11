@@ -8,12 +8,13 @@ argv0=$0; argv0abs=$(readlink -fn "$argv0"); argv0dir=$(dirname "$argv0abs")
 umask 0022
 
 id || true
+echo "PWD='$PWD'"
 if [[ $UID == 0 || $EUID == 0 ]]; then
     echo "ERROR: do not run as root: UID=$UID EUID=$EUID"
     exit 91
 fi
 
-# test behaviour with symlinks; requires:
+# test file system behaviour with symlinks; requires:
 #   $upx_exe                (required, but with convenience fallback "./upx")
 # optional settings:
 #   $upx_exe_runner         (e.g. "qemu-x86_64 -cpu Westmere" or "valgrind")
@@ -39,14 +40,18 @@ fi
 upx_run+=( "$upx_exe" )
 echo "upx_run='${upx_run[*]}'"
 
-# upx_run check, part1
+# upx_run check
 if ! "${upx_run[@]}" --version-short >/dev/null; then echo "UPX-ERROR: FATAL: upx --version-short FAILED"; exit 1; fi
 if ! "${upx_run[@]}" -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
 if ! "${upx_run[@]}" --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
 
 #***********************************************************************
-#
+# util
 #***********************************************************************
+
+exit_code=0
+num_errors=0
+all_errors=
 
 failed() {
     ####exit $1
@@ -97,6 +102,7 @@ assert_symlink_dangling() {
 
 create_files() {
     # clean
+    local d
     for d in z_dir_1 z_dir_2 z_dir_3 z_dir_4; do
         if [[ -d $d ]]; then
             chmod -R +w "./$d"
@@ -137,15 +143,12 @@ create_files() {
 #
 #***********************************************************************
 
+#set -x # debug
+
 export UPX="--prefer-ucl --no-color --no-progress"
 export UPX_DEBUG_DISABLE_GITREV_WARNING=1
 export UPX_DEBUG_DOCTEST_VERBOSE=0
 export NO_COLOR=1
-
-#set -x # debug
-exit_code=0
-num_errors=0
-all_errors=
 
 testsuite_header() {
     local x='==========='; x="$x$x$x$x$x$x$x"

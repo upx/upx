@@ -99,5 +99,5 @@ jobs:
           export upx_exe_runner="valgrind --error-exitcode=1 --quiet"
           # on current GitHub CI, takes about 30 minutes for release and 80 minutes for debug builds
           # reduce time for debug builds to about 30 minutes
-          test $release = debug && export UPX_TESTSUITE_LEVEL=4
+          test "$release" = "debug" && export UPX_TESTSUITE_LEVEL=4
           env -C build/xtarget/clang-static/$release "$PWD"/misc/testsuite/upx_testsuite_1.sh

@@ -37,6 +37,8 @@ jobs:
             # clang-dev is needed on older Alpine versions for clang headers like <emmintrin.h>
             *:3.[0-9]|*:3.10|*:3.11) apk add clang-dev ;;
           esac
+          # create user upx:upx 2000:2000 for file system tests below ("sudo")
+          adduser upx -u 2000 -D && cd /home/upx && chmod 00700 . && chown -R upx:upx .
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx "upx with space"
@@ -63,55 +65,55 @@ jobs:
 
       # build with C17 and C++20 on alpine:edge
       - name: ${{ format('Build clang C++20 Release with {0}', env.clang_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=clang-cxx20-static CC="clang -std=gnu17 -static" CXX="clang++ -std=gnu++20 -static"
       - name: ${{ format('Build clang C++20 Debug with {0}', env.clang_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=clang-cxx20-static CC="clang -std=gnu17 -static" CXX="clang++ -std=gnu++20 -static" xtarget/debug
       - name: ${{ format('Build gcc C++20 Release with {0}', env.gcc_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=gcc-cxx20-static   CC="gcc -std=gnu17 -static"   CXX="g++ -std=gnu++20 -static"
       - name: ${{ format('Build gcc C++20 Debug with {0}', env.gcc_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=gcc-cxx20-static   CC="gcc -std=gnu17 -static"   CXX="g++ -std=gnu++20 -static" xtarget/debug
 
       # build with C23 and C++23 on alpine:edge
       - name: ${{ format('Build clang C++23 Release with {0}', env.clang_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=clang-cxx23-static CC="clang -std=gnu2x -static" CXX="clang++ -std=gnu++2b -static"
       - name: ${{ format('Build clang C++23 Debug with {0}', env.clang_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=clang-cxx23-static CC="clang -std=gnu2x -static" CXX="clang++ -std=gnu++2b -static" xtarget/debug
       - name: ${{ format('Build gcc C++23 Release with {0}', env.gcc_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=gnu2x -static"   CXX="g++ -std=gnu++23 -static"
       - name: ${{ format('Build gcc C++23 Debug with {0}', env.gcc_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=gnu2x -static"   CXX="g++ -std=gnu++23 -static" xtarget/debug
 
       # build with -flto=auto on alpine:edge
       - name: ${{ format('Build clang LTO Release with {0}', env.clang_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=clang-cxxlto-static CC="clang -flto=auto -static" CXX="clang++ -flto=auto -static"
       - name: ${{ format('Build clang LTO Debug with {0}', env.clang_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=clang-cxxlto-static CC="clang -flto=auto -static" CXX="clang++ -flto=auto -static" xtarget/debug
       - name: ${{ format('Build gcc LTO Release with {0}', env.gcc_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=gcc-cxxlto-static   CC="gcc -flto=auto -static"   CXX="g++ -flto=auto -static"
       - name: ${{ format('Build gcc LTO Debug with {0}', env.gcc_package) }}
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           make -C "upx with space" UPX_XTARGET=gcc-cxxlto-static   CC="gcc -flto=auto -static"   CXX="g++ -flto=auto -static" xtarget/debug
 
@@ -129,7 +131,7 @@ jobs:
       - { name: 'Run basic tests gcc Release',   run: 'make -C "upx with space"/build/xtarget/gcc-static/release test' }
       - { name: 'Run basic tests gcc Debug',     run: 'make -C "upx with space"/build/xtarget/gcc-static/debug test' }
       - name: 'Run basic tests C++20, C++23 and LTO'
-        if: ${{ contains(matrix.container, ':edge') }}
+        if: endsWith(matrix.container, ':edge')
         run: |
           for dir in "upx with space"/build/xtarget/*-cxx*/*; do
              echo "===== $dir"
@@ -152,7 +154,7 @@ jobs:
           testsuite="$(readlink -fn "upx with space"/misc/testsuite/test_symlinks.sh)"
           cd "upx with space"/build/xtarget/gcc-static/release
           # IMPORTANT: do NOT run as user root!
-          chmod a+w . && sudo -u operator bash "$testsuite"
+          chmod a+w . && sudo -u upx bash "$testsuite"
 
       # test suite
       - name: ${{ format('Run test suite level {0}', env.UPX_TESTSUITE_LEVEL) }}
@@ -171,4 +173,4 @@ jobs:
           testsuite="$(readlink -fn "upx with space"/misc/testsuite/test_symlinks.sh)"
           cd "upx with space"/build/xtarget/gcc-static/release
           # IMPORTANT: do NOT run as user root!
-          chmod a+w . && sudo -u operator bash "$testsuite"
+          chmod a+w . && sudo -u upx bash "$testsuite"

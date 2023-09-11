@@ -49,7 +49,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_MEM == UPX_RSIZE_MAX)
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_STR <= UPX_RSIZE_MAX / 256)
 ACC_COMPILE_TIME_ASSERT_HEADER(2ull * UPX_RSIZE_MAX * 9 / 8 + 256 * 1024 * 1024 < INT_MAX)
 ACC_COMPILE_TIME_ASSERT_HEADER(2ull * UPX_RSIZE_MAX * 10 / 8 + 128 * 1024 * 1024 <= INT_MAX + 1u)
-ACC_COMPILE_TIME_ASSERT_HEADER(5ull * UPX_RSIZE_MAX < UINT_MAX)
+ACC_COMPILE_TIME_ASSERT_HEADER(5ull * UPX_RSIZE_MAX < UINT_MAX) // IMPORTANT overflow protection
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX >= 8192 * 65536)
 ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_STR >= 1024)
 
@@ -264,12 +264,12 @@ void *upx_calloc(size_t n, size_t element_size) {
 // simple unoptimized memswap()
 void upx_memswap(void *a, void *b, size_t n) {
     if (a != b && n != 0) {
-        char *x = (char *) a;
-        char *y = (char *) b;
+        byte *x = (byte *) a;
+        byte *y = (byte *) b;
         do {
             // strange clang-analyzer-15 false positive when compiling in Debug mode
             // clang-analyzer-core.uninitialized.Assign
-            char tmp = *x; // NOLINT(*core.uninitialized.Assign) // bogus clang-analyzer warning
+            byte tmp = *x; // NOLINT(*core.uninitialized.Assign) // bogus clang-analyzer warning
             *x++ = *y;
             *y++ = tmp;
         } while (--n != 0);
@@ -277,12 +277,12 @@ void upx_memswap(void *a, void *b, size_t n) {
 }
 
 // much better memswap(), optimized for our use case in sort functions below
-static void memswap_no_overlap(char *a, char *b, size_t n) {
+static void memswap_no_overlap(byte *a, byte *b, size_t n) {
 #if defined(__clang__) && __clang_major__ < 15
     // work around a clang < 15 ICE (Internal Compiler Error)
     upx_memswap(a, b, n);
 #else // clang bug
-    upx_alignas_max char tmp_buf[16];
+    upx_alignas_max byte tmp_buf[16];
 #define SWAP(x)                                                                                    \
     ACC_BLOCK_BEGIN                                                                                \
     upx_memcpy_inline(tmp_buf, a, x);                                                              \
@@ -301,7 +301,7 @@ static void memswap_no_overlap(char *a, char *b, size_t n) {
     if (n & 2)
         SWAP(2);
     if (n & 1) {
-        char tmp = *a;
+        byte tmp = *a;
         *a = *b;
         *b = tmp;
     }
@@ -313,7 +313,7 @@ static void memswap_no_overlap(char *a, char *b, size_t n) {
 // WARNING: O(n^2) and thus very inefficient for large n
 void upx_gnomesort(void *array, size_t n, size_t element_size, upx_compare_func_t compare) {
     for (size_t i = 1; i < n; i++) {
-        char *a = (char *) array + element_size * i;               // a := &array[i]
+        byte *a = (byte *) array + element_size * i;               // a := &array[i]
         if (i != 0 && compare(a - element_size, a) > 0) {          // if a[-1] > a[0] then
             memswap_no_overlap(a - element_size, a, element_size); //   swap elements a[-1] <=> a[0]
             i -= 2;                                                //   and decrease i
@@ -330,22 +330,22 @@ void upx_shellsort_memswap(void *array, size_t n, size_t element_size, upx_compa
         gap = gap * 3 + 1;
     for (; gap > 0; gap = (gap - 1) / 3) {
         const size_t gap_bytes = element_size * gap;
-        char *p = (char *) array + gap_bytes;
+        byte *p = (byte *) array + gap_bytes;
         for (size_t i = gap; i < n; i += gap, p += gap_bytes) // invariant: p == &array[i]
-            for (char *a = p; a != array && compare(a - gap_bytes, a) > 0; a -= gap_bytes)
+            for (byte *a = p; a != array && compare(a - gap_bytes, a) > 0; a -= gap_bytes)
                 memswap_no_overlap(a - gap_bytes, a, element_size);
     }
 }
 
 // simple Shell sort using Knuth's gap; NOT stable; uses memcpy()
-// should be faster than memswap() in theory, but benchmarks are inconsistent
+// should be faster than memswap() version in theory, but benchmarks are inconsistent
 void upx_shellsort_memcpy(void *array, size_t n, size_t element_size, upx_compare_func_t compare) {
     mem_size_assert(element_size, n); // check size
     constexpr size_t MAX_INLINE_ELEMENT_SIZE = 256;
-    upx_alignas_max char tmp_buf[MAX_INLINE_ELEMENT_SIZE]; // buffer for one element
-    char *tmp = tmp_buf;
+    upx_alignas_max byte tmp_buf[MAX_INLINE_ELEMENT_SIZE]; // buffer for one element
+    byte *tmp = tmp_buf;
     if (element_size > MAX_INLINE_ELEMENT_SIZE) {
-        tmp = (char *) malloc(element_size);
+        tmp = (byte *) malloc(element_size);
         assert(tmp != nullptr);
     }
     size_t gap = 0;         // 0, 1, 4, 13, 40, 121, 364, 1093, ...
@@ -353,10 +353,10 @@ void upx_shellsort_memcpy(void *array, size_t n, size_t element_size, upx_compar
         gap = gap * 3 + 1;
     for (; gap > 0; gap = (gap - 1) / 3) {
         const size_t gap_bytes = element_size * gap;
-        char *p = (char *) array + gap_bytes;
+        byte *p = (byte *) array + gap_bytes;
         for (size_t i = gap; i < n; i += gap, p += gap_bytes) // invariant: p == &array[i]
             if (compare(p - gap_bytes, p) > 0) {
-                char *a = p;
+                byte *a = p;
                 memcpy(tmp, a, element_size);
                 do {
                     memcpy(a, a - gap_bytes, element_size);
@@ -378,7 +378,7 @@ void upx_std_stable_sort(void *array, size_t n, upx_compare_func_t compare) {
     // just for testing
     upx_gnomesort(array, n, ElementSize, compare);
 #else
-    struct alignas(1) element_type { char data[ElementSize]; };
+    struct alignas(1) element_type { byte data[ElementSize]; };
     static_assert(sizeof(element_type) == ElementSize);
     static_assert(alignof(element_type) == 1);
     auto cmp = [compare](const element_type &a, const element_type &b) -> bool {

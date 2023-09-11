@@ -71,9 +71,8 @@
 FileBase::~FileBase() may_throw {
 #if 0 && defined(__GNUC__) // debug
     if (isOpen())
-        fprintf(stderr,"%s: %s\n", _name, __PRETTY_FUNCTION__);
+        fprintf(stderr, "%s: %s\n", _name, __PRETTY_FUNCTION__);
 #endif
-
     if (std::uncaught_exceptions() == 0)
         closex(); // may_throw
     else

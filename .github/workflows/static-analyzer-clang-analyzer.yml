@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: {container: ['alpine:3.16','alpine:3.17','alpine:3.18','alpine:edge','i386/alpine:edge']}
-    name: ${{ format('Analyze {0}', matrix.container) }}
+    name: ${{ format('Analyze clang-analyzer {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
