@@ -51,7 +51,7 @@
 #include "xspan_impl.h"
 
 #ifdef XSPAN_NAMESPACE_NAME
-// help constructor to distinguish between number of elements and bytes
+// types to help the constructor to distinguish between number of elements and bytes
 using XSPAN_NAMESPACE_NAME::XSpanCount;
 using XSPAN_NAMESPACE_NAME::XSpanSizeInBytes;
 // actual classes
@@ -59,7 +59,7 @@ using XSPAN_NAMESPACE_NAME::Ptr;
 using XSPAN_NAMESPACE_NAME::PtrOrSpan;
 using XSPAN_NAMESPACE_NAME::PtrOrSpanOrNull;
 using XSPAN_NAMESPACE_NAME::Span;
-// util
+// support functions
 using XSPAN_NAMESPACE_NAME::raw_bytes;       // overloaded for all classes
 using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #endif

@@ -64,7 +64,7 @@ static void handle_opterr(acc_getopt_p g, const char *f, void *v) {
 static int exit_code = EXIT_OK;
 
 #if (WITH_GUI)
-__acc_static_noinline void do_exit(void) { throw exit_code; }
+static noinline void do_exit(void) { throw exit_code; }
 #else
 #if defined(__GNUC__)
 static void do_exit(void) __attribute__((__noreturn__));
@@ -105,14 +105,14 @@ static bool set_eec(int ec, int *eec) {
 
 bool main_set_exit_code(int ec) { return set_eec(ec, &exit_code); }
 
-__acc_static_noinline void e_exit(int ec) {
+static noinline void e_exit(int ec) {
     if (opt->debug.getopt_throw_instead_of_exit)
         throw ec;
     (void) main_set_exit_code(ec);
     do_exit();
 }
 
-__acc_static_noinline void e_usage(void) {
+static noinline void e_usage(void) {
     if (opt->debug.getopt_throw_instead_of_exit)
         throw EXIT_USAGE;
     show_usage();
@@ -220,7 +220,7 @@ static void e_help(void) {
 }
 
 static void set_term(FILE *f) {
-    if (f)
+    if (f != nullptr)
         con_term = f;
     else
         con_term = acc_isatty(STDIN_FILENO) ? stderr : stdout;
@@ -1327,7 +1327,7 @@ int _dowildcard = -1;
 }
 #endif
 
-int __acc_cdecl_main main(int argc, char *argv[]) {
+int __acc_cdecl_main main(int argc, char *argv[]) /*noexcept*/ {
 #if 0 && (ACC_OS_DOS32) && defined(__DJGPP__)
     // LFN=n may cause problems with 2.03's _rename and mkdir under WinME
     putenv("LFN=y");

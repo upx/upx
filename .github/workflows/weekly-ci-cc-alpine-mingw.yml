@@ -1,5 +1,5 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# CC CompilationCheck: test various gcc+mingw versions
+# CC CompilationCheck: compile with various mingw-gcc versions and run tests under Wine
 
 name: 'Weekly CI CC - Alpine Linux MinGW'
 on:

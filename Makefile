@@ -20,6 +20,28 @@ endif
 # enable this if you prefer Ninja for the actual builds:
 #UPX_CMAKE_CONFIG_FLAGS += -G Ninja
 
+# CMake honors CC and CXX; explicitly pass optional CMAKE_AR and CMAKE_RANLIB
+is_set = $(and $($1),$(or $(findstring command line,$(origin $1)),$(findstring environment,$(origin $1))))
+ifneq ($(call is_set,CMAKE_AR),)
+  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_AR="$(CMAKE_AR)"
+endif
+ifneq ($(call is_set,CMAKE_RANLIB),)
+  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_RANLIB="$(CMAKE_RANLIB)"
+endif
+# undocumented: CMAKE_NM, CMAKE_OBJCOPY, CMAKE_OBJDUMP and CMAKE_STRIP
+ifneq ($(call is_set,CMAKE_NM),)
+  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_NM="$(CMAKE_NM)"
+endif
+ifneq ($(call is_set,CMAKE_OBJCOPY),)
+  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_OBJCOPY="$(CMAKE_OBJCOPY)"
+endif
+ifneq ($(call is_set,CMAKE_OBJDUMP),)
+  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_OBJDUMP="$(CMAKE_OBJDUMP)"
+endif
+ifneq ($(call is_set,CMAKE_STRIP),)
+  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_STRIP="$(CMAKE_STRIP)"
+endif
+
 #***********************************************************************
 # default
 #***********************************************************************

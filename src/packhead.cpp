@@ -95,7 +95,7 @@ int PackHeader::getPackHeaderSize() const {
 }
 
 /*************************************************************************
-// see stub/header.ash
+// see stub/src/include/header.S
 **************************************************************************/
 
 void PackHeader::putPackHeader(SPAN_S(byte) p) const {
@@ -111,7 +111,7 @@ void PackHeader::putPackHeader(SPAN_S(byte) p) const {
     int old_chksum = 0;
 
     // the new variable length header
-    if (format < 128) {
+    if (format < 128) { // little endian
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS) {
             size = 22;
             old_chksum = get_packheader_checksum(p, size - 1);
@@ -140,7 +140,7 @@ void PackHeader::putPackHeader(SPAN_S(byte) p) const {
         }
         set_le32(p + 8, u_adler);
         set_le32(p + 12, c_adler);
-    } else {
+    } else { // big endian
         size = 32;
         old_chksum = get_packheader_checksum(p, size - 1);
         set_be32(p + 8, u_len);

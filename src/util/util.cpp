@@ -388,7 +388,7 @@ void upx_std_stable_sort(void *array, size_t n, upx_compare_func_t compare) {
 #endif
 }
 
-#if UPX_QSORT_IS_STABLE_SORT
+#if UPX_CONFIG_USE_STABLE_SORT
 // instantiate function templates for all element sizes we need
 // efficient, but code size bloat
 template void upx_std_stable_sort<1>(void *, size_t, upx_compare_func_t);

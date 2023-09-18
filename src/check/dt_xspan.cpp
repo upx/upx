@@ -806,7 +806,7 @@ TEST_CASE("PtrOrSpan int") {
 
 namespace {
 template <class T>
-__acc_static_noinline int foo(T p) {
+static noinline int foo(T p) {
     unsigned r = 0;
     r += *p++;
     r += *++p;
@@ -848,5 +848,87 @@ TEST_CASE("Span codegen") {
 }
 
 #endif // WITH_XSPAN >= 2
+
+/*************************************************************************
+// misc
+**************************************************************************/
+
+namespace {
+template <class T>
+struct PointerTraits {
+    typedef typename std::add_lvalue_reference<T>::type reference;
+    typedef
+        typename std::add_lvalue_reference<typename std::add_const<T>::type>::type const_reference;
+    typedef typename std::add_pointer<T>::type pointer;
+    typedef typename std::add_pointer<typename std::add_const<T>::type>::type const_pointer;
+};
+} // namespace
+
+#if __cplusplus >= 201103L
+
+TEST_CASE("decltype integral constants") {
+    static_assert((std::is_same<decltype(0), int>::value), "");
+    static_assert((std::is_same<decltype(0u), unsigned>::value), "");
+    static_assert((std::is_same<decltype(0l), long>::value), "");
+    static_assert((std::is_same<decltype(0ul), unsigned long>::value), "");
+    static_assert((std::is_same<decltype(0ll), long long>::value), "");
+    static_assert((std::is_same<decltype(0ull), unsigned long long>::value), "");
+    static_assert((std::is_same<decltype((char) 0), char>::value), "");
+    static_assert((std::is_same<decltype((short) 0), short>::value), "");
+    static_assert((std::is_same<decltype((long) 0), long>::value), "");
+    static_assert((std::is_same<decltype((long long) 0), long long>::value), "");
+    static_assert((std::is_same<decltype(char(0)), char>::value), "");
+    static_assert((std::is_same<decltype(short(0)), short>::value), "");
+    static_assert((std::is_same<decltype(long(0)), long>::value), "");
+}
+
+TEST_CASE("decltype pointer") {
+    int dummy = 0;
+    int *p = &dummy;
+    const int *c = &dummy;
+    static_assert((std::is_same<decltype(p - p), std::ptrdiff_t>::value), "");
+    static_assert((std::is_same<decltype(c - c), std::ptrdiff_t>::value), "");
+    static_assert((std::is_same<decltype(p - c), std::ptrdiff_t>::value), "");
+    static_assert((std::is_same<decltype(c - p), std::ptrdiff_t>::value), "");
+    typedef PointerTraits<int> TInt;
+    typedef PointerTraits<const int> TConstInt;
+    static_assert((std::is_same<int *, TInt::pointer>::value), "");
+    static_assert((std::is_same<const int *, TInt::const_pointer>::value), "");
+    static_assert((std::is_same<const int *, TConstInt::pointer>::value), "");
+    static_assert((std::is_same<const int *, TConstInt::const_pointer>::value), "");
+    //
+    static_assert((std::is_same<decltype(p), TInt::pointer>::value), "");
+    static_assert((std::is_same<decltype(c), TInt::const_pointer>::value), "");
+    static_assert((std::is_same<decltype(c), TConstInt::pointer>::value), "");
+    static_assert((std::is_same<decltype(p + 1), TInt::pointer>::value), "");
+    static_assert((std::is_same<decltype(c + 1), TInt::const_pointer>::value), "");
+    static_assert((std::is_same<decltype(c + 1), TConstInt::pointer>::value), "");
+    static_assert((std::is_same<decltype(c + 1), TConstInt::const_pointer>::value), "");
+    static_assert((std::is_same<decltype(c + 1), const int *>::value), "");
+    // dereference
+    static_assert((std::is_same<decltype(*p), TInt::reference>::value), "");
+    static_assert((std::is_same<decltype(*c), TInt::const_reference>::value), "");
+#if 0
+    // this works, but avoid clang warnings:
+    //   "Expression with side effects has no effect in an unevaluated context"
+    static_assert((std::is_same<decltype(*p++), TInt::reference>::value), "");
+    static_assert((std::is_same<decltype(*++p), TInt::reference>::value), "");
+    static_assert((std::is_same<decltype(*c++), TInt::const_reference>::value), "");
+    static_assert((std::is_same<decltype(*c++), TConstInt::reference>::value), "");
+    static_assert((std::is_same<decltype(*c++), TConstInt::const_reference>::value), "");
+    static_assert((std::is_same<decltype(*++c), TInt::const_reference>::value), "");
+    static_assert((std::is_same<decltype(*++c), TConstInt::reference>::value), "");
+    static_assert((std::is_same<decltype(*++c), TConstInt::const_reference>::value), "");
+#endif
+    // array access
+    static_assert((std::is_same<decltype(p[0]), TInt::reference>::value), "");
+    static_assert((std::is_same<decltype(c[0]), TInt::const_reference>::value), "");
+    static_assert((std::is_same<decltype(c[0]), TConstInt::reference>::value), "");
+    static_assert((std::is_same<decltype(c[0]), TConstInt::const_reference>::value), "");
+    UNUSED(p);
+    UNUSED(c);
+}
+
+#endif // __cplusplus >= 201103L
 
 /* vim:set ts=4 sw=4 et: */

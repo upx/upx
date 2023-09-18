@@ -50,7 +50,7 @@ public:
     // getVersion() enables detecting forward incompatibility of unpack()
     // by old upx when newer upx changes the format of compressed output.
     virtual int getVersion() const = 0;
-    // A unique integer ID for this executable format. See conf.h.
+    // A unique integer ID for this executable format; see UPX_F_xxx in conf.h.
     virtual int getFormat() const = 0;
     virtual const char *getName() const = 0;
     virtual const char *getFullName(const Options *) const = 0;

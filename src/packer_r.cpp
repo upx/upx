@@ -137,7 +137,7 @@ unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P
         if (pc + 4 > image_size)
             throwCantUnpack("bad reloc[%#x] = %#x", i, pc);
         *relocs++ = pc;
-        if (bswap && image != nullptr) {
+        if (bswap) {
             if (bits == 32)
                 set_be32(image + pc, get_le32(image + pc));
             else

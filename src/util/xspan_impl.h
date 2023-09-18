@@ -204,8 +204,6 @@ struct XSpanInternalDummyArg {
 #define XSpanInternalDummyArgInit (XSPAN_NS(XSpanInternalDummyArg)(0, nullptr))
 #endif
 
-XSPAN_NAMESPACE_END
-
 // poison a pointer: point to a non-null invalid address
 // - resulting pointer should crash on dereference
 // - this should be efficient (so no mmap() guard page etc.)
@@ -215,6 +213,8 @@ static forceinline void *XSPAN_GET_POISON_VOID_PTR() {
     // return (void *) (upx_uintptr_t) 251; // NOLINT(performance-no-int-to-ptr)
     return (void *) 251;
 }
+
+XSPAN_NAMESPACE_END
 
 #ifndef XSPAN_DELETED_FUNCTION
 #define XSPAN_DELETED_FUNCTION = delete

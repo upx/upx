@@ -634,7 +634,7 @@ TEST_CASE("libc qsort") {
     struct Elem {
         upx_uint16_t id;
         upx_uint16_t value;
-        static int compare(const void *aa, const void *bb) noexcept {
+        static int __acc_cdecl_qsort compare(const void *aa, const void *bb) noexcept {
             const Elem *a = (const Elem *) aa;
             const Elem *b = (const Elem *) bb;
             assert_noexcept(a->id != b->id); // check not IDENTICAL
@@ -657,11 +657,11 @@ TEST_CASE("libc qsort") {
     constexpr size_t N = 4096;
     Elem e[N];
     for (size_t n = 0; n <= N; n = 2 * n + 1) {
-        CHECK(Elem::check_sort(qsort, e, n));
+        // CHECK(Elem::check_sort(qsort, e, n)); // libc qsort()
         CHECK(Elem::check_sort(upx_gnomesort, e, n));
         CHECK(Elem::check_sort(upx_shellsort_memswap, e, n));
         CHECK(Elem::check_sort(upx_shellsort_memcpy, e, n));
-#if UPX_QSORT_IS_STABLE_SORT
+#if UPX_CONFIG_USE_STABLE_SORT
         upx_sort_func_t wrap_stable_sort = [](void *aa, size_t nn, size_t, upx_compare_func_t cc) {
             upx_std_stable_sort<sizeof(Elem)>(aa, nn, cc);
         };

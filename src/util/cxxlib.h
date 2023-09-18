@@ -1,4 +1,4 @@
-/* cxxlib.h --
+/* cxxlib.h -- C++ support library
 
    This file is part of the UPX executable compressor.
 
@@ -35,7 +35,7 @@ namespace upx {
 // type_traits
 **************************************************************************/
 
-// <type_traits> is_bounded_array: same as C++20 std::is_bounded_array
+// is_bounded_array: identical to C++20 std::is_bounded_array
 template <class T>
 struct is_bounded_array : public std::false_type {};
 template <class T, size_t N>
@@ -43,7 +43,7 @@ struct is_bounded_array<T[N]> : public std::true_type {};
 template <class T>
 inline constexpr bool is_bounded_array_v = is_bounded_array<T>::value;
 
-// <type_traits> util: is_same_all and is_same_any means std::is_same for multiple types
+// is_same_all and is_same_any: std::is_same for multiple types
 template <class T, class... Ts>
 struct is_same_all : public std::conjunction<std::is_same<T, Ts>...> {};
 template <class T, class... Ts>
@@ -125,7 +125,7 @@ struct TriBool final {
         return value == TriBool(other).value;
     }
 
-    // "Third" can mean many things, depending on usage context, so provide some alternative names:
+    // "Third" can mean many things - depending on usage context, so provide some alternate names:
     // constexpr bool isDefault() const noexcept { return isThird(); } // might be misleading
     constexpr bool isIndeterminate() const noexcept { return isThird(); }
     constexpr bool isOther() const noexcept { return isThird(); }

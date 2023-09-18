@@ -138,13 +138,13 @@ void upx_shellsort_memcpy(void *array, size_t n, size_t element_size, upx_compar
 template <size_t ElementSize>
 void upx_std_stable_sort(void *array, size_t n, upx_compare_func_t compare);
 
-#if 1
+// #define UPX_CONFIG_USE_STABLE_SORT 1
+#if UPX_CONFIG_USE_STABLE_SORT
+// use std::stable_sort(); requires that "element_size" is constexpr!
+#define upx_qsort(a, n, element_size, compare) upx_std_stable_sort<(element_size)>(a, n, compare)
+#else
 // use libc qsort()
 #define upx_qsort qsort
-#else
-// use std::stable_sort()
-#define upx_qsort(a, b, c, d)    upx_std_stable_sort<(c)>(a, b, d)
-#define UPX_QSORT_IS_STABLE_SORT 1
 #endif
 
 /*************************************************************************

@@ -49,7 +49,7 @@ function run_config_and_build {
         # run_config
         if [[ ! -f $bdir/CMakeCache.txt ]]; then
             export CMAKE_REQUIRED_QUIET=OFF
-            cmake -S . -B "$bdir" -DCMAKE_BUILD_TYPE=$build_type -DCMAKE_AR=$AR -DCMAKE_RANLIB=$RANLIB $cmake_config_flags
+            cmake -S . -B "$bdir" -DCMAKE_BUILD_TYPE=$build_type -DCMAKE_AR="$AR" -DCMAKE_RANLIB="$RANLIB" $cmake_config_flags
         fi
         # run_build
         cmake --build "$bdir" --config $build_type --parallel
@@ -93,7 +93,7 @@ do
     export CC=/usr/bin/${toolchain}-gcc
     export CXX=/usr/bin/${toolchain}-g++
     export RANLIB=/usr/bin/${toolchain}-ranlib
-    ls -l $AR $CC $CXX $RANLIB
+    ls -l "$AR" "$CC" "$CXX" "$RANLIB"
     run_config_and_build $toolchain
     unset AR CC CXX RANLIB
 done
