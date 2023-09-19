@@ -20,27 +20,21 @@ endif
 # enable this if you prefer Ninja for the actual builds:
 #UPX_CMAKE_CONFIG_FLAGS += -G Ninja
 
-# CMake honors CC and CXX; explicitly pass optional CMAKE_AR and CMAKE_RANLIB
-is_set = $(and $($1),$(or $(findstring command line,$(origin $1)),$(findstring environment,$(origin $1))))
-ifneq ($(call is_set,CMAKE_AR),)
-  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_AR="$(CMAKE_AR)"
-endif
-ifneq ($(call is_set,CMAKE_RANLIB),)
-  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_RANLIB="$(CMAKE_RANLIB)"
-endif
-# undocumented: CMAKE_NM, CMAKE_OBJCOPY, CMAKE_OBJDUMP and CMAKE_STRIP
-ifneq ($(call is_set,CMAKE_NM),)
-  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_NM="$(CMAKE_NM)"
-endif
-ifneq ($(call is_set,CMAKE_OBJCOPY),)
-  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_OBJCOPY="$(CMAKE_OBJCOPY)"
-endif
-ifneq ($(call is_set,CMAKE_OBJDUMP),)
-  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_OBJDUMP="$(CMAKE_OBJDUMP)"
-endif
-ifneq ($(call is_set,CMAKE_STRIP),)
-  UPX_CMAKE_CONFIG_FLAGS += -DCMAKE_STRIP="$(CMAKE_STRIP)"
-endif
+# by default CMake only honors CC and CXX; make it easy to use other
+# variables like CMAKE_AR by manually passing them
+__add_cmake_config = $(and $($1),-D$1="$($1)")
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_AR)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_NM)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_RANLIB)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJCOPY)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJDUMP)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_STRIP)
+# pass UPX config options from environment/make to cmake; see CMakeLists.txt
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_GITREV)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SANITIZE)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WSTRICT)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WERROR)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SELF_PACK_TEST)
 
 #***********************************************************************
 # default

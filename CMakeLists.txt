@@ -54,11 +54,11 @@ function(upx_cache_bool_vars)
     list(REMOVE_AT ARGV 0)
     foreach(var ${ARGV})
         set(value ${default_value})
-        if(DEFINED UPX_CACHE_${var})
+        if(DEFINED UPX_CACHE_${var})            # cached
             set(value "${UPX_CACHE_${var}}")
-        elseif(DEFINED ${var})
+        elseif(DEFINED ${var})                  # defined via "cmake -DXXX=YYY"
             set(value "${${var}}")
-        elseif("$ENV{${var}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$")
+        elseif("$ENV{${var}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$") # environment
             set(value "$ENV{${var}}")
             set(UPX_CACHE_ORIGIN_FROM_ENV_${var} TRUE CACHE INTERNAL "" FORCE)
         endif()
