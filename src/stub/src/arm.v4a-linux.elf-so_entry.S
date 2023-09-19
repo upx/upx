@@ -171,12 +171,17 @@ L70_ret:
 
     mfd     .req r6  // busy: r6,r5
 O_RDWR= 2
-O_DIRECTORY= 040000
-O_TMPFILE= 020000000
+O_DIRECTORY= 00200000   // 0x10000
+O_TMPFILE= 020000000   // 0x400000
 
+// memfd_create() requires Linux >= 3.11 (2018-03-25)
+// Early Android also lacks memfd_create.
+// So fall back to unnamed file in /dev/shm.
+// O_TMPFILE requires Linux >= 2013-07-13, so it might be necessary
+// to use a named /dev/shm/upxXXXXX; later!
         bl L110
         .word O_RDWR | O_DIRECTORY | O_TMPFILE
-        .word 0700
+        .word 0700  // S_IRWXU permissions
         .asciz "/dev/shm"; .balign 4
 L110:
         mov r0,lr
@@ -204,9 +209,6 @@ L110:
         adr r0,_start -4 *NBPW  // &SO_INFO
         add r1,sp,#F_ARGC
         ldr pc,[sp, #F_ADRU]  // invoke folded code
-
-devshm:
-        .asciz "/dev/shm"; .balign 4
 
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1

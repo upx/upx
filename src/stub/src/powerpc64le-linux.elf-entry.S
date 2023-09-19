@@ -63,6 +63,7 @@ PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
 /* /usr/include/asm-ppc/unistd.h */
 __NR_exit  = 1
+__NR_memfd_create= 360
 __NR_mmap  = 90
 __NR_mprotect = 125
 __NR_munmap = 91

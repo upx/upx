@@ -114,6 +114,7 @@ M_NRV2E_LE32=8
 /* These from /usr/include/asm/unistd.h */
 __NR_Linux = 4000
 __NR_exit     =   1+ __NR_Linux
+__NR_memfd_create= 354
 __NR_mmap     =  90+ __NR_Linux
 __NR_mprotect = 125+ __NR_Linux
 __NR_open     =   5+ __NR_Linux

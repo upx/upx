@@ -194,14 +194,14 @@ eof_n2b:
 
         xor %ecx,%ecx  // zero
         call 0f; .asciz "upx"; 0: pop %ebx
-        push $__NR_memfd_create; pop %eax; int $0x80
+        push $__NR_memfd_create; pop %eax; call sys_check
 #define mfd %edi
         mov %eax,mfd
 
         mov F_LENU(old_sp),%edx
         mov %esp,%ecx
         mov %edi,%ebx
-        push $__NR_write; pop %eax; int $0x80
+        push $__NR_write; pop %eax; call sys_check
         mov old_sp,%esp  // de-alloca
 
         push $0  // arg6
@@ -211,11 +211,12 @@ eof_n2b:
         push 4*NBPW(%esp)  // arg2  F_LENU
         push $0  // arg1
         mov %esp,%ebx
-        push $__NR_mmap; pop %eax; int $0x80; add $6*NBPW,%esp
+        push $__NR_mmap; pop %eax; call sys_check
+        add $6*NBPW,%esp
 
         push %eax  // MATCH_13  ptr unfolded_code
         mov mfd,%ebx
-        push $__NR_close; pop %eax; int $0x80
+        push $__NR_close; pop %eax; call sys_check
 
         pop %eax; push %eax
         jmp *%eax
@@ -230,10 +231,16 @@ eof_n2b:
 //  MATCH_07  envp
 
 
+sys_check:  // syscall with error checking; if halt then %eax= -errno, %ecx= __NR_
+        push %eax // save __NR_ for debug
+        int $0x80
+        pop %ecx  // recover __NR_ for debug
+        cmp $PAGE_MASK,%eax; jb 0f; hlt; 0:  // -errno
+        ret
+
 old_mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
         lea 4(%esp),%ebx
-        push $__NR_mmap; pop %eax; int $0x80
-        cmp $PAGE_MASK,%eax; jb 0f; hlt; 0:
+        push $__NR_mmap; pop %eax; call sys_check
         ret $6*4
 
 // IDENTSTR goes here

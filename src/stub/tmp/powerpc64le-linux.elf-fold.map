@@ -7,64 +7,80 @@ Name             Origin             Length             Attributes
 Linker script and memory map
 
 TARGET(elf64-powerpcle)
-                0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
+                0x000000000010004c                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x00000000001000bc      0xc04
+.text           0x000000000010004c      0xd7c
  *(.text)
- .text          0x00000000001000bc      0x348 tmp/powerpc64le-linux.elf-fold.o
-                0x00000000001000bc                get_page_mask
-                0x0000000000100394                mmap
-                0x00000000001003ac                Pprotect
-                0x00000000001003ac                mprotect
-                0x00000000001003c4                exit
-                0x00000000001003cc                brk
-                0x00000000001003d4                readlink
-                0x00000000001003dc                read
-                0x00000000001003e4                open
-                0x00000000001003ec                close
-                0x00000000001003f4                munmap
-                0x00000000001003fc                my_bkpt
- .text          0x0000000000100404      0x8bc tmp/powerpc64le-linux.elf-main.o
+ .text          0x000000000010004c      0x394 tmp/powerpc64le-linux.elf-fold.o
+                0x000000000010004c                get_page_mask
+                0x000000000010031c                Pmap
+                0x000000000010032c                mmap
+                0x0000000000100344                Pprotect
+                0x0000000000100344                mprotect
+                0x000000000010035c                Punmap
+                0x000000000010036c                munmap
+                0x0000000000100374                memfd_create
+                0x000000000010037c                ftruncate
+                0x0000000000100384                exit
+                0x000000000010038c                brk
+                0x0000000000100394                readlink
+                0x000000000010039c                Pwrite
+                0x00000000001003a4                read
+                0x00000000001003ac                open
+                0x00000000001003b4                close
+                0x00000000001003bc                memcpy
+                0x00000000001003d8                my_bkpt
+ .text          0x00000000001003e0      0x9e8 tmp/powerpc64le-linux.elf-main.o
+ .text          0x0000000000100dc8        0x0 tmp/powerpc64le-expand.o
  *(.data)
- .data          0x0000000000100cc0        0x0 tmp/powerpc64le-linux.elf-fold.o
- .data          0x0000000000100cc0        0x0 tmp/powerpc64le-linux.elf-main.o
-
-.sfpr           0x0000000000100cc0       0xa4
- .sfpr          0x0000000000100cc0       0xa4 linker stubs
-                0x0000000000100cc0                _savegpr0_14
-                0x0000000000100ce8                _savegpr0_24
-                0x0000000000100cf8                _savegpr0_28
-                0x0000000000100d10                _restgpr0_14
-                0x0000000000100d38                _restgpr0_24
-                0x0000000000100d48                _restgpr0_28
-
-.glink          0x0000000000100d68        0x0
- .glink         0x0000000000100d68        0x0 linker stubs
-
-.eh_frame       0x0000000000100d64        0x0
- .eh_frame      0x0000000000100d64        0x0 linker stubs
-
-.rela.dyn       0x0000000000100d68        0x0
- .rela.iplt     0x0000000000100d68        0x0 linker stubs
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-linux.elf-fold.o
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-linux.elf-main.o
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-expand.o
 
 .data
 LOAD tmp/powerpc64le-linux.elf-fold.o
 LOAD tmp/powerpc64le-linux.elf-main.o
+LOAD tmp/powerpc64le-expand.o
 OUTPUT(tmp/powerpc64le-linux.elf-fold.bin elf64-powerpcle)
 
-.branch_lt      0x0000000000100d68        0x0
- .branch_lt     0x0000000000100d68        0x0 linker stubs
+.toc            0x0000000000000000        0x0
+ .toc           0x0000000000000000        0x0 tmp/powerpc64le-linux.elf-main.o
 
-.toc            0x0000000000100d68        0x0
- .toc           0x0000000000100d68        0x0 tmp/powerpc64le-linux.elf-main.o
+.opd            0x0000000000000000       0x80
+ .opd           0x0000000000000000       0x80 tmp/powerpc64le-linux.elf-main.o
+                0x0000000000000050                PF_TO_PROT
+                0x0000000000000070                upx_main
 
-.opd            0x0000000000100d68       0x58
- .opd           0x0000000000100d68       0x58 tmp/powerpc64le-linux.elf-main.o
-                0x0000000000100da8                upx_main
+.bss            0x0000000000000000        0x0
+ .bss           0x0000000000000000        0x0 tmp/powerpc64le-linux.elf-fold.o
+ .bss           0x0000000000000000        0x0 tmp/powerpc64le-linux.elf-main.o
+ .bss           0x0000000000000000        0x0 tmp/powerpc64le-expand.o
 
-.iplt           0x0000000000100dc0        0x0
- .iplt          0x0000000000100dc0        0x0 linker stubs
+EXP_HEAD        0x0000000000000000       0xdc
+ EXP_HEAD       0x0000000000000000       0xdc tmp/powerpc64le-expand.o
+                0x0000000000000000                f_expand
 
-.bss            0x0000000000100dc0        0x0
- .bss           0x0000000000100dc0        0x0 tmp/powerpc64le-linux.elf-fold.o
- .bss           0x0000000000100dc0        0x0 tmp/powerpc64le-linux.elf-main.o
+EXP_TAIL        0x0000000000000000       0x1c
+ EXP_TAIL       0x0000000000000000       0x1c tmp/powerpc64le-expand.o
+                0x0000000000000000                eof_nrv
+
+NRV2E           0x0000000000000000      0x154
+ NRV2E          0x0000000000000000      0x154 tmp/powerpc64le-expand.o
+
+NRV2D           0x0000000000000000      0x144
+ NRV2D          0x0000000000000000      0x144 tmp/powerpc64le-expand.o
+
+NRV2B           0x0000000000000000       0xf8
+ NRV2B          0x0000000000000000       0xf8 tmp/powerpc64le-expand.o
+
+LZMA_ELF00      0x0000000000000000       0x94
+ LZMA_ELF00     0x0000000000000000       0x94 tmp/powerpc64le-expand.o
+
+LZMA_DEC30      0x0000000000000000       0x28
+ LZMA_DEC30     0x0000000000000000       0x28 tmp/powerpc64le-expand.o
+
+LZMA_DEC10      0x0000000000000000      0xbb8
+ LZMA_DEC10     0x0000000000000000      0xbb8 tmp/powerpc64le-expand.o
+
+LZMA_DEC20      0x0000000000000000      0xc74
+ LZMA_DEC20     0x0000000000000000      0xc74 tmp/powerpc64le-expand.o
