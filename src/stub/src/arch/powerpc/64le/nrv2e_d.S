@@ -33,9 +33,11 @@
         dcbtst 0,dst  // prime dcache for store
         mflr t3  // return address
 
+#define meth a4
         cmplwi cr0,meth,M_NRV2E_LE32
         bne   cr0,not_nrv2e
 
+#define ldst a3
         std dst,0(ldst)  // original dst
         add lsrc,lsrc,src  // input eof
 

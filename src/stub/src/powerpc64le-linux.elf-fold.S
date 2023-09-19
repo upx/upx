@@ -302,11 +302,18 @@ SYS_open=  5
 SYS_close= 6
 
 SYS_brk=       45
+SYS_readlink=  85
 SYS_mmap=      90
 SYS_munmap=    91
+SYS_ftruncate= 93
 SYS_mprotect= 125
-SYS_readlink=  85
+SYS_memfd_create= 360
 
+Pmap: .globl Pmap
+        li r0, 0xfff  // ~PAGE_MASK  (FIXME: probably use 4th arg)
+        and r0,a0,r0
+        sub a0,a0,r0
+        add a1,a1,r0
 mmap: .globl mmap
         clrldi  a4,a4,32  // truncate fd to 32 bits; kernel is picky?
         li 0,SYS_mmap
@@ -325,22 +332,42 @@ mprotect: .globl mprotect
         add a1,a1,r0
         li r0,SYS_mprotect; 5: b 5f
 
+Punmap: .globl Punmap
+        li r0, 0xfff  // ~PAGE_MASK  (FIXME: probably use 4th arg)
+        and r0,a0,r0
+        sub a0,a0,r0
+        add a1,a1,r0
+munmap: .globl munmap
+        li r0,SYS_munmap;   5: b sysgo
+memfd_create: .globl memfd_create
+        li r0,SYS_memfd_create; 5: b 5f
+ftruncate: .globl ftruncate
+        li r0,SYS_ftruncate;5: b 5f
 exit: .globl exit
-        li r0,SYS_exit;        b 5f
+        li r0,SYS_exit;     5: b 5f
 brk: .globl brk
         li r0,SYS_brk;      5: b 5f
 readlink: .globl readlink
         li r0,SYS_readlink; 5: b 5f
+Pwrite: .globl Pwrite
 //write: .globl write
-//        li r0,SYS_write;    5: b 5f
+        li r0,SYS_write;    5: b 5f
 read: .globl read
         li r0,SYS_read;     5: b 5f
 open: .globl open
         li r0,SYS_open;     5: b 5f
 close: .globl close
-        li r0,SYS_close;    5: b 5f
-munmap: .globl munmap
-        li r0,SYS_munmap;   5: b sysgo
+        li r0,SYS_close;    5: b sysgo
+
+memcpy: .globl memcpy  // FIXME: opcodes!
+        mtctr a2
+        subi a0,a0,1
+        subi a1,a1,1
+L999:
+        lbzu r0,1(a1)
+        stbu r0,1(a0)
+        bdnz L999
+        blr
 
 my_bkpt: .globl my_bkpt
         teq r0,r0  // my_bkpt

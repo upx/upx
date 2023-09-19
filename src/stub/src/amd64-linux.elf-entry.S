@@ -31,6 +31,20 @@
 
 #include "arch/amd64/macros.S"
 #include "arch/amd64/regs.h"
+NBPW= 8
+.macro          jmps    target
+                .byte   0xeb, \target - . - 1
+.endm
+
+/* These from /usr/include/unistd_64.h */
+__NR_memfd_create= 319  // 0x13f
+__NR_ftruncate= 77
+__NR_exit=     60
+__NR_mprotect= 10
+__NR_mmap=      9
+__NR_close=     3
+__NR_open=      2
+__NR_write=     1
 
 sz_Ehdr= 64
 e_phnum= 56
@@ -50,6 +64,7 @@ PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
 
+MAP_SHARED=  1
 MAP_PRIVATE= 2
 MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
@@ -71,10 +86,86 @@ M_NRV2E_LE32=8
   section ELFMAINX
 sz_pack2= .-4
 _start: .globl _start
-////    nop; int3  # uncomment for debugging
+    nop; int3  # uncomment for debugging
+        movq %rsp,%r13
         push %rax  // space for entry address
         push %rdx  // register this function pointer with 'atexit'
-        call main  // push &decompress
+
+// Create anonymous temporary file on mfd
+        push $'u'|('p'<<8)|('x'<<16)|(0<<24)
+        push %rsp; pop %arg1  // "upx"
+        subl %arg2l,%arg2l  // 0
+        movl $__NR_memfd_create,%eax; call sys_check; mov %eax,%r12d  // mfd
+        pop %rcx  // discard "upx"
+
+// Decompress the rest of this loader, and jump to it.
+        lea o_binfo(%rip),%rsi
+        lodsl; and $~1,%eax; movl %eax,%r14d  // O_BINFO
+        push %rsi; pop %rbx  // &b_info of folded decompressor
+        movl (%rsi),%edx  // .sz_unc LENU
+
+        lea sz_pack2(%rip),%rcx  // &sz_pack2
+        movl (%rcx),%r15d  // sz_pack2: length before stub
+        subq %r15,%rcx  // elfaddr= &Elf64_Ehdr of this stub
+        subl %r14d,%r15d  // LENX= sz_pack2 - O_BINFO
+        addq %rcx,%r14  // ADRX= elfaddr + O_BINFO
+        push %rdx  // P_30  LENU
+        push %rcx  // P_31  elfaddr
+
+// alloca()
+        subq %rdx,%rsp; and $-2*NBPW,%rsp  // aligned space for unfolded stub
+
+        push %rsp; pop %arg3  // dst= decompress onto stack
+        push %rbx; pop %rsi
+        lodsl; push %rax  // P_13  .sz_unc
+        push %rsp; pop %arg4  // &dstlen
+        lodsl; push %rax  // P_14  tmp= .sz_cpr
+        lodsl; xchg %eax,%arg5l  // .b_method
+        movq %rsi,%arg1  // src
+        pop %arg2  // P_14  srclen
+        lea f_exp(%rip),%rbp
+        call *%rbp  // f_exp
+
+// Write de-compressed 'fold' to file
+        push %r12; pop %arg1  // mfd
+        pop %arg3  // P_13  LENU
+        push %rsp; pop %arg2  // buffer
+        push $__NR_write; pop %rax; call sys_check
+// de-alloca()
+        lea -4*NBPW(%r13),%rsp  // elfaddr,LENU,atexit.rdx,&entry
+
+// Map unfolded code the SELinux way
+        sub %arg6l,%arg6l  // 0  offset
+        mov %r12,%arg5  // mfd
+        push $MAP_SHARED; pop %sys4
+        push %arg3; pop %arg2  // length
+        push $PROT_READ|PROT_EXEC; pop %arg3
+        subl %edi,%edi  // (%arg1)dst = 0;  // kernel chooses addr
+        push $__NR_mmap; pop %rax; call sys_check
+        pop %rcx  // P_31  elfaddr
+        push %rax  // P_32  ADRU
+        push $0  // P_33  %fd
+        push %rcx  // P_34  elfaddr
+
+        push %arg5; pop %arg1  // mfd
+        push $__NR_close; pop %rax; syscall
+
+// Use the copy.
+// %r14= ADRX; %r15= LENX;
+// rsp/ elfaddr,%fd,ADRU,LENU,atexit.rdx,%entry
+        jmp * -4*NBPW(%r13)  // ADRU
+
+sys_check:
+        push %rax  // save __NR_ for debug
+        syscall
+        pop %rcx  // recover __NR_ for debug
+        cmp $PAGE_MASK,%rax; jb 0f; hlt; 0:
+        ret
+
+here:  // OUT: %rdi= (2+ retaddrj) without disturbing shadow stack
+        mov (%rsp),%rdi
+        scasw  // over jmp.s
+        ret
 
 /* Returns 0 on success; non-zero on failure. */
 f_exp:  // shorter name
@@ -198,95 +289,11 @@ eof:
         pop %rbx; pop %rbp
         ret
 
-/* These from /usr/include/asm-x86_64/unistd.h */
-__NR_exit=     60
-__NR_mmap=      9
-__NR_mprotect= 10
-__NR_open=      2
-__NR_write=     1
-
-msg_SELinux:
-        push $ L71 - L70; pop %arg3  // length
-        call L72
-L70:
-        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
-L71:
-L72:
-        pop %arg2  // message text
-L75:
-        push $FD_stderr; pop %arg1
-        push $ __NR_write; pop %rax
-        syscall
-die:
-        push $127; pop %arg1
-        push $ __NR_exit; pop %rax
-        syscall
-
         // IDENTSTR goes here
 
   section ELFMAINZ
-// Decompress the rest of this loader, and jump to it.
-unfold:  // IN: rbp= &f_exp; rsp/ &proc_self_exe,%entry
-        pop %arg1  // &proc_self_exe
-        sub %arg2l,%arg2l  // O_RDONLY
-        push $__NR_open; pop %rax; syscall
-        // test %eax,%eax; js msg_proc_self_exe  // no longer fatal
-        push %rax  // save fd
-
-        lea -4+ FOLD - proc_self_exe(%arg1),%rsi  // &O_BINFO | is_ptinterp
-        lodsl; and $~1,%eax; movl %eax,%r14d  // O_BINFO
-        push %rsi; pop %rbx  // &b_info of folded decompressor
-        movl (%rsi),%edx  // .sz_unc
-
-        lea sz_pack2 - f_exp(%rbp),%rcx  // &sz_pack2
-        movl (%rcx),%r15d  // sz_pack2: length before stub
-        subq %r15,%rcx  // elfaddr= &Elf64_Ehdr of this stub
-        subl %r14d,%r15d  // LENX= sz_pack2 - O_BINFO
-        addq %rcx,%r14  // ADRX= elfaddr + O_BINFO
-          pop %rdi  // fd
-        push %rdx  // LENU
-        push %rax  // %ADRU
-          push %rdi  // fd
-        push %rcx  // elfaddr
-
-// Reserve space for unfolded stub.
-        subq %arg6,%arg6  // 0 offset
-        orl $-1,%arg5l  // fd
-        push $MAP_PRIVATE|MAP_ANONYMOUS; pop %sys4
-        push %rdx; pop %arg2  // len
-        push $PROT_READ|PROT_WRITE; pop %arg3
-        subl %arg1l,%arg1l  // 0; kernel chooses addr
-        push $__NR_mmap; pop %rax; syscall
-        movq %rax,2*8(%rsp)  // ADRU
-
-// Unfold
-        push %rax; pop %arg3  // dst= new unfold
-        push %rbx; pop %rsi
-        lodsl; push %rax; movq %rsp,%arg4  // P_13  .sz_unc; &dstlen
-        movq %arg3,%r13  // execute here
-        lodsl; push %rax  // P_14  tmp= .sz_cpr
-        lodsl; xchg %eax,%arg5l  // .b_method
-        movq %rsi,%arg1  // src
-        pop %arg2  // P_14  srclen
-        call *%rbp  // f_exp
-        pop %rcx  // P_13  toss .sz_unc
-
-// PROT_EXEC
-        movq 3*8(%rsp),%arg2  // LENU
-        movq 2*8(%rsp),%arg1  // ADRU
-        push $PROT_READ|PROT_EXEC; pop %arg3
-        push $__NR_mprotect; pop %rax; syscall
-
-// Use the copy.
-// %r14= ADRX; %r15= LENX;
-// rsp/ elfaddr,fd,ADRU,LENU,%entry
-        jmp *%r13
-
-main:
-        pop %rbp  // &f_exp
-        call unfold
-proc_self_exe:
-        .asciz "/proc/self/exe"
+        .balign 4
+o_binfo:
         .long O_BINFO  // offset of b_info for .text
 FOLD:
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}

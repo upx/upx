@@ -266,6 +266,7 @@ ERR_LAB
 #endif  //}
 
 #if defined(__i386__)  //
+extern int upxfd_create(void);  // x86_64 Android emulator of i386 is not faithful
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it; remembered in AT_NULL.d_val
 static char *
@@ -327,7 +328,7 @@ make_hatch_arm32(
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = upxfd_create();  // the directory entry
             write(mfd, &code, 2*4);
-            hatch = Pmap(0, 2*4, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            hatch = mmap(0, 2*4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
         }
     }
@@ -553,7 +554,8 @@ upx_so_main(  // returns &escape_hatch
     DPRINTF("base=%%p\\n", base);
 
     if (phdr->p_flags & PF_X) {
-#if defined(__arm__)  //{
+// __arm__ for actual use; __i386__ for [BUGGY!!] Android emulator used by developers
+#if defined(__arm__) || defined(__i386__)  //{
         int mfd = upxfd_create();
 #else  //}{
         int mfd = memfd_create(addr_string("upx"), 0);
@@ -608,10 +610,12 @@ upx_so_main(  // returns &escape_hatch
             // Cannot set PROT_EXEC except via mmap() into a region (Linux "vma")
             // that has never had PROT_WRITE.  So use a Linux-only "memory file"
             // to hold the contents.
-#if defined(__arm__)  //{ Emulate: Android "ABI" has inconsistent __NR_ftruncate.
+// Android: "ABI" has inconsistent __NR_ftruncate, x86* emulator is not faithful
+#if defined(__arm__) || defined(__i386__)  //{
             mfd = upxfd_create();  // anonymous file in /dev/shm with 0700 permission
             size_t goal = x1.size;
             while (0 < goal) { // /dev/shm limits to 8KiB at a time!!
+                // Any contents will do; will be overwritten by de-compression
                 ssize_t len = Pwrite(mfd, x1.buf, goal);
                 if (len < 0) {
                     break;  // give up: will SIGSEGV or SIGBUS later

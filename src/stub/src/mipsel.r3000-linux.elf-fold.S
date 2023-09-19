@@ -59,6 +59,8 @@ __NR_Linux = 4000
 __NR_brk      =  45+ __NR_Linux
 __NR_close    =   6+ __NR_Linux
 __NR_exit     =   1+ __NR_Linux
+__NR_ftruncate=  93+ __NR_Linux
+__NR_memfd_create=354+__NR_Linux
 __NR_mmap     =  90+ __NR_Linux
 __NR_mprotect = 125+ __NR_Linux
 __NR_munmap   =  91+ __NR_Linux
@@ -182,11 +184,13 @@ BAL=0x04110000
      subtracting the current location).
    So do it the hard way.
 */
-        bltzal $0,9f  # ra= &9f; no branch (condition is false!)
-          li v0,%lo(9f)
+//        bltzal $0,9f  # ra= &9f; no branch (condition is false!)
+//          b 8f
 9:
-        subu v0,ra,v0
-        addiu v0,v0,%lo(upx_main)
+        .word upx_main
+8:
+//        li at,%lo(upx_main)
+        lw at,(ra)
         jalr v0
           move a0,$r_ADRX
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Elf32_Auxv_t *a3,

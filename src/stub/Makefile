@@ -28,17 +28,21 @@ endif
 include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 
 # update $PATH for our special stub build tools
+$(info 0 PATH = $(PATH))
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
+$(info 1 PATH = $(PATH))
 else ifneq ($(wildcard $(HOME)/.local/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/.local/bin/bin-upx:$(PATH)
+$(info 2 PATH = $(PATH))
 else ifneq ($(wildcard $(HOME)/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/bin/bin-upx:$(PATH)
+$(info 3 PATH = $(PATH))
 endif
 
 
 # /***********************************************************************
-# //
+# // 2023-09-17 *-linux.kernel.vmlinux*  has been supplanted by zstd
 # ************************************************************************/
 
 ifndef STUBS
@@ -50,8 +54,10 @@ STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-so_entry.h
 STUBS += amd64-linux.elf-fold.h
 STUBS += amd64-linux.elf-so_fold.h
+
 STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += amd64-linux.kernel.vmlinux.h
+
 STUBS += amd64-linux.shlib-init.h
 STUBS += amd64-win64.pe.h
 STUBS += arm.v4a-linux.elf-entry.h
@@ -66,16 +72,20 @@ STUBS += arm.v5a-linux.elf-entry.h
 STUBS += arm.v5a-linux.elf-so_entry.h
 STUBS += arm.v5a-linux.elf-fold.h
 STUBS += arm.v5a-linux.elf-so_fold.h
+
 STUBS += arm.v5a-linux.kernel.vmlinux-head.h
 STUBS += arm.v5a-linux.kernel.vmlinux.h
 STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
 STUBS += arm.v5a-linux.kernel.vmlinuz.h
+
 STUBS += arm.v5a-linux.shlib-init.h
 STUBS += arm.v5t-linux.shlib-init.h
 STUBS += armeb.v4a-linux.elf-entry.h
 STUBS += armeb.v4a-linux.elf-fold.h
+
 STUBS += armeb.v5a-linux.kernel.vmlinux-head.h
 STUBS += armeb.v5a-linux.kernel.vmlinux.h
+
 STUBS += arm64-linux.elf-entry.h
 STUBS += arm64-linux.elf-so_entry.h
 STUBS += arm64-linux.elf-fold.h
@@ -110,9 +120,11 @@ STUBS += i386-linux.elf.interp-entry.h
 STUBS += i386-linux.elf.interp-fold.h
 STUBS += i386-linux.elf.shell-entry.h
 STUBS += i386-linux.elf.shell-fold.h
+
 STUBS += i386-linux.kernel.vmlinux-head.h
 STUBS += i386-linux.kernel.vmlinux.h
 STUBS += i386-linux.kernel.vmlinuz.h
+
 STUBS += i386-linux.shlib-init.h
 STUBS += i386-netbsd.elf-entry.h
 STUBS += i386-netbsd.elf-fold.h
@@ -132,19 +144,28 @@ STUBS += powerpc-darwin.macho-fold.h
 STUBS += powerpc-darwin.macho-upxmain.h
 STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
+
 STUBS += powerpc-linux.kernel.vmlinux-head.h
 STUBS += powerpc-linux.kernel.vmlinux.h
+
 STUBS += powerpc64le-linux.elf-entry.h
 STUBS += powerpc64le-linux.elf-fold.h
+
 STUBS += powerpc64le-linux.kernel.vmlinux-head.h
 STUBS += powerpc64le-linux.kernel.vmlinux.h
+
 STUBS += powerpc64-darwin.dylib-entry.h
 STUBS += powerpc64-darwin.macho-entry.h
 STUBS += powerpc64-darwin.macho-fold.h
+
+# powerpc64-linux (big-endian) is no longer supported, but is built
+# for testing linux on [ancient] Apple PowerPC G5, which is big-endian
 STUBS += powerpc64-linux.elf-entry.h
 STUBS += powerpc64-linux.elf-fold.h
-#STUBS += powerpc64-linux.kernel.vmlinux-head.h
-#STUBS += powerpc64-linux.kernel.vmlinux.h
+
+STUBS += powerpc64-linux.kernel.vmlinux-head.h
+STUBS += powerpc64-linux.kernel.vmlinux.h
+
 endif
 
 
@@ -691,8 +712,8 @@ arm64-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-arm64-linux.elf-fold.h : tmp/$$T.o tmp/arm64-linux.elf-main.o $(srcdir)/src/arm64-linux.elf-fold.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/arm64-linux.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+arm64-linux.elf-fold.h :    tmp/$$T.o tmp/arm64-linux.elf-main.o    $(srcdir)/src/$$T.lds tmp/arm64-expand.o
+	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -1418,7 +1439,7 @@ endif
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
 mipsel.r3000-linux.elf-fold.h : tmp/$$T.o tmp/mipsel.r3000-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -1650,10 +1671,9 @@ powerpc64le-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-powerpc64le-linux.elf-fold.h : tmp/$$T.o tmp/powerpc64le-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
+#FIXME	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+powerpc64le-linux.elf-fold.h : tmp/$$T.o tmp/powerpc64le-linux.elf-main.o $(srcdir)/src/$$T.lds tmp/powerpc64le-expand.o
+	$(call tc,ld) -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/powerpc64le-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -1664,6 +1684,8 @@ tmp/powerpc64le-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 
+tmp/powerpc64le-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
 
 powerpc64-linux.elf%.h : tc_list = powerpc64-linux.elf default
 powerpc64-linux.elf%.h : tc_bfdname = elf64-powerpc
@@ -1682,10 +1704,9 @@ powerpc64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-powerpc64-linux.elf-fold.h : tmp/$$T.o tmp/powerpc64-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
+#	: $(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+powerpc64-linux.elf-fold.h : tmp/$$T.o tmp/powerpc64-linux.elf-main.o $(srcdir)/src/$$T.lds tmp/powerpc64-expand.o
+	$(call tc,ld) -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/powerpc64-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -1695,6 +1716,9 @@ tmp/powerpc64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/powerpc64-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
+
+tmp/powerpc64-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
 
 
 # /***********************************************************************

@@ -39,6 +39,7 @@ unsigned Pprotect(void *, size_t, unsigned);
 #if defined(__mips__)  //{
   #define Pprotect mprotect
 #endif  //}
+extern int memfd_create(char const *name, unsigned flags);
 void *mmap(void *, size_t, int, int, int, off_t);
 #if defined(__i386__) || defined(__mips__) || defined(__powerpc__) //{
 #  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
@@ -358,6 +359,43 @@ ERR_LAB
     }
 }
 
+#if defined(__i386__) //}{
+#define addr_string(string) ({ \
+    char const *str; \
+    asm("call 0f; .asciz \"" string "\"; 0: pop %0" \
+/*out*/ : "=r"(str) ); \
+    str; \
+})
+#elif defined(__arm__) //}{
+#define addr_string(string) ({ \
+    char const *str; \
+    asm("bl 0f; .string \"" string "\"; .balign 4; 0: mov %0,lr" \
+/*out*/ : "=r"(str) \
+/* in*/ : \
+/*und*/ : "lr"); \
+    str; \
+})
+#elif defined(__mips__) //}{
+#define addr_strng(string) ({ \
+    char const *str; \
+    asm("bal 0f; .asciz \"" string "\"; .balign 4; 0: mov %0,ra" \
+/*out*/ : "=r"(str) \
+/* in*/ : \
+/*und*/ : "ra"); \
+    str; \
+)
+#elif defined(__powerpc__)  /*}{*/
+#define addr_strng(string) ({ \
+    asm("bl 0f; .asciz \"" string "\"; .balign 4; 0: mflr %0" \
+/*out*/ : "=r"(str) \
+/* in*/ : \
+/*und*/ : "lr"); \
+    str; \
+)
+#else  //}{
+#error;
+#endif  //}
+
 
 #if defined(__i386__)  /*{*/
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
@@ -365,44 +403,27 @@ ERR_LAB
 static void *
 make_hatch_x86(Elf32_Phdr const *const phdr, ptrdiff_t reloc)
 {
-    unsigned xprot = 0;
     unsigned *hatch = 0;
     DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,0);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        // The format of the 'if' is
-        //  if ( ( (hatch = loc1), test_loc1 )
-        //  ||   ( (hatch = loc2), test_loc2 ) ) {
-        //      action
-        //  }
-        // which uses the comma to save bytes when test_locj involves locj
-        // and the action is the same when either test succeeds.
-
-        if (
+        unsigned /*const*/ escape = 0xc36180cd;  // "int $0x80; popa; ret"
         // Try page fragmentation just beyond .text .
-             ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
-                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  4<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
-        // Try Elf32_Ehdr.e_ident[12..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[12])),
-                (phdr->p_offset==0) )
-        // Allocate and use a new page.
-        ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_WRITE|PROT_READ,
-                MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
-        ) {
-            // Omitting 'const' saves repeated literal in gcc.
-            unsigned /*const*/ escape = 0xc36180cd;  // "int $0x80; popa; ret"
+        hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc);
+        if (phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
+        &&  4<=(~PAGE_MASK & -(int)hatch) ) // space left on page
+        { // Omitting 'const' saves repeated literal in gcc.
             // Don't store into read-only page if value is already there.
             if (* (volatile unsigned*) hatch != escape) {
                 * hatch  = escape;
             }
-            if (xprot) {
-                Pprotect(hatch, 1*sizeof(unsigned), PROT_EXEC|PROT_READ);
-            }
-            DPRINTF(" hatch at %%p\\n", hatch);
         }
         else {
-            hatch = 0;
+            int mfd = memfd_create(addr_string("upx"), 0);
+            write(mfd, &escape, 4);
+            hatch = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
+            close(mfd);
         }
+        DPRINTF(" hatch at %%p\\n", hatch);
     }
     return hatch;
 }

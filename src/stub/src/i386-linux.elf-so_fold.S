@@ -129,8 +129,7 @@ mmap: .globl mmap  // oldmmap: %ebx -> 6 word parameters
     and $0xfff,%eax  // lo fragment
     sub %eax,    (%ebx)  // page align lo end
     add %eax,NBPW(%ebx)
-    push $ __NR_mmap; pop %eax
-    int $0x80; cmp $-0x1000,%eax; jna 0f; hlt; 0:
+    push $ __NR_mmap; pop %eax; call sys_check
     pop %ebx  // restore
     ret
 
@@ -164,8 +163,7 @@ Pprotect: .globl Pprotect  // from C
     sub %ebx,%ecx  // extra length
     add 2*NBPW(%esp),%ecx  // length
     mov 3*NBPW(%esp),%edx  // bits
-    push $__NR_mprotect; pop %eax; int $0x80
-    cmp $-0x1000,%eax; jna 0f; hlt; 0:
+    push $__NR_mprotect; pop %eax; call sys_check
     mov 1*NBPW(%esp),%ebx  // restore reg
     ret
 
@@ -177,7 +175,7 @@ Punmap: .globl Punmap  // from C
     sub %eax,%ebx
     mov (1+2)*NBPW(%ebp),%ecx  // len
     add %eax,%ecx
-    push $__NR_munmap; pop %eax; int $0x80
+    push $__NR_munmap; pop %eax; call sys_check
     cmp $-0x1000,%eax; jna 0f; hlt; 0:
     pop %ebx; pop %ebp
     ret
@@ -198,8 +196,13 @@ munmap: .globl munmap
 Pwrite: .globl Pwrite
 write: .globl write
         push $__NR_write; 5:
-        pop %eax
+sys_check1:
+        pop %eax  // __NR_
+sys_check:  // syscall with error checking; if halt then %eax= -errno, %ecx= __NR_
+        push %eax // save __NR_ for debug
         int $0x80
+        pop %ecx  // recover __NR_ for debug
+        cmp $PAGE_MASK,%eax; jb 0f; hlt; 0:  // -errno
         ret
 
 

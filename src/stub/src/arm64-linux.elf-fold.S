@@ -32,6 +32,7 @@ NBPW= 8
 
 #define ARM_OLDABI 1
 #include "arch/arm64/v8/macros.S"
+#define bkpt brk #0
 
 sz_Ehdr= 8*NBPW
 e_type= 16
@@ -90,9 +91,8 @@ bits_privanon:  // known offset (NBPW + 2*4)
 
 fold_begin:  // known offset (NBPW + 3*4)
 ////    brk #0  // DEBUG
-        b L10
-
 // In:  sp/ PMASK,fd,ADRU,LENU, argc,argv,...
+
 //lr   .req x30
 wLENC  .req w29  // compressed input
   xLENC  .req x29
@@ -108,8 +108,8 @@ xauxe  .req x23  // past new auxv
 xauxv  .req x22
 
 wfd    .req w21
-  xfd    .req x21
 xPMASK .req x20
+  xfd    .req x21
 
 mmap_privanon: .globl mmap_privanon
         ldr w6,bits_privanon  // r12 === ip
@@ -137,7 +137,6 @@ mprotect: .globl mprotect
 
 L10:
         POP4(xPMASK,xfd, xADRU,xLENU)
-
         ldr x7,[sp,#0]  // argc
         mov x0,sp  // current stack pointer
 
@@ -213,6 +212,11 @@ L10:
         call munmap  // discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that munmap does not remove all references
+        mov w0,#AT_FDCWD
+        adr x1,proc_self_exe
+        mov w2,#O_RDONLY
+        do_sys __NR_openat; mov wfd,w0
+
         mov x5,#0  // offset
         mov w4,wfd  // fd
         cmp w4,#0; blt no_map_pse
@@ -438,6 +442,8 @@ __NR_getpid   = 0xad + __NR_SYSCALL_BASE  // 172
 __NR_brk      = 0xd6 + __NR_SYSCALL_BASE  // 214
 __NR_readlink = 0x4e + __NR_SYSCALL_BASE  // 78
 
+__NR_memfd_create = 0x117 + __NR_SYSCALL_BASE  // 279
+__NR_ftruncate= 0x2e + __NR_SYSCALL_BASE  // 46
 __NR_mmap     = 0xde + __NR_SYSCALL_BASE  // 222
 __NR_mprotect = 0xe2 + __NR_SYSCALL_BASE  // 226
 __NR_munmap   = 0xd7 + __NR_SYSCALL_BASE  // 215
@@ -451,11 +457,15 @@ my_bkpt:
 exit:
         do_sys __NR_exit
 
+ftruncate:    .globl ftruncate;    do_sys __NR_ftruncate;    ret
+memfd_create: .globl memfd_create; do_sys __NR_memfd_create; ret
+
         .globl read
 read:
         do_sys __NR_read; ret
 
-        .globl write
+        .globl write,Pwrite
+Pwrite:
 write:
         do_sys __NR_write; ret
 
@@ -471,9 +481,38 @@ getpid:
 brk:
         do_sys __NR_brk; ret
 
-        .globl munmap
+        .globl munmap,Punmap
+Punmap:
 munmap:
+        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_MASK
+        sub x0,x0,x8
+        add x1,x1,x8
         do_sys __NR_munmap; ret
+
+// Sometimes Linux enforces page-aligned address
+Pprotect: .globl Pprotect
+mprotect: .globl mprotect
+        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_SIZE
+        sub x0,x0,x8
+        add x1,x1,x8
+        do_sys __NR_mprotect; ret
+
+bits_privanon= -4+ fold_begin  // entry stores: MAP_{PRIVATE|ANON}  QNX vs linux
+
+mmap_privanon: .globl mmap_privanon
+        ldr w6,bits_privanon  // r12 === ip
+        mov x5,#0  // offset= 0
+        mov x4,#-1  // fd= -1
+        orr w3,w3,w6  // flags |= MAP_{PRIVATE|ANON}  [QNX vs Linux]
+    // FALL THROUGH to mmap
+
+        .globl mmap,Pmap
+Pmap:
+mmap:
+        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_SIZE
+        sub x0,x0,x8
+        add x1,x1,x8
+        do_sys __NR_mmap; ret
 
         .globl unlink
 unlink:
@@ -498,6 +537,19 @@ svc_AT:
         mov x1,x0  // fname
         mov x0,#AT_FDCWD
         svc #0; ret
+
+memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t len)
+        ldrb w3,[x1],#1
+        strb w3,[x0],#1
+        subs x2,x2,#1
+        bgt memcpy
+        ret
+
+memset: .globl memset  // void *memset(void *dst, int c, size_t len);
+        strb w1,[x0],#1
+        subs x2,x2,#1
+        bgt memset
+        ret
 
         .globl __clear_cache
 __clear_cache:

@@ -193,15 +193,15 @@ memfd_create: .globl memfd_create
         do_sys7t2 __NR_memfd_create; ret
 
 O_RDWR= 2
-O_DIRECTORY= 040000
-O_TMPFILE= 020000000
+O_DIRECTORY= 00200000  //  0x10000
+O_TMPFILE= 020000000   // 0x400000
         .balign 4
 table3:
         .word O_RDWR | O_DIRECTORY | O_TMPFILE
-        .word 0700
+        .word 0700  // S_IRWXU
         .asciz "/dev/shm"; .balign 4
 
-upxfd_create: .globl upxfd_create
+upxfd_create: .globl upxfd_create  // workaround for lack of memfd_create
         adr r0,table3
         ldmia r0!,{r1,r2}
         do_sys7t2 __NR_open

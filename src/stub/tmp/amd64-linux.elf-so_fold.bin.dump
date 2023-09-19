@@ -60,7 +60,7 @@ OFFSET           TYPE              VALUE
 000000000000010e R_X86_64_PLT32    f_expand+0xfffffffffffffffc
 00000000000001d2 R_X86_64_PLT32    memfd_create+0xfffffffffffffffc
 00000000000001ed R_X86_64_PLT32    Pwrite+0xfffffffffffffffc
-000000000000020f R_X86_64_PLT32    Pmap+0xfffffffffffffffc
+000000000000020f R_X86_64_PLT32    mmap+0xfffffffffffffffc
 0000000000000219 R_X86_64_PLT32    close+0xfffffffffffffffc
 0000000000000277 R_X86_64_PLT32    openat+0xfffffffffffffffc
 000000000000028f R_X86_64_PLT32    read+0xfffffffffffffffc

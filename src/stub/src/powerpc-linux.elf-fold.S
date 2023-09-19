@@ -226,7 +226,9 @@ SYS_brk=       45
 SYS_readlink=  85
 SYS_mmap=      90
 SYS_munmap=    91
+SYS_ftruncate= 93
 SYS_mprotect= 125
+SYS_memfd_create= 360
 
 Pprotect: .globl Pprotect
         li r0, 0xfff  // ~PAGE_MASK  (FIXME: probably use 4th arg)
@@ -244,8 +246,12 @@ sysgo:
 no_fail:
         ret
 
+memfd_create: .globl memfd_create
+        li r0,SYS_memfd_create; b 5f
+ftruncate: .globl ftruncate
+        li r0,SYS_ftruncate;5: b 5f
 exit: .globl exit
-        li r0,SYS_exit;        b 5f
+        li r0,SYS_exit;     5: b 5f
 brk: .globl brk
         li r0,SYS_brk;      5: b 5f
 readlink: .globl readlink
