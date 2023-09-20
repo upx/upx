@@ -12,24 +12,24 @@ env:
   UPX_CMAKE_CONFIG_FLAGS: -G "Unix Makefiles"
 
 jobs:
-  job-cmake-windows-nmake: # uses cmake + nmake
+  job-cmake-windows-make: # uses cmake + make
     if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
       matrix:
         include:
-          # mingw-gcc
-          - { os: windows-2022, cc: gcc, cxx: 'g++', arch: amd64 }
-#         # NOTE: the following don't work => use Ninja instead
-#         # clang-cl
-#         - { os: windows-2022, cc: clang-cl, cxx: clang-cl, vsversion: 2022, arch: amd64 }
-#         # msvc
+# INFO: the following don't work => use Ninja (weekly-ci-bs-cmake-windows-ninja.yml) instead
+#         # cl (msvc)
 #         - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64 }
 #         - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64_arm64 }
 #         - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64_x86 }
 #         - { os: windows-2022, cc: cl, cxx: cl, vsversion: 2022, arch: amd64 }
 #         - { os: windows-2022, cc: cl, cxx: cl, vsversion: 2022, arch: amd64_arm64 }
 #         - { os: windows-2022, cc: cl, cxx: cl, vsversion: 2022, arch: amd64_x86 }
+#         # clang-cl
+#         - { os: windows-2022, cc: clang-cl, cxx: clang-cl, vsversion: 2022, arch: amd64 }
+          # gcc (mingw-gcc)
+          - { os: windows-2022, cc: gcc, cxx: 'g++', arch: amd64 }
     env:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}

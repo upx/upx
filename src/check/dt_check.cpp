@@ -188,7 +188,7 @@ struct CheckIntegral {
             assert_noexcept(t.y[0] == 0 && t.y[1] == 0);
             assert_noexcept(t.z[0] == 0 && t.z[1] == 0);
         }
-#if __cplusplus < 202002L
+#if __cplusplus <= 201703L
         COMPILE_TIME_ASSERT(std::is_pod<U>::value) // std::is_pod is deprecated in C++20
 #endif
         COMPILE_TIME_ASSERT(std::is_standard_layout<U>::value)

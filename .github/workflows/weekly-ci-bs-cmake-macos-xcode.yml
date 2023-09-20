@@ -1,5 +1,5 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# BS BuildSystem: build with 'cmake -G Xcode'
+# BS BuildSystem: build on macOS with 'cmake -G Xcode'
 
 name: 'Weekly CI BS - cmake macOS Xcode'
 on:

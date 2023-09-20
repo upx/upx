@@ -221,7 +221,6 @@ struct OwningPointer final {
     typedef typename std::add_lvalue_reference<const T>::type const_reference;
     typedef typename std::add_pointer<T>::type pointer;
     typedef typename std::add_pointer<const T>::type const_pointer;
-    pointer ptr;
     inline OwningPointer(pointer p) noexcept : ptr(p) {}
     inline operator pointer() noexcept { return ptr; }
     inline operator const_pointer() const noexcept { return ptr; }
@@ -229,6 +228,35 @@ struct OwningPointer final {
     inline const_reference operator*() const noexcept { return *ptr; }
     inline pointer operator->() noexcept { return ptr; }
     inline const_pointer operator->() const noexcept { return ptr; }
+private:
+    pointer ptr;
+    reference operator[](std::ptrdiff_t) noexcept = delete;
+    const_reference operator[](std::ptrdiff_t) const noexcept = delete;
+#if 1 // fun with C++
+    // disable common "new" and ALL "delete" operators
+    static void *operator new(size_t) = delete;
+    static void *operator new[](size_t) = delete;
+    static void *operator new(size_t, void *) = delete;
+    static void *operator new[](size_t, void *) = delete;
+    // replaceable usual deallocation functions (8)
+    static void operator delete(void *) noexcept = delete;
+    static void operator delete[](void *) noexcept = delete;
+    static void operator delete(void *, std::align_val_t) noexcept = delete;
+    static void operator delete[](void *, std::align_val_t) noexcept = delete;
+    static void operator delete(void *, std::size_t) noexcept = delete;
+    static void operator delete[](void *, std::size_t) noexcept = delete;
+    static void operator delete(void *, std::size_t, std::align_val_t) noexcept = delete;
+    static void operator delete[](void *, std::size_t, std::align_val_t) noexcept = delete;
+    // replaceable placement deallocation functions (4)
+    static void operator delete(void *, const std::nothrow_t &) noexcept = delete;
+    static void operator delete[](void *, const std::nothrow_t &) noexcept = delete;
+    static void operator delete(void *, std::align_val_t, const std::nothrow_t &) noexcept = delete;
+    static void operator delete[](void *, std::align_val_t,
+                                  const std::nothrow_t &) noexcept = delete;
+    // non-allocating placement deallocation functions (2)
+    static void operator delete(void *, void *) noexcept = delete;
+    static void operator delete[](void *, void *) noexcept = delete;
+#endif
 };
 // must overload mem_clear()
 template <class T>
