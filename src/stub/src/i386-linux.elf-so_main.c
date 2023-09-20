@@ -288,7 +288,7 @@ make_hatch_i386(
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             write(mfd, &escape, 4);
-            hatch = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
+            hatch = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
             close(mfd);
         }
     }
@@ -328,7 +328,7 @@ make_hatch_arm32(
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = upxfd_create();  // the directory entry
             write(mfd, &code, 2*4);
-            hatch = Pmap(0, 2*4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
+            hatch = Pmap(0, 2*4, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
             close(mfd);
         }
     }
@@ -565,7 +565,7 @@ upx_so_main(  // returns &escape_hatch
 
         Punmap(va_load, mfd_len);  // make SELinux forget any previous protection
         Elf32_Addr va_mfd = (Elf32_Addr)Pmap(va_load, mfd_len, PF_to_PROT(phdr),
-            MAP_FIXED|MAP_SHARED, mfd, 0); (void)va_mfd;
+            MAP_FIXED|MAP_PRIVATE, mfd, 0); (void)va_mfd;
 
         close(mfd);
     }
@@ -657,7 +657,7 @@ upx_so_main(  // returns &escape_hatch
             DPRINTF("mfd mmap addr=%%p  len=%%p\\n", (phdr->p_vaddr + base + pfx), al_bi.sz_unc);
             Punmap(mfd_addr, frag + al_bi.sz_unc);  // Discard RW mapping; mfd has the bytes
             Pmap((char *)(phdr->p_vaddr + base + pfx), al_bi.sz_unc, PF_to_PROT(phdr),
-                MAP_FIXED|MAP_SHARED, mfd, 0);
+                MAP_FIXED|MAP_PRIVATE, mfd, 0);
             close(mfd);
         }
         else { // easy
