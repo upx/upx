@@ -2595,6 +2595,11 @@ tribool PackLinuxElf32::canPack()
     if (canUnpack()) {
         throwAlreadyPacked();
     }
+    // Heuristic for lopped trailing PackHeader (packed and "hacked"!)
+    if (3 == e_phnum  // not shlib: PT_LOAD.C_BASE, PT_LOAD.C_TEXT, PT_GNU_STACK
+    && UPX_MAGIC_LE32 == get_le32(&((l_info *)&phdri[e_phnum])->l_magic)) {
+        throwAlreadyPacked();
+    }
     // We want to compress position-independent executable (gcc -pie)
     // main programs, but compressing a shared library must be avoided
     // because the result is no longer usable.  In theory, there is no way
@@ -3028,6 +3033,11 @@ PackLinuxElf64::canPack()
         }
     }
     if (canUnpack()) {
+        throwAlreadyPacked();
+    }
+    // Heuristic for lopped trailing PackHeader (packed and "hacked"!)
+    if (3 == e_phnum  // not shlib: PT_LOAD.C_BASE, PT_LOAD.C_TEXT, PT_GNU_STACK
+    && UPX_MAGIC_LE32 == get_le32(&((l_info *)&phdri[e_phnum])->l_magic)) {
         throwAlreadyPacked();
     }
     // We want to compress position-independent executable (gcc -pie)
@@ -7640,7 +7650,7 @@ PackLinuxElf32::check_pt_load(Elf32_Phdr const *const phdr)
     if ((-1+ align) & (paddr ^ vaddr)
     ||  (u32_t)file_size <= (u32_t)offset
     ||  (u32_t)file_size <  (u32_t)offend
-    ||  (u32_t)file_size <= (u32_t)filesz) {
+    ||  (u32_t)file_size <  (u32_t)filesz) {
         char msg[50]; snprintf(msg, sizeof(msg), "bad PT_LOAD phdr[%u]",
             (unsigned)(phdr - phdri));
         throwCantPack(msg);
@@ -7797,7 +7807,7 @@ PackLinuxElf64::check_pt_load(Elf64_Phdr const *const phdr)
     if ((-1+ align) & (paddr ^ vaddr)
     ||  (u64_t)file_size <= (u64_t)offset
     ||  (u64_t)file_size <  (u64_t)offend
-    ||  (u64_t)file_size <= (u64_t)filesz) {
+    ||  (u64_t)file_size <  (u64_t)filesz) {
         char msg[50]; snprintf(msg, sizeof(msg), "bad PT_LOAD phdr[%u]",
             (unsigned)(phdr - phdri));
         throwCantPack(msg);

@@ -90,7 +90,7 @@ protected:
         );
     unsigned total_in, total_out;  // unpack
 
-    int exetype;
+    int exetype;  // 0: unknown; 1: ELF; 2: pre-ELF; -1: /bin/sh; -2: Java
     unsigned blocksize;
     unsigned progid;              // program id
     unsigned overlay_offset;      // used when decompressing
