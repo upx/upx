@@ -16,7 +16,7 @@ endif()
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-    # permissive config defaults when building from source code tarball
+    # permissive config defaults when building from source code release tarball
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." ON)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." ON)
     option(UPX_CONFIG_DISABLE_WSTRICT  "Do not compile with strict compiler warnings." ON)
@@ -166,6 +166,7 @@ endif()
 #***********************************************************************
 
 include(CheckCCompilerFlag)
+include(CheckIncludeFile)
 
 if(UPX_CONFIG_DISABLE_WSTRICT)
     # enable all basic warnings
@@ -372,10 +373,13 @@ set(t upx_vendor_zlib)
 upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
 target_compile_definitions(${t} PRIVATE HAVE_VSNPRINTF=1)
+check_include_file("unistd.h" HAVE_UNISTD_H)
+if(HAVE_UNISTD_H)
+    target_compile_definitions(${t} PRIVATE HAVE_UNISTD_H=1)
+endif()
 if(MSVC_FRONTEND)
     target_compile_options(${t} PRIVATE -W3 ${warn_WX})
 else()
-    target_compile_definitions(${t} PRIVATE HAVE_UNISTD_H=1)
     target_compile_options(${t} PRIVATE -Wall ${warn_Werror})
     ##target_compile_options(${t} PRIVATE ${warn_Wall} -Wno-cast-align -Wno-cast-qual ${warn_Werror})
 endif()

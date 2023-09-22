@@ -26,14 +26,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { container: 'alpine:3.9' , use_cxx20: 0, use_cxx2b: 0, use_lto: 0 } # Jan 2019: C++17
+          - { container: 'alpine:3.9' , use_cxx20: 0, use_cxx2b: 0, use_lto: 0 } # Jan 2019: C++17; clang-5 & gcc-8
           - { container: 'alpine:3.10', use_cxx20: 0, use_cxx2b: 0, use_lto: 0 }
           - { container: 'alpine:3.11', use_cxx20: 0, use_cxx2b: 0, use_lto: 0 }
           - { container: 'alpine:3.12', use_cxx20: 0, use_cxx2b: 0, use_lto: 0 }
-          - { container: 'alpine:3.13', use_cxx20: 1, use_cxx2b: 0, use_lto: 0 } # Jan 2021: C++20
+          - { container: 'alpine:3.13', use_cxx20: 1, use_cxx2b: 0, use_lto: 0 } # Jan 2021: C++20; clang-10 & gcc-10
           - { container: 'alpine:3.14', use_cxx20: 1, use_cxx2b: 0, use_lto: 0 }
-          - { container: 'alpine:3.15', use_cxx20: 1, use_cxx2b: 0, use_lto: 1 } # Nov 2021: LTO
-          - { container: 'alpine:3.16', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 } # May 2022: C++23
+          - { container: 'alpine:3.15', use_cxx20: 1, use_cxx2b: 0, use_lto: 1 } # Nov 2021: LTO;   clang-12 & gcc-10 & binutils-2.37
+          - { container: 'alpine:3.16', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 } # May 2022: C++2b; clang-13 & gcc-11
           - { container: 'alpine:3.17', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 }
           - { container: 'alpine:3.18', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 }
           - { container: 'alpine:edge', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 }
@@ -47,11 +47,11 @@ jobs:
         run: |
           apk update && apk upgrade && apk add clang cmake g++ git make
           case ${{ matrix.container }} in
-            # clang-dev is needed on older Alpine versions for clang headers like <emmintrin.h>
+            # clang-dev is needed on Alpine versions <= 3.11 for clang headers like <emmintrin.h>
             *:3.[0-9] | *:3.1[0-1]) apk add clang-dev ;;
           esac
           case ${{ matrix.container }}-${{ matrix.use_lto }} in
-            # llvm-dev is needed on older Alpine versions for -flto (LTO also needs support in binutils)
+            # llvm-dev is needed on Alpine versions <= 3.18 for -flto
             *:3.[0-9]-1 | *:3.1[0-8]-1) apk add llvm-dev ;;
           esac
           # set environment vars
@@ -100,25 +100,29 @@ jobs:
 
       # build with C23 and C++23 (using -std=gnu++2b)
       - name: ${{ format('Build clang C++23 Release with {0}', env.clang_package) }}
-        if: matrix.use_cxx2b
+        if: matrix.use_cxx23 || matrix.use_cxx2b
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
-          make -C "upx with space" UPX_XTARGET=clang-cxx23-static CC="clang -std=gnu2x -static" CXX="clang++ -std=gnu++2b -static"
+          a=gnu23; b=gnu++23; if test "X${{ matrix.use_cxx2b }}" = X1; then a=gnu2x; b=gnu++2b; fi
+          make -C "upx with space" UPX_XTARGET=clang-cxx23-static CC="clang -std=$a -static" CXX="clang++ -std=$b -static"
       - name: ${{ format('Build clang C++23 Debug with {0}', env.clang_package) }}
-        if: matrix.use_cxx2b
+        if: matrix.use_cxx23 || matrix.use_cxx2b
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
-          make -C "upx with space" UPX_XTARGET=clang-cxx23-static CC="clang -std=gnu2x -static" CXX="clang++ -std=gnu++2b -static" xtarget/debug
+          a=gnu23; b=gnu++23; if test "X${{ matrix.use_cxx2b }}" = X1; then a=gnu2x; b=gnu++2b; fi
+          make -C "upx with space" UPX_XTARGET=clang-cxx23-static CC="clang -std=$a -static" CXX="clang++ -std=$b -static" xtarget/debug
       - name: ${{ format('Build gcc C++23 Release with {0}', env.gcc_package) }}
-        if: matrix.use_cxx2b
+        if: matrix.use_cxx23 || matrix.use_cxx2b
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
-          make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=gnu2x -static"   CXX="g++ -std=gnu++2b -static"
+          a=gnu23; b=gnu++23; if test "X${{ matrix.use_cxx2b }}" = X1; then a=gnu2x; b=gnu++2b; fi
+          make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=$a -static"   CXX="g++ -std=$b -static"
       - name: ${{ format('Build gcc C++23 Debug with {0}', env.gcc_package) }}
-        if: matrix.use_cxx2b
+        if: matrix.use_cxx23 || matrix.use_cxx2b
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
-          make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=gnu2x -static"   CXX="g++ -std=gnu++2b -static" xtarget/debug
+          a=gnu23; b=gnu++23; if test "X${{ matrix.use_cxx2b }}" = X1; then a=gnu2x; b=gnu++2b; fi
+          make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=$a -static"   CXX="g++ -std=$b -static" xtarget/debug
 
       # build with -flto
       - name: ${{ format('Build clang LTO Release with {0}', env.clang_package) }}
@@ -147,19 +151,6 @@ jobs:
           name: ${{ env.artifact_name }}
           path: 'upx with space*/build/*/*/*/upx'
 
-      - { name: 'Run basic tests clang Release', run: 'make -C "upx with space"/build/xtarget/clang-static/release test' }
-      - { name: 'Run basic tests clang Debug',   run: 'make -C "upx with space"/build/xtarget/clang-static/debug test' }
-      - { name: 'Run basic tests gcc Release',   run: 'make -C "upx with space"/build/xtarget/gcc-static/release test' }
-      - { name: 'Run basic tests gcc Debug',     run: 'make -C "upx with space"/build/xtarget/gcc-static/debug test' }
-
-      - name: 'Run basic tests C++20, C++23 and LTO'
-        if: matrix.use_cxx20 || matrix.use_cxx2b || matrix.use_cxx23 || matrix.use_lto
-        run: |
-          for dir in "upx with space"/build/xtarget/*-cxx*/*; do
-             echo "===== $dir"
-             make -C "$dir" test
-          done
-
       - name: 'Run install tests'
         run: |
           (cd "upx with space"/build/xtarget/clang-static/debug   && DESTDIR="$PWD/Install with cmake" cmake --install .)
@@ -170,6 +161,19 @@ jobs:
           (cd "upx with space"/build/xtarget/gcc-static/debug     && DESTDIR="$PWD/Install with make"  make install)
           (cd "upx with space"/build/xtarget/gcc-static/release   && DESTDIR="$PWD/Install with cmake" cmake --install .)
           (cd "upx with space"/build/xtarget/gcc-static/release   && DESTDIR="$PWD/Install with make"  make install)
+
+      - { name: 'Run basic tests clang Debug',   run: 'make -C "upx with space"/build/xtarget/clang-static/debug test' }
+      - { name: 'Run basic tests clang Release', run: 'make -C "upx with space"/build/xtarget/clang-static/release test' }
+      - { name: 'Run basic tests gcc Debug',     run: 'make -C "upx with space"/build/xtarget/gcc-static/debug test' }
+      - { name: 'Run basic tests gcc Release',   run: 'make -C "upx with space"/build/xtarget/gcc-static/release test' }
+
+      - name: 'Run basic tests C++20, C++23 and LTO'
+        if: matrix.use_cxx20 || matrix.use_cxx23 || matrix.use_cxx2b || matrix.use_lto
+        run: |
+          for dir in "upx with space"/build/xtarget/*-cxx*/*; do
+             echo "===== $dir"
+             make -C "$dir" test
+          done
 
       - name: 'Run file system test suite (busybox)'
         run: |

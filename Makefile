@@ -20,9 +20,10 @@ endif
 # enable this if you prefer Ninja for the actual builds:
 #UPX_CMAKE_CONFIG_FLAGS += -G Ninja
 
-# by default CMake only honors CC and CXX; make it easy to use other
-# variables like CMAKE_AR by manually passing them
+# info: by default CMake only honors the CC and CXX environment variables; make
+# it easy to set other variables like CMAKE_AR or CMAKE_RANLIB
 __add_cmake_config = $(and $($1),-D$1="$($1)")
+# pass common CMake settings from environment/make to cmake
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_AR)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_NM)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_RANLIB)
@@ -109,6 +110,12 @@ build/extra/clang-static/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/clang-static/%: export CC  = clang -static
 build/extra/clang-static/%: export CXX = clang++ -static
 
+# force building with clang/clang++ -static -flto
+build/extra/clang-static-lto/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/clang-static-lto/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/clang-static-lto/%: export CC  = clang -static -flto
+build/extra/clang-static-lto/%: export CXX = clang++ -static -flto
+
 # force building with clang/clang++ C17/C++20
 build/extra/clang-std-cxx20/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-std-cxx20/release: PHONY; $(call run_config_and_build,$@,Release)
@@ -154,6 +161,12 @@ build/extra/gcc-static/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/gcc-static/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-static/%: export CC  = gcc -static
 build/extra/gcc-static/%: export CXX = g++ -static
+
+# force building with gcc/g++ -static -flto
+build/extra/gcc-static-lto/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/gcc-static-lto/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/gcc-static-lto/%: export CC  = gcc -static -flto
+build/extra/gcc-static-lto/%: export CXX = g++ -static -flto
 
 # force building with gcc/g++ C17/C++20
 build/extra/gcc-std-cxx20/debug:   PHONY; $(call run_config_and_build,$@,Debug)

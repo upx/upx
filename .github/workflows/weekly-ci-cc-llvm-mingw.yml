@@ -24,12 +24,12 @@ jobs:
           - name: llvm-mingw-20230614-ucrt
             llvm_version: 16.0.6
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64.tar.xz'
-          - name: llvm-mingw-20230905-msvcrt
-            llvm_version: 17.0.0rc4
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230905/llvm-mingw-20230905-msvcrt-ubuntu-20.04-x86_64.tar.xz'
-          - name: llvm-mingw-20230905-ucrt
-            llvm_version: 17.0.0rc4
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230905/llvm-mingw-20230905-ucrt-ubuntu-20.04-x86_64.tar.xz'
+          - name: llvm-mingw-20230919-msvcrt
+            llvm_version: 17.0.1
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230919/llvm-mingw-20230919-msvcrt-ubuntu-20.04-x86_64.tar.xz'
+          - name: llvm-mingw-20230919-ucrt
+            llvm_version: 17.0.1
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230919/llvm-mingw-20230919-ucrt-ubuntu-20.04-x86_64.tar.xz'
     name: ${{ format('{0} {1}', matrix.name, matrix.llvm_version) }}
     runs-on: ubuntu-latest
     steps:
@@ -43,23 +43,23 @@ jobs:
           wget -q '${{ matrix.url }}'
           ls -l ./llvm-mingw*.tar.*
           tar -xoaf ./llvm-mingw*.tar.*
-          rm ./llvm-mingw*tar.*
+          rm ./llvm-mingw*.tar.*
           # update PATH
           cd ./llvm-mingw*/bin
           echo "PATH=$PWD:$PATH" >> $GITHUB_ENV
-      - name: 'Build aarch64'
+      - name: 'Build clang aarch64'
         run: |
           export CC="aarch64-w64-mingw32-clang -static" CXX="aarch64-w64-mingw32-clang++ -static"
           make UPX_XTARGET=aarch64-w64-mingw32-clang xtarget/debug xtarget/release
-      - name: 'Build armv7'
+      - name: 'Build clang armv7'
         run: |
           export CC="armv7-w64-mingw32-clang -static" CXX="armv7-w64-mingw32-clang++ -static"
           make UPX_XTARGET=armv7-w64-mingw32-clang xtarget/debug xtarget/release
-      - name: 'Build i686'
+      - name: 'Build clang i686'
         run: |
           export CC="i686-w64-mingw32-clang -static" CXX="i686-w64-mingw32-clang++ -static"
           make UPX_XTARGET=i686-w64-mingw32-clang xtarget/debug xtarget/release
-      - name: 'Build x86_64'
+      - name: 'Build clang x86_64'
         run: |
           export CC="x86_64-w64-mingw32-clang -static" CXX="x86_64-w64-mingw32-clang++ -static"
           make UPX_XTARGET=x86_64-w64-mingw32-clang xtarget/debug xtarget/release
