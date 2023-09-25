@@ -25,8 +25,8 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-// INFO: not thread-safe; assumes a single UiPacker instance that
-// is exclusively called from main thread
+// INFO: not thread-safe; instantiated and used by class Packer, and the
+// static (global) variables are also updated in work.cpp
 
 #include "conf.h"
 #include "file.h"
@@ -128,7 +128,7 @@ static void init_global_constants(void) noexcept {
 static const char *mkline(upx_uint64_t fu_len, upx_uint64_t fc_len, upx_uint64_t u_len,
                           upx_uint64_t c_len, const char *format_name, const char *filename,
                           bool decompress = false) {
-    static char buf[2048];
+    static char buf[2048]; // static!
     char r[7 + 1];
     char fn[15 + 1];
     const char *f;

@@ -38,7 +38,7 @@ namespace upx {
 // is_bounded_array: identical to C++20 std::is_bounded_array
 template <class T>
 struct is_bounded_array : public std::false_type {};
-template <class T, size_t N>
+template <class T, std::size_t N>
 struct is_bounded_array<T[N]> : public std::true_type {};
 template <class T>
 inline constexpr bool is_bounded_array_v = is_bounded_array<T>::value;
@@ -57,7 +57,7 @@ inline constexpr bool is_same_any_v = is_same_any<T, Ts...>::value;
 // util
 **************************************************************************/
 
-template <size_t Size>
+template <std::size_t Size>
 struct UnsignedSizeOf {
     static_assert(Size >= 1 && Size <= UPX_RSIZE_MAX_MEM);
     static constexpr unsigned value = unsigned(Size);
@@ -65,8 +65,12 @@ struct UnsignedSizeOf {
 
 class noncopyable {
 protected:
-    inline noncopyable() noexcept {}
-    inline ~noncopyable() noexcept = default;
+    forceinline constexpr noncopyable() noexcept {}
+#if __cplusplus >= 202002L
+    forceinline constexpr ~noncopyable() noexcept = default;
+#else
+    forceinline ~noncopyable() noexcept = default;
+#endif
 private:
     noncopyable(const noncopyable &) noexcept DELETED_FUNCTION;            // copy constructor
     noncopyable &operator=(const noncopyable &) noexcept DELETED_FUNCTION; // copy assignment
@@ -75,7 +79,7 @@ private:
 };
 
 namespace compile_time {
-constexpr size_t string_len(const char *a) { return *a == '\0' ? 0 : 1 + string_len(a + 1); }
+constexpr std::size_t string_len(const char *a) { return *a == '\0' ? 0 : 1 + string_len(a + 1); }
 constexpr bool string_eq(const char *a, const char *b) {
     return *a == *b && (*a == '\0' || string_eq(a + 1, b + 1));
 }
@@ -107,7 +111,11 @@ struct TriBool final {
     forceinline constexpr TriBool() noexcept {}
     forceinline constexpr TriBool(value_type x) noexcept : value(x) {}
     constexpr TriBool(promoted_type x) noexcept : value(x == 0 ? False : (x == 1 ? True : Third)) {}
+#if __cplusplus >= 202002L
+    forceinline constexpr ~TriBool() noexcept = default;
+#else
     forceinline ~TriBool() noexcept = default;
+#endif
     // explicit conversion to bool
     // checks for > 0, so ThirdValue determines if Third is false (the default) or true
     explicit constexpr operator bool() const noexcept { return value > False; }
@@ -221,23 +229,23 @@ struct OwningPointer final {
     typedef typename std::add_lvalue_reference<const T>::type const_reference;
     typedef typename std::add_pointer<T>::type pointer;
     typedef typename std::add_pointer<const T>::type const_pointer;
-    inline OwningPointer(pointer p) noexcept : ptr(p) {}
-    inline operator pointer() noexcept { return ptr; }
-    inline operator const_pointer() const noexcept { return ptr; }
-    inline reference operator*() noexcept { return *ptr; }
-    inline const_reference operator*() const noexcept { return *ptr; }
-    inline pointer operator->() noexcept { return ptr; }
-    inline const_pointer operator->() const noexcept { return ptr; }
+    constexpr OwningPointer(pointer p) noexcept : ptr(p) {}
+    constexpr operator pointer() noexcept { return ptr; }
+    constexpr operator const_pointer() const noexcept { return ptr; }
+    constexpr reference operator*() noexcept { return *ptr; }
+    constexpr const_reference operator*() const noexcept { return *ptr; }
+    constexpr pointer operator->() noexcept { return ptr; }
+    constexpr const_pointer operator->() const noexcept { return ptr; }
 private:
     pointer ptr;
     reference operator[](std::ptrdiff_t) noexcept = delete;
     const_reference operator[](std::ptrdiff_t) const noexcept = delete;
-#if 1 // fun with C++
+#if 0 // fun with C++
     // disable common "new" and ALL "delete" operators
-    static void *operator new(size_t) = delete;
-    static void *operator new[](size_t) = delete;
-    static void *operator new(size_t, void *) = delete;
-    static void *operator new[](size_t, void *) = delete;
+    static void *operator new(std::size_t) = delete;
+    static void *operator new[](std::size_t) = delete;
+    static void *operator new(std::size_t, void *) = delete;
+    static void *operator new[](std::size_t, void *) = delete;
     // replaceable usual deallocation functions (8)
     static void operator delete(void *) noexcept = delete;
     static void operator delete[](void *) noexcept = delete;
@@ -275,6 +283,8 @@ inline void owner_delete(OwningPointer(T)(&object)) noexcept {
         delete (T *) object;
         object = nullptr;
     }
+    assert_noexcept((T *) object == nullptr);
+    assert_noexcept(object == nullptr);
 }
 
 // disable some overloads
@@ -282,7 +292,7 @@ inline void owner_delete(OwningPointer(T)(&object)) noexcept {
 template <class T>
 inline void owner_delete(T (&array)[]) noexcept DELETED_FUNCTION;
 #endif
-template <class T, size_t N>
+template <class T, std::size_t N>
 inline void owner_delete(T (&array)[N]) noexcept DELETED_FUNCTION;
 
 } // namespace upx

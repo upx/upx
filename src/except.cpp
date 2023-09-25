@@ -142,7 +142,7 @@ void throwEOFException(const char *msg, int e) {
 }
 
 /*************************************************************************
-//
+// varargs overloads
 **************************************************************************/
 
 template <>
@@ -166,7 +166,7 @@ void throwCantUnpack(const char *format, ...) {
 }
 
 /*************************************************************************
-//
+// util
 **************************************************************************/
 
 void assertFailed(const char *expr, const char *file, int line, const char *func) noexcept {
@@ -191,7 +191,7 @@ const char *prettyName(const char *n) noexcept {
             n++;
         else if (*n == ' ')
             n++;
-        else if (strncmp(n, "class ", 6) == 0) // Visual C++
+        else if (strncmp(n, "class ", 6) == 0) // Visual C++ (msvc)
             n += 6;
         else
             break;

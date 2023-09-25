@@ -143,12 +143,12 @@ void upx_std_stable_sort(void *array, size_t n, upx_compare_func_t compare);
 // use std::stable_sort(); requires that "element_size" is constexpr!
 #define upx_qsort(a, n, element_size, compare) upx_std_stable_sort<(element_size)>(a, n, compare)
 #else
-// use libc qsort()
+// use libc qsort(); good enough for our use cases
 #define upx_qsort qsort
 #endif
 
 /*************************************************************************
-// misc. support functions
+// misc support functions
 **************************************************************************/
 
 int find(const void *b, int blen, const void *what, int wlen) noexcept;

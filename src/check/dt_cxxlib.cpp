@@ -30,6 +30,7 @@
 // compile-time checks
 **************************************************************************/
 
+// need extra parenthesis because the C preprocessor does not understand C++ templates
 ACC_COMPILE_TIME_ASSERT_HEADER((upx::is_same_all_v<int>) )
 ACC_COMPILE_TIME_ASSERT_HEADER((upx::is_same_all_v<int, int>) )
 ACC_COMPILE_TIME_ASSERT_HEADER((upx::is_same_all_v<int, int, int>) )

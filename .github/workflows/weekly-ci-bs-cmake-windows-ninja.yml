@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-#         # cl (msvc)
+          # cl (msvc)
           - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64 }
           - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64_arm64 }
           - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64_x86 }
@@ -27,6 +27,8 @@ jobs:
           - { os: windows-2022, cc: cl, cxx: cl, vsversion: 2022, arch: amd64_x86 }
           # clang-cl
           - { os: windows-2022, cc: clang-cl, cxx: clang-cl, vsversion: 2022, arch: amd64 }
+          # clang
+          - { os: windows-2022, cc: clang, cxx: 'clang++', arch: amd64, xflags: '-static' }
           # gcc (mingw-gcc)
           - { os: windows-2022, cc: gcc, cxx: 'g++', arch: amd64, xflags: '-static' }
     env:
@@ -48,7 +50,7 @@ jobs:
         shell: bash
         run: |
           command -v ninja >/dev/null || choco install -y --no-progress ninja
-          xtarget="windows-make-${{ matrix.cc }}-${{ matrix.vsversion }}-${{ matrix.arch}}"
+          xtarget="windows-ninja-${{ matrix.cc }}-${{ matrix.vsversion }}-${{ matrix.arch}}"
           echo "xtarget=$xtarget" >> $GITHUB_ENV
       - name: 'Build cmake Ninja Debug'
         shell: bash

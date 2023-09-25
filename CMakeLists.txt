@@ -16,7 +16,7 @@ endif()
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-    # permissive config defaults when building from source code release tarball
+    # permissive config defaults when building from source code tarball
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." ON)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." ON)
     option(UPX_CONFIG_DISABLE_WSTRICT  "Do not compile with strict compiler warnings." ON)
@@ -226,12 +226,14 @@ if(NOT CMAKE_C_COMPILER_ID MATCHES "^MSVC")
     set(CMAKE_C_FLAGS_RELEASE "${a}" CACHE STRING "Flags used by the C compiler during RELEASE builds." FORCE)
     set(CMAKE_CXX_FLAGS_RELEASE "${b}" CACHE STRING "Flags used by the CXX compiler during RELEASE builds." FORCE)
 endif()
-if(MSVC_FRONTEND)
+if(MSVC_FRONTEND OR WIN32)
     # disable silly warnings about using "deprecated" POSIX functions like fopen()
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
     add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+if(MSVC_FRONTEND)
     # use -funsigned-char; set __cplusplus according to selected C++ standard
     add_definitions(-J -Zc:__cplusplus)
     if(CMAKE_C_COMPILER_ID MATCHES "^MSVC")

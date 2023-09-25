@@ -381,16 +381,17 @@ void upx_std_stable_sort(void *array, size_t n, upx_compare_func_t compare) {
     struct alignas(1) element_type { byte data[ElementSize]; };
     static_assert(sizeof(element_type) == ElementSize);
     static_assert(alignof(element_type) == 1);
-    auto cmp = [compare](const element_type &a, const element_type &b) -> bool {
+    auto less = [compare](const element_type &a, const element_type &b) -> bool {
         return compare(&a, &b) < 0;
     };
-    std::stable_sort((element_type *) array, (element_type *) array + n, cmp);
+    std::stable_sort((element_type *) array, (element_type *) array + n, less);
 #endif
 }
 
 #if UPX_CONFIG_USE_STABLE_SORT
-// instantiate function templates for all element sizes we need
-// efficient, but code size bloat
+// instantiate function templates for all element sizes we need; efficient run time, but code size
+// bloat (about 4KiB code size for each function with my current libstdc++); not really needed as
+// libc qsort() is good enough for our use cases
 template void upx_std_stable_sort<1>(void *, size_t, upx_compare_func_t);
 template void upx_std_stable_sort<2>(void *, size_t, upx_compare_func_t);
 template void upx_std_stable_sort<4>(void *, size_t, upx_compare_func_t);
@@ -428,7 +429,7 @@ struct TestSortAllPermutations {
         } while (std::next_permutation(perm, perm + n));
         return num_perms;
     }
-    static bool test_permutations(upx_sort_func_t sort) {
+    static noinline bool test_permutations(upx_sort_func_t sort) {
         bool ok = true;
         ok &= (test(sort, 0) == 0);
         ok &= (test(sort, 1) == 1);
@@ -653,9 +654,9 @@ TEST_CASE("find") {
 }
 
 int mem_replace(void *buf, int blen, const void *what, int wlen, const void *replacement) noexcept {
-    byte *b = (byte *) buf;
+    byte *const b = (byte *) buf;
     int boff = 0;
-    int n = 0;
+    int count = 0;
 
     while (blen - boff >= wlen) {
         int off = find(b + boff, blen - boff, what, wlen);
@@ -664,9 +665,9 @@ int mem_replace(void *buf, int blen, const void *what, int wlen, const void *rep
         boff += off;
         memcpy(b + boff, replacement, wlen);
         boff += wlen;
-        n++;
+        count++;
     }
-    return n;
+    return count;
 }
 
 TEST_CASE("mem_replace") {

@@ -65,7 +65,7 @@
 }
 
 /*************************************************************************
-//
+// FileBase
 **************************************************************************/
 
 FileBase::~FileBase() may_throw {
@@ -160,7 +160,7 @@ void FileBase::set_extent(upx_off_t offset, upx_off_t length) {
 upx_off_t FileBase::st_size() const { return _length; }
 
 /*************************************************************************
-//
+// InputFile
 **************************************************************************/
 
 void InputFile::sopen(const char *name, int flags, int shflags) {
@@ -210,7 +210,7 @@ upx_off_t InputFile::seek(upx_off_t off, int whence) {
 upx_off_t InputFile::st_size_orig() const { return _length_orig; }
 
 /*************************************************************************
-//
+// OutputFile
 **************************************************************************/
 
 void OutputFile::sopen(const char *name, int flags, int shflags, int mode) {

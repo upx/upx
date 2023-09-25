@@ -18,7 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-# INFO: the following don't work => use Ninja (weekly-ci-bs-cmake-windows-ninja.yml) instead
+# INFO: the following don't work with GNU make (probably some quoting problems with spaces or backslashes)
+#   => use Ninja generator instead; see weekly-ci-bs-cmake-windows-ninja.yml
 #         # cl (msvc)
 #         - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64 }
 #         - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64_arm64 }
@@ -28,6 +29,8 @@ jobs:
 #         - { os: windows-2022, cc: cl, cxx: cl, vsversion: 2022, arch: amd64_x86 }
 #         # clang-cl
 #         - { os: windows-2022, cc: clang-cl, cxx: clang-cl, vsversion: 2022, arch: amd64 }
+          # clang
+          - { os: windows-2022, cc: clang, cxx: 'clang++', arch: amd64, xflags: '-static' }
           # gcc (mingw-gcc)
           - { os: windows-2022, cc: gcc, cxx: 'g++', arch: amd64, xflags: '-static' }
     env:

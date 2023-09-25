@@ -30,8 +30,8 @@ jobs:
           echo "installing shells: $shells"
           apk update && apk upgrade && apk add ccache g++ git $shells
           # enable ccache and some warnings
-          warn="-Wall -Wextra -Werror"
-          echo -e "CC=ccache gcc $warn\nCXX=ccache g++ -std=gnu++17 $warn" >> $GITHUB_ENV
+          xflags="-static -Wall -Wextra -Werror"
+          echo -e "CC=ccache gcc $xflags\nCXX=ccache g++ -std=gnu++17 $xflags" >> $GITHUB_ENV
           # this seems to be needed when running in a container (beause of UID mismatch??)
           git config --global --add safe.directory '*'
           # create user upx:upx 2000:2000 for file system tests below ("sudo")

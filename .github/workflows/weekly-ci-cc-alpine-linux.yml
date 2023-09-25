@@ -81,66 +81,66 @@ jobs:
         if: matrix.use_cxx20
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
-          make -C "upx with space" UPX_XTARGET=clang-cxx20-static CC="clang -std=gnu17 -static" CXX="clang++ -std=gnu++20 -static"
+          make -C "upx with space" UPX_XTARGET=clang-static-cxx20 CC="clang -static -std=gnu17" CXX="clang++ -static -std=gnu++20"
       - name: ${{ format('Build clang C++20 Debug with {0}', env.clang_package) }}
         if: matrix.use_cxx20
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
-          make -C "upx with space" UPX_XTARGET=clang-cxx20-static CC="clang -std=gnu17 -static" CXX="clang++ -std=gnu++20 -static" xtarget/debug
+          make -C "upx with space" UPX_XTARGET=clang-static-cxx20 CC="clang -static -std=gnu17" CXX="clang++ -static -std=gnu++20" xtarget/debug
       - name: ${{ format('Build gcc C++20 Release with {0}', env.gcc_package) }}
         if: matrix.use_cxx20
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
-          make -C "upx with space" UPX_XTARGET=gcc-cxx20-static   CC="gcc -std=gnu17 -static"   CXX="g++ -std=gnu++20 -static"
+          make -C "upx with space" UPX_XTARGET=gcc-static-cxx20   CC="gcc -static -std=gnu17"   CXX="g++ -static -std=gnu++20"
       - name: ${{ format('Build gcc C++20 Debug with {0}', env.gcc_package) }}
         if: matrix.use_cxx20
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
-          make -C "upx with space" UPX_XTARGET=gcc-cxx20-static   CC="gcc -std=gnu17 -static"   CXX="g++ -std=gnu++20 -static" xtarget/debug
+          make -C "upx with space" UPX_XTARGET=gcc-static-cxx20   CC="gcc -static -std=gnu17"   CXX="g++ -static -std=gnu++20" xtarget/debug
 
-      # build with C23 and C++23 (using -std=gnu++2b)
+      # build with C23 and C++23
       - name: ${{ format('Build clang C++23 Release with {0}', env.clang_package) }}
         if: matrix.use_cxx23 || matrix.use_cxx2b
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
           a=gnu23; b=gnu++23; if test "X${{ matrix.use_cxx2b }}" = X1; then a=gnu2x; b=gnu++2b; fi
-          make -C "upx with space" UPX_XTARGET=clang-cxx23-static CC="clang -std=$a -static" CXX="clang++ -std=$b -static"
+          make -C "upx with space" UPX_XTARGET=clang-static-cxx23 CC="clang -static -std=$a" CXX="clang++ -static -std=$b"
       - name: ${{ format('Build clang C++23 Debug with {0}', env.clang_package) }}
         if: matrix.use_cxx23 || matrix.use_cxx2b
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
           a=gnu23; b=gnu++23; if test "X${{ matrix.use_cxx2b }}" = X1; then a=gnu2x; b=gnu++2b; fi
-          make -C "upx with space" UPX_XTARGET=clang-cxx23-static CC="clang -std=$a -static" CXX="clang++ -std=$b -static" xtarget/debug
+          make -C "upx with space" UPX_XTARGET=clang-static-cxx23 CC="clang -static -std=$a" CXX="clang++ -static -std=$b" xtarget/debug
       - name: ${{ format('Build gcc C++23 Release with {0}', env.gcc_package) }}
         if: matrix.use_cxx23 || matrix.use_cxx2b
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
           a=gnu23; b=gnu++23; if test "X${{ matrix.use_cxx2b }}" = X1; then a=gnu2x; b=gnu++2b; fi
-          make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=$a -static"   CXX="g++ -std=$b -static"
+          make -C "upx with space" UPX_XTARGET=gcc-static-cxx23   CC="gcc -static -std=$a"   CXX="g++ -static -std=$b"
       - name: ${{ format('Build gcc C++23 Debug with {0}', env.gcc_package) }}
         if: matrix.use_cxx23 || matrix.use_cxx2b
         run: |
           export UPX_CONFIG_DISABLE_C_STANDARD=ON UPX_CONFIG_DISABLE_CXX_STANDARD=ON
           a=gnu23; b=gnu++23; if test "X${{ matrix.use_cxx2b }}" = X1; then a=gnu2x; b=gnu++2b; fi
-          make -C "upx with space" UPX_XTARGET=gcc-cxx23-static   CC="gcc -std=$a -static"   CXX="g++ -std=$b -static" xtarget/debug
+          make -C "upx with space" UPX_XTARGET=gcc-static-cxx23   CC="gcc -static -std=$a"   CXX="g++ -static -std=$b" xtarget/debug
 
       # build with -flto
       - name: ${{ format('Build clang LTO Release with {0}', env.clang_package) }}
         if: matrix.use_lto
         run: |
-          make -C "upx with space" UPX_XTARGET=clang-cxxlto-static CC="clang -flto -static" CXX="clang++ -flto -static"
+          make -C "upx with space" UPX_XTARGET=clang-static-cxxlto CC="clang -static -flto" CXX="clang++ -static -flto"
       - name: ${{ format('Build clang LTO Debug with {0}', env.clang_package) }}
         if: matrix.use_lto
         run: |
-          make -C "upx with space" UPX_XTARGET=clang-cxxlto-static CC="clang -flto -static" CXX="clang++ -flto -static" xtarget/debug
+          make -C "upx with space" UPX_XTARGET=clang-static-cxxlto CC="clang -static -flto" CXX="clang++ -static -flto" xtarget/debug
       - name: ${{ format('Build gcc LTO Release with {0}', env.gcc_package) }}
         if: matrix.use_lto
         run: |
-          make -C "upx with space" UPX_XTARGET=gcc-cxxlto-static   CC="gcc -flto -static"   CXX="g++ -flto -static"
+          make -C "upx with space" UPX_XTARGET=gcc-static-cxxlto   CC="gcc -static -flto"   CXX="g++ -static -flto"
       - name: ${{ format('Build gcc LTO Debug with {0}', env.gcc_package) }}
         if: matrix.use_lto
         run: |
-          make -C "upx with space" UPX_XTARGET=gcc-cxxlto-static   CC="gcc -flto -static"   CXX="g++ -flto -static" xtarget/debug
+          make -C "upx with space" UPX_XTARGET=gcc-static-cxxlto   CC="gcc -static -flto"   CXX="g++ -static -flto" xtarget/debug
 
       - { name: 'Strip release binaries', run: 'strip -p --strip-unneeded "upx with space"/build/*/*/release/upx' }
 

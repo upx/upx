@@ -82,7 +82,7 @@ jobs:
       - name: 'Run testsuite clang-asan'
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: ASAN not supported
         run: |
-          export ASAN_OPTIONS=detect_invalid_pointer_pairs=2
+          export ASAN_OPTIONS="detect_invalid_pointer_pairs=2"
           env -C build/xtarget/clang-asan/$release "$PWD"/misc/testsuite/upx_testsuite_1.sh
       - name: 'Run testsuite clang-msan'
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: MSAN not supported

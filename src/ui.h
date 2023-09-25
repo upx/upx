@@ -93,7 +93,7 @@ protected:
     struct State;
     OwningPointer(State) s = nullptr; // owner
 
-    // totals
+    // static totals
     static unsigned total_files;
     static unsigned total_files_done;
     static upx_uint64_t total_c_len;

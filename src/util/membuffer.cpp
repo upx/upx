@@ -96,8 +96,9 @@ void *MemBuffer::subref_impl(const char *errfmt, size_t skip, size_t take) {
     return ptr + skip;
 }
 
-static forceinline size_t umax(size_t a, size_t b) { return (a >= b) ? a : b; }
+static forceinline constexpr size_t umax(size_t a, size_t b) { return (a >= b) ? a : b; }
 
+/*static*/
 unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned extra) {
     if (uncompressed_size == 0)
         throwCantPack("invalid uncompressed_size");
@@ -112,6 +113,7 @@ unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned e
     return ACC_ICONV(unsigned, bytes);
 }
 
+/*static*/
 unsigned MemBuffer::getSizeForDecompression(unsigned uncompressed_size, unsigned extra) {
     if (uncompressed_size == 0)
         throwCantPack("invalid uncompressed_size");
