@@ -47,6 +47,7 @@ jobs:
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx .
           git submodule update --init
           git clone --depth=1 https://github.com/upx/upx-testsuite ../upx-testsuite
+
       - name: 'Build clang-static'
         run: |
           export CC="clang -static" CXX="clang++ -static"
@@ -55,16 +56,17 @@ jobs:
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: ASAN not supported
         run: |
           # unfortunately ASAN does not support static linking
-          flags="-fsanitize=address -fsanitize=pointer-compare -fsanitize=pointer-subtract -fsanitize=undefined -fno-omit-frame-pointer -D__SANITIZE_ADDRESS__=1"
+          flags="-fsanitize=address -fsanitize=pointer-compare -fsanitize=pointer-subtract -fsanitize=undefined -fno-omit-frame-pointer"
           export CC="clang $flags" CXX="clang++ $flags"
           make UPX_XTARGET=clang-asan xtarget/$release
       - name: 'Build clang-msan'
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: MSAN not supported
         run: |
           # unfortunately MSAN does not support static linking
-          flags="-fsanitize=memory -fsanitize=undefined -fno-omit-frame-pointer -D__SANITIZE_ADDRESS__=1 -DDOCTEST_CONFIG_DISABLE=1"
+          flags="-fsanitize=memory -fsanitize=undefined -fno-omit-frame-pointer -DDOCTEST_CONFIG_DISABLE=1"
           export CC="clang $flags" CXX="clang++ $flags"
           make UPX_XTARGET=clang-msan xtarget/$release
+
       - name: 'Make artifact'
         run: |
           N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-runtime-checkers-${{ matrix.container }}-${{ matrix.release }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
@@ -79,6 +81,16 @@ jobs:
         with:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
+
+      - name: 'Run basic tests clang-static'
+        run: 'make -C build/xtarget/clang-static/$release test'
+      - name: 'Run basic tests clang-asan'
+        if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: ASAN not supported
+        run: 'make -C build/xtarget/clang-asan/$release test'
+      - name: 'Run basic tests clang-msan'
+        if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: MSAN not supported
+        run: 'make -C build/xtarget/clang-msan/$release test'
+
       - name: 'Run testsuite clang-asan'
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: ASAN not supported
         run: |

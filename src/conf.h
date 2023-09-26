@@ -34,6 +34,16 @@
 #include "headers.h"
 #include "version.h"
 
+#if !defined(__has_attribute)
+#define __has_attribute(x) 0
+#endif
+#if !defined(__has_builtin)
+#define __has_builtin(x) 0
+#endif
+#if !defined(__has_feature)
+#define __has_feature(x) 0
+#endif
+
 // reserve name "upx" for namespace
 namespace upx {}
 
@@ -318,10 +328,6 @@ inline void NO_printf(const char *, ...) noexcept attribute_format(1, 2);
 inline void NO_fprintf(FILE *, const char *, ...) noexcept attribute_format(2, 3);
 inline void NO_printf(const char *, ...) noexcept {}
 inline void NO_fprintf(FILE *, const char *, ...) noexcept {}
-
-#if !defined(__has_builtin)
-#  define __has_builtin(x)      0
-#endif
 
 #if __has_builtin(__builtin_memcpy_inline)
 #  define upx_memcpy_inline     __builtin_memcpy_inline

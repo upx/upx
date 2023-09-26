@@ -109,6 +109,18 @@ static_assert(sizeof(void *) == 8);
 #include <mutex>
 #endif
 
+// sanitizers
+#if !defined(__SANITIZE_ADDRESS__) && defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define __SANITIZE_ADDRESS__ 1
+#endif
+#endif
+#if !defined(__SANITIZE_MEMORY__) && defined(__has_feature)
+#if __has_feature(memory_sanitizer)
+#define __SANITIZE_MEMORY__ 1
+#endif
+#endif
+
 // UPX vendor git submodule headers
 #include <doctest/doctest/parts/doctest_fwd.h>
 #if WITH_BOOST_PFR
@@ -121,7 +133,8 @@ static_assert(sizeof(void *) == 8);
 #ifndef WITH_VALGRIND
 #define WITH_VALGRIND 1
 #endif
-#if defined(__SANITIZE_ADDRESS__) || defined(_WIN32) || !defined(__GNUC__)
+#if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_MEMORY__) || defined(_WIN32) ||            \
+    !defined(__GNUC__)
 #undef WITH_VALGRIND
 #endif
 #if WITH_VALGRIND

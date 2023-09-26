@@ -47,7 +47,7 @@ unsigned membuffer_get_size(MemBuffer &mb) noexcept { return mb.getSize(); }
 // bool use_simple_mcheck()
 **************************************************************************/
 
-#if defined(__SANITIZE_ADDRESS__)
+#if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_MEMORY__)
 static forceinline constexpr bool use_simple_mcheck() noexcept { return false; }
 #elif (WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
 static bool use_simple_mcheck_flag;
@@ -190,7 +190,7 @@ void MemBuffer::alloc(upx_uint64_t bytes) {
         set_ne32(p + size_in_bytes + 4, stats.global_alloc_counter);
     }
     ptr = (pointer) (void *) p;
-#if DEBUG
+#if !defined(__SANITIZE_MEMORY__) && DEBUG
     memset(ptr, 0xfb, size_in_bytes);
     (void) VALGRIND_MAKE_MEM_UNDEFINED(ptr, size_in_bytes);
 #endif

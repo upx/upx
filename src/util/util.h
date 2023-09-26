@@ -70,12 +70,18 @@ inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n) {
 #if DEBUG
 template <class T>
 T *NewArray(upx_uint64_t n) {
+    COMPILE_TIME_ASSERT(std::is_standard_layout<T>::value)
+    COMPILE_TIME_ASSERT(std::is_trivially_copyable<T>::value)
+    COMPILE_TIME_ASSERT(std::is_trivially_default_constructible<T>::value)
     size_t bytes = mem_size(sizeof(T), n); // assert size
     T *array = new T[size_t(n)];
+#if !defined(__SANITIZE_MEMORY__)
     if (array != nullptr && bytes > 0) {
         memset(array, 0xfb, bytes);
         (void) VALGRIND_MAKE_MEM_UNDEFINED(array, bytes);
     }
+#endif
+    UNUSED(bytes);
     return array;
 }
 #define New(type, n) (NewArray<type>((n)))
