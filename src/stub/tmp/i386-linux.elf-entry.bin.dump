@@ -169,7 +169,7 @@ Idx Name          Size      VMA       LMA       File off  Algn  Flags
 164 ctok32.30     0a  0  0  01aa8  2**0  CONTENTS
 165 ctok32.40     05  0  0  01ab2  2**0  CONTENTS
 166 LEXEC017      02  0  0  01ab7  2**0  CONTENTS
-167 LEXEC020      0ab  0  0  01ab9  2**0  CONTENTS
+167 LEXEC020      0b0  0  0  01abc  2**2  CONTENTS
 SYMBOL TABLE:
 00000000 l    d  N2BSMA10 0 N2BSMA10
 00000000 l    d  N2BFAS11 0 N2BFAS11
@@ -657,4 +657,4 @@ OFFSET   TYPE              VALUE
 
 RELOCATION RECORDS FOR [LEXEC020]:
 OFFSET   TYPE              VALUE
-000000a7 R_386_32          O_BINFO
+000000ac R_386_32          O_BINFO
