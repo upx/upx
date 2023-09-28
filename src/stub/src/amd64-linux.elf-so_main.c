@@ -37,7 +37,6 @@ extern unsigned Pprotect(void *, size_t, unsigned);
 extern void *Pmap(void *, size_t, unsigned, unsigned, int, size_t);
 extern int Punmap(void *, size_t);
 extern size_t Pwrite(unsigned, void const *, size_t);
-extern int ftruncate(int fd, off_t length);
 
 extern void f_int3(int arg);
 

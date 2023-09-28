@@ -546,8 +546,9 @@ static ssize_t write(int fd, void const *buf, size_t len)
 void *brk(void *);
 int close(int);
 void exit(int) __attribute__((__noreturn__,__nothrow__));
+int ftruncate(int fd, size_t len);
+off_t lseek(int fd, off_t offset, int whence);
 int memfd_create(char const *, unsigned);
-void *mmap(void *, size_t, int, int, int, off_t);
 int munmap(void *, size_t);
 int mprotect(void const *, size_t, int);
 int open(char const *, unsigned, unsigned);
@@ -557,6 +558,7 @@ ssize_t write(int, void const *, size_t);
 
 #endif  /*}*/
 void __clear_cache(void *, void *);
+void *mmap(void *, size_t, int, int, int, off_t);
 
 
 /*************************************************************************

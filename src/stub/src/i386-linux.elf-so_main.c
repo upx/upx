@@ -298,7 +298,6 @@ make_hatch_i386(
 #elif defined(__arm__)  /*}{*/
 extern unsigned get_sys_munmap(void);
 extern int upxfd_create(void);  // early 32-bit Android lacks memfd_create
-extern size_t lseek(int fd, size_t offset, int whence);
 #define SEEK_SET 0
 
 static void *

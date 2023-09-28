@@ -96,9 +96,6 @@ do_brk(void *addr)
     return brk(addr);
 }
 
-extern char *mmap(void *addr, size_t len,
-    int prot, int flags, int fd, off_t offset);
-
 /*************************************************************************
 // UPX & NRV stuff
 **************************************************************************/
