@@ -23,7 +23,7 @@
     str; \
 })
 #else  //}{
-#   error;  // only: __arm__ or __i386__ (for ARM emulator) 
+#   error;  // only: __arm__ or __i386__ (for ARM emulator)
 #endif  //}
 
 // Upper half of ASCII (chars 0100-0177) are all legal in a Linux filename.
