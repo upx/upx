@@ -1400,7 +1400,7 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft, unsigned m_decomp
     }
 
     addLoader("IDENTSTR", nullptr);
-    addLoader("LEXEC020", nullptr);
+    addLoader("+40,LEXEC020", nullptr);
     addLoader("FOLDEXEC", nullptr);
 }
 

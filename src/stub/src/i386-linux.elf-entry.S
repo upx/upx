@@ -230,9 +230,12 @@ mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
         cmp eax,PAGE_MASK; jb 0f; hlt; 0:
         ret 6*4
 
+        .balign 4  // for Android emulator
 main:
         pop ebp  // &decompress
-        call unfold
+        nop;nop  // align 'call' opcode to (3 mod 4)
+        call unfold  // " *--sp = &O_BINFO; goto unfold; "
+            // must be ".balign 4" here for Android emulator
         .long O_BINFO
             // compressed fold_elf86 follows
 eof:
