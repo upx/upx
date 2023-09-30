@@ -73,7 +73,8 @@ jobs:
         with:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
-      - name: ${{ format('Run test suite') }}
+
+      - name: ${{ format('Run test suite under Wine') }}
         if: ${{ matrix.wine }}
         run: |
           git clone --depth=1 https://github.com/upx/upx-testsuite ../upx-testsuite

@@ -8,10 +8,11 @@
 # HINT: if you only have an older CMake 3.x then you can invoke cmake manually like this:
 #   mkdir -p build/release
 #   cd build/release
-#   cmake ../..
-#   make -j     (or use "cmake --build . --parallel")
+#   cmake ../..         # run config
+#   make -j             # and run build
 
 CMAKE = cmake
+
 UPX_CMAKE_BUILD_FLAGS += --parallel
 ifneq ($(VERBOSE),)
   #UPX_CMAKE_BUILD_FLAGS += --verbose # requires CMake >= 3.14
@@ -19,23 +20,6 @@ ifneq ($(VERBOSE),)
 endif
 # enable this if you prefer Ninja for the actual builds:
 #UPX_CMAKE_CONFIG_FLAGS += -G Ninja
-
-# info: by default CMake only honors the CC and CXX environment variables; make
-# it easy to set other variables like CMAKE_AR or CMAKE_RANLIB
-__add_cmake_config = $(and $($1),-D$1="$($1)")
-# pass common CMake settings from environment/make to cmake
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_AR)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_NM)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_RANLIB)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJCOPY)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJDUMP)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_STRIP)
-# pass UPX config options from environment/make to cmake; see CMakeLists.txt
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_GITREV)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SANITIZE)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WSTRICT)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WERROR)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SELF_PACK_TEST)
 
 #***********************************************************************
 # default
@@ -227,7 +211,8 @@ build/extra/cross-darwin-x86_64/%: export CXX = clang++ -target x86_64-apple-dar
 # force building with clang Static Analyzer (scan-build)
 build/analyze/clang-analyzer/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/analyze/clang-analyzer/release: PHONY; $(call run_config_and_build,$@,Release)
-build/analyze/clang-analyzer/%: CMAKE := scan-build $(CMAKE)
+build/analyze/clang-analyzer/%: SCAN_BUILD = scan-build
+build/analyze/clang-analyzer/%: override CMAKE := $(SCAN_BUILD) $(CMAKE)
 build/analyze/clang-analyzer/%: export CCC_CC  ?= clang
 build/analyze/clang-analyzer/%: export CCC_CXX ?= clang++
 
@@ -281,6 +266,31 @@ xtarget/release: build/xtarget/$(UPX_XTARGET)/release
 
 endif
 endif
+endif
+
+#***********************************************************************
+# assemble cmake config flags; useful for CI jobs
+#***********************************************************************
+
+ifneq ($(origin UPX_CMAKE_CONFIG_FLAGS),command line) # needed to work around a GNU make bug
+
+# info: by default CMake only honors the CC and CXX environment variables; make
+# it easy to set other variables like CMAKE_AR or CMAKE_RANLIB
+__add_cmake_config = $(and $($1),-D$1="$($1)")
+# pass common CMake settings from environment/make to cmake
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_AR)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_NM)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_RANLIB)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJCOPY)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJDUMP)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_STRIP)
+# pass UPX config options from environment/make to cmake; see CMakeLists.txt
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_GITREV)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SANITIZE)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WSTRICT)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WERROR)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SELF_PACK_TEST)
+
 endif
 
 #***********************************************************************

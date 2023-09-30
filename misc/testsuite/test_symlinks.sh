@@ -100,6 +100,14 @@ assert_symlink_dangling() {
     done
 }
 
+copy_directory() {
+    if command -v rsync >/dev/null; then
+        rsync -aH "$1/" "$2"
+    else
+        cp -ai "$1" "$2"
+    fi
+}
+
 create_files() {
     # clean
     local d
@@ -127,15 +135,15 @@ create_files() {
     cd ..
 
     # write-protect z_dir_2/z_file*
-    cp -ai z_dir_1 z_dir_2
+    copy_directory z_dir_1 z_dir_2
     chmod a-w z_dir_2/z_file*
 
     # write-protect z_dir_3 itself
-    cp -ai z_dir_1 z_dir_3
+    copy_directory z_dir_1 z_dir_3
     chmod a-w z_dir_3
 
     # write-protect everything in z_dir_4
-    cp -ai z_dir_1 z_dir_4
+    copy_directory z_dir_1 z_dir_4
     chmod -R a-w z_dir_4
 }
 
@@ -169,7 +177,11 @@ leave_dir() {
 tmpdir="$(mktemp -d tmp-upx-test-XXXXXX)"
 cd "./$tmpdir" || exit 1
 
-test_file="$(readlink -fn /bin/ls)"
+if [[ -f /bin/ls ]]; then
+    test_file="$(readlink -fn /bin/ls)"
+else
+    test_file="$(readlink -fn /usr/bin/env)"
+fi
 
 testsuite_header "default"
 flags="-qq -1 --no-filter"
@@ -364,7 +376,7 @@ fi
 
 # clean up
 cd ..
-chmod -R +w "./$tmpdir"
+chmod -R +rwx "./$tmpdir"
 rm -rf "./$tmpdir"
 
 if [[ $exit_code == 0 ]]; then

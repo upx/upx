@@ -45,7 +45,7 @@ ii  g++                         4:11.2.0-1ubuntu1                       amd64   
 ii  g++-11                      11.4.0-1ubuntu1~22.04                   amd64        GNU C++ compiler
 ii  g++-11-multilib             11.4.0-1ubuntu1~22.04                   amd64        GNU C++ compiler (multilib support)
 ii  g++-multilib                4:11.2.0-1ubuntu1                       amd64        GNU C++ compiler (multilib files)
-ii  gawk                        1:5.1.0-1build3                         amd64        GNU awk, a pattern scanning and processing language
+ii  gawk                        1:5.1.0-1ubuntu0.1                      amd64        GNU awk, a pattern scanning and processing language
 ii  gcc                         4:11.2.0-1ubuntu1                       amd64        GNU C compiler
 ii  gcc-11                      11.4.0-1ubuntu1~22.04                   amd64        GNU C compiler
 ii  gcc-11-base:amd64           11.4.0-1ubuntu1~22.04                   amd64        GCC, the GNU Compiler Collection (base package)
@@ -218,7 +218,7 @@ ii  libssh2-1:amd64             1.10.0-3                                amd64   
 ii  libssl3:amd64               3.0.2-0ubuntu1.10                       amd64        Secure Sockets Layer toolkit - shared libraries
 ii  libstdc++-11-dev:amd64      11.4.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (development files)
 ii  libstdc++6:amd64            12.3.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3
-ii  libsystemd0:amd64           249.11-0ubuntu3.9                       amd64        systemd utility library
+ii  libsystemd0:amd64           249.11-0ubuntu3.10                      amd64        systemd utility library
 ii  libtasn1-6:amd64            4.18.0-4build1                          amd64        Manage ASN.1 structures (runtime)
 ii  libtime-duration-perl       1.21-1                                  all          module for rounded or exact English expression of durations
 ii  libtimedate-perl            2.3300-2                                all          collection of modules to manipulate date/time information
@@ -229,7 +229,7 @@ ii  libtirpc-dev:amd64          1.3.2-2ubuntu0.1                        amd64   
 ii  libtirpc3:amd64             1.3.2-2ubuntu0.1                        amd64        transport-independent RPC library
 ii  libtsan0:amd64              11.4.0-1ubuntu1~22.04                   amd64        ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
 ii  libubsan1:amd64             12.3.0-1ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (runtime)
-ii  libudev1:amd64              249.11-0ubuntu3.9                       amd64        libudev shared library
+ii  libudev1:amd64              249.11-0ubuntu3.10                      amd64        libudev shared library
 ii  libunistring2:amd64         1.0-1                                   amd64        Unicode string library for C
 ii  libutempter0:amd64          1.2.1-2build2                           amd64        privileged helper for utmp/wtmp updates (runtime)
 ii  libuuid1:amd64              2.37.2-4ubuntu3                         amd64        Universally Unique ID library
@@ -254,7 +254,7 @@ ii  libxxhash0:amd64            0.8.1-1                                 amd64   
 ii  libyaml-0-2:amd64           0.2.2-1build2                           amd64        Fast YAML 1.1 parser and emitter library
 ii  libzstd-dev:amd64           1.4.8+dfsg-3build1                      amd64        fast lossless compression algorithm -- development files
 ii  libzstd1:amd64              1.4.8+dfsg-3build1                      amd64        fast lossless compression algorithm
-ii  linux-libc-dev:amd64        5.15.0-83.92                            amd64        Linux Kernel Headers for development
+ii  linux-libc-dev:amd64        5.15.0-84.93                            amd64        Linux Kernel Headers for development
 ii  login                       1:4.8.1-2ubuntu2.1                      amd64        system login tools
 ii  logsave                     1.46.5-2ubuntu1.1                       amd64        save the output of a command in a log file
 ii  lsb-base                    11.1.0ubuntu4                           all          Linux Standard Base init script functionality
@@ -327,7 +327,7 @@ ii  zstd                        1.4.8+dfsg-3build1                      amd64   
 ||/ Name                        Version                                 Architecture Description
 
 Packages sorted by Installed-Size:
-   749379 ===== TOTAL (321 packages)
+   749380 ===== TOTAL (321 packages)
     52747 gcc-11                                   amd64
     34444 libicu70                                 amd64
     32781 vim-runtime                              all
@@ -360,7 +360,7 @@ Packages sorted by Installed-Size:
      7128 libmagic-mgc                             amd64
      7112 coreutils                                amd64
      6988 libx32gcc-11-dev                         amd64
-     6780 linux-libc-dev                           amd64
+     6781 linux-libc-dev                           amd64
      6733 dpkg                                     amd64
      6667 lib32asan6                               amd64
      6570 libx32asan6                              amd64
