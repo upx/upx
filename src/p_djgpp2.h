@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_P_DJGPP2_H__
-#define UPX_P_DJGPP2_H__ 1
 
 /*************************************************************************
 // djgpp2/coff
@@ -103,7 +101,5 @@ protected:
 
     void stripDebug();
 };
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

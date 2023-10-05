@@ -31,9 +31,10 @@ LC_ALL=C sort -z | xargs -0r perl -n -e '
         }
     }
     if (m,\t,) {
-       if ($ARGV =~ m,(^|/)(gnu|m)?make(file|vars),i) { }
-       elsif ($ARGV =~ m,/tmp/.*\.(disasm|dump)$,) { }
-       elsif ($ARGV =~ m,/src/stub/src/arch/.*/lzma\w+\.S$,) { }
-       else { print "ERROR: hard TAB detected $ARGV: $_"; exit(1); }
+        if ($ARGV =~ m,(^|/)(gnu|m)?make(file|vars),i) { }
+        elsif ($ARGV =~ m,\.mk$,) { }
+        elsif ($ARGV =~ m,/tmp/.*\.(disasm|dump)$,) { }
+        elsif ($ARGV =~ m,/src/stub/src/arch/.*/lzma\w+\.S$,) { }
+        else { print "ERROR: hard TAB detected $ARGV: $_"; exit(1); }
     }
 ' || exit 1

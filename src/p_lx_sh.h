@@ -30,6 +30,7 @@
  */
 
 
+#pragma once
 #ifndef __UPX_P_LX_SH_H  //{
 #define __UPX_P_LX_SH_H 1
 

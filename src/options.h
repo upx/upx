@@ -47,6 +47,7 @@ enum {
     CMD_TEST,
     CMD_LIST,
     CMD_FILEINFO,
+    CMD_SYSINFO,
     CMD_HELP,
     CMD_LICENSE,
     CMD_VERSION,

@@ -435,4 +435,91 @@ void show_version(bool one_line) {
     // clang-format on
 }
 
+/*************************************************************************
+// sysinfo
+// undocumented and subject to change
+**************************************************************************/
+
+void show_sysinfo(const char *options_var) {
+    FILE *f = con_term;
+
+    show_header();
+
+    if (opt->verbose >= 1) {
+        con_fprintf(f, "UPX version: ");
+        fflush(f);
+        show_version(true);
+    }
+    fflush(stdout);
+
+    // Compilation Flags
+    if (opt->verbose >= 2) {
+        size_t cf_count = 0;
+        auto cf_print = [f, &cf_count](const char *name, const char *fmt, upx_int64_t v) noexcept {
+            if (cf_count++ == 0)
+                con_fprintf(f, "\nCompilation flags:\n");
+            con_fprintf(f, "  %s = ", name);
+            con_fprintf(f, fmt, v);
+            con_fprintf(f, "\n");
+        };
+        // OS and libc
+#if defined(WINVER)
+        cf_print("WINVER", "0x%04llx", WINVER + 0);
+#endif
+#if defined(_WIN32_WINNT)
+        cf_print("_WIN32_WINNT", "0x%04llx", _WIN32_WINNT + 0);
+#endif
+#if defined(__MSVCRT_VERSION__)
+        cf_print("__MSVCRT_VERSION__", "0x%04llx", __MSVCRT_VERSION__ + 0);
+#endif
+#if defined(_USE_MINGW_ANSI_STDIO)
+        cf_print("_USE_MINGW_ANSI_STDIO", "%lld", _USE_MINGW_ANSI_STDIO + 0);
+#endif
+#if defined(__USE_MINGW_ANSI_STDIO)
+        cf_print("__USE_MINGW_ANSI_STDIO", "%lld", __USE_MINGW_ANSI_STDIO + 0);
+#endif
+#if defined(__GLIBC__)
+        cf_print("__GLIBC__", "%lld", __GLIBC__ + 0);
+#endif
+#if defined(__GLIBC_MINOR__)
+        cf_print("__GLIBC_MINOR__", "%lld", __GLIBC_MINOR__ + 0);
+#endif
+        // compiler
+#if defined(_MSC_VER) && defined(_MSC_FULL_VER)
+        cf_print("_MSC_VER", "%lld", _MSC_VER + 0);
+        cf_print("_MSC_FULL_VER", "%lld", _MSC_FULL_VER + 0);
+#endif
+        UNUSED(cf_count);
+        UNUSED(cf_print);
+    }
+
+    // run-time
+#if defined(HAVE_LOCALTIME) && defined(HAVE_GMTIME)
+    {
+        auto tm2str = [](char *s, size_t size, const struct tm *tmp) noexcept {
+            snprintf(s, size, "%04d-%02d-%02d %02d:%02d:%02d", (int) tmp->tm_year + 1900,
+                     (int) tmp->tm_mon + 1, (int) tmp->tm_mday, (int) tmp->tm_hour,
+                     (int) tmp->tm_min, (int) tmp->tm_sec);
+        };
+
+        char s[40];
+        const time_t t = time(nullptr);
+        tm2str(s, sizeof(s), localtime(&t));
+        con_fprintf(f, "\n");
+        con_fprintf(f, "Local time is:  %s\n", s);
+        tm2str(s, sizeof(s), gmtime(&t));
+        con_fprintf(f, "UTC time is:    %s\n", s);
+    }
+#endif
+
+    if (options_var && options_var[0]) {
+        const char *e = getenv(options_var);
+        con_fprintf(f, "\n");
+        if (e && e[0])
+            con_fprintf(f, "Contents of environment variable %s: '%s'\n\n", options_var, e);
+        else
+            con_fprintf(f, "Environment variable '%s' is not set.\n\n", options_var);
+    }
+}
+
 /* vim:set ts=4 sw=4 et: */

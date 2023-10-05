@@ -185,7 +185,7 @@ bool Packer::compress(SPAN_P(byte) i_ptr, unsigned i_len, SPAN_P(byte) o_ptr,
             opt->crp.crp_ucl.max_match < cconf.conf_ucl.max_match)
             cconf.conf_ucl.max_match = opt->crp.crp_ucl.max_match;
 #if (WITH_NRV)
-        if (ph.level >= 7 || (ph.level >= 4 && ph.u_len >= 512 * 1024))
+        if ((ph.level >= 7 || (ph.level >= 4 && ph.u_len >= 512 * 1024)) && !opt->prefer_ucl)
             step = 0;
 #endif
     }

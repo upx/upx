@@ -374,6 +374,9 @@ static int do_option(int optc, const char *arg) {
     case 909:
         set_cmd(CMD_FILEINFO);
         break;
+    case 910:
+        set_cmd(CMD_SYSINFO);
+        break;
     case 'h':
     case 'H':
     case '?':
@@ -807,6 +810,8 @@ int main_get_options(int argc, char **argv) {
         {"help", 0, N, 'h' + 256},     // give help
         {"license", 0, N, 'L'},        // display software license
         {"list", 0, N, 'l'},           // list compressed exe
+        {"sysinfo", 0x90, N, 910},     // display system info // undocumented and subject to change
+        {"sys-info", 0x90, N, 910},    // display system info // undocumented and subject to change
         {"test", 0, N, 't'},           // test compressed file integrity
         {"uncompress", 0, N, 'd'},     // decompress
         {"version", 0, N, 'V' + 256},  // display version number
@@ -1250,12 +1255,16 @@ int upx_main(int argc, char *argv[]) may_throw {
         break;
     case CMD_FILEINFO:
         break;
-    case CMD_LICENSE:
-        show_license();
+    case CMD_SYSINFO:
+        show_sysinfo(OPTIONS_VAR);
         e_exit(EXIT_OK);
         break;
     case CMD_HELP:
         show_help(1);
+        e_exit(EXIT_OK);
+        break;
+    case CMD_LICENSE:
+        show_license();
         e_exit(EXIT_OK);
         break;
     case CMD_VERSION:

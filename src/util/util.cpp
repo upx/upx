@@ -280,6 +280,7 @@ void upx_memswap(void *a, void *b, size_t n) {
 static void memswap_no_overlap(byte *a, byte *b, size_t n) {
 #if defined(__clang__) && __clang_major__ < 15
     // work around a clang < 15 ICE (Internal Compiler Error)
+    // @COMPILER_BUG @CLANG_BUG
     upx_memswap(a, b, n);
 #else // clang bug
     upx_alignas_max byte tmp_buf[16];
@@ -763,7 +764,7 @@ int fn_strcmp(const char *n1, const char *n2) {
 }
 
 /*************************************************************************
-// misc.
+// misc
 **************************************************************************/
 
 bool set_method_name(char *buf, size_t size, int method, int level) {

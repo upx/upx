@@ -1,17 +1,15 @@
 #
-# UPX stub Makefile - needs GNU make 3.81 or better
-#
-# Preferred: see misc/podman/rebuild-stubs how to use Podman/Docker.
-# Otherwise you will need a number of special build tools like various
-# cross-assemblers and cross-compilers - see README.SRC.
-#
-# Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
+# UPX stub Makefile - needs GNU make
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
+# NOTE: see misc/podman/rebuild-stubs/20-image-run-shell.sh
+#   how to rebuild the UPX stubs
+
 MAKEFLAGS += -rR
-.SUFFIXES:
-.SECONDEXPANSION:
 .NOTPARALLEL:
+.SECONDEXPANSION:
+.SUFFIXES:
 export LC_ALL = C
 export SHELL = /bin/sh
 
@@ -22,8 +20,7 @@ space := $(empty) $(empty)
 tab   := $(empty)	$(empty)
 
 ifndef srcdir
-srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
-srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
+srcdir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
 endif
 ifndef top_srcdir
 top_srcdir := $(srcdir)/../..

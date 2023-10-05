@@ -7,12 +7,8 @@
 # instead. And see the top-level Makefile for some pre-defined CMake
 # build configurations.
 
-MAKEFLAGS += -r
-export SHELL = /bin/sh
-
 ifndef srcdir
-  srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
-  srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,' || echo 'ERROR')
+  srcdir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
 endif
 ifndef top_srcdir
   top_srcdir := $(srcdir)/..
@@ -98,8 +94,7 @@ endif
 # "make check-whitespace"
 #
 
-CHECK_WHITESPACE =
-ifeq ($(shell uname),Linux)
+ifeq ($(shell uname),Linux) # needs bash, perl, xargs, etc.
 CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
 CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)

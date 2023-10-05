@@ -29,6 +29,7 @@
  */
 
 
+#pragma once
 #ifndef __UPX_P_LX_EXC_H
 #define __UPX_P_LX_EXC_H 1
 

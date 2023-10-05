@@ -58,7 +58,7 @@ private:
 
 // debug - internal sanity check; also serves as pseudo-documentation
 #if DEBUG
-    noinline void assertInvariants() const {
+    noinline void assertInvariants() const may_throw {
         if __acc_cte (configRequirePtr)
             assert(ptr != nullptr);
         if __acc_cte (configRequireBase)
@@ -68,7 +68,7 @@ private:
             xspan_check_range(ptr, base, size_in_bytes);
     }
 #else
-forceinline void assertInvariants() const noexcept {}
+forceinline constexpr void assertInvariants() const noexcept {}
 #endif
 
     static inline pointer makeNotNull(pointer p) {

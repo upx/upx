@@ -113,7 +113,7 @@ create_files() {
     local d
     for d in z_dir_1 z_dir_2 z_dir_3 z_dir_4; do
         if [[ -d $d ]]; then
-            chmod -R +w "./$d"
+            chmod -R +rwx "./$d"
             rm -rf "./$d"
         fi
     done

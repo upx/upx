@@ -8,6 +8,7 @@ on:
 env:
   CMAKE_REQUIRED_QUIET: OFF
   DEBIAN_FRONTEND: noninteractive
+  UPX_CMAKE_CONFIG_FLAGS: -DCMAKE_VERBOSE_MAKEFILE=ON
 
 jobs:
   job-alpine-mingw: # uses cmake + make
@@ -28,7 +29,6 @@ jobs:
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
-    env: { UPX_CMAKE_CONFIG_FLAGS: '-DCMAKE_VERBOSE_MAKEFILE=ON' }
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         run: |
@@ -54,11 +54,11 @@ jobs:
       - name: 'Build cmake extra/cross-windows-mingw64/debug'
         # on Alpine 3.11 and 3.12 CMake does not find AR; Alpine >= 3.13 (with CMake 3.18) works
 ########run:   'make build/extra/cross-windows-mingw64/debug'
-        run:   'make build/extra/cross-windows-mingw64/debug UPX_CMAKE_CONFIG_FLAGS="$UPX_CMAKE_CONFIG_FLAGS -DCMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar"'
+        run:   'make build/extra/cross-windows-mingw64/debug -DCMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar'
       - name: 'Build cmake extra/cross-windows-mingw64/release'
         # on Alpine 3.11 and 3.12 CMake does not find AR
 ########run:   'make build/extra/cross-windows-mingw64/release'
-        run:   'make build/extra/cross-windows-mingw64/release UPX_CMAKE_CONFIG_FLAGS="$UPX_CMAKE_CONFIG_FLAGS -DCMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar"'
+        run:   'make build/extra/cross-windows-mingw64/release -DCMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar'
       - name: 'Make artifact'
         shell: bash
         run: |

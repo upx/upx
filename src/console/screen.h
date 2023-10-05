@@ -26,8 +26,6 @@
  */
 
 #pragma once
-#ifndef UPX_SCREEN_H__
-#define UPX_SCREEN_H__ 1
 
 #if (USE_SCREEN)
 
@@ -99,7 +97,5 @@ screen_t *screen_win32_construct(void);
 void screen_show_frames(screen_t *);
 
 #endif /* USE_SCREEN */
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

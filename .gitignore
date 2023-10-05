@@ -6,10 +6,10 @@
 /maint*
 /vendor*
 
-GNUmakefile
-MMakefile
+GNUmakefile*
+MMakefile*
 Makevars.local*
-compile_flags.txt
+compile_flags*.txt
 Tmp*
 tmp*
 

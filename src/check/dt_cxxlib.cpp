@@ -95,11 +95,14 @@ TEST_CASE("noncopyable") {
     Test t = {};
     CHECK(t.v == 1);
 #if (ACC_CC_MSC) // MSVC thinks that Test is not std::is_trivially_copyable; true or compiler bug?
+    // @COMPILER_BUG @MSVC_BUG
     t.v = 0;
 #else
     mem_clear(&t);
 #endif
     CHECK(t.v == 0);
+    constexpr Test x = {};
+    static_assert(x.v == 1);
 }
 
 /*************************************************************************
