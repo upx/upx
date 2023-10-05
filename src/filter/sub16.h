@@ -25,88 +25,46 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-
 /*************************************************************************
 //
 **************************************************************************/
 
 #include "sub.hh"
 
-#define SUB16(f, N)     SUB(f, N, unsigned short, get_le16, set_le16)
-#define ADD16(f, N)     ADD(f, N, unsigned short, get_le16, set_le16)
-#define SCAN16(f, N)    SCAN(f, N, unsigned short, get_le16, set_le16)
-
+#define SUB16(f, N)  SUB(f, N, unsigned short, get_le16, set_le16)
+#define ADD16(f, N)  ADD(f, N, unsigned short, get_le16, set_le16)
+#define SCAN16(f, N) SCAN(f, N, unsigned short, get_le16, set_le16)
 
 /*************************************************************************
 //
 **************************************************************************/
 
 // filter
-static int f_sub16_1(Filter *f)
-{
-    SUB16(f, 1)
-}
+static int f_sub16_1(Filter *f) { SUB16(f, 1) }
 
-static int f_sub16_2(Filter *f)
-{
-    SUB16(f, 2)
-}
+static int f_sub16_2(Filter *f) { SUB16(f, 2) }
 
-static int f_sub16_3(Filter *f)
-{
-    SUB16(f, 3)
-}
+static int f_sub16_3(Filter *f) { SUB16(f, 3) }
 
-static int f_sub16_4(Filter *f)
-{
-    SUB16(f, 4)
-}
-
+static int f_sub16_4(Filter *f) { SUB16(f, 4) }
 
 // unfilter
-static int u_sub16_1(Filter *f)
-{
-    ADD16(f, 1)
-}
+static int u_sub16_1(Filter *f) { ADD16(f, 1) }
 
-static int u_sub16_2(Filter *f)
-{
-    ADD16(f, 2)
-}
+static int u_sub16_2(Filter *f) { ADD16(f, 2) }
 
-static int u_sub16_3(Filter *f)
-{
-    ADD16(f, 3)
-}
+static int u_sub16_3(Filter *f) { ADD16(f, 3) }
 
-static int u_sub16_4(Filter *f)
-{
-    ADD16(f, 4)
-}
-
+static int u_sub16_4(Filter *f) { ADD16(f, 4) }
 
 // scan
-static int s_sub16_1(Filter *f)
-{
-    SCAN16(f, 1)
-}
+static int s_sub16_1(Filter *f) { SCAN16(f, 1) }
 
-static int s_sub16_2(Filter *f)
-{
-    SCAN16(f, 2)
-}
+static int s_sub16_2(Filter *f) { SCAN16(f, 2) }
 
-static int s_sub16_3(Filter *f)
-{
-    SCAN16(f, 3)
-}
+static int s_sub16_3(Filter *f) { SCAN16(f, 3) }
 
-static int s_sub16_4(Filter *f)
-{
-    SCAN16(f, 4)
-}
-
+static int s_sub16_4(Filter *f) { SCAN16(f, 4) }
 
 #undef SUB
 #undef ADD

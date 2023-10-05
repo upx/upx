@@ -215,7 +215,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
             if (opt->output_name) {
                 strcpy(tname, opt->output_name);
                 if ((opt->force_overwrite || opt->force >= 2) && !preserve_link)
-                    FileBase::unlink(tname, false);
+                    (void) FileBase::unlink_noexcept(tname);
             } else {
                 if (st.st_nlink < 2)
                     preserve_link = false; // not needed
@@ -233,7 +233,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                     preserve_link = ost.st_nlink >= 2;
                 } else if (r == 0 && S_ISLNK(ost.st_mode)) {
                     // output_name is a symlink (valid or dangling)
-                    FileBase::unlink(tname, false);
+                    (void) FileBase::unlink_noexcept(tname);
                     preserve_link = false; // not needed
                 } else {
                     preserve_link = false; // not needed
@@ -341,7 +341,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
 
 static void unlink_ofile(char *oname) noexcept {
     if (oname && oname[0]) {
-        FileBase::unlink(oname, false);
+        (void) FileBase::unlink_noexcept(oname);
         oname[0] = 0; // done with oname
     }
 }

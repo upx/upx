@@ -765,6 +765,7 @@ void show_version(bool one_line=false);
 unsigned upx_adler32(const void *buf, unsigned len, unsigned adler=1);
 unsigned upx_crc32  (const void *buf, unsigned len, unsigned crc=0);
 
+// clang-format off
 int upx_compress           ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
@@ -781,6 +782,7 @@ int upx_test_overlap       ( const upx_bytep buf,
                                    unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
+// clang-format on
 
 
 #include "util/snprintf.h"   // must get included first!

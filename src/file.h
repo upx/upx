@@ -52,7 +52,8 @@ public:
     // static file-related util functions; will throw on error
     static void chmod(const char *name, int mode) may_throw;
     static void rename(const char *old_, const char *new_) may_throw;
-    static bool unlink(const char *name, bool check = true) may_throw;
+    static void unlink(const char *name) may_throw;
+    static bool unlink_noexcept(const char *name) noexcept;
 
 protected:
     bool do_sopen();

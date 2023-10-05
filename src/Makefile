@@ -80,10 +80,9 @@ endif
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)
 # Markus loves clang-format, but John hates it; find a compromise
-CLANG_FORMAT_EXCLUDE_FILES += conf.h miniacc.h version.h packer_c.cpp
+CLANG_FORMAT_EXCLUDE_FILES += conf.h miniacc.h stub/%.h
 CLANG_FORMAT_EXCLUDE_FILES += p_elf.h p_elf_enum.h p_lx_% p_mach% p_unix% p_vmlin%
-CLANG_FORMAT_EXCLUDE_FILES += compress/compress.h filter/filter_impl.cpp
-CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* [cu]*/*.[ch]*))
+CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* */*.[ch]*))
 CLANG_FORMAT_FILES := $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES))
 clang-format: PHONY $(CLANG_FORMAT_FILES)
 	@echo "running upx-clang-format"
@@ -94,7 +93,7 @@ endif
 # "make check-whitespace"
 #
 
-ifeq ($(shell uname),Linux) # needs bash, perl, xargs, etc.
+ifneq ($(wildcard /usr/bin/env),) # needs bash, perl, xargs, etc.
 CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
 CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)

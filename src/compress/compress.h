@@ -25,8 +25,8 @@
  */
 
 #pragma once
-#ifndef UPX_COMPRESS_H__
-#define UPX_COMPRESS_H__ 1
+
+// clang-format off
 
 /*************************************************************************
 //
@@ -53,7 +53,6 @@ int upx_bzip2_test_overlap ( const upx_bytep buf,
                              const upx_compress_result_t *cresult );
 #endif
 
-
 #if (WITH_LZMA)
 int upx_lzma_init(void);
 const char *upx_lzma_version_string(void);
@@ -75,7 +74,6 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
                              const upx_compress_result_t *cresult );
 #endif
 
-
 #if (WITH_NRV)
 int upx_nrv_init(void);
 const char *upx_nrv_version_string(void);
@@ -96,7 +94,6 @@ int upx_nrv_test_overlap   ( const upx_bytep buf,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif
-
 
 #if (WITH_UCL)
 int upx_ucl_init(void);
@@ -121,7 +118,6 @@ unsigned upx_ucl_adler32(const void *buf, unsigned len, unsigned adler);
 unsigned upx_ucl_crc32  (const void *buf, unsigned len, unsigned crc);
 #endif
 
-
 #if (WITH_ZLIB)
 int upx_zlib_init(void);
 const char *upx_zlib_version_string(void);
@@ -145,7 +141,6 @@ unsigned upx_zlib_adler32(const void *buf, unsigned len, unsigned adler);
 unsigned upx_zlib_crc32  (const void *buf, unsigned len, unsigned crc);
 #endif
 
-
 #if (WITH_ZSTD)
 int upx_zstd_init(void);
 const char *upx_zstd_version_string(void);
@@ -166,8 +161,5 @@ int upx_zstd_test_overlap  ( const upx_bytep buf,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif
-
-
-#endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

@@ -52,16 +52,19 @@
         throwIOException("rename error", errno);
 }
 
-/*static*/ bool FileBase::unlink(const char *name, bool check) {
-    assert(name != nullptr && name[0] != 0);
+/*static*/ bool FileBase::unlink_noexcept(const char *name) noexcept {
+    assert_noexcept(name != nullptr && name[0] != 0);
     bool success = ::unlink(name) == 0;
 #if HAVE_CHMOD
     if (!success)
         success = (::chmod(name, 0666) == 0 && ::unlink(name) == 0);
 #endif
-    if (check && !success)
-        throwIOException(name, errno);
     return success;
+}
+
+/*static*/ void FileBase::unlink(const char *name) {
+    if (!unlink_noexcept(name))
+        throwIOException(name, errno);
 }
 
 /*************************************************************************

@@ -29,14 +29,11 @@
    <jreiser@users.sourceforge.net>
  */
 
-
-
 /*************************************************************************
 // filter / scan
 **************************************************************************/
 
-static int F(Filter *f)
-{
+static int F(Filter *f) {
 #ifdef U
     // filter
     byte *b = f->buf;
@@ -54,20 +51,17 @@ static int F(Filter *f)
     // find a 16 MiB large empty address space
     {
         unsigned char buf[256];
-        memset(buf,0,256);
+        memset(buf, 0, 256);
 
-        for (ic = 0; ic < size - 5; ic++)
-        {
-            if (!COND(b,ic,lastcall))
+        for (ic = 0; ic < size - 5; ic++) {
+            if (!COND(b, ic, lastcall))
                 continue;
-            jc = get_le32(b+ic+1)+ic+1;
-            if (jc < size)
-            {
+            jc = get_le32(b + ic + 1) + ic + 1;
+            if (jc < size) {
                 if (jc + addvalue >= (1u << 24)) // hi 8 bits won't be cto8
                     return -1;
-            }
-            else
-                buf[b[ic+1]] |= 1;
+            } else
+                buf[b[ic + 1]] |= 1;
         }
 
         if (getcto(f, buf) < 0)
@@ -75,35 +69,31 @@ static int F(Filter *f)
     }
     const unsigned char cto8 = f->cto;
 #ifdef U
-    const unsigned cto = (unsigned)f->cto << 24;
+    const unsigned cto = (unsigned) f->cto << 24;
 #endif
 
-    for (ic = 0; ic < size - 5; ic++)
-    {
-        if (!COND(b,ic,lastcall))
+    for (ic = 0; ic < size - 5; ic++) {
+        if (!COND(b, ic, lastcall))
             continue;
-        jc = get_le32(b+ic+1)+ic+1;
+        jc = get_le32(b + ic + 1) + ic + 1;
         // try to detect 'real' calls only
-        if (jc < size)
-        {
+        if (jc < size) {
             assert(jc + addvalue < (1u << 24)); // hi 8 bits won't be cto8
 #ifdef U
-            set_be32(b+ic+1,jc+addvalue+cto);
+            set_be32(b + ic + 1, jc + addvalue + cto);
 #endif
-            if (ic - lastnoncall < 5)
-            {
+            if (ic - lastnoncall < 5) {
                 // check the last 4 bytes before this call
                 for (kc = 4; kc; kc--)
-                    if (COND(b,ic-kc,lastcall) && b[ic-kc+1] == cto8)
+                    if (COND(b, ic - kc, lastcall) && b[ic - kc + 1] == cto8)
                         break;
-                if (kc)
-                {
+                if (kc) {
 #ifdef U
                     // restore original
-                    set_le32(b+ic+1,jc-ic-1);
+                    set_le32(b + ic + 1, jc - ic - 1);
 #endif
-                    if (b[ic+1] == cto8)
-                        return 1;           // fail - buffer not restored
+                    if (b[ic + 1] == cto8)
+                        return 1; // fail - buffer not restored
                     lastnoncall = ic;
                     noncalls2++;
                     continue;
@@ -111,11 +101,9 @@ static int F(Filter *f)
             }
             calls++;
             ic += 4;
-            lastcall = ic+1;
-        }
-        else
-        {
-            assert(b[ic+1] != cto8);        // this should not happen
+            lastcall = ic + 1;
+        } else {
+            assert(b[ic + 1] != cto8); // this should not happen
             lastnoncall = ic;
             noncalls++;
         }
@@ -132,39 +120,33 @@ static int F(Filter *f)
     return 0;
 }
 
-
 /*************************************************************************
 // unfilter
 **************************************************************************/
 
 #ifdef U
-static int U(Filter *f)
-{
+static int U(Filter *f) {
     byte *b = f->buf;
     const unsigned size5 = f->buf_len - 5;
     const unsigned addvalue = f->addvalue;
-    const unsigned cto = (unsigned)f->cto << 24;
-//    unsigned lastcall = 0;    // lastcall is not used in COND macro
+    const unsigned cto = (unsigned) f->cto << 24;
+    //    unsigned lastcall = 0;    // lastcall is not used in COND macro
     unsigned ic, jc;
 
     for (ic = 0; ic < size5; ic++)
-        if (COND(b,ic,lastcall))
-        {
-            jc = get_be32(b+ic+1);
-            if (b[ic+1] == f->cto)
-            {
-                set_le32(b+ic+1,jc-ic-1-addvalue-cto);
+        if (COND(b, ic, lastcall)) {
+            jc = get_be32(b + ic + 1);
+            if (b[ic + 1] == f->cto) {
+                set_le32(b + ic + 1, jc - ic - 1 - addvalue - cto);
                 f->calls++;
                 ic += 4;
-                f->lastcall = ic+1;
-            }
-            else
+                f->lastcall = ic + 1;
+            } else
                 f->noncalls++;
         }
     return 0;
 }
 #endif
-
 
 #undef F
 #undef U

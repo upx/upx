@@ -25,88 +25,46 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-
 /*************************************************************************
 //
 **************************************************************************/
 
 #include "sub.hh"
 
-#define SUB32(f, N)     SUB(f, N, unsigned int, get_le32, set_le32)
-#define ADD32(f, N)     ADD(f, N, unsigned int, get_le32, set_le32)
-#define SCAN32(f, N)    SCAN(f, N, unsigned int, get_le32, set_le32)
-
+#define SUB32(f, N)  SUB(f, N, unsigned int, get_le32, set_le32)
+#define ADD32(f, N)  ADD(f, N, unsigned int, get_le32, set_le32)
+#define SCAN32(f, N) SCAN(f, N, unsigned int, get_le32, set_le32)
 
 /*************************************************************************
 //
 **************************************************************************/
 
 // filter
-static int f_sub32_1(Filter *f)
-{
-    SUB32(f, 1)
-}
+static int f_sub32_1(Filter *f) { SUB32(f, 1) }
 
-static int f_sub32_2(Filter *f)
-{
-    SUB32(f, 2)
-}
+static int f_sub32_2(Filter *f) { SUB32(f, 2) }
 
-static int f_sub32_3(Filter *f)
-{
-    SUB32(f, 3)
-}
+static int f_sub32_3(Filter *f) { SUB32(f, 3) }
 
-static int f_sub32_4(Filter *f)
-{
-    SUB32(f, 4)
-}
-
+static int f_sub32_4(Filter *f) { SUB32(f, 4) }
 
 // unfilter
-static int u_sub32_1(Filter *f)
-{
-    ADD32(f, 1)
-}
+static int u_sub32_1(Filter *f) { ADD32(f, 1) }
 
-static int u_sub32_2(Filter *f)
-{
-    ADD32(f, 2)
-}
+static int u_sub32_2(Filter *f) { ADD32(f, 2) }
 
-static int u_sub32_3(Filter *f)
-{
-    ADD32(f, 3)
-}
+static int u_sub32_3(Filter *f) { ADD32(f, 3) }
 
-static int u_sub32_4(Filter *f)
-{
-    ADD32(f, 4)
-}
-
+static int u_sub32_4(Filter *f) { ADD32(f, 4) }
 
 // scan
-static int s_sub32_1(Filter *f)
-{
-    SCAN32(f, 1)
-}
+static int s_sub32_1(Filter *f) { SCAN32(f, 1) }
 
-static int s_sub32_2(Filter *f)
-{
-    SCAN32(f, 2)
-}
+static int s_sub32_2(Filter *f) { SCAN32(f, 2) }
 
-static int s_sub32_3(Filter *f)
-{
-    SCAN32(f, 3)
-}
+static int s_sub32_3(Filter *f) { SCAN32(f, 3) }
 
-static int s_sub32_4(Filter *f)
-{
-    SCAN32(f, 4)
-}
-
+static int s_sub32_4(Filter *f) { SCAN32(f, 4) }
 
 #undef SUB
 #undef ADD

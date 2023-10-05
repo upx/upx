@@ -25,28 +25,20 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "../conf.h"
 #include "../filter.h"
 
-static unsigned
-umin(const unsigned a, const unsigned b)
-{
-    return (a<=b) ? a : b;
-}
+static unsigned umin(const unsigned a, const unsigned b) { return (a <= b) ? a : b; }
 
-
-#define set_dummy(p, v)     ((void)0)
-#define get_8(p)            (*(p))
-#define set_8(p, v)         (*(p) = (v))
-
+#define set_dummy(p, v) ((void) 0)
+#define get_8(p)        (*(p))
+#define set_8(p, v)     (*(p) = (v))
 
 /*************************************************************************
 // util
 **************************************************************************/
 
 #include "getcto.h"
-
 
 /*************************************************************************
 // simple filters: calltrick / swaptrick / delta / ...
@@ -60,86 +52,80 @@ umin(const unsigned a, const unsigned b)
 #include "sub16.h"
 #include "sub32.h"
 
-
 /*************************************************************************
 // cto calltrick
 **************************************************************************/
 
-#define COND(b,x)               (b[x] == 0xe8)
-#define F                       f_cto32_e8_bswap_le
-#define U                       u_cto32_e8_bswap_le
+#define COND(b, x) (b[x] == 0xe8)
+#define F          f_cto32_e8_bswap_le
+#define U          u_cto32_e8_bswap_le
 #include "cto.h"
-#define F                       s_cto32_e8_bswap_le
-#include "cto.h"
-#undef COND
-
-#define COND(b,x)               (b[x] == 0xe9)
-#define F                       f_cto32_e9_bswap_le
-#define U                       u_cto32_e9_bswap_le
-#include "cto.h"
-#define F                       s_cto32_e9_bswap_le
+#define F s_cto32_e8_bswap_le
 #include "cto.h"
 #undef COND
 
-#define COND(b,x)               (b[x] == 0xe8 || b[x] == 0xe9)
-#define F                       f_cto32_e8e9_bswap_le
-#define U                       u_cto32_e8e9_bswap_le
+#define COND(b, x) (b[x] == 0xe9)
+#define F          f_cto32_e9_bswap_le
+#define U          u_cto32_e9_bswap_le
 #include "cto.h"
-#define F                       s_cto32_e8e9_bswap_le
+#define F s_cto32_e9_bswap_le
 #include "cto.h"
 #undef COND
 
+#define COND(b, x) (b[x] == 0xe8 || b[x] == 0xe9)
+#define F          f_cto32_e8e9_bswap_le
+#define U          u_cto32_e8e9_bswap_le
+#include "cto.h"
+#define F s_cto32_e8e9_bswap_le
+#include "cto.h"
+#undef COND
 
 /*************************************************************************
 // cto calltrick with jmp
 **************************************************************************/
 
-#define COND(b,x,lastcall) (b[x] == 0xe8 || b[x] == 0xe9)
-#define F                       f_ctoj32_e8e9_bswap_le
-#define U                       u_ctoj32_e8e9_bswap_le
+#define COND(b, x, lastcall) (b[x] == 0xe8 || b[x] == 0xe9)
+#define F                    f_ctoj32_e8e9_bswap_le
+#define U                    u_ctoj32_e8e9_bswap_le
 #include "ctoj.h"
-#define F                       s_ctoj32_e8e9_bswap_le
+#define F s_ctoj32_e8e9_bswap_le
 #include "ctoj.h"
 #undef COND
-
 
 /*************************************************************************
 // cto calltrick with jmp, optional jcc
 **************************************************************************/
 
-#define COND1(b,x)     (b[x] == 0xe8 || b[x] == 0xe9)
-#define COND2(b,x,lc)  (lc!=(x) && 0xf==b[(x)-1] && 0x80<=b[x] && b[x]<=0x8f)
-#define COND(b,x,lc,id) (COND1(b,x) || ((9<=(0xf&(id))) && COND2(b,x,lc)))
-#define F                       f_ctok32_e8e9_bswap_le
-#define U                       u_ctok32_e8e9_bswap_le
+#define COND1(b, x)        (b[x] == 0xe8 || b[x] == 0xe9)
+#define COND2(b, x, lc)    (lc != (x) && 0xf == b[(x) -1] && 0x80 <= b[x] && b[x] <= 0x8f)
+#define COND(b, x, lc, id) (COND1(b, x) || ((9 <= (0xf & (id))) && COND2(b, x, lc)))
+#define F                  f_ctok32_e8e9_bswap_le
+#define U                  u_ctok32_e8e9_bswap_le
 #include "ctok.h"
-#define F                       s_ctok32_e8e9_bswap_le
+#define F s_ctok32_e8e9_bswap_le
 #include "ctok.h"
 #undef COND
 #undef COND2
 #undef COND1
 
-
 /*************************************************************************
 // cto calltrick with jmp and jcc and relative renumbering
 **************************************************************************/
 
-#define COND_CALL(which,b,x) ((which = 0), b[x] == 0xe8)
-#define COND_JMP( which,b,x) ((which = 1), b[x] == 0xe9)
-#define COND_JCC( which,b,lastcall,x,y,z) ((which = 2), \
-         (lastcall!=(x) && 0xf==b[y] && 0x80<=b[z] && b[z]<=0x8f))
-#define COND1(which,b,x) (COND_CALL(which,b,x) || COND_JMP(which,b,x))
-#define COND2(which,b,lastcall,x,y,z) COND_JCC(which,b,lastcall,x,y,z)
+#define COND_CALL(which, b, x) ((which = 0), b[x] == 0xe8)
+#define COND_JMP(which, b, x)  ((which = 1), b[x] == 0xe9)
+#define COND_JCC(which, b, lastcall, x, y, z)                                                      \
+    ((which = 2), (lastcall != (x) && 0xf == b[y] && 0x80 <= b[z] && b[z] <= 0x8f))
+#define COND1(which, b, x)                 (COND_CALL(which, b, x) || COND_JMP(which, b, x))
+#define COND2(which, b, lastcall, x, y, z) COND_JCC(which, b, lastcall, x, y, z)
 
-#define CONDF(which,b,x,lastcall) \
-    (COND1(which,b,x) || COND2(which,b,lastcall,x,(x)-1, x   ))
-#define CONDU(which,b,x,lastcall) \
-    (COND1(which,b,x) || COND2(which,b,lastcall,x, x   ,(x)-1))
+#define CONDF(which, b, x, lastcall) (COND1(which, b, x) || COND2(which, b, lastcall, x, (x) -1, x))
+#define CONDU(which, b, x, lastcall) (COND1(which, b, x) || COND2(which, b, lastcall, x, x, (x) -1))
 
-#define F                       f_ctojr32_e8e9_bswap_le
-#define U                       u_ctojr32_e8e9_bswap_le
+#define F f_ctojr32_e8e9_bswap_le
+#define U u_ctojr32_e8e9_bswap_le
 #include "ctojr.h"
-#define F                       s_ctojr32_e8e9_bswap_le
+#define F s_ctojr32_e8e9_bswap_le
 #include "ctojr.h"
 
 #undef CONDU
@@ -150,24 +136,23 @@ umin(const unsigned a, const unsigned b)
 #undef COND_JMP
 #undef COND_CALL
 
-
 /*************************************************************************
 // PowerPC branch [incl. call] trick
 **************************************************************************/
 
-#define COND(b,x) (18==(get_be32(b+x)>>26))
-#define F                       f_ppcbxx
-#define U                       u_ppcbxx
+#define COND(b, x) (18 == (get_be32(b + x) >> 26))
+#define F          f_ppcbxx
+#define U          u_ppcbxx
 #include "ppcbxx.h"
-#define F                       s_ppcbxx
+#define F s_ppcbxx
 #include "ppcbxx.h"
 #undef COND
-
 
 /*************************************************************************
 // database for use in class Filter
 **************************************************************************/
 
+// clang-format off
 /*static*/ const FilterImpl::FilterEntry FilterImpl::filters[] = {
     // no filter
     { 0x00, 0,          0, nullptr, nullptr, nullptr },
@@ -265,6 +250,7 @@ umin(const unsigned a, const unsigned b)
     // PowerPC branch+call trick
     { 0xd0, 8,          0, f_ppcbxx, u_ppcbxx, s_ppcbxx },
 };
+// clang-format on
 
 /*static*/ const int FilterImpl::n_filters = TABLESIZE(filters);
 

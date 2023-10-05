@@ -29,16 +29,13 @@
    <jreiser@users.sourceforge.net>
  */
 
-
-
 /*************************************************************************
 // filter / scan
 **************************************************************************/
 
-#define W_CTO 4  /* width of cto; must match stub/ppc_bxx.S */
+#define W_CTO 4 /* width of cto; must match stub/ppc_bxx.S */
 
-static int F(Filter *f)
-{
+static int F(Filter *f) {
 #ifdef U
     // filter
     byte *b = f->buf;
@@ -47,8 +44,8 @@ static int F(Filter *f)
     // scan
     const byte *b = f->buf;
 #endif
-    const unsigned size  = umin(f->buf_len, 0u - (~0u<<(32 - (6+ W_CTO))));
-    const unsigned size4 = size -4;
+    const unsigned size = umin(f->buf_len, 0u - (~0u << (32 - (6 + W_CTO))));
+    const unsigned size4 = size - 4;
 
     unsigned ic;
     unsigned calls = 0, noncalls = 0;
@@ -58,18 +55,19 @@ static int F(Filter *f)
     {
         unsigned char buf[256];
         unsigned short wbuf[256];
-        const size_t WW = (size_t)0 - ((~(size_t)0) << W_CTO); // ???
+        const size_t WW = (size_t) 0 - ((~(size_t) 0) << W_CTO); // ???
         memset(wbuf, 0, sizeof(wbuf));
-        memset(buf     , 0,       WW);
+        memset(buf, 0, WW);
         memset(buf + WW, 1, 256 - WW);
 
-        for (ic = 0; ic<=size4; ic+=4) if (COND(b,ic)) {
-            unsigned const off = (int)(get_be32(b+ic)<<6) >>6;
-            if (size <= (off & (~0u<<2))+ic) {
-                buf[(~(~0u<<W_CTO)) & (off>>(26 - W_CTO))] |= 1;
-                ++wbuf[0xff&(off>>18)];
+        for (ic = 0; ic <= size4; ic += 4)
+            if (COND(b, ic)) {
+                unsigned const off = (int) (get_be32(b + ic) << 6) >> 6;
+                if (size <= (off & (~0u << 2)) + ic) {
+                    buf[(~(~0u << W_CTO)) & (off >> (26 - W_CTO))] |= 1;
+                    ++wbuf[0xff & (off >> 18)];
+                }
             }
-        }
 
         if (getcto(f, buf) < 0) {
 #if (W_CTO != 0)
@@ -81,29 +79,30 @@ static int F(Filter *f)
     }
     const unsigned char cto8 = f->cto;
 #ifdef U
-    const unsigned cto = (unsigned)f->cto << (24+2 - W_CTO);
+    const unsigned cto = (unsigned) f->cto << (24 + 2 - W_CTO);
 #endif
 
-    for (ic = 0; ic<=size4; ic+=4) if (COND(b,ic)) {
-        unsigned const word = get_be32(b+ic);
-        unsigned const off = (int)(word<<6) >>6;
-        unsigned const jc = (off & (~0u<<2))+ic;
-        // try to detect 'real' calls only
-        if (jc < size) {
+    for (ic = 0; ic <= size4; ic += 4)
+        if (COND(b, ic)) {
+            unsigned const word = get_be32(b + ic);
+            unsigned const off = (int) (word << 6) >> 6;
+            unsigned const jc = (off & (~0u << 2)) + ic;
+            // try to detect 'real' calls only
+            if (jc < size) {
 #ifdef U
-            set_be32(b+ic,(0xfc000003&word) | (jc+addvalue+cto));
+                set_be32(b + ic, (0xfc000003 & word) | (jc + addvalue + cto));
 #endif
-            calls++;
-            lastcall = ic;
-        }
-        else {
+                calls++;
+                lastcall = ic;
+            } else {
 #if (W_CTO != 0)
-            assert((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) != (unsigned) cto8);  // this should not happen
+                assert((~(~0u << W_CTO) & (word >> (24 + 2 - W_CTO))) !=
+                       (unsigned) cto8); // this should not happen
 #endif
-            lastnoncall = ic;
-            noncalls++;
+                lastnoncall = ic;
+                noncalls++;
+            }
         }
-    }
 
     f->calls = calls;
     f->noncalls = noncalls;
@@ -117,36 +116,33 @@ static int F(Filter *f)
     return 0;
 }
 
-
 /*************************************************************************
 // unfilter
 **************************************************************************/
 
 #ifdef U
-static int U(Filter *f)
-{
+static int U(Filter *f) {
     byte *b = f->buf;
-    const unsigned size4 = umin(f->buf_len - 4, 0u - (~0u<<(32 - (6+ W_CTO))));
+    const unsigned size4 = umin(f->buf_len - 4, 0u - (~0u << (32 - (6 + W_CTO))));
     const unsigned addvalue = f->addvalue;
 
     unsigned ic;
 
-   for (ic = 0; ic<=size4; ic+=4) if (COND(b,ic)) {
-        unsigned const word = get_be32(b+ic);
-        if ((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) == (unsigned) f->cto) {
-            unsigned const jc = word & (~(~0u<<(26 - W_CTO)) & (~0u<<2));
-            set_be32(b+ic, (0xfc000003&word)|(0x03fffffc&(jc-ic-addvalue)));
-            f->calls++;
-            f->lastcall = ic;
+    for (ic = 0; ic <= size4; ic += 4)
+        if (COND(b, ic)) {
+            unsigned const word = get_be32(b + ic);
+            if ((~(~0u << W_CTO) & (word >> (24 + 2 - W_CTO))) == (unsigned) f->cto) {
+                unsigned const jc = word & (~(~0u << (26 - W_CTO)) & (~0u << 2));
+                set_be32(b + ic, (0xfc000003 & word) | (0x03fffffc & (jc - ic - addvalue)));
+                f->calls++;
+                f->lastcall = ic;
+            } else {
+                f->noncalls++;
+            }
         }
-        else {
-            f->noncalls++;
-        }
-    }
     return 0;
 }
 #endif
-
 
 #undef F
 #undef U

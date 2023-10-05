@@ -25,88 +25,46 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-
 /*************************************************************************
 //
 **************************************************************************/
 
 #include "sub.hh"
 
-#define SUB8(f, N)      SUB(f, N, unsigned char, get_8, set_8)
-#define ADD8(f, N)      ADD(f, N, unsigned char, get_8, set_8)
-#define SCAN8(f, N)     SCAN(f, N, unsigned char, get_8, set_8)
-
+#define SUB8(f, N)  SUB(f, N, unsigned char, get_8, set_8)
+#define ADD8(f, N)  ADD(f, N, unsigned char, get_8, set_8)
+#define SCAN8(f, N) SCAN(f, N, unsigned char, get_8, set_8)
 
 /*************************************************************************
 //
 **************************************************************************/
 
 // filter
-static int f_sub8_1(Filter *f)
-{
-    SUB8(f, 1)
-}
+static int f_sub8_1(Filter *f) { SUB8(f, 1) }
 
-static int f_sub8_2(Filter *f)
-{
-    SUB8(f, 2)
-}
+static int f_sub8_2(Filter *f) { SUB8(f, 2) }
 
-static int f_sub8_3(Filter *f)
-{
-    SUB8(f, 3)
-}
+static int f_sub8_3(Filter *f) { SUB8(f, 3) }
 
-static int f_sub8_4(Filter *f)
-{
-    SUB8(f, 4)
-}
-
+static int f_sub8_4(Filter *f) { SUB8(f, 4) }
 
 // unfilter
-static int u_sub8_1(Filter *f)
-{
-    ADD8(f, 1)
-}
+static int u_sub8_1(Filter *f) { ADD8(f, 1) }
 
-static int u_sub8_2(Filter *f)
-{
-    ADD8(f, 2)
-}
+static int u_sub8_2(Filter *f) { ADD8(f, 2) }
 
-static int u_sub8_3(Filter *f)
-{
-    ADD8(f, 3)
-}
+static int u_sub8_3(Filter *f) { ADD8(f, 3) }
 
-static int u_sub8_4(Filter *f)
-{
-    ADD8(f, 4)
-}
-
+static int u_sub8_4(Filter *f) { ADD8(f, 4) }
 
 // scan
-static int s_sub8_1(Filter *f)
-{
-    SCAN8(f, 1)
-}
+static int s_sub8_1(Filter *f) { SCAN8(f, 1) }
 
-static int s_sub8_2(Filter *f)
-{
-    SCAN8(f, 2)
-}
+static int s_sub8_2(Filter *f) { SCAN8(f, 2) }
 
-static int s_sub8_3(Filter *f)
-{
-    SCAN8(f, 3)
-}
+static int s_sub8_3(Filter *f) { SCAN8(f, 3) }
 
-static int s_sub8_4(Filter *f)
-{
-    SCAN8(f, 4)
-}
-
+static int s_sub8_4(Filter *f) { SCAN8(f, 4) }
 
 #undef SUB
 #undef ADD

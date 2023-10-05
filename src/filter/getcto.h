@@ -25,22 +25,16 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-
 /*************************************************************************
 //
 **************************************************************************/
 
-static int getcto(Filter *f, const byte *buf, const int n=256)
-{
+static int getcto(Filter *f, const byte *buf, const int n = 256) {
     int ic = n;
 
-    if (f->preferred_ctos)
-    {
-        for (const int *pc = f->preferred_ctos; *pc >= 0; pc++)
-        {
-            if (*pc < n && buf[*pc] == 0)
-            {
+    if (f->preferred_ctos) {
+        for (const int *pc = f->preferred_ctos; *pc >= 0; pc++) {
+            if (*pc < n && buf[*pc] == 0) {
                 ic = *pc;
                 break;
             }
@@ -60,7 +54,7 @@ static int getcto(Filter *f, const byte *buf, const int n=256)
                 break;
 
     if (ic >= n)
-        //throwCantPack("call trick problem");
+        // throwCantPack("call trick problem");
         return -1;
 
     f->cto = (byte) ic;

@@ -33,67 +33,74 @@
 // compression method util
 **************************************************************************/
 
-/*static*/ bool Packer::isValidCompressionMethod(int method)
-{
+/*static*/ bool Packer::isValidCompressionMethod(int method) {
     if (M_IS_LZMA(method))
         return true;
     return method >= M_NRV2B_LE32 && method <= M_LZMA;
 }
 
+const int *Packer::getDefaultCompressionMethods_8(int method, int level, int small) const {
+#define M_LZMA_003 (M_LZMA | 0x00300)
+#define M_LZMA_407 (M_LZMA | 0x40700)
+    static const int m_all[] = {M_NRV2B_8,     M_NRV2D_8,  M_NRV2E_8,  M_LZMA,
+                                M_ULTRA_BRUTE, M_LZMA_003, M_LZMA_407, M_END};
+    // static const int m_cl1b[]  = { M_CL1B_8, M_END };
+    static const int m_lzma[] = {M_LZMA, M_END};
+    static const int m_nrv2b[] = {M_NRV2B_8, M_END};
+    static const int m_nrv2d[] = {M_NRV2D_8, M_END};
+    static const int m_nrv2e[] = {M_NRV2E_8, M_END};
 
-const int *Packer::getDefaultCompressionMethods_8(int method, int level, int small) const
-{
-#define M_LZMA_003      (M_LZMA | 0x00300)
-#define M_LZMA_407      (M_LZMA | 0x40700)
-    static const int m_all[]   = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, M_LZMA, M_ULTRA_BRUTE, M_LZMA_003, M_LZMA_407, M_END };
-    //static const int m_cl1b[]  = { M_CL1B_8, M_END };
-    static const int m_lzma[]  = { M_LZMA, M_END };
-    static const int m_nrv2b[] = { M_NRV2B_8, M_END };
-    static const int m_nrv2d[] = { M_NRV2D_8, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_END };
-
-    if (method == M_ALL)    return m_all;
-    //if (M_IS_CL1B(method))  return m_cl1b;
-    if (M_IS_LZMA(method))  return m_lzma;
-    if (M_IS_NRV2B(method)) return m_nrv2b;
-    if (M_IS_NRV2D(method)) return m_nrv2d;
-    if (M_IS_NRV2E(method)) return m_nrv2e;
+    if (method == M_ALL)
+        return m_all;
+    // if (M_IS_CL1B(method))  return m_cl1b;
+    if (M_IS_LZMA(method))
+        return m_lzma;
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
     if (small < 0)
-        small = file_size <= 512*1024;
+        small = file_size <= 512 * 1024;
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
 }
 
+const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int small) const {
+    static const int m_all[] = {M_NRV2B_LE32,  M_NRV2D_LE32, M_NRV2E_LE32, M_LZMA,
+                                M_ULTRA_BRUTE, M_LZMA_003,   M_LZMA_407,   M_END};
+    // static const int m_cl1b[]  = { M_CL1B_LE32, M_END };
+    static const int m_lzma[] = {M_LZMA, M_END};
+    static const int m_nrv2b[] = {M_NRV2B_LE32, M_END};
+    static const int m_nrv2d[] = {M_NRV2D_LE32, M_END};
+    static const int m_nrv2e[] = {M_NRV2E_LE32, M_END};
 
-const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int small) const
-{
-    static const int m_all[]   = { M_NRV2B_LE32, M_NRV2D_LE32, M_NRV2E_LE32, M_LZMA, M_ULTRA_BRUTE, M_LZMA_003, M_LZMA_407, M_END };
-    //static const int m_cl1b[]  = { M_CL1B_LE32, M_END };
-    static const int m_lzma[]  = { M_LZMA, M_END };
-    static const int m_nrv2b[] = { M_NRV2B_LE32, M_END };
-    static const int m_nrv2d[] = { M_NRV2D_LE32, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_LE32, M_END };
-
-    if (method == M_ALL)    return m_all;
-    //if (M_IS_CL1B(method))  return m_cl1b;
-    if (M_IS_LZMA(method))  return m_lzma;
-    if (M_IS_NRV2B(method)) return m_nrv2b;
-    if (M_IS_NRV2D(method)) return m_nrv2d;
-    if (M_IS_NRV2E(method)) return m_nrv2e;
+    if (method == M_ALL)
+        return m_all;
+    // if (M_IS_CL1B(method))  return m_cl1b;
+    if (M_IS_LZMA(method))
+        return m_lzma;
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
     if (small < 0)
-        small = file_size <= 512*1024;
+        small = file_size <= 512 * 1024;
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
 }
-
 
 /*************************************************************************
 // loader util
 **************************************************************************/
 
 static bool callsManyTimes(int format) {
+    // clang-format off
     return
         UPX_F_LINUX_ELF_i386   ==format
     ||  UPX_F_LINUX_ELFI_i386  ==format
@@ -113,10 +120,11 @@ static bool callsManyTimes(int format) {
     ||  UPX_F_MACH_i386        ==format
     ||  UPX_F_DYLIB_i386       ==format
     ;
+    // clang-format on
 }
 
-const char *Packer::getDecompressorSections() const
-{
+const char *Packer::getDecompressorSections() const {
+    // clang-format off
     static const char nrv2b_le32_small[] =
         "N2BSMA10,N2BDEC10,N2BSMA20,N2BDEC20,N2BSMA30,"
         "N2BDEC30,N2BSMA40,N2BSMA50,N2BDEC50,N2BSMA60,"
@@ -209,6 +217,7 @@ const char *Packer::getDecompressorSections() const
         "LZMA_ELF00,LZMA_DEC10,LZMA_DEC30";
     static const char lzma_elf_fast[] =
         "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30";
+    // clang-format on
 
     unsigned const method = ph_forced_method(ph.method);
     if (method == M_NRV2B_LE32)
@@ -217,46 +226,39 @@ const char *Packer::getDecompressorSections() const
         return opt->small ? nrv2d_le32_small : nrv2d_le32_fast;
     if (method == M_NRV2E_LE32)
         return opt->small ? nrv2e_le32_small : nrv2e_le32_fast;
-//    if (method == M_CL1B_LE32)
-//        return opt->small ? cl1b_le32_small  : cl1b_le32_fast;
+    //    if (method == M_CL1B_LE32)
+    //        return opt->small ? cl1b_le32_small  : cl1b_le32_fast;
     if (M_IS_LZMA(method)) {
         if (callsManyTimes(ph.format)) {
-            return opt->small ? lzma_elf_small  : lzma_elf_fast;
+            return opt->small ? lzma_elf_small : lzma_elf_fast;
         }
-        return opt->small ? lzma_small  : lzma_fast;
+        return opt->small ? lzma_small : lzma_fast;
     }
     throwInternalError("bad decompressor");
     return nullptr;
 }
 
-
-unsigned Packer::getDecompressorWrkmemSize() const
-{
+unsigned Packer::getDecompressorWrkmemSize() const {
     unsigned size = 0;
-    if (M_IS_LZMA(ph.method))
-    {
+    if (M_IS_LZMA(ph.method)) {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
         // FIXME - this is for i386 only
         size = 8 + 4 + ALIGN_UP(2 * res->num_probs, 4u);
         size = ALIGN_UP(size, 16u);
     }
-    assert((int)size >= 0);
+    assert((int) size >= 0);
     return size;
 }
 
-void Packer::defineDecompressorSymbols()
-{
+void Packer::defineDecompressorSymbols() {
     if (callsManyTimes(ph.format)) {
         // ELF calls the decompressor many times; the parameters change!
         return;
     }
-    if (M_IS_LZMA(ph.method))
-    {
+    if (M_IS_LZMA(ph.method)) {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
         upx_uint32_t properties = // lc, lp, pb, dummy
-            (res->lit_context_bits << 0) |
-            (res->lit_pos_bits << 8) |
-            (res->pos_bits << 16);
+            (res->lit_context_bits << 0) | (res->lit_pos_bits << 8) | (res->pos_bits << 16);
         if (bele->isBE()) // big endian - bswap32
             properties = bswap32(properties);
 
@@ -267,9 +269,8 @@ void Packer::defineDecompressorSymbols()
         unsigned stack = getDecompressorWrkmemSize();
         linker->defineSymbol("lzma_stack_adjust", 0u - stack);
 
-        if (ph.format == UPX_F_DOS_EXE)
-        {
-            linker->defineSymbol("lzma_properties_hi", properties >> 16);   // pb
+        if (ph.format == UPX_F_DOS_EXE) {
+            linker->defineSymbol("lzma_properties_hi", properties >> 16); // pb
             linker->defineSymbol("lzma_c_len_hi", (ph.c_len - 2) >> 16);
             linker->defineSymbol("lzma_u_len_hi", ph.u_len >> 16);
             linker->defineSymbol("lzma_u_len_segment", (ph.u_len & 0xf0000) >> 4);

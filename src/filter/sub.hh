@@ -25,58 +25,60 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
-
 /*************************************************************************
 //
 **************************************************************************/
 
-#define SUB(f, N, T, get, set) \
-    byte *b = f->buf; \
-    unsigned l = f->buf_len / sizeof(T); \
-    int i; \
-    T d[N]; \
-    \
-    i = N - 1; do d[i] = 0; while (--i >= 0); \
-    \
-    i = N - 1; \
-    do { \
-        T delta = (T) (get(b) - d[i]); \
-        set(b, delta); \
-        d[i] = (T) (d[i] + delta); \
-        b += sizeof(T); \
-        if (--i < 0) \
-            i = N - 1; \
-    } while (--l > 0); \
-    f->calls = (f->buf_len / sizeof(T)) - N; \
-    assert((int)f->calls > 0); \
+#define SUB(f, N, T, get, set)                                                                     \
+    byte *b = f->buf;                                                                              \
+    unsigned l = f->buf_len / sizeof(T);                                                           \
+    int i;                                                                                         \
+    T d[N];                                                                                        \
+                                                                                                   \
+    i = N - 1;                                                                                     \
+    do                                                                                             \
+        d[i] = 0;                                                                                  \
+    while (--i >= 0);                                                                              \
+                                                                                                   \
+    i = N - 1;                                                                                     \
+    do {                                                                                           \
+        T delta = (T) (get(b) - d[i]);                                                             \
+        set(b, delta);                                                                             \
+        d[i] = (T) (d[i] + delta);                                                                 \
+        b += sizeof(T);                                                                            \
+        if (--i < 0)                                                                               \
+            i = N - 1;                                                                             \
+    } while (--l > 0);                                                                             \
+    f->calls = (f->buf_len / sizeof(T)) - N;                                                       \
+    assert((int) f->calls > 0);                                                                    \
     return 0;
 
-
-#define ADD(f, N, T, get, set) \
-    byte *b = f->buf; \
-    unsigned l = f->buf_len / sizeof(T); \
-    int i; \
-    T d[N]; \
-    \
-    i = N - 1; do d[i] = 0; while (--i >= 0); \
-    \
-    i = N - 1; \
-    do { \
-        d[i] = (T) (d[i] + get(b)); \
-        set(b, d[i]); \
-        b += sizeof(T); \
-        if (--i < 0) \
-            i = N - 1; \
-    } while (--l > 0); \
-    f->calls = (f->buf_len / sizeof(T)) - N; \
-    assert((int)f->calls > 0); \
+#define ADD(f, N, T, get, set)                                                                     \
+    byte *b = f->buf;                                                                              \
+    unsigned l = f->buf_len / sizeof(T);                                                           \
+    int i;                                                                                         \
+    T d[N];                                                                                        \
+                                                                                                   \
+    i = N - 1;                                                                                     \
+    do                                                                                             \
+        d[i] = 0;                                                                                  \
+    while (--i >= 0);                                                                              \
+                                                                                                   \
+    i = N - 1;                                                                                     \
+    do {                                                                                           \
+        d[i] = (T) (d[i] + get(b));                                                                \
+        set(b, d[i]);                                                                              \
+        b += sizeof(T);                                                                            \
+        if (--i < 0)                                                                               \
+            i = N - 1;                                                                             \
+    } while (--l > 0);                                                                             \
+    f->calls = (f->buf_len / sizeof(T)) - N;                                                       \
+    assert((int) f->calls > 0);                                                                    \
     return 0;
 
-
-#define SCAN(f, N, T, get, set) \
-    f->calls = (f->buf_len / sizeof(T)) - N; \
-    assert((int)f->calls > 0); \
+#define SCAN(f, N, T, get, set)                                                                    \
+    f->calls = (f->buf_len / sizeof(T)) - N;                                                       \
+    assert((int) f->calls > 0);                                                                    \
     return 0;
 
 /* vim:set ts=4 sw=4 et: */
