@@ -144,7 +144,6 @@ decompress:  // inlined: (uchar const *src, uint len, uchar *dst /*, u32 &ldst, 
         addq src,lsrc; push lsrc  // MATCH_05  &input_eof
         subq src,lsrc // restore the value of lsrc
 
-
 //%rsp:
 //  MATCH_05  &input_eof
 //  MATCH_04  ptr unfolded_code
