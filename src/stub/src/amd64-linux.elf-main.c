@@ -244,8 +244,9 @@ make_hatch_x86_64(
     unsigned const frag_mask
 )
 {
-    char *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x  %%x\\n",phdr,reloc,frag_mask, phdr->p_flags);
+    unsigned xprot = 0;
+    unsigned *hatch = 0;
+    DPRINTF("make_hatch %%p %%p %%x  %%x\\n",phdr,reloc,frag_mask, phdr->p_flags);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         hatch = (char *)(phdr->p_memsz + reloc);
         if (4 <= (frag_mask & -(long)hatch)) {
@@ -269,19 +270,9 @@ make_hatch_ppc64(
     unsigned const frag_mask
 )
 {
-    unsigned *hatch = (void *)0;
-    unsigned const *code;
-    unsigned const sz_code = 4*4;
-    asm("bl 0f; \
-        sc; \
-        mr 12,31; \
-        li 4,0; \
-        blr; \
-     0: mflr %0 "
-/*out*/ : "=r"(code)
-/* in*/ :
-/*und*/ : "lr");
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
+    unsigned xprot = 0;
+    unsigned *hatch = 0;
+    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         hatch = (unsigned *)(phdr->p_memsz + reloc);
         if (4*4 <= (frag_mask & -(long)hatch)) {
@@ -306,16 +297,7 @@ make_hatch_arm64(
 )
 {
     unsigned *hatch = 0;
-    unsigned const *code;
-    unsigned const sz_code = 2*4;
-    asm ("bl 0f; \
-        svc #0; \
-        br x30; \
-     0: mov %0,x30"
-/*out*/ : "=r"(code)
-/* in*/ :
-/*und*/ : );
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         hatch = (unsigned *)(phdr->p_memsz + reloc);
         if (sz_code <= (frag_mask & -(long)hatch)) {
@@ -509,21 +491,15 @@ do_xmap(
         DPRINTF("  mlen=%%p\\n", mlen);
 #endif
 
-        DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  frag=%%p  prot=%%x\\n",
-            addr, mlen, phdr->p_offset - frag, frag, prot);
-        int mfd = 0;
-        char *mfd_addr = 0;
-        struct b_info al_bi; memcpy(&al_bi, xi->buf, sizeof(al_bi));
-        if (phdr->p_flags & PF_X) { // SELinux
-            // Cannot set PROT_EXEC except via mmap() into a region (Linux "vma")
-            // that has never had PROT_WRITE.  So use a Linux-only "memory file"
-            // to hold the contents.
-            mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            ftruncate(mfd, xo.size);  // Allocate the pages in the file.
-            Pwrite(mfd, xo.buf, frag);  // Save lo fragment of contents on first page.
-            Punmap(xo.buf, xo.size);
-            mfd_addr = Pmap(xo.buf, xo.size, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0);
-            DPRINTF("mfd_addr= %%p\\n", mfd_addr);  // Re-use the address space
+        DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  lo_frag=%%p  prot=%%x  reloc=%%p\\n",
+            addr, mlen, phdr->p_offset - lo_frag, lo_frag, prot, reloc);
+        if (addr != mmap(addr, mlen,
+                // If compressed, then we need PROT_WRITE to de-compress;
+                // but then SELinux 'execmod' requires no PROT_EXEC for now.
+                (prot | (xi ? PROT_WRITE : 0)) &~ (xi ? PROT_EXEC : 0),
+                MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
+                (xi ? -1 : fdi), phdr->p_offset - lo_frag) ) {
+            err_exit(8);
         }
         else {
             underlay(xo.size, xo.buf, frag);  // also makes PROT_WRITE
