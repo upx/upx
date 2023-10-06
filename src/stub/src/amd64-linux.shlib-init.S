@@ -101,6 +101,7 @@ decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint meth
         push ldst
         push dst
         addq src,lsrc; push lsrc  // &input_eof
+        subq src,lsrc // restore the value of lsrc
 
   section NRV_HEAD
 

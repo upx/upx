@@ -232,7 +232,7 @@ make_hatch_x86_64(
 {
     unsigned xprot = 0;
     unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x  %%x\\n",phdr,reloc,frag_mask, phdr->p_flags);
+    DPRINTF("make_hatch %%p %%p %%x  %%x\\n",phdr,reloc,frag_mask, phdr->p_flags);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         if (
         // Try page fragmentation just beyond .text .
@@ -275,7 +275,7 @@ make_hatch_ppc64(
 {
     unsigned xprot = 0;
     unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         if (
         // Try page fragmentation just beyond .text .
@@ -315,7 +315,7 @@ make_hatch_arm64(
 {
     unsigned xprot = 0;
     unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // The format of the 'if' is
         //  if ( ( (hatch = loc1), test_loc1 )
@@ -522,8 +522,8 @@ do_xmap(
         DPRINTF("  mlen=%%p\\n", mlen);
 #endif
 
-        DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  lo_frag=%%p  prot=%%x\\n",
-            addr, mlen, phdr->p_offset - lo_frag, lo_frag, prot);
+        DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  lo_frag=%%p  prot=%%x  reloc=%%p\\n",
+            addr, mlen, phdr->p_offset - lo_frag, lo_frag, prot, reloc);
         if (addr != mmap(addr, mlen,
                 // If compressed, then we need PROT_WRITE to de-compress;
                 // but then SELinux 'execmod' requires no PROT_EXEC for now.

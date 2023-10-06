@@ -2,18 +2,18 @@ file format elf64-x86-64
 
 Sections:
 Idx Name          Size      VMA               LMA               File off  Algn  Flags
-  0 ELFMAINX      019  0  0  040  2**0  CONTENTS
-  1 NRV_HEAD      066  0  0  059  2**0  CONTENTS
-  2 NRV2E         0ba  0  0  0bf  2**0  CONTENTS
-  3 NRV2D         0a1  0  0  0179  2**0  CONTENTS
-  4 NRV2B         093  0  0  021a  2**0  CONTENTS
-  5 LZMA_ELF00    064  0  0  02ad  2**0  CONTENTS
-  6 LZMA_DEC10    09f7  0  0  0311  2**0  CONTENTS
-  7 LZMA_DEC20    09f7  0  0  0d08  2**0  CONTENTS
-  8 LZMA_DEC30    018  0  0  016ff  2**0  CONTENTS
-  9 NRV_TAIL      0  0  0  01717  2**0  CONTENTS
- 10 ELFMAINY      03a  0  0  01717  2**0  CONTENTS
- 11 ELFMAINZ      01b5  0  0  01751  2**0  CONTENTS
+  0 ELFMAINX      01c  0  0  040  2**0  CONTENTS
+  1 NRV_HEAD      066  0  0  05c  2**0  CONTENTS
+  2 NRV2E         0ba  0  0  0c2  2**0  CONTENTS
+  3 NRV2D         0a1  0  0  017c  2**0  CONTENTS
+  4 NRV2B         093  0  0  021d  2**0  CONTENTS
+  5 LZMA_ELF00    064  0  0  02b0  2**0  CONTENTS
+  6 LZMA_DEC10    09f7  0  0  0314  2**0  CONTENTS
+  7 LZMA_DEC20    09f7  0  0  0d0b  2**0  CONTENTS
+  8 LZMA_DEC30    018  0  0  01702  2**0  CONTENTS
+  9 NRV_TAIL      0  0  0  0171a  2**0  CONTENTS
+ 10 ELFMAINY      03a  0  0  0171a  2**0  CONTENTS
+ 11 ELFMAINZ      01b5  0  0  01754  2**0  CONTENTS
 SYMBOL TABLE:
 0000000000000000 l    d  NRV_HEAD 0 NRV_HEAD
 0000000000000000 l    d  LZMA_DEC30 0 LZMA_DEC30

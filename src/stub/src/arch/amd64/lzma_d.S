@@ -44,6 +44,7 @@ section LZMA_ELF00
 //      pushq ldst
 //      pushq dst
 //      addq src,lsrc; push lsrc  // &input_eof
+//      subq src,lsrc //restore the value of lsrc
 
 #define M_LZMA          14
 #ifndef NO_METHOD_CHECK
