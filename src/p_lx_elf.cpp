@@ -1581,7 +1581,40 @@ PackLinuxElf64::buildLinuxLoader(
         }
         method = M_NRV2B_LE32;  // requires unaligned fetch
     }
+<<<<<<< HEAD
     else {
+=======
+    else if (this->e_machine==Elf64_Ehdr::EM_X86_64) { // main program
+        initLoader(fold, szfold);
+        char sec[120];
+        int len = 0;
+        unsigned m_decompr = (methods_used ? methods_used : (1u << ph_forced_method(ph.method)));
+        len += snprintf(sec, sizeof(sec), "%s", ".text,EXP_HEAD");
+        if (((1u<<M_NRV2B_LE32)|(1u<<M_NRV2B_8)|(1u<<M_NRV2B_LE16)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "NRV2B");
+        }
+        if (((1u<<M_NRV2D_LE32)|(1u<<M_NRV2D_8)|(1u<<M_NRV2D_LE16)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "NRV2D");
+        }
+        if (((1u<<M_NRV2E_LE32)|(1u<<M_NRV2E_8)|(1u<<M_NRV2E_LE16)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "NRV2E");
+        }
+        if (((1u<<M_LZMA)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
+        }
+        len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "SYSCALLS,EXP_TAIL");
+        (void)len;
+        addLoader(sec, nullptr);
+        relocateLoader();
+        {
+            int sz_unc_int;
+            uncLoader = linker->getLoader(&sz_unc_int);
+            sz_unc = sz_unc_int;
+        }
+        method = M_NRV2B_LE32;  // requires unaligned fetch
+    }
+    else { // main program not amd64
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
         cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
         unsigned fold_hdrlen = umax(0x80, usizeof(hf->ehdr) +
             get_te16(&hf->ehdr.e_phentsize) * get_te16(&hf->ehdr.e_phnum) +
@@ -3711,11 +3744,24 @@ PackLinuxElf64::generateElfHdr(
     cprElfHdr2 *const h2 = (cprElfHdr2 *)(void *)&elfout;
     cprElfHdr3 *const h3 = (cprElfHdr3 *)(void *)&elfout;
     h3->ehdr =         ((cprElfHdr3 const *)proto)->ehdr;
-    h3->phdr[C_BASE] = ((cprElfHdr3 const *)proto)->phdr[1];  // .data; .p_align
-    h3->phdr[C_TEXT] = ((cprElfHdr3 const *)proto)->phdr[0];  // .text
+    if (Elf64_Ehdr::ET_REL == get_te16(&h3->ehdr.e_type)) {
+        set_te64(&h3->ehdr.e_phoff, sizeof(Elf64_Ehdr));
+        set_te16(&h3->ehdr.e_ehsize,sizeof(Elf64_Ehdr));
+        set_te16(&h3->ehdr.e_phentsize, sizeof(Elf64_Phdr));
+        set_te16(&h3->ehdr.e_phnum, 2);
+        memset(&h3->phdr[C_BASE], 0, sizeof(h3->phdr[C_BASE]));
+        memset(&h3->phdr[C_TEXT], 0, sizeof(h3->phdr[C_TEXT]));
+        memset(&h3->phdr[2     ], 0, sizeof(h3->phdr[2     ]));
+        set_te32(&h3->phdr[C_BASE].p_flags, 0);
+        set_te32(&h3->phdr[C_TEXT].p_flags, Elf64_Phdr::PF_X| Elf64_Phdr::PF_R);
+    }
+    else {
+        h3->phdr[C_BASE] = ((cprElfHdr3 const *)proto)->phdr[1];  // .data; .p_align
+        h3->phdr[C_TEXT] = ((cprElfHdr3 const *)proto)->phdr[0];  // .text
+    }
+    h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
     memset(&h3->linfo, 0, sizeof(h3->linfo));
 
-    h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
     h3->ehdr.e_ident[Elf64_Ehdr::EI_OSABI] = ei_osabi;
     if (Elf64_Ehdr::ELFOSABI_LINUX == ei_osabi  // proper
     &&  Elf64_Ehdr::ELFOSABI_NONE  == ehdri.e_ident[Elf64_Ehdr::EI_OSABI]  // sloppy
@@ -3775,6 +3821,7 @@ PackLinuxElf64::generateElfHdr(
         h2->phdr[C_TEXT].p_vaddr = h2->phdr[C_BASE].p_vaddr;
         h2->phdr[C_TEXT].p_paddr = h2->phdr[C_BASE].p_vaddr;
         set_te32(&h2->phdr[C_BASE].p_type, PT_LOAD64);  // be sure
+        set_te32(&h2->phdr[C_TEXT].p_type, PT_LOAD64);  // be sure
         h2->phdr[C_BASE].p_offset = 0;
         h2->phdr[C_BASE].p_filesz = 0;
         // .p_memsz = brka;  temporary until sz_pack2

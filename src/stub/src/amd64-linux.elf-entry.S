@@ -86,7 +86,7 @@ M_NRV2E_LE32=8
   section ELFMAINX
 sz_pack2= .-4
 _start: .globl _start
-    nop; int3  # uncomment for debugging
+////    nop; int3  # uncomment for debugging
         movq %rsp,%r13
         push %rax  // space for entry address
         push %rdx  // register this function pointer with 'atexit'
@@ -100,9 +100,15 @@ _start: .globl _start
 
 // Decompress the rest of this loader, and jump to it.
         lea o_binfo(%rip),%rsi
+<<<<<<< HEAD
         lodsl; and $~1,%eax; movl %eax,%r14d  // O_BINFO
         push %rsi; pop %rbx  // &b_info of folded decompressor
         movl (%rsi),%edx  // .sz_unc LENU
+=======
+        lodsl; movl %eax,-1*NBPW(%r13)  // is_ptinterp
+        and $~0<<1,%eax; movl %eax,%r14d  // O_BINFO
+        movl (%rsi),%edx; push %rdx  // P_30  .sz_unc LENU
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
         lea sz_pack2(%rip),%rcx  // &sz_pack2
         movl (%rcx),%r15d  // sz_pack2: length before stub
@@ -115,6 +121,7 @@ _start: .globl _start
 // alloca()
         subq %rdx,%rsp; and $-2*NBPW,%rsp  // aligned space for unfolded stub
 
+<<<<<<< HEAD
         push %rsp; pop %arg3  // dst= decompress onto stack
         push %rbx; pop %rsi
         lodsl; push %rax  // P_13  .sz_unc
@@ -125,6 +132,99 @@ _start: .globl _start
         pop %arg2  // P_14  srclen
         lea f_exp(%rip),%rbp
         call *%rbp  // f_exp
+=======
+#define dst  %rdi
+#define src  %rsi
+#define lsrc %rcx
+        push %rsp; pop dst  // dst= decompress onto stack
+        lodsl; push %rax  // MATCH_10  .sz_unc
+        lodsl; push %rax  // MATCH_11  .sz_cpr
+        lodsl; cmpw $M_NRV2B_LE32|(0<<8),%ax; je 0f; hlt; 0:  // check method and filter bytes
+        pop %rax; add src,%rax; push %rax  // MATCH_11  input_eof
+
+
+// This is nrv2b_d32, inlined and optimized for small space (about 160 bytes).
+// The task is to de-compress the folded pieces for shared library init:
+// the de-compressor(s) of the PT_LOAD pieces, and the C-code supervisor
+// which adjusts the placement and mapping of the address space.
+// The output length is a couple KB for NRV, a few KB for Lzma, 64KB for Zstd.
+// This is motivated by the possibility of using multiple de-compressors
+// depending on the characteristics of each PT_LOAD, and by the increased size
+// and compressability of C-coded de-compressors for Lzma and Zstd
+// in contrast to the simple and small assembly-coded NRV.
+
+//%rsp:
+//  MATCH_11  &input_eof
+//  MATCH_10  len unfolded_code
+//  P_11  rcx.atexit
+//  P_10  %entry
+//  MATCH_00  argc
+//  MATCH_01  argv
+//  MATCH_07  envp
+
+/* Working registers */
+#define off  %eax  /* XXX: 2GB */
+#define bits %ebx
+#define len  %ecx  /* XXX: 2GB */
+#define lenq %rcx
+#define dispq %rbp
+#define displ %ebp
+
+#define GETBIT call *%rdx
+#define jnextb0 GETBIT; jnc
+#define jnextb1 GETBIT; jc
+
+/* rotate next bit into bottom bit of reg */
+#define getnextb(reg) GETBIT; adcl reg,reg
+
+        xor bits,bits  // empty; force refill
+        xor len,len  // create loop invariant
+        lea getbit(%rip),%rdx
+        push $-1; pop dispq  // initial displacement
+        cld  // paranoia
+        .byte 0xa8  // "testb $... ,%al" ==> "jmp top_n2b"
+lit_n2b:
+        movsb  // *dst++ = *src++;
+top_n2b:
+        jnextb1 lit_n2b
+        lea 1(lenq),off  # [len= 0] off= 1
+offmore_n2b:
+        getnextb(off)
+        jnextb0 offmore_n2b
+
+        subl $ 3,off; jc len_n2b  # use previous offset
+        shll $ 8,off; lodsb  # off is %eax, so 'lodsb' is "off |= *src++;"
+        xorl $~0,off; jz eof_n2b
+        movslq off,dispq  # XXX: 2GB; (note propagation of negative sign!)
+// for 4GB, replace the 'movslq' with:
+//      pushq $~0  # 64 bits all '1'
+//      movl off,(%rsp)  # replace lo-order 32 bits
+//      popq dispq
+len_n2b:
+        lea 1(lenq),off  # [len= 0] off= 1
+        getnextb(len); getnextb(len)  # two bits; cc set on result
+        jnz gotlen_n2b  # raw 1,2,3 ==> 2,3,4
+        movl off,len  # len= 1, the msb
+        addl $3-1,off  # raw 2.. ==> 5..
+lenmore_n2b:
+        getnextb(len)
+        jnextb0 lenmore_n2b
+gotlen_n2b:
+        cmpl $-0xd00,displ  # XXX: 2GB;  for 4GB: use 'cmpq'
+        adcl off,len  # len += off + (disp < -0xd00)
+
+        push %rsi  // MATCH_06
+          lea (%rdi,dispq),%rsi
+          rep; movsb
+        pop %rsi  // MATCH_06
+
+        jmp top_n2b
+
+eof_n2b:
+        pop %rcx  // MATCH_11  &input_eof
+        cmp %rcx,%rsi; je 0f; hlt; 0:  // test for ending in correct place
+        //FIXME: check dst, too
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 // Write de-compressed 'fold' to file
         push %r12; pop %arg1  // mfd

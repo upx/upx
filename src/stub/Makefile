@@ -307,7 +307,13 @@ define tc.default.f-embed_objinfo_without_xstrip
 	chmod a-x $1
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
+<<<<<<< HEAD
 	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start --keep-symbol=upx_so_main $1
+=======
+	$(call tc,objcopy) --strip-unneeded \
+	    --keep-symbol=_start --keep-symbol=upx_so_main --keep-symbol=upx_main \
+	    --keep-symbol=copy $1
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 #
 # Disassemble for human readability
 # objdump
@@ -403,7 +409,7 @@ amd64-linux.elf%.h : tc_list = amd64-linux.elf default
 amd64-linux.elf%.h : tc_bfdname = elf64-x86-64
 
 tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -fPIC -m64 -nostdinc -MMD -MT $@
-tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables --save-temps
 tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
@@ -416,12 +422,20 @@ amd64-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds tmp/amd64-expand.o
+amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds
+#	    tmp/amd64-expand.o
 #	# FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
 #	####$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+<<<<<<< HEAD
 	multiarch-ld-2.17 --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
+=======
+	multiarch-ld-2.17 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+#	$(call tc,f-objstrip,tmp/$T.bin)
+#	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 amd64-linux.elf-so_fold.h : tmp/$$T.o tmp/amd64-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/amd64-expand.o
