@@ -251,7 +251,7 @@ unfold:
 
         mov ebx,[4*NBPW + esp]  // mfd
         pushsbli __NR_close; pop eax; call sys_check
-        
+
 // Jump to unfolded code
         pop eax  // P_73  ADRX
         pop ecx  // P_72  LENX

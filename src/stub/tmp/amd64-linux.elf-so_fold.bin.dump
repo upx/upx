@@ -3,6 +3,7 @@ file format elf64-x86-64
 Sections:
 Idx Name          Size      VMA               LMA               File off  Algn  Flags
   0 SO_MAIN       0787  0  0  040  2**4  CONTENTS
+<<<<<<< HEAD
   1 EXP_HEAD      0e0  0  0  07c7  2**0  CONTENTS
   2 NRV2E         0e5  0  0  08a7  2**0  CONTENTS
   3 NRV2D         0d7  0  0  098c  2**0  CONTENTS
@@ -15,11 +16,30 @@ Idx Name          Size      VMA               LMA               File off  Algn  
  10 LZMA_DEC20    09f7  0  0  01643  2**0  CONTENTS
  11 LZMA_DEC30    018  0  0  0203a  2**0  CONTENTS
  12 EXP_TAIL      0c  0  0  02052  2**0  CONTENTS
+=======
+  1 .text         0  0  0  07c8  2**2  CONTENTS
+  2 EXP_HEAD      0ef  0  0  07c8  2**0  CONTENTS
+  3 NRV2E         0e0  0  0  08b7  2**0  CONTENTS
+  4 NRV2D         0d2  0  0  0997  2**0  CONTENTS
+  5 NRV2B         0bc  0  0  0a69  2**0  CONTENTS
+  6 SO_HEAD       02c  0  0  0b25  2**0  CONTENTS
+  7 ptr_NEXT      0  0  0  0b51  2**0  CONTENTS
+  8 SO_TAIL       087  0  0  0b51  2**0  CONTENTS
+  9 LZMA_ELF00    064  0  0  0bd8  2**0  CONTENTS
+ 10 LZMA_DEC10    09f7  0  0  0c3c  2**0  CONTENTS
+ 11 LZMA_DEC20    09f7  0  0  01633  2**0  CONTENTS
+ 12 LZMA_DEC30    018  0  0  0202a  2**0  CONTENTS
+ 13 EXP_TAIL      01  0  0  02042  2**0  CONTENTS
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 SYMBOL TABLE:
-0000000000000000 l    d  EXP_HEAD 0 EXP_HEAD
 0000000000000000 l    d  LZMA_DEC30 0 LZMA_DEC30
 0000000000000000 l    d  EXP_TAIL 0 EXP_TAIL
 0000000000000000 l    d  SO_MAIN 0 SO_MAIN
+<<<<<<< HEAD
+=======
+0000000000000000 l    d  .text 0 .text
+0000000000000000 l    d  EXP_HEAD 0 EXP_HEAD
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 0000000000000000 l    d  NRV2E 0 NRV2E
 0000000000000000 l    d  NRV2D 0 NRV2D
 0000000000000000 l    d  NRV2B 0 NRV2B
@@ -31,6 +51,7 @@ SYMBOL TABLE:
 0000000000000000 l    d  LZMA_DEC20 0 LZMA_DEC20
 0000000000000031 g       SO_TAIL 0 Pmap
 0000000000000000 g       EXP_HEAD 0 f_expand
+<<<<<<< HEAD
 000000000000005f g       SO_TAIL 0 munmap
 000000000000001c g       SO_TAIL 0 memcpy
 0000000000000031 g       SO_TAIL 0 O_BINFO
@@ -38,6 +59,15 @@ SYMBOL TABLE:
 000000000000003f g       SO_TAIL 0 mmap
 0000000000000000 g     F SO_TAIL 0 eof
 000000000000007d g       SO_TAIL 0 write
+=======
+000000000000004e g       SO_TAIL 0 munmap
+000000000000000b g       SO_TAIL 0 memcpy
+00000000000000b3 g       EXP_HEAD 0 copy
+0000000000000020 g       SO_TAIL 0 O_BINFO
+0000000000000056 g       SO_TAIL 0 ftruncate
+000000000000002e g       SO_TAIL 0 mmap
+000000000000006c g       SO_TAIL 0 write
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 0000000000000374 g     F SO_MAIN 01d PF_to_PROT
 000000000000006b g       SO_TAIL 0 memfd_create
 0000000000000081 g       SO_TAIL 0 read
@@ -92,6 +122,7 @@ OFFSET           TYPE              VALUE
 
 RELOCATION RECORDS FOR [NRV2E]:
 OFFSET           TYPE              VALUE
+<<<<<<< HEAD
 00000000000000da R_X86_64_PC32     EXP_HEAD+0x000000000000009f
 0000000000000071 R_X86_64_PC32     EXP_TAIL+0xfffffffffffffffc
 
@@ -104,6 +135,17 @@ RELOCATION RECORDS FOR [NRV2B]:
 OFFSET           TYPE              VALUE
 00000000000000b6 R_X86_64_PC32     EXP_HEAD+0x000000000000009f
 000000000000005d R_X86_64_PC32     EXP_TAIL+0xfffffffffffffffc
+=======
+00000000000000d6 R_X86_64_PC32     copy+0xfffffffffffffffc
+
+RELOCATION RECORDS FOR [NRV2D]:
+OFFSET           TYPE              VALUE
+00000000000000c8 R_X86_64_PC32     copy+0xfffffffffffffffc
+
+RELOCATION RECORDS FOR [NRV2B]:
+OFFSET           TYPE              VALUE
+00000000000000b2 R_X86_64_PC32     copy+0xfffffffffffffffc
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 RELOCATION RECORDS FOR [SO_HEAD]:
 OFFSET           TYPE              VALUE

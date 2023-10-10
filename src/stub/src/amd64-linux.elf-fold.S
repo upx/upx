@@ -69,6 +69,7 @@ __NR_exit= 60
 __NR_readlink= 89
 
 // IN: [ADRX,+LENX): compressed data; [ADRU,+LENU): expanded fold (w/ upx_main)
+<<<<<<< HEAD
 // %rbx= &b_info; %rbp= f_exp; %r14= ADRX; %r15= LENX;
 // rsp/ elfaddr,fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
 
@@ -78,6 +79,15 @@ fold_begin:
 #include "arch/amd64/bxx.S"
 L90:
         pop %rax  # &f_unf
+=======
+// %rbp= old_f_exp; %r14= ADRX; %r15= LENX;
+// rsp/ elfaddr,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
+
+// no 'section', thus '.text'; also loaded first in amd64-linux.elf-fold.bin.
+// Code from amd64-linux.elf-main.c is also .text, and is next.
+fold_begin:
+        movq 4*NBPW(%rsp),%rbp  // O_BINFO | is_ptinterp  FIXME: where does src memory move to?
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
         push %r14  // ADRX
         push %r15  // LENX
         push %rax  # &amdbxx: f_unf
@@ -99,8 +109,13 @@ L90:
         sub %r15,%r12  # -length of auxv
 
           push %rdi  # buffer
+          mov %ebp,%ebx  # is_ptinterp
         lea proc_self_exe(%rip),%arg1; sub %arg2l,%arg2l  # O_RDONLY
+<<<<<<< HEAD
         call open; mov %rax,-4*NBPW(%rsp)  # fd
+=======
+        call open; mov %eax,%ebp  # fd
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
           pop %arg2  #buffer
 
         movl $-1+ PATH_MAX,%arg3l # buflen
@@ -134,6 +149,7 @@ L90:
         lea NBPW(%rdi),%rsp
      cld
 
+<<<<<<< HEAD
         lea (%r14,%r12),%arg4  # &new Elf64_auxv
         movl -4(%rbx),%eax; and $1,%eax; add %rax,%arg4  # is_ptinterp
         pop %arg6  # f_unf
@@ -141,6 +157,14 @@ L90:
         pop %arg1  # ADRX
 
         pop %rax  # elfaddr
+=======
+        lea (%r14,%r12),%arg4  # &new Elf64_auxv  %r12 dead
+        and $1,%ebx; add %rbx,%arg4  # is_ptinterp  (what a pain!)
+        pop %arg2  # LENX
+        pop %arg1  # ADRX
+
+        pop %arg5; mov %arg5,%r13  # elfaddr
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
         subq $ OVERHEAD,%rsp
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
         push %rax; mov %rax,%r13  # elfaddr  7th arg
@@ -152,10 +176,17 @@ L90:
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unf arg6,
                 Elf64_Addr elfaddr )
 */
+<<<<<<< HEAD
 // rsp/ elfaddr,{OVERHEAD},fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
         addq $1*NBPW+OVERHEAD,%rsp  # also discard elfaddr
         movq %rax,4*NBPW(%rsp)  # entry
         pop %rbx  # fd
+=======
+// rsp/ {OVERHEAD},ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
+        addq $OVERHEAD,%rsp  # Elf64_Ehdr temporary space
+        mov       %ebp,%ebx  # fd
+        movq %rax,3*NBPW(%rsp)  # entry
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 sz_Ehdr= 8*NBPW
 e_type= 16
@@ -187,8 +218,16 @@ no_pse_map:
         push $__NR_munmap; pop %rax
         jmp *-NBPW(%r14)  # goto: syscall; pop %rdx; ret
 
+        section SYSCALLS
+my_bkpt: .globl my_bkpt
+        int3  // my_bkpt
+        ret
+
 proc_self_exe:
         .asciz "/proc/self/exe"
+
+memfd_create: .globl memfd_create
+        mov $__NR_memfd_create,%eax; jmp sysgo2
 
 Pmap: .globl Pmap  // page-align the lo end
         mov %arg1,%rax; and $0xfff,%eax
@@ -199,10 +238,14 @@ mmap: .globl mmap
         movq %arg4,%sys4
 sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
         movzbl %al,%eax
-        syscall
-        cmpq $ PAGE_MASK,%rax; jc no_fail
-        orq $~0,%rax  # failure; IGNORE errno
-no_fail:
+sysgo2:
+        push %rax  // save __NR_
+        syscall  // %rax= -errno
+        pop %rcx  // recover __NR_
+        cmp $PAGE_MASK,%rax; jb sysOK
+        cmp $__NR_open,%ecx; je sysOK  # ENOENT etc
+        int3  // %rax= errno; %rcx= __NR_
+sysOK:
         ret
 
 Pprotect: .globl Pprotect
@@ -218,16 +261,14 @@ Punmap: .globl Punmap  // page-align the lo end
         add %rax,%arg2
 munmap: .globl munmap
         movb $ __NR_munmap,%al; 5: jmp 5f
-ftruncate: .globl ftruncate
-        push $__NR_ftruncate; 5: jmp 5f
-memfd_create: .globl memfd_create
-        push $__NR_memfd_create; 5: jmp 5f
 exit: .globl exit
         movb $ __NR_exit,%al; 5: jmp 5f
 brk: .globl brk
         movb $ __NR_brk,%al; 5: jmp 5f
 close: .globl close
         movb $ __NR_close,%al; 5: jmp 5f
+ftruncate: .globl ftruncate
+        movb $__NR_ftruncate,%al; 5: jmp 5f
 open: .globl open
         movb $ __NR_open,%al; 5: jmp 5f
 mprotect: .globl mprotect
@@ -238,8 +279,14 @@ write: .globl write
 read: .globl read
         movb $ __NR_read,%al; 5: jmp sysgo
 
+<<<<<<< HEAD
 my_bkpt: .globl my_bkpt
         int3
         ret
+=======
+// To evade quirks in ld from stub/Makefile, and enable selection
+// and relocadtion of .sections by ::buildLinuxLoader
+#include "amd64-expand.S"
+>>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 /* vim:set ts=8 sw=8 et: */
