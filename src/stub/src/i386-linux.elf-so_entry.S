@@ -135,6 +135,7 @@ L20:
         lea sz_b_info(foldi),src  // foldi dead
 decompress:  // inlined: (uchar const *src, uint len, uchar *dst /*, u32 &ldst, uint method */)
         add src,lsrc; push lsrc  // MATCH_05  &input_eof
+        //subq src,lsrc  // restore the value of lsrc; dead for inlined nrv2b
 
 //%esp:
 //  MATCH_05  &input_eof

@@ -71,6 +71,7 @@ decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint meth
         push ldst
         push dst
         addq src,lsrc; push lsrc  // &input_eof
+        subq src,lsrc  // restore the value of lsrc
 
 M_NRV2B_LE32=2  // ../conf.h
 M_NRV2D_LE32=5

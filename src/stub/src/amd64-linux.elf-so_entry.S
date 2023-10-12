@@ -142,7 +142,7 @@ L20:  // %rdx == &getbit
         lea  sz_b_info(%rbx),src
 decompress:  // inlined: (uchar const *src, uint len, uchar *dst /*, u32 &ldst, uint method */)
         addq src,lsrc; push lsrc  // MATCH_05  &input_eof
-        subq src,lsrc //restore the value of lsrc
+        //subq src,lsrc //restore the value of lsrc; dead for inlined nrv2b
 
 //%rsp:
 //  MATCH_05  &input_eof
