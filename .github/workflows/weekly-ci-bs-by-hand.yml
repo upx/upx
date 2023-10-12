@@ -11,12 +11,12 @@ env:
   VERBOSE: 1
 
 jobs:
-  job-alpine-by-hand: # uses a POSIX-compliant shell
+  job-by-hand-alpine-linux-gcc: # uses a POSIX-compliant shell
     # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
     # ...and also uses ccache as we are running the same build-script again and again
     if: github.repository_owner == 'upx'
     strategy: { matrix: { container: ['alpine:3.9','alpine:3.18','alpine:edge','i386/alpine:edge'] } }
-    name: ${{ format('gcc by-hand {0}', matrix.container) }}
+    name: ${{ format('by-hand gcc {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
@@ -40,6 +40,8 @@ jobs:
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx "upx with space"
           git -C "upx with space" submodule update --init
+      - name: 'Build by-hand with /bin/sh'
+        run: '/bin/sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Build by-hand with bash'
         run: 'bash "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Build by-hand with bash --posix'
@@ -98,3 +100,54 @@ jobs:
           cd "upx with space"/build/by-hand
           # IMPORTANT: do NOT run as user root!
           chmod a+w . && sudo -u upx bash "$testsuite"
+
+  job-by-hand-macos: # uses a POSIX-compliant shell
+    # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
+    if: github.repository_owner == 'upx'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-11, run_fs_test: false } # macos-11 does not have "readlink -f"
+          - { os: macos-12, run_fs_test: true }
+          - { os: macos-13, run_fs_test: true }
+    name: ${{ format('by-hand cc {0}', matrix.os) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+        run: |
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx "upx with space"
+          git -C "upx with space" submodule update --init
+      - name: 'Build by-hand with /bin/sh'
+        run: 'top_srcdir="$PWD/upx with space" /bin/sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with bash'
+        run: 'top_srcdir="$PWD/upx with space" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Run file system test suite'
+        if: ${{ matrix.run_fs_test }}
+        run: |
+          testsuite="$(readlink -fn "upx with space"/misc/testsuite/test_symlinks.sh)"
+          cd "upx with space"/build/by-hand
+          bash "$testsuite"
+
+  job-by-hand-windows-gcc: # uses a POSIX-compliant shell
+    # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
+    if: github.repository_owner == 'upx'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-2019 }
+          - { os: windows-2022 }
+    name: ${{ format('by-hand gcc {0}', matrix.os) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+        shell: bash
+        run: |
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx "upx with space"
+          git -C "upx with space" submodule update --init
+      - name: 'Build by-hand with bash'
+        shell: bash
+        run: |
+          xflags="-static -Wall -Wextra -Werror"
+          CC="gcc $xflags" CXX="g++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"

@@ -155,10 +155,12 @@ if(is_multi_config)
     set(CMAKE_CONFIGURATION_TYPES "${c}" CACHE STRING "List of supported configuration types." FORCE)
 endif()
 
-# set MSVC_FRONTEND
-set(MSVC_FRONTEND 0)
-if(MSVC OR CMAKE_C_COMPILER_FRONTEND_VARIANT MATCHES "^MSVC")
+# set MSVC_FRONTEND and MINGW
+if(NOT DEFINED MSVC_FRONTEND AND (MSVC OR CMAKE_C_COMPILER_FRONTEND_VARIANT MATCHES "^MSVC"))
     set(MSVC_FRONTEND 1)
+endif()
+if(NOT DEFINED MINGW AND CMAKE_C_PLATFORM_ID MATCHES "^MinGW")
+    set(MINGW 1)
 endif()
 
 #***********************************************************************
@@ -230,12 +232,13 @@ if(NOT CMAKE_C_COMPILER_ID MATCHES "^MSVC")
     set(CMAKE_C_FLAGS_RELEASE "${a}" CACHE STRING "Flags used by the C compiler during RELEASE builds." FORCE)
     set(CMAKE_CXX_FLAGS_RELEASE "${b}" CACHE STRING "Flags used by the CXX compiler during RELEASE builds." FORCE)
 endif()
-if(MSVC_FRONTEND OR WIN32)
+if(MSVC_FRONTEND OR WIN32 OR MINGW OR CYGWIN)
     # disable silly warnings about using "deprecated" POSIX functions like fopen()
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
     add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
 endif()
 if(MSVC_FRONTEND)
     # use -funsigned-char; set __cplusplus according to selected C++ standard
@@ -274,7 +277,7 @@ function(upx_sanitize_target)
             # no-op
         elseif(MSVC_FRONTEND)
             # MSVC uses -GS (similar to -fstack-protector) by default
-        elseif(CMAKE_C_PLATFORM_ID MATCHES "^MinGW" OR MINGW OR CYGWIN)
+        elseif(MINGW OR CYGWIN)
             # avoid link errors with current MinGW-w64 versions
             # see https://www.mingw-w64.org/contribute/#sanitizers-asan-tsan-usan
         else()

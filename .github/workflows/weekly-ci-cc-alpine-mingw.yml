@@ -17,15 +17,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { container: 'alpine:3.11', wine: false, i686_mingw: false } # skip testsuite; TODO: internal error: doctest check failed
-          - { container: 'alpine:3.12', wine: false, i686_mingw: false } # skip testsuite; TODO: internal error: doctest check failed
-          - { container: 'alpine:3.13', wine: true,  i686_mingw: false }
-          - { container: 'alpine:3.14', wine: true,  i686_mingw: false }
-          - { container: 'alpine:3.15', wine: true,  i686_mingw: false }
-          - { container: 'alpine:3.16', wine: true,  i686_mingw: false }
-          - { container: 'alpine:3.17', wine: true,  i686_mingw: false }
-          - { container: 'alpine:3.18', wine: true,  i686_mingw: true }
-          - { container: 'alpine:edge', wine: true,  i686_mingw: true }
+          - { container: 'alpine:3.11', wine: false, i686_mingw: false } # skip Wine testsuite; TODO: internal error: doctest check failed
+          - { container: 'alpine:3.12', wine: false, i686_mingw: false } # skip Wine testsuite; TODO: internal error: doctest check failed
+          - { container: 'alpine:3.13', wine: true,  i686_mingw: false } # wine-4.0.3
+          - { container: 'alpine:3.14', wine: true,  i686_mingw: false } # wine-6.18
+          - { container: 'alpine:3.15', wine: true,  i686_mingw: false } # wine-6.23
+          - { container: 'alpine:3.16', wine: true,  i686_mingw: false } # wine-7.8
+          - { container: 'alpine:3.17', wine: true,  i686_mingw: false } # wine-7.21
+          # Wine >= 8.0 can run i686 32-bit programs in WOW64 mode on pure 64-bit systems
+          - { container: 'alpine:3.18', wine: true,  i686_mingw: true }  # wine-8.13
+          - { container: 'alpine:edge', wine: true,  i686_mingw: true }  # wine-8.17
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
@@ -52,13 +53,21 @@ jobs:
         if: ${{ matrix.i686_mingw }}
         run:   'make build/extra/cross-windows-mingw32/release'
       - name: 'Build cmake extra/cross-windows-mingw64/debug'
-        # on Alpine 3.11 and 3.12 CMake does not find AR; Alpine >= 3.13 (with CMake 3.18) works
-########run:   'make build/extra/cross-windows-mingw64/debug'
-        run:   'make build/extra/cross-windows-mingw64/debug -DCMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar'
+        run: |
+          # on Alpine 3.11 and 3.12 CMake does not find AR; Alpine >= 3.13 (with CMake 3.18.4) works
+          X=
+          case ${{ matrix.container }} in
+            *:3.1[12]) X="CMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar" ;;
+          esac
+          make build/extra/cross-windows-mingw64/debug $X
       - name: 'Build cmake extra/cross-windows-mingw64/release'
-        # on Alpine 3.11 and 3.12 CMake does not find AR
-########run:   'make build/extra/cross-windows-mingw64/release'
-        run:   'make build/extra/cross-windows-mingw64/release -DCMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar'
+        run: |
+          # on Alpine 3.11 and 3.12 CMake does not find AR; Alpine >= 3.13 (with CMake 3.18.4) works
+          X=
+          case ${{ matrix.container }} in
+            *:3.1[12]) X="CMAKE_AR=/usr/bin/x86_64-w64-mingw32-ar" ;;
+          esac
+          make build/extra/cross-windows-mingw64/release $X
       - name: 'Make artifact'
         shell: bash
         run: |

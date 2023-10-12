@@ -26,6 +26,8 @@ if test "x$AR" = "x0" || test "x$AR" = "xfalse" || test "x$AR" = "x/bin/false"; 
 fi
 # protect against security threats caused by misguided compiler "optimizations"
 mandatory_flags="-fno-strict-aliasing -fno-strict-overflow -funsigned-char"
+# not mandatory but good practice when using <windows.h>:
+mandatory_flags="$mandatory_flags -DWIN32_LEAN_AND_MEAN"
 if test "x$OPTIMIZE" != "x" && test "x$OPTIMIZE" != "x0"; then
     # not mandatory and not minimal, but usually a good idea:
     mandatory_flags="-Wall -O2 $mandatory_flags"
