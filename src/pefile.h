@@ -233,7 +233,6 @@ protected:
         PEDIR_EXCEPTION = 3, // Exception table
         PEDIR_SECURITY = 4,  // Certificate table (file pointer)
         PEDIR_BASERELOC = 5,
-        PEDIR_RELOC = PEDIR_BASERELOC,
         PEDIR_DEBUG = 6,
         PEDIR_ARCHITECTURE = 7, // Architecture-specific data
         PEDIR_GLOBALPTR = 8,    // Global pointer
@@ -359,14 +358,14 @@ protected:
     };
 
     class Interval : private noncopyable {
-        unsigned capacity;
-        void *base;
+        unsigned capacity = 0;
+        void *base = nullptr;
     public:
         struct interval {
             unsigned start, len;
-        } *ivarr;
-
-        unsigned ivnum;
+        };
+        struct interval *ivarr = nullptr;
+        unsigned ivnum = 0;
 
         explicit Interval(void *b);
         ~Interval() noexcept;
@@ -385,25 +384,33 @@ protected:
     };
 
     class Reloc : private noncopyable {
-        byte *start;
-        unsigned size;
+        // these are set in constructor
+        byte *start = nullptr;
+        unsigned start_size_in_bytes = 0;
+        bool start_did_alloc = false;
+        SPAN_0(byte) start_buf = nullptr;
 
-        void newRelocPos(void *p);
+        struct alignas(1) BaseReloc {
+            LE32 pagestart;
+            LE32 size_of_block;
+        };
+        SPAN_0(BaseReloc) rel = nullptr;
+        SPAN_0(LE16) rel1 = nullptr;
+        void advanceBaseRelocPos(void *p);
 
-        struct reloc;
-        reloc *rel;
-        LE16 *rel1;
-        unsigned counts[16];
+        unsigned counts[16] = {};
 
     public:
         explicit Reloc(byte *, unsigned);
         explicit Reloc(unsigned relocnum);
+        void initSpans();
+        ~Reloc() noexcept;
         //
-        bool next(unsigned &pos, unsigned &type);
+        bool next(unsigned &result_pos, unsigned &result_type);
         const unsigned *getcounts() const { return counts; }
         //
         void add(unsigned pos, unsigned type);
-        void finish(byte *&p, unsigned &size);
+        void finish(byte *&result_ptr, unsigned &result_size); // => transfer ownership
     };
 
     class Resource : private noncopyable {

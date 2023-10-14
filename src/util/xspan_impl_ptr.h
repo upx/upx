@@ -125,6 +125,13 @@ public:
         return assign(Self(other));
     }
 
+    template <class U>
+    CSelf<U> type_cast() const {
+        assertInvariants();
+        typedef CSelf<U> R;
+        return R(reinterpret_cast<typename R::pointer>(ptr));
+    }
+
     // comparison
 
     bool operator==(pointer other) const { return ptr == other; }

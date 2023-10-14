@@ -295,73 +295,129 @@ struct FixDeleter { // don't leak memory on exceptions
 };
 } // namespace
 
-struct alignas(1) PeFile::Reloc::reloc {
-    LE32 pagestart;
-    LE32 size;
-};
+static constexpr unsigned RELOC_BUF_OFFSET = 64 * 1024;
 
-void PeFile::Reloc::newRelocPos(void *p) {
-    rel = (reloc *) p;
-    rel1 = (LE16 *) ((char *) p + sizeof(reloc));
+PeFile::Reloc::~Reloc() noexcept {
+    COMPILE_TIME_ASSERT(sizeof(BaseReloc) == 8)
+    COMPILE_TIME_ASSERT_ALIGNED1(BaseReloc)
+    // prevent leak on exceptions
+    if (start_did_alloc)
+        delete[] start;
 }
 
-PeFile::Reloc::Reloc(byte *s, unsigned si) : start(s), size(si), rel(nullptr), rel1(nullptr) {
-    COMPILE_TIME_ASSERT(sizeof(reloc) == 8)
-    COMPILE_TIME_ASSERT_ALIGNED1(reloc)
-    memset(counts, 0, sizeof(counts));
+// constructor for compression only
+PeFile::Reloc::Reloc(byte *s, unsigned si) : start(s), start_size_in_bytes(si) {
+    assert(opt->cmd == CMD_COMPRESS);
+    initSpans();
+    // check size
+    constexpr unsigned BRS = sizeof(BaseReloc); // 8
+    if (si == 0)                                // empty
+        return;
+    if (si == BRS) {
+        unsigned x = get_le32(start_buf + 4); // size_of_block
+        if (x == 0 || x == BRS)               // ignore strange empty relocs
+            return;
+    }
+    if (si < BRS + sizeof(LE16)) // 10
+        throwCantPack("bad reloc size %d", si);
+    // fill counts
     unsigned pos, type;
     while (next(pos, type))
         counts[type]++;
 }
 
-PeFile::Reloc::Reloc(unsigned relocnum) : start(nullptr), size(0), rel(nullptr), rel1(nullptr) {
-    start = new byte[mem_size(4, relocnum, 8192)]; // => oxrelocs
-    counts[0] = 0;
+PeFile::Reloc::Reloc(unsigned relocnum) {
+    start_size_in_bytes = mem_size(4, relocnum, RELOC_BUF_OFFSET, 8192);
+    start = new byte[start_size_in_bytes]; // => transfer to oxrelocs[] in finish()
+    start_did_alloc = true;
+    initSpans();
 }
 
-bool PeFile::Reloc::next(unsigned &pos, unsigned &type) {
-    if (!rel)
-        newRelocPos(start);
-    if (ptr_diff_bytes(rel, start) >= (int) size) {
-        rel = nullptr; // rewind
-        return false;
-    }
+void PeFile::Reloc::initSpans() {
+    start_buf = SPAN_S_MAKE(byte, start, start_size_in_bytes);
+    rel = SPAN_S_CAST(BaseReloc, start_buf);
+    rel1 = SPAN_S_CAST(LE16, start_buf);
+    rel = nullptr;
+    rel1 = nullptr;
+}
 
-    pos = rel->pagestart + (*rel1 & 0xfff);
-    type = *rel1++ >> 12;
-    NO_printf("%x %d\n", pos, type);
-    if (ptr_diff_bytes(rel1, rel) >= (int) rel->size)
-        newRelocPos(rel1);
-    return type == 0 ? next(pos, type) : true;
+void PeFile::Reloc::advanceBaseRelocPos(void *p) {
+    unsigned off = ptr_udiff_bytes(p, start);
+    if (!start_did_alloc && off == start_size_in_bytes) { // final entry
+        rel = (BaseReloc *) p;
+        rel1 = nullptr;
+    } else {
+        rel = (BaseReloc *) p;
+        rel1 = (LE16 *) ((byte *) p + sizeof(BaseReloc));
+    }
+}
+
+bool PeFile::Reloc::next(unsigned &result_pos, unsigned &result_type) {
+    assert(!start_did_alloc);
+    unsigned pos, type;
+    do {
+        if (rel == nullptr)
+            advanceBaseRelocPos(start);
+        if (ptr_udiff_bytes(rel, start) >= start_size_in_bytes) {
+            rel = nullptr;  // rewind
+            rel1 = nullptr; // rewind
+            return false;
+        }
+        pos = rel->pagestart + (*rel1 & 0xfff);
+        type = *rel1++ >> 12;
+        NO_printf("%x %d\n", pos, type);
+        if (ptr_udiff_bytes(raw_bytes(rel1, 0), rel) >= rel->size_of_block)
+            advanceBaseRelocPos(raw_bytes(rel1, 0));
+    } while (type == 0);
+    result_pos = pos;
+    result_type = type;
+    return true;
 }
 
 void PeFile::Reloc::add(unsigned pos, unsigned type) {
-    set_le32(start + 1024 + 4 * counts[0]++, (pos << 4) + type);
+    assert(start_did_alloc);
+    set_le32(start_buf + (RELOC_BUF_OFFSET + 4 * counts[0]), (pos << 4) + type);
+    counts[0] += 1;
 }
 
-void PeFile::Reloc::finish(byte *&p, unsigned &siz) {
-    unsigned prev = 0xffffffff;
-    set_le32(start + 1024 + 4 * counts[0]++, 0xf0000000);
-    upx_qsort(start + 1024, counts[0], 4, le32_compare);
+void PeFile::Reloc::finish(byte *&result_ptr, unsigned &result_size) {
+    assert(start_did_alloc);
+    // sentinel to force final advanceBaseRelocPos()
+    set_le32(start_buf + (RELOC_BUF_OFFSET + 4 * counts[0]), 0xfff00000);
+    counts[0] += 1;
+    upx_qsort(raw_index_bytes(start_buf, RELOC_BUF_OFFSET, 4 * counts[0]), counts[0], 4,
+              le32_compare);
 
-    rel = (reloc *) start;
-    rel1 = (LE16 *) start;
+    rel = nullptr;
+    rel1 = nullptr;
+    unsigned prev = 0xffffffff;
     for (unsigned ic = 0; ic < counts[0]; ic++) {
-        unsigned pos = get_le32(start + 1024 + 4 * ic);
-        if ((pos ^ prev) >= 0x10000) {
+        unsigned pos = get_le32(start_buf + (RELOC_BUF_OFFSET + 4 * ic));
+        if (ic == 0) {
             prev = pos;
-            *rel1 = 0;
-            rel->size = ALIGN_UP(ptr_diff_bytes(rel1, rel), 4);
-            newRelocPos((char *) rel + rel->size);
+            advanceBaseRelocPos(start);
             rel->pagestart = (pos >> 4) & ~0xfff;
+            rel->size_of_block = 0; // to be filled later
+        } else if ((pos ^ prev) >= 0x10000) {
+            prev = pos;
+            *rel1 = 0; // clear align-up memory
+            rel->size_of_block = ALIGN_UP(ptr_udiff_bytes(raw_bytes(rel1, 0), rel), 4u);
+            advanceBaseRelocPos((char *) raw_bytes(rel, rel->size_of_block) + rel->size_of_block);
+            rel->pagestart = (pos >> 4) & ~0xfff;
+            rel->size_of_block = 0;
         }
         *rel1++ = (pos << 12) + ((pos >> 4) & 0xfff);
     }
-    p = start;
-    siz = ptr_udiff_bytes(rel1, start) & ~3;
-    siz -= 8;
-    // siz can be 0 in 64-bit mode // assert(siz > 0);
-    start = nullptr; // safety
+    assert(ptr_udiff_bytes(raw_bytes(rel1, 0), rel) == 10); // sentinel
+    result_size = ptr_udiff_bytes(rel, start);
+    assert((result_size & 3) == 0);
+    // assert(result_size > 0); // result_size can be 0 in 64-bit mode
+    // transfer ownership
+    assert(start_did_alloc);
+    result_ptr = start;
+    start = nullptr;     // safety
+    start_buf = nullptr; // safety
+    start_did_alloc = false;
 }
 
 void PeFile::processRelocs(Reloc *rel) // pass2
@@ -375,20 +431,22 @@ void PeFile32::processRelocs() // pass1
 {
     big_relocs = 0;
 
-    const unsigned skip1 = IDADDR(PEDIR_RELOC);
-    const unsigned take1 = IDSIZE(PEDIR_RELOC);
+    const unsigned skip1 = IDADDR(PEDIR_BASERELOC);
+    const unsigned take1 = IDSIZE(PEDIR_BASERELOC);
     Reloc rel(ibuf.subref("bad reloc %#x", skip1, take1), take1);
-    const unsigned *counts = rel.getcounts();
+    const unsigned *const counts = rel.getcounts();
     unsigned relocnum = 0;
 
     unsigned ic;
     for (ic = 1; ic < 16; ic++)
         relocnum += counts[ic];
+    for (ic = 0; ic < 16; ic++)
+        NO_printf("reloc counts[%u] %u\n", ic, counts[ic]);
 
     if (opt->win32_pe.strip_relocs || relocnum == 0) {
-        if (IDSIZE(PEDIR_RELOC)) {
-            ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
-            ih.objects = tryremove(IDADDR(PEDIR_RELOC), ih.objects);
+        if (IDSIZE(PEDIR_BASERELOC)) {
+            ibuf.fill(IDADDR(PEDIR_BASERELOC), IDSIZE(PEDIR_BASERELOC), FILLVAL);
+            ih.objects = tryremove(IDADDR(PEDIR_BASERELOC), ih.objects);
         }
         mb_orelocs.alloc(1);
         orelocs = mb_orelocs; // => orelocs now is a SPAN_S
@@ -429,7 +487,7 @@ void PeFile32::processRelocs() // pass1
             if (fix[ic][kc] != prev)
                 prev = fix[ic][jc++] = fix[ic][kc];
 
-        NO_printf("xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
+        NO_printf("reloc xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
         xcounts[ic] = jc;
     }
 
@@ -440,7 +498,7 @@ void PeFile32::processRelocs() // pass1
         set_le32(ibuf + pos, w - ih.imagebase - rvamin);
     }
 
-    ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
+    ibuf.fill(IDADDR(PEDIR_BASERELOC), IDSIZE(PEDIR_BASERELOC), FILLVAL);
     mb_orelocs.alloc(mem_size(4, relocnum, 8192)); // 8192 - safety
     orelocs = mb_orelocs;                          // => orelocs now is a SPAN_S
     sorelocs = optimizeReloc(xcounts[3], (byte *) fix[3], orelocs, ibuf + rvamin, ibufgood - rvamin,
@@ -465,7 +523,7 @@ void PeFile32::processRelocs() // pass1
         }
     }
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",
-         (unsigned) IDSIZE(PEDIR_RELOC), sorelocs);
+         (unsigned) IDSIZE(PEDIR_BASERELOC), sorelocs);
 }
 
 // FIXME - this is too similar to PeFile32::processRelocs
@@ -473,8 +531,8 @@ void PeFile64::processRelocs() // pass1
 {
     big_relocs = 0;
 
-    const unsigned skip = IDADDR(PEDIR_RELOC);
-    const unsigned take = IDSIZE(PEDIR_RELOC);
+    const unsigned skip = IDADDR(PEDIR_BASERELOC);
+    const unsigned take = IDSIZE(PEDIR_BASERELOC);
     Reloc rel(ibuf.subref("bad reloc %#x", skip, take), take);
     const unsigned *counts = rel.getcounts();
     unsigned relocnum = 0;
@@ -484,9 +542,9 @@ void PeFile64::processRelocs() // pass1
         relocnum += counts[ic];
 
     if (opt->win32_pe.strip_relocs || relocnum == 0) {
-        if (IDSIZE(PEDIR_RELOC)) {
-            ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
-            ih.objects = tryremove(IDADDR(PEDIR_RELOC), ih.objects);
+        if (IDSIZE(PEDIR_BASERELOC)) {
+            ibuf.fill(IDADDR(PEDIR_BASERELOC), IDSIZE(PEDIR_BASERELOC), FILLVAL);
+            ih.objects = tryremove(IDADDR(PEDIR_BASERELOC), ih.objects);
         }
         mb_orelocs.alloc(1);
         orelocs = mb_orelocs; // => orelocs now is a SPAN_S
@@ -513,7 +571,6 @@ void PeFile64::processRelocs() // pass1
     while (rel.next(pos, type)) {
         // FIXME add check for relocations which try to modify the
         // PE header or other relocation records
-
         if (pos >= ih.imagesize)
             continue; // skip out-of-bounds record
         if (type < 16)
@@ -540,7 +597,7 @@ void PeFile64::processRelocs() // pass1
         set_le64(ibuf + pos, w - ih.imagebase - rvamin);
     }
 
-    ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
+    ibuf.fill(IDADDR(PEDIR_BASERELOC), IDSIZE(PEDIR_BASERELOC), FILLVAL);
     mb_orelocs.alloc(mem_size(4, relocnum, 8192)); // 8192 - safety
     orelocs = mb_orelocs;                          // => orelocs now is a SPAN_S
     sorelocs = optimizeReloc(xcounts[10], (byte *) fix[10], orelocs, ibuf + rvamin,
@@ -567,7 +624,7 @@ void PeFile64::processRelocs() // pass1
     }
 #endif
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",
-         (unsigned) IDSIZE(PEDIR_RELOC), sorelocs);
+         (unsigned) IDSIZE(PEDIR_BASERELOC), sorelocs);
 }
 
 /*************************************************************************
@@ -1305,8 +1362,8 @@ void PeFile::processTls1(Interval *iv, typename tls_traits<LEXX>::cb_value_t ima
     const unsigned tlsdataend = tlsp->dataend - imagebase;
 
     // now some ugly stuff: find the relocation entries in the tls data area
-    const unsigned skip2 = IDADDR(PEDIR_RELOC);
-    const unsigned take2 = IDSIZE(PEDIR_RELOC);
+    const unsigned skip2 = IDADDR(PEDIR_BASERELOC);
+    const unsigned take2 = IDSIZE(PEDIR_BASERELOC);
     Reloc rel(ibuf.subref("bad tls reloc %#x", skip2, take2), take2);
     unsigned pos, type;
     while (rel.next(pos, type))
@@ -1341,7 +1398,7 @@ void PeFile::processTls1(Interval *iv, typename tls_traits<LEXX>::cb_value_t ima
 }
 
 template <typename LEXX>
-void PeFile::processTls2(Reloc *rel, const Interval *iv, unsigned newaddr,
+void PeFile::processTls2(Reloc *const rel, const Interval *const iv, unsigned newaddr,
                          typename tls_traits<LEXX>::cb_value_t imagebase) // pass 2
 {
     typedef typename tls_traits<LEXX>::tls tls;
@@ -1365,7 +1422,7 @@ void PeFile::processTls2(Reloc *rel, const Interval *iv, unsigned newaddr,
     SPAN_S_VAR(tls, const tlsp, mb_otls);
     // now the relocation entries in the tls data area
     for (ic = 0; ic < iv->ivnum; ic += 4) {
-        SPAN_S_VAR(byte, pp,
+        SPAN_S_VAR(byte, const pp,
                    otls + (iv->ivarr[ic].start - (tlsp->datastart - imagebase) + sizeof(tls)));
         LEXX *const p = (LEXX *) raw_bytes(pp, sizeof(LEXX));
         cb_value_t kc = *p;
@@ -1417,8 +1474,8 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
 
     // if there were relocation entries referring to the load config table
     // then we need them for the copy of the table too
-    const unsigned skip = IDADDR(PEDIR_RELOC);
-    const unsigned take = IDSIZE(PEDIR_RELOC);
+    const unsigned skip = IDADDR(PEDIR_BASERELOC);
+    const unsigned take = IDSIZE(PEDIR_BASERELOC);
     Reloc rel(ibuf.subref("bad reloc %#x", skip, take), take);
     unsigned pos, type;
     while (rel.next(pos, type))
@@ -2084,7 +2141,7 @@ unsigned PeFile::readSections(unsigned objs, unsigned usize, unsigned ih_fileali
                               unsigned ih_datasize) {
     const unsigned xtrasize = UPX_MAX(ih_datasize, 65536u) + IDSIZE(PEDIR_IMPORT) +
                               IDSIZE(PEDIR_BOUND_IMPORT) + IDSIZE(PEDIR_IAT) +
-                              IDSIZE(PEDIR_DELAY_IMPORT) + IDSIZE(PEDIR_RELOC);
+                              IDSIZE(PEDIR_DELAY_IMPORT) + IDSIZE(PEDIR_BASERELOC);
     ibuf.alloc(usize + xtrasize);
 
     // BOUND IMPORT support. FIXME: is this ok?
@@ -2136,8 +2193,8 @@ void PeFile::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned i
 void PeFile::callProcessRelocs(Reloc &rel, unsigned &ic) {
     // WinCE wants relocation data at the beginning of a section
     PeFile::processRelocs(&rel);
-    ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
-    ODSIZE(PEDIR_RELOC) = soxrelocs;
+    ODADDR(PEDIR_BASERELOC) = soxrelocs ? ic : 0;
+    ODSIZE(PEDIR_BASERELOC) = soxrelocs;
     ic += soxrelocs;
 }
 
@@ -2498,7 +2555,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
         oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) & ~oam1;
         if (soresources == 0) {
             oh.objects = 3;
-            memset(&osection[3], 0, sizeof(osection[3]));
+            mem_clear(&osection[3]);
         }
     }
 
@@ -2508,8 +2565,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     oh.codesize = osection[1].vsize;
     oh.codebase = osection[1].vaddr;
     setOhHeaderSize(osection);
-    if (rvamin < osection[0].rawdataptr)
-        throwCantPack("object alignment too small");
+    if (rvamin < osection[0].rawdataptr) {
+        throwCantPack("object alignment too small rvamin=%#x oraw=%#x", rvamin,
+                      unsigned(osection[0].rawdataptr));
+    }
 
     if (opt->win32_pe.strip_relocs)
         oh.flags |= IMAGE_FILE_RELOCS_STRIPPED;
@@ -2574,6 +2633,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     printf("%-13s: exports      : %8d bytes\n", getName(), (int) soexport);
     printf("%-13s: relocs       : %8d bytes\n", getName(), (int) soxrelocs);
     printf("%-13s: loadconf     : %8d bytes\n", getName(), (int) soloadconf);
+    // linker->dumpSymbols();
 #endif
 
     // verify
@@ -2594,12 +2654,13 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
 void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned flags,
                            upx_uint64_t imagebase) {
     assert(bits == 32 || bits == 64);
-    if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (flags & IMAGE_FILE_RELOCS_STRIPPED))
+    if (!ODADDR(PEDIR_BASERELOC) || !ODSIZE(PEDIR_BASERELOC) ||
+        (flags & IMAGE_FILE_RELOCS_STRIPPED))
         return;
 
-    if (ODSIZE(PEDIR_RELOC) == 8) // some tricky dlls use this
+    if (ODSIZE(PEDIR_BASERELOC) == 8) // some tricky dlls use this
     {
-        omemcpy(obuf + (ODADDR(PEDIR_RELOC) - rvamin), "\x0\x0\x0\x0\x8\x0\x0\x0", 8);
+        omemcpy(obuf + (ODADDR(PEDIR_BASERELOC) - rvamin), "\x0\x0\x0\x0\x8\x0\x0\x0", 8);
         return;
     }
 
@@ -2611,9 +2672,8 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
     MemBuffer mb_wrkmem;
     unsigned relocnum = unoptimizeReloc(rdata, mb_wrkmem, obuf, orig_crelocs, bits, true);
     unsigned r16 = 0;
-    if (big & 6) // 16 bit relocations
-    {
-        SPAN_S_VAR(const LE32, q, (const LE32 *) raw_bytes(rdata, 0), obuf);
+    if (big & 6) { // count 16 bit relocations
+        SPAN_S_VAR(const LE32, q, SPAN_S_CAST(const LE32, rdata));
         while (*q++)
             r16++;
         if ((big & 6) == 6)
@@ -2621,14 +2681,14 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
                 r16++;
     }
     Reloc rel(relocnum + r16);
-    if (big & 6) {
-        SPAN_S_VAR(const LE32, q, (const LE32 *) raw_bytes(rdata, 0), obuf);
+    if (big & 6) { // add 16 bit relocations
+        SPAN_S_VAR(const LE32, q, SPAN_S_CAST(const LE32, rdata));
         while (*q)
             rel.add(*q++ + rvamin, (big & 4) ? 2 : 1);
         if ((big & 6) == 6)
             while (*++q)
                 rel.add(*q + rvamin, 1);
-        // rdata = (byte *) raw_bytes(q, 0); // ???
+        // rdata = (const byte *) raw_bytes(q, 0); // advance rdata
     }
 
     SPAN_S_VAR(byte, const wrkmem, mb_wrkmem);
@@ -2642,12 +2702,12 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
     }
     rel.finish(oxrelocs, soxrelocs);
 
-    omemcpy(obuf + (ODADDR(PEDIR_RELOC) - rvamin), oxrelocs, soxrelocs);
+    omemcpy(obuf + (ODADDR(PEDIR_BASERELOC) - rvamin), oxrelocs, soxrelocs);
     delete[] oxrelocs;
     oxrelocs = nullptr;
     mb_wrkmem.dealloc();
 
-    ODSIZE(PEDIR_RELOC) = soxrelocs;
+    ODSIZE(PEDIR_BASERELOC) = soxrelocs;
 }
 
 void PeFile::rebuildExports() {
@@ -2866,8 +2926,8 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
     // FIXME: ih.flags is checked here because of a bug in UPX 0.92
     if (ih.flags & IMAGE_FILE_RELOCS_STRIPPED) {
         oh.flags |= IMAGE_FILE_RELOCS_STRIPPED;
-        ODADDR(PEDIR_RELOC) = 0;
-        ODSIZE(PEDIR_RELOC) = 0;
+        ODADDR(PEDIR_BASERELOC) = 0;
+        ODSIZE(PEDIR_BASERELOC) = 0;
     }
 
     rebuildImports<LEXX>(extra_info, ord_mask, set_oft);

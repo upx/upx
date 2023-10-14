@@ -51,6 +51,12 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
     if (relocnum == 0)
         return 0;
     upx_qsort(raw_bytes(relocs, 4 * relocnum), relocnum, 4, le32_compare);
+    if (0) {
+        printf("optimizeReloc: u_reloc %9u checksum=0x%08x\n", 4 * relocnum,
+               upx_adler32(relocs, 4 * relocnum));
+        printf("optimizeReloc: u_image %9u checksum=0x%08x\n", image_size,
+               upx_adler32(image, image_size));
+    }
 
     unsigned pc = (unsigned) -4;
     for (unsigned i = 0; i < relocnum; i++) {
@@ -84,7 +90,13 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
         }
     }
     *fix++ = 0; // end marker
-    return ptr_udiff_bytes(fix, out);
+    const unsigned bytes = ptr_udiff_bytes(fix, out);
+    if (0) {
+        printf("optimizeReloc: c_reloc %9u checksum=0x%08x\n", bytes, upx_adler32(out, bytes));
+        printf("optimizeReloc: c_image %9u checksum=0x%08x\n", image_size,
+               upx_adler32(image, image_size));
+    }
+    return bytes;
 }
 
 /*************************************************************************
@@ -113,6 +125,12 @@ unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P
         }
     }
     NO_fprintf(stderr, "relocnum=%x\n", relocnum);
+    if (0) {
+        const unsigned bytes = ptr_udiff_bytes(fix + 1, in);
+        printf("unoptimizeReloc: c_reloc %9u checksum=0x%08x\n", bytes, upx_adler32(in, bytes));
+        printf("unoptimizeReloc: c_image %9u checksum=0x%08x\n", image_size,
+               upx_adler32(image, image_size));
+    }
 
     out.alloc(4 * (relocnum + 1)); // one extra entry
     SPAN_S_VAR(LE32, relocs, out);
@@ -146,6 +164,12 @@ unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P
     }
     in = fix + 1; // advance
     assert(relocnum == ptr_udiff_bytes(relocs, raw_bytes(out, 0)) / 4);
+    if (0) {
+        printf("unoptimizeReloc: u_reloc %9u checksum=0x%08x\n", 4 * relocnum,
+               upx_adler32(out, 4 * relocnum));
+        printf("unoptimizeReloc: u_image %9u checksum=0x%08x\n", image_size,
+               upx_adler32(image, image_size));
+    }
     return relocnum;
 }
 

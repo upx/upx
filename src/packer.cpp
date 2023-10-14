@@ -1246,8 +1246,12 @@ void Packer::compressWithFilters(Filter *ft, const unsigned overlap_range,
     byte *i_ptr = ibuf + ibuf_off;
     unsigned i_len = ph.u_len;
     byte *o_ptr = obuf + obuf_off;
-    byte *f_ptr = ibuf + filter_off;
     unsigned f_len = ft->buf_len ? ft->buf_len : i_len;
+    if (filter_strategy == -3) {
+        filter_off = 0;
+        f_len = 0;
+    }
+    byte *f_ptr = ibuf + filter_off;
 
     assert(f_ptr + f_len <= i_ptr + i_len);
 
