@@ -180,6 +180,11 @@ XSPAN_FWD_TU(unsigned) ptr_udiff_bytes(const C<T> &a, const E<U> &b) {
 #ifdef UPX_VERSION_HEX
 
 template <class T>
+inline unsigned upx_adler32(const C<T> &a, unsigned n, unsigned adler = 1) {
+    return upx_adler32(a.raw_bytes(n), n, adler);
+}
+
+template <class T>
 unsigned get_ne16(const C<T> &a) {
     return get_ne16(a.raw_bytes(2));
 }

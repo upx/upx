@@ -29,6 +29,7 @@
 **************************************************************************/
 
 #if CLANG_FORMAT_DUMMY_CLASS
+template <class T>
 class CSelf {
 #endif
 
@@ -68,7 +69,7 @@ private:
             xspan_check_range(ptr, base, size_in_bytes);
     }
 #else
-forceinline constexpr void assertInvariants() const noexcept {}
+forceinline_constexpr void assertInvariants() const noexcept {}
 #endif
 
     static inline pointer makeNotNull(pointer p) {
@@ -272,13 +273,21 @@ public:
     Self &operator=(MemBuffer &mb) { return assign(Self(mb)); }
 #endif
 
-    Self subspan(ptrdiff_t offset, ptrdiff_t count) {
+    Self subspan(ptrdiff_t offset, ptrdiff_t count) const {
         pointer begin = check_add(ptr, offset);
         pointer end = check_add(begin, count);
         if (begin <= end)
             return Self(Unchecked, begin, (end - begin) * sizeof(T), begin);
         else
             return Self(Unchecked, end, (begin - end) * sizeof(T), end);
+    }
+
+    template <class U>
+    CSelf<U> type_cast() const {
+        assertInvariants();
+        typedef CSelf<U> R;
+        return R(R::Unchecked, reinterpret_cast<typename R::pointer>(ptr), size_in_bytes,
+                 reinterpret_cast<typename R::pointer>(base));
     }
 
     bool operator==(pointer other) const { return ptr == other; }

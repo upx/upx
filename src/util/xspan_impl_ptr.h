@@ -55,7 +55,7 @@ private:
     // inverse logic for ensuring valid pointers from existing objects
     inline pointer ensurePtr() const { return ptr; }
     // debug
-    forceinline constexpr void assertInvariants() const noexcept {}
+    forceinline_constexpr void assertInvariants() const noexcept {}
 
 public:
 #if XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1

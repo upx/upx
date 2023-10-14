@@ -53,11 +53,11 @@ void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_byte
 
 // help constructor to distinguish between number of elements and bytes
 struct XSpanCount final {
-    explicit forceinline constexpr XSpanCount(size_t n) noexcept : count(n) {}
+    explicit forceinline_constexpr XSpanCount(size_t n) noexcept : count(n) {}
     size_t count; // public
 };
 struct XSpanSizeInBytes final {
-    explicit forceinline constexpr XSpanSizeInBytes(size_t bytes) noexcept : size_in_bytes(bytes) {}
+    explicit forceinline_constexpr XSpanSizeInBytes(size_t bytes) noexcept : size_in_bytes(bytes) {}
     size_t size_in_bytes; // public
 };
 
@@ -199,29 +199,22 @@ struct Ptr;
 class XSpanInternalDummyArgFake; // not implemented on purpose
 typedef XSpanInternalDummyArgFake *XSpanInternalDummyArg;
 #define XSpanInternalDummyArgInit nullptr
-#elif 1
+#elif __cplusplus >= 201103L && 1
 // use an enum
 struct XSpanInternalDummyArg final {
     enum DummyEnum {};
-    explicit forceinline constexpr XSpanInternalDummyArg(DummyEnum &&) noexcept {}
+    explicit forceinline_constexpr XSpanInternalDummyArg(DummyEnum &&) noexcept {}
 };
 #define XSpanInternalDummyArgInit                                                                  \
     (XSPAN_NS(XSpanInternalDummyArg)(XSPAN_NS(XSpanInternalDummyArg)::DummyEnum{}))
 #else
 // use a class with a private constructor
 struct XSpanInternalDummyArg final {
-    static forceinline constexpr XSpanInternalDummyArg make() noexcept {
-        return XSpanInternalDummyArg{};
+    static forceinline_constexpr XSpanInternalDummyArg make() noexcept {
+        return XSpanInternalDummyArg();
     }
 private:
-    explicit forceinline constexpr XSpanInternalDummyArg() noexcept {}
-#if !(ACC_CC_MSC) // MSVC wants to use the copy and move constructors; correct or compiler bug?
-    // @COMPILER_BUG @MSVC_BUG
-    XSpanInternalDummyArg(const XSpanInternalDummyArg &) = delete;
-    XSpanInternalDummyArg(XSpanInternalDummyArg &&) noexcept = delete;
-    XSpanInternalDummyArg &operator=(const XSpanInternalDummyArg &) = delete;
-    XSpanInternalDummyArg &operator=(XSpanInternalDummyArg &&) noexcept = delete;
-#endif
+    explicit forceinline_constexpr XSpanInternalDummyArg() noexcept {}
 };
 #define XSpanInternalDummyArgInit                                                                  \
     (XSPAN_NS(XSpanInternalDummyArg)(XSPAN_NS(XSpanInternalDummyArg)::make()))

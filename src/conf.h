@@ -173,6 +173,7 @@ typedef upx_int64_t upx_off_t;
 #else
 #define noinline        __acc_noinline
 #endif
+#define forceinline_constexpr forceinline constexpr
 #define likely          __acc_likely
 #define unlikely        __acc_unlikely
 #define very_likely     __acc_very_likely

@@ -95,6 +95,11 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #define XSPAN_P_VAR(type, var, first, ...) XSPAN_P(type) var((first), ##__VA_ARGS__)
 #define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var((first), ##__VA_ARGS__)
 
+// cast to a different type (creates a new value)
+#define XSPAN_0_CAST(type, var) ((var).type_cast<type>())
+#define XSPAN_P_CAST(type, var) ((var).type_cast<type>())
+#define XSPAN_S_CAST(type, var) ((var).type_cast<type>())
+
 #elif WITH_XSPAN >= 1
 
 // unchecked - just a no-op pointer wrapper, no extra functionality
@@ -113,6 +118,11 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #define XSPAN_0_VAR(type, var, first, ...) XSPAN_0(type) var((first))
 #define XSPAN_P_VAR(type, var, first, ...) XSPAN_P(type) var((first))
 #define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var((first))
+
+// cast to a different type (creates a new value)
+#define XSPAN_0_CAST(type, var)            ((var).type_cast<type>())
+#define XSPAN_P_CAST(type, var)            ((var).type_cast<type>())
+#define XSPAN_S_CAST(type, var)            ((var).type_cast<type>())
 
 #else // WITH_XSPAN
 
@@ -147,6 +157,11 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
 #define XSPAN_P_VAR(type, var, first, ...) type *var = XSPAN_P_MAKE(type, (first))
 #define XSPAN_S_VAR(type, var, first, ...) type *var = XSPAN_S_MAKE(type, (first))
 
+// cast to a different type (creates a new value)
+#define XSPAN_0_CAST(type, var)            ((type *) (var))
+#define XSPAN_P_CAST(type, var)            ((type *) (var))
+#define XSPAN_S_CAST(type, var)            ((type *) (var))
+
 #endif // WITH_XSPAN
 
 /*************************************************************************
@@ -166,6 +181,10 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
 #define SPAN_0_VAR  XSPAN_0_VAR
 #define SPAN_P_VAR  XSPAN_P_VAR
 #define SPAN_S_VAR  XSPAN_S_VAR
+// cast to a different type (creates a new value)
+#define SPAN_0_CAST XSPAN_0_CAST
+#define SPAN_P_CAST XSPAN_P_CAST
+#define SPAN_S_CAST XSPAN_S_CAST
 #endif
 
 /* vim:set ts=4 sw=4 et: */
