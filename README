@@ -35,7 +35,7 @@ and run exactly as before, with no runtime or memory penalty for most
 of the supported formats.
 
 UPX supports a number of different executable formats, including
-Windows programs and DLLs, macOS apps and Linux executables.
+Windows programs and DLLs, and Linux executables.
 
 UPX is free software distributed under the term of the GNU General
 Public License. Full source code is available.

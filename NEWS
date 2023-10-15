@@ -3,6 +3,7 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 4.2.0 (XX XXX 2023):
+  * disable macOS support until we fix compatibility with macOS 13+
   * new option '--link' to preserve hard-links (Unix only; use with care)
   * add support for NO_COLOR env var; see https://no-color.org/
   * bug fixes - see https://github.com/upx/upx/milestone/13

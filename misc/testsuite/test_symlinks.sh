@@ -3,6 +3,12 @@
 set -e; set -o pipefail
 argv0=$0; argv0abs=$(readlink -fn "$argv0"); argv0dir=$(dirname "$argv0abs")
 
+# disable on macOS for now, see https://github.com/upx/upx/issues/612
+if [[ "$(uname)" == Darwin ]]; then
+    echo "$0: SKIPPED"
+    exit 0
+fi
+
 # IMPORTANT NOTE: do NOT run as user root!!
 # IMPORTANT NOTE: this script only works on Unix!!
 umask 0022

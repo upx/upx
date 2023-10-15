@@ -2229,6 +2229,12 @@ tribool PackMachBase<T>::canPack()
             break;
         }
     }
+#if !defined(DEBUG)
+    // disable macOS packing in Release builds until we do support macOS 13+
+    //   https://github.com/upx/upx/issues/612
+    if (my_cputype == CPU_TYPE_X86_64 || my_cputype == CPU_TYPE_ARM64)
+        throwCantPack("macOS is currently not supported");
+#endif
     return true;
 }
 
