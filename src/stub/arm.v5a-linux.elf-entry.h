@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM_V5A_LINUX_ELF_ENTRY_SIZE    14006
 #define STUB_ARM_V5A_LINUX_ELF_ENTRY_ADLER32 0x66c37fd8

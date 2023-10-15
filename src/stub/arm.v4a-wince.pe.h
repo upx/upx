@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM_V4A_WINCE_PE_SIZE    14676
 #define STUB_ARM_V4A_WINCE_PE_ADLER32 0x3e1886fc

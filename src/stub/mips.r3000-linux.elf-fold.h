@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_MIPS_R3000_LINUX_ELF_FOLD_SIZE    2888
 #define STUB_MIPS_R3000_LINUX_ELF_FOLD_ADLER32 0xadec7a75

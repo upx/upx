@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_DOS32_WATCOM_LE_SIZE    22961
 #define STUB_I386_DOS32_WATCOM_LE_ADLER32 0x4a846c5a

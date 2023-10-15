@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_SIZE    14436
 #define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_ADLER32 0xb8419a13

@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_HEAD_SIZE    8
 #define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_HEAD_ADLER32 0x17bb0637

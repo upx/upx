@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_POWERPC64_DARWIN_DYLIB_ENTRY_SIZE    10225
 #define STUB_POWERPC64_DARWIN_DYLIB_ENTRY_ADLER32 0xac2304d7

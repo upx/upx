@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_M68K_ATARI_TOS_SIZE    16638
 #define STUB_M68K_ATARI_TOS_ADLER32 0x36537f3a

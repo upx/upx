@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_BSD_ELF_FOLD_SIZE    1813
 #define STUB_I386_BSD_ELF_FOLD_ADLER32 0xa3ac09fc

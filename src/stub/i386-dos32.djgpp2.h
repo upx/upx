@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_DOS32_DJGPP2_SIZE    21808
 #define STUB_I386_DOS32_DJGPP2_ADLER32 0xe2575c37

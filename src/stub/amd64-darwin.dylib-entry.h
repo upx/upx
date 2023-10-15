@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_AMD64_DARWIN_DYLIB_ENTRY_SIZE    8672
 #define STUB_AMD64_DARWIN_DYLIB_ENTRY_ADLER32 0x3e682173

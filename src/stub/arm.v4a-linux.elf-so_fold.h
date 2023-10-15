@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM_V4A_LINUX_ELF_SO_FOLD_SIZE    26593
 #define STUB_ARM_V4A_LINUX_ELF_SO_FOLD_ADLER32 0x933c1b26

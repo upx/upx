@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_POWERPC_DARWIN_MACHO_UPXMAIN_EXE_SIZE    4096
 #define STUB_POWERPC_DARWIN_MACHO_UPXMAIN_EXE_ADLER32 0xf916c823

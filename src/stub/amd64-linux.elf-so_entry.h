@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_AMD64_LINUX_ELF_SO_ENTRY_SIZE    970
 #define STUB_AMD64_LINUX_ELF_SO_ENTRY_ADLER32 0x06cc0686

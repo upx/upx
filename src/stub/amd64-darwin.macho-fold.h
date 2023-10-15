@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_AMD64_DARWIN_MACHO_FOLD_SIZE    2455
 #define STUB_AMD64_DARWIN_MACHO_FOLD_ADLER32 0x520aeb26

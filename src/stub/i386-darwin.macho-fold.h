@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_DARWIN_MACHO_FOLD_SIZE    1457
 #define STUB_I386_DARWIN_MACHO_FOLD_ADLER32 0x0e3ea459

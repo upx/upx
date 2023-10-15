@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_DARWIN_MACHO_ENTRY_SIZE    8962
 #define STUB_I386_DARWIN_MACHO_ENTRY_ADLER32 0x7ff29f11

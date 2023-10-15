@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_LINUX_ELF_INTERP_ENTRY_SIZE    36191
 #define STUB_I386_LINUX_ELF_INTERP_ENTRY_ADLER32 0x2259c496

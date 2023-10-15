@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_LINUX_SHLIB_INIT_SIZE    30801
 #define STUB_I386_LINUX_SHLIB_INIT_ADLER32 0xd04e44b0

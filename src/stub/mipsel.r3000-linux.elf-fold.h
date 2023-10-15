@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_MIPSEL_R3000_LINUX_ELF_FOLD_SIZE    2888
 #define STUB_MIPSEL_R3000_LINUX_ELF_FOLD_ADLER32 0x0c507a74

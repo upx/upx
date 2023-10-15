@@ -74,7 +74,8 @@ def w_header_c(w, ifile, ofile, n):
 
    John F. Reiser
    <jreiser@users.sourceforge.net>
- */\n\n\n""")
+ */\n\n""")
+    w("/* clang" + "-format off */\n\n")
 
 
 # /***********************************************************************

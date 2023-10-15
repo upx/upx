@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_DARWIN_DYLIB_ENTRY_SIZE    30552
 #define STUB_I386_DARWIN_DYLIB_ENTRY_ADLER32 0x3677f3d6

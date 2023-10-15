@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_LINUX_KERNEL_VMLINUZ_SIZE    24683
 #define STUB_I386_LINUX_KERNEL_VMLINUZ_ADLER32 0xd8c33a16

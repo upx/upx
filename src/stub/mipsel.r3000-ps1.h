@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_MIPSEL_R3000_PS1_SIZE    19509
 #define STUB_MIPSEL_R3000_PS1_ADLER32 0x9eaaf272

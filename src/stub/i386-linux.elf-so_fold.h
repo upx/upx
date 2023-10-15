@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_LINUX_ELF_SO_FOLD_SIZE    14071
 #define STUB_I386_LINUX_ELF_SO_FOLD_ADLER32 0x36648206

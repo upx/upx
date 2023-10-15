@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM64_LINUX_SHLIB_INIT_SIZE    7923
 #define STUB_ARM64_LINUX_SHLIB_INIT_ADLER32 0x74b92ff3

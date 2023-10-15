@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_MIPS_R3000_LINUX_SHLIB_INIT_SIZE    9517
 #define STUB_MIPS_R3000_LINUX_SHLIB_INIT_ADLER32 0xa6bb1270

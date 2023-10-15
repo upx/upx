@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_POWERPC64LE_LINUX_ELF_ENTRY_SIZE    10183
 #define STUB_POWERPC64LE_LINUX_ELF_ENTRY_ADLER32 0x9a03ac5f

@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_DOS32_TMT_SIZE    22586
 #define STUB_I386_DOS32_TMT_ADLER32 0x997c080e

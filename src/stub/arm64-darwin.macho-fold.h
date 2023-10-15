@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM64_DARWIN_MACHO_FOLD_SIZE    2816
 #define STUB_ARM64_DARWIN_MACHO_FOLD_ADLER32 0x5925fb9d

@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_AMD64_DARWIN_MACHO_UPXMAIN_EXE_SIZE    4136
 #define STUB_AMD64_DARWIN_MACHO_UPXMAIN_EXE_ADLER32 0xb100fe8b

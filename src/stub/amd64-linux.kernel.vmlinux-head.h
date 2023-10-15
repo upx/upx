@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_SIZE    37
 #define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_ADLER32 0x81fb1575

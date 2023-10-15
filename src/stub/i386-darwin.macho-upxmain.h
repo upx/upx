@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_DARWIN_MACHO_UPXMAIN_EXE_SIZE    4688
 #define STUB_I386_DARWIN_MACHO_UPXMAIN_EXE_ADLER32 0x8f7d68d7

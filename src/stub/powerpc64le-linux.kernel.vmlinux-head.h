@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_HEAD_SIZE    8
 #define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_HEAD_ADLER32 0x0d7d0259

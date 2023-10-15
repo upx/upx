@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_SIZE    14433
 #define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_ADLER32 0xb24498b8

@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_POWERPC64_DARWIN_MACHO_ENTRY_SIZE    9564
 #define STUB_POWERPC64_DARWIN_MACHO_ENTRY_ADLER32 0xe057f4cd

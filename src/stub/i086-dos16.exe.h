@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I086_DOS16_EXE_SIZE    26112
 #define STUB_I086_DOS16_EXE_ADLER32 0x1abb93ec

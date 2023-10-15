@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_I386_WIN32_PE_SIZE    27890
 #define STUB_I386_WIN32_PE_ADLER32 0xc149ed7a

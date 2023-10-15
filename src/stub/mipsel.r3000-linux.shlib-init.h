@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_MIPSEL_R3000_LINUX_SHLIB_INIT_SIZE    9399
 #define STUB_MIPSEL_R3000_LINUX_SHLIB_INIT_ADLER32 0x53ddfd4b

@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM_V5A_LINUX_SHLIB_INIT_SIZE    15200
 #define STUB_ARM_V5A_LINUX_SHLIB_INIT_ADLER32 0x46d1e7fe

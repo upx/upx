@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM64_WIN64_PE_SIZE    6445
 #define STUB_ARM64_WIN64_PE_ADLER32 0x2ad96830

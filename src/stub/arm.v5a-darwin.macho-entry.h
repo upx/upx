@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_SIZE    14129
 #define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_ADLER32 0xfe74b14d

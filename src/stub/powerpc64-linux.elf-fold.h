@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_POWERPC64_LINUX_ELF_FOLD_SIZE    3504
 #define STUB_POWERPC64_LINUX_ELF_FOLD_ADLER32 0x74d9b80b

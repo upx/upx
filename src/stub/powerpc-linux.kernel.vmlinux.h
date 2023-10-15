@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_POWERPC_LINUX_KERNEL_VMLINUX_SIZE    8429
 #define STUB_POWERPC_LINUX_KERNEL_VMLINUX_ADLER32 0xa0409e95

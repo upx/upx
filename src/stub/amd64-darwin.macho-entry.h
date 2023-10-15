@@ -30,6 +30,7 @@
    <jreiser@users.sourceforge.net>
  */
 
+/* clang-format off */
 
 #define STUB_AMD64_DARWIN_MACHO_ENTRY_SIZE    8898
 #define STUB_AMD64_DARWIN_MACHO_ENTRY_ADLER32 0x5c514fd2
