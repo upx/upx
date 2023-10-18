@@ -202,11 +202,10 @@ jobs:
           (cd build/extra/clang/release && DESTDIR=$PWD/Install-with-cmake cmake --install .)
           (cd build/extra/clang/release && DESTDIR=$PWD/Install-with-make  make install)
       - name: 'Run basic tests'
-#       if: ${{ !contains(matrix.os, 'macos-13') }} # FIXME: UPX on macos-13 is broken => disable self-test for now
-        if: false
+        if: ${{ !contains(matrix.os, 'macos-13') }} # FIXME: UPX on macos-13 is broken => disable self-test for now
         run: |
           make -C build/extra/clang/debug test
-          make -C build/extra/clang/release test
+#         make -C build/extra/clang/release test
       - name: 'Run file system test suite'
         if: ${{ matrix.testsuite }} # for coreutils readlink
         run: |

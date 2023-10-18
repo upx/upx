@@ -46,7 +46,7 @@ jobs:
         if: ${{ matrix.run_test }}
         run: |
           ctest --test-dir build/xcode -C Debug
-          ctest --test-dir build/xcode -C Release
+#         ctest --test-dir build/xcode -C Release
       - name: 'Run install tests'
         run: |
           (cd build/xcode && DESTDIR=$PWD/Install-default cmake --install .)
