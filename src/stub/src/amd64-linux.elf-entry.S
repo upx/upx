@@ -100,15 +100,9 @@ _start: .globl _start
 
 // Decompress the rest of this loader, and jump to it.
         lea o_binfo(%rip),%rsi
-<<<<<<< HEAD
-        lodsl; and $~1,%eax; movl %eax,%r14d  // O_BINFO
-        push %rsi; pop %rbx  // &b_info of folded decompressor
-        movl (%rsi),%edx  // .sz_unc LENU
-=======
         lodsl; movl %eax,-1*NBPW(%r13)  // is_ptinterp
         and $~0<<1,%eax; movl %eax,%r14d  // O_BINFO
         movl (%rsi),%edx; push %rdx  // P_30  .sz_unc LENU
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
         lea sz_pack2(%rip),%rcx  // &sz_pack2
         movl (%rcx),%r15d  // sz_pack2: length before stub
@@ -121,18 +115,6 @@ _start: .globl _start
 // alloca()
         subq %rdx,%rsp; and $-2*NBPW,%rsp  // aligned space for unfolded stub
 
-<<<<<<< HEAD
-        push %rsp; pop %arg3  // dst= decompress onto stack
-        push %rbx; pop %rsi
-        lodsl; push %rax  // P_13  .sz_unc
-        push %rsp; pop %arg4  // &dstlen
-        lodsl; push %rax  // P_14  tmp= .sz_cpr
-        lodsl; xchg %eax,%arg5l  // .b_method
-        movq %rsi,%arg1  // src
-        pop %arg2  // P_14  srclen
-        lea f_exp(%rip),%rbp
-        call *%rbp  // f_exp
-=======
 #define dst  %rdi
 #define src  %rsi
 #define lsrc %rcx
@@ -224,7 +206,6 @@ eof_n2b:
         pop %rcx  // MATCH_11  &input_eof
         cmp %rcx,%rsi; je 0f; hlt; 0:  // test for ending in correct place
         //FIXME: check dst, too
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 // Write de-compressed 'fold' to file
         push %r12; pop %arg1  // mfd
@@ -239,7 +220,7 @@ eof_n2b:
         mov %r12,%arg5  // mfd
         push $MAP_SHARED; pop %sys4
         push %arg3; pop %arg2  // length
-        push $PROT_READ|PROT_EXEC; pop %arg3
+        push $PROT_READ|PROT_EXEC; pop %arg3  // PROT_WRITE|: DEBUG only
         subl %edi,%edi  // (%arg1)dst = 0;  // kernel chooses addr
         push $__NR_mmap; pop %rax; call sys_check
         pop %rcx  // P_31  elfaddr
