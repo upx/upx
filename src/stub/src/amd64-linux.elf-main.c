@@ -178,7 +178,7 @@ err_exit(int a)
 // UPX & NRV stuff
 **************************************************************************/
 
-int f_expand( // .globl in $(ARCH)-linux.elf-fold.S
+int f_expand( // .globl in $(ARCH)-expand.S
     nrv_byte const *binfo, nrv_byte *dst, size_t *dstlen);
 
 static void
