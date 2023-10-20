@@ -469,6 +469,12 @@ mmap_privanon: .globl mmap_privanon
         mvn r4,#0  @ fd= -1
         b mmap_do
 
+f_expand: .globl f_expand
+        bkpt  // FIXME
+
+get_page_mask: .globl get_page_mask
+        bkpt  // FIXME
+
 #if 1|DEBUG  /*{*/
 
 __udivsi3: .globl __udivsi3

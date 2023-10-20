@@ -79,7 +79,7 @@ PROT_READ= 1
 
 O_RDONLY= 0
 
-get_page_mask:
+get_page_mask: .globl get_page_mask
         li v0,0  // modified to PAGE_MASK >> 9
         jr ra
           sll v0,v0,9
@@ -174,25 +174,18 @@ L30:  // copy auxv
         move a2,sp  # &Elf32_Ehdr tmp space
         move a1,$r_LENX  # total_size
 
-BAL=0x04110000
-        .extern upx_main
-/* We need a position-independent call of upx_main, which is external.
-   "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.
-   ".long BAL + upx_main" then changing R_MIPS_32 to R_MIPS_PC16
-     in a utility program, is botched when loaded by multiarch-ld-2.17
-     (relocates as if R_MIPS_32, changing the opcode and not
-     subtracting the current location).
-   So do it the hard way.
-*/
-//        bltzal $0,9f  # ra= &9f; no branch (condition is false!)
-//          b 8f
-9:
+        bal 1f  # ra= 0f
+          lw at,0(ra)  # at= assembly-time return address
+0:  # ra points here
+        .word 0b
         .word upx_main
-8:
-//        li at,%lo(upx_main)
-        lw at,(ra)
-        jalr v0
+1:
+        lw v0,NBPW(ra)  # v0= assembly-time upx_main
+        sub ra,ra,at  # run-time zero
+        add ra,ra,v0  # run-time upx_main
+        jalr ra
           move a0,$r_ADRX
+
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Elf32_Auxv_t *a3,
         f_decompr t0, f_unfilter t1, Elf32_Ehdr &t2, page_mask t3 )
 */
