@@ -280,34 +280,62 @@ err_exit(int a)
 // UPX & NRV stuff
 **************************************************************************/
 
-typedef void f_unfilter(
-    nrv_byte *,  // also addvalue
-    nrv_uint,
-    unsigned cto8, // junk in high 24 bits
-    unsigned ftid
-);
-typedef int f_expand(
-    const nrv_byte *, nrv_uint,
-          nrv_byte *, size_t *, unsigned );
+extern size_t get_page_mask(void);  // variable page size AT_PAGESZ; see *-fold.S
+
+#if !defined(__mips__)  //{
+#define my_page_mask get_page_mask
+extern int f_expand(  // .globl in $(ARCH)-expand.S
+    const nrv_byte *binfo, nrv_byte *dst, size_t *dstlen);
+#else  //}{  FIXME  mips
+int f_expand(const nrv_byte *binfo, nrv_byte *dst, size_t *dstlen);  // prototype
+int f_expand(const nrv_byte *binfo, nrv_byte *dst, size_t *dstlen)
+{
+    (void)binfo; (void)dst; (void)dstlen;
+    return !0;
+}
+size_t my_page_mask(void);  // prototype
+size_t my_page_mask(void) {
+    size_t rv;
+  asm(
+    ".set noreorder; .set noat;"
+    "bal 1f;"  // ra= 0f
+    "  lw $1,0($31);"  // $1= assembly-time 0f
+"0: ;"
+    ".word 0b;"
+    ".word get_page_mask;"
+"1: ;"
+    "lw $2,4($31);"  // $w= assembly-time get_page_mask
+    "sub $31,$31,$1;" // ra= run-time 0
+    "add $31,$31,$2;" // ra= run-time get_page_mask
+    "jalr $31;"
+    "  nop;"
+  //"move $4,$2;"  // compensate for compiler bug!
+    ".set at; .set reorder; "
+/*out*/ : "=r"(rv)
+/* in*/ :
+/*und*/ : "$31", "$1");
+  return rv;
+}
+#endif  //}
 
 
 static void
 unpackExtent(
     Extent *const xi,  // input
-    Extent *const xo,  // output
-    f_expand *const f_exp,
-    f_unfilter *f_unf
+    Extent *const xo   // output
 )
 {
-    DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n",
-        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_exp, f_unf);
     while (xo->size) {
+        DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)\\n",
+            xi, xi->size, xi->buf, xo, xo->size, xo->buf);
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
         //   compressible and is stored in its uncompressed form.
 
         // Read and check block sizes.
         xread(xi, (char *)&h, sizeof(h));
+        DPRINTF("h.sz_unc=%%x  h.sz_cpr=%%x  h.b_method=%%x\\n",
+            h.sz_unc, h.sz_cpr, h.b_method);
         if (h.sz_unc == 0) {                     // uncompressed size 0 -> EOF
             if (h.sz_cpr != UPX_MAGIC_LE32)      // h.sz_cpr must be h->magic
                 err_exit(2);
@@ -331,27 +359,17 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             size_t out_len = h.sz_unc;  // EOF for lzma
-            int const j = (*f_exp)((unsigned char *)xi->buf, h.sz_cpr,
-                (unsigned char *)xo->buf, &out_len,
-#if defined(__i386__) //{
-                *(int *)(void *)&h.b_method
-#else
-                h.b_method
-#endif
-                );
-            if (j != 0 || out_len != (nrv_uint)h.sz_unc)
-                err_exit(7);
-            // Skip Ehdr+Phdrs: separate 1st block, not filtered
-            if (h.b_ftid!=0 && f_unf  // have filter
-            &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
-              || (xo->size==(unsigned)h.sz_unc) )  // block is last in Extent
-            ) {
-                (*f_unf)((unsigned char *)xo->buf, out_len, h.b_cto8, h.b_ftid);
+            int const j = f_expand((unsigned char *)xi->buf - sizeof(h),
+                (unsigned char *)xo->buf, &out_len);
+            if (j != 0 || out_len != (nrv_uint)h.sz_unc) {
+                DPRINTF("  j=%%x  out_len=%%x  &h=%%p\\n", j, out_len, &h);
+                err_exit(6);
             }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;
         }
         else { // copy literal block
+            DPRINTF("  copy %%p  %%p  %%p\\n", xi->buf, xo->buf, h.sz_cpr);
             xread(xi, xo->buf, h.sz_cpr);
         }
         xo->buf  += h.sz_unc;
@@ -617,15 +635,6 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
         ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
 
 
-#if defined(__powerpc__)  //{
-extern
-size_t get_page_mask(void);  // variable page size AT_PAGESZ; see *-fold.S
-#elif defined(__mips__)  //}{
-    // empty
-#else  //}{  // FIXME for __mips__
-size_t get_page_mask(void) { return PAGE_MASK; }  // compile-time constant
-#endif  //}
-
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
@@ -633,16 +642,9 @@ static ptrdiff_t // returns relocation constant
 #if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
 #endif  /*}*/
-xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
-    Elf32_Addr *const p_brk
-#if defined (__mips__)  //{
-    , size_t const page_mask
-#endif  //}
-)
+xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum, Elf32_Addr *const p_brk)
 {
-#if !defined(__mips__)  //{
-    size_t const page_mask = get_page_mask();
-#endif  //}
+    size_t const page_mask = my_page_mask();
     Elf32_Addr lo= ~0, hi= 0, addr = 0;
     DPRINTF("xfind_pages  %%x  %%p  %%d  %%p\\n", mflags, phdr, phnum, p_brk);
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type
@@ -677,18 +679,10 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 
 
 static Elf32_Addr  // entry address
-do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
-    Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf
-#if defined(__mips__)  //{
-    , size_t const page_mask
-#endif  //}
-)
+do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
+    Elf32_auxv_t *const av, unsigned *const p_reloc)
 {
-#if defined(__mips__)  //{
-    unsigned const frag_mask = ~page_mask;
-#else  //}{
-    unsigned const frag_mask = ~get_page_mask();
-#endif  //}
+    unsigned const frag_mask = ~my_page_mask();
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
     Elf32_Addr v_brk;
@@ -712,20 +706,13 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     }
     else { // PT_INTERP
         reloc = xfind_pages(
-            ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk
-#if defined(__mips__)  //{
-         , page_mask
-#endif  //}
-        );
+            ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
     }
 
-#if DEBUG &&!defined(__mips__)  //{
-    size_t const page_mask = 0;
-#endif  //}
-    DPRINTF("do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)\\n"
-          "  av=%%p  page_mask=%%p  reloc=%%p  p_reloc=%%p/%%p  f_unf=%%p\\n",
-        fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0),
-        av, page_mask, reloc, p_reloc, *p_reloc, f_unf);
+    DPRINTF("do_xmap  ehdr=%%p  xi=%%p(%%x %%p)  fdi=%%x\\n"
+          "  av=%%p  reloc=%%p  p_reloc=%%p/%%p\\n",
+        ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), fdi,
+        av, reloc, p_reloc, *p_reloc);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -772,8 +759,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #endif  //}
                     PROT_WRITE | PROT_READ, MAP_FIXED) )
                 err_exit(6);
-            unpackExtent(xi, &xo, (f_expand *)fdi,
-                ((PROT_EXEC & prot) ? f_unf : 0) );
+            unpackExtent(xi, &xo);
         }
         else {  // PT_INTERP
             if (addr != mmap(addr, mlen, prot, MAP_FIXED | MAP_PRIVATE,
@@ -872,20 +858,14 @@ void *upx_main(  // returns entry address
     size_t const sz_compressed,  // total length
     Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Elf32_auxv_t *const av,
-    f_expand *const f_exp,
-    f_unfilter *const f_unf,
-    Elf32_Addr const elfaddr,
-    size_t const page_mask
+    Elf32_Addr const elfaddr
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
     Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Elf32_auxv_t *const av,
-    f_expand *const f_exp,
-    f_unfilter *const f_unf,
-    Elf32_Addr const elfaddr,
-    size_t const page_mask
+    Elf32_Addr const elfaddr
 )
 
 #elif defined(__powerpc__) //}{
@@ -894,8 +874,6 @@ void *upx_main(  // returns entry address
     size_t const sz_compressed,  // total length
     Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Elf32_auxv_t *const av,
-    f_expand *const f_exp,
-    f_unfilter *const f_unf,
     Elf32_Addr elfaddr
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
@@ -903,8 +881,6 @@ void *upx_main(  // returns entry address
     size_t const sz_compressed,  // total length
     Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Elf32_auxv_t *const av,
-    f_expand *const f_exp,
-    f_unfilter *const f_unf,
     Elf32_Addr elfaddr
 )
 
@@ -912,8 +888,6 @@ void *upx_main(  // returns entry address
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
-    f_expand *const f_exp,
-    f_unfilter * /*const*/ f_unfilter,
     Extent xo,
     Extent xi,
     Elf32_Addr const volatile elfaddr
@@ -921,20 +895,12 @@ void *upx_main(
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
-    f_expand *const f_exp,
-    f_unfilter * /*const*/ f_unf,
     Extent xo,  // {sz_unc, ehdr}    for ELF headers
     Extent xi,  // {sz_cpr, &b_info} for ELF headers
     Elf32_Addr const volatile elfaddr  // value+result: compiler must not change
 )
 #endif  /*}*/
 {
-#if defined(__i386__)  //{
-    f_unf = (0xeb != *(unsigned char *)f_exp)  // 2-byte jmp around unfilter
-        ? 0
-        : (f_unfilter *)(2+ (long)f_exp);
-#endif  //}
-
 #if !defined(__mips__) && !defined(__powerpc__)  /*{*/
     Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR_32+OVERHEAD]
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
@@ -955,17 +921,17 @@ void *upx_main(
     xj.buf = CONST_CAST(char *, bi); xj.size = sizeof(*bi) + bi->sz_cpr;
 #endif  //}
 
-    DPRINTF("upx_main@%%p av=%%p  szc=%%x  f_exp=%%p  f_unf=%%p  "
+    DPRINTF("upx_main@%%p av=%%p  szc=%%x"
             "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  elfaddr=%%x\\n",
-        upx_main, av, sz_compressed, f_exp, f_unf, &xo, xo.size, xo.buf,
+        upx_main, av, sz_compressed, &xo, xo.size, xo.buf,
         &xi, xi.size, xi.buf, elfaddr);
 
 #if defined(__mips__)  //{
     // ehdr = Uncompress Ehdr and Phdrs
-    unpackExtent(&xj, &xo, f_exp, 0);
+    unpackExtent(&xj, &xo);
 #else  //}{ !defined(__mips__)
     // Uncompress Ehdr and Phdrs.
-    unpackExtent(&xi, &xo, f_exp, 0);
+    unpackExtent(&xi, &xo);
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.
     xi.buf  -= sz_first;
     xi.size  = sz_compressed;
@@ -976,11 +942,7 @@ void *upx_main(
     Elf32_Phdr *phdr = (Elf32_Phdr *)(1+ ehdr);
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    Elf32_Addr entry = do_xmap((int)f_exp, ehdr, &xi, av, &reloc, f_unf
-#if defined(__mips__)  //{
-        , page_mask
-#endif  //}
-        );
+    Elf32_Addr entry = do_xmap(ehdr, &xi, 0, av, &reloc);
     DPRINTF("upx_main2  entry=%%p  reloc=%%p\\n", entry, reloc);
     auxv_up(av, AT_ENTRY , entry);
 
@@ -996,11 +958,7 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0
-#if defined(__mips__)  //{
-            , page_mask
-#endif  //}
-        );
+        entry = do_xmap(ehdr, 0, fdi, av, &reloc);
         DPRINTF("upx_main3  entry=%%p  reloc=%%p\\n", entry, reloc);
         auxv_up(av, AT_BASE, reloc);  // uClibc and musl
         close(fdi);

@@ -278,6 +278,12 @@ mmap: .globl mmap  // what happened to the ebx->args_on_stack method?
         pop ebp
         ret
 
+f_expand:  .globl f_expand
+        hlt  // FIXME
+
+get_page_mask: .globl get_page_mask
+        hlt  // FIXME
+
 .balign 4,0
 
 /* vim:set ts=8 sw=8 et: */

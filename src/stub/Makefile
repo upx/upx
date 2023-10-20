@@ -1394,7 +1394,7 @@ endif
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
 mips.r3000-linux.elf-fold.h : tmp/$$T.o tmp/mips.r3000-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
