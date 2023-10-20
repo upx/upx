@@ -294,6 +294,7 @@ int f_expand(const nrv_byte *binfo, nrv_byte *dst, size_t *dstlen)
     return !0;
 }
 size_t my_page_mask(void);  // prototype
+__attribute__((__noinline__))
 size_t my_page_mask(void) {
     size_t rv;
   asm(
@@ -304,16 +305,16 @@ size_t my_page_mask(void) {
     ".word 0b;"
     ".word get_page_mask;"
 "1: ;"
-    "lw $2,4($31);"  // $w= assembly-time get_page_mask
+    "lw $2,4($31);"  // $2= assembly-time get_page_mask
     "sub $31,$31,$1;" // ra= run-time 0
     "add $31,$31,$2;" // ra= run-time get_page_mask
     "jalr $31;"
     "  nop;"
-  //"move $4,$2;"  // compensate for compiler bug!
+    "move %0,$2;"  // shouldn't be necessary?
     ".set at; .set reorder; "
 /*out*/ : "=r"(rv)
 /* in*/ :
-/*und*/ : "$31", "$1");
+/*und*/ : "$31", "$1", "$2");
   return rv;
 }
 #endif  //}
@@ -682,7 +683,6 @@ static Elf32_Addr  // entry address
 do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
     Elf32_auxv_t *const av, unsigned *const p_reloc)
 {
-    unsigned const frag_mask = ~my_page_mask();
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
     Elf32_Addr v_brk;
@@ -726,6 +726,7 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
             auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
             //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
         }
+        unsigned const frag_mask = ~my_page_mask();
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
