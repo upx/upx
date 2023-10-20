@@ -73,12 +73,12 @@ L20:
         mov edx,0700  // S_IRWXU  permissions
         mov ecx,O_RDWR | O_DIRECTORY | O_TMPFILE // flags
         mov ebx,esi  // L05
-        push __NR_open; pop eax; call sys_check
+        mov al,__NR_open; call sys_check1
         push eax  // mfd in %entry
 
         sub ecx,ecx  // 0; O_RDONLY
         lea ebx,[D0705 + esi] // "/proc/self/exe"
-        push __NR_open; pop eax; call sys_check
+        mov al,__NR_open; call sys_check1
         pop ebx; push ebx  // mfd
         push eax  // xfd
 
@@ -228,7 +228,7 @@ unfold:
         pop edx; mov edx,[edx]  // P_55  sz_unc
         //mov ebx,ebx  // mfd
         pop eax  // P_54  b_method
-        pushsbli __NR_write; pop eax; call sys_check
+        mov al,__NR_write; call sys_check1
 
         pushsbli 0  // P_60  offset
         push ebx  // P_61  mfd
@@ -250,7 +250,7 @@ unfold:
         push edx  // P_73  ADRX
 
         mov ebx,[4*NBPW + esp]  // mfd
-        pushsbli __NR_close; pop eax; call sys_check
+        mov al,__NR_close; call sys_check1
 
 // Jump to unfolded code
         pop eax  // P_73  ADRX
@@ -262,11 +262,13 @@ unfold:
 
 mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
         lea ebx,[4+esp]
-        push __NR_mmap; pop eax; call sys_check
+        mov al,__NR_mmap; call sys_check1
         ret 6*4
 
+sys_check1:
+        movzbl eax,al
 sys_check:
-        push eax
+        push eax  // save __NR_ for debug
         int 0x80
         pop edx  // recover __NR_ for debug
         cmp eax,PAGE_MASK; jae 0f; ret; 0:
