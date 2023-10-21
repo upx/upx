@@ -307,13 +307,9 @@ define tc.default.f-embed_objinfo_without_xstrip
 	chmod a-x $1
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
-<<<<<<< HEAD
-	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start --keep-symbol=upx_so_main $1
-=======
 	$(call tc,objcopy) --strip-unneeded \
 	    --keep-symbol=_start --keep-symbol=upx_so_main --keep-symbol=upx_main \
-	    --keep-symbol=copy $1
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
+	    --keep-symbol=copy --keep-symbol=dprintf $1
 #
 # Disassemble for human readability
 # objdump
@@ -426,16 +422,10 @@ amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.
 #	    tmp/amd64-expand.o
 #	# FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
 #	####$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-<<<<<<< HEAD
-	multiarch-ld-2.17 --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
-=======
 	multiarch-ld-2.17 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 #	$(call tc,f-objstrip,tmp/$T.bin)
 #	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 amd64-linux.elf-so_fold.h : tmp/$$T.o tmp/amd64-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/amd64-expand.o
@@ -1170,7 +1160,7 @@ tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MM
 tc.i386-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.i386-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 tc.i386-linux.elf.gcc     += -mtune=k6
-tc.i386-linux.elf.gcc     += -Os -fno-omit-frame-pointer
+tc.i386-linux.elf.gcc     += -O2 -fno-omit-frame-pointer
 tc.i386-linux.elf.gcc     += -momit-leaf-frame-pointer
 tc.i386-linux.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
 tc.i386-linux.elf.gcc     += -mpreferred-stack-boundary=2
@@ -1186,10 +1176,13 @@ i386-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
+i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.lds tmp/i386-expand.o
+#	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	multiarch-ld-2.17 -r      -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+#	$(call tc,f-objstrip,tmp/$T.bin)
+#	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
