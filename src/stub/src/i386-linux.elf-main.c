@@ -160,7 +160,7 @@ heximal(unsigned long x, char *ptr, int n)
 #define va_list     __builtin_va_list
 #define va_start    __builtin_va_start
 
-static int
+/*static*/ int
 dprintf(char const *fmt, ...)
 {
     int n= 0;
@@ -575,6 +575,7 @@ __attribute__((regparm(2), stdcall))
 #endif  /*}*/
 upx_bzero(char *p, size_t len)
 {
+    DPRINTF("upx_bzero  %%p  %%x\\n", p, len);
     if (len) do {
         *p++= 0;
     } while (--len);
@@ -701,7 +702,7 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
             reloc = ehdr0;
         }
         v_brk = phdr0->p_memsz + ehdr0;
-        DPRINTF("do_xmap munmap [%%p, +%%x)\n", ehdr0, phdr0->p_memsz);
+        DPRINTF("do_xmap munmap [%%p, +%%x)\\n", ehdr0, phdr0->p_memsz);
         munmap((void *)ehdr0, phdr0->p_memsz);
     }
     else { // PT_INTERP
@@ -726,8 +727,8 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
             auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
             //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
         }
-        unsigned const frag_mask = ~my_page_mask();
-        unsigned const prot = PF_TO_PROT(phdr->p_flags);
+        unsigned /*const*/ frag_mask = ~my_page_mask();
+        unsigned /*const*/ prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
         char * addr = xo.buf  =  (char *)(phdr->p_vaddr + reloc);
@@ -735,10 +736,10 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
         size_t frag  = (int)addr & frag_mask;
         mlen += frag;
         addr -= frag;
-        DPRINTF("  phdr type=%%x  offset=%%x  vaddr=%%x  paddr=%%x  filesz=%%x  memsz=%%x  flags=%%x  align=%%x\\n",
-            phdr->p_type, phdr->p_offset, phdr->p_vaddr, phdr->p_paddr,
+        DPRINTF("  phdr@%%p type=%%x  offset=%%x  vaddr=%%x  paddr=%%x  filesz=%%x  memsz=%%x  flags=%%x  align=%%x\\n",
+            phdr, phdr->p_type, phdr->p_offset, phdr->p_vaddr, phdr->p_paddr,
             phdr->p_filesz, phdr->p_memsz, phdr->p_flags, phdr->p_align);
-        DPRINTF("  addr=%%x  mlen=%%x  frag=%%x  prot=%%x\\n", addr, mlen, frag, prot);
+        DPRINTF("  addr=%%x  mlen=%%x  frag=%%x  prot=%%x  frag_mask=%%x\\n", addr, mlen, frag, prot, frag_mask);
 
 #if defined(__i386__)  /*{*/
     // Decompressor can overrun the destination by 3 bytes.
@@ -747,12 +748,6 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
 #  define LEN_OVER 0
 #endif  /*}*/
 
-        DPRINTF("    prot=%%x\n",
-#if defined(__arm__)  //{
-                    ((PF_X & phdr->p_flags) ? PROT_EXEC : 0) |
-#endif  //}
-                    PROT_WRITE | PROT_READ);
-
         if (xi) { // compressed source: Pprotect(,,prot) later
             if (addr != mmap_privanon(addr, LEN_OVER + mlen,
 #if defined(__arm__)  //{
@@ -760,13 +755,16 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
 #endif  //}
                     PROT_WRITE | PROT_READ, MAP_FIXED) )
                 err_exit(6);
+            DPRINTF("mlen 3 %%x\\n", mlen);
             unpackExtent(xi, &xo);
+            DPRINTF("mlen 4a mlen=%%x  frag=%%x  frag_mask=%%x  prot=%%x\\n", mlen, frag, frag_mask, prot);
         }
         else {  // PT_INTERP
             if (addr != mmap(addr, mlen, prot, MAP_FIXED | MAP_PRIVATE,
                     fdi, phdr->p_offset - frag) )
                 err_exit(8);
         }
+        DPRINTF("mlen 4b mlen=%%x  frag=%%x  frag_mask=%%x  prot=%%x\\n", mlen, frag, frag_mask, prot);
         // Linux does not fixup the low end, so neither do we.
         // Indeed, must leave it alone because some PT_GNU_RELRO
         // dangle below PT_LOAD (but still on the low page)!
@@ -774,9 +772,11 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
         //    bzero(addr, frag);  // fragment at lo end
         //}
         frag = (-mlen) & frag_mask;  // distance to next page boundary
+        DPRINTF("mlen 4c mlen=%%x  frag=%%x  frag_mask=%%x  prot=%%x\\n", mlen, frag, frag_mask, prot);
         if (PROT_WRITE & prot) { // note: read-only .bss not supported here
             bzero(mlen+addr, frag);  // fragment at hi end
         }
+        DPRINTF("mlen 5 %%x\\n", mlen);
         if (xi) {
 #if defined(__i386__)  /*{*/
             void *const hatch = make_hatch_x86(phdr, reloc);
@@ -800,6 +800,7 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
                 auxv_up(av, AT_NULL, (unsigned)hatch);
             }
 #endif  /*}*/
+            DPRINTF("hatch protect %%p %%x %%x\\n", addr, mlen, prot);
             if (0!=Pprotect(addr, mlen, prot)) {
                 err_exit(10);
 ERR_LAB
@@ -873,37 +874,40 @@ void *upx_main(  // returns entry address
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
+    Elf32_Addr elfaddr,
     Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Elf32_auxv_t *const av,
-    Elf32_Addr elfaddr
+    Elf32_auxv_t *const av
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
+    Elf32_Addr elfaddr,
     Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Elf32_auxv_t *const av,
-    Elf32_Addr elfaddr
+    Elf32_auxv_t *const av
 )
 
 #else  /*}{ !__mips__ && !__powerpc__ */
+//        pusha  // (auxv, sz_cpr, elfaddr, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
+    Elf32_Addr const volatile elfaddr,
+    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Extent xo,
-    Extent xi,
-    Elf32_Addr const volatile elfaddr
+    Extent xi
 ) __asm__("upx_main");
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
+    Elf32_Addr const /*volatile*/ elfaddr, // (used to be value+result)
+    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Extent xo,  // {sz_unc, ehdr}    for ELF headers
-    Extent xi,  // {sz_cpr, &b_info} for ELF headers
-    Elf32_Addr const volatile elfaddr  // value+result: compiler must not change
+    Extent xi  // {sz_cpr, &b_info} for ELF headers
 )
 #endif  /*}*/
 {
 #if !defined(__mips__) && !defined(__powerpc__)  /*{*/
-    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR_32+OVERHEAD]
+    //Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR_32+OVERHEAD]
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
     size_t const sz_first = xi.size;
 #endif  /*}*/
