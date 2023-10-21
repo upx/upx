@@ -64,7 +64,7 @@ TEST_CASE("raw_bytes bounded array") {
 **************************************************************************/
 
 TEST_CASE("basic xspan usage") {
-    char buf[4] = {0, 1, 2, 3};
+    alignas(4) char buf[4] = {0, 1, 2, 3};
 
     SUBCASE("XSPAN_x") {
         XSPAN_0(char) a0 = nullptr;
@@ -114,6 +114,28 @@ TEST_CASE("basic xspan usage") {
         CHECK_THROWS(raw_bytes(cs, 5));
         CHECK_THROWS(raw_index_bytes(cs, 1, 4));
 #endif
+
+        XSPAN_0(upx_uint16_t) c0_2 = XSPAN_TYPE_CAST(upx_uint16_t, c0 + 2);
+        XSPAN_P(upx_uint16_t) cp_2 = XSPAN_TYPE_CAST(upx_uint16_t, cp + 2);
+        XSPAN_S(upx_uint16_t) cs_2 = XSPAN_TYPE_CAST(upx_uint16_t, cs + 2);
+        CHECK(ptr_udiff_bytes(c0_2, c0) == 2u);
+        CHECK(ptr_udiff_bytes(cp_2, c0) == 2u);
+        CHECK(ptr_udiff_bytes(cs_2, c0) == 2u);
+        CHECK(ptr_udiff_bytes(c0_2, cp) == 2u);
+        CHECK(ptr_udiff_bytes(cp_2, cp) == 2u);
+        CHECK(ptr_udiff_bytes(cs_2, cp) == 2u);
+        CHECK(ptr_udiff_bytes(c0_2, cs) == 2u);
+        CHECK(ptr_udiff_bytes(cp_2, cs) == 2u);
+        CHECK(ptr_udiff_bytes(cs_2, cs) == 2u);
+        XSPAN_0(upx_uint16_t) c0_2b = XSPAN_TYPE_CAST(upx_uint16_t, c0) + 1;
+        XSPAN_P(upx_uint16_t) cp_2b = XSPAN_TYPE_CAST(upx_uint16_t, cp) + 1;
+        XSPAN_S(upx_uint16_t) cs_2b = XSPAN_TYPE_CAST(upx_uint16_t, cs) + 1;
+        CHECK(c0_2 == c0_2b);
+        CHECK(cp_2 == cp_2b);
+        CHECK(cs_2 == cs_2b);
+
+        CHECK(sizeof(*c0) == 1u);
+        CHECK(sizeof(*c0_2) == 2u);
     }
 
     SUBCASE("XSPAN_x_VAR") {
@@ -171,6 +193,28 @@ TEST_CASE("basic xspan usage") {
         CHECK_THROWS(raw_bytes(cs, 5));
         CHECK_THROWS(raw_index_bytes(cs, 1, 4));
 #endif
+
+        XSPAN_0_VAR(upx_uint16_t, c0_2, XSPAN_TYPE_CAST(upx_uint16_t, c0 + 2));
+        XSPAN_P_VAR(upx_uint16_t, cp_2, XSPAN_TYPE_CAST(upx_uint16_t, cp + 2));
+        XSPAN_S_VAR(upx_uint16_t, cs_2, XSPAN_TYPE_CAST(upx_uint16_t, cs + 2));
+        CHECK(ptr_udiff_bytes(c0_2, c0) == 2u);
+        CHECK(ptr_udiff_bytes(cp_2, c0) == 2u);
+        CHECK(ptr_udiff_bytes(cs_2, c0) == 2u);
+        CHECK(ptr_udiff_bytes(c0_2, cp) == 2u);
+        CHECK(ptr_udiff_bytes(cp_2, cp) == 2u);
+        CHECK(ptr_udiff_bytes(cs_2, cp) == 2u);
+        CHECK(ptr_udiff_bytes(c0_2, cs) == 2u);
+        CHECK(ptr_udiff_bytes(cp_2, cs) == 2u);
+        CHECK(ptr_udiff_bytes(cs_2, cs) == 2u);
+        XSPAN_0_VAR(upx_uint16_t, c0_2b, XSPAN_TYPE_CAST(upx_uint16_t, c0) + 1);
+        XSPAN_P_VAR(upx_uint16_t, cp_2b, XSPAN_TYPE_CAST(upx_uint16_t, cp) + 1);
+        XSPAN_S_VAR(upx_uint16_t, cs_2b, XSPAN_TYPE_CAST(upx_uint16_t, cs) + 1);
+        CHECK(c0_2 == c0_2b);
+        CHECK(cp_2 == cp_2b);
+        CHECK(cs_2 == cs_2b);
+
+        CHECK(sizeof(*c0) == 1u);
+        CHECK(sizeof(*c0_2) == 2u);
     }
 
     SUBCASE("xspan in class") {

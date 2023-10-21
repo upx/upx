@@ -335,8 +335,8 @@ PeFile::Reloc::Reloc(unsigned relocnum) {
 
 void PeFile::Reloc::initSpans() {
     start_buf = SPAN_S_MAKE(byte, start, start_size_in_bytes);
-    rel = SPAN_S_CAST(BaseReloc, start_buf);
-    rel1 = SPAN_S_CAST(LE16, start_buf);
+    rel = SPAN_TYPE_CAST(BaseReloc, start_buf);
+    rel1 = SPAN_TYPE_CAST(LE16, start_buf);
     rel = nullptr;
     rel1 = nullptr;
 }
@@ -366,7 +366,7 @@ bool PeFile::Reloc::next(unsigned &result_pos, unsigned &result_type) {
         pos = rel->pagestart + (*rel1 & 0xfff);
         type = *rel1++ >> 12;
         NO_printf("%x %d\n", pos, type);
-        if (ptr_udiff_bytes(raw_bytes(rel1, 0), rel) >= rel->size_of_block)
+        if (ptr_udiff_bytes(rel1, rel) >= rel->size_of_block)
             advanceBaseRelocPos(raw_bytes(rel1, 0));
     } while (type == 0);
     result_pos = pos;
@@ -380,7 +380,7 @@ void PeFile::Reloc::add(unsigned pos, unsigned type) {
     counts[0] += 1;
 }
 
-void PeFile::Reloc::finish(byte *&result_ptr, unsigned &result_size) {
+void PeFile::Reloc::finish(byte *(&result_ptr), unsigned &result_size) {
     assert(start_did_alloc);
     // sentinel to force final advanceBaseRelocPos()
     set_le32(start_buf + (RELOC_BUF_OFFSET + 4 * counts[0]), 0xfff00000);
@@ -392,32 +392,37 @@ void PeFile::Reloc::finish(byte *&result_ptr, unsigned &result_size) {
     rel1 = nullptr;
     unsigned prev = 0xffffffff;
     for (unsigned ic = 0; ic < counts[0]; ic++) {
-        unsigned pos = get_le32(start_buf + (RELOC_BUF_OFFSET + 4 * ic));
+        const unsigned pos = get_le32(start_buf + (RELOC_BUF_OFFSET + 4 * ic));
+        if (rel == (BaseReloc *) (void *) start)
+            if (ptr_udiff_bytes(rel1, rel) > RELOC_BUF_OFFSET - sizeof(*rel1))
+                throwCantPack("too many relocs");
         if (ic == 0) {
             prev = pos;
             advanceBaseRelocPos(start);
             rel->pagestart = (pos >> 4) & ~0xfff;
-            rel->size_of_block = 0; // to be filled later
+            rel->size_of_block = unsigned(-1); // to be filled later
         } else if ((pos ^ prev) >= 0x10000) {
             prev = pos;
-            *rel1 = 0; // clear align-up memory
-            rel->size_of_block = ALIGN_UP(ptr_udiff_bytes(raw_bytes(rel1, 0), rel), 4u);
+            *rel1 = 0;                                                     // clear align-up memory
+            rel->size_of_block = ALIGN_UP(ptr_udiff_bytes(rel1, rel), 4u); // <= FILL
             advanceBaseRelocPos((char *) raw_bytes(rel, rel->size_of_block) + rel->size_of_block);
             rel->pagestart = (pos >> 4) & ~0xfff;
-            rel->size_of_block = 0;
+            rel->size_of_block = unsigned(-1); // to be filled later
         }
         *rel1++ = (pos << 12) + ((pos >> 4) & 0xfff);
     }
-    assert(ptr_udiff_bytes(raw_bytes(rel1, 0), rel) == 10); // sentinel
+    assert(ptr_udiff_bytes(rel1, rel) == 10); // sentinel
     result_size = ptr_udiff_bytes(rel, start);
     assert((result_size & 3) == 0);
     // assert(result_size > 0); // result_size can be 0 in 64-bit mode
     // transfer ownership
     assert(start_did_alloc);
     result_ptr = start;
-    start = nullptr;     // safety
-    start_buf = nullptr; // safety
+    start = nullptr;
     start_did_alloc = false;
+    SPAN_INVALIDATE(start_buf); // safety
+    SPAN_INVALIDATE(rel);       // safety
+    SPAN_INVALIDATE(rel1);      // safety
 }
 
 void PeFile::processRelocs(Reloc *rel) // pass2
@@ -2673,7 +2678,7 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
     unsigned relocnum = unoptimizeReloc(rdata, mb_wrkmem, obuf, orig_crelocs, bits, true);
     unsigned r16 = 0;
     if (big & 6) { // count 16 bit relocations
-        SPAN_S_VAR(const LE32, q, SPAN_S_CAST(const LE32, rdata));
+        SPAN_S_VAR(const LE32, q, SPAN_TYPE_CAST(const LE32, rdata));
         while (*q++)
             r16++;
         if ((big & 6) == 6)
@@ -2682,7 +2687,7 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
     }
     Reloc rel(relocnum + r16);
     if (big & 6) { // add 16 bit relocations
-        SPAN_S_VAR(const LE32, q, SPAN_S_CAST(const LE32, rdata));
+        SPAN_S_VAR(const LE32, q, SPAN_TYPE_CAST(const LE32, rdata));
         while (*q)
             rel.add(*q++ + rvamin, (big & 4) ? 2 : 1);
         if ((big & 6) == 6)

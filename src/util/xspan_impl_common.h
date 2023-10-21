@@ -114,10 +114,8 @@ forceinline ~CSelf() noexcept {}
 #endif
     noinline void invalidate() {
         assertInvariants();
-        // poison the pointer: point to non-null invalid address
-        ptr = (pointer) XSPAN_GET_POISON_VOID_PTR();
-        // ptr = (pointer) (void *) &ptr; // point to self
-        base = ptr;
+        ptr_invalidate_and_poison(ptr); // point to non-null invalid address
+        base = ptr;                     // point to non-null invalid address
         size_in_bytes = 0;
         assertInvariants();
     }
@@ -283,11 +281,11 @@ public:
     }
 
     template <class U>
-    CSelf<U> type_cast() const {
-        assertInvariants();
+    inline CSelf<U> type_cast() const {
         typedef CSelf<U> R;
-        return R(R::Unchecked, reinterpret_cast<typename R::pointer>(ptr), size_in_bytes,
-                 reinterpret_cast<typename R::pointer>(base));
+        typedef typename R::pointer rpointer;
+        return R(R::Unchecked, reinterpret_cast<rpointer>(ptr), size_in_bytes,
+                 reinterpret_cast<rpointer>(base));
     }
 
     bool operator==(pointer other) const { return ptr == other; }

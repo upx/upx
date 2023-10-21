@@ -96,9 +96,9 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var((first), ##__VA_ARGS__)
 
 // cast to a different type (creates a new value)
-#define XSPAN_0_CAST(type, var) ((var).type_cast<type>())
-#define XSPAN_P_CAST(type, var) ((var).type_cast<type>())
-#define XSPAN_S_CAST(type, var) ((var).type_cast<type>())
+#define XSPAN_TYPE_CAST(type, x) ((x).type_cast<type>())
+// poison a pointer: point to a non-null invalid address
+#define XSPAN_INVALIDATE(x)      ((x).invalidate())
 
 #elif WITH_XSPAN >= 1
 
@@ -120,9 +120,9 @@ using XSPAN_NAMESPACE_NAME::raw_index_bytes; // overloaded for all classes
 #define XSPAN_S_VAR(type, var, first, ...) XSPAN_S(type) var((first))
 
 // cast to a different type (creates a new value)
-#define XSPAN_0_CAST(type, var)            ((var).type_cast<type>())
-#define XSPAN_P_CAST(type, var)            ((var).type_cast<type>())
-#define XSPAN_S_CAST(type, var)            ((var).type_cast<type>())
+#define XSPAN_TYPE_CAST(type, x)           ((x).type_cast<type>())
+// poison a pointer: point to a non-null invalid address
+#define XSPAN_INVALIDATE(x)                ((x).invalidate())
 
 #else // WITH_XSPAN
 
@@ -158,9 +158,9 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
 #define XSPAN_S_VAR(type, var, first, ...) type *var = XSPAN_S_MAKE(type, (first))
 
 // cast to a different type (creates a new value)
-#define XSPAN_0_CAST(type, var)            ((type *) (var))
-#define XSPAN_P_CAST(type, var)            ((type *) (var))
-#define XSPAN_S_CAST(type, var)            ((type *) (var))
+#define XSPAN_TYPE_CAST(type, x)           (reinterpret_cast<type *>(x))
+// poison a pointer: point to a non-null invalid address
+#define XSPAN_INVALIDATE(x)                ptr_invalidate_and_poison(x)
 
 #endif // WITH_XSPAN
 
@@ -170,21 +170,21 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
 
 #if 1
 // types
-#define SPAN_0      XSPAN_0
-#define SPAN_P      XSPAN_P
-#define SPAN_S      XSPAN_S
+#define SPAN_0          XSPAN_0
+#define SPAN_P          XSPAN_P
+#define SPAN_S          XSPAN_S
 // create a value
-#define SPAN_0_MAKE XSPAN_0_MAKE
-#define SPAN_P_MAKE XSPAN_P_MAKE
-#define SPAN_S_MAKE XSPAN_S_MAKE
+#define SPAN_0_MAKE     XSPAN_0_MAKE
+#define SPAN_P_MAKE     XSPAN_P_MAKE
+#define SPAN_S_MAKE     XSPAN_S_MAKE
 // define a variable
-#define SPAN_0_VAR  XSPAN_0_VAR
-#define SPAN_P_VAR  XSPAN_P_VAR
-#define SPAN_S_VAR  XSPAN_S_VAR
+#define SPAN_0_VAR      XSPAN_0_VAR
+#define SPAN_P_VAR      XSPAN_P_VAR
+#define SPAN_S_VAR      XSPAN_S_VAR
 // cast to a different type (creates a new value)
-#define SPAN_0_CAST XSPAN_0_CAST
-#define SPAN_P_CAST XSPAN_P_CAST
-#define SPAN_S_CAST XSPAN_S_CAST
+#define SPAN_TYPE_CAST  XSPAN_TYPE_CAST
+// poison a pointer: point to a non-null invalid address
+#define SPAN_INVALIDATE XSPAN_INVALIDATE
 #endif
 
 /* vim:set ts=4 sw=4 et: */

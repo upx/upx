@@ -200,7 +200,7 @@ class XSpanInternalDummyArgFake; // not implemented on purpose
 typedef XSpanInternalDummyArgFake *XSpanInternalDummyArg;
 #define XSpanInternalDummyArgInit nullptr
 #elif __cplusplus >= 201103L && 1
-// use an enum
+// use an enum and a move constructor
 struct XSpanInternalDummyArg final {
     enum DummyEnum {};
     explicit forceinline_constexpr XSpanInternalDummyArg(DummyEnum &&) noexcept {}
@@ -219,16 +219,6 @@ private:
 #define XSpanInternalDummyArgInit                                                                  \
     (XSPAN_NS(XSpanInternalDummyArg)(XSPAN_NS(XSpanInternalDummyArg)::make()))
 #endif
-
-// poison a pointer: point to a non-null invalid address
-// - resulting pointer should crash on dereference
-// - this should be efficient (so no mmap() guard page etc.)
-// - this should play nice with runtime checkers like ASAN, MSAN, valgrind, etc.
-// - this should play nice with static analyzers like clang-tidy etc.
-static forceinline void *XSPAN_GET_POISON_VOID_PTR() noexcept {
-    // return (void *) (upx_uintptr_t) 251; // NOLINT(performance-no-int-to-ptr)
-    return (void *) 251;
-}
 
 XSPAN_NAMESPACE_END
 

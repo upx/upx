@@ -410,7 +410,7 @@ protected:
         const unsigned *getcounts() const { return counts; }
         //
         void add(unsigned pos, unsigned type);
-        void finish(byte *&result_ptr, unsigned &result_size); // => transfer ownership
+        void finish(byte *(&result_ptr), unsigned &result_size); // => transfer ownership
     };
 
     class Resource : private noncopyable {

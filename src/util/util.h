@@ -125,6 +125,16 @@ forceinline void ptr_check_no_overlap(const void *a, size_t a_size, const void *
                              (upx_uintptr_t) c, c_size);
 }
 
+// invalidate and poison a pointer: point to a non-null invalid address
+// - resulting pointer should crash on dereference
+// - this should be efficient, so no mmap() guard page etc.
+// - this should play nice with runtime checkers like ASAN, MSAN, valgrind, etc.
+// - this should play nice with static analyzers like clang-tidy etc.
+template <class T>
+inline void ptr_invalidate_and_poison(T *(&ptr)) noexcept {
+    ptr = (T *) (void *) 251; // 0x000000fb // NOLINT(performance-no-int-to-ptr)
+}
+
 /*************************************************************************
 // stdlib
 **************************************************************************/

@@ -189,13 +189,13 @@ else()
     set(warn_WX -WX)
 endif()
 if(MSVC_FRONTEND)
-    # disable warning C5105 which may get triggered by some versions of <windows.h>
+    # disable warning C5105 which may get triggered by some older versions of <windows.h>
     set(warn_WX -wd5105 ${warn_WX})
 endif()
 
 function(upx_add_definitions_with_prefix)
     set(flag_prefix "${ARGV0}")
-    if(flag_prefix MATCHES "^dummy$") # need dummy to work around bug in old CMake versions
+    if(flag_prefix MATCHES "^empty$") # need "empty" to work around bug in old CMake versions
         set(flag_prefix "")
     endif()
     list(REMOVE_AT ARGV 0)
@@ -219,9 +219,9 @@ function(upx_add_definitions)
     if(MSVC_FRONTEND AND CMAKE_C_COMPILER_ID MATCHES "Clang")
         # for clang-cl try "-clang:" flag prefix first
         upx_add_definitions_with_prefix("-clang:" ${ARGV})
-        upx_add_definitions_with_prefix("dummy" ${failed_flags})
+        upx_add_definitions_with_prefix("empty" ${failed_flags})
     else()
-        upx_add_definitions_with_prefix("dummy" ${ARGV})
+        upx_add_definitions_with_prefix("empty" ${ARGV})
     endif()
 endfunction()
 

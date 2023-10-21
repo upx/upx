@@ -77,9 +77,7 @@ public:
 #endif
     noinline void invalidate() {
         assertInvariants();
-        // poison the pointer: point to non-null invalid address
-        ptr = (pointer) XSPAN_GET_POISON_VOID_PTR();
-        // ptr = (pointer) (void *) &ptr; // point to self
+        ptr_invalidate_and_poison(ptr); // point to non-null invalid address
         assertInvariants();
     }
     inline CSelf() { assertInvariants(); }
@@ -126,10 +124,10 @@ public:
     }
 
     template <class U>
-    CSelf<U> type_cast() const {
-        assertInvariants();
+    inline CSelf<U> type_cast() const {
         typedef CSelf<U> R;
-        return R(reinterpret_cast<typename R::pointer>(ptr));
+        typedef typename R::pointer rpointer;
+        return R(reinterpret_cast<rpointer>(ptr));
     }
 
     // comparison
