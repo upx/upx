@@ -128,7 +128,7 @@ static void init_global_constants(void) noexcept {
 static const char *mkline(upx_uint64_t fu_len, upx_uint64_t fc_len, upx_uint64_t u_len,
                           upx_uint64_t c_len, const char *format_name, const char *filename,
                           bool decompress = false) {
-    static char buf[2048]; // static!
+    static char buf[2048]; // static! // TODO later: check if affected by WITH_THREADS
     char r[7 + 1];
     char fn[15 + 1];
     const char *f;

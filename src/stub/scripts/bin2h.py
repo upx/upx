@@ -75,7 +75,6 @@ def w_header_c(w, ifile, ofile, n):
    John F. Reiser
    <jreiser@users.sourceforge.net>
  */\n\n""")
-    w("/* clang" + "-format off */\n\n")
 
 
 # /***********************************************************************
@@ -347,9 +346,10 @@ def main(argv):
         else:
             ofp = open(ofile, "wb")
         w = ofp.write
-    if opts.verbose >= 0:
-        if opts.mode == "c":
+    if opts.mode == "c":
+        if opts.verbose >= 0:
             w_header_c(w, ifile, ofile, len(idata))
+        w("/* clang" + "-format off */\n\n")
     for i in range(len(mdata)):
         write_stub(w, mdata_odata[mdata[i]], i, mdata)
     if ofp:

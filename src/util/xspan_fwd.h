@@ -34,11 +34,11 @@
 //   #define XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(A, B, RType)
 //       std::enable_if_t<std::is_convertible_v<A *, B *> || std::is_convertible_v<B *, A *>, RType>
 
-// requires convertible T to U, or U to T
+// requires convertible T* to U* or U* to T*
 #define XSPAN_FWD_TU_CONVERTIBLE(RType)                                                            \
     template <class T, class U>                                                                    \
     inline XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION(T, U, RType)
-// any pointer type, matching automatic conversion to "void *"
+// requires convertible to void* (i.e. any pointer type matches)
 #define XSPAN_FWD_TU_VOIDPTR(RType)                                                                \
     template <class T, class U>                                                                    \
     inline RType
@@ -54,10 +54,8 @@ template <class T, class U>
 inline typename std::enable_if<std::is_integral<U>::value, void *>::type operator+(U, const C<T> &)
     XSPAN_DELETED_FUNCTION;
 
-#if 0 // handled by member functions
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator==(const C<T> &a, const U *b) {
-    return a.raw_bytes(0) == b;
-}
+#if 0 // already handled by member functions
+XSPAN_FWD_TU_CONVERTIBLE(bool) operator==(const C<T> &a, const U *b) { return a.raw_bytes(0) == b; }
 XSPAN_FWD_TU_CONVERTIBLE(bool) operator==(const C<T> &a, const C<U> &b) {
     return a.raw_bytes(0) == b.raw_bytes(0);
 }
@@ -72,9 +70,7 @@ XSPAN_FWD_TU_CONVERTIBLE(bool) operator==(const C<T> &a, const E<U> &b) {
 }
 #endif
 
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator!=(const C<T> &a, const U *b) {
-    return a.raw_bytes(0) != b;
-}
+XSPAN_FWD_TU_CONVERTIBLE(bool) operator!=(const C<T> &a, const U *b) { return a.raw_bytes(0) != b; }
 XSPAN_FWD_TU_CONVERTIBLE(bool) operator!=(const C<T> &a, const C<U> &b) {
     return a.raw_bytes(0) != b.raw_bytes(0);
 }
@@ -88,7 +84,7 @@ XSPAN_FWD_TU_CONVERTIBLE(bool) operator!=(const C<T> &a, const E<U> &b) {
     return a.raw_bytes(0) != b.raw_bytes(0);
 }
 #endif
-#endif // if 0 // handled by member functions
+#endif // if 0 // already handled by member functions
 
 #endif // XSPAN_FWD_C_IS_MEMBUFFER
 
@@ -177,7 +173,7 @@ inline void *memset(const C<T> &a, int v, size_t n) {
 }
 
 /*************************************************************************
-// overloads for UPX extras
+// overloads for UPX extras 1
 **************************************************************************/
 
 template <class T>
@@ -224,96 +220,100 @@ XSPAN_FWD_TU_VOIDPTR(unsigned) ptr_udiff_bytes(const C<T> &a, const E<U> &b) {
 }
 #endif
 
+/*************************************************************************
+// overloads for UPX extras 2
+**************************************************************************/
+
 #ifdef UPX_VERSION_HEX
 
 template <class T>
-unsigned upx_adler32(const C<T> &a, unsigned n, unsigned adler = 1) {
+inline unsigned upx_adler32(const C<T> &a, unsigned n, unsigned adler = 1) {
     return upx_adler32(a.raw_bytes(n), n, adler);
 }
 
 template <class T>
-unsigned get_ne16(const C<T> &a) {
+inline unsigned get_ne16(const C<T> &a) {
     return get_ne16(a.raw_bytes(2));
 }
 template <class T>
-unsigned get_ne32(const C<T> &a) {
+inline unsigned get_ne32(const C<T> &a) {
     return get_ne32(a.raw_bytes(4));
 }
 template <class T>
-upx_uint64_t get_ne64(const C<T> &a) {
+inline upx_uint64_t get_ne64(const C<T> &a) {
     return get_ne64(a.raw_bytes(8));
 }
 
 template <class T>
-unsigned get_be16(const C<T> &a) {
+inline unsigned get_be16(const C<T> &a) {
     return get_be16(a.raw_bytes(2));
 }
 template <class T>
-unsigned get_be32(const C<T> &a) {
+inline unsigned get_be32(const C<T> &a) {
     return get_be32(a.raw_bytes(4));
 }
 template <class T>
-upx_uint64_t get_be64(const C<T> &a) {
+inline upx_uint64_t get_be64(const C<T> &a) {
     return get_be64(a.raw_bytes(8));
 }
 
 template <class T>
-unsigned get_le16(const C<T> &a) {
+inline unsigned get_le16(const C<T> &a) {
     return get_le16(a.raw_bytes(2));
 }
 template <class T>
-unsigned get_le24(const C<T> &a) {
+inline unsigned get_le24(const C<T> &a) {
     return get_le24(a.raw_bytes(3));
 }
 template <class T>
-unsigned get_le32(const C<T> &a) {
+inline unsigned get_le32(const C<T> &a) {
     return get_le32(a.raw_bytes(4));
 }
 template <class T>
-upx_uint64_t get_le64(const C<T> &a) {
+inline upx_uint64_t get_le64(const C<T> &a) {
     return get_le64(a.raw_bytes(8));
 }
 
 template <class T>
-void set_ne16(const C<T> &a, unsigned v) {
+inline void set_ne16(const C<T> &a, unsigned v) {
     return set_ne16(a.raw_bytes(2), v);
 }
 template <class T>
-void set_ne32(const C<T> &a, unsigned v) {
+inline void set_ne32(const C<T> &a, unsigned v) {
     return set_ne32(a.raw_bytes(4), v);
 }
 template <class T>
-void set_ne64(const C<T> &a, upx_uint64_t v) {
+inline void set_ne64(const C<T> &a, upx_uint64_t v) {
     return set_ne64(a.raw_bytes(8), v);
 }
 
 template <class T>
-void set_be16(const C<T> &a, unsigned v) {
+inline void set_be16(const C<T> &a, unsigned v) {
     return set_be16(a.raw_bytes(2), v);
 }
 template <class T>
-void set_be32(const C<T> &a, unsigned v) {
+inline void set_be32(const C<T> &a, unsigned v) {
     return set_be32(a.raw_bytes(4), v);
 }
 template <class T>
-void set_be64(const C<T> &a, upx_uint64_t v) {
+inline void set_be64(const C<T> &a, upx_uint64_t v) {
     return set_be64(a.raw_bytes(8), v);
 }
 
 template <class T>
-void set_le16(const C<T> &a, unsigned v) {
+inline void set_le16(const C<T> &a, unsigned v) {
     return set_le16(a.raw_bytes(2), v);
 }
 template <class T>
-void set_le24(const C<T> &a, unsigned v) {
+inline void set_le24(const C<T> &a, unsigned v) {
     return set_le24(a.raw_bytes(3), v);
 }
 template <class T>
-void set_le32(const C<T> &a, unsigned v) {
+inline void set_le32(const C<T> &a, unsigned v) {
     return set_le32(a.raw_bytes(4), v);
 }
 template <class T>
-void set_le64(const C<T> &a, upx_uint64_t v) {
+inline void set_le64(const C<T> &a, upx_uint64_t v) {
     return set_le64(a.raw_bytes(8), v);
 }
 
