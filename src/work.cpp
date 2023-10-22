@@ -30,13 +30,20 @@
 // of class PackerBase which then does the actual work.
 // And see p_com.cpp for a simple executable format.
 
+#include "headers.h"
+#if USE_UTIMENSAT
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#endif
 #include "conf.h"
 #include "file.h"
 #include "packmast.h"
 #include "ui.h"
 #include "util/membuffer.h"
 
-#if (ACC_OS_DOS32) && defined(__DJGPP__)
+#if USE_UTIMENSAT && defined(AT_FDCWD)
+#elif (ACC_OS_DOS32) && defined(__DJGPP__)
 #define USE_FTIME 1
 #elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_INTELC || ACC_CC_MSC))
 #define USE__FUTIME 1
@@ -95,16 +102,29 @@ static void copy_file_contents(const char *iname, const char *oname, OpenMode om
 
 static void copy_file_attributes(const struct stat *st, const char *oname, bool preserve_mode,
                                  bool preserve_ownership, bool preserve_timestamp) noexcept {
-#if USE_UTIME
     // copy time stamp
     if (preserve_timestamp) {
+#if USE_UTIMENSAT && defined(AT_FDCWD)
+        struct timespec times[2];
+        memset(&times[0], 0, sizeof(times));
+#if HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
+        times[0] = st->st_atimespec;
+        times[1] = st->st_mtimespec;
+#else
+        times[0] = st->st_atim;
+        times[1] = st->st_mtim;
+#endif
+        int r = utimensat(AT_FDCWD, oname, &times[0], 0);
+        IGNORE_ERROR(r);
+#elif USE_UTIME
         struct utimbuf u;
+        memset(&u, 0, sizeof(u));
         u.actime = st->st_atime;
         u.modtime = st->st_mtime;
         int r = utime(oname, &u);
         IGNORE_ERROR(r);
-    }
 #endif
+    }
 #if HAVE_CHOWN
     // copy the group ownership
     if (preserve_ownership) {
