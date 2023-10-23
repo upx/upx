@@ -4,7 +4,7 @@
 #
 
 # NOTE: see misc/podman/rebuild-stubs/20-image-run-shell.sh
-#   how to rebuild the UPX stubs
+#   how to rebuild the UPX stubs from source code
 
 MAKEFLAGS += -rR
 .NOTPARALLEL:

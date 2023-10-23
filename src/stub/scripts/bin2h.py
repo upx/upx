@@ -349,7 +349,7 @@ def main(argv):
     if opts.mode == "c":
         if opts.verbose >= 0:
             w_header_c(w, ifile, ofile, len(idata))
-        w("/* clang" + "-format off */\n\n")
+        w("/* clang" + "-format" + " off */\n\n")
     for i in range(len(mdata)):
         write_stub(w, mdata_odata[mdata[i]], i, mdata)
     if ofp:

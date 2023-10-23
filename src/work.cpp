@@ -108,9 +108,11 @@ static void copy_file_attributes(const struct stat *st, const char *oname, bool 
         struct timespec times[2];
         memset(&times[0], 0, sizeof(times));
 #if HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
+        // macOS
         times[0] = st->st_atimespec;
         times[1] = st->st_mtimespec;
 #else
+        // POSIX.1-2008
         times[0] = st->st_atim;
         times[1] = st->st_mtim;
 #endif
@@ -118,7 +120,7 @@ static void copy_file_attributes(const struct stat *st, const char *oname, bool 
         IGNORE_ERROR(r);
 #elif USE_UTIME
         struct utimbuf u;
-        memset(&u, 0, sizeof(u));
+        mem_clear(&u);
         u.actime = st->st_atime;
         u.modtime = st->st_mtime;
         int r = utime(oname, &u);
@@ -235,7 +237,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
             if (opt->output_name) {
                 strcpy(tname, opt->output_name);
                 if ((opt->force_overwrite || opt->force >= 2) && !preserve_link)
-                    (void) FileBase::unlink_noexcept(tname);
+                    (void) FileBase::unlink_noexcept(tname); // IGNORE_ERROR
             } else {
                 if (st.st_nlink < 2)
                     preserve_link = false; // not needed
@@ -253,8 +255,8 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                     preserve_link = ost.st_nlink >= 2;
                 } else if (r == 0 && S_ISLNK(ost.st_mode)) {
                     // output_name is a symlink (valid or dangling)
-                    (void) FileBase::unlink_noexcept(tname);
-                    preserve_link = false; // not needed
+                    (void) FileBase::unlink_noexcept(tname); // IGNORE_ERROR
+                    preserve_link = false;                   // not needed
                 } else {
                     preserve_link = false; // not needed
                 }
@@ -361,8 +363,8 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
 
 static void unlink_ofile(char *oname) noexcept {
     if (oname && oname[0]) {
-        (void) FileBase::unlink_noexcept(oname);
-        oname[0] = 0; // done with oname
+        (void) FileBase::unlink_noexcept(oname); // IGNORE_ERROR
+        oname[0] = 0;                            // done with oname
     }
 }
 

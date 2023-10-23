@@ -54,38 +54,6 @@ template <class T, class U>
 inline typename std::enable_if<std::is_integral<U>::value, void *>::type operator+(U, const C<T> &)
     XSPAN_DELETED_FUNCTION;
 
-#if 0 // already handled by member functions
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator==(const C<T> &a, const U *b) { return a.raw_bytes(0) == b; }
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator==(const C<T> &a, const C<U> &b) {
-    return a.raw_bytes(0) == b.raw_bytes(0);
-}
-#ifdef D
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator==(const C<T> &a, const D<U> &b) {
-    return a.raw_bytes(0) == b.raw_bytes(0);
-}
-#endif
-#ifdef E
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator==(const C<T> &a, const E<U> &b) {
-    return a.raw_bytes(0) == b.raw_bytes(0);
-}
-#endif
-
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator!=(const C<T> &a, const U *b) { return a.raw_bytes(0) != b; }
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator!=(const C<T> &a, const C<U> &b) {
-    return a.raw_bytes(0) != b.raw_bytes(0);
-}
-#ifdef D
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator!=(const C<T> &a, const D<U> &b) {
-    return a.raw_bytes(0) != b.raw_bytes(0);
-}
-#endif
-#ifdef E
-XSPAN_FWD_TU_CONVERTIBLE(bool) operator!=(const C<T> &a, const E<U> &b) {
-    return a.raw_bytes(0) != b.raw_bytes(0);
-}
-#endif
-#endif // if 0 // already handled by member functions
-
 #endif // XSPAN_FWD_C_IS_MEMBUFFER
 
 /*************************************************************************

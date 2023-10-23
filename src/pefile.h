@@ -396,7 +396,7 @@ protected:
         };
         SPAN_0(BaseReloc) rel = nullptr;
         SPAN_0(LE16) rel1 = nullptr;
-        void advanceBaseRelocPos(void *p);
+        void setBaseRelocPos(void *p, bool check_size_of_block); // set rel and rel1
 
         unsigned counts[16] = {};
 
