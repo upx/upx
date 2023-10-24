@@ -454,13 +454,6 @@ void PeFile::Reloc::finish(byte *(&result_ptr), unsigned &result_size) {
 #endif
 }
 
-void PeFile::processRelocs(Reloc *rel) // pass2
-{
-    rel->finish(oxrelocs, soxrelocs);
-    if (opt->win32_pe.strip_relocs)
-        soxrelocs = 0;
-}
-
 void PeFile32::processRelocs() // pass1
 {
     big_relocs = 0;
@@ -483,8 +476,8 @@ void PeFile32::processRelocs() // pass1
             ih.objects = tryremove(IDADDR(PEDIR_BASERELOC), ih.objects);
         }
         mb_orelocs.alloc(1);
+        mb_orelocs.clear();
         orelocs = mb_orelocs; // => orelocs now is a SPAN_S
-        orelocs[0] = 0;       // clear
         sorelocs = 0;
         return;
     }
@@ -567,15 +560,17 @@ void PeFile64::processRelocs() // pass1
 {
     big_relocs = 0;
 
-    const unsigned skip = IDADDR(PEDIR_BASERELOC);
-    const unsigned take = IDSIZE(PEDIR_BASERELOC);
-    Reloc rel(ibuf.subref("bad reloc %#x", skip, take), take);
-    const unsigned *counts = rel.getcounts();
+    const unsigned skip1 = IDADDR(PEDIR_BASERELOC);
+    const unsigned take1 = IDSIZE(PEDIR_BASERELOC);
+    Reloc rel(ibuf.subref("bad reloc %#x", skip1, take1), take1);
+    const unsigned *const counts = rel.getcounts();
     unsigned relocnum = 0;
 
     unsigned ic;
     for (ic = 1; ic < 16; ic++)
         relocnum += counts[ic];
+    for (ic = 0; ic < 16; ic++)
+        NO_printf("reloc counts[%u] %u\n", ic, counts[ic]);
 
     if (opt->win32_pe.strip_relocs || relocnum == 0) {
         if (IDSIZE(PEDIR_BASERELOC)) {
@@ -583,6 +578,7 @@ void PeFile64::processRelocs() // pass1
             ih.objects = tryremove(IDADDR(PEDIR_BASERELOC), ih.objects);
         }
         mb_orelocs.alloc(1);
+        mb_orelocs.clear();
         orelocs = mb_orelocs; // => orelocs now is a SPAN_S
         sorelocs = 0;
         return;
@@ -2226,9 +2222,11 @@ void PeFile::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned i
     compressWithFilters(&ft, 2048, NULL_cconf, filter_strategy, ih_codebase, rvamin, 0, nullptr, 0);
 }
 
-void PeFile::callProcessRelocs(Reloc &rel, unsigned &ic) {
+void PeFile::callProcessStubRelocs(Reloc &rel, unsigned &ic) {
     // WinCE wants relocation data at the beginning of a section
-    PeFile::processRelocs(&rel);
+    rel.finish(oxrelocs, soxrelocs);
+    if (opt->win32_pe.strip_relocs)
+        soxrelocs = 0;
     ODADDR(PEDIR_BASERELOC) = soxrelocs ? ic : 0;
     ODSIZE(PEDIR_BASERELOC) = soxrelocs;
     ic += soxrelocs;
@@ -2456,7 +2454,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     const unsigned ncsection = (s1addr + s1size + oam1) & ~oam1;
     const unsigned upxsection = s1addr + ic + c_len;
 
-    Reloc rel(1024); // new relocations are put here
+    Reloc rel(1024); // new stub relocations are put here
     addNewRelocations(rel, upxsection);
 
     // new PE header
@@ -2497,7 +2495,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     if (!last_section_rsrc_only)
         callProcessResources(res, ic);
     if (rel_at_sections_start)
-        callProcessRelocs(rel, ic);
+        callProcessStubRelocs(rel, ic);
 
     processImports2(ic, getProcessImportParam(upxsection));
     ODADDR(PEDIR_IMPORT) = soimpdlls ? ic : 0;
@@ -2514,7 +2512,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     ic += soexport;
 
     if (!rel_at_sections_start)
-        callProcessRelocs(rel, ic);
+        callProcessStubRelocs(rel, ic);
 
     // when the resource is put alone into section 3
     const unsigned res_start = (ic + oam1) & ~oam1;

@@ -134,11 +134,14 @@ struct TriBool final {
     }
 
     // "Third" can mean many things - depending on usage context, so provide some alternate names:
+#if 0
     // constexpr bool isDefault() const noexcept { return isThird(); } // might be misleading
     constexpr bool isIndeterminate() const noexcept { return isThird(); }
+    constexpr bool isNone() const noexcept { return isThird(); }
     constexpr bool isOther() const noexcept { return isThird(); }
     constexpr bool isUndecided() const noexcept { return isThird(); }
     // constexpr bool isUnset() const noexcept { return isThird(); } // might be misleading
+#endif
 
 private:
     value_type value = False; // the actual value of this type

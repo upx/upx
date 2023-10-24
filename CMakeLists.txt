@@ -281,6 +281,30 @@ if(NOT CMAKE_C_COMPILER_ID MATCHES "^MSVC")
     endif()
 endif()
 
+# compile a source file with -O2 even in Debug build
+function(upx_compile_source_debug_with_O2)
+    set(flags "$<$<CONFIG:Debug>:-O2>")
+    if (CMAKE_VERSION VERSION_LESS 3.8)
+        # 3.8: The COMPILE_FLAGS source file property learned to support generator expressions
+        if (is_multi_config OR NOT CMAKE_BUILD_TYPE MATCHES "^Debug$")
+            return()
+        endif()
+        set(flags "-O2")
+    endif()
+    foreach(t ${ARGV})
+        if(MSVC_FRONTEND)
+            # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
+        else()
+            get_source_file_property(prop ${t} COMPILE_FLAGS)
+            if(prop MATCHES "^(NOTFOUND)?$")
+                set_source_files_properties(${t} PROPERTIES COMPILE_FLAGS "${flags}")
+            else()
+                set_source_files_properties(${t} PROPERTIES COMPILE_FLAGS "${prop} ${flags}")
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
 # compile a target with -O2 even in Debug build
 function(upx_compile_target_debug_with_O2)
     foreach(t ${ARGV})
@@ -456,6 +480,9 @@ if(HAVE_UTIMENSAT)
         target_compile_definitions(${t} PRIVATE HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC=1)
     endif()
 endif()
+# improve speed of the debug versions
+upx_compile_source_debug_with_O2(src/compress/compress_lzma.cpp)
+upx_compile_source_debug_with_O2(src/filter/filter_impl.cpp)
 #upx_compile_target_debug_with_O2(${t})
 upx_sanitize_target(${t})
 if(MSVC_FRONTEND)
@@ -473,6 +500,7 @@ endif()
 if(NOT UPX_CONFIG_CMAKE_DISABLE_TEST)
 
 include(CTest)
+# TODO later: check CMAKE_CROSSCOMPILING_EMULATOR
 if(NOT CMAKE_CROSSCOMPILING)
     add_test(NAME upx-version COMMAND upx --version)
     add_test(NAME upx-help    COMMAND upx --help)

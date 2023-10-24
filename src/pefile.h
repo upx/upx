@@ -59,7 +59,7 @@ protected:
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
                                unsigned isize_isplit, unsigned s1addr) = 0;
     virtual void addNewRelocations(Reloc &, unsigned) {}
-    void callProcessRelocs(Reloc &rel, unsigned &ic);
+    void callProcessStubRelocs(Reloc &rel, unsigned &ic);
     void callProcessResources(Resource &res, unsigned &ic);
     virtual unsigned getProcessImportParam(unsigned) { return 0; }
     virtual void setOhDataBase(const pe_section_t *osection) = 0;
@@ -106,7 +106,6 @@ protected:
     upx_uint64_t ilinkerGetAddress(const char *, const char *) const;
 
     virtual void processRelocs() = 0;
-    void processRelocs(Reloc *);
     void rebuildRelocs(SPAN_S(byte) &, unsigned bits, unsigned flags, upx_uint64_t imagebase);
     MemBuffer mb_orelocs;
     SPAN_0(byte) orelocs = nullptr;
