@@ -8,7 +8,8 @@ on:
   schedule: [cron: '30 2 * * 3'] # run weekly Wednesday 02:30 UTC
   workflow_dispatch:
 env:
-  CMAKE_REQUIRED_QUIET: OFF
+  CMAKE_REQUIRED_QUIET: "OFF"
+  CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
 
 jobs:

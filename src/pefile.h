@@ -390,20 +390,26 @@ protected:
         bool start_did_alloc = false;
         SPAN_0(byte) start_buf = nullptr;
 
-        struct alignas(1) BaseReloc {
-            LE32 pagestart;
+        struct alignas(1) BaseReloc { // IMAGE_BASE_RELOCATION
+            LE32 virtual_address;
             LE32 size_of_block;
+            // LE16 rel1[COUNT]; // COUNT == (size_of_block - 8) / 2
         };
-        SPAN_0(BaseReloc) rel = nullptr;
-        SPAN_0(LE16) rel1 = nullptr;
-        void setBaseRelocPos(void *p, bool check_size_of_block); // set rel and rel1
+        struct RelocationBlock {
+            SPAN_0(BaseReloc) rel = nullptr;
+            SPAN_0(LE16) rel1 = nullptr;
+            unsigned count = 0;
+            void reset() noexcept;
+        };
+        RelocationBlock rb;                   // current RelocationBlock
+        bool readFromRelocationBlock(byte *); // set rb
 
         unsigned counts[16] = {};
 
-    public:
-        explicit Reloc(byte *, unsigned);
-        explicit Reloc(unsigned relocnum);
         void initSpans();
+    public:
+        explicit Reloc(byte *ptr, unsigned bytes);
+        explicit Reloc(unsigned relocnum);
         ~Reloc() noexcept;
         //
         bool next(unsigned &result_pos, unsigned &result_type);

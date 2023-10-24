@@ -15,7 +15,8 @@ on:
   schedule: [cron: '00 2 * * 3'] # run weekly Wednesday 02:00 UTC
   workflow_dispatch:
 env:
-  CMAKE_REQUIRED_QUIET: OFF
+  CMAKE_REQUIRED_QUIET: "OFF"
+  CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_CONFIG_FLAGS: -DCMAKE_VERBOSE_MAKEFILE=ON
   UPX_TESTSUITE_LEVEL: 4

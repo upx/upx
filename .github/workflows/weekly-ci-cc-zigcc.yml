@@ -8,10 +8,11 @@ on:
   schedule: [cron: '40 2 * * 3'] # run weekly Wednesday 02:40 UTC
   workflow_dispatch:
 env:
-  CMAKE_REQUIRED_QUIET: OFF
+  CMAKE_REQUIRED_QUIET: "OFF"
+  CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
-  # 2023-10-22
-  ZIG_DIST_VERSION: 0.12.0-dev.1153+45d7dfa83
+  # 2023-10-23
+  ZIG_DIST_VERSION: 0.12.0-dev.1200+5f92b070b
 
 jobs:
   job-linux-zigcc: # uses cmake + make
