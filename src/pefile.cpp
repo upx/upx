@@ -312,8 +312,8 @@ PeFile::Reloc::~Reloc() noexcept {
 
 // constructor for compression only
 PeFile::Reloc::Reloc(byte *ptr, unsigned bytes) : start(ptr) {
-    start_size_in_bytes = mem_size(1, bytes);
     assert(opt->cmd == CMD_COMPRESS);
+    start_size_in_bytes = mem_size(1, bytes);
     initSpans();
     // fill counts
     unsigned pos, type;
@@ -390,7 +390,9 @@ bool PeFile::Reloc::next(unsigned &result_pos, unsigned &result_type) {
 
 void PeFile::Reloc::add(unsigned pos, unsigned type) {
     assert(start_did_alloc);
-    set_le32(start_buf + (RELOC_INPLACE_OFFSET + 4 * counts[0]), (pos << 4) + type);
+    if ((pos << 4) >> 4 != pos || type > 0xf)
+        throwCantPack("relocation overflow %u %u", pos, type);
+    set_le32(start_buf + (RELOC_INPLACE_OFFSET + 4 * counts[0]), (pos << 4) + (type & 0xf));
     counts[0] += 1;
 }
 

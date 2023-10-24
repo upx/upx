@@ -135,6 +135,9 @@ struct Options final {
         bool split_segments;
     } atari_tos;
     struct {
+        bool force_macos; // undocumented temporary option until we fix macOS 13+ support
+    } darwin_macho;
+    struct {
         bool coff;
     } djgpp2_coff;
     struct {

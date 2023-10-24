@@ -673,19 +673,85 @@ static int do_option(int optc, const char *arg) {
     case 564:
         opt->cpu_x86 = opt->CPU_486;
         break;
-    //
+
+    // atari/tos
+    case 650:
+        opt->atari_tos.split_segments = true;
+        break;
+    // darwin/macho
+    case 690:
+        opt->darwin_macho.force_macos = true;
+        break;
+    // dos/exe
     case 600:
         opt->dos_exe.force_stub = true;
         break;
     case 601:
         opt->dos_exe.no_reloc = true;
         break;
+    // djgpp2/coff
     case 610:
         opt->djgpp2_coff.coff = true;
         break;
+    // o_unix
+    case 660:
+        getoptvar(&opt->o_unix.blocksize, 8192u, ~0u, arg);
+        break;
+    case 661:
+        opt->o_unix.force_execve = true;
+        break;
+    case 663:
+        opt->o_unix.is_ptinterp = true;
+        break;
+    case 664:
+        opt->o_unix.use_ptinterp = true;
+        break;
+    case 665:
+        opt->o_unix.make_ptinterp = true;
+        break;
+    case 666: // Linux
+        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
+        break;
+    case 667: // FreeBSD
+        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_FREEBSD;
+        break;
+    case 668: // NetBSD
+        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_NETBSD;
+        break;
+    case 669: // OpenBSD
+        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_OPENBSD;
+        break;
+    case 674:
+        opt->o_unix.unmap_all_pages = true; // val ?
+        break;
+    case 675:
+        opt->o_unix.preserve_build_id = true;
+        break;
+    case 676:
+        opt->o_unix.android_shlib = true;
+        break;
+    case 677:
+        opt->o_unix.force_pie = true;
+        break;
+    // ps1/exe
+    case 670:
+        opt->ps1_exe.boot_only = true;
+        break;
+    case 671:
+        opt->ps1_exe.no_align = true;
+        opt->ps1_exe.boot_only = false;
+        break;
+    case 672:
+        opt->ps1_exe.do_8bit = true;
+        break;
+    case 673:
+        opt->ps1_exe.do_8mib = false;
+        break;
+    // watcom/le
     case 620:
         opt->watcom_le.le = true;
         break;
+    // win32/pe
     case 630:
         opt->win32_pe.compress_exports = 1;
         if (mfx_optarg && mfx_optarg[0])
@@ -720,61 +786,6 @@ static int do_option(int optc, const char *arg) {
         if (!mfx_optarg || !mfx_optarg[0])
             e_optarg(arg);
         opt->win32_pe.keep_resource = mfx_optarg;
-        break;
-    case 650:
-        opt->atari_tos.split_segments = true;
-        break;
-    case 660:
-        getoptvar(&opt->o_unix.blocksize, 8192u, ~0u, arg);
-        break;
-    case 661:
-        opt->o_unix.force_execve = true;
-        break;
-    case 663:
-        opt->o_unix.is_ptinterp = true;
-        break;
-    case 664:
-        opt->o_unix.use_ptinterp = true;
-        break;
-    case 665:
-        opt->o_unix.make_ptinterp = true;
-        break;
-    case 666: // Linux
-        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
-        break;
-    case 667: // FreeBSD
-        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_FREEBSD;
-        break;
-    case 668: // NetBSD
-        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_NETBSD;
-        break;
-    case 669: // OpenBSD
-        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_OPENBSD;
-        break;
-    case 670:
-        opt->ps1_exe.boot_only = true;
-        break;
-    case 671:
-        opt->ps1_exe.no_align = true;
-        opt->ps1_exe.boot_only = false;
-        break;
-    case 672:
-        opt->ps1_exe.do_8bit = true;
-        break;
-    case 673:
-        opt->ps1_exe.do_8mib = false;
-        break;
-    case 674:
-        opt->o_unix.unmap_all_pages = true; // val ?
-        break;
-    case 675:
-        opt->o_unix.preserve_build_id = true;
-        break;
-    case 676:
-        opt->o_unix.android_shlib = true;
-        break;
-    case 677:
-        opt->o_unix.force_pie = true;
         break;
 
 #if !defined(DOCTEST_CONFIG_DISABLE)
@@ -910,15 +921,15 @@ int main_get_options(int argc, char **argv) {
         {"crp-zlib-st", 0x31, N, 823},
 
         // atari/tos
-        {"split-segments", 0x10, N, 650},
+        {"split-segments", 0x90, N, 650},
+        // darwin/macho
+        {"force-macos", 0x90, N, 690}, // undocumented temporary until we fix macOS 13+
         // djgpp2/coff
-        {"coff", 0x10, N, 610},          // produce COFF output
-                                         // dos/com
-                                         // dos/exe
-                                         //{"force-stub",             0x10, 0, 600},
-        {"no-reloc", 0x10, N, 601},      // no reloc. record into packer dos/exe
-                                         // dos/sys
-                                         // unix
+        {"coff", 0x90, N, 610}, // produce COFF output
+        // dos/exe
+        //{"force-stub", 0x10, N, 600},
+        {"no-reloc", 0x10, N, 601}, // no reloc. record into packer dos/exe
+        // o_unix
         {"blocksize", 0x31, N, 660},     // --blocksize=
         {"force-execve", 0x90, N, 661},  // force linux/386 execve format
         {"is_ptinterp", 0x10, N, 663},   // linux/elf386 PT_INTERP program
@@ -936,21 +947,21 @@ int main_get_options(int argc, char **argv) {
         {"preserve-build-id", 0, N, 675},
         {"android-shlib", 0, N, 676},
         {"force-pie", 0x90, N, 677},
+        // ps1/exe
+        {"boot-only", 0x90, N, 670},
+        {"no-align", 0x90, N, 671},
+        {"8-bit", 0x90, N, 672},
+        {"8mib-ram", 0x90, N, 673},
+        {"8mb-ram", 0x90, N, 673},
         // watcom/le
-        {"le", 0x10, N, 620}, // produce LE output
-                              // win32/pe
+        {"le", 0x90, N, 620}, // produce LE output
+        // win32/pe
         {"compress-exports", 2, N, 630},
         {"compress-icons", 2, N, 631},
         {"compress-resources", 2, N, 632},
         {"strip-loadconf", 0x12, N, 633}, // OBSOLETE - IGNORED
         {"strip-relocs", 0x12, N, 634},
         {"keep-resource", 0x31, N, 635},
-        // ps1/exe
-        {"boot-only", 0x10, N, 670},
-        {"no-align", 0x10, N, 671},
-        {"8-bit", 0x10, N, 672},
-        {"8mib-ram", 0x10, N, 673},
-        {"8mb-ram", 0x10, N, 673},
 
 #if !defined(DOCTEST_CONFIG_DISABLE)
         // [doctest] Query flags - the program quits after them. Available:
@@ -1056,8 +1067,6 @@ void main_get_envoptions() {
         {"no-lzma", 0x10, N, 722}, // disable all_methods_use_lzma
         {"prefer-nrv", 0x10, N, 723},
         {"prefer-ucl", 0x10, N, 724},
-        // compression settings
-        // compression runtime parameters
 
         // win32/pe
         {"compress-exports", 2, N, 630},

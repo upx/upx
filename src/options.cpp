@@ -69,6 +69,8 @@ void Options::reset() noexcept {
     if (e && e[0])
         o->console = CON_FILE;
 
+    // options for various executable formats
+
     o->o_unix.osabi0 = 3; // 3 == ELFOSABI_LINUX
 
     o->win32_pe.compress_exports = 1;

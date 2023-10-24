@@ -2233,7 +2233,8 @@ tribool PackMachBase<T>::canPack()
     // disable macOS packing in Release builds until we do support macOS 13+
     //   https://github.com/upx/upx/issues/612
     if (my_cputype == CPU_TYPE_X86_64 || my_cputype == CPU_TYPE_ARM64)
-        throwCantPack("macOS is currently not supported");
+        if (!opt->darwin_macho.force_macos)
+            throwCantPack("macOS is currently not supported (try --force-macos)");
 #endif
     return true;
 }
