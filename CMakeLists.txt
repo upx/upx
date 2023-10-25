@@ -291,6 +291,10 @@ function(upx_compile_source_debug_with_O2)
         endif()
         set(flags "-O2")
     endif()
+    if(CMAKE_GENERATOR MATCHES "Xcode") # multi-config
+        # NOTE: Xcode does not support per-config per-source COMPILE_FLAGS (as of CMake 3.27.7)
+        return()
+    endif()
     foreach(t ${ARGV})
         if(MSVC_FRONTEND)
             # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
