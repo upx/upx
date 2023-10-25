@@ -55,7 +55,7 @@ private:
     // inverse logic for ensuring valid pointers from existing objects
     inline pointer ensurePtr() const { return ptr; }
     // debug
-    forceinline_constexpr void assertInvariants() const noexcept {}
+    forceinline void assertInvariants() const noexcept {}
 
 public:
 #if XSPAN_CONFIG_ENABLE_IMPLICIT_CONVERSION || 1
@@ -132,15 +132,15 @@ public:
 
     // comparison
 
-    bool operator==(pointer other) const { return ptr == other; }
+    bool operator==(pointer other) const noexcept { return ptr == other; }
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator==(U *other) const {
+    operator==(U *other) const noexcept {
         return ptr == other;
     }
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator==(const Ptr<U> &other) const {
+    operator==(const Ptr<U> &other) const noexcept {
         return ptr == other.ptr;
     }
 

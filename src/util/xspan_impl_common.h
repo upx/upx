@@ -69,7 +69,7 @@ private:
             xspan_check_range(ptr, base, size_in_bytes);
     }
 #else
-forceinline_constexpr void assertInvariants() const noexcept {}
+forceinline void assertInvariants() const noexcept {}
 #endif
 
     static inline pointer makeNotNull(pointer p) {
@@ -288,49 +288,49 @@ public:
                  reinterpret_cast<rpointer>(base));
     }
 
-    bool operator==(pointer other) const { return ptr == other; }
+    bool operator==(pointer other) const noexcept { return ptr == other; }
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator==(U *other) const {
+    operator==(U *other) const noexcept {
         return ptr == other;
     }
-    bool operator!=(pointer other) const { return ptr != other; }
+    bool operator!=(pointer other) const noexcept { return ptr != other; }
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator!=(U *other) const {
+    operator!=(U *other) const noexcept {
         return ptr != other;
     }
 
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator==(const PtrOrSpan<U> &other) const {
+    operator==(const PtrOrSpan<U> &other) const noexcept {
         return ptr == other.ptr;
     }
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator==(const PtrOrSpanOrNull<U> &other) const {
+    operator==(const PtrOrSpanOrNull<U> &other) const noexcept {
         return ptr == other.ptr;
     }
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator==(const Span<U> &other) const {
+    operator==(const Span<U> &other) const noexcept {
         return ptr == other.ptr;
     }
 
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator!=(const PtrOrSpan<U> &other) const {
-        return !(*this == other);
+    operator!=(const PtrOrSpan<U> &other) const noexcept {
+        return ptr != other.ptr;
     }
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator!=(const PtrOrSpanOrNull<U> &other) const {
-        return !(*this == other);
+    operator!=(const PtrOrSpanOrNull<U> &other) const noexcept {
+        return ptr != other.ptr;
     }
     template <class U>
     XSPAN_REQUIRES_CONVERTIBLE_R(bool)
-    operator!=(const Span<U> &other) const {
-        return !(*this == other);
+    operator!=(const Span<U> &other) const noexcept {
+        return ptr != other.ptr;
     }
 
     // check for notNull here

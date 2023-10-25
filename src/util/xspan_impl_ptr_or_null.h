@@ -87,6 +87,10 @@ public:
 
     // nullptr
     forceinline CSelf(std::nullptr_t) noexcept : ptr(nullptr), base(nullptr), size_in_bytes(0) {}
+    forceinline Self &operator=(std::nullptr_t) noexcept {
+        ptr = nullptr;
+        return *this;
+    }
 #undef CSelf
 };
 
