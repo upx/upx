@@ -1449,7 +1449,7 @@ PackLinuxElf32::buildLinuxLoader(
         char sec[120];
         int len = 0;
         unsigned m_decompr = (methods_used ? methods_used : (1u << ph_forced_method(ph.method)));
-        len += snprintf(sec, sizeof(sec), "%s", "SO_HEAD,ptr_NEXT,EXP_HEAD");
+        len += snprintf(sec, sizeof(sec), "%s", ".text,SO_HEAD,ptr_NEXT,EXP_HEAD");
         if (((1u<<M_NRV2B_LE32)|(1u<<M_NRV2B_8)|(1u<<M_NRV2B_LE16)) & m_decompr) {
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "NRV2B");
         }

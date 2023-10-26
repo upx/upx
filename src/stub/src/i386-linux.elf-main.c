@@ -30,7 +30,7 @@
  */
 
 #ifndef DEBUG  /*{*/
-#define DEBUG 0
+#define DEBUG 1
 #endif  /*}*/
 
 #include "include/linux.h"

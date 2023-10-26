@@ -6,44 +6,43 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-TARGET(elf32-littlearm)
-                0x0000000000008080                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
+                0x0000000000008040                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008080      0xae0
+.text           0x0000000000008040     0x1574
  *(.text)
- .text          0x0000000000008080      0x3f4 tmp/arm.v5a-linux.elf-fold.o
-                0x0000000000008410                f_expand
-                0x0000000000008414                get_page_mask
-                0x0000000000008348                munmap
-                0x00000000000083f0                get_sys_munmap
-                0x000000000000830c                getpid
-                0x0000000000008334                readlink
-                0x0000000000008418                __udivsi3
-                0x0000000000008380                mmap
-                0x00000000000083cc                __clear_cache
-                0x00000000000083f8                mmap_privanon
-                0x00000000000082bc                write
-                0x00000000000082a8                read
-                0x00000000000082f8                unlink
-                0x0000000000008290                my_bkpt
-                0x000000000000835c                Pprotect
-                0x0000000000008298                exit
-                0x0000000000008320                brk
-                0x00000000000082d0                open
-                0x0000000000008418                div10
-                0x000000000000835c                mprotect
-                0x00000000000082e4                close
- .text          0x0000000000008474      0x6ec tmp/armel-linux.elf-main.o
-                0x0000000000008a40                upx_main
+ .text          0x0000000000008040      0x3fc tmp/arm.v5a-linux.elf-fold.o
+                0x0000000000008258                my_bkpt
+                0x0000000000008260                exit
+                0x0000000000008270                read
+                0x0000000000008284                write
+                0x0000000000008298                open
+                0x00000000000082ac                close
+                0x00000000000082c0                unlink
+                0x00000000000082d4                getpid
+                0x00000000000082e8                brk
+                0x00000000000082fc                readlink
+                0x0000000000008310                munmap
+                0x0000000000008324                Pprotect
+                0x0000000000008324                mprotect
+                0x0000000000008348                mmap
+                0x0000000000008394                __clear_cache
+                0x00000000000083b8                get_sys_munmap
+                0x00000000000083c0                mmap_privanon
+                0x00000000000083d8                f_expand
+                0x00000000000083dc                get_page_mask
+                0x00000000000083e0                __udivsi3
+                0x00000000000083e0                div10
+ .text          0x000000000000843c     0x1178 tmp/arm.v5a-linux.elf-main.o
+                0x0000000000009364                upx_main
  *(.data)
- .data          0x0000000000008b60        0x0 tmp/arm.v5a-linux.elf-fold.o
- .data          0x0000000000008b60        0x0 tmp/armel-linux.elf-main.o
+ .data          0x00000000000095b4        0x0 tmp/arm.v5a-linux.elf-fold.o
+ .data          0x00000000000095b4        0x0 tmp/arm.v5a-linux.elf-main.o
 
 .data
-
-.bss            0x0000000000008b60        0x0
- .bss           0x0000000000008b60        0x0 tmp/arm.v5a-linux.elf-fold.o
- .bss           0x0000000000008b60        0x0 tmp/armel-linux.elf-main.o
 LOAD tmp/arm.v5a-linux.elf-fold.o
-LOAD tmp/armel-linux.elf-main.o
+LOAD tmp/arm.v5a-linux.elf-main.o
 OUTPUT(tmp/arm.v5a-linux.elf-fold.bin elf32-littlearm)
+
+.bss            0x0000000000000000        0x0
+ .bss           0x0000000000000000        0x0 tmp/arm.v5a-linux.elf-fold.o
+ .bss           0x0000000000000000        0x0 tmp/arm.v5a-linux.elf-main.o

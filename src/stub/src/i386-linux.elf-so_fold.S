@@ -44,7 +44,6 @@ fold:
         //  pop %ebp
         //  ???
 
-L10:
   section ptr_NEXT
     pop %eax; call *%eax
 f_exp:  // start of code for actual de-compressor
