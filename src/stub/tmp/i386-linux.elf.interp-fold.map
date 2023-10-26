@@ -9,25 +9,25 @@ Linker script and memory map
 TARGET(elf32-i386)
                 0x0000000000010074                . = (0x10000 + SIZEOF_HEADERS)
 
-.text           0x0000000000010074      0x584
+.text           0x0000000000010074      0x630
  *(.text)
  .text          0x0000000000010074       0x74 tmp/i386-linux.elf.interp-fold.o
                 0x00000000000100da                mmap
- .text          0x00000000000100e8      0x50d tmp/i386-linux.elf.interp-main.o
-                0x00000000000104fa                pti_main
+ .text          0x00000000000100e8      0x5bb tmp/i386-linux.elf.interp-main.o
+                0x000000000001059f                pti_main
  *(.rodata)
  *(.data)
- *fill*         0x00000000000105f5        0x3 00
- .data          0x00000000000105f8        0x0 tmp/i386-linux.elf.interp-fold.o
- .data          0x00000000000105f8        0x0 tmp/i386-linux.elf.interp-main.o
+ *fill*         0x00000000000106a3        0x1 00
+ .data          0x00000000000106a4        0x0 tmp/i386-linux.elf.interp-fold.o
+ .data          0x00000000000106a4        0x0 tmp/i386-linux.elf.interp-main.o
 
 .data
 
-.bss            0x00000000000105f8        0x0
- .bss           0x00000000000105f8        0x0 tmp/i386-linux.elf.interp-fold.o
- .bss           0x00000000000105f8        0x0 tmp/i386-linux.elf.interp-main.o
+.bss            0x00000000000106a4        0x0
+ .bss           0x00000000000106a4        0x0 tmp/i386-linux.elf.interp-fold.o
+ .bss           0x00000000000106a4        0x0 tmp/i386-linux.elf.interp-main.o
 
-.rel.dyn        0x00000000000105f8        0x0
+.rel.dyn        0x00000000000106a4        0x0
  .rel.text      0x0000000000000000        0x0 tmp/i386-linux.elf.interp-fold.o
 LOAD tmp/i386-linux.elf.interp-fold.o
 LOAD tmp/i386-linux.elf.interp-main.o
