@@ -2,6 +2,9 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 4.3.0 (XX XXX XXXX):
+  * bug fixes - see https://github.com/upx/upx/milestone/14
+
 Changes in 4.2.0 (26 Oct 2023):
   * win32/pe and win64/pe: stricter relocation checks; please report regressions
   * new option '--link' to preserve hard-links (Unix only; use with care)
