@@ -37,7 +37,7 @@
 #pragma warning(disable : 4201 4214 4514)
 #endif
 #if defined(_MSC_VER) && !defined(__clang__)
-/* avoid warnings in some versions of <windows.h> */
+/* avoid warnings in some older versions of <windows.h> */
 #pragma warning(disable : 5105)
 #endif
 

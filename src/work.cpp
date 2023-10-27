@@ -36,6 +36,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #endif
+#if defined(_WIN32) || defined(__CYGWIN__)
+#include "util/windows_lean.h" // _get_osfhandle, GetFileTime, SetFileTime
+#endif
 #include "conf.h"
 #include "file.h"
 #include "packmast.h"
@@ -43,6 +46,8 @@
 #include "util/membuffer.h"
 
 #if USE_UTIMENSAT && defined(AT_FDCWD)
+#elif (defined(_WIN32) || defined(__CYGWIN__)) && 1
+#define USE_SETFILETIME 1
 #elif (ACC_OS_DOS32) && defined(__DJGPP__)
 #define USE_FTIME 1
 #elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_INTELC || ACC_CC_MSC))
@@ -62,6 +67,18 @@
 // util
 **************************************************************************/
 
+namespace {
+
+struct XStat {
+    struct stat st;
+#if USE_SETFILETIME
+    FILETIME ft_atime;
+    FILETIME ft_mtime;
+#elif USE_FTIME
+    struct ftime ft_ftime;
+#endif
+};
+
 // ignore errors in some cases and silence __attribute__((__warn_unused_result__))
 #define IGNORE_ERROR(var) ACC_UNUSED(var)
 
@@ -79,7 +96,29 @@ static constexpr int get_open_flags(OpenMode om) noexcept {
     return O_RDONLY | O_BINARY; // will cause an error if file does not exist
 }
 
-static void copy_file_contents(const char *iname, const char *oname, OpenMode om) may_throw {
+// set file time of an open file
+static void set_fd_timestamp(int fd, const XStat *xst) noexcept {
+#if USE_SETFILETIME
+    BOOL r = SetFileTime((HANDLE) _get_osfhandle(fd), nullptr, &xst->ft_atime, &xst->ft_mtime);
+    IGNORE_ERROR(r);
+#elif USE_FTIME
+    auto ft_ftime = xst->ft_ftime; // djgpp2 libc bug: not const, so use a copy
+    int r = setftime(fd, &ft_ftime);
+    IGNORE_ERROR(r);
+#elif USE__FUTIME
+    struct _utimbuf u = {};
+    u.actime = xst->st.st_atime;
+    u.modtime = xst->st.st_mtime;
+    int r = _futime(fd, &u);
+    IGNORE_ERROR(r);
+#endif
+    // maybe unused
+    UNUSED(fd);
+    UNUSED(xst);
+}
+
+static void copy_file_contents(const char *iname, const char *oname, OpenMode om,
+                               const XStat *oname_timestamp) may_throw {
     InputFile fi;
     fi.sopen(iname, get_open_flags(RO_MUST_EXIST), SH_DENYWR);
     fi.seek(0, SEEK_SET);
@@ -96,17 +135,19 @@ static void copy_file_contents(const char *iname, const char *oname, OpenMode om
             break;
         fo.write(buf, bytes);
     }
+    if (oname_timestamp != nullptr)
+        set_fd_timestamp(fo.getFd(), oname_timestamp);
     fi.closex();
     fo.closex();
 }
 
-static void copy_file_attributes(const struct stat *st, const char *oname, bool preserve_mode,
+static void copy_file_attributes(const XStat *xst, const char *oname, bool preserve_mode,
                                  bool preserve_ownership, bool preserve_timestamp) noexcept {
+    const struct stat *const st = &xst->st;
     // copy time stamp
     if (preserve_timestamp) {
 #if USE_UTIMENSAT && defined(AT_FDCWD)
-        struct timespec times[2];
-        memset(&times[0], 0, sizeof(times));
+        struct timespec times[2] = {};
 #if HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
         // macOS
         times[0] = st->st_atimespec;
@@ -119,8 +160,7 @@ static void copy_file_attributes(const struct stat *st, const char *oname, bool 
         int r = utimensat(AT_FDCWD, oname, &times[0], 0);
         IGNORE_ERROR(r);
 #elif USE_UTIME
-        struct utimbuf u;
-        mem_clear(&u);
+        struct utimbuf u = {};
         u.actime = st->st_atime;
         u.modtime = st->st_mtime;
         int r = utime(oname, &u);
@@ -149,12 +189,15 @@ static void copy_file_attributes(const struct stat *st, const char *oname, bool 
     }
 #endif
     // maybe unused
+    UNUSED(xst);
     UNUSED(st);
     UNUSED(oname);
     UNUSED(preserve_mode);
     UNUSED(preserve_ownership);
     UNUSED(preserve_timestamp);
 }
+
+} // namespace
 
 /*************************************************************************
 // process one file
@@ -164,8 +207,8 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
     oname[0] = 0; // make empty
 
     // check iname stat
-    struct stat st;
-    mem_clear(&st);
+    XStat xst = {};
+    struct stat &st = xst.st;
 #if HAVE_LSTAT
     int rr = lstat(iname, &st);
 #else
@@ -212,14 +255,16 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
     InputFile fi;
     fi.sopen(iname, get_open_flags(RO_MUST_EXIST), SH_DENYWR);
 
-#if USE_FTIME
-    struct ftime fi_ftime;
-    mem_clear(&fi_ftime);
     if (opt->preserve_timestamp) {
-        if (getftime(fi.getFd(), &fi_ftime) != 0)
+#if USE_SETFILETIME
+        if (GetFileTime((HANDLE) _get_osfhandle(fi.getFd()), nullptr, &xst.ft_atime,
+                        &xst.ft_mtime) == 0)
             throwIOException("cannot determine file timestamp");
-    }
+#elif USE_FTIME
+        if (getftime(fi.getFd(), &xst.ft_ftime) != 0)
+            throwIOException("cannot determine file timestamp");
 #endif
+    }
 
     // open output file
     // NOTE: only use "preserve_link" if you really need it, e.g. it can fail
@@ -248,8 +293,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
             if (opt->output_name && preserve_link) {
                 flags = get_open_flags(WO_CREATE_OR_TRUNCATE);
 #if HAVE_LSTAT
-                struct stat ost;
-                mem_clear(&ost);
+                struct stat ost = {};
                 int r = lstat(tname, &ost);
                 if (r == 0 && S_ISREG(ost.st_mode)) {
                     preserve_link = ost.st_nlink >= 2;
@@ -298,18 +342,8 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
         throwInternalError("invalid command");
 
     // copy time stamp
-    if (oname[0] && opt->preserve_timestamp && fo.isOpen()) {
-#if USE_FTIME
-        int r = setftime(fo.getFd(), &fi_ftime);
-        IGNORE_ERROR(r);
-#elif USE__FUTIME
-        struct _utimbuf u;
-        u.actime = st.st_atime;
-        u.modtime = st.st_mtime;
-        int r = _futime(fo.getFd(), &u);
-        IGNORE_ERROR(r);
-#endif
-    }
+    if (oname[0] && opt->preserve_timestamp && fo.isOpen())
+        set_fd_timestamp(fo.getFd(), &xst);
 
     // close files
     fi.closex();
@@ -323,9 +357,10 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
             if (!makebakname(bakname, sizeof(bakname), iname))
                 throwIOException("could not create a backup file name");
             if (preserve_link) {
-                copy_file_contents(iname, bakname, WO_MUST_CREATE);
-                copy_file_attributes(&st, bakname, true, true, true);
-                copy_file_contents(oname, iname, WO_MUST_EXIST_TRUNCATE);
+                copy_file_contents(iname, bakname, WO_MUST_CREATE, &xst);
+                copy_file_attributes(&xst, bakname, true, true, true);
+                const XStat *xstamp = opt->preserve_timestamp ? &xst : nullptr;
+                copy_file_contents(oname, iname, WO_MUST_EXIST_TRUNCATE, xstamp);
                 FileBase::unlink(oname);
                 copy_timestamp_only = true;
             } else {
@@ -333,7 +368,8 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                 FileBase::rename(oname, iname);
             }
         } else if (preserve_link) {
-            copy_file_contents(oname, iname, WO_MUST_EXIST_TRUNCATE);
+            const XStat *xstamp = opt->preserve_timestamp ? &xst : nullptr;
+            copy_file_contents(oname, iname, WO_MUST_EXIST_TRUNCATE, xstamp);
             FileBase::unlink(oname);
             copy_timestamp_only = true;
         } else {
@@ -348,9 +384,9 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
         oname[0] = 0; // done with oname
         const char *name = opt->output_name ? opt->output_name : iname;
         if (copy_timestamp_only)
-            copy_file_attributes(&st, name, false, false, opt->preserve_timestamp);
+            copy_file_attributes(&xst, name, false, false, opt->preserve_timestamp);
         else
-            copy_file_attributes(&st, name, opt->preserve_mode, opt->preserve_ownership,
+            copy_file_attributes(&xst, name, opt->preserve_mode, opt->preserve_ownership,
                                  opt->preserve_timestamp);
     }
 
