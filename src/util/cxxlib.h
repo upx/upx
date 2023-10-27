@@ -107,6 +107,8 @@ struct TriBool final {
     static_assert(std::is_integral_v<promoted_type>);
     static_assert(ThirdValue != 0 && ThirdValue != 1);
     enum value_type : underlying_type { False = 0, True = 1, Third = ThirdValue };
+    static_assert(sizeof(value_type) == sizeof(underlying_type));
+    static_assert(sizeof(underlying_type) <= sizeof(promoted_type));
     // constructors
     forceinline constexpr TriBool() noexcept {}
     forceinline constexpr TriBool(value_type x) noexcept : value(x) {}

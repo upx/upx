@@ -195,11 +195,17 @@ TEST_CASE("TriBool") {
     TestTriBool<tribool>::test(false, -1);
     //
     TestTriBool<TriBool<upx_int8_t> >::test(false, -1);
+    TestTriBool<TriBool<upx_int16_t> >::test(false, -1);
+    TestTriBool<TriBool<upx_int32_t> >::test(false, -1);
     TestTriBool<TriBool<upx_int64_t> >::test(false, -1);
     //
     TestTriBool<TriBool<unsigned, 2> >::test(true, 2);
     TestTriBool<TriBool<upx_int8_t, 2> >::test(true, 2);
     TestTriBool<TriBool<upx_uint8_t, 2> >::test(true, 2);
+    TestTriBool<TriBool<upx_int16_t, 2> >::test(true, 2);
+    TestTriBool<TriBool<upx_uint16_t, 2> >::test(true, 2);
+    TestTriBool<TriBool<upx_int32_t, 2> >::test(true, 2);
+    TestTriBool<TriBool<upx_uint32_t, 2> >::test(true, 2);
     TestTriBool<TriBool<upx_int64_t, 2> >::test(true, 2);
     TestTriBool<TriBool<upx_uint64_t, 2> >::test(true, 2);
 }
