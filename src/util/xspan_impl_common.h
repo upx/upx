@@ -284,8 +284,8 @@ public:
     inline CSelf<U> type_cast() const {
         typedef CSelf<U> R;
         typedef typename R::pointer rpointer;
-        return R(R::Unchecked, reinterpret_cast<rpointer>(ptr), size_in_bytes,
-                 reinterpret_cast<rpointer>(base));
+        return R(R::Unchecked, upx::ptr_reinterpret_cast<rpointer>(ptr), size_in_bytes,
+                 upx::ptr_reinterpret_cast<rpointer>(base));
     }
 
     bool operator==(pointer other) const noexcept { return ptr == other; }

@@ -88,6 +88,26 @@ ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 // util
 **************************************************************************/
 
+TEST_CASE("ptr_reinterpret_cast") {
+    using upx::ptr_reinterpret_cast;
+    byte *an = nullptr;
+    int *in = nullptr;
+    CHECK((an == ptr_reinterpret_cast<byte *>(an)));
+    CHECK((an == ptr_reinterpret_cast<byte *>(in)));
+    CHECK((in == ptr_reinterpret_cast<int *>(an)));
+    CHECK((in == ptr_reinterpret_cast<int *>(in)));
+    const byte *ac = nullptr;
+    const int *ic = nullptr;
+    CHECK((ac == ptr_reinterpret_cast<byte *>(an)));
+    CHECK((ac == ptr_reinterpret_cast<const byte *>(ac)));
+    CHECK((ac == ptr_reinterpret_cast<byte *>(in)));
+    CHECK((ac == ptr_reinterpret_cast<const byte *>(ic)));
+    CHECK((ic == ptr_reinterpret_cast<int *>(an)));
+    CHECK((ic == ptr_reinterpret_cast<const int *>(ac)));
+    CHECK((ic == ptr_reinterpret_cast<int *>(in)));
+    CHECK((ic == ptr_reinterpret_cast<const int *>(ic)));
+}
+
 TEST_CASE("noncopyable") {
     struct Test : private upx::noncopyable {
         int v = 1;

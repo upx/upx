@@ -127,7 +127,7 @@ public:
     inline CSelf<U> type_cast() const {
         typedef CSelf<U> R;
         typedef typename R::pointer rpointer;
-        return R(reinterpret_cast<rpointer>(ptr));
+        return R(upx::ptr_reinterpret_cast<rpointer>(ptr));
     }
 
     // comparison

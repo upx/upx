@@ -158,7 +158,7 @@ inline R *xspan_make_helper__(R * /*dummy*/, MemBuffer &mb) noexcept {
 #define XSPAN_S_VAR(type, var, first, ...) type *var = XSPAN_S_MAKE(type, (first))
 
 // cast to a different type (creates a new value)
-#define XSPAN_TYPE_CAST(type, x)           (reinterpret_cast<type *>(x))
+#define XSPAN_TYPE_CAST(type, x)           (upx::ptr_reinterpret_cast<type *>(x))
 // poison a pointer: point to a non-null invalid address
 #define XSPAN_INVALIDATE(x)                ptr_invalidate_and_poison(x)
 
