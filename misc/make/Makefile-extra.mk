@@ -3,6 +3,9 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
+ifeq ($(UPX_MAKEFILE_EXTRA_MK_INCLUDED),)
+UPX_MAKEFILE_EXTRA_MK_INCLUDED := 1
+
 #***********************************************************************
 # extra builds: some pre-defined build configurations
 #***********************************************************************
@@ -131,14 +134,14 @@ build/extra/cross-linux-gnu-arm-eabihf/%: export CXX = arm-linux-gnueabihf-g++ -
 # cross compiler: Windows x86 win32 MinGW (i386)
 build/extra/cross-windows-mingw32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw32/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc -static
-build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++ -static
+build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc -static -D_WIN32_WINNT=0x0400
+build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++ -static -D_WIN32_WINNT=0x0400
 
 # cross compiler: Windows x64 win64 MinGW (amd64)
 build/extra/cross-windows-mingw64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc -static
-build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++ -static
+build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc -static -D_WIN32_WINNT=0x0400
+build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++ -static -D_WIN32_WINNT=0x0400
 
 # cross compiler: macOS arm64 (aarch64)
 build/extra/cross-darwin-arm64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
@@ -249,3 +252,5 @@ SUBMODULES = doctest lzma-sdk ucl valgrind zlib
 
 dummy := $(foreach m,$(SUBMODULES),$(if $(wildcard vendor/$m/[CL]*),$m,\
     $(error ERROR: missing git submodule '$m'; run 'git submodule update --init')))
+
+endif # UPX_MAKEFILE_EXTRA_MK_INCLUDED

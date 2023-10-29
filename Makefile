@@ -56,7 +56,11 @@ build/%/all:   $$(dir $$@)debug $$(dir $$@)release ;
 #
 
 # extra pre-defined build configurations and some utility; optional
+ifneq ($(MAKEFILE_LIST),)
+include $(dir $(lastword $(MAKEFILE_LIST)))/misc/make/Makefile-extra.mk
+else
 include ./misc/make/Makefile-extra.mk
+endif
 
 # developer convenience
 ifneq ($(wildcard /usr/bin/env),) # needs bash, perl, xargs, etc.

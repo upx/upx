@@ -54,10 +54,12 @@ enum {
 };
 
 struct Options final {
-    int cmd;
+    void reset() noexcept;
+
+    int cmd; // CMD_xxx
 
     // compression options
-    int method;
+    int method; // M_xxx
     bool method_lzma_seen;
     bool method_nrv2b_seen;
     bool method_nrv2d_seen;
@@ -90,6 +92,20 @@ struct Options final {
     int verbose;
     bool to_stdout;
 
+    // overlay handling
+    enum { SKIP_OVERLAY = 0, COPY_OVERLAY = 1, STRIP_OVERLAY = 2 };
+    int overlay;
+
+    // CPU options for i086/i386
+    enum {
+        CPU_DEFAULT = 0,
+        CPU_8086 = 1,
+        CPU_286 = 2,
+        CPU_386 = 3,
+        CPU_486 = 4,
+    };
+    int cpu_x86;
+
     // debug options
     struct {
         int debug_level;
@@ -98,13 +114,9 @@ struct Options final {
         char fake_stub_version[4 + 1];     // for internal debugging
         char fake_stub_year[4 + 1];        // for internal debugging
         bool getopt_throw_instead_of_exit; // for internal doctest checks
-        bool use_random_method;            // for internal debugging
-        bool use_random_filter;            // for internal debugging
+        bool use_random_method;            // for internal debugging / fuzz testing
+        bool use_random_filter;            // for internal debugging / fuzz testing
     } debug;
-
-    // overlay handling
-    enum { SKIP_OVERLAY = 0, COPY_OVERLAY = 1, STRIP_OVERLAY = 2 };
-    int overlay;
 
     // CRP - Compression Runtime Parameters (undocumented and subject to change)
     struct {
@@ -119,16 +131,6 @@ struct Options final {
             crp_zstd.reset();
         }
     } crp;
-
-    // CPU options for i086/i386
-    enum {
-        CPU_DEFAULT = 0,
-        CPU_8086 = 1,
-        CPU_286 = 2,
-        CPU_386 = 3,
-        CPU_486 = 4,
-    };
-    int cpu_x86;
 
     // options for various executable formats
     struct {
@@ -173,8 +175,6 @@ struct Options final {
         int strip_relocs;
         const char *keep_resource;
     } win32_pe;
-
-    void reset() noexcept;
 };
 
 /* vim:set ts=4 sw=4 et: */

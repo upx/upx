@@ -49,8 +49,8 @@ static void xcheck(const void *p) {
         throwCantUnpack("xcheck unexpected nullptr pointer; take care!");
 }
 static void xcheck(const void *p, size_t plen, const void *b, size_t blen) {
-    const char *pp = (const char *) p;
-    const char *bb = (const char *) b;
+    const charptr pp = (const charptr) p;
+    const charptr bb = (const charptr) b;
     if very_unlikely (pp < bb || pp > bb + blen || pp + plen > bb + blen)
         throwCantUnpack("xcheck pointer out of range; take care!");
 }
@@ -154,7 +154,7 @@ bool PeFile::testUnpackVersion(int version) const {
 }
 
 int PeFile::readFileHeader() {
-    struct alignas(1) exe_header_t {
+    struct alignas(1) ExeHeader final {
         LE16 mz;
         LE16 m512;
         LE16 p512;
@@ -164,12 +164,12 @@ int PeFile::readFileHeader() {
         LE32 nexepos;
     };
 
-    COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 64)
-    COMPILE_TIME_ASSERT_ALIGNED1(exe_header_t)
-    COMPILE_TIME_ASSERT(sizeof(((exe_header_t *) nullptr)->_) == 18)
-    COMPILE_TIME_ASSERT(sizeof(((exe_header_t *) nullptr)->__) == 34)
+    COMPILE_TIME_ASSERT(sizeof(ExeHeader) == 64)
+    COMPILE_TIME_ASSERT_ALIGNED1(ExeHeader)
+    COMPILE_TIME_ASSERT(sizeof(((ExeHeader *) nullptr)->_) == 18)
+    COMPILE_TIME_ASSERT(sizeof(((ExeHeader *) nullptr)->__) == 34)
 
-    exe_header_t h;
+    ExeHeader h;
     int ic;
     pe_offset = 0;
 
@@ -179,11 +179,11 @@ int PeFile::readFileHeader() {
 
         if (h.mz == 'M' + 'Z' * 256) // dos exe
         {
-            if (h.nexepos && h.nexepos < sizeof(exe_header_t)) {
+            if (h.nexepos && h.nexepos < sizeof(ExeHeader)) {
                 // Overlapping MZ and PE headers by 'leanify', etc.
                 char buf[64];
                 snprintf(buf, sizeof(buf), "PE and MZ header overlap: %#x < %#x",
-                         (unsigned) h.nexepos, (unsigned) sizeof(exe_header_t));
+                         (unsigned) h.nexepos, (unsigned) sizeof(ExeHeader));
                 throwCantPack(buf);
             }
             const unsigned delta = (h.relocoffs >= 0x40)
@@ -283,11 +283,11 @@ void PeFile::Interval::dump() const {
 **************************************************************************/
 
 namespace {
-struct FixDeleter { // don't leak memory on exceptions
+struct FixDeleter final { // helper so we don't leak memory on exceptions
     LE32 **fix;
-    size_t n;
+    size_t count;
     ~FixDeleter() noexcept {
-        for (size_t i = 0; i < n; i++) {
+        for (size_t i = 0; i < count; i++) {
             delete[] fix[i];
             fix[i] = nullptr;
         }
@@ -492,7 +492,7 @@ void PeFile32::processRelocs() // pass1
     FixDeleter fixdel{fix, 0}; // don't leak memory
     for (ic = 0; ic < 4; ic++) {
         fix[ic] = New(LE32, counts[ic]);
-        fixdel.n += 1;
+        fixdel.count += 1;
     }
 
     unsigned xcounts[4];
@@ -594,7 +594,7 @@ void PeFile64::processRelocs() // pass1
     FixDeleter fixdel{fix, 0}; // don't leak memory
     for (ic = 0; ic < 16; ic++) {
         fix[ic] = New(LE32, counts[ic]);
-        fixdel.n += 1;
+        fixdel.count += 1;
     }
 
     unsigned xcounts[16];
@@ -686,16 +686,18 @@ const LE32 &PeFile::IDADDR(unsigned x) const { return iddirs[x].vaddr; }
  */
 
 class PeFile::ImportLinker final : public ElfLinkerAMD64 {
-    struct tstr : private ::noncopyable {
-        char *s = nullptr;
-        explicit tstr(char *str) : s(str) {}
-        ~tstr() noexcept { delete[] s; }
-        operator char *() const { return s; }
+    struct TStr final : private ::noncopyable { // temporary string owner, deletes on destruction
+        explicit TStr(char *str) noexcept : s(str) {}
+        ~TStr() noexcept { delete[] s; } // delete!
+        operator char *() noexcept { return s; }
+        operator const char *() const noexcept { return s; }
+    private:
+        char *s;
     };
 
     // encoding of dll and proc names are required, so that our special
     // control characters in the name of sections can work as intended
-    static void encode_name(const char *name, char *buf) {
+    static void encode_name(SPAN_P(const char) name, SPAN_S(char) buf) {
         while (*name) {
             *buf++ = 'a' + ((*name >> 4) & 0xf);
             *buf++ = 'a' + (*name & 0xf);
@@ -705,27 +707,29 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
     }
 
     static char *name_for_dll(const char *dll, char first_char) {
-        assert(dll);
-        unsigned l = strlen(dll);
+        assert(dll != nullptr);
+        const unsigned l = strlen(dll);
         assert(l > 0);
-
-        char *name = New(char, 3 * l + 2);
+        const unsigned new_size = 1 + 3 * l + 1;
+        char *const new_name = New(char, new_size);
+        SPAN_S_VAR(char, const name, new_name, new_size);
         name[0] = first_char;
-        char *n = name + 1 + 2 * l;
+        SPAN_S_VAR(char, n, name + (1 + 2 * l));
         do {
             *n++ = tolower((uchar) *dll);
         } while (*dll++);
-        encode_name(name + 1 + 2 * l, name + 1);
-        return name;
+        encode_name(new_name + (1 + 2 * l), name + 1);
+        return new_name;
     }
 
     static char *name_for_proc(const char *dll, const char *proc, char first_char, char separator) {
-        unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
-        tstr dlln(name_for_dll(dll, first_char));
-        char *procn = New(char, len);
-        upx_safe_snprintf(procn, len, "%s%c", (const char *) dlln, separator);
-        encode_name(proc, procn + strlen(procn));
-        return procn;
+        const unsigned new_size = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
+        TStr dll_name(name_for_dll(dll, first_char));
+        char *const new_name = New(char, new_size);
+        SPAN_S_VAR(char, const name, new_name, new_size);
+        upx_safe_snprintf(new_name, new_size, "%s%c", (const char *) dll_name, separator);
+        encode_name(proc, name + strlen(name));
+        return new_name;
     }
 
     static const char zeros[sizeof(import_desc)];
@@ -747,8 +751,8 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
     unsigned thunk_size; // 4 or 8 bytes
 
     void add(const char *dll, const char *proc, unsigned ordinal) {
-        tstr sdll(name_for_dll(dll, dll_name_id));
-        tstr desc_name(name_for_dll(dll, descriptor_id));
+        TStr sdll(name_for_dll(dll, dll_name_id));
+        TStr desc_name(name_for_dll(dll, descriptor_id));
 
         char tsep = thunk_separator;
         if (findSection(sdll, false) == nullptr) {
@@ -759,7 +763,7 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
             addSection(desc_name, zeros, sizeof(zeros), 0); // descriptor
             addRelocation(desc_name, offsetof(import_desc, dllname), "R_X86_64_32", sdll, 0);
         }
-        tstr thunk(proc == nullptr ? name_for_dll(dll, thunk_id)
+        TStr thunk(proc == nullptr ? name_for_dll(dll, thunk_id)
                                    : name_for_proc(dll, proc, thunk_id, tsep));
 
         if (findSection(thunk, false) != nullptr)
@@ -769,7 +773,7 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
         if (tsep == thunk_separator_first) {
             addRelocation(desc_name, offsetof(import_desc, iat), "R_X86_64_32", thunk, 0);
 
-            tstr last_thunk(name_for_proc(dll, "X", thunk_id, thunk_separator_last));
+            TStr last_thunk(name_for_proc(dll, "X", thunk_id, thunk_separator_last));
             addSection(last_thunk, zeros, thunk_size, 0);
         }
 
@@ -777,7 +781,7 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
         if (ordinal != 0u) {
             addRelocation(thunk, 0, reltype, "*UND*", ordinal | (1ull << (thunk_size * 8 - 1)));
         } else if (proc != nullptr) {
-            tstr proc_name(name_for_proc(dll, proc, proc_name_id, procname_separator));
+            TStr proc_name(name_for_proc(dll, proc, proc_name_id, procname_separator));
             addSection(proc_name, zeros, 2, 1); // 2 bytes of word aligned "hint"
             addSymbol(proc_name, proc_name, 0);
             addRelocation(thunk, 0, reltype, proc_name, 0);
@@ -806,7 +810,7 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
     const Section *getThunk(const char *dll, const char *proc, char tsep) const {
         assert(dll);
         assert(proc);
-        tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        TStr thunk(name_for_proc(dll, proc, thunk_id, tsep));
         return findSection(thunk, false);
     }
 
@@ -887,7 +891,6 @@ public:
         assert(ordinal > 0 && ordinal < 0x10000);
         char ord[1 + 5 + 1];
         upx_safe_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
-
         const Section *s = getThunk((const char *) dll, ord, thunk_separator_first);
         if (s == nullptr && (s = getThunk((const char *) dll, ord, thunk_separator)) == nullptr)
             throwInternalError("entry not found");
@@ -897,18 +900,18 @@ public:
     template <typename C>
     upx_uint64_t getAddress(const C *dll) const {
         ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1) // "char" or "byte"
-        tstr sdll(name_for_dll((const char *) dll, dll_name_id));
+        TStr sdll(name_for_dll((const char *) dll, dll_name_id));
         return findSection(sdll, true)->offset;
     }
 
     template <typename C>
     upx_uint64_t hasDll(const C *dll) const {
         ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1) // "char" or "byte"
-        tstr sdll(name_for_dll((const char *) dll, dll_name_id));
+        TStr sdll(name_for_dll((const char *) dll, dll_name_id));
         return findSection(sdll, false) != nullptr;
     }
 };
-const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = {0};
+/*static*/ const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = {0};
 
 void PeFile::addKernelImport(const char *name) { ilinker->add(kernelDll(), name); }
 
@@ -923,10 +926,8 @@ void PeFile::addStubImports() {
 void PeFile::processImports2(unsigned myimport, unsigned) // pass 2
 {
     COMPILE_TIME_ASSERT(sizeof(import_desc) == 20)
-
-    if (!ilinker)
+    if (ilinker == nullptr)
         return;
-
     ilinker->relocate_import(myimport);
     int len;
     oimpdlls = ilinker->getLoader(&len);
@@ -958,7 +959,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     if (dllnum > 4096) // just some arbitrary limit/sanity check
         throwCantPack("too many DLL imports %u", dllnum);
 
-    struct udll {
+    struct UDll final {
         const byte *name;
         const byte *shname;
         unsigned ordinal;
@@ -968,8 +969,8 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         bool isk32;
 
         static int __acc_cdecl_qsort compare(const void *aa, const void *bb) {
-            const udll *a = *(const udll *const *) aa;
-            const udll *b = *(const udll *const *) bb;
+            const UDll *a = *(const UDll *const *) aa;
+            const UDll *b = *(const UDll *const *) bb;
             if (a->original_position == b->original_position) // identical object, poor qsort()
                 return 0;
             if (a->isk32 != b->isk32)
@@ -997,8 +998,8 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     };
 
     // +1 for dllnum=0
-    Array(struct udll, dlls, dllnum + 1);
-    Array(struct udll *, idlls, dllnum + 1);
+    Array(UDll, dlls, dllnum + 1);
+    Array(UDll *, idlls, dllnum + 1);
 
     soimport = 1024; // safety
 
@@ -1036,7 +1037,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
     mb_oimport.clear();
     oimport = mb_oimport;
 
-    upx_qsort(idlls, dllnum, sizeof(*idlls), udll::compare);
+    upx_qsort(idlls, dllnum, sizeof(*idlls), UDll::compare);
 
     info("Processing imports: %d DLLs", dllnum);
     for (unsigned ic = 0; ic < dllnum; ic++) {
@@ -1081,7 +1082,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         ppi += 8;
         for (; *tarr; tarr++)
             if (*tarr & ord_mask) {
-                unsigned ord = *tarr & 0xffff;
+                const unsigned ord = *tarr & 0xffff;
                 if (idlls[ic]->isk32 && kernel32ordinal) {
                     *ppi++ = 0xfe; // signed + odd parity
                     set_le32(ppi, ilinker->getAddress(idlls[ic]->name, ord));
@@ -1101,7 +1102,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             }
         ppi++;
 
-        unsigned esize = ptr_udiff_bytes(tarr, idlls[ic]->lookupt);
+        const unsigned esize = ptr_udiff_bytes(tarr, idlls[ic]->lookupt);
         lookups.add(idlls[ic]->lookupt, esize);
         if (ptr_diff_bytes(ibuf.subref("bad import name %#x", idlls[ic]->iat, 1),
                            idlls[ic]->lookupt) != 0) {
@@ -1311,13 +1312,13 @@ void PeFile::processExports(Export *xport, unsigned newoffs) // pass2
 // of course it was impossible to debug this ;-)
 
 template <>
-struct PeFile::tls_traits<LE32> {
+struct PeFile::tls_traits<LE32> final {
     struct alignas(1) tls {
         LE32 datastart; // VA tls init data start
         LE32 dataend;   // VA tls init data end
         LE32 tlsindex;  // VA tls index
         LE32 callbacks; // VA tls callbacks
-        char _[8];      // zero init, characteristics
+        byte _[8];      // zero init, characteristics
     };
 
     static const unsigned sotls = 24;
@@ -1328,13 +1329,13 @@ struct PeFile::tls_traits<LE32> {
 };
 
 template <>
-struct PeFile::tls_traits<LE64> {
+struct PeFile::tls_traits<LE64> final {
     struct alignas(1) tls {
         LE64 datastart; // VA tls init data start
         LE64 dataend;   // VA tls init data end
         LE64 tlsindex;  // VA tls index
         LE64 callbacks; // VA tls callbacks
-        char _[8];      // zero init, characteristics
+        byte _[8];      // zero init, characteristics
     };
 
     static const unsigned sotls = 40;
@@ -1545,7 +1546,7 @@ struct alignas(1) PeFile::Resource::res_dir_entry {
 };
 
 struct alignas(1) PeFile::Resource::res_dir {
-    char _[12]; // flags, timedate, version
+    byte _[12]; // flags, timedate, version
     LE16 namedentr;
     LE16 identr;
 
@@ -1558,7 +1559,7 @@ struct alignas(1) PeFile::Resource::res_dir {
 struct alignas(1) PeFile::Resource::res_data {
     LE32 offset;
     LE32 size;
-    char _[8]; // codepage, reserved
+    byte _[8]; // codepage, reserved
 };
 
 struct PeFile::Resource::upx_rnode {
@@ -1856,11 +1857,10 @@ static bool match(unsigned itype, const byte *ntype, unsigned iname, const byte 
     // typex and namex can be string or number
     // hopefully resource names do not have '/' or ',' characters inside
 
-    struct helper {
+    struct Helper final {
         static bool match(unsigned num, const byte *unistr, const char *mkeep) {
             if (!unistr)
                 return (unsigned) atoi(mkeep) == num;
-
             unsigned ic;
             for (ic = 0; ic < get_le16(unistr); ic++)
                 if (unistr[2 + ic * 2] != (byte) mkeep[ic])
@@ -1871,17 +1871,16 @@ static bool match(unsigned itype, const byte *ntype, unsigned iname, const byte 
 
     // FIXME this comparison is not too exact
     for (;;) {
-        char const *delim1 = strchr(keep, '/');
-        char const *delim2 = strchr(keep, ',');
-        if (helper::match(itype, ntype, keep)) {
+        const char *delim1 = strchr(keep, '/');
+        const char *delim2 = strchr(keep, ',');
+        if (Helper::match(itype, ntype, keep)) {
             if (!delim1)
                 return true;
             if (delim2 && delim2 < delim1)
                 return true;
-            if (helper::match(iname, nname, delim1 + 1))
+            if (Helper::match(iname, nname, delim1 + 1))
                 return true;
         }
-
         if (delim2 == nullptr)
             break;
         keep = delim2 + 1;
@@ -1967,13 +1966,15 @@ void PeFile::processResources(Resource *res) {
         else if (rtype > 0 && rtype < RT_LAST)
             do_compress = opt->win32_pe.compress_rt[rtype] ? true : false;
 
-        if (keep_icons)
+        if (do_compress && keep_icons)
             do_compress &=
                 !match(res->itype(), res->ntype(), res->iname(), res->nname(), keep_icons);
-        do_compress &=
-            !match(res->itype(), res->ntype(), res->iname(), res->nname(), "TYPELIB,REGISTRY,16");
-        do_compress &= !match(res->itype(), res->ntype(), res->iname(), res->nname(),
-                              opt->win32_pe.keep_resource);
+        if (do_compress)
+            do_compress &= !match(res->itype(), res->ntype(), res->iname(), res->nname(),
+                                  "TYPELIB,REGISTRY,16");
+        if (do_compress)
+            do_compress &= !match(res->itype(), res->ntype(), res->iname(), res->nname(),
+                                  opt->win32_pe.keep_resource);
 
         if (do_compress) {
             csize += res->size();
@@ -2042,22 +2043,22 @@ unsigned PeFile::stripDebug(unsigned overlaystart) {
     if (IDADDR(PEDIR_DEBUG) == 0)
         return overlaystart;
 
-    struct alignas(1) debug_dir_t {
-        char _[16]; // flags, time/date, version, type
+    struct alignas(1) DebugDir final {
+        byte _[16]; // flags, time/date, version, type
         LE32 size;
-        char __[4]; // rva
+        byte __[4]; // rva
         LE32 fpos;
     };
 
-    COMPILE_TIME_ASSERT(sizeof(debug_dir_t) == 28)
-    COMPILE_TIME_ASSERT_ALIGNED1(debug_dir_t)
-    COMPILE_TIME_ASSERT(sizeof(((debug_dir_t *) nullptr)->_) == 16)
-    COMPILE_TIME_ASSERT(sizeof(((debug_dir_t *) nullptr)->__) == 4)
+    COMPILE_TIME_ASSERT(sizeof(DebugDir) == 28)
+    COMPILE_TIME_ASSERT_ALIGNED1(DebugDir)
+    COMPILE_TIME_ASSERT(sizeof(((DebugDir *) nullptr)->_) == 16)
+    COMPILE_TIME_ASSERT(sizeof(((DebugDir *) nullptr)->__) == 4)
 
     const unsigned skip = IDADDR(PEDIR_DEBUG);
     const unsigned take = IDSIZE(PEDIR_DEBUG);
-    const debug_dir_t *dd = (const debug_dir_t *) ibuf.subref("bad debug %#x", skip, take);
-    for (unsigned ic = 0; ic < IDSIZE(PEDIR_DEBUG) / sizeof(debug_dir_t); ic++, dd++)
+    const DebugDir *dd = (const DebugDir *) ibuf.subref("bad debug %#x", skip, take);
+    for (unsigned ic = 0; ic < IDSIZE(PEDIR_DEBUG) / sizeof(DebugDir); ic++, dd++)
         if (overlaystart == dd->fpos)
             overlaystart += dd->size;
     ibuf.fill(IDADDR(PEDIR_DEBUG), IDSIZE(PEDIR_DEBUG), FILLVAL);
@@ -2770,7 +2771,7 @@ struct VPtr final { // "virtual pointer" pointing before a buffer
     SPAN_S(T) base;
     size_t x;
     // return base + (n - x)
-    auto operator+(size_t n) const { return base + mem_size_get_n(sizeof(T), n - x); }
+    SPAN_S(T) operator+(size_t n) const { return base + mem_size_get_n(sizeof(T), n - x); }
 };
 } // namespace
 

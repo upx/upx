@@ -26,8 +26,12 @@
 
 #pragma once
 
+// UPX only uses the very basic Windows API
 #if !defined(WIN32_LEAN_AND_MEAN)
 #define WIN32_LEAN_AND_MEAN 1
+#endif
+#if !defined(_WIN32_WINNT)
+#define _WIN32_WINNT 0x0400 // _WIN32_WINNT_NT4 aka Windows NT 4
 #endif
 
 #if (defined(_MSC_VER) && (_MSC_VER >= 1000 && _MSC_VER < 1200)) && !defined(__clang__)

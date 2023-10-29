@@ -855,8 +855,8 @@ int main_get_options(int argc, char **argv) {
         {"fake-stub-version", 0x31, N, 542},       // for internal debugging
         {"fake-stub-year", 0x31, N, 543},          // for internal debugging
         {"disable-random-id", 0x90, N, 545},       // for internal debugging
-        {"debug-use-random-method", 0x90, N, 546}, // for internal debugging
-        {"debug-use-random-filter", 0x90, N, 547}, // for internal debugging
+        {"debug-use-random-method", 0x90, N, 546}, // for internal debugging / fuzz testing
+        {"debug-use-random-filter", 0x90, N, 547}, // for internal debugging / fuzz testing
 
         // backup options
         {"backup", 0x10, N, 'k'},

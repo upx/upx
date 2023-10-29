@@ -27,9 +27,9 @@ jobs:
         uses: actions/checkout@v4
         with: { submodules: true }
       - { name: 'Config cmake Xcode',        run: 'cmake -S . -B build/xcode -G Xcode' }
-      - { name: 'Build cmake Xcode default', run: 'cmake --build build/xcode' }
-      - { name: 'Build cmake Xcode Debug',   run: 'cmake --build build/xcode --config Debug' }
-      - { name: 'Build cmake Xcode Release', run: 'cmake --build build/xcode --config Release' }
+      - { name: 'Build cmake Xcode default', run: 'cmake --build build/xcode --parallel --verbose' }
+      - { name: 'Build cmake Xcode Debug',   run: 'cmake --build build/xcode --parallel --verbose --config Debug' }
+      - { name: 'Build cmake Xcode Release', run: 'cmake --build build/xcode --parallel --verbose --config Release' }
       - name: 'Make artifact'
         run: |
           N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-xcode-${{ matrix.os }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')

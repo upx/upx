@@ -106,7 +106,8 @@ TEST_CASE("noncopyable") {
 }
 
 /*************************************************************************
-// TriBool
+// TriBool checks
+// (modern compilers will optimize away most of this code)
 **************************************************************************/
 
 namespace {

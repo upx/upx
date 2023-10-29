@@ -11,6 +11,7 @@ env:
   CMAKE_REQUIRED_QUIET: "OFF"
   CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
+  UPX_CMAKE_CONFIG_FLAGS: -DCMAKE_VERBOSE_MAKEFILE=ON
 
 jobs:
   job-llvm-mingw: # uses cmake + make
@@ -51,18 +52,22 @@ jobs:
       - name: 'Build clang aarch64'
         run: |
           export CC="aarch64-w64-mingw32-clang -static" CXX="aarch64-w64-mingw32-clang++ -static"
+          CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
           make UPX_XTARGET=aarch64-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Build clang armv7'
         run: |
           export CC="armv7-w64-mingw32-clang -static" CXX="armv7-w64-mingw32-clang++ -static"
+          CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
           make UPX_XTARGET=armv7-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Build clang i686'
         run: |
           export CC="i686-w64-mingw32-clang -static" CXX="i686-w64-mingw32-clang++ -static"
+          CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
           make UPX_XTARGET=i686-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Build clang x86_64'
         run: |
           export CC="x86_64-w64-mingw32-clang -static" CXX="x86_64-w64-mingw32-clang++ -static"
+          CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
           make UPX_XTARGET=x86_64-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Make artifact'
         run: |

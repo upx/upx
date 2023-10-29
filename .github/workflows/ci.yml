@@ -13,8 +13,8 @@ env:
   CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-10-27
-  ZIG_DIST_VERSION: 0.12.0-dev.1297+a9e66ed73
+  # 2023-10-29
+  ZIG_DIST_VERSION: 0.12.0-dev.1327+256ab68a9
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -317,7 +317,8 @@ jobs:
           where cl & where link
           set RUN_CL=cl ${{ matrix.cl_machine_flags }} -MT
           set RUN_LIB=link -lib ${{ matrix.link_machine_flags }}
-          set DEFS=-D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN
+          @rem UPX only uses the very basic Windows API
+          set DEFS=-D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0400
           set BDIR=%H%\build\%C%\%B%
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
           @REM ===== build bzip2 =====

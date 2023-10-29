@@ -11,8 +11,22 @@
 if(DEFINED UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
     cmake_minimum_required(VERSION "${UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION}" FATAL_ERROR)
 else()
-    cmake_minimum_required(VERSION 3.8 FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
+    cmake_minimum_required(VERSION "3.8" FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
 endif()
+
+# Sections of this CMakeLists.txt:
+#   - options
+#   - init
+#   - common compilation flags
+#   - targets
+#   - target compilation flags
+#   - test
+#   - install
+#   - print summary
+
+#***********************************************************************
+# options
+#***********************************************************************
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -281,12 +295,23 @@ if(NOT CMAKE_C_COMPILER_ID MATCHES "^MSVC")
     endif()
 endif()
 
-# compile a source file with -O2 even in Debug build
+# compile a target with -O2 optimization even in Debug build
+function(upx_compile_target_debug_with_O2)
+    foreach(t ${ARGV})
+        if(MSVC_FRONTEND)
+            # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
+        else()
+            target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-O2>)
+        endif()
+    endforeach()
+endfunction()
+
+# compile a source file with -O2 optimization even in Debug build; messy because of CMake limitations
 function(upx_compile_source_debug_with_O2)
     set(flags "$<$<CONFIG:Debug>:-O2>")
-    if (CMAKE_VERSION VERSION_LESS 3.8)
+    if(${CMAKE_VERSION} VERSION_LESS "3.8")
         # 3.8: The COMPILE_FLAGS source file property learned to support generator expressions
-        if (is_multi_config OR NOT CMAKE_BUILD_TYPE MATCHES "^Debug$")
+        if(is_multi_config OR NOT CMAKE_BUILD_TYPE MATCHES "^Debug$")
             return()
         endif()
         set(flags "-O2")
@@ -305,17 +330,6 @@ function(upx_compile_source_debug_with_O2)
             else()
                 set_source_files_properties(${t} PROPERTIES COMPILE_FLAGS "${prop} ${flags}")
             endif()
-        endif()
-    endforeach()
-endfunction()
-
-# compile a target with -O2 even in Debug build
-function(upx_compile_target_debug_with_O2)
-    foreach(t ${ARGV})
-        if(MSVC_FRONTEND)
-            # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
-        else()
-            target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-O2>)
         endif()
     endforeach()
 endfunction()
@@ -484,7 +498,7 @@ if(HAVE_UTIMENSAT)
         target_compile_definitions(${t} PRIVATE HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC=1)
     endif()
 endif()
-# improve speed of the debug versions
+# improve speed of the Debug versions
 upx_compile_source_debug_with_O2(src/compress/compress_lzma.cpp)
 upx_compile_source_debug_with_O2(src/filter/filter_impl.cpp)
 #upx_compile_target_debug_with_O2(${t})
@@ -496,9 +510,10 @@ else()
 endif()
 
 #***********************************************************************
-# ctest
-# make test
-# ninja test
+# test
+#   ctest
+#   make test
+#   ninja test
 #***********************************************************************
 
 if(NOT UPX_CONFIG_CMAKE_DISABLE_TEST)
@@ -536,9 +551,10 @@ endif()
 endif() # UPX_CONFIG_CMAKE_DISABLE_TEST
 
 #***********************************************************************
-# cmake --install .
-# make install
-# ninja install
+# install
+#   cmake --install .
+#   make install
+#   ninja install
 #***********************************************************************
 
 if(NOT UPX_CONFIG_CMAKE_DISABLE_INSTALL)
@@ -563,13 +579,16 @@ endif()
 endif() # UPX_CONFIG_CMAKE_DISABLE_INSTALL
 
 #***********************************************************************
-# finally print some info about the build configuration
+# show summary
+# print some info about the build configuration
 #***********************************************************************
 
 function(print_var)
     foreach(var ${ARGV})
-        if(${var})
-            message(STATUS "${var} = ${${var}}")
+        if(DEFINED ${var} AND NOT ",${${var}}," STREQUAL ",,")
+            if(${var})
+                message(STATUS "${var} = ${${var}}")
+            endif()
         endif()
     endforeach()
 endfunction()
