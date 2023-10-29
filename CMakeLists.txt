@@ -155,7 +155,7 @@ if(NOT is_multi_config AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 # CMake init
-project(upx VERSION 4.3.0 LANGUAGES C CXX)
+project(upx VERSION 4.2.1 LANGUAGES C CXX)
 
 # set the default multi-config build type to "Release"
 if(is_multi_config)
