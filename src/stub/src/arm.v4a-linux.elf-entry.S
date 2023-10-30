@@ -234,14 +234,6 @@ hex:
         .balign 4
 #endif  /*}*/
 
-L75:
-        mov r2,#14  @ length
-        adr r1,proc_self_exe
-        mov r0,#FD_stderr
-        do_sys7t __NR_write
-        mov r0,#127
-        do_sys7t __NR_exit
-
 main:  // IN: lr= &f_exp
         ldr r0,[lr,#sz_pack2 - f_exp]  @ sz_pack2
         add r6, lr,#sz_pack2 - f_exp  @ &sz_pack2
@@ -254,7 +246,7 @@ main:  // IN: lr= &f_exp
         adr r0,proc_self_exe
         mov r1,#O_RDONLY
         do_sys7t __NR_open
-        cmp r0,#0; blt L75
+        // cmp r0,#0; blt L75  // missing /proc/self/exe is no longer fatal
         str r0,[sp,#F_fd]
 
         ldr r3,[lr,#mflg - f_exp]

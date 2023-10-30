@@ -12,7 +12,7 @@ TARGET(elf32-bigmips)
 .text           0x0000000000100080      0xad0
  *(.text)
  .text          0x0000000000100080      0x1c0 tmp/mips.r3000-linux.elf-fold.o
-                0x0000000000100218                Pprotect
+                0x000000000010021c                Pprotect
  .text          0x0000000000100240      0x910 tmp/mips.r3000-linux.elf-main.o
                 0x00000000001009b0                upx_main
  *(.data)

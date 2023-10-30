@@ -198,6 +198,7 @@ F_delta= 3*4
 
 // Map 1 page of /proc/self/exe so that it does not disappear
         ldr r4,[sp],#4  @ pop r4,F_fd
+        cmp r4,#0; blt no_map_pse
         mov r5,#0  @ SEEK_SET offset
         stmdb sp!,{r4,r5}  @ arg5,arg6 calling convention
         mov r3,#MAP_PRIVATE
@@ -207,7 +208,7 @@ F_delta= 3*4
         call mmap  @ no error check: cannot recover
         ldmia sp!,{r0,r1}  @ fd, offset
         call close
-
+no_map_pse:
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x15; bl trace
 #endif  //}

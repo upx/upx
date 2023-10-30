@@ -231,6 +231,7 @@ p_memsz= 4+4+ 4*NBPW
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)
         li a5,0  // offset
         movr a4,r_fd
+        cmpwi a4,0; blt no_map_pse
         li a3,MAP_PRIVATE
         li a2,PROT_READ
         neg a1,r_PMASK  // PAGE_SIZE
@@ -239,6 +240,7 @@ p_memsz= 4+4+ 4*NBPW
 // close /proc/self/exe
         movr a0,r_fd
         call close
+no_map_pse:
 
 AT_NULL= 0  // <elf.h>
 a_type= 0

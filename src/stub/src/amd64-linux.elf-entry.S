@@ -211,14 +211,6 @@ msg_SELinux:
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
-
-        // IDENTSTR goes here
-
-  section ELFMAINZ
-msg_proc_self_exe:
-        push $14; pop %arg3  // length
-        push %arg1; pop %arg2  // "/proc/self/exe"
-        jmp L75
 L72:
         pop %arg2  // message text
 L75:
@@ -230,12 +222,15 @@ die:
         push $ __NR_exit; pop %rax
         syscall
 
+        // IDENTSTR goes here
+
+  section ELFMAINZ
 // Decompress the rest of this loader, and jump to it.
 unfold:  // IN: rbp= &f_exp; rsp/ &proc_self_exe,%entry
         pop %arg1  // &proc_self_exe
         sub %arg2l,%arg2l  // O_RDONLY
-        push $__NR_open; pop %rax
-        syscall; test %eax,%eax; js msg_proc_self_exe
+        push $__NR_open; pop %rax; syscall
+        // test %eax,%eax; js msg_proc_self_exe  // no longer fatal
         push %rax  // save fd
 
         lea -4+ FOLD - proc_self_exe(%arg1),%rsi  // &O_BINFO | is_ptinterp

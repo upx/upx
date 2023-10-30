@@ -186,6 +186,7 @@ xPMASK .req x20
 // Map 1 page of /proc/self/exe so that munmap does not remove all references
         mov x5,#0  // offset
         mov w4,wfd  // fd
+        cmp w4,#0; blt no_map_pse
         mov w3,#MAP_PRIVATE
         mov w2,#PROT_READ
         mov x1,#PAGE_SIZE
@@ -194,7 +195,7 @@ xPMASK .req x20
 
         mov w0,wfd  // fd
         call close
-
+no_map_pse:
         mov lr,xfexp  // entry
         mov x0,xADRU
         mov w1,wLENU

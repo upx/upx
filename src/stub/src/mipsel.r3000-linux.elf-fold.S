@@ -207,7 +207,8 @@ p_memsz= 5*NBPW
 
 // Map 1 page of /proc/self/exe so that munmap does not remove all references
         lw   a4,F_fd(sp)
-        move a5,$0  // offset
+          move a5,$0  // offset
+        bltz a4,no_map_pse
           sw a4,a4_sys(sp)
           sw a5,a5_sys(sp)
         li   a3,MAP_PRIVATE
@@ -218,7 +219,7 @@ p_memsz= 5*NBPW
 // close /proc/self/exe
         lw a0,a4_sys(sp)  // fd
         li v0,__NR_close; syscall
-
+no_map_pse:
         lw a1,F_LENU(sp)  # prepare for munmap() at escape hatch
         lw a0,F_ADRU(sp)
         addiu sp,sp,sp_frame

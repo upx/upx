@@ -343,14 +343,6 @@ zfind:
         ldr x1,[x0],#NBPW; cbnz x1,zfind
         ret
 
-L75:
-        mov w2,#14  // length
-        adr x1,proc_self_exe
-        mov w0,#FD_stderr
-        do_sys __NR_write
-        mov w0,#127
-        do_sys __NR_exit
-
 main:
         mov xfexp,lr
         mov x0,sp; call zfind  // x0= &envp
@@ -370,7 +362,7 @@ main:
         adr x1,proc_self_exe
         mov w2,O_RDONLY
         do_sys __NR_openat; mov wfd,w0
-        cmp w0,#0; blt L75
+        // cmp w0,#0; blt L75  // no longer fatal
 
         call unfold
 LxFOLD:

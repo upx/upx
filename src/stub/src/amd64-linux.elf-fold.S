@@ -164,6 +164,7 @@ p_memsz= 5*NBPW
         movq %r13,%arg1; call munmap  # discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that the symlink does not disappear.
+        test %ebx,%ebx; js no_pse_map
         subq %arg6,%arg6  # 0 offset
         mov %ebx,%arg5l  # fd
         push $MAP_PRIVATE; pop %arg4
@@ -174,7 +175,7 @@ p_memsz= 5*NBPW
 
         mov %ebx,%edi  # fd
         call close
-
+no_pse_map:
         pop %arg1  # ADRU: unfolded upx_main etc.
         pop %arg2  # LENU
         push $__NR_munmap; pop %rax

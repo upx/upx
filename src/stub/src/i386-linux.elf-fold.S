@@ -207,6 +207,9 @@ F_fd= 6*4  // frame offset to fd
         push edi  // fd, auxv, ADRU, LENU, entry, argc
 
 // Map one page of /proc/self/exe so that symlink does not disappear
+        pop ebx  // fd in case no_pse_map
+        test edi,edi; js no_pse_map
+        push ebx  // restore fd
         sub ebp,ebp  // 0 block in file
         // edi has fd
         push MAP_PRIVATE; pop esi
@@ -217,7 +220,7 @@ F_fd= 6*4  // frame offset to fd
 
         pop ebx  // fd;  auxv, LENU, ADRU, entry, argc
         push __NR_close; pop eax; int 0x80
-
+no_pse_map:
         pop edi  // auxv table
         sub eax,eax  // 0, also AT_NULL
         .byte 0x3c  // "cmpb al, byte ..." like "jmp 1+L60" but 1 byte shorter

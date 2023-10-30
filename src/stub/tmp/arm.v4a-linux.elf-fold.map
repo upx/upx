@@ -8,34 +8,34 @@ Linker script and memory map
 
                 0x0000000000008040                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008040      0xaa8
+.text           0x0000000000008040      0xab0
  *(.text)
- .text          0x0000000000008040      0x338 tmp/arm.v4a-linux.elf-fold.o
-                0x0000000000008250                my_bkpt
-                0x0000000000008258                exit
-                0x000000000000825c                read
-                0x0000000000008264                write
-                0x000000000000826c                open
-                0x0000000000008274                close
-                0x000000000000827c                unlink
-                0x0000000000008284                getpid
-                0x000000000000828c                brk
-                0x0000000000008294                readlink
-                0x000000000000829c                munmap
-                0x00000000000082a4                Pprotect
-                0x00000000000082a4                mprotect
-                0x00000000000082bc                mmap
-                0x00000000000082f0                __clear_cache
-                0x00000000000082fc                get_sys_munmap
-                0x0000000000008304                mmap_privanon
-                0x000000000000831c                __udivsi3
-                0x000000000000831c                div10
- .text          0x0000000000008378      0x770 tmp/arm.v4a-linux.elf-main.o
-                0x0000000000008398                get_page_mask
-                0x00000000000089b4                upx_main
+ .text          0x0000000000008040      0x340 tmp/arm.v4a-linux.elf-fold.o
+                0x0000000000008258                my_bkpt
+                0x0000000000008260                exit
+                0x0000000000008264                read
+                0x000000000000826c                write
+                0x0000000000008274                open
+                0x000000000000827c                close
+                0x0000000000008284                unlink
+                0x000000000000828c                getpid
+                0x0000000000008294                brk
+                0x000000000000829c                readlink
+                0x00000000000082a4                munmap
+                0x00000000000082ac                Pprotect
+                0x00000000000082ac                mprotect
+                0x00000000000082c4                mmap
+                0x00000000000082f8                __clear_cache
+                0x0000000000008304                get_sys_munmap
+                0x000000000000830c                mmap_privanon
+                0x0000000000008324                __udivsi3
+                0x0000000000008324                div10
+ .text          0x0000000000008380      0x770 tmp/arm.v4a-linux.elf-main.o
+                0x00000000000083a0                get_page_mask
+                0x00000000000089bc                upx_main
  *(.data)
- .data          0x0000000000008ae8        0x0 tmp/arm.v4a-linux.elf-fold.o
- .data          0x0000000000008ae8        0x0 tmp/arm.v4a-linux.elf-main.o
+ .data          0x0000000000008af0        0x0 tmp/arm.v4a-linux.elf-fold.o
+ .data          0x0000000000008af0        0x0 tmp/arm.v4a-linux.elf-main.o
 
 .data
 LOAD tmp/arm.v4a-linux.elf-fold.o

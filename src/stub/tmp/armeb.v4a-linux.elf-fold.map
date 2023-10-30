@@ -9,40 +9,40 @@ Linker script and memory map
 TARGET(elf32-bigarm)
                 0x0000000000008080                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008080      0xaa8
+.text           0x0000000000008080      0xab0
  *(.text)
- .text          0x0000000000008080      0x338 tmp/armeb.v4a-linux.elf-fold.o
-                0x00000000000082dc                munmap
-                0x000000000000833c                get_sys_munmap
-                0x00000000000082c4                getpid
-                0x00000000000082d4                readlink
-                0x000000000000835c                __udivsi3
-                0x00000000000082fc                mmap
-                0x0000000000008330                __clear_cache
-                0x0000000000008344                mmap_privanon
-                0x00000000000082a4                write
-                0x000000000000829c                read
-                0x00000000000082bc                unlink
-                0x0000000000008290                my_bkpt
-                0x00000000000082e4                Pprotect
-                0x0000000000008298                exit
-                0x00000000000082cc                brk
-                0x00000000000082ac                open
-                0x000000000000835c                div10
-                0x00000000000082e4                mprotect
-                0x00000000000082b4                close
- .text          0x00000000000083b8      0x770 tmp/armeb.v4a-linux.elf-main.o
-                0x00000000000083d8                get_page_mask
-                0x00000000000089f4                upx_main
+ .text          0x0000000000008080      0x340 tmp/armeb.v4a-linux.elf-fold.o
+                0x00000000000082e4                munmap
+                0x0000000000008344                get_sys_munmap
+                0x00000000000082cc                getpid
+                0x00000000000082dc                readlink
+                0x0000000000008364                __udivsi3
+                0x0000000000008304                mmap
+                0x0000000000008338                __clear_cache
+                0x000000000000834c                mmap_privanon
+                0x00000000000082ac                write
+                0x00000000000082a4                read
+                0x00000000000082c4                unlink
+                0x0000000000008298                my_bkpt
+                0x00000000000082ec                Pprotect
+                0x00000000000082a0                exit
+                0x00000000000082d4                brk
+                0x00000000000082b4                open
+                0x0000000000008364                div10
+                0x00000000000082ec                mprotect
+                0x00000000000082bc                close
+ .text          0x00000000000083c0      0x770 tmp/armeb.v4a-linux.elf-main.o
+                0x00000000000083e0                get_page_mask
+                0x00000000000089fc                upx_main
  *(.data)
- .data          0x0000000000008b28        0x0 tmp/armeb.v4a-linux.elf-fold.o
- .data          0x0000000000008b28        0x0 tmp/armeb.v4a-linux.elf-main.o
+ .data          0x0000000000008b30        0x0 tmp/armeb.v4a-linux.elf-fold.o
+ .data          0x0000000000008b30        0x0 tmp/armeb.v4a-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000008b28        0x0
- .bss           0x0000000000008b28        0x0 tmp/armeb.v4a-linux.elf-fold.o
- .bss           0x0000000000008b28        0x0 tmp/armeb.v4a-linux.elf-main.o
+.bss            0x0000000000008b30        0x0
+ .bss           0x0000000000008b30        0x0 tmp/armeb.v4a-linux.elf-fold.o
+ .bss           0x0000000000008b30        0x0 tmp/armeb.v4a-linux.elf-main.o
 LOAD tmp/armeb.v4a-linux.elf-fold.o
 LOAD tmp/armeb.v4a-linux.elf-main.o
 OUTPUT(tmp/armeb.v4a-linux.elf-fold.bin elf32-bigarm)
