@@ -356,11 +356,8 @@ inline void NO_fprintf(FILE *, const char *, ...) noexcept {}
 #define upx_return_address() nullptr
 #endif
 
-// TODO cleanup: we now require C++17, so remove all __packed_struct usage
-#define __packed_struct(s) struct alignas(1) s {
-#define __packed_struct_end()                                                                      \
-    }                                                                                              \
-    ;
+// TODO cleanup: we now require C++17, so remove all packed_struct usage
+#define packed_struct(s) struct alignas(1) s
 
 #define COMPILE_TIME_ASSERT_ALIGNOF_USING_SIZEOF__(a, b)                                           \
     {                                                                                              \

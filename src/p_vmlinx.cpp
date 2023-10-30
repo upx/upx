@@ -327,7 +327,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
         if (UPX_E_OK!=r || len_unc<=len_cpr)  // FIXME: allow no compression
             throwInternalError("Ehdr compression failed");
 
-        __packed_struct(b_info) // 12-byte header before each compressed block
+        packed_struct(b_info) { // 12-byte header before each compressed block
             NE32 sz_unc;  // uncompressed_size
             NE32 sz_cpr;  //   compressed_size
             unsigned char b_method;  // compression algorithm
@@ -335,7 +335,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
             unsigned char b_cto8;  // filter parameter
             unsigned char b_unused;  // FIXME: !=0  for partial-block unfilter
             // NE32 f_offset, f_len;  // only if    partial-block unfilter
-        __packed_struct_end()
+        };
 
         struct b_info hdr_info;
         set_be32(&hdr_info.sz_unc, len_unc);

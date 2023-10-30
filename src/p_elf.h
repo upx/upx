@@ -49,7 +49,7 @@ struct ElfITypes
 
 // The ELF file header. This appears at the start of every ELF file.
 template <class TElfITypes>
-__packed_struct(Ehdr)
+packed_struct(Ehdr) {
     typedef typename TElfITypes::Half    Half;
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Addr    Addr;
@@ -72,11 +72,11 @@ __packed_struct(Ehdr)
 
 #   define WANT_EHDR_ENUM 1
 #   include "p_elf_enum.h"
-__packed_struct_end()
+};
 
 
 template <class TElfITypes>
-__packed_struct(Dyn)
+packed_struct(Dyn) {
     typedef typename TElfITypes::Xword   Xword;
     typedef typename TElfITypes::Addr    Addr;
 
@@ -85,32 +85,32 @@ __packed_struct(Dyn)
 
 #   define WANT_DYN_ENUM 1
 #   include "p_elf_enum.h"
-__packed_struct_end()
+};
 
 
 template <class TElfITypes>
-__packed_struct(Rel)
+packed_struct(Rel) {
     typedef typename TElfITypes::Xword   Xword;
     typedef typename TElfITypes::Addr    Addr;
 
     Addr r_offset;
     Xword r_info;
-__packed_struct_end()
+};
 
 
 template <class TElfITypes>
-__packed_struct(Rela)
+packed_struct(Rela) {
     typedef typename TElfITypes::Xword   Xword;
     typedef typename TElfITypes::Addr    Addr;
 
     Addr r_offset;
     Xword r_info;
     Xword r_addend;
-__packed_struct_end()
+};
 
 
 template <class TElfITypes>
-__packed_struct(External_Note)
+packed_struct(External_Note) {
     typedef typename TElfITypes::Word   Word;
 
     Word xn_namesz;  // includes terminating '\0'
@@ -118,7 +118,7 @@ __packed_struct(External_Note)
     Word xn_type;
     //char xn_name[N];  // terminate with '\0'
     //char xn_data[M];  // aligned to 0 mod 4
-__packed_struct_end()
+};
 
 
 } // namespace N_Elf
@@ -131,7 +131,7 @@ __packed_struct_end()
 namespace N_Elf32 {
 
 template <class TElfITypes>
-__packed_struct(Phdr)
+packed_struct(Phdr) {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Addr    Addr;
     typedef typename TElfITypes::Off     Off;
@@ -147,11 +147,11 @@ __packed_struct(Phdr)
 
 #   define WANT_PHDR_ENUM 1
 #   include "p_elf_enum.h"
-__packed_struct_end()
+};
 
 
 template <class TElfITypes>
-__packed_struct(Shdr)
+packed_struct(Shdr) {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Addr    Addr;
     typedef typename TElfITypes::Off     Off;
@@ -169,11 +169,11 @@ __packed_struct(Shdr)
 
 #   define WANT_SHDR_ENUM 1
 #   include "p_elf_enum.h"
-__packed_struct_end()
+};
 
 
 template <class TElfITypes>
-__packed_struct(Sym)
+packed_struct(Sym) {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Addr    Addr;
     typedef typename TElfITypes::Section Section;
@@ -192,7 +192,7 @@ __packed_struct(Sym)
     static unsigned int  get_st_type(unsigned x) { return 0xf &  x    ; }
     static unsigned char make_st_info(unsigned bind, unsigned type)
         { return (unsigned char) (((bind<<4) + (0xf & type)) & 0xff); }
-__packed_struct_end()
+};
 
 
 } // namespace N_Elf32
@@ -205,7 +205,7 @@ __packed_struct_end()
 namespace N_Elf64 {
 
 template <class TElfITypes>
-__packed_struct(Phdr)
+packed_struct(Phdr) {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Xword   Xword;
     typedef typename TElfITypes::Addr    Addr;
@@ -222,11 +222,11 @@ __packed_struct(Phdr)
 
 #   define WANT_PHDR_ENUM 1
 #   include "p_elf_enum.h"
-__packed_struct_end()
+};
 
 
 template <class TElfITypes>
-__packed_struct(Shdr)
+packed_struct(Shdr) {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Xword   Xword;
     typedef typename TElfITypes::Addr    Addr;
@@ -245,11 +245,11 @@ __packed_struct(Shdr)
 
 #   define WANT_SHDR_ENUM 1
 #   include "p_elf_enum.h"
-__packed_struct_end()
+};
 
 
 template <class TElfITypes>
-__packed_struct(Sym)
+packed_struct(Sym) {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Xword   Xword;
     typedef typename TElfITypes::Addr    Addr;
@@ -269,7 +269,7 @@ __packed_struct(Sym)
     static unsigned int  get_st_type(unsigned x) { return 0xf &  x    ; }
     static unsigned char make_st_info(unsigned bind, unsigned type)
         { return (unsigned char) (((bind<<4) + (0xf & type)) & 0xff); }
-__packed_struct_end()
+};
 
 
 } // namespace N_Elf64

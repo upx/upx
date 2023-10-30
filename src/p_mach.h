@@ -32,22 +32,22 @@
 
 #include "conf.h"
 
-__packed_struct(Mach_fat_header)
+packed_struct(Mach_fat_header) {
     BE32 magic;
         enum : unsigned {  // note conflict with java bytecode PackLinuxI386
             FAT_MAGIC      = 0xcafebabe,
             FAT_MAGIC_SWAB = 0xbebafeca,
         };
     BE32 nfat_arch;  // Number of Mach_fat_arch which follow.
-__packed_struct_end()
+};
 
-__packed_struct(Mach_fat_arch)
+packed_struct(Mach_fat_arch) {
     BE32 cputype;
     BE32 cpusubtype;
     BE32 offset;
     BE32 size;
     BE32 align;  /* shift count; log base 2 */
-__packed_struct_end()
+};
 
 /*************************************************************************
 // Mach  Mach Object executable; all structures are target-endian
@@ -67,7 +67,7 @@ struct MachITypes
 };
 
 template <class TMachITypes>
-__packed_struct(Mach_header)
+packed_struct(Mach_header) {
     typedef typename TMachITypes::Word Word;
 
     Word magic;
@@ -79,10 +79,10 @@ __packed_struct(Mach_header)
     Word flags;
 #define WANT_MACH_HEADER_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_header64)
+packed_struct(Mach_header64) {
     // only difference is padding to 0 mod 8
     typedef typename TMachITypes::Word Word;
 
@@ -96,10 +96,10 @@ __packed_struct(Mach_header64)
     Word reserved;  // pad to 0 mod 8
 #define WANT_MACH_HEADER_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_command)  // generic prefix
+packed_struct(Mach_command) { // generic prefix
     typedef typename TMachITypes::Word Word;
 
     Word cmd;
@@ -107,10 +107,10 @@ __packed_struct(Mach_command)  // generic prefix
     Word data[2];  // because cmdsize >= 16
 #define WANT_MACH_SEGMENT_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_segment_command)
+packed_struct(Mach_segment_command) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Addr Addr;
     typedef typename TMachITypes::Off  Off;
@@ -128,10 +128,10 @@ __packed_struct(Mach_segment_command)
     Word flags;
 #define WANT_MACH_SEGMENT_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_section_command)
+packed_struct(Mach_section_command) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Addr Addr;
     typedef typename TMachITypes::Off  Off;
@@ -149,10 +149,10 @@ __packed_struct(Mach_section_command)
     Word reserved2;  /* for count or sizeof */
 #define WANT_MACH_SECTION_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_section_command_64)
+packed_struct(Mach_section_command_64) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Addr Addr;
     typedef typename TMachITypes::Off  Off;
@@ -173,10 +173,10 @@ __packed_struct(Mach_section_command_64)
     Word reserved3;  /* NOT IN 32-bit VERSION!! */
 #define WANT_MACH_SECTION_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_symtab_command)
+packed_struct(Mach_symtab_command) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Off  Off;
     typedef typename TMachITypes::Word Off32;
@@ -187,10 +187,10 @@ __packed_struct(Mach_symtab_command)
     Word nsyms;    /* number of symbol table entries */
     Off32 stroff;  /* string table offset */
     Word strsize;  /* string table size in bytes */
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_dysymtab_command)
+packed_struct(Mach_dysymtab_command) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Off  Off;
     typedef typename TMachITypes::Word Off32;
@@ -215,10 +215,10 @@ __packed_struct(Mach_dysymtab_command)
     Word nextrel;       /* number of external relocation entries */
     Off32 locreloff;      /* offset to local relocation entries */
     Word nlocrel;       /* number of local relocation entries */
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_segsplit_info_command)
+packed_struct(Mach_segsplit_info_command) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Off  Off;
 
@@ -226,10 +226,10 @@ __packed_struct(Mach_segsplit_info_command)
     Word cmdsize;       /* sizeof(struct Mach_segsplit_info_command) */
     Off dataoff;
     Word datasize;
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_routines_command)
+packed_struct(Mach_routines_command) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Addr Addr;
 
@@ -245,10 +245,10 @@ __packed_struct(Mach_routines_command)
     Word reserved6;
 #define WANT_MACH_SEGMENT_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_routines_command_64)
+packed_struct(Mach_routines_command_64) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Addr Addr;
     typedef typename TMachITypes::Xword Xword;
@@ -265,10 +265,10 @@ __packed_struct(Mach_routines_command_64)
     Xword reserved6;
 #define WANT_MACH_SEGMENT_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_twolevel_hints_command)
+packed_struct(Mach_twolevel_hints_command) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Off  Off;
 
@@ -278,10 +278,10 @@ __packed_struct(Mach_twolevel_hints_command)
     Word nhints;  /* number of hints */
 #define WANT_MACH_SEGMENT_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_linkedit_data_command)
+packed_struct(Mach_linkedit_data_command) {
     typedef typename TMachITypes::Word Word;
 
     Word cmd;  // LC_CODE_SIGNATURE, LC_SEGMENT_SPLIT_INFO,
@@ -290,19 +290,19 @@ __packed_struct(Mach_linkedit_data_command)
     Word cmdsize;
     Word dataoff;  // file offset of data in __LINKEDIT segment
     Word datasize;  // file size of data in __LINKEDIT segment
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_uuid_command)
+packed_struct(Mach_uuid_command) {
     typedef typename TMachITypes::Word Word;
 
     Word cmd;  // LC_UUID
     Word cmdsize;  // 24
     unsigned char uuid[16];
-__packed_struct_end()
+};
 
 template <class TMachITypes, class TMachThreadState>
-__packed_struct(Mach_thread_command)
+packed_struct(Mach_thread_command) {
     typedef typename TMachITypes::Word Word;
 
     Word cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
@@ -312,10 +312,10 @@ __packed_struct(Mach_thread_command)
     TMachThreadState state;
 #define WANT_MACH_THREAD_ENUM 1
 #include "p_mach_enum.h"
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_main_command)
+packed_struct(Mach_main_command) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Xword Xword;
 
@@ -323,30 +323,30 @@ __packed_struct(Mach_main_command)
     Word cmdsize;  // 24
     Xword entryoff;  // file offset of main() [expected in __TEXT]
     Xword stacksize;  // non-default initial stack size
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_source_version_command)
+packed_struct(Mach_source_version_command) {
     typedef typename TMachITypes::Word Word;
 
     Word cmd;  // LC_SOURCE_VERSION
     Word cmdsize;  // 16
     Word version;
     Word __pad;  // to 0 mod 8
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_version_min_command)
+packed_struct(Mach_version_min_command) {
     typedef typename TMachITypes::Word Word;
 
     Word cmd;  // LC_VERSION_MIN_MACOSX
     Word cmdsize;  // 16
     Word version;  // X.Y.Z ==> xxxx.yy.zz
     Word sdk;  // X.Y.Z ==> xxxx.yy.zz
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_dyld_info_only_command)
+packed_struct(Mach_dyld_info_only_command) {
     typedef typename TMachITypes::Word Word;
 
     Word cmd;  // LC_DYLD_INFO_ONLY
@@ -361,42 +361,42 @@ __packed_struct(Mach_dyld_info_only_command)
     Word lazy_bind_size;
     Word export_off;
     Word export_size;
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_load_dylinker_command)
+packed_struct(Mach_load_dylinker_command) {
     typedef typename TMachITypes::Word Word;
 
     Word cmd;
     Word cmdsize;
     Word name;
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_dylib)
+packed_struct(Mach_dylib) {
     typedef typename TMachITypes::Word Word;
 
     Word name;         /* library's path name */
     Word timestamp;         /* library's build time stamp */
     Word current_version;       /* library's current version number */
     Word compatibility_version; /* library's compatibility vers number*/
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_load_dylib_command)
+packed_struct(Mach_load_dylib_command) {
     typedef typename TMachITypes::Word Word;
 
     Word cmd;
     Word cmdsize;
     Mach_dylib<TMachITypes> dylib;
-__packed_struct_end()
+};
 
 }  // namespace N_Mach
 
 namespace N_Mach32 {
 
 template <class TMachITypes>
-__packed_struct(Mach_ppc_thread_state)
+packed_struct(Mach_ppc_thread_state) {
     typedef typename TMachITypes::Addr Addr;
 
     Addr srr0;      /* Instruction address register (PC; entry addr) */
@@ -413,10 +413,10 @@ __packed_struct(Mach_ppc_thread_state)
     Addr mq;        /* MQ register (601 only) */
 
     Addr vrsave;    /* Vector Save Register */
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_i386_thread_state)
+packed_struct(Mach_i386_thread_state) {
     typedef typename TMachITypes::Word Word;
 
     Word eax, ebx, ecx, edx;
@@ -425,10 +425,10 @@ __packed_struct(Mach_i386_thread_state)
     Word eflags;
     Word eip, cs;
     Word ds, es, fs, gs;
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_ARM_thread_state)
+packed_struct(Mach_ARM_thread_state) {
     typedef typename TMachITypes::Word Word;
 
     Word r[13];  // r0-r12
@@ -436,14 +436,14 @@ __packed_struct(Mach_ARM_thread_state)
     Word lr;  // r14
     Word pc;  // r15
     Word cpsr;
-__packed_struct_end()
+};
 
 } // namespace N_Mach32
 
 namespace N_Mach64 {
 
 template <class TMachITypes>
-__packed_struct(Mach_AMD64_thread_state)
+packed_struct(Mach_AMD64_thread_state) {
     typedef typename TMachITypes::Xword Xword;
 
     Xword rax, rbx, rcx, rdx;
@@ -452,10 +452,10 @@ __packed_struct(Mach_AMD64_thread_state)
     Xword r12, r13, r14, r15;
     Xword rip, rflags;
     Xword cs, fs, gs;
-__packed_struct_end()
+};
 
 template <class TMachITypes>
-__packed_struct(Mach_ppc_thread_state64)
+packed_struct(Mach_ppc_thread_state64) {
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Xword Xword;
 
@@ -472,9 +472,10 @@ __packed_struct(Mach_ppc_thread_state64)
     Xword ctr;      /* Count register */
 
     Word vrsave;    /* Vector Save Register */
-__packed_struct_end()
+};
 
-template <class TMachITypes> __packed_struct(Mach_ARM64_thread_state)
+template <class TMachITypes>
+packed_struct(Mach_ARM64_thread_state) {
     typedef typename TMachITypes::Xword Xword;
     typedef typename TMachITypes::Word Word;
 
@@ -489,7 +490,7 @@ template <class TMachITypes> __packed_struct(Mach_ARM64_thread_state)
     Xword pc;
     Word cpsr;
     Word pad;  // to (0 mod 8)
-__packed_struct_end()
+};
 
 }  // namespace N_Mach64
 
@@ -823,28 +824,28 @@ protected:
     Mach_source_version_command cmdSRCVER;  // copied from input
     Mach_version_min_command cmdVERMIN;  // copied from input
 
-    __packed_struct(b_info)     // 12-byte header before each compressed block
+    packed_struct(b_info) {    // 12-byte header before each compressed block
         TE32 sz_unc;  // uncompressed_size
         TE32 sz_cpr;  //   compressed_size
         unsigned char b_method; // compression algorithm
         unsigned char b_ftid;   // filter id
         unsigned char b_cto8;   // filter parameter
         unsigned char b_segseq; // LC_SEGMENT ordinal
-    __packed_struct_end()
+    };
 
-    __packed_struct(l_info)     // 12-byte trailer in header for loader
+    packed_struct(l_info) {    // 12-byte trailer in header for loader
         TE32 l_checksum;
         LE32 l_magic;
         TE16 l_lsize;
         unsigned char l_version;
         unsigned char l_format;
-    __packed_struct_end()
+    };
 
-    __packed_struct(p_info)     // 12-byte packed program header
+    packed_struct(p_info) {    // 12-byte packed program header
         TE32 p_progid;
         TE32 p_filesize;
         TE32 p_blocksize;
-    __packed_struct_end()
+    };
 
     struct l_info linfo;
 
@@ -878,7 +879,7 @@ protected:
     virtual Linker* newLinker() const override;
     virtual void addStubEntrySections(Filter const *) override;
 
-    __packed_struct(Mach_thread_command)
+    packed_struct(Mach_thread_command) {
         TE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
         TE32 cmdsize;        /* total size of this command */
         TE32 flavor;
@@ -886,7 +887,7 @@ protected:
         Mach_ppc_thread_state state;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
-    __packed_struct_end()
+    };
 
     Mach_thread_command threado;
     int  threado_size() const override { return sizeof(threado); }
@@ -930,7 +931,7 @@ protected:
     virtual void pack1_setup_threado(OutputFile *const fo) override;
     virtual Linker* newLinker() const override;
 
-    __packed_struct(Mach_thread_command)
+    packed_struct(Mach_thread_command) {
         BE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
         BE32 cmdsize;        /* total size of this command */
         BE32 flavor;
@@ -938,7 +939,7 @@ protected:
         Mach_ppc_thread_state64 state64;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
-    __packed_struct_end()
+    };
 
     Mach_thread_command threado;
     int threado_size() const override { return sizeof(threado); }
@@ -1012,7 +1013,7 @@ protected:
     virtual Linker* newLinker() const override;
     virtual void addStubEntrySections(Filter const *) override;
 
-    __packed_struct(Mach_thread_command)
+    packed_struct(Mach_thread_command) {
         LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
         LE32 cmdsize;        /* total size of this command */
         LE32 flavor;
@@ -1020,7 +1021,7 @@ protected:
         Mach_i386_thread_state state;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
-    __packed_struct_end()
+    };
 
     Mach_thread_command threado;
     int threado_size() const override { return sizeof(threado); }
@@ -1079,7 +1080,7 @@ protected:
     virtual Linker* newLinker() const override;
     virtual void addStubEntrySections(Filter const *) override;
 
-    __packed_struct(Mach_thread_command)
+    packed_struct(Mach_thread_command) {
         typedef MachITypes::Word Word;
         Word cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
         Word cmdsize;        /* total size of this command */
@@ -1088,7 +1089,7 @@ protected:
         Mach_AMD64_thread_state state;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
-    __packed_struct_end()
+    };
 
     Mach_thread_command threado;
     int threado_size() const override { return sizeof(threado); }
@@ -1148,7 +1149,7 @@ protected:
     virtual Linker* newLinker() const override;
     virtual void addStubEntrySections(Filter const *) override;
 
-    __packed_struct(Mach_thread_command)
+    packed_struct(Mach_thread_command) {
         LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
         LE32 cmdsize;        /* total size of this command */
         LE32 flavor;
@@ -1156,7 +1157,7 @@ protected:
         Mach_ARM_thread_state state;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
-    __packed_struct_end()
+    };
 
     Mach_thread_command threado;
     int threado_size() const override { return sizeof(threado); }
@@ -1200,7 +1201,7 @@ protected:
     virtual Linker* newLinker() const override;
     virtual void addStubEntrySections(Filter const *) override;
 
-    __packed_struct(Mach_thread_command)
+    packed_struct(Mach_thread_command) {
         LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
         LE32 cmdsize;        /* total size of this command */
         LE32 flavor;
@@ -1208,7 +1209,7 @@ protected:
         Mach_ARM64_thread_state state;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
-    __packed_struct_end()
+    };
 
     Mach_thread_command threado;
     int threado_size() const override { return sizeof(threado); }
@@ -1267,10 +1268,10 @@ protected:
 
     enum { N_FAT_ARCH = 5 };
 protected:
-    __packed_struct(Fat_head)
+    packed_struct(Fat_head) {
         struct Mach_fat_header fat;
         struct Mach_fat_arch arch[N_FAT_ARCH];
-    __packed_struct_end()
+    };
 
     Fat_head fat_head;
 

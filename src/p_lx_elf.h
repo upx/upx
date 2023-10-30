@@ -242,41 +242,41 @@ protected:
     Elf32_Shdr const *sec_dynstr;
     Elf32_Shdr       *sec_arm_attr;  // SHT_ARM_ATTRIBUTES;
 
-    __packed_struct(cprElfHdr1)
+    packed_struct(cprElfHdr1) {
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[1];
         l_info linfo;
-    __packed_struct_end()
+    };
 
-    __packed_struct(cprElfHdr2)
+    packed_struct(cprElfHdr2) {
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[2];
         l_info linfo;
-    __packed_struct_end()
+    };
 
-    __packed_struct(cprElfHdr3)
+    packed_struct(cprElfHdr3) {
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[3];
         l_info linfo;
-    __packed_struct_end()
+    };
 
-    __packed_struct(cprElfHdr4)
+    packed_struct(cprElfHdr4) {
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[4];
         l_info linfo;
-    __packed_struct_end()
+    };
 
-    __packed_struct(cprElfHdrNetBSD)
+    packed_struct(cprElfHdrNetBSD) {
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[4];
         unsigned char notes[512];
-    __packed_struct_end()
+    };
 
     cprElfHdrNetBSD elfout;
 
-    __packed_struct(cprElfShdr3)
+    packed_struct(cprElfShdr3) {
         Elf32_Shdr shdr[3];
-    __packed_struct_end()
+    };
 
     cprElfShdr3 shdrout;
 
@@ -402,35 +402,35 @@ protected:
     Elf64_Shdr const *sec_dynstr;
     Elf64_Shdr       *sec_arm_attr;  // SHT_ARM_ATTRIBUTES;
 
-    __packed_struct(cprElfHdr1)
+    packed_struct(cprElfHdr1) {
         Elf64_Ehdr ehdr;
         Elf64_Phdr phdr[1];
         l_info linfo;
-    __packed_struct_end()
+    };
 
-    __packed_struct(cprElfHdr2)
+    packed_struct(cprElfHdr2) {
         Elf64_Ehdr ehdr;
         Elf64_Phdr phdr[2];
         l_info linfo;
-    __packed_struct_end()
+    };
 
-    __packed_struct(cprElfHdr3)
+    packed_struct(cprElfHdr3) {
         Elf64_Ehdr ehdr;
         Elf64_Phdr phdr[3];
         l_info linfo;
-    __packed_struct_end()
+    };
 
-    __packed_struct(cprElfHdr4)
+    packed_struct(cprElfHdr4) {
         Elf64_Ehdr ehdr;
         Elf64_Phdr phdr[4];
         l_info linfo;
-    __packed_struct_end()
+    };
 
     cprElfHdr4 elfout;
 
-    __packed_struct(cprElfShdr3)
+    packed_struct(cprElfShdr3) {
         Elf64_Shdr shdr[3];
-    __packed_struct_end()
+    };
 
     cprElfShdr3 shdrout;
 
