@@ -42,7 +42,6 @@
 
 // arm-wince-pe-gcc -Wl,--image-base,0x400000
 
-
 #include <stddef.h>
 #include <stdarg.h>
 #include <string.h>
@@ -50,89 +49,83 @@
 #include <errno.h>
 
 #ifdef __i386__
-#  define UPX_MMAP_ADDRESS  0x20000000
+#define UPX_MMAP_ADDRESS 0x20000000
 #else
-#  define UPX_MMAP_ADDRESS  0x410000 // 0x10000
+#define UPX_MMAP_ADDRESS 0x410000 // 0x10000
 #endif
 
 #ifdef __linux__
-#  include <sys/mman.h>
+#include <sys/mman.h>
 #else
 void *VirtualAlloc(void *address, unsigned size, unsigned type, unsigned protect);
-#  define MEM_COMMIT 0x1000
-#  define PAGE_EXECUTE_READWRITE 0x0040
+#define MEM_COMMIT             0x1000
+#define PAGE_EXECUTE_READWRITE 0x0040
 #endif
 
-typedef size_t          upx_uintptr_t;
-typedef unsigned short  LE16;
-typedef unsigned int    LE32;
-#define get_le32(p)     (* (const unsigned *) (p))
-#define set_le32(p,v)   (* (unsigned *) (p) = (v))
-#define get_le16(p)     (* (const unsigned short *) (p))
+typedef unsigned short LE16;
+typedef unsigned int LE32;
+#define get_le32(p)    (*(const unsigned *) (p))
+#define set_le32(p, v) (*(unsigned *) (p) = (v))
+#define get_le16(p)    (*(const unsigned short *) (p))
 
-#if !defined(__packed_struct)
-#  define __packed_struct(s)        struct s {
-#  define __packed_struct_end()     };
+#if !defined(packed_struct)
+#define packed_struct(s) struct s
 #endif
 
+packed_struct(ddirs_t) {
+    LE32 vaddr;
+    LE32 size;
+};
 
-__packed_struct(ddirs_t)
-    LE32    vaddr;
-    LE32    size;
-__packed_struct_end()
-
-
-__packed_struct(pe_header_t)
+packed_struct(pe_header_t) {
     // 0x0
-    char    _[4];
-    LE16    cpu;
-    LE16    objects;
-    char    __[12];
-    LE16    opthdrsize;
-    LE16    flags;
+    char _[4];
+    LE16 cpu;
+    LE16 objects;
+    char __[12];
+    LE16 opthdrsize;
+    LE16 flags;
     // optional header
-    char    ___[4];
-    LE32    codesize;
+    char ___[4];
+    LE32 codesize;
     // 0x20
-    LE32    datasize;
-    LE32    bsssize;
-    LE32    entry;
-    LE32    codebase;
+    LE32 datasize;
+    LE32 bsssize;
+    LE32 entry;
+    LE32 codebase;
     // 0x30
-    LE32    database;
+    LE32 database;
     // nt specific fields
-    LE32    imagebase;
-    LE32    objectalign;
-    LE32    filealign;
+    LE32 imagebase;
+    LE32 objectalign;
+    LE32 filealign;
     // 0x40
-    char    ____[16];
+    char ____[16];
     // 0x50
-    LE32    imagesize;
-    LE32    headersize;
-    LE32    chksum;
-    LE16    subsystem;
-    LE16    dllflags;
+    LE32 imagesize;
+    LE32 headersize;
+    LE32 chksum;
+    LE16 subsystem;
+    LE16 dllflags;
     // 0x60
-    char    _____[20];
+    char _____[20];
     // 0x74
-    LE32    ddirsentries;
+    LE32 ddirsentries;
     //
     struct ddirs_t ddirs[16];
-__packed_struct_end()
+};
 
+packed_struct(pe_section_t) {
+    char name[8];
+    LE32 vsize;
+    LE32 vaddr;
+    LE32 size;
+    LE32 rawdataptr;
+    char _[12];
+    LE32 flags;
+};
 
-__packed_struct(pe_section_t)
-    char    name[8];
-    LE32    vsize;
-    LE32    vaddr;
-    LE32    size;
-    LE32    rawdataptr;
-    char    _[12];
-    LE32    flags;
-__packed_struct_end()
-
-
-__packed_struct(exe_header_t)
+packed_struct(exe_header_t) {
     LE16 mz;
     LE16 m512;
     LE16 p512;
@@ -140,27 +133,25 @@ __packed_struct(exe_header_t)
     LE16 relocoffs;
     char __[34];
     LE32 nexepos;
-__packed_struct_end()
-
-
-enum {
-    PEDIR_EXPORT    = 0,
-    PEDIR_IMPORT    = 1,
-    PEDIR_RESOURCE  = 2,
-    PEDIR_EXCEPTION = 3,
-    PEDIR_SEC       = 4,
-    PEDIR_RELOC     = 5,
-    PEDIR_DEBUG     = 6,
-    PEDIR_COPYRIGHT = 7,
-    PEDIR_GLOBALPTR = 8,
-    PEDIR_TLS       = 9,
-    PEDIR_LOADCONF  = 10,
-    PEDIR_BOUNDIM   = 11,
-    PEDIR_IAT       = 12,
-    PEDIR_DELAYIMP  = 13,
-    PEDIR_COMRT     = 14
 };
 
+enum {
+    PEDIR_EXPORT = 0,
+    PEDIR_IMPORT = 1,
+    PEDIR_RESOURCE = 2,
+    PEDIR_EXCEPTION = 3, // Exception table
+    PEDIR_SECURITY = 4,  // Certificate table (file pointer)
+    PEDIR_BASERELOC = 5,
+    PEDIR_DEBUG = 6,
+    PEDIR_ARCHITECTURE = 7, // Architecture-specific data
+    PEDIR_GLOBALPTR = 8,    // Global pointer
+    PEDIR_TLS = 9,
+    PEDIR_LOAD_CONFIG = 10, // Load Config Table
+    PEDIR_BOUND_IMPORT = 11,
+    PEDIR_IAT = 12,
+    PEDIR_DELAY_IMPORT = 13,  // Delay Import Descriptor
+    PEDIR_COM_DESCRIPTOR = 14 // Com+ Runtime Header
+};
 
 static struct pe_header_t ih;
 static struct pe_section_t isections[4];
@@ -184,8 +175,7 @@ static int print(const char *format, ...)
 #define print printf
 #endif
 
-static int load(const char *file)
-{
+static int load(const char *file) {
     struct exe_header_t h;
     int ic;
     unsigned pe_offset = 0;
@@ -193,20 +183,17 @@ static int load(const char *file)
     if ((f = fopen(file, "rb")) == NULL)
         return print("can not open file: %s\n", file);
 
-    for (ic = 0; ic < 20; ic++)
-    {
-        if (fseek(f, pe_offset, SEEK_SET)
-            || fread(&h, sizeof(h), 1, f) != 1)
+    for (ic = 0; ic < 20; ic++) {
+        if (fseek(f, pe_offset, SEEK_SET) || fread(&h, sizeof(h), 1, f) != 1)
             return print("read error at %u\n", pe_offset);
 
-        if (h.mz == 'M' + 'Z'*256) // dos exe
+        if (h.mz == 'M' + 'Z' * 256) // dos exe
         {
-            if (h.relocoffs >= 0x40)      // new format exe
+            if (h.relocoffs >= 0x40) // new format exe
                 pe_offset += h.nexepos;
             else
                 pe_offset += h.p512 * 512 + h.m512 - h.m512 ? 512 : 0;
-        }
-        else if (get_le32(&h) == 'P' + 'E'*256)
+        } else if (get_le32(&h) == 'P' + 'E' * 256)
             break;
         else
             return print("bad header at %u\n", pe_offset);
@@ -214,47 +201,40 @@ static int load(const char *file)
     if (ic == 20)
         return print("pe header not found\n");
     printf("pe header found at offset: %u\n", pe_offset);
-    if (fseek(f, pe_offset, SEEK_SET)
-        || fread(&ih, sizeof(ih), 1, f) != 1)
+    if (fseek(f, pe_offset, SEEK_SET) || fread(&ih, sizeof(ih), 1, f) != 1)
         return print("can not load pe header\n");
 
     print("ih.imagesize=0x%x\n", ih.imagesize);
     if (ih.cpu != 0x1c0 && ih.cpu != 0x1c2)
         return print("unsupported processor type: %x\n", ih.cpu);
 
-    if ((ih.objects != 3 && ih.objects != 4)
-        || fread(isections, sizeof(isections), 1, f) != 1)
+    if ((ih.objects != 3 && ih.objects != 4) || fread(isections, sizeof(isections), 1, f) != 1)
         return print("error reading section descriptors\n");
 
     return 0;
 }
 
-static int read(void)
-{
+static int read(void) {
     unsigned ic;
 #ifdef __linux__
-    vaddr = mmap((void *) UPX_MMAP_ADDRESS, ih.imagesize,
-                 PROT_WRITE | PROT_READ | PROT_EXEC,
+    vaddr = mmap((void *) UPX_MMAP_ADDRESS, ih.imagesize, PROT_WRITE | PROT_READ | PROT_EXEC,
                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
     if (((int) vaddr) == -1)
         return print("mmap() failed: %d\n", errno);
     print("mmap for %p (size %x) successful\n", vaddr, ih.imagesize);
 #else
-    if ((vaddr = VirtualAlloc(0, ih.imagesize,
-                              MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == 0)
+    if ((vaddr = VirtualAlloc(0, ih.imagesize, MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == 0)
         return print("VirtualAlloc() failed\n");
     print("VirtualAlloc() ok %x\n", vaddr);
 #endif
     for (ic = 1; ic <= (unsigned) ih.objects - 1; ic++)
-        if (fseek(f, isections[ic].rawdataptr, SEEK_SET)
-            || fread(vaddr + isections[ic].vaddr,
-                     isections[ic].vsize, 1, f) != 1)
+        if (fseek(f, isections[ic].rawdataptr, SEEK_SET) ||
+            fread(vaddr + isections[ic].vaddr, isections[ic].vsize, 1, f) != 1)
             return print("error reading section %u\n", ic);
     return 0;
 }
 
-static void dump(char n)
-{
+static void dump(char n) {
     char buf[100];
 #ifdef __linux__
     snprintf(buf, sizeof(buf), "a.dump%c", n);
@@ -266,49 +246,37 @@ static void dump(char n)
     fclose(f2);
 }
 
-static int loadlibraryw(const unsigned short *name)
-{
+static int loadlibraryw(const unsigned short *name) {
     return name[0] + name[1] * 0x100 + name[2] * 0x10000;
 }
 
-static int getprocaddressa(unsigned h, const char *proc)
-{
+static int getprocaddressa(unsigned h, const char *proc) {
     unsigned p = (unsigned) proc;
-    if (p < 0x10000)
-    {
-        print("getprocaddressa called %c%c%c, ordinal %u\n",
-               h, h >> 8, h >> 16, p);
+    if (p < 0x10000) {
+        print("getprocaddressa called %c%c%c, ordinal %u\n", h, h >> 8, h >> 16, p);
         return h + p * 0x10000;
     }
-    print("getprocaddressa called %c%c%c, name %s\n",
-           h, h >> 8, h >> 16, proc);
+    print("getprocaddressa called %c%c%c, name %s\n", h, h >> 8, h >> 16, proc);
     return h + proc[0] * 0x10000 + proc[1] * 0x1000000;
 }
 
-static void cachesync(unsigned v)
-{
-    print("cachesync called %u\n", v);
-}
+static void cachesync(unsigned v) { print("cachesync called %u\n", v); }
 
-static int import(void)
-{
+static int import(void) {
     if (ih.ddirs[PEDIR_IMPORT].vaddr == 0)
         return print("no imports?\n");
-    print("loadlibraryw=%p,getprocaddressa=%p,cachesync=%p\n",
-          loadlibraryw, getprocaddressa, cachesync);
+    print("loadlibraryw=%p,getprocaddressa=%p,cachesync=%p\n", loadlibraryw, getprocaddressa,
+          cachesync);
     void *imports = vaddr + ih.ddirs[PEDIR_IMPORT].vaddr;
-    while (get_le32(imports + 12))
-    {
-        if (strcasecmp(vaddr + get_le32(imports + 12), "coredll.dll") == 0)
-        {
+    while (get_le32(imports + 12)) {
+        if (strcasecmp(vaddr + get_le32(imports + 12), "coredll.dll") == 0) {
             void *coredll_imports = vaddr + get_le32(imports + 16);
             print("coredll_imports=%p\n", coredll_imports);
-            void *oft =  vaddr + get_le32(imports);
+            void *oft = vaddr + get_le32(imports);
             unsigned pos = 0;
-            while (get_le32(oft + pos))
-            {
+            while (get_le32(oft + pos)) {
                 void *name = vaddr + get_le32(oft + pos) + 2;
-                print("name=%s\n", (char*) name);
+                print("name=%s\n", (char *) name);
                 if (strcasecmp(name, "loadlibraryw") == 0)
                     set_le32(coredll_imports + pos, (unsigned) loadlibraryw);
                 else if (strcasecmp(name, "getprocaddressa") == 0)
@@ -326,18 +294,16 @@ static int import(void)
     return 1;
 }
 
-static int reloc(void)
-{
-    if (ih.ddirs[PEDIR_RELOC].vaddr == 0)
+static int reloc(void) {
+    if (ih.ddirs[PEDIR_BASERELOC].vaddr == 0)
         return 0;
-    void *relocs = vaddr + ih.ddirs[PEDIR_RELOC].vaddr;
+    void *relocs = vaddr + ih.ddirs[PEDIR_BASERELOC].vaddr;
     void *page = vaddr + get_le32(relocs);
     unsigned size = get_le32(relocs + 4);
-    if (size != ih.ddirs[PEDIR_RELOC].size)
+    if (size != ih.ddirs[PEDIR_BASERELOC].size)
         return print("only 1 page can be relocated\n");
-    unsigned num =  (size - 8) / 2;
-    while (num--)
-    {
+    unsigned num = (size - 8) / 2;
+    while (num--) {
         unsigned pos = get_le16(relocs + 8 + num * 2);
         if (pos == 0)
             continue;
@@ -350,14 +316,14 @@ static int reloc(void)
     return 0;
 }
 
-static void dump2(int c)
-{
+#ifndef __i386__
+static void dump2(int c) {
     print("dump2 %c\n", c);
     dump(c);
 }
+#endif
 
-static void call(void)
-{
+static void call(void) {
 #ifndef __i386__
     void (*entry)(void (*)(int), unsigned) = vaddr + ih.entry;
     entry(dump2, 1);
@@ -365,8 +331,7 @@ static void call(void)
 #endif
 }
 
-static int main2(int argc, char **argv)
-{
+static int main2(int argc, char **argv) {
     if (argc != 2)
         return print("usage: %s arm_pe_file\n", argv[0]), 1;
     if (load(argv[1]))
@@ -386,8 +351,7 @@ static int main2(int argc, char **argv)
     return 0;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     out = stdout;
 #ifndef __linux__
     out = fopen("/wtest.log", "wt");
