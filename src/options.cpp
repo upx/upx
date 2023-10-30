@@ -88,14 +88,26 @@ void Options::reset() noexcept {
 **************************************************************************/
 
 TEST_CASE("Options::reset") {
+#define opt DO_NOT_USE_opt
     COMPILE_TIME_ASSERT(std::is_standard_layout<Options>::value)
     COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<Options>::value)
     COMPILE_TIME_ASSERT(std::is_trivially_copyable<Options>::value)
 
     Options local_options;
-    Options *o = &local_options;
+    Options *const o = &local_options;
     o->reset();
     CHECK(o->o_unix.osabi0 == 3);
+    //
+    static_assert(TABLESIZE(o->win32_pe.compress_rt) == 25); // 25 == RT_LAST
+    CHECK(o->win32_pe.compress_exports);
+    CHECK(o->win32_pe.compress_icons);
+    CHECK(o->win32_pe.strip_relocs);
+    // issue 728
+    CHECK(o->win32_pe.compress_resources);
+    for (size_t i = 0; i < 24; i++)
+        CHECK(o->win32_pe.compress_rt[i]);
+    CHECK(!o->win32_pe.compress_rt[24]); // 24 == RT_MANIFEST
+#undef opt
 }
 
 template <size_t N>
