@@ -191,13 +191,14 @@ if(NOT DEFINED HAVE_UNISTD_H)
     check_include_file("unistd.h" HAVE_UNISTD_H)
 endif()
 if(NOT DEFINED HAVE_UTIMENSAT)
+    # proper checking for utimensat() is somewhat messy
     check_function_exists(utimensat HAVE_UTIMENSAT_FUNCTION__)
     if(HAVE_UTIMENSAT_FUNCTION__)
         check_symbol_exists(utimensat "sys/types.h;fcntl.h;sys/stat.h" HAVE_UTIMENSAT_SYMBOL__)
         if(HAVE_UTIMENSAT_SYMBOL__)
-            CHECK_STRUCT_HAS_MEMBER("struct stat" "st_mtim.tv_nsec" "sys/types.h;fcntl.h;sys/stat.h" HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
+            CHECK_STRUCT_HAS_MEMBER("struct stat" "st_mtim.tv_nsec" "sys/types.h;fcntl.h;sys/stat.h" HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC) # POSIX.1-2008
             if(NOT HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
-                CHECK_STRUCT_HAS_MEMBER("struct stat" "st_mtimespec.tv_nsec" "sys/types.h;fcntl.h;sys/stat.h" HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
+                CHECK_STRUCT_HAS_MEMBER("struct stat" "st_mtimespec.tv_nsec" "sys/types.h;fcntl.h;sys/stat.h" HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC) # macOS
             endif()
             if(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC OR HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
                 set(HAVE_UTIMENSAT 1)

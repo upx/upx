@@ -32,24 +32,6 @@
 namespace upx {
 
 /*************************************************************************
-// misc
-**************************************************************************/
-
-// a reinterpret_cast that does not trigger -Wcast-align warnings
-template <class Result, class From>
-forceinline Result ptr_reinterpret_cast(From *ptr) {
-    static_assert(std::is_pointer_v<Result>);
-    static_assert(!std::is_const_v<std::remove_pointer_t<Result> >); // enforce same constness
-    return (Result) (void *) ptr;
-}
-template <class Result, class From>
-forceinline Result ptr_reinterpret_cast(const From *ptr) {
-    static_assert(std::is_pointer_v<Result>);
-    static_assert(std::is_const_v<std::remove_pointer_t<Result> >); // required
-    return (Result) (const void *) ptr;
-}
-
-/*************************************************************************
 // type_traits
 **************************************************************************/
 
@@ -80,6 +62,20 @@ struct UnsignedSizeOf {
     static_assert(Size >= 1 && Size <= UPX_RSIZE_MAX_MEM);
     static constexpr unsigned value = unsigned(Size);
 };
+
+// a reinterpret_cast that does not trigger -Wcast-align warnings
+template <class Result, class From>
+forceinline Result ptr_reinterpret_cast(From *ptr) noexcept {
+    static_assert(std::is_pointer_v<Result>);
+    static_assert(!std::is_const_v<std::remove_pointer_t<Result> >); // enforce same constness
+    return reinterpret_cast<Result>(reinterpret_cast<void *>(ptr));
+}
+template <class Result, class From>
+forceinline Result ptr_reinterpret_cast(const From *ptr) noexcept {
+    static_assert(std::is_pointer_v<Result>);
+    static_assert(std::is_const_v<std::remove_pointer_t<Result> >); // required
+    return reinterpret_cast<Result>(reinterpret_cast<const void *>(ptr));
+}
 
 class noncopyable {
 protected:

@@ -26,6 +26,9 @@
 
 #include "../conf.h"
 
+// various cxxlib checks
+// (modern compilers will optimize away much of this code)
+
 /*************************************************************************
 // compile-time checks
 **************************************************************************/
@@ -89,6 +92,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 **************************************************************************/
 
 TEST_CASE("ptr_reinterpret_cast") {
+    // check that we don't trigger any -Wcast-align warnings
     using upx::ptr_reinterpret_cast;
     byte *an = nullptr;
     int *in = nullptr;
@@ -127,7 +131,6 @@ TEST_CASE("noncopyable") {
 
 /*************************************************************************
 // TriBool checks
-// (modern compilers will optimize away most of this code)
 **************************************************************************/
 
 namespace {

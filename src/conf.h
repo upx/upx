@@ -190,13 +190,16 @@ typedef upx_int64_t upx_off_t;
 // portab
 **************************************************************************/
 
-// just in case
+// some system headers may define these, so undef just in case
 #undef _
 #undef __
 #undef ___
 #undef dos
+#undef large
 #undef linux
 #undef small
+#undef SP
+#undef SS
 #undef tos
 #undef unix
 #if (ACC_OS_POSIX) && !defined(__unix__)

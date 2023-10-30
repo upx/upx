@@ -1540,41 +1540,41 @@ void PeFile::processLoadConf(Reloc *rel, const Interval *iv,
 // resource handling
 **************************************************************************/
 
-struct alignas(1) PeFile::Resource::res_dir_entry {
+struct alignas(1) PeFile::Resource::res_dir_entry final {
     LE32 tnl; // Type | Name | Language id - depending on level
     LE32 child;
 };
 
-struct alignas(1) PeFile::Resource::res_dir {
+struct alignas(1) PeFile::Resource::res_dir final {
     byte _[12]; // flags, timedate, version
     LE16 namedentr;
     LE16 identr;
-
-    unsigned Sizeof() const { return 16 + sizeof(res_dir_entry) * (namedentr + identr); }
-    res_dir_entry entries[1];
     // it's usually safe to assume that every res_dir contains
     // at least one res_dir_entry - check() complains otherwise
+    res_dir_entry entries[1];
+
+    unsigned Sizeof() const { return 16 + mem_size(sizeof(res_dir_entry), namedentr + identr); }
 };
 
-struct alignas(1) PeFile::Resource::res_data {
+struct alignas(1) PeFile::Resource::res_data final {
     LE32 offset;
     LE32 size;
     byte _[8]; // codepage, reserved
 };
 
-struct PeFile::Resource::upx_rnode {
+struct PeFile::Resource::upx_rnode /*not_final*/ {
     unsigned id;
     byte *name;
     upx_rnode *parent;
 };
 
-struct PeFile::Resource::upx_rbranch : public PeFile::Resource::upx_rnode {
+struct PeFile::Resource::upx_rbranch final : public PeFile::Resource::upx_rnode {
     unsigned nc;
     upx_rnode **children;
     res_dir data;
 };
 
-struct PeFile::Resource::upx_rleaf : public PeFile::Resource::upx_rnode {
+struct PeFile::Resource::upx_rleaf final : public PeFile::Resource::upx_rnode {
     upx_rleaf *next;
     unsigned newoffset;
     res_data data;
