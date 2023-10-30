@@ -24,10 +24,10 @@
    <markus@oberhumer.com>
  */
 
-#include "../conf.h"
+// lots of tests (and probably quite a number of redundant tests)
+// modern compilers will optimize away quite a lot of this code
 
-// various cxxlib checks
-// (modern compilers will optimize away much of this code)
+#include "../conf.h"
 
 /*************************************************************************
 // compile-time checks
@@ -169,6 +169,9 @@ struct TestTriBool {
         static_assert(sizeof(T) == sizeof(typename T::underlying_type));
         static_assert(alignof(T) == alignof(typename T::underlying_type));
 #endif
+        static_assert(!bool(T(false)));
+        static_assert(bool(T(true)));
+        static_assert(bool(T(T::Third)) == (T::Third > T::False));
         static_assert(T(false) == T::False);
         static_assert(T(true) == T::True);
         static_assert(T(T::False) == T::False);
@@ -188,37 +191,58 @@ struct TestTriBool {
         static_assert(array[2].isThird());
         static_assert(sizeof(array) == 3 * sizeof(T));
         T a;
+        CHECK(a.getValue() == T::False);
         CHECK(!a);
+        CHECK(!bool(a));
+        CHECK((!a ? true : false));
         CHECK(a.isStrictFalse());
         CHECK(!a.isStrictTrue());
         CHECK(a.isStrictBool());
         CHECK(!a.isThird());
         a = false;
+        CHECK(a.getValue() == T::False);
         CHECK(!a);
+        CHECK(!bool(a));
+        CHECK((!a ? true : false));
         CHECK(a.isStrictFalse());
         CHECK(!a.isStrictTrue());
         CHECK(a.isStrictBool());
         CHECK(!a.isThird());
         a = true;
+        CHECK(a.getValue() == T::True);
         CHECK(a);
+        CHECK(bool(a));
+        CHECK((a ? true : false));
         CHECK(!a.isStrictFalse());
         CHECK(a.isStrictTrue());
         CHECK(a.isStrictBool());
         CHECK(!a.isThird());
         a = T::Third;
-        if (expect_true)
+        CHECK(a.getValue() == T::Third);
+        if (expect_true) {
             CHECK(a);
-        else
+            CHECK(bool(a));
+            CHECK((a ? true : false));
+        } else {
             CHECK(!a);
+            CHECK(!bool(a));
+            CHECK((!a ? true : false));
+        }
         CHECK(!a.isStrictFalse());
         CHECK(!a.isStrictTrue());
         CHECK(!a.isStrictBool());
         CHECK(a.isThird());
         a = x;
-        if (expect_true)
+        CHECK(a.getValue() == T::Third);
+        if (expect_true) {
             CHECK(a);
-        else
+            CHECK(bool(a));
+            CHECK((a ? true : false));
+        } else {
             CHECK(!a);
+            CHECK(!bool(a));
+            CHECK((!a ? true : false));
+        }
         CHECK(!a.isStrictFalse());
         CHECK(!a.isStrictTrue());
         CHECK(!a.isStrictBool());
@@ -237,20 +261,20 @@ TEST_CASE("TriBool") {
     static_assert(!tribool(tribool::Third));
     TestTriBool<tribool>::test(false, -1);
     //
-    TestTriBool<TriBool<upx_int8_t> >::test(false, -1);
-    TestTriBool<TriBool<upx_int16_t> >::test(false, -1);
-    TestTriBool<TriBool<upx_int32_t> >::test(false, -1);
-    TestTriBool<TriBool<upx_int64_t> >::test(false, -1);
+    TestTriBool<TriBool<upx_int8_t> >::test(false, -99990);
+    TestTriBool<TriBool<upx_int16_t> >::test(false, -99991);
+    TestTriBool<TriBool<upx_int32_t> >::test(false, -99992);
+    TestTriBool<TriBool<upx_int64_t> >::test(false, -99993);
     //
-    TestTriBool<TriBool<unsigned, 2> >::test(true, 2);
-    TestTriBool<TriBool<upx_int8_t, 2> >::test(true, 2);
-    TestTriBool<TriBool<upx_uint8_t, 2> >::test(true, 2);
-    TestTriBool<TriBool<upx_int16_t, 2> >::test(true, 2);
-    TestTriBool<TriBool<upx_uint16_t, 2> >::test(true, 2);
-    TestTriBool<TriBool<upx_int32_t, 2> >::test(true, 2);
-    TestTriBool<TriBool<upx_uint32_t, 2> >::test(true, 2);
-    TestTriBool<TriBool<upx_int64_t, 2> >::test(true, 2);
-    TestTriBool<TriBool<upx_uint64_t, 2> >::test(true, 2);
+    TestTriBool<TriBool<unsigned, 2> >::test(true, 99);
+    TestTriBool<TriBool<upx_int8_t, 2> >::test(true, 99990);
+    TestTriBool<TriBool<upx_uint8_t, 2> >::test(true, 99991);
+    TestTriBool<TriBool<upx_int16_t, 2> >::test(true, 99992);
+    TestTriBool<TriBool<upx_uint16_t, 2> >::test(true, 99993);
+    TestTriBool<TriBool<upx_int32_t, 2> >::test(true, 99994);
+    TestTriBool<TriBool<upx_uint32_t, 2> >::test(true, 99995);
+    TestTriBool<TriBool<upx_int64_t, 2> >::test(true, 99996);
+    TestTriBool<TriBool<upx_uint64_t, 2> >::test(true, 99997);
 }
 
 /* vim:set ts=4 sw=4 et: */
