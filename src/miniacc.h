@@ -25,6 +25,8 @@
    http://www.oberhumer.com/
  */
 
+/* clang-format off */
+
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
 #define ACC_VERSION     20230625L

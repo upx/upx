@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright 2022 BitWagon Software LLC.  All rights reserved.
 
+/* clang-format off */
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

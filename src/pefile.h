@@ -356,7 +356,7 @@ protected:
         RT_LAST
     };
 
-    class Interval : private noncopyable {
+    class Interval final : private noncopyable {
         unsigned capacity = 0;
         void *base = nullptr;
     public:
@@ -382,7 +382,7 @@ protected:
         static int __acc_cdecl_qsort compare(const void *p1, const void *p2);
     };
 
-    class Reloc : private noncopyable {
+    class Reloc final : private noncopyable {
         // these are set in constructor
         byte *start = nullptr;
         unsigned start_size_in_bytes = 0;
@@ -418,7 +418,7 @@ protected:
         void finish(byte *(&result_ptr), unsigned &result_size); // => transfer ownership
     };
 
-    class Resource : private noncopyable {
+    class Resource final : private noncopyable {
         struct res_dir_entry;
         struct res_dir;
         struct res_data;
@@ -474,7 +474,7 @@ protected:
          */
     };
 
-    class Export : private noncopyable {
+    class Export final : private noncopyable {
         struct alignas(1) export_dir_t {
             byte _[12]; // flags, timedate, version
             LE32 name;

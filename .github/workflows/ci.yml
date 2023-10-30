@@ -13,8 +13,8 @@ env:
   CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-10-29
-  ZIG_DIST_VERSION: 0.12.0-dev.1327+256ab68a9
+  # 2023-10-30
+  ZIG_DIST_VERSION: 0.12.0-dev.1349+fa022d1ec
 
 jobs:
   job-rebuild-and-verify-stubs:

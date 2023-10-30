@@ -1,5 +1,7 @@
 /* http://www.muppetlabs.com/~breadbox/software/elfkickers.html */
 
+/* clang-format off */
+
 /* sstrip: Copyright (C) 1999-2001 by Brian Raiter, under the GNU
  * General Public License. No warranty. See COPYING for details.
  *

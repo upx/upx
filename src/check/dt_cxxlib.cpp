@@ -94,21 +94,40 @@ ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 TEST_CASE("ptr_reinterpret_cast") {
     // check that we don't trigger any -Wcast-align warnings
     using upx::ptr_reinterpret_cast;
-    byte *an = nullptr;
-    int *in = nullptr;
-    CHECK((an == ptr_reinterpret_cast<byte *>(an)));
-    CHECK((an == ptr_reinterpret_cast<byte *>(in)));
-    CHECK((in == ptr_reinterpret_cast<int *>(an)));
-    CHECK((in == ptr_reinterpret_cast<int *>(in)));
-    const byte *ac = nullptr;
+    void *vp = nullptr;
+    byte *bp = nullptr;
+    int *ip = nullptr;
+    double *dp = nullptr;
+
+    CHECK((vp == ptr_reinterpret_cast<void *>(vp)));
+    CHECK((vp == ptr_reinterpret_cast<void *>(bp)));
+    CHECK((vp == ptr_reinterpret_cast<void *>(ip)));
+    CHECK((vp == ptr_reinterpret_cast<void *>(dp)));
+
+    CHECK((bp == ptr_reinterpret_cast<byte *>(vp)));
+    CHECK((bp == ptr_reinterpret_cast<byte *>(bp)));
+    CHECK((bp == ptr_reinterpret_cast<byte *>(ip)));
+    CHECK((bp == ptr_reinterpret_cast<byte *>(dp)));
+
+    CHECK((ip == ptr_reinterpret_cast<int *>(vp)));
+    CHECK((ip == ptr_reinterpret_cast<int *>(bp)));
+    CHECK((ip == ptr_reinterpret_cast<int *>(ip)));
+    CHECK((ip == ptr_reinterpret_cast<int *>(dp)));
+
+    CHECK((dp == ptr_reinterpret_cast<double *>(vp)));
+    CHECK((dp == ptr_reinterpret_cast<double *>(bp)));
+    CHECK((dp == ptr_reinterpret_cast<double *>(ip)));
+    CHECK((dp == ptr_reinterpret_cast<double *>(dp)));
+
+    const byte *bc = nullptr;
     const int *ic = nullptr;
-    CHECK((ac == ptr_reinterpret_cast<byte *>(an)));
-    CHECK((ac == ptr_reinterpret_cast<const byte *>(ac)));
-    CHECK((ac == ptr_reinterpret_cast<byte *>(in)));
-    CHECK((ac == ptr_reinterpret_cast<const byte *>(ic)));
-    CHECK((ic == ptr_reinterpret_cast<int *>(an)));
-    CHECK((ic == ptr_reinterpret_cast<const int *>(ac)));
-    CHECK((ic == ptr_reinterpret_cast<int *>(in)));
+    CHECK((bc == ptr_reinterpret_cast<byte *>(bp)));
+    CHECK((bc == ptr_reinterpret_cast<const byte *>(bc)));
+    CHECK((bc == ptr_reinterpret_cast<byte *>(ip)));
+    CHECK((bc == ptr_reinterpret_cast<const byte *>(ic)));
+    CHECK((ic == ptr_reinterpret_cast<int *>(bp)));
+    CHECK((ic == ptr_reinterpret_cast<const int *>(bc)));
+    CHECK((ic == ptr_reinterpret_cast<int *>(ip)));
     CHECK((ic == ptr_reinterpret_cast<const int *>(ic)));
 }
 
