@@ -155,7 +155,7 @@ TEST_CASE("noncopyable") {
 namespace {
 template <class T>
 struct TestTriBool {
-    static void test(bool expect_true, int x) noexcept {
+    static void test(bool expect_true) noexcept {
         static_assert(std::is_class<T>::value);
         static_assert(std::is_nothrow_default_constructible<T>::value);
         static_assert(std::is_nothrow_destructible<T>::value);
@@ -171,7 +171,6 @@ struct TestTriBool {
 #endif
         static_assert(!bool(T(false)));
         static_assert(bool(T(true)));
-        static_assert(bool(T(T::Third)) == (T::Third > T::False));
         static_assert(T(false) == T::False);
         static_assert(T(true) == T::True);
         static_assert(T(T::False) == T::False);
@@ -232,7 +231,7 @@ struct TestTriBool {
         CHECK(!a.isStrictTrue());
         CHECK(!a.isStrictBool());
         CHECK(a.isThird());
-        a = x;
+        a = 99;
         CHECK(a.getValue() == T::Third);
         if (expect_true) {
             CHECK(a);
@@ -255,26 +254,28 @@ struct TestTriBool {
 
 TEST_CASE("TriBool") {
     using upx::TriBool, upx::tribool;
-    //
     static_assert(!tribool(false));
     static_assert(tribool(true));
     static_assert(!tribool(tribool::Third));
-    TestTriBool<tribool>::test(false, -1);
-    //
-    TestTriBool<TriBool<upx_int8_t> >::test(false, -99990);
-    TestTriBool<TriBool<upx_int16_t> >::test(false, -99991);
-    TestTriBool<TriBool<upx_int32_t> >::test(false, -99992);
-    TestTriBool<TriBool<upx_int64_t> >::test(false, -99993);
-    //
-    TestTriBool<TriBool<unsigned, 2> >::test(true, 99);
-    TestTriBool<TriBool<upx_int8_t, 2> >::test(true, 99990);
-    TestTriBool<TriBool<upx_uint8_t, 2> >::test(true, 99991);
-    TestTriBool<TriBool<upx_int16_t, 2> >::test(true, 99992);
-    TestTriBool<TriBool<upx_uint16_t, 2> >::test(true, 99993);
-    TestTriBool<TriBool<upx_int32_t, 2> >::test(true, 99994);
-    TestTriBool<TriBool<upx_uint32_t, 2> >::test(true, 99995);
-    TestTriBool<TriBool<upx_int64_t, 2> >::test(true, 99996);
-    TestTriBool<TriBool<upx_uint64_t, 2> >::test(true, 99997);
+    TestTriBool<tribool>::test(false);
+#if DEBUG || 1
+    TestTriBool<TriBool<upx_int8_t> >::test(false);
+    TestTriBool<TriBool<upx_uint8_t> >::test(false);
+    TestTriBool<TriBool<upx_int16_t> >::test(false);
+    TestTriBool<TriBool<upx_uint16_t> >::test(false);
+    TestTriBool<TriBool<upx_int32_t> >::test(false);
+    TestTriBool<TriBool<upx_uint32_t> >::test(false);
+    TestTriBool<TriBool<upx_int64_t> >::test(false);
+    TestTriBool<TriBool<upx_uint64_t> >::test(false);
+    TestTriBool<TriBool<upx_int8_t, true> >::test(true);
+    TestTriBool<TriBool<upx_uint8_t, true> >::test(true);
+    TestTriBool<TriBool<upx_int16_t, true> >::test(true);
+    TestTriBool<TriBool<upx_uint16_t, true> >::test(true);
+    TestTriBool<TriBool<upx_int32_t, true> >::test(true);
+    TestTriBool<TriBool<upx_uint32_t, true> >::test(true);
+    TestTriBool<TriBool<upx_int64_t, true> >::test(true);
+    TestTriBool<TriBool<upx_uint64_t, true> >::test(true);
+#endif
 }
 
 /* vim:set ts=4 sw=4 et: */

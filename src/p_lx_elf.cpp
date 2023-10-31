@@ -2974,8 +2974,7 @@ tribool PackLinuxElf64::canUnpack() // bool, except -1: format known, but not pa
     return false;
 }
 
-tribool
-PackLinuxElf64::canPack()
+tribool PackLinuxElf64::canPack()
 {
     union {
         unsigned char buf[MAX_ELF_HDR_64];

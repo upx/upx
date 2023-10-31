@@ -170,8 +170,8 @@ struct Options final {
     struct {
         int compress_exports;
         int compress_icons;
-        upx::TriBool<upx_int8_t, 2> compress_resources;
-        upx::TriBool<upx_int8_t, 2> compress_rt[25]; // 25 == RT_LAST
+        upx::TriBool<upx_int8_t, true> compress_resources;
+        upx::TriBool<upx_int8_t, true> compress_rt[25]; // 25 == RT_LAST
         int strip_relocs;
         const char *keep_resource;
     } win32_pe;

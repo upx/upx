@@ -109,23 +109,23 @@ constexpr bool string_ge(const char *a, const char *b) { return !string_lt(a, b)
 /*************************************************************************
 // TriBool - tri-state bool
 // an enum with an underlying type and 3 values
-// bool() checks for > 0, so ThirdValue determines if Third is false or true
+// IsThirdTrue determines if Third is false or true
 **************************************************************************/
 
-template <class T = int, T ThirdValue = -1> // ThirdValue is false by default
+template <class T = int, bool IsThirdTrue = false> // Third is false by default
 struct TriBool final {
     // types
     typedef T underlying_type;
     static_assert(std::is_integral_v<underlying_type>);
     typedef decltype(T(0) + T(0)) promoted_type;
     static_assert(std::is_integral_v<promoted_type>);
-    static_assert(ThirdValue != 0 && ThirdValue != 1);
-    enum value_type : underlying_type { False = 0, True = 1, Third = ThirdValue };
+    enum value_type : underlying_type { False = 0, True = 1, Third = 2 };
     static_assert(sizeof(value_type) == sizeof(underlying_type));
     static_assert(sizeof(underlying_type) <= sizeof(promoted_type));
     // constructors
     forceinline constexpr TriBool() noexcept {}
     forceinline constexpr TriBool(value_type x) noexcept : value(x) {}
+    // permissive, converts all other values to Third!!
     constexpr TriBool(promoted_type x) noexcept : value(x == 0 ? False : (x == 1 ? True : Third)) {}
 #if __cplusplus >= 202002L
     forceinline constexpr ~TriBool() noexcept = default;
@@ -133,8 +133,9 @@ struct TriBool final {
     forceinline ~TriBool() noexcept = default;
 #endif
     // explicit conversion to bool
-    // checks for > 0, so ThirdValue determines if Third is false (the default) or true
-    explicit constexpr operator bool() const noexcept { return value > False; }
+    explicit constexpr operator bool() const noexcept {
+        return IsThirdTrue ? (value != False) : (value == True);
+    }
     // query; this is NOT the same as operator bool()
     constexpr bool isStrictFalse() const noexcept { return value == False; }
     constexpr bool isStrictTrue() const noexcept { return value == True; }
