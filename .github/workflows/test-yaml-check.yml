@@ -1,0 +1,33 @@
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+name: 'Test - YAML check'
+on: [workflow_dispatch]
+env:
+  CMAKE_REQUIRED_QUIET: "OFF"
+  CTEST_OUTPUT_ON_FAILURE: "ON"
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  job-yaml-check:
+    if: true
+    strategy: { matrix: { container: ['alpine:3.18','alpine:edge'] } }
+    name: ${{ format('{0}', matrix.container) }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    steps:
+      - name: ${{ format('Install packages {0}', matrix.container) }}
+        run: |
+          apk update && apk upgrade && apk add bash git yq ytt
+          # this seems to be needed when running in a container (beause of UID mismatch??)
+          git config --global --add safe.directory '*'
+      - name: 'Check out code'
+        uses: actions/checkout@v4
+        with: { submodules: false }
+      - name: ${{ format('YAML check {0}', matrix.container) }}
+        shell: bash
+        run: |
+          for f in $(find . -type f -iname '*.yml'); do
+            echo "===== checking file $f"
+            yq < "$f" > /dev/null
+            ytt -f- < "$f" > /dev/null
+          done

@@ -14,7 +14,12 @@ jobs:
     if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
-      matrix: {container: ['alpine:3.18','alpine:edge','i386/alpine:edge']}
+      matrix:
+        include:
+          - container: 'alpine:3.18'
+          - container: 'alpine:edge'
+          - container: 'i386/alpine:3.18'
+          - container: 'i386/alpine:edge'
     name: ${{ format('Analyze clang-tidy {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}

@@ -12,7 +12,7 @@ env:
   CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
   # 2023-10-30
-  ZIG_DIST_VERSION: 0.12.0-dev.1349+fa022d1ec
+  ZIG_DIST_VERSION: 0.12.0-dev.1350+91e117697
 
 jobs:
   job-linux-zigcc: # uses cmake + make
@@ -21,17 +21,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # zig BUG: -fPIE is currently broken
           - { zig_target: aarch64-linux-musl }
-          - { zig_target: aarch64-linux-musl, zig_pic: -fPIE }
+          # { zig_target: aarch64-linux-musl, zig_pic: -fPIE }
           - { zig_target: aarch64-macos-none }
           - { zig_target: aarch64-macos.11.0-none }
           - { zig_target: aarch64-macos.12.0-none }
           - { zig_target: aarch64-macos.13.0-none }
           - { zig_target: aarch64-windows-gnu }
           - { zig_target: arm-linux-musleabihf }
-          - { zig_target: arm-linux-musleabihf, zig_pic: -fPIE }
+          # { zig_target: arm-linux-musleabihf, zig_pic: -fPIE }
           - { zig_target: i386-linux-musl }
-          - { zig_target: i386-linux-musl, zig_pic: -fPIE }
+          # { zig_target: i386-linux-musl, zig_pic: -fPIE }
           - { zig_target: i386-windows-gnu }
           - { zig_target: mips-linux-musl }
           - { zig_target: mipsel-linux-musl }
@@ -39,7 +40,7 @@ jobs:
           - { zig_target: powerpc64-linux-musl }
           - { zig_target: powerpc64le-linux-musl }
           - { zig_target: x86_64-linux-musl }
-          - { zig_target: x86_64-linux-musl, zig_pic: -fPIE }
+          # { zig_target: x86_64-linux-musl, zig_pic: -fPIE }
           - { zig_target: x86_64-macos-none }
           - { zig_target: x86_64-macos.11.0-none }
           - { zig_target: x86_64-macos.12.0-none }

@@ -19,18 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: 'alpine:3.18'
-            release: debug
-            qemu: 'qemu-x86_64 -cpu Westmere'
-          - container: 'alpine:3.18'
-            release: release
-            qemu: 'qemu-x86_64 -cpu Westmere'
-          - container: 'alpine:edge'
-            release: release
-            qemu: 'qemu-x86_64 -cpu Westmere'
-          - container: 'i386/alpine:edge'
-            release: release
-            qemu: 'qemu-i386'
+          - { container: 'alpine:3.18',      release: debug,   qemu: 'qemu-x86_64 -cpu Westmere' }
+          - { container: 'alpine:3.18',      release: release, qemu: 'qemu-x86_64 -cpu Westmere' }
+          - { container: 'alpine:edge',      release: release, qemu: 'qemu-x86_64 -cpu Westmere' }
+          - { container: 'i386/alpine:edge', release: release, qemu: 'qemu-i386' }
     name: ${{ format('{0} {1}', matrix.container, matrix.release) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}

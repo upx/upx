@@ -14,7 +14,7 @@ env:
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
   # 2023-10-30
-  ZIG_DIST_VERSION: 0.12.0-dev.1349+fa022d1ec
+  ZIG_DIST_VERSION: 0.12.0-dev.1350+91e117697
 
 jobs:
   job-rebuild-and-verify-stubs:

@@ -42,8 +42,13 @@ private:
 #define CSelf PtrOrSpanOrNull
     typedef CSelf<T> Self;
     // core config
+#if __cplusplus >= 201103L
+    static constexpr bool configRequirePtr = false;
+    static constexpr bool configRequireBase = false;
+#else
     enum { configRequirePtr = false };
     enum { configRequireBase = false };
+#endif
 
 #include "xspan_impl_common.h"
 public:
