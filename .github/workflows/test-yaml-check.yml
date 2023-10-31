@@ -10,14 +10,24 @@ env:
 jobs:
   job-yaml-check:
     if: true
-    strategy: { matrix: { container: ['alpine:3.18','alpine:edge'] } }
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - container: 'alpine:3.16'
+          - container: 'alpine:3.17'
+          - container: 'alpine:3.18'
+          - container: 'alpine:edge'
     name: ${{ format('{0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         run: |
-          apk update && apk upgrade && apk add bash git yq ytt
+          apk update && apk upgrade && apk add bash git yq
+          case ${{ matrix.container }} in
+            *:edge) apk add -X http://dl-cdn.alpinelinux.org/alpine/edge/testing ytt ;;
+          esac
           # this seems to be needed when running in a container (beause of UID mismatch??)
           git config --global --add safe.directory '*'
       - name: 'Check out code'
@@ -26,8 +36,13 @@ jobs:
       - name: ${{ format('YAML check {0}', matrix.container) }}
         shell: bash
         run: |
-          for f in $(find . -type f -iname '*.yml'); do
-            echo "===== checking file $f"
+          for f in $(find . -type f -iname '*.yml' | LC_ALL=C sort); do
+            echo "===== checking file"
+            echo "  yq  $f"
             yq < "$f" > /dev/null
-            ytt -f- < "$f" > /dev/null
+            if command -v ytt > /dev/null; then
+              echo "  ytt $f"
+              ytt -f- < "$f" > /dev/null
+            fi
           done
+          echo "All done."
