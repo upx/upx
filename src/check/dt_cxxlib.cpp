@@ -99,36 +99,36 @@ TEST_CASE("ptr_reinterpret_cast") {
     int *ip = nullptr;
     double *dp = nullptr;
 
-    CHECK((vp == ptr_reinterpret_cast<void *>(vp)));
-    CHECK((vp == ptr_reinterpret_cast<void *>(bp)));
-    CHECK((vp == ptr_reinterpret_cast<void *>(ip)));
-    CHECK((vp == ptr_reinterpret_cast<void *>(dp)));
+    assert((vp == ptr_reinterpret_cast<void *>(vp)));
+    assert((vp == ptr_reinterpret_cast<void *>(bp)));
+    assert((vp == ptr_reinterpret_cast<void *>(ip)));
+    assert((vp == ptr_reinterpret_cast<void *>(dp)));
 
-    CHECK((bp == ptr_reinterpret_cast<byte *>(vp)));
-    CHECK((bp == ptr_reinterpret_cast<byte *>(bp)));
-    CHECK((bp == ptr_reinterpret_cast<byte *>(ip)));
-    CHECK((bp == ptr_reinterpret_cast<byte *>(dp)));
+    assert((bp == ptr_reinterpret_cast<byte *>(vp)));
+    assert((bp == ptr_reinterpret_cast<byte *>(bp)));
+    assert((bp == ptr_reinterpret_cast<byte *>(ip)));
+    assert((bp == ptr_reinterpret_cast<byte *>(dp)));
 
-    CHECK((ip == ptr_reinterpret_cast<int *>(vp)));
-    CHECK((ip == ptr_reinterpret_cast<int *>(bp)));
-    CHECK((ip == ptr_reinterpret_cast<int *>(ip)));
-    CHECK((ip == ptr_reinterpret_cast<int *>(dp)));
+    assert((ip == ptr_reinterpret_cast<int *>(vp)));
+    assert((ip == ptr_reinterpret_cast<int *>(bp)));
+    assert((ip == ptr_reinterpret_cast<int *>(ip)));
+    assert((ip == ptr_reinterpret_cast<int *>(dp)));
 
-    CHECK((dp == ptr_reinterpret_cast<double *>(vp)));
-    CHECK((dp == ptr_reinterpret_cast<double *>(bp)));
-    CHECK((dp == ptr_reinterpret_cast<double *>(ip)));
-    CHECK((dp == ptr_reinterpret_cast<double *>(dp)));
+    assert((dp == ptr_reinterpret_cast<double *>(vp)));
+    assert((dp == ptr_reinterpret_cast<double *>(bp)));
+    assert((dp == ptr_reinterpret_cast<double *>(ip)));
+    assert((dp == ptr_reinterpret_cast<double *>(dp)));
 
     const byte *bc = nullptr;
     const int *ic = nullptr;
-    CHECK((bc == ptr_reinterpret_cast<byte *>(bp)));
-    CHECK((bc == ptr_reinterpret_cast<const byte *>(bc)));
-    CHECK((bc == ptr_reinterpret_cast<byte *>(ip)));
-    CHECK((bc == ptr_reinterpret_cast<const byte *>(ic)));
-    CHECK((ic == ptr_reinterpret_cast<int *>(bp)));
-    CHECK((ic == ptr_reinterpret_cast<const int *>(bc)));
-    CHECK((ic == ptr_reinterpret_cast<int *>(ip)));
-    CHECK((ic == ptr_reinterpret_cast<const int *>(ic)));
+    assert((bc == ptr_reinterpret_cast<byte *>(bp)));
+    assert((bc == ptr_reinterpret_cast<const byte *>(bc)));
+    assert((bc == ptr_reinterpret_cast<byte *>(ip)));
+    assert((bc == ptr_reinterpret_cast<const byte *>(ic)));
+    assert((ic == ptr_reinterpret_cast<int *>(bp)));
+    assert((ic == ptr_reinterpret_cast<const int *>(bc)));
+    assert((ic == ptr_reinterpret_cast<int *>(ip)));
+    assert((ic == ptr_reinterpret_cast<const int *>(ic)));
 }
 
 TEST_CASE("noncopyable") {
@@ -155,7 +155,7 @@ TEST_CASE("noncopyable") {
 namespace {
 template <class T>
 struct TestTriBool {
-    static void test(bool expect_true) noexcept {
+    static void test(bool expect_true) {
         static_assert(std::is_class<T>::value);
         static_assert(std::is_nothrow_default_constructible<T>::value);
         static_assert(std::is_nothrow_destructible<T>::value);
@@ -171,6 +171,7 @@ struct TestTriBool {
 #endif
         static_assert(!bool(T(false)));
         static_assert(bool(T(true)));
+        static_assert(bool(T(T::Third)) == T::is_third_true);
         static_assert(T(false) == T::False);
         static_assert(T(true) == T::True);
         static_assert(T(T::False) == T::False);
@@ -190,64 +191,65 @@ struct TestTriBool {
         static_assert(array[2].isThird());
         static_assert(sizeof(array) == 3 * sizeof(T));
         T a;
-        CHECK(a.getValue() == T::False);
-        CHECK(!a);
-        CHECK(!bool(a));
-        CHECK((!a ? true : false));
-        CHECK(a.isStrictFalse());
-        CHECK(!a.isStrictTrue());
-        CHECK(a.isStrictBool());
-        CHECK(!a.isThird());
+        assert(a.getValue() == T::False);
+        assert(!a);
+        assert(!bool(a));
+        assert((!a ? true : false));
+        assert(a.isStrictFalse());
+        assert(!a.isStrictTrue());
+        assert(a.isStrictBool());
+        assert(!a.isThird());
         a = false;
-        CHECK(a.getValue() == T::False);
-        CHECK(!a);
-        CHECK(!bool(a));
-        CHECK((!a ? true : false));
-        CHECK(a.isStrictFalse());
-        CHECK(!a.isStrictTrue());
-        CHECK(a.isStrictBool());
-        CHECK(!a.isThird());
+        assert(a.getValue() == T::False);
+        assert(!a);
+        assert(!bool(a));
+        assert((!a ? true : false));
+        assert(a.isStrictFalse());
+        assert(!a.isStrictTrue());
+        assert(a.isStrictBool());
+        assert(!a.isThird());
         a = true;
-        CHECK(a.getValue() == T::True);
-        CHECK(a);
-        CHECK(bool(a));
-        CHECK((a ? true : false));
-        CHECK(!a.isStrictFalse());
-        CHECK(a.isStrictTrue());
-        CHECK(a.isStrictBool());
-        CHECK(!a.isThird());
+        assert(a.getValue() == T::True);
+        assert(a);
+        assert(bool(a));
+        assert((a ? true : false));
+        assert(!a.isStrictFalse());
+        assert(a.isStrictTrue());
+        assert(a.isStrictBool());
+        assert(!a.isThird());
         a = T::Third;
-        CHECK(a.getValue() == T::Third);
+        assert(a.getValue() == T::Third);
+        assert(T::is_third_true == expect_true);
         if (expect_true) {
-            CHECK(a);
-            CHECK(bool(a));
-            CHECK((a ? true : false));
+            assert(a);
+            assert(bool(a));
+            assert((a ? true : false));
         } else {
-            CHECK(!a);
-            CHECK(!bool(a));
-            CHECK((!a ? true : false));
+            assert(!a);
+            assert(!bool(a));
+            assert((!a ? true : false));
         }
-        CHECK(!a.isStrictFalse());
-        CHECK(!a.isStrictTrue());
-        CHECK(!a.isStrictBool());
-        CHECK(a.isThird());
+        assert(!a.isStrictFalse());
+        assert(!a.isStrictTrue());
+        assert(!a.isStrictBool());
+        assert(a.isThird());
         a = 99;
-        CHECK(a.getValue() == T::Third);
+        assert(a.getValue() == T::Third);
         if (expect_true) {
-            CHECK(a);
-            CHECK(bool(a));
-            CHECK((a ? true : false));
+            assert(a);
+            assert(bool(a));
+            assert((a ? true : false));
         } else {
-            CHECK(!a);
-            CHECK(!bool(a));
-            CHECK((!a ? true : false));
+            assert(!a);
+            assert(!bool(a));
+            assert((!a ? true : false));
         }
-        CHECK(!a.isStrictFalse());
-        CHECK(!a.isStrictTrue());
-        CHECK(!a.isStrictBool());
-        CHECK(a.isThird());
+        assert(!a.isStrictFalse());
+        assert(!a.isStrictTrue());
+        assert(!a.isStrictBool());
+        assert(a.isThird());
         mem_clear(&a);
-        CHECK(a.isStrictFalse());
+        assert(a.isStrictFalse());
     }
 };
 } // namespace

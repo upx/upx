@@ -19,14 +19,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # cl (msvc)
+          # cl (MSVC)
           - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64 }
           - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64_arm64 }
           - { os: windows-2019, cc: cl, cxx: cl, vsversion: 2019, arch: amd64_x86 }
           - { os: windows-2022, cc: cl, cxx: cl, vsversion: 2022, arch: amd64 }
           - { os: windows-2022, cc: cl, cxx: cl, vsversion: 2022, arch: amd64_arm64 }
           - { os: windows-2022, cc: cl, cxx: cl, vsversion: 2022, arch: amd64_x86 }
-          # clang-cl
+          # clang-cl (from MSVC)
+          - { os: windows-2019, cc: clang-cl, cxx: clang-cl, vsversion: 2019, arch: amd64 }
           - { os: windows-2022, cc: clang-cl, cxx: clang-cl, vsversion: 2022, arch: amd64 }
           # clang
           - { os: windows-2022, cc: clang, cxx: 'clang++', arch: amd64, xflags: '-static' }

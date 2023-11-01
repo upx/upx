@@ -114,6 +114,7 @@ constexpr bool string_ge(const char *a, const char *b) { return !string_lt(a, b)
 
 template <class T = int, bool IsThirdTrue = false> // Third is false by default
 struct TriBool final {
+    static constexpr bool is_third_true = IsThirdTrue;
     // types
     typedef T underlying_type;
     static_assert(std::is_integral_v<underlying_type>);
