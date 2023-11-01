@@ -25,7 +25,7 @@
  */
 
 // lots of tests (and probably quite a number of redundant tests)
-// modern compilers will optimize away quite a lot of this code
+// modern compilers will optimize away much of this code
 
 #include "../conf.h"
 

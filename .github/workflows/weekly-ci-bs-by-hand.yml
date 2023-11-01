@@ -102,7 +102,7 @@ jobs:
           # IMPORTANT: do NOT run as user root!
           chmod a+w . && sudo -u upx bash "$testsuite"
 
-  job-by-hand-macos: # uses a POSIX-compliant shell
+  job-by-hand-macos-clang: # uses a POSIX-compliant shell
     # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
     if: github.repository_owner == 'upx'
     strategy:
@@ -112,9 +112,18 @@ jobs:
           - { os: macos-11, run_fs_test: false } # macos-11 does not have "readlink -f"
           - { os: macos-12, run_fs_test: true }
           - { os: macos-13, run_fs_test: true }
-    name: ${{ format('by-hand cc {0}', matrix.os) }}
+    name: ${{ format('by-hand clang {0}', matrix.os) }}
     runs-on: ${{ matrix.os }}
     steps:
+      - name: 'Install brew packages'
+        run: |
+          # install ccache
+          if ! command -v ccache > /dev/null; then
+            # only run "brew update" if needed
+            if ! brew install ccache; then brew update && brew install ccache; fi
+          fi
+          xflags="-Wall -Wextra -Werror"
+          echo -e "CC=ccache clang $xflags\nCXX=ccache clang++ -std=gnu++17 $xflags" >> $GITHUB_ENV
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
@@ -123,6 +132,8 @@ jobs:
         run: 'top_srcdir="$PWD/upx with space" /bin/sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Build by-hand with bash'
         run: 'top_srcdir="$PWD/upx with space" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"'
+      - name: 'Build by-hand with zsh'
+        run: 'top_srcdir="$PWD/upx with space" zsh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
       - name: 'Run file system test suite'
         if: ${{ matrix.run_fs_test }}
         run: |
