@@ -32,7 +32,7 @@ ii  debconf                     1.5.79ubuntu1                           all     
 ii  debianutils                 5.5-1ubuntu2                            amd64        Miscellaneous utilities specific to Debian
 ii  dh-elpa-helper              2.0.9ubuntu1                            all          helper package for emacs lisp extensions
 ii  diffutils                   1:3.8-0ubuntu2                          amd64        File comparison utilities
-ii  distro-info-data            0.52ubuntu0.4                           all          information about the distributions' releases (data files)
+ii  distro-info-data            0.52ubuntu0.5                           all          information about the distributions' releases (data files)
 ii  dpkg                        1.21.1ubuntu2.2                         amd64        Debian package management system
 ii  e2fsprogs                   1.46.5-2ubuntu1.1                       amd64        ext2/ext3/ext4 file system utilities
 ii  elfutils                    0.186-1build1                           amd64        collection of utilities to handle ELF objects
@@ -215,10 +215,10 @@ ii  libsqlite3-0:amd64          3.37.2-2ubuntu0.1                       amd64   
 ii  libss2:amd64                1.46.5-2ubuntu1.1                       amd64        command-line interface parsing library
 ii  libssh-4:amd64              0.9.6-2ubuntu0.22.04.1                  amd64        tiny C SSH library (OpenSSL flavor)
 ii  libssh2-1:amd64             1.10.0-3                                amd64        SSH2 client-side library
-ii  libssl3:amd64               3.0.2-0ubuntu1.10                       amd64        Secure Sockets Layer toolkit - shared libraries
+ii  libssl3:amd64               3.0.2-0ubuntu1.12                       amd64        Secure Sockets Layer toolkit - shared libraries
 ii  libstdc++-11-dev:amd64      11.4.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (development files)
 ii  libstdc++6:amd64            12.3.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3
-ii  libsystemd0:amd64           249.11-0ubuntu3.10                      amd64        systemd utility library
+ii  libsystemd0:amd64           249.11-0ubuntu3.11                      amd64        systemd utility library
 ii  libtasn1-6:amd64            4.18.0-4build1                          amd64        Manage ASN.1 structures (runtime)
 ii  libtime-duration-perl       1.21-1                                  all          module for rounded or exact English expression of durations
 ii  libtimedate-perl            2.3300-2                                all          collection of modules to manipulate date/time information
@@ -229,7 +229,7 @@ ii  libtirpc-dev:amd64          1.3.2-2ubuntu0.1                        amd64   
 ii  libtirpc3:amd64             1.3.2-2ubuntu0.1                        amd64        transport-independent RPC library
 ii  libtsan0:amd64              11.4.0-1ubuntu1~22.04                   amd64        ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
 ii  libubsan1:amd64             12.3.0-1ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (runtime)
-ii  libudev1:amd64              249.11-0ubuntu3.10                      amd64        libudev shared library
+ii  libudev1:amd64              249.11-0ubuntu3.11                      amd64        libudev shared library
 ii  libunistring2:amd64         1.0-1                                   amd64        Unicode string library for C
 ii  libutempter0:amd64          1.2.1-2build2                           amd64        privileged helper for utmp/wtmp updates (runtime)
 ii  libuuid1:amd64              2.37.2-4ubuntu3                         amd64        Universally Unique ID library
@@ -254,7 +254,7 @@ ii  libxxhash0:amd64            0.8.1-1                                 amd64   
 ii  libyaml-0-2:amd64           0.2.2-1build2                           amd64        Fast YAML 1.1 parser and emitter library
 ii  libzstd-dev:amd64           1.4.8+dfsg-3build1                      amd64        fast lossless compression algorithm -- development files
 ii  libzstd1:amd64              1.4.8+dfsg-3build1                      amd64        fast lossless compression algorithm
-ii  linux-libc-dev:amd64        5.15.0-87.97                            amd64        Linux Kernel Headers for development
+ii  linux-libc-dev:amd64        5.15.0-88.98                            amd64        Linux Kernel Headers for development
 ii  login                       1:4.8.1-2ubuntu2.1                      amd64        system login tools
 ii  logsave                     1.46.5-2ubuntu1.1                       amd64        save the output of a command in a log file
 ii  lsb-base                    11.1.0ubuntu4                           all          Linux Standard Base init script functionality
@@ -272,7 +272,7 @@ ii  ncurses-base                6.3-2ubuntu0.1                          all     
 ii  ncurses-bin                 6.3-2ubuntu0.1                          amd64        terminal-related programs and man pages
 ii  ncurses-term                6.3-2ubuntu0.1                          all          additional terminal type definitions
 ii  ninja-build                 1.10.1-1                                amd64        small build system closest in spirit to Make
-ii  openssl                     3.0.2-0ubuntu1.10                       amd64        Secure Sockets Layer toolkit - cryptographic utility
+ii  openssl                     3.0.2-0ubuntu1.12                       amd64        Secure Sockets Layer toolkit - cryptographic utility
 ii  p7zip                       16.02+dfsg-8                            amd64        7zr file archiver with high compression ratio
 ii  parallel                    20210822+ds-2                           all          build and execute command lines from standard input in parallel
 ii  passwd                      1:4.8.1-2ubuntu2.1                      amd64        change and administer password and group data
@@ -311,11 +311,11 @@ ii  universal-ctags             5.9.20210829.0-1                        amd64   
 ii  unzip                       6.0-26ubuntu3.1                         amd64        De-archiver for .zip files
 ii  usrmerge                    25ubuntu2                               all          Convert the system to the merged /usr directories scheme
 ii  util-linux                  2.37.2-4ubuntu3                         amd64        miscellaneous system utilities
-ii  vim                         2:8.2.3995-1ubuntu2.12                  amd64        Vi IMproved - enhanced vi editor
-ii  vim-common                  2:8.2.3995-1ubuntu2.12                  all          Vi IMproved - Common files
-ii  vim-runtime                 2:8.2.3995-1ubuntu2.12                  all          Vi IMproved - Runtime files
+ii  vim                         2:8.2.3995-1ubuntu2.13                  amd64        Vi IMproved - enhanced vi editor
+ii  vim-common                  2:8.2.3995-1ubuntu2.13                  all          Vi IMproved - Common files
+ii  vim-runtime                 2:8.2.3995-1ubuntu2.13                  all          Vi IMproved - Runtime files
 ii  wget                        1.21.2-2ubuntu1                         amd64        retrieves files from the web
-ii  xxd                         2:8.2.3995-1ubuntu2.12                  amd64        tool to make (or reverse) a hex dump
+ii  xxd                         2:8.2.3995-1ubuntu2.13                  amd64        tool to make (or reverse) a hex dump
 ii  xz-utils                    5.2.5-2ubuntu1                          amd64        XZ-format compression utilities
 ii  yash                        2.51-1                                  amd64        yet another shell
 ii  zip                         3.0-12build2                            amd64        Archiver for .zip files
@@ -330,10 +330,10 @@ ii  zstd                        1.4.8+dfsg-3build1                      amd64   
 ||/ Name                        Version                                 Architecture Description
 
 Packages sorted by Installed-Size:
-   754072 ===== TOTAL (324 packages)
+   754091 ===== TOTAL (324 packages)
     52747 gcc-11                                   amd64
     34444 libicu70                                 amd64
-    32781 vim-runtime                              all
+    32782 vim-runtime                              all
     28891 g++-11                                   amd64
     28441 libperl5.34                              amd64
     26284 cpp-11                                   amd64
@@ -363,19 +363,19 @@ Packages sorted by Installed-Size:
      7128 libmagic-mgc                             amd64
      7112 coreutils                                amd64
      6988 libx32gcc-11-dev                         amd64
-     6795 linux-libc-dev                           amd64
+     6802 linux-libc-dev                           amd64
      6733 dpkg                                     amd64
      6667 lib32asan6                               amd64
      6570 libx32asan6                              amd64
      5905 python3.10-minimal                       amd64
-     5824 libssl3                                  amd64
+     5828 libssl3                                  amd64
      5768 libpython3.10                            amd64
      5103 libpython3.10-minimal                    amd64
      4249 ncurses-term                             all
      4156 apt                                      amd64
      4147 ripgrep                                  amd64
      4082 libglib2.0-0                             amd64
-     3925 vim                                      amd64
+     3930 vim                                      amd64
      3643 python2.7-minimal                        amd64
      3542 python3-pycryptodome                     amd64
      3506 re2c                                     amd64
@@ -484,7 +484,7 @@ Packages sorted by Installed-Size:
       390 ca-certificates                          all
       389 mount                                    amd64
       382 libmount1                                amd64
-      380 vim-common                               all
+      381 vim-common                               all
       376 unzip                                    amd64
       372 xz-utils                                 amd64
       368 libssh2-1                                amd64
@@ -517,7 +517,7 @@ Packages sorted by Installed-Size:
       292 libk5crypto3                             amd64
       290 pax-utils                                amd64
       290 liblzma5                                 amd64
-      278 xxd                                      amd64
+      279 xxd                                      amd64
       273 gcc-11-base                              amd64
       272 gcc-12-base                              i386
       272 gcc-12-base                              amd64

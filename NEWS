@@ -2,7 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 4.2.1 (XX XXX XXXX):
+Changes in 4.2.1 (01 Nov 2023):
+  * linux: /proc/self/exe now is optional
   * windows: use SetFileTime to preserve sub-second file timestamps
   * official Windows builds: revert activeCodePage change introduced in 4.2.0
   * bug fixes - see https://github.com/upx/upx/milestone/14
