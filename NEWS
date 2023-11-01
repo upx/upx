@@ -2,6 +2,9 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 4.3.0 (XX XXX XXXX):
+  * bug fixes - see https://github.com/upx/upx/milestone/15
+
 Changes in 4.2.1 (01 Nov 2023):
   * linux: /proc/self/exe now is optional
   * windows: use SetFileTime to preserve sub-second file timestamps
