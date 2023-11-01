@@ -1,24 +1,41 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# BS BuildSystem: build misc
+# BS BuildSystem: build with misc flags
 
 name: 'Weekly CI BS - Misc'
 on:
-  schedule: [cron: '40 1 * * 3'] # run weekly Wednesday 01:50 UTC
+  schedule: [cron: '50 1 * * 3'] # run weekly Wednesday 01:50 UTC
   workflow_dispatch:
 env:
   CMAKE_REQUIRED_QUIET: "OFF"
   CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
+  UPX_CMAKE_BUILD_FLAGS: --verbose
 
 jobs:
-  job-bs-misc: # uses cmake + make
+  BS0:
+    runs-on: ubuntu-latest
+    container: 'alpine:edge'
+    steps:
+      - name: 'Install packages'
+        run: |
+          apk update && apk upgrade && apk add bash git perl yq
+          git config --global --add safe.directory '*'
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" .
+      - name: 'Misc checks'
+        run: |
+          cat ./.github/*.yml | yq > /dev/null
+          cat ./.github/*/*.yml | yq > /dev/null
+          bash ./misc/scripts/check_whitespace_git.sh
+          echo "All done."
+
+  BS1: # uses cmake + make
     if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
       matrix:
         container:
-          - 'alpine:3.18'
-          - 'i386/alpine:3.18'
+          - 'alpine:edge'
+          - 'i386/alpine:edge'
         cc:
           - 'clang'
           - 'gcc'
@@ -32,22 +49,62 @@ jobs:
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         run: 'apk update && apk upgrade && apk add clang cmake g++ git make'
-      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+      - name: ${{ format('Check out {0} source code', github.ref_name) }}
         run: |
           # this seems to be needed when running in a container (beause of UID mismatch??)
           git config --global --add safe.directory '*'
-          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx .
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" .
           git submodule update --init
-          # set environment
+          # prepare environment
           xflags="-static ${{ matrix.cppflags }}"
           case ${{ matrix.cc }} in
             clang) CC="clang $xflags"; CXX="clang++ $xflags" ;;
             gcc)   CC="gcc $xflags";   CXX="g++ $xflags" ;;
-            *)     CC=false; CXX=false ;;
+            *)     exit 99 ;;
           esac
           echo -e "CC=$CC\nCXX=$CXX" >> $GITHUB_ENV
-      - name: 'Build Debug'
-        run: 'make debug && ctest --test-dir build/debug'
-      - name: 'Build Release'
+      - name: 'Build and test Debug'
+        run: 'echo -e "CC=$CC;\nCXX=$CXX;" && make debug && ctest --test-dir build/debug'
+      - name: 'Build and test Release'
         if: success() || failure() # run this step even if the previous step failed
-        run: 'make release && ctest --test-dir build/debug'
+        run: 'echo -e "CC=$CC;\nCXX=$CXX;" && make release && ctest --test-dir build/release'
+
+  BS2: # uses cmake + make
+    if: github.repository_owner == 'upx'
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - 'alpine:edge'
+        cc:
+          - 'clang'
+          - 'gcc'
+        cxxflags:
+          - '-std=gnu++20'
+          - '-std=gnu++23'
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    steps:
+      - name: ${{ format('Install packages {0}', matrix.container) }}
+        run: 'apk update && apk upgrade && apk add clang cmake g++ git make'
+      - name: ${{ format('Check out {0} source code', github.ref_name) }}
+        run: |
+          # this seems to be needed when running in a container (beause of UID mismatch??)
+          git config --global --add safe.directory '*'
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" .
+          git submodule update --init
+          # prepare environment
+          xflags="-static"
+          case ${{ matrix.cc }} in
+            clang) CC="clang $xflags"; CXX="clang++ $xflags ${{ matrix.cxxflags }}" ;;
+            gcc)   CC="gcc $xflags";   CXX="g++ $xflags ${{ matrix.cxxflags }}" ;;
+            *)     exit 99 ;;
+          esac
+          echo -e "CC=$CC\nCXX=$CXX" >> $GITHUB_ENV
+          echo "UPX_CONFIG_DISABLE_C_STANDARD=ON" >> $GITHUB_ENV
+          echo "UPX_CONFIG_DISABLE_CXX_STANDARD=ON" >> $GITHUB_ENV
+      - name: 'Build and test Debug'
+        run: 'echo -e "CC=$CC;\nCXX=$CXX;" && make debug && ctest --test-dir build/debug'
+      - name: 'Build and test Release'
+        if: success() || failure() # run this step even if the previous step failed
+        run: 'echo -e "CC=$CC;\nCXX=$CXX;" && make release && ctest --test-dir build/release'

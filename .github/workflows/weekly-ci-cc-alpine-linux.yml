@@ -75,7 +75,7 @@ jobs:
           adduser upx -u 2000 -D && cd /home/upx && chmod 00700 . && chown -R upx:upx .
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
-          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx "upx with space"
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
           git -C "upx with space" submodule update --init
 
       # build with default C11 and C++17

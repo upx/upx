@@ -45,7 +45,7 @@ jobs:
           mkdir -p -v ~/.wine
           # this seems to be needed when running in a container (beause of UID mismatch??)
           git config --global --add safe.directory '*'
-          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx .
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" .
           git submodule update --init
       - name: 'Build cmake extra/cross-windows-mingw32/debug'
         if: ${{ matrix.i686_mingw }}

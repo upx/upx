@@ -39,7 +39,7 @@ jobs:
           adduser upx -u 2000 -D && cd /home/upx && chmod 00700 . && chown -R upx:upx .
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
-          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx "upx with space"
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
           git -C "upx with space" submodule update --init
       - name: 'Build by-hand with /bin/sh'
         run: '/bin/sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
@@ -117,7 +117,7 @@ jobs:
     steps:
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
-          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx "upx with space"
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
           git -C "upx with space" submodule update --init
       - name: 'Build by-hand with /bin/sh'
         run: 'top_srcdir="$PWD/upx with space" /bin/sh "./upx with space/misc/scripts/build_upx_by_hand.sh"'
@@ -145,7 +145,7 @@ jobs:
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         shell: bash
         run: |
-          git clone --branch "$GITHUB_REF_NAME" --depth 1 https://github.com/upx/upx "upx with space"
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
           git -C "upx with space" submodule update --init
       - name: 'Build by-hand with bash'
         shell: bash
