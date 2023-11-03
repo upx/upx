@@ -14,6 +14,9 @@
 /src/stub/src/arch/**/lzma_d_c[fns].S   linguist-generated
 /src/stub/tmp/**                        linguist-generated
 
+/misc/podman/*/packages*.txt            linguist-generated
+/misc/testsuite/*expected_sha256sums*   linguist-generated
+
 #
 # make GitHub language detection more accurate
 #

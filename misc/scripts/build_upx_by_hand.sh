@@ -27,13 +27,13 @@ fi
 # protect against security threats caused by misguided compiler "optimizations"
 mandatory_flags="-fno-strict-aliasing -fno-strict-overflow -funsigned-char"
 # not mandatory but good practice when using <windows.h>:
-mandatory_flags="$mandatory_flags -DWIN32_LEAN_AND_MEAN"
+sensible_flags="-DWIN32_LEAN_AND_MEAN"
 if test "x$OPTIMIZE" != "x" && test "x$OPTIMIZE" != "x0"; then
     # not mandatory and not minimal, but usually a good idea:
-    mandatory_flags="-Wall -O2 $mandatory_flags"
+    sensible_flags="-Wall -O2 $sensible_flags"
 fi
-CC="$CC $mandatory_flags"
-CXX="$CXX $mandatory_flags"
+CC="$CC $sensible_flags $mandatory_flags"
+CXX="$CXX $sensible_flags $mandatory_flags"
 
 # go to upx top-level directory
 # HINT: set "top_srcdir" manually if your system does not have "readlink"
@@ -93,8 +93,9 @@ check_submodule() {
 # build
 run "+" mkdir -p "build/by-hand"
 if check_submodule bzip2; then
+    test -z "${bzip2_extra_flags+set}" && bzip2_extra_flags=
     for f in "$rel_top_srcdir"/vendor/bzip2/*.c; do
-        run "CC  $f" $CC -c "$f"
+        run "CC  $f" $CC $bzip2_extra_flags -c "$f"
     done
 fi
 if check_submodule ucl; then
@@ -103,13 +104,15 @@ if check_submodule ucl; then
     done
 fi
 if check_submodule zlib; then
+    test -z "${zlib_extra_flags+set}" && zlib_extra_flags="-DHAVE_UNISTD_H -DHAVE_VSNPRINTF"
     for f in "$rel_top_srcdir"/vendor/zlib/*.c; do
-        run "CC  $f" $CC -DHAVE_UNISTD_H -DHAVE_VSNPRINTF -c "$f"
+        run "CC  $f" $CC $zlib_extra_flags -c "$f"
     done
 fi
 if check_submodule zstd; then
+    test -z "${zstd_extra_flags+set}" && zstd_extra_flags="-DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM"
     for f in "$rel_top_srcdir"/vendor/zstd/lib/*/*.c; do
-        run "CC  $f" $CC -DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM -c "$f"
+        run "CC  $f" $CC $zstd_extra_flags -c "$f"
     done
 fi
 run "+" cd "$rel_top_srcdir" || exit 1

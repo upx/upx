@@ -18,6 +18,7 @@ jobs:
       matrix:
         include:
           # clang-cl
+          - { os: windows-2019, vsversion: 2019, arch: amd64, clang_cl: true }
           - { os: windows-2022, vsversion: 2022, arch: amd64, clang_cl: true }
           # msvc
           - { os: windows-2019, vsversion: 2019, arch: amd64 }
@@ -29,6 +30,7 @@ jobs:
     name: ${{ format('vs{0} {1} {2}', matrix.vsversion, matrix.arch, matrix.clang_cl && 'clang-cl' || '') }}
     runs-on: ${{ matrix.os }}
     steps:
+      - run: git config --global core.autocrlf false
       - name: 'Check out code'
         uses: actions/checkout@v4
         with: { submodules: true }
@@ -46,6 +48,7 @@ jobs:
           nmake
           dir *.exe
       - name: 'Build cmake NMake Release'
+        if: success() || failure() # run this step even if the previous step failed
         shell: cmd
         run: |
           set X=${{ matrix.clang_cl && '-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl' || '' }}
@@ -72,6 +75,8 @@ jobs:
         run: |
           ctest --test-dir build/debug
           ctest --test-dir build/release
+          .\build\debug\upx.exe --sysinfo -v
+          .\build\release\upx.exe --sysinfo -v
       - name: 'Run install tests'
         run: |
           env DESTDIR=./Install-debug   cmake --install build/debug

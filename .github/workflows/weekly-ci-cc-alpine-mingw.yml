@@ -112,6 +112,7 @@ jobs:
           wine=wine64
           tt='./upx.exe'
           $wine ./upx.exe --version-short
+          $wine ./upx.exe --sysinfo -v
           $wine ./upx.exe -3 $tt -o tt.packed.exe
           $wine ./upx.exe -l tt.packed.exe
           $wine ./upx.exe -t tt.packed.exe
@@ -130,6 +131,7 @@ jobs:
           wine=wine64
           tt='./upx.exe'
           $wine ./upx.exe --version-short
+          $wine ./upx.exe --sysinfo -v
           $wine ./upx.exe -3 $tt -o tt.packed.exe
           $wine ./upx.exe -l tt.packed.exe
           $wine ./upx.exe -t tt.packed.exe
@@ -148,6 +150,7 @@ jobs:
           wine=wine64
           tt='./upx.exe'
           $wine ./upx.exe --version-short
+          $wine ./upx.exe --sysinfo -v
           $wine ./upx.exe -3 $tt -o tt.packed.exe
           $wine ./upx.exe -l tt.packed.exe
           $wine ./upx.exe -t tt.packed.exe
@@ -166,6 +169,7 @@ jobs:
           wine=wine64
           tt='./upx.exe'
           $wine ./upx.exe --version-short
+          $wine ./upx.exe --sysinfo -v
           $wine ./upx.exe -3 $tt -o tt.packed.exe
           $wine ./upx.exe -l tt.packed.exe
           $wine ./upx.exe -t tt.packed.exe

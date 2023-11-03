@@ -152,4 +152,10 @@ static_assert(sizeof(void *) == 8);
 #endif
 #endif
 
+#ifdef WANT_WINDOWS_LEAN_H
+#if defined(_WIN32) || defined(__CYGWIN__)
+#include "util/windows_lean.h"
+#endif
+#endif
+
 /* vim:set ts=4 sw=4 et: */

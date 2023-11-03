@@ -221,6 +221,7 @@ TEST_CASE("upx_zstd_decompress") {
     d_len = 31;
     r = upx_zstd_decompress(c_data, 16, d_buf, &d_len, M_ZSTD, nullptr);
     CHECK(r == UPX_E_OUTPUT_OVERRUN);
+    UNUSED(r);
 }
 
 #endif // WITH_ZSTD

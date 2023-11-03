@@ -38,15 +38,15 @@
 #include "p_vmlinx.h"
 #include "linker.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-linux.kernel.vmlinux.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/amd64-linux.kernel.vmlinux.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/arm.v5a-linux.kernel.vmlinux.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/armeb.v5a-linux.kernel.vmlinux.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc-linux.kernel.vmlinux.h"
 
 
@@ -943,7 +943,7 @@ void PackVmlinuxPPC32::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,UPX1HEAD", nullptr);
 }
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc64le-linux.kernel.vmlinux.h"
 void PackVmlinuxPPC64LE::buildLoader(const Filter *ft)
 {
@@ -971,15 +971,15 @@ void PackVmlinuxPPC64LE::buildLoader(const Filter *ft)
 }
 
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-linux.kernel.vmlinux-head.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/amd64-linux.kernel.vmlinux-head.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/arm.v5a-linux.kernel.vmlinux-head.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/armeb.v5a-linux.kernel.vmlinux-head.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc-linux.kernel.vmlinux-head.h"
 
 unsigned PackVmlinuxI386::write_vmlinux_head(
@@ -1166,7 +1166,7 @@ bool PackVmlinuxPPC32::has_valid_vmlinux_head()
     return false;
 }
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc64le-linux.kernel.vmlinux-head.h"
 bool PackVmlinuxPPC64LE::has_valid_vmlinux_head()
 {

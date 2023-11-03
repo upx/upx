@@ -45,48 +45,48 @@
 #  pragma GCC diagnostic ignored "-Wcast-align"
 #endif
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-darwin.macho-entry.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-darwin.macho-fold.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-darwin.macho-upxmain.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-darwin.dylib-entry.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/amd64-darwin.macho-entry.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/amd64-darwin.macho-fold.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/amd64-darwin.macho-upxmain.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/amd64-darwin.dylib-entry.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/arm.v5a-darwin.macho-entry.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/arm.v5a-darwin.macho-fold.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/arm64-darwin.macho-entry.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/arm64-darwin.macho-fold.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc-darwin.macho-entry.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc-darwin.macho-fold.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc-darwin.macho-upxmain.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc-darwin.dylib-entry.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc64-darwin.macho-entry.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc64-darwin.macho-fold.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/powerpc64-darwin.dylib-entry.h"
 
 // Packing a Darwin (Mach-o) Mac OS X dylib (dynamic shared library)

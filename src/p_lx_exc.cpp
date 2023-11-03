@@ -74,14 +74,14 @@ PackBSDI386::PackBSDI386(InputFile *f) : super(f)
     }
 }
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-linux.elf.execve-entry.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-linux.elf.execve-fold.h"
 
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-bsd.elf.execve-entry.h"
-static const
+static const CLANG_FORMAT_DUMMY_STATEMENT
 #include "stub/i386-bsd.elf.execve-fold.h"
 
 

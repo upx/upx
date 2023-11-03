@@ -51,6 +51,7 @@ jobs:
   cmake-nmake:
     runs-on: windows-2022
     steps:
+      - run: git config --global core.autocrlf false
       - name: 'Check out code'
         uses: actions/checkout@v4
         with: { submodules: true }
@@ -100,6 +101,7 @@ jobs:
   cmake-vsstudio-multi-config:
     runs-on: windows-2022
     steps:
+      - run: git config --global core.autocrlf false
       - name: 'Check out code'
         uses: actions/checkout@v4
         with: { submodules: true }

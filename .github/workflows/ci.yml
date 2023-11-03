@@ -92,13 +92,13 @@ jobs:
         if: ${{ matrix.use_m32 }}
         run:   'make build/extra/gcc-m32/debug'
       - name: 'Build cmake extra/gcc-m32/release'
-        if: ${{ matrix.use_m32 }}
+        if: ${{ matrix.use_m32 && (success() || failure()) }} # run this step even if the previous step failed
         run:   'make build/extra/gcc-m32/release'
       - name: 'Build cmake extra/cross-windows-mingw32/release'
-        if: ${{ matrix.use_m32 }}
+        if: ${{ matrix.use_m32 && (success() || failure()) }} # run this step even if the previous step failed
         run:   'make build/extra/cross-windows-mingw32/release'
       - name: 'Build cmake extra/cross-windows-mingw64/release'
-        if: ${{ matrix.use_m32 }}
+        if: ${{ matrix.use_m32 && (success() || failure()) }} # run this step even if the previous step failed
         run:   'make build/extra/cross-windows-mingw64/release'
       - name: 'Make artifact'
         run: |
@@ -206,7 +206,8 @@ jobs:
         if: ${{ !contains(matrix.os, 'macos-13') }} # FIXME: UPX on macos-13 is broken => disable self-test for now
         run: |
           make -C build/extra/clang/debug test
-#         make -C build/extra/clang/release test
+          #make -C build/extra/clang/release test
+          for f in ./build/extra/*/*/upx; do echo "===== $f"; $f --sysinfo -v; done
       - name: 'Run file system test suite'
         if: ${{ matrix.testsuite }} # for coreutils readlink
         run: |
@@ -235,6 +236,7 @@ jobs:
           - { name: windows-2019-amd64, os: windows-2019, vsversion: 2019, arch: amd64 }
           - { name: windows-2022-amd64, os: windows-2022, vsversion: 2022, arch: amd64 }
     steps:
+      - run: git config --global core.autocrlf false
       - name: 'Check out code'
         uses: actions/checkout@v4
         with: { submodules: true }
@@ -283,7 +285,6 @@ jobs:
     env:
       C: ${{ matrix.name }}
       B: release
-      H: 'd:\a\upx\upx'
     strategy:
       fail-fast: false
       matrix:
@@ -297,6 +298,7 @@ jobs:
           - { name: i386-win32-vs2019,    os: windows-2019, vsversion: 2019, arch: amd64_x86 }
           - { name: i386-win32-vs2022,    os: windows-2022, vsversion: 2022, arch: amd64_x86 }
     steps:
+      - run: git config --global core.autocrlf false
       - name: 'Check out code'
         uses: actions/checkout@v4
         with: { submodules: true }
@@ -305,6 +307,8 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite
           mkdir -p -v build/$C/$B/{bzip2,ucl,upx,zlib,zstd}
+          repo_name="${GITHUB_REPOSITORY##*/}" # basename
+          echo "H=d:\\a\\$repo_name\\$repo_name" >> $GITHUB_ENV
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
         with:
@@ -370,6 +374,7 @@ jobs:
           cd $Env:H\build\$Env:C\$Env:B\upx
           $Env:UPX = "--no-color --no-progress"
           .\upx.exe --version
+          .\upx.exe --sysinfo -v
           .\upx.exe upx.exe -o upx_packed.exe
           dir *.exe
           .\upx.exe -l upx_packed.exe

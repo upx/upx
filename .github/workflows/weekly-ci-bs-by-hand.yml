@@ -141,7 +141,7 @@ jobs:
           cd "upx with space"/build/by-hand
           bash "$testsuite"
 
-  job-by-hand-windows-gcc: # uses a POSIX-compliant shell
+  job-by-hand-windows: # uses a POSIX-compliant shell
     # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
     if: github.repository_owner == 'upx'
     strategy:
@@ -150,16 +150,29 @@ jobs:
         include:
           - { os: windows-2019 }
           - { os: windows-2022 }
-    name: ${{ format('by-hand gcc {0}', matrix.os) }}
+    name: ${{ format('by-hand cc {0}', matrix.os) }}
     runs-on: ${{ matrix.os }}
     steps:
+      - run: git config --global core.autocrlf false
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         shell: bash
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
           git -C "upx with space" submodule update --init
-      - name: 'Build by-hand with bash'
+      - name: 'Build by-hand with bash - clang'
         shell: bash
         run: |
           xflags="-static -Wall -Wextra -Werror"
+          # clang uses the MSVC headers, adjust settings
+          xflags="$xflags -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS"
+          export zlib_extra_flags="-DHAVE_VSNPRINTF"
+          export AR=false # link without using $AR
+          CC="clang $xflags" CXX="clang++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"
+          ls -l build/by-hand || true
+      - name: 'Build by-hand with bash - gcc'
+        if: success() || failure() # run this step even if the previous step failed
+        shell: bash
+        run: |
+          xflags="-static -Wall -Wextra -Werror"
+          # gcc uses the MingGW headers, so no extra settings are needed
           CC="gcc $xflags" CXX="g++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"

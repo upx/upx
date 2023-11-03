@@ -39,6 +39,7 @@ std::mutex opt_lock_mutex;
 **************************************************************************/
 
 void Options::reset() noexcept {
+#define opt ERROR_DO_NOT_USE_opt // protect against using the wrong variable
     Options *const o = this;
     mem_clear(o);
     o->crp.reset();
@@ -81,6 +82,7 @@ void Options::reset() noexcept {
     o->win32_pe.compress_rt[24] = false; // 24 == RT_MANIFEST
     o->win32_pe.strip_relocs = -1;
     o->win32_pe.keep_resource = "";
+#undef opt
 }
 
 /*************************************************************************
@@ -88,7 +90,7 @@ void Options::reset() noexcept {
 **************************************************************************/
 
 TEST_CASE("Options::reset") {
-#define opt DO_NOT_USE_opt
+#define opt ERROR_DO_NOT_USE_opt // protect against using the wrong variable
     COMPILE_TIME_ASSERT(std::is_standard_layout<Options>::value)
     COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<Options>::value)
     COMPILE_TIME_ASSERT(std::is_trivially_copyable<Options>::value)
@@ -97,7 +99,6 @@ TEST_CASE("Options::reset") {
     Options *const o = &local_options;
     o->reset();
     CHECK(o->o_unix.osabi0 == 3);
-    //
     static_assert(TABLESIZE(o->win32_pe.compress_rt) == 25); // 25 == RT_LAST
     CHECK(o->win32_pe.compress_exports);
     CHECK(o->win32_pe.compress_icons);

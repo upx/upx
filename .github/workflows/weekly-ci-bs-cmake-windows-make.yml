@@ -43,6 +43,7 @@ jobs:
     name: ${{ format('{0} {1} {2}', matrix.cc, matrix.vsversion, matrix.arch) }}
     runs-on: ${{ matrix.os }}
     steps:
+      - run: git config --global core.autocrlf false
       - name: 'Check out code'
         uses: actions/checkout@v4
         with: { submodules: true }
@@ -64,6 +65,7 @@ jobs:
           ls -l build/xtarget/$xtarget/debug/upx.exe
           file  build/xtarget/$xtarget/debug/upx.exe || true
       - name: 'Build cmake Make Release'
+        if: success() || failure() # run this step even if the previous step failed
         shell: bash
         run: |
           make UPX_XTARGET=$xtarget xtarget/release
@@ -88,6 +90,8 @@ jobs:
         run: |
           ctest --test-dir build/xtarget/$xtarget/debug
           ctest --test-dir build/xtarget/$xtarget/release
+          ./build/xtarget/$xtarget/debug/upx.exe --sysinfo -v
+          ./build/xtarget/$xtarget/release/upx.exe --sysinfo -v
       - name: 'Run install tests'
         shell: bash
         run: |
