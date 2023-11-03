@@ -11,40 +11,14 @@ AccessModifierOffset: -4
 AlignConsecutiveMacros: AcrossComments
 AlwaysBreakTemplateDeclarations: true
 AttributeMacros:
-  - __acc_cdecl
-  - __acc_cdecl_atexit
-  - __acc_cdecl_qsort
-  - __acc_cdecl_sighandler
-  - __acc_forceinline
-  - __acc_noinline
-  - __acc_static_forceinline
-  - __acc_static_noinline
   - DELETED_FUNCTION
   - XSPAN_DELETED_FUNCTION
-  - forceinline
   - may_throw
-  - noinline
-  - static_forceinline
-  - static_noinline
 EmptyLineBeforeAccessModifier: Leave
 SortIncludes: false
 SpaceAfterCStyleCast: true
 Standard: Cpp03
 StatementMacros:
-  - ACCCHK_ASSERT
-  - ACCCHK_ASSERT_IS_SIGNED_T
-  - ACCCHK_ASSERT_IS_UNSIGNED_T
-  - ACCCHK_ASSERT_SIGN_T
   - ACC_BLOCK_BEGIN
-  - ACC_COMPILE_TIME_ASSERT
-  - ACC_COMPILE_TIME_ASSERT_HEADER
-  - ACC_CXX_DISABLE_NEW_DELETE
-  - ACC_CXX_TRIGGER_FUNCTION
-  - ACC_CXX_TRIGGER_FUNCTION_IMPL
   - CLANG_FORMAT_DUMMY_STATEMENT
-  - COMPILE_TIME_ASSERT
-  - COMPILE_TIME_ASSERT_ALIGNED1
-WhitespaceSensitiveMacros:
-  - ACC_PP_MACRO_EXPAND
-  - ACC_PP_STRINGIZE
 ...
