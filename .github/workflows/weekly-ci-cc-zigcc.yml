@@ -11,8 +11,8 @@ env:
   CMAKE_REQUIRED_QUIET: "OFF"
   CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
-  # 2023-11-01
-  ZIG_DIST_VERSION: 0.12.0-dev.1369+a09ba455c
+  # 2023-11-03
+  ZIG_DIST_VERSION: 0.12.0-dev.1390+94cee4fb2
 
 jobs:
   job-linux-zigcc: # uses cmake + make

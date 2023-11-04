@@ -55,16 +55,19 @@ jobs:
           CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
           make UPX_XTARGET=aarch64-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Build clang armv7'
+        if: success() || failure() # run this step even if the previous step failed
         run: |
           export CC="armv7-w64-mingw32-clang -static" CXX="armv7-w64-mingw32-clang++ -static"
           CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
           make UPX_XTARGET=armv7-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Build clang i686'
+        if: success() || failure() # run this step even if the previous step failed
         run: |
           export CC="i686-w64-mingw32-clang -static" CXX="i686-w64-mingw32-clang++ -static"
           CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
           make UPX_XTARGET=i686-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Build clang x86_64'
+        if: success() || failure() # run this step even if the previous step failed
         run: |
           export CC="x86_64-w64-mingw32-clang -static" CXX="x86_64-w64-mingw32-clang++ -static"
           CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"

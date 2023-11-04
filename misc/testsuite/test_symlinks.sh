@@ -3,15 +3,24 @@
 set -e; set -o pipefail
 argv0=$0; argv0abs=$(readlink -fn "$argv0"); argv0dir=$(dirname "$argv0abs")
 
+#
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+#
+# test file system behaviour with symlinks; requires:
+#   $upx_exe                (required, but with convenience fallback "./upx")
+# optional settings:
+#   $upx_exe_runner         (e.g. "qemu-x86_64 -cpu Westmere" or "valgrind")
+#
+
+# IMPORTANT NOTE: do NOT run as user root!!
+# IMPORTANT NOTE: this script only works on Unix!!
+umask 0022
+
 # disable on macOS for now, see https://github.com/upx/upx/issues/612
 if [[ "$(uname)" == Darwin ]]; then
     echo "$0: SKIPPED"
     exit 0
 fi
-
-# IMPORTANT NOTE: do NOT run as user root!!
-# IMPORTANT NOTE: this script only works on Unix!!
-umask 0022
 
 id || true
 echo "PWD='$PWD'"
@@ -19,11 +28,6 @@ if [[ $UID == 0 || $EUID == 0 ]]; then
     echo "ERROR: do not run as root: UID=$UID EUID=$EUID"
     exit 91
 fi
-
-# test file system behaviour with symlinks; requires:
-#   $upx_exe                (required, but with convenience fallback "./upx")
-# optional settings:
-#   $upx_exe_runner         (e.g. "qemu-x86_64 -cpu Westmere" or "valgrind")
 
 #***********************************************************************
 # init & checks

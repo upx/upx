@@ -467,6 +467,11 @@ void show_sysinfo(const char *options_var) {
             con_fprintf(f, fmt, v);
             con_fprintf(f, "\n");
         };
+        // language
+        cf_print("__cplusplus", "%lld", __cplusplus + 0, 3);
+#if defined(_MSVC_LANG)
+        cf_print("_MSVC_LANG", "%lld", _MSVC_LANG + 0, 3);
+#endif
         // compiler
 #if defined(ACC_CC_CLANG)
         cf_print("ACC_CC_CLANG", "0x%06llx", ACC_CC_CLANG + 0, 3);

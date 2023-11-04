@@ -13,8 +13,8 @@ env:
   CTEST_OUTPUT_ON_FAILURE: "ON"
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  # 2023-11-01
-  ZIG_DIST_VERSION: 0.12.0-dev.1369+a09ba455c
+  # 2023-11-03
+  ZIG_DIST_VERSION: 0.12.0-dev.1390+94cee4fb2
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -146,8 +146,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # NOTE: macos does not have "env -C"; only with coreutils
-          # NOTE: macos-11 does not have "readlink -f"; only on macos >= 12 or with coreutils
+          # NOTE: macos does not have "env -C"; only with brew coreutils
+          # NOTE: macos-11 does not have "readlink -f"; only on macos >= 12 or with brew coreutils
           - { os: macos-11, gcc: gcc-10, gxx: 'g++-10', testsuite: true }
           - { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true }
           - { os: macos-13, gcc: gcc-12, gxx: 'g++-12', testsuite: true }
@@ -278,7 +278,7 @@ jobs:
           env -C build/release/Release upx_exe=./upx bash "$testsuite_1"
 
   job-windows-toolchains: # build "by hand" using cmd.exe
-    if: true
+    if: github.repository_owner == 'upx'
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('windows {0}', matrix.name) }}
     runs-on: ${{ matrix.os }}

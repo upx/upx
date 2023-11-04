@@ -104,6 +104,7 @@ jobs:
 
   job-by-hand-macos-clang: # uses a POSIX-compliant shell
     # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
+    # ...and also uses ccache as we are running the same build-script again and again
     if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
@@ -168,7 +169,7 @@ jobs:
           export zlib_extra_flags="-DHAVE_VSNPRINTF"
           export AR=false # link without using $AR
           CC="clang $xflags" CXX="clang++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"
-          ls -l build/by-hand || true
+          ls -l "upx with space"/build/by-hand || true
       - name: 'Build by-hand with bash - gcc'
         if: success() || failure() # run this step even if the previous step failed
         shell: bash
@@ -176,3 +177,4 @@ jobs:
           xflags="-static -Wall -Wextra -Werror"
           # gcc uses the MingGW headers, so no extra settings are needed
           CC="gcc $xflags" CXX="g++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"
+          ls -l "upx with space"/build/by-hand || true

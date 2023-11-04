@@ -3,6 +3,9 @@
 set -e; set -o pipefail
 argv0=$0; argv0abs=$(readlink -fn "$argv0"); argv0dir=$(dirname "$argv0abs")
 
+#
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+#
 # very first version of the upx-testsuite; requires:
 #   $upx_exe                (required, but with convenience fallback "./upx")
 #   $upx_testsuite_SRCDIR   (required, but with convenience fallback)
@@ -14,6 +17,7 @@ argv0=$0; argv0abs=$(readlink -fn "$argv0"); argv0dir=$(dirname "$argv0abs")
 #   $UPX_TESTSUITE_LEVEL
 #
 # see https://github.com/upx/upx-testsuite.git
+#
 
 #***********************************************************************
 # init & checks

@@ -13,6 +13,7 @@ env:
 
 jobs:
   BS0:
+    if: github.repository_owner == 'upx'
     runs-on: ubuntu-latest
     container: 'alpine:edge'
     steps:

@@ -524,7 +524,7 @@ include(CTest)
 if(NOT CMAKE_CROSSCOMPILING)
     add_test(NAME upx-version COMMAND upx --version)
     add_test(NAME upx-help    COMMAND upx --help)
-    add_test(NAME upx-sysinfo COMMAND upx --sysinfo)
+    add_test(NAME upx-sysinfo COMMAND upx --sysinfo -v)
 endif()
 if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     # IMPORTANT NOTE: these tests can only work if the host executable format is supported by UPX!
