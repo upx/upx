@@ -128,7 +128,7 @@ if test "x$AR" = "x"; then
     # link without using $AR
     run "CXX upx"    $CXX -o upx *.o */*.o
 else
-    run "AR  libupx" $AR rcs libupx_submodules.a */*.o
+    run "AR  libupx" $AR rcs ${AR_LIBFILE:-libupx_submodules.a} */*.o
     run "CXX upx"    $CXX -o upx *.o -L. -lupx_submodules
 fi
 echo "# current directory: '$(pwd)'"

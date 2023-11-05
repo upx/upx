@@ -164,17 +164,14 @@ jobs:
         shell: bash
         run: |
           xflags="-static -Wall -Wextra -Werror"
-          # clang uses the MSVC headers, adjust settings
+          # clang uses the MSVC headers and libraries, so adjust settings
           xflags="$xflags -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS"
           export zlib_extra_flags="-DHAVE_VSNPRINTF"
-          export AR=false # link without using $AR
+          export AR_LIBFILE=upx_submodules.lib
           CC="clang $xflags" CXX="clang++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"
-          ls -l "upx with space"/build/by-hand || true
       - name: 'Build by-hand with bash - gcc'
         if: success() || failure() # run this step even if the previous step failed
         shell: bash
         run: |
           xflags="-static -Wall -Wextra -Werror"
-          # gcc uses the MingGW headers, so no extra settings are needed
           CC="gcc $xflags" CXX="g++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"
-          ls -l "upx with space"/build/by-hand || true

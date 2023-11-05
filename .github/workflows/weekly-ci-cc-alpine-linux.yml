@@ -38,8 +38,8 @@ jobs:
           - { container: 'alpine:3.16', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 } # May 2022: C++2b; clang-13 & gcc-11
           - { container: 'alpine:3.17', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 }
           - { container: 'alpine:3.18', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 }
-          - { container: 'alpine:edge', use_cxx20: 1, use_cxx23: 1, use_lto: 1 }
-          - { container: 'i386/alpine:edge', use_cxx20: 1, use_cxx23: 1, use_lto: 1 }
+          - { container: 'alpine:edge', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 }
+          - { container: 'i386/alpine:edge', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 }
           # more 32-bit i386 versions, just for testing
           # { container: 'i386/alpine:3.9' }  # clang-5,  gcc-8; BROKEN: clang -m32 problem
           - { container: 'i386/alpine:3.10' } # clang-8,  gcc-8
