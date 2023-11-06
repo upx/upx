@@ -411,6 +411,11 @@ void show_version(bool one_line) {
     if (v != nullptr && v[0])
         fprintf(f, "zstd data compression library %s\n", v);
 #endif
+#if (WITH_BZIP2)
+    v = upx_bzip2_version_string();
+    if (v != nullptr && v[0])
+        fprintf(f, "bzip2 data compression library %s\n", v);
+#endif
 #if !defined(DOCTEST_CONFIG_DISABLE)
     fprintf(f, "doctest C++ testing framework version %s\n", DOCTEST_VERSION_STR);
 #endif
@@ -428,6 +433,9 @@ void show_version(bool one_line) {
 #if (WITH_ZSTD)
     // see vendor/zstd/LICENSE; main author is Yann Collet
     fprintf(f, "Copyright (C) 2015" "-2023 Meta Platforms, Inc. and affiliates\n");
+#endif
+#if (WITH_BZIP2)
+    fprintf(f, "Copyright (C) 1996" "-2010 Julian Seward\n"); // see <bzlib.h>
 #endif
 #if !defined(DOCTEST_CONFIG_DISABLE)
     fprintf(f, "Copyright (C) 2016" "-2023 Viktor Kirilov\n");

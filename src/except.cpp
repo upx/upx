@@ -150,7 +150,7 @@ void throwCantPack(const char *format, ...) {
     char msg[1024];
     va_list ap;
     va_start(ap, format);
-    (void) upx_safe_vsnprintf(msg, sizeof(msg), format, ap);
+    (void) upx_safe_vsnprintf_noexcept(msg, sizeof(msg), format, ap);
     va_end(ap);
     throwCantPack(msg);
 }
@@ -160,7 +160,17 @@ void throwCantUnpack(const char *format, ...) {
     char msg[1024];
     va_list ap;
     va_start(ap, format);
-    (void) upx_safe_vsnprintf(msg, sizeof(msg), format, ap);
+    (void) upx_safe_vsnprintf_noexcept(msg, sizeof(msg), format, ap);
+    va_end(ap);
+    throwCantUnpack(msg);
+}
+
+template <>
+void throwInternalError(const char *format, ...) {
+    char msg[1024];
+    va_list ap;
+    va_start(ap, format);
+    (void) upx_safe_vsnprintf_noexcept(msg, sizeof(msg), format, ap);
     va_end(ap);
     throwCantUnpack(msg);
 }

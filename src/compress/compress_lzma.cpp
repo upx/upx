@@ -293,7 +293,7 @@ struct ProgressInfo final : public ICompressProgressInfo, public CMyUnknownImp {
     virtual ~ProgressInfo() {}
     MY_UNKNOWN_IMP
     STDMETHOD(SetRatioInfo)(const UInt64 *inSize, const UInt64 *outSize) override;
-    upx_callback_p cb = nullptr;
+    upx_callback_t *cb = nullptr;
 };
 
 STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outSize) {
@@ -317,7 +317,7 @@ STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outS
 #undef RC_NORMALIZE
 
 int upx_lzma_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigned *dst_len,
-                      upx_callback_p cb, int method, int level,
+                      upx_callback_t *cb, int method, int level,
                       const upx_compress_config_t *cconf_parm, upx_compress_result_t *cresult) {
     assert(M_IS_LZMA(method));
     assert(level > 0);
@@ -327,6 +327,7 @@ int upx_lzma_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsi
     HRESULT rh;
     const lzma_compress_config_t *const lcconf = cconf_parm ? &cconf_parm->conf_lzma : nullptr;
     lzma_compress_result_t *const res = &cresult->result_lzma;
+    res->reset();
 
     MyLzma::InStream is;
     is.AddRef();

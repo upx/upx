@@ -8,7 +8,8 @@ set -e
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
-# uses optional environment variables: AR, CC, CXX, OPTIMIZE, VERBOSE, top_srcdir
+# uses optional environment variables: AR, CC, CXX, OPTIMIZE, VERBOSE
+#  and optional settings for top_srcdir, obj_suffix and XXX_extra_flags
 
 # shell init
 ### set -x # enable logging
@@ -24,19 +25,23 @@ CXX="${CXX:-c++ -std=gnu++17}"
 if test "x$AR" = "x0" || test "x$AR" = "xfalse" || test "x$AR" = "x/bin/false"; then
     AR="" # do not use $AR
 fi
-# protect against security threats caused by misguided compiler "optimizations"
-mandatory_flags="-fno-strict-aliasing -fno-strict-overflow -funsigned-char"
-# not mandatory but good practice when using <windows.h>:
-sensible_flags="-DWIN32_LEAN_AND_MEAN"
-if test "x$OPTIMIZE" != "x" && test "x$OPTIMIZE" != "x0"; then
-    # not mandatory and not minimal, but usually a good idea:
-    sensible_flags="-Wall -O2 $sensible_flags"
+if test -z "${mandatory_flags+set}"; then
+    # protect against security threats caused by misguided compiler "optimizations"
+    mandatory_flags="-fno-strict-aliasing -fno-strict-overflow -funsigned-char"
+fi
+if test -z "${sensible_flags+set}"; then
+    # not mandatory but good practice when using <windows.h>:
+    sensible_flags="-DWIN32_LEAN_AND_MEAN"
+    if test "x$OPTIMIZE" != "x" && test "x$OPTIMIZE" != "x0"; then
+        # not mandatory and not minimal, but usually a good idea:
+        sensible_flags="-Wall -O2 $sensible_flags"
+    fi
 fi
 CC="$CC $sensible_flags $mandatory_flags"
 CXX="$CXX $sensible_flags $mandatory_flags"
 
 # go to upx top-level directory
-# HINT: set "top_srcdir" manually if your system does not have "readlink"
+# HINT: set "top_srcdir" manually if your system does not have "readlink -f"
 if test "x$top_srcdir" = "x"; then
     my_argv0abs="$(readlink -fn "$my_argv0")"
     test "x$my_argv0abs" = "x" && exit 1
@@ -91,25 +96,31 @@ check_submodule() {
 }
 
 # build
+upx_submodule_defs=
 run "+" mkdir -p "build/by-hand"
 if check_submodule bzip2; then
-    test -z "${bzip2_extra_flags+set}" && bzip2_extra_flags=
+    upx_submodule_defs="$upx_submodule_defs -DWITH_BZIP2"
+    test -z "${bzip2_extra_flags+set}" && bzip2_extra_flags="-DBZ_NO_STDIO"
     for f in "$rel_top_srcdir"/vendor/bzip2/*.c; do
         run "CC  $f" $CC $bzip2_extra_flags -c "$f"
     done
 fi
 if check_submodule ucl; then
+    #upx_submodule_defs="$upx_submodule_defs -DWITH_UCL"
+    test -z "${ucl_extra_flags+set}" && ucl_extra_flags=
     for f in "$rel_top_srcdir"/vendor/ucl/src/*.c; do
-        run "CC  $f" $CC -I"$rel_top_srcdir"/vendor/ucl/include -I"$rel_top_srcdir"/vendor/ucl -c "$f"
+        run "CC  $f" $CC -I"$rel_top_srcdir"/vendor/ucl/include -I"$rel_top_srcdir"/vendor/ucl $ucl_extra_flags -c "$f"
     done
 fi
 if check_submodule zlib; then
+    #upx_submodule_defs="$upx_submodule_defs -DWITH_ZLIB"
     test -z "${zlib_extra_flags+set}" && zlib_extra_flags="-DHAVE_UNISTD_H -DHAVE_VSNPRINTF"
     for f in "$rel_top_srcdir"/vendor/zlib/*.c; do
         run "CC  $f" $CC $zlib_extra_flags -c "$f"
     done
 fi
 if check_submodule zstd; then
+    upx_submodule_defs="$upx_submodule_defs -DWITH_ZSTD"
     test -z "${zstd_extra_flags+set}" && zstd_extra_flags="-DDYNAMIC_BMI2=0 -DZSTD_DISABLE_ASM"
     for f in "$rel_top_srcdir"/vendor/zstd/lib/*/*.c; do
         run "CC  $f" $CC $zstd_extra_flags -c "$f"
@@ -121,15 +132,16 @@ echo "#==== build UPX ====="
 run "+" cd "build/by-hand" || exit 1
 rel_top_srcdir=../..
 for f in "$rel_top_srcdir"/src/*.cpp "$rel_top_srcdir"/src/*/*.cpp; do
-    run "CXX $f"     $CXX -I"$rel_top_srcdir"/vendor -c "$f"
+    run "CXX $f"     $CXX -I"$rel_top_srcdir"/vendor $upx_submodule_defs -c "$f"
 done
 # echo "#==== link UPX ====="
+test "x$obj_suffix" = "x" && obj_suffix=.o
 if test "x$AR" = "x"; then
     # link without using $AR
-    run "CXX upx"    $CXX -o upx *.o */*.o
+    run "CXX upx"    $CXX -o upx *${obj_suffix} */*${obj_suffix}
 else
-    run "AR  libupx" $AR rcs ${AR_LIBFILE:-libupx_submodules.a} */*.o
-    run "CXX upx"    $CXX -o upx *.o -L. -lupx_submodules
+    run "AR  libupx" $AR rcs ${AR_LIBFILE:-libupx_submodules.a} */*${obj_suffix}
+    run "CXX upx"    $CXX -o upx *${obj_suffix} -L. -lupx_submodules
 fi
 echo "# current directory: '$(pwd)'"
 ls -l upx*

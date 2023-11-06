@@ -17,5 +17,5 @@ jobs:
         uses: actions/checkout@v4
         with: { submodules: false }
       - name: 'Spell check with crate-ci/typos'
-        uses: crate-ci/typos@47dd2976043bd5c76a33aa9300b328a176a1d6f7 # v1.16.21
+        uses: crate-ci/typos@0d04ce91a7a8436a6e3c589750514ac586632192 # v1.16.22
         with: { config: ./.github/typos_config.toml }

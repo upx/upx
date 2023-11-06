@@ -354,7 +354,7 @@ void UiPacker::endCallback(bool done) {
 **************************************************************************/
 
 /*static*/
-void __acc_cdecl UiPacker::progress_callback(upx_callback_p cb, unsigned isize, unsigned osize) {
+void __acc_cdecl UiPacker::progress_callback(upx_callback_t *cb, unsigned isize, unsigned osize) {
     // printf("%6d %6d %d\n", isize, osize, state);
     UiPacker *self = (UiPacker *) cb->user;
     self->doCallback(isize, osize);

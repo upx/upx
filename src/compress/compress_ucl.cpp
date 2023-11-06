@@ -66,7 +66,7 @@ extern "C" {
 static void __UCL_CDECL wrap_nprogress_ucl(ucl_uint a, ucl_uint b, int state, ucl_voidp user) {
     if (state != -1 && state != 3)
         return;
-    upx_callback_p cb = (upx_callback_p) user;
+    upx_callback_t *cb = (upx_callback_t *) user;
     if (cb && cb->nprogress)
         cb->nprogress(cb, a, b);
 }
@@ -77,7 +77,7 @@ static void __UCL_CDECL wrap_nprogress_ucl(ucl_uint a, ucl_uint b, int state, uc
 **************************************************************************/
 
 int upx_ucl_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigned *dst_len,
-                     upx_callback_p cb_parm, int method, int level,
+                     upx_callback_t *cb_parm, int method, int level,
                      const upx_compress_config_t *cconf_parm, upx_compress_result_t *cresult) {
     int r;
     assert(level > 0);

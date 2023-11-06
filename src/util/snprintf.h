@@ -46,6 +46,11 @@ char *upx_safe_xprintf(const char *format, ...) attribute_format(1, 2);
 
 upx_rsize_t upx_safe_strlen(const char *);
 
+// noexcept variants (these use "assert_noexcept")
+int upx_safe_vsnprintf_noexcept(char *str, upx_rsize_t max_size, const char *format,
+                                va_list ap) noexcept;
+upx_rsize_t upx_safe_strlen_noexcept(const char *) noexcept;
+
 // globally redirect some functions
 #undef strlen
 #define strlen upx_safe_strlen

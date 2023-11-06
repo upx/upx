@@ -36,19 +36,19 @@
 int upx_bzip2_init(void);
 const char *upx_bzip2_version_string(void);
 int upx_bzip2_compress     ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
-                                   upx_callback_p cb,
+                                   upx_bytep dst, unsigned *dst_len,
+                                   upx_callback_t *cb,
                                    int method, int level,
                              const upx_compress_config_t *cconf,
                                    upx_compress_result_t *cresult );
 int upx_bzip2_decompress   ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_bytep dst, unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 int upx_bzip2_test_overlap ( const upx_bytep buf,
                              const upx_bytep tbuf,
                                    unsigned  src_off, unsigned src_len,
-                                   unsigned* dst_len,
+                                   unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif
@@ -57,19 +57,19 @@ int upx_bzip2_test_overlap ( const upx_bytep buf,
 int upx_lzma_init(void);
 const char *upx_lzma_version_string(void);
 int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
-                                   upx_callback_p cb,
+                                   upx_bytep dst, unsigned *dst_len,
+                                   upx_callback_t *cb,
                                    int method, int level,
                              const upx_compress_config_t *cconf,
                                    upx_compress_result_t *cresult );
 int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_bytep dst, unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 int upx_lzma_test_overlap  ( const upx_bytep buf,
                              const upx_bytep tbuf,
                                    unsigned  src_off, unsigned src_len,
-                                   unsigned* dst_len,
+                                   unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif
@@ -78,19 +78,19 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
 int upx_nrv_init(void);
 const char *upx_nrv_version_string(void);
 int upx_nrv_compress       ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
-                                   upx_callback_p cb,
+                                   upx_bytep dst, unsigned *dst_len,
+                                   upx_callback_t *cb,
                                    int method, int level,
                              const upx_compress_config_t *cconf,
                                    upx_compress_result_t *cresult );
 int upx_nrv_decompress     ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_bytep dst, unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 int upx_nrv_test_overlap   ( const upx_bytep buf,
                              const upx_bytep tbuf,
                                    unsigned  src_off, unsigned src_len,
-                                   unsigned* dst_len,
+                                   unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif
@@ -99,19 +99,19 @@ int upx_nrv_test_overlap   ( const upx_bytep buf,
 int upx_ucl_init(void);
 const char *upx_ucl_version_string(void);
 int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
-                                   upx_callback_p cb,
+                                   upx_bytep dst, unsigned *dst_len,
+                                   upx_callback_t *cb,
                                    int method, int level,
                              const upx_compress_config_t *cconf,
                                    upx_compress_result_t *cresult );
 int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_bytep dst, unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 int upx_ucl_test_overlap   ( const upx_bytep buf,
                              const upx_bytep tbuf,
                                    unsigned  src_off, unsigned src_len,
-                                   unsigned* dst_len,
+                                   unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 unsigned upx_ucl_adler32(const void *buf, unsigned len, unsigned adler);
@@ -122,19 +122,19 @@ unsigned upx_ucl_crc32  (const void *buf, unsigned len, unsigned crc);
 int upx_zlib_init(void);
 const char *upx_zlib_version_string(void);
 int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
-                                   upx_callback_p cb,
+                                   upx_bytep dst, unsigned *dst_len,
+                                   upx_callback_t *cb,
                                    int method, int level,
                              const upx_compress_config_t *cconf,
                                    upx_compress_result_t *cresult );
 int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_bytep dst, unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 int upx_zlib_test_overlap  ( const upx_bytep buf,
                              const upx_bytep tbuf,
                                    unsigned  src_off, unsigned src_len,
-                                   unsigned* dst_len,
+                                   unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 unsigned upx_zlib_adler32(const void *buf, unsigned len, unsigned adler);
@@ -145,19 +145,19 @@ unsigned upx_zlib_crc32  (const void *buf, unsigned len, unsigned crc);
 int upx_zstd_init(void);
 const char *upx_zstd_version_string(void);
 int upx_zstd_compress      ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
-                                   upx_callback_p cb,
+                                   upx_bytep dst, unsigned *dst_len,
+                                   upx_callback_t *cb,
                                    int method, int level,
                              const upx_compress_config_t *cconf,
                                    upx_compress_result_t *cresult );
 int upx_zstd_decompress    ( const upx_bytep src, unsigned  src_len,
-                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_bytep dst, unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 int upx_zstd_test_overlap  ( const upx_bytep buf,
                              const upx_bytep tbuf,
                                    unsigned  src_off, unsigned src_len,
-                                   unsigned* dst_len,
+                                   unsigned *dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif

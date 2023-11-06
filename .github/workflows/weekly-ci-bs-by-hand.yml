@@ -142,7 +142,7 @@ jobs:
           cd "upx with space"/build/by-hand
           bash "$testsuite"
 
-  job-by-hand-windows: # uses a POSIX-compliant shell
+  job-by-hand-windows-clang: # uses a POSIX-compliant shell
     # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
     if: github.repository_owner == 'upx'
     strategy:
@@ -151,7 +151,7 @@ jobs:
         include:
           - { os: windows-2019 }
           - { os: windows-2022 }
-    name: ${{ format('by-hand cc {0}', matrix.os) }}
+    name: ${{ format('by-hand clang {0}', matrix.os) }}
     runs-on: ${{ matrix.os }}
     steps:
       - run: git config --global core.autocrlf false
@@ -160,7 +160,7 @@ jobs:
         run: |
           git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
           git -C "upx with space" submodule update --init
-      - name: 'Build by-hand with bash - clang'
+      - name: 'Build by-hand with bash'
         shell: bash
         run: |
           xflags="-static -Wall -Wextra -Werror"
@@ -169,9 +169,72 @@ jobs:
           export zlib_extra_flags="-DHAVE_VSNPRINTF"
           export AR_LIBFILE=upx_submodules.lib
           CC="clang $xflags" CXX="clang++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"
-      - name: 'Build by-hand with bash - gcc'
-        if: success() || failure() # run this step even if the previous step failed
+
+  job-by-hand-windows-gcc: # uses a POSIX-compliant shell
+    # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
+    if: github.repository_owner == 'upx'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-2019 }
+          - { os: windows-2022 }
+    name: ${{ format('by-hand gcc {0}', matrix.os) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: git config --global core.autocrlf false
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+        shell: bash
+        run: |
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
+          git -C "upx with space" submodule update --init
+      - name: 'Build by-hand with bash'
         shell: bash
         run: |
           xflags="-static -Wall -Wextra -Werror"
           CC="gcc $xflags" CXX="g++ -std=gnu++17 $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"
+
+  job-by-hand-windows-msvc: # uses a POSIX-compliant shell
+    # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
+    if: github.repository_owner == 'upx'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # clang-cl
+          - { os: windows-2019, vsversion: 2019, arch: amd64, clang_cl: true }
+          - { os: windows-2022, vsversion: 2022, arch: amd64, clang_cl: true }
+          # msvc
+          - { os: windows-2019, vsversion: 2019, arch: amd64 }
+          - { os: windows-2019, vsversion: 2019, arch: amd64_arm64 }
+          - { os: windows-2019, vsversion: 2019, arch: amd64_x86 }
+          - { os: windows-2022, vsversion: 2022, arch: amd64 }
+          - { os: windows-2022, vsversion: 2022, arch: amd64_arm64 }
+          - { os: windows-2022, vsversion: 2022, arch: amd64_x86 }
+    name: ${{ format('by-hand vs{0} {1} {2}', matrix.vsversion, matrix.arch, matrix.clang_cl && 'clang-cl' || '') }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: git config --global core.autocrlf false
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+        shell: bash
+        run: |
+          git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "upx with space"
+          git -C "upx with space" submodule update --init
+      - name: 'Set up Developer Command Prompt'
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+        with:
+          vsversion: ${{ matrix.vsversion }}
+          arch: ${{ matrix.arch }}
+      - name: 'Build by-hand with bash'
+        shell: bash
+        run: |
+          X="${{ matrix.clang_cl && 'clang-cl' || 'cl' }}"
+          command -v cl clang-cl lib link
+          # using MSVC headers and libraries, so adjust settings
+          xflags="-MT -J -W3 -DWIN32_LEAN_AND_MEAN -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS"
+          export mandatory_flags=
+          export sensible_flags=
+          export zlib_extra_flags="-DHAVE_VSNPRINTF"
+          export AR=false
+          export obj_suffix=.obj
+          CC="$X $xflags" CXX="$X -std:c++17 -Zc:__cplusplus -EHsc $xflags" bash "./upx with space/misc/scripts/build_upx_by_hand.sh"

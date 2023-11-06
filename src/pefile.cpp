@@ -2928,7 +2928,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
     unsigned take = sizeof(oh);
     SPAN_S_VAR(byte, extra_info, obuf);
     extra_info = obuf.subref("bad extra_info offset %#x", skip, take);
-    // byte * const eistart = raw_bytes(extra_info, 0);
+    // byte *const eistart = raw_bytes(extra_info, 0);
 
     memcpy(&oh, extra_info, take);
     extra_info += take;

@@ -212,6 +212,10 @@ template <class T>
 void throwCantUnpack(const T *, ...) DELETED_FUNCTION;
 template <>
 NORET void throwCantUnpack(const char *format, ...) may_throw attribute_format(1, 2);
+template <class T>
+void throwInternalError(const T *, ...) DELETED_FUNCTION;
+template <>
+NORET void throwInternalError(const char *format, ...) may_throw attribute_format(1, 2);
 
 #undef NORET
 

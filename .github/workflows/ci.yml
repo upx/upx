@@ -327,7 +327,7 @@ jobs:
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
           @REM ===== build bzip2 =====
           cd %BDIR%\bzip2
-          @rem %RUN_CL% -J -O2 -W4 -wd4127 -wd4244 -wd4267 -WX %DEFS% -c %H%\vendor\bzip2\*.c
+          @rem %RUN_CL% -J -O2 -W4 -wd4127 -wd4244 -wd4267 -WX %DEFS% -DBZ_NO_STDIO -c %H%\vendor\bzip2\*.c
           @rem %RUN_LIB% -out:bzip2.lib *.obj
           @REM ===== build UCL =====
           cd %BDIR%\ucl
@@ -348,7 +348,7 @@ jobs:
           set s=%H%\src
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
-          set UPX_DEFS=-DUPX_CONFIG_DISABLE_WSTRICT=0 -DUPX_CONFIG_DISABLE_WERROR=0 -DWITH_BZIP2=0 -DWITH_ZSTD=0
+          set UPX_DEFS=-DUPX_CONFIG_DISABLE_WSTRICT=0 -DUPX_CONFIG_DISABLE_WERROR=0 -DWITH_THREADS=0 -DWITH_BZIP2=0 -DWITH_ZSTD=0
           set UPX_LIBS=%BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib
           @rem set UPX_LIBS=%BDIR%\bzip2\bzip2.lib %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp

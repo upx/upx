@@ -75,7 +75,7 @@ static int convert_errno_from_zlib(int zr) {
 **************************************************************************/
 
 int upx_zlib_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsigned *dst_len,
-                      upx_callback_p cb_parm, int method, int level,
+                      upx_callback_t *cb_parm, int method, int level,
                       const upx_compress_config_t *cconf_parm, upx_compress_result_t *cresult) {
     assert(method == M_DEFLATE);
     assert(level > 0);
@@ -85,6 +85,7 @@ int upx_zlib_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsi
     int zr;
     const zlib_compress_config_t *const lcconf = cconf_parm ? &cconf_parm->conf_zlib : nullptr;
     zlib_compress_result_t *const res = &cresult->result_zlib;
+    res->reset();
 
     if (level == 10)
         level = 9;
@@ -98,8 +99,6 @@ int upx_zlib_compress(const upx_bytep src, unsigned src_len, upx_bytep dst, unsi
         oassign(window_bits, lcconf->window_bits);
         oassign(strategy, lcconf->strategy);
     }
-
-    res->dummy = 0;
 
     z_stream s;
     s.zalloc = (alloc_func) nullptr;
