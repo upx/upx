@@ -40,7 +40,7 @@ jobs:
     env:
       CC: ${{ matrix.cc }} ${{ matrix.xflags }}
       CXX: ${{ matrix.cxx }} ${{ matrix.xflags }}
-    name: ${{ format('{0} {1} {2}', matrix.cc, matrix.vsversion, matrix.arch) }}
+    name: ${{ format('{0} {1} {2} {3}', matrix.cc, matrix.vsversion, matrix.arch, matrix.os) }}
     runs-on: ${{ matrix.os }}
     steps:
       - run: git config --global core.autocrlf false

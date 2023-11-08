@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 jobs:
   job-close-inactive-issues:
-    if: github.repository_owner == 'upx'
+    if: github.repository_owner == 'upx' && github.repository == 'upx/upx'
     name: 'Close inactive issues'
     runs-on: ubuntu-latest
     permissions:

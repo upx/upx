@@ -307,8 +307,8 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite
           mkdir -p -v build/$C/$B/{bzip2,ucl,upx,zlib,zstd}
-          repo_name="${GITHUB_REPOSITORY##*/}" # basename
-          echo "H=d:\\a\\$repo_name\\$repo_name" >> $GITHUB_ENV
+          repository_name="${GITHUB_REPOSITORY##*/}" # basename
+          echo "H=d:\\a\\$repository_name\\$repository_name" >> $GITHUB_ENV
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
         with:

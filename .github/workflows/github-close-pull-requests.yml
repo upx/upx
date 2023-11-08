@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   job-close-pull-requests:
-    if: github.repository_owner == 'upx'
+    if: github.repository_owner == 'upx' && github.repository == 'upx/upx'
     name: 'Close pull requests'
     runs-on: ubuntu-latest
     permissions:
