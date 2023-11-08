@@ -530,6 +530,16 @@ void show_sysinfo(const char *options_var) {
 #if defined(__GLIBC_MINOR__)
         cf_print("__GLIBC_MINOR__", "%lld", __GLIBC_MINOR__ + 0);
 #endif
+        // misc compilation options
+#if defined(UPX_CONFIG_DISABLE_WSTRICT)
+        cf_print("UPX_CONFIG_DISABLE_WSTRICT", "%lld", UPX_CONFIG_DISABLE_WSTRICT + 0, 3);
+#endif
+#if defined(UPX_CONFIG_DISABLE_WERROR)
+        cf_print("UPX_CONFIG_DISABLE_WERROR", "%lld", UPX_CONFIG_DISABLE_WERROR + 0, 3);
+#endif
+#if defined(WITH_THREADS)
+        cf_print("WITH_THREADS", "%lld", WITH_THREADS + 0);
+#endif
         UNUSED(cf_count);
         UNUSED(cf_print);
     }

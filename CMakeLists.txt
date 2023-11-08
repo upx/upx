@@ -187,6 +187,13 @@ include(CheckIncludeFile)
 include(CheckStructHasMember)
 include(CheckSymbolExists)
 
+# TODO later: use pledge()
+#   https://justine.lol/pledge/
+#   https://github.com/jart/cosmopolitan
+#   https://news.ycombinator.com/item?id=32096801
+##find_package(PkgConfig QUIET)
+##pkg_check_modules(PKG_libseccomp QUIET libseccomp)
+
 if(NOT DEFINED HAVE_UNISTD_H)
     check_include_file("unistd.h" HAVE_UNISTD_H)
 endif()

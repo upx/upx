@@ -62,6 +62,21 @@ static_assert(sizeof(void *) == 8);
 #define _USE_MINGW_ANSI_STDIO 1
 #endif
 #endif
+#if defined(_WIN32)
+// disable silly warnings about using "deprecated" POSIX functions like fopen()
+#if !defined(_CRT_NONSTDC_NO_DEPRECATE)
+#define _CRT_NONSTDC_NO_DEPRECATE 1
+#endif
+#if !defined(_CRT_NONSTDC_NO_WARNINGS)
+#define _CRT_NONSTDC_NO_WARNINGS 1
+#endif
+#if !defined(_CRT_SECURE_NO_DEPRECATE)
+#define _CRT_SECURE_NO_DEPRECATE 1
+#endif
+#if !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+#endif // _WIN32
 
 // ACC and C system headers
 #ifndef ACC_CFG_USE_NEW_STYLE_CASTS

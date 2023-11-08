@@ -83,6 +83,12 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char) (-1) == 255)
 #endif // UPX_CONFIG_DISABLE_WSTRICT
 
 // multithreading (UPX currently does not use multithreading)
+#if (WITH_THREADS) && defined(_WIN32) && defined(__GLIBCXX__)
+#if !defined(_GLIBCXX_HAS_GTHREADS)
+#error "broken MinGW installation: missing _GLIBCXX_HAS_GTHREADS"
+#undef WITH_THREADS
+#endif
+#endif
 #if (WITH_THREADS)
 #define upx_thread_local     thread_local
 #define upx_std_atomic(Type) std::atomic<Type>
