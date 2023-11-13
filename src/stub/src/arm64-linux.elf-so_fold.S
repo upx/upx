@@ -64,10 +64,6 @@ get4:  .globl get4  // un-aligned fetch (little endian)
     ldrb w2,[x1],#1; orr w0,w0,w2,lsl #24
     ret
 
-  section ptr_NEXT
-        call 0f; 0:
-        mov x0,lr
-
 // De-compressor sections inserted here:
 // section EXP_HEAD
 // section NRV_HEAD

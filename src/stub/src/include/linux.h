@@ -175,12 +175,15 @@ struct timespec {
 #define __NR_lseek               19
 #define __NR_getpid              20
 #define __NR_access              33
+#define __NR_mkdir               39
 #define __NR_brk                 45
 #define __NR_fcntl               55
 #define __NR_gettimeofday        78
 #define __NR_mmap                90
 #define __NR_munmap              91
 #define __NR_ftruncate           93
+#define __NR_stat               106
+#define __NR_uname              122
 #define __NR_adjtimex           124
 #define __NR_mprotect           125
 #define __NR_nanosleep          162
@@ -342,6 +345,8 @@ type name(type1 arg1,type2 arg2,type3 arg3) \
 #define _exit           syscall_exit
 #define exit            syscall_exit
 
+struct stat;
+struct utsname;
 static inline _syscall2(int,access,const char *,file,int,mode)
 static inline _syscall1(int,adjtimex,struct timex *,ntx)
 static inline _syscall1(void *,brk,void *,high)
@@ -355,13 +360,16 @@ static inline _syscall0(pid_t,getpid)
 static inline _syscall2(int,gettimeofday,struct timeval *,tv,void *,tz)
 static inline _syscall3(off_t,lseek,int,fd,off_t,offset,int,whence)
 static inline _syscall2(int,memfd_create,char const *,name,unsigned,flags);
+static inline _syscall2(int,mkdir,char const *,path,unsigned,mode);
 static inline _syscall3(int,mprotect,void *,addr,size_t,len,int,prot)
 static inline _syscall2(int,munmap,void *,start,size_t,length)
 static inline _syscall2(int,nanosleep,const struct timespec *,rqtp,struct timespec *,rmtp)
 static inline _syscall3(int,open,const char *,file,int,flag,int,mode)
 static inline _syscall3(ssize_t,read,int,fd,void *,buf,size_t,count)
 static inline _syscall3(pid_t,waitpid,pid_t,pid,int *,wait_stat,int,options)
+static inline _syscall2(int,stat,char const *,path,struct stat *,statbuf)
 static inline _syscall3(ssize_t,write,int,fd,const void *,buf,size_t,count)
+static inline _syscall1(int,uname,struct utsname *,buf);
 static inline _syscall1(int,unlink,const char *,file)
 static inline _syscall2(int,link,const char *,src, const char *,dst)
 
