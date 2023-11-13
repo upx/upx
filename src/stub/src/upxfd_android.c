@@ -64,14 +64,29 @@ struct stat { // __NR_stat = 106 _ NR_SYSCALL_BASE
 #define S_IRWXU 00700
 #define AT_FDCWD -100
 #define restrict /**/
-extern int stat(char const *restrict pathname, struct stat *restrict statbuf);
+#include "include/linux.h"  // syscalls; i386 inlines via "int 0x80"
 extern int fstatat(int dirfd, const char *restrict pathname,
     struct stat *restrict statbuf, int flags);
-extern int mkdirat(int dirfd, const char *pathname, unsigned mode);
 #ifndef __i386__  //{
 extern int mkdir (char const *pathname, unsigned mode);
-#endif  //}
+extern int stat(char const *restrict pathname, struct stat *restrict statbuf);
 extern void *memset(void *dst, unsigned val, unsigned len);
+#else  //}{
+
+#if 1  //{
+static void *memset(void *dst, unsigned val, unsigned len)
+{
+    char *rv = dst;
+    __asm__( "rep stosb"
+            : "=a" (dst)
+            : "D" (dst), "a" (val), "c" (len)
+            : "edi", "ecx"
+    );
+    return rv;
+}
+#endif  //}
+
+#endif  //}
 
 #define ENOENT 2   /* no such name */
 #define ENOSPC 28  /* no space left on device */
@@ -96,7 +111,6 @@ static int dir_check(char const *path)
 
 //#define S_IRWXU 00700  /* rwx------ User Read-Write-eXecute */
 extern void *alloca(unsigned size);
-#include "include/linux.h"  // syscalls; i386 inlines via "int 0x80"
 //#include <string.h>  // we use "typedef unsigned size_t;"
 //#include <sys/utsname.h>
 

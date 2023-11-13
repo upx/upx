@@ -103,9 +103,6 @@ get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
   section SO_HEAD
 // empty
 
-  section ptr_NEXT
-    mov r0,pc
-    ret
 // De-compressor sections inserted here:
 // section EXP_HEAD
 // section NRV_HEAD

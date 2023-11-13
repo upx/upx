@@ -45,11 +45,6 @@ fold:
         //  pop %arg3  // MATCH_07  envp
         //  ret  // ==> user_DT_INIT
 
-  section ptr_NEXT
-//    pop %rax; call *%rax
-// "lea f_exp(%rip)," addressing on x86_64 subsumes the need for code,
-// but keep the empty section to unify buildLinuxLoader()
-
 // De-compressor sections inserted here:
 // section NRV_HEAD
 // section NRV2B

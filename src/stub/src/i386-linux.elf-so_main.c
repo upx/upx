@@ -455,8 +455,10 @@ get_PAGE_MASK(void)  // the mask which KEEPS the page address
 }
 #endif  //}
 
-extern void *memcpy(void *dst, void const *src, size_t n);
-extern void *memset(void *dst, unsigned val, size_t n);
+extern void *memcpy(void *dst, void const *src, unsigned n);
+#ifndef __i386__  //{
+extern void *memset(void *dst, unsigned val, unsigned n);
+#endif  //}
 
 #ifndef __arm__  //{
 // Segregate large local array, to avoid code bloat due to large displacements.

@@ -38,14 +38,45 @@ fold:
     push $__NR_munmap; pop %eax
     jmp *%ebp  // goto &escape_hatch
 
+get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
+    call 0f; 0: pop %edx
+    add $fold -2*NBPW -0b,%edx  // link-time 0
+    mov 1*NBPW(%edx),%eax  // distance forward to &name
+    test %eax,%eax; je 1f  // nullptr
+    add %edx,%eax  // &name
+1:
+    ret
+
     ret  // MATCH_30  ==>escape_hatch:
         //  syscall
         //  pop %ebx
         //  pop %ebp
         //  ???
 
-  section ptr_NEXT
-    pop %eax; call *%eax
+#if 0  //{
+memset: .globl memset  // (dst, val, n)
+        push %ebp; mov %esp,%ebp
+        push %edi
+        mov (2+ 2)*NBPW(%ebp),%ecx
+        mov (2+ 1)*NBPW(%ebp),%eax
+        mov (2+ 0)*NBPW(%ebp),%edi
+        rep stosb
+        pop %edi
+        pop %ebp
+        ret
+#endif  //}
+
+mempcpy: .globl mempcpy  // (dst, src, n)
+        push %ebp; mov %esp,%ebp
+        push %edi; push %esi
+        mov (2+ 2)*NBPW(%ebp),%ecx
+        mov (2+ 1)*NBPW(%ebp),%esi
+        mov (2+ 0)*NBPW(%ebp),%edi
+        rep movsb
+        mov %edi,%eax
+        pop %esi; pop %edi; pop %ebp
+        ret
+
 f_exp:  // start of code for actual de-compressor
 // "lea f_exp(%eip)," addressing on x86_64 subsumes the need for code,
 // but keep the empty section to unify buildLinuxLoader()
@@ -60,7 +91,6 @@ f_exp:  // start of code for actual de-compressor
 // section ZSTD  future
 
   section SO_TAIL
-  .type eof,@function
   .globl eof
 eof:  // end of a compressed extent
         pop %ecx  // &input_eof
@@ -77,6 +107,7 @@ my_bkpt: .globl my_bkpt
         int3
         ret
 
+#if 0  //{
 memset: .globl memset  // void *memset(void *s, int c, size_t n);
     push %edi  // result = dst
     mov %esi,%eax  // c
@@ -84,6 +115,7 @@ memset: .globl memset  // void *memset(void *s, int c, size_t n);
     rep; stosb
     pop %eax  // result
     ret
+#endif  //}
 
 memcpy: .globl memcpy  // void (memcpy(void *dst, void const *src, size_t len)
                    pop %ecx  // ret_addr
@@ -103,89 +135,59 @@ memcpy: .globl memcpy  // void (memcpy(void *dst, void const *src, size_t len)
     ret
 
 /* 32-bit mode only! */
+__NR_exit=  1
 __NR_read=  3
 __NR_write= 4
 __NR_open=  5
 __NR_close= 6
 
-__NR_memfd_create= 0x164  // 356
-__NR_mmap=     90
-__NR_mprotect=125
+__NR_brk=      45
+__NR_readlink= 85
+__NR_oldmmap=  90
 __NR_munmap=   91
+__NR_mprotect=125
 __NR_mremap=  163
 
-__NR_brk=      45
+__NR_memfd_create= 0x164  // 356
 
-__NR_exit=      1
-__NR_readlink= 85
-
-
-Pmap: .globl Pmap
-mmap: .globl mmap  // oldmmap: %ebx -> 6 word parameters
-    push %ebx  // save C-lang register
-    lea 2*NBPW(%esp),%ebx
-    mov (%ebx),%eax  // arg1
-    and $0xfff,%eax  // lo fragment
-    sub %eax,    (%ebx)  // page align lo end
-    add %eax,NBPW(%ebx)
-    push $ __NR_mmap; pop %eax; call sys_check
-    pop %ebx  // restore
-    ret
-
-#if DEBUG  //{
-  push %sys4  // %e10
-  push %e9
-  push %e8
-  push %ecx; mov %ecx,%arg6
-  push %edx; mov %edx,%arg5
-  push %esi; mov %esi,%arg4
-  push %edi; mov %edi,%arg3
-  push %eax; mov %eax,%arg2
-  call 0f; .asciz "syscall %p(%p %p  %p %p  %p %p  %p)\n";
-0: pop %arg1
-  call dprint8
-  pop %eax
-  pop %edi
-  pop %esi
-  pop %edx
-  pop %ecx
-  pop %e8
-  pop %e9
-  pop %e10
-#endif  //}
+// These system calls are called from C (so_main.c, upxfd_android.c).
+// Input parameters are on the stack.
+// Registers %ebx,%esp,%ebp,%esi,%edi must be preserved.
 
 // Sometimes linux enforces page-aligned address
 Pprotect: .globl Pprotect  // from C
-    xchg %ebx,1*NBPW(%esp)  // save reg, %ebx= address
-    mov %ebx,%ecx  // copy address
-    and $~0<<12,%ebx  // page align
-    sub %ebx,%ecx  // extra length
-    add 2*NBPW(%esp),%ecx  // length
-    mov 3*NBPW(%esp),%edx  // bits
-    push $__NR_mprotect; pop %eax; call sys_check
-    mov 1*NBPW(%esp),%ebx  // restore reg
-    ret
-
-Punmap: .globl Punmap  // from C
-    push %ebp; mov %esp,%ebp
+    nop
+mprotect: .globl mprotect
     push %ebx
-    mov (0+2)*NBPW(%ebp),%ebx  // addr
-    mov %ebx,%eax; and $-1+ (1<<12),%eax
-    sub %eax,%ebx
-    mov (1+2)*NBPW(%ebp),%ecx  // len
-    add %eax,%ecx
-    push $__NR_munmap; pop %eax; call sys_check
-    cmp $-0x1000,%eax; jna 0f; hlt; 0:
-    pop %ebx; pop %ebp
-    ret
+    push $__NR_mprotect; 4: jmp 4f
+
+Punmap: .globl Punmap
+    push %ebx
+    push $__NR_munmap; 4: jmp 4f
+
+Pmap: .globl Pmap
+    nop
+mmap: .globl mmap  // oldmmap: %ebx -> 6 word parameters
+    push %ebx
+    push $ __NR_oldmmap
+4:
+    lea 3*NBPW(%esp),%ebx  // &arg1
+    mov (%ebx),%eax  // ptr
+    and $~(~0<<12),%eax  // offset in page
+    sub %eax,    (%ebx)  // ptr
+    add %eax,NBPW(%ebx)  // len
+    pop %eax  // __NR_
+    cmp $__NR_oldmmap,%eax; je 6f  // %ebx -> 6 args
+    mov (%ebx),%ebx  // arg1
+6:
+    jmp 6f
+
+// System calls below take 3 or fewer arguments,
+// and %ecx,%edx need not be preserved.
+// So always pass 3 arguments.
 
 memfd_create: .globl memfd_create
         push $__NR_memfd_create; 5: jmp 5f
-mprotect: .globl mprotect
-        mov %ebx,%eax; and $-1+ (1<<12),%eax
-        sub %eax,%ebx
-        add %eax,%ecx
-        push $ __NR_mprotect; 5: jmp 5f
 exit: .globl exit
         push $ __NR_exit; 5: jmp 5f
 close: .globl close
@@ -194,15 +196,20 @@ munmap: .globl munmap
         push $ __NR_munmap; 5: jmp 5f
 Pwrite: .globl Pwrite
 write: .globl write
-        push $__NR_write; 5:
-sys_check1:
+        push $__NR_write
+5:
         pop %eax  // __NR_
+        push %ebx  // save regsiter
+        mov 2*NBPW(%esp),%ebx
+6:
+        mov 3*NBPW(%esp),%ecx
+        mov 4*NBPW(%esp),%edx
 sys_check:  // syscall with error checking; if halt then %eax= -errno, %ecx= __NR_
         push %eax // save __NR_ for debug
         int $0x80
         pop %ecx  // recover __NR_ for debug
-        cmp $PAGE_MASK,%eax; jb 0f; hlt; 0:  // -errno
+        cmp $~0<<12,%eax; jb 0f; hlt; 0:  // -errno
+        pop %ebx  // restore
         ret
-
 
 // section SO_MAIN inserted here
