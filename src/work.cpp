@@ -62,7 +62,7 @@
 #endif
 
 /*************************************************************************
-// util
+// file util
 **************************************************************************/
 
 namespace {
@@ -100,7 +100,7 @@ static void set_fd_timestamp(int fd, const XStat *xst) noexcept {
     BOOL r = SetFileTime((HANDLE) _get_osfhandle(fd), nullptr, &xst->ft_atime, &xst->ft_mtime);
     IGNORE_ERROR(r);
 #elif USE_FTIME
-    auto ft_ftime = xst->ft_ftime; // djgpp2 libc bug: not const, so use a copy
+    struct ftime ft_ftime = xst->ft_ftime; // djgpp2 libc bug/feature: not const, so use a copy
     int r = setftime(fd, &ft_ftime);
     IGNORE_ERROR(r);
 #elif USE__FUTIME

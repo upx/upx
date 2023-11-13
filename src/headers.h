@@ -113,9 +113,6 @@ static_assert(sizeof(void *) == 8);
 #include <type_traits>
 
 // C++ multithreading (UPX currently does not use multithreading)
-#ifndef WITH_THREADS
-#define WITH_THREADS 0
-#endif
 #if __STDC_NO_ATOMICS__
 #undef WITH_THREADS
 #endif

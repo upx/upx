@@ -14,6 +14,11 @@ else()
     cmake_minimum_required(VERSION "3.8" FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
 endif()
 
+macro(upx_cmake_include_hook section) # developer convenience
+    include("${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/hooks/CMakeLists.${section}.txt" OPTIONAL)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.${section}.txt" OPTIONAL)
+endmacro()
+
 # Sections of this CMakeLists.txt:
 #   - options
 #   - init
@@ -27,6 +32,8 @@ endif()
 #***********************************************************************
 # options
 #***********************************************************************
+
+upx_cmake_include_hook(1_options)
 
 # compilation config options
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -52,6 +59,8 @@ option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" O
 # init
 #***********************************************************************
 
+upx_cmake_include_hook(2_init_begin)
+
 # Disallow in-source builds. Note that you will still have to manually
 # clean up a few files if you accidentally try an in-source build.
 if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -62,30 +71,41 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     endif()
 endif()
 
+# util
+function(print_var)
+    foreach(var_name ${ARGV})
+        if(DEFINED ${var_name} AND NOT ",${${var_name}}," STREQUAL ",,")
+            if(${var_name})
+                message(STATUS "${var_name} = ${${var_name}}")
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
 # useful for CI jobs: allow settings via environment and cache result
 function(upx_cache_bool_vars)
     set(default_value "${ARGV0}")
     list(REMOVE_AT ARGV 0)
-    foreach(var ${ARGV})
+    foreach(var_name ${ARGV})
         set(value ${default_value})
-        if(DEFINED UPX_CACHE_${var})            # cached
-            set(value "${UPX_CACHE_${var}}")
-        elseif(DEFINED ${var})                  # defined via "cmake -DXXX=YYY"
-            set(value "${${var}}")
-        elseif("$ENV{${var}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$") # environment
-            set(value "$ENV{${var}}")
-            set(UPX_CACHE_ORIGIN_FROM_ENV_${var} TRUE CACHE INTERNAL "" FORCE)
+        if(DEFINED UPX_CACHE_${var_name})           # cached
+            set(value "${UPX_CACHE_${var_name}}")
+        elseif(DEFINED ${var_name})                 # defined via "cmake -DXXX=YYY"
+            set(value "${${var_name}}")
+        elseif("$ENV{${var_name}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$") # environment
+            set(value "$ENV{${var_name}}")
+            set(UPX_CACHE_ORIGIN_FROM_ENV_${var_name} TRUE CACHE INTERNAL "" FORCE)
         endif()
         if(value)
             set(value ON)
         else()
             set(value OFF)
         endif()
-        if(UPX_CACHE_ORIGIN_FROM_ENV_${var})
-            message(STATUS "setting from environment: ${var} = ${value}")
+        if(UPX_CACHE_ORIGIN_FROM_ENV_${var_name})
+            message(STATUS "setting from environment: ${var_name} = ${value}")
         endif()
-        set(${var} "${value}" PARENT_SCOPE)
-        set(UPX_CACHE_${var} "${value}" CACHE INTERNAL "" FORCE)
+        set(${var_name} "${value}" PARENT_SCOPE)
+        set(UPX_CACHE_${var_name} "${value}" CACHE INTERNAL "" FORCE)
     endforeach()
 endfunction()
 
@@ -169,6 +189,15 @@ if(is_multi_config)
     set(CMAKE_CONFIGURATION_TYPES "${c}" CACHE STRING "List of supported configuration types." FORCE)
 endif()
 
+# set the build type for use in try_compile()
+if(NOT CMAKE_TRY_COMPILE_CONFIGURATION)
+    if(CMAKE_BUILD_TYPE)
+        set(CMAKE_TRY_COMPILE_CONFIGURATION "${CMAKE_BUILD_TYPE}")
+    else()
+        set(CMAKE_TRY_COMPILE_CONFIGURATION "Release")
+    endif()
+endif()
+
 # set MSVC_FRONTEND and MINGW
 if(NOT DEFINED MSVC_FRONTEND AND (MSVC OR CMAKE_C_COMPILER_FRONTEND_VARIANT MATCHES "^MSVC"))
     set(MSVC_FRONTEND 1)
@@ -176,6 +205,8 @@ endif()
 if(NOT DEFINED MINGW AND CMAKE_C_PLATFORM_ID MATCHES "^MinGW")
     set(MINGW 1)
 endif()
+
+upx_cmake_include_hook(2_init_end)
 
 #***********************************************************************
 # common compilation flags
@@ -187,12 +218,7 @@ include(CheckIncludeFile)
 include(CheckStructHasMember)
 include(CheckSymbolExists)
 
-# TODO later: use pledge()
-#   https://justine.lol/pledge/
-#   https://github.com/jart/cosmopolitan
-#   https://news.ycombinator.com/item?id=32096801
-##find_package(PkgConfig QUIET)
-##pkg_check_modules(PKG_libseccomp QUIET libseccomp)
+upx_cmake_include_hook(3_common_compilation_flags_begin)
 
 if(NOT DEFINED HAVE_UNISTD_H)
     check_include_file("unistd.h" HAVE_UNISTD_H)
@@ -328,15 +354,15 @@ function(upx_compile_source_debug_with_O2)
         # NOTE: Xcode does not support per-config per-source COMPILE_FLAGS (as of CMake 3.27.7)
         return()
     endif()
-    foreach(t ${ARGV})
+    foreach(source ${ARGV})
         if(MSVC_FRONTEND)
             # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
         else()
-            get_source_file_property(prop ${t} COMPILE_FLAGS)
+            get_source_file_property(prop "${source}" COMPILE_FLAGS)
             if(prop MATCHES "^(NOTFOUND)?$")
-                set_source_files_properties(${t} PROPERTIES COMPILE_FLAGS "${flags}")
+                set_source_files_properties("${source}" PROPERTIES COMPILE_FLAGS "${flags}")
             else()
-                set_source_files_properties(${t} PROPERTIES COMPILE_FLAGS "${prop} ${flags}")
+                set_source_files_properties("${source}" PROPERTIES COMPILE_FLAGS "${prop} ${flags}")
             endif()
         endif()
     endforeach()
@@ -363,6 +389,21 @@ function(upx_sanitize_target)
     endforeach()
 endfunction()
 
+# util to add wildcard expansions to a variable
+function(upx_add_glob_files)
+    set(var_name ${ARGV0})
+    list(REMOVE_AT ARGV 0)
+    file(GLOB files ${ARGV})
+    set(result "${${var_name}}")
+    list(APPEND result "${files}")
+    list(SORT result)
+    list(REMOVE_DUPLICATES result)
+    ##message(STATUS "upx_add_glob_files: ${var_name} = ${result}")
+    set(${var_name} "${result}" PARENT_SCOPE) # return value
+endfunction()
+
+upx_cmake_include_hook(3_common_compilation_flags_end)
+
 #***********************************************************************
 # targets
 #***********************************************************************
@@ -372,44 +413,41 @@ set(UPX_CONFIG_DISABLE_THREADS ON) # multithreading is currently not used; maybe
 set(UPX_CONFIG_DISABLE_BZIP2 ON)   # bzip2 is currently not used; we might need it to decompress linux kernels
 set(UPX_CONFIG_DISABLE_ZSTD ON)    # zstd is currently not used; maybe in UPX version 5
 
+upx_cmake_include_hook(4_targets_begin)
+
 if(NOT UPX_CONFIG_DISABLE_THREADS)
     find_package(Threads)
 endif()
 
 if(NOT UPX_CONFIG_DISABLE_BZIP2)
-file(GLOB bzip2_SOURCES "vendor/bzip2/*.c")
-list(SORT bzip2_SOURCES)
+upx_add_glob_files(bzip2_SOURCES "vendor/bzip2/*.c")
 add_library(upx_vendor_bzip2 STATIC ${bzip2_SOURCES})
 if(NOT UPX_CONFIG_DISABLE_C_STANDARD)
     set_property(TARGET upx_vendor_bzip2 PROPERTY C_STANDARD 11)
 endif()
 endif() # UPX_CONFIG_DISABLE_BZIP2
 
-file(GLOB ucl_SOURCES "vendor/ucl/src/*.c")
-list(SORT ucl_SOURCES)
+upx_add_glob_files(ucl_SOURCES "vendor/ucl/src/*.c")
 add_library(upx_vendor_ucl STATIC ${ucl_SOURCES})
 if(NOT UPX_CONFIG_DISABLE_C_STANDARD)
     set_property(TARGET upx_vendor_ucl PROPERTY C_STANDARD 11)
 endif()
 
-file(GLOB zlib_SOURCES "vendor/zlib/*.c")
-list(SORT zlib_SOURCES)
+upx_add_glob_files(zlib_SOURCES "vendor/zlib/*.c")
 add_library(upx_vendor_zlib STATIC ${zlib_SOURCES})
 if(NOT UPX_CONFIG_DISABLE_C_STANDARD)
     set_property(TARGET upx_vendor_zlib PROPERTY C_STANDARD 11)
 endif()
 
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
-file(GLOB zstd_SOURCES "vendor/zstd/lib/*/*.c")
-list(SORT zstd_SOURCES)
+upx_add_glob_files(zstd_SOURCES "vendor/zstd/lib/*/*.c")
 add_library(upx_vendor_zstd STATIC ${zstd_SOURCES})
 if(NOT UPX_CONFIG_DISABLE_C_STANDARD)
     set_property(TARGET upx_vendor_zstd PROPERTY C_STANDARD 11)
 endif()
 endif() # UPX_CONFIG_DISABLE_ZSTD
 
-file(GLOB upx_SOURCES "src/*.cpp" "src/[cfu]*/*.cpp")
-list(SORT upx_SOURCES)
+upx_add_glob_files(upx_SOURCES "src/*.cpp" "src/[cfu]*/*.cpp")
 add_executable(upx ${upx_SOURCES})
 if(NOT UPX_CONFIG_DISABLE_CXX_STANDARD)
     set_property(TARGET upx PROPERTY CXX_STANDARD 17)
@@ -425,9 +463,13 @@ if(Threads_FOUND)
     target_link_libraries(upx Threads::Threads)
 endif()
 
+upx_cmake_include_hook(4_targets_end)
+
 #***********************************************************************
 # target compilation flags
 #***********************************************************************
+
+upx_cmake_include_hook(5_target_compilation_flags_begin)
 
 if(NOT UPX_CONFIG_DISABLE_BZIP2)
 set(t upx_vendor_bzip2)
@@ -518,12 +560,16 @@ else()
     target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
 
+upx_cmake_include_hook(5_target_compilation_flags_end)
+
 #***********************************************************************
 # test
 #   ctest
 #   make test
 #   ninja test
 #***********************************************************************
+
+upx_cmake_include_hook(6_test)
 
 if(NOT UPX_CONFIG_CMAKE_DISABLE_TEST)
 
@@ -567,6 +613,8 @@ endif() # UPX_CONFIG_CMAKE_DISABLE_TEST
 #   ninja install
 #***********************************************************************
 
+upx_cmake_include_hook(7_install)
+
 if(NOT UPX_CONFIG_CMAKE_DISABLE_INSTALL)
 
 # installation prefix and directories
@@ -593,19 +641,7 @@ endif() # UPX_CONFIG_CMAKE_DISABLE_INSTALL
 # print some info about the build configuration
 #***********************************************************************
 
-function(print_var)
-    foreach(var ${ARGV})
-        if(DEFINED ${var} AND NOT ",${${var}}," STREQUAL ",,")
-            if(${var})
-                message(STATUS "${var} = ${${var}}")
-            endif()
-        endif()
-    endforeach()
-endfunction()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
-include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.maint.txt")
-endif()
+upx_cmake_include_hook(8_summary)
 
 print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION CMAKE_GENERATOR)
 if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
@@ -613,7 +649,7 @@ print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
 print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING)
 print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_FRONTEND_VARIANT CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_FRONTEND_VARIANT CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
-print_var(CMAKE_POSITION_INDEPENDENT_CODE)
+print_var(CMAKE_CROSSCOMPILING_EMULATOR CMAKE_INTERPROCEDURAL_OPTIMIZATION CMAKE_POSITION_INDEPENDENT_CODE CMAKE_TRY_COMPILE_CONFIGURATION)
 print_var(CYGWIN GNUC MINGW MSVC MSVC_FRONTEND MSVC_IDE WIN32 WIN64)
 endif() # UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO
 print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
@@ -633,5 +669,7 @@ if(NOT ",${CMAKE_C_COMPILER_FRONTEND_VARIANT}," STREQUAL ",${CMAKE_CXX_COMPILER_
     message(FATAL_ERROR "ERROR: CMAKE_C_COMPILER_FRONTEND_VARIANT CMAKE_CXX_COMPILER_FRONTEND_VARIANT mismatch")
 endif()
 endif() # UPX_CONFIG_CMAKE_DISABLE_PLATFORM_CHECK
+
+upx_cmake_include_hook(9_finish)
 
 # vim:set ft=cmake ts=4 sw=4 tw=0 et:

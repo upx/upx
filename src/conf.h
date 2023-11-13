@@ -197,7 +197,7 @@ typedef upx_int64_t upx_off_t;
 // portab
 **************************************************************************/
 
-// some system headers may define these, so undef just in case
+// some platform system headers may pre-define these, so undef to avoid conflicts
 #undef _
 #undef __
 #undef ___
