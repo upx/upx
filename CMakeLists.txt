@@ -119,6 +119,10 @@ upx_cache_bool_vars(ON
     CMAKE_C_STANDARD_REQUIRED CMAKE_CXX_STANDARD_REQUIRED
     CMAKE_EXPORT_COMPILE_COMMANDS CMAKE_REQUIRED_QUIET
 )
+# global CMake settings that default to OFF
+upx_cache_bool_vars(OFF
+    CMAKE_VERBOSE_MAKEFILE
+)
 # internal UPX settings that default to OFF
 upx_cache_bool_vars(OFF
     UPX_CONFIG_CMAKE_DISABLE_TEST UPX_CONFIG_CMAKE_DISABLE_INSTALL
@@ -418,6 +422,20 @@ upx_cmake_include_hook(4_targets_begin)
 if(NOT UPX_CONFIG_DISABLE_THREADS)
     find_package(Threads)
 endif()
+# make sure that threads are indeed fully supported
+if(Threads_FOUND)
+    foreach(f std_lock_guard.cpp)
+        set(CMAKE_TRY_COMPILE_TARGET_TYPE "EXECUTABLE")
+        try_compile(result "${CMAKE_CURRENT_BINARY_DIR}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/try_compile/${f}"
+                    OUTPUT_VARIABLE output)
+        if(NOT result)
+            #message(STATUS "${output}") # debug output from try_compile
+            set(Threads_FOUND OFF)
+            break()
+        endif()
+    endforeach()
+endif()
 
 if(NOT UPX_CONFIG_DISABLE_BZIP2)
 upx_add_glob_files(bzip2_SOURCES "vendor/bzip2/*.c")
@@ -573,22 +591,21 @@ upx_cmake_include_hook(6_test)
 
 if(NOT UPX_CONFIG_CMAKE_DISABLE_TEST)
 
+function(upx_add_test)
+    set(name "${ARGV0}")
+    list(REMOVE_AT ARGV 0)
+    add_test(NAME "${name}" COMMAND ${ARGV})
+    set_tests_properties("${name}" PROPERTIES RUN_SERIAL TRUE) # run these tests sequentially
+endfunction()
+
 include(CTest)
-# TODO later: check CMAKE_CROSSCOMPILING_EMULATOR
-if(NOT CMAKE_CROSSCOMPILING)
+if(NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
     add_test(NAME upx-version COMMAND upx --version)
     add_test(NAME upx-help    COMMAND upx --help)
     add_test(NAME upx-sysinfo COMMAND upx --sysinfo -v)
-endif()
-if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
+if(NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     # IMPORTANT NOTE: these tests can only work if the host executable format is supported by UPX!
-    function(upx_add_test)
-        set(name "${ARGV0}")
-        list(REMOVE_AT ARGV 0)
-        add_test(NAME "${name}" COMMAND ${ARGV})
-        set_tests_properties("${name}" PROPERTIES RUN_SERIAL TRUE) # run these tests sequentially
-    endfunction()
-    set(exe ${CMAKE_EXECUTABLE_SUFFIX})
+    set(exe "${CMAKE_EXECUTABLE_SUFFIX}")
     set(upx_self_exe "$<TARGET_FILE:upx>")
     set(fo "--force-overwrite")
     upx_add_test(upx-self-pack      upx -3         "${upx_self_exe}" ${fo} -o upx-packed${exe})
@@ -600,8 +617,9 @@ if(NOT CMAKE_CROSSCOMPILING AND NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     upx_add_test(upx-fileinfo       upx --fileinfo upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})
     upx_add_test(upx-test           upx -t         upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})
     upx_add_test(upx-unpack         upx -d upx-packed${exe} ${fo} -o upx-unpacked${exe})
-    upx_add_test(upx-run-unpacked   ./upx-unpacked${exe} --version-short)
-    upx_add_test(upx-run-packed     ./upx-packed${exe} --version-short)
+    upx_add_test(upx-run-unpacked   ${CMAKE_CROSSCOMPILING_EMULATOR} ./upx-unpacked${exe} --version-short)
+    upx_add_test(upx-run-packed     ${CMAKE_CROSSCOMPILING_EMULATOR} ./upx-packed${exe} --version-short)
+endif() # UPX_CONFIG_DISABLE_SELF_PACK_TEST
 endif()
 
 endif() # UPX_CONFIG_CMAKE_DISABLE_TEST
@@ -646,13 +664,16 @@ upx_cmake_include_hook(8_summary)
 print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION CMAKE_GENERATOR)
 if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
 print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
-print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING)
+print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING CMAKE_CROSSCOMPILING_EMULATOR)
 print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_FRONTEND_VARIANT CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
 print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_FRONTEND_VARIANT CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
-print_var(CMAKE_CROSSCOMPILING_EMULATOR CMAKE_INTERPROCEDURAL_OPTIMIZATION CMAKE_POSITION_INDEPENDENT_CODE CMAKE_TRY_COMPILE_CONFIGURATION)
+print_var(CMAKE_INTERPROCEDURAL_OPTIMIZATION CMAKE_POSITION_INDEPENDENT_CODE CMAKE_TRY_COMPILE_CONFIGURATION)
 print_var(CYGWIN GNUC MINGW MSVC MSVC_FRONTEND MSVC_IDE WIN32 WIN64)
 endif() # UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO
 print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
+if(Threads_FOUND)
+    message(STATUS "WITH_THREADS = 1")
+endif()
 if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|None|Release)$")
     message(WARNING "WARNING: unsupported CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}; please use \"Debug\" or \"Release\"")
 endif()

@@ -39,6 +39,10 @@ $(top_srcdir)/build/debug/upx: PHONY
 $(top_srcdir)/build/release/upx: PHONY
 	$(MAKE) -C $(top_srcdir) build/release
 
+# convenience
+test: $(top_srcdir)/$(.DEFAULT_GOAL)
+	cd $(top_srcdir)/$(.DEFAULT_GOAL) && ctest
+
 #
 # "make run-testsuite"
 # see https://github.com/upx/upx-testsuite.git

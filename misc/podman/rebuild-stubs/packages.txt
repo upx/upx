@@ -137,7 +137,7 @@ ii  libgnutls30:amd64           3.7.3-4ubuntu1.2                        amd64   
 ii  libgomp1:amd64              12.3.0-1ubuntu1~22.04                   amd64        GCC OpenMP (GOMP) support library
 ii  libgpg-error0:amd64         1.43-3                                  amd64        GnuPG development runtime library
 ii  libgpm2:amd64               1.20.7-10build1                         amd64        General Purpose Mouse - shared library
-ii  libgssapi-krb5-2:amd64      1.19.2-2ubuntu0.2                       amd64        MIT Kerberos runtime libraries - krb5 GSS-API Mechanism
+ii  libgssapi-krb5-2:amd64      1.19.2-2ubuntu0.3                       amd64        MIT Kerberos runtime libraries - krb5 GSS-API Mechanism
 ii  libhiredis0.14:amd64        0.14.1-2                                amd64        minimalistic C client library for Redis
 ii  libhogweed6:amd64           3.7.3-1build2                           amd64        low level cryptographic library (public-key cryptos)
 ii  libicu70:amd64              70.1-2                                  amd64        International Components for Unicode
@@ -150,10 +150,10 @@ ii  libitm1:amd64               12.3.0-1ubuntu1~22.04                   amd64   
 ii  libjansson4:amd64           2.13.1-1.1build3                        amd64        C library for encoding, decoding and manipulating JSON data
 ii  libjq1:amd64                1.6-2.1ubuntu3                          amd64        lightweight and flexible command-line JSON processor - shared library
 ii  libjsoncpp25:amd64          1.9.5-3                                 amd64        library for reading and writing JSON for C++
-ii  libk5crypto3:amd64          1.19.2-2ubuntu0.2                       amd64        MIT Kerberos runtime libraries - Crypto Library
+ii  libk5crypto3:amd64          1.19.2-2ubuntu0.3                       amd64        MIT Kerberos runtime libraries - Crypto Library
 ii  libkeyutils1:amd64          1.6.1-2ubuntu3                          amd64        Linux Key Management Utilities (library)
-ii  libkrb5-3:amd64             1.19.2-2ubuntu0.2                       amd64        MIT Kerberos runtime libraries
-ii  libkrb5support0:amd64       1.19.2-2ubuntu0.2                       amd64        MIT Kerberos runtime libraries - Support library
+ii  libkrb5-3:amd64             1.19.2-2ubuntu0.3                       amd64        MIT Kerberos runtime libraries
+ii  libkrb5support0:amd64       1.19.2-2ubuntu0.3                       amd64        MIT Kerberos runtime libraries - Support library
 ii  libldap-2.5-0:amd64         2.5.16+dfsg-0ubuntu0.22.04.1            amd64        OpenLDAP libraries
 ii  liblsan0:amd64              12.3.0-1ubuntu1~22.04                   amd64        LeakSanitizer -- a memory leak detector (runtime)
 ii  liblz4-1:amd64              1.9.3-2build2                           amd64        Fast LZ compression algorithm library - runtime

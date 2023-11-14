@@ -124,36 +124,46 @@ build/extra/cross-linux-gnu-aarch64/debug:   PHONY; $(call run_config_and_build,
 build/extra/cross-linux-gnu-aarch64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-linux-gnu-aarch64/%: export CC  = aarch64-linux-gnu-gcc
 build/extra/cross-linux-gnu-aarch64/%: export CXX = aarch64-linux-gnu-g++
+build/extra/cross-linux-gnu-aarch64/%: CMAKE_SYSTEM_NAME = Linux
+build/extra/cross-linux-gnu-aarch64/%: CMAKE_CROSSCOMPILING_EMULATOR = qemu-aarch64
 
 # cross compiler: Linux glibc arm-linux-gnueabihf
 build/extra/cross-linux-gnu-arm-eabihf/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-linux-gnu-arm-eabihf/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-linux-gnu-arm-eabihf/%: export CC  = arm-linux-gnueabihf-gcc
 build/extra/cross-linux-gnu-arm-eabihf/%: export CXX = arm-linux-gnueabihf-g++ -Wno-psabi
+build/extra/cross-linux-gnu-arm-eabihf/%: CMAKE_SYSTEM_NAME = Linux
+build/extra/cross-linux-gnu-arm-eabihf/%: CMAKE_CROSSCOMPILING_EMULATOR = qemu-arm
 
 # cross compiler: Windows x86 win32 MinGW (i386)
 build/extra/cross-windows-mingw32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw32/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc -static -D_WIN32_WINNT=0x0400
 build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++ -static -D_WIN32_WINNT=0x0400
+build/extra/cross-windows-mingw32/%: CMAKE_SYSTEM_NAME = Windows
+build/extra/cross-windows-mingw32/%: CMAKE_CROSSCOMPILING_EMULATOR = wine
 
 # cross compiler: Windows x64 win64 MinGW (amd64)
 build/extra/cross-windows-mingw64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc -static -D_WIN32_WINNT=0x0400
 build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++ -static -D_WIN32_WINNT=0x0400
+build/extra/cross-windows-mingw64/%: CMAKE_SYSTEM_NAME = Windows
+build/extra/cross-windows-mingw64/%: CMAKE_CROSSCOMPILING_EMULATOR = wine
 
 # cross compiler: macOS arm64 (aarch64)
 build/extra/cross-darwin-arm64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-darwin-arm64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-darwin-arm64/%: export CC  = clang -target arm64-apple-darwin
 build/extra/cross-darwin-arm64/%: export CXX = clang++ -target arm64-apple-darwin
+build/extra/cross-darwin-arm64/%: CMAKE_SYSTEM_NAME = Darwin
 
 # cross compiler: macOS x86_64 (amd64)
 build/extra/cross-darwin-x86_64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-darwin-x86_64/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/cross-darwin-x86_64/%: export CC  = clang -target x86_64-apple-darwin
 build/extra/cross-darwin-x86_64/%: export CXX = clang++ -target x86_64-apple-darwin
+build/extra/cross-darwin-x86_64/%: CMAKE_SYSTEM_NAME = Darwin
 
 #***********************************************************************
 # C/C++ static analyzers
@@ -213,7 +223,7 @@ xtarget/all:     xtarget/debug xtarget/release
 xtarget/debug:   build/xtarget/$(UPX_XTARGET)/debug
 xtarget/release: build/xtarget/$(UPX_XTARGET)/release
 # set new default
-.DEFAULT_GOAL = xtarget/release
+.DEFAULT_GOAL = build/xtarget/$(UPX_XTARGET)/release
 
 endif
 endif
@@ -235,6 +245,9 @@ build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_RANLIB)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJCOPY)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJDUMP)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_STRIP)
+# pass common CMake cross compilation settings from environment/make to cmake
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_SYSTEM_NAME)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CROSSCOMPILING_EMULATOR)
 # pass UPX config options from environment/make to cmake; see CMakeLists.txt
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_GITREV)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SANITIZE)

@@ -63,6 +63,8 @@ include ./misc/make/Makefile-extra.mk
 endif
 
 # developer convenience
+test: $(.DEFAULT_GOAL)
+	cd $(.DEFAULT_GOAL) && ctest
 ifneq ($(wildcard /usr/bin/env),) # needs bash, perl, xargs, etc.
 check-whitespace clang-format run-testsuite run-testsuite-debug run-testsuite-release: PHONY src/Makefile
 	$(MAKE) -C src $@
