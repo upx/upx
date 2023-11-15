@@ -76,12 +76,12 @@ jobs:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
 
-      - name: 'Run basic tests clang-static'
+      - name: 'Run ctest tests clang-static'
         run: 'make -C build/xtarget/clang-static/$release test'
-      - name: 'Run basic tests clang-asan'
+      - name: 'Run ctest tests clang-asan'
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: ASAN not supported
         run: 'make -C build/xtarget/clang-asan/$release test'
-      - name: 'Run basic tests clang-msan'
+      - name: 'Run ctest tests clang-msan'
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: MSAN not supported
         run: 'make -C build/xtarget/clang-msan/$release test'
 

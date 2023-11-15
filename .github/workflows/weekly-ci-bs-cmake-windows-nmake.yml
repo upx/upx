@@ -10,6 +10,7 @@ env:
   CMAKE_VERBOSE_MAKEFILE: 'ON'
   CTEST_OUTPUT_ON_FAILURE: 'ON'
   DEBIAN_FRONTEND: noninteractive
+  UPX_CONFIG_EXPECT_THREADS: 'ON'
 
 jobs:
   job-cmake-windows-nmake: # uses cmake + nmake
@@ -44,7 +45,7 @@ jobs:
         shell: cmd
         run: |
           set X=${{ matrix.clang_cl && '-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl' || '' }}
-          cmake -S . -B build/debug -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Debug %X%
+          cmake -S . -B build/debug -G "NMake Makefiles" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_BUILD_TYPE=Debug %X%
           cd build/debug
           nmake
           dir *.exe
@@ -53,7 +54,7 @@ jobs:
         shell: cmd
         run: |
           set X=${{ matrix.clang_cl && '-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl' || '' }}
-          cmake -S . -B build/release -G "NMake Makefiles" %X%
+          cmake -S . -B build/release -G "NMake Makefiles" -DCMAKE_VERBOSE_MAKEFILE=ON %X%
           cd build/release
           nmake
           dir *.exe
@@ -71,7 +72,7 @@ jobs:
         with:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
-      - name: 'Run basic tests'
+      - name: 'Run ctest tests'
         if: ${{ matrix.arch != 'amd64_arm64' }}
         run: |
           ctest --test-dir build/debug

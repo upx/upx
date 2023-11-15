@@ -174,12 +174,12 @@ jobs:
           (cd "upx with space"/build/xtarget/gcc-static/release   && DESTDIR="$PWD/Install with cmake" cmake --install .)
           (cd "upx with space"/build/xtarget/gcc-static/release   && DESTDIR="$PWD/Install with make"  make install)
 
-      - { name: 'Run basic tests clang Debug',   run: 'make -C "upx with space"/build/xtarget/clang-static/debug test' }
-      - { name: 'Run basic tests clang Release', run: 'make -C "upx with space"/build/xtarget/clang-static/release test' }
-      - { name: 'Run basic tests gcc Debug',     run: 'make -C "upx with space"/build/xtarget/gcc-static/debug test' }
-      - { name: 'Run basic tests gcc Release',   run: 'make -C "upx with space"/build/xtarget/gcc-static/release test' }
+      - { name: 'Run ctest tests clang Debug',   run: 'make -C "upx with space"/build/xtarget/clang-static/debug test' }
+      - { name: 'Run ctest tests clang Release', run: 'make -C "upx with space"/build/xtarget/clang-static/release test' }
+      - { name: 'Run ctest tests gcc Debug',     run: 'make -C "upx with space"/build/xtarget/gcc-static/debug test' }
+      - { name: 'Run ctest tests gcc Release',   run: 'make -C "upx with space"/build/xtarget/gcc-static/release test' }
 
-      - name: 'Run basic tests C++20, C++23 and LTO'
+      - name: 'Run ctest tests C++20, C++23 and LTO'
         if: matrix.use_cxx20 || matrix.use_cxx23 || matrix.use_cxx2b || matrix.use_lto
         run: |
           for dir in "upx with space"/build/xtarget/*-cxx*/*; do

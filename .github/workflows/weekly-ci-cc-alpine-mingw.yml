@@ -10,6 +10,7 @@ env:
   CMAKE_VERBOSE_MAKEFILE: 'ON'
   CTEST_OUTPUT_ON_FAILURE: 'ON'
   DEBIAN_FRONTEND: noninteractive
+  UPX_CONFIG_EXPECT_THREADS: 'ON'
 
 jobs:
   job-alpine-mingw: # uses cmake + make
@@ -18,8 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { container: 'alpine:3.11', wine: false, i686_mingw: false } # skip Wine testsuite; TODO: internal error: doctest check failed
-          - { container: 'alpine:3.12', wine: false, i686_mingw: false } # skip Wine testsuite; TODO: internal error: doctest check failed
+          - { container: 'alpine:3.11', wine: true,  i686_mingw: false } # wine-4.0.3
+          - { container: 'alpine:3.12', wine: true,  i686_mingw: false } # wine-4.0.3
           - { container: 'alpine:3.13', wine: true,  i686_mingw: false } # wine-4.0.3
           - { container: 'alpine:3.14', wine: true,  i686_mingw: false } # wine-6.18
           - { container: 'alpine:3.15', wine: true,  i686_mingw: false } # wine-6.23
@@ -27,7 +28,7 @@ jobs:
           - { container: 'alpine:3.17', wine: true,  i686_mingw: false } # wine-7.21
           # Wine >= 8.0 can run i686 32-bit programs in WOW64 mode on pure 64-bit systems
           - { container: 'alpine:3.18', wine: true,  i686_mingw: true }  # wine-8.13
-          - { container: 'alpine:edge', wine: true,  i686_mingw: true }  # wine-8.17
+          - { container: 'alpine:edge', wine: true,  i686_mingw: true }  # wine-8.19
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
@@ -37,12 +38,17 @@ jobs:
           apk update && apk upgrade && apk add bash cmake coreutils file git make tar xz
           apk add mingw-w64-gcc
           test "${{ matrix.i686_mingw }}" = "true" && apk add i686-mingw-w64-gcc
-          test "${{ matrix.wine }}" = "true" && apk add wine
           true
-      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+      - name: 'Install Wine'
+        if: ${{ matrix.wine }}
         run: |
+          apk add wine
+          test -f /usr/bin/wine || ln -s -v wine64 /usr/bin/wine
           # this seems to be needed for Wine when running in a container (beause of UID mismatch??)
           mkdir -p -v ~/.wine
+          wineboot --init
+      - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
+        run: |
           # this seems to be needed when running in a container (beause of UID mismatch??)
           git config --global --add safe.directory '*'
           git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" .
@@ -89,7 +95,7 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/upx/upx-testsuite ../upx-testsuite
           testsuite_1="$(readlink -fn ./misc/testsuite/upx_testsuite_1.sh)"
-          export upx_exe_runner="wine64"
+          export upx_exe_runner="wine"
           if test "${{ matrix.i686_mingw }}" = "true"; then
           UPX_TESTSUITE_LEVEL=2 \
           env -C build/extra/cross-windows-mingw32/debug   upx_exe=./upx.exe bash "$testsuite_1"
@@ -109,7 +115,7 @@ jobs:
           cd build/extra/cross-windows-mingw32/debug
           [[ -f upx && ! -f upx.exe ]] && mv -i -v upx upx.exe
           pwd; file ./upx.exe
-          wine=wine64
+          wine=wine
           tt='./upx.exe'
           $wine ./upx.exe --version-short
           $wine ./upx.exe --sysinfo -v
@@ -128,7 +134,7 @@ jobs:
           cd build/extra/cross-windows-mingw32/release
           [[ -f upx && ! -f upx.exe ]] && mv -i -v upx upx.exe
           pwd; file ./upx.exe
-          wine=wine64
+          wine=wine
           tt='./upx.exe'
           $wine ./upx.exe --version-short
           $wine ./upx.exe --sysinfo -v
@@ -176,3 +182,19 @@ jobs:
           $wine ./upx.exe -d tt.packed.exe -o tt.unpacked.exe
           $wine ./tt.packed.exe --version-short
           $wine ./tt.unpacked.exe --version-short
+
+      - name: 'Run ctest tests under Wine - mingw32/debug'
+        if: ${{ matrix.wine && matrix.i686_mingw }}
+        run: 'make -C build/extra/cross-windows-mingw32/debug test'
+
+      - name: 'Run ctest tests under Wine - mingw32/release'
+        if: ${{ matrix.wine && matrix.i686_mingw }}
+        run: 'make -C build/extra/cross-windows-mingw32/release test'
+
+      - name: 'Run ctest tests under Wine - mingw64/debug'
+        if: ${{ matrix.wine }}
+        run: 'make -C build/extra/cross-windows-mingw64/debug test'
+
+      - name: 'Run ctest tests under Wine - mingw64/release'
+        if: ${{ matrix.wine }}
+        run: 'make -C build/extra/cross-windows-mingw64/release test'

@@ -10,6 +10,7 @@ env:
   CMAKE_VERBOSE_MAKEFILE: 'ON'
   CTEST_OUTPUT_ON_FAILURE: 'ON'
   DEBIAN_FRONTEND: noninteractive
+  UPX_CONFIG_EXPECT_THREADS: 'ON'
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -G "Unix Makefiles"
 
@@ -85,7 +86,7 @@ jobs:
         with:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
-      - name: 'Run basic tests'
+      - name: 'Run ctest tests'
         if: ${{ matrix.arch != 'amd64_arm64' }}
         shell: bash
         run: |

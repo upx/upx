@@ -3,9 +3,8 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
-# NOTE: this Makefile is deprecated - please directly use the CMake build
-# instead. And see the top-level Makefile for some pre-defined CMake
-# build configurations.
+# NOTE: this Makefile is deprecated - please directly use
+# the top-level CMake build instead.
 
 ifndef srcdir
   srcdir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))

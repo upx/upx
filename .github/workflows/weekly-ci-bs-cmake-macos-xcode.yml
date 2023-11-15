@@ -10,6 +10,7 @@ env:
   CMAKE_VERBOSE_MAKEFILE: 'ON'
   CTEST_OUTPUT_ON_FAILURE: 'ON'
   DEBIAN_FRONTEND: noninteractive
+  UPX_CONFIG_EXPECT_THREADS: 'ON'
 
 jobs:
   job-cmake-macos-xcode: # uses cmake + xcodebuild
@@ -44,7 +45,7 @@ jobs:
         with:
           name: ${{ env.artifact_name }}
           path: tmp/artifact
-      - name: 'Run basic tests'
+      - name: 'Run ctest tests'
         if: ${{ matrix.run_test }}
         run: |
           ctest --test-dir build/xcode -C Debug
