@@ -1202,9 +1202,20 @@ tc.i386-linux.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-la
 tc.i386-linux.elf.gcc     += -mpreferred-stack-boundary=2
 tc.i386-linux.elf.gcc     += -fweb
 
-i386-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
+#i386-linux.elf-entry.h : $(srcdir)/src/$$T.S
+#	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+#	$(call tc,f-embed_objinfo,tmp/$T.bin)
+#	$(call tc,bin2h) tmp/$T.bin $@
+
+i386-linux.elf-entry.h : $(srcdir)/src/i386-linux.elf-entry.lds \
+	    $(srcdir)/src/$$T.S \
+	    tmp/i386-linux.elf-upxfd_android.o
+	$(call tc,gcc) -c  $(srcdir)/src/$T.S -o tmp/$T.o
+	multiarch-ld-2.17 -r -Map tmp/$T.map -o tmp/$T.bin \
+	    -T src/i386-linux.elf-entry.lds \
+	    tmp/$T.o \
+	    tmp/i386-linux.elf-upxfd_android.o
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 i386-linux.elf-so_entry.h : $(srcdir)/src/i386-linux.elf-so_entry.lds \

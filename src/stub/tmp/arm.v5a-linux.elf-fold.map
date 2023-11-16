@@ -8,7 +8,7 @@ Linker script and memory map
 
                 0x0000000000008040                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008040     0x1574
+.text           0x0000000000008040      0xae8
  *(.text)
  .text          0x0000000000008040      0x3fc tmp/arm.v5a-linux.elf-fold.o
                 0x0000000000008258                my_bkpt
@@ -32,11 +32,11 @@ Linker script and memory map
                 0x00000000000083dc                get_page_mask
                 0x00000000000083e0                __udivsi3
                 0x00000000000083e0                div10
- .text          0x000000000000843c     0x1178 tmp/arm.v5a-linux.elf-main.o
-                0x0000000000009364                upx_main
+ .text          0x000000000000843c      0x6ec tmp/arm.v5a-linux.elf-main.o
+                0x0000000000008a08                upx_main
  *(.data)
- .data          0x00000000000095b4        0x0 tmp/arm.v5a-linux.elf-fold.o
- .data          0x00000000000095b4        0x0 tmp/arm.v5a-linux.elf-main.o
+ .data          0x0000000000008b28        0x0 tmp/arm.v5a-linux.elf-fold.o
+ .data          0x0000000000008b28        0x0 tmp/arm.v5a-linux.elf-main.o
 
 .data
 LOAD tmp/arm.v5a-linux.elf-fold.o

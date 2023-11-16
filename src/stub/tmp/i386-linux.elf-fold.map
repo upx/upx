@@ -8,12 +8,12 @@ Linker script and memory map
 
                 0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000000000     0x1080
- .text          0x0000000000000000      0x13b tmp/i386-linux.elf-fold.o
- *fill*         0x000000000000013b        0x1 00
- .text          0x000000000000013c      0xf44 tmp/i386-linux.elf-main.o
-                0x0000000000000e69                upx_main
- .text          0x0000000000001080        0x0 tmp/i386-expand.o
+.text           0x0000000000000000      0x74c
+ .text          0x0000000000000000      0x148 tmp/i386-linux.elf-fold.o
+ .text          0x0000000000000148      0x601 tmp/i386-linux.elf-main.o
+                0x000000000000065c                upx_main
+ *fill*         0x0000000000000749        0x3 00
+ .text          0x000000000000074c        0x0 tmp/i386-expand.o
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/i386-linux.elf-fold.o
@@ -31,9 +31,9 @@ OUTPUT(tmp/i386-linux.elf-fold.bin elf32-i386)
 
 SYSCALLS        0x0000000000000000       0x50
  SYSCALLS       0x0000000000000000       0x50 tmp/i386-linux.elf-fold.o
-                0x0000000000000046                get_page_mask
-                0x0000000000000028                mmap
-                0x000000000000004c                my_bkpt
+                0x0000000000000048                get_page_mask
+                0x000000000000002a                mmap
+                0x000000000000004e                my_bkpt
                 0x0000000000000000                Pprotect
 
 EXP_HEAD        0x0000000000000000       0xf1

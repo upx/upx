@@ -73,24 +73,17 @@ O_RDONLY=       0
 // are uncompressed.
 
 // enter:
-// eax:ADRX; ebx:free; ecx:LENX
-// ebp:f_exp; esi:free; edi:elfaddr
-// esp/ ADRU,LENU,fd,%entry,argc,argv,0,envp,0,auxv,0,strings
+// esp/ ADRX,LENX,elfaddr,ADRU,LENU,%fd,%entry,argc,argv,0,envp,0,auxv,0,strings
 //      (ADRU,LENU) = params for final munmap()
-//      (ADRX,LENX) = extent of compressed program (after moving)
+//      (ADRX,LENX) = extent of compressed program
 
 fold_begin:
    //// int3  // DEBUG
-        push edi  // elfaddr
-        push ecx  // LENX
-        push eax  // ADRX
-
         mov esi,esp; sub esp,PATH_MAX
         mov edi,esp; push 8; pop ecx; rep movsd  // copy ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 
         push ebp  // f_exp
         mov ebp,esp  // frame: f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
-F_fd= 6*NBPW  // frame offset to fd
 0:
         lodsd; test %eax,%eax; stosd; jne 0b  // argv
         push edi  // &new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
@@ -107,17 +100,22 @@ F_fd= 6*NBPW  // frame offset to fd
         dec eax; stosd; stosd  // 0, AT_NULL
         sub [-2*NBPW + ebp],edi  // -len_aux
         push edi  // P_07  &new_aux[N],-len_aux,&new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
-        push esi  // &strings,&new_aux[N],-len_aux,&new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,fd,entry,argc
+        push esi  // &strings,&new_aux[N],-len_aux,&new_env[0]; f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 
         call 1f
 0:
         .asciz "/proc/self/exe"
 1:
-        pop ebx  // path (because 'readlink' wants the name, not the fd)
+        // Use inline 'int 0x80' because failure is not fatal
+        pop ebx  // path
+        sub ecx,ecx  // O_RDONLY
+        push __NR_open; pop eax; int 0x80; mov [esp+ 10*NBPW],eax  // fd for mmap
+
         mov edx,-5*2*NBPW -1+ PATH_MAX  // buflen
         mov ecx,edi  // buffer
         // mov ebx,ebx  // name
-        push __NR_readlink; pop eax; int 0x80; test eax,eax; jns 0f
+        push __NR_readlink; pop eax; int 0x80
+        test eax,eax; jns 0f
         mov ecx,ebx  // point at name
         mov eax,-1+ (1b - 0b)  // len
 0:
@@ -183,9 +181,9 @@ F_fd= 6*NBPW  // frame offset to fd
         mov ecx,[ebp+ p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
         mov ebx,ebp  // hi &Elf32_Ehdr
         cmpw [e_type + ebp],ET_EXEC; jne 1f
-          push __NR_brk; pop %eax; int 0x80  // static __end_bss
+          mov al,__NR_brk; call sys_check_al  // static __end_bss
 1:
-        push __NR_munmap; pop %eax; int 0x80  // discard C_TEXT compressed data
+        mov al,__NR_munmap; call sys_check_al  // discard C_TEXT compressed data
 
 // Buggy programs may depend on uninit stack being 0, so clear what we used.
         mov edx,edi  // save auxv
@@ -215,10 +213,10 @@ F_fd= 6*NBPW  // frame offset to fd
         push PROT_READ; pop edx
         mov ecx,PAGE_SIZE
         sub ebx,ebx  // 0 ==> Linux chooses page frame
-        push __NR_newmmap; pop eax; int 0x80
+        mov al,__NR_newmmap; call sys_check_al
 
         pop ebx  // fd;  auxv, LENU, ADRU, entry, argc
-        push __NR_close; pop eax; int 0x80
+        mov al,__NR_close; call sys_check_al
 no_pse_map:
         pop edi  // auxv table
         sub eax,eax  // 0, also AT_NULL
@@ -253,7 +251,7 @@ Pprotect: .globl Pprotect
     sub ecx,%ebx  // extra length
     add ecx,[2*NBPW + esp]  // length
     mov edx,[3*NBPW + esp]  // bits
-    push __NR_mprotect; pop %eax; int 0x80
+    mov al,__NR_mprotect; call sys_check_al
     cmp eax, -0x1000; jna 0f; hlt; 0:
     mov ebx,[1*NBPW + esp]  // restore reg
     ret
@@ -263,11 +261,11 @@ Pprotect: .globl Pprotect
 mmap: .globl mmap  // oldmmap: ebx -> 6 arguments
         push ebx  // save register
         lea ebx,[2*NBPW + esp]
-        mov al,__NR_oldmmap; call sys_check1
+        mov al,__NR_oldmmap; call sys_check_al
         pop ebx  // restore register
         ret
 
-sys_check1:
+sys_check_al:
         movzbl eax,al
 sys_check:
         push eax  // save __NR_ for debug
