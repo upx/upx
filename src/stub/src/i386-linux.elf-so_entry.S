@@ -301,9 +301,9 @@ mempcpy: .globl mempcpy  // (dst, src, n)
 
   section ELFMAINZ
 L70:
-        pop %edx  // &getbit  (also L70ret)
+        pop %edx  // MATCH_08  &getbit  (also L70ret)
         call L20  // MATCH_09  push $&fold_info
-fold_info:
+fold_info:  // nice if 4-byte aligned
 //  b_info (sz_unc, sz_cpr, method) of folded code (C-language, etc.)
 
 /* vim:set ts=8 sw=8 et: */

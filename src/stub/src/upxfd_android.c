@@ -175,7 +175,12 @@ static int create_upxfn_path(char *name)
     return 0;  // success
 }
 
-// Early 32-bit Android lacks memfd_create.
+// memfd_create() gets ENOSYS on early Android.  There are 32-bit x86 Android
+// such as Zenfone 2 (discontinued 2018?), x86 Chromebooks (2019 and later),
+// FydeOS, Windows subsystem for Android.  But the main use is for developing,
+// to make Android emulator running on x86_64 (Linux or Windows) run faster
+// by emulating x86 instead of ARM.
+//
 // Try /data/data/$APP_NAME/cache/upxAAA
 // where APP_NAME is discovered as basename(argv[0])
 // and argv[0] is guessed from /proc/self/cmdline.
