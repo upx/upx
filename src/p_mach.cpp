@@ -1952,7 +1952,7 @@ tribool PackMachBase<T>::canPack()
         throwCantPack("256 < Mach_header.ncmds");
     }
     unsigned const sz_mhcmds = (unsigned)mhdri.sizeofcmds;
-    unsigned headway = file_size - sizeof(mhdri);
+    unsigned headway = umin(sz_mhcmds, file_size - sizeof(mhdri));
     if (headway < sz_mhcmds) {
         char buf[32]; snprintf(buf, sizeof(buf), "bad sizeofcmds %d", sz_mhcmds);
         throwCantPack(buf);
@@ -1961,7 +1961,7 @@ tribool PackMachBase<T>::canPack()
     ||  32768 < sz_mhcmds) { // somewhat arbitrary, but *-darwin.macho-upxmain.c
         throwCantPack("32768 < Mach_header.sizeofcmds (or ==0)");
     }
-    rawmseg_buf.alloc(sz_mhcmds);
+    rawmseg_buf.alloc(headway);
     rawmseg = (Mach_segment_command *)(void *)rawmseg_buf;
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
