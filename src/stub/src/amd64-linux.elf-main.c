@@ -76,6 +76,8 @@ unsigned Pprotect(void *, size_t, unsigned);
 
 #endif  //}
 
+extern void my_bkpt(void *, ...);
+
 static int dprintf(char const *fmt, ...); // forward
 #endif  /*}*/
 
@@ -480,6 +482,7 @@ do_xmap(
         if (ET_EXEC==ehdr->e_type) {
             reloc = 0;
         }
+        DPRINTF("do_xmap 1 reloc=%%p\\n", reloc);
     }
     else { // PT_INTERP
         DPRINTF("INTERP\\n", 0);
@@ -489,8 +492,8 @@ do_xmap(
             , PAGE_MASK
 #endif
         );
+        DPRINTF("do_xmap 2 reloc=%%p\\n", reloc);
     }
-    DPRINTF("do_xmap reloc=%%p\\n", reloc);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {

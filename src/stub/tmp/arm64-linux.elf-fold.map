@@ -8,45 +8,46 @@ Linker script and memory map
 
                 0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x00000000001000bc      0xa58
+.text           0x00000000001000bc      0xa68
  *(.text)
- .text          0x00000000001000bc      0x29c tmp/arm64-linux.elf-fold.o
-                0x0000000000100274                my_bkpt
-                0x000000000010027c                exit
-                0x0000000000100284                read
-                0x0000000000100290                write
-                0x000000000010029c                close
-                0x00000000001002a8                getpid
-                0x00000000001002b4                brk
-                0x00000000001002c0                munmap
-                0x00000000001002cc                Pprotect
-                0x00000000001002cc                mprotect
-                0x00000000001002e4                mmap_privanon
-                0x00000000001002f4                mmap
-                0x000000000010030c                unlink
-                0x0000000000100320                readlink
-                0x0000000000100328                open
-                0x0000000000100344                __clear_cache
- .text          0x0000000000100358      0x7bc tmp/arm64-linux.elf-main.o
-                0x00000000001009ac                upx_main
+ .text          0x00000000001000bc      0x2ac tmp/arm64-linux.elf-fold.o
+                0x00000000001000c4                get_page_mask
+                0x00000000001000d4                mmap_privanon
+                0x00000000001000e4                mmap
+                0x0000000000100100                Pprotect
+                0x0000000000100100                mprotect
+                0x00000000001002c4                my_bkpt
+                0x00000000001002cc                exit
+                0x00000000001002d4                read
+                0x00000000001002e0                write
+                0x00000000001002ec                close
+                0x00000000001002f8                getpid
+                0x0000000000100304                brk
+                0x0000000000100310                munmap
+                0x000000000010031c                unlink
+                0x0000000000100330                readlink
+                0x0000000000100338                open
+                0x0000000000100354                __clear_cache
+ .text          0x0000000000100368      0x7bc tmp/arm64-linux.elf-main.o
+                0x00000000001009bc                upx_main
  *(.data)
- .data          0x0000000000100b14        0x0 tmp/arm64-linux.elf-fold.o
- .data          0x0000000000100b14        0x0 tmp/arm64-linux.elf-main.o
+ .data          0x0000000000100b24        0x0 tmp/arm64-linux.elf-fold.o
+ .data          0x0000000000100b24        0x0 tmp/arm64-linux.elf-main.o
 
-.iplt           0x0000000000100b14        0x0
- .iplt          0x0000000000100b14        0x0 tmp/arm64-linux.elf-fold.o
+.iplt           0x0000000000100b24        0x0
+ .iplt          0x0000000000100b24        0x0 tmp/arm64-linux.elf-fold.o
 
-.rela.dyn       0x0000000000100b18        0x0
- .rela.iplt     0x0000000000100b18        0x0 tmp/arm64-linux.elf-fold.o
+.rela.dyn       0x0000000000100b28        0x0
+ .rela.iplt     0x0000000000100b28        0x0 tmp/arm64-linux.elf-fold.o
 
 .data
 LOAD tmp/arm64-linux.elf-fold.o
 LOAD tmp/arm64-linux.elf-main.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
-.igot.plt       0x0000000000100b18        0x0
- .igot.plt      0x0000000000100b18        0x0 tmp/arm64-linux.elf-fold.o
+.igot.plt       0x0000000000100b28        0x0
+ .igot.plt      0x0000000000100b28        0x0 tmp/arm64-linux.elf-fold.o
 
-.bss            0x0000000000100b14        0x0
- .bss           0x0000000000100b14        0x0 tmp/arm64-linux.elf-fold.o
- .bss           0x0000000000100b14        0x0 tmp/arm64-linux.elf-main.o
+.bss            0x0000000000100b24        0x0
+ .bss           0x0000000000100b24        0x0 tmp/arm64-linux.elf-fold.o
+ .bss           0x0000000000100b24        0x0 tmp/arm64-linux.elf-main.o

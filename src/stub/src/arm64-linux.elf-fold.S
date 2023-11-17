@@ -51,6 +51,7 @@ sz_auxv= 2*NBPW
 
 MAP_PRIVATE=   0x02
 MAP_FIXED=     0x10
+MAP_ANONYMOUS= 0x20
 
 PROT_READ=     0x1
 
@@ -79,14 +80,17 @@ PATH_MAX= 4096
 #define OVERHEAD 2048
 #include "MAX_ELF_HDR.S"
 
-get_page_mask:
-        mov x0,#~0  // all 1's; -1
-        add x1,x0,#0  // constant is modified to (1+ count)
-        lsl x0,x0,x1  // generate the mask
+PAGE_MASK: .quad ~0<<12  // default
+get_page_mask: .globl get_page_mask
+        ldr x0,PAGE_MASK
         ret
 
-fold_begin:
+bits_privanon:  // known offset (NBPW + 2*4)
+        .int MAP_PRIVATE | MAP_ANONYMOUS  // Linux default; else QNX
+
+fold_begin:  // known offset (NBPW + 3*4)
 ////    brk #0  // DEBUG
+        b L10
 
 // In:  sp/ PMASK,fd,ADRU,LENU, argc,argv,...
 //lr   .req x30
@@ -107,6 +111,31 @@ wfd    .req w21
   xfd    .req x21
 xPMASK .req x20
 
+mmap_privanon: .globl mmap_privanon
+        ldr w6,bits_privanon  // r12 === ip
+        mov x5,#0  // offset= 0
+        mov x4,#-1  // fd= -1
+        orr w3,w3,w6  // flags |= MAP_{PRIVATE|ANON}  [QNX vs Linux]
+    // FALL THROUGH to mmap
+
+        .globl mmap
+mmap:
+        ldr x8,PAGE_MASK
+        bic x8,x0,x8
+        sub x0,x0,x8
+        add x1,x1,x8
+        do_sys __NR_mmap; ret
+
+// Sometimes Linux enforces page-aligned address
+Pprotect: .globl Pprotect
+mprotect: .globl mprotect
+        ldr x8,PAGE_MASK
+        bic x8,x0,x8
+        sub x0,x0,x8
+        add x1,x1,x8
+        do_sys __NR_mprotect; ret
+
+L10:
         POP4(xPMASK,xfd, xADRU,xLENU)
 
         ldr x7,[sp,#0]  // argc
@@ -445,30 +474,6 @@ brk:
         .globl munmap
 munmap:
         do_sys __NR_munmap; ret
-
-// Sometimes Linux enforces page-aligned address
-Pprotect: .globl Pprotect
-mprotect: .globl mprotect
-        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_SIZE
-        sub x0,x0,x8
-        add x1,x1,x8
-        do_sys __NR_mprotect; ret
-
-bits_privanon= -4+ fold_begin  // entry stores: MAP_{PRIVATE|ANON}  QNX vs linux
-
-mmap_privanon: .globl mmap_privanon
-        ldr w6,bits_privanon  // r12 === ip
-        mov x5,#0  // offset= 0
-        mov x4,#-1  // fd= -1
-        orr w3,w3,w6  // flags |= MAP_{PRIVATE|ANON}  [QNX vs Linux]
-    // FALL THROUGH to mmap
-
-        .globl mmap
-mmap:
-        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_SIZE
-        sub x0,x0,x8
-        add x1,x1,x8
-        do_sys __NR_mmap; ret
 
         .globl unlink
 unlink:

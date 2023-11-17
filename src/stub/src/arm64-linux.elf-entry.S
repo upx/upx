@@ -114,6 +114,7 @@ xauxv  .req x22
 wszuf  .req w21
   xszuf  .req x21
 xFOLD  .req x20
+wPrivAnon .req w19
 
 // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055b/IHI0055B_aapcs64.pdf
 // x18 is CLOBBERED: "The platform register"
@@ -126,12 +127,13 @@ xFOLD  .req x20
   section ELFMAINX
 sz_pack2= .-4  // placed there by ::pack3()
 mflg:
-        .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
+        .int MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
 #if DEBUG  /*{*/
     brk #0  // DEBUG  0xd4200000
         TRACE(#0)
 #endif  /*}*/
+        ldr wPrivAnon,mflg
         call main
 
 f_exp:
@@ -212,14 +214,9 @@ unfold:
         callr xfexp  // decompress it
         POP1(x8)  // discard lzma EOF
 
-// Generate code to compute PAGE_MASK
-        ldr x0,[xADRM,#1*4]  // 2nd instr
-        rbit x1,xPMASK
-        clz x1,x1  // # trailing 0's in xPMASK
-        add x1,x1,#1
-        lsl x1,x1,#2*5  // past two register numbers
-        orr x0,x0,x1
-        str x0,[xADRM,#1*4]  // modify 2nd instr: "add x1,x0,#1+ count"
+// propagate PAGE_MASK and wPrivAnon
+        str xPMASK,[xADRM]
+        str wPrivAnon,[xADRM,#NBPW + 2*4]  // bits_privanon in unfolded code
 
 // PROT_EXEC
         mov w2,#PROT_EXEC|PROT_READ
@@ -232,7 +229,7 @@ unfold:
         ldr w0,[xFOLD, #LOBINFO - LxFOLD]  // O_BINFO
         ldr wLENC,[xfexp,#sz_pack2 - f_exp]
         add xADRC,xelfa,x0  // &b_info of compressed input data
-        add x0,xADRM,#4*4  // jmp over get_page_mask()
+        add x0,xADRM,#NBPW + 3*4  // jmp over get_page_mask() and bits_privanon
         jr x0
 
     .unreq src
@@ -350,7 +347,7 @@ main:
 
 // set xPMASK by finding actual page size in Elf64_auxv
 1:
-        ldp x1,x2,[x0],#8
+        ldp x1,x2,[x0],#sz_auxv
         cmp w1,#AT_PAGESZ; beq 2f
         cbnz w1,1b  // AT_NULL
         mov x2,#PAGE_SIZE  // default
