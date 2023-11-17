@@ -68,14 +68,14 @@ jobs:
         run: |
           export CC="i686-w64-mingw32-clang -static" CXX="i686-w64-mingw32-clang++ -static"
           CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
-          export CMAKE_SYSTEM_NAME=Windows # CMAKE_CROSSCOMPILING_EMULATOR=wine
+          export CMAKE_SYSTEM_NAME=Windows CMAKE_CROSSCOMPILING_EMULATOR=wine
           make UPX_XTARGET=i686-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Build clang x86_64'
         if: success() || failure() # run this step even if the previous step failed
         run: |
           export CC="x86_64-w64-mingw32-clang -static" CXX="x86_64-w64-mingw32-clang++ -static"
           CC="$CC -D_WIN32_WINNT=0x0400"; CXX="$CXX -D_WIN32_WINNT=0x0400"
-          export CMAKE_SYSTEM_NAME=Windows # CMAKE_CROSSCOMPILING_EMULATOR=wine64
+          export CMAKE_SYSTEM_NAME=Windows CMAKE_CROSSCOMPILING_EMULATOR=wine64
           make UPX_XTARGET=x86_64-w64-mingw32-clang xtarget/debug xtarget/release
       - name: 'Make artifact'
         run: |

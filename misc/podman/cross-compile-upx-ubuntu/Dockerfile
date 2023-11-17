@@ -2,7 +2,7 @@
 #   so you have to create that image first
 # WARNING: we install many packages, so the resulting image needs A LOT of disk space!
 FROM localhost/upx-stubtools-20221212-v6
-ENV UPX_CONTAINER_IMAGE_NAME=upx-cross-compile-ubuntu2204-20230721-v1
+ENV UPX_CONTAINER_IMAGE_NAME=upx-cross-compile-ubuntu2204-20230721-v2
 ARG DEBIAN_FRONTEND=noninteractive
 
 USER root
@@ -34,6 +34,8 @@ RUN apt-get update && apt-get upgrade -y \
         # Windows cross compilers
         g++-mingw-w64-i686 \
         g++-mingw-w64-x86-64 \
+    # make sure that we use posix-threads (pthreads) and NOT win32-threads
+    && for f in i686-w64-mingw32-g++ i686-w64-mingw32-gcc x86_64-w64-mingw32-g++ x86_64-w64-mingw32-gcc; do update-alternatives --set $f /usr/bin/$f-posix; done \
     && true
 RUN apt-get install -y \
         # clang-14 and tools

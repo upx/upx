@@ -20,8 +20,8 @@ endif
 # NOTE that top-level Makefile .DEFAULT_GOAL is build/release
 .DEFAULT_GOAL = build/debug
 
-build/debug:   $(top_srcdir)/build/debug/upx
-build/release: $(top_srcdir)/build/release/upx
+build/debug:   $(top_srcdir)/build/debug
+build/release: $(top_srcdir)/build/release
 
 .NOTPARALLEL: # because the actual builds use "cmake --parallel"
 .PHONY: PHONY
@@ -33,14 +33,15 @@ debug:   build/debug
 release: build/release
 all build/all: build/debug build/release
 
-$(top_srcdir)/build/debug/upx: PHONY
+$(top_srcdir)/build/debug: PHONY
 	$(MAKE) -C $(top_srcdir) build/debug
-$(top_srcdir)/build/release/upx: PHONY
+$(top_srcdir)/build/release: PHONY
 	$(MAKE) -C $(top_srcdir) build/release
 
 # convenience
+CTEST = ctest
 test: $(top_srcdir)/$(.DEFAULT_GOAL)
-	cd $(top_srcdir)/$(.DEFAULT_GOAL) && ctest
+	cd $(top_srcdir)/$(.DEFAULT_GOAL) && $(CTEST)
 
 #
 # "make run-testsuite"
@@ -69,10 +70,10 @@ run-testsuite: run-testsuite-release
 run-testsuite-%: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
 run-testsuite-%: export upx_testsuite_BUILDDIR := ./tmp-upx-testsuite
 run-testsuite-debug: export upx_exe := $(top_srcdir)/build/debug/upx
-run-testsuite-debug: PHONY $(top_srcdir)/build/debug/upx
+run-testsuite-debug: PHONY $(top_srcdir)/build/debug
 	time -p bash $(top_srcdir)/misc/testsuite/upx_testsuite_1.sh
 run-testsuite-release: export upx_exe := $(top_srcdir)/build/release/upx
-run-testsuite-release: PHONY $(top_srcdir)/build/release/upx
+run-testsuite-release: PHONY $(top_srcdir)/build/release
 	time -p bash $(top_srcdir)/misc/testsuite/upx_testsuite_1.sh
 endif
 endif

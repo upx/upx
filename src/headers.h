@@ -57,9 +57,9 @@ static_assert(sizeof(void *) == 8);
 #if !defined(_FILE_OFFSET_BITS)
 #define _FILE_OFFSET_BITS 64
 #endif
-#if defined(_WIN32) && defined(__MINGW32__) && defined(__GNUC__)
-#if !defined(_USE_MINGW_ANSI_STDIO)
-#define _USE_MINGW_ANSI_STDIO 1
+#if defined(_WIN32) && defined(__MINGW32__) && (defined(__clang__) || defined(__GNUC__))
+#if !defined(__USE_MINGW_ANSI_STDIO)
+#define __USE_MINGW_ANSI_STDIO 1
 #endif
 #endif
 #if defined(_WIN32)

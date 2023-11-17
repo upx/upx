@@ -6,6 +6,10 @@
 ifeq ($(UPX_MAKEFILE_EXTRA_MK_INCLUDED),)
 UPX_MAKEFILE_EXTRA_MK_INCLUDED := 1
 
+override check_defined   = $(foreach 1,$1,$(if $(filter undefined,$(origin $1)),$(error ERROR: variable '$1' is not defined),))
+override check_undefined = $(foreach 1,$1,$(if $(filter undefined,$(origin $1)),,$(error ERROR: variable '$1' is already defined)))
+$(call check_undefined,run_config_and_build)
+
 #***********************************************************************
 # extra builds: some pre-defined build configurations
 #***********************************************************************
@@ -223,7 +227,7 @@ xtarget/all:     xtarget/debug xtarget/release
 xtarget/debug:   build/xtarget/$(UPX_XTARGET)/debug
 xtarget/release: build/xtarget/$(UPX_XTARGET)/release
 # set new default
-.DEFAULT_GOAL = build/xtarget/$(UPX_XTARGET)/release
+.DEFAULT_GOAL  = build/xtarget/$(UPX_XTARGET)/release
 
 endif
 endif
@@ -265,7 +269,7 @@ endif # bug work-around
 
 SUBMODULES = doctest lzma-sdk ucl valgrind zlib
 
-dummy := $(foreach m,$(SUBMODULES),$(if $(wildcard vendor/$m/[CL]*),$m,\
-    $(error ERROR: missing git submodule '$m'; run 'git submodule update --init')))
+$(foreach 1,$(SUBMODULES),$(if $(wildcard vendor/$1/[CL]*),,\
+    $(error ERROR: missing git submodule '$1'; run 'git submodule update --init')))
 
 endif # UPX_MAKEFILE_EXTRA_MK_INCLUDED

@@ -296,8 +296,8 @@ struct FixDeleter final { // helper so we don't leak memory on exceptions
 } // namespace
 
 void PeFile::Reloc::RelocationBlock::reset() noexcept {
-    rel = nullptr;
-    rel1 = nullptr;
+    rel = nullptr;  // SPAN_0
+    rel1 = nullptr; // SPAN_0
     count = 0;
 }
 
@@ -335,13 +335,13 @@ void PeFile::Reloc::initSpans() {
     rb.reset();
 }
 
-// check values for better error messages (instead of getting a cryptic SPAN failure)
+// check values so that we have better error messages (instead of getting a cryptic SPAN failure)
 bool PeFile::Reloc::readFromRelocationBlock(byte *next_rb) { // set rb
     assert(!start_did_alloc);
     const unsigned off = ptr_udiff_bytes(next_rb, start);
     assert((off & 1) == 0);
     rb.reset();
-    if (off >= start_size_in_bytes) // use ">=" instead of strict "=="
+    if (off >= start_size_in_bytes) // permissive: use ">=" instead of strict "=="
         return false;               // EOF
     if (start_size_in_bytes - off < 8)
         throwCantPack("relocs overflow");
@@ -418,7 +418,7 @@ void PeFile::Reloc::finish(byte *(&result_ptr), unsigned &result_size) {
     for (unsigned ic = 0; ic < counts[0]; ic++) {
         const auto pos_ptr = start_buf + (RELOC_INPLACE_OFFSET + 4 * ic);
         const unsigned pos = get_le32(pos_ptr);
-        if (ic > 0 && get_le32(pos_ptr - 4) == pos) // XXX: should we check for duplicates?
+        if (ic > 0 && get_le32(pos_ptr - 4) == pos)
             if (!opt->force)
                 throwCantPack("duplicate relocs (try --force)");
         if (ic == 0 || (pos ^ prev) >= 0x10000) {

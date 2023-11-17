@@ -3,7 +3,7 @@ Packages:
 Desired=Unknown/Install/Remove/Purge/Hold
 ii  7zip                        21.07+dfsg-4                            amd64        7-Zip file archiver with a high compression ratio
 ii  adduser                     3.118ubuntu5                            all          add and remove users and groups
-ii  apt                         2.4.10                                  amd64        commandline package manager
+ii  apt                         2.4.11                                  amd64        commandline package manager
 ii  aria2                       1.36.0-1                                amd64        High speed download utility
 ii  base-files                  12ubuntu4.4                             amd64        Debian base system miscellaneous files
 ii  base-passwd                 3.5.52build1                            amd64        Debian base system master password and group files
@@ -78,7 +78,7 @@ ii  lib32stdc++-11-dev          11.4.0-1ubuntu1~22.04                   amd64   
 ii  lib32stdc++6                12.3.0-1ubuntu1~22.04                   amd64        GNU Standard C++ Library v3 (32 bit Version)
 ii  lib32ubsan1                 12.3.0-1ubuntu1~22.04                   amd64        UBSan -- undefined behaviour sanitizer (32bit)
 ii  libacl1:amd64               2.3.1-1                                 amd64        access control list - shared library
-ii  libapt-pkg6.0:amd64         2.4.10                                  amd64        package management runtime library
+ii  libapt-pkg6.0:amd64         2.4.11                                  amd64        package management runtime library
 ii  libarchive13:amd64          3.6.0-1ubuntu1                          amd64        Multi-format archive and compression library (shared library)
 ii  libaria2-0:amd64            1.36.0-1                                amd64        C++ library interface to aria2
 ii  libasan6:amd64              11.4.0-1ubuntu1~22.04                   amd64        AddressSanitizer -- a fast memory error detector
@@ -186,7 +186,7 @@ ii  libpcre2-8-0:amd64          10.39-3ubuntu0.1                        amd64   
 ii  libpcre3:amd64              2:8.39-13ubuntu0.22.04.1                amd64        Old Perl 5 Compatible Regular Expression Library - runtime files
 ii  libperl5.34:amd64           5.34.0-3ubuntu1.2                       amd64        shared Perl library
 ii  libpopt0:amd64              1.18-3build1                            amd64        lib for parsing cmdline parameters
-ii  libprocps8:amd64            2:3.3.17-6ubuntu2                       amd64        library for accessing process information from /proc
+ii  libprocps8:amd64            2:3.3.17-6ubuntu2.1                     amd64        library for accessing process information from /proc
 ii  libpsl5:amd64               0.21.0-1.2build2                        amd64        Library for Public Suffix List (shared libraries)
 ii  libpython2.7-minimal:amd64  2.7.18-13ubuntu1.1                      amd64        Minimal subset of the Python language (version 2.7)
 ii  libpython3-stdlib:amd64     3.10.6-1~22.04                          amd64        interactive high-level object-oriented language (default python3 version)
@@ -278,12 +278,13 @@ ii  parallel                    20210822+ds-2                           all     
 ii  passwd                      1:4.8.1-2ubuntu2.1                      amd64        change and administer password and group data
 ii  patch                       2.7.6-7build2                           amd64        Apply a diff file to an original
 ii  patchelf                    0.14.3-1                                amd64        modify properties of ELF executables
+ii  patchutils                  0.4.2-1build2                           amd64        Utilities to work with patches
 ii  pax-utils                   1.2.9-1                                 amd64        Security-focused ELF files checking tool
 ii  paxctl                      0.9-1build1                             amd64        new PaX control program for using the PT_PAX_FLAGS marking
 ii  perl                        5.34.0-3ubuntu1.2                       amd64        Larry Wall's Practical Extraction and Report Language
 ii  perl-base                   5.34.0-3ubuntu1.2                       amd64        minimal Perl system
 ii  perl-modules-5.34           5.34.0-3ubuntu1.2                       all          Core Perl modules
-ii  procps                      2:3.3.17-6ubuntu2                       amd64        /proc file system utilities
+ii  procps                      2:3.3.17-6ubuntu2.1                     amd64        /proc file system utilities
 ii  python2-minimal             2.7.18-3                                amd64        minimal subset of the Python2 language
 ii  python2.7-minimal           2.7.18-13ubuntu1.1                      amd64        Minimal subset of the Python language (version 2.7)
 ii  python3                     3.10.6-1~22.04                          amd64        interactive high-level object-oriented language (default python3 version)
@@ -330,7 +331,7 @@ ii  zstd                        1.4.8+dfsg-3build1                      amd64   
 ||/ Name                        Version                                 Architecture Description
 
 Packages sorted by Installed-Size:
-   754091 ===== TOTAL (324 packages)
+   754312 ===== TOTAL (325 packages)
     52747 gcc-11                                   amd64
     34444 libicu70                                 amd64
     32782 vim-runtime                              all
@@ -372,8 +373,8 @@ Packages sorted by Installed-Size:
      5768 libpython3.10                            amd64
      5103 libpython3.10-minimal                    amd64
      4249 ncurses-term                             all
-     4156 apt                                      amd64
      4147 ripgrep                                  amd64
+     4141 apt                                      amd64
      4082 libglib2.0-0                             amd64
      3930 vim                                      amd64
      3643 python2.7-minimal                        amd64
@@ -383,7 +384,7 @@ Packages sorted by Installed-Size:
      3405 libmpfr6                                 amd64
      3399 util-linux                               amd64
      3347 libaria2-0                               amd64
-     3181 libapt-pkg6.0                            amd64
+     3198 libapt-pkg6.0                            amd64
      3013 libboost-regex1.74.0                     amd64
      2961 liblsan0                                 amd64
      2943 parallel                                 all
@@ -542,6 +543,7 @@ Packages sorted by Installed-Size:
       225 libcrypt1                                amd64
       221 bfs                                      amd64
       220 libidn2-0                                amd64
+      219 patchutils                               amd64
       219 libtirpc3                                amd64
       219 librhash0                                amd64
       214 dash                                     amd64

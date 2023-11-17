@@ -7,7 +7,7 @@ ii  adduser                                   3.118ubuntu5                      
 ii  adwaita-icon-theme                        41.0-1ubuntu1                           all          default icon theme of GNOME (small subset)
 ii  alsa-topology-conf                        1.2.5.1-2                               all          ALSA topology configuration files
 ii  alsa-ucm-conf                             1.2.6.3-1ubuntu1.8                      all          ALSA Use Case Manager configuration files
-ii  apt                                       2.4.10                                  amd64        commandline package manager
+ii  apt                                       2.4.11                                  amd64        commandline package manager
 ii  aria2                                     1.36.0-1                                amd64        High speed download utility
 ii  at-spi2-core                              2.44.0-3                                amd64        Assistive Technology Service Provider Interface (dbus core)
 ii  base-files                                12ubuntu4.4                             amd64        Debian base system miscellaneous files
@@ -297,7 +297,7 @@ ii  libacl1:amd64                             2.3.1-1                           
 ii  libaio1:amd64                             0.3.112-13build1                        amd64        Linux kernel AIO access library - shared library
 ii  libapparmor1:amd64                        3.0.4-2ubuntu2.2                        amd64        changehat AppArmor library
 ii  libapparmor1:i386                         3.0.4-2ubuntu2.2                        i386         changehat AppArmor library
-ii  libapt-pkg6.0:amd64                       2.4.10                                  amd64        package management runtime library
+ii  libapt-pkg6.0:amd64                       2.4.11                                  amd64        package management runtime library
 ii  libarchive13:amd64                        3.6.0-1ubuntu1                          amd64        Multi-format archive and compression library (shared library)
 ii  libargon2-1:amd64                         0~20171227-0.3                          amd64        memory-hard hashing function - runtime library
 ii  libaria2-0:amd64                          1.36.0-1                                amd64        C++ library interface to aria2
@@ -792,7 +792,7 @@ ii  libpmemobj1:amd64                         1.11.1-3build1                    
 ii  libpng16-16:amd64                         1.6.37-3build5                          amd64        PNG library - runtime (version 1.6)
 ii  libpng16-16:i386                          1.6.37-3build5                          i386         PNG library - runtime (version 1.6)
 ii  libpopt0:amd64                            1.18-3build1                            amd64        lib for parsing cmdline parameters
-ii  libprocps8:amd64                          2:3.3.17-6ubuntu2                       amd64        library for accessing process information from /proc
+ii  libprocps8:amd64                          2:3.3.17-6ubuntu2.1                     amd64        library for accessing process information from /proc
 ii  libproxy1v5:amd64                         0.4.17-2                                amd64        automatic proxy configuration management library (shared)
 ii  libproxy1v5:i386                          0.4.17-2                                i386         automatic proxy configuration management library (shared)
 ii  libpsl5:amd64                             0.21.0-1.2build2                        amd64        Library for Public Suffix List (shared libraries)
@@ -1138,12 +1138,13 @@ ii  parallel                                  20210822+ds-2                     
 ii  passwd                                    1:4.8.1-2ubuntu2.1                      amd64        change and administer password and group data
 ii  patch                                     2.7.6-7build2                           amd64        Apply a diff file to an original
 ii  patchelf                                  0.14.3-1                                amd64        modify properties of ELF executables
+ii  patchutils                                0.4.2-1build2                           amd64        Utilities to work with patches
 ii  pax-utils                                 1.2.9-1                                 amd64        Security-focused ELF files checking tool
 ii  paxctl                                    0.9-1build1                             amd64        new PaX control program for using the PT_PAX_FLAGS marking
 ii  perl                                      5.34.0-3ubuntu1.2                       amd64        Larry Wall's Practical Extraction and Report Language
 ii  perl-base                                 5.34.0-3ubuntu1.2                       amd64        minimal Perl system
 ii  perl-modules-5.34                         5.34.0-3ubuntu1.2                       all          Core Perl modules
-ii  procps                                    2:3.3.17-6ubuntu2                       amd64        /proc file system utilities
+ii  procps                                    2:3.3.17-6ubuntu2.1                     amd64        /proc file system utilities
 ii  publicsuffix                              20211207.1025-1                         all          accurate, machine-readable list of domain name suffixes
 ii  python2-minimal                           2.7.18-3                                amd64        minimal subset of the Python2 language
 ii  python2.7-minimal                         2.7.18-13ubuntu1.1                      amd64        Minimal subset of the Python language (version 2.7)
@@ -1230,7 +1231,7 @@ ii  zstd                                      1.4.8+dfsg-3build1                
 ||/ Name                                      Version                                 Architecture Description
 
 Packages sorted by Installed-Size:
-  8373937 ===== TOTAL (1224 packages)
+  8374158 ===== TOTAL (1225 packages)
    545062 libwine                                  amd64
    474522 libwine                                  i386
    270995 llvm-14-dev                              amd64
@@ -1485,8 +1486,8 @@ Packages sorted by Installed-Size:
      4249 ncurses-term                             all
      4236 xkb-data                                 all
      4204 llvm-14-linker-tools                     amd64
-     4156 apt                                      amd64
      4147 ripgrep                                  amd64
+     4141 apt                                      amd64
      4082 libglib2.0-0                             amd64
      4024 python3-pygments                         all
      3930 vim                                      amd64
@@ -1503,7 +1504,7 @@ Packages sorted by Installed-Size:
      3333 libxml2-dev                              amd64
      3261 liblsan0-ppc64-cross                     all
      3247 libstdc++6-ppc64-cross                   all
-     3181 libapt-pkg6.0                            amd64
+     3198 libapt-pkg6.0                            amd64
      3147 libvpx7                                  i386
      3139 libhwasan0-arm64-cross                   all
      3135 liblsan0-ppc64el-cross                   all
@@ -1973,6 +1974,7 @@ Packages sorted by Installed-Size:
       221 libxcb1                                  i386
       221 bfs                                      amd64
       220 libidn2-0                                amd64
+      219 patchutils                               amd64
       219 libtirpc3                                amd64
       219 librhash0                                amd64
       217 libasound2-data                          all

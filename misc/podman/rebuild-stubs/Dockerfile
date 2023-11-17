@@ -15,7 +15,7 @@ RUN dpkg --add-architecture i386 \
         # the full UPX binary inside the container via CMake:
         7zip bfs busybox bzip2 cabextract ccache chrpath cmake cpio curl elfutils fd-find file fzf \
         g++ gawk gdb gojq ht htop hyperfine jq libzstd-dev lsb-release lz4 lzip lzop \
-        mksh moreutils ninja-build p7zip parallel patch patchelf pax-utils paxctl \
+        mksh moreutils ninja-build p7zip parallel patch patchelf patchutils pax-utils paxctl \
         python3 python3-pyasn1 python3-pycryptodome python3-zstd \
         re2c ripgrep rsync screen universal-ctags unzip vim yash zip zlib1g-dev zsh zstd \
         # extra packages for compiling with "gcc -m32" and and "gcc -mx32":

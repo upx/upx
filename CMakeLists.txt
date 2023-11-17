@@ -81,6 +81,15 @@ function(print_var)
         endif()
     endforeach()
 endfunction()
+function(print_have_symbol)
+    foreach(symbol ${ARGV})
+        set(var_name "HAVE_symbol_${symbol}")
+        check_symbol_exists(${symbol} "stddef.h" ${var_name})
+        if(${var_name})
+           message(STATUS "HAVE ${symbol}")
+        endif()
+    endforeach()
+endfunction()
 
 # useful for CI jobs: allow settings via environment and cache result
 function(upx_cache_bool_vars)
@@ -403,6 +412,20 @@ function(upx_add_glob_files)
     set(${var_name} "${result}" PARENT_SCOPE) # return value
 endfunction()
 
+# examine MinGW/Cygwin compiler configuration
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+if(WIN32 OR MINGW OR CYGWIN)
+if(CMAKE_C_COMPILER_ID MATCHES "(Clang|GNU)")
+    # runtime library: msvcrt vs ucrt vs cygwin
+    print_have_symbol(__CRTDLL__ __CYGWIN__ __CYGWIN32__ __MINGW32__ __MINGW64_VERSION_MAJOR __MSVCRT__ _UCRT)
+    # exception handing: SJLJ (setjmp/longjmp) vs DWARF vs SEH
+    print_have_symbol(__GCC_HAVE_DWARF2_CFI_ASM __SEH__ __USING_SJLJ_EXCEPTIONS__)
+    # threads: win32 vs posix/pthread/winpthreads vs mcfgthread
+    print_have_symbol(_REENTRANT __USING_MCFGTHREAD__)
+endif()
+endif()
+endif()
+
 upx_cmake_include_hook(3_common_compilation_flags_end)
 
 #***********************************************************************
@@ -419,7 +442,7 @@ upx_cmake_include_hook(4_targets_begin)
 if(NOT UPX_CONFIG_DISABLE_THREADS)
     find_package(Threads)
 endif()
-# make sure that threads are indeed fully supported
+# make sure that threads are indeed fully supported in C++
 if(Threads_FOUND)
     foreach(f std_lock_guard.cpp)
         set(CMAKE_TRY_COMPILE_TARGET_TYPE "EXECUTABLE")
@@ -427,6 +450,7 @@ if(Threads_FOUND)
                     "${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/try_compile/${f}"
                     OUTPUT_VARIABLE output)
         if(NOT result)
+            # failed; under MinGW be sure the use the posix-threads and NOT the win32-threads version
             #message(STATUS "${output}") # debug output from try_compile
             set(Threads_FOUND OFF)
             break()

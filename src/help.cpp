@@ -518,8 +518,8 @@ void show_sysinfo(const char *options_var) {
 #if defined(__MSVCRT_VERSION__)
         cf_print("__MSVCRT_VERSION__", "0x%04llx", __MSVCRT_VERSION__ + 0);
 #endif
-#if defined(_USE_MINGW_ANSI_STDIO)
-        cf_print("_USE_MINGW_ANSI_STDIO", "%lld", _USE_MINGW_ANSI_STDIO + 0, 3);
+#if defined(__MINGW64_VERSION_MAJOR)
+        cf_print("__MINGW64_VERSION_MAJOR", "%lld", __MINGW64_VERSION_MAJOR + 0);
 #endif
 #if defined(__USE_MINGW_ANSI_STDIO)
         cf_print("__USE_MINGW_ANSI_STDIO", "%lld", __USE_MINGW_ANSI_STDIO + 0, 3);
