@@ -30,7 +30,7 @@
  */
 
 #ifndef DEBUG  /*{*/
-#define DEBUG 0
+#define DEBUG 1
 #endif  /*}*/
 
 #include "include/linux.h"
@@ -269,6 +269,12 @@ err_exit(int a)
 {
     DPRINTF("err_exit %%x\\n", a);
     (void)a;  // debugging convenience
+#if DEBUG && defined(__mips__)  //{
+    __asm__("break");
+#endif  //}
+#if defined(__arm__)  //{
+    my_bkpt(a);
+#endif  //}
 #if defined(__powerpc__)  //{
     my_bkpt(a);
 #endif  //}
@@ -324,11 +330,13 @@ static void
 unpackExtent(
     Extent *const xi,  // input
     Extent *const xo   // output
+    , int flag
 )
 {
     while (xo->size) {
-        DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)\\n",
-            xi, xi->size, xi->buf, xo, xo->size, xo->buf);
+        DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  flag=%%x\\n",
+            xi, xi->size, xi->buf, xo, xo->size, xo->buf, flag);
+        my_bkpt((int)xi, xo);
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
         //   compressible and is stored in its uncompressed form.
@@ -416,119 +424,120 @@ ERR_LAB
 #endif  //}
 
 
-#if defined(__i386__)  /*{*/
+extern long upx_mmap_and_fd(  // x86_64 Android emulator of i386 is not faithful
+     void *ptr,
+     unsigned len,  // also pre-allocate space in file
+     char *pathname  // 0 ==> call get_upxfn_path
+);
+#if defined(__i386__)  //
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it; remembered in AT_NULL.d_val
-static void *
-make_hatch_x86(Elf32_Phdr const *const phdr, ptrdiff_t reloc)
+static char *
+make_hatch_i386(
+    Elf32_Phdr const *const phdr,
+    char *next_unc,
+    unsigned frag_mask
+)
 {
-    unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,0);
+    char *hatch = 0;
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        frag_mask &= -(long)next_unc;  // bytes left on page
         unsigned /*const*/ escape = 0xc36180cd;  // "int $0x80; popa; ret"
-        // Try page fragmentation just beyond .text .
-        hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc);
-        if (phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-        &&  4<=(~PAGE_MASK & -(int)hatch) ) // space left on page
-        { // Omitting 'const' saves repeated literal in gcc.
-            // Don't store into read-only page if value is already there.
-            if (* (volatile unsigned*) hatch != escape) {
-                * hatch  = escape;
-            }
+        if (4 <= frag_mask) {
+            hatch = next_unc;
+            *(long *)&hatch[0] = escape;
         }
-        else {
-            int mfd = memfd_create(addr_string("upx"), 0);
-            write(mfd, &escape, 4);
-            hatch = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
+        else { // Does not fit at hi end of .text, so must use a new page "permanently"
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(escape), 0);
+            unsigned mfd = -1+ (0xfff& fdmap);
+            write(mfd, &escape, sizeof(escape));
+            hatch = mmap((void *)(fdmap & ~0xffful), sizeof(escape),
+              PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
             close(mfd);
         }
-        DPRINTF(" hatch at %%p\\n", hatch);
     }
+    DPRINTF("hatch=%%p\\n", hatch);
     return hatch;
 }
 #elif defined(__arm__)  /*}{*/
 extern unsigned get_sys_munmap(void);
+#define SEEK_SET 0
 
 static void *
-make_hatch_arm(
+make_hatch_arm32(
     Elf32_Phdr const *const phdr,
-    ptrdiff_t reloc
+    char *next_unc,
+    unsigned frag_mask
 )
 {
     unsigned const sys_munmap = get_sys_munmap();
-    unsigned xprot = 0;
+    unsigned code[2] = {
+        sys_munmap,  // syscall __NR_unmap
+        0xe8bd80ff,  // ldmia sp!,{r0,r1,r2,r3,r4,r5,r6,r7,pc}
+     };
     unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,sys_munmap);
-    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        // The format of the 'if' is
-        //  if ( ( (hatch = loc1), test_loc1 )
-        //  ||   ( (hatch = loc2), test_loc2 ) ) {
-        //      action
-        //  }
-        // which uses the comma to save bytes when test_locj involves locj
-        // and the action is the same when either test succeeds.
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
 
-        if (
-        // Try page fragmentation just beyond .text .
-            ( (hatch = (void *)(~3u & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
-                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  (2*4)<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
-        // Try Elf32_Ehdr.e_ident[8..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
-                (phdr->p_offset==0) )
-        // Allocate and use a new page.
-        // Linux on ARM wants PROT_EXEC or else __clear_cache does not work?
-        ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_EXEC|PROT_WRITE|PROT_READ,
-                MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
-        ) {
-            hatch = (unsigned *)(~3ul & (3+ (unsigned long)hatch));
-            hatch[0] = sys_munmap;  // syscall __NR_unmap
-            hatch[1] = 0xe1a0f00e;  // mov pc,lr
-            __clear_cache(&hatch[0], &hatch[2]);  // ? needed before Pprotect()
-            if (xprot) {
-                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
-            }
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        frag_mask &= -(long)next_unc;  // bytes left on page
+        if (2*4 <= frag_mask) {
+            hatch = (unsigned *)(void *)(~3ul & (long)(3+ next_unc));
+            hatch[0]= code[0];
+            hatch[1]= code[1];
+            __clear_cache(&hatch[0], &hatch[2]);
         }
-        else {
-            hatch = 0;
+        else { // Does not fit at hi end of .text, so must use a new page "permanently"
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0);
+            unsigned mfd = -1+ (0xfff& fdmap);
+            write(mfd, &code, sizeof(code));
+            hatch = mmap((void *)(fdmap & ~0xffful), sizeof(code),
+                PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            close(mfd);
         }
     }
+    DPRINTF("hatch=%%p\\n", hatch);
     return hatch;
 }
 #elif defined(__mips__)  /*}{*/
 static void *
 make_hatch_mips(
     Elf32_Phdr const *const phdr,
-    ptrdiff_t reloc,
-    unsigned const frag_mask)
+    char *next_unc,
+    unsigned frag_mask)
 {
-    unsigned xprot = 0;
-    unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
-    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        if (
-        // Try page fragmentation just beyond .text .
-            ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
-                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  (3*4)<=(frag_mask & -(int)hatch) ) ) // space left on page
-        // Allocate and use a new page.
-        ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_WRITE|PROT_READ,
-                MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
-        ) {
-            hatch = (unsigned *)(~3ul & (3+ (unsigned long)hatch));
-            hatch[0]= 0x0000000c;  // syscall
+    unsigned code[3] = {
+            0x0000000c,  // syscall
 #define RS(r) ((037&(r))<<21)
 #define JR 010
-            hatch[1] = RS(30)|JR;  // jr $30  # s8
-            hatch[2] = 0x00000000;  //   nop
-            if (xprot) {
-                Pprotect(hatch, 3*sizeof(unsigned), PROT_EXEC|PROT_READ);
-            }
+            RS(30)|JR,  // jr $30  # s8
+            0x00000000  //   nop
+     };
+    unsigned *hatch = 0;
+    DPRINTF("make_hatch_mips %%p %%p %%x\\n", phdr, next_unc, frag_mask);
+
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        frag_mask &= -(long)next_unc;  // bytes left on page
+        if (3*4 <= frag_mask) {
+            hatch = (unsigned *)(void *)(~3ul & (long)(3+ next_unc));
+            hatch[0]= code[0];
+            hatch[1]= code[1];
+            hatch[2]= code[2];
+            __clear_cache(&hatch[0], &hatch[3]);
         }
-        else {
-            hatch = 0;
+        else { // Does not fit at hi end of .text, so must use a new page "permanently"
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0);
+            unsigned mfd = -1+ (0xfff& fdmap);
+            write(mfd, &code, sizeof(code));
+            hatch = mmap((void *)(fdmap & ~0xffful), sizeof(code),
+                PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            close(mfd);
         }
     }
+    DPRINTF("hatch=%%p\\n", hatch);
     return hatch;
 }
 #elif defined(__powerpc__)  /*}{*/
@@ -554,7 +563,6 @@ make_hatch_ppc32(
         ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_WRITE|PROT_READ,
                 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         ) {
-            hatch = (unsigned *)(~3ul & (3+ (unsigned long)hatch));
             hatch[0] = 0x44000002;  // sc
             hatch[1] = 0x4e800020;  // blr
             if (xprot) {
@@ -756,7 +764,7 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
                     PROT_WRITE | PROT_READ, MAP_FIXED) )
                 err_exit(6);
             DPRINTF("mlen 3 %%x\\n", mlen);
-            unpackExtent(xi, &xo);
+            unpackExtent(xi, &xo, 23);
             DPRINTF("mlen 4a mlen=%%x  frag=%%x  frag_mask=%%x  prot=%%x\\n", mlen, frag, frag_mask, prot);
         }
         else {  // PT_INTERP
@@ -778,24 +786,25 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
         }
         DPRINTF("mlen 5 %%x\\n", mlen);
         if (xi) {
+            size_t page_mask = my_page_mask();
 #if defined(__i386__)  /*{*/
-            void *const hatch = make_hatch_x86(phdr, reloc);
+            void *const hatch = make_hatch_i386(phdr, xo.buf, ~page_mask);
             if (0!=hatch) {
                 /* always update AT_NULL, especially for compressed PT_INTERP */
                 auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
             }
 #elif defined(__arm__)  /*}{*/
-            void *const hatch = make_hatch_arm(phdr, reloc);
+            void *const hatch = make_hatch_arm32(phdr, xo.buf, ~page_mask);
             if (0!=hatch) {
                 auxv_up(av, AT_NULL, (unsigned)hatch);
             }
 #elif defined(__mips__)  /*}{*/
-            void *const hatch = make_hatch_mips(phdr, reloc, frag_mask);
+            void *const hatch = make_hatch_mips(phdr, xo.buf, ~page_mask);
             if (0!=hatch) {
                 auxv_up(av, AT_NULL, (unsigned)hatch);
             }
 #elif defined(__powerpc__)  /*}{*/
-            void *const hatch = make_hatch_ppc32(phdr, reloc, frag_mask);
+            void *const hatch = make_hatch_ppc32(phdr, xo.buf, ~page_mask);
             if (0!=hatch) {
                 auxv_up(av, AT_NULL, (unsigned)hatch);
             }
@@ -933,10 +942,10 @@ void *upx_main(
 
 #if defined(__mips__)  //{
     // ehdr = Uncompress Ehdr and Phdrs
-    unpackExtent(&xj, &xo);
+    unpackExtent(&xj, &xo, 45);
 #else  //}{ !defined(__mips__)
     // Uncompress Ehdr and Phdrs.
-    unpackExtent(&xi, &xo);
+    unpackExtent(&xi, &xo, 34);
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.
     xi.buf  -= sz_first;
     xi.size  = sz_compressed;

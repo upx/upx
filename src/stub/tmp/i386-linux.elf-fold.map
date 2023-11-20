@@ -8,12 +8,12 @@ Linker script and memory map
 
                 0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000000000      0x74c
+.text           0x0000000000000000     0x10b0
  .text          0x0000000000000000      0x148 tmp/i386-linux.elf-fold.o
- .text          0x0000000000000148      0x601 tmp/i386-linux.elf-main.o
-                0x000000000000065c                upx_main
- *fill*         0x0000000000000749        0x3 00
- .text          0x000000000000074c        0x0 tmp/i386-expand.o
+ .text          0x0000000000000148      0xf66 tmp/i386-linux.elf-main.o
+                0x0000000000000e93                upx_main
+ *fill*         0x00000000000010ae        0x2 00
+ .text          0x00000000000010b0        0x0 tmp/i386-expand.o
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/i386-linux.elf-fold.o
