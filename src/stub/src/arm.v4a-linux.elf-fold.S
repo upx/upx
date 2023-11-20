@@ -69,47 +69,97 @@ PATH_MAX= 4096
 #define call bl
 #include "MAX_ELF_HDR.S"
 
-mflg_data: .int MAP_PRIVATE|MAP_ANONYMOUS  @ overwritten for QNX vs Linux
+PAGE_MASK=  . - 3*NBPW; .globl PAGE_MASK
+upxfn_path= . - 2*NBPW  // displacement from "zero"
+mflg_data = . - 1*NBPW  // QNX vs Linux: MAP_PRIVATE | MAP_ANONYMOUS
 
-SP_fd= 3*4
-/* In:
-   r4= LENX
-   r5= ADRX
-   lr= "/proc/self/exe"
-new sp/            elfaddr,fd, ADRU,LENU, f_exp,%entry, argc,argv,0,envp,0,auxv
-        (ADRX,LENX) = extent of compressed program
-        (ADRU,LENU) = params to munmap unfolded stub
-*/
+arg1  .req r0
+arg2  .req r1
+arg3  .req r2
+arg4  .req r3
+arg5  .req r4
+arg6  .req r5
+
+// In:  sp/ ADRX,LENX,ELFA,ADRU,LENU,MFD,ENTR,argc
+//   (ADRX,LENX) = extent of compressed program
+//   (ADRU,LENU) = params to munmap unfolded stub
+F_ADRX=  0*NBPW
+F_LENX=  1*NBPW
+F_ELFA=  2*NBPW
+F_ADRU=  3*NBPW
+F_LENU=  4*NBPW
+F_MFD=   5*NBPW
+F_ENTR=  6*NBPW
+F_ARGC=  7*NBPW
+
 fold_begin:  // enter here
-#if DEBUG  //{
-#define TRACE_REGS r0-r12,r14,r15
-        mov r0,sp  @ current stack pointer (extra clue)
-        stmdb sp!,{TRACE_REGS}; mov r0,#0x10; bl trace
-#endif  //}
-        ldmia sp!,{      r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
-        mov r1,sp  @ src (argv)
+    bkpt
+        b L05  // put PAGE_MASK and mflg_data within short-displacement of uses
+
+get_page_mask: .globl get_page_mask
+        ldr r0,PAGE_MASK
+        ret
+
+get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
+    adr r1,fold_begin-3*NBPW  // "zero"
+    ldr r0,[r1,#1*NBPW]  // offset(upxfn_path)
+    cmp r0,#0; beq 1f  // nullptr
+    add r0,r0,r1  // &path
+1:
+    ret
+
+// Sometimes Linux enforces page-aligned address
+Pprotect: .globl Pprotect
+mprotect: .globl mprotect
+    bkpt
+        ldr r12,PAGE_MASK
+        bic r12,arg1,r12  // lo frag
+        sub arg1,arg1,r12  // page align lo end
+        add arg2,arg2,r12
+        do_sys __NR_mprotect; ret
+
+mmap_privanon: .globl mmap_privanon
+        stmdb sp!,{r4,r5,lr}
+        ldr r4,mflg_data  @ MAP_PRIVATE|MAP_ANON for Linux; MAP_PRIVANON for QNX
+        mov arg6,#0  @ offset= 0
+        orr arg4,arg4,r4  @ combine with input (such as MAP_FIXED)
+        mvn arg5,#0  @ fd= -1
+        b mmap_do
+
+// __NR_oldmmap gets ENOSYS!  Must use __NR_mmap64 with all args in registers
+// Called from C (5th and 6th arg on stack), so must preserve r4 and r5
+mmap: .globl mmap
+        stmdb sp!,{r4,r5,lr}  // called from C: only 4 args in registers
+        ldr arg6,[sp,#4*NBPW]
+        ldr arg5,[sp,#3*NBPW]
+        mov arg6,arg6,lsr #12  @ FIXME?  convert to page offset in file
+mmap_do: // sp: saved r4,r5,lr
+    bkpt
+        ldr r12,PAGE_MASK
+        bic r12,arg1,r12  // lo frag
+        sub arg1,arg1,r12  // page align lo end
+        add arg2,arg2,r12
+        do_sys __NR_mmap2
+        ldmia sp!,{r4,r5,pc}
+
+proc_self_exe: .asciz "/proc/self/exe"; .balign 4
+
+L05:
+        ldmia sp!,{r4,r5,r6,r7,r8,r9,r10,r11}  // includes argc
+        mov r1,sp  @ src
         sub sp,sp,#PATH_MAX
         mov r0,sp  @ dst
-        stmdb sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
-F_LENX=    0*4
-F_ADRX=    1*4
-F_elfaddr= 2*4
-F_fd=      3*4
-F_ADRU=    4*4
-F_LENU=    5*4
-F_f_exp=   6*4
-  F_e_auxv=  F_f_exp
-F_entry=   7*4
+        stmdb sp!,{r4,r5,r6,r7,r8,r9,r10,r11}
 
 0: // copy argv down
-        ldr r3,[r1],#4; cmp r3,#0
-        str r3,[r0],#4; bne 0b
+        ldr r3,[r1],#NBPW; cmp r3,#0
+        str r3,[r0],#NBPW; bne 0b
      mov r4,r0  @ &new_env[0]
-        str r3,[r0],#4  @ space for new_env[0]
+        str r3,[r0],#NBPW  @ space for new_env[0]
 
 0: // copy env down
-        ldr r3,[r1],#4; cmp r3,#0
-        str r3,[r0],#4; bne 0b
+        ldr r3,[r1],#NBPW; cmp r3,#0
+        str r3,[r0],#NBPW; bne 0b
      mov r5,r1  @ &orig_auxv[0]
 
 0: // copy auxv down
@@ -118,13 +168,18 @@ F_entry=   7*4
      mov r6,r1  @ &orig_auxv[end]; also &old_strings
      mov r9,r0  @ &down_auxv[end]
 
-        mov r2,#PATH_MAX
-        mov r1,r0  @ buffer
-        mov r0,lr  @ arg1= "/proc/self/exe"
-        sub r2,r2,#1  @ room for null terminator
-        call readlink
-        cmn r0,#4096
-        movcs r1,lr  @ "/proc/self/exe"
+        adr arg1,proc_self_exe
+        mov arg2,#O_RDONLY
+        do_sys7t __NR_open  // ENOENT is OK
+        str r0,[sp,#F_MFD]
+
+        mov arg3,#PATH_MAX
+        mov arg2,r9  @ buffer
+        adr arg1,proc_self_exe
+        sub arg3,arg3,#1  @ room for null terminator
+        do_sys7t __NR_readlink  // ENOENT is OK
+        cmn r0,#1<<12
+        movcs r1,arg1  @ FIXME?  "/proc/self/exe"
         movcs r0,#14  @ strlen("/proc/self/exe")
 link_ok:
         add r2,r1,r0  @ end
@@ -143,82 +198,68 @@ link_ok:
         mov r0,r0,lsr #2
         mov r0,r0,lsl #2  @ &new_strings
         eor r3,r6,r0  @ word parity with &old_strings
-        and r3,r3,#4  @ 0 or 4
-        eor r3,r3,#4  @ we add 1 new_env[0]
+        and r3,r3,#NBPW  @ 0 or 4
+        eor r3,r3,#NBPW  @ we add 1 new_env[0]
         sub r0,r0,r3  @ align mod 8
 
 // copy up auxv,env,argv
         sub r3,r0,r6  @ &new_auxv[end] - &orig_auxv[end]
         add r3,r3,r5  @ &new_auxv[0] = delta +  &orig_auxv[0]
         mov r1,r9  @ &down_auxv[end]
-        ldr r5,[sp,#F_f_exp]  @ save f_exp
-        str r0,[sp,#F_e_auxv]  @ replace f_exp with &new_auxv[end]
+        str r0,[sp,#F_ENTR]  @ &new_auxv[end]
 0:
         ldr r2,[r1,#-4]!; cmp r1,sp
         str r2,[r0,#-4]!; bne 0b
         mov sp,r0
 
-#if DEBUG  //{
-        stmdb sp!,{TRACE_REGS}; mov r0,#0x12; bl trace
-#endif  //}
-
 /* Construct arglist for upx_main */
-        @ldr r5,[sp,#F_f_exp]
-        ldmia sp!,{r4,r10,r11}  @ LENX, ADRX, elfaddr
-F_delta= 3*4
-        sub sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ alloca
-        ldr r9,[r10,#sz_cpr]  @ xi.size  of ELF headers
-        mov r8,sp  @ xo.ptr
-        ldr r7,[r10,#sz_unc]  @ xo.size
-        adr r6,f_unfilter
+    bkpt
         //mov r3,r3  @ auxv
-        add r9,r9,#sz_b_info  @ for unpackExtent
+        ldmia sp!,{r0,r4,r5}  @ pop: ADRX, LENX, elfaddr
+F_delta= 3*NBPW
+        sub sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ alloca
+        mov r6,sp  // &ehdr.tmp
+        ldr r7,[r0,#sz_unc]  @ xo.size
+        mov r8,sp            @ xo.ptr
+        ldr r9,[r0,#sz_cpr]  @ xi.size  of ELF headers
+        mov r10,r0           @ xi.ptr  ADRX &b_info
 
-        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11}
-        ldmia sp!,{r0,r1,r2,r3}
-#if DEBUG  //{
-        stmdb sp!,{TRACE_REGS}; mov r0,#0x13; bl trace
-#endif  //}
-// r0=av; r1=sz_cpr; r2=f_decompress; r3=f_unfilter;
-// xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}, elfaddr
+        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10}
+        ldmia sp!,{arg1,arg2,arg3,arg4}
+// r0=av; r1=sz_cpr; r2=elfaddr; r3= &ehdr.temp
+// xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}
         call upx_main
-        add sp,sp,#(9-4)*4
+        add sp,sp,#(8-4)*NBPW
         add sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ un-alloca
-#if DEBUG  //{
-        stmdb sp!,{TRACE_REGS}; mov r0,#0x14; bl trace
-#endif  //}
-        str r0,[sp,#F_entry - F_delta]  @ entry address
+        str r0,[sp,#F_ENTR - F_delta]  @ entry address
 
 // Discard pages of compressed input data (includes [ADRC,+LENC) )
-        ldr r1,[r11,#p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
-        //ldrb r0,[r11,#e_type]; cmp r0,#ET_EXEC; bne 1f
-        mov r0,r11; call brk  // also sets the brk
+        ldr r1,[r5,#p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
+        //ldrb r0,[r5,#e_type]; cmp r0,#ET_EXEC; bne 1f
+        mov r0,r5; call brk  // also sets the brk
 1:
-        mov r0,r11; call munmap  // discard C_TEXT compressed data
+        mov r0,r5; call munmap  // discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that it does not disappear
-        ldr r4,[sp],#4  @ pop r4,F_fd
-        cmp r4,#0; blt no_map_pse
-        mov r5,#0  @ SEEK_SET offset
+        ldr arg5,[sp,#F_MFD]
+        cmp arg5,#0; blt no_map_pse
+        mov arg6,#0  @ SEEK_SET offset
         stmdb sp!,{r4,r5}  @ arg5,arg6 calling convention
-        mov r3,#MAP_PRIVATE
-        mov r2,#PROT_READ
-        mov r1,#PAGE_SIZE
-        mov r0,#0  @ any address
+        mov arg4,#MAP_PRIVATE
+        mov arg3,#PROT_READ
+        mov arg2,#PAGE_SIZE
+        mov arg1,#0  @ any address
         call mmap  @ no error check: cannot recover
         ldmia sp!,{r0,r1}  @ fd, offset
         call close
 no_map_pse:
-#if DEBUG  //{
-        stmdb sp!,{TRACE_REGS}; mov r0,#0x15; bl trace
-#endif  //}
         ldmia sp!,{r0,r1,r2, lr}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type], entry
         // crumb is unused: replaced by mapping /proc/self/exe into a free page
 
 #if DEBUG  /*{*/
-        ldr r3,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
+        ldr r3,[r2,#NBPW -2*NBPW]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
         ldr r4,[r3,#0]  @ 1st instr
-        ldr r5,[r3,#4]  @ 2nd instr
+        ldr r5,[r3,#NBPW]  @ 2nd instr
         stmdb sp!,{TRACE_REGS}; mov r0,#0x15; bl trace
 #endif  /*}*/
         mov r3,#0  @ clear registers: paranoia
@@ -254,12 +295,6 @@ sweep:
         mov r12,#0
 #endif  /*}*/
         mov pc,lr
-
-proc_self_exe:
-        .ascii "/proc/self/exe"  @ no terminator
-proc_self_align:
-        .asciz ""  @ terminator
-        .balign 4
 
 f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         ptr  .req r0
@@ -315,7 +350,7 @@ L600:  @ each row
 
         mov r6,#8  @ words per row
 L610:  @ each word
-        ldr r0,[r4],#4; mov r1,#' '; bl trace_hex  @ next word
+        ldr r0,[r4],#NBPW; mov r1,#' '; bl trace_hex  @ next word
         subs r6,r6,#1; bgt L610
 
         subs r5,r5,#1; bgt L600
@@ -335,14 +370,14 @@ L610:  @ each word
 
 trace_hex:  // In: r0=val, r1=punctuation before, r2=ptr; Uses: r3, ip
         strb r1,[r2],#1  @ punctuation
-        mov r3,#4*(8 -1)  @ shift count
+        mov r3,#NBPW*(8 -1)  @ shift count
         adr ip,hex
 L620:
         mov r1,r0,lsr r3
         and r1,r1,#0xf
         ldrb r1,[ip, r1]
         strb r1,[r2],#1
-        subs r3,r3,#4; bge L620
+        subs r3,r3,#NBPW; bge L620
         ret
 hex:
         .ascii "0123456789abcdef"
@@ -352,104 +387,54 @@ hex:
         .unreq cto
         .unreq fid
 
+memset: .globl memset  // (dst, val, n)
+        cmp r2,#0; beq 9f
+0:
+        strb r1,[r0],#1
+        subs r2,r2,#1
+        bne 0b
+9:
+        ret
+
+mempcpy: .globl mempcpy  // (dst, src, n)
+        cmp r2,#0; beq 9f
+0:
+        ldrb r3,[r1],#1
+        strb r3,[r0],#1
+        subs r2,r2,#1
+        bne 0b
+9:
+        ret
+
+  section SYSCALLS
 __NR_exit  =  1 + __NR_SYSCALL_BASE
 __NR_read  =  3 + __NR_SYSCALL_BASE
 __NR_write =  4 + __NR_SYSCALL_BASE
 __NR_open  =  5 + __NR_SYSCALL_BASE
 __NR_close =  6 + __NR_SYSCALL_BASE
 __NR_unlink= 10 + __NR_SYSCALL_BASE
+__NR_lseek=  19 + __NR_SYSCALL_BASE
 __NR_getpid= 20 + __NR_SYSCALL_BASE
+__NR_mkdir = 39 + __NR_SYSCALL_BASE  // 0x27
 __NR_brk   = 45 + __NR_SYSCALL_BASE
-__NR_readlink=85+ __NR_SYSCALL_BASE
-
-
-__NR_mmap2    = 192 + __NR_SYSCALL_BASE
-__NR_mprotect = 125 + __NR_SYSCALL_BASE
-__NR_munmap   =  91 + __NR_SYSCALL_BASE
+__NR_readlink=  85 + __NR_SYSCALL_BASE  // 0x55
+__NR_munmap  =  91 + __NR_SYSCALL_BASE  // 0x5b
+__NR_ftruncate= 93 + __NR_SYSCALL_BASE  // 0x5d
+__NR_stat=     106 + __NR_SYSCALL_BASE  // 0x6a
+__NR_uname=    122 + __NR_SYSCALL_BASE  // 0x7a
+__NR_mprotect= 125 + __NR_SYSCALL_BASE  // 0x7d
+__NR_mmap2=    192 + __NR_SYSCALL_BASE  // 0xc0
+__NR_fstat=    197 + __NR_SYSCALL_BASE  // 0xc5
+__NR_memfd_create= 385 + __NR_SYSCALL_BASE  // 0x181
 
 __ARM_NR_BASE       = 0x0f0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush = 2 + __ARM_NR_BASE
 
-        .globl my_bkpt
-my_bkpt:
-        bkpt  // my_bkpt
-        ret
-
-        .globl exit
-exit:
-        do_sys __NR_exit
-
-        .globl read
-read:
-        do_sys __NR_read; ret
-
-        .globl write
-write:
-        do_sys __NR_write; ret
-
-        .globl open
-open:
-        do_sys __NR_open; ret
-
-        .globl close
-close:
-        do_sys __NR_close; ret
-
-        .globl unlink
-unlink:
-        do_sys __NR_unlink; ret
-
-        .globl getpid
-getpid:
-        do_sys __NR_getpid; ret
-
-        .globl brk
-brk:
-        do_sys __NR_brk; ret
-
-        .globl readlink
-readlink:
-        do_sys __NR_readlink; ret
-
-        .globl munmap
-munmap:
-        do_sys __NR_munmap; ret
-
-// Sometimes Linux enforces page-aligned address
-Pprotect: .globl Pprotect
-mprotect: .globl mprotect
-        ldr r12,m_off4k
-        and r12,r12,r0  // lo frag
-        sub r0,r0,r12  // page align lo end
-        add r1,r1,r12
-        do_sys __NR_mprotect; ret
-
-        .globl mmap
-mmap:
-        stmdb sp!,{r4,r5,lr}
-        ldr r5,[sp,#4*4]
-        ldr r4,[sp,#3*4]
-        mov r5,r5,lsr #12  @ convert to page number
-mmap_do:
-        ldr r12,m_off4k
-        and r12,r12,r0  // lo frag
-        sub r0,r0,r12  // page align lo end
-        add r1,r1,r12
-        do_sys __NR_mmap2
-        ldmia sp!,{r4,r5,pc}
-
-m_off4k:
-        .word -1+ (1<<PAGE_SHIFT)  // offset mask for 4KiB
-
-        do_sys __NR_mmap2
-        ldmia sp!,{r4,r5,pc}
-
-        .globl __clear_cache
-__clear_cache:
-        mov r2,#0
-        do_sys2 __ARM_NR_cacheflush; ret
+// All of these syscalls must preserve r7 (cannot use 'do_sys7t')
+// because they are called from C-language upxfd_android.c
 
 get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
+    bkpt  // FIXME get_sys_munmap
 #if defined(ARMEL_DARWIN)  /*{*/
         ldr r0,4*1 + munmap
 #elif defined(ARMEL_EABI4)  /*}{*/
@@ -461,19 +446,33 @@ get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
 #endif  /*}*/
         ret
 
-mmap_privanon: .globl mmap_privanon
-        stmdb sp!,{r4,r5,lr}
-        ldr r4,mflg_data  @ Map_PRIVATE|MAP_ANON for Linux; MAP_PRIVANON for QNX
-        mov r5,#0  @ offset= 0
-        orr r3,r3,r4  @ combine with input (such as MAP_FIXED)
-        mvn r4,#0  @ fd= -1
-        b mmap_do
+brk:   .globl brk;   do_sys __NR_brk; ret
+close: .globl close; do_sys __NR_close; ret
+exit:  .globl exit;  do_sys __NR_exit
+fstat: .globl fstat; do_sys __NR_fstat; ret
+ftruncate: .globl ftruncate; do_sys __NR_ftruncate; ret
+getpid:.globl getpid;do_sys __NR_getpid; ret
+lseek: .globl lseek; do_sys __NR_lseek; ret
+memfd_create: .globl memfd_create; do_sys2 __NR_memfd_create; ret
+mkdir: .globl mkdir; do_sys __NR_mkdir; ret
+munmap: .globl munmap; do_sys __NR_munmap; ret
+open:  .globl open;  do_sys __NR_open; ret
+read:  .globl read;  do_sys __NR_read; ret
+readlink: .globl readlink; do_sys __NR_readlink; ret
+stat: .globl stat; do_sys __NR_stat; ret
+uname: .globl uname; do_sys __NR_uname; ret
+unlink:.globl unlink;do_sys __NR_unlink; ret
+write: .globl write; do_sys __NR_write; ret
 
-f_expand: .globl f_expand
-        bkpt  // FIXME
+        .globl __clear_cache
+__clear_cache:
+        mov r2,#0
+        do_sys2 __ARM_NR_cacheflush; ret
 
-get_page_mask: .globl get_page_mask
-        bkpt  // FIXME
+        .globl my_bkpt
+my_bkpt:
+        bkpt  // my_bkpt
+        ret
 
 #if 1|DEBUG  /*{*/
 

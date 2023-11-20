@@ -1474,7 +1474,8 @@ PackLinuxElf32::buildLinuxLoader(
         if (this->e_machine==Elf32_Ehdr::EM_ARM)
             method = M_NRV2B_8;  //only ARM v6 and above has unaligned fetch
     }
-    else if (this->e_machine==Elf32_Ehdr::EM_386) { // main program
+    else if (this->e_machine==Elf32_Ehdr::EM_386
+         ||  this->e_machine==Elf32_Ehdr::EM_ARM) { // main program
         initLoader(fold, szfold);
         char sec[120];
         int len = 0;
@@ -1502,6 +1503,8 @@ PackLinuxElf32::buildLinuxLoader(
             sz_unc = sz_unc_int;
         }
         method = M_NRV2B_LE32;  // requires unaligned fetch
+        if (this->e_machine==Elf32_Ehdr::EM_ARM)
+            method = M_NRV2B_8;  //only ARM v6 and above has unaligned fetch
     }
     else {
         cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
@@ -1544,7 +1547,8 @@ PackLinuxElf32::buildLinuxLoader(
     ) {
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
     }
-    else if (this->e_machine==Elf32_Ehdr::EM_386) { // main program
+    else if (this->e_machine==Elf32_Ehdr::EM_ARM
+          || this->e_machine==Elf32_Ehdr::EM_386) { // main program
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
             defineSymbols(ft);
     }

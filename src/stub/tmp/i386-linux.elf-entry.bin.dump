@@ -9,15 +9,15 @@ SYMBOL TABLE:
 00000000 l    d  ELFMAINZ 0 ELFMAINZ
 00000311 g     F ELFMAINX 0161 upx_mmap_and_fd
 00000000         *UND* 0 O_BINFO
-00000133 g       ELFMAINX 0 mempcpy
-00000120 g       ELFMAINX 0 mmap
-00000130 g       ELFMAINX 0 get_upxfn_path
+00000135 g       ELFMAINX 0 mempcpy
+00000122 g       ELFMAINX 0 mmap
+00000132 g       ELFMAINX 0 get_upxfn_path
 00000000 g       ELFMAINX 0 _start
 
 RELOCATION RECORDS FOR [ELFMAINX]:
 OFFSET   TYPE              VALUE
 00000001 R_386_PC32        ELFMAINZ
-00000056 R_386_PC32        upx_mmap_and_fd
+00000058 R_386_PC32        upx_mmap_and_fd
 00000281 R_386_PC32        mempcpy
 0000035b R_386_PC32        get_upxfn_path
 00000444 R_386_PC32        mmap

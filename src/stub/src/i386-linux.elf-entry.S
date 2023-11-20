@@ -120,13 +120,6 @@ refill:
 L20:
         pop foldi  // MATCH_09  &fold_info
 #define old_sp %ebp
-#if 0  //{ DEBUG
-        mov $0xa5a5a5a5,%eax
-        push %eax; push %eax; push %eax; push %eax
-        push %eax; push %eax; push %eax
-#else  //}{ non-DEBUG
-        sub $7*NBPW,%esp
-#endif  //}
 #define F_FRAME 7*NBPW
 #define F_ENTR 6*NBPW
 #define F_MFD  5*NBPW
@@ -135,12 +128,20 @@ L20:
 #define F_ELFA 2*NBPW
 #define F_LENX 1*NBPW
 #define F_ADRX 0*NBPW
+#if 0  //{ DEBUG
+        mov $0xa5a5a5a5,%eax
+        push %eax; push %eax; push %eax; push %eax
+        push %eax; push %eax; push %eax
+#else  //}{ non-DEBUG
+        sub $F_FRAME*NBPW,%esp
+#endif  //}
         mov %esp,old_sp
         lea sz_pack2 - L70ret(r_getb),%edi
-        mov (%edi),%eax; mov %eax,F_LENX(old_sp)
-        sub %eax,%edi;   mov %edi,F_ELFA(old_sp)
-        lodsl  // O_BINFO
-        add %edi,%eax;   mov %eax,F_ADRX(old_sp)
+        mov (%edi),%ecx
+        sub %ecx,%edi;   mov %edi,F_ELFA(old_sp)
+        lodsl  // O_BINFO; advance to &b_info
+        add %eax,%edi; mov %eax,F_ADRX(old_sp)
+        sub %eax,%ecx; mov %ecx,F_LENX(old_sp)
 //        cmpw $M_NRV2B_LE32|(0<<8),b_method(foldi); je 0f; hlt; 0:  // check method and filter bytes
 
         mov /*sz_unc*/(foldi),r_unc

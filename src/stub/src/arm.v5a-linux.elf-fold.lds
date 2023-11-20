@@ -38,8 +38,7 @@ PHDRS
 }
 SECTIONS
 {
-  /*  0x00004000: below 0x00008000 usual, enough to avoid icache sync */
-  . = 0x00008000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
+/*  . = 0x00100000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
   .text : {
     *(.text)
     *(.data)

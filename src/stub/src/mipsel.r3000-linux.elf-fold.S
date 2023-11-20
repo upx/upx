@@ -257,6 +257,11 @@ Pprotect: .globl Pprotect
         j ra
           nop
 
+my_bkpt: .globl my_bkpt
+        break
+        j ra
+          nop
+
 #if 0  /*{ replaced by macros in include/linux.h because of 'bal' vs gcc */
 err_syscall:
         li a0,-1

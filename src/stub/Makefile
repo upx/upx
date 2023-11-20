@@ -551,9 +551,20 @@ tc.arm.v4a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4t -nostdinc -MMD -MT
 tc.arm.v4a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm.v4a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-arm.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
+#arm.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
+#	$(call tc,gcc) -c $< -o tmp/$T.bin
+#	$(call tc,f-embed_objinfo,tmp/$T.bin)
+#	$(call tc,bin2h) tmp/$T.bin $@
+
+arm.v4a-linux.elf-entry.h : $(srcdir)/src/arm.v4a-linux.elf-entry.lds \
+	    $(srcdir)/src/$$T.S \
+	    tmp/arm.v4a-linux.elf-upxfd_android.o
+	$(call tc,gcc) -c  $(srcdir)/src/$T.S -o tmp/$T.o
+	multiarch-ld-2.17 -r --format=elf32-littlearm -Map tmp/$T.map -o tmp/$T.bin \
+	    -T src/arm.v4a-linux.elf-entry.lds \
+	    tmp/$T.o \
+	    tmp/arm.v4a-linux.elf-upxfd_android.o
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 arm.v4a-linux.elf-so_entry.h : src/arm.v4a-linux.elf-so_entry.lds \
@@ -572,10 +583,13 @@ tmp/arm.v4a-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,objcopy) -R .comment $@
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
-arm.v4a-linux.elf-fold.h : tmp/$$T.o tmp/arm.v4a-linux.elf-main.o $(srcdir)/src/$$T.lds
-	multiarch-ld-2.23.90 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	: $(call tc,sstrip) tmp/$T.bin
+arm.v4a-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/arm.v4a-linux.elf-upxfd_android.o \
+	    tmp/arm.v4a-expand.o \
+	    tmp/arm.v4a-linux.elf-main.o
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 arm.v4a-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
@@ -648,9 +662,15 @@ tc.arm.v5a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5t -nostdinc -MMD -MT
 tc.arm.v5a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm.v5a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-arm.v5a-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
+arm.v5a-linux.elf-entry.h : $(srcdir)/src/arm.v5a-linux.elf-entry.lds \
+	    $(srcdir)/src/$$T.S \
+	    tmp/arm.v5a-linux.elf-upxfd_android.o
+	$(call tc,gcc) -c  $(srcdir)/src/$T.S -o tmp/$T.o
+	multiarch-ld-2.17 -r --format=elf32-littlearm -Map tmp/$T.map -o tmp/$T.bin \
+	    -T src/arm.v5a-linux.elf-entry.lds \
+	    tmp/$T.o \
+	    tmp/arm.v5a-linux.elf-upxfd_android.o
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 arm.v5a-linux.elf-so_entry.h : src/arm.v5a-linux.elf-so_entry.lds \
@@ -669,10 +689,13 @@ tmp/arm.v5a-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,objcopy) -R .comment $@
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
-arm.v5a-linux.elf-fold.h : tmp/$$T.o tmp/arm.v5a-linux.elf-main.o $(srcdir)/src/$$T.lds
-	multiarch-ld-2.23.90 -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	: $(call tc,sstrip) tmp/$T.bin
+arm.v5a-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/arm.v5a-linux.elf-upxfd_android.o \
+	    tmp/arm.v5a-expand.o \
+	    tmp/arm.v5a-linux.elf-main.o
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 arm.v5a-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
@@ -856,11 +879,22 @@ armeb.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-armeb.v4a-linux.elf-fold.h : tmp/$$T.o tmp/armeb.v4a-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
+armeb.v4a-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/armeb.v4a-linux.elf-upxfd_android.o \
+	    tmp/armeb.v4a-expand.o \
+	    tmp/armeb.v4a-linux.elf-so_main.o
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/armeb.v4a-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) -R .comment $@
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
+tmp/armeb.v4a-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
 
 tmp/armeb.v4a-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -868,6 +902,11 @@ tmp/armeb.v4a-linux.elf-fold.o : $(srcdir)/src/$$T.S
 
 tmp/armeb.v4a-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/armeb.v4a-linux.elf-so_main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-so_main.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) --rename-section .text=SO_MAIN -R .comment -R .note -R .note.GNU-stack -R .reginfo $@
 	$(call tc,f-objstrip,$@)
 
 
@@ -1449,15 +1488,20 @@ endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-mips.r3000-linux.elf-fold.h : tmp/$$T.o tmp/mips.r3000-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds
+	    tmp/$$T.s \
+	    tmp/mips.r3000-linux.elf-main.s \
+	    tmp/mips.r3000-linux.upxfd_android.s
+	cat $(filter %.s,$&) | $(call tc,as) - -o tmp/$T.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
+	     tmp/$T.o
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/mips.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
-	$(call tc,f-objstrip,$@)
+	: $(call tc,f-objstrip,$@)
 
 tmp/mips.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -S -Os -MF tmp/$T.d $< -o - | $(RTRIM) > tmp/$T.i
@@ -1516,7 +1560,7 @@ mipsel.r3000-linux.elf-fold.h : tmp/$$T.o tmp/mipsel.r3000-linux.elf-main.o $(sr
 
 tmp/mipsel.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
-	$(call tc,f-objstrip,$@)
+	: $(call tc,f-objstrip,$@)
 
 tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -S -Os -MF tmp/$T.d $< -o - | $(RTRIM) > tmp/$T.i
