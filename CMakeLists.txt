@@ -7,18 +7,6 @@
 #   A C++ compiler that fully implements C++17: clang-5, gcc-8 or msvc-2019-16.11
 #   (older or other compilers may work but are unsupported, use at your own risk)
 
-# CMake version check; using a somewhat current CMake version is highly recommended
-if(DEFINED UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
-    cmake_minimum_required(VERSION "${UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION}" FATAL_ERROR)
-else()
-    cmake_minimum_required(VERSION "3.8" FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
-endif()
-
-macro(upx_cmake_include_hook section) # developer convenience
-    include("${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/hooks/CMakeLists.${section}.txt" OPTIONAL)
-    include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.${section}.txt" OPTIONAL)
-endmacro()
-
 # Sections of this CMakeLists.txt:
 #   - options
 #   - init
@@ -28,6 +16,19 @@ endmacro()
 #   - test
 #   - install
 #   - print summary
+
+# CMake version check; using a somewhat current CMake version is highly recommended
+if(DEFINED UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
+    cmake_minimum_required(VERSION "${UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION}" FATAL_ERROR)
+else()
+    cmake_minimum_required(VERSION "3.8" FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
+endif()
+
+# support config hooks; developer convenience
+macro(upx_cmake_include_hook section)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/hooks/CMakeLists.${section}.txt" OPTIONAL)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.${section}.txt" OPTIONAL)
+endmacro()
 
 #***********************************************************************
 # options
@@ -59,7 +60,7 @@ option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" O
 # init
 #***********************************************************************
 
-upx_cmake_include_hook(2_init_begin)
+upx_cmake_include_hook(2_init)
 
 # Disallow in-source builds. Note that you will still have to manually
 # clean up a few files if you accidentally try an in-source build.
@@ -216,8 +217,6 @@ if(NOT DEFINED MINGW AND CMAKE_C_PLATFORM_ID MATCHES "^MinGW")
     set(MINGW 1)
 endif()
 
-upx_cmake_include_hook(2_init_end)
-
 #***********************************************************************
 # common compilation flags
 #***********************************************************************
@@ -228,7 +227,7 @@ include(CheckIncludeFile)
 include(CheckStructHasMember)
 include(CheckSymbolExists)
 
-upx_cmake_include_hook(3_common_compilation_flags_begin)
+upx_cmake_include_hook(3_common_compilation_flags)
 
 if(NOT DEFINED HAVE_UNISTD_H)
     check_include_file("unistd.h" HAVE_UNISTD_H)
@@ -319,6 +318,7 @@ if(MSVC_FRONTEND OR WIN32 OR MINGW OR CYGWIN)
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
+    add_definitions(-D__USE_MINGW_ANSI_STDIO)
 endif()
 if(MSVC_FRONTEND)
     # use -funsigned-char; set __cplusplus according to selected C++ standard
@@ -426,8 +426,6 @@ endif()
 endif()
 endif()
 
-upx_cmake_include_hook(3_common_compilation_flags_end)
-
 #***********************************************************************
 # targets
 #***********************************************************************
@@ -437,7 +435,7 @@ set(UPX_CONFIG_DISABLE_THREADS ON) # multithreading is currently not used; maybe
 set(UPX_CONFIG_DISABLE_BZIP2 ON)   # bzip2 is currently not used; we might need it to decompress linux kernels
 set(UPX_CONFIG_DISABLE_ZSTD ON)    # zstd is currently not used; maybe in UPX version 5
 
-upx_cmake_include_hook(4_targets_begin)
+upx_cmake_include_hook(4_targets)
 
 if(NOT UPX_CONFIG_DISABLE_THREADS)
     find_package(Threads)
@@ -502,13 +500,11 @@ if(Threads_FOUND)
     target_link_libraries(upx Threads::Threads)
 endif()
 
-upx_cmake_include_hook(4_targets_end)
-
 #***********************************************************************
 # target compilation flags
 #***********************************************************************
 
-upx_cmake_include_hook(5_target_compilation_flags_begin)
+upx_cmake_include_hook(5_target_compilation_flags)
 
 if(NOT UPX_CONFIG_DISABLE_BZIP2)
 set(t upx_vendor_bzip2)
@@ -599,8 +595,6 @@ else()
     target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
 
-upx_cmake_include_hook(5_target_compilation_flags_end)
-
 #***********************************************************************
 # test
 #   ctest
@@ -676,7 +670,7 @@ endif()
 endif() # UPX_CONFIG_CMAKE_DISABLE_INSTALL
 
 #***********************************************************************
-# show summary
+# summary
 # print some info about the build configuration
 #***********************************************************************
 

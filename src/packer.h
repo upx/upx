@@ -36,7 +36,7 @@ class UiPacker;
 class Filter;
 
 /*************************************************************************
-// purely abstract minimal base class for all packers
+// PackerBase: purely abstract minimal base class for all packers
 //
 // clients: PackMaster, UiPacker
 **************************************************************************/
@@ -61,7 +61,7 @@ public:
     // a recognized format.
     // canPack() can also return -1 to fail early; see class PackMaster
     virtual tribool canPack() = 0;
-    // canUnpack() should throw a cantUnpackException explaining why it cannot pack
+    // canUnpack() should throw a cantUnpackException explaining why it cannot unpack
     // a recognized format.
     // canUnpack() can also return -1 to fail early; see class PackMaster
     virtual tribool canUnpack() = 0;
@@ -80,16 +80,16 @@ protected:
     InputFile *const fi;                // reference
     union {                             // unnamed union
         const upx_int64_t file_size;    // must get set by constructor
-        const upx_uint64_t file_size_u; // (explicitly unsigned)
+        const upx_uint64_t file_size_u; // (explicitly unsigned to avoid casts)
     };
     PackHeader ph; // must be filled by canUnpack(); also used by UiPacker
 };
 
 /*************************************************************************
-// abstract default implementation class for packers
+// Packer: default implementation base class for all current packers
 //
-// Packer can be viewed as "PackerDefaultImplV1"; it is grown historically
-// and still would benefit from a decomposition
+// Packer can be viewed as "PackerDefaultImplVersion1"; it is grown
+// historically and really would benefit from a decomposition
 **************************************************************************/
 
 class Packer : public PackerBase {
@@ -244,7 +244,7 @@ protected:
     static unsigned unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P(byte) image,
                                     unsigned image_size, int bits, bool bswap);
 
-    // Target Endianness abstraction
+    // TE - Target Endianness abstraction
 #if 0
     // permissive version using "void *"
     inline unsigned get_te16(const void *p) const noexcept { return bele->get16(p); }
@@ -296,7 +296,7 @@ protected:
 #endif
 
 protected:
-    const N_BELE_RTP::AbstractPolicy *bele = nullptr; // target endianness
+    const N_BELE_RTP::AbstractPolicy *bele = nullptr; // TE - Target Endianness
 
     // PackHeader
     int ph_format = -1;

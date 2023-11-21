@@ -8,6 +8,7 @@ UPX_MAKEFILE_EXTRA_MK_INCLUDED := 1
 
 override check_defined   = $(foreach 1,$1,$(if $(filter undefined,$(origin $1)),$(error ERROR: variable '$1' is not defined),))
 override check_undefined = $(foreach 1,$1,$(if $(filter undefined,$(origin $1)),,$(error ERROR: variable '$1' is already defined)))
+$(call check_defined,run_config run_build)
 $(call check_undefined,run_config_and_build)
 
 #***********************************************************************

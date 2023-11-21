@@ -48,6 +48,7 @@
 #define XSPAN_CONFIG_ENABLE_SPAN_CONVERSION 1
 #endif
 
+// actual implementation
 #include "xspan_impl.h"
 
 #ifdef XSPAN_NAMESPACE_NAME
