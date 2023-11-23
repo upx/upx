@@ -551,11 +551,6 @@ tc.arm.v4a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4t -nostdinc -MMD -MT
 tc.arm.v4a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm.v4a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-#arm.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
-#	$(call tc,gcc) -c $< -o tmp/$T.bin
-#	$(call tc,f-embed_objinfo,tmp/$T.bin)
-#	$(call tc,bin2h) tmp/$T.bin $@
-
 arm.v4a-linux.elf-entry.h : $(srcdir)/src/arm.v4a-linux.elf-entry.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/arm.v4a-linux.elf-upxfd_android.o
@@ -1241,11 +1236,6 @@ tc.i386-linux.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-la
 tc.i386-linux.elf.gcc     += -mpreferred-stack-boundary=2
 tc.i386-linux.elf.gcc     += -fweb
 
-#i386-linux.elf-entry.h : $(srcdir)/src/$$T.S
-#	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-#	$(call tc,f-embed_objinfo,tmp/$T.bin)
-#	$(call tc,bin2h) tmp/$T.bin $@
-
 i386-linux.elf-entry.h : $(srcdir)/src/i386-linux.elf-entry.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/i386-linux.elf-upxfd_android.o
@@ -1471,28 +1461,41 @@ mips.r3000-linux.elf%.h : tc_list = mips.r3000-linux.elf default
 mips.r3000-linux.elf%.h : tc_bfdname = elf32-bigmips
 
 tc.mips.r3000-linux.elf.as   = mipsel-elf-as-20060406 -EB -O -mno-pdr
+tc.mips.r3000-linux.elf.pp-as= mipsel-elf-as-20060406 -x assembler-with-cpp -Wall
 tc.mips.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -meb -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
 tc.mips.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.mips.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-mips.r3000-linux.elf-entry.h : $(srcdir)/src/$$T.S
+mips.r3000-linux.elf-entry.h : $(srcdir)/src/mips.r3000-linux.elf-entry.lds \
+	    $(srcdir)/src/$$T.S \
+	    tmp/mips.r3000-linux.elf-upxfd_android.o
 ifeq (1,1)
 	# info: we really need as-2.17 here
-	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEB__ $< -o - | $(RTRIM) > tmp/$T.i
-	$(call tc,as) tmp/$T.i -o tmp/$T.bin
+	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEB__ $< -o - | \
+	    $(call tc,as) - -o tmp/$T.o
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 else
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
 	$(call tc,gcc) -c -D_TARGET_LINUX_ -Wa,-O,-mno-pdr $< -o tmp/$T.bin
 endif
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
+	multiarch-ld-2.17 -r --format=elf32-bigmips -Map tmp/$T.map -o tmp/$T.bin \
+	    -T src/mips.r3000-linux.elf-entry.lds \
+	    tmp/$T.o \
+	    tmp/mips.r3000-linux.elf-upxfd_android.o
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
 
-mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds
-	    tmp/$$T.s \
+tmp/mips.r3000-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) -R .comment $@
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
+mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    $(srcdir)/src/$$T.S \
 	    tmp/mips.r3000-linux.elf-main.s \
 	    tmp/mips.r3000-linux.upxfd_android.s
-	cat $(filter %.s,$&) | $(call tc,as) - -o tmp/$T.o
+	/lib/cpp -D_TARGET_LINUX_ -D__MIPSEB__ $(filter %.S,$^) -o - | \
+	    cat - $(filter %.s,$^) | $(call tc,as) - -march=r3000 -o tmp/$T.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
 	$(call tc,f-objstrip,tmp/$T.bin)
@@ -1500,8 +1503,23 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/mips.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
-	: $(call tc,f-objstrip,$@)
+	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEB__ $< -o - | $(RTRIM) > tmp/$T.i
+	$(call tc,as) tmp/$T.i -o tmp/$T.o
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
+	$(call tc,gcc) -c -D_TARGET_LINUX_ -Wa,-O,-mno-pdr $< -o $@
+
+tmp/mips.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -S -D__mips__ -D_TARGET_LINUX_ -O $< -o - \
+	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/L[0-9]*/L8&/g' \
+	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
+	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
+		  >$@
+
+tmp/mips.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c
+	$(call tc,gcc) -S -D__mips__ -D_TARGET_LINUX_ -O $< -o - \
+	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/L[0-9]*/L7&/g' >$@
 
 tmp/mips.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -S -Os -MF tmp/$T.d $< -o - | $(RTRIM) > tmp/$T.i
@@ -1518,10 +1536,10 @@ tmp/mips.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.e
 mips.r3000-linux.shlib%.h : tc_list = mips.r3000-linux.elf default
 mips.r3000-linux.shlib%.h : tc_bfdname = elf32-bigmips
 
-mips.r3000-linux.shlib%.h : $(srcdir)/src/$$T.S
+mips.r3000-linux.shlib-init.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
 	# info: we really need as-2.17 here
-	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEB__ $< -o - | $(RTRIM) > tmp/$T.i
+	/lib/cpp -D_TARGET_LINUX_ -D__MIPSEB__ $< | $(RTRIM) > tmp/$T.i
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 else
@@ -1552,8 +1570,14 @@ endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-mipsel.r3000-linux.elf-fold.h : tmp/$$T.o tmp/mipsel.r3000-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    $(srcdir)/src/$$T.S \
+	    tmp/mips.r3000-linux.elf-main.s \
+	    tmp/mips.r3000-linux.upxfd_android.s
+	/lib/cpp -D_TARGET_LINUX_ -D__MIPSEL__ $(filter %.S,$^) -o - | \
+	    cat - $(filter %.s,$^) | $(call tc,as) - -march=r3000 -o tmp/$T.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
+	     tmp/$T.o
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -1678,10 +1702,13 @@ powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
+powerpc-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/powerpc-linux.elf-upxfd_android.o \
+	    tmp/powerpc-expand.o \
+	    tmp/powerpc-linux.elf-main.o
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -1692,6 +1719,13 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
+tmp/powerpc-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) -R .comment $@
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
+tmp/powerpc-expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
 
 # /***********************************************************************
 # // powerpc-linux.kernel.vmlinux
