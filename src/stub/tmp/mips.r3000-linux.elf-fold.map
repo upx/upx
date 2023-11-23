@@ -1,4 +1,8 @@
 
+Discarded input sections
+
+ .got           0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
+
 Memory Configuration
 
 Name             Origin             Length             Attributes
@@ -7,33 +11,44 @@ Name             Origin             Length             Attributes
 Linker script and memory map
 
 
-.text           0x0000000000000000      0x1e0
- .text          0x0000000000000000      0x1e0 tmp/mips.r3000-linux.elf-fold.o
-                0x0000000000000000                get_page_mask
-                0x00000000000001c8                my_bkpt
-                0x00000000000001a8                Pprotect
- .text          0x00000000000001e0        0x0 tmp/mips.r3000-linux.elf-main.o
+.text           0x0000000000000000     0x1a3c
+ .text          0x0000000000000000     0x1a3c tmp/mips.r3000-linux.elf-fold.o
+                0x00000000000001d4                f_expand
+                0x0000000000000088                get_page_mask
+                0x0000000000001938                upx_mmap_and_fd
+                0x000000000000020c                __clear_cache
+                0x0000000000000098                get_upxfn_path
+                0x0000000000000200                my_bkpt
+                0x00000000000001e0                Pprotect
+                0x00000000000015b8                upx_main
+                0xfffffffffffffff8                PAGE_MASK
 
-.data           0x0000000000000000        0x0
- .data          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
- .data          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-main.o
+.rodata         0x0000000000001a3c        0xc
+ .rodata        0x0000000000001a3c        0xc tmp/mips.r3000-linux.elf-fold.o
 
-.bss            0x0000000000000000        0x0
- .bss           0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
- .bss           0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-main.o
+.data           0x0000000000001a48        0x0
+ .data          0x0000000000001a48        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+.bss            0x0000000000001a48        0x0
+ .bss           0x0000000000001a48        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+.rel.dyn        0x0000000000001a48        0x0
+ .rel.dyn       0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
 TARGET(elf32-bigmips)
 LOAD tmp/mips.r3000-linux.elf-fold.o
-LOAD tmp/mips.r3000-linux.elf-main.o
 OUTPUT(tmp/mips.r3000-linux.elf-fold.bin elf32-bigmips)
 
-.pdr            0x0000000000000000        0x0
- .pdr           0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
+.reginfo        0x0000000000000000       0x18
+ .reginfo       0x0000000000000000       0x18 tmp/mips.r3000-linux.elf-fold.o
 
 .mdebug.eabi32  0x0000000000000000        0x0
  .mdebug.eabi32
-                0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-main.o
+                0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
 
 .gcc_compiled_long32
                 0x0000000000000000        0x0
  .gcc_compiled_long32
-                0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-main.o
+                0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+.comment        0x0000000000000000       0x23
+ .comment       0x0000000000000000       0x23 tmp/mips.r3000-linux.elf-fold.o

@@ -24,9 +24,25 @@ void my_bkpt(void const *, ...);
 /*und*/ : "lr"); \
     str; \
 })
+#elif defined(__mips__) //}{
+#define addr_string(string) ({ \
+    char const *str; \
+    asm("bal 0f; .asciz \"" string "\"; .balign 4\n0: move %0,$31" \
+/*out*/ : "=r"(str) \
+/* in*/ : \
+/*und*/ : "ra"); \
+    str; \
+})
+#elif defined(__powerpc__)  /*}{*/
+#define addr_string(string) ({ \
+    asm("bl 0f; .asciz \"" string "\"; .balign 4; 0: mflr %0" \
+/*out*/ : "=r"(str) \
+/* in*/ : \
+/*und*/ : "lr"); \
+    str; \
+})
 #else  //}{
-#   error "only: __arm__ (or __i386__, for ARM32 emulator)"
-    char const *addr_string(char const *);
+#error  addr_string
 #endif  //}
 
 //#include <fcntl.h>

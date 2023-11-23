@@ -96,7 +96,7 @@ ssize_t write(int, void const *, size_t);
 #elif defined(__mips__)  /*}{*/
 #define DPRINTF(fmt, args...) ({ \
     char const *r_fmt; \
-    asm(".set noreorder; bal L%=j; move %0,$31; .set reorder; \
+    asm(".set noreorder; bal L%=j; move %0,$31; .set reorder\n\
         .asciz \"" fmt "\"; .balign 4; \
       L%=j: " \
 /*out*/ : "=r"(r_fmt) \
@@ -288,43 +288,8 @@ err_exit(int a)
 
 extern size_t get_page_mask(void);  // variable page size AT_PAGESZ; see *-fold.S
 
-#if !defined(__mips__)  //{
-#define my_page_mask get_page_mask
 extern int f_expand(  // .globl in $(ARCH)-expand.S
     const nrv_byte *binfo, nrv_byte *dst, size_t *dstlen);
-#else  //}{  FIXME  mips
-int f_expand(const nrv_byte *binfo, nrv_byte *dst, size_t *dstlen);  // prototype
-int f_expand(const nrv_byte *binfo, nrv_byte *dst, size_t *dstlen)
-{
-    (void)binfo; (void)dst; (void)dstlen;
-    return !0;
-}
-size_t my_page_mask(void);  // prototype
-__attribute__((__noinline__))
-size_t my_page_mask(void) {
-    size_t rv;
-  asm(
-    ".set noreorder; .set noat;"
-    "bal 1f;"  // ra= 0f
-    "  lw $1,0($31);"  // $1= assembly-time 0f
-"0: ;"
-    ".word 0b;"
-    ".word get_page_mask;"
-"1: ;"
-    "lw $2,4($31);"  // $2= assembly-time get_page_mask
-    "sub $31,$31,$1;" // ra= run-time 0
-    "add $31,$31,$2;" // ra= run-time get_page_mask
-    "jalr $31;"
-    "  nop;"
-    "move %0,$2;"  // shouldn't be necessary?
-    ".set at; .set reorder; "
-/*out*/ : "=r"(rv)
-/* in*/ :
-/*und*/ : "$31", "$1", "$2");
-  return rv;
-}
-#endif  //}
-
 
 static void
 unpackExtent(
@@ -403,24 +368,24 @@ ERR_LAB
     str; \
 })
 #elif defined(__mips__) //}{
-#define addr_strng(string) ({ \
+#define addr_string(string) ({ \
     char const *str; \
     asm("bal 0f; .asciz \"" string "\"; .balign 4; 0: mov %0,ra" \
 /*out*/ : "=r"(str) \
 /* in*/ : \
 /*und*/ : "ra"); \
     str; \
-)
+})
 #elif defined(__powerpc__)  /*}{*/
-#define addr_strng(string) ({ \
+#define addr_string(string) ({ \
     asm("bl 0f; .asciz \"" string "\"; .balign 4; 0: mflr %0" \
 /*out*/ : "=r"(str) \
 /* in*/ : \
 /*und*/ : "lr"); \
     str; \
-)
+})
 #else  //}{
-#error;
+#error  addr_string
 #endif  //}
 
 
@@ -654,7 +619,7 @@ __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum, Elf32_Addr *const p_brk)
 {
-    size_t const page_mask = my_page_mask();
+    size_t const page_mask = get_page_mask();
     Elf32_Addr lo= ~0, hi= 0, addr = 0;
     DPRINTF("xfind_pages  %%x  %%p  %%d  %%p\\n", mflags, phdr, phnum, p_brk);
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type
@@ -735,7 +700,7 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
             auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
             //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
         }
-        unsigned /*const*/ frag_mask = ~my_page_mask();
+        unsigned /*const*/ frag_mask = ~get_page_mask();
         unsigned /*const*/ prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
@@ -786,7 +751,7 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
         }
         DPRINTF("mlen 5 %%x\\n", mlen);
         if (xi) {
-            size_t page_mask = my_page_mask();
+            size_t page_mask = get_page_mask();
 #if defined(__i386__)  /*{*/
             void *const hatch = make_hatch_i386(phdr, xo.buf, ~page_mask);
             if (0!=hatch) {

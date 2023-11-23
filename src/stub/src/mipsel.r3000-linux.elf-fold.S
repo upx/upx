@@ -60,13 +60,19 @@ __NR_brk      =  45+ __NR_Linux
 __NR_close    =   6+ __NR_Linux
 __NR_exit     =   1+ __NR_Linux
 __NR_ftruncate=  93+ __NR_Linux
-__NR_memfd_create=354+__NR_Linux
-__NR_mmap     =  90+ __NR_Linux
+__NR_getpid=     20+ __NR_Linux
+__NR_lseek=      19+ __NR_Linux
+__NR_memfd_create=356+__NR_Linux
+__NR_mmap=       90+ __NR_Linux
+__NR_mkdir=      39+ __NR_Linux
 __NR_mprotect = 125+ __NR_Linux
 __NR_munmap   =  91+ __NR_Linux
+__NR_oldstat=    18+ __NR_Linux
 __NR_open     =   5+ __NR_Linux
 __NR_read     =   3+ __NR_Linux
 __NR_readlink =  85+ __NR_Linux
+__NR_uname=     122+ __NR_Linux
+__NR_unlink=     10+ __NR_Linux
 __NR_write    =   4+ __NR_Linux
 
 PATHSIZE=4096
@@ -78,12 +84,6 @@ MAP_ANONYMOUS=0x800  # not same as i386
 PROT_READ= 1
 
 O_RDONLY= 0
-
-get_page_mask: .globl get_page_mask
-        li v0,0  // modified to PAGE_MASK >> 9
-        jr ra
-          sll v0,v0,9
-        nop
 
 sp_frame= 0x20
 F_PMASK= 4*NBPW
@@ -119,6 +119,9 @@ a5_sys=  5*NBPW
     r_ADRX,r_LENX,r_elfa,r_auxv,r_PMASK,r_fexp
     sp= -sp_frame{%,%,%,%,PMASK,%fd,ADRU,LENU}, {argc,argv...,0,env...,0,auxv...,0,0,strings}
 */
+PAGE_MASK=  . - 2*NBPW; .globl PAGE_MASK
+upxfn_path= . - 1*NBPW  // displacement from "zero"
+
 fold_begin:
 ////    break
         move v0,sp
@@ -132,10 +135,10 @@ L10:  # copy until auxv
           addiu t1,v1,-NBPW  // new envp goes here
         sw zero,(v1); addiu v1,NBPW  // new terminator for envp
         move $r_auxv,v1  // new auxv
-L30:  // copy auxv
+L20:  // copy auxv
         lw tmp,0(v0); lw t0,NBPW(v0); addiu v0,sz_auxv
         sw tmp,0(v1); sw t0,NBPW(v1); addiu v1,sz_auxv
-        bnez tmp,L30  # AT_NULL: stop when v0= &auxv[N]
+        bnez tmp,L20  # AT_NULL: stop when v0= &auxv[N]
           move $r_auxe,v1  // end of new auxv
 
         sw v1,0(t1)  # new env var
@@ -147,11 +150,33 @@ L30:  // copy auxv
         sb tmp,3(v1)
         addiu s7,v1,4  # &buf[0]
 
-        bal 9f
+        bal L30
           sw ra,F_fd(sp)  # "/proc/self/exe"
         .asciz "/proc/self/exe"
         .balign 4
+
+get_page_mask: .globl get_page_mask
+        move v1,ra; bal 5f  // FIXME
+0:
+        .word 0b
+        .word PAGE_MASK
+
+get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
+        move v1,ra; bal 5f
+0:
+        .word 0b
+        .word upxfn_path
+5:
+        lw v0,4(ra)  // &upx_fn_path or &PAGE_MASK
+        lw at,0(ra)  // 4+ bal
+        beq v0,zero,9f  // null string
+          subu at,ra,at  // "zero"
+        addu v0,v0,at
 9:
+        jr v1
+          nop
+
+L30:
         li a1,O_RDONLY
         move a0,ra  # "/proc/self/exe"
         li v0,__NR_open; syscall
@@ -248,8 +273,13 @@ L40:
         jr $r_fexp  # omit munmap
           nop
 
+f_expand: .globl f_expand
+        break
+        jr ra
+          nop
+
 Pprotect: .globl Pprotect
-        li tmp,~PAGE_MASK
+        li tmp,1<<12  // FIXME  PAGE_MASK
         and tmp,a0
         sub a0,tmp
         add a1,tmp
@@ -262,32 +292,10 @@ my_bkpt: .globl my_bkpt
         j ra
           nop
 
-#if 0  /*{ replaced by macros in include/linux.h because of 'bal' vs gcc */
-err_syscall:
-        li a0,-1
-exit: .globl exit
-        li v0,__NR_exit
-sysgo:
-        syscall
-sysret:
-        sltiu tmp,v0,PAGE_MASK
-        addiu tmp,tmp,-1
+// mips-linux-gnu/libc/uclibc/lib/libgcc_s.so.1: __clear_cache is a no-op
+__clear_cache: .globl __clear_cache
         j ra
-          or v0,v0,tmp
-read: .globl read
-        b sysgo; li v0,__NR_read
-write: .globl write
-        b sysgo; li v0,__NR_write
-open: .globl open
-        b sysgo; li v0,__NR_open
-close: .globl close
-        b sysgo; li v0,__NR_close
-brk: .globl brk
-        b sysgo; li v0,__NR_brk
-munmap: .globl munmap
-        b sysgo; li v0,__NR_munmap
-mprotect: .globl mprotect
-        b sysgo; li v0,__NR_mprotect
+          nop
 
 mmap_privanon: .globl mmap_privanon
         ori a3,a3,MAP_PRIVATE|MAP_ANONYMOUS
@@ -298,8 +306,54 @@ mmap: .globl mmap
         sw a4,a4_sys(sp)
         sw a5,a5_sys(sp)
         li v0,__NR_mmap; syscall
+        lw a4,a4_sys(sp)
+        lw a5,a5_sys(sp)
         b sysret
           addiu sp,sp,sp_frame
-#endif  /*}*/
+
+sysgo:
+        syscall
+sysret:
+        bgez a3,sysOK
+          nop
+        move v0,a3  // -errno:  < 0, and > 0xfffff000
+sysOK:
+        jr ra
+          nop
+
+brk: .globl brk
+        b sysgo; li v0,__NR_brk
+close: .globl close
+        b sysgo; li v0,__NR_close
+exit: .globl exit
+        b sysgo; li v0,__NR_exit
+ftruncate: .globl ftruncate
+        b sysgo; li v0,__NR_ftruncate
+getpid: .globl getpid
+        b sysgo; li v0,__NR_getpid
+lseek: .globl lseek
+        b sysgo; li v0,__NR_lseek
+memfd_create: .globl memfd_create
+        b sysgo; li v0,__NR_memfd_create
+mkdir: .globl mkdir
+        b sysgo; li v0,__NR_mkdir
+mprotect: .globl mprotect
+        b sysgo; li v0,__NR_mprotect
+munmap: .globl munmap
+        b sysgo; li v0,__NR_munmap
+oldstat: .globl oldstat
+        b sysgo; li v0,__NR_oldstat
+open: .globl open
+        b sysgo; li v0,__NR_open
+read: .globl read
+        b sysgo; li v0,__NR_read
+readlink: .globl readlink
+        b sysgo; li v0,__NR_readlink
+uname: .globl uname
+        b sysgo; li v0,__NR_uname
+unlink: .globl unlink
+        b sysgo; li v0,__NR_unlink
+write: .globl write
+        b sysgo; li v0,__NR_write
 
 /* vim:set ts=8 sw=8 et: */
