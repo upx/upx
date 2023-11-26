@@ -3967,7 +3967,15 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter &ft)
                 ++lg2_page;
             }
         }
-        if (PT_GNU_RELRO32 == type) {
+        if (PT_GNU_RELRO32 == type
+        &&  16 < lg2_page) {
+            // x86* allows 4K, 2M, 1G
+            // arm32 and arm64 both allow 4K, 16K, 64K; Apple Silicon uses 16K
+            // Oracle 5.4.17-2136.314.6.2.el8uek.aarch64 demands 64K
+            // PowerPC and PowerPC64 has 4K, 64K, 1M (?), 16M (?)
+            // MIPS  allows any power of 2 from 4K through 64K
+
+            // If 64K < .p_align then we assume that 4K is also accepted.
             // .p_align can be like 2M, which is a huge over-estimate.
             // RELRO ends on a page boundary: usually close to actual page_size
             unsigned offset = get_te32(&phdr->p_offset);
@@ -3978,7 +3986,7 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter &ft)
                     ++b;
                 }
                 lg2_page = umin(lg2_page, -1+ b);
-                }
+            }
         }
         if (PT_GNU_STACK32 == type) {
             gnu_stack = phdr;
@@ -4849,7 +4857,15 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
                 ++lg2_page;
             }
         }
-        if (PT_GNU_RELRO64 == type) {
+        if (PT_GNU_RELRO64 == type
+        &&  16 < lg2_page) {
+            // x86* allows 4K, 2M, 1G
+            // arm32 and arm64 both allow 4K, 16K, 64K; Apple Silicon uses 16K
+            // Oracle 5.4.17-2136.314.6.2.el8uek.aarch64 demands 64K
+            // PowerPC and PowerPC64 has 4K, 64K, 1M (?), 16M (?)
+            // MIPS  allows any power of 2 from 4K through 64K
+
+            // If 64K < .p_align then we assume that 4K is also accepted.
             // .p_align can be like 2M, which is a huge over-estimate.
             // RELRO ends on a page boundary: usually close to actual page_size
             unsigned offset = get_te64(&phdr->p_offset);
@@ -4860,7 +4876,7 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
                     ++b;
                 }
                 lg2_page = umin(lg2_page, -1+ b);
-                }
+            }
         }
         if (PT_GNU_STACK64 == type) {
             gnu_stack = phdr;
