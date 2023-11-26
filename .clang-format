@@ -19,6 +19,5 @@ SortIncludes: false
 SpaceAfterCStyleCast: true
 Standard: Cpp03
 StatementMacros:
-  - ACC_BLOCK_BEGIN
   - CLANG_FORMAT_DUMMY_STATEMENT
 ...

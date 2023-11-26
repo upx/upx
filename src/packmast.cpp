@@ -137,19 +137,19 @@ static noinline tribool try_can_unpack(PackerBase *pb, void *user) may_throw {
 PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const Options *o,
                                         void *user) may_throw {
 #define D(Klass)                                                                                   \
-    ACC_BLOCK_BEGIN                                                                                \
-    COMPILE_TIME_ASSERT(std::is_nothrow_destructible_v<Klass>)                                     \
-    auto pb = std::unique_ptr<PackerBase>(new Klass(f));                                           \
-    if (o->debug.debug_level)                                                                      \
-        fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", pb->getVersion(),               \
-                pb->getFormat(), #Klass);                                                          \
-    pb->assertPacker();                                                                            \
-    tribool r = func(pb.get(), user);                                                              \
-    if (r)                                                                                         \
-        return pb.release(); /* success */                                                         \
-    if (r.isThird())                                                                               \
-        return nullptr; /* stop and fail early */                                                  \
-    ACC_BLOCK_END
+    do {                                                                                           \
+        COMPILE_TIME_ASSERT(std::is_nothrow_destructible_v<Klass>)                                 \
+        auto pb = std::unique_ptr<PackerBase>(new Klass(f));                                       \
+        if (o->debug.debug_level)                                                                  \
+            fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", pb->getVersion(),           \
+                    pb->getFormat(), #Klass);                                                      \
+        pb->assertPacker();                                                                        \
+        tribool r = func(pb.get(), user);                                                          \
+        if (r)                                                                                     \
+            return pb.release(); /* success */                                                     \
+        if (r.isThird())                                                                           \
+            return nullptr; /* stop and fail early */                                              \
+    } while (0)
 
     // NOTE: order of tries is important !!!
 

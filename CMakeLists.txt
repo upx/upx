@@ -120,7 +120,7 @@ function(upx_cache_bool_vars)
 endfunction()
 
 # global settings
-if(${CMAKE_VERSION} VERSION_GREATER "3.14.7" AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+if(${CMAKE_VERSION} VERSION_GREATER "3.14.99" AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
     cmake_policy(SET CMP0091 NEW)
 endif()

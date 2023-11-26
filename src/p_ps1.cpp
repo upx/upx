@@ -136,12 +136,10 @@ bool PackPs1::readBkupHeader() {
 }
 
 #define INIT_BH_BKUP(p, l)                                                                         \
-    ACC_BLOCK_BEGIN                                                                                \
-    {                                                                                              \
+    do {                                                                                           \
         (p)->id = '1';                                                                             \
         (p)->len = l;                                                                              \
-    }                                                                                              \
-    ACC_BLOCK_END
+    } while (0)
 #define ADLER16(a) (((a) >> 16) ^ ((a) &0xffff))
 
 void PackPs1::putBkupHeader(const byte *src, byte *dst, unsigned *len) {

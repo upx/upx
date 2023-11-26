@@ -285,13 +285,13 @@ static void memswap_no_overlap(byte *a, byte *b, size_t n) {
 #else // clang bug
     upx_alignas_max byte tmp_buf[16];
 #define SWAP(x)                                                                                    \
-    ACC_BLOCK_BEGIN                                                                                \
-    upx_memcpy_inline(tmp_buf, a, x);                                                              \
-    upx_memcpy_inline(a, b, x);                                                                    \
-    upx_memcpy_inline(b, tmp_buf, x);                                                              \
-    a += x;                                                                                        \
-    b += x;                                                                                        \
-    ACC_BLOCK_END
+    do {                                                                                           \
+        upx_memcpy_inline(tmp_buf, a, x);                                                          \
+        upx_memcpy_inline(a, b, x);                                                                \
+        upx_memcpy_inline(b, tmp_buf, x);                                                          \
+        a += x;                                                                                    \
+        b += x;                                                                                    \
+    } while (0)
 
     for (; n >= 16; n -= 16)
         SWAP(16);

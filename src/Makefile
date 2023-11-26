@@ -18,7 +18,7 @@ endif
 #
 
 # NOTE that top-level Makefile .DEFAULT_GOAL is build/release
-.DEFAULT_GOAL = build/debug
+.DEFAULT_GOAL = build/all
 
 build/debug:   $(top_srcdir)/build/debug
 build/release: $(top_srcdir)/build/release
@@ -33,15 +33,14 @@ debug:   build/debug
 release: build/release
 all build/all: build/debug build/release
 
-$(top_srcdir)/build/debug: PHONY
-	$(MAKE) -C $(top_srcdir) build/debug
-$(top_srcdir)/build/release: PHONY
-	$(MAKE) -C $(top_srcdir) build/release
+# actual rules - redirect to top-level
+$(top_srcdir)/build/debug:   PHONY; $(MAKE) -C $(top_srcdir) build/debug
+$(top_srcdir)/build/release: PHONY; $(MAKE) -C $(top_srcdir) build/release
 
 # convenience
 CTEST = ctest
-test: $(top_srcdir)/$(.DEFAULT_GOAL)
-	cd $(top_srcdir)/$(.DEFAULT_GOAL) && $(CTEST)
+test:: $(top_srcdir)/build/debug   PHONY; cd $< && $(CTEST)
+test:: $(top_srcdir)/build/release PHONY; cd $< && $(CTEST)
 
 #
 # "make run-testsuite"
@@ -70,10 +69,10 @@ run-testsuite: run-testsuite-release
 run-testsuite-%: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
 run-testsuite-%: export upx_testsuite_BUILDDIR := ./tmp-upx-testsuite
 run-testsuite-debug: export upx_exe := $(top_srcdir)/build/debug/upx
-run-testsuite-debug: PHONY $(top_srcdir)/build/debug
+run-testsuite-debug: $(top_srcdir)/build/debug PHONY
 	time -p bash $(top_srcdir)/misc/testsuite/upx_testsuite_1.sh
 run-testsuite-release: export upx_exe := $(top_srcdir)/build/release/upx
-run-testsuite-release: PHONY $(top_srcdir)/build/release
+run-testsuite-release: $(top_srcdir)/build/release PHONY
 	time -p bash $(top_srcdir)/misc/testsuite/upx_testsuite_1.sh
 endif
 endif
@@ -83,9 +82,9 @@ endif
 #
 
 ifneq ($(wildcard /usr/bin/env),) # needs bash, perl, xargs, etc.
-CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
+CHECK_WHITESPACE = bash $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
-CHECK_WHITESPACE = $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)
+CHECK_WHITESPACE = bash $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)
 endif
 check-whitespace: PHONY; $(CHECK_WHITESPACE)
 endif
@@ -102,7 +101,7 @@ CLANG_FORMAT_EXCLUDE_FILES += p_elf.h p_elf_enum.h p_lx_% p_mach% p_unix% p_vmli
 CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* */*.[ch]*))
 CLANG_FORMAT_FILES += $(sort $(wildcard stub/tools/*/*.[ch]*))
 CLANG_FORMAT_FILES := $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES))
-clang-format: PHONY $(CLANG_FORMAT_FILES)
+clang-format: $(CLANG_FORMAT_FILES) PHONY
 	@echo "running upx-clang-format"
 	@$(top_srcdir)/misc/scripts/upx-clang-format.sh -i $(CLANG_FORMAT_FILES)
 endif

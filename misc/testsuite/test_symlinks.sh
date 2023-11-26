@@ -9,7 +9,7 @@ argv0=$0; argv0abs=$(readlink -fn "$argv0"); argv0dir=$(dirname "$argv0abs")
 # test file system behaviour with symlinks; requires:
 #   $upx_exe                (required, but with convenience fallback "./upx")
 # optional settings:
-#   $upx_exe_runner         (e.g. "qemu-x86_64 -cpu Westmere" or "valgrind")
+#   $upx_exe_runner         (e.g. "qemu-x86_64 -cpu Nehalem" or "valgrind")
 #
 
 # IMPORTANT NOTE: do NOT run as user root!!
@@ -42,7 +42,7 @@ upx_exe=$(readlink -fn "$upx_exe") # make absolute
 upx_run=()
 if [[ -n $upx_exe_runner ]]; then
     # usage examples:
-    #   export upx_exe_runner="qemu-x86_64 -cpu Westmere"
+    #   export upx_exe_runner="qemu-x86_64 -cpu Nehalem"
     #   export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
     #   export upx_exe_runner="wine"
     IFS=' ' read -r -a upx_run <<< "$upx_exe_runner" # split at spaces into array
