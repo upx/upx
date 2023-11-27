@@ -509,35 +509,35 @@ make_hatch_mips(
 static void *
 make_hatch_ppc32(
     Elf32_Phdr const *const phdr,
-    ptrdiff_t reloc,
-    unsigned const frag_mask)
+    char *next_unc,
+    unsigned frag_mask)
 {
-    unsigned xprot = 0;
+    unsigned code[2] = {
+       0x44000002,  // sc
+       0x4e800020,  // blr
+     };
     unsigned *hatch = 0;
-    DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
+
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        if (
-        // Try page fragmentation just beyond .text .
-            ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
-                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  (2*4)<=(frag_mask & -(int)hatch) ) ) // space left on page
-        // Try Elf32_Ehdr.e_ident[8..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
-                (phdr->p_offset==0) )
-        // Allocate and use a new page.
-        ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_WRITE|PROT_READ,
-                MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
-        ) {
-            hatch[0] = 0x44000002;  // sc
-            hatch[1] = 0x4e800020;  // blr
-            if (xprot) {
-                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
-            }
+        next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        frag_mask &= -(long)next_unc;  // bytes left on page
+        if (2*4 <= frag_mask) {
+            hatch = (unsigned *)(void *)(~3ul & (long)(3+ next_unc));
+            hatch[0]= code[0];
+            hatch[1]= code[1];
+            // __clear_cache(&hatch[0], &hatch[2]);  // FIXME
         }
-        else {
-            hatch = 0;
+        else { // Does not fit at hi end of .text, so must use a new page "permanently"
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0);
+            unsigned mfd = -1+ (0xfff& fdmap);
+            write(mfd, &code, sizeof(code));
+            hatch = mmap((void *)(fdmap & ~0xffful), sizeof(code),
+                PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            close(mfd);
         }
     }
+    DPRINTF("hatch=%%p\\n", hatch);
     return hatch;
 }
 #endif  /*}*/

@@ -6,42 +6,84 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-TARGET(elf32-powerpc)
-                0x0000000000100080                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000100080     0x1fb8
+.rodata         0x0000000000000000        0x8
+ .rodata        0x0000000000000000        0x8 tmp/powerpc-linux.elf-main.o
+TARGET(elf32-powerpc)
+                0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
+
+.text           0x0000000000100040     0x2400
  *(.text)
- .text          0x0000000000100080      0x2a0 tmp/powerpc-linux.elf-fold.o
-                0x0000000000100318                f_expand
-                0x0000000000100080                get_page_mask
-                0x0000000000100310                munmap
-                0x00000000001002e0                readlink
-                0x00000000001002c8                ftruncate
-                0x00000000001002ac                mmap
-                0x00000000001002e8                write
-                0x00000000001002c0                memfd_create
-                0x00000000001002f0                read
-                0x0000000000100318                my_bkpt
-                0x0000000000100298                Pprotect
-                0x00000000001002d0                exit
-                0x00000000001002d8                brk
-                0x00000000001002f8                open
-                0x0000000000100308                mprotect
-                0x0000000000100300                close
- .text          0x0000000000100328     0x1d10 tmp/powerpc-linux.elf-main.o
-                0x0000000000101cfc                upx_main
+ .text          0x0000000000100040      0x2a0 tmp/powerpc-linux.elf-fold.o
+                0x0000000000100040                get_page_mask
+                0x00000000001002d0                munmap
+                0x00000000001002a0                readlink
+                0x0000000000100288                ftruncate
+                0x000000000010026c                mmap
+                0x00000000001002a8                write
+                0x0000000000100280                memfd_create
+                0x00000000001002b0                read
+                0x00000000001002d8                my_bkpt
+                0x0000000000100258                Pprotect
+                0x0000000000100290                exit
+                0x0000000000100298                brk
+                0x00000000001002b8                open
+                0x00000000001002c8                mprotect
+                0x00000000001002c0                close
+ .text          0x00000000001002e0      0x41c tmp/powerpc-linux.elf-upxfd_android.o
+                0x00000000001004f0                upx_mmap_and_fd
+ .text          0x00000000001006fc        0x0 tmp/powerpc-expand.o
+ .text          0x00000000001006fc     0x1d44 tmp/powerpc-linux.elf-main.o
+                0x0000000000102100                upx_main
  *(.data)
- .data          0x0000000000102038        0x0 tmp/powerpc-linux.elf-fold.o
- .data          0x0000000000102038        0x0 tmp/powerpc-linux.elf-main.o
+ .data          0x0000000000102440        0x0 tmp/powerpc-linux.elf-fold.o
+ .data          0x0000000000102440        0x0 tmp/powerpc-linux.elf-upxfd_android.o
+ .data          0x0000000000102440        0x0 tmp/powerpc-expand.o
+ .data          0x0000000000102440        0x0 tmp/powerpc-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000102038        0x0
- .bss           0x0000000000102038        0x0 tmp/powerpc-linux.elf-fold.o
- .bss           0x0000000000102038        0x0 tmp/powerpc-linux.elf-main.o
-
-.rela.dyn       0x0000000000102038        0x0
- .rela.text     0x0000000000000000        0x0 tmp/powerpc-linux.elf-fold.o
+.bss            0x0000000000000000        0x0
+ .bss           0x0000000000000000        0x0 tmp/powerpc-linux.elf-fold.o
+ .bss           0x0000000000000000        0x0 tmp/powerpc-linux.elf-upxfd_android.o
+ .bss           0x0000000000000000        0x0 tmp/powerpc-expand.o
+ .bss           0x0000000000000000        0x0 tmp/powerpc-linux.elf-main.o
 LOAD tmp/powerpc-linux.elf-fold.o
+LOAD tmp/powerpc-linux.elf-upxfd_android.o
+LOAD tmp/powerpc-expand.o
 LOAD tmp/powerpc-linux.elf-main.o
 OUTPUT(tmp/powerpc-linux.elf-fold.bin elf32-powerpc)
+
+.note.GNU-stack
+                0x0000000000000000        0x0
+ .note.GNU-stack
+                0x0000000000000000        0x0 tmp/powerpc-linux.elf-upxfd_android.o
+
+EXP_HEAD        0x0000000000000000       0xdc
+ EXP_HEAD       0x0000000000000000       0xdc tmp/powerpc-expand.o
+                0x0000000000000000                f_expand
+
+EXP_TAIL        0x0000000000000000       0x1c
+ EXP_TAIL       0x0000000000000000       0x1c tmp/powerpc-expand.o
+                0x0000000000000000                eof_nrv
+
+NRV2E           0x0000000000000000      0x148
+ NRV2E          0x0000000000000000      0x148 tmp/powerpc-expand.o
+
+NRV2D           0x0000000000000000      0x12c
+ NRV2D          0x0000000000000000      0x12c tmp/powerpc-expand.o
+
+NRV2B           0x0000000000000000       0xf0
+ NRV2B          0x0000000000000000       0xf0 tmp/powerpc-expand.o
+
+LZMA_ELF00      0x0000000000000000       0x90
+ LZMA_ELF00     0x0000000000000000       0x90 tmp/powerpc-expand.o
+
+LZMA_DEC10      0x0000000000000000      0x99c
+ LZMA_DEC10     0x0000000000000000      0x99c tmp/powerpc-expand.o
+
+LZMA_DEC20      0x0000000000000000      0x99c
+ LZMA_DEC20     0x0000000000000000      0x99c tmp/powerpc-expand.o
+
+LZMA_DEC30      0x0000000000000000       0x24
+ LZMA_DEC30     0x0000000000000000       0x24 tmp/powerpc-expand.o

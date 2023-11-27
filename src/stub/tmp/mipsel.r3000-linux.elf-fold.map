@@ -10,40 +10,69 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
+
+.rodata         0x0000000000000000        0xc
+ .rodata        0x0000000000000000        0xc tmp/mipsel.r3000-linux.elf-fold.o
 TARGET(elf32-littlemips)
                 0x0000000000100080                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000100080      0x1e0
+.text           0x0000000000100080     0x1cc0
  *(.text)
- .text          0x0000000000100080      0x1e0 tmp/mipsel.r3000-linux.elf-fold.o
-                0x0000000000100080                get_page_mask
-                0x0000000000100248                my_bkpt
-                0x0000000000100228                Pprotect
- .text          0x0000000000100260        0x0 tmp/mipsel.r3000-linux.elf-main.o
+ .text          0x0000000000100080     0x1cc0 tmp/mipsel.r3000-linux.elf-fold.o
+                0x0000000000100254                f_expand
+                0x0000000000100108                get_page_mask
+                0x000000000010036c                munmap
+                0x0000000000100344                getpid
+                0x0000000000101a0c                upx_mmap_and_fd
+                0x000000000010038c                readlink
+                0x00000000001002b4                mempcpy
+                0x000000000010033c                ftruncate
+                0x000000000010034c                lseek
+                0x00000000001002e8                mmap
+                0x000000000010028c                __clear_cache
+                0x00000000001002dc                mmap_privanon
+                0x0000000000100394                uname
+                0x00000000001003a4                write
+                0x0000000000100118                get_upxfn_path
+                0x0000000000100354                memfd_create
+                0x0000000000100384                read
+                0x000000000010039c                unlink
+                0x0000000000100294                memset
+                0x0000000000100280                my_bkpt
+                0x0000000000100260                Pprotect
+                0x0000000000100374                stat
+                0x0000000000100334                exit
+                0x00000000001016b8                upx_main
+                0x0000000000100324                brk
+                0x000000000010037c                open
+                0x0000000000100078                PAGE_MASK
+                0x0000000000100364                mprotect
+                0x000000000010035c                mkdir
+                0x000000000010032c                close
  *(.data)
- .data          0x0000000000100260        0x0 tmp/mipsel.r3000-linux.elf-fold.o
- .data          0x0000000000100260        0x0 tmp/mipsel.r3000-linux.elf-main.o
+ .data          0x0000000000101d40        0x0 tmp/mipsel.r3000-linux.elf-fold.o
 
 .data
 
-.bss            0x0000000000100260        0x0
- .bss           0x0000000000100260        0x0 tmp/mipsel.r3000-linux.elf-fold.o
- .bss           0x0000000000100260        0x0 tmp/mipsel.r3000-linux.elf-main.o
+.bss            0x0000000000101d40        0x0
+ .bss           0x0000000000101d40        0x0 tmp/mipsel.r3000-linux.elf-fold.o
 
-.rel.dyn        0x0000000000100260        0x0
+.rel.dyn        0x0000000000101d40        0x0
  .rel.dyn       0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-fold.o
 LOAD tmp/mipsel.r3000-linux.elf-fold.o
-LOAD tmp/mipsel.r3000-linux.elf-main.o
 OUTPUT(tmp/mipsel.r3000-linux.elf-fold.bin elf32-littlemips)
 
-.pdr            0x0000000000000000        0x0
- .pdr           0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-fold.o
+.reginfo        0x0000000000000000       0x18
+ .reginfo       0x0000000000000000       0x18 tmp/mipsel.r3000-linux.elf-fold.o
 
 .mdebug.eabi32  0x0000000000000000        0x0
  .mdebug.eabi32
-                0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-main.o
+                0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-fold.o
 
 .gcc_compiled_long32
                 0x0000000000000000        0x0
  .gcc_compiled_long32
-                0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-main.o
+                0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-fold.o
+
+.comment        0x0000000000000000       0x23
+ .comment       0x0000000000000000       0x23 tmp/mipsel.r3000-linux.elf-fold.o
