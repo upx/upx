@@ -273,7 +273,4 @@ my_bkpt: .globl my_bkpt
         teq r0,r0
         blr
 
-f_expand: .globl f_expand  // FIXME
-        teq r0,r0
-        blr
 /* vim:set ts=8 sw=8 et: */

@@ -2,56 +2,69 @@ file format elf32-bigmips
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags
-  0 ELFMAINX      08  0  0  034  2**0  CONTENTS
-  1 NRV2E         0154  0  0  03c  2**0  CONTENTS
-  2 NRV2D         0144  0  0  0190  2**0  CONTENTS
-  3 NRV2B         0128  0  0  02d4  2**0  CONTENTS
-  4 LZMA_ELF00    09c  0  0  03fc  2**0  CONTENTS
-  5 LZMA_DEC20    0ad8  0  0  0498  2**0  CONTENTS
-  6 LZMA_DEC10    0ad8  0  0  0f70  2**0  CONTENTS
-  7 LZMA_DEC30    04  0  0  01a48  2**0  CONTENTS
-  8 NRV_HEAD      010  0  0  01a4c  2**0  CONTENTS
-  9 NRV_TAIL      010  0  0  01a5c  2**0  CONTENTS
- 10 CFLUSH        024  0  0  01a6c  2**0  CONTENTS
- 11 ELFMAINY      02a  0  0  01a90  2**0  CONTENTS
- 12 ELFMAINZ      0124  0  0  01aba  2**0  CONTENTS
+  0 ELFMAINX      03e0  0  0  040  2**4  CONTENTS
+  1 .pdr          060  0  0  0420  2**2  CONTENTS
+  2 .mdebug.eabi32 0  0  0  0480  2**0  CONTENTS
+  3 .gcc_compiled_long32 0  0  0  0480  2**0  CONTENTS
 SYMBOL TABLE:
-00000000 l    d  NRV_TAIL 0 NRV_TAIL
-00000000 l    d  ELFMAINZ 0 ELFMAINZ
 00000000 l    d  ELFMAINX 0 ELFMAINX
-00000000 l    d  NRV2E 0 NRV2E
-00000000 l    d  NRV2D 0 NRV2D
-00000000 l    d  NRV2B 0 NRV2B
-00000000 l    d  LZMA_ELF00 0 LZMA_ELF00
-00000000 l    d  LZMA_DEC20 0 LZMA_DEC20
-00000000 l    d  LZMA_DEC10 0 LZMA_DEC10
-00000000 l    d  LZMA_DEC30 0 LZMA_DEC30
-00000000 l    d  NRV_HEAD 0 NRV_HEAD
-00000000 l    d  CFLUSH 0 CFLUSH
-00000000 l    d  ELFMAINY 0 ELFMAINY
-00000000 g     O ELFMAINX 0 _start
-00000000         *UND* 0 O_BINFO
+00000000 l    d  .pdr 0 .pdr
+00000000 l    d  .mdebug.eabi32 0 .mdebug.eabi32
+00000000 l    d  .gcc_compiled_long32 0 .gcc_compiled_long32
+00000000         *UND* 0 getpid
+000000a0 g     F ELFMAINX 0334 upx_mmap_and_fd
+00000000         *UND* 0 mempcpy
+00000000         *UND* 0 ftruncate
+00000000         *UND* 0 lseek
+00000000         *UND* 0 mmap
+00000000         *UND* 0 uname
+00000000         *UND* 0 write
+00000000         *UND* 0 get_upxfn_path
+00000000         *UND* 0 memfd_create
+00000000         *UND* 0 read
+00000000         *UND* 0 unlink
+00000000         *UND* 0 memset
+00000000         *UND* 0 stat
+00000000         *UND* 0 open
+00000000         *UND* 0 mkdir
 
 RELOCATION RECORDS FOR [ELFMAINX]:
 OFFSET   TYPE              VALUE
-00000000 R_MIPS_PC16       ELFMAINZ
+0000001c R_MIPS_26         ELFMAINX
+00000040 R_MIPS_26         stat
+00000068 R_MIPS_26         ELFMAINX
+00000080 R_MIPS_26         mkdir
+000000e4 R_MIPS_26         memfd_create
+000000fc R_MIPS_26         uname
+00000128 R_MIPS_26         get_upxfn_path
+00000178 R_MIPS_26         mempcpy
+00000188 R_MIPS_26         ELFMAINX
+000001b4 R_MIPS_26         open
+000001c4 R_MIPS_26         read
+00000200 R_MIPS_26         ELFMAINX
+00000220 R_MIPS_26         mempcpy
+00000230 R_MIPS_26         ELFMAINX
+00000250 R_MIPS_26         mempcpy
+00000260 R_MIPS_26         ELFMAINX
+00000280 R_MIPS_26         mempcpy
+00000288 R_MIPS_26         getpid
+00000294 R_MIPS_26         ELFMAINX
+000002a0 R_MIPS_26         ELFMAINX
+000002ac R_MIPS_26         ELFMAINX
+000002c4 R_MIPS_26         open
+000002d4 R_MIPS_26         ELFMAINX
+000002dc R_MIPS_26         unlink
+000002f8 R_MIPS_26         ftruncate
+00000308 R_MIPS_26         ELFMAINX
+00000314 R_MIPS_26         memset
+00000334 R_MIPS_26         write
+00000354 R_MIPS_26         lseek
+00000370 R_MIPS_26         mmap
+0000038c R_MIPS_26         ELFMAINX
+00000394 R_MIPS_26         ELFMAINX
 
-RELOCATION RECORDS FOR [NRV2E]:
+RELOCATION RECORDS FOR [.pdr]:
 OFFSET   TYPE              VALUE
-0000007c R_MIPS_PC16       NRV_TAIL
-
-RELOCATION RECORDS FOR [NRV2D]:
-OFFSET   TYPE              VALUE
-0000007c R_MIPS_PC16       NRV_TAIL
-
-RELOCATION RECORDS FOR [NRV2B]:
-OFFSET   TYPE              VALUE
-00000064 R_MIPS_PC16       NRV_TAIL
-
-RELOCATION RECORDS FOR [ELFMAINY]:
-OFFSET   TYPE              VALUE
-00000004 R_MIPS_PC16       ELFMAINZ
-
-RELOCATION RECORDS FOR [ELFMAINZ]:
-OFFSET   TYPE              VALUE
-00000120 R_MIPS_32         O_BINFO
+00000000 R_MIPS_32         ELFMAINX
+00000020 R_MIPS_32         ELFMAINX
+00000040 R_MIPS_32         upx_mmap_and_fd

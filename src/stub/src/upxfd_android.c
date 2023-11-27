@@ -35,6 +35,7 @@ void my_bkpt(void const *, ...);
 })
 #elif defined(__powerpc__)  /*}{*/
 #define addr_string(string) ({ \
+    char const *str; \
     asm("bl 0f; .asciz \"" string "\"; .balign 4; 0: mflr %0" \
 /*out*/ : "=r"(str) \
 /* in*/ : \

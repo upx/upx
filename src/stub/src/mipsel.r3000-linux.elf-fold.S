@@ -297,6 +297,30 @@ __clear_cache: .globl __clear_cache
         j ra
           nop
 
+memset: .globl memset  // (dst, val, n)
+        beqz a2,9f
+          move v0,a0
+0:
+        sb a1,(a0)
+        addiu a2,a2,#-1
+        bnez a2,0b
+          addiu a0,a0,#1
+9:
+        j ra
+          nop
+
+mempcpy: .globl mempcpy  // (dst, src, n)
+        beq $0,a2,9f
+          nop
+0:
+        lb at,(a1); addiu a1,a1,#1
+        sb at,(a0); addiu a2,a2,#-1
+        bnez a2,0b
+          addiu a0,a0,#1
+9:
+        j ra
+          move v0,a0
+
 mmap_privanon: .globl mmap_privanon
         ori a3,a3,MAP_PRIVATE|MAP_ANONYMOUS
         li t0,-1  # fd
@@ -341,8 +365,8 @@ mprotect: .globl mprotect
         b sysgo; li v0,__NR_mprotect
 munmap: .globl munmap
         b sysgo; li v0,__NR_munmap
-oldstat: .globl oldstat
-        b sysgo; li v0,__NR_oldstat
+stat: .globl stat
+        b sysgo; li v0,__NR_oldstat  // WARNING: oldstat
 open: .globl open
         b sysgo; li v0,__NR_open
 read: .globl read
