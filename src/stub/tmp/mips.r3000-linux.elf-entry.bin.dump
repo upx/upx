@@ -18,12 +18,12 @@ SYMBOL TABLE:
 00000000         *UND* 0 lseek
 00000000         *UND* 0 mmap
 00000000         *UND* 0 uname
+00000000         *UND* 0 my_memset
 00000000         *UND* 0 write
 00000000         *UND* 0 get_upxfn_path
 00000000         *UND* 0 memfd_create
 00000000         *UND* 0 read
 00000000         *UND* 0 unlink
-00000000         *UND* 0 memset
 00000000         *UND* 0 stat
 00000000         *UND* 0 open
 00000000         *UND* 0 mkdir
@@ -56,7 +56,7 @@ OFFSET   TYPE              VALUE
 000002dc R_MIPS_26         unlink
 000002f8 R_MIPS_26         ftruncate
 00000308 R_MIPS_26         ELFMAINX
-00000314 R_MIPS_26         memset
+00000314 R_MIPS_26         my_memset
 00000334 R_MIPS_26         write
 00000354 R_MIPS_26         lseek
 00000370 R_MIPS_26         mmap

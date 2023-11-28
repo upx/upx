@@ -320,13 +320,12 @@ write: .globl write
 // __NR_oldmmap gets ENOSYS!  Must use __NR_mmap64 with all args in registers
 // Called from C, so must preserve r4 and r5
 mmap: .globl mmap
-        stmdb sp!,{r4,r5}
-        ldr r4,[sp,#2*NBPW]
-        ldr r5,[sp,#3*NBPW]  // lo32 of offset; where is hi32?
+        stmdb sp!,{r4,r5,lr}
+        ldr r4,[sp,#3*NBPW]
+        ldr r5,[sp,#4*NBPW]  // lo32 of offset; where is hi32?
         mov r5,r5,lsr #12  // FIXME page number in file
         do_sys __NR_mmap64
-        ldmia sp!,{r4,r5}
-        ret
+        ldmia sp!,{r4,r5,pc}
 
 // IDENTSTR goes here
 
