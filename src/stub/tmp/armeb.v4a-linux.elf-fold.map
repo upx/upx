@@ -16,8 +16,8 @@ TARGET(elf32-bigarm)
                 0x0000000000008304                mempcpy
                 0x000000000000809c                mmap
                 0x0000000000008084                mmap_privanon
+                0x00000000000082ec                my_memset
                 0x0000000000008050                get_upxfn_path
-                0x00000000000082ec                memset
                 0x0000000000008068                Pprotect
                 0x0000000100008034                PAGE_MASK
                 0x0000000000008068                mprotect

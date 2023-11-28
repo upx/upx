@@ -15,8 +15,8 @@ TARGET(elf32-littlearm)
                 0x00000000000002c4                mempcpy
                 0x000000000000005c                mmap
                 0x0000000000000044                mmap_privanon
+                0x00000000000002ac                my_memset
                 0x0000000000000010                get_upxfn_path
-                0x00000000000002ac                memset
                 0x0000000000000028                Pprotect
                 0x00000000fffffff4                PAGE_MASK
                 0x0000000000000028                mprotect

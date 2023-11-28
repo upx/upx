@@ -16,7 +16,7 @@ SYMBOL TABLE:
 00000278 g       ELFMAINX 0 lseek
 000002c0 g       ELFMAINX 0 mmap
 000002a0 g       ELFMAINX 0 uname
-00000000         *UND* 0 my_memset
+0000022c g       ELFMAINX 0 my_memset
 000002b8 g       ELFMAINX 0 write
 00000260 g       ELFMAINX 0 fstat
 00000140 g       ELFMAINX 0 get_upxfn_path
@@ -24,7 +24,6 @@ SYMBOL TABLE:
 00000004 g       ELFMAINX 0 _start
 00000290 g       ELFMAINX 0 read
 000002b0 g       ELFMAINX 0 unlink
-0000022c g       ELFMAINX 0 memset
 00000148 g     F ELFMAINX 0dc ucl_nrv2b_decompress_8
 00000224 g       ELFMAINX 0 my_bkpt
 00000298 g       ELFMAINX 0 stat

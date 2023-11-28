@@ -318,8 +318,7 @@ get_upxfn_path: .globl get_upxfn_path
         sub %eax,%eax  // should not be called!
         ret
 
-#if 0  //{
-memset: .globl memset  // (dst, val, n)
+my_memset: .globl my_memset  // (dst, val, n)
         push %ebp; mov %esp,%ebp
         push %edi
         mov (2+ 2)*NBPW(%ebp),%ecx
@@ -329,7 +328,6 @@ memset: .globl memset  // (dst, val, n)
         pop %edi
         pop %ebp
         ret
-#endif  //}
 
 mempcpy: .globl mempcpy  // (dst, src, n)
         push %ebp; mov %esp,%ebp

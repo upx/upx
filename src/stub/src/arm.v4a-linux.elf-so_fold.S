@@ -405,10 +405,11 @@ underlay: .globl underlay // (unsigned size, char *ptr, unsigned ulen, unsigned 
     .unreq ulen
     .unreq pflg
 
-memset: .globl memset  // void *memset(void *s, int c, size_t n);
+my_memset: .globl my_memset  // void *memset(void *s, int c, size_t n);
+0:
         tst r2,r2; moveq pc,lr
         strb r1,[r0],#1; subs r2,r2,#1
-        bgt memset
+        bgt 0b
         ret
 
 my_alloca: .globl my_alloca

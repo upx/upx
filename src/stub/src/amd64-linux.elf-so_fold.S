@@ -72,7 +72,7 @@ my_bkpt: .globl my_bkpt
         int3  // my_bkpt
         ret
 
-memset: .globl memset  // void *memset(void *s, int c, size_t n);
+my_memset: .globl my_memset  // void *memset(void *s, int c, size_t n);
     push %rdi  // result = dst
     mov %esi,%eax  // c
     mov %edx,%ecx  // n

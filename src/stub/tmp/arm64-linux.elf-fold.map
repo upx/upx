@@ -10,35 +10,35 @@ Linker script and memory map
 
 .text           0x00000000001000bc      0xb78
  *(.text)
- .text          0x00000000001000bc      0x2f4 tmp/arm64-linux.elf-fold.o
-                0x0000000000100284                my_bkpt
-                0x000000000010028c                exit
-                0x0000000000100294                ftruncate
-                0x00000000001002a0                memfd_create
-                0x00000000001002ac                read
-                0x00000000001002b8                write
-                0x00000000001002b8                Pwrite
-                0x00000000001002c4                close
-                0x00000000001002d0                getpid
-                0x00000000001002dc                brk
-                0x00000000001002e8                munmap
-                0x00000000001002e8                Punmap
-                0x0000000000100300                Pprotect
-                0x0000000000100300                mprotect
-                0x0000000000100318                mmap_privanon
-                0x0000000000100328                Pmap
-                0x0000000000100328                mmap
-                0x0000000000100340                unlink
-                0x0000000000100354                readlink
-                0x000000000010035c                open
-                0x0000000000100378                memcpy
-                0x000000000010038c                memset
-                0x000000000010039c                __clear_cache
- .text          0x00000000001003b0      0x884 tmp/arm64-linux.elf-main.o
-                0x0000000000100564                underlay
-                0x00000000001005d0                PF_TO_PROT
-                0x0000000000100af0                upx_main
- .text          0x0000000000100c34        0x0 tmp/arm64-expand.o
+ .text          0x00000000001000bc      0x2fc tmp/arm64-linux.elf-fold.o
+                0x000000000010028c                my_bkpt
+                0x0000000000100294                exit
+                0x000000000010029c                ftruncate
+                0x00000000001002a8                memfd_create
+                0x00000000001002b4                read
+                0x00000000001002c0                write
+                0x00000000001002c0                Pwrite
+                0x00000000001002cc                close
+                0x00000000001002d8                getpid
+                0x00000000001002e4                brk
+                0x00000000001002f0                munmap
+                0x00000000001002f0                Punmap
+                0x0000000000100308                Pprotect
+                0x0000000000100308                mprotect
+                0x0000000000100320                mmap_privanon
+                0x0000000000100330                Pmap
+                0x0000000000100330                mmap
+                0x0000000000100348                unlink
+                0x000000000010035c                readlink
+                0x0000000000100364                open
+                0x0000000000100380                memcpy
+                0x0000000000100394                my_memset
+                0x00000000001003a4                __clear_cache
+ .text          0x00000000001003b8      0x884 tmp/arm64-linux.elf-main.o
+                0x000000000010056c                underlay
+                0x00000000001005d8                PF_TO_PROT
+                0x0000000000100af8                upx_main
+ .text          0x0000000000100c3c        0x0 tmp/arm64-expand.o
  *(.data)
  .data          0x0000000000100c34        0x0 tmp/arm64-linux.elf-fold.o
  .data          0x0000000000100c34        0x0 tmp/arm64-linux.elf-main.o
