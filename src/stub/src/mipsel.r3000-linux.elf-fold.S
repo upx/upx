@@ -297,7 +297,7 @@ __clear_cache: .globl __clear_cache
         j ra
           nop
 
-memset: .globl memset  // (dst, val, n)
+my_memset: .globl my_memset  // (dst, val, n)
         beqz a2,9f
           move v0,a0
 0:

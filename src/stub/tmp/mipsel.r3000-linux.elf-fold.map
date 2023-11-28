@@ -32,12 +32,12 @@ TARGET(elf32-littlemips)
                 0x000000000010028c                __clear_cache
                 0x00000000001002dc                mmap_privanon
                 0x0000000000100394                uname
+                0x0000000000100294                my_memset
                 0x00000000001003a4                write
                 0x0000000000100118                get_upxfn_path
                 0x0000000000100354                memfd_create
                 0x0000000000100384                read
                 0x000000000010039c                unlink
-                0x0000000000100294                memset
                 0x0000000000100280                my_bkpt
                 0x0000000000100260                Pprotect
                 0x0000000000100374                stat

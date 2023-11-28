@@ -26,12 +26,12 @@ Linker script and memory map
                 0x000000000000020c                __clear_cache
                 0x000000000000025c                mmap_privanon
                 0x0000000000000314                uname
+                0x0000000000000214                my_memset
                 0x0000000000000324                write
                 0x0000000000000098                get_upxfn_path
                 0x00000000000002d4                memfd_create
                 0x0000000000000304                read
                 0x000000000000031c                unlink
-                0x0000000000000214                memset
                 0x0000000000000200                my_bkpt
                 0x00000000000001e0                Pprotect
                 0x00000000000002f4                stat

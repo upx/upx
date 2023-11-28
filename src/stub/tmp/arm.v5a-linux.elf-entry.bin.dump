@@ -16,6 +16,7 @@ SYMBOL TABLE:
 000002c4 g       ELFMAINX 0 lseek
 00000384 g       ELFMAINX 0 mmap
 00000328 g       ELFMAINX 0 uname
+00000000         *UND* 0 my_memset
 00000370 g       ELFMAINX 0 write
 00000288 g       ELFMAINX 0 fstat
 00000150 g       ELFMAINX 0 get_upxfn_path
@@ -108,7 +109,7 @@ OFFSET   TYPE              VALUE
 0000063c R_ARM_PC24        ftruncate
 00000644 R_ARM_PC24        ELFMAINX
 00000648 R_ARM_PC24        ELFMAINX
-00000658 R_ARM_PC24        memset
+00000658 R_ARM_PC24        my_memset
 00000674 R_ARM_PC24        write
 0000067c R_ARM_PC24        ELFMAINX
 00000688 R_ARM_PC24        ELFMAINX

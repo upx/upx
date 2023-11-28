@@ -347,6 +347,8 @@ type name(type1 arg1,type2 arg2,type3 arg3) \
 
 struct stat;
 struct utsname;
+void *my_memset(void *dst, unsigned val, unsigned length);
+
 static inline _syscall2(int,access,const char *,file,int,mode)
 static inline _syscall1(int,adjtimex,struct timex *,ntx)
 static inline _syscall1(void *,brk,void *,high)
@@ -378,17 +380,23 @@ static inline _syscall2(int,link,const char *,src, const char *,dst)
 
 #else  /*}{ generic */
 
+struct stat;
+void *my_memset(void *dst, unsigned val, unsigned length);
+
 void *brk(void *);
 int close(int);
 void exit(int) __attribute__((__noreturn__,__nothrow__));
 int ftruncate(int fd, size_t len);
+unsigned getpid(void);
 off_t lseek(int fd, off_t offset, int whence);
 int memfd_create(char const *, unsigned);
+int mkdir(char const *path, unsigned mode);
 int munmap(void *, size_t);
 int mprotect(void const *, size_t, int);
 int open(char const *, unsigned, unsigned);
 int openat(int fd, char const *, unsigned, unsigned);
 ssize_t read(int, void *, size_t);
+int stat(char const *path, struct stat *statbuf);
 int unlink(char const *);
 ssize_t write(int, void const *, size_t);
 
