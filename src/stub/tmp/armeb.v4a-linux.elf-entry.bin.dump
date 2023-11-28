@@ -13,7 +13,7 @@ SYMBOL TABLE:
 00000140 g       ELFMAINX 0 get_upxfn_path
 00000148 g     F ELFMAINX 0dc ucl_nrv2b_decompress_8
 00000224 g       ELFMAINX 0 my_bkpt
-0000022c g       ELFMAINX 0 memset
+0000022c g       ELFMAINX 0 my_memset
 00000244 g       ELFMAINX 0 mempcpy
 00000260 g       ELFMAINX 0 fstat
 00000268 g       ELFMAINX 0 ftruncate

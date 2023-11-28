@@ -53,8 +53,7 @@ get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
         //  pop %ebp
         //  ???
 
-#if 0  //{
-memset: .globl memset  // (dst, val, n)
+my_memset: .globl my_memset  // (dst, val, n)
         push %ebp; mov %esp,%ebp
         push %edi
         mov (2+ 2)*NBPW(%ebp),%ecx
@@ -64,7 +63,6 @@ memset: .globl memset  // (dst, val, n)
         pop %edi
         pop %ebp
         ret
-#endif  //}
 
 mempcpy: .globl mempcpy  // (dst, src, n)
         push %ebp; mov %esp,%ebp
@@ -106,16 +104,6 @@ eof:  // end of a compressed extent
 my_bkpt: .globl my_bkpt
         int3
         ret
-
-#if 0  //{
-memset: .globl memset  // void *memset(void *s, int c, size_t n);
-    push %edi  // result = dst
-    mov %esi,%eax  // c
-    mov %edx,%ecx  // n
-    rep; stosb
-    pop %eax  // result
-    ret
-#endif  //}
 
 memcpy: .globl memcpy  // void (memcpy(void *dst, void const *src, size_t len)
                    pop %ecx  // ret_addr

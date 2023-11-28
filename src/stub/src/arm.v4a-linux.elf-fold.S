@@ -387,7 +387,7 @@ hex:
         .unreq cto
         .unreq fid
 
-memset: .globl memset  // (dst, val, n)
+my_memset: .globl my_memset  // (dst, val, n)
         cmp r2,#0; beq 9f
 0:
         strb r1,[r0],#1

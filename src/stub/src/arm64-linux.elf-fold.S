@@ -545,10 +545,11 @@ memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t len)
         bgt memcpy
         ret
 
-memset: .globl memset  // void *memset(void *dst, int c, size_t len);
+my_memset: .globl my_memset  // void *memset(void *dst, int c, size_t len);
+0:
         strb w1,[x0],#1
         subs x2,x2,#1
-        bgt memset
+        bgt 0b
         ret
 
         .globl __clear_cache
