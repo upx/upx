@@ -7264,7 +7264,9 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     }
 
     fi->seek(overlay_offset - sizeof(l_info), SEEK_SET);
-    fi->readx(&linfo, sizeof(linfo));
+                  fi->readx(&linfo, sizeof(linfo)); lsize = get_te16(&linfo.l_lsize);
+    p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
+    b_info bhdr; memset(&bhdr, 0, sizeof(bhdr)); fi->readx(&bhdr, szb_info);
     if (UPX_MAGIC_LE32 != get_le32(&linfo.l_magic)) {
         NE32 const *const lp = (NE32 const *)(void const *)&linfo;
         // Workaround for bug of extra linfo by some asl_pack2_Shdrs().
@@ -7277,12 +7279,32 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                 throwCantUnpack("l_info corrupted");
             }
         }
-        else {
-            throwCantUnpack("l_info corrupted");
+        else { // l_info corrupted, but try to defeat some obfuscators
+            if (UPX_F_LINUX_ELF64_AMD64 == linfo.l_format
+            &&  Elf64_Ehdr::ET_EXEC == ehdri.e_type
+            &&  getVersion() >= linfo.l_version
+            &&  lsize < 0xe00  // heuristic
+            &&  lsize > 0x400) {
+                upx_uint64_t e_entry = get_te64(&ehdri.e_entry);
+                upx_uint64_t d = e_entry - get_te64(&phdri->p_vaddr);
+                if (d < get_te64(&phdri->p_filesz)) {
+                    d += get_te64(&phdri->p_offset);
+                    unsigned buf[4];
+                    fi->seek(d - 4, SEEK_SET);
+                    fi->readx(&buf, sizeof(buf));
+                    if ((d - 4) == buf[0]  // sz_pack2 matches
+                    &&  0x00e85250 == (0x00ffffff & get_le32(&buf[1]))) {
+                        // push %rax; push %rdx; call ...
+                        // Looks like beginning of stub, so force continue
+                        infoWarning("recovering hacked l_info at %#zx", (size_t)overlay_offset);
+                        fi->seek(overlay_offset + sizeof(p_info) + sizeof(b_info), SEEK_SET);
+                    } else
+                        throwCantUnpack("l_info corrupted");
+                }
+            } else
+                throwCantUnpack("l_info corrupted");
         }
     }
-    lsize = get_te16(&linfo.l_lsize);
-    p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
     if ((u32_t)file_size > orig_file_size || blocksize > orig_file_size
@@ -7290,8 +7312,6 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         throwCantUnpack("p_info corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
-    b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
-    fi->readx(&bhdr, szb_info);
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
     if (ph.c_len > (unsigned)file_size || ph.c_len == 0 || ph.u_len == 0

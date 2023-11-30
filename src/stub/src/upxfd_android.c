@@ -9,6 +9,7 @@
 void my_bkpt(void const *, ...);
 
 #if defined(__i386__) //}{
+#define ANDROID_FRIEND 1
 #define addr_string(string) ({ \
     char const *str; \
     asm("call 0f; .asciz \"" string "\"; 0: pop %0" \
@@ -16,6 +17,7 @@ void my_bkpt(void const *, ...);
     str; \
 })
 #elif defined(__arm__) //}{
+#define ANDROID_FRIEND 1
 #define addr_string(string) ({ \
     char const *str; \
     asm("bl 0f; .string \"" string "\"; .balign 4; 0: mov %0,lr" \
@@ -25,6 +27,7 @@ void my_bkpt(void const *, ...);
     str; \
 })
 #elif defined(__mips__) //}{
+#define ANDROID_FRIEND 0
 #define addr_string(string) ({ \
     char const *str; \
     asm("bal 0f; .asciz \"" string "\"; .balign 4\n0: move %0,$31" \
@@ -34,6 +37,7 @@ void my_bkpt(void const *, ...);
     str; \
 })
 #elif defined(__powerpc__)  /*}{*/
+#define ANDROID_FRIEND 0
 #define addr_string(string) ({ \
     char const *str; \
     asm("bl 0f; .asciz \"" string "\"; .balign 4; 0: mflr %0" \
@@ -42,7 +46,36 @@ void my_bkpt(void const *, ...);
 /*und*/ : "lr"); \
     str; \
 })
+#elif defined(__powerpc64__) //}{
+#define ANDROID_FRIEND 0
+#define addr_string(string) ({ \
+    char const *str; \
+    asm("bl 0f; .string \"" string "\"; .balign 4; 0: mflr %0" \
+/*out*/ : "=r"(str) \
+/* in*/ : \
+/*und*/ : "lr"); \
+    str; \
+})
+#elif defined(__x86_64) //}{
+#define ANDROID_FRIEND 0
+#define addr_string(string) ({ \
+    char const *str; \
+    asm("call 0f; .asciz \"" string "\"; 0: pop %0" \
+/*out*/ : "=r"(str) ); \
+    str; \
+})
+#elif defined(__aarch64__) //}{
+#define ANDROID_FRIEND 0
+#define addr_string(string) ({ \
+    char const *str; \
+    asm("bl 0f; .string \"" string "\"; .balign 4; 0: mov %0,x30" \
+/*out*/ : "=r"(str) \
+/* in*/ : \
+/*und*/ : "x30"); \
+    str; \
+})
 #else  //}{
+#define ANDROID_FRIEND 0
 #error  addr_string
 #endif  //}
 
@@ -88,6 +121,8 @@ extern int fstatat(int dirfd, const char *restrict pathname,
 #define ENOENT 2   /* no such name */
 #define ENOSPC 28  /* no space left on device */
 #define ENOSYS 38  /* no such system call */
+
+#if ANDROID_FRIEND  //{
 
 __attribute__((__noinline__))
 static int dir_check(char const *path)
@@ -188,6 +223,8 @@ struct utsname;
 extern int uname(struct utsname *);
 extern char * get_upxfn_path(void);
 
+#endif  //}  ANDROID_FRIEND
+
 unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
     void *ptr,  // desired address
     unsigned datlen,  // mapped length
@@ -197,6 +234,7 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
     unsigned long addr = 0;  // for result
     int fd = memfd_create(addr_string("upx"), 0);  // might be -ENOSYS on early 32-bit Android
 
+#if ANDROID_FRIEND  //{
     // Varying __NR_ftruncate on Android can hurt even if memfd_create() succeeds.
     // On Linux, struct utsname has 6 arrays of size 257; but size can be larger.
 #define BUFLEN 4096
@@ -223,6 +261,10 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
         }
         unlink(pathname);
     }
+#else  //}{
+    int is_android = 0;
+    (void)pathname;
+#endif  //}
 
     // Set the file length
     if (datlen) {
@@ -232,6 +274,7 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
                 return rv;
             }
         }
+#if ANDROID_FRIEND  //{
         else { // is_android: ftruncate has varying system call number on 32-bit
             extern void *my_memset(void *dst, unsigned val, unsigned len);
             my_memset(buf, 0, BUFLEN);
@@ -245,6 +288,7 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
             }
             lseek(fd, 0, SEEK_SET);  // go back to the beginning
         }
+#endif  //}
 
         // Map the file pages
         addr = (unsigned long)mmap(ptr, datlen, PROT_WRITE | PROT_READ,
