@@ -15,7 +15,7 @@ the value that is manipulated by system call 45 (__NR_brk in
 there will be no execve() except for the execve() of the decompressor
 program itself.  So, the decompressor program (which contains the
 compressed version of the original executable) must have the same
-brk() as the original executable.  So, the second PT_LOAD
+brk() as the original executable.  So, the first PT_LOAD
 ELF "segment" of the compressed program is used only to set the brk(0).
 See src/p_lx_elf.cpp, function PackLinuxElf32::generateElfHdr.
 All of the decompressor's code, and all of the compressed image
@@ -25,35 +25,27 @@ decompressor program.
 The decompressor program stub is just under 2K bytes when linked.
 After linking, the decompressor code is converted to an initialized
 array, and #included into the compilation of the compressor;
-see src/stub/l_le_n2b.h.  To make self-contained compressed
+see stub/i386-linux.elf-entry.h.  To make self-contained compressed
 executables even smaller, the compressor also compresses all but the
 startup and decompression subroutine of the decompressor itself,
 saving a few hundred bytes.  The startup code first decompresses the
 rest of the decompressor, then jumps to it.  A nonstandard linker
-script src/stub/l_lx_elf86.lds places both the .text and .data
-of the decompressor into the same PT_LOAD at 0x00401000.  The
-compressor includes the compressed bytes of the original executable
-at the end of this first PT_LOAD.
+script src/stub/src/i386-linux.elf-entry.lds arranges the SECTIONS
+so that PackLinuxElf32x86::buildLoader() and buildLinuxLoader()
+generate the desired stub code, which goes into PT_LOAD[1].
 
-At runtime, the decompressed stub lives at 0x00400000.  In order for the
-decompressed stub to work properly at an address that is different
-from its link-time address, the compiled code must contain no absolute
-addresses.  So, the data items in l_lx_elf.c must be only parameters
-and automatic (on-stack) local variables; no global data, no static data,
-and no string constants.  Use "size l_le_n2b.o l_6e_n2b.o" to check
-that both data and bss have length zero.  Also, the '&' operator
-may not be used to take the address of a function.
-
-The address  0x00400000 was chosen to be out of the way of the usual
-load address 0x08048000, and to minimize fragmentation in kernel
-page tables; one page of page tables covers 4 MiB. The address
-0x00401000 was chosen as 1 page up from a 64 KiB boundary, to
-make the startup code and its constants smaller.
+At runtime, the decompressed stub lives close beyond the brk().
+In order for the decompressed stub to work properly at an address
+that is different from its link-time address, the compiled code must
+contain no absolute addresses.  So, the data items in stub code
+must be only parameters and automatic (on-stack) local variables;
+no global data, no static data, and no string constants.  Also,
+the '&' operator may not be used to take the address of a function.
 
 Decompression of the executable begins by decompressing the Elf32_Ehdr
-and Elf32_Phdr, and then uses the Ehdr and Phdrs to control decompression
-of the PT_LOAD segments.
-Subroutine do_xmap() of src/stub/l_lx_elf.c performs the
+and Elf32_Phdr, and then uses those Ehdr and Phdrs to control decompression
+of the PT_LOAD segments.  Subroutine do_xmap() of src/stub/src/
+i386-linux.elf-main.c performs the
 "virtual execve()" using the compressed data as source, and stores
 the decompressed bytes directly into the appropriate virtual addresses.
 
@@ -74,22 +66,17 @@ expanding $ORIGIN in -rpath, or for application code that relies on
 --unmap-all-pages to achieve that effect at run time.  Upx-3.04
 and previous versions did this by default with no option.  However,
 too much other software erroneously assumes that /proc/self/exe
-always exists.
+always exists.  upx-4.3.0 made /proc/self/exe optional so that
+chroot() and related environments can work.
+For Elf formats, UPX adds an environment variable named "   " [three
+spaces] which saves the results of readlink("/proc/self/exe",,)
+If /proc/self/exe is ENOENT, then the variable has the same value
+as its name "/proc/self/exe".
 
-On arm*-linux-elf there is no good address at which to retain one
-page of the compressed executable.  Pages below the usual .p_vaddr
-0x8000 (32KiB) are rejected by the kernel.  Using a page above the
-original uncompressed brk(0) would require placing the entire initial
-compressed program above uncompressed brk(0), which would significantly
-increase the running brk(0); but too many programs break if brk(0)
-moves.  Thus on arm*-linux-elf the compressed executable begins
-with 0x8000==.p_vaddr, all pages mapped by execve() that are also
-occupied by decompressed bytes are removed before overwriting, and
-/proc/self/exe becomes a "(deleted)" symlink.  It might be possible
-to preserve /proc/self/exe if the original uncompressed executable
-were created with 0x9000==.p_vaddr (one page higher than the usual
-0x8000) so that the compressed page mapped at 0x8000 would linger.
-[This has not been tested.]
+All of the above documentation refers to ET_EXEC main programs,
+which always use the same virtual addresses.  An ET_DYN executable
+(main program or shared library) follows much the same scheme,
+re-using the address space that the kernel chose originally.
 
 Linux stores the pathname argument that was specified to execve()
 immediately after the '\0' which terminates the character string of the
@@ -99,9 +86,24 @@ records a pointer to that character string in Elf32_auxv[AT_EXECFN].
 The pathname is not "bound" to the file as strongly as /proc/self/exe
 (the file may be changed without affecting the pathname), but the
 pathname does provide some information.  The pathname may be relative
-to the working directory, so look before any chdir().
+to the working directory, so look before performing any chdir().
 
-The Elf formats for Linux add an environment variable named "   " [three
-spaces] which saves the results of readlink("/proc/self/exe",,) before
-the runtime stub unmaps all its pages.  As of 2006-10-03 this works
-for linux/elf386 and linux/ElfAMD.
+On any page, then SELinux in strictest enforcing mode prohibits
+simultaneous PROT_EXEC and PROT_WRITE, and also prohibits adding
+PROT_EXEC if the kernel VMA struct (Virtual Memory Area struct)
+that manages that page ever has had PROT_WRITE.  This implies that
+the only way to get PROT_EXEC is to map the page directly from a file.
+Therefore, in late 2023 the various decompression stubs are being
+rewritten to "bounce" the decompressed data through pages in a
+memory-resident file created by the memfd_create() system call,
+and subsequently mapped PROT_EXEC.  Actual copying of the pages
+can be avoided by careful sequence mmap() modes, but the overhead
+of an additional system call is required.
+
+The not-as-strict "targeted enforcing" mode of
+SELinux seems not to demand this extra work, except for executables
+that run with elevated privileges, such as various system daemons.
+So "ordinary" user-mode apps can run in current "targeted enforcing"
+mode.  But because the actual runtime mode of SELinux is unknown
+at compression time, then the memfd_create method should be used
+all the time.
