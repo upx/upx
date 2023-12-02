@@ -138,7 +138,8 @@ PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const O
                                         void *user) may_throw {
 #define D(Klass)                                                                                   \
     do {                                                                                           \
-        COMPILE_TIME_ASSERT(std::is_nothrow_destructible_v<Klass>)                                 \
+        static_assert(std::is_class_v<Klass>);                                                     \
+        static_assert(std::is_nothrow_destructible_v<Klass>);                                      \
         auto pb = std::unique_ptr<PackerBase>(new Klass(f));                                       \
         if (o->debug.debug_level)                                                                  \
             fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", pb->getVersion(),           \

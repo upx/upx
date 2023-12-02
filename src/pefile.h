@@ -383,7 +383,7 @@ protected:
     };
 
     class Reloc final : private noncopyable {
-        // these are set in constructor
+        // these are set in the constructor:
         byte *start = nullptr;
         unsigned start_size_in_bytes = 0;
         bool start_did_alloc = false;

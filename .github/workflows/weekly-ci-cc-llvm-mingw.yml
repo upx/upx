@@ -27,12 +27,12 @@ jobs:
           - name: llvm-mingw-20230614-ucrt
             llvm_version: 16.0.6
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20230614/llvm-mingw-20230614-ucrt-ubuntu-20.04-x86_64.tar.xz'
-          - name: llvm-mingw-20231114-msvcrt
-            llvm_version: 17.0.5
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20231114/llvm-mingw-20231114-msvcrt-ubuntu-20.04-x86_64.tar.xz'
-          - name: llvm-mingw-20231114-ucrt
-            llvm_version: 17.0.5
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20231114/llvm-mingw-20231114-ucrt-ubuntu-20.04-x86_64.tar.xz'
+          - name: llvm-mingw-20231128-msvcrt
+            llvm_version: 17.0.6
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20231128/llvm-mingw-20231128-msvcrt-ubuntu-20.04-x86_64.tar.xz'
+          - name: llvm-mingw-20231128-ucrt
+            llvm_version: 17.0.6
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20231128/llvm-mingw-20231128-ucrt-ubuntu-20.04-x86_64.tar.xz'
     name: ${{ format('{0} {1}', matrix.name, matrix.llvm_version) }}
     runs-on: ubuntu-latest
     steps:

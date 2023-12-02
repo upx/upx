@@ -753,6 +753,24 @@ inline unsigned UPX_MIN(const LE32 &a, unsigned b) { return UPX_MIN(unsigned(a),
 // misc support
 **************************************************************************/
 
+// <type_traits> upx_is_integral; see conf.h
+#define TT_UPX_IS_INTEGRAL(T)                                                                      \
+    template <>                                                                                    \
+    struct upx_is_integral<T> : public std::true_type {};                                          \
+    template <>                                                                                    \
+    struct upx_is_integral<const T> : public std::true_type {};                                    \
+    template <>                                                                                    \
+    struct upx_is_integral<volatile T> : public std::true_type {};                                 \
+    template <>                                                                                    \
+    struct upx_is_integral<const volatile T> : public std::true_type {}
+TT_UPX_IS_INTEGRAL(BE16);
+TT_UPX_IS_INTEGRAL(BE32);
+TT_UPX_IS_INTEGRAL(BE64);
+TT_UPX_IS_INTEGRAL(LE16);
+TT_UPX_IS_INTEGRAL(LE32);
+TT_UPX_IS_INTEGRAL(LE64);
+#undef TT_UPX_IS_INTEGRAL
+
 // native types
 #if (ACC_ABI_BIG_ENDIAN)
 typedef BE16 NE16;
@@ -775,24 +793,6 @@ typedef LE64 NE64;
 #define ne32_compare_signed le32_compare_signed
 #define ne64_compare_signed le64_compare_signed
 #endif
-
-// <type_traits> upx_is_integral
-#define TT_IS_INTEGRAL(T)                                                                          \
-    template <>                                                                                    \
-    struct upx_is_integral<T> : public std::true_type {};                                          \
-    template <>                                                                                    \
-    struct upx_is_integral<const T> : public std::true_type {};                                    \
-    template <>                                                                                    \
-    struct upx_is_integral<volatile T> : public std::true_type {};                                 \
-    template <>                                                                                    \
-    struct upx_is_integral<const volatile T> : public std::true_type {}
-TT_IS_INTEGRAL(BE16);
-TT_IS_INTEGRAL(BE32);
-TT_IS_INTEGRAL(BE64);
-TT_IS_INTEGRAL(LE16);
-TT_IS_INTEGRAL(LE32);
-TT_IS_INTEGRAL(LE64);
-#undef TT_IS_INTEGRAL
 
 // for use with qsort()
 extern "C" {

@@ -34,7 +34,7 @@ RUN apt-get update && apt-get upgrade -y \
         # Windows cross compilers
         g++-mingw-w64-i686 \
         g++-mingw-w64-x86-64 \
-    # make sure that we use posix-threads (pthreads) and NOT win32-threads
+    # make sure that we use posix-threads (pthread/winpthreads) and NOT win32-threads
     && for f in i686-w64-mingw32-g++ i686-w64-mingw32-gcc x86_64-w64-mingw32-g++ x86_64-w64-mingw32-gcc; do update-alternatives --set $f /usr/bin/$f-posix; done \
     && true
 RUN apt-get install -y \

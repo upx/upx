@@ -67,7 +67,7 @@
 
 namespace {
 
-struct XStat {
+struct XStat final {
     struct stat st;
 #if USE_SETFILETIME
     FILETIME ft_atime;
@@ -307,8 +307,9 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
                     flags = get_open_flags(WO_MUST_EXIST_TRUNCATE);
                     copy_timestamp_only = true;
                 }
-            } else if (opt->force_overwrite || opt->force)
+            } else if (opt->force_overwrite || opt->force) {
                 flags = get_open_flags(WO_CREATE_OR_TRUNCATE);
+            }
             int shmode = SH_DENYWR;
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
             // TODO later: check current mintlib if this hack is still needed

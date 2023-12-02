@@ -686,7 +686,8 @@ const LE32 &PeFile::IDADDR(unsigned x) const { return iddirs[x].vaddr; }
  */
 
 class PeFile::ImportLinker final : public ElfLinkerAMD64 {
-    struct TStr final : private ::noncopyable { // temporary string owner, deletes on destruction
+    // temporary string owner, deletes on destruction
+    struct TStr final : private upx::noncopyable {
         explicit TStr(char *str) noexcept : s(str) {}
         ~TStr() noexcept { delete[] s; } // delete!
         operator char *() noexcept { return s; }

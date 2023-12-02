@@ -29,6 +29,7 @@ macro(upx_cmake_include_hook section)
     include("${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/hooks/CMakeLists.${section}.txt" OPTIONAL)
     include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.${section}.txt" OPTIONAL)
 endmacro()
+file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/.upx_cmake_config_done.txt")
 
 #***********************************************************************
 # options
@@ -711,5 +712,6 @@ endif()
 endif() # UPX_CONFIG_CMAKE_DISABLE_PLATFORM_CHECK
 
 upx_cmake_include_hook(9_finish)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/.upx_cmake_config_done.txt" "")
 
 # vim:set ft=cmake ts=4 sw=4 tw=0 et:

@@ -207,7 +207,7 @@ build/extra/scan-build/debug:   build/analyze/clang-analyzer/debug
 build/extra/scan-build/release: build/analyze/clang-analyzer/release
 
 #***********************************************************************
-# advanced: generic extra target
+# advanced: generic eXtra target
 #***********************************************************************
 
 # usage:
