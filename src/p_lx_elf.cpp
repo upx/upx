@@ -1686,6 +1686,12 @@ PackLinuxElf64::buildLinuxLoader(
     ) {
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
     }
+    else if (this->e_machine==Elf64_Ehdr::EM_X86_64) {
+        addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC");
+        if (!xct_off) {
+            defineSymbols(ft);
+        }
+    }
     else {
         addStubEntrySections(ft, (methods_used ? methods_used
                             : (1u << ph_forced_method(ph.method))) );
