@@ -8,61 +8,6 @@ Linker script and memory map
 
                 0x000000000010004c                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-<<<<<<< HEAD
-.text           0x00000000001000bc      0x9bc
- *(.text)
- .text          0x00000000001000bc      0x1f9 tmp/amd64-linux.elf-fold.o
-                0x0000000000100245                Pmap
-                0x000000000010028a                munmap
-                0x000000000010028e                ftruncate
-                0x0000000000100253                mmap
-                0x00000000001002ad                write
-                0x0000000000100292                memfd_create
-                0x00000000001002b1                read
-                0x000000000010026a                Pprotect
-                0x00000000001002ad                Pwrite
-                0x000000000010027c                Punmap
-                0x0000000000100299                exit
-                0x000000000010029d                brk
-                0x00000000001002a5                open
-                0x00000000001002a9                mprotect
-                0x00000000001002a1                close
- *fill*         0x00000000001002b5        0x3 00
- .text          0x00000000001002b8      0x7bd tmp/amd64-linux.elf-main.o
-                0x000000000010043c                PF_TO_PROT
-                0x000000000010093b                upx_main
- *fill*         0x0000000000100a75        0x3 00
- .text          0x0000000000100a78        0x0 tmp/amd64-expand.o
- *(.data)
- .data          0x0000000000100a78        0x0 tmp/amd64-linux.elf-fold.o
- .data          0x0000000000100a78        0x0 tmp/amd64-linux.elf-main.o
- .data          0x0000000000100a78        0x0 tmp/amd64-expand.o
-                0x0000000000100a78                . = ALIGN (0x1)
-                0x0000000000100a78                __start_EXP_HEAD = .
-
-EXP_HEAD        0x0000000000100a78       0xe0
- EXP_HEAD       0x0000000000100a78       0xe0 tmp/amd64-expand.o
-                0x0000000000100a78                f_expand
-                0x0000000000100b58                __stop_EXP_HEAD = .
-                0x0000000000100b58                . = ALIGN (0x1)
-                0x0000000000100b58                __start_NRV2E = .
-
-NRV2E           0x0000000000100b58       0xe5
- NRV2E          0x0000000000100b58       0xe5 tmp/amd64-expand.o
-                0x0000000000100c3d                __stop_NRV2E = .
-                0x0000000000100c3d                . = ALIGN (0x1)
-                0x0000000000100c3d                __start_NRV2D = .
-
-NRV2D           0x0000000000100c3d       0xd7
- NRV2D          0x0000000000100c3d       0xd7 tmp/amd64-expand.o
-                0x0000000000100d14                __stop_NRV2D = .
-                0x0000000000100d14                . = ALIGN (0x1)
-                0x0000000000100d14                __start_NRV2B = .
-
-NRV2B           0x0000000000100d14       0xc1
- NRV2B          0x0000000000100d14       0xc1 tmp/amd64-expand.o
-                0x0000000000100dd5                __stop_NRV2B = .
-=======
 .text           0x0000000000000000      0x92b
  .text          0x0000000000000000      0x125 tmp/amd64-linux.elf-fold.o
  *fill*         0x0000000000000125        0x3 00
@@ -84,25 +29,14 @@ NRV2D           0x0000000000000000       0xd2
 
 NRV2B           0x0000000000000000       0xbc
  NRV2B          0x0000000000000000       0xbc tmp/amd64-linux.elf-fold.o
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
  .data          0x0000000000000000        0x0 tmp/amd64-linux.elf-main.o
 
-<<<<<<< HEAD
-.bss            0x0000000000100dd8        0x0
- .bss           0x0000000000100dd8        0x0 tmp/amd64-linux.elf-fold.o
- .bss           0x0000000000100dd8        0x0 tmp/amd64-linux.elf-main.o
- .bss           0x0000000000100dd8        0x0 tmp/amd64-expand.o
-
-.rela.dyn       0x0000000000100dd8        0x0
- .rela.text     0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
-=======
 .bss            0x0000000000000000        0x0
  .bss           0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
  .bss           0x0000000000000000        0x0 tmp/amd64-linux.elf-main.o
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 LOAD tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-main.o
 OUTPUT(tmp/amd64-linux.elf-fold.bin elf64-x86-64)
@@ -138,11 +72,5 @@ LZMA_DEC20      0x0000000000000000      0x9f7
 LZMA_DEC30      0x0000000000000000       0x18
  LZMA_DEC30     0x0000000000000000       0x18 tmp/amd64-linux.elf-fold.o
 
-<<<<<<< HEAD
-EXP_TAIL        0x0000000000000000        0xc
- EXP_TAIL       0x0000000000000000        0xc tmp/amd64-expand.o
-                0x000000000000000c                __stop_EXP_TAIL = .
-=======
 EXP_TAIL        0x0000000000000000        0x1
  EXP_TAIL       0x0000000000000000        0x1 tmp/amd64-linux.elf-fold.o
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)

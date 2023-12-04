@@ -49,7 +49,7 @@ MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
 
 __NR_memfd_create= 0x164 // 356
-__NR_mmap=     90
+__NR_oldmmap=  90
 __NR_mprotect=125
 __NR_munmap=   91
 
@@ -210,9 +210,7 @@ eof_n2b:
         push $PROT_READ|PROT_EXEC  // arg3
         push 4*NBPW(%esp)  // arg2  F_LENU
         push $0  // arg1
-        mov %esp,%ebx
-        push $__NR_mmap; pop %eax; call sys_check
-        add $6*NBPW,%esp
+        call oldmmap
 
         push %eax  // MATCH_13  ptr unfolded_code
         mov mfd,%ebx
@@ -238,10 +236,12 @@ sys_check:  // syscall with error checking; if halt then %eax= -errno, %ecx= __N
         cmp $PAGE_MASK,%eax; jb 0f; hlt; 0:  // -errno
         ret
 
-old_mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
-        lea 4(%esp),%ebx
-        push $__NR_mmap; pop %eax; call sys_check
-        ret $6*4
+oldmmap:  // oldmmap: 6 arguments on stack; remove arguments on return
+        push %ebx  // save register
+        lea 2*NBPW(%esp),%ebx
+        push $__NR_oldmmap; pop %eax; call sys_check
+        pop %ebx  // restore register
+        ret $6*NBPW
 
 // IDENTSTR goes here
 

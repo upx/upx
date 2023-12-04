@@ -69,17 +69,6 @@ __NR_exit= 60
 __NR_readlink= 89
 
 // IN: [ADRX,+LENX): compressed data; [ADRU,+LENU): expanded fold (w/ upx_main)
-<<<<<<< HEAD
-// %rbx= &b_info; %rbp= f_exp; %r14= ADRX; %r15= LENX;
-// rsp/ elfaddr,fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
-
-fold_begin:
-////    int3  // DEBUG only
-        call L90
-#include "arch/amd64/bxx.S"
-L90:
-        pop %rax  # &f_unf
-=======
 // %rbp= old_f_exp; %r14= ADRX; %r15= LENX;
 // rsp/ elfaddr,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
 
@@ -87,7 +76,6 @@ L90:
 // Code from amd64-linux.elf-main.c is also .text, and is next.
 fold_begin:
         movq 4*NBPW(%rsp),%rbp  // O_BINFO | is_ptinterp  FIXME: where does src memory move to?
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
         push %r14  // ADRX
         push %r15  // LENX
         push %rax  # &amdbxx: f_unf
@@ -111,11 +99,7 @@ fold_begin:
           push %rdi  # buffer
           mov %ebp,%ebx  # is_ptinterp
         lea proc_self_exe(%rip),%arg1; sub %arg2l,%arg2l  # O_RDONLY
-<<<<<<< HEAD
-        call open; mov %rax,-4*NBPW(%rsp)  # fd
-=======
         call open; mov %eax,%ebp  # fd
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
           pop %arg2  #buffer
 
         movl $-1+ PATH_MAX,%arg3l # buflen
@@ -149,22 +133,12 @@ fold_begin:
         lea NBPW(%rdi),%rsp
      cld
 
-<<<<<<< HEAD
-        lea (%r14,%r12),%arg4  # &new Elf64_auxv
-        movl -4(%rbx),%eax; and $1,%eax; add %rax,%arg4  # is_ptinterp
-        pop %arg6  # f_unf
-        pop %arg2  # LENX
-        pop %arg1  # ADRX
-
-        pop %rax  # elfaddr
-=======
         lea (%r14,%r12),%arg4  # &new Elf64_auxv  %r12 dead
         and $1,%ebx; add %rbx,%arg4  # is_ptinterp  (what a pain!)
         pop %arg2  # LENX
         pop %arg1  # ADRX
 
         pop %arg5; mov %arg5,%r13  # elfaddr
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
         subq $ OVERHEAD,%rsp
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
         push %rax; mov %rax,%r13  # elfaddr  7th arg
@@ -176,17 +150,10 @@ fold_begin:
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unf arg6,
                 Elf64_Addr elfaddr )
 */
-<<<<<<< HEAD
-// rsp/ elfaddr,{OVERHEAD},fd,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
-        addq $1*NBPW+OVERHEAD,%rsp  # also discard elfaddr
-        movq %rax,4*NBPW(%rsp)  # entry
-        pop %rbx  # fd
-=======
 // rsp/ {OVERHEAD},ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
         addq $OVERHEAD,%rsp  # Elf64_Ehdr temporary space
         mov       %ebp,%ebx  # fd
         movq %rax,3*NBPW(%rsp)  # entry
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 sz_Ehdr= 8*NBPW
 e_type= 16
@@ -279,14 +246,8 @@ write: .globl write
 read: .globl read
         movb $ __NR_read,%al; 5: jmp sysgo
 
-<<<<<<< HEAD
-my_bkpt: .globl my_bkpt
-        int3
-        ret
-=======
 // To evade quirks in ld from stub/Makefile, and enable selection
 // and relocadtion of .sections by ::buildLinuxLoader
 #include "amd64-expand.S"
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 /* vim:set ts=8 sw=8 et: */
