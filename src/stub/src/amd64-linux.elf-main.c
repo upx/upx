@@ -495,17 +495,6 @@ do_xmap(
         DPRINTF("  mlen=%%p\\n", mlen);
 #endif
 
-<<<<<<< HEAD
-        DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  lo_frag=%%p  prot=%%x  reloc=%%p\\n",
-            addr, mlen, phdr->p_offset - lo_frag, lo_frag, prot, reloc);
-        if (addr != mmap(addr, mlen,
-                // If compressed, then we need PROT_WRITE to de-compress;
-                // but then SELinux 'execmod' requires no PROT_EXEC for now.
-                (prot | (xi ? PROT_WRITE : 0)) &~ (xi ? PROT_EXEC : 0),
-                MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
-                (xi ? -1 : fdi), phdr->p_offset - lo_frag) ) {
-            err_exit(8);
-=======
         DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  frag=%%p  prot=%%x\\n",
             addr, mlen, phdr->p_offset - frag, frag, prot);
         int mfd = 0;
@@ -520,7 +509,6 @@ do_xmap(
             if (addr != Pmap(addr, mlen, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0)) {
                 err_exit(7);
             }
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
         }
         else {
             Punmap(addr, mlen);

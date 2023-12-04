@@ -9,11 +9,7 @@ Linker script and memory map
 TARGET(elf64-powerpcle)
                 0x000000000010004c                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-<<<<<<< HEAD
-.text           0x000000000010004c      0xd7c
-=======
 .text           0x000000000010004c      0xd64
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
  *(.text)
  .text          0x000000000010004c      0x394 tmp/powerpc64le-linux.elf-fold.o
                 0x000000000010004c                get_page_mask
@@ -34,21 +30,12 @@ TARGET(elf64-powerpcle)
                 0x00000000001003b4                close
                 0x00000000001003bc                memcpy
                 0x00000000001003d8                my_bkpt
-<<<<<<< HEAD
- .text          0x00000000001003e0      0x9e8 tmp/powerpc64le-linux.elf-main.o
- .text          0x0000000000100dc8        0x0 tmp/powerpc64le-expand.o
- *(.data)
- .data          0x0000000000100dc8        0x0 tmp/powerpc64le-linux.elf-fold.o
- .data          0x0000000000100dc8        0x0 tmp/powerpc64le-linux.elf-main.o
- .data          0x0000000000100dc8        0x0 tmp/powerpc64le-expand.o
-=======
  .text          0x00000000001003e0      0x9d0 tmp/powerpc64le-linux.elf-main.o
  .text          0x0000000000100db0        0x0 tmp/powerpc64le-expand.o
  *(.data)
  .data          0x0000000000100db0        0x0 tmp/powerpc64le-linux.elf-fold.o
  .data          0x0000000000100db0        0x0 tmp/powerpc64le-linux.elf-main.o
  .data          0x0000000000100db0        0x0 tmp/powerpc64le-expand.o
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 .data
 LOAD tmp/powerpc64le-linux.elf-fold.o
@@ -61,10 +48,7 @@ OUTPUT(tmp/powerpc64le-linux.elf-fold.bin elf64-powerpcle)
 
 .opd            0x0000000000000000       0x80
  .opd           0x0000000000000000       0x80 tmp/powerpc64le-linux.elf-main.o
-<<<<<<< HEAD
-=======
                 0x0000000000000040                underlay
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
                 0x0000000000000050                PF_TO_PROT
                 0x0000000000000070                upx_main
 

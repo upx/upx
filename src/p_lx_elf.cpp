@@ -1615,9 +1615,6 @@ PackLinuxElf64::buildLinuxLoader(
         }
         method = M_NRV2B_LE32;  // requires unaligned fetch
     }
-<<<<<<< HEAD
-    else {
-=======
     else if (this->e_machine==Elf64_Ehdr::EM_X86_64) { // main program
         initLoader(fold, szfold);
         char sec[120];
@@ -1648,7 +1645,6 @@ PackLinuxElf64::buildLinuxLoader(
         method = M_NRV2B_LE32;  // requires unaligned fetch
     }
     else { // main program not amd64
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
         cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
         unsigned fold_hdrlen = umax(0x80, usizeof(hf->ehdr) +
             get_te16(&hf->ehdr.e_phentsize) * get_te16(&hf->ehdr.e_phnum) +

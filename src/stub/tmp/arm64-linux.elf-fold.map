@@ -8,11 +8,7 @@ Linker script and memory map
 
                 0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-<<<<<<< HEAD
-.text           0x00000000001000bc      0xb38
-=======
 .text           0x00000000001000bc      0xb78
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
  *(.text)
  .text          0x00000000001000bc      0x2f4 tmp/arm64-linux.elf-fold.o
                 0x0000000000100284                my_bkpt
@@ -38,22 +34,6 @@ Linker script and memory map
                 0x0000000000100378                memcpy
                 0x000000000010038c                memset
                 0x000000000010039c                __clear_cache
-<<<<<<< HEAD
- .text          0x00000000001003b0      0x844 tmp/arm64-linux.elf-main.o
-                0x00000000001005d0                PF_TO_PROT
-                0x0000000000100ab8                upx_main
- .text          0x0000000000100bf4        0x0 tmp/arm64-expand.o
- *(.data)
- .data          0x0000000000100bf4        0x0 tmp/arm64-linux.elf-fold.o
- .data          0x0000000000100bf4        0x0 tmp/arm64-linux.elf-main.o
- .data          0x0000000000100bf4        0x0 tmp/arm64-expand.o
-
-.iplt           0x0000000000100bf4        0x0
- .iplt          0x0000000000100bf4        0x0 tmp/arm64-linux.elf-fold.o
-
-.rela.dyn       0x0000000000100bf8        0x0
- .rela.iplt     0x0000000000100bf8        0x0 tmp/arm64-linux.elf-fold.o
-=======
  .text          0x00000000001003b0      0x884 tmp/arm64-linux.elf-main.o
                 0x0000000000100564                underlay
                 0x00000000001005d0                PF_TO_PROT
@@ -69,7 +49,6 @@ Linker script and memory map
 
 .rela.dyn       0x0000000000100c38        0x0
  .rela.iplt     0x0000000000100c38        0x0 tmp/arm64-linux.elf-fold.o
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 .data
 LOAD tmp/arm64-linux.elf-fold.o
@@ -77,15 +56,6 @@ LOAD tmp/arm64-linux.elf-main.o
 LOAD tmp/arm64-expand.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
-<<<<<<< HEAD
-.igot.plt       0x0000000000100bf8        0x0
- .igot.plt      0x0000000000100bf8        0x0 tmp/arm64-linux.elf-fold.o
-
-.bss            0x0000000000100bf4        0x0
- .bss           0x0000000000100bf4        0x0 tmp/arm64-linux.elf-fold.o
- .bss           0x0000000000100bf4        0x0 tmp/arm64-linux.elf-main.o
- .bss           0x0000000000100bf4        0x0 tmp/arm64-expand.o
-=======
 .igot.plt       0x0000000000100c38        0x0
  .igot.plt      0x0000000000100c38        0x0 tmp/arm64-linux.elf-fold.o
 
@@ -93,7 +63,6 @@ OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
  .bss           0x0000000000100c34        0x0 tmp/arm64-linux.elf-fold.o
  .bss           0x0000000000100c34        0x0 tmp/arm64-linux.elf-main.o
  .bss           0x0000000000100c34        0x0 tmp/arm64-expand.o
->>>>>>> 873b6dd6 (amd64 main programs now use memfd_create to support SELinux)
 
 EXP_HEAD        0x0000000000000000      0x104
                 0x0000000000000000                PROVIDE (__start_EXP_HEAD, .)

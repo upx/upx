@@ -124,12 +124,6 @@ _=-1+_  // one less word on stack
 .endm
 
   section ELFMAINX
-//  .long offset(b_info)|(asl_delta>>12)  src for f_exp  // FIXME: not true?
-//SO_INFO:
-//  .long offset(.)  // detect relocation
-//  .long offset(user DT_INIT)
-//  .long offset(xct_off)  // lowest executable instr
-//  .long offset(dst for f_exp)
 
         //.arch armv7-a
         //.syntax unified
@@ -206,7 +200,26 @@ L110:
     .unreq mfd  // busy: empty
         do_sys __NR_close
 
-        adr r0,_start -4 *NBPW  // &SO_INFO
+// typedef struct {
+//     long argc;
+//     char **argv;
+//     char **envp;
+// } So_args;
+// 
+// typedef struct {
+//     unsigned off_reloc;  // distance back to &Elf32_Ehdr
+//     unsigned off_user_DT_INIT;
+//     unsigned off_xct_off;  // where un-compressed bytes end  [unused?]
+//     unsigned off_info;  //  xct_off: {l_info; p_info; b_info; compressed data)
+// } So_info;
+// 
+// void *
+// upx_so_main(  // returns &escape_hatch
+//     So_info *so_info,
+//     So_args *so_args,
+//     Elf32_Ehdr *elf_tmp  // scratch for Elf32_Ehdr and Elf32_Phdrs
+// )
+        adr r0,_start -4*4  // &So_info
         add r1,sp,#F_ARGC
         ldr pc,[sp, #F_ADRU]  // invoke folded code
 
