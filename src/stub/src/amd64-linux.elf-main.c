@@ -33,11 +33,10 @@
 #include "include/linux.h"
 extern void *memcpy(void *dst, void const *src, size_t n);
 // Pprotect is mprotect but uses page-aligned address (Linux requirement)
-extern unsigned Pprotect(void *, size_t, unsigned);
-extern void *Pmap(void *, size_t, unsigned, unsigned, int, size_t);
-extern int Punmap(void *, size_t);
+//extern unsigned Pprotect(void *, size_t, unsigned);
+//extern void *Pmap(void *, size_t, unsigned, unsigned, int, size_t);
+//extern int Punmap(void *, size_t);
 extern size_t Pwrite(unsigned, void const *, size_t);
-extern int ftruncate(int fd, off_t length);
 
 #ifndef DEBUG  //{
 #define DEBUG 0
@@ -246,8 +245,7 @@ make_hatch_x86_64(
     unsigned const frag_mask
 )
 {
-    unsigned xprot = 0;
-    unsigned *hatch = 0;
+    char *hatch = 0;
     DPRINTF("make_hatch %%p %%p %%x  %%x\\n",phdr,reloc,frag_mask, phdr->p_flags);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         hatch = (char *)(phdr->p_memsz + reloc);
@@ -272,8 +270,18 @@ make_hatch_ppc64(
     unsigned const frag_mask
 )
 {
-    unsigned xprot = 0;
-    unsigned *hatch = 0;
+    unsigned *hatch = (void *)0;
+    unsigned const *code;
+    unsigned const sz_code = 4*4;
+    asm("bl 0f; \
+        sc; \
+        mr 12,31; \
+        li 4,0; \
+        blr; \
+     0: mflr %0 "
+/*out*/ : "=r"(code)
+/* in*/ :
+/*und*/ : "lr");
     DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         hatch = (unsigned *)(phdr->p_memsz + reloc);
@@ -299,6 +307,15 @@ make_hatch_arm64(
 )
 {
     unsigned *hatch = 0;
+    unsigned const *code;
+    unsigned const sz_code = 2*4;
+    asm ("bl 0f; \
+        svc #0; \
+        br x30; \
+     0: mov %0,x30"
+/*out*/ : "=r"(code)
+/* in*/ :
+/*und*/ : );
     DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         hatch = (unsigned *)(phdr->p_memsz + reloc);
@@ -370,8 +387,8 @@ underlay(unsigned size, char *ptr, unsigned len)  // len <= PAGE_SIZE
 // Use table lookup into a PIC-string that pre-computes the result.
 unsigned PF_TO_PROT(Elf64_Phdr const *phdr)
 {
-    return 7& addr_string("@\x04\x02\x06\x01\x05\x03\x07")
-        [phdr->p_flags & (PF_R|PF_W|PF_X)];
+    char const *table = addr_string("\x80\x04\x02\x06\x01\x05\x03\x07");
+    return 7& table[phdr->p_flags & (PF_R|PF_W|PF_X)];
 }
 
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
@@ -504,20 +521,20 @@ do_xmap(
             // to hold the contents.
             mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             ftruncate(mfd, mlen);  // Allocate the pages in the file.
-            Pwrite(mfd, addr, frag);  // Save lo fragment of contents on first page.
-            Punmap(addr, mlen);  // Erase existing VMA  [necessary?]
-            if (addr != Pmap(addr, mlen, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0)) {
+            write(mfd, addr, frag);  // Save lo fragment of contents on first page.
+            munmap(addr, mlen);  // Erase existing VMA  [necessary?]
+            if (addr != mmap(addr, mlen, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0)) {
                 err_exit(7);
             }
         }
         else {
-            Punmap(addr, mlen);
+            munmap(addr, mlen);
             unsigned tprot = prot;
             if (xi) {
                 tprot |=  PROT_WRITE;  // De-compression needs Write
                 tprot &= ~PROT_EXEC;  // Avoid simultaneous Write and eXecute
             }
-            if (addr != Pmap(addr, mlen, tprot,
+            if (addr != mmap(addr, mlen, tprot,
                 MAP_FIXED|MAP_PRIVATE|(xi ? MAP_ANONYMOUS : 0), (xi ? -1 : fdi),
                 phdr->p_offset - frag)) {
                 err_exit(8);
@@ -551,14 +568,14 @@ do_xmap(
 
             // SELinux: Map the contents of mfd as per *phdr.
             DPRINTF("mfd mmap addr=%%p  mlen=%%p\\n", addr, mlen);
-            Punmap(addr, mlen);  // Discard RW mapping; mfd has the bytes
-            if (addr != Pmap(addr, mlen, prot, MAP_FIXED|MAP_SHARED, mfd, 0)) {
+            munmap(addr, mlen);  // Discard RW mapping; mfd has the bytes
+            if (addr != mmap(addr, mlen, prot, MAP_FIXED|MAP_SHARED, mfd, 0)) {
                 err_exit(9);
             }
             close(mfd);
         }
         else { // easy
-            Pprotect(addr, mlen, prot);
+            mprotect(addr, mlen, prot);
         }
         if (addr2 < hi_addr) { // pages for .bss beyond last page for p_filesz
             DPRINTF("zmap addr2=%%p  len=%%p  prot=%%x\\n", addr2, hi_addr - addr2, prot);

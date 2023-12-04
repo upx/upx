@@ -246,8 +246,4 @@ write: .globl write
 read: .globl read
         movb $ __NR_read,%al; 5: jmp sysgo
 
-// To evade quirks in ld from stub/Makefile, and enable selection
-// and relocadtion of .sections by ::buildLinuxLoader
-#include "amd64-expand.S"
-
 /* vim:set ts=8 sw=8 et: */

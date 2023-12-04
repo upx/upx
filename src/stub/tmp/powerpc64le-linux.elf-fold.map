@@ -9,33 +9,33 @@ Linker script and memory map
 TARGET(elf64-powerpcle)
                 0x000000000010004c                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x000000000010004c      0xd64
+.text           0x000000000010004c      0xd7c
  *(.text)
- .text          0x000000000010004c      0x394 tmp/powerpc64le-linux.elf-fold.o
+ .text          0x000000000010004c      0x39c tmp/powerpc64le-linux.elf-fold.o
                 0x000000000010004c                get_page_mask
-                0x000000000010031c                Pmap
-                0x000000000010032c                mmap
-                0x0000000000100344                Pprotect
-                0x0000000000100344                mprotect
-                0x000000000010035c                Punmap
-                0x000000000010036c                munmap
-                0x0000000000100374                memfd_create
-                0x000000000010037c                ftruncate
-                0x0000000000100384                exit
-                0x000000000010038c                brk
-                0x0000000000100394                readlink
-                0x000000000010039c                Pwrite
-                0x00000000001003a4                read
-                0x00000000001003ac                open
-                0x00000000001003b4                close
-                0x00000000001003bc                memcpy
-                0x00000000001003d8                my_bkpt
- .text          0x00000000001003e0      0x9d0 tmp/powerpc64le-linux.elf-main.o
- .text          0x0000000000100db0        0x0 tmp/powerpc64le-expand.o
+                0x0000000000100324                Pmap
+                0x0000000000100334                mmap
+                0x000000000010034c                Pprotect
+                0x000000000010034c                mprotect
+                0x0000000000100364                Punmap
+                0x0000000000100374                munmap
+                0x000000000010037c                memfd_create
+                0x0000000000100384                ftruncate
+                0x000000000010038c                exit
+                0x0000000000100394                brk
+                0x000000000010039c                readlink
+                0x00000000001003a4                Pwrite
+                0x00000000001003ac                read
+                0x00000000001003b4                open
+                0x00000000001003bc                close
+                0x00000000001003c4                memcpy
+                0x00000000001003e0                my_bkpt
+ .text          0x00000000001003e8      0x9e0 tmp/powerpc64le-linux.elf-main.o
+ .text          0x0000000000100dc8        0x0 tmp/powerpc64le-expand.o
  *(.data)
- .data          0x0000000000100db0        0x0 tmp/powerpc64le-linux.elf-fold.o
- .data          0x0000000000100db0        0x0 tmp/powerpc64le-linux.elf-main.o
- .data          0x0000000000100db0        0x0 tmp/powerpc64le-expand.o
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-linux.elf-fold.o
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-linux.elf-main.o
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-expand.o
 
 .data
 LOAD tmp/powerpc64le-linux.elf-fold.o
@@ -65,23 +65,23 @@ EXP_TAIL        0x0000000000000000       0x1c
  EXP_TAIL       0x0000000000000000       0x1c tmp/powerpc64le-expand.o
                 0x0000000000000000                eof_nrv
 
-NRV2E           0x0000000000000000      0x154
- NRV2E          0x0000000000000000      0x154 tmp/powerpc64le-expand.o
+NRV2E           0x0000000000000000      0x148
+ NRV2E          0x0000000000000000      0x148 tmp/powerpc64le-expand.o
 
-NRV2D           0x0000000000000000      0x144
- NRV2D          0x0000000000000000      0x144 tmp/powerpc64le-expand.o
+NRV2D           0x0000000000000000      0x12c
+ NRV2D          0x0000000000000000      0x12c tmp/powerpc64le-expand.o
 
-NRV2B           0x0000000000000000       0xf8
- NRV2B          0x0000000000000000       0xf8 tmp/powerpc64le-expand.o
+NRV2B           0x0000000000000000       0xf0
+ NRV2B          0x0000000000000000       0xf0 tmp/powerpc64le-expand.o
 
-LZMA_ELF00      0x0000000000000000       0x94
- LZMA_ELF00     0x0000000000000000       0x94 tmp/powerpc64le-expand.o
+LZMA_ELF00      0x0000000000000000       0x90
+ LZMA_ELF00     0x0000000000000000       0x90 tmp/powerpc64le-expand.o
 
-LZMA_DEC30      0x0000000000000000       0x28
- LZMA_DEC30     0x0000000000000000       0x28 tmp/powerpc64le-expand.o
+LZMA_DEC10      0x0000000000000000      0x99c
+ LZMA_DEC10     0x0000000000000000      0x99c tmp/powerpc64le-expand.o
 
-LZMA_DEC10      0x0000000000000000      0xbb8
- LZMA_DEC10     0x0000000000000000      0xbb8 tmp/powerpc64le-expand.o
+LZMA_DEC20      0x0000000000000000      0x99c
+ LZMA_DEC20     0x0000000000000000      0x99c tmp/powerpc64le-expand.o
 
-LZMA_DEC20      0x0000000000000000      0xc74
- LZMA_DEC20     0x0000000000000000      0xc74 tmp/powerpc64le-expand.o
+LZMA_DEC30      0x0000000000000000       0x24
+ LZMA_DEC30     0x0000000000000000       0x24 tmp/powerpc64le-expand.o
