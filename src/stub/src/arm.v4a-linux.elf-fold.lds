@@ -30,18 +30,8 @@
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
-/*ENTRY(_start)*/
-PHDRS
-{
-    text PT_LOAD FILEHDR PHDRS ;
-    data PT_LOAD ;  /* for setting brk(0) */
-}
+
 SECTIONS
 {
-  .text : {
-    *(.text)
-    *(.data)
-  } : text
-  .data : {
-  } : data
+  . = 0x00100000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
 }

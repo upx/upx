@@ -6,10 +6,8 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-TARGET(elf32-littlearm)
 
 .text           0x0000000000000000     0x17f4
- *(.text)
  .text          0x0000000000000000      0x2e0 tmp/arm.v4a-linux.elf-fold.o
                 0x0000000000000008                get_page_mask
                 0x00000000000002c4                mempcpy
@@ -25,11 +23,6 @@ TARGET(elf32-littlearm)
  .text          0x0000000000000624        0x0 tmp/arm.v4a-expand.o
  .text          0x0000000000000624     0x11d0 tmp/arm.v4a-linux.elf-main.o
                 0x00000000000015a0                upx_main
- *(.data)
- .data          0x00000000000017f4        0x0 tmp/arm.v4a-linux.elf-fold.o
- .data          0x00000000000017f4        0x0 tmp/arm.v4a-linux.elf-upxfd_android.o
- .data          0x00000000000017f4        0x0 tmp/arm.v4a-expand.o
- .data          0x00000000000017f4        0x0 tmp/arm.v4a-linux.elf-main.o
 
 SYSCALLS        0x0000000000000000      0x100
  SYSCALLS       0x0000000000000000      0x100 tmp/arm.v4a-linux.elf-fold.o
@@ -76,13 +69,19 @@ NRV2B           0x0000000000000000       0xc4
  NRV2B          0x0000000000000000       0xc4 tmp/arm.v4a-expand.o
                 0x0000000000000000                ucl_nrv2b_decompress_8
 
-.data
+.data           0x0000000000000000        0x0
+ .data          0x0000000000000000        0x0 tmp/arm.v4a-linux.elf-fold.o
+ .data          0x0000000000000000        0x0 tmp/arm.v4a-linux.elf-upxfd_android.o
+ .data          0x0000000000000000        0x0 tmp/arm.v4a-expand.o
+ .data          0x0000000000000000        0x0 tmp/arm.v4a-linux.elf-main.o
 
 .bss            0x0000000000000000        0x0
  .bss           0x0000000000000000        0x0 tmp/arm.v4a-linux.elf-fold.o
  .bss           0x0000000000000000        0x0 tmp/arm.v4a-linux.elf-upxfd_android.o
  .bss           0x0000000000000000        0x0 tmp/arm.v4a-expand.o
  .bss           0x0000000000000000        0x0 tmp/arm.v4a-linux.elf-main.o
+TARGET(elf32-littlearm)
+                0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 LOAD tmp/arm.v4a-linux.elf-fold.o
 LOAD tmp/arm.v4a-linux.elf-upxfd_android.o
 LOAD tmp/arm.v4a-expand.o

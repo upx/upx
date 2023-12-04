@@ -126,6 +126,14 @@ mmap:
         add x1,x1,x8
         do_sys __NR_mmap; ret
 
+        .globl munmap
+munmap:
+        ldr x8,PAGE_MASK
+        bic x8,x0,x8
+        sub x0,x0,x8
+        add x1,x1,x8
+        do_sys __NR_munmap; ret
+
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
 mprotect: .globl mprotect
@@ -480,39 +488,6 @@ getpid:
         .globl brk
 brk:
         do_sys __NR_brk; ret
-
-        .globl munmap,Punmap
-Punmap:
-munmap:
-        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_MASK
-        sub x0,x0,x8
-        add x1,x1,x8
-        do_sys __NR_munmap; ret
-
-// Sometimes Linux enforces page-aligned address
-Pprotect: .globl Pprotect
-mprotect: .globl mprotect
-        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_SIZE
-        sub x0,x0,x8
-        add x1,x1,x8
-        do_sys __NR_mprotect; ret
-
-bits_privanon= -4+ fold_begin  // entry stores: MAP_{PRIVATE|ANON}  QNX vs linux
-
-mmap_privanon: .globl mmap_privanon
-        ldr w6,bits_privanon  // r12 === ip
-        mov x5,#0  // offset= 0
-        mov x4,#-1  // fd= -1
-        orr w3,w3,w6  // flags |= MAP_{PRIVATE|ANON}  [QNX vs Linux]
-    // FALL THROUGH to mmap
-
-        .globl mmap,Pmap
-Pmap:
-mmap:
-        and x8,x0,#-1+ (1<<12)  // FIXME: variable PAGE_SIZE
-        sub x0,x0,x8
-        add x1,x1,x8
-        do_sys __NR_mmap; ret
 
         .globl unlink
 unlink:

@@ -163,8 +163,9 @@ STUBS += powerpc64-darwin.macho-fold.h
 STUBS += powerpc64-linux.elf-entry.h
 STUBS += powerpc64-linux.elf-fold.h
 
-STUBS += powerpc64-linux.kernel.vmlinux-head.h
-STUBS += powerpc64-linux.kernel.vmlinux.h
+#kernel no longer supported
+#STUBS += powerpc64-linux.kernel.vmlinux-head.h
+#STUBS += powerpc64-linux.kernel.vmlinux.h
 
 endif
 
@@ -592,7 +593,7 @@ arm.v4a-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/arm.v4a-linux.elf-upxfd_android.o \
 	    tmp/arm.v4a-expand.o \
 	    tmp/arm.v4a-linux.elf-so_main.o
-	multiarch-ld-2.23.90 -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 

@@ -8,47 +8,46 @@ Linker script and memory map
 
                 0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x00000000001000bc      0xb78
+.text           0x00000000001000bc      0xb90
  *(.text)
- .text          0x00000000001000bc      0x2fc tmp/arm64-linux.elf-fold.o
-                0x000000000010028c                my_bkpt
-                0x0000000000100294                exit
-                0x000000000010029c                ftruncate
-                0x00000000001002a8                memfd_create
-                0x00000000001002b4                read
-                0x00000000001002c0                write
-                0x00000000001002c0                Pwrite
-                0x00000000001002cc                close
-                0x00000000001002d8                getpid
-                0x00000000001002e4                brk
-                0x00000000001002f0                munmap
-                0x00000000001002f0                Punmap
-                0x0000000000100308                Pprotect
-                0x0000000000100308                mprotect
-                0x0000000000100320                mmap_privanon
-                0x0000000000100330                Pmap
-                0x0000000000100330                mmap
-                0x0000000000100348                unlink
-                0x000000000010035c                readlink
-                0x0000000000100364                open
-                0x0000000000100380                memcpy
-                0x0000000000100394                my_memset
-                0x00000000001003a4                __clear_cache
- .text          0x00000000001003b8      0x884 tmp/arm64-linux.elf-main.o
-                0x000000000010056c                underlay
-                0x00000000001005d8                PF_TO_PROT
-                0x0000000000100af8                upx_main
- .text          0x0000000000100c3c        0x0 tmp/arm64-expand.o
+ .text          0x00000000001000bc      0x30c tmp/arm64-linux.elf-fold.o
+                0x00000000001000c4                get_page_mask
+                0x00000000001000d0                mmap_privanon
+                0x00000000001000e0                mmap
+                0x00000000001000fc                munmap
+                0x0000000000100118                Pprotect
+                0x0000000000100118                mprotect
+                0x00000000001002f4                my_bkpt
+                0x00000000001002fc                exit
+                0x0000000000100304                ftruncate
+                0x0000000000100310                memfd_create
+                0x000000000010031c                read
+                0x0000000000100328                write
+                0x0000000000100328                Pwrite
+                0x0000000000100334                close
+                0x0000000000100340                getpid
+                0x000000000010034c                brk
+                0x0000000000100358                unlink
+                0x000000000010036c                readlink
+                0x0000000000100374                open
+                0x0000000000100390                memcpy
+                0x00000000001003a4                my_memset
+                0x00000000001003b4                __clear_cache
+ .text          0x00000000001003c8      0x884 tmp/arm64-linux.elf-main.o
+                0x000000000010057c                underlay
+                0x00000000001005e8                PF_TO_PROT
+                0x0000000000100b08                upx_main
+ .text          0x0000000000100c4c        0x0 tmp/arm64-expand.o
  *(.data)
- .data          0x0000000000100c34        0x0 tmp/arm64-linux.elf-fold.o
- .data          0x0000000000100c34        0x0 tmp/arm64-linux.elf-main.o
- .data          0x0000000000100c34        0x0 tmp/arm64-expand.o
+ .data          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
+ .data          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-main.o
+ .data          0x0000000000100c4c        0x0 tmp/arm64-expand.o
 
-.iplt           0x0000000000100c34        0x0
- .iplt          0x0000000000100c34        0x0 tmp/arm64-linux.elf-fold.o
+.iplt           0x0000000000100c4c        0x0
+ .iplt          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
 
-.rela.dyn       0x0000000000100c38        0x0
- .rela.iplt     0x0000000000100c38        0x0 tmp/arm64-linux.elf-fold.o
+.rela.dyn       0x0000000000100c50        0x0
+ .rela.iplt     0x0000000000100c50        0x0 tmp/arm64-linux.elf-fold.o
 
 .data
 LOAD tmp/arm64-linux.elf-fold.o
@@ -56,13 +55,13 @@ LOAD tmp/arm64-linux.elf-main.o
 LOAD tmp/arm64-expand.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
-.igot.plt       0x0000000000100c38        0x0
- .igot.plt      0x0000000000100c38        0x0 tmp/arm64-linux.elf-fold.o
+.igot.plt       0x0000000000100c50        0x0
+ .igot.plt      0x0000000000100c50        0x0 tmp/arm64-linux.elf-fold.o
 
-.bss            0x0000000000100c34        0x0
- .bss           0x0000000000100c34        0x0 tmp/arm64-linux.elf-fold.o
- .bss           0x0000000000100c34        0x0 tmp/arm64-linux.elf-main.o
- .bss           0x0000000000100c34        0x0 tmp/arm64-expand.o
+.bss            0x0000000000100c4c        0x0
+ .bss           0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
+ .bss           0x0000000000100c4c        0x0 tmp/arm64-linux.elf-main.o
+ .bss           0x0000000000100c4c        0x0 tmp/arm64-expand.o
 
 EXP_HEAD        0x0000000000000000      0x104
                 0x0000000000000000                PROVIDE (__start_EXP_HEAD, .)
