@@ -6,35 +6,50 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-                0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000000000     0x10b0
- .text          0x0000000000000000      0x148 tmp/i386-linux.elf-fold.o
- .text          0x0000000000000148      0xf66 tmp/i386-linux.elf-main.o
-                0x0000000000000e93                upx_main
- *fill*         0x00000000000010ae        0x2 00
- .text          0x00000000000010b0        0x0 tmp/i386-expand.o
+.text           0x0000000000000000      0xa72
+ .text          0x0000000000000000      0x16a tmp/i386-linux.elf-fold.o
+                0x0000000000000002                get_page_mask
+                0x000000000000000f                get_upxfn_path
+ *fill*         0x000000000000016a        0x2 00
+ .text          0x000000000000016c      0x30d tmp/i386-linux.elf-upxfd_android.o
+                0x0000000000000318                upx_mmap_and_fd
+ *fill*         0x0000000000000479        0x3 00
+ .text          0x000000000000047c        0x0 tmp/i386-expand.o
+ .text          0x000000000000047c      0x5f6 tmp/i386-linux.elf-main.o
+                0x0000000000000985                upx_main
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/i386-linux.elf-fold.o
- .data          0x0000000000000000        0x0 tmp/i386-linux.elf-main.o
+ .data          0x0000000000000000        0x0 tmp/i386-linux.elf-upxfd_android.o
  .data          0x0000000000000000        0x0 tmp/i386-expand.o
+ .data          0x0000000000000000        0x0 tmp/i386-linux.elf-main.o
 
 .bss            0x0000000000000000        0x0
  .bss           0x0000000000000000        0x0 tmp/i386-linux.elf-fold.o
- .bss           0x0000000000000000        0x0 tmp/i386-linux.elf-main.o
+ .bss           0x0000000000000000        0x0 tmp/i386-linux.elf-upxfd_android.o
  .bss           0x0000000000000000        0x0 tmp/i386-expand.o
+ .bss           0x0000000000000000        0x0 tmp/i386-linux.elf-main.o
+TARGET(elf32-i386)
+                0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 LOAD tmp/i386-linux.elf-fold.o
-LOAD tmp/i386-linux.elf-main.o
+LOAD tmp/i386-linux.elf-upxfd_android.o
 LOAD tmp/i386-expand.o
+LOAD tmp/i386-linux.elf-main.o
 OUTPUT(tmp/i386-linux.elf-fold.bin elf32-i386)
 
-SYSCALLS        0x0000000000000000       0x50
- SYSCALLS       0x0000000000000000       0x50 tmp/i386-linux.elf-fold.o
-                0x0000000000000048                get_page_mask
+SYSCALLS        0x0000000000000000       0x74
+ SYSCALLS       0x0000000000000000       0x74 tmp/i386-linux.elf-fold.o
+                0x000000000000005a                mempcpy
                 0x000000000000002a                mmap
-                0x000000000000004e                my_bkpt
+                0x0000000000000048                my_memset
+                0x0000000000000070                my_bkpt
                 0x0000000000000000                Pprotect
+
+.note.GNU-stack
+                0x0000000000000000        0x0
+ .note.GNU-stack
+                0x0000000000000000        0x0 tmp/i386-linux.elf-upxfd_android.o
 
 EXP_HEAD        0x0000000000000000       0xf1
  EXP_HEAD       0x0000000000000000       0xf1 tmp/i386-expand.o

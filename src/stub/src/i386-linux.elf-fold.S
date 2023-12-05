@@ -32,6 +32,9 @@
 #include "arch/i386/macros.S"
 NBPW= 4
 
+# WARNING: This file uses Intel syntax:  opcode reg,operand 
+# Memory operands use square brackets:  [displ + %reg]
+# Literal operands lack square brackets.
 
 PAGE_SIZE= ( 1<<12)
 PAGE_MASK= -PAGE_SIZE
@@ -72,13 +75,33 @@ O_RDONLY=       0
 // control just falls through, after this part and compiled C code
 // are uncompressed.
 
-// enter:
+// enter at fold :
 // esp/ ADRX,LENX,elfaddr,ADRU,LENU,%fd,%entry,argc,argv,0,envp,0,auxv,0,strings
 //      (ADRU,LENU) = params for final munmap()
 //      (ADRX,LENX) = extent of compressed program
+F_ENTR= 6*NBPW; F_PMASK= F_ENTR
 
-fold_begin:
-   //// int3  // DEBUG
+PAGE_MASK=  . - 3*NBPW
+upxfn_path= . - 2*NBPW  // displacement to filename string
+mflg_data=  . - 1*NBPW  // QNZ vs Linux
+
+fold:
+  // int3  // DEBUG
+        jmp L10
+
+get_page_mask: .globl get_page_mask
+        call 0f; 0: pop %ecx
+        mov %eax,[PAGE_MASK - 0b + %ecx]
+        ret
+
+get_upxfn_path: .globl get_upxfn_path
+        call 0f; 0: pop %ecx
+        mov %eax,[upxfn_path - 0b + %ecx]
+        test %eax,%eax; je 1f; add %eax,%ecx
+1:
+        ret
+
+L10:
         mov esi,esp; sub esp,PATH_MAX
         mov edi,esp; push 8; pop ecx; rep movsd  // copy ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 
@@ -271,11 +294,29 @@ sys_check:
         push eax  // save __NR_ for debug
         int 0x80
         pop edx  // recover __NR_ for debug
-        cmp %eax,PAGE_MASK; jae 0f; ret; 0:
+        cmp %eax,-1<<12; jae 0f; ret; 0:
         hlt
 
-get_page_mask: .globl get_page_mask
-        mov eax,-1<<12
+my_memset: .globl my_memset  // (dst, val, n)
+        push %ebp; mov %esp,%ebp
+        push %edi
+        mov %ecx,[(2+ 2)*NBPW + %ebp]
+        mov %eax,[(2+ 1)*NBPW + %ebp]
+        mov %edi,[(2+ 0)*NBPW + %ebp]
+        rep stosb
+        pop %edi
+        pop %ebp
+        ret
+
+mempcpy: .globl mempcpy  // (dst, src, n)
+        push %ebp; mov %esp,%ebp
+        push %edi; push %esi
+        mov %ecx,[(2+ 2)*NBPW + %ebp]
+        mov %eax,[(2+ 1)*NBPW + %ebp]
+        mov %edi,[(2+ 0)*NBPW + %ebp]
+        rep movsb
+        mov %edi,%eax
+        pop %esi; pop %edi; pop %ebp
         ret
 
 my_bkpt: .globl my_bkpt

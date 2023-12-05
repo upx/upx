@@ -30,7 +30,7 @@
  */
 
 #ifndef DEBUG  /*{*/
-#define DEBUG 1
+#define DEBUG 0
 #endif  /*}*/
 
 #include "include/linux.h"
@@ -256,13 +256,13 @@ xread(Extent *x, char *buf, size_t count)
 // util
 **************************************************************************/
 
+extern void my_bkpt(int, ...);
+
 #if !DEBUG  //{ save space
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
 #define ERR_LAB /*empty*/
-
-extern void my_bkpt(int, ...);
 
 static void __attribute__ ((__noreturn__))
 err_exit(int a)
@@ -295,13 +295,11 @@ static void
 unpackExtent(
     Extent *const xi,  // input
     Extent *const xo   // output
-    , int flag
 )
 {
     while (xo->size) {
-        DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  flag=%%x\\n",
-            xi, xi->size, xi->buf, xo, xo->size, xo->buf, flag);
-        my_bkpt((int)xi, xo);
+        DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)\\n",
+            xi, xi->size, xi->buf, xo, xo->size, xo->buf);
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
         //   compressible and is stored in its uncompressed form.
@@ -729,7 +727,7 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
                     PROT_WRITE | PROT_READ, MAP_FIXED) )
                 err_exit(6);
             DPRINTF("mlen 3 %%x\\n", mlen);
-            unpackExtent(xi, &xo, 23);
+            unpackExtent(xi, &xo);
             DPRINTF("mlen 4a mlen=%%x  frag=%%x  frag_mask=%%x  prot=%%x\\n", mlen, frag, frag_mask, prot);
         }
         else {  // PT_INTERP
@@ -907,10 +905,10 @@ void *upx_main(
 
 #if defined(__mips__)  //{
     // ehdr = Uncompress Ehdr and Phdrs
-    unpackExtent(&xj, &xo, 45);
+    unpackExtent(&xj, &xo);
 #else  //}{ !defined(__mips__)
     // Uncompress Ehdr and Phdrs.
-    unpackExtent(&xi, &xo, 34);
+    unpackExtent(&xi, &xo);
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.
     xi.buf  -= sz_first;
     xi.size  = sz_compressed;

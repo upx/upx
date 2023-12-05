@@ -9,7 +9,7 @@ Linker script and memory map
 TARGET(elf64-powerpcle)
                 0x000000000010004c                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x000000000010004c     0x1754
+.text           0x000000000010004c      0xd7c
  *(.text)
  .text          0x000000000010004c      0x39c tmp/powerpc64le-linux.elf-fold.o
                 0x000000000010004c                get_page_mask
@@ -30,12 +30,12 @@ TARGET(elf64-powerpcle)
                 0x00000000001003bc                close
                 0x00000000001003c4                memcpy
                 0x00000000001003e0                my_bkpt
- .text          0x00000000001003e8     0x13b8 tmp/powerpc64le-linux.elf-main.o
- .text          0x00000000001017a0        0x0 tmp/powerpc64le-expand.o
+ .text          0x00000000001003e8      0x9e0 tmp/powerpc64le-linux.elf-main.o
+ .text          0x0000000000100dc8        0x0 tmp/powerpc64le-expand.o
  *(.data)
- .data          0x00000000001017a0        0x0 tmp/powerpc64le-linux.elf-fold.o
- .data          0x00000000001017a0        0x0 tmp/powerpc64le-linux.elf-main.o
- .data          0x00000000001017a0        0x0 tmp/powerpc64le-expand.o
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-linux.elf-fold.o
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-linux.elf-main.o
+ .data          0x0000000000100dc8        0x0 tmp/powerpc64le-expand.o
 
 .data
 LOAD tmp/powerpc64le-linux.elf-fold.o
@@ -46,12 +46,11 @@ OUTPUT(tmp/powerpc64le-linux.elf-fold.bin elf64-powerpcle)
 .toc            0x0000000000000000        0x0
  .toc           0x0000000000000000        0x0 tmp/powerpc64le-linux.elf-main.o
 
-.opd            0x0000000000000000       0xc0
- .opd           0x0000000000000000       0xc0 tmp/powerpc64le-linux.elf-main.o
-                0x0000000000000020                PF_TO_PROT
-                0x0000000000000030                write
-                0x0000000000000050                underlay
-                0x00000000000000b0                upx_main
+.opd            0x0000000000000000       0x80
+ .opd           0x0000000000000000       0x80 tmp/powerpc64le-linux.elf-main.o
+                0x0000000000000040                underlay
+                0x0000000000000050                PF_TO_PROT
+                0x0000000000000070                upx_main
 
 .bss            0x0000000000000000        0x0
  .bss           0x0000000000000000        0x0 tmp/powerpc64le-linux.elf-fold.o

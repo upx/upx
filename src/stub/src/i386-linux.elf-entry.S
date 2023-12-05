@@ -119,41 +119,65 @@ refill:
 
 L20:
         pop foldi  // MATCH_09  &fold_info
+
 #define old_sp %ebp
-#define F_FRAME 7*NBPW
-#define F_ENTR 6*NBPW
-#define F_MFD  5*NBPW
-#define F_LENU 4*NBPW
-#define F_ADRU 3*NBPW
-#define F_ELFA 2*NBPW
-#define F_LENX 1*NBPW
-#define F_ADRX 0*NBPW
+F_FRAME= 7*NBPW
+F_ENTR= 6*NBPW; F_PMASK= F_ENTR
+F_MFD=  5*NBPW
+F_LENU= 4*NBPW
+F_ADRU= 3*NBPW
+F_ELFA= 2*NBPW
+F_LENX= 1*NBPW
+F_ADRX= 0*NBPW
+
+D_FOLD=  3*NBPW  // .data space at start of unfold
+D_QFLG=  2*NBPW
+D_FNAME= 1*NBPW
+D_PMASK= 0*NBPW
+
 #if 0  //{ DEBUG
         mov $0xa5a5a5a5,%eax
         push %eax; push %eax; push %eax; push %eax
         push %eax; push %eax; push %eax
 #else  //}{ non-DEBUG
-        sub $F_FRAME*NBPW,%esp
+        sub $F_FRAME,%esp
 #endif  //}
+AT_PAGESZ= 6  // /usr/include/elf.h
+        lea NBPW + F_FRAME(%esp),%edi  // past argc
+        call zfind  // skip argv
+        call zfind  // skip env
+0: // find AT_PAGESZ in auxv
+        mov     (%edi),%eax
+        mov NBPW(%edi),%ecx; add $2*NBPW,%edi
+        cmp $AT_PAGESZ,%eax; je 5f
+        mov $1<<12,%ecx  // default PAGE_SIZE
+        test %eax,%eax; jne 0b
+5:
+        neg %ecx  // PAGE_MASK
+
         mov %esp,old_sp
+        mov %ecx,F_PMASK(old_sp)
         lea sz_pack2 - L70ret(r_getb),%edi
         mov (%edi),%ecx
         sub %ecx,%edi;   mov %edi,F_ELFA(old_sp)
         lodsl  // O_BINFO; advance to &b_info
-        add %eax,%edi; mov %eax,F_ADRX(old_sp)
+        add %eax,%edi; mov %edi,F_ADRX(old_sp)
         sub %eax,%ecx; mov %ecx,F_LENX(old_sp)
 //        cmpw $M_NRV2B_LE32|(0<<8),b_method(foldi); je 0f; hlt; 0:  // check method and filter bytes
 
         mov /*sz_unc*/(foldi),r_unc
             // align + {page_mask, fd_name} + "/data/data/$APP_NAME/cache/upxAAA"
-        lea (1+ NAME_MAX + 8 + 2*NBPW + (1+ 11 + 13))(r_unc),u_len
+        lea (1+ NAME_MAX + 8 + D_FOLD + (1+ 11 + 13))(r_unc),u_len
         mov u_len,F_LENU(old_sp)
         sub u_len,%esp  // alloca
         and $-2*NBPW,%esp  // align stack
 
-        lea (8 + 2*NBPW)(r_unc),%eax; add %esp,%eax
+        lea (8 + D_FOLD)(r_unc),%eax; add %esp,%eax
         and $-2*NBPW,%eax; push %eax  // MATCH_31 where to put pathname
-        push $PAGE_MASK  // MATCH_32
+        mov %eax,%ecx
+        sub %esp,%ecx;            mov %ecx,D_FNAME(%esp)  // forward to unfolded code
+        mov F_PMASK(old_sp),%ecx; mov %ecx,D_PMASK(%esp)  // forward to unfolded code
+        mov $MAP_PRIVATE|MAP_ANONYMOUS,%ecx; mov %ecx,D_QFLG(%esp)  // forward to unfolded code
 
         xor %ecx,%ecx  // zero
         push %edx  // MATCH_33  save &getbit
@@ -198,7 +222,7 @@ L20:
 #define dst  %edi
 //#define ldst %edx  /* Out: actually a reference: &len_dst */
 
-        lea 2*NBPW(%esp),dst  // &unfolded_code ( PAGE_MASK, upxfd_path, code)
+        lea D_FOLD(%esp),dst  // &unfolded code
         push old_sp  // MATCH_16  save register
         mov    sz_cpr(foldi),lsrc
         lea sz_b_info(foldi),src
@@ -284,7 +308,7 @@ eof_n2b:
         mov $__NR_close,%al; call sys_check_al
 
         mov F_ADRU(%ebp),%eax
-        add $2*NBPW,%eax  // PAGE_MASK, upxfd_path
+        add $D_FOLD,%eax  // PAGE_MASK, upxfd_path, mflg_data
         jmp *%eax
 // %esp:
 //  MATCH_13  ptr unfolded_code; for escape hatch
@@ -340,28 +364,12 @@ mempcpy: .globl mempcpy  // (dst, src, n)
         pop %esi; pop %edi; pop %ebp
         ret
 
+zfind:
+        mov (%edi),%eax; add $NBPW,%edi
+        test %eax,%eax; jne zfind
+        ret
+
 // IDENTSTR goes here
-
-        pop %ecx  // P_55  LENU
-        pop %edx  // P_42  ADRX
-        pop %esi  // P_41  LENX
-        pop %edi  // P_40  elfaddr
-
-        push %ecx  // P_60  LENU
-        push %eax  // P_61  ADRU
-        push %esi  // P_62  LENX
-        push %edx  // P_63  ADRX
-
-        //mov %ebx,%arg1  // mfd
-        mov $__NR_close,%al; call sys_check_al
-
-// Jump to unfolded code
-        pop %eax  // P_63  ADRX
-        pop %ecx  // P_62  LENX
-// eax:ADRX; ebx:free; ecx:LENX
-// ebp:free; esi:free; edi:elfaddr(dynbase?)
-        pop %edx; push %edx  // P_61  ADRU
-        jmp *%edx  // esp/ ADRU,LENU,xfd,%entry{mfd},argc,argv,0,...
 
   section ELFMAINZ
 L70:
