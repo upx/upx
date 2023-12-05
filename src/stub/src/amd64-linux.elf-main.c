@@ -110,8 +110,6 @@ extern void my_bkpt(unsigned, ...);
 
 #endif  //}
 
-extern void my_bkpt(void *, ...);
-
 static int dprintf(char const *fmt, ...); // forward
 #endif  /*}*/
 

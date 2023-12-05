@@ -116,15 +116,9 @@ fold_begin:
         rep movsb  # slide up
         sub $3,%rdi; movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),(%rdi)  # env var name
         mov %rdi,(%r14)  # new_env[0]
-        and $~0<<3,%rdi  # align
+        and $-2*NBPW,%rdi  # align
         mov %r15,%rcx
         sub %rsp,%rcx  # byte count
-
-        mov %ecx,%eax
-        xor %edi,%eax
-        xor   $NBPW,%eax
-        and   $NBPW,%eax
-        sub %rax,%rdi  # keep 16-byte alignment of %rsp
 
         mov %rdi,%r14  # end of new auxv
         sub $NBPW,%rdi        # &last qword of new auxv
@@ -135,20 +129,21 @@ fold_begin:
 
         lea (%r14,%r12),%arg4  # &new Elf64_auxv  %r12 dead
         and $1,%ebx; add %rbx,%arg4  # is_ptinterp  (what a pain!)
+        pop %rax   # f_unf
         pop %arg2  # LENX
         pop %arg1  # ADRX
 
         pop %arg5; mov %arg5,%r13  # elfaddr
         subq $ OVERHEAD,%rsp
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
-        push %rax; mov %rax,%r13  # elfaddr  7th arg
-
-        movq %rbp,%arg5  # &decompress: f_expand
-    int3
         call upx_main  # Out: %rax= entry
-/* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
-                Elf32_Auxv_t *arg4, f_decompr arg5, f_unf arg6,
-                Elf64_Addr elfaddr )
+/* entry= upx_main(
+   b_info *arg1,       {%rdi}
+   total_size arg2,    {%rsi}
+   Elf64_Ehdr *arg3,   {%rdx}
+   Elf32_Auxv_t *arg4, {%rcx}
+   Elf64_Addr elfaddr  {%r8}
+   )
 */
 // rsp/ {OVERHEAD},ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
         addq $OVERHEAD,%rsp  # Elf64_Ehdr temporary space

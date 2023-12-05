@@ -88,8 +88,8 @@ sz_pack2= .-4
 _start: .globl _start
 ////    nop; int3  # uncomment for debugging
         movq %rsp,%r13
-        push %rax  // space for entry address
-        push %rdx  // register this function pointer with 'atexit'
+        push %rax  // P_10  space for entry address
+        push %rdx  // P_11  register this function pointer with 'atexit'
 
 // Create anonymous temporary file on mfd
         push $'u'|('p'<<8)|('x'<<16)|(0<<24)
@@ -106,11 +106,9 @@ _start: .globl _start
 
         lea sz_pack2(%rip),%rcx  // &sz_pack2
         movl (%rcx),%r15d  // sz_pack2: length before stub
-        subq %r15,%rcx  // elfaddr= &Elf64_Ehdr of this stub
+        subq %r15,%rcx; push %rcx  // P_31  elfaddr= &Elf64_Ehdr of this stub
         subl %r14d,%r15d  // LENX= sz_pack2 - O_BINFO
         addq %rcx,%r14  // ADRX= elfaddr + O_BINFO
-        push %rdx  // P_30  LENU
-        push %rcx  // P_31  elfaddr
 
 // alloca()
         subq %rdx,%rsp; and $-2*NBPW,%rsp  // aligned space for unfolded stub
@@ -225,7 +223,6 @@ eof_n2b:
         push $__NR_mmap; pop %rax; call sys_check
         pop %rcx  // P_31  elfaddr
         push %rax  // P_32  ADRU
-        push $0  // P_33  %fd
         push %rcx  // P_34  elfaddr
 
         push %arg5; pop %arg1  // mfd
@@ -233,7 +230,7 @@ eof_n2b:
 
 // Use the copy.
 // %r14= ADRX; %r15= LENX;
-// rsp/ elfaddr,%fd,ADRU,LENU,atexit.rdx,%entry
+// rsp/ elfaddr,ADRU,LENU,atexit.rdx,%entry
         jmp * -4*NBPW(%r13)  // ADRU
 
 sys_check:
@@ -248,9 +245,15 @@ here:  // OUT: %rdi= (2+ retaddrj) without disturbing shadow stack
         scasw  // over jmp.s
         ret
 
-/* Returns 0 on success; non-zero on failure. */
-f_exp:  // shorter name
-decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
+getbit:
+        addl bits,bits; jz refill  // Carry= next bit
+        rep; ret
+refill:
+        movl (%rsi),bits; subq $-4,%rsi  // next 32 bits; set Carry
+        adcl bits,bits  // LSB= 1 (CarryIn); CarryOut= next bit
+        rep; ret
+
+        // IDENTSTR goes here
 
   section ELFMAINZ
         .balign 4

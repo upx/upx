@@ -308,7 +308,7 @@ endef
 
 define tc.default.f-embed_objinfo_without_xstrip
 	chmod a-x $1
-	$(call tc,objcopy) -R .text -R .data -R .bss $1
+	$(call tc,objcopy) -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objcopy) --strip-unneeded \
 	    --keep-symbol=_start --keep-symbol=upx_so_main --keep-symbol=upx_mmap_and_fd \
@@ -422,13 +422,11 @@ amd64-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds
-#	    tmp/amd64-expand.o
-#	# FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
-#	####$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	multiarch-ld-2.17 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-#	$(call tc,f-objstrip,tmp/$T.bin)
-#	$(call tc,sstrip) tmp/$T.bin
+amd64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/amd64-expand.o \
+	    tmp/amd64-linux.elf-main.o
+	multiarch-ld-2.17 -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
@@ -593,7 +591,7 @@ arm.v4a-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/arm.v4a-linux.elf-upxfd_android.o \
 	    tmp/arm.v4a-expand.o \
 	    tmp/arm.v4a-linux.elf-so_main.o
-	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	multiarch-ld-2.23.90 -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
