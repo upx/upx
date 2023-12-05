@@ -1262,13 +1262,13 @@ tmp/i386-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,objcopy) -R .comment $@
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
-i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.lds tmp/i386-expand.o
-#	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	multiarch-ld-2.17 -r      -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-#	$(call tc,f-objstrip,tmp/$T.bin)
-#	$(call tc,sstrip) tmp/$T.bin
+i386-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/i386-linux.elf-upxfd_android.o \
+	    tmp/i386-expand.o \
+	    tmp/i386-linux.elf-main.o
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 

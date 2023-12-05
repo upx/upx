@@ -8,14 +8,14 @@ Linker script and memory map
 
                 0x000000000010004c                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000000000     0x1252
- .text          0x0000000000000000      0x121 tmp/amd64-linux.elf-fold.o
- *fill*         0x0000000000000121        0x3 00
- .text          0x0000000000000124        0x0 tmp/amd64-expand.o
- .text          0x0000000000000124     0x112e tmp/amd64-linux.elf-main.o
-                0x0000000000000124                PF_TO_PROT
-                0x00000000000011c7                underlay
-                0x0000000000000ff6                upx_main
+.text           0x0000000000000000      0x923
+ .text          0x0000000000000000      0x11e tmp/amd64-linux.elf-fold.o
+ *fill*         0x000000000000011e        0x2 00
+ .text          0x0000000000000120        0x0 tmp/amd64-expand.o
+ .text          0x0000000000000120      0x803 tmp/amd64-linux.elf-main.o
+                0x00000000000002ef                PF_TO_PROT
+                0x00000000000002a4                underlay
+                0x00000000000007e9                upx_main
 
 EXP_HEAD        0x0000000000000000       0xe0
  EXP_HEAD       0x0000000000000000       0xe0 tmp/amd64-expand.o
