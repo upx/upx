@@ -16,14 +16,14 @@ Linker script and memory map
 TARGET(elf32-littlemips)
                 0x0000000000100080                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000100080     0x1994
+.text           0x0000000000100080      0xcc4
  *(.text)
- .text          0x0000000000100080     0x1994 tmp/mipsel.r3000-linux.elf-fold.o
+ .text          0x0000000000100080      0xcc4 tmp/mipsel.r3000-linux.elf-fold.o
                 0x0000000000100254                f_expand
                 0x0000000000100108                get_page_mask
                 0x000000000010036c                munmap
                 0x0000000000100344                getpid
-                0x000000000010196c                upx_mmap_and_fd
+                0x0000000000100c9c                upx_mmap_and_fd
                 0x000000000010038c                readlink
                 0x00000000001002b4                mempcpy
                 0x000000000010033c                ftruncate
@@ -42,7 +42,7 @@ TARGET(elf32-littlemips)
                 0x0000000000100260                Pprotect
                 0x0000000000100374                stat
                 0x0000000000100334                exit
-                0x00000000001016b8                upx_main
+                0x0000000000100b24                upx_main
                 0x0000000000100324                brk
                 0x000000000010037c                open
                 0x0000000000100078                PAGE_MASK
@@ -50,14 +50,14 @@ TARGET(elf32-littlemips)
                 0x000000000010035c                mkdir
                 0x000000000010032c                close
  *(.data)
- .data          0x0000000000101a14        0x0 tmp/mipsel.r3000-linux.elf-fold.o
+ .data          0x0000000000100d44        0x0 tmp/mipsel.r3000-linux.elf-fold.o
 
 .data
 
-.bss            0x0000000000101a14        0x0
- .bss           0x0000000000101a14        0x0 tmp/mipsel.r3000-linux.elf-fold.o
+.bss            0x0000000000100d44        0x0
+ .bss           0x0000000000100d44        0x0 tmp/mipsel.r3000-linux.elf-fold.o
 
-.rel.dyn        0x0000000000101a14        0x0
+.rel.dyn        0x0000000000100d44        0x0
  .rel.dyn       0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-fold.o
 LOAD tmp/mipsel.r3000-linux.elf-fold.o
 OUTPUT(tmp/mipsel.r3000-linux.elf-fold.bin elf32-littlemips)
