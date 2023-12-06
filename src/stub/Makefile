@@ -430,8 +430,11 @@ amd64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-amd64-linux.elf-so_fold.h : tmp/$$T.o tmp/amd64-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/amd64-expand.o
-	multiarch-ld-2.17 -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+amd64-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/amd64-expand.o \
+	    tmp/amd64-linux.elf-so_main.o
+	multiarch-ld-2.17 -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
@@ -769,13 +772,19 @@ arm64-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-arm64-linux.elf-fold.h :    tmp/$$T.o tmp/arm64-linux.elf-main.o    $(srcdir)/src/$$T.lds tmp/arm64-expand.o
+arm64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/arm64-expand.o \
+	    tmp/arm64-linux.elf-main.o
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-arm64-linux.elf-so_fold.h : tmp/$$T.o tmp/arm64-linux.elf-so_main.o $(srcdir)/src/$$T.lds tmp/arm64-expand.o
+arm64-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/arm64-expand.o \
+	    tmp/arm64-linux.elf-so_main.o
 	$(call tc,ld) -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -1493,8 +1502,10 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/mips.r3000-linux.elf-main.s \
 	    tmp/mips.r3000-linux.upxfd_android.s
-	/lib/cpp -D_TARGET_LINUX_ -D__MIPSEB__ $(filter %.S,$^) -o - | \
+	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
+	$(call tc,gcc) -E -D_TARGET_LINUX_ -D__MIPSEB__ $(filter %.S,$^) -o - | \
 	    cat - $(filter %.s,$^) | $(call tc,as) - -march=r3000 -o tmp/$T.o
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
 	$(call tc,f-objstrip,tmp/$T.bin)
@@ -1538,7 +1549,7 @@ mips.r3000-linux.shlib%.h : tc_bfdname = elf32-bigmips
 mips.r3000-linux.shlib-init.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
 	# info: we really need as-2.17 here
-	/lib/cpp -D_TARGET_LINUX_ -D__MIPSEB__ $< | $(RTRIM) > tmp/$T.i
+	$(call tc,gcc) -E -D_TARGET_LINUX_ -D__MIPSEB__ $< | $(RTRIM) > tmp/$T.i
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 else
@@ -1573,8 +1584,10 @@ mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/mips.r3000-linux.elf-main.s \
 	    tmp/mips.r3000-linux.upxfd_android.s
-	/lib/cpp -D_TARGET_LINUX_ -D__MIPSEL__ $(filter %.S,$^) -o - | \
+	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
+	$(call tc,gcc) -E -D_TARGET_LINUX_ -D__MIPSEL__ $(filter %.S,$^) -o - | \
 	    cat - $(filter %.s,$^) | $(call tc,as) - -march=r3000 -o tmp/$T.o
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
 	$(call tc,f-objstrip,tmp/$T.bin)
