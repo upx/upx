@@ -412,6 +412,20 @@ tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -fPIC -m64 -nostdinc -MMD -MT $@
 tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables --save-temps
 tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
+# Apparently gcc-3.4.4 leaves some turds *.s and *.i.  For example:
+# rm amd64-linux.elf-entry.h
+# strace -f -o strace.out -e trace=execve,file make
+# grep amd64-linux.elf-entry.s strace.out
+#   111841 stat64("amd64-linux.elf-entry.s", 0xffcd434c) = -1 ENOENT (No such file or directory)
+#   111842 execve(".../bin-upx-20221212/packages/amd64-linux/gcc-3.4.3.20050507-glibc-2.3.5/bin/../libexec/gcc/x86_64-unknown-linux-gnu/3.4.4/cc1", \
+#     [..., "-E", ..., "src/amd64-linux.elf-entry.S", ..., "-o", "amd64-linux.elf-entry.s"], 0x963b180 /* 63 vars */) = 0
+#   111842 openat(AT_FDCWD, "amd64-linux.elf-entry.s", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+#   111841 stat64("amd64-linux.elf-entry.s", {st_mode=S_IFREG|0644, st_size=4027, ...}) = 0
+#   111843 execve(".../bin-upx-20221212/amd64-linux/gcc-3.4.3.20050507-glibc-2.3.5/bin/../libexec/gcc/x86_64-unknown-linux-gnu/3.4.4/as", \
+#      [..., "-o", "tmp/amd64-linux.elf-entry.bin", "amd64-linux.elf-entry.s"], 0x963b180 /* 63 vars */) = 0
+#   111843 openat(AT_FDCWD, "amd64-linux.elf-entry.s", O_RDONLY) = 4
+# Buf no "unlink amd64-linux.elf-entry.s"
+
 amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
