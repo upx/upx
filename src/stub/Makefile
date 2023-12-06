@@ -891,16 +891,22 @@ armeb.v4a-linux.elf%.h : tc_bfdname = elf32-bigarm
 
 tc.armeb.v4a-linux.elf.gcc = $(tc.arm.v4a-linux.elf.gcc) -mbig-endian
 
-armeb.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
+armeb.v4a-linux.elf-entry.h : $(srcdir)/src/armeb.v4a-linux.elf-entry.lds \
+	    $(srcdir)/src/$$T.S \
+	    tmp/armeb.v4a-linux.elf-upxfd_android.o
+	$(call tc,gcc) -c  $(srcdir)/src/$T.S -o tmp/$T.o
+	multiarch-ld-2.17 -r --format=elf32-bigarm -Map tmp/$T.map -o tmp/$T.bin \
+	    -T src/armeb.v4a-linux.elf-entry.lds \
+	    tmp/$T.o \
+	    tmp/armeb.v4a-linux.elf-upxfd_android.o
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 armeb.v4a-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/$$T.o \
 	    tmp/armeb.v4a-linux.elf-upxfd_android.o \
 	    tmp/armeb.v4a-expand.o \
-	    tmp/armeb.v4a-linux.elf-so_main.o
+	    tmp/armeb.v4a-linux.elf-main.o
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
