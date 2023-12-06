@@ -33,15 +33,15 @@ Linker script and memory map
                 0x0000000000100390                memcpy
                 0x00000000001003a4                my_memset
                 0x00000000001003b4                __clear_cache
+ .text          0x00000000001003c8        0x0 tmp/arm64-expand.o
  .text          0x00000000001003c8      0x884 tmp/arm64-linux.elf-main.o
                 0x000000000010057c                underlay
                 0x00000000001005e8                PF_TO_PROT
                 0x0000000000100b08                upx_main
- .text          0x0000000000100c4c        0x0 tmp/arm64-expand.o
  *(.data)
  .data          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
- .data          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-main.o
  .data          0x0000000000100c4c        0x0 tmp/arm64-expand.o
+ .data          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-main.o
 
 .iplt           0x0000000000100c4c        0x0
  .iplt          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
@@ -51,8 +51,8 @@ Linker script and memory map
 
 .data
 LOAD tmp/arm64-linux.elf-fold.o
-LOAD tmp/arm64-linux.elf-main.o
 LOAD tmp/arm64-expand.o
+LOAD tmp/arm64-linux.elf-main.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
 .igot.plt       0x0000000000100c50        0x0
@@ -60,8 +60,8 @@ OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
 .bss            0x0000000000100c4c        0x0
  .bss           0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
- .bss           0x0000000000100c4c        0x0 tmp/arm64-linux.elf-main.o
  .bss           0x0000000000100c4c        0x0 tmp/arm64-expand.o
+ .bss           0x0000000000100c4c        0x0 tmp/arm64-linux.elf-main.o
 
 EXP_HEAD        0x0000000000000000      0x104
                 0x0000000000000000                PROVIDE (__start_EXP_HEAD, .)
