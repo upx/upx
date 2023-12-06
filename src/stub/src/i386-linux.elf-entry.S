@@ -302,7 +302,7 @@ eof_n2b:
         push $PROT_READ|PROT_EXEC  // arg3
         push F_LENU(%ebp)  // arg2
         push F_ADRU(%ebp)  // arg1
-        call oldmmap
+        call mmap; add $6*NBPW,%esp
 
         mov mfd,%ebx
         mov $__NR_close,%al; call sys_check_al
@@ -331,12 +331,11 @@ sys_check:  // syscall with error checking; if halt then %eax= -errno, %ecx= __N
         ret
 
 mmap: .globl mmap  // for C-callable, such as from upx_mmap_and_fd()
-oldmmap:  // oldmmap: 6 arguments on stack; remove arguments on return
         push %ebx  // save register
         lea 2*NBPW(%esp),%ebx
-        mov $__NR_oldmmap,%al; call sys_check_al
+        mov $__NR_oldmmap,%al; call sys_check_al  // use simpler-for-us oldmmap
         pop %ebx  // restore register
-        ret $6*NBPW
+        ret  // C-callable, so cannot remove 6 args here
 
 get_upxfn_path: .globl get_upxfn_path
         sub %eax,%eax  // should not be called!
@@ -367,6 +366,10 @@ mempcpy: .globl mempcpy  // (dst, src, n)
 zfind:
         mov (%edi),%eax; add $NBPW,%edi
         test %eax,%eax; jne zfind
+        ret
+
+my_bkpt: .globl my_bkpt
+        int3  // my_bkpt
         ret
 
 // IDENTSTR goes here
