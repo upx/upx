@@ -79,6 +79,19 @@ void my_bkpt(void const *, ...);
 #error  addr_string
 #endif  //}
 
+#if defined(__x86_64) || defined(__i386__) //}{
+#define DPRINTF(fmt, args...) ({ \
+    char const *r_fmt; \
+    asm("call 0f; .asciz \"" fmt "\"; 0: pop %0" \
+/*out*/ : "=r"(r_fmt) ); \
+    dprintf(r_fmt, args); \
+})
+#else  //}{
+#define DPRINTF(fmt, args...) /*empty*/
+#endif  //}
+
+#define dprintf my_bkpt
+
 //#include <fcntl.h>
 //#include <sys/stat.h>
 typedef unsigned long long u64_t;
@@ -128,7 +141,7 @@ __attribute__((__noinline__))
 static int dir_check(char const *path)
 {
     struct stat sb;
-    //memset(&sb,0xff, sizeof(sb));  // DEBUG aid
+    my_memset(&sb,0xff, sizeof(sb));  // DEBUG aid
     int rv = stat(path, &sb);
     if (0 <= rv) {
         if (S_IFDIR == (sb.st_mode & S_IFMT)) {
@@ -181,6 +194,7 @@ static int create_upxfn_path(char *name)
     // Append the name of the app
     int fd = open(addr_string("/proc/self/cmdline"), O_RDONLY, 0);
     int rlen = read(fd, p, PATH_MAX - 11);
+    close(fd);
     if (rlen < 0) {
         return rlen;  // failure
     }
@@ -223,6 +237,22 @@ struct utsname;
 extern int uname(struct utsname *);
 extern char * get_upxfn_path(void);
 
+// To work around bug in "i386-linux-gcc-3.4.6 -m32 -march=i386" .
+// gcc optimized out this code:
+//      uname((struct utsname *)buf);
+//      int const is_android = ( (('r'<<3*8)|('d'<<2*8)|('n'<<1*8)|('a'<<0*8))
+//          == (0x20202020 | *(int *)buf) );
+// Specialized: does NOT consider early termination of either string, etc.
+__attribute__((__noinline__))
+int strncmplc(char const *s1, char const *s2, unsigned n)
+{
+    while (n--) {
+        int rv = (0x20 | *s1++) - (0x20 | *s2++);
+        if (rv) return rv;
+    }
+    return 0;
+}
+
 #endif  //}  ANDROID_FRIEND
 
 unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
@@ -240,14 +270,13 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
 #define BUFLEN 4096
     void *buf = alloca(BUFLEN); *(int *)buf = 0;
     uname((struct utsname *)buf);
-    int const is_android = ( (('r'<<3*8)|('d'<<2*8)|('n'<<1*8)|('a'<<0*8))
-        == (0x20202020 | *(int *)buf) );
+    int /*const*/ not_android = strncmplc(addr_string("andr"), buf, 4);
 
     // Work-around for missing memfd_create syscall on early 32-bit Android.
     if (!pathname) { // must ask
         pathname = get_upxfn_path();
     }
-    if (is_android && -ENOSYS == fd && pathname) {
+    if (!not_android && -ENOSYS == fd && pathname) {
         if ('\0' == pathname[0]) { // first time; create the pathname and file
             fd = create_upxfn_path(pathname);
             if (fd < 0) {
@@ -262,21 +291,20 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
         unlink(pathname);
     }
 #else  //}{
-    int is_android = 0;
+    int not_android = 1;
     (void)pathname;
 #endif  //}
 
     // Set the file length
     if (datlen) {
-        if (!is_android) { // Linux ftruncate() is well-behaved
+        if (not_android) { // Linux ftruncate() is well-behaved
             int rv = ftruncate(fd, datlen);
             if (rv < 0) {
                 return rv;
             }
         }
 #if ANDROID_FRIEND  //{
-        else { // is_android: ftruncate has varying system call number on 32-bit
-            extern void *my_memset(void *dst, unsigned val, unsigned len);
+        else { // !not_android: ftruncate has varying system call number on 32-bit
             my_memset(buf, 0, BUFLEN);
             while (0 < datlen) {
                 int x = (datlen < BUFLEN) ? datlen : BUFLEN;
@@ -290,8 +318,8 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
         }
 #endif  //}
 
-        // Map the file pages
-        addr = (unsigned long)mmap(ptr, datlen, PROT_WRITE | PROT_READ,
+        // Map the file pages; set length 0 ==> 1
+        addr = (unsigned long)mmap(ptr, (!datlen) + datlen, PROT_WRITE | PROT_READ,
             MAP_SHARED, fd, 0);
         if ((~0ul<<12) < addr) { // error
             return addr;
