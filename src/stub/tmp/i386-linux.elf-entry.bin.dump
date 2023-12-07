@@ -2,27 +2,32 @@ file format elf32-i386
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags
-  0 ELFMAINX      04b1  0  0  034  2**2  CONTENTS
-  1 ELFMAINZ      0a  0  0  04e5  2**0  CONTENTS
+  0 ELFMAINX      052c  0  0  034  2**2  CONTENTS
+  1 ELFMAINZ      0a  0  0  0560  2**0  CONTENTS
 SYMBOL TABLE:
 00000000 l    d  ELFMAINX 0 ELFMAINX
 00000000 l    d  ELFMAINZ 0 ELFMAINZ
-00000350 g     F ELFMAINX 0161 upx_mmap_and_fd
+000003b0 g     F ELFMAINX 017c upx_mmap_and_fd
 00000000         *UND* 0 O_BINFO
-00000182 g       ELFMAINX 0 mempcpy
-0000015d g       ELFMAINX 0 mmap
-00000170 g       ELFMAINX 0 my_memset
-0000016d g       ELFMAINX 0 get_upxfn_path
+00000183 g       ELFMAINX 0 mempcpy
+00000160 g       ELFMAINX 0 mmap
+00000171 g       ELFMAINX 0 my_memset
+0000016e g       ELFMAINX 0 get_upxfn_path
 00000000 g       ELFMAINX 0 _start
+000001a3 g       ELFMAINX 0 my_bkpt
+00000376 g     F ELFMAINX 03a strncmplc
 
 RELOCATION RECORDS FOR [ELFMAINX]:
 OFFSET   TYPE              VALUE
 00000001 R_386_PC32        ELFMAINZ
 00000093 R_386_PC32        upx_mmap_and_fd
-000002c0 R_386_PC32        mempcpy
-0000039a R_386_PC32        get_upxfn_path
-0000042a R_386_PC32        my_memset
-00000483 R_386_PC32        mmap
+00000138 R_386_PC32        mmap
+000001bc R_386_PC32        my_memset
+000002e4 R_386_PC32        mempcpy
+00000403 R_386_PC32        strncmplc
+00000414 R_386_PC32        get_upxfn_path
+0000049e R_386_PC32        my_memset
+000004fe R_386_PC32        mmap
 
 RELOCATION RECORDS FOR [ELFMAINZ]:
 OFFSET   TYPE              VALUE
