@@ -1435,6 +1435,7 @@ PackLinuxElf32::buildLinuxLoader(
   if (0 < szfold) {
     if (xct_off // shlib
       && (  this->e_machine==Elf32_Ehdr::EM_ARM
+         || this->e_machine==Elf32_Ehdr::EM_MIPS
          || this->e_machine==Elf32_Ehdr::EM_386)
     ) {
         initLoader(fold, szfold);
@@ -1475,6 +1476,7 @@ PackLinuxElf32::buildLinuxLoader(
             method = M_NRV2B_8;  //only ARM v6 and above has unaligned fetch
     }
     else if (this->e_machine==Elf32_Ehdr::EM_386
+         ||  this->e_machine==Elf32_Ehdr::EM_MIPS
          ||  this->e_machine==Elf32_Ehdr::EM_ARM) { // main program
         initLoader(fold, szfold);
         char sec[120];
@@ -1537,16 +1539,19 @@ PackLinuxElf32::buildLinuxLoader(
     memcpy(cprLoader, &h, sizeof(h)); // cprLoader will become FOLDEXEC
   }
 
+#define NO_printf printf
     initLoader(proto, szproto, -1, sz_cpr);
     NO_printf("FOLDEXEC unc=%#x  cpr=%#x\n", sz_unc, sz_cpr);
     linker->addSection("FOLDEXEC", mb_cprLoader, sizeof(b_info) + sz_cpr, 0);
     if (xct_off
        && (  this->e_machine==Elf32_Ehdr::EM_ARM
+          || this->e_machine==Elf32_Ehdr::EM_MIPS
           || this->e_machine==Elf32_Ehdr::EM_386)
     ) {
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
     }
     else if (this->e_machine==Elf32_Ehdr::EM_ARM
+          || this->e_machine==Elf32_Ehdr::EM_MIPS
           || this->e_machine==Elf32_Ehdr::EM_386) { // main program
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
             defineSymbols(ft);

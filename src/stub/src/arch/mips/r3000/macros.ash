@@ -30,6 +30,9 @@
 ;
  */
 
+#ifndef _MR3K_MACROS_ASH  /*{*/
+#define _MR3K_MACROS_ASH 1
+
 .macro  section name
         .section \name,"ax"
         .align  0
@@ -91,3 +94,5 @@
 #else
 #   define PRINT(str)   .print str
 #endif
+
+#endif  /*} _MR3K_MACROS_ASH */

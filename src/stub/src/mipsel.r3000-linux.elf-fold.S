@@ -36,7 +36,7 @@ NBPW=  4
         .set noat
         .altmacro
 
-PAGE_SHIFT= 16  // 64KiB is better default than 4KiB on MIPS
+PAGE_SHIFT= 16  # 64KiB is better default than 4KiB on MIPS
 PAGE_MASK= 0xffffffffffffffff<<PAGE_SHIFT
 
 sz_Ehdr= 52
