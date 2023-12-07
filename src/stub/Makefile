@@ -1518,12 +1518,14 @@ tmp/mips.r3000-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,objcopy) -R .comment $@
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
+#	    $(srcdir)/src/mips.r3000-expand.S
+
 mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/mips.r3000-linux.elf-main.s \
 	    tmp/mips.r3000-linux.upxfd_android.s
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
-	$(call tc,gcc) -E -D_TARGET_LINUX_ -D__MIPSEB__ $(filter %.S,$^) -o - | \
+	$(call tc,gcc) -E -D_TARGET_LINUX_ -D__MIPSEL__ $(filter %.S,$^) -o - | \
 	    cat - $(filter %.s,$^) | $(call tc,as) - -march=r3000 -o tmp/$T.o
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \

@@ -31,7 +31,7 @@
  */
 
 
-#ifndef _MR3K_STD_CONF_
+#ifndef _MR3K_STD_CONF_  /*{*/
 #define _MR3K_STD_CONF_ 1
 
 #define  JOHN       1
@@ -514,4 +514,4 @@ init_sz = . - init_sz
 .endm
 
 
-#endif  //_MR3K_STD_CONF_
+#endif  //} _MR3K_STD_CONF_
