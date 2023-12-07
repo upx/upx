@@ -6,29 +6,24 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-TARGET(elf32-bigarm)
-                0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-SO_MAIN         0x0000000000100040      0xd48
- *(.text)
- .text          0x0000000000100040      0x2e0 tmp/armeb.v4a-linux.elf-fold.o
-                0x0000000000100048                get_page_mask
-                0x0000000000100304                mempcpy
-                0x000000000010009c                mmap
-                0x0000000000100084                mmap_privanon
-                0x00000000001002ec                my_memset
-                0x0000000000100050                get_upxfn_path
-                0x0000000000100068                Pprotect
-                0x0000000100100034                PAGE_MASK
-                0x0000000000100068                mprotect
- .text          0x0000000000100320      0x344 tmp/armeb.v4a-linux.elf-upxfd_android.o
-                0x000000000010038c                upx_mmap_and_fd
- .text          0x0000000000100664        0x0 tmp/armeb.v4a-expand.o
- *(SO_MAIN)
- SO_MAIN        0x0000000000100664      0x724 tmp/armeb.v4a-linux.elf-so_main.o
-                0x0000000000100664                PF_to_PROT
-                0x0000000000100840                get_PAGE_MASK
-                0x00000000001008e8                upx_so_main
+.text           0x0000000000000000      0xd74
+ .text          0x0000000000000000      0x2e0 tmp/armeb.v4a-linux.elf-fold.o
+                0x0000000000000008                get_page_mask
+                0x00000000000002c4                mempcpy
+                0x000000000000005c                mmap
+                0x0000000000000044                mmap_privanon
+                0x00000000000002ac                my_memset
+                0x0000000000000010                get_upxfn_path
+                0x0000000000000028                Pprotect
+                0x00000000fffffff4                PAGE_MASK
+                0x0000000000000028                mprotect
+ .text          0x00000000000002e0      0x3bc tmp/armeb.v4a-linux.elf-upxfd_android.o
+                0x00000000000003a4                upx_mmap_and_fd
+                0x0000000000000304                strncmplc
+ .text          0x000000000000069c        0x0 tmp/armeb.v4a-expand.o
+ .text          0x000000000000069c      0x6d8 tmp/armeb.v4a-linux.elf-main.o
+                0x0000000000000c54                upx_main
 
 SYSCALLS        0x0000000000000000      0x100
  SYSCALLS       0x0000000000000000      0x100 tmp/armeb.v4a-linux.elf-fold.o
@@ -79,17 +74,19 @@ NRV2B           0x0000000000000000       0xc4
  .data          0x0000000000000000        0x0 tmp/armeb.v4a-linux.elf-fold.o
  .data          0x0000000000000000        0x0 tmp/armeb.v4a-linux.elf-upxfd_android.o
  .data          0x0000000000000000        0x0 tmp/armeb.v4a-expand.o
- .data          0x0000000000000000        0x0 tmp/armeb.v4a-linux.elf-so_main.o
+ .data          0x0000000000000000        0x0 tmp/armeb.v4a-linux.elf-main.o
 
 .bss            0x0000000000000000        0x0
  .bss           0x0000000000000000        0x0 tmp/armeb.v4a-linux.elf-fold.o
  .bss           0x0000000000000000        0x0 tmp/armeb.v4a-linux.elf-upxfd_android.o
  .bss           0x0000000000000000        0x0 tmp/armeb.v4a-expand.o
- .bss           0x0000000000000000        0x0 tmp/armeb.v4a-linux.elf-so_main.o
+ .bss           0x0000000000000000        0x0 tmp/armeb.v4a-linux.elf-main.o
+TARGET(elf32-bigarm)
+                0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 LOAD tmp/armeb.v4a-linux.elf-fold.o
 LOAD tmp/armeb.v4a-linux.elf-upxfd_android.o
 LOAD tmp/armeb.v4a-expand.o
-LOAD tmp/armeb.v4a-linux.elf-so_main.o
+LOAD tmp/armeb.v4a-linux.elf-main.o
 OUTPUT(tmp/armeb.v4a-linux.elf-fold.bin elf32-bigarm)
 
 LZMA_ELF00      0x0000000000000000       0x90

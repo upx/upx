@@ -34,29 +34,29 @@ NBPW= 4
 #include "arch/mips/r3000/bits.ash"
 
 sp_frame= 0x20
-  // These are local temporaries.
+  # These are local temporaries.
 F_ADRM=  2*NBPW
 F_LENM=  3*NBPW
 
-  // These are passed on stack to unfolded code.
+  # These are passed on stack to unfolded code.
 F_PMASK= 4*NBPW
 F_fd=    5*NBPW
 F_ADRU=  6*NBPW
 F_LENU=  7*NBPW
-  // r_PMASK still is used here
+  # r_PMASK still is used here
 
-// C-language uses 8 args in registers
+# C-language uses 8 args in registers
 a5=        9
 a4=        8
 
-//ra             31
+#ra             31
 #define r_fexp   30  /* s8 */
-//sp             29  /* hardware */
+#sp             29  /* hardware */
 #define r_PMASK  28  /* gp */
-//k1             27  /* trashed by syscall */
-//k0             26  /* trashed by syscall */
-//t9, jp         25  /* trashed by syscall ? */
-//t8             24  /* trashed by syscall ? */
+#k1             27  /* trashed by syscall */
+#k0             26  /* trashed by syscall */
+#t9, jp         25  /* trashed by syscall ? */
+#t8             24  /* trashed by syscall ? */
 #define r_fd     23  /* s7 */
 #define r_auxv   22  /* s6 */
 #define r_elfa   21  /* s5 */
@@ -88,7 +88,7 @@ sz_b_info= 12
   b_cto8=  10
   b_unused=11
 
-AT_NULL= 0  // <elf.h>
+AT_NULL= 0  # <elf.h>
 AT_PAGESZ= 6
 a_type= 0
 a_val=  NBPW
@@ -104,10 +104,10 @@ MAP_PRIVATE=        2
 MAP_FIXED=       0x10
 MAP_ANONYMOUS=  0x800
 
-PAGE_SHIFT= 12  // default only
+PAGE_SHIFT= 12  # default only
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
-M_NRV2B_LE32=2  // ../conf.h
+M_NRV2B_LE32=2  # ../conf.h
 M_NRV2D_LE32=5
 M_NRV2E_LE32=8
 
@@ -125,20 +125,20 @@ __NR_cacheflush = 147+ __NR_Linux
 ICACHE= 1<<0
 DCACHE= 1<<1
 
-//BAL=0x04110000
+#BAL=0x04110000
 
   section ELFMAINX
 sz_pack2 = . - 4
 
 _start: .globl _start
-////    break  # debug only
+#//    break  # debug only
         bal main
           addiu $r_fexp,ra, f_exp - 0f
 0:
 
 /* Returns 0 on success; non-zero on failure. */
-f_exp:  // alternate name
-decompressor:  // (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdstlen, uint method)
+f_exp:  # alternate name
+decompressor:  # (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdstlen, uint method)
 #define lxsrc    a0
 #define lxsrclen a1
 #define lxdst    a2
@@ -263,24 +263,24 @@ lzma_decode:
 
 
   section LZMA_DEC30
-        break  // FIXME
+        break  # FIXME
 
   section NRV_HEAD
         addiu sp,-4
         sw ra,0(sp)
-        add lxsrclen,lxsrclen,lxsrc  //  src_EOF
-        sw lxdst,(lxdstlen)  // original lxdst in &lxdstlen
+        add lxsrclen,lxsrclen,lxsrc  #  src_EOF
+        sw lxdst,(lxdstlen)  # original lxdst in &lxdstlen
 
   section NRV_TAIL
 eof:
-        lw v1,(lxdstlen)  // original lxdst
-        subu t8,lxsrc,lxsrclen  // new_src - src_EOF;  // return 0: good; else: bad
+        lw v1,(lxdstlen)  # original lxdst
+        subu t8,lxsrc,lxsrclen  # new_src - src_EOF;  // return 0: good; else: bad
         lw ra,0(sp)
         sw t8,0(sp)
 
   section CFLUSH
-        move a0,v1  // original lxdst
-        subu a1,lxdst,v1  // actual length generated
+        move a0,v1  # original lxdst
+        subu a1,lxdst,v1  # actual length generated
           sw a1,(lxdstlen)
         li a2,ICACHE|DCACHE
         li v0,__NR_cacheflush; syscall
@@ -292,78 +292,78 @@ eof:
 
   section ELFMAINY
 msg_SELinux:
-        addiu a2,zero,L71 - L70  // length
+        addiu a2,zero,L71 - L70  # length
         bal L72
           move a1,ra
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
-        // IDENTSTR goes here
+        # IDENTSTR goes here
 
   section ELFMAINZ
 L72:
-        li a0,2  // fd stderr
+        li a0,2  # fd stderr
         li v0,__NR_write; syscall
 die:
         li a0,127
         li v0,__NR_exit; syscall
 
-unfold:  // IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
+unfold:  # IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
         addiu sp,sp,-sp_frame
         sw $r_PMASK,F_PMASK(sp)
 
-// Reserve enough space to decompress the folded code of the stub
-        lw $r_LENX,sz_pack2 - f_exp($r_fexp)  // length before stub
+# Reserve enough space to decompress the folded code of the stub
+        lw $r_LENX,sz_pack2 - f_exp($r_fexp)  # length before stub
         la $r_elfa,sz_pack2 - f_exp($r_fexp)
           li a4,-1
-        lw $r_szuf,sz_unc($r_FOLD)  // sz_unc of fold
+        lw $r_szuf,sz_unc($r_FOLD)  # sz_unc of fold
           li a3,MAP_PRIVATE|MAP_ANONYMOUS
-        sub $r_elfa,$r_elfa,$r_LENX  // $r_elfa= &Elf32_Ehdr of this stub
-          li a0,0  // kernel chooses addr
+        sub $r_elfa,$r_elfa,$r_LENX  # $r_elfa= &Elf32_Ehdr of this stub
+          li a0,0  # kernel chooses addr
         move a1,$r_szuf
         bal mmapRW0
           sw a1,F_LENU(sp)
         sw v0,  F_ADRU(sp)
 
-        lw $r_ADRX,-4($r_FOLD)  // O_BINFO
-// Decompress folded code
-        lb meth,b_method($r_FOLD)  // a4
-        sw $r_szuf,0(sp)  // lzma uses for EOF
-        move ldst,sp  // a3  &slot on stack
-        move dst,v0  // a2  dst for unfolding
-        lw lsrc,sz_cpr($r_FOLD)  // a1
-        jalr $r_fexp  // decompress it
-          addiu src,$r_FOLD,sz_b_info  // a0  folded code
+        lw $r_ADRX,-4($r_FOLD)  # O_BINFO
+# Decompress folded code
+        lb meth,b_method($r_FOLD)  # a4
+        sw $r_szuf,0(sp)  # lzma uses for EOF
+        move ldst,sp  # a3  &slot on stack
+        move dst,v0  # a2  dst for unfolding
+        lw lsrc,sz_cpr($r_FOLD)  # a1
+        jalr $r_fexp  # decompress it
+          addiu src,$r_FOLD,sz_b_info  # a0  folded code
 
-// Generate code to compute PAGE_MASK.
+# Generate code to compute PAGE_MASK.
         lw a0,F_ADRU(sp)
           srl v1,$r_PMASK,9
-        lw v0,0(a0)  // "li v0,0"
-        andi v1,v1,0xffff  // 0xffff is NOT sign-extended
-        or v0,v0,v1  // replace immediate constant
+        lw v0,0(a0)  # "li v0,0"
+        andi v1,v1,0xffff  # 0xffff is NOT sign-extended
+        or v0,v0,v1  # replace immediate constant
         sw v0,0(a0)
 
-// PROT_EXEC
+# PROT_EXEC
         li a2,PROT_EXEC|PROT_READ
-        lw a1,F_LENU(sp)  // length
-      //lw a0,F_ADRU(sp)  // base
+        lw a1,F_LENU(sp)  # length
+      #lw a0,F_ADRU(sp)  // base
         li v0,__NR_mprotect; syscall
 
-// Use the unfolded code
+# Use the unfolded code
         lw ra,F_ADRU(sp)
-          //nop  r_LENX
-        addi ra,ra,4*4  // jmp over get_page_mask()
+          #nop  r_LENX
+        addi ra,ra,4*4  # jmp over get_page_mask()
         jr ra
-          addu $r_ADRX,$r_elfa,$r_ADRX  // compressed data
+          addu $r_ADRX,$r_elfa,$r_ADRX  # compressed data
 
 mmapRW0:
-        li a5,0  // offset
+        li a5,0  # offset
 mmapRW:
         li a2,PROT_WRITE|PROT_READ
 mmap:
         addiu sp,sp,-sp_frame
-a4_sys=  4*NBPW  // temporary for syscall
-a5_sys=  5*NBPW  // temporary for syscall
+a4_sys=  4*NBPW  # temporary for syscall
+a5_sys=  5*NBPW  # temporary for syscall
         sw a4,a4_sys(sp)
         sw a5,a5_sys(sp)
         li v0,__NR_mmap; syscall
@@ -372,14 +372,14 @@ a5_sys=  5*NBPW  // temporary for syscall
         jr ra
           addiu sp,sp, sp_frame
 mmap_bad:
-        break  // mmap_bad
+        break  # mmap_bad
 
-zfind:  // result in $r_auxv
+zfind:  # result in $r_auxv
         lw v1,(a0); addiu a0,a0,NBPW
         bnez v1,zfind
           move $r_auxv,a0
         jr ra
-          li t0,AT_PAGESZ  // prepare early
+          li t0,AT_PAGESZ  # prepare early
 
 main:
         bal zfind
@@ -387,22 +387,22 @@ main:
         bal zfind
           move a0,$r_auxv
 
-// set $r_PMASK by finding actual page size in Elf32_auxv_t
+# set $r_PMASK by finding actual page size in Elf32_auxv_t
 1:
         lw  v1,a_type(a0)
           addiu a0,a0,sz_auxv
-        beq v1,t0,2f  // AT_PAGESZ
+        beq v1,t0,2f  # AT_PAGESZ
           lw v0,a_val - sz_auxv(a0)
-        bnez v1,1b  // AT_NULL
+        bnez v1,1b  # AT_NULL
           li v0,PAGE_SIZE
 2:
         sub $r_PMASK,zero,v0
         bal unfold
-          addiu $r_FOLD,ra,LrFLD - 0f  // &b_info for folded loader
+          addiu $r_FOLD,ra,LrFLD - 0f  # &b_info for folded loader
 0:
         .long O_BINFO
 LrFLD:
-        // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        # { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
 /*__XTHEENDX__*/
 

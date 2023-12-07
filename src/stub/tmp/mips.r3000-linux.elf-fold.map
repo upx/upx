@@ -1,8 +1,4 @@
 
-Discarded input sections
-
- .got           0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
-
 Memory Configuration
 
 Name             Origin             Length             Attributes
@@ -11,51 +7,66 @@ Name             Origin             Length             Attributes
 Linker script and memory map
 
 
-.text           0x0000000000000000      0xcc4
- .text          0x0000000000000000      0xcc4 tmp/mips.r3000-linux.elf-fold.o
-                0x00000000000001d4                f_expand
-                0x0000000000000088                get_page_mask
-                0x00000000000002ec                munmap
-                0x00000000000002c4                getpid
-                0x0000000000000c1c                upx_mmap_and_fd
-                0x000000000000030c                readlink
-                0x0000000000000234                mempcpy
-                0x00000000000002bc                ftruncate
-                0x00000000000002cc                lseek
-                0x0000000000000268                mmap
-                0x000000000000020c                __clear_cache
-                0x000000000000025c                mmap_privanon
-                0x0000000000000314                uname
-                0x0000000000000214                my_memset
-                0x0000000000000324                write
-                0x0000000000000098                get_upxfn_path
-                0x00000000000002d4                memfd_create
-                0x0000000000000304                read
-                0x000000000000031c                unlink
-                0x0000000000000200                my_bkpt
-                0x00000000000001e0                Pprotect
-                0x00000000000002f4                stat
-                0x00000000000002b4                exit
-                0x0000000000000aa4                upx_main
-                0x00000000000002a4                brk
-                0x00000000000002fc                open
-                0xfffffffffffffff8                PAGE_MASK
-                0x00000000000002e4                mprotect
-                0x00000000000002dc                mkdir
-                0x00000000000002ac                close
-
-.rodata         0x0000000000000cc4        0xc
- .rodata        0x0000000000000cc4        0xc tmp/mips.r3000-linux.elf-fold.o
-
-.data           0x0000000000000cd0        0x0
- .data          0x0000000000000cd0        0x0 tmp/mips.r3000-linux.elf-fold.o
-
-.bss            0x0000000000000cd0        0x0
- .bss           0x0000000000000cd0        0x0 tmp/mips.r3000-linux.elf-fold.o
-
-.rel.dyn        0x0000000000000cd0        0x0
- .rel.dyn       0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
+.rodata         0x0000000000000000        0xc
+ .rodata        0x0000000000000000        0xc tmp/mips.r3000-linux.elf-fold.o
 TARGET(elf32-bigmips)
+                0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
+
+.text           0x0000000000100040      0xcbc
+ *(.text)
+ .text          0x0000000000100040      0xcbc tmp/mips.r3000-linux.elf-fold.o
+                0x00000000001000c8                get_page_mask
+                0x0000000000100320                munmap
+                0x00000000001002f8                getpid
+                0x0000000000100c50                upx_mmap_and_fd
+                0x0000000000100340                readlink
+                0x0000000000100270                mempcpy
+                0x00000000001002f0                ftruncate
+                0x0000000000100300                lseek
+                0x00000000001002a4                mmap
+                0x0000000000100248                __clear_cache
+                0x0000000000100298                mmap_privanon
+                0x0000000000100348                uname
+                0x0000000000100250                my_memset
+                0x0000000000100358                write
+                0x00000000001000d8                get_upxfn_path
+                0x0000000000100308                memfd_create
+                0x0000000000100338                read
+                0x0000000000100350                unlink
+                0x000000000010023c                my_bkpt
+                0x000000000010021c                Pprotect
+                0x0000000000100328                stat
+                0x00000000001002e8                exit
+                0x0000000000100ad8                upx_main
+                0x00000000001002e0                brk
+                0x0000000000100330                open
+                0x0000000000100038                PAGE_MASK
+                0x0000000000100318                mprotect
+                0x0000000000100310                mkdir
+                0x0000000000100104                close
+ *(.data)
+ .data          0x0000000000100cfc        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+EXP_HEAD        0x0000000000000000        0x4
+ EXP_HEAD       0x0000000000000000        0x4 tmp/mips.r3000-linux.elf-fold.o
+                0x0000000000000000                f_expand
+
+EXP_TAIL        0x0000000000000000        0x4
+ EXP_TAIL       0x0000000000000000        0x4 tmp/mips.r3000-linux.elf-fold.o
+
+NRV2E           0x0000000000000000        0x0
+ NRV2E          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+NRV2D           0x0000000000000000        0x0
+ NRV2D          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+NRV2B           0x0000000000000000        0x0
+ NRV2B          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+.data
+
+.bss            0x0000000000000000        0x0
+ .bss           0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
 LOAD tmp/mips.r3000-linux.elf-fold.o
 OUTPUT(tmp/mips.r3000-linux.elf-fold.bin elf32-bigmips)
 

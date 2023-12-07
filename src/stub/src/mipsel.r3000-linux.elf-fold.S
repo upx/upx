@@ -127,27 +127,28 @@ fold_begin:
         move v0,sp
         addiu sp,(~0<<4)&-(NBPW+ 4+ PATHSIZE - sp_frame)  # alloca: new envp[0], "   =", buffer
 
+#define TMP $25
         move v1,sp
 L10:  # copy until auxv
-        lw tmp,0(v0); addiu v0,NBPW
-        sw tmp,0(v1); addiu v1,NBPW
+        lw TMP,0(v0); addiu v0,NBPW
+        sw TMP,0(v1); addiu v1,NBPW
         bne v0,$r_auxv,L10
           addiu t1,v1,-NBPW  // new envp goes here
         sw zero,(v1); addiu v1,NBPW  // new terminator for envp
         move $r_auxv,v1  // new auxv
 L20:  // copy auxv
-        lw tmp,0(v0); lw t0,NBPW(v0); addiu v0,sz_auxv
-        sw tmp,0(v1); sw t0,NBPW(v1); addiu v1,sz_auxv
-        bnez tmp,L20  # AT_NULL: stop when v0= &auxv[N]
+        lw TMP,0(v0); lw t0,NBPW(v0); addiu v0,sz_auxv
+        sw TMP,0(v1); sw t0,NBPW(v1); addiu v1,sz_auxv
+        bnez TMP,L20  # AT_NULL: stop when v0= &auxv[N]
           move $r_auxe,v1  // end of new auxv
 
         sw v1,0(t1)  # new env var
-        li tmp,' '
-        sb tmp,0(v1)  # endian neutral!
-        sb tmp,1(v1)
-        sb tmp,2(v1)
-        li tmp,'='
-        sb tmp,3(v1)
+        li TMP,' '
+        sb TMP,0(v1)  # endian neutral!
+        sb TMP,1(v1)
+        sb TMP,2(v1)
+        li TMP,'='
+        sb TMP,3(v1)
         addiu s7,v1,4  # &buf[0]
 
         bal L30
@@ -176,6 +177,9 @@ get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
         jr v1
           nop
 
+close: .globl close
+        b sysgo; li v0,__NR_close
+
 L30:
         li a1,O_RDONLY
         move a0,ra  # "/proc/self/exe"
@@ -187,8 +191,8 @@ L30:
         sw v0,F_fd(sp)  # result of __NR_open
         li v0,__NR_readlink; syscall
         bltz a3,0f
-          addu tmp,a1,v0
-        sb $0,(tmp)  # null terminate the path
+          addu TMP,a1,v0
+        sb $0,(TMP)  # null terminate the path
 0:
         addiu sp,-MAX_ELF_HDR_32  # alloca
         move t3,$r_PMASK  # page_mask
@@ -196,7 +200,7 @@ L30:
         move t1,zero  # &f_unfilter
         move t0,$r_fexp  # &f_decompress
         move a3,$r_auxv  # new &auxv[0]
-        move a2,sp  # &Elf32_Ehdr tmp space
+        move a2,sp  # &Elf32_Ehdr TMP space
         move a1,$r_LENX  # total_size
 
         bal 1f  # ra= 0f
@@ -256,33 +260,28 @@ no_map_pse:
    leading to SIGSEGV.  Fixed in [git blame:]
 27d501fdbf (Denis Vlasenko           2009-01-10 21:02:48 +0000
 */
-        move tmp,sp
+        move TMP,sp
         addiu sp, -0x380  # estimated stack bound of upx_main and below
 0:
         addiu sp,NBPW
-        bne sp,tmp,0b
+        bne sp,TMP,0b
           sw $0,-NBPW(sp)
 
-        lw tmp,-sz_auxv+ a_val($r_auxe)  // last .a_val
+        lw TMP,-sz_auxv+ a_val($r_auxe)  // last .a_val
           nop  # needed? allegedly MIPS R3000 provides load delay in hardware when needed
-        beqz tmp,L40  # could not make escape hatch
+        beqz TMP,L40  # could not make escape hatch
           nop  # even R3000 requires branch delay
-        jr tmp  # goto munmap escape hatch: [syscall; jr $r_fexp; nop]
+        jr TMP  # goto munmap escape hatch: [syscall; jr $r_fexp; nop]
           li v0,__NR_munmap
 L40:
         jr $r_fexp  # omit munmap
           nop
 
-f_expand: .globl f_expand
-        break
-        jr ra
-          nop
-
 Pprotect: .globl Pprotect
-        li tmp,1<<12  // FIXME  PAGE_MASK
-        and tmp,a0
-        sub a0,tmp
-        add a1,tmp
+        li TMP,1<<12  // FIXME  PAGE_MASK
+        and TMP,a0
+        sub a0,TMP
+        add a1,TMP
         li v0,__NR_mprotect; syscall
         j ra
           nop
@@ -347,8 +346,6 @@ sysOK:
 
 brk: .globl brk
         b sysgo; li v0,__NR_brk
-close: .globl close
-        b sysgo; li v0,__NR_close
 exit: .globl exit
         b sysgo; li v0,__NR_exit
 ftruncate: .globl ftruncate
