@@ -36,9 +36,6 @@ NBPW=  4
         .set noat
         .altmacro
 
-PAGE_SHIFT= 16  # 64KiB is better default than 4KiB on MIPS
-PAGE_MASK= 0xffffffffffffffff<<PAGE_SHIFT
-
 sz_Ehdr= 52
 e_type= 16
 ET_EXEC= 2
@@ -157,25 +154,25 @@ L20:  // copy auxv
         .balign 4
 
 get_page_mask: .globl get_page_mask
-        move v1,ra; bal 5f  // FIXME
+        move v1,ra; bal 5f
 0:
-        .word 0b
-        .word PAGE_MASK
+        .word PAGE_MASK - (NBPW+ 0b)
+5:  # ra points here
+        lw v0,-NBPW(ra); addu v0,ra
+        jr v1
+          lw v0,(v0)
 
 get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
         move v1,ra; bal 5f
 0:
-        .word 0b
-        .word upxfn_path
-5:
-        lw v0,4(ra)  // &upx_fn_path or &PAGE_MASK
-        lw at,0(ra)  // 4+ bal
-        beq v0,zero,9f  // null string
-          subu at,ra,at  // "zero"
-        addu v0,v0,at
-9:
+        .word upxfn_path - (NBPW + 0b)
+5:  # ra points here
+        lw at,-NBPW(ra); addu at,ra  // &upxfn_path
+        lw v0,(at)  // offset
+        beqz v0,9f  // null string
+          addu at,v0
         jr v1
-          nop
+          addiu v0,at,-1*NBPW
 
 close: .globl close
         b sysgo; li v0,__NR_close
@@ -203,16 +200,13 @@ L30:
         move a2,sp  # &Elf32_Ehdr TMP space
         move a1,$r_LENX  # total_size
 
-        bal 1f  # ra= 0f
-          lw at,0(ra)  # at= assembly-time return address
-0:  # ra points here
-        .word 0b
-        .word upx_main
-1:
-        lw v0,NBPW(ra)  # v0= assembly-time upx_main
-        sub ra,ra,at  # run-time zero
-        add ra,ra,v0  # run-time upx_main
-        jalr ra
+        bal 5f  # ra= 0f
+          lw at,-NBPW(ra)  # at= assembly-time return address
+0:
+        .word upx_main - (NBPW + 0b)
+5:  # ra points here
+        lw at,-NBPW(ra); addu $25,ra,at
+        jalr $25
           move a0,$r_ADRX
 
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Elf32_Auxv_t *a3,

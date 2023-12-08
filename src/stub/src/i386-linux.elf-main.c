@@ -471,13 +471,14 @@ make_hatch_mips(
     char *next_unc,
     unsigned frag_mask)
 {
-    unsigned code[3] = {
-            0x0000000c,  // syscall
+    unsigned code[3];
+    // avoid gcc initializing array by copying .rodata
+    code[0] = 0x0000000c;  // syscall
 #define RS(r) ((037&(r))<<21)
 #define JR 010
-            RS(30)|JR,  // jr $30  # s8
-            0x00000000  //   nop
-     };
+    code[1] = RS(30)|JR;   // jr $30  # s8
+    code[2] = 0x00000000;  //   nop
+
     unsigned *hatch = 0;
     DPRINTF("make_hatch_mips %%p %%p %%x\\n", phdr, next_unc, frag_mask);
 
