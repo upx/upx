@@ -1530,6 +1530,8 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	cat tmp/foo1.s $(filter %.s,$^) src/mips.r3000-expand.S > tmp/foo2.s
 	    echo line 1c
 	$(call tc,as) tmp/foo2.s -march=r3000 -o tmp/$T.o
+	    echo line 1d
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
 	    echo line 2
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 	    echo line 3

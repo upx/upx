@@ -1,0 +1,944 @@
+
+tmp/mips.r3000-linux.elf-fold.o:     file format elf32-bigmips
+
+Disassembly of section .text:
+
+00000000 <fold_begin>:
+   0:	03a01021 	move	v0,sp
+   4:	27bdf010 	addiu	sp,sp,-4080
+   8:	03a01821 	move	v1,sp
+
+0000000c <L10>:
+   c:	8c590000 	lw	t9,0(v0)
+  10:	24420004 	addiu	v0,v0,4
+  14:	ac790000 	sw	t9,0(v1)
+  18:	24630004 	addiu	v1,v1,4
+  1c:	1456fffb 	bne	v0,s6,c <L10>
+  20:	2469fffc 	addiu	t1,v1,-4
+  24:	ac600000 	sw	zero,0(v1)
+  28:	24630004 	addiu	v1,v1,4
+  2c:	0060b021 	move	s6,v1
+
+00000030 <L20>:
+  30:	8c590000 	lw	t9,0(v0)
+  34:	8c480004 	lw	t0,4(v0)
+  38:	24420008 	addiu	v0,v0,8
+  3c:	ac790000 	sw	t9,0(v1)
+  40:	ac680004 	sw	t0,4(v1)
+  44:	24630008 	addiu	v1,v1,8
+  48:	1720fff9 	bnez	t9,30 <L20>
+  4c:	0060a021 	move	s4,v1
+  50:	ad230000 	sw	v1,0(t1)
+  54:	24190020 	li	t9,32
+  58:	a0790000 	sb	t9,0(v1)
+  5c:	a0790001 	sb	t9,1(v1)
+  60:	a0790002 	sb	t9,2(v1)
+  64:	2419003d 	li	t9,61
+  68:	a0790003 	sb	t9,3(v1)
+  6c:	24770004 	addiu	s7,v1,4
+  70:	04110018 	bal	d4 <L30>
+  74:	afbf0014 	sw	ra,20(sp)
+  78:	2f70726f 	sltiu	s0,k1,29295
+  7c:	632f7365 	0x632f7365
+  80:	6c662f65 	0x6c662f65
+  84:	78650000 	0x78650000
+
+00000088 <get_page_mask>:
+  88:	03e01821 	move	v1,ra
+  8c:	04110001 	bal	94 <get_page_mask+0xc>
+  90:	ffffff68 	0xffffff68
+  94:	8fe20000 	lw	v0,0(ra)
+  98:	005f1021 	addu	v0,v0,ra
+  9c:	00600008 	jr	v1
+  a0:	8c420000 	lw	v0,0(v0)
+
+000000a4 <get_upxfn_path>:
+  a4:	03e01821 	move	v1,ra
+  a8:	04110001 	bal	b0 <get_upxfn_path+0xc>
+  ac:	ffffff50 	0xffffff50
+  b0:	8fe10000 	lw	at,0(ra)
+  b4:	003f0821 	addu	at,at,ra
+  b8:	8c220000 	lw	v0,0(at)
+  bc:	1040005c 	beqz	v0,230 <my_memset+0x18>
+  c0:	00220821 	addu	at,at,v0
+  c4:	00600008 	jr	v1
+  c8:	2422fffc 	addiu	v0,at,-4
+
+000000cc <close>:
+  cc:	10000070 	b	290 <sysgo>
+  d0:	24020fa6 	li	v0,4006
+
+000000d4 <L30>:
+  d4:	24050000 	li	a1,0
+  d8:	03e02021 	move	a0,ra
+  dc:	24020fa5 	li	v0,4005
+  e0:	0000000c 	syscall
+  e4:	24060fff 	li	a2,4095
+  e8:	02e02821 	move	a1,s7
+  ec:	8fa40014 	lw	a0,20(sp)
+  f0:	afa20014 	sw	v0,20(sp)
+  f4:	24020ff5 	li	v0,4085
+  f8:	0000000c 	syscall
+  fc:	04e00002 	bltz	a3,108 <L30+0x34>
+ 100:	00a2c821 	addu	t9,a1,v0
+ 104:	a3200000 	sb	zero,0(t9)
+ 108:	27bdfe00 	addiu	sp,sp,-512
+ 10c:	03805821 	move	t3,gp
+ 110:	02a05021 	move	t2,s5
+ 114:	00004821 	move	t1,zero
+ 118:	03c04021 	move	t0,s8
+ 11c:	02c03821 	move	a3,s6
+ 120:	03a03021 	move	a2,sp
+ 124:	02202821 	move	a1,s1
+ 128:	04110003 	bal	138 <L30+0x64>
+ 12c:	8fe10000 	lw	at,0(ra)
+ 130:	00000130 	0x130
+			130: R_MIPS_32	.text
+ 134:	00000000 	nop
+			134: R_MIPS_32	upx_main
+ 138:	8fe20004 	lw	v0,4(ra)
+ 13c:	03e1f822 	sub	ra,ra,at
+ 140:	03e2f820 	add	ra,ra,v0
+ 144:	03e0f809 	jalr	ra
+ 148:	02002021 	move	a0,s0
+ 14c:	27bd0200 	addiu	sp,sp,512
+ 150:	0040f021 	move	s8,v0
+ 154:	8ea50068 	lw	a1,104(s5)
+ 158:	02a02021 	move	a0,s5
+ 15c:	24020fcd 	li	v0,4045
+ 160:	0000000c 	syscall
+ 164:	24020ffb 	li	v0,4091
+ 168:	0000000c 	syscall
+ 16c:	8fa80014 	lw	t0,20(sp)
+ 170:	00004821 	move	t1,zero
+ 174:	0500000b 	bltz	t0,1a4 <no_map_pse>
+ 178:	afa80010 	sw	t0,16(sp)
+ 17c:	afa90014 	sw	t1,20(sp)
+ 180:	24070002 	li	a3,2
+ 184:	24060001 	li	a2,1
+ 188:	001c2822 	neg	a1,gp
+ 18c:	00002021 	move	a0,zero
+ 190:	24020ffa 	li	v0,4090
+ 194:	0000000c 	syscall
+ 198:	8fa40010 	lw	a0,16(sp)
+ 19c:	24020fa6 	li	v0,4006
+ 1a0:	0000000c 	syscall
+
+000001a4 <no_map_pse>:
+ 1a4:	8fa5001c 	lw	a1,28(sp)
+ 1a8:	8fa40018 	lw	a0,24(sp)
+ 1ac:	27bd0020 	addiu	sp,sp,32
+ 1b0:	03a0c821 	move	t9,sp
+ 1b4:	27bdfc80 	addiu	sp,sp,-896
+ 1b8:	27bd0004 	addiu	sp,sp,4
+ 1bc:	17b9fffe 	bne	sp,t9,1b8 <no_map_pse+0x14>
+ 1c0:	afa0fffc 	sw	zero,-4(sp)
+ 1c4:	8e99fffc 	lw	t9,-4(s4)
+ 1c8:	00000000 	nop
+ 1cc:	13200003 	beqz	t9,1dc <L40>
+ 1d0:	00000000 	nop
+ 1d4:	03200008 	jr	t9
+ 1d8:	24020ffb 	li	v0,4091
+
+000001dc <L40>:
+ 1dc:	03c00008 	jr	s8
+ 1e0:	00000000 	nop
+
+000001e4 <Pprotect>:
+ 1e4:	24191000 	li	t9,4096
+ 1e8:	0324c824 	and	t9,t9,a0
+ 1ec:	00992022 	sub	a0,a0,t9
+ 1f0:	00b92820 	add	a1,a1,t9
+ 1f4:	2402101d 	li	v0,4125
+ 1f8:	0000000c 	syscall
+ 1fc:	03e00008 	jr	ra
+ 200:	00000000 	nop
+
+00000204 <my_bkpt>:
+ 204:	0000000d 	break
+ 208:	03e00008 	jr	ra
+ 20c:	00000000 	nop
+
+00000210 <__clear_cache>:
+ 210:	03e00008 	jr	ra
+ 214:	00000000 	nop
+
+00000218 <my_memset>:
+ 218:	10c00005 	beqz	a2,230 <my_memset+0x18>
+ 21c:	00801021 	move	v0,a0
+ 220:	a0850000 	sb	a1,0(a0)
+ 224:	24c60000 	addiu	a2,a2,0
+ 228:	14c0fffd 	bnez	a2,220 <my_memset+0x8>
+ 22c:	24840000 	addiu	a0,a0,0
+ 230:	03e00008 	jr	ra
+ 234:	00000000 	nop
+
+00000238 <mempcpy>:
+ 238:	10060007 	beq	zero,a2,258 <mempcpy+0x20>
+ 23c:	00000000 	nop
+ 240:	80a10000 	lb	at,0(a1)
+ 244:	24a50000 	addiu	a1,a1,0
+ 248:	a0810000 	sb	at,0(a0)
+ 24c:	24c60000 	addiu	a2,a2,0
+ 250:	14c0fffb 	bnez	a2,240 <mempcpy+0x8>
+ 254:	24840000 	addiu	a0,a0,0
+ 258:	03e00008 	jr	ra
+ 25c:	00801021 	move	v0,a0
+
+00000260 <mmap_privanon>:
+ 260:	34e70802 	ori	a3,a3,0x802
+ 264:	2408ffff 	li	t0,-1
+ 268:	24090000 	li	t1,0
+
+0000026c <mmap>:
+ 26c:	27bdffe0 	addiu	sp,sp,-32
+ 270:	afa80010 	sw	t0,16(sp)
+ 274:	afa90014 	sw	t1,20(sp)
+ 278:	24020ffa 	li	v0,4090
+ 27c:	0000000c 	syscall
+ 280:	8fa80010 	lw	t0,16(sp)
+ 284:	8fa90014 	lw	t1,20(sp)
+ 288:	10000002 	b	294 <sysret>
+ 28c:	27bd0020 	addiu	sp,sp,32
+
+00000290 <sysgo>:
+ 290:	0000000c 	syscall
+
+00000294 <sysret>:
+ 294:	04e10002 	bgez	a3,2a0 <sysOK>
+ 298:	00000000 	nop
+ 29c:	00e01021 	move	v0,a3
+
+000002a0 <sysOK>:
+ 2a0:	03e00008 	jr	ra
+ 2a4:	00000000 	nop
+
+000002a8 <brk>:
+ 2a8:	1000fff9 	b	290 <sysgo>
+ 2ac:	24020fcd 	li	v0,4045
+
+000002b0 <exit>:
+ 2b0:	1000fff7 	b	290 <sysgo>
+ 2b4:	24020fa1 	li	v0,4001
+
+000002b8 <ftruncate>:
+ 2b8:	1000fff5 	b	290 <sysgo>
+ 2bc:	24020ffd 	li	v0,4093
+
+000002c0 <getpid>:
+ 2c0:	1000fff3 	b	290 <sysgo>
+ 2c4:	24020fb4 	li	v0,4020
+
+000002c8 <lseek>:
+ 2c8:	1000fff1 	b	290 <sysgo>
+ 2cc:	24020fb3 	li	v0,4019
+
+000002d0 <memfd_create>:
+ 2d0:	1000ffef 	b	290 <sysgo>
+ 2d4:	24021104 	li	v0,4356
+
+000002d8 <mkdir>:
+ 2d8:	1000ffed 	b	290 <sysgo>
+ 2dc:	24020fc7 	li	v0,4039
+
+000002e0 <mprotect>:
+ 2e0:	1000ffeb 	b	290 <sysgo>
+ 2e4:	2402101d 	li	v0,4125
+
+000002e8 <munmap>:
+ 2e8:	1000ffe9 	b	290 <sysgo>
+ 2ec:	24020ffb 	li	v0,4091
+
+000002f0 <stat>:
+ 2f0:	1000ffe7 	b	290 <sysgo>
+ 2f4:	24020fb2 	li	v0,4018
+
+000002f8 <open>:
+ 2f8:	1000ffe5 	b	290 <sysgo>
+ 2fc:	24020fa5 	li	v0,4005
+
+00000300 <read>:
+ 300:	1000ffe3 	b	290 <sysgo>
+ 304:	24020fa3 	li	v0,4003
+
+00000308 <readlink>:
+ 308:	1000ffe1 	b	290 <sysgo>
+ 30c:	24020ff5 	li	v0,4085
+
+00000310 <uname>:
+ 310:	1000ffdf 	b	290 <sysgo>
+ 314:	2402101a 	li	v0,4122
+
+00000318 <unlink>:
+ 318:	1000ffdd 	b	290 <sysgo>
+ 31c:	24020faa 	li	v0,4010
+
+00000320 <write>:
+ 320:	1000ffdb 	b	290 <sysgo>
+ 324:	24020fa4 	li	v0,4004
+
+00000328 <auxv_up>:
+ 328:	1080000e 	beqz	a0,364 <auxv_up+0x3c>
+ 32c:	00000000 	nop
+ 330:	8c820000 	lw	v0,0(a0)
+ 334:	00000000 	nop
+ 338:	10a20009 	beq	a1,v0,360 <auxv_up+0x38>
+ 33c:	00000000 	nop
+ 340:	24840008 	addiu	a0,a0,8
+ 344:	8c820000 	lw	v0,0(a0)
+ 348:	00000000 	nop
+ 34c:	14a2fffd 	bne	a1,v0,344 <auxv_up+0x1c>
+ 350:	24840008 	addiu	a0,a0,8
+ 354:	2484fff8 	addiu	a0,a0,-8
+ 358:	10800002 	beqz	a0,364 <auxv_up+0x3c>
+ 35c:	00000000 	nop
+ 360:	ac860004 	sw	a2,4(a0)
+ 364:	03e00008 	jr	ra
+ 368:	00000000 	nop
+
+0000036c <xread>:
+ 36c:	27bdfff8 	addiu	sp,sp,-8
+ 370:	afbf0000 	sw	ra,0(sp)
+ 374:	8c870004 	lw	a3,4(a0)
+ 378:	8c820000 	lw	v0,0(a0)
+ 37c:	00000000 	nop
+ 380:	0046102b 	sltu	v0,v0,a2
+ 384:	14400005 	bnez	v0,39c <xread+0x30>
+ 388:	00000000 	nop
+ 38c:	14c00005 	bnez	a2,3a4 <xread+0x38>
+ 390:	00000000 	nop
+ 394:	1000000b 	b	3c4 <xread+0x58>
+ 398:	00000000 	nop
+ 39c:	0411ffff 	bal	39c <xread+0x30>
+			39c: R_MIPS_PC16	exit
+ 3a0:	2404007f 	li	a0,127
+ 3a4:	00e01821 	move	v1,a3
+ 3a8:	00e63821 	addu	a3,a3,a2
+ 3ac:	90620000 	lbu	v0,0(v1)
+ 3b0:	00000000 	nop
+ 3b4:	a0a20000 	sb	v0,0(a1)
+ 3b8:	24630001 	addiu	v1,v1,1
+ 3bc:	14e3fffb 	bne	a3,v1,3ac <xread+0x40>
+ 3c0:	24a50001 	addiu	a1,a1,1
+ 3c4:	8c820004 	lw	v0,4(a0)
+ 3c8:	00000000 	nop
+ 3cc:	00461021 	addu	v0,v0,a2
+ 3d0:	ac820004 	sw	v0,4(a0)
+ 3d4:	8c820000 	lw	v0,0(a0)
+ 3d8:	00000000 	nop
+ 3dc:	00461023 	subu	v0,v0,a2
+ 3e0:	ac820000 	sw	v0,0(a0)
+ 3e4:	8fbf0000 	lw	ra,0(sp)
+ 3e8:	00000000 	nop
+ 3ec:	03e00008 	jr	ra
+ 3f0:	27bd0008 	addiu	sp,sp,8
+
+000003f4 <unpackExtent>:
+ 3f4:	27bdffe0 	addiu	sp,sp,-32
+ 3f8:	afbf0018 	sw	ra,24(sp)
+ 3fc:	afb10014 	sw	s1,20(sp)
+ 400:	afb00010 	sw	s0,16(sp)
+ 404:	00808821 	move	s1,a0
+ 408:	8ca20000 	lw	v0,0(a1)
+ 40c:	00000000 	nop
+ 410:	10400047 	beqz	v0,530 <unpackExtent+0x13c>
+ 414:	00a08021 	move	s0,a1
+ 418:	02202021 	move	a0,s1
+ 41c:	27a50004 	addiu	a1,sp,4
+ 420:	0411ffd2 	bal	36c <xread>
+ 424:	2406000c 	li	a2,12
+ 428:	8fa30004 	lw	v1,4(sp)
+ 42c:	00000000 	nop
+ 430:	1460000b 	bnez	v1,460 <unpackExtent+0x6c>
+ 434:	3c022158 	lui	v0,0x2158
+ 438:	8fa30008 	lw	v1,8(sp)
+ 43c:	34425055 	ori	v0,v0,0x5055
+ 440:	1462000b 	bne	v1,v0,470 <unpackExtent+0x7c>
+ 444:	00000000 	nop
+ 448:	8e220000 	lw	v0,0(s1)
+ 44c:	00000000 	nop
+ 450:	14400007 	bnez	v0,470 <unpackExtent+0x7c>
+ 454:	00000000 	nop
+ 458:	10000035 	b	530 <unpackExtent+0x13c>
+ 45c:	00000000 	nop
+ 460:	8fa60008 	lw	a2,8(sp)
+ 464:	00000000 	nop
+ 468:	14c00003 	bnez	a2,478 <unpackExtent+0x84>
+ 46c:	0066102b 	sltu	v0,v1,a2
+ 470:	0411ffff 	bal	470 <unpackExtent+0x7c>
+			470: R_MIPS_PC16	exit
+ 474:	2404007f 	li	a0,127
+ 478:	1440fffd 	bnez	v0,470 <unpackExtent+0x7c>
+ 47c:	00000000 	nop
+ 480:	8e020000 	lw	v0,0(s0)
+ 484:	00000000 	nop
+ 488:	0043102b 	sltu	v0,v0,v1
+ 48c:	1440fff8 	bnez	v0,470 <unpackExtent+0x7c>
+ 490:	00c3102b 	sltu	v0,a2,v1
+ 494:	10400019 	beqz	v0,4fc <unpackExtent+0x108>
+ 498:	00000000 	nop
+ 49c:	afa30000 	sw	v1,0(sp)
+ 4a0:	8e240004 	lw	a0,4(s1)
+ 4a4:	00000000 	nop
+ 4a8:	2484fff4 	addiu	a0,a0,-12
+ 4ac:	8e050004 	lw	a1,4(s0)
+ 4b0:	0411ffff 	bal	4b0 <unpackExtent+0xbc>
+			4b0: R_MIPS_PC16	f_expand
+ 4b4:	03a03021 	move	a2,sp
+ 4b8:	1440ffed 	bnez	v0,470 <unpackExtent+0x7c>
+ 4bc:	00000000 	nop
+ 4c0:	8fa30004 	lw	v1,4(sp)
+ 4c4:	8fa20000 	lw	v0,0(sp)
+ 4c8:	00000000 	nop
+ 4cc:	1462ffe8 	bne	v1,v0,470 <unpackExtent+0x7c>
+ 4d0:	00000000 	nop
+ 4d4:	8e220004 	lw	v0,4(s1)
+ 4d8:	8fa30008 	lw	v1,8(sp)
+ 4dc:	00000000 	nop
+ 4e0:	00431021 	addu	v0,v0,v1
+ 4e4:	ae220004 	sw	v0,4(s1)
+ 4e8:	8e220000 	lw	v0,0(s1)
+ 4ec:	00000000 	nop
+ 4f0:	00431023 	subu	v0,v0,v1
+ 4f4:	10000004 	b	508 <unpackExtent+0x114>
+ 4f8:	ae220000 	sw	v0,0(s1)
+ 4fc:	8e050004 	lw	a1,4(s0)
+ 500:	0411ff9a 	bal	36c <xread>
+ 504:	02202021 	move	a0,s1
+ 508:	8e020004 	lw	v0,4(s0)
+ 50c:	8fa30004 	lw	v1,4(sp)
+ 510:	00000000 	nop
+ 514:	00431021 	addu	v0,v0,v1
+ 518:	ae020004 	sw	v0,4(s0)
+ 51c:	8e020000 	lw	v0,0(s0)
+ 520:	00000000 	nop
+ 524:	00431023 	subu	v0,v0,v1
+ 528:	1440ffbb 	bnez	v0,418 <unpackExtent+0x24>
+ 52c:	ae020000 	sw	v0,0(s0)
+ 530:	8fbf0018 	lw	ra,24(sp)
+ 534:	8fb10014 	lw	s1,20(sp)
+ 538:	8fb00010 	lw	s0,16(sp)
+ 53c:	03e00008 	jr	ra
+ 540:	27bd0020 	addiu	sp,sp,32
+
+00000544 <do_xmap>:
+ 544:	27bdffa0 	addiu	sp,sp,-96
+ 548:	afbf005c 	sw	ra,92(sp)
+ 54c:	afbe0058 	sw	s8,88(sp)
+ 550:	afb70054 	sw	s7,84(sp)
+ 554:	afb60050 	sw	s6,80(sp)
+ 558:	afb5004c 	sw	s5,76(sp)
+ 55c:	afb40048 	sw	s4,72(sp)
+ 560:	afb30044 	sw	s3,68(sp)
+ 564:	afb20040 	sw	s2,64(sp)
+ 568:	afb1003c 	sw	s1,60(sp)
+ 56c:	afb00038 	sw	s0,56(sp)
+ 570:	0080a821 	move	s5,a0
+ 574:	00a0b021 	move	s6,a1
+ 578:	afa60028 	sw	a2,40(sp)
+ 57c:	afa7002c 	sw	a3,44(sp)
+ 580:	afa80030 	sw	t0,48(sp)
+ 584:	8c82001c 	lw	v0,28(a0)
+ 588:	10a00014 	beqz	a1,5dc <do_xmap+0x98>
+ 58c:	00829021 	addu	s2,a0,v0
+ 590:	8d060000 	lw	a2,0(t0)
+ 594:	00000000 	nop
+ 598:	94c30010 	lhu	v1,16(a2)
+ 59c:	24020002 	li	v0,2
+ 5a0:	14620004 	bne	v1,v0,5b4 <do_xmap+0x70>
+ 5a4:	24c50034 	addiu	a1,a2,52
+ 5a8:	8ca40008 	lw	a0,8(a1)
+ 5ac:	10000006 	b	5c8 <do_xmap+0x84>
+ 5b0:	afa00024 	sw	zero,36(sp)
+ 5b4:	8ca20028 	lw	v0,40(a1)
+ 5b8:	00000000 	nop
+ 5bc:	00c23023 	subu	a2,a2,v0
+ 5c0:	afa60024 	sw	a2,36(sp)
+ 5c4:	00c02021 	move	a0,a2
+ 5c8:	8ca50014 	lw	a1,20(a1)
+ 5cc:	0411ffff 	bal	5cc <do_xmap+0x88>
+			5cc: R_MIPS_PC16	munmap
+ 5d0:	00000000 	nop
+ 5d4:	10000035 	b	6ac <do_xmap+0x168>
+ 5d8:	00000000 	nop
+ 5dc:	94820010 	lhu	v0,16(a0)
+ 5e0:	00000000 	nop
+ 5e4:	38420003 	xori	v0,v0,0x3
+ 5e8:	0002102b 	sltu	v0,zero,v0
+ 5ec:	9490002c 	lhu	s0,44(a0)
+ 5f0:	0411ffff 	bal	5f0 <do_xmap+0xac>
+			5f0: R_MIPS_PC16	get_page_mask
+ 5f4:	00028900 	sll	s1,v0,0x4
+ 5f8:	2610ffff 	addiu	s0,s0,-1
+ 5fc:	0600001c 	bltz	s0,670 <do_xmap+0x12c>
+ 600:	00403821 	move	a3,v0
+ 604:	02401821 	move	v1,s2
+ 608:	2408ffff 	li	t0,-1
+ 60c:	00002821 	move	a1,zero
+ 610:	24090001 	li	t1,1
+ 614:	240affff 	li	t2,-1
+ 618:	8c620000 	lw	v0,0(v1)
+ 61c:	00000000 	nop
+ 620:	1449000e 	bne	v0,t1,65c <do_xmap+0x118>
+ 624:	00603021 	move	a2,v1
+ 628:	8c640008 	lw	a0,8(v1)
+ 62c:	00000000 	nop
+ 630:	0088102b 	sltu	v0,a0,t0
+ 634:	10400002 	beqz	v0,640 <do_xmap+0xfc>
+ 638:	00000000 	nop
+ 63c:	00804021 	move	t0,a0
+ 640:	8cc20014 	lw	v0,20(a2)
+ 644:	00000000 	nop
+ 648:	00822021 	addu	a0,a0,v0
+ 64c:	00a4102b 	sltu	v0,a1,a0
+ 650:	10400002 	beqz	v0,65c <do_xmap+0x118>
+ 654:	00000000 	nop
+ 658:	00802821 	move	a1,a0
+ 65c:	2610ffff 	addiu	s0,s0,-1
+ 660:	120a0005 	beq	s0,t2,678 <do_xmap+0x134>
+ 664:	24630020 	addiu	v1,v1,32
+ 668:	1000ffeb 	b	618 <do_xmap+0xd4>
+ 66c:	00000000 	nop
+ 670:	2408ffff 	li	t0,-1
+ 674:	00002821 	move	a1,zero
+ 678:	00e88024 	and	s0,a3,t0
+ 67c:	00b02823 	subu	a1,a1,s0
+ 680:	00a72823 	subu	a1,a1,a3
+ 684:	24a5ffff 	addiu	a1,a1,-1
+ 688:	02002021 	move	a0,s0
+ 68c:	00e52824 	and	a1,a3,a1
+ 690:	00003021 	move	a2,zero
+ 694:	36270022 	ori	a3,s1,0x22
+ 698:	2408ffff 	li	t0,-1
+ 69c:	0411ffff 	bal	69c <do_xmap+0x158>
+			69c: R_MIPS_PC16	mmap
+ 6a0:	00004821 	move	t1,zero
+ 6a4:	00501023 	subu	v0,v0,s0
+ 6a8:	afa20024 	sw	v0,36(sp)
+ 6ac:	96a2002c 	lhu	v0,44(s5)
+ 6b0:	00000000 	nop
+ 6b4:	184000d7 	blez	v0,a14 <do_xmap+0x4d0>
+ 6b8:	0000a021 	move	s4,zero
+ 6bc:	12c0000c 	beqz	s6,6f0 <do_xmap+0x1ac>
+ 6c0:	24020006 	li	v0,6
+ 6c4:	8e430000 	lw	v1,0(s2)
+ 6c8:	00000000 	nop
+ 6cc:	14620008 	bne	v1,v0,6f0 <do_xmap+0x1ac>
+ 6d0:	24050003 	li	a1,3
+ 6d4:	8e460008 	lw	a2,8(s2)
+ 6d8:	8fa4002c 	lw	a0,44(sp)
+ 6dc:	8fa20024 	lw	v0,36(sp)
+ 6e0:	0411ff11 	bal	328 <auxv_up>
+ 6e4:	00463021 	addu	a2,v0,a2
+ 6e8:	100000c5 	b	a00 <do_xmap+0x4bc>
+ 6ec:	26940001 	addiu	s4,s4,1
+ 6f0:	8e420000 	lw	v0,0(s2)
+ 6f4:	24030001 	li	v1,1
+ 6f8:	144300c0 	bne	v0,v1,9fc <do_xmap+0x4b8>
+ 6fc:	02408021 	move	s0,s2
+ 700:	8e420014 	lw	v0,20(s2)
+ 704:	00000000 	nop
+ 708:	104000bc 	beqz	v0,9fc <do_xmap+0x4b8>
+ 70c:	00000000 	nop
+ 710:	12c00015 	beqz	s6,768 <do_xmap+0x224>
+ 714:	00000000 	nop
+ 718:	8e420004 	lw	v0,4(s2)
+ 71c:	00000000 	nop
+ 720:	14400011 	bnez	v0,768 <do_xmap+0x224>
+ 724:	24050003 	li	a1,3
+ 728:	8e460008 	lw	a2,8(s2)
+ 72c:	8ea2001c 	lw	v0,28(s5)
+ 730:	00000000 	nop
+ 734:	00c23021 	addu	a2,a2,v0
+ 738:	8fa4002c 	lw	a0,44(sp)
+ 73c:	8fa20024 	lw	v0,36(sp)
+ 740:	0411fef9 	bal	328 <auxv_up>
+ 744:	00463021 	addu	a2,v0,a2
+ 748:	8fa4002c 	lw	a0,44(sp)
+ 74c:	96a6002c 	lhu	a2,44(s5)
+ 750:	0411fef5 	bal	328 <auxv_up>
+ 754:	24050005 	li	a1,5
+ 758:	8fa4002c 	lw	a0,44(sp)
+ 75c:	96a6002a 	lhu	a2,42(s5)
+ 760:	0411fef1 	bal	328 <auxv_up>
+ 764:	24050004 	li	a1,4
+ 768:	0411ffff 	bal	768 <do_xmap+0x224>
+			768: R_MIPS_PC16	get_page_mask
+ 76c:	00000000 	nop
+ 770:	00028827 	nor	s1,zero,v0
+ 774:	8e020018 	lw	v0,24(s0)
+ 778:	00000000 	nop
+ 77c:	00021080 	sll	v0,v0,0x2
+ 780:	3c037351 	lui	v1,0x7351
+ 784:	34636240 	ori	v1,v1,0x6240
+ 788:	00431006 	srlv	v0,v1,v0
+ 78c:	30420007 	andi	v0,v0,0x7
+ 790:	afa20020 	sw	v0,32(sp)
+ 794:	8e030010 	lw	v1,16(s0)
+ 798:	00000000 	nop
+ 79c:	afa30000 	sw	v1,0(sp)
+ 7a0:	8e020008 	lw	v0,8(s0)
+ 7a4:	8fa40024 	lw	a0,36(sp)
+ 7a8:	00000000 	nop
+ 7ac:	0082f021 	addu	s8,a0,v0
+ 7b0:	afbe0004 	sw	s8,4(sp)
+ 7b4:	8e020014 	lw	v0,20(s0)
+ 7b8:	00000000 	nop
+ 7bc:	afa20018 	sw	v0,24(sp)
+ 7c0:	023e1024 	and	v0,s1,s8
+ 7c4:	0062b821 	addu	s7,v1,v0
+ 7c8:	12c0000e 	beqz	s6,804 <do_xmap+0x2c0>
+ 7cc:	03c29823 	subu	s3,s8,v0
+ 7d0:	02602021 	move	a0,s3
+ 7d4:	02e02821 	move	a1,s7
+ 7d8:	24060003 	li	a2,3
+ 7dc:	24070032 	li	a3,50
+ 7e0:	2408ffff 	li	t0,-1
+ 7e4:	0411ffff 	bal	7e4 <do_xmap+0x2a0>
+			7e4: R_MIPS_PC16	mmap
+ 7e8:	00004821 	move	t1,zero
+ 7ec:	1662006c 	bne	s3,v0,9a0 <do_xmap+0x45c>
+ 7f0:	02c02021 	move	a0,s6
+ 7f4:	0411feff 	bal	3f4 <unpackExtent>
+ 7f8:	03a02821 	move	a1,sp
+ 7fc:	1000000b 	b	82c <do_xmap+0x2e8>
+ 800:	00171023 	negu	v0,s7
+ 804:	8e090004 	lw	t1,4(s0)
+ 808:	02602021 	move	a0,s3
+ 80c:	02e02821 	move	a1,s7
+ 810:	8fa60020 	lw	a2,32(sp)
+ 814:	24070012 	li	a3,18
+ 818:	8fa80028 	lw	t0,40(sp)
+ 81c:	0411ffff 	bal	81c <do_xmap+0x2d8>
+			81c: R_MIPS_PC16	mmap
+ 820:	01224823 	subu	t1,t1,v0
+ 824:	1662005e 	bne	s3,v0,9a0 <do_xmap+0x45c>
+ 828:	00171023 	negu	v0,s7
+ 82c:	02228824 	and	s1,s1,v0
+ 830:	afb1001c 	sw	s1,28(sp)
+ 834:	8fa30020 	lw	v1,32(sp)
+ 838:	00000000 	nop
+ 83c:	30620002 	andi	v0,v1,0x2
+ 840:	10400008 	beqz	v0,864 <do_xmap+0x320>
+ 844:	00000000 	nop
+ 848:	12200006 	beqz	s1,864 <do_xmap+0x320>
+ 84c:	02771821 	addu	v1,s3,s7
+ 850:	02201021 	move	v0,s1
+ 854:	a0600000 	sb	zero,0(v1)
+ 858:	2442ffff 	addiu	v0,v0,-1
+ 85c:	1440fffd 	bnez	v0,854 <do_xmap+0x310>
+ 860:	24630001 	addiu	v1,v1,1
+ 864:	12c00050 	beqz	s6,9a8 <do_xmap+0x464>
+ 868:	00000000 	nop
+ 86c:	0411ffff 	bal	86c <do_xmap+0x328>
+			86c: R_MIPS_PC16	get_page_mask
+ 870:	00000000 	nop
+ 874:	00402821 	move	a1,v0
+ 878:	8fa40004 	lw	a0,4(sp)
+ 87c:	2406000c 	li	a2,12
+ 880:	afa60008 	sw	a2,8(sp)
+ 884:	3c0203c0 	lui	v0,0x3c0
+ 888:	34420008 	ori	v0,v0,0x8
+ 88c:	afa2000c 	sw	v0,12(sp)
+ 890:	afa00010 	sw	zero,16(sp)
+ 894:	8e020000 	lw	v0,0(s0)
+ 898:	24030001 	li	v1,1
+ 89c:	1443003a 	bne	v0,v1,988 <do_xmap+0x444>
+ 8a0:	00000000 	nop
+ 8a4:	8e020018 	lw	v0,24(s0)
+ 8a8:	00000000 	nop
+ 8ac:	30420001 	andi	v0,v0,0x1
+ 8b0:	10400035 	beqz	v0,988 <do_xmap+0x444>
+ 8b4:	00000000 	nop
+ 8b8:	8e020014 	lw	v0,20(s0)
+ 8bc:	8e030010 	lw	v1,16(s0)
+ 8c0:	00000000 	nop
+ 8c4:	00431023 	subu	v0,v0,v1
+ 8c8:	00822021 	addu	a0,a0,v0
+ 8cc:	00051027 	nor	v0,zero,a1
+ 8d0:	00041823 	negu	v1,a0
+ 8d4:	00431024 	and	v0,v0,v1
+ 8d8:	2c42000c 	sltiu	v0,v0,12
+ 8dc:	14400010 	bnez	v0,920 <do_xmap+0x3dc>
+ 8e0:	2405000c 	li	a1,12
+ 8e4:	24830003 	addiu	v1,a0,3
+ 8e8:	2402fffc 	li	v0,-4
+ 8ec:	00628824 	and	s1,v1,v0
+ 8f0:	ae260000 	sw	a2,0(s1)
+ 8f4:	8fa2000c 	lw	v0,12(sp)
+ 8f8:	00000000 	nop
+ 8fc:	ae220004 	sw	v0,4(s1)
+ 900:	8fa20010 	lw	v0,16(sp)
+ 904:	00000000 	nop
+ 908:	ae220008 	sw	v0,8(s1)
+ 90c:	02202021 	move	a0,s1
+ 910:	0411ffff 	bal	910 <do_xmap+0x3cc>
+			910: R_MIPS_PC16	__clear_cache
+ 914:	2625000c 	addiu	a1,s1,12
+ 918:	10000016 	b	974 <do_xmap+0x430>
+ 91c:	00000000 	nop
+ 920:	00002021 	move	a0,zero
+ 924:	0411ffff 	bal	924 <do_xmap+0x3e0>
+			924: R_MIPS_PC16	upx_mmap_and_fd
+ 928:	00003021 	move	a2,zero
+ 92c:	00408821 	move	s1,v0
+ 930:	30500fff 	andi	s0,v0,0xfff
+ 934:	2610ffff 	addiu	s0,s0,-1
+ 938:	02002021 	move	a0,s0
+ 93c:	27a50008 	addiu	a1,sp,8
+ 940:	0411ffff 	bal	940 <do_xmap+0x3fc>
+			940: R_MIPS_PC16	write
+ 944:	2406000c 	li	a2,12
+ 948:	2404f000 	li	a0,-4096
+ 94c:	02242024 	and	a0,s1,a0
+ 950:	2405000c 	li	a1,12
+ 954:	24060005 	li	a2,5
+ 958:	24070002 	li	a3,2
+ 95c:	02004021 	move	t0,s0
+ 960:	0411ffff 	bal	960 <do_xmap+0x41c>
+			960: R_MIPS_PC16	mmap
+ 964:	00004821 	move	t1,zero
+ 968:	00408821 	move	s1,v0
+ 96c:	0411ffff 	bal	96c <do_xmap+0x428>
+			96c: R_MIPS_PC16	close
+ 970:	02002021 	move	a0,s0
+ 974:	12200004 	beqz	s1,988 <do_xmap+0x444>
+ 978:	00002821 	move	a1,zero
+ 97c:	8fa4002c 	lw	a0,44(sp)
+ 980:	0411fe69 	bal	328 <auxv_up>
+ 984:	02203021 	move	a2,s1
+ 988:	02602021 	move	a0,s3
+ 98c:	8fa60020 	lw	a2,32(sp)
+ 990:	0411ffff 	bal	990 <do_xmap+0x44c>
+			990: R_MIPS_PC16	mprotect
+ 994:	02e02821 	move	a1,s7
+ 998:	10400003 	beqz	v0,9a8 <do_xmap+0x464>
+ 99c:	00000000 	nop
+ 9a0:	0411ffff 	bal	9a0 <do_xmap+0x45c>
+			9a0: R_MIPS_PC16	exit
+ 9a4:	2404007f 	li	a0,127
+ 9a8:	8fa40018 	lw	a0,24(sp)
+ 9ac:	00000000 	nop
+ 9b0:	03c42821 	addu	a1,s8,a0
+ 9b4:	8fa3001c 	lw	v1,28(sp)
+ 9b8:	00000000 	nop
+ 9bc:	02e31021 	addu	v0,s7,v1
+ 9c0:	02628021 	addu	s0,s3,v0
+ 9c4:	0205102b 	sltu	v0,s0,a1
+ 9c8:	1040000c 	beqz	v0,9fc <do_xmap+0x4b8>
+ 9cc:	02002021 	move	a0,s0
+ 9d0:	00b02823 	subu	a1,a1,s0
+ 9d4:	8fa60020 	lw	a2,32(sp)
+ 9d8:	24070032 	li	a3,50
+ 9dc:	2408ffff 	li	t0,-1
+ 9e0:	0411ffff 	bal	9e0 <do_xmap+0x49c>
+			9e0: R_MIPS_PC16	mmap
+ 9e4:	00004821 	move	t1,zero
+ 9e8:	12020005 	beq	s0,v0,a00 <do_xmap+0x4bc>
+ 9ec:	26940001 	addiu	s4,s4,1
+ 9f0:	2694ffff 	addiu	s4,s4,-1
+ 9f4:	1000ffff 	b	9f4 <do_xmap+0x4b0>
+ 9f8:	00000000 	nop
+ 9fc:	26940001 	addiu	s4,s4,1
+ a00:	96a2002c 	lhu	v0,44(s5)
+ a04:	00000000 	nop
+ a08:	0282102a 	slt	v0,s4,v0
+ a0c:	1440ff2b 	bnez	v0,6bc <do_xmap+0x178>
+ a10:	26520020 	addiu	s2,s2,32
+ a14:	8fa40030 	lw	a0,48(sp)
+ a18:	00000000 	nop
+ a1c:	10800004 	beqz	a0,a30 <do_xmap+0x4ec>
+ a20:	00000000 	nop
+ a24:	8fa20024 	lw	v0,36(sp)
+ a28:	00000000 	nop
+ a2c:	ac820000 	sw	v0,0(a0)
+ a30:	8ea20018 	lw	v0,24(s5)
+ a34:	8fa30024 	lw	v1,36(sp)
+ a38:	00000000 	nop
+ a3c:	00621021 	addu	v0,v1,v0
+ a40:	8fbf005c 	lw	ra,92(sp)
+ a44:	8fbe0058 	lw	s8,88(sp)
+ a48:	8fb70054 	lw	s7,84(sp)
+ a4c:	8fb60050 	lw	s6,80(sp)
+ a50:	8fb5004c 	lw	s5,76(sp)
+ a54:	8fb40048 	lw	s4,72(sp)
+ a58:	8fb30044 	lw	s3,68(sp)
+ a5c:	8fb20040 	lw	s2,64(sp)
+ a60:	8fb1003c 	lw	s1,60(sp)
+ a64:	8fb00038 	lw	s0,56(sp)
+ a68:	03e00008 	jr	ra
+ a6c:	27bd0060 	addiu	sp,sp,96
+
+00000a70 <upx_main>:
+ a70:	27bdffc8 	addiu	sp,sp,-56
+ a74:	afbf0030 	sw	ra,48(sp)
+ a78:	afb3002c 	sw	s3,44(sp)
+ a7c:	afb20028 	sw	s2,40(sp)
+ a80:	afb10024 	sw	s1,36(sp)
+ a84:	afb00020 	sw	s0,32(sp)
+ a88:	00c08821 	move	s1,a2
+ a8c:	00e09821 	move	s3,a3
+ a90:	01008021 	move	s0,t0
+ a94:	afa60004 	sw	a2,4(sp)
+ a98:	8c820000 	lw	v0,0(a0)
+ a9c:	00000000 	nop
+ aa0:	afa20000 	sw	v0,0(sp)
+ aa4:	afa4000c 	sw	a0,12(sp)
+ aa8:	afa50008 	sw	a1,8(sp)
+ aac:	afa40014 	sw	a0,20(sp)
+ ab0:	8c820004 	lw	v0,4(a0)
+ ab4:	00000000 	nop
+ ab8:	2442000c 	addiu	v0,v0,12
+ abc:	afa20010 	sw	v0,16(sp)
+ ac0:	27a40010 	addiu	a0,sp,16
+ ac4:	0411fe4b 	bal	3f4 <unpackExtent>
+ ac8:	03a02821 	move	a1,sp
+ acc:	afb00018 	sw	s0,24(sp)
+ ad0:	02202021 	move	a0,s1
+ ad4:	27a50008 	addiu	a1,sp,8
+ ad8:	00003021 	move	a2,zero
+ adc:	02603821 	move	a3,s3
+ ae0:	0411fe98 	bal	544 <do_xmap>
+ ae4:	27a80018 	addiu	t0,sp,24
+ ae8:	00408021 	move	s0,v0
+ aec:	02602021 	move	a0,s3
+ af0:	24050009 	li	a1,9
+ af4:	0411fe0c 	bal	328 <auxv_up>
+ af8:	00403021 	move	a2,v0
+ afc:	9626002c 	lhu	a2,44(s1)
+ b00:	00000000 	nop
+ b04:	18c00030 	blez	a2,bc8 <upx_main+0x158>
+ b08:	24020003 	li	v0,3
+ b0c:	8e230034 	lw	v1,52(s1)
+ b10:	00000000 	nop
+ b14:	14620028 	bne	v1,v0,bb8 <upx_main+0x148>
+ b18:	26240034 	addiu	a0,s1,52
+ b1c:	10000006 	b	b38 <upx_main+0xc8>
+ b20:	00000000 	nop
+ b24:	24840020 	addiu	a0,a0,32
+ b28:	8c830000 	lw	v1,0(a0)
+ b2c:	00000000 	nop
+ b30:	14620023 	bne	v1,v0,bc0 <upx_main+0x150>
+ b34:	24a50001 	addiu	a1,a1,1
+ b38:	8c820008 	lw	v0,8(a0)
+ b3c:	8fa40018 	lw	a0,24(sp)
+ b40:	00000000 	nop
+ b44:	00442021 	addu	a0,v0,a0
+ b48:	00002821 	move	a1,zero
+ b4c:	0411ffff 	bal	b4c <upx_main+0xdc>
+			b4c: R_MIPS_PC16	open
+ b50:	00003021 	move	a2,zero
+ b54:	04400008 	bltz	v0,b78 <upx_main+0x108>
+ b58:	00409021 	move	s2,v0
+ b5c:	00402021 	move	a0,v0
+ b60:	02202821 	move	a1,s1
+ b64:	0411ffff 	bal	b64 <upx_main+0xf4>
+			b64: R_MIPS_PC16	read
+ b68:	24060200 	li	a2,512
+ b6c:	24030200 	li	v1,512
+ b70:	10430003 	beq	v0,v1,b80 <upx_main+0x110>
+ b74:	02603821 	move	a3,s3
+ b78:	0411ffff 	bal	b78 <upx_main+0x108>
+			b78: R_MIPS_PC16	exit
+ b7c:	2404007f 	li	a0,127
+ b80:	02202021 	move	a0,s1
+ b84:	00002821 	move	a1,zero
+ b88:	02403021 	move	a2,s2
+ b8c:	0411fe6d 	bal	544 <do_xmap>
+ b90:	27a80018 	addiu	t0,sp,24
+ b94:	00408021 	move	s0,v0
+ b98:	02602021 	move	a0,s3
+ b9c:	8fa60018 	lw	a2,24(sp)
+ ba0:	0411fde1 	bal	328 <auxv_up>
+ ba4:	24050007 	li	a1,7
+ ba8:	0411ffff 	bal	ba8 <upx_main+0x138>
+			ba8: R_MIPS_PC16	close
+ bac:	02402021 	move	a0,s2
+ bb0:	10000006 	b	bcc <upx_main+0x15c>
+ bb4:	02001021 	move	v0,s0
+ bb8:	00002821 	move	a1,zero
+ bbc:	24a50001 	addiu	a1,a1,1
+ bc0:	14c5ffd8 	bne	a2,a1,b24 <upx_main+0xb4>
+ bc4:	24020003 	li	v0,3
+ bc8:	02001021 	move	v0,s0
+ bcc:	8fbf0030 	lw	ra,48(sp)
+ bd0:	8fb3002c 	lw	s3,44(sp)
+ bd4:	8fb20028 	lw	s2,40(sp)
+ bd8:	8fb10024 	lw	s1,36(sp)
+ bdc:	8fb00020 	lw	s0,32(sp)
+ be0:	03e00008 	jr	ra
+ be4:	27bd0038 	addiu	sp,sp,56
+
+00000be8 <upx_mmap_and_fd>:
+ be8:	27bdfff0 	addiu	sp,sp,-16
+ bec:	afbf000c 	sw	ra,12(sp)
+ bf0:	afb20008 	sw	s2,8(sp)
+ bf4:	afb10004 	sw	s1,4(sp)
+ bf8:	afb00000 	sw	s0,0(sp)
+ bfc:	00809021 	move	s2,a0
+ c00:	04110002 	bal	c0c <upx_mmap_and_fd+0x24>
+ c04:	00a08021 	move	s0,a1
+ c08:	75707800 	jalx	5c1e000 <__NR_memfd_create+0x5c1cefc>
+ c0c:	03e02021 	move	a0,ra
+ c10:	0411ffff 	bal	c10 <upx_mmap_and_fd+0x28>
+			c10: R_MIPS_PC16	memfd_create
+ c14:	00002821 	move	a1,zero
+ c18:	16000003 	bnez	s0,c28 <upx_mmap_and_fd+0x40>
+ c1c:	00408821 	move	s1,v0
+ c20:	10000013 	b	c70 <upx_mmap_and_fd+0x88>
+ c24:	00001821 	move	v1,zero
+ c28:	00402021 	move	a0,v0
+ c2c:	0411ffff 	bal	c2c <upx_mmap_and_fd+0x44>
+			c2c: R_MIPS_PC16	ftruncate
+ c30:	02002821 	move	a1,s0
+ c34:	04410003 	bgez	v0,c44 <upx_mmap_and_fd+0x5c>
+ c38:	02402021 	move	a0,s2
+ c3c:	1000000e 	b	c78 <upx_mmap_and_fd+0x90>
+ c40:	00401821 	move	v1,v0
+ c44:	2e050001 	sltiu	a1,s0,1
+ c48:	02052821 	addu	a1,s0,a1
+ c4c:	24060003 	li	a2,3
+ c50:	24070001 	li	a3,1
+ c54:	02204021 	move	t0,s1
+ c58:	0411ffff 	bal	c58 <upx_mmap_and_fd+0x70>
+			c58: R_MIPS_PC16	mmap
+ c5c:	00004821 	move	t1,zero
+ c60:	00401821 	move	v1,v0
+ c64:	2c42f001 	sltiu	v0,v0,-4095
+ c68:	10400004 	beqz	v0,c7c <upx_mmap_and_fd+0x94>
+ c6c:	00601021 	move	v0,v1
+ c70:	26220001 	addiu	v0,s1,1
+ c74:	00621825 	or	v1,v1,v0
+ c78:	00601021 	move	v0,v1
+ c7c:	8fbf000c 	lw	ra,12(sp)
+ c80:	8fb20008 	lw	s2,8(sp)
+ c84:	8fb10004 	lw	s1,4(sp)
+ c88:	8fb00000 	lw	s0,0(sp)
+ c8c:	03e00008 	jr	ra
+ c90:	27bd0010 	addiu	sp,sp,16
+Disassembly of section .reginfo:
+
+00000000 <.reginfo>:
+   0:	f2ff0ffe 	0xf2ff0ffe
+	...
+Disassembly of section .comment:
+
+00000000 <.comment>:
+   0:	00474343 	0x474343
+   4:	3a202847 	xori	zero,s1,0x2847
+   8:	4e552920 	c3	0x552920
+   c:	342e312e 	ori	t6,at,0x312e
+  10:	31004743 	andi	zero,t0,0x4743
+  14:	433a2028 	c0	0x13a2028
+  18:	474e5529 	c1	0x14e5529
+  1c:	20342e31 	addi	s4,at,11825
+  20:	Address 0x0000000000000020 is out of bounds.
+
+Disassembly of section EXP_HEAD:
+
+00000000 <f_expand>:
+   0:	0000000d 	break
+Disassembly of section EXP_TAIL:
+
+00000000 <EXP_TAIL>:
+   0:	0000000d 	break
