@@ -18,6 +18,7 @@ jobs:
           - container: 'alpine:3.16'
           - container: 'alpine:3.17'
           - container: 'alpine:3.18'
+          - container: 'alpine:3.19'
           - container: 'alpine:edge'
     name: ${{ format('{0}', matrix.container) }}
     runs-on: ubuntu-latest

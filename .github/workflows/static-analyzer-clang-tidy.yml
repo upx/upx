@@ -18,8 +18,10 @@ jobs:
       matrix:
         include:
           - container: 'alpine:3.18'
+          - container: 'alpine:3.19'
           - container: 'alpine:edge'
           - container: 'i386/alpine:3.18'
+          - container: 'i386/alpine:3.19'
           - container: 'i386/alpine:edge'
     name: ${{ format('Analyze clang-tidy {0}', matrix.container) }}
     runs-on: ubuntu-latest

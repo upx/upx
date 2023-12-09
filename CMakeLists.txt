@@ -379,7 +379,7 @@ function(upx_compile_source_debug_with_O2)
     endforeach()
 endfunction()
 
-# sanitize a target
+# sanitize a target: this needs proper support from your compiler AND toolchain
 function(upx_sanitize_target)
     foreach(t ${ARGV})
         if(UPX_CONFIG_DISABLE_SANITIZE)
@@ -389,6 +389,8 @@ function(upx_sanitize_target)
         elseif(MINGW OR CYGWIN)
             # avoid link errors with current MinGW-w64 versions
             # see https://www.mingw-w64.org/contribute/#sanitizers-asan-tsan-usan
+        elseif(CMAKE_C_COMPILER_ID MATCHES "^GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS "8.0")
+            # unsupported compiler; unreliable/broken sanitize implementation
         else()
             # default sanitizer for Debug builds
             target_compile_options(${t} PRIVATE $<$<CONFIG:Debug>:-fsanitize=undefined -fsanitize-undefined-trap-on-error -fstack-protector-all>)
@@ -418,7 +420,7 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
 if(WIN32 OR MINGW OR CYGWIN)
 if(CMAKE_C_COMPILER_ID MATCHES "(Clang|GNU)")
     # runtime library: msvcrt vs ucrt vs cygwin
-    print_have_symbol(__CRTDLL__ __CYGWIN__ __CYGWIN32__ __MINGW32__ __MINGW64_VERSION_MAJOR __MSVCRT__ _UCRT)
+    print_have_symbol(__CRTDLL__ __CYGWIN__ __CYGWIN32__ __CYGWIN64__ __MINGW32__ __MINGW64__ __MINGW64_VERSION_MAJOR __MSVCRT__ _UCRT _WIN32 _WIN64)
     # exception handing: SJLJ (setjmp/longjmp) vs DWARF vs SEH
     print_have_symbol(__GCC_HAVE_DWARF2_CFI_ASM __SEH__ __USING_SJLJ_EXCEPTIONS__)
     # threads: win32 vs posix/pthread/winpthreads vs mcfgthread
@@ -449,7 +451,7 @@ if(Threads_FOUND)
                     "${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/try_compile/${f}"
                     OUTPUT_VARIABLE output)
         if(NOT result)
-            # failed; under MinGW be sure the use the posix-threads and NOT the win32-threads version
+            # failed; under MinGW be sure to use the posix-threads and NOT the win32-threads version
             #message(STATUS "${output}") # debug output from try_compile
             set(Threads_FOUND OFF)
             break()
@@ -659,6 +661,7 @@ endif()
 if(CMAKE_INSTALL_PREFIX)
     include(GNUInstallDirs)
 endif()
+# install files
 if(CMAKE_INSTALL_PREFIX AND DEFINED CMAKE_INSTALL_FULL_BINDIR)
     install(TARGETS upx DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
     install(FILES

@@ -49,7 +49,7 @@ jobs:
           - { zig_target: x86_64-windows-gnu }
     name: ${{ format('zigcc {0} {1}', matrix.zig_target, matrix.zig_pic) }}
     runs-on: ubuntu-latest
-    container: 'alpine:3.18' # older versions such as alpine:3.12 also work; no-container also works
+    container: 'alpine:3.19' # older versions such as alpine:3.12 also work; no-container also works
     env:
       # for zig-cc wrapper scripts (see below):
       ZIG_CPPFLAGS: -DUPX_DOCTEST_CONFIG_MULTITHREADING

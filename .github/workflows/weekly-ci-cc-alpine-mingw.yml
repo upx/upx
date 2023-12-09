@@ -28,7 +28,8 @@ jobs:
           - { container: 'alpine:3.17', wine: true,  i686_mingw: false } # wine-7.21
           # Wine >= 8.0 can run i686 32-bit programs in WOW64 mode on pure 64-bit systems
           - { container: 'alpine:3.18', wine: true,  i686_mingw: true }  # wine-8.13
-          - { container: 'alpine:edge', wine: true,  i686_mingw: true }  # wine-8.19
+          - { container: 'alpine:3.19', wine: true,  i686_mingw: true }  # wine-8.21
+          - { container: 'alpine:edge', wine: true,  i686_mingw: true }  # wine-8.21
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}

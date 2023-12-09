@@ -53,12 +53,22 @@ ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(int) == sizeof(int))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof('a') == sizeof(char))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof("") == 1)
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof("a") == 2)
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof("ab") == 3)
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(L'a') == sizeof(wchar_t))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(L"") == 1 * sizeof(wchar_t))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(L"a") == 2 * sizeof(wchar_t))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(L"ab") == 3 * sizeof(wchar_t))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0) == sizeof(int))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0L) == sizeof(long))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(0LL) == sizeof(long long))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(nullptr) == sizeof(void *))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(sizeof(0)) == sizeof(size_t))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(usizeof(0)) == sizeof(unsigned))
+#if 0
+// works, but may trigger clang/gcc warnings "-Wunused-value"
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof((1LL, 1)) == sizeof(int))
+ACC_COMPILE_TIME_ASSERT_HEADER(usizeof((1, 1LL)) == sizeof(long long))
+#endif
 
 namespace compile_time = upx::compile_time;
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_len("") == 0)

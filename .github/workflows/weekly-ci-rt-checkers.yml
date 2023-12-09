@@ -20,8 +20,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { container: 'alpine:3.18',      release: debug,   qemu: 'qemu-x86_64 -cpu Nehalem' }
-          - { container: 'alpine:3.18',      release: release, qemu: 'qemu-x86_64 -cpu Nehalem' }
+          # latest Alpine release + edge
+          - { container: 'alpine:3.19',      release: debug,   qemu: 'qemu-x86_64 -cpu Nehalem' }
+          - { container: 'alpine:3.19',      release: release, qemu: 'qemu-x86_64 -cpu Nehalem' }
           - { container: 'alpine:edge',      release: release, qemu: 'qemu-x86_64 -cpu Nehalem' }
           - { container: 'i386/alpine:edge', release: release, qemu: 'qemu-i386' }
     name: ${{ format('{0} {1}', matrix.container, matrix.release) }}

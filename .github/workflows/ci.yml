@@ -404,7 +404,7 @@ jobs:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('zigcc {0} {1}', matrix.zig_target, matrix.zig_pic) }}
     runs-on: ubuntu-latest
-    container: 'alpine:3.18' # older versions such as alpine:3.12 also work; no-container also works
+    container: 'alpine:3.19' # older versions such as alpine:3.12 also work; no-container also works
     strategy:
       fail-fast: false
       matrix:
