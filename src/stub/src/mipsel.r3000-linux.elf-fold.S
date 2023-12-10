@@ -74,7 +74,7 @@ __NR_write    =   4+ __NR_Linux
 
 PATHSIZE=4096
 OVERHEAD=2048
-#include "MAX_ELF_HDR.S"
+#include "../src/MAX_ELF_HDR.S"
 
 MAP_PRIVATE=  0x002
 MAP_ANONYMOUS=0x800  # not same as i386
@@ -154,25 +154,32 @@ L20:  // copy auxv
         .balign 4
 
 get_page_mask: .globl get_page_mask
-        move v1,ra; bal 5f
+        move v1,ra
+        bal 5f  // ra= 0f
+          lw v0,(ra)
 0:
-        .word PAGE_MASK - (NBPW+ 0b)
-5:  # ra points here
-        lw v0,-NBPW(ra); addu v0,ra
+        .word PAGE_MASK - 0b
+5:
+        addu v0,ra
         jr v1
           lw v0,(v0)
 
 get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
-        move v1,ra; bal 5f
+        move v1,ra
+        bal 5f  // ra= 0f
+          lw at,(ra)
 0:
-        .word upxfn_path - (NBPW + 0b)
-5:  # ra points here
-        lw at,-NBPW(ra); addu at,ra  // &upxfn_path
+        .word upxfn_path - 0b
+5:
+        addu at,ra  // &upxfn_path
         lw v0,(at)  // offset
         beqz v0,9f  // null string
-          addu at,v0
+          addu v0,at
         jr v1
-          addiu v0,at,-1*NBPW
+          addiu v0,-1*NBPW
+9:
+        jr v1
+          move v0,$0
 
 close: .globl close
         b sysgo; li v0,__NR_close
@@ -200,13 +207,7 @@ L30:
         move a2,sp  # &Elf32_Ehdr TMP space
         move a1,$r_LENX  # total_size
 
-        bal 5f  # ra= 0f
-          lw at,-NBPW(ra)  # at= assembly-time return address
-0:
-        .word upx_main - (NBPW + 0b)
-5:  # ra points here
-        lw at,-NBPW(ra); addu $25,ra,at
-        jalr $25
+        bal upx_main  # remember that Makefile 'cat' all *.[sS]
           move a0,$r_ADRX
 
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Elf32_Auxv_t *a3,
