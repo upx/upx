@@ -1533,7 +1533,7 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	(cd tmp; ln -sf ../src/arch arch)
 	    echo line 1b
 	/lib/cpp -D__MIPSEB__ tmp/mips.r3000-linux.elf-fold-2.S \
-	    | sed -e $$(< dollar-dollar.sed) > tmp/mips.r3000-linux.elf-fold-3.S
+	    | sed -e $$(< src/dollar-dollar.sed) > tmp/mips.r3000-linux.elf-fold-3.S
 	    echo line 1c
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EB tmp/mips.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
@@ -1565,7 +1565,7 @@ tmp/mips.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -S -D__mips__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L8&/g' \
-	          -e $$(< dollar-dollar.sed) \
+	          -e $$(< src/dollar-dollar.sed) \
 	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
@@ -1574,7 +1574,7 @@ tmp/mips.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c
 	$(call tc,gcc) -S -D__mips__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L7&/g' \
-	          -e $$(< dollar-dollar.sed) \
+	          -e $$(< src/dollar-dollar.sed) \
 	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
@@ -1642,7 +1642,7 @@ mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	(cd tmp; ln -sf ../src/arch arch)
 	    echo line 1b
 	/lib/cpp -D__MIPSEL__ tmp/mipsel.r3000-linux.elf-fold-2.S \
-	    | sed -e $$(< dollar-dollar.sed) > tmp/mipsel.r3000-linux.elf-fold-3.S
+	    | sed -e $$(< src/dollar-dollar.sed) > tmp/mipsel.r3000-linux.elf-fold-3.S
 	    echo line 1c
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EL tmp/mipsel.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
@@ -1665,7 +1665,7 @@ tmp/mipsel.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -S -D__mipsel__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L8&/g' \
-	          -e $$(< dollar-dollar.sed) \
+	          -e $$(< src/dollar-dollar.sed) \
 	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
@@ -1674,7 +1674,7 @@ tmp/mipsel.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c
 	$(call tc,gcc) -S -D__mipsel__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L7&/g' \
-	          -e $$(< dollar-dollar.sed) \
+	          -e $$(< src/dollar-dollar.sed) \
 	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
