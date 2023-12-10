@@ -18,6 +18,7 @@ comma := ,
 empty :=
 space := $(empty) $(empty)
 tab   := $(empty)	$(empty)
+dollar := $$
 
 ifndef srcdir
 srcdir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
@@ -1521,15 +1522,21 @@ tmp/mips.r3000-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/mips.r3000-linux.elf-main.s \
-	    src/mips.r3000-expand.S \
-	    tmp/mips.r3000-linux.upxfd_android.s
-	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
+	    tmp/mips.r3000-linux.upxfd_android.s \
+	    src/mips.r3000-expand.S
 	    echo line 1
-	$(call tc,gcc) -E -D_TARGET_LINUX_ -D__MIPSEL__ src/mips.r3000-linux.elf-fold.S -o tmp/foo1.s
+	cat > tmp/mips.r3000-linux.elf-fold-2.S \
+	    src/mips.r3000-linux.elf-fold.S \
+	    tmp/mips.r3000-linux.elf-main.s \
+	    tmp/mips.r3000-linux.upxfd_android.s \
+	    src/mips.r3000-expand.S
+	(cd tmp; ln -sf ../src/arch arch)
 	    echo line 1b
-	cat tmp/foo1.s $(filter %.s,$^) src/mips.r3000-expand.S > tmp/foo2.s
+	/lib/cpp -D__MIPSEB__ tmp/mips.r3000-linux.elf-fold-2.S \
+	    | sed -e $$(< dollar-dollar.sed) > tmp/mips.r3000-linux.elf-fold-3.S
 	    echo line 1c
-	$(call tc,as) tmp/foo2.s -march=r3000 -o tmp/$T.o
+	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
+	$(call tc,as) -EB tmp/mips.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
 	    echo line 1d
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
 	    echo line 2
@@ -1558,6 +1565,7 @@ tmp/mips.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -S -D__mips__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L8&/g' \
+	          -e $$(< dollar-dollar.sed) \
 	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
@@ -1566,6 +1574,7 @@ tmp/mips.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c
 	$(call tc,gcc) -S -D__mips__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L7&/g' \
+	          -e $$(< dollar-dollar.sed) \
 	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
@@ -1621,16 +1630,24 @@ endif
 
 mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
-	    tmp/mips.r3000-linux.elf-main.s \
-	    src/mips.r3000-expand.S \
-	    tmp/mips.r3000-linux.upxfd_android.s
-	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
+	    tmp/mipsel.r3000-linux.elf-main.s \
+	    tmp/mipsel.r3000-linux.upxfd_android.s \
+	    src/mipsel.r3000-expand.S
 	    echo line 1
-	$(call tc,gcc) -E -D_TARGET_LINUX_ -D__MIPSEL__ src/mipsel.r3000-linux.elf-fold.S -o tmp/foo1.s
+	cat > tmp/mipsel.r3000-linux.elf-fold-2.S \
+	    src/mipsel.r3000-linux.elf-fold.S \
+	    tmp/mipsel.r3000-linux.elf-main.s \
+	    tmp/mipsel.r3000-linux.upxfd_android.s \
+	    src/mipsel.r3000-expand.S
+	(cd tmp; ln -sf ../src/arch arch)
 	    echo line 1b
-	cat tmp/foo1.s $(filter %.s,$^) src/mips.r3000-expand.S > tmp/foo2.s
+	/lib/cpp -D__MIPSEL__ tmp/mipsel.r3000-linux.elf-fold-2.S \
+	    | sed -e $$(< dollar-dollar.sed) > tmp/mipsel.r3000-linux.elf-fold-3.S
 	    echo line 1c
-	$(call tc,as) tmp/foo2.s -march=r3000 -o tmp/$T.o
+	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
+	$(call tc,as) -EL tmp/mipsel.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
+	    echo line 1d
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
 	    echo line 2
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 	    echo line 3
@@ -1643,6 +1660,24 @@ mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 tmp/mipsel.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
 	: $(call tc,f-objstrip,$@)
+
+tmp/mipsel.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -S -D__mipsel__ -D_TARGET_LINUX_ -O $< -o - \
+	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/L[0-9]*/L8&/g' \
+	          -e $$(< dollar-dollar.sed) \
+	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
+	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
+		  >$@
+
+tmp/mipsel.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c
+	$(call tc,gcc) -S -D__mipsel__ -D_TARGET_LINUX_ -O $< -o - \
+	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/L[0-9]*/L7&/g' \
+	          -e $$(< dollar-dollar.sed) \
+	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
+	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
+		  >$@
 
 tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -S -Os -MF tmp/$T.d $< -o - | $(RTRIM) > tmp/$T.i
