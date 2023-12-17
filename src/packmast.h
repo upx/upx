@@ -47,16 +47,15 @@ public:
     void fileInfo() may_throw;
 
     typedef tribool (*visit_func_t)(PackerBase *pb, void *user);
-    static PackerBase *visitAllPackers(visit_func_t, InputFile *f, const Options *, void *user)
-        may_throw;
+    static noinline PackerBase *visitAllPackers(visit_func_t, InputFile *f, const Options *,
+                                                void *user) may_throw;
 
 private:
-    OwningPointer(PackerBase) packer = nullptr; // owner
-    InputFile *const fi;                        // reference, required
-
     static PackerBase *getPacker(InputFile *f) may_throw;
     static PackerBase *getUnpacker(InputFile *f) may_throw;
 
+    OwningPointer(PackerBase) packer = nullptr; // owner
+    InputFile *const fi;                        // reference, required
     // setup local options for each file
     Options local_options;
     Options *saved_opt = nullptr;

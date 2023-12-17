@@ -120,7 +120,7 @@ build/extra/gcc-std-cxx20/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
 build/extra/gcc-std-cxx23/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/gcc-std-cxx23/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-std-cxx23/%: export CC  = gcc -std=gnu2x
-build/extra/gcc-std-cxx23/%: export CXX = g++ -std=gnu++23
+build/extra/gcc-std-cxx23/%: export CXX = g++ -std=gnu++2b
 build/extra/gcc-std-cxx23/%: export UPX_CONFIG_DISABLE_C_STANDARD=ON
 build/extra/gcc-std-cxx23/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
 
@@ -221,8 +221,8 @@ ifneq ($(CXX),)
 UPX_XTARGET := $(UPX_XTARGET)
 build/xtarget/$(UPX_XTARGET)/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/xtarget/$(UPX_XTARGET)/release: PHONY; $(call run_config_and_build,$@,Release)
-build/xtarget/$(UPX_XTARGET)/%: export CC
-build/xtarget/$(UPX_XTARGET)/%: export CXX
+build/xtarget/$(UPX_XTARGET)/%: export CC := $(CC)
+build/xtarget/$(UPX_XTARGET)/%: export CXX := $(CXX)
 # shortcuts
 xtarget/all:     xtarget/debug xtarget/release
 xtarget/debug:   build/xtarget/$(UPX_XTARGET)/debug
@@ -246,12 +246,22 @@ __add_cmake_config = $(and $($1),-D$1="$($1)")
 # pass common CMake settings from environment/make to cmake
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_VERBOSE_MAKEFILE)
 # pass common CMake toolchain settings from environment/make to cmake
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_ADDR2LINE)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_AR)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_DLLTOOL)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_LINKER)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_NM)
-build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_RANLIB)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJCOPY)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_OBJDUMP)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_RANLIB)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_READELF)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_STRIP)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_TAPI)
+# pass common CMake LTO toolchain settings from environment/make to cmake (for use with "-flto")
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_C_COMPILER_AR)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_C_COMPILER_RANLIB)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CXX_COMPILER_AR)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CXX_COMPILER_RANLIB)
 # pass common CMake cross compilation settings from environment/make to cmake
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_SYSTEM_NAME)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CROSSCOMPILING_EMULATOR)
