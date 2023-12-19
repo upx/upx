@@ -81,7 +81,7 @@ endif
 # "make check-whitespace"
 #
 
-ifneq ($(wildcard /usr/bin/env),) # needs bash, perl, xargs, etc.
+ifneq ($(wildcard /usr/bin/env),) # needs Unix utils like bash, perl, sed, xargs, etc.
 CHECK_WHITESPACE = bash $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
 CHECK_WHITESPACE = bash $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)

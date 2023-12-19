@@ -1,5 +1,6 @@
 #
-# UPX doc Makefile - needs GNU make, pod2html, pod2man and pod2text
+# UPX doc Makefile - needs GNU make, sed, pod2html, pod2man and pod2text
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
 BUILT_SOURCES = upx.1 upx-doc.html upx-doc.txt
@@ -24,6 +25,9 @@ DETAB2 := sed -e 's/$(tab)/  /g'
 #***********************************************************************
 
 .DEFAULT_GOAL = all
+.PHONY: PHONY
+.SECONDEXPANSION:
+.SUFFIXES:
 
 all: $(BUILT_SOURCES) PHONY
 
@@ -34,7 +38,6 @@ mostlyclean clean distclean maintainer-clean: PHONY
 # rules
 #***********************************************************************
 
-.SUFFIXES:
 .SUFFIXES: .1 .html .man .pod .ps .tex .txt
 
 %.1 : %.pod
@@ -68,4 +71,3 @@ mostlyclean clean distclean maintainer-clean: PHONY
 
 $(BUILT_SOURCES): $(top_srcdir)/src/version.h $(MAKEFILE_LIST)
 .DELETE_ON_ERROR: $(BUILT_SOURCES)
-.PHONY: PHONY

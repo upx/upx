@@ -18,6 +18,7 @@
 #   - print summary
 
 # CMake version check; using a somewhat current CMake version is highly recommended
+file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/.upx_cmake_config_done.txt")
 if(DEFINED UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION)
     cmake_minimum_required(VERSION "${UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION}" FATAL_ERROR)
 else()
@@ -29,7 +30,6 @@ macro(upx_cmake_include_hook section)
     include("${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/hooks/CMakeLists.${section}.txt" OPTIONAL)
     include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.${section}.txt" OPTIONAL)
 endmacro()
-file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/.upx_cmake_config_done.txt")
 
 #***********************************************************************
 # options
@@ -61,6 +61,8 @@ option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" O
 # init
 #***********************************************************************
 
+set(UPX_VERSION_STRING "4.3.0")
+
 upx_cmake_include_hook(2_init)
 
 # Disallow in-source builds. Note that you will still have to manually
@@ -74,7 +76,7 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
 endif()
 
 # util
-function(print_var)
+function(upx_print_var) # ARGV
     foreach(var_name ${ARGV})
         if(DEFINED ${var_name} AND NOT ",${${var_name}}," STREQUAL ",,")
             if(${var_name})
@@ -83,40 +85,42 @@ function(print_var)
         endif()
     endforeach()
 endfunction()
-function(print_have_symbol)
+function(upx_print_have_symbol) # ARGV
     foreach(symbol ${ARGV})
-        set(var_name "HAVE_symbol_${symbol}")
-        check_symbol_exists(${symbol} "stddef.h" ${var_name})
-        if(${var_name})
+        set(cache_var_name "HAVE_symbol_${symbol}")
+        check_symbol_exists(${symbol} "limits.h;stddef.h;stdint.h" ${cache_var_name})
+        if(${cache_var_name})
            message(STATUS "HAVE ${symbol}")
         endif()
     endforeach()
 endfunction()
 
 # useful for CI jobs: allow settings via environment and cache result
-function(upx_cache_bool_vars)
+function(upx_cache_bool_vars) # ARGV
     set(default_value "${ARGV0}")
     list(REMOVE_AT ARGV 0)
     foreach(var_name ${ARGV})
         set(value ${default_value})
-        if(DEFINED UPX_CACHE_${var_name})           # cached
-            set(value "${UPX_CACHE_${var_name}}")
+        if(DEFINED UPX_CACHE_VALUE_${var_name})     # check cache
+            set(value "${UPX_CACHE_VALUE_${var_name}}")
         elseif(DEFINED ${var_name})                 # defined via "cmake -DXXX=YYY"
             set(value "${${var_name}}")
-        elseif("$ENV{${var_name}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$") # environment
+        elseif("$ENV{${var_name}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$") # check environment
             set(value "$ENV{${var_name}}")
-            set(UPX_CACHE_ORIGIN_FROM_ENV_${var_name} TRUE CACHE INTERNAL "" FORCE)
+            set(UPX_CACHE_ORIGIN_FROM_ENV_${var_name} TRUE CACHE INTERNAL "" FORCE) # for info below
         endif()
+        # convert to bool
         if(value)
             set(value ON)
         else()
             set(value OFF)
         endif()
+        # store result
         if(UPX_CACHE_ORIGIN_FROM_ENV_${var_name})
             message(STATUS "setting from environment: ${var_name} = ${value}")
         endif()
-        set(${var_name} "${value}" PARENT_SCOPE)
-        set(UPX_CACHE_${var_name} "${value}" CACHE INTERNAL "" FORCE)
+        set(${var_name} "${value}" PARENT_SCOPE) # store result
+        set(UPX_CACHE_VALUE_${var_name} "${value}" CACHE INTERNAL "" FORCE) # and store in cache
     endforeach()
 endfunction()
 
@@ -187,7 +191,7 @@ if(NOT is_multi_config AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 # CMake init
-project(upx VERSION 4.3.0 LANGUAGES C CXX)
+project(upx VERSION "${UPX_VERSION_STRING}" LANGUAGES C CXX)
 
 # set the default multi-config build type to "Release"
 if(is_multi_config)
@@ -273,7 +277,7 @@ if(MSVC_FRONTEND)
     set(warn_WX -wd5105 ${warn_WX})
 endif()
 
-function(upx_add_definitions_with_prefix)
+function(upx_add_definitions_with_prefix) # ARGV
     set(flag_prefix "${ARGV0}")
     if(flag_prefix MATCHES "^empty$") # need "empty" to work around bug in old CMake versions
         set(flag_prefix "")
@@ -282,9 +286,9 @@ function(upx_add_definitions_with_prefix)
     set(failed "")
     foreach(f ${ARGV})
         set(flag "${flag_prefix}${f}")
-        string(REGEX REPLACE "[^0-9a-zA-Z_]" "_" cache_var "HAVE_CFLAG_${flag}")
-        check_c_compiler_flag("${flag}" ${cache_var})
-        if(${cache_var})
+        string(REGEX REPLACE "[^0-9a-zA-Z_]" "_" cache_var_name "HAVE_CFLAG_${flag}")
+        check_c_compiler_flag("${flag}" ${cache_var_name})
+        if(${cache_var_name})
             #message(STATUS "add_definitions: ${flag}")
             add_definitions("${flag}")
         else()
@@ -294,7 +298,7 @@ function(upx_add_definitions_with_prefix)
     set(failed_flags "${failed}" PARENT_SCOPE) # return value
 endfunction()
 
-function(upx_add_definitions)
+function(upx_add_definitions) # ARGV
     set(failed_flags "")
     if(MSVC_FRONTEND AND CMAKE_C_COMPILER_ID MATCHES "Clang")
         # for clang-cl try "-clang:" flag prefix first
@@ -341,7 +345,7 @@ if(NOT CMAKE_C_COMPILER_ID MATCHES "^MSVC")
 endif()
 
 # compile a target with -O2 optimization even in Debug build
-function(upx_compile_target_debug_with_O2)
+function(upx_compile_target_debug_with_O2) # ARGV
     foreach(t ${ARGV})
         if(MSVC_FRONTEND)
             # MSVC uses some Debug compilation options like -RTC1 that are incompatible with -O2
@@ -352,7 +356,7 @@ function(upx_compile_target_debug_with_O2)
 endfunction()
 
 # compile a source file with -O2 optimization even in Debug build; messy because of CMake limitations
-function(upx_compile_source_debug_with_O2)
+function(upx_compile_source_debug_with_O2) # ARGV
     set(flags "$<$<CONFIG:Debug>:-O2>")
     if(${CMAKE_VERSION} VERSION_LESS "3.8")
         # 3.8: The COMPILE_FLAGS source file property learned to support generator expressions
@@ -380,7 +384,7 @@ function(upx_compile_source_debug_with_O2)
 endfunction()
 
 # sanitize a target: this needs proper support from your compiler AND toolchain
-function(upx_sanitize_target)
+function(upx_sanitize_target) # ARGV
     foreach(t ${ARGV})
         if(UPX_CONFIG_DISABLE_SANITIZE)
             # no-op
@@ -403,7 +407,7 @@ function(upx_sanitize_target)
 endfunction()
 
 # util to add wildcard expansions to a variable
-function(upx_add_glob_files)
+function(upx_add_glob_files) # ARGV
     set(var_name ${ARGV0})
     list(REMOVE_AT ARGV 0)
     file(GLOB files ${ARGV})
@@ -420,11 +424,11 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
 if(WIN32 OR MINGW OR CYGWIN)
 if(CMAKE_C_COMPILER_ID MATCHES "(Clang|GNU)")
     # runtime library: msvcrt vs ucrt vs cygwin
-    print_have_symbol(__CRTDLL__ __CYGWIN__ __CYGWIN32__ __CYGWIN64__ __MINGW32__ __MINGW64__ __MINGW64_VERSION_MAJOR __MSVCRT__ _UCRT _WIN32 _WIN64)
+    upx_print_have_symbol(__CRTDLL__ __CYGWIN__ __CYGWIN32__ __CYGWIN64__ __MINGW32__ __MINGW64__ __MINGW64_VERSION_MAJOR __MSVCRT__ _UCRT _WIN32 _WIN64)
     # exception handing: SJLJ (setjmp/longjmp) vs DWARF vs SEH
-    print_have_symbol(__GCC_HAVE_DWARF2_CFI_ASM __SEH__ __USING_SJLJ_EXCEPTIONS__)
+    upx_print_have_symbol(__GCC_HAVE_DWARF2_CFI_ASM __SEH__ __USING_SJLJ_EXCEPTIONS__)
     # threads: win32 vs posix/pthread/winpthreads vs mcfgthread
-    print_have_symbol(_REENTRANT __USING_MCFGTHREAD__)
+    upx_print_have_symbol(_REENTRANT __USING_MCFGTHREAD__)
 endif()
 endif()
 endif()
@@ -609,7 +613,7 @@ upx_cmake_include_hook(6_test)
 
 if(NOT UPX_CONFIG_CMAKE_DISABLE_TEST)
 
-function(upx_add_test)
+function(upx_add_test) # ARGV
     set(name "${ARGV0}")
     list(REMOVE_AT ARGV 0)
     add_test(NAME "${name}" COMMAND ${ARGV})
@@ -680,16 +684,16 @@ endif() # UPX_CONFIG_CMAKE_DISABLE_INSTALL
 
 upx_cmake_include_hook(8_summary)
 
-print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION CMAKE_GENERATOR)
+upx_print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION CMAKE_GENERATOR)
 if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
-print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
-print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING CMAKE_CROSSCOMPILING_EMULATOR)
-print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_FRONTEND_VARIANT CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
-print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_FRONTEND_VARIANT CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
-print_var(CMAKE_INTERPROCEDURAL_OPTIMIZATION CMAKE_POSITION_INDEPENDENT_CODE CMAKE_TRY_COMPILE_CONFIGURATION)
-print_var(CYGWIN GNUC MINGW MSVC MSVC_FRONTEND MSVC_IDE WIN32 WIN64)
+upx_print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION)
+upx_print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_CROSSCOMPILING CMAKE_CROSSCOMPILING_EMULATOR)
+upx_print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_FRONTEND_VARIANT CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
+upx_print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_FRONTEND_VARIANT CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
+upx_print_var(CMAKE_INTERPROCEDURAL_OPTIMIZATION CMAKE_POSITION_INDEPENDENT_CODE CMAKE_TRY_COMPILE_CONFIGURATION)
+upx_print_var(CYGWIN GNUC MINGW MSVC MSVC_FRONTEND MSVC_IDE WIN32 WIN64)
 endif() # UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO
-print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
+upx_print_var(CMAKE_INSTALL_PREFIX CMAKE_CONFIGURATION_TYPES CMAKE_BUILD_TYPE)
 if(Threads_FOUND)
     message(STATUS "WITH_THREADS = 1")
 elseif(UPX_CONFIG_REQUIRE_THREADS)

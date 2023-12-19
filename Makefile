@@ -66,7 +66,7 @@ endif
 CTEST = ctest
 test:: $(.DEFAULT_GOAL) PHONY
 	cd $(.DEFAULT_GOAL) && $(CTEST)
-ifneq ($(wildcard /usr/bin/env),) # needs bash, perl, xargs, etc.
+ifneq ($(wildcard /usr/bin/env),) # needs Unix utils like bash, perl, sed, xargs, etc.
 check-whitespace clang-format run-testsuite run-testsuite-debug run-testsuite-release: src/Makefile PHONY
 	$(MAKE) -C src $@
 endif
