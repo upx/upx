@@ -1,5 +1,5 @@
 /*
-;  powerpc-expand.S -- decompressors for powerpc
+;  powerpc64le-expand.S -- decompressors for powerpc
 ;
 ;  This file is part of the UPX executable compressor.
 ;
@@ -33,14 +33,14 @@
 
 // FIXME  This assembles, but has ERRORS in translation from amd64
 
-NBPW= 4
+NBPW= 8
 SZ_DLINE= 128  # size of data cache line in Apple G5
 #ifndef BIG_ENDIAN  //{
-#define BIG_ENDIAN 1
+#define BIG_ENDIAN 0
 #endif  //}
 
-#include "arch/powerpc/32/macros.S"
-#include "arch/powerpc/32/ppc_regs.h"
+#include "arch/powerpc/64/macros.S"
+#include "arch/powerpc/64/ppc_regs.h"
 
 .macro PUSH4 p1,p2,p3,p4
     stdu \p1,-4*NBPW(sp)
@@ -171,14 +171,14 @@ eof_nrv:
 #define NO_METHOD_CHECK 1
 
   section NRV2E
-#include "arch/powerpc/32/nrv2e_d.S"
+#include "arch/powerpc/64le/nrv2e_d.S"
 
   section NRV2D
-#include "arch/powerpc/32/nrv2d_d.S"
+#include "arch/powerpc/64le/nrv2d_d.S"
 
   section NRV2B
-#include "arch/powerpc/32/nrv2b_d.S"
+#include "arch/powerpc/64le/nrv2b_d.S"
 
 /* lzma has its own 'section's */
-#include "arch/powerpc/32/lzma_d.S"
+#include "arch/powerpc/64le/lzma_d.S"
 
