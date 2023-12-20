@@ -172,5 +172,5 @@ eof:  // end of a compressed extent; need sync_cache
 #include "arch/mips/r3000/nrv2b_d.ash"
 
 /* lzma has its own 'section's */
-/* FIXME #include "arch/mips/r3000/lzma_d.S" */
+#include "arch/mips/r3000/lzma_d.S"
 
