@@ -73,3 +73,16 @@ NRV2D           0x0000000000000000      0x170
 NRV2B           0x0000000000000000      0x144
  NRV2B          0x0000000000000000      0x144 tmp/arm64-expand.o
                 0x0000000000000000                ucl_nrv2b_decompress_32
+
+LZMA_ELF00      0x0000000000000000      0x10c
+ LZMA_ELF00     0x0000000000000000      0x10c tmp/arm64-expand.o
+
+LZMA_DEC20      0x0000000000000000      0x968
+ LZMA_DEC20     0x0000000000000000      0x968 tmp/arm64-expand.o
+
+LZMA_DEC10      0x0000000000000000      0x4a0
+ LZMA_DEC10     0x0000000000000000      0x4a0 tmp/arm64-expand.o
+                0x0000000000000000                LzmaDecode
+
+LZMA_DEC30      0x0000000000000000        0x0
+ LZMA_DEC30     0x0000000000000000        0x0 tmp/arm64-expand.o
