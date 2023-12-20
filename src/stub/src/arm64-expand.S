@@ -131,5 +131,5 @@ eof:  // end of a compressed extent; need sync_cache
 #include "arch/arm64/v8/nrv2b_d32.S"
 
 /* lzma has its own 'section's */
-/* FIXME #include "arch/arm64/v8/lzma_d.S"*/
+#include "arch/arm64/v8/lzma_d.S"
 
