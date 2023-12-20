@@ -32,9 +32,6 @@ NBPW= 8
 #include "arch/amd64/regs.h"
 
 PATH_MAX= 4096  // /usr/include/linux/limits.h
-PAGE_SHIFT= 12  // /usr/include/sys/user.h
-PAGE_SIZE=  1 << PAGE_SHIFT
-PAGE_MASK= ~0 << PAGE_SHIFT
 
 sz_b_info= 12
   sz_unc= 0
@@ -68,21 +65,29 @@ __NR_ftruncate= 0x4d  // 77
 __NR_exit= 60
 __NR_readlink= 89
 
+F_FRAME= 7*NBPW
+F_ENTR= 6*NBPW; F_PMASK= F_ENTR
+F_RDX=  5*NBPW
+F_LENU= 4*NBPW
+F_ADRU= 3*NBPW
+F_ELFA= 2*NBPW
+F_LENX= 1*NBPW
+F_ADRX= 0*NBPW
+
+        .balign 4
+PAGE_MASK: .quad -1<<12  // default
+
 // IN: [ADRX,+LENX): compressed data; [ADRU,+LENU): expanded fold (w/ upx_main)
-// %rbp= old_f_exp; %r14= ADRX; %r15= LENX;
-// rsp/ elfaddr,ADRU,LENU,rdx,%entry,  argc,argv,0,envp,0,auxv,0,strings
+// %rsp= %rbp= &F_ADRX; %r13= O_BINFO | is_ptinterp
 
 // no 'section', thus '.text'; also loaded first in amd64-linux.elf-fold.bin.
 // Code from amd64-linux.elf-main.c is also .text, and is next.
 fold_begin:
-        movq 4*NBPW(%rsp),%rbp  // O_BINFO | is_ptinterp  FIXME: where does src memory move to?
-        push %r14  // ADRX
-        push %r15  // LENX
-        push %rax  # &amdbxx: f_unf
+        mov %r13,%rax; and $1,%eax; or %eax,F_ELFA(%rbp)  // is_ptinterp; %r13 dead
         mov %rsp,%rsi
         sub $PATH_MAX,%rsp
-        push %rsp; pop %rdi
-        push $10; pop %rcx; rep movsq  # f_unf,LENX,ADRX,elfaddr,fd,ADRU,LENU,rdx,%entry,argc
+        mov %rsp,%rdi
+        push $8; pop %rcx; rep movsq  # ADRX,LDRX,ELFA,ADRU,LENU,rdx,%entry,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
         movq %rdi,%r14  # remember &new_env[0]
@@ -97,7 +102,6 @@ fold_begin:
         sub %r15,%r12  # -length of auxv
 
           push %rdi  # buffer
-          mov %ebp,%ebx  # is_ptinterp
         lea proc_self_exe(%rip),%arg1; sub %arg2l,%arg2l  # O_RDONLY
         call open; mov %eax,%ebp  # fd
           pop %arg2  #buffer
@@ -116,24 +120,33 @@ fold_begin:
         rep movsb  # slide up
         sub $3,%rdi; movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),(%rdi)  # env var name
         mov %rdi,(%r14)  # new_env[0]
-        and $-2*NBPW,%rdi  # align
+        and $-NBPW,%rdi  # align
         mov %r15,%rcx
         sub %rsp,%rcx  # byte count
 
         mov %rdi,%r14  # end of new auxv
         sub $NBPW,%rdi        # &last qword of new auxv
         lea -NBPW(%r15),%rsi  # &last qword of old auxv
+
+        // end of auxv must move by even number of NBPW
+        mov %edi,%eax
+        xor %esi,%eax
+        and $NBPW,%eax
+        sub %rax,%rdi
+
         shr   $3,%rcx; rep movsq
         lea NBPW(%rdi),%rsp
      cld
 
         lea (%r14,%r12),%arg4  # &new Elf64_auxv  %r12 dead
-        and $1,%ebx; add %rbx,%arg4  # is_ptinterp  (what a pain!)
-        pop %rax   # f_unf
-        pop %arg2  # LENX
         pop %arg1  # ADRX
+        pop %arg2  # LENX
 
-        pop %arg5; mov %arg5,%r13  # elfaddr
+        pop %arg5  # ELFA | is_ptinterp
+        mov %arg5l,%eax; and $1,%eax  # is_ptinterp
+        or  %rax,%arg4  # transfer is_ptinterp to &new_ELF64_auxv
+        sub %rax,%arg5  # and clear from  ELFA
+        mov %arg5,%r13  # save ELFA
         subq $ OVERHEAD,%rsp
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
         call upx_main  # Out: %rax= entry
@@ -168,7 +181,7 @@ p_memsz= 5*NBPW
         mov %ebx,%arg5l  # fd
         push $MAP_PRIVATE; pop %arg4
         push $PROT_READ; pop %arg3
-        mov $PAGE_SIZE,%arg2l
+        mov $1<<12,%arg2l
         subl %arg1l,%arg1l  # 0
         call mmap
 
@@ -179,6 +192,10 @@ no_pse_map:
         pop %arg2  # LENU
         push $__NR_munmap; pop %rax
         jmp *-NBPW(%r14)  # goto: syscall; pop %rdx; ret
+
+get_page_mask: .globl get_page_mask
+        mov PAGE_MASK(%rip),%rax
+        ret
 
         section SYSCALLS
 my_bkpt: .globl my_bkpt
@@ -192,7 +209,8 @@ memfd_create: .globl memfd_create
         mov $__NR_memfd_create,%eax; jmp sysgo2
 
 Pmap: .globl Pmap  // page-align the lo end
-        mov %arg1,%rax; and $0xfff,%eax
+        mov PAGE_MASK(%rip),%rax; not %rax  // frag mask
+        and %arg1l,%eax  // frag
         sub %rax,%arg1
         add %rax,%arg2
 mmap: .globl mmap
@@ -204,21 +222,22 @@ sysgo2:
         push %rax  // save __NR_
         syscall  // %rax= -errno
         pop %rcx  // recover __NR_
-        cmp $PAGE_MASK,%rax; jb sysOK
+        cmp $-1<<12,%rax; jb sysOK
         cmp $__NR_open,%ecx; je sysOK  # ENOENT etc
         int3  // %rax= errno; %rcx= __NR_
 sysOK:
         ret
 
 Pprotect: .globl Pprotect
-        movl $~PAGE_MASK,%ecx  // frag mask
-        and %edi,%ecx  // frag
-        sub %rcx,%rdi
-        add %rcx,%rsi
+        mov PAGE_MASK(%rip),%eax; not %eax  // frag mask
+        and %arg1l,%eax  // frag
+        sub %rax,%rdi
+        add %rax,%rsi
         jmp mprotect
 
 Punmap: .globl Punmap  // page-align the lo end
-        mov %arg1,%rax; and $0xfff,%eax
+        mov PAGE_MASK(%rip),%eax; not %eax  // frag mask
+        and %arg1l,%eax  // frag
         sub %rax,%arg1
         add %rax,%arg2
 munmap: .globl munmap

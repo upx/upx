@@ -6,110 +6,70 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-                0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
-
-.text           0x00000000001000bc      0xb90
- *(.text)
- .text          0x00000000001000bc      0x30c tmp/arm64-linux.elf-fold.o
-                0x00000000001000c4                get_page_mask
-                0x00000000001000d0                mmap_privanon
-                0x00000000001000e0                mmap
-                0x00000000001000fc                munmap
-                0x0000000000100118                Pprotect
-                0x0000000000100118                mprotect
-                0x00000000001002f4                my_bkpt
-                0x00000000001002fc                exit
-                0x0000000000100304                ftruncate
-                0x0000000000100310                memfd_create
-                0x000000000010031c                read
-                0x0000000000100328                write
-                0x0000000000100328                Pwrite
-                0x0000000000100334                close
-                0x0000000000100340                getpid
-                0x000000000010034c                brk
-                0x0000000000100358                unlink
-                0x000000000010036c                readlink
-                0x0000000000100374                open
-                0x0000000000100390                memcpy
-                0x00000000001003a4                my_memset
-                0x00000000001003b4                __clear_cache
- .text          0x00000000001003c8        0x0 tmp/arm64-expand.o
- .text          0x00000000001003c8      0x884 tmp/arm64-linux.elf-main.o
-                0x000000000010057c                underlay
-                0x00000000001005e8                PF_TO_PROT
-                0x0000000000100b08                upx_main
- *(.data)
- .data          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
- .data          0x0000000000100c4c        0x0 tmp/arm64-expand.o
- .data          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-main.o
-
-.iplt           0x0000000000100c4c        0x0
- .iplt          0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
-
-.rela.dyn       0x0000000000100c50        0x0
- .rela.iplt     0x0000000000100c50        0x0 tmp/arm64-linux.elf-fold.o
-
-.data
+                0x000000000000004c                . = (SIZEOF_HEADERS + 0xc)
 LOAD tmp/arm64-linux.elf-fold.o
 LOAD tmp/arm64-expand.o
 LOAD tmp/arm64-linux.elf-main.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
-.igot.plt       0x0000000000100c50        0x0
- .igot.plt      0x0000000000100c50        0x0 tmp/arm64-linux.elf-fold.o
+.text           0x0000000000000000      0xaac
+ .text          0x0000000000000000      0x230 tmp/arm64-linux.elf-fold.o
+                0x0000000000000010                get_page_mask
+                0x0000000000000018                mmap_privanon
+                0x0000000000000028                mmap
+                0x0000000000000044                munmap
+                0x0000000000000060                Pprotect
+                0x0000000000000060                mprotect
+ .text          0x0000000000000230        0x0 tmp/arm64-expand.o
+ .text          0x0000000000000230      0x87c tmp/arm64-linux.elf-main.o
+                0x00000000000003e4                underlay
+                0x0000000000000450                PF_TO_PROT
+                0x0000000000000978                upx_main
 
-.bss            0x0000000000100c4c        0x0
- .bss           0x0000000000100c4c        0x0 tmp/arm64-linux.elf-fold.o
- .bss           0x0000000000100c4c        0x0 tmp/arm64-expand.o
- .bss           0x0000000000100c4c        0x0 tmp/arm64-linux.elf-main.o
+.data           0x0000000000000000        0x0
+ .data          0x0000000000000000        0x0 tmp/arm64-linux.elf-fold.o
+ .data          0x0000000000000000        0x0 tmp/arm64-expand.o
+ .data          0x0000000000000000        0x0 tmp/arm64-linux.elf-main.o
+
+.bss            0x0000000000000000        0x0
+ .bss           0x0000000000000000        0x0 tmp/arm64-linux.elf-fold.o
+ .bss           0x0000000000000000        0x0 tmp/arm64-expand.o
+ .bss           0x0000000000000000        0x0 tmp/arm64-linux.elf-main.o
+
+SYSCALLS        0x0000000000000000       0xcc
+ SYSCALLS       0x0000000000000000       0xcc tmp/arm64-linux.elf-fold.o
+                0x0000000000000000                my_bkpt
+                0x0000000000000008                exit
+                0x0000000000000010                brk
+                0x000000000000001c                close
+                0x0000000000000028                ftruncate
+                0x0000000000000034                getpid
+                0x0000000000000040                memfd_create
+                0x000000000000004c                read
+                0x0000000000000058                unlink
+                0x0000000000000064                write
+                0x0000000000000070                readlink
+                0x0000000000000078                open
+                0x0000000000000094                memcpy
+                0x00000000000000a8                my_memset
+                0x00000000000000b8                __clear_cache
 
 EXP_HEAD        0x0000000000000000      0x104
-                0x0000000000000000                PROVIDE (__start_EXP_HEAD, .)
  EXP_HEAD       0x0000000000000000      0x104 tmp/arm64-expand.o
                 0x0000000000000000                f_expand
-                0x0000000000000104                PROVIDE (__stop_EXP_HEAD, .)
 
 EXP_TAIL        0x0000000000000000       0x20
-                0x0000000000000000                PROVIDE (__start_EXP_TAIL, .)
  EXP_TAIL       0x0000000000000000       0x20 tmp/arm64-expand.o
                 0x0000000000000000                eof
-                0x0000000000000020                PROVIDE (__stop_EXP_TAIL, .)
 
 NRV2E           0x0000000000000000      0x17c
-                0x0000000000000000                PROVIDE (__start_NRV2E, .)
  NRV2E          0x0000000000000000      0x17c tmp/arm64-expand.o
                 0x0000000000000000                ucl_nrv2e_decompress_32
-                0x000000000000017c                PROVIDE (__stop_NRV2E, .)
 
 NRV2D           0x0000000000000000      0x170
-                0x0000000000000000                PROVIDE (__start_NRV2D, .)
  NRV2D          0x0000000000000000      0x170 tmp/arm64-expand.o
                 0x0000000000000000                ucl_nrv2d_decompress_32
-                0x0000000000000170                PROVIDE (__stop_NRV2D, .)
 
 NRV2B           0x0000000000000000      0x144
-                0x0000000000000000                PROVIDE (__start_NRV2B, .)
  NRV2B          0x0000000000000000      0x144 tmp/arm64-expand.o
                 0x0000000000000000                ucl_nrv2b_decompress_32
-                0x0000000000000144                PROVIDE (__stop_NRV2B, .)
-
-LZMA_ELF00      0x0000000000000000      0x10c
-                0x0000000000000000                PROVIDE (__start_LZMA_ELF00, .)
- LZMA_ELF00     0x0000000000000000      0x10c tmp/arm64-expand.o
-                0x000000000000010c                PROVIDE (__stop_LZMA_ELF00, .)
-
-LZMA_DEC20      0x0000000000000000      0x968
-                0x0000000000000000                PROVIDE (__start_LZMA_DEC20, .)
- LZMA_DEC20     0x0000000000000000      0x968 tmp/arm64-expand.o
-                0x0000000000000968                PROVIDE (__stop_LZMA_DEC20, .)
-
-LZMA_DEC10      0x0000000000000000      0x4a0
-                0x0000000000000000                PROVIDE (__start_LZMA_DEC10, .)
- LZMA_DEC10     0x0000000000000000      0x4a0 tmp/arm64-expand.o
-                0x0000000000000000                LzmaDecode
-                0x00000000000004a0                PROVIDE (__stop_LZMA_DEC10, .)
-
-LZMA_DEC30      0x0000000000000000        0x0
-                0x0000000000000000                PROVIDE (__start_LZMA_DEC30, .)
- LZMA_DEC30     0x0000000000000000        0x0 tmp/arm64-expand.o
-                0x0000000000000000                PROVIDE (__stop_LZMA_DEC30, .)

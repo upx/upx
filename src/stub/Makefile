@@ -760,6 +760,8 @@ tc.arm64-linux.elf.gcc  = arm64-linux-gcc-4.9.2 -nostdinc -MMD -MT $@
 tc.arm64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
+tc.arm64-expand.gcc = $(tc.arm64-linux.elf.gcc)
+
 tc.arm64-linux.elf-fold.ld       = arm64-linux-ld-2.25
 tc.arm64-linux.elf-so_fold.ld    = arm64-linux-ld-2.25
 
@@ -776,6 +778,7 @@ tc.arm64-linux.elf-fold.objdump      = arm64-linux-objdump-2.25
 tc.arm64-linux.elf-so_fold.objdump   = arm64-linux-objdump-2.25
 tc.arm64-linux.elf-main.objdump      = arm64-linux-objdump-2.25
 tc.arm64-linux.elf-so_main.objdump   = arm64-linux-objdump-2.25
+tc.arm64-expand.objdump              = arm64-linux-objdump-2.25
 
 arm64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
@@ -791,9 +794,9 @@ arm64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/$$T.o \
 	    tmp/arm64-expand.o \
 	    tmp/arm64-linux.elf-main.o
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.bin | $(RTRIM) > tmp/$T.bin.disasm
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 arm64-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
@@ -815,6 +818,7 @@ tmp/arm64-linux.elf-so_fold.o : $(srcdir)/src/$$T.S
 
 tmp/arm64-expand.o: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
+	arm64-linux-objdump-2.25 -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) > tmp/$T.o.disasm
 
 tmp/arm64-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/arm64-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
@@ -1500,7 +1504,8 @@ mips.r3000-linux.elf-entry.h : $(srcdir)/src/mips.r3000-linux.elf-entry.lds \
 	    tmp/mips.r3000-linux.elf-upxfd_android.o
 ifeq (1,1)
 	# info: we really need as-2.17 here
-	/lib/cpp -D__MIPSEB__ $(filter %.S,$^) | $(call tc,pp-as) -o tmp/$T.o
+	$(call tc,gcc) -E -x assembler-with-cpp  -D__mips__  -D__MIPSEB__ $(filter %.S,$^) \
+	    | $(call tc,pp-as) -o tmp/$T.o
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 else
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
@@ -1524,24 +1529,18 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/mips.r3000-linux.elf-main.s \
 	    tmp/mips.r3000-linux.upxfd_android.s \
 	    src/mips.r3000-expand.S
-	    echo line 1
 	cat > tmp/mips.r3000-linux.elf-fold-2.S \
 	    src/mips.r3000-linux.elf-fold.S \
 	    tmp/mips.r3000-linux.elf-main.s \
 	    tmp/mips.r3000-linux.upxfd_android.s \
 	    src/mips.r3000-expand.S
 	(cd tmp; ln -sf ../src/arch arch)
-	    echo line 1b
-	/lib/cpp -D__MIPSEB__ tmp/mips.r3000-linux.elf-fold-2.S \
+	$(call tc,gcc) -E -x assembler-with-cpp  -D__mips__ -D__MIPSEB__ tmp/mips.r3000-linux.elf-fold-2.S \
 	    | sed -e $$(< src/dollar-dollar.sed) > tmp/mips.r3000-linux.elf-fold-3.S
-	    echo line 1c
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EB tmp/mips.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
-	    echo line 1d
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
-	    echo line 2
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
-	    echo line 3
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
 	$(call tc,f-objstrip,tmp/$T.bin)
@@ -1552,13 +1551,9 @@ tmp/mips.r3000-expand.o: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 
 tmp/mips.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
-	    echo line 4
 	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEB__ $< -o - | $(RTRIM) > tmp/$T.i
-	    echo line 5
 	$(call tc,as) tmp/$T.i -o tmp/$T.o
-	    echo line 6
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
-	    echo line 7
 	$(call tc,gcc) -c -D_TARGET_LINUX_ -Wa,-O,-mno-pdr $< -o $@
 
 tmp/mips.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
@@ -1633,24 +1628,18 @@ mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/mipsel.r3000-linux.elf-main.s \
 	    tmp/mipsel.r3000-linux.upxfd_android.s \
 	    src/mipsel.r3000-expand.S
-	    echo line 1
 	cat > tmp/mipsel.r3000-linux.elf-fold-2.S \
 	    src/mipsel.r3000-linux.elf-fold.S \
 	    tmp/mipsel.r3000-linux.elf-main.s \
 	    tmp/mipsel.r3000-linux.upxfd_android.s \
 	    src/mipsel.r3000-expand.S
 	(cd tmp; ln -sf ../src/arch arch)
-	    echo line 1b
-	/lib/cpp -D__MIPSEL__ tmp/mipsel.r3000-linux.elf-fold-2.S \
+	$(call tc,gcc) -E -x assembler-with-cpp  -D__mips__  -D__MIPSEL__ tmp/mipsel.r3000-linux.elf-fold-2.S \
 	    | sed -e $$(< src/dollar-dollar.sed) > tmp/mipsel.r3000-linux.elf-fold-3.S
-	    echo line 1c
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EL tmp/mipsel.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
-	    echo line 1d
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
-	    echo line 2
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
-	    echo line 3
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
 	$(call tc,f-objstrip,tmp/$T.bin)

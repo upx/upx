@@ -8,14 +8,15 @@ Linker script and memory map
 
                 0x000000000010004c                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000000000      0x923
- .text          0x0000000000000000      0x11e tmp/amd64-linux.elf-fold.o
- *fill*         0x000000000000011e        0x2 00
- .text          0x0000000000000120        0x0 tmp/amd64-expand.o
- .text          0x0000000000000120      0x803 tmp/amd64-linux.elf-main.o
-                0x00000000000002ef                PF_TO_PROT
-                0x00000000000002a4                underlay
-                0x00000000000007e9                upx_main
+.text           0x0000000000000000      0x953
+ .text          0x0000000000000000      0x13b tmp/amd64-linux.elf-fold.o
+                0x0000000000000133                get_page_mask
+ *fill*         0x000000000000013b        0x1 00
+ .text          0x000000000000013c        0x0 tmp/amd64-expand.o
+ .text          0x000000000000013c      0x817 tmp/amd64-linux.elf-main.o
+                0x000000000000030b                PF_TO_PROT
+                0x00000000000002c0                underlay
+                0x0000000000000814                upx_main
 
 EXP_HEAD        0x0000000000000000       0xe0
  EXP_HEAD       0x0000000000000000       0xe0 tmp/amd64-expand.o
@@ -45,24 +46,24 @@ LOAD tmp/amd64-expand.o
 LOAD tmp/amd64-linux.elf-main.o
 OUTPUT(tmp/amd64-linux.elf-fold.bin elf64-x86-64)
 
-SYSCALLS        0x0000000000000000       0x85
- SYSCALLS       0x0000000000000000       0x85 tmp/amd64-linux.elf-fold.o
+SYSCALLS        0x0000000000000000       0x8e
+ SYSCALLS       0x0000000000000000       0x8e tmp/amd64-linux.elf-fold.o
                 0x0000000000000018                Pmap
-                0x0000000000000061                munmap
-                0x0000000000000071                ftruncate
-                0x0000000000000026                mmap
-                0x000000000000007d                write
+                0x000000000000006a                munmap
+                0x000000000000007a                ftruncate
+                0x000000000000002a                mmap
+                0x0000000000000086                write
                 0x0000000000000011                memfd_create
-                0x0000000000000081                read
+                0x000000000000008a                read
                 0x0000000000000000                my_bkpt
-                0x0000000000000041                Pprotect
-                0x000000000000007d                Pwrite
-                0x0000000000000053                Punmap
-                0x0000000000000065                exit
-                0x0000000000000069                brk
-                0x0000000000000075                open
-                0x0000000000000079                mprotect
-                0x000000000000006d                close
+                0x0000000000000045                Pprotect
+                0x0000000000000086                Pwrite
+                0x000000000000005a                Punmap
+                0x000000000000006e                exit
+                0x0000000000000072                brk
+                0x000000000000007e                open
+                0x0000000000000082                mprotect
+                0x0000000000000076                close
 
 LZMA_ELF00      0x0000000000000000       0x64
  LZMA_ELF00     0x0000000000000000       0x64 tmp/amd64-expand.o

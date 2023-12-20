@@ -175,6 +175,8 @@ err_exit(int a)
 // UPX & NRV stuff
 **************************************************************************/
 
+extern size_t get_page_mask(void);  // variable page size AT_PAGESZ; see *-fold.S
+
 int f_expand( // .globl in $(ARCH)-expand.S
     nrv_byte const *binfo, nrv_byte *dst, size_t *dstlen);
 
@@ -396,9 +398,6 @@ static Elf64_Addr // returns relocation constant
 xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
     Elf64_Addr *const p_brk
     , Elf64_Addr const elfaddr
-#if defined(__powerpc64__) || defined(__aarch64__)
-    , size_t const PAGE_MASK
-#endif
 )
 {
     Elf64_Addr lo= ~0, hi= 0, addr= 0;
@@ -413,6 +412,7 @@ xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
             hi =  phdr->p_memsz + phdr->p_vaddr;
         }
     }
+    size_t PAGE_MASK = get_page_mask();
     lo -= ~PAGE_MASK & lo;  // round down to page boundary
     hi  =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     if (MAP_FIXED & mflags) {
@@ -440,9 +440,6 @@ do_xmap(
     int const fdi,
     Elf64_auxv_t *const av,
     Elf64_Addr *p_reloc
-#if defined(__powerpc64__) || defined(__aarch64__)
-    , size_t const PAGE_MASK
-#endif
 )
 {
     (void)fdi;  // FIXME
@@ -472,9 +469,6 @@ do_xmap(
         DPRINTF("INTERP\\n", 0);
         reloc = xfind_pages(
             ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk, *p_reloc
-#if defined(__powerpc64__) || defined(__aarch64__)
-            , PAGE_MASK
-#endif
         );
         DPRINTF("do_xmap 2 reloc=%%p\\n", reloc);
     }
@@ -500,6 +494,7 @@ do_xmap(
             // xo.size, xo.buf are not changed except by unpackExtent()
         char *hi_addr = phdr->p_memsz  + addr;  // end of local .bss
         char *addr2 = mlen + addr;  // end of local .data
+        size_t PAGE_MASK = get_page_mask();
         unsigned frag  = (Elf64_Addr)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
@@ -520,12 +515,14 @@ do_xmap(
             mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             ftruncate(mfd, mlen);  // Allocate the pages in the file.
             write(mfd, addr, frag);  // Save lo fragment of contents on first page.
+            DPRINTF("munmap 1 addr=%%p  mlen=%%p\\n", addr, mlen);
             munmap(addr, mlen);  // Erase existing VMA  [necessary?]
             if (addr != mmap(addr, mlen, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0)) {
                 err_exit(7);
             }
         }
         else {
+            DPRINTF("munmap 2 addr=%%p  mlen=%%p\\n", addr, mlen);
             munmap(addr, mlen);
             unsigned tprot = prot;
             if (xi) {
@@ -612,10 +609,8 @@ upx_main(  // returns entry address
 /*arg5*/    , Elf64_Addr elfaddr  // In: &Elf64_Ehdr for stub
 #elif defined(__powerpc64__)  //}{
 /*arg5*/    , Elf64_Addr *p_reloc  // In: &Elf64_Ehdr for stub; Out: 'slide' for PT_INTERP
-/*arg6*/    , size_t const PAGE_MASK
 #elif defined(__aarch64__) //}{
 /*arg5*/    , Elf64_Addr elfaddr
-/*arg6*/    , size_t const PAGE_MASK
 #endif  //}
 )
 {
@@ -631,16 +626,13 @@ upx_main(  // returns entry address
 #if defined(__x86_64) || defined(__aarch64__)  //{
     Elf64_Addr *const p_reloc = &elfaddr;
 #endif  //}
+    Elf64_Addr PAGE_MASK = get_page_mask(); (void)PAGE_MASK;
     DPRINTF("upx_main1  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p  PAGE_MASK=%%p\\n",
         ehdr->e_entry, p_reloc, *p_reloc, PAGE_MASK);
     Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, p_reloc
-#if defined(__powerpc64__) || defined(__aarch64__)
-       , PAGE_MASK
-#endif
-    );
+    Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, p_reloc);
     DPRINTF("upx_main2  entry=%%p  *p_reloc=%%p\\n", entry, *p_reloc);
     auxv_up(av, AT_ENTRY , entry);
 
@@ -660,11 +652,7 @@ ERR_LAB
         // We expect PT_INTERP to be ET_DYN at 0.
         // Thus do_xmap will set *p_reloc = slide.
         *p_reloc = 0;  // kernel picks where PT_INTERP goes
-        entry = do_xmap(ehdr, 0, fdi, 0, p_reloc
-#if defined(__powerpc64__) || defined(__aarch64__)
-            , PAGE_MASK
-#endif
-        );
+        entry = do_xmap(ehdr, 0, fdi, 0, p_reloc);
         auxv_up(av, AT_BASE, *p_reloc);  // musl
         close(fdi);
     }

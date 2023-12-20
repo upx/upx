@@ -60,6 +60,8 @@ sz_b_info= 12
   sz_cpr= 4
   b_method= 8
 
+AT_PAGESZ= 6
+
 PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
@@ -73,10 +75,6 @@ SYS_mmap= 9  // 64-bit mode only!
 
 FD_stderr= 2
 
-PAGE_SHIFT= 12
-PAGE_MASK= (~0<<PAGE_SHIFT)
-PAGE_SIZE= -PAGE_MASK
-
 M_NRV2B_LE32=2  // ../conf.h
 M_NRV2D_LE32=5
 M_NRV2E_LE32=8
@@ -87,40 +85,69 @@ M_NRV2E_LE32=8
 sz_pack2= .-4
 _start: .globl _start
 ////    nop; int3  # uncomment for debugging
-        movq %rsp,%r13
-        push %rax  // P_10  space for entry address
-        push %rdx  // P_11  register this function pointer with 'atexit'
+
+        pop %rcx  // argc
+        push %rsp; pop %rdi  // argv
+        push %rcx  // argc
+
+#define old_sp %rbp
+F_FRAME= 7*NBPW
+F_ENTR= 6*NBPW; F_PMASK= F_ENTR
+F_RDX=  5*NBPW
+F_LENU= 4*NBPW
+F_ADRU= 3*NBPW
+F_ELFA= 2*NBPW
+F_LENX= 1*NBPW
+F_ADRX= 0*NBPW
+
+D_FOLD=  1*NBPW  // .data space at start of unfold
+D_PMASK= 0*NBPW
+
+AT_PAGESZ= 6  // /usr/include/elf.h
+        call zfind  // skip argv
+        call zfind  // skip env
+0: // find AT_PAGESZ in auxv
+        mov     (%rdi),%rax
+        mov NBPW(%rdi),%rcx; add $2*NBPW,%rdi
+        cmp $AT_PAGESZ,%rax; je 5f
+        mov $1<<12,%rcx  // default PAGE_SIZE
+        test %rax,%rax; jne 0b
+5:
+        neg %rcx; push %rcx  // F_PMASK
+        push %rdx  // F_RDX
 
 // Create anonymous temporary file on mfd
         push $'u'|('p'<<8)|('x'<<16)|(0<<24)
         push %rsp; pop %arg1  // "upx"
         subl %arg2l,%arg2l  // 0
-        movl $__NR_memfd_create,%eax; call sys_check; mov %eax,%r12d  // mfd
+        movl $__NR_memfd_create,%eax; call sys_check; mov %rax,%r12  // mfd
         pop %rcx  // discard "upx"
 
-// Decompress the rest of this loader, and jump to it.
+        lea sz_pack2(%rip),%rdi
+        mov (%rdi),%ecx  // sz_pack2: length before stub
+        sub %rcx,%rdi  // elfaddr
         lea o_binfo(%rip),%rsi
-        lodsl; movl %eax,-1*NBPW(%r13)  // is_ptinterp
-        and $~0<<1,%eax; movl %eax,%r14d  // O_BINFO
-        movl (%rsi),%edx; push %rdx  // P_30  .sz_unc LENU
+        lodsl; xchg %eax,%ebx; mov %ebx,%r13d  // O_BINFO; advance to &b_info
+        lodsl; xchg %eax,%edx; push %rdx  // .sz_unc; F_LENU
+        push $-1  // space for F_ADRU
+        push %rdi  // F_ELFA
+        sub %rbx,%rcx; push %rcx  // F_LENX = sz_pack2 - O_BINFO
+        add %rdi,%rbx; push %rbx  // F_ADRX =  elfaddr + O_BINFO
 
-        lea sz_pack2(%rip),%rcx  // &sz_pack2
-        movl (%rcx),%r15d  // sz_pack2: length before stub
-        subq %r15,%rcx; push %rcx  // P_31  elfaddr= &Elf64_Ehdr of this stub
-        subl %r14d,%r15d  // LENX= sz_pack2 - O_BINFO
-        addq %rcx,%r14  // ADRX= elfaddr + O_BINFO
-
+        push %rsp; pop old_sp
 // alloca()
-        subq %rdx,%rsp; and $-2*NBPW,%rsp  // aligned space for unfolded stub
+        sub %rcx,%rsp; and $-2*NBPW,%rsp  // align stack
+
+// Decompress the rest of this loader, and jump to it.
 
 #define dst  %rdi
 #define src  %rsi
 #define lsrc %rcx
         push %rsp; pop dst  // dst= decompress onto stack
-        lodsl; push %rax  // MATCH_10  .sz_unc
         lodsl; push %rax  // MATCH_11  .sz_cpr
         lodsl; cmpw $M_NRV2B_LE32|(0<<8),%ax; je 0f; hlt; 0:  // check method and filter bytes
         pop %rax; add src,%rax; push %rax  // MATCH_11  input_eof
+        push old_sp  // MATCH_10
 
 
 // This is nrv2b_d32, inlined and optimized for small space (about 160 bytes).
@@ -134,13 +161,10 @@ _start: .globl _start
 // in contrast to the simple and small assembly-coded NRV.
 
 //%rsp:
+//  MATCH_10  old_sp
 //  MATCH_11  &input_eof
-//  MATCH_10  len unfolded_code
-//  P_11  rcx.atexit
-//  P_10  %entry
-//  MATCH_00  argc
-//  MATCH_01  argv
-//  MATCH_07  envp
+
+//%rbp  === old_sp:  array of F_FRAME
 
 /* Working registers */
 #define off  %eax  /* XXX: 2GB */
@@ -201,43 +225,49 @@ gotlen_n2b:
         jmp top_n2b
 
 eof_n2b:
+        pop old_sp   // MATCH_10
         pop %rcx  // MATCH_11  &input_eof
         cmp %rcx,%rsi; je 0f; hlt; 0:  // test for ending in correct place
         //FIXME: check dst, too
 
 // Write de-compressed 'fold' to file
-        push %r12; pop %arg1  // mfd
-        pop %arg3  // P_13  LENU
+        mov F_PMASK(old_sp),%rax; mov %rax,(%rsp)  // propagate PAGE_MASK
+        mov F_LENU(old_sp),%arg3  // LENU
         push %rsp; pop %arg2  // buffer
+        mov %r12,%arg1  // mfd
         push $__NR_write; pop %rax; call sys_check
 // de-alloca()
-        lea -4*NBPW(%r13),%rsp  // elfaddr,LENU,atexit.rdx,&entry
+        push old_sp; pop %rsp
 
 // Map unfolded code the SELinux way
         sub %arg6l,%arg6l  // 0  offset
         mov %r12,%arg5  // mfd
         push $MAP_SHARED; pop %sys4
-        push %arg3; pop %arg2  // length
-        push $PROT_READ|PROT_EXEC; pop %arg3  // PROT_WRITE|: DEBUG only
+        push %arg3; pop %arg2  // LENU
+        push $PROT_READ|PROT_EXEC; pop %arg3  // FIXME: add PROT_WRITE for DEBUG only
         subl %edi,%edi  // (%arg1)dst = 0;  // kernel chooses addr
         push $__NR_mmap; pop %rax; call sys_check
-        pop %rcx  // P_31  elfaddr
-        push %rax  // P_32  ADRU
-        push %rcx  // P_34  elfaddr
+        push %rax  // MATCH_12
+        mov %rax,F_ADRU(old_sp)
 
         push %arg5; pop %arg1  // mfd
         push $__NR_close; pop %rax; syscall
 
 // Use the copy.
-// %r14= ADRX; %r15= LENX;
-// rsp/ elfaddr,ADRU,LENU,atexit.rdx,%entry
-        jmp * -4*NBPW(%r13)  // ADRU
+        pop %rax  // MATCH_12  ADRU
+        add $D_FOLD,%rax  // beyond .data
+        jmp *%rax  // goto unfolded stub
+
+zfind:
+        mov (%rdi),%rax; add $NBPW,%rdi
+        test %rax,%rax; jne zfind
+        ret
 
 sys_check:
         push %rax  // save __NR_ for debug
         syscall
         pop %rcx  // recover __NR_ for debug
-        cmp $PAGE_MASK,%rax; jb 0f; hlt; 0:
+        cmp $-1<<12,%rax; jb 0f; hlt; 0:
         ret
 
 here:  // OUT: %rdi= (2+ retaddrj) without disturbing shadow stack

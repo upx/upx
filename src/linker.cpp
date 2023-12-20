@@ -319,7 +319,7 @@ ElfLinker::Symbol *ElfLinker::findSymbol(const char *name, bool fatal) const {
 
 ElfLinker::Section *ElfLinker::addSection(const char *sname, const void *sdata, int slen,
                                           unsigned p2align) {
-    NO_printf("addSection: %s len=%d align=%d\n", sname, slen, p2align);
+    NO_printf("addSection: %s len=%d p2align=%d\n", sname, slen, p2align);
     if (!sdata && (!strcmp("ABS*", sname) || !strcmp("UND*", sname)))
         return nullptr;
     if (update_capacity(nsections, &nsections_capacity))
