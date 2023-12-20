@@ -35,7 +35,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/functions.cmake")
 upx_cmake_include_hook(1_options)
 
 # compilation config options
-if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git" OR NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/use_strict_defaults.cmake")
     # permissive config defaults when building from source code tarball
     option(UPX_CONFIG_DISABLE_GITREV   "Do not compile with default Git version info." ON)
     option(UPX_CONFIG_DISABLE_SANITIZE "Do not compile with default sanitize options." ON)
@@ -62,14 +62,10 @@ set(UPX_VERSION_STRING "4.3.0")
 
 upx_cmake_include_hook(2_init)
 
-# Disallow in-source builds. Note that you will still have to manually
+# Disallow in-source build. Note that you will still have to manually
 # clean up a few files if you accidentally try an in-source build.
 if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-    set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-    set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
-    if(",${CMAKE_CURRENT_SOURCE_DIR}," STREQUAL ",${CMAKE_CURRENT_BINARY_DIR},")
-        message(FATAL_ERROR "ERROR: In-source builds are not allowed, please use an extra build dir.")
-    endif()
+    upx_disallow_in_source_build()
 endif()
 
 # global settings
@@ -132,35 +128,10 @@ else()
     message(STATUS "UPX_VERSION_GITREV: not set")
 endif()
 
-# set the default build type to "Release"
-get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(NOT is_multi_config AND NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-endif()
-
 # CMake init
+upx_default_build_type(Release)
 project(upx VERSION "${UPX_VERSION_STRING}" LANGUAGES C CXX)
-
-# set the default multi-config build type to "Release"
-if(is_multi_config)
-    set(c "${CMAKE_CONFIGURATION_TYPES}")
-    list(INSERT c 0 "Release")
-    list(INSERT c 1 "Debug")
-    if(CMAKE_BUILD_TYPE)
-        list(INSERT c 0 "${CMAKE_BUILD_TYPE}")
-    endif()
-    list(REMOVE_DUPLICATES c)
-    set(CMAKE_CONFIGURATION_TYPES "${c}" CACHE STRING "List of supported configuration types." FORCE)
-endif()
-
-# set the build type for use in try_compile()
-if(NOT CMAKE_TRY_COMPILE_CONFIGURATION)
-    if(CMAKE_BUILD_TYPE)
-        set(CMAKE_TRY_COMPILE_CONFIGURATION "${CMAKE_BUILD_TYPE}")
-    else()
-        set(CMAKE_TRY_COMPILE_CONFIGURATION "Release")
-    endif()
-endif()
+upx_apply_build_type()
 
 # set MSVC_FRONTEND and MINGW
 if(NOT DEFINED MSVC_FRONTEND AND (MSVC OR CMAKE_C_COMPILER_FRONTEND_VARIANT MATCHES "^MSVC"))
@@ -452,6 +423,10 @@ if(NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
     add_test(NAME upx-sysinfo COMMAND upx --sysinfo -v)
 if(NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     # IMPORTANT NOTE: these tests can only work if the host executable format is supported by UPX!
+    set(emu "")
+    if(DEFINED CMAKE_CROSSCOMPILING_EMULATOR)
+        set(emu "${CMAKE_CROSSCOMPILING_EMULATOR}")
+    endif()
     set(exe "${CMAKE_EXECUTABLE_SUFFIX}")
     set(upx_self_exe "$<TARGET_FILE:upx>")
     set(fo "--force-overwrite")
@@ -464,8 +439,8 @@ if(NOT UPX_CONFIG_DISABLE_SELF_PACK_TEST)
     upx_add_serial_test(upx-fileinfo       upx --fileinfo upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})
     upx_add_serial_test(upx-test           upx -t         upx-packed${exe} upx-packed-n2b${exe} upx-packed-n2d${exe} upx-packed-n2e${exe} upx-packed-lzma${exe})
     upx_add_serial_test(upx-unpack         upx -d upx-packed${exe} ${fo} -o upx-unpacked${exe})
-    upx_add_serial_test(upx-run-unpacked   ${CMAKE_CROSSCOMPILING_EMULATOR} ./upx-unpacked${exe} --version-short)
-    upx_add_serial_test(upx-run-packed     ${CMAKE_CROSSCOMPILING_EMULATOR} ./upx-packed${exe} --version-short)
+    upx_add_serial_test(upx-run-unpacked   ${emu} ./upx-unpacked${exe} --version-short)
+    upx_add_serial_test(upx-run-packed     ${emu} ./upx-packed${exe} --version-short)
 endif() # UPX_CONFIG_DISABLE_SELF_PACK_TEST
 endif()
 

@@ -4,7 +4,7 @@
 #
 
 #***********************************************************************
-# util
+# macros
 #***********************************************************************
 
 # support config hooks; developer convenience
@@ -13,11 +13,60 @@ macro(upx_cmake_include_hook section)
     include("${CMAKE_CURRENT_SOURCE_DIR}/maint/make/CMakeLists.${section}.txt" OPTIONAL)
 endmacro()
 
+# Disallow in-source build. Note that you will still have to manually
+# clean up a few files if you accidentally try an in-source build.
+macro(upx_disallow_in_source_build)
+    set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+    set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
+    if(",${CMAKE_CURRENT_SOURCE_DIR}," STREQUAL ",${CMAKE_CURRENT_BINARY_DIR},")
+        # try to clean up (does not work)
+        #file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/CMakeCache.txt")
+        #file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/cmake.check_cache")
+        message(FATAL_ERROR "ERROR: In-source builds are not allowed, please use an extra build dir.")
+    endif()
+endmacro()
+
+# set the default build type; must be called before project() cmake init
+macro(upx_default_build_type type)
+    set(upx_global_default_build_type "${type}")
+    get_property(upx_global_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    if(NOT upx_global_is_multi_config AND NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "${upx_global_default_build_type}" CACHE STRING "Choose the type of build." FORCE)
+    endif()
+endmacro()
+
+# set the default multi-config build type; must be called after project() cmake init
+macro(upx_apply_build_type)
+    if(upx_global_is_multi_config)
+        set(c "${CMAKE_CONFIGURATION_TYPES}")
+        list(INSERT c 0 "${upx_global_default_build_type}")
+        if(CMAKE_BUILD_TYPE)
+            list(INSERT c 0 "${CMAKE_BUILD_TYPE}")
+        endif()
+        list(REMOVE_DUPLICATES c)
+        set(CMAKE_CONFIGURATION_TYPES "${c}" CACHE STRING "List of supported configuration types." FORCE)
+    endif()
+    # now also set the build type for use in try_compile()
+    if(NOT CMAKE_TRY_COMPILE_CONFIGURATION)
+        if(CMAKE_BUILD_TYPE)
+            set(CMAKE_TRY_COMPILE_CONFIGURATION "${CMAKE_BUILD_TYPE}")
+        else()
+            set(CMAKE_TRY_COMPILE_CONFIGURATION "${upx_global_default_build_type}")
+        endif()
+    endif()
+endmacro()
+
+#***********************************************************************
+# util
+#***********************************************************************
+
 function(upx_print_var) # ARGV
     foreach(var_name ${ARGV})
-        if(DEFINED ${var_name} AND NOT ",${${var_name}}," STREQUAL ",,")
-            if(${var_name})
-                message(STATUS "${var_name} = ${${var_name}}")
+        if(DEFINED ${var_name})
+            if(NOT ",${${var_name}}," STREQUAL ",,")
+                if(${var_name})
+                    message(STATUS "${var_name} = ${${var_name}}")
+                endif()
             endif()
         endif()
     endforeach()
@@ -52,7 +101,10 @@ function(upx_add_glob_files) # ARGV
     set(var_name ${ARGV0})
     list(REMOVE_AT ARGV 0)
     file(GLOB files ${ARGV})
-    set(result "${${var_name}}")
+    set(result "")
+    if(DEFINED ${var_name})
+        set(result "${${var_name}}")
+    endif()
     list(APPEND result "${files}")
     list(SORT result)
     list(REMOVE_DUPLICATES result)
@@ -70,9 +122,11 @@ function(upx_cache_bool_vars) # ARGV
             set(value "${UPX_CACHE_VALUE_${var_name}}")
         elseif(DEFINED ${var_name})                 # defined via "cmake -DXXX=YYY"
             set(value "${${var_name}}")
-        elseif("$ENV{${var_name}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$") # check environment
-            set(value "$ENV{${var_name}}")
-            set(UPX_CACHE_ORIGIN_FROM_ENV_${var_name} TRUE CACHE INTERNAL "" FORCE) # for info below
+        elseif(DEFINED ENV{${var_name}})
+            if("$ENV{${var_name}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$") # check environment
+                set(value "$ENV{${var_name}}")
+                set(UPX_CACHE_ORIGIN_FROM_ENV_${var_name} TRUE CACHE INTERNAL "" FORCE) # for info below
+            endif()
         endif()
         # convert to bool
         if(value)
@@ -141,7 +195,7 @@ function(upx_compile_source_debug_with_O2) # ARGV
     set(flags "$<$<CONFIG:Debug>:-O2>")
     if(${CMAKE_VERSION} VERSION_LESS "3.8")
         # 3.8: The COMPILE_FLAGS source file property learned to support generator expressions
-        if(is_multi_config OR NOT CMAKE_BUILD_TYPE MATCHES "^Debug$")
+        if(upx_global_is_multi_config OR NOT CMAKE_BUILD_TYPE MATCHES "^Debug$")
             return()
         endif()
         set(flags "-O2")
