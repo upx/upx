@@ -61,6 +61,12 @@ NRV2D           0x0000000000000000        0x0
 NRV2B           0x0000000000000000        0x0
  NRV2B          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
 
+LZMA_DEC10      0x0000000000000000      0xad8
+ LZMA_DEC10     0x0000000000000000      0xad8 tmp/mips.r3000-linux.elf-fold.o
+
+LZMA_DEC20      0x0000000000000000      0xad8
+ LZMA_DEC20     0x0000000000000000      0xad8 tmp/mips.r3000-linux.elf-fold.o
+
 .data
 
 .bss            0x0000000000000000        0x0
