@@ -456,7 +456,7 @@ if(Threads_FOUND)
                     OUTPUT_VARIABLE output)
         if(NOT result)
             # failed; under MinGW be sure to use the posix-threads and NOT the win32-threads version
-            #message(STATUS "${output}") # debug output from try_compile
+            #message(STATUS "Threads FAILED: ${output}") # debug output from try_compile
             set(Threads_FOUND OFF)
             break()
         endif()

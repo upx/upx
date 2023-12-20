@@ -101,44 +101,44 @@ ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 // util
 **************************************************************************/
 
-TEST_CASE("ptr_reinterpret_cast") {
+TEST_CASE("ptr_static_cast") {
     // check that we don't trigger any -Wcast-align warnings
-    using upx::ptr_reinterpret_cast;
+    using upx::ptr_static_cast;
     void *vp = nullptr;
     byte *bp = nullptr;
     int *ip = nullptr;
     double *dp = nullptr;
 
-    assert((vp == ptr_reinterpret_cast<void *>(vp)));
-    assert((vp == ptr_reinterpret_cast<void *>(bp)));
-    assert((vp == ptr_reinterpret_cast<void *>(ip)));
-    assert((vp == ptr_reinterpret_cast<void *>(dp)));
+    assert((vp == ptr_static_cast<void *>(vp)));
+    assert((vp == ptr_static_cast<void *>(bp)));
+    assert((vp == ptr_static_cast<void *>(ip)));
+    assert((vp == ptr_static_cast<void *>(dp)));
 
-    assert((bp == ptr_reinterpret_cast<byte *>(vp)));
-    assert((bp == ptr_reinterpret_cast<byte *>(bp)));
-    assert((bp == ptr_reinterpret_cast<byte *>(ip)));
-    assert((bp == ptr_reinterpret_cast<byte *>(dp)));
+    assert((bp == ptr_static_cast<byte *>(vp)));
+    assert((bp == ptr_static_cast<byte *>(bp)));
+    assert((bp == ptr_static_cast<byte *>(ip)));
+    assert((bp == ptr_static_cast<byte *>(dp)));
 
-    assert((ip == ptr_reinterpret_cast<int *>(vp)));
-    assert((ip == ptr_reinterpret_cast<int *>(bp)));
-    assert((ip == ptr_reinterpret_cast<int *>(ip)));
-    assert((ip == ptr_reinterpret_cast<int *>(dp)));
+    assert((ip == ptr_static_cast<int *>(vp)));
+    assert((ip == ptr_static_cast<int *>(bp)));
+    assert((ip == ptr_static_cast<int *>(ip)));
+    assert((ip == ptr_static_cast<int *>(dp)));
 
-    assert((dp == ptr_reinterpret_cast<double *>(vp)));
-    assert((dp == ptr_reinterpret_cast<double *>(bp)));
-    assert((dp == ptr_reinterpret_cast<double *>(ip)));
-    assert((dp == ptr_reinterpret_cast<double *>(dp)));
+    assert((dp == ptr_static_cast<double *>(vp)));
+    assert((dp == ptr_static_cast<double *>(bp)));
+    assert((dp == ptr_static_cast<double *>(ip)));
+    assert((dp == ptr_static_cast<double *>(dp)));
 
     const byte *bc = nullptr;
     const int *ic = nullptr;
-    assert((bc == ptr_reinterpret_cast<byte *>(bp)));
-    assert((bc == ptr_reinterpret_cast<const byte *>(bc)));
-    assert((bc == ptr_reinterpret_cast<byte *>(ip)));
-    assert((bc == ptr_reinterpret_cast<const byte *>(ic)));
-    assert((ic == ptr_reinterpret_cast<int *>(bp)));
-    assert((ic == ptr_reinterpret_cast<const int *>(bc)));
-    assert((ic == ptr_reinterpret_cast<int *>(ip)));
-    assert((ic == ptr_reinterpret_cast<const int *>(ic)));
+    assert((bc == ptr_static_cast<byte *>(bp)));
+    assert((bc == ptr_static_cast<const byte *>(bc)));
+    assert((bc == ptr_static_cast<byte *>(ip)));
+    assert((bc == ptr_static_cast<const byte *>(ic)));
+    assert((ic == ptr_static_cast<int *>(bp)));
+    assert((ic == ptr_static_cast<const int *>(bc)));
+    assert((ic == ptr_static_cast<int *>(ip)));
+    assert((ic == ptr_static_cast<const int *>(ic)));
 }
 
 TEST_CASE("noncopyable") {

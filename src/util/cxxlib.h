@@ -63,18 +63,18 @@ struct UnsignedSizeOf {
     static constexpr unsigned value = unsigned(Size);
 };
 
-// a reinterpret_cast that does not trigger -Wcast-align warnings
+// a static_cast that does not trigger -Wcast-align warnings
 template <class Result, class From>
-forceinline Result ptr_reinterpret_cast(From *ptr) noexcept {
+forceinline Result ptr_static_cast(From *ptr) noexcept {
     static_assert(std::is_pointer_v<Result>);
     static_assert(!std::is_const_v<std::remove_pointer_t<Result> >); // enforce same constness
-    return reinterpret_cast<Result>(reinterpret_cast<void *>(ptr));
+    return static_cast<Result>(static_cast<void *>(ptr));
 }
 template <class Result, class From>
-forceinline Result ptr_reinterpret_cast(const From *ptr) noexcept {
+forceinline Result ptr_static_cast(const From *ptr) noexcept {
     static_assert(std::is_pointer_v<Result>);
     static_assert(std::is_const_v<std::remove_pointer_t<Result> >); // required
-    return reinterpret_cast<Result>(reinterpret_cast<const void *>(ptr));
+    return static_cast<Result>(static_cast<const void *>(ptr));
 }
 
 class noncopyable {
