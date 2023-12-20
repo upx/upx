@@ -1621,7 +1621,9 @@ PackLinuxElf64::buildLinuxLoader(
         }
         method = M_NRV2B_LE32;  // requires unaligned fetch
     }
-    else if (this->e_machine==Elf64_Ehdr::EM_X86_64) { // main program
+    else if (this->e_machine==Elf64_Ehdr::EM_X86_64
+         ||  this->e_machine==Elf64_Ehdr::EM_AARCH64
+         ) { // main program
         initLoader(fold, szfold);
         char sec[120];
         int len = 0;
@@ -1690,7 +1692,9 @@ PackLinuxElf64::buildLinuxLoader(
     ) {
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
     }
-    else if (this->e_machine==Elf64_Ehdr::EM_X86_64) {
+    else if (this->e_machine==Elf64_Ehdr::EM_X86_64
+         ||  this->e_machine==Elf64_Ehdr::EM_AARCH64
+        ) {
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC");
         if (!xct_off) {
             defineSymbols(ft);

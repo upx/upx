@@ -9,7 +9,7 @@ Linker script and memory map
 TARGET(elf64-powerpc)
                 0x000000000010004c                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x000000000010004c      0xd0c
+.text           0x000000000010004c      0xd00
  *(.text)
  .text          0x000000000010004c      0x39c tmp/powerpc64-linux.elf-fold.o
                 0x000000000010004c                get_page_mask
@@ -30,12 +30,12 @@ TARGET(elf64-powerpc)
                 0x00000000001003bc                close
                 0x00000000001003c4                memcpy
                 0x00000000001003e0                my_bkpt
- .text          0x00000000001003e8      0x970 tmp/powerpc64-linux.elf-main.o
- .text          0x0000000000100d58        0x0 tmp/powerpc64-expand.o
+ .text          0x00000000001003e8      0x964 tmp/powerpc64-linux.elf-main.o
+ .text          0x0000000000100d4c        0x0 tmp/powerpc64-expand.o
  *(.data)
- .data          0x0000000000100d58        0x0 tmp/powerpc64-linux.elf-fold.o
- .data          0x0000000000100d58        0x0 tmp/powerpc64-linux.elf-main.o
- .data          0x0000000000100d58        0x0 tmp/powerpc64-expand.o
+ .data          0x0000000000100d4c        0x0 tmp/powerpc64-linux.elf-fold.o
+ .data          0x0000000000100d4c        0x0 tmp/powerpc64-linux.elf-main.o
+ .data          0x0000000000100d4c        0x0 tmp/powerpc64-expand.o
 
 .data
 LOAD tmp/powerpc64-linux.elf-fold.o

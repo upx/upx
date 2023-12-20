@@ -81,17 +81,16 @@ PATH_MAX= 4096
 #define OVERHEAD 2048
 #include "MAX_ELF_HDR.S"
 
+        .balign 4
 PAGE_MASK: .quad ~0<<12  // default
-get_page_mask: .globl get_page_mask
-        ldr x0,PAGE_MASK
-        ret
-
-bits_privanon:  // known offset (NBPW + 2*4)
+bits_privanon:
         .int MAP_PRIVATE | MAP_ANONYMOUS  // Linux default; else QNX
 
-fold_begin:  // known offset (NBPW + 3*4)
+fold_begin:  // known offset (NBPW + 4)
 ////    brk #0  // DEBUG
 // In:  sp/ PMASK,fd,ADRU,LENU, argc,argv,...
+        b L10
+
 
 //lr   .req x30
 wLENC  .req w29  // compressed input
@@ -110,6 +109,10 @@ xauxv  .req x22
 wfd    .req w21
 xPMASK .req x20
   xfd    .req x21
+
+get_page_mask: .globl get_page_mask
+        ldr x0,PAGE_MASK
+        ret
 
 mmap_privanon: .globl mmap_privanon
         ldr w6,bits_privanon  // r12 === ip
@@ -184,7 +187,7 @@ L10:
         cbnz x2,.Laux  // AT_NULL
         mov xauxe,x0  // last of new auxv
 
-        mov x1,x6
+        mov x1,x0
         str x1,[x4]  // new env ptr
         ldr w2,space3eq
         str w2,[x1],#4  // "   =" of new env var
@@ -197,11 +200,8 @@ L10:
 0:
 
 /* Construct arglist for upx_main */
-        mov x7,xPMASK
-        mov x6,xelfa  // Elf64_Ehdr (reloc if ET_DYN and not pre-link)
           sub sp,sp,#MAX_ELF_HDR_64 + OVERHEAD  // alloca
-        adr x5,f_unfilter
-        mov x4,xfexp  // &f_decompress
+        mov x4,xelfa  // Elf64_Ehdr (reloc if ET_DYN and not pre-link)
         mov x3,xauxv  // new &Elf64_auxv_t
         mov x2,sp  // ehdr
         mov w1,wLENC  // total size of compressed data
@@ -438,6 +438,8 @@ hex:
         .unreq cto
         .unreq fid
 
+  section SYSCALLS; .balign 4
+
 __NR_SYSCALL_BASE= 0
 
 __NR_exit     = 0x5d + __NR_SYSCALL_BASE  // 93
@@ -449,6 +451,7 @@ __NR_unlinkat = 0x23 + __NR_SYSCALL_BASE  // 35
 __NR_getpid   = 0xad + __NR_SYSCALL_BASE  // 172
 __NR_brk      = 0xd6 + __NR_SYSCALL_BASE  // 214
 __NR_readlink = 0x4e + __NR_SYSCALL_BASE  // 78
+__NR_unlink   = 0x57 + __NR_SYSCALL_BASE  // 87
 
 __NR_memfd_create = 0x117 + __NR_SYSCALL_BASE  // 279
 __NR_ftruncate= 0x2e + __NR_SYSCALL_BASE  // 46
@@ -461,52 +464,23 @@ my_bkpt:
         brk #0  // my_bkpt
         ret
 
-        .globl exit
-exit:
-        do_sys __NR_exit
+exit:    .globl exit; do_sys __NR_exit
 
-ftruncate:    .globl ftruncate;    do_sys __NR_ftruncate;    ret
+
+
+brk:    .globl brk;      do_sys __NR_brk; ret
+close:  .globl close;   do_sys __NR_close; ret
+ftruncate:.globl ftruncate;do_sys __NR_ftruncate;    ret
+getpid: .globl getpid;  do_sys __NR_getpid; ret
 memfd_create: .globl memfd_create; do_sys __NR_memfd_create; ret
+read:   .globl read;    do_sys __NR_read; ret
+unlink: .globl unlink;  do_sys __NR_unlink; ret
+Pwrite: .globl Parite
+write:  .globl write;   do_sys __NR_write; ret
 
-        .globl read
-read:
-        do_sys __NR_read; ret
-
-        .globl write,Pwrite
-Pwrite:
-write:
-        do_sys __NR_write; ret
-
-        .globl close
-close:
-        do_sys __NR_close; ret
-
-        .globl getpid
-getpid:
-        do_sys __NR_getpid; ret
-
-        .globl brk
-brk:
-        do_sys __NR_brk; ret
-
-        .globl unlink
-unlink:
-        mov x2,#0  // flags as last arg
-        mov x1,x0  // path
-        mov w0,#AT_FDCWD
-        mov w8,#__NR_unlinkat
-        b svc_AT
-
-        .globl readlink
-readlink:
-        mov w8,#__NR_readlink
-        b svc_AT
-
-        .globl open
-open:
-        mov w8,#__NR_openat
+readlink: .globl readlink; mov w8,#__NR_readlink; b svc_AT  // OK if fails
+open:   .globl open;    mov w8,#__NR_openat  // OK if fails
 svc_AT:
-        //mov x4,x3
         mov x3,x2  // mode
         mov x2,x1  // flags
         mov x1,x0  // fname
@@ -514,10 +488,11 @@ svc_AT:
         svc #0; ret
 
 memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t len)
+0:
         ldrb w3,[x1],#1
         strb w3,[x0],#1
         subs x2,x2,#1
-        bgt memcpy
+        bgt 0b
         ret
 
 my_memset: .globl my_memset  // void *memset(void *dst, int c, size_t len);
@@ -532,7 +507,6 @@ __clear_cache:
         hlt #0
         mov w2,#0
         do_sys 0; ret  // FIXME
-
 
 #if DEBUG  /*{*/
 

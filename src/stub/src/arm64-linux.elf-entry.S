@@ -176,7 +176,7 @@ L00:
         add x0,xFOLD,#strupx - LxFOLD
         do_sys __NR_memfd_create; mov mfd,w0
 
-        adr xfexp,f_exp
+        adr xfexp,f_expand
 // alloca() for de-compressed stub
         ldr w0,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // .sz_unc of fold
         mov fp,sp
@@ -208,15 +208,7 @@ wmeth  .req w4
     .unreq xmeth
     .unreq wmeth
 
-// Generate code to compute PAGE_MASK
-        ldr x0,[sp,#1*4]  // 2nd instr
-        ldr w2,[fp,#F_PMASK]
-        rbit x1,x2
-        clz x1,x1  // # trailing 0's in xPMASK
-        add x1,x1,#1
-        lsl x1,x1,#2*5  // past two register numbers
-        orr x0,x0,x1
-        str x0,[sp,#1*4]  // modify 2nd instr: "add x1,x0,#1+ count"
+        str xPMASK,[sp]  // propagate PAGE_MASK
 
 // Write de-compressed stub
         ldr w2,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // .sz_unc of fold
@@ -228,7 +220,7 @@ wmeth  .req w4
         mov arg6,#0  // beginning of file
         mov arg5w,mfd
         mov arg4w,#MAP_SHARED  // modes
-        mov arg3w,#PROT_READ|PROT_EXEC  // prot
+        mov arg3w,#PROT_READ|PROT_EXEC  // FIXME: add PROT_WRITE for DEBUG only
         ldr arg2w,[xFOLD,#sz_unc + LBINFO - LxFOLD]
         str arg2,[sp,#F_LENU]
         mov arg1,#0  // addr (kernel chooses)
@@ -240,7 +232,7 @@ wmeth  .req w4
 // Use the unfolded stub
         ldr wLENC,[sp,#F_SZPK2]
         ldr w1,[xFOLD, #LOBINFO - LxFOLD]  // O_BINFO
-        add lr,xADRU,#4*4  // jmp over get_page_mask()
+        add lr,xADRU,#4 + NBPW  // jmp over data
         sub wLENC,wLENC,w1
         str xLENC,[sp,#F_SZPK2]
         add xADRC,xelfa,x1  // &b_info of compressed input data
@@ -250,27 +242,9 @@ zfind:
         ldr x1,[x0],#NBPW; cbnz x1,zfind
         ret
 
-f_exp:
-f_decompress:
-
-  section NRV_HEAD
-        // empty
-  section NRV_TAIL
-        // empty
-
-// FIXME
+f_expand:
 #define NO_METHOD_CHECK 1
-
-  section NRV2E
-#include "arch/arm64/v8/nrv2e_d32.S"
-
-  section NRV2D
-#include "arch/arm64/v8/nrv2d_d32.S"
-
-  section NRV2B
 #include "arch/arm64/v8/nrv2b_d32.S"
-
-#include "arch/arm64/v8/lzma_d.S"
 
   section ELFMAINY
 end_decompress: .globl end_decompress
@@ -375,6 +349,7 @@ hex:
 
         .balign 4
 main:
+lr .req x30
         add xelfa,lr,#sz_pack2 - L00  // &sz_pack2
         ldr w0,[xelfa]
         sub xelfa,xelfa,w0,uxtw
