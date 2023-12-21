@@ -1503,23 +1503,28 @@ tc.mips.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -meb -march=r3000 -mno-abi
 tc.mips.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.mips.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
+tc.mipsel.r3000-linux.elf.as   = mipsel-elf-as-20060406 -EL -O -mno-pdr
+tc.mipsel.r3000-linux.elf.pp-as= mipsel-elf-as-20060406 -EL -mabi=eabi -Wall
+tc.mipsel.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
+tc.mipsel.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.mipsel.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
 mips.r3000-linux.elf-entry.h : $(srcdir)/src/mips.r3000-linux.elf-entry.lds \
-	    $(srcdir)/src/$$T.S \
-	    tmp/mips.r3000-linux.elf-upxfd_android.o
-ifeq (1,1)
-	# info: we really need as-2.17 here
-	$(call tc,gcc) -E -x assembler-with-cpp  -D__mips__  -D__MIPSEB__ $(filter %.S,$^) \
-	    | $(call tc,pp-as) -o tmp/$T.o
-	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
-else
-	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
-	$(call tc,gcc) -c -D_TARGET_LINUX_ -Wa,-O,-mno-pdr $< -o tmp/$T.bin
-endif
+	    $(srcdir)/src/$$T.S
+	# info: we really need as-2.17 here; as-2.16.1 as used by gcc-4.1.1 does _not_ work
+	    echo line 40
+	$(call tc,gcc) -E -x assembler-with-cpp \
+		-D__mips__  -D__MIPSEB__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
+	    | $(call tc,pp-as) -a=/dev/null -o tmp/$T.o
+	    echo line 41
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
+	    echo line 42
 	multiarch-ld-2.17 -r --format=elf32-bigmips -Map tmp/$T.map -o tmp/$T.bin \
 	    -T src/mips.r3000-linux.elf-entry.lds \
-	    tmp/$T.o \
-	    tmp/mips.r3000-linux.elf-upxfd_android.o
+	    tmp/$T.o
+	    echo line 43
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	echo line 45
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/mips.r3000-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
@@ -1548,7 +1553,7 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EB tmp/mips.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
-	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
@@ -1618,21 +1623,21 @@ endif
 mipsel.r3000-linux.elf%.h : tc_list = mipsel.r3000-ps1 default
 mipsel.r3000-linux.elf%.h : tc_bfdname = elf32-littlemips
 
-mipsel.r3000-linux.elf-entry.h : $(srcdir)/src/$$T.S
-ifeq (1,1)
-	# info: we really need as-2.17 here
-	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEL__ $< -o - | $(RTRIM) > tmp/$T.i
-	$(call tc,as) tmp/$T.i -o tmp/$T.bin
-	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
-else
-	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
-	$(call tc,gcc) -c -D_TARGET_LINUX_ -Wa,-O,-mno-pdr $< -o tmp/$T.bin
-endif
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-#	$(call tc,gcc) -E -x assembler-with-cpp \
-#
+mipsel.r3000-linux.elf-entry.h : $(srcdir)/src/mipsel.r3000-linux.elf-entry.lds \
+	    $(srcdir)/src/$$T.S
+	# info: we really need as-2.17 here; as-2.16.1 as used by gcc-4.1.1 does _not_ work
+	    echo line 50
+	$(call tc,gcc) -E -x assembler-with-cpp \
+		-D__mips__  -D__MIPSEL__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
+	    | mipsel-elf-as-20060406 -EL -mabi=eabi -Wall -a=/dev/null -o tmp/$T.o
+	    echo line 51
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
+	multiarch-ld-2.17 -r --format=elf32-littlemips -Map tmp/$T.map -o tmp/$T.bin \
+	    -T src/mipsel.r3000-linux.elf-entry.lds \
+	    tmp/$T.o
+	    echo line 52
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
 
 mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
