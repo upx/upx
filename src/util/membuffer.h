@@ -217,7 +217,7 @@ private:
     MemBuffer &operator=(MemBuffer &&) noexcept DELETED_FUNCTION;
 #endif
     // disable dynamic allocation
-    ACC_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
 };
 
 /* vim:set ts=4 sw=4 et: */

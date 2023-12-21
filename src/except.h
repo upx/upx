@@ -61,7 +61,7 @@ private:
     Throwable(Throwable &&) noexcept DELETED_FUNCTION;
     Throwable &operator=(Throwable &&) noexcept DELETED_FUNCTION;
     // disable dynamic allocation => force throwing by value
-    ACC_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE
     // disable taking the address => force passing by reference
     // [I'm not too sure about this design decision, but we can always allow it if needed]
     Throwable *operator&() const noexcept DELETED_FUNCTION;

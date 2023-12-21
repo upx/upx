@@ -12,7 +12,7 @@ env:
   DEBIAN_FRONTEND: noninteractive
   UPX_CONFIG_EXPECT_THREADS: 'ON'
   UPX_CMAKE_BUILD_FLAGS: --verbose
-  UPX_CMAKE_CONFIG_FLAGS: -G Ninja
+  UPX_CMAKE_CONFIG_FLAGS: -G Ninja -Wdev --warn-uninitialized
 
 jobs:
   job-cmake-windows-ninja: # uses cmake + ninja

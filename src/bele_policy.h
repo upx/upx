@@ -84,7 +84,7 @@ private:
     AbstractPolicy(AbstractPolicy &&) noexcept DELETED_FUNCTION;
     AbstractPolicy &operator=(AbstractPolicy &&) noexcept DELETED_FUNCTION;
     // disable dynamic allocation
-    ACC_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE
 };
 #endif
 
@@ -152,7 +152,7 @@ private:
     BEPolicy(BEPolicy &&) noexcept DELETED_FUNCTION;
     BEPolicy &operator=(BEPolicy &&) noexcept DELETED_FUNCTION;
     // disable dynamic allocation
-    ACC_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE
 };
 
 struct LEPolicy
@@ -214,7 +214,7 @@ private:
     LEPolicy(LEPolicy &&) noexcept DELETED_FUNCTION;
     LEPolicy &operator=(LEPolicy &&) noexcept DELETED_FUNCTION;
     // disable dynamic allocation
-    ACC_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE
 };
 
 // Native Endianness policy (aka host policy)

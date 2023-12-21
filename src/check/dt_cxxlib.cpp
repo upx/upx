@@ -98,6 +98,78 @@ ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_ge("abc", "abz"))
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 
 /*************************************************************************
+// UPX_CXX_DISABLE_NEW_DELETE
+**************************************************************************/
+
+namespace test_disable_new_delete {
+
+struct A1 {
+    int a;
+};
+struct A2 {
+    int a;
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
+};
+struct B1_A1 : public A1 {
+    int b;
+};
+struct B1_A2 : public A2 {
+    int b;
+};
+struct B2_A1 : public A1 {
+    int b;
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
+};
+struct B2_A2 : public A2 {
+    int b;
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
+};
+
+struct X1 {
+    virtual ~X1() noexcept {}
+    int x;
+};
+struct X2 {
+    virtual ~X2() noexcept {}
+    int x;
+    UPX_CXX_DISABLE_NEW_DELETE
+};
+struct Y1_X1 : public X1 {
+    int y;
+};
+struct Y1_X2 : public X2 {
+    int y;
+};
+struct Y2_X1 : public X1 {
+    int y;
+    UPX_CXX_DISABLE_NEW_DELETE
+};
+struct Y2_X2 : public X2 {
+    int y;
+    UPX_CXX_DISABLE_NEW_DELETE
+};
+struct Z1_X1 : public X1 {
+    virtual ~Z1_X1() noexcept {}
+    int z;
+};
+struct Z1_X2 : public X2 {
+    virtual ~Z1_X2() noexcept {}
+    int z;
+};
+struct Z2_X1 : public X1 {
+    virtual ~Z2_X1() noexcept {}
+    int z;
+    UPX_CXX_DISABLE_NEW_DELETE
+};
+struct Z2_X2 : public X2 {
+    virtual ~Z2_X2() noexcept {}
+    int z;
+    UPX_CXX_DISABLE_NEW_DELETE
+};
+
+} // namespace test_disable_new_delete
+
+/*************************************************************************
 // util
 **************************************************************************/
 

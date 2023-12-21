@@ -14,6 +14,7 @@ env:
   CTEST_OUTPUT_ON_FAILURE: 'ON'
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
+  UPX_CMAKE_CONFIG_FLAGS: -Wdev --warn-uninitialized
   # 2023-11-08
   ZIG_DIST_VERSION: 0.12.0-dev.1502+b3462b7ce
 

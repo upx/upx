@@ -85,7 +85,7 @@ check_submodule() {
             # create and enter build directory; updates global $rel_top_srcdir
             run "+" cd "$rel_top_srcdir" || exit 1
             rel_top_srcdir=.
-            echo "#==== build $1 ====="
+            echo "#===== build $1 ====="
             run "+" mkdir "build/by-hand/$1"
             run "+" cd "build/by-hand/$1" || exit 1
             rel_top_srcdir=../../..
@@ -128,13 +128,13 @@ if check_submodule zstd; then
 fi
 run "+" cd "$rel_top_srcdir" || exit 1
 rel_top_srcdir=.
-echo "#==== build UPX ====="
+echo "#===== build UPX ====="
 run "+" cd "build/by-hand" || exit 1
 rel_top_srcdir=../..
 for f in "$rel_top_srcdir"/src/*.cpp "$rel_top_srcdir"/src/*/*.cpp; do
     run "CXX $f"     $CXX -I"$rel_top_srcdir"/vendor $upx_submodule_defs -c "$f"
 done
-# echo "#==== link UPX ====="
+# echo "#===== link UPX ====="
 test "x$obj_suffix" = "x" && obj_suffix=.o
 if test "x$AR" = "x"; then
     # link without using $AR
