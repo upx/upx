@@ -95,4 +95,39 @@
 #   define PRINT(str)   .print str
 #endif
 
+.macro PUSH4 p1,p2,p3,p4
+    addiu sp,-4*NBPW
+    sw \p1,0*NBPW(sp)
+    sw \p2,1*NBPW(sp)
+    sw \p3,2*NBPW(sp)
+    sw \p4,3*NBPW(sp)
+.endm
+.macro POP4 p1,p2,p3,p4
+    lw \p1,0*NBPW(sp)
+    lw \p2,1*NBPW(sp)
+    lw \p3,2*NBPW(sp)
+    lw \p4,3*NBPW(sp)
+    addiu sp,4*NBPW
+.endm
+.macro PUSH3 p1,p2,p3
+    addiu sp,-3*NBPW
+    sw \p1,0*NBPW(sp)
+    sw \p2,1*NBPW(sp)
+    sw \p3,2*NBPW(sp)
+.endm
+.macro POP3 p1,p2,p3
+    lw \p1,0*NBPW(sp)
+    lw \p2,1*NBPW(sp)
+    lw \p3,2*NBPW(sp)
+    addiu sp,3*NBPW
+.endm
+.macro POP2 p1,p2
+    lw \p1,0*NBPW(sp)
+    lw \p2,1*NBPW(sp)
+    addiu sp,2*NBPW
+.endm
+.macro POP1 p1
+    lw \p1,0*NBPW(sp)
+    addiu sp,1*NBPW
+.endm
 #endif  /*} _MR3K_MACROS_ASH */
