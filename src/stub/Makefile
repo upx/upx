@@ -1532,9 +1532,6 @@ tmp/mips.r3000-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,objcopy) -R .comment $@
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
-#	$(call tc,gcc) -E -x assembler-with-cpp \
-#
-
 mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/mips.r3000-linux.elf-main.s \

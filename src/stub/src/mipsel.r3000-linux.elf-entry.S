@@ -46,8 +46,8 @@ F_LENU=  7*NBPW
   # r_PMASK still is used here
 
 # C-language uses 8 args in registers
-a5=        9
-a4=        8
+#define a5       9
+#define a4       8
 
 #ra             31
 #define r_fexp   30  /* s8 */
@@ -83,7 +83,7 @@ sz_p_info= 12
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
-  b_method= 8
+#define b_method 8
   b_ftid=   9
   b_cto8=  10
   b_unused=11
@@ -154,151 +154,11 @@ decompressor:  # (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdstl
 
         UCL_init    32,1,0
         decomp_done = eof
-#include "arch/mips/r3000/nrv2e_d.ash"
-  section NRV2E
-        build nrv2e, full
-
-#include "arch/mips/r3000/nrv2d_d.ash"
-  section NRV2D
-        build nrv2d, full
-
 #include "arch/mips/r3000/nrv2b_d.ash"
-  section NRV2B
         build nrv2b, full
 
-section     LZMA_ELF00 # (a0=lxsrc, a1=lxsrclen, a2=lxdst, a3= &lxdstlen)
-
-/* LzmaDecode(a0=CLzmaDecoderState *,
-        a1=src, a2=srclen, a3=*psrcdone,
-        dst, dstlen, *pdstdone);
-struct CLzmaDecoderState {
-        uchar lit_context_bits;
-        uchar lit_pos_bits;
-        uchar pos_bits;
-        uchar unused;
-        struct CProb[LZMA_BASE_SIZE + (LZMA_LIT_SIZE<<n)];
-};
-*/
-
-LZMA_BASE_NUM = 1846
-LZMA_LIT_NUM  =  768
-
-lxlzma_szframe  = 12*4
-lxlzma_sv_pc    = 11*4
-lxlzma_sv_sp    = 10*4
-lxlzma_dst      =  9*4
-lxlzma_dstdone  =  8*4
-lxlzma_srcdone  =  7*4
-lxlzma_retval   = lxlzma_srcdone
-
-#define a4 t0
-#define a5 t1
-#define a6 t2
-
-        lbu t9,0(lxsrc)  # ((lit_context_bits + lit_pos_bits)<<3) | pos_bits
-        li tmp,-2*LZMA_LIT_NUM
-        lbu t8,1(lxsrc)  # (lit_pos_bits<<4) | lit_context_bits
-        andi v0,t9,7  # pos_bits
-        srl t9,t9,3  # (lit_context_bits + lit_pos_bits)
-        sllv tmp,tmp,t9
-        addiu tmp,tmp,-4 - 2*LZMA_BASE_NUM - lxlzma_szframe
-        addu sp,sp,tmp  # alloca
-                sw tmp,lxlzma_sv_sp(sp)  # dynamic frame size
-        addiu a6,sp,lxlzma_dstdone
-                sw ra, lxlzma_sv_pc(sp)
-        lw    a5,0(lxdstlen)
-                sw lxdst,lxlzma_dst(sp)
-        move  a4,lxdst
-        addiu a3,sp,lxlzma_srcdone
-        addiu a2,lxsrclen,-2  # 2 header bytes
-        addiu a1,lxsrc,2  # 2 header bytes
-        addiu a0,sp,lxlzma_szframe  # &CLzamDecoderState
-        sb     v0,2(a0)   # pos_bits
-        andi tmp,t8,0xf
-        sb   tmp, 0(a0)  # lit_context_bits
-        srl  t8,t8,4
-        bal lzma_decode
-          sb   t8,1(a0)   # lit_pos_bits
-
-/* It seems that for our uses the icache does not need to be invalidated,
-   because no lines from the destination have ever been fetched.  However,
-   if the dcache is write-back, then some of the results might not be in
-   memory yet, and the icache could fetch stale data; so memory must be
-   updated from dcache.
-   The *next* call of the decompressor will tend to sweep much of the dcache
-   anyway, because the probability history array (typically ushort[7990] or
-   ushort[14134]) gets initialized.
-*/
-        sw v0,lxlzma_retval(sp)  # return value from decompression
-
-        lw a0,lxlzma_dst(sp)
-        lw a1,lxlzma_dstdone(sp)
-        li a2,ICACHE|DCACHE
-        li v0,__NR_cacheflush; syscall
-
-        lw v0,lxlzma_retval(sp)  # return value from decompression
-
-        lw tmp,lxlzma_sv_sp(sp)
-        lw ra,lxlzma_sv_pc(sp)
-/* Workaround suspected glibc bug: elf/rtld.c assumes uninit local is zero.
-   2007-11-24 openembedded.org mipsel-linux 2.6.12.6/glibc 2.3.2
-*/
-        subu tmp,sp,tmp  # previous sp (un_alloca)
-0:
-        addiu sp,4
-        bne sp,tmp,0b
-          sw $0,-4(sp)
-
-        jr ra
-          nop
-
-
-lzma_decode:
-  section LZMA_DEC20
-#if 1  /*{*/
-#include "arch/mips/r3000/lzma_d.S"
-#else  /*}{*/
-#include "arch/mips/r3000/lzma_d-mips3k.S"       /* gpp_inc:ignore=1: */
-#endif  /*}*/
-
-
-  section LZMA_DEC30
-        break  # FIXME
-
-  section NRV_HEAD
-        addiu sp,-4
-        sw ra,0(sp)
-        add lxsrclen,lxsrclen,lxsrc  #  src_EOF
-        sw lxdst,(lxdstlen)  # original lxdst in &lxdstlen
-
-  section NRV_TAIL
 eof:
-        lw v1,(lxdstlen)  # original lxdst
-        subu t8,lxsrc,lxsrclen  # new_src - src_EOF;  // return 0: good; else: bad
-        lw ra,0(sp)
-        sw t8,0(sp)
-
-  section CFLUSH
-        move a0,v1  # original lxdst
-        subu a1,lxdst,v1  # actual length generated
-          sw a1,(lxdstlen)
-        li a2,ICACHE|DCACHE
-        li v0,__NR_cacheflush; syscall
-
-        lw v0,0(sp)
-        jr ra
-          addiu sp,4
-
-
-  section ELFMAINY
-msg_SELinux:
-        addiu a2,zero,L71 - L70  # length
-        bal L72
-          move a1,ra
-L70:
-        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
-L71:
-        # IDENTSTR goes here
+        break  # FIXME
 
   section ELFMAINZ
 L72:
@@ -315,7 +175,7 @@ unfold:  # IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
 # Reserve enough space to decompress the folded code of the stub
         lw $r_LENX,sz_pack2 - f_exp($r_fexp)  # length before stub
         la $r_elfa,sz_pack2 - f_exp($r_fexp)
-          li a4,-1
+          li $a4,-1
         lw $r_szuf,sz_unc($r_FOLD)  # sz_unc of fold
           li a3,MAP_PRIVATE|MAP_ANONYMOUS
         sub $r_elfa,$r_elfa,$r_LENX  # $r_elfa= &Elf32_Ehdr of this stub
@@ -327,7 +187,7 @@ unfold:  # IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
 
         lw $r_ADRX,-4($r_FOLD)  # O_BINFO
 # Decompress folded code
-        lb meth,b_method($r_FOLD)  # a4
+        lb $meth,b_method($r_FOLD)  # a4
         sw $r_szuf,0(sp)  # lzma uses for EOF
         move ldst,sp  # a3  &slot on stack
         move dst,v0  # a2  dst for unfolding
@@ -357,15 +217,15 @@ unfold:  # IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
           addu $r_ADRX,$r_elfa,$r_ADRX  # compressed data
 
 mmapRW0:
-        li a5,0  # offset
+        li $a5,0  # offset
 mmapRW:
         li a2,PROT_WRITE|PROT_READ
 mmap:
         addiu sp,sp,-sp_frame
 a4_sys=  4*NBPW  # temporary for syscall
 a5_sys=  5*NBPW  # temporary for syscall
-        sw a4,a4_sys(sp)
-        sw a5,a5_sys(sp)
+        sw $a4,a4_sys(sp)
+        sw $a5,a5_sys(sp)
         li v0,__NR_mmap; syscall
         bnez a3,mmap_bad
           nop
