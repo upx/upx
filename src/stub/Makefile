@@ -310,11 +310,14 @@ endef
 define tc.default.f-embed_objinfo_without_xstrip
 	chmod a-x $1
 	$(call tc,objcopy) -R .data -R .bss $1
+	cp $1 $1.1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
+	cp $1 $1.2
 	$(call tc,objcopy) --strip-unneeded \
 	    --keep-symbol=_start --keep-symbol=upx_so_main --keep-symbol=upx_mmap_and_fd \
 	    --keep-symbol=upx_main \
 	    --keep-symbol=copy --keep-symbol=dprintf $1
+	cp $1 $1.3
 #
 # Disassemble for human readability
 # objdump
@@ -339,6 +342,7 @@ define tc.default.f-embed_objinfo_without_xstrip
 	  -e 's/CONTENTS.*/CONTENTS/' \
 	  > $1.dump
 	cat $1.dump >> $1
+	cp $1 $1.4
 endef
 
 tc.default.f-objstrip-disasm.bin = @true
@@ -1523,19 +1527,23 @@ tmp/mips.r3000-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,objcopy) -R .comment $@
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
+#	$(call tc,gcc) -E -x assembler-with-cpp \
+#
 
 mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/mips.r3000-linux.elf-main.s \
 	    tmp/mips.r3000-linux.upxfd_android.s \
-	    src/mips.r3000-expand.S
+	    src/mips.r3000-linux.expand.S
 	cat > tmp/mips.r3000-linux.elf-fold-2.S \
 	    src/mips.r3000-linux.elf-fold.S \
 	    tmp/mips.r3000-linux.elf-main.s \
 	    tmp/mips.r3000-linux.upxfd_android.s \
-	    src/mips.r3000-expand.S
+	    src/mips.r3000-linux.expand.S
 	(cd tmp; ln -sf ../src/arch arch)
-	$(call tc,gcc) -E -x assembler-with-cpp  -D__mips__ -D__MIPSEB__ tmp/mips.r3000-linux.elf-fold-2.S \
+	/lib/cpp \
+	        -D__mips__ -D__MIPSEB__ -D_TARGET_LINUX_ \
+		tmp/mips.r3000-linux.elf-fold-2.S \
 	    | sed -e $$(< src/dollar-dollar.sed) > tmp/mips.r3000-linux.elf-fold-3.S
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EB tmp/mips.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
@@ -1543,11 +1551,11 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
-	$(call tc,f-objstrip,tmp/$T.bin)
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 # "unrecognized program segment header size"	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/mips.r3000-expand.o: $(srcdir)/src/$$T.S
+tmp/mips.r3000-linux.expand.o: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 
 tmp/mips.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -1623,18 +1631,23 @@ endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
+#	$(call tc,gcc) -E -x assembler-with-cpp \
+#
+
 mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    $(srcdir)/src/$$T.S \
 	    tmp/mipsel.r3000-linux.elf-main.s \
 	    tmp/mipsel.r3000-linux.upxfd_android.s \
-	    src/mipsel.r3000-expand.S
+	    src/mipsel.r3000-linux.expand.S
 	cat > tmp/mipsel.r3000-linux.elf-fold-2.S \
 	    src/mipsel.r3000-linux.elf-fold.S \
 	    tmp/mipsel.r3000-linux.elf-main.s \
 	    tmp/mipsel.r3000-linux.upxfd_android.s \
-	    src/mipsel.r3000-expand.S
+	    src/mipsel.r3000-linux.expand.S
 	(cd tmp; ln -sf ../src/arch arch)
-	$(call tc,gcc) -E -x assembler-with-cpp  -D__mips__  -D__MIPSEL__ tmp/mipsel.r3000-linux.elf-fold-2.S \
+	/lib/cpp \
+	        -D__mips__  -D__MIPSEL__ -D_TARGET_LINUX_ \
+	        tmp/mipsel.r3000-linux.elf-fold-2.S \
 	    | sed -e $$(< src/dollar-dollar.sed) > tmp/mipsel.r3000-linux.elf-fold-3.S
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EL tmp/mipsel.r3000-linux.elf-fold-3.S -march=r3000 -o tmp/$T.o
@@ -1642,13 +1655,18 @@ mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
-	$(call tc,f-objstrip,tmp/$T.bin)
+	ls -l tmp/$T.bin; cp tmp/$T.bin tmp/foo.1
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+	ls -l tmp/$T.bin; cp tmp/$T.bin tmp/foo.2
 # "unrecognized program segment header size"	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@; cp tmp/$T.bin tmp/foo.3
 
 tmp/mipsel.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
 	: $(call tc,f-objstrip,$@)
+
+tmp/mipsel.r3000-linux.expand.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
 
 tmp/mipsel.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -S -D__mipsel__ -D_TARGET_LINUX_ -O $< -o - \

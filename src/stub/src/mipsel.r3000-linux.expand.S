@@ -124,31 +124,27 @@ no_unf:
 #undef fx_src
 #undef fx_dst
 #undef fx_dstlen
-#undef xsrc
-#undef xsrclen
-#undef xdst
-#undef xdstlen
-#undef methb
 
 decompress:  // (src *, cpr_len, dst *, &dstlen);
 //  sections NRV2B, etc, inserted here by addLoader() from ::buildLinuxLoader()
 
   section EXP_TAIL
     break
-#define src $a0
-#define dst $a1
   .type eof,function
   .globl eof
 eof:  // end of a compressed extent; need sync_cache
         lw v1,(sp)  // &input_eof
-        sub v0,src,v1  // src -= eof;  // return 0: good; else: bad
+        sub v0,xsrc,v1  // xsrc -= eof;  // return 0: good; else: bad
         lw v1,1*NBPW(sp)  // original dst
-        lw v1,2*NBPW(sp); sub v1,dst,v1  // dst -= original dst
+        lw v1,2*NBPW(sp); sub v1,xdst,v1  // dst -= original dst
         lw t8,3*NBPW(sp); sw v1,(t8)  // actual length used t8 dst  XXX: 4GB
         jr ra
           addiu sp,4*NBPW
-#undef src
-#undef dst
+#undef xsrc
+#undef xsrclen
+#undef xdst
+#undef xdstlen
+#undef methb
 
 
 #define M_NRV2B_LE32    2
@@ -164,12 +160,15 @@ eof:  // end of a compressed extent; need sync_cache
 
   section NRV2E
 #include "arch/mips/r3000/nrv2e_d.ash"
+    build nrv2e, full
 
   section NRV2D
 #include "arch/mips/r3000/nrv2d_d.ash"
+    build nrv2d, full
 
   section NRV2B
 #include "arch/mips/r3000/nrv2b_d.ash"
+    build nrv2b, full
 
 /* lzma has its own 'section's */
 #include "arch/mips/r3000/lzma_d.S"
