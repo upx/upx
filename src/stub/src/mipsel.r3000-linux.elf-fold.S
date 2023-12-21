@@ -272,6 +272,8 @@ L40:
         jr $r_fexp  # omit munmap
           nop
 
+  section SYSCALLS
+
 Pprotect: .globl Pprotect
         li TMP,1<<12  // FIXME  PAGE_MASK
         and TMP,a0

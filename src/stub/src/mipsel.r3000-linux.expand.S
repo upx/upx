@@ -133,6 +133,7 @@ decompress:  // (src *, cpr_len, dst *, &dstlen);
   .type eof,function
   .globl eof
 eof:  // end of a compressed extent; need sync_cache
+decomp_done: .globl decomp_done  // mips.r3000 macro target
         lw v1,(sp)  // &input_eof
         sub v0,xsrc,v1  // xsrc -= eof;  // return 0: good; else: bad
         lw v1,1*NBPW(sp)  // original dst
@@ -140,6 +141,7 @@ eof:  // end of a compressed extent; need sync_cache
         lw t8,3*NBPW(sp); sw v1,(t8)  // actual length used t8 dst  XXX: 4GB
         jr ra
           addiu sp,4*NBPW
+
 #undef xsrc
 #undef xsrclen
 #undef xdst

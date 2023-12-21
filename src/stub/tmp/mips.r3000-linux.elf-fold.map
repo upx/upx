@@ -9,40 +9,43 @@ Linker script and memory map
 TARGET(elf32-bigmips)
                 0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000100040      0xc80
+.text           0x0000000000100040      0xb3c
  *(.text)
- .text          0x0000000000100040      0xc80 tmp/mips.r3000-linux.elf-fold.o
+ .text          0x0000000000100040      0xb3c tmp/mips.r3000-linux.elf-fold.o
                 0x00000000001000c8                get_page_mask
-                0x0000000000100314                munmap
-                0x00000000001002ec                getpid
-                0x0000000000100c14                upx_mmap_and_fd
-                0x0000000000100334                readlink
-                0x0000000000100264                mempcpy
-                0x00000000001002e4                ftruncate
-                0x00000000001002f4                lseek
-                0x0000000000100298                mmap
-                0x000000000010023c                __clear_cache
-                0x000000000010028c                mmap_privanon
-                0x000000000010033c                uname
-                0x0000000000100244                my_memset
-                0x000000000010034c                write
+                0x0000000000100ad0                upx_mmap_and_fd
                 0x00000000001000e4                get_upxfn_path
-                0x00000000001002fc                memfd_create
-                0x000000000010032c                read
-                0x0000000000100344                unlink
-                0x0000000000100230                my_bkpt
-                0x0000000000100210                Pprotect
-                0x000000000010031c                stat
-                0x00000000001002dc                exit
-                0x0000000000100a9c                upx_main
-                0x00000000001002d4                brk
-                0x0000000000100324                open
+                0x0000000000100958                upx_main
                 0x0000000000100038                PAGE_MASK
-                0x000000000010030c                mprotect
-                0x0000000000100304                mkdir
                 0x0000000000100114                close
  *(.data)
- .data          0x0000000000100cc0        0x0 tmp/mips.r3000-linux.elf-fold.o
+ .data          0x0000000000100b7c        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+SYSCALLS        0x0000000000000000      0x144
+ SYSCALLS       0x0000000000000000      0x144 tmp/mips.r3000-linux.elf-fold.o
+                0x0000000000000104                munmap
+                0x00000000000000dc                getpid
+                0x0000000000000124                readlink
+                0x0000000000000054                mempcpy
+                0x00000000000000d4                ftruncate
+                0x00000000000000e4                lseek
+                0x0000000000000088                mmap
+                0x000000000000002c                __clear_cache
+                0x000000000000007c                mmap_privanon
+                0x000000000000012c                uname
+                0x0000000000000034                my_memset
+                0x000000000000013c                write
+                0x00000000000000ec                memfd_create
+                0x000000000000011c                read
+                0x0000000000000134                unlink
+                0x0000000000000020                my_bkpt
+                0x0000000000000000                Pprotect
+                0x000000000000010c                stat
+                0x00000000000000cc                exit
+                0x00000000000000c4                brk
+                0x0000000000000114                open
+                0x00000000000000fc                mprotect
+                0x00000000000000f4                mkdir
 
 EXP_HEAD        0x0000000000000000       0x90
  EXP_HEAD       0x0000000000000000       0x90 tmp/mips.r3000-linux.elf-fold.o
@@ -51,6 +54,7 @@ EXP_HEAD        0x0000000000000000       0x90
 EXP_TAIL        0x0000000000000000       0x34
  EXP_TAIL       0x0000000000000000       0x34 tmp/mips.r3000-linux.elf-fold.o
                 0x0000000000000004                eof
+                0x0000000000000004                decomp_done
 
 NRV2E           0x0000000000000000      0x39c
  NRV2E          0x0000000000000000      0x39c tmp/mips.r3000-linux.elf-fold.o
