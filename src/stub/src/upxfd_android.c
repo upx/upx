@@ -186,7 +186,7 @@ static unsigned sixbit(unsigned x)
 // Where to put temp file when memfd_create() fails on early 32-bit Android
 static int create_upxfn_path(char *name)
 {
-    // Construct path "/data/data/$APP_NAME/cache/upxAAA". 
+    // Construct path "/data/data/$APP_NAME/cache/upxAAA".
     // Note 'mempcpy' [with 'p' in the middle!] returns the end-of-string.
     char *p =  mempcpy(&name[0], addr_string("/data/data/"), 11);  // '/' sentinel at end
     p[0] = '\0'; dir_check(name);
