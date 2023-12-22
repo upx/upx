@@ -64,6 +64,9 @@ NRV2D           0x0000000000000000        0x0
 NRV2B           0x0000000000000000        0x0
  NRV2B          0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-fold.o
 
+LZMA_DEC30      0x0000000000000000        0x4
+ LZMA_DEC30     0x0000000000000000        0x4 tmp/mipsel.r3000-linux.elf-fold.o
+
 LZMA_ELF00      0x0000000000000000       0x9c
  LZMA_ELF00     0x0000000000000000       0x9c tmp/mipsel.r3000-linux.elf-fold.o
 

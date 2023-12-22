@@ -137,6 +137,9 @@ eof:  // end of a compressed extent; need sync_cache
 #include "arch/mips/r3000/nrv2b_d.ash"
 
 /* lzma has its own 'section's */
+  section LZMA_DEC30
+        break  // FIXME
+
   section     LZMA_ELF00 # (a0=lxsrc, a1=lxsrclen, a2=lxdst, a3= &lxdstlen)
 #define lxsrc a0
 #define lxsrclen a1
