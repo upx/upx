@@ -51,19 +51,21 @@ EXP_HEAD        0x0000000000000000       0x90
  EXP_HEAD       0x0000000000000000       0x90 tmp/mips.r3000-linux.elf-fold.o
                 0x0000000000000000                f_expand
 
-EXP_TAIL        0x0000000000000000       0x34
- EXP_TAIL       0x0000000000000000       0x34 tmp/mips.r3000-linux.elf-fold.o
-                0x0000000000000004                eof
-                0x0000000000000004                decomp_done
+EXP_TAIL        0x0000000000000000       0x30
+ EXP_TAIL       0x0000000000000000       0x30 tmp/mips.r3000-linux.elf-fold.o
+                0x0000000000000000                eof
 
-NRV2E           0x0000000000000000      0x39c
- NRV2E          0x0000000000000000      0x39c tmp/mips.r3000-linux.elf-fold.o
+NRV2E           0x0000000000000000        0x0
+ NRV2E          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
 
-NRV2D           0x0000000000000000      0x348
- NRV2D          0x0000000000000000      0x348 tmp/mips.r3000-linux.elf-fold.o
+NRV2D           0x0000000000000000        0x0
+ NRV2D          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
 
-NRV2B           0x0000000000000000      0x2dc
- NRV2B          0x0000000000000000      0x2dc tmp/mips.r3000-linux.elf-fold.o
+NRV2B           0x0000000000000000        0x0
+ NRV2B          0x0000000000000000        0x0 tmp/mips.r3000-linux.elf-fold.o
+
+LZMA_ELF00      0x0000000000000000       0x9c
+ LZMA_ELF00     0x0000000000000000       0x9c tmp/mips.r3000-linux.elf-fold.o
 
 LZMA_DEC10      0x0000000000000000      0xad8
  LZMA_DEC10     0x0000000000000000      0xad8 tmp/mips.r3000-linux.elf-fold.o

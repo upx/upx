@@ -96,6 +96,9 @@ no_unf:
 #undef methb
 
 decompress:  // (src *, cpr_len, dst *, &dstlen);
+#define lxdst    a2
+#define lxdstlen a3
+
 //  sections NRV2B, etc, inserted here by addLoader() from ::buildLinuxLoader()
 
   section EXP_TAIL
@@ -134,5 +137,103 @@ eof:  // end of a compressed extent; need sync_cache
 #include "arch/mips/r3000/nrv2b_d.ash"
 
 /* lzma has its own 'section's */
+  section     LZMA_ELF00 # (a0=lxsrc, a1=lxsrclen, a2=lxdst, a3= &lxdstlen)
+#define lxsrc a0
+#define lxsrclen a1
+#define lxdst a2
+
+/* LzmaDecode(a0=CLzmaDecoderState *,
+        a1=src, a2=srclen, a3=*psrcdone,
+        dst, dstlen, *pdstdone);
+struct CLzmaDecoderState {
+        uchar lit_context_bits;
+        uchar lit_pos_bits;
+        uchar pos_bits;
+        uchar unused;
+        struct CProb[LZMA_BASE_SIZE + (LZMA_LIT_SIZE<<n)];
+};
+*/
+
+LZMA_BASE_NUM = 1846
+LZMA_LIT_NUM  =  768
+
+lxlzma_szframe  = 12*NBPW
+lxlzma_sv_pc    = 11*NBPW
+lxlzma_sv_sp    = 10*NBPW
+lxlzma_dst      =  9*NBPW
+lxlzma_dstdone  =  8*NBPW
+lxlzma_srcdone  =  7*NBPW
+lxlzma_retval   = lxlzma_srcdone
+
+#define a4 t0
+#define a5 t1
+#define a6 t2
+#define t8      $24
+#define t9      $25
+
+
+        lbu t9,0(lxsrc)  # ((lit_context_bits + lit_pos_bits)<<3) | pos_bits
+        li v1,-2*LZMA_LIT_NUM
+        lbu t8,1(lxsrc)  # (lit_pos_bits<<4) | lit_context_bits
+        andi v0,t9,7  # pos_bits
+        srl t9,t9,3  # (lit_context_bits + lit_pos_bits)
+        sllv v1,v1,t9
+        addiu v1,v1,-4 - 2*LZMA_BASE_NUM - lxlzma_szframe
+        addu sp,sp,v1  # alloca
+                sw v1,lxlzma_sv_sp(sp)  # dynamic frame size
+        addiu a6,sp,lxlzma_dstdone
+                sw ra, lxlzma_sv_pc(sp)
+        lw    a5,0(lxdstlen)
+                sw lxdst,lxlzma_dst(sp)
+        move  a4,lxdst
+        addiu a3,sp,lxlzma_srcdone
+        addiu a2,lxsrclen,-2  # 2 header bytes
+        addiu a1,lxsrc,2  # 2 header bytes
+        addiu a0,sp,lxlzma_szframe  # &CLzamDecoderState
+        sb     v0,2(a0)   # pos_bits
+        andi v1,t8,0xf
+        sb   v1, 0(a0)  # lit_context_bits
+        srl  t8,t8,4
+        bal lzma_decode
+          sb   t8,1(a0)   # lit_pos_bits
+
+/* It seems that for our uses the icache does not need to be invalidated,
+   because no lines from the destination have ever been fetched.  However,
+   if the dcache is write-back, then some of the results might not be in
+   memory yet, and the icache could fetch stale data; so memory must be
+   updated from dcache.
+   The *next* call of the decompressor will tend to sweep much of the dcache
+   anyway, because the probability history array (typically ushort[7990] or
+   ushort[14134]) gets initialized.
+*/
+        sw v0,lxlzma_retval(sp)  # return value from decompression
+
+/* asm/cachectl.h */
+ICACHE= 1<<0
+DCACHE= 1<<1
+
+        lw a0,lxlzma_dst(sp)
+        lw a1,lxlzma_dstdone(sp)
+        li a2,ICACHE|DCACHE
+        break  // FIXME  do_sys __NR_cacheflush
+
+        lw v0,lxlzma_retval(sp)  # return value from decompression
+
+        lw v1,lxlzma_sv_sp(sp)
+        lw ra,lxlzma_sv_pc(sp)
+/* Workaround suspected glibc bug: elf/rtld.c assumes uninit local is zero.
+   2007-11-24 openembedded.org mipsel-linux 2.6.12.6/glibc 2.3.2
+*/
+        subu v1,sp,v1  # previous sp (un_alloca)
+0:
+        addiu sp,4
+        bne sp,v1,0b
+          sw $0,-4(sp)
+
+        jr ra
+          nop
+
+
+lzma_decode:
 #include "arch/mips/r3000/lzma_d.S"
 
