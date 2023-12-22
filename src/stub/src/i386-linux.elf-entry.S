@@ -64,7 +64,7 @@ __NR_oldmmap=      90  // %ebx -> args[6]
 __NR_memfd_create= 356
 __NR_mprotect= 125
 
-ENOSYS= 38	/* Invalid system call number */
+ENOSYS= 38  /* Invalid system call number */
 NAME_MAX=  255  // # chars in file name; linux/include/uapi/linux/limits.h
 
 PAGE_SHIFT= 12

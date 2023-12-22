@@ -32,7 +32,7 @@
 #include "arch/i386/macros.S"
 NBPW= 4
 
-# WARNING: This file uses Intel syntax:  opcode reg,operand 
+# WARNING: This file uses Intel syntax:  opcode dst,src
 # Memory operands use square brackets:  [displ + %reg]
 # Literal operands lack square brackets.
 
