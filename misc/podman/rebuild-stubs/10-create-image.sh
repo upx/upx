@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 ## vim:set ts=4 sw=4 et:
-set -e; set -o pipefail
+set -e; set -o pipefail; set -x
 argv0=$0; argv0abs="$(readlink -fn "$argv0")"; argv0dir="$(dirname "$argv0abs")"
 
 # create the image from Dockerfile
