@@ -1515,7 +1515,7 @@ mips.r3000-linux.elf-entry.h : $(srcdir)/src/mips.r3000-linux.elf-entry.lds \
 	    echo line 40
 	$(call tc,gcc) -E -x assembler-with-cpp \
 		-D__mips__  -D__MIPSEB__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
-	    | $(call tc,pp-as) -a=/dev/null -o tmp/$T.o
+	    | $(call tc,pp-as) -achlmms=tmp/$T.list -o tmp/$T.o
 	    echo line 41
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	    echo line 42
