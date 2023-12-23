@@ -131,7 +131,7 @@ DCACHE= 1<<1
 sz_pack2 = . - 4
 
 _start: .globl _start
-#//    break  # debug only
+#//     break  # debug only
         bal main
           addiu $r_fexp,ra, f_exp - 0f
 0:
@@ -152,6 +152,7 @@ decompressor:  # (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdstl
 #define ldst    lxdstlen
 #define meth     a4
 
+    break
         UCL_init    32,1,0
         decomp_done = eof
 #include "arch/mips/r3000/nrv2b_d.ash"
@@ -243,7 +244,7 @@ zfind:  # result in $r_auxv
 
 main:
         bal zfind
-          move a0,sp
+          addiu a0,sp,NBPW  # avoid feint of 0==argc
         bal zfind
           move a0,$r_auxv
 
@@ -256,7 +257,7 @@ main:
         bnez v1,1b  # AT_NULL
           li v0,PAGE_SIZE
 2:
-        sub $r_PMASK,zero,v0
+        neg $r_PMASK,v0
         bal unfold
           addiu $r_FOLD,ra,LrFLD - 0f  # &b_info for folded loader
 0:
