@@ -7,7 +7,7 @@ Name             Origin             Length             Attributes
 Linker script and memory map
 
 
-.text           0x0000000000000000      0xae6
+.text           0x0000000000000000     0x143a
  .text          0x0000000000000000      0x16a tmp/i386-linux.elf-fold.o
                 0x0000000000000002                get_page_mask
                 0x000000000000000f                get_upxfn_path
@@ -16,8 +16,8 @@ Linker script and memory map
                 0x0000000000000374                upx_mmap_and_fd
                 0x000000000000033a                strncmplc
  .text          0x00000000000004f0        0x0 tmp/i386-expand.o
- .text          0x00000000000004f0      0x5f6 tmp/i386-linux.elf-main.o
-                0x00000000000009f9                upx_main
+ .text          0x00000000000004f0      0xf4a tmp/i386-linux.elf-main.o
+                0x0000000000001223                upx_main
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/i386-linux.elf-fold.o

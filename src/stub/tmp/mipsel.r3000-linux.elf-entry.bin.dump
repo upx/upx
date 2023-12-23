@@ -3,8 +3,8 @@ file format elf32-littlemips
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags
   0 ELFMAINZ      0124  0  0  034  2**0  CONTENTS
-  1 ELFMAINX      010c  0  0  0158  2**2  CONTENTS
-  2 .pdr          0  0  0  0264  2**2  CONTENTS
+  1 ELFMAINX      0110  0  0  0158  2**2  CONTENTS
+  2 .pdr          0  0  0  0268  2**2  CONTENTS
 SYMBOL TABLE:
 00000000 l    d  ELFMAINZ 0 ELFMAINZ
 00000000 l    d  ELFMAINX 0 ELFMAINX
