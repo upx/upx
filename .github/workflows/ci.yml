@@ -136,14 +136,24 @@ jobs:
         run: |
           make -C build/extra/gcc-m32/debug test
           make -C build/extra/gcc-m32/release test
+      - name: 'Mimic ctest tests'
+        run: |
+          env -C build/extra/gcc/debug     bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          env -C build/extra/gcc/release   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          env -C build/extra/clang/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          env -C build/extra/clang/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
+      - name: 'Mimic ctest tests 32-bit'
+        if: ${{ matrix.use_m32 }}
+        run: |
+          env -C build/extra/gcc-m32/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          env -C build/extra/gcc-m32/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
       - name: 'Run file system test suite'
         run: |
           env -C build/extra/gcc/release bash "$PWD"/misc/testsuite/test_symlinks.sh
       - name: 'Run test suite build/extra/gcc/release'
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1="$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)"
-          env -C build/extra/gcc/release upx_exe=./upx bash "$testsuite_1"
+          env -C build/extra/gcc/release bash "$PWD"/misc/testsuite/upx_testsuite_1.sh
 
   job-macos-cmake: # uses cmake + make
     if: true
@@ -218,12 +228,15 @@ jobs:
           make -C build/extra/clang/debug test
           #make -C build/extra/clang/release test
           for f in ./build/extra/*/*/upx; do echo "===== $f"; $f --sysinfo -v; done
+      - name: 'Mimic ctest tests'
+        if: ${{ !contains(matrix.os, 'macos-13') }} # FIXME: UPX on macos-13 is broken => disable self-test for now
+        run: |
+          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+          env -C build/extra/clang/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          #env -C build/extra/clang/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
       - name: 'Run file system test suite'
         if: ${{ matrix.testsuite }} # for coreutils readlink
         run: |
-          ## macos-11 does not have "readlink -f"
-          ##   testsuite="$(readlink -fn ./misc/testsuite/test_symlinks.sh)"
-          ##   (cd build/extra/clang/release && upx_exe=./upx bash "$testsuite")
           export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
           env -C build/extra/clang/release bash "$PWD"/misc/testsuite/test_symlinks.sh
       - name: 'Run test suite build/extra/clang/release'
@@ -231,8 +244,7 @@ jobs:
         run: |
           export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1="$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)"
-          env -C build/extra/clang/release upx_exe=./upx bash "$testsuite_1"
+          env -C build/extra/clang/release bash "$PWD"/misc/testsuite/upx_testsuite_1.sh
 
   job-windows-cmake: # uses cmake + msbuild
     if: true
@@ -286,8 +298,7 @@ jobs:
         shell: bash
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1="$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)"
-          env -C build/release/Release upx_exe=./upx bash "$testsuite_1"
+          env -C build/release/Release bash "$PWD"/misc/testsuite/upx_testsuite_1.sh
 
   job-windows-toolchains: # build "by hand" using cmd.exe
     if: github.repository_owner == 'upx'
@@ -397,8 +408,7 @@ jobs:
         shell: bash
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          testsuite_1="$(readlink -en ./misc/testsuite/upx_testsuite_1.sh)"
-          env -C build/$C/$B/upx upx_exe=./upx.exe bash "$testsuite_1"
+          env -C build/$C/$B/upx upx_exe=./upx.exe bash "$PWD"/misc/testsuite/upx_testsuite_1.sh
 
   job-linux-zigcc: # uses cmake + make
     if: github.repository_owner == 'upx'
@@ -420,7 +430,7 @@ jobs:
           - { zig_target: aarch64-windows-gnu }
           - { zig_target: arm-linux-musleabihf }
           # { zig_target: arm-linux-musleabihf, zig_pic: -fPIE }
-          # { zig_target: i386-linux-musl }
+          - { zig_target: i386-linux-musl }
           # { zig_target: i386-linux-musl, zig_pic: -fPIE }
           - { zig_target: i386-windows-gnu }
           # { zig_target: mips-linux-musl }
