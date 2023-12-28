@@ -43,7 +43,7 @@ protected:
     Throwable(const char *m = nullptr, int e = 0, bool w = false) noexcept;
 
 public:
-    Throwable(const Throwable &) noexcept;
+    Throwable(const Throwable &) noexcept; // copy constructor
     virtual ~Throwable() noexcept;
     const char *getMsg() const noexcept { return msg; }
     int getErrno() const noexcept { return err; }
@@ -57,14 +57,13 @@ protected:
 
 private:
     // disable copy assignment and move
-    Throwable &operator=(const Throwable &) DELETED_FUNCTION;
-    Throwable(Throwable &&) noexcept DELETED_FUNCTION;
-    Throwable &operator=(Throwable &&) noexcept DELETED_FUNCTION;
+    Throwable &operator=(const Throwable &) noexcept DELETED_FUNCTION; // copy assignment
+    UPX_CXX_DISABLE_MOVE(Throwable)
     // disable dynamic allocation => force throwing by value
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(Throwable)
     // disable taking the address => force passing by reference
     // [I'm not too sure about this design decision, but we can always allow it if needed]
-    Throwable *operator&() const noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_ADDRESS(Throwable)
 
 private:
     static upx_std_atomic(size_t) debug_counter; // for debugging

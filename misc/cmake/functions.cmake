@@ -72,7 +72,7 @@ function(upx_print_var) # ARGV
     endforeach()
 endfunction()
 
-function(upx_print_have_symbol) # ARGV
+function(upx_print_have_symbol) # ARGV; needs include(CheckSymbolExists)
     foreach(symbol ${ARGV})
         set(cache_var_name "HAVE_symbol_${symbol}")
         check_symbol_exists(${symbol} "limits.h;stddef.h;stdint.h" ${cache_var_name})
@@ -147,7 +147,7 @@ endfunction()
 # compilation flags
 #***********************************************************************
 
-function(upx_internal_add_definitions_with_prefix) # ARGV
+function(upx_internal_add_definitions_with_prefix) # ARGV; needs include(CheckCCompilerFlag)
     set(flag_prefix "${ARGV0}")
     if(flag_prefix MATCHES "^empty$") # need "empty" to work around bug in old CMake versions
         set(flag_prefix "")
@@ -168,7 +168,7 @@ function(upx_internal_add_definitions_with_prefix) # ARGV
     set(failed_flags "${failed}" PARENT_SCOPE) # return value
 endfunction()
 
-function(upx_add_definitions) # ARGV
+function(upx_add_definitions) # ARGV; needs include(CheckCCompilerFlag)
     set(failed_flags "")
     if(MSVC_FRONTEND AND CMAKE_C_COMPILER_ID MATCHES "Clang")
         # for clang-cl try "-clang:" flag prefix first

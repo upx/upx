@@ -98,8 +98,53 @@ ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_ge("abc", "abz"))
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
 
 /*************************************************************************
-// UPX_CXX_DISABLE_NEW_DELETE
+// UPX_CXX_DISABLE_xxx
 **************************************************************************/
+
+namespace {
+template <class TA, class TB, int TC = 0>
+struct MyType1 {
+    MyType1() noexcept {}
+    UPX_CXX_DISABLE_ADDRESS(MyType1)
+    UPX_CXX_DISABLE_COPY_MOVE(MyType1)
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(MyType1)
+};
+template <class TA, class TB, int TC = 0>
+struct MyType2 {
+    MyType2() noexcept {}
+    UPX_CXX_DISABLE_COPY_MOVE(MyType2)
+    typedef MyType2<TA, TB, TC> Self;
+    UPX_CXX_DISABLE_ADDRESS(Self)
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(Self)
+};
+template <class TA, class TB, int TC = 0>
+struct MyVType1 {
+    MyVType1() noexcept {}
+    virtual ~MyVType1() noexcept {}
+    UPX_CXX_DISABLE_ADDRESS(MyVType1)
+    UPX_CXX_DISABLE_COPY_MOVE(MyVType1)
+    UPX_CXX_DISABLE_NEW_DELETE(MyVType1)
+};
+template <class TA, class TB, int TC = 0>
+struct MyVType2 {
+    MyVType2() noexcept {}
+    virtual ~MyVType2() noexcept {}
+    UPX_CXX_DISABLE_COPY_MOVE(MyVType2)
+    typedef MyVType2<TA, TB, TC> Self;
+    UPX_CXX_DISABLE_ADDRESS(Self)
+    UPX_CXX_DISABLE_NEW_DELETE(Self)
+};
+TEST_CASE("upx_cxx_disable") {
+    MyType1<char, int, 1> dummy1;
+    MyType2<char, int, 2> dummy2;
+    MyVType1<char, int, 1> vdummy1;
+    MyVType2<char, int, 2> vdummy2;
+    (void) dummy1;
+    (void) dummy2;
+    (void) vdummy1;
+    (void) vdummy2;
+}
+} // namespace
 
 namespace test_disable_new_delete {
 
@@ -108,7 +153,7 @@ struct A1 {
 };
 struct A2 {
     int a;
-    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(A2)
 };
 struct B1_A1 : public A1 {
     int b;
@@ -118,11 +163,11 @@ struct B1_A2 : public A2 {
 };
 struct B2_A1 : public A1 {
     int b;
-    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(B2_A1)
 };
 struct B2_A2 : public A2 {
     int b;
-    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(B2_A2)
 };
 
 struct X1 {
@@ -132,7 +177,7 @@ struct X1 {
 struct X2 {
     virtual ~X2() noexcept {}
     int x;
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(X2)
 };
 struct Y1_X1 : public X1 {
     int y;
@@ -142,11 +187,11 @@ struct Y1_X2 : public X2 {
 };
 struct Y2_X1 : public X1 {
     int y;
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(Y2_X1)
 };
 struct Y2_X2 : public X2 {
     int y;
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(Y2_X2)
 };
 struct Z1_X1 : public X1 {
     virtual ~Z1_X1() noexcept {}
@@ -159,12 +204,12 @@ struct Z1_X2 : public X2 {
 struct Z2_X1 : public X1 {
     virtual ~Z2_X1() noexcept {}
     int z;
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(Z2_X1)
 };
 struct Z2_X2 : public X2 {
     virtual ~Z2_X2() noexcept {}
     int z;
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(Z2_X2)
 };
 
 } // namespace test_disable_new_delete

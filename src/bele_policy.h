@@ -79,12 +79,9 @@ struct AbstractPolicy {
 
 private:
     // disable copy and move
-    AbstractPolicy(const AbstractPolicy &) DELETED_FUNCTION;
-    AbstractPolicy &operator=(const AbstractPolicy &) DELETED_FUNCTION;
-    AbstractPolicy(AbstractPolicy &&) noexcept DELETED_FUNCTION;
-    AbstractPolicy &operator=(AbstractPolicy &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(AbstractPolicy)
     // disable dynamic allocation
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(AbstractPolicy)
 };
 #endif
 
@@ -147,12 +144,9 @@ struct BEPolicy
 
 private:
     // disable copy and move
-    BEPolicy(const BEPolicy &) DELETED_FUNCTION;
-    BEPolicy &operator=(const BEPolicy &) DELETED_FUNCTION;
-    BEPolicy(BEPolicy &&) noexcept DELETED_FUNCTION;
-    BEPolicy &operator=(BEPolicy &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(BEPolicy)
     // disable dynamic allocation
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(BEPolicy)
 };
 
 struct LEPolicy
@@ -209,12 +203,9 @@ struct LEPolicy
 
 private:
     // disable copy and move
-    LEPolicy(const LEPolicy &) DELETED_FUNCTION;
-    LEPolicy &operator=(const LEPolicy &) DELETED_FUNCTION;
-    LEPolicy(LEPolicy &&) noexcept DELETED_FUNCTION;
-    LEPolicy &operator=(LEPolicy &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(LEPolicy)
     // disable dynamic allocation
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(LEPolicy)
 };
 
 // Native Endianness policy (aka host policy)

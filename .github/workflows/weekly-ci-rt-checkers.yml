@@ -24,6 +24,7 @@ jobs:
           - { container: 'alpine:3.19',      release: debug,   qemu: 'qemu-x86_64 -cpu Nehalem' }
           - { container: 'alpine:3.19',      release: release, qemu: 'qemu-x86_64 -cpu Nehalem' }
           - { container: 'alpine:edge',      release: release, qemu: 'qemu-x86_64 -cpu Nehalem' }
+          - { container: 'i386/alpine:3.19', release: release, qemu: 'qemu-i386' }
           - { container: 'i386/alpine:edge', release: release, qemu: 'qemu-i386' }
     name: ${{ format('{0} {1}', matrix.container, matrix.release) }}
     runs-on: ubuntu-latest
@@ -45,7 +46,8 @@ jobs:
 
       - name: 'Build clang-static'
         run: |
-          export CC="clang -static" CXX="clang++ -static"
+          flags="-static -fno-omit-frame-pointer"
+          export CC="clang $flags" CXX="clang++ $flags"
           make UPX_XTARGET=clang-static xtarget/$release
       - name: 'Build clang-asan'
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: ASAN not supported

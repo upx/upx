@@ -33,55 +33,105 @@
 namespace upx {
 
 /*************************************************************************
-// core
+// core util
 **************************************************************************/
 
+// disable taking the address => force passing by reference (instead of pointer)
+#define UPX_CXX_DISABLE_ADDRESS(Klass)                                                             \
+private:                                                                                           \
+    Klass *operator&() const noexcept DELETED_FUNCTION;
+
+// disable copy and move
+#define UPX_CXX_DISABLE_COPY(KlassName)                                                            \
+private:                                                                                           \
+    KlassName(const KlassName &) noexcept DELETED_FUNCTION;            /* copy constructor */      \
+    KlassName &operator=(const KlassName &) noexcept DELETED_FUNCTION; /* copy assignment */
+#define UPX_CXX_DISABLE_MOVE(KlassName)                                                            \
+private:                                                                                           \
+    KlassName(KlassName &&) noexcept DELETED_FUNCTION;            /* move constructor */           \
+    KlassName &operator=(KlassName &&) noexcept DELETED_FUNCTION; /* move assignment */
+#define UPX_CXX_DISABLE_COPY_MOVE(KlassName)                                                       \
+    UPX_CXX_DISABLE_COPY(KlassName)                                                                \
+    UPX_CXX_DISABLE_MOVE(KlassName)
+
 // fun with C++: disable common "new" and ALL "delete" operators
-#define UPX_CXX_DISABLE_NEW_DELETE_COMMON__                                                        \
+// https://en.cppreference.com/w/cpp/memory/new/operator_delete
+#define UPX_CXX_DISABLE_NEW_DELETE_IMPL__(Klass)                                                   \
 private:                                                                                           \
     /* common allocation functions (4) */                                                          \
-    static void *operator new(std::size_t) = delete;                                               \
-    static void *operator new[](std::size_t) = delete;                                             \
-    static void *operator new(std::size_t, void *) = delete;                                       \
-    static void *operator new[](std::size_t, void *) = delete;                                     \
+    static void *operator new(std::size_t) DELETED_FUNCTION;                                       \
+    static void *operator new[](std::size_t) DELETED_FUNCTION;                                     \
+    static void *operator new(std::size_t, void *) DELETED_FUNCTION;                               \
+    static void *operator new[](std::size_t, void *) DELETED_FUNCTION;                             \
     /* replaceable placement deallocation functions (4) */                                         \
-    static void operator delete(void *, const std::nothrow_t &) noexcept = delete;                 \
-    static void operator delete[](void *, const std::nothrow_t &) noexcept = delete;               \
-    static void operator delete(void *, std::align_val_t, const std::nothrow_t &) noexcept =       \
-        delete;                                                                                    \
-    static void operator delete[](void *, std::align_val_t, const std::nothrow_t &) noexcept =     \
-        delete;                                                                                    \
+    static void operator delete(void *, const std::nothrow_t &) noexcept DELETED_FUNCTION;         \
+    static void operator delete[](void *, const std::nothrow_t &) noexcept DELETED_FUNCTION;       \
+    static void operator delete(void *, std::align_val_t, const std::nothrow_t &)                  \
+        noexcept DELETED_FUNCTION;                                                                 \
+    static void operator delete[](void *, std::align_val_t, const std::nothrow_t &)                \
+        noexcept DELETED_FUNCTION;                                                                 \
     /* non-allocating placement deallocation functions (2) */                                      \
-    static void operator delete(void *, void *) noexcept = delete;                                 \
-    static void operator delete[](void *, void *) noexcept = delete;
+    static void operator delete(void *, void *) noexcept DELETED_FUNCTION;                         \
+    static void operator delete[](void *, void *) noexcept DELETED_FUNCTION;
 
-// for classes with virtual methods
-#define UPX_CXX_DISABLE_NEW_DELETE                                                                 \
-    UPX_CXX_DISABLE_NEW_DELETE_COMMON__                                                            \
-    /* replaceable usual deallocation functions (8) */                                             \
+/* class-specific usual deallocation functions (8) */
+#define UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDF_A__(Klass)                                           \
 protected:                                                                                         \
     static void operator delete(void *) noexcept {}                                                \
-    static void operator delete[](void *) noexcept = delete;                                       \
-    static void operator delete(void *, std::align_val_t) {}                                       \
-    static void operator delete[](void *, std::align_val_t) noexcept = delete;                     \
-    static void operator delete(void *, std::size_t) {}                                            \
-    static void operator delete[](void *, std::size_t) noexcept = delete;                          \
-    static void operator delete(void *, std::size_t, std::align_val_t) {}                          \
-    static void operator delete[](void *, std::size_t, std::align_val_t) noexcept = delete;        \
-private:
+    static void operator delete(void *, std::align_val_t) noexcept {}                              \
+    static void operator delete(void *, std::size_t) noexcept {}                                   \
+    static void operator delete(void *, std::size_t, std::align_val_t) noexcept {}                 \
+private:                                                                                           \
+    static void operator delete[](void *) noexcept DELETED_FUNCTION;                               \
+    static void operator delete[](void *, std::align_val_t) noexcept DELETED_FUNCTION;             \
+    static void operator delete[](void *, std::size_t) noexcept DELETED_FUNCTION;                  \
+    static void operator delete[](void *, std::size_t, std::align_val_t) noexcept DELETED_FUNCTION;
+#define UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDF_B__(Klass)                                           \
+private:                                                                                           \
+    static void operator delete(void *) noexcept DELETED_FUNCTION;                                 \
+    static void operator delete[](void *) noexcept DELETED_FUNCTION;                               \
+    static void operator delete(void *, std::align_val_t) noexcept DELETED_FUNCTION;               \
+    static void operator delete[](void *, std::align_val_t) noexcept DELETED_FUNCTION;             \
+    static void operator delete(void *, std::size_t) noexcept DELETED_FUNCTION;                    \
+    static void operator delete[](void *, std::size_t) noexcept DELETED_FUNCTION;                  \
+    static void operator delete(void *, std::size_t, std::align_val_t) noexcept DELETED_FUNCTION;  \
+    static void operator delete[](void *, std::size_t, std::align_val_t) noexcept DELETED_FUNCTION;
 
-// for classes WITHOUT any virtual methods
-#define UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL                                                      \
-    UPX_CXX_DISABLE_NEW_DELETE_COMMON__                                                            \
-    /* replaceable usual deallocation functions (8) */                                             \
-    static void operator delete(void *) noexcept = delete;                                         \
-    static void operator delete[](void *) noexcept = delete;                                       \
-    static void operator delete(void *, std::align_val_t) = delete;                                \
-    static void operator delete[](void *, std::align_val_t) noexcept = delete;                     \
-    static void operator delete(void *, std::size_t) = delete;                                     \
-    static void operator delete[](void *, std::size_t) noexcept = delete;                          \
-    static void operator delete(void *, std::size_t, std::align_val_t) = delete;                   \
-    static void operator delete[](void *, std::size_t, std::align_val_t) noexcept = delete;
+/* class-specific usual destroying deallocation functions (4) */
+#if __cplusplus >= 202002L
+#define UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDDF_A__(Klass)                                          \
+protected:                                                                                         \
+    static void operator delete(Klass *, std::destroying_delete_t) noexcept {}                     \
+    static void operator delete(Klass *, std::destroying_delete_t, std::align_val_t) noexcept {}   \
+    static void operator delete(Klass *, std::destroying_delete_t, std::size_t) noexcept {}        \
+    static void operator delete(Klass *, std::destroying_delete_t, std::size_t, std::align_val_t)  \
+        noexcept {}                                                                                \
+private:
+#define UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDDF_B__(Klass)                                          \
+private:                                                                                           \
+    static void operator delete(Klass *, std::destroying_delete_t) noexcept DELETED_FUNCTION;      \
+    static void operator delete(Klass *, std::destroying_delete_t, std::align_val_t)               \
+        noexcept DELETED_FUNCTION;                                                                 \
+    static void operator delete(Klass *, std::destroying_delete_t, std::size_t)                    \
+        noexcept DELETED_FUNCTION;                                                                 \
+    static void operator delete(Klass *, std::destroying_delete_t, std::size_t, std::align_val_t)  \
+        noexcept DELETED_FUNCTION;
+#else
+#define UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDDF_A__(Klass) private:
+#define UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDDF_B__(Klass) private:
+#endif
+
+// for classes which may have virtual methods
+#define UPX_CXX_DISABLE_NEW_DELETE(Klass)                                                          \
+    UPX_CXX_DISABLE_NEW_DELETE_IMPL__(Klass)                                                       \
+    UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDF_A__(Klass)                                               \
+    UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDDF_A__(Klass)
+
+// this only works for classes WITHOUT any virtual methods
+#define UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(Klass)                                               \
+    UPX_CXX_DISABLE_NEW_DELETE_IMPL__(Klass)                                                       \
+    UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDF_B__(Klass)                                               \
+    UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDDF_B__(Klass)
 
 /*************************************************************************
 // type_traits
@@ -137,11 +187,7 @@ protected:
 #else
     forceinline ~noncopyable() noexcept = default;
 #endif
-private:
-    noncopyable(const noncopyable &) noexcept DELETED_FUNCTION;            // copy constructor
-    noncopyable &operator=(const noncopyable &) noexcept DELETED_FUNCTION; // copy assignment
-    noncopyable(noncopyable &&) noexcept DELETED_FUNCTION;                 // move constructor
-    noncopyable &operator=(noncopyable &&) noexcept DELETED_FUNCTION;      // move assignment
+    UPX_CXX_DISABLE_COPY_MOVE(noncopyable)
 };
 
 namespace compile_time {
@@ -178,7 +224,7 @@ struct TriBool final {
     // constructors
     forceinline constexpr TriBool() noexcept {}
     forceinline constexpr TriBool(value_type x) noexcept : value(x) {}
-    // permissive, converts all other values to Third!!
+    // IMPORTANT NOTE: permissive, converts all other values to Third!
     constexpr TriBool(promoted_type x) noexcept : value(x == 0 ? False : (x == 1 ? True : Third)) {}
 #if __cplusplus >= 202002L
     forceinline constexpr ~TriBool() noexcept = default;
@@ -214,8 +260,8 @@ struct TriBool final {
 #endif
 
 private:
-    value_type value = False;             // the actual value of this type
-    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL // UPX convention
+    value_type value = False;                      // the actual value of this type
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(TriBool) // UPX convention
 };
 
 typedef TriBool<> tribool;
@@ -245,7 +291,7 @@ struct OptVar final {
     void assertValue() const noexcept { assertValue(value); }
 
     constexpr OptVar() noexcept {}
-    OptVar &operator=(const T &other) noexcept {
+    OptVar &operator=(const T &other) noexcept { // copy constructor
         assertValue(other);
         value = other;
         is_set = true;
@@ -259,6 +305,7 @@ struct OptVar final {
 
     value_type value = default_value;
     bool is_set = false;
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(OptVar) // UPX convention
 };
 
 // optional assignments
@@ -312,9 +359,9 @@ struct OwningPointer final {
     constexpr const_pointer operator->() const noexcept { return ptr; }
 private:
     pointer ptr;
-    reference operator[](std::ptrdiff_t) noexcept = delete;
-    const_reference operator[](std::ptrdiff_t) const noexcept = delete;
-    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL // UPX convention
+    reference operator[](std::ptrdiff_t) noexcept DELETED_FUNCTION;
+    const_reference operator[](std::ptrdiff_t) const noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(OwningPointer) // UPX convention
 };
 // must overload mem_clear()
 template <class T>

@@ -321,10 +321,7 @@ private:
 
 private:
     // disable copy and move
-    Packer(const Packer &) DELETED_FUNCTION;
-    Packer &operator=(const Packer &) DELETED_FUNCTION;
-    Packer(Packer &&) noexcept DELETED_FUNCTION;
-    Packer &operator=(Packer &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(Packer)
 };
 
 /* vim:set ts=4 sw=4 et: */

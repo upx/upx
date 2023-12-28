@@ -564,6 +564,17 @@ TEST_CASE("acc_vget") {
     CHECK_EQ(acc_vget_acc_hvoid_p(nullptr, 0), nullptr);
 }
 
+TEST_CASE("ptr_invalidate_and_poison") {
+    int *ip = nullptr;
+    ptr_invalidate_and_poison(ip);
+    assert(ip != nullptr);
+    (void) ip;
+    double *dp;
+    ptr_invalidate_and_poison(dp);
+    assert(dp != nullptr);
+    (void) dp;
+}
+
 TEST_CASE("working -fno-strict-aliasing") {
     bool ok;
     long v = 0;
