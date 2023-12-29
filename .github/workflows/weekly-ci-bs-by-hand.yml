@@ -13,7 +13,7 @@ env:
   VERBOSE: 1
 
 jobs:
-  job-by-hand-alpine-linux-gcc: # uses a POSIX-compliant shell
+  job-by-hand-alpinelinux-gcc: # uses a POSIX-compliant shell
     # ...and also uses a subdirectory "upx with space" in order to detect possible quoting issues
     # ...and also uses ccache as we are running the same build-script again and again
     if: github.repository_owner == 'upx'

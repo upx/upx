@@ -12,7 +12,7 @@ env:
   DEBIAN_FRONTEND: noninteractive
 
 jobs:
-  job-alpine-clang: # uses cmake + make
+  job-alpinelinux-clang-static: # uses cmake + make
     if: true
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
     name: ${{ format('clang {0}', matrix.container) }}
@@ -30,7 +30,7 @@ jobs:
           make -C build/debug   test
           make -C build/release test
           make -C build/release install DESTDIR="$PWD/Install"
-          N=$(echo "upx-test-minimal-alpine-linux-clang-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          N=$(echo "upx-test-minimal-alpinelinux-clang-static-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
@@ -39,7 +39,7 @@ jobs:
           name: ${{ env.artifact_name }}
           path: 'upx*/build/*/upx'
 
-  job-alpine-gcc: # uses cmake + make
+  job-alpinelinux-gcc-static: # uses cmake + make
     if: true
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
     name: ${{ format('gcc {0}', matrix.container) }}
@@ -57,7 +57,7 @@ jobs:
           make -C build/debug   test
           make -C build/release test
           make -C build/release install DESTDIR="$PWD/Install"
-          N=$(echo "upx-test-minimal-alpine-linux-gcc-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          N=$(echo "upx-test-minimal-alpinelinux-gcc-static-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
