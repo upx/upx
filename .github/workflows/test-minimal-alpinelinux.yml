@@ -15,7 +15,7 @@ jobs:
   job-alpinelinux-clang-static: # uses cmake + make
     if: true
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
-    name: ${{ format('clang {0}', matrix.container) }}
+    name: ${{ format('clang-static {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
@@ -42,7 +42,7 @@ jobs:
   job-alpinelinux-gcc-static: # uses cmake + make
     if: true
     strategy: { matrix: { container: ['alpine:edge','i386/alpine:edge'] } }
-    name: ${{ format('gcc {0}', matrix.container) }}
+    name: ${{ format('gcc-static {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:

@@ -1,6 +1,6 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 # test minimal number of packages required for building UPX under Chimera Linux
-#   clang: apk add clang cmake curl gmake gtar
+#   clang: apk add bsdtar clang cmake curl gmake
 #
 
 name: 'Test - Minimal Chimera build'
@@ -21,8 +21,8 @@ jobs:
     steps:
       - name: ${{ format('Build clang {0}', matrix.container) }}
         run: |
-          apk update && apk upgrade && apk add clang cmake curl gmake gtar
-          for p in make tar; do ln -s -v ../../bin/g$p /usr/local/bin/$p; done
+          apk update && apk upgrade && apk add bsdtar clang cmake curl gmake
+          for p in make; do ln -s -v ../../bin/g$p /usr/local/bin/$p; done
           curl -OL https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-src.tar.xz
           tar -xoaf upx-*-src.tar.xz
           cd upx-*-src
@@ -43,16 +43,16 @@ jobs:
   job-chimeralinux-clang-static: # uses cmake + make
     if: true
     strategy: { matrix: { container: ['chimeralinux/chimera:latest'] } }
-    name: ${{ format('clang {0}', matrix.container) }}
+    name: ${{ format('clang-static {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
       - name: ${{ format('Build clang {0}', matrix.container) }}
         run: |
-          apk update && apk upgrade && apk add clang cmake curl gmake gtar
-          for p in make tar; do ln -s -v ../../bin/g$p /usr/local/bin/$p; done
-          # install -static packages
-          apk add libcxx-devel-static musl-devel-static
+          apk update && apk upgrade && apk add bsdtar clang cmake curl gmake
+          for p in make; do ln -s -v ../../bin/g$p /usr/local/bin/$p; done
+          # install devel-static packages
+          apk add libatomic-chimera-devel-static libcxx-devel-static musl-devel-static
           curl -OL https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-src.tar.xz
           tar -xoaf upx-*-src.tar.xz
           cd upx-*-src
