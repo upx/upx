@@ -30,7 +30,7 @@ jobs:
           make -C build/debug   test
           make -C build/release test
           make -C build/release install DESTDIR="$PWD/Install"
-          N=$(echo "upx-test-alpine-linux-clang-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          N=$(echo "upx-test-minimal-alpine-linux-clang-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host
@@ -57,7 +57,7 @@ jobs:
           make -C build/debug   test
           make -C build/release test
           make -C build/release install DESTDIR="$PWD/Install"
-          N=$(echo "upx-test-alpine-linux-gcc-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          N=$(echo "upx-test-minimal-alpine-linux-gcc-${{ matrix.container }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ !startsWith(matrix.container, 'i386/') }} # i386: missing nodejs on host

@@ -221,7 +221,7 @@ ifneq ($(CXX),)
 UPX_XTARGET := $(UPX_XTARGET)
 build/xtarget/$(UPX_XTARGET)/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/xtarget/$(UPX_XTARGET)/release: PHONY; $(call run_config_and_build,$@,Release)
-build/xtarget/$(UPX_XTARGET)/%: export CC := $(CC)
+build/xtarget/$(UPX_XTARGET)/%: export CC  := $(CC)
 build/xtarget/$(UPX_XTARGET)/%: export CXX := $(CXX)
 # shortcuts
 xtarget/all:     xtarget/debug xtarget/release
