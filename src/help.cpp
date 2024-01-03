@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -420,10 +420,10 @@ void show_version(bool one_line) {
     fprintf(f, "doctest C++ testing framework version %s\n", DOCTEST_VERSION_STR);
 #endif
     // clang-format off
-    fprintf(f, "Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer\n");
-    fprintf(f, "Copyright (C) 1996-2023 Laszlo Molnar\n");
-    fprintf(f, "Copyright (C) 2000-2023 John F. Reiser\n");
-    fprintf(f, "Copyright (C) 2002-2023 Jens Medoch\n");
+    fprintf(f, "Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer\n");
+    fprintf(f, "Copyright (C) 1996-2024 Laszlo Molnar\n");
+    fprintf(f, "Copyright (C) 2000-2024 John F. Reiser\n");
+    fprintf(f, "Copyright (C) 2002-2024 Jens Medoch\n");
 #if (WITH_ZLIB)
     fprintf(f, "Copyright (C) 1995" "-2023 Jean-loup Gailly and Mark Adler\n");
 #endif
