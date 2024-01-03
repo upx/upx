@@ -33,8 +33,8 @@ jobs:
           - { container: 'alpine:3.10', use_cxx20: 0, use_cxx2b: 0, use_lto: 0 }
           - { container: 'alpine:3.11', use_cxx20: 0, use_cxx2b: 0, use_lto: 0 }
           - { container: 'alpine:3.12', use_cxx20: 0, use_cxx2b: 0, use_lto: 0 }
-          - { container: 'alpine:3.13', use_cxx20: 1, use_cxx2b: 0, use_lto: 0 } # Jan 2021: C++20; clang-10 & gcc-10
-          - { container: 'alpine:3.14', use_cxx20: 1, use_cxx2b: 0, use_lto: 0 }
+          - { container: 'alpine:3.13', use_cxx20: 0, use_cxx2b: 0, use_lto: 0 } # Jan 2021: C++20; clang-10 & gcc-10; INFO: clang-10 is NOT fully C++20 compatible
+          - { container: 'alpine:3.14', use_cxx20: 1, use_cxx2b: 0, use_lto: 0 } # Jun 2011: C++20; clang-11 & gcc-10
           - { container: 'alpine:3.15', use_cxx20: 1, use_cxx2b: 0, use_lto: 1 } # Nov 2021: LTO;   clang-12 & gcc-10 & binutils-2.37
           - { container: 'alpine:3.16', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 } # May 2022: C++2b; clang-13 & gcc-11
           - { container: 'alpine:3.17', use_cxx20: 1, use_cxx2b: 1, use_lto: 1 }
