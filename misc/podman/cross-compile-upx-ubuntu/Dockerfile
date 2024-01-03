@@ -1,8 +1,8 @@
-# NOTE: this image is based on rebuild-stubs/upx-stubtools-20221212-v6,
+# NOTE: this image is based on rebuild-stubs/upx-stubtools-20221212-v7,
 #   so you have to create that image first
 # WARNING: we install many packages, so the resulting image needs A LOT of disk space!
-FROM localhost/upx-stubtools-20221212-v6
-ENV UPX_CONTAINER_IMAGE_NAME=upx-cross-compile-ubuntu2204-20230721-v2
+FROM localhost/upx-stubtools-20221212-v7
+ENV UPX_CONTAINER_IMAGE_NAME=upx-cross-compile-ubuntu2204-20230721-v3
 ARG DEBIAN_FRONTEND=noninteractive
 
 USER root
