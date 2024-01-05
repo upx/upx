@@ -37,7 +37,7 @@
 
 .macro call subr; bal \subr; .endm
 
-  section EXP_HEAD
+  section EXP_HEAD; .set noreorder
 
 sz_unc= 0
 sz_cpr= 4
@@ -47,6 +47,7 @@ b_cto8=  10
 b_extra= 11
 sz_binfo= 12
 
+  .set noreorder
 f_expand: .globl f_expand // f_expand(b_info *, dst, &dstlen)
 // Supervisor for de-compression, un-filter, and sync_cache
 // Input to supervisor:
@@ -101,7 +102,7 @@ decompress:  // (src *, cpr_len, dst *, &dstlen);
 
 //  sections NRV2B, etc, inserted here by addLoader() from ::buildLinuxLoader()
 
-  section EXP_TAIL
+  section EXP_TAIL; .set noreorder
   .type eof,function
   .globl eof
 eof:  // end of a compressed extent; need sync_cache
@@ -112,8 +113,6 @@ eof:  // end of a compressed extent; need sync_cache
         lw a3,3*NBPW(sp); sw dst,(a3)  // actual length used at dst  XXX: 4GB
         jr ra
           addiu sp,4*NBPW
-#undef src
-#undef dst
 
 #define M_NRV2B_LE32    2
 #define M_NRV2B_8    3
@@ -127,20 +126,38 @@ eof:  // end of a compressed extent; need sync_cache
 // FIXME: will need extra parameter for multi-method decompression
 #define NO_METHOD_CHECK 1
 
-  section NRV2E
+  section NRV2E; .set noreorder
+        UCL_init    32,1,0
+        decomp_done = eof_n2e
 #include "arch/mips/r3000/nrv2e_d.ash"
+        build nrv2e, full
+eof_n2e:
+    break  // FIXME
 
-  section NRV2D
+  section NRV2D; .set noreorder
+        UCL_init    32,1,0
+        decomp_done = eof_n2d
 #include "arch/mips/r3000/nrv2d_d.ash"
+        build nrv2d, full
+eof_n2d:
+    break  // FIXME
 
-  section NRV2B
+  section NRV2B; .set noreorder
+        UCL_init    32,1,0
+        decomp_done = eof_n2b
 #include "arch/mips/r3000/nrv2b_d.ash"
+        build nrv2b, full
+eof_n2b:
+    break  // FIXME
 
 /* lzma has its own 'section's */
-  section LZMA_DEC30
+  section LZMA_DEC30; .set noreorder
         break  // FIXME
 
-  section     LZMA_ELF00 # (a0=lxsrc, a1=lxsrclen, a2=lxdst, a3= &lxdstlen)
+#undef src
+#undef dst
+
+  section LZMA_ELF00; .set noreorder  # (a0=lxsrc, a1=lxsrclen, a2=lxdst, a3= &lxdstlen)
 #define lxsrc a0
 #define lxsrclen a1
 #define lxdst a2

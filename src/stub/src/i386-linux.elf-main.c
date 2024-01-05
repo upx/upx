@@ -29,6 +29,8 @@
    <jreiser@users.sourceforge.net>
  */
 
+#define DEBUG 1
+
 #ifndef DEBUG  /*{*/
 #define DEBUG 1
 #endif  /*}*/
@@ -894,14 +896,15 @@ void *upx_main(
 
 #if defined(__mips__)  /*{*/
     Extent xo, xi, xj;
+  DPRINTF("mips_main\\n", -1);
     xo.buf  = (char *)ehdr;          xo.size = bi->sz_unc;
     xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
     xj.buf = CONST_CAST(char *, bi); xj.size = sizeof(*bi) + bi->sz_cpr;
 #endif  //}
 
-    DPRINTF("upx_main@%%p av=%%p  szc=%%x"
+    DPRINTF("upx_main  av=%%p  szc=%%x"
             "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  elfaddr=%%x\\n",
-        upx_main, av, sz_compressed, &xo, xo.size, xo.buf,
+        av, sz_compressed, &xo, xo.size, xo.buf,
         &xi, xi.size, xi.buf, elfaddr);
 
 #if defined(__mips__)  //{

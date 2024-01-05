@@ -148,7 +148,7 @@ _start: .globl _start
     bkpt  // DEBUG  0xd4200000
         TRACE(#0)
 #endif  /*}*/
-        mov x0,sp; call zfind  // x0= &envp
+        add x0,sp,#NBPW; call zfind  // avoid feint of 0==argc;  x0= &envp
         call zfind; mov xauxv,x0  // &Elf64_auxv
 
         sub sp,sp,#4*NBPW  // space for ADRU, LENU
@@ -156,7 +156,7 @@ F_PMASK= 0 * NBPW
 F_SZPK2= 1 * NBPW
 F_ADRU= 2 * NBPW
 F_LENU= 3 * NBPW
-F_ARGC= 4 * NBPW
+//F_ARGC= 4 * NBPW
 
 // set xPMASK by finding actual page size in Elf64_auxv
 1:

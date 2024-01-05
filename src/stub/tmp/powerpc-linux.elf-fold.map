@@ -12,7 +12,7 @@ Linker script and memory map
 TARGET(elf32-powerpc)
                 0x0000000000100040                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000100040     0x2070
+.text           0x0000000000100040     0x2068
  *(.text)
  .text          0x0000000000100040      0x2a0 tmp/powerpc-linux.elf-fold.o
                 0x0000000000100040                get_page_mask
@@ -33,13 +33,13 @@ TARGET(elf32-powerpc)
  .text          0x00000000001002e0       0xb0 tmp/powerpc-linux.elf-upxfd_android.o
                 0x00000000001002e0                upx_mmap_and_fd
  .text          0x0000000000100390        0x0 tmp/powerpc-expand.o
- .text          0x0000000000100390     0x1d20 tmp/powerpc-linux.elf-main.o
+ .text          0x0000000000100390     0x1d18 tmp/powerpc-linux.elf-main.o
                 0x0000000000101d74                upx_main
  *(.data)
- .data          0x00000000001020b0        0x0 tmp/powerpc-linux.elf-fold.o
- .data          0x00000000001020b0        0x0 tmp/powerpc-linux.elf-upxfd_android.o
- .data          0x00000000001020b0        0x0 tmp/powerpc-expand.o
- .data          0x00000000001020b0        0x0 tmp/powerpc-linux.elf-main.o
+ .data          0x00000000001020a8        0x0 tmp/powerpc-linux.elf-fold.o
+ .data          0x00000000001020a8        0x0 tmp/powerpc-linux.elf-upxfd_android.o
+ .data          0x00000000001020a8        0x0 tmp/powerpc-expand.o
+ .data          0x00000000001020a8        0x0 tmp/powerpc-linux.elf-main.o
 
 .data
 
