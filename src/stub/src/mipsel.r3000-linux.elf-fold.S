@@ -96,7 +96,7 @@ a5_sys=  5*NBPW
 #define a5  t1
 
 //ra             31
-#define r_fexp   30  /* s8 */
+//s8 AVAIL       30  /* s8 */
 //sp             29  /* hardware */
 #define r_PMASK  28  /* gp */
 //k1             27  /* trashed by syscall */
@@ -113,14 +113,16 @@ a5_sys=  5*NBPW
 #define r_ADRX   16  /* s0 */
 
 /* In:
-    r_ADRX,r_LENX,r_elfa,r_auxv,r_PMASK,r_fexp
-    sp= -sp_frame{%,%,%,%,PMASK,%fd,ADRU,LENU}, {argc,argv...,0,env...,0,auxv...,0,0,strings}
+    r_ADRX,r_LENX,r_elfa,r_auxv,r_PMASK
+    sp= -sp_frame{%,%,%,%,PMASK,%,ADRU,LENU}, {argc,argv...,0,env...,0,auxv...,0,0,strings}
 */
 PAGE_MASK=  . - 2*NBPW; .globl PAGE_MASK
 upxfn_path= . - 1*NBPW  // displacement from "zero"
 
-fold_begin:
-////    break
+PAGE_MASK: .word 0  # set by elf-entry.S
+upxfn_path: .word 0  # set by elf-entry.S
+
+fold_begin: .set noreorder
         move v0,sp
         addiu sp,(~0<<4)&-(NBPW+ 4+ PATHSIZE - sp_frame)  # alloca: new envp[0], "   =", buffer
 
@@ -199,22 +201,20 @@ L30:
         sb $0,(TMP)  # null terminate the path
 0:
         addiu sp,-MAX_ELF_HDR_32  # alloca
-        move t3,$r_PMASK  # page_mask
-        move t2,$r_elfa  # &Elf32_Ehdr of stub
-        move t1,zero  # &f_unfilter
-        move t0,$r_fexp  # &f_decompress
+        move t0,$r_elfa  # &Elf32_Ehdr of stub  a4  arg5
         move a3,$r_auxv  # new &auxv[0]
         move a2,sp  # &Elf32_Ehdr TMP space
         move a1,$r_LENX  # total_size
 
+    break  # DEBUG temp
         bal upx_main  # remember that Makefile 'cat' all *.[sS]
           move a0,$r_ADRX
 
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Elf32_Auxv_t *a3,
-        f_decompr t0, f_unfilter t1, Elf32_Ehdr &t2, page_mask t3 )
+        Elf32_Ehdr *elfa)
 */
         addiu sp,MAX_ELF_HDR_32  # un-alloca
-        move $r_fexp,v0  # &entry
+        move ra,v0  # &entry
 
 p_vaddr= 2*NBPW
 p_memsz= 5*NBPW
@@ -266,13 +266,13 @@ no_map_pse:
           nop  # needed? allegedly MIPS R3000 provides load delay in hardware when needed
         beqz TMP,L40  # could not make escape hatch
           nop  # even R3000 requires branch delay
-        jr TMP  # goto munmap escape hatch: [syscall; jr $r_fexp; nop]
+        jr TMP  # goto munmap escape hatch: [syscall; jr ra; nop]
           li v0,__NR_munmap
 L40:
-        jr $r_fexp  # omit munmap
+        jr ra  # omit munmap
           nop
 
-  section SYSCALLS
+  section SYSCALLS; .set noreorder
 
 Pprotect: .globl Pprotect
         li TMP,1<<12  // FIXME  PAGE_MASK
@@ -284,7 +284,7 @@ Pprotect: .globl Pprotect
           nop
 
 my_bkpt: .globl my_bkpt
-        break
+        break  # my_bkpt
         j ra
           nop
 

@@ -8,7 +8,7 @@ Linker script and memory map
 
 TARGET(elf32-littlearm)
 
-.text           0x0000000000000000     0x1870
+.text           0x0000000000000000     0x1868
  *(.text)
  .text          0x0000000000000000      0x300 tmp/arm.v5a-linux.elf-fold.o
                 0x0000000000000008                get_page_mask
@@ -24,13 +24,13 @@ TARGET(elf32-littlearm)
                 0x00000000000003c8                upx_mmap_and_fd
                 0x0000000000000324                strncmplc
  .text          0x00000000000006c0        0x0 tmp/arm.v5a-expand.o
- .text          0x00000000000006c0     0x11b0 tmp/arm.v5a-linux.elf-main.o
+ .text          0x00000000000006c0     0x11a8 tmp/arm.v5a-linux.elf-main.o
                 0x0000000000001620                upx_main
  *(.data)
- .data          0x0000000000001870        0x0 tmp/arm.v5a-linux.elf-fold.o
- .data          0x0000000000001870        0x0 tmp/arm.v5a-linux.elf-upxfd_android.o
- .data          0x0000000000001870        0x0 tmp/arm.v5a-expand.o
- .data          0x0000000000001870        0x0 tmp/arm.v5a-linux.elf-main.o
+ .data          0x0000000000001868        0x0 tmp/arm.v5a-linux.elf-fold.o
+ .data          0x0000000000001868        0x0 tmp/arm.v5a-linux.elf-upxfd_android.o
+ .data          0x0000000000001868        0x0 tmp/arm.v5a-expand.o
+ .data          0x0000000000001868        0x0 tmp/arm.v5a-linux.elf-main.o
 
 SYSCALLS        0x0000000000000000      0x1f0
  SYSCALLS       0x0000000000000000      0x1f0 tmp/arm.v5a-linux.elf-fold.o

@@ -33,14 +33,10 @@ NBPW= 4
 #include "arch/mips/r3000/macros.ash"
 #include "arch/mips/r3000/bits.ash"
 
-sp_frame= 0x20
-  # These are local temporaries.
-F_ADRM=  2*NBPW
-F_LENM=  3*NBPW
-
+sp_frame= 8*NBPW  # first 4 are ??
   # These are passed on stack to unfolded code.
 F_PMASK= 4*NBPW
-F_fd=    5*NBPW
+F_SZPK2= 5*NBPW; F_EOF= F_SZPK2
 F_ADRU=  6*NBPW
 F_LENU=  7*NBPW
   # r_PMASK still is used here
@@ -57,12 +53,12 @@ F_LENU=  7*NBPW
 #k0             26  /* trashed by syscall */
 #t9, jp         25  /* trashed by syscall ? */
 #t8             24  /* trashed by syscall ? */
-#define r_fd     23  /* s7 */
+#define r_mfd    23  /* s7 */
 #define r_auxv   22  /* s6 */
 #define r_elfa   21  /* s5 */
 #define r_FOLD   20  /* s4 */
 #define r_szuf   19  /* s3 */
-#define r_relo   18  /* s2 */
+//#define r_relo   18  /* s2 */
 #define r_LENX   17  /* s1 */
 #define r_ADRX   16  /* s0 */
 #define r_LENU   r_LENX
@@ -100,6 +96,7 @@ PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
 
+MAP_SHARED=         1
 MAP_PRIVATE=        2
 MAP_FIXED=       0x10
 MAP_ANONYMOUS=  0x800
@@ -113,6 +110,7 @@ M_NRV2E_LE32=8
 
 /* These from /usr/include/asm/unistd.h */
 __NR_Linux = 4000
+__NR_close    =   6+ __NR_Linux
 __NR_exit     =   1+ __NR_Linux
 __NR_memfd_create= 354 + __NR_Linux
 __NR_mmap     =  90+ __NR_Linux
@@ -127,7 +125,7 @@ DCACHE= 1<<1
 
 #BAL=0x04110000
 
-  section ELFMAINX
+  section ELFMAINX; .set noreorder
 sz_pack2 = . - 4
 
 _start: .globl _start
@@ -152,16 +150,28 @@ decompressor:  # (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdstl
 #define ldst    lxdstlen
 #define meth     a4
 
-    break
+        addiu sp,-2*NBPW
+        addu at,lxsrclen,lxsrc
+        sw ra,0*NBPW(sp)
+        sw at,1*NBPW(sp)  # src_eof
+
         UCL_init    32,1,0
         decomp_done = eof
 #include "arch/mips/r3000/nrv2b_d.ash"
         build nrv2b, full
 
 eof:
-        break  # FIXME
+        lw at,1*NBPW(sp)  # src_eof
+        lw ra,0*NBPW(sp)
+        sub at,lxsrc
+        beqz at,0f
+          addiu sp,2*NBPW
+        break  # bad EOF
+0:
+        jr ra
+          nop
 
-  section ELFMAINZ
+  section ELFMAINZ; .set noreorder
 L72:
         li a0,2  # fd stderr
         li v0,__NR_write; syscall
@@ -172,69 +182,57 @@ die:
 unfold:  # IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
         addiu sp,sp,-sp_frame
         sw $r_PMASK,F_PMASK(sp)
-
-# Reserve enough space to decompress the folded code of the stub
         lw $r_LENX,sz_pack2 - f_exp($r_fexp)  # length before stub
         la $r_elfa,sz_pack2 - f_exp($r_fexp)
-          li $a4,-1
-        lw $r_szuf,sz_unc($r_FOLD)  # sz_unc of fold
-          li a3,MAP_PRIVATE|MAP_ANONYMOUS
         sub $r_elfa,$r_elfa,$r_LENX  # $r_elfa= &Elf32_Ehdr of this stub
-          li a0,0  # kernel chooses addr
-        move a1,$r_szuf
-        bal mmapRW0
-          sw a1,F_LENU(sp)
-        sw v0,  F_ADRU(sp)
 
-        lw $r_ADRX,-4($r_FOLD)  # O_BINFO
+        bal 0f; move a0,ra; .asciz "upx"; .balign 4
+0:
+        move a1,zero
+        li v0,__NR_memfd_create; syscall; move $r_mfd,v0
+
+# alloca() for de-compressed stub
+        lw $r_szuf,sz_unc($r_FOLD)  # sz_unc of fold
+        move fp,sp
+        sw $r_szuf,F_LENU(sp)
+        li at,-2*NBPW
+        subu sp,$r_szuf; and sp,at
+
+        lw $r_ADRX,-NBPW($r_FOLD)  # O_BINFO
 # Decompress folded code
         lb $meth,b_method($r_FOLD)  # a4
-        sw $r_szuf,0(sp)  # lzma uses for EOF
-        move ldst,sp  # a3  &slot on stack
-        move dst,v0  # a2  dst for unfolding
+        sw $r_szuf,F_ADRU(fp)  # lzma uses for EOF
+        la ldst,   F_ADRU(fp)  # a3  &slot on stack
+        move dst,sp            # a2  dst for unfolding
         lw lsrc,sz_cpr($r_FOLD)  # a1
-        jalr $r_fexp  # decompress it
+        bal f_exp  # decompress it
           addiu src,$r_FOLD,sz_b_info  # a0  folded code
+        sw $r_PMASK,0*NBPW(sp)  # forward the PAGE_MASK
 
-# Generate code to compute PAGE_MASK.
-        lw a0,F_ADRU(sp)
-          srl v1,$r_PMASK,9
-        lw v0,0(a0)  # "li v0,0"
-        andi v1,v1,0xffff  # 0xffff is NOT sign-extended
-        or v0,v0,v1  # replace immediate constant
-        sw v0,0(a0)
+# Write de-compressed stub
+        move a2,$r_szuf  # .sz_unc
+        move a1,sp
+        move a0,$r_mfd
+        li v0,__NR_write; syscall
+        move sp,fp
 
-# PROT_EXEC
-        li a2,PROT_EXEC|PROT_READ
-        lw a1,F_LENU(sp)  # length
-      #lw a0,F_ADRU(sp)  // base
-        li v0,__NR_mprotect; syscall
+# Map de-compressed stub
+        addiu sp,-6*NBPW  # space for all 6 args to mmap()
+        sw zero,  5*NBPW(sp)  # last 2 args are in memory
+        sw $r_mfd,4*NBPW(sp)
+        li   a3,MAP_SHARED  # first 4 args are in registers, but kernel might store onto stack
+        li   a2,PROT_WRITE|PROT_READ|PROT_EXEC  # FIXME: PROT_WRITE is DEBUG only
+        lw   a1,sz_unc($r_FOLD)
+        move a0,zero
+        li v0,__NR_mmap; syscall; addiu sp,6*NBPW
+        sw v0,F_ADRU(sp)
+        addiu ra,v0,2*NBPW
 
-# Use the unfolded code
-        lw ra,F_ADRU(sp)
-          #nop  r_LENX
-        addi ra,ra,4*4  # jmp over get_page_mask()
+        move a0,$r_mfd; li v0,__NR_close; syscall
+
         jr ra
           addu $r_ADRX,$r_elfa,$r_ADRX  # compressed data
-
-mmapRW0:
-        li $a5,0  # offset
-mmapRW:
-        li a2,PROT_WRITE|PROT_READ
-mmap:
-        addiu sp,sp,-sp_frame
-a4_sys=  4*NBPW  # temporary for syscall
-a5_sys=  5*NBPW  # temporary for syscall
-        sw $a4,a4_sys(sp)
-        sw $a5,a5_sys(sp)
-        li v0,__NR_mmap; syscall
-        bnez a3,mmap_bad
-          nop
-        jr ra
-          addiu sp,sp, sp_frame
-mmap_bad:
-        break  # mmap_bad
-
+          
 zfind:  # result in $r_auxv
         lw v1,(a0); addiu a0,a0,NBPW
         bnez v1,zfind

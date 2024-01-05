@@ -7,7 +7,7 @@ Name             Origin             Length             Attributes
 Linker script and memory map
 
 
-.text           0x0000000000000000     0x1848
+.text           0x0000000000000000     0x1840
  .text          0x0000000000000000      0x2e0 tmp/arm.v4a-linux.elf-fold.o
                 0x0000000000000008                get_page_mask
                 0x00000000000002c4                mempcpy
@@ -22,7 +22,7 @@ Linker script and memory map
                 0x00000000000003a4                upx_mmap_and_fd
                 0x0000000000000304                strncmplc
  .text          0x000000000000069c        0x0 tmp/arm.v4a-expand.o
- .text          0x000000000000069c     0x11ac tmp/arm.v4a-linux.elf-main.o
+ .text          0x000000000000069c     0x11a4 tmp/arm.v4a-linux.elf-main.o
                 0x00000000000015f8                upx_main
 
 SYSCALLS        0x0000000000000000      0x100
