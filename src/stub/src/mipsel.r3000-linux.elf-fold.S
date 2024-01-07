@@ -77,6 +77,7 @@ OVERHEAD=2048
 #include "../src/MAX_ELF_HDR.S"
 
 MAP_PRIVATE=  0x002
+// see "#define __MAP_ANONYMOUS 0x0800" in  mips-linux-gnu/libc/usr/include/bits/mman.h
 MAP_ANONYMOUS=0x800  # not same as i386
 PROT_READ= 1
 
@@ -156,6 +157,7 @@ L20:  // copy auxv
         .balign 4
 
 get_page_mask: .globl get_page_mask
+Lget_page_mask:
         move v1,ra
         bal 5f  // ra= 0f
           lw v0,(ra)
@@ -206,7 +208,6 @@ L30:
         move a2,sp  # &Elf32_Ehdr TMP space
         move a1,$r_LENX  # total_size
 
-    break  # DEBUG temp
         bal upx_main  # remember that Makefile 'cat' all *.[sS]
           move a0,$r_ADRX
 
@@ -214,7 +215,7 @@ L30:
         Elf32_Ehdr *elfa)
 */
         addiu sp,MAX_ELF_HDR_32  # un-alloca
-        move ra,v0  # &entry
+        move s8,v0  # &entry
 
 p_vaddr= 2*NBPW
 p_memsz= 5*NBPW
@@ -266,26 +267,30 @@ no_map_pse:
           nop  # needed? allegedly MIPS R3000 provides load delay in hardware when needed
         beqz TMP,L40  # could not make escape hatch
           nop  # even R3000 requires branch delay
-        jr TMP  # goto munmap escape hatch: [syscall; jr ra; nop]
+        jr TMP  # goto munmap escape hatch: [syscall; jr s8; nop]
           li v0,__NR_munmap
 L40:
-        jr ra  # omit munmap
+        jr s8  # omit munmap
           nop
 
   section SYSCALLS; .set noreorder
 
 Pprotect: .globl Pprotect
-        li TMP,1<<12  // FIXME  PAGE_MASK
-        and TMP,a0
+        addiu sp,-2*NBPW; sw ra,0*NBPW(sp)
+        bal Lget_page_mask
+          nop
+        not v0,v0  # fragment mask
+        lw ra,0*NBPW(sp)
+        and TMP,a0,v0
         sub a0,TMP
         add a1,TMP
         li v0,__NR_mprotect; syscall
-        j ra
-          nop
+        jr ra
+          addiu sp,2*NBPW
 
 my_bkpt: .globl my_bkpt
         break  # my_bkpt
-        j ra
+        jr ra
           nop
 
 // mips-linux-gnu/libc/uclibc/lib/libgcc_s.so.1: __clear_cache is a no-op

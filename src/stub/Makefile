@@ -1503,28 +1503,17 @@ tc.mips.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -meb -march=r3000 -mno-abi
 tc.mips.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.mips.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-tc.mipsel.r3000-linux.elf.as   = mipsel-elf-as-20060406 -EL -O -mno-pdr
-tc.mipsel.r3000-linux.elf.pp-as= mipsel-elf-as-20060406 -EL -mabi=eabi -Wall
-tc.mipsel.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
-tc.mipsel.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.mipsel.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-
 mips.r3000-linux.elf-entry.h : $(srcdir)/src/mips.r3000-linux.elf-entry.lds \
 	    $(srcdir)/src/$$T.S
 	# info: we really need as-2.17 here; as-2.16.1 as used by gcc-4.1.1 does _not_ work
-	    echo line 40
 	$(call tc,gcc) -E -x assembler-with-cpp \
 		-D__mips__  -D__MIPSEB__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
 	    | $(call tc,pp-as) -achlmms=tmp/$T.list -o tmp/$T.o
-	    echo line 41
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
-	    echo line 42
 	multiarch-ld-2.17 -r --format=elf32-bigmips -Map tmp/$T.map -o tmp/$T.bin \
 	    -T src/mips.r3000-linux.elf-entry.lds \
 	    tmp/$T.o
-	    echo line 43
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
-	echo line 45
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/mips.r3000-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
@@ -1557,15 +1546,6 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 # "unrecognized program segment header size"	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/mips.r3000-linux.expand.o: $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
-
-tmp/mips.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEB__ $< -o - | $(RTRIM) > tmp/$T.i
-	$(call tc,as) tmp/$T.i -o tmp/$T.o
-	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
-	$(call tc,gcc) -c -D_TARGET_LINUX_ -Wa,-O,-mno-pdr $< -o $@
-
 tmp/mips.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -S -D__mips__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
@@ -1575,7 +1555,7 @@ tmp/mips.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
 
-tmp/mips.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c
+tmp/mips.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -S -D__mips__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L7&/g' \
@@ -1617,22 +1597,25 @@ endif
 # // mipsel.r3000-linux.elf
 # ************************************************************************/
 
+tc.mipsel.r3000-linux.elf.as   = mipsel-elf-as-20060406 -EL -O -mno-pdr
+tc.mipsel.r3000-linux.elf.pp-as= mipsel-elf-as-20060406 -EL -mabi=eabi -Wall
+tc.mipsel.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
+tc.mipsel.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.mipsel.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
 mipsel.r3000-linux.elf%.h : tc_list = mipsel.r3000-ps1 default
 mipsel.r3000-linux.elf%.h : tc_bfdname = elf32-littlemips
 
 mipsel.r3000-linux.elf-entry.h : $(srcdir)/src/mipsel.r3000-linux.elf-entry.lds \
 	    $(srcdir)/src/$$T.S
 	# info: we really need as-2.17 here; as-2.16.1 as used by gcc-4.1.1 does _not_ work
-	    echo line 50
 	$(call tc,gcc) -E -x assembler-with-cpp \
 		-D__mips__  -D__MIPSEL__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
 	    | mipsel-elf-as-20060406 -EL -mabi=eabi -Wall -a=/dev/null -o tmp/$T.o
-	    echo line 51
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	multiarch-ld-2.17 -r --format=elf32-littlemips -Map tmp/$T.map -o tmp/$T.bin \
 	    -T src/mipsel.r3000-linux.elf-entry.lds \
 	    tmp/$T.o
-	    echo line 52
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
@@ -1657,18 +1640,9 @@ mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
-	ls -l tmp/$T.bin; cp tmp/$T.bin tmp/foo.1
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
-	ls -l tmp/$T.bin; cp tmp/$T.bin tmp/foo.2
 # "unrecognized program segment header size"	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@; cp tmp/$T.bin tmp/foo.3
-
-tmp/mipsel.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
-	: $(call tc,f-objstrip,$@)
-
-tmp/mipsel.r3000-linux.expand.o: $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/mipsel.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -S -D__mipsel__ -D_TARGET_LINUX_ -O $< -o - \
@@ -1679,7 +1653,7 @@ tmp/mipsel.r3000-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
 
-tmp/mipsel.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c
+tmp/mipsel.r3000-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -S -D__mipsel__ -D_TARGET_LINUX_ -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L7&/g' \

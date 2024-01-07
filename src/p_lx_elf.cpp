@@ -7713,7 +7713,7 @@ PackLinuxElf32mipseb::~PackLinuxElf32mipseb()
 
 PackLinuxElf32mipsel::PackLinuxElf32mipsel(InputFile *f) : super(f)
 {
-    e_machine = Elf32_Ehdr::EM_MIPS;
+    e_machine = Elf32_Ehdr::EM_MIPS;  // not EM_MIPS_RS3_LE ??
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2LSB;
     ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
