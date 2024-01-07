@@ -43,10 +43,10 @@ unsigned Pprotect(void *, size_t, unsigned);
 #endif  //}
 extern int memfd_create(char const *name, unsigned flags);
 void *mmap(void *, size_t, int, int, int, off_t);
-#if defined(__i386__) || defined(__mips__) || defined(__powerpc__) //{
+#if defined(__i386__) || defined(__powerpc__) //{
 #  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
         MAP_PRIVATE|MAP_ANONYMOUS|(flgs),-1,0)
-#else  //}{
+#else  //}{ /* MIPS is special */
   void *mmap_privanon(void *, size_t, int, int);
 #endif  //}
 ssize_t write(int, void const *, size_t);

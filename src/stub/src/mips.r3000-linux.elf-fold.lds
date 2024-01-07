@@ -38,7 +38,6 @@ PHDRS
 }
 SECTIONS
 {
-  . = 0x00100000 + SIZEOF_HEADERS + 12;
   .text : {
     *(.text)
     *(.data)

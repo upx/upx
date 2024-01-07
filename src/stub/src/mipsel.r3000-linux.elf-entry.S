@@ -150,26 +150,12 @@ decompressor:  # (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdstl
 #define ldst    lxdstlen
 #define meth     a4
 
-        addiu sp,-2*NBPW
-        addu at,lxsrclen,lxsrc
-        sw ra,0*NBPW(sp)
-        sw at,1*NBPW(sp)  # src_eof
-
+        NRV_pre
         UCL_init    32,1,0
-        decomp_done = eof
+        decomp_done = NRV_eof
 #include "arch/mips/r3000/nrv2b_d.ash"
         build nrv2b, full
-
-eof:
-        lw at,1*NBPW(sp)  # src_eof
-        lw ra,0*NBPW(sp)
-        sub at,lxsrc
-        beqz at,0f
-          addiu sp,2*NBPW
-        break  # bad EOF
-0:
-        jr ra
-          nop
+        NRV_post
 
   section ELFMAINZ; .set noreorder
 L72:

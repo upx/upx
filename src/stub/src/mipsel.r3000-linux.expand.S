@@ -37,6 +37,10 @@
 
 .macro call subr; bal \subr; .endm
 
+/* These from /usr/include/asm/unistd.h */
+__NR_Linux = 4000
+__NR_cacheflush = 147+ __NR_Linux
+
   section EXP_HEAD; .set noreorder
 
 sz_unc= 0
@@ -54,7 +58,7 @@ f_expand: .globl f_expand // f_expand(b_info *, dst, &dstlen)
 #define fx_src a0
 #define fx_dst a1
 #define fx_dstlen a2
-    PUSH4 fx_src,fx_dst,fx_dstlen,ra  // params to unfilter and sync_cache
+    PUSH4 fx_src,fx_dst,fx_dstlen,ra  // MATCH_40  params to unfilter and sync_cache
 
 // Input to de-compressor:
 #define xsrc    a0
@@ -65,25 +69,36 @@ f_expand: .globl f_expand // f_expand(b_info *, dst, &dstlen)
     lbu methb,b_method(fx_src)
     move xdstlen,fx_dstlen  // arg4
     move xdst,fx_dst  // arg3
-    lw xsrclen,sz_cpr(xsrc)  // arg2
-    addiu xsrc,fx_src,sz_binfo // arg1
+#if __MIPSEB__  //{
+    lwl xsrclen,  sz_cpr(xsrc)  // arg2
+    lwr xsrclen,3+sz_cpr(xsrc)  // arg2
+#elif __MIPSEL__  //}{
+    lwr xsrclen,  sz_cpr(xsrc)  // arg2
+    lwl xsrclen,3+sz_cpr(xsrc)  // arg2
+#else
+    .print __MIPSEB__ or __MIPSEL__
+#endif  //}
     call decompress
+      addiu xsrc,fx_src,sz_binfo // arg1
     move a3,v0  // save retval
 
-    POP4 a2,a0,a1,ra   // fx_src,fx_dst,fx_dstlen,ra
+    POP4 a2,a0,a1,ra   // MATCH_40  fx_src,fx_dst,fx_dstlen,ra
     lw a1,(a1)  // actual length used by decompressor
-    PUSH3 a0,a1,a3   // params for sync_cache
+    PUSH3 a0,a1,a3   // MATCH_41  params for sync_cache(fx_dst, fx_dstlen, rv_decompr)
     lbu a3,b_ftid(a2)
-    lbu a2,b_cto8(a2)
     beqz a3,no_unf
+      lbu a2,b_cto8(a2)
 
-    break  # FIXME #include "arch/mips/r3000/bxx.S"  // unfilter code; args in registers, fall-through return
+# FIXME #include "arch/mips/r3000/bxx.S"  // unfilter code; args in registers, fall-through return
 no_unf:
 
-    POP2 a0,a1   // dst, len
-    add a1,a1,a0  // lo, hi
-    break  // FIXME sync_cache  // in macros.S
-    POP1 a0   // retval from decompress
+/* asm/cachectl.h */
+ICACHE= 1<<0
+DCACHE= 1<<1
+    POP2 a0,a1   // MATCH_41  dst, len
+        li a2,ICACHE|DCACHE
+        li v0,__NR_cacheflush; syscall
+    POP1 v0   // MATCH_41  retval from decompress
     jr ra
       nop
 
@@ -99,20 +114,31 @@ no_unf:
 decompress:  // (src *, cpr_len, dst *, &dstlen);
 #define lxdst    a2
 #define lxdstlen a3
+    addiu sp,-2*NBPW; sw ra,0*NBPW(sp)
 
 //  sections NRV2B, etc, inserted here by addLoader() from ::buildLinuxLoader()
 
   section EXP_TAIL; .set noreorder
-  .type eof,function
-  .globl eof
-eof:  // end of a compressed extent; need sync_cache
-        lw a3,0*NBPW(sp)  // &input_eof
-        sub a3,a0,a3  // src -= eof;  // return 0: good; else: bad
+cpr_eof:  // end of a compressed extent; next: unfilter, sync_cache
+    lw ra,0*NBPW(sp); addiu sp,2*NBPW
+        lw a3,0*NBPW(sp); subu v1,a0,a3  // src - orig_src;  length consumed
         lw a0,1*NBPW(sp)  // original dst
-        lw a1,2*NBPW(sp); sub a1,a2,a1  // dst -= original dst
-        lw a3,3*NBPW(sp); sw dst,(a3)  // actual length used at dst  XXX: 4GB
+        lw at,2*NBPW(sp); subu v0,a2,a0  // dst - orig_dst;  length produced
+        /*lw ra,3*NBPW(sp);*/
+                          sw   v0,(at)  // actual length used at dst  XXX: 4GB
+#if __MIPSEB__  //{
+        lwl a1,  sz_unc(a3)
+        lwr a1,3+sz_unc(a3)
+#elif __MIPSEL__  //}{
+        lwr a1,  sz_unc(a3)
+        lwl a1,3+sz_unc(a3)
+#else  //}{
+    .print __MIPSEB__ or __MIPSEL__
+#endif  //}
+        subu v0,v0,a1  // rv: 0 good; else bad
+// sync_cache (__NR_cacheflush) postponed until after unfilter
         jr ra
-          addiu sp,4*NBPW
+          nop
 
 #define M_NRV2B_LE32    2
 #define M_NRV2B_8    3
@@ -128,31 +154,36 @@ eof:  // end of a compressed extent; need sync_cache
 
   section NRV2E; .set noreorder
         UCL_init    32,1,0
-        decomp_done = eof_n2e
+        decomp_done = cpr_eof
 #include "arch/mips/r3000/nrv2e_d.ash"
         build nrv2e, full
-eof_n2e:
-    break  // FIXME
 
   section NRV2D; .set noreorder
         UCL_init    32,1,0
-        decomp_done = eof_n2d
+        decomp_done = cpr_eof
 #include "arch/mips/r3000/nrv2d_d.ash"
         build nrv2d, full
-eof_n2d:
-    break  // FIXME
 
   section NRV2B; .set noreorder
         UCL_init    32,1,0
-        decomp_done = eof_n2b
+        decomp_done = cpr_eof
 #include "arch/mips/r3000/nrv2b_d.ash"
         build nrv2b, full
-eof_n2b:
-    break  // FIXME
+
+  section CFLUSH; .set noreorder  // unused? (subsumed into f_expand ?)
+        move a0,v1  // original lxdst
+        subu a1,lxdst,v1  // actual length generated
+          sw a1,(lxdstlen)
+        li a2,ICACHE|DCACHE
+        li v0,__NR_cacheflush; syscall
+
+        lw v0,0(sp)
+        jr ra
+          addiu sp,4
 
 /* lzma has its own 'section's */
   section LZMA_DEC30; .set noreorder
-        break  // FIXME
+        break; .ascii "LZMA"  // FIXME
 
 #undef src
 #undef dst
@@ -228,14 +259,10 @@ lxlzma_retval   = lxlzma_srcdone
 */
         sw v0,lxlzma_retval(sp)  # return value from decompression
 
-/* asm/cachectl.h */
-ICACHE= 1<<0
-DCACHE= 1<<1
-
         lw a0,lxlzma_dst(sp)
         lw a1,lxlzma_dstdone(sp)
         li a2,ICACHE|DCACHE
-        break  // FIXME  do_sys __NR_cacheflush
+        li v0,__NR_cacheflush; syscall
 
         lw v0,lxlzma_retval(sp)  # return value from decompression
 
