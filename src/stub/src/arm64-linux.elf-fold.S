@@ -177,7 +177,7 @@ L10:
         cbnz x2,.Laux  // AT_NULL
         mov xauxe,x0  // last of new auxv
 
-        mov x1,x6
+        mov x1,x0
         str x1,[x4]  // new env ptr
         ldr w2,space3eq
         str w2,[x1],#4  // "   =" of new env var
