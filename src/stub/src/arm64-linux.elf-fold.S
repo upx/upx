@@ -240,7 +240,7 @@ no_map_pse:
         ldp x22,x23,[sp,#0]
         ldp x24,x25,[sp,#0]
         ldp x26,x27,[sp,#0]
-        ldp x28,x29,[sp],#2*NBPW
+        ldp x28,x29,[sp]  // leave 2 zero-words on-stack for popping into x0,x1
 
 #if DEBUG  //{
         ldr w3,[x2,#0]  // 1st instr
@@ -285,6 +285,7 @@ no_map_pse:
 // fpsr           0x0                 0x0
 // fpcr           0x0                 0x0
 // (gdb)
+        ldp x0,x1,[sp],#2*NBPW  // ABI owns x0?
         ret  // "br lr"; just enter ld-linux, omitting the munmap of unfolded stub
 #else  //}{  This should work, but fails intermittently
         mov w8,#__NR_munmap  // munmap(ADRU, LENU)  unfolded stub

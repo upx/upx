@@ -308,6 +308,8 @@ make_hatch_ppc64(
     return hatch;
 }
 #elif defined(__aarch64__)  //{
+#define NBPI 4
+#define NINSTR 3
 static void *
 make_hatch_arm64(
     Elf64_Phdr const *const phdr,
@@ -331,19 +333,17 @@ make_hatch_arm64(
         // Try page fragmentation just beyond .text .
              ( (hatch = (void *)(~3ul & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  (2*4)<=(frag_mask & -(int)(uint64_t)hatch) ) ) // space left on page
-        // Try Elf64_Ehdr.e_ident[8..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf64_Ehdr *)(phdr->p_vaddr + reloc))->e_ident[8])),
-                (phdr->p_offset==0) )
+                &&  (NINSTR*NBPI)<=(frag_mask & -(int)(uint64_t)hatch) ) ) // space left on page
         // Allocate and use a new page.
         ||   (  xprot = 1, hatch = mmap(0, 1<<12, PROT_WRITE|PROT_READ,
                 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) )
         )
         {
-            hatch[0] = 0xd4000001;  // svc #0
-            hatch[1] = 0xd65f03c0;  // ret (jmp *lr)
+            hatch[0] = 0xd4000001;  // svc #0;  # {addr,len,__NR_munmap} already in {x0,x1,w8}
+            hatch[1] = 0xa8c107e0;  // ldp x0,x1,[sp],#2*NBPI  # ABI owns x0?
+            hatch[2] = 0xd65f03c0;  // ret (jmp *lr)
             if (xprot) {
-                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, NINSTR*sizeof(unsigned), PROT_EXEC|PROT_READ);
             }
         }
         else {
@@ -353,6 +353,8 @@ make_hatch_arm64(
     DPRINTF("hatch=%%p\n", hatch);
     return hatch;
 }
+#undef NBPI
+#undef NINSTR
 #endif  //}
 
 #if defined(__powerpc64__) || defined(__aarch64__)  //{ bzero
