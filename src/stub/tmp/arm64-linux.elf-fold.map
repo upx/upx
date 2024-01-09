@@ -10,25 +10,25 @@ Linker script and memory map
 
 .text           0x00000000001000bc      0xa68
  *(.text)
- .text          0x00000000001000bc      0x2ac tmp/arm64-linux.elf-fold.o
+ .text          0x00000000001000bc      0x2b0 tmp/arm64-linux.elf-fold.o
                 0x00000000001000c4                get_page_mask
                 0x00000000001000d4                mmap_privanon
                 0x00000000001000e4                mmap
                 0x0000000000100100                Pprotect
                 0x0000000000100100                mprotect
-                0x00000000001002c4                my_bkpt
-                0x00000000001002cc                exit
-                0x00000000001002d4                read
-                0x00000000001002e0                write
-                0x00000000001002ec                close
-                0x00000000001002f8                getpid
-                0x0000000000100304                brk
-                0x0000000000100310                munmap
-                0x000000000010031c                unlink
-                0x0000000000100330                readlink
-                0x0000000000100338                open
-                0x0000000000100354                __clear_cache
- .text          0x0000000000100368      0x7bc tmp/arm64-linux.elf-main.o
+                0x00000000001002c8                my_bkpt
+                0x00000000001002d0                exit
+                0x00000000001002d8                read
+                0x00000000001002e4                write
+                0x00000000001002f0                close
+                0x00000000001002fc                getpid
+                0x0000000000100308                brk
+                0x0000000000100314                munmap
+                0x0000000000100320                unlink
+                0x0000000000100334                readlink
+                0x000000000010033c                open
+                0x0000000000100358                __clear_cache
+ .text          0x000000000010036c      0x7b8 tmp/arm64-linux.elf-main.o
                 0x00000000001009bc                upx_main
  *(.data)
  .data          0x0000000000100b24        0x0 tmp/arm64-linux.elf-fold.o
