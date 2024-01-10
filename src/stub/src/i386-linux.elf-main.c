@@ -29,10 +29,8 @@
    <jreiser@users.sourceforge.net>
  */
 
-#define DEBUG 1
-
 #ifndef DEBUG  /*{*/
-#define DEBUG 1
+#define DEBUG 0
 #endif  /*}*/
 
 #include "include/linux.h"
@@ -293,7 +291,7 @@ extern size_t get_page_mask(void);  // variable page size AT_PAGESZ; see *-fold.
 extern int f_expand(  // .globl in $(ARCH)-expand.S
     const nrv_byte *binfo, nrv_byte *dst, size_t *dstlen);
 
-static void
+ void
 unpackExtent(
     Extent *const xi,  // input
     Extent *const xo   // output
@@ -513,10 +511,11 @@ make_hatch_ppc32(
     char *next_unc,
     unsigned frag_mask)
 {
-    unsigned code[2] = {
-       0x44000002,  // sc
-       0x4e800020,  // blr
-     };
+    unsigned code[2];
+    // avoid gcc initializing array by copying .rodata
+    code[0] = 0x44000002;  // sc
+    code[1] = 0x4e800020;  // blr
+
     unsigned *hatch = 0;
     DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
 

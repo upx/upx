@@ -215,6 +215,7 @@ sz_auxv= 2*NBPW
 
         bctr  // goto escape hatch
 
+  section SYSCALLS
 SYS_exit=  1
 SYS_fork=  2
 SYS_read=  3

@@ -1436,6 +1436,7 @@ PackLinuxElf32::buildLinuxLoader(
     if (xct_off // shlib
       && (  this->e_machine==Elf32_Ehdr::EM_ARM
          || this->e_machine==Elf32_Ehdr::EM_MIPS
+         || this->e_machine==Elf32_Ehdr::EM_PPC
          || this->e_machine==Elf32_Ehdr::EM_386)
     ) {
         initLoader(fold, szfold);
@@ -1477,6 +1478,7 @@ PackLinuxElf32::buildLinuxLoader(
     }
     else if (this->e_machine==Elf32_Ehdr::EM_386
          ||  this->e_machine==Elf32_Ehdr::EM_MIPS
+         ||  this->e_machine==Elf32_Ehdr::EM_PPC
          ||  this->e_machine==Elf32_Ehdr::EM_ARM) { // main program
         initLoader(fold, szfold);
         char sec[120];
@@ -1546,12 +1548,14 @@ PackLinuxElf32::buildLinuxLoader(
     if (xct_off
        && (  this->e_machine==Elf32_Ehdr::EM_ARM
           || this->e_machine==Elf32_Ehdr::EM_MIPS
+          || this->e_machine==Elf32_Ehdr::EM_PPC
           || this->e_machine==Elf32_Ehdr::EM_386)
     ) {
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
     }
     else if (this->e_machine==Elf32_Ehdr::EM_ARM
           || this->e_machine==Elf32_Ehdr::EM_MIPS
+          || this->e_machine==Elf32_Ehdr::EM_PPC
           || this->e_machine==Elf32_Ehdr::EM_386) { // main program
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
             defineSymbols(ft);
