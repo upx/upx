@@ -597,6 +597,8 @@ int PackUnix::find_overlay_offset(MemBuffer const &buf)
 // See notes there.
 **************************************************************************/
 
+static unsigned umax(unsigned a, unsigned b) {return (a < b) ? b : a;}
+
 void PackUnix::unpack(OutputFile *fo)
 {
     b_info bhdr;
@@ -658,7 +660,11 @@ void PackUnix::unpack(OutputFile *fo)
         if (sz_cpr > sz_unc || sz_unc > blocksize)
             throwCompressedDataViolation();
 
-        i = blocksize + OVERHEAD - sz_cpr;
+        // Compressed output has control bytes such as the 32-bit
+        // first flag bits of NRV_d32, the 5-byte info of LZMA, etc.
+        // Fuzzers may try sz_cpr shorter than possible.
+        // Use some OVERHEAD for safety.
+        i = blocksize + OVERHEAD - umax(12, sz_cpr);
         if (i < 0)
             throwCantUnpack("corrupt b_info");
         fi->readx(buf+i, sz_cpr);
