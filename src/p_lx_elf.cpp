@@ -7405,7 +7405,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
                         }
                     }
                     int boff = find_le32(peek_arr, sizeof(peek_arr), size);
-                    if (boff < 0) {
+                    if (boff < 0
+                    || sizeof(peek_arr) < (boff + sizeof(b_info))) {
                         throwCantUnpack("b_info corrupted");
                     }
                     bp = (b_info *)(void *)&peek_arr[boff];
