@@ -1673,10 +1673,19 @@ tribool PackMachBase<T>::canUnpack()
         unsigned const cmd = ptr->cmd;
         unsigned const cmdsize = ptr->cmdsize;
         if (is_bad_linker_command(cmd, cmdsize, headway, lc_seg, sizeof(Addr))) {
-                infoWarning("bad Mach_command[%u]{@0x%zx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx",
+                opt->info_mode += 1;
+                infoWarning("bad Mach_command[%u]{@0x%zx,+0x%x}=0x%x: file_size=0x%lx  cmdsize=0x%lx",
                     j, (sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg)), headway,
-                    (unsigned long) file_size, (unsigned long)ptr->cmdsize);
+                    cmd, (unsigned long) file_size, (unsigned long)ptr->cmdsize);
+                opt->info_mode -= 1;
                 throwCantUnpack("file corrupted");
+        }
+        headway -= cmdsize;
+        if (headway < 0) {
+            infoWarning("Mach_command[%u]{@%lu}.cmdsize = %u", j,
+                (unsigned long) (sizeof(mhdri) + mhdri.sizeofcmds - (headway + ptr->cmdsize)),
+                (unsigned)ptr->cmdsize);
+            throwCantUnpack("sum(.cmdsize) exceeds .sizeofcmds");
         }
         if (lc_seg == ptr->cmd) {
             Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
@@ -1713,12 +1722,6 @@ tribool PackMachBase<T>::canUnpack()
                 }
             }
             pos_next = segptr->filesize + segptr->fileoff;
-            if ((headway -= ptr->cmdsize) < 0) {
-                infoWarning("Mach_command[%u]{@%lu}.cmdsize = %u", j,
-                    (unsigned long) (sizeof(mhdri) + mhdri.sizeofcmds - (headway + ptr->cmdsize)),
-                    (unsigned)ptr->cmdsize);
-                throwCantUnpack("sum(.cmdsize) exceeds .sizeofcmds");
-            }
         }
         else if (Mach_command::LC_UNIXTHREAD==ptr->cmd) {
             rip = entryVMA = threadc_getPC(ptr);
@@ -1973,9 +1976,10 @@ tribool PackMachBase<T>::canPack()
         unsigned const cmd     = segptr->cmd &~ LC_REQ_DYLD;
         unsigned const cmdsize = segptr->cmdsize;
         if (is_bad_linker_command(cmd, cmdsize, headway, lc_seg, sizeof(Addr))) {
-            char buf[80]; snprintf(buf, sizeof(buf),
-                "bad Mach_command[%d]{cmd=%#x, size=%#x}", j,
-                cmd, cmdsize);
+            char buf[200]; snprintf(buf, sizeof(buf),
+                "bad Mach_command[%u]{@0x%zx,+0x%x}=0x%x: file_size=0x%lx  cmdsize=0x%x",
+                    j, (sizeof(mhdri) + ((char const *)segptr - (char const *)rawmseg)), headway,
+                    cmd, (unsigned long) file_size, cmdsize);
             throwCantPack(buf);
         }
         headway -= cmdsize;
