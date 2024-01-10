@@ -2420,6 +2420,9 @@ tribool PackLinuxElf32::canUnpack() // bool, except -1: format known, but not pa
     if (checkEhdr(&ehdri)) {
         return false;
     }
+    if (get_te16(&ehdri.e_phnum) < 2) {
+        throwCantUnpack("e_phnum must be >= 2");
+    }
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         PackLinuxElf32help1(fi);
     }
@@ -2965,6 +2968,9 @@ tribool PackLinuxElf64::canUnpack() // bool, except -1: format known, but not pa
 {
     if (checkEhdr(&ehdri)) {
         return false;
+    }
+    if (get_te16(&ehdri.e_phnum) < 2) {
+        throwCantUnpack("e_phnum must be >= 2");
     }
     if (Elf64_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         PackLinuxElf64help1(fi);
