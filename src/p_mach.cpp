@@ -2267,6 +2267,11 @@ unsigned PackMachFat::check_fat_head()
     }
     for (unsigned j=0; j < nfat; ++j) {
         unsigned const align = arch[j].align;
+        if (24 < align) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                "bad fat_arch alignment 0x%x > 24", align);
+            throwCantPack(msg);
+        }
         unsigned const mask = ~(~0u<<align);
         unsigned const size = arch[j].size;
         unsigned const offset = arch[j].offset;
