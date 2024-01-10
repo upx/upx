@@ -2128,7 +2128,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, u32_t headway)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
-        if ((hashend - buckets) < nbucket
+        if ((unsigned)(hashend - buckets) < nbucket
         || !v_sym || (unsigned)file_size <= v_sym
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
@@ -2170,7 +2170,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, u32_t headway)
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
         if (!n_bucket || (1u<<31) <= n_bucket  /* fie on fuzzers */
-        || (gashend - buckets) < n_bucket
+        || (unsigned)(gashend - buckets) < n_bucket
         || (void const *)&file_image[file_size] <= (void const *)hasharr) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
@@ -8015,7 +8015,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         unsigned const *const chains = &buckets[nbucket]; (void)chains;
 
         unsigned const v_sym = !x_sym ? 0 : get_te64(&dynp0[-1+ x_sym].d_val);  // UPX_RSIZE_MAX_MEM
-        if ((hashend - buckets) < nbucket
+        if ((unsigned)(hashend - buckets) < nbucket
         || !v_sym || (unsigned)file_size <= v_sym
         || ((v_hsh < v_sym) && (v_sym - v_hsh) < sizeof(*buckets)*(2+ nbucket))
         ) {
@@ -8057,7 +8057,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
         if (!n_bucket || (1u<<31) <= n_bucket  /* fie on fuzzers */
-        || (gashend - buckets) < n_bucket
+        || (unsigned)(gashend - buckets) < n_bucket
         || (void const *)&file_image[file_size] <= (void const *)hasharr) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
