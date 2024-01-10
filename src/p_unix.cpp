@@ -581,7 +581,7 @@ int PackUnix::find_overlay_offset(MemBuffer const &buf)
         return false;
 
     int l = ph.buf_offset + ph.getPackHeaderSize();
-    if (l < 0 || l + 4 > bufsize)
+    if (l < 0 || i + l + 4 > bufsize)
         throwCantUnpack("file corrupted");
     overlay_offset = get_te32(buf + i + l);
     if ((off_t)overlay_offset >= file_size)
