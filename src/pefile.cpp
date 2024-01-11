@@ -3106,10 +3106,8 @@ PeFile32::~PeFile32() noexcept {}
 
 void PeFile32::readPeHeader() {
     fi->readx(&ih, sizeof(ih));
-    if (31 < (unsigned)ih.subsystem) {
-        char msg[80];
-        snprintf(msg, sizeof(msg), "bad subsystem 0x%x", (unsigned)ih.subsystem);
-        throwCantPack(msg);
+    if (31 < (unsigned) ih.subsystem) {
+        throwCantPack("bad ih.subsystem 0x%x", (unsigned) ih.subsystem);
     }
     isefi = ((1u << ih.subsystem) &
              ((1u << IMAGE_SUBSYSTEM_EFI_APPLICATION) |
@@ -3164,10 +3162,8 @@ PeFile64::~PeFile64() noexcept {}
 
 void PeFile64::readPeHeader() {
     fi->readx(&ih, sizeof(ih));
-    if (31 < (unsigned)ih.subsystem) {
-        char msg[80];
-        snprintf(msg, sizeof(msg), "bad subsystem 0x%x", (unsigned)ih.subsystem);
-        throwCantPack(msg);
+    if (31 < (unsigned) ih.subsystem) {
+        throwCantPack("bad ih.subsystem 0x%x", (unsigned) ih.subsystem);
     }
     isefi = ((1u << ih.subsystem) &
              ((1u << IMAGE_SUBSYSTEM_EFI_APPLICATION) |
