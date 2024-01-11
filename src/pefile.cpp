@@ -2953,7 +2953,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
         ibuf.alloc(size + 1);
         fi->seek(isection[2].rawdataptr, SEEK_SET);
         fi->readx(ibuf, ibufgood = size);
-        ibuf[size] = 0;  // allow strlen() up to 'size'
+        ibuf[size] = 0; // allow strlen() up to 'size'
     }
 
     // unfilter
