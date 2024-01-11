@@ -1512,6 +1512,9 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     if ((unsigned)file_size < ph.c_len || ph.c_len == 0 || ph.u_len == 0)
         throwCantUnpack("file header corrupted");
     ph.method = bhdr.b_method;
+    if (ph.method < M_NRV2B_LE32
+    ||  ph.method > M_BZIP2)
+        throwCantUnpack("file header bad method");
     ph.filter = bhdr.b_ftid;
     ph.filter_cto = bhdr.b_cto8;
 
