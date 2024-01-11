@@ -2948,10 +2948,12 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
 
     if (iobjs > 2) {
         // read the noncompressed section
+        unsigned const size = isection[2].size;
         ibuf.dealloc();
-        ibuf.alloc(isection[2].size);
+        ibuf.alloc(size + 1);
         fi->seek(isection[2].rawdataptr, SEEK_SET);
-        fi->readx(ibuf, ibufgood = isection[2].size);
+        fi->readx(ibuf, ibufgood = size);
+        ibuf[size] = 0; // allow strlen() up to 'size'
     }
 
     // unfilter
