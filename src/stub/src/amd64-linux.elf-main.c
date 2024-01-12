@@ -125,7 +125,7 @@ xread(Extent *x, char *buf, size_t count)
 // util
 **************************************************************************/
 
-#if 1  //{  save space
+#if !DEBUG  //{  save space
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
@@ -343,7 +343,7 @@ make_hatch_arm64(
             hatch[1] = 0xa8c107e0;  // ldp x0,x1,[sp],#2*NBPI  # ABI owns x0?
             hatch[2] = 0xd65f03c0;  // ret (jmp *lr)
             if (xprot) {
-                Pprotect(hatch, NINSTR*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, NINSTR * NBPI, PROT_EXEC|PROT_READ);
             }
         }
         else {

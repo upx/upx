@@ -408,6 +408,8 @@ make_hatch_x86(Elf32_Phdr const *const phdr, ptrdiff_t reloc)
 }
 #elif defined(__arm__)  /*}{*/
 extern unsigned get_sys_munmap(void);
+#define NINSTR 3
+#define NBPI 4
 
 static void *
 make_hatch_arm(
@@ -432,10 +434,7 @@ make_hatch_arm(
         // Try page fragmentation just beyond .text .
             ( (hatch = (void *)(~3u & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  (2*4)<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
-        // Try Elf32_Ehdr.e_ident[8..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
-                (phdr->p_offset==0) )
+                &&  (NINSTR * NBPI)<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
         // Allocate and use a new page.
         // Linux on ARM wants PROT_EXEC or else __clear_cache does not work?
         ||   (  xprot = 1, hatch = mmap(0, PAGE_SIZE, PROT_EXEC|PROT_WRITE|PROT_READ,
@@ -443,10 +442,11 @@ make_hatch_arm(
         ) {
             hatch = (unsigned *)(~3ul & (3+ (unsigned long)hatch));
             hatch[0] = sys_munmap;  // syscall __NR_unmap
-            hatch[1] = 0xe1a0f00e;  // mov pc,lr
-            __clear_cache(&hatch[0], &hatch[2]);  // ? needed before Pprotect()
+            hatch[1] = 0xe8bd0003;  // pop {r0,r1}  ABI -static parameters
+            hatch[2] = 0xe1a0f00e;  // mov pc,lr
+            __clear_cache(&hatch[0], &hatch[NINSTR]);  // ? needed before Pprotect()
             if (xprot) {
-                Pprotect(hatch, 2*sizeof(unsigned), PROT_EXEC|PROT_READ);
+                Pprotect(hatch, NINSTR * NBPI, PROT_EXEC|PROT_READ);
             }
         }
         else {

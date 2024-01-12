@@ -129,10 +129,7 @@ sz_pack2= .-4  // placed there by ::pack3()
 mflg:
         .int MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
-#if DEBUG  /*{*/
-    brk #0  // DEBUG  0xd4200000
-        TRACE(#0)
-#endif  /*}*/
+        stp x0,x1,[sp,#-2*NBPW]!  // ABI: -static crt0 might pass data in x0,x1
         ldr wPrivAnon,mflg
         call main
 
@@ -342,7 +339,7 @@ zfind:
 
 main:
         mov xfexp,lr
-        mov x0,sp; call zfind  // x0= &envp
+        add x0,sp,#3*NBPW; call zfind  // in: x0= &argv;  out: x0= &envp
         call zfind; mov xauxv,x0  // &Elf64_auxv
 
 // set xPMASK by finding actual page size in Elf64_auxv

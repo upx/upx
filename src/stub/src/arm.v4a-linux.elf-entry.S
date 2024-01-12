@@ -91,6 +91,7 @@ mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
 ////  nop; bkpt
+        stmdb sp!, {r0,r1}  // ABI crt0 -static may have data here
         sub sp,sp,#6*4
 F_elfaddr= 0*4
 F_fd=      1*4
