@@ -92,7 +92,7 @@ fold_begin:  // known offset (NBPW + 3*4)
 ////    brk #0  // DEBUG
         b L10
 
-// In:  sp/ PMASK,fd,ADRU,LENU, argc,argv,...
+// In:  sp/ PMASK,fd,ADRU,LENU, x0,x1, argc,argv,...
 //lr   .req x30
 wLENC  .req w29  // compressed input
   xLENC  .req x29
@@ -138,7 +138,7 @@ mprotect: .globl mprotect
 L10:
         POP4(xPMASK,xfd, xADRU,xLENU)
 
-        ldr x7,[sp,#0]  // argc
+        mov x7,sp  // old_sp: x0,x1,argc,...
         mov x0,sp  // current stack pointer
 
         mov x1,xauxv
@@ -148,13 +148,17 @@ L10:
 
         sub x0,x1,#PATH_MAX // buffer for readlink
         sub x6,x0,#4  // space for copy of space3eq
-        sub x1,x1,x6  // amount needed for argc,argv,env,auxv
-        sub x0,x6,x1  // space for argc,argv,env,auxv
+        sub x1,x1,x6  // amount needed for x0,x1,argc,argv,env,auxv
+        sub x0,x6,x1  // space for x0,x1,argc,argv,env,auxv
         sub x0,x0,#NBPW  // room for added env ptr
         and x0,x0,#~0<<4  // sp must be 16-byte aligned
-        add x1,sp,#NBPW  // old_argv; avoid 0==argc impostor for terminator of argv
-        mov sp,x0  // new_argc
-        str x7,[x0],#NBPW  // argc
+        add x1,sp,#3*NBPW  // old_argv; avoid 0==argc impostor for terminator of argv
+        mov sp,x0  // new_sp
+        ldp x2,x3,[x7]  // x0,x1
+        stp x2,x3,[sp]
+        ldr x2,[x7,#2*NBPW]  // argc
+        str x2,[sp,#2*NBPW]
+        add x0,sp,#3*NBPW  // new argv
 
 .Larg:  // copy argv
         ldr x2,[x1],#NBPW
@@ -240,7 +244,7 @@ no_map_pse:
         ldp x22,x23,[sp,#0]
         ldp x24,x25,[sp,#0]
         ldp x26,x27,[sp,#0]
-        ldp x28,x29,[sp]  // leave 2 zero-words on-stack for popping into x0,x1
+        ldp x28,x29,[sp],#2*NBPW
 
 #if DEBUG  //{
         ldr w3,[x2,#0]  // 1st instr

@@ -76,7 +76,7 @@ SP_fd= 3*4
    r4= LENX
    r5= ADRX
    lr= "/proc/self/exe"
-new sp/            elfaddr,fd, ADRU,LENU, f_exp,%entry, argc,argv,0,envp,0,auxv
+new sp/            elfaddr,fd, ADRU,LENU, f_exp,%entry, r0,r1, argc,argv,0,envp,0,auxv
         (ADRX,LENX) = extent of compressed program
         (ADRU,LENU) = params to munmap unfolded stub
 */
@@ -86,20 +86,24 @@ fold_begin:  // enter here
         mov r0,sp  @ current stack pointer (extra clue)
         stmdb sp!,{TRACE_REGS}; mov r0,#0x10; bl trace
 #endif  //}
-        ldmia sp!,{      r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
+        mov r2,r4  @ LENX
+        mov r3,r5  @ ADRX
+        ldmia sp!,{      r4,r5,r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
         mov r1,sp  @ src (argv)
         sub sp,sp,#PATH_MAX
         mov r0,sp  @ dst
-        stmdb sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
-F_LENX=    0*4
-F_ADRX=    1*4
-F_elfaddr= 2*4
-F_fd=      3*4
-F_ADRU=    4*4
-F_LENU=    5*4
-F_f_exp=   6*4
+        stmdb sp!,{r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}  @ r12= argc
+F_LENX=    0*NBPW
+F_ADRX=    1*NBPW
+F_elfaddr= 2*NBPW
+F_fd=      3*NBPW
+F_ADRU=    4*NBPW
+F_LENU=    5*NBPW
+F_f_exp=   6*NBPW
   F_e_auxv=  F_f_exp
-F_entry=   7*4
+F_entry=   7*NBPW
+F_r0=      8*NBPW
+F_r1=      9*NBPW
 
 0: // copy argv down
         ldr r3,[r1],#4; cmp r3,#0
@@ -165,7 +169,7 @@ link_ok:
 /* Construct arglist for upx_main */
         @ldr r5,[sp,#F_f_exp]
         ldmia sp!,{r4,r10,r11}  @ LENX, ADRX, elfaddr
-F_delta= 3*4
+F_delta= 3*NBPW
         sub sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ alloca
         ldr r9,[r10,#sz_cpr]  @ xi.size  of ELF headers
         mov r8,sp  @ xo.ptr
@@ -216,9 +220,9 @@ no_map_pse:
         // crumb is unused: replaced by mapping /proc/self/exe into a free page
 
 #if DEBUG  /*{*/
-        ldr r3,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
+        ldr r3,[r2,#NBPW -2*NBPW]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
         ldr r4,[r3,#0]  @ 1st instr
-        ldr r5,[r3,#4]  @ 2nd instr
+        ldr r5,[r3,#NBPW]  @ 2nd instr
         stmdb sp!,{TRACE_REGS}; mov r0,#0x15; bl trace
 #endif  /*}*/
         mov r3,#0  @ clear registers: paranoia
@@ -253,7 +257,7 @@ sweep:
         mov r7,#0
         mov r12,#0
 #endif  /*}*/
-        mov pc,lr
+        ldr pc,[r2,#NBPW -2*NBPW]  @ hatch: Elf32_auxv_t[AT_NULL@.a_type].a_val
 
 proc_self_exe:
         .ascii "/proc/self/exe"  @ no terminator
