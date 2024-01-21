@@ -8176,11 +8176,15 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         }
         if (nbucket) {
             unsigned const m = elf_hash(name) % nbucket;
+            unsigned nvisit = 0;
             unsigned si;
             for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
                 char const *const p= get_dynsym_name(si, (unsigned)-1);
                 if (0==strcmp(name, p)) {
                     return &dynsym[si];
+                }
+                if (nbucket <= ++nvisit) {
+                    throwCantPack("circular DT_HASH chain %d\n", si);
                 }
             }
         }
@@ -8221,12 +8225,16 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
                 }
                 if (0!=bucket) {
                     Elf32_Sym const *dsp = &dynsym[bucket];
+                    unsigned nvisit = 0;
                     unsigned const *hp = &hasharr[bucket - symbias];
                     do if (0==((h ^ get_te32(hp))>>1)) {
                         unsigned st_name = get_te32(&dsp->st_name);
                         char const *const p = get_str_name(st_name, (unsigned)-1);
                         if (0==strcmp(name, p)) {
                             return dsp;
+                        }
+                        if (n_bitmask <= ++nvisit) {
+                            throwCantPack("circular DT_GNUHASH list %d\n", bucket);
                         }
                     } while (++dsp,
                             (char const *)hp < (char const *)&file_image[file_size]
@@ -8258,11 +8266,15 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         }
         if (nbucket) { // -rust-musl can have "empty" hashtab
             unsigned const m = elf_hash(name) % nbucket;
+            unsigned nvisit = 0;
             unsigned si;
             for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
                 char const *const p= get_dynsym_name(si, (unsigned)-1);
                 if (0==strcmp(name, p)) {
                     return &dynsym[si];
+                }
+                if (nbucket <= ++nvisit) {
+                    throwCantPack("circular DT_HASH chain %d\n", si);
                 }
             }
         }
@@ -8298,6 +8310,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
                 if (hhead) {
                     Elf64_Sym const *dsp = &dynsym[hhead];
                     unsigned const *hp = &hasharr[hhead - symbias];
+                    unsigned nvisit = 0;
                     unsigned k;
                     do {
                         if (gashend <= hp) {
@@ -8313,6 +8326,9 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
                             if (0==strcmp(name, p)) {
                                 return dsp;
                             }
+                        }
+                        if (n_bitmask <= ++nvisit) {
+                            throwCantPack("circular DT_GNUHASH list %d\n", hhead);
                         }
                     } while (++dsp, ++hp, 0==(1u& k));
                 }
