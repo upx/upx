@@ -152,11 +152,15 @@ static forceinline void set_ne64(XE64 *p, upx_uint64_t vv) noexcept {
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(long) == 4)
 
 // unfortunately *not* constexpr with current MSVC
-static forceinline unsigned bswap16(unsigned v) noexcept {
+static forceinline /*constexpr*/ unsigned bswap16(unsigned v) noexcept {
     return (unsigned) _byteswap_ulong(v << 16);
 }
-static forceinline unsigned bswap32(unsigned v) noexcept { return (unsigned) _byteswap_ulong(v); }
-static forceinline upx_uint64_t bswap64(upx_uint64_t v) noexcept { return _byteswap_uint64(v); }
+static forceinline /*constexpr*/ unsigned bswap32(unsigned v) noexcept {
+    return (unsigned) _byteswap_ulong(v);
+}
+static forceinline /*constexpr*/ upx_uint64_t bswap64(upx_uint64_t v) noexcept {
+    return _byteswap_uint64(v);
+}
 
 #else
 
@@ -266,21 +270,27 @@ inline void set_le24(XE24 *p, unsigned v) noexcept {
     b[2] = ACC_ICONV(byte, (v >> 16) & 0xff);
 }
 
-inline unsigned get_le26(const void *p) noexcept { return get_le32(p) & 0x03ffffff; }
-inline unsigned get_le19_5(const void *p) noexcept { return (get_le32(p) >> 5) & 0x0007ffff; }
-inline unsigned get_le14_5(const void *p) noexcept { return (get_le32(p) >> 5) & 0x00003fff; }
+REQUIRE_XE32
+inline unsigned get_le26(const XE32 *p) noexcept { return get_le32(p) & 0x03ffffff; }
+REQUIRE_XE32
+inline unsigned get_le19_5(const XE32 *p) noexcept { return (get_le32(p) >> 5) & 0x0007ffff; }
+REQUIRE_XE32
+inline unsigned get_le14_5(const XE32 *p) noexcept { return (get_le32(p) >> 5) & 0x00003fff; }
 
-inline void set_le26(void *p, unsigned v) noexcept {
+REQUIRE_XE32
+inline void set_le26(XE32 *p, unsigned v) noexcept {
     // preserve the top 6 bits
     //   set_le32(p, (get_le32(p) & 0xfc000000) | (v & 0x03ffffff));
     // optimized version, saving a runtime bswap32
     set_ne32(p, (get_ne32(p) & ne32_to_le32(0xfc000000)) |
                     (ne32_to_le32(v) & ne32_to_le32(0x03ffffff)));
 }
-inline void set_le19_5(void *p, unsigned v) noexcept {
+REQUIRE_XE32
+inline void set_le19_5(XE32 *p, unsigned v) noexcept {
     set_le32(p, (get_le32(p) & 0xff00001f) | ((v & 0x0007ffff) << 5));
 }
-inline void set_le14_5(void *p, unsigned v) noexcept {
+REQUIRE_XE32
+inline void set_le14_5(XE32 *p, unsigned v) noexcept {
     set_le32(p, (get_le32(p) & 0xfff8001f) | ((v & 0x00003fff) << 5));
 }
 
@@ -289,17 +299,21 @@ inline void set_le14_5(void *p, unsigned v) noexcept {
 **************************************************************************/
 
 static forceinline constexpr int sign_extend(unsigned v, unsigned bits) noexcept {
+#if (ACC_ARCH_M68K) // no barrel shifter
     const unsigned sign_bit = 1u << (bits - 1);
-    v &= sign_bit | (sign_bit - 1);
-    v |= 0u - (v & sign_bit);
-    return ACC_ICAST(int, v);
+    return ACC_ICAST(int, (v & (sign_bit - 1)) - (v & sign_bit));
+#else
+    return ACC_ICAST(int, v << (32 - bits)) >> (32 - bits);
+#endif
 }
 
 static forceinline constexpr upx_int64_t sign_extend(upx_uint64_t v, unsigned bits) noexcept {
+#if (ACC_ARCH_M68K) // no barrel shifter
     const upx_uint64_t sign_bit = 1ull << (bits - 1);
-    v &= sign_bit | (sign_bit - 1);
-    v |= 0ull - (v & sign_bit);
-    return ACC_ICAST(upx_int64_t, v);
+    return ACC_ICAST(upx_int64_t, (v & (sign_bit - 1)) - (v & sign_bit));
+#else
+    return ACC_ICAST(upx_int64_t, v << (64 - bits)) >> (64 - bits);
+#endif
 }
 
 REQUIRE_XE16
@@ -713,6 +727,22 @@ template <class T>
 T *operator+(T *ptr, const LE64 &v) noexcept DELETED_FUNCTION;
 template <class T>
 T *operator-(T *ptr, const LE64 &v) noexcept DELETED_FUNCTION;
+
+#if !ALLOW_INT_PLUS_MEMBUFFER
+template <class T>
+T *operator+(const BE16 &v, T *ptr) noexcept DELETED_FUNCTION;
+template <class T>
+T *operator+(const BE32 &v, T *ptr) noexcept DELETED_FUNCTION;
+template <class T>
+T *operator+(const LE16 &v, T *ptr) noexcept DELETED_FUNCTION;
+template <class T>
+T *operator+(const LE32 &v, T *ptr) noexcept DELETED_FUNCTION;
+#endif // ALLOW_INT_PLUS_MEMBUFFER
+
+template <class T>
+T *operator+(const BE64 &v, T *ptr) noexcept DELETED_FUNCTION;
+template <class T>
+T *operator+(const LE64 &v, T *ptr) noexcept DELETED_FUNCTION;
 
 /*************************************************************************
 // global overloads

@@ -15,8 +15,8 @@ env:
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -Wdev --warn-uninitialized
-  # 2023-11-08
-  ZIG_DIST_VERSION: 0.12.0-dev.1502+b3462b7ce
+  # 2024-01-24
+  ZIG_DIST_VERSION: 0.12.0-dev.2334+aef1da163
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -53,16 +53,16 @@ jobs:
           git status || true
           make -C src/stub extra-all all
           if ! git diff --quiet; then git diff; exit 1; fi
+      - run: bash ./misc/scripts/check_whitespace_git.sh
       - name: 'Check source code formatting'
         run: |
-          bash ./misc/scripts/check_whitespace_git.sh
           UPX_CLANG_FORMAT="$PWD/../deps/bin-upx-20221212/clang-format-15.0.6" make -C src clang-format
           if ! git diff --quiet; then git diff; exit 1; fi
 
   job-linux-cmake: # uses cmake + make
     if: true
     needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ format('{0} cmake', matrix.os) }}
+    name: ${{ format('{0}', matrix.os) }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -158,7 +158,7 @@ jobs:
   job-macos-cmake: # uses cmake + make
     if: true
     needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ format('{0} cmake', matrix.os) }}
+    name: ${{ format('{0}', matrix.os) }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -249,7 +249,7 @@ jobs:
   job-windows-cmake: # uses cmake + msbuild
     if: true
     needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ format('{0} cmake', matrix.name) }}
+    name: ${{ format('{0}', matrix.name) }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

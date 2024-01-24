@@ -37,8 +37,10 @@ Throwable::Throwable(const char *m, int e, bool w) noexcept : super(),
                                                               msg(nullptr),
                                                               err(e),
                                                               is_warning(w) {
-    if (m)
+    if (m != nullptr) {
         msg = strdup(m);
+        assert_noexcept(msg != nullptr);
+    }
 #if 0
     fprintf(stderr, "construct exception: %s %zu\n", msg, debug_counter);
     debug_counter += 1;
@@ -49,8 +51,10 @@ Throwable::Throwable(const Throwable &other) noexcept : super(other),
                                                         msg(nullptr),
                                                         err(other.err),
                                                         is_warning(other.is_warning) {
-    if (other.msg)
+    if (other.msg != nullptr) {
         msg = strdup(other.msg);
+        assert_noexcept(msg != nullptr);
+    }
 #if 0
     fprintf(stderr, "copy exception: %s %zu\n", msg, debug_counter);
     debug_counter += 1;
@@ -62,8 +66,7 @@ Throwable::~Throwable() noexcept {
     debug_counter -= 1;
     fprintf(stderr, "destruct exception: %s %zu\n", msg, debug_counter);
 #endif
-    if (msg)
-        free(msg);
+    upx::owner_free(msg);
 }
 
 /*************************************************************************

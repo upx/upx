@@ -264,6 +264,7 @@ build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CXX_COMPILER_
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CXX_COMPILER_RANLIB)
 # pass common CMake cross compilation settings from environment/make to cmake
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_SYSTEM_NAME)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_SYSTEM_PROCESSOR)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CROSSCOMPILING_EMULATOR)
 # pass UPX config options from environment/make to cmake; see CMakeLists.txt
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_GITREV)
@@ -272,7 +273,7 @@ build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WERROR)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SELF_PACK_TEST)
 
-endif # bug work-around
+endif # GNU make bug work-around
 
 #***********************************************************************
 # check git submodules

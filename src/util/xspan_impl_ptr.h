@@ -123,6 +123,7 @@ public:
         return assign(Self(other));
     }
 
+    // cast to a different type (creates a new value)
     template <class U>
     inline CSelf<U> type_cast() const {
         typedef CSelf<U> R;

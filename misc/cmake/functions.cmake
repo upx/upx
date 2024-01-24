@@ -27,7 +27,7 @@ macro(upx_disallow_in_source_build)
 endmacro()
 
 # set the default build type; must be called before project() cmake init
-macro(upx_default_build_type type)
+macro(upx_set_default_build_type type)
     set(upx_global_default_build_type "${type}")
     get_property(upx_global_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
     if(NOT upx_global_is_multi_config AND NOT CMAKE_BUILD_TYPE)
@@ -77,7 +77,7 @@ function(upx_print_have_symbol) # ARGV; needs include(CheckSymbolExists)
         set(cache_var_name "HAVE_symbol_${symbol}")
         check_symbol_exists(${symbol} "limits.h;stddef.h;stdint.h" ${cache_var_name})
         if(${cache_var_name})
-           message(STATUS "HAVE ${symbol}")
+            message(STATUS "HAVE ${symbol}")
         endif()
     endforeach()
 endfunction()
@@ -87,7 +87,7 @@ function(upx_print_mingw_symbols)
     if(WIN32 OR MINGW OR CYGWIN)
         if(CMAKE_C_COMPILER_ID MATCHES "(Clang|GNU)")
             # runtime library: msvcrt vs ucrt vs cygwin
-            upx_print_have_symbol(__CRTDLL__ __CYGWIN__ __CYGWIN32__ __CYGWIN64__ __MINGW32__ __MINGW64__ __MINGW64_VERSION_MAJOR __MSVCRT__ _UCRT _WIN32 _WIN64)
+            upx_print_have_symbol(__CRTDLL__ __CYGWIN__ __CYGWIN32__ __CYGWIN64__ __MINGW32__ __MINGW64__ __MINGW64_VERSION_MAJOR __MSVCRT__ __MSVCRT_VERSION__ _UCRT _WIN32 _WIN64)
             # exception handing: SJLJ (setjmp/longjmp) vs DWARF vs SEH
             upx_print_have_symbol(__GCC_HAVE_DWARF2_CFI_ASM __SEH__ __USING_SJLJ_EXCEPTIONS__)
             # threads: win32 vs posix/pthread/winpthreads vs mcfgthread
@@ -108,7 +108,25 @@ function(upx_add_glob_files) # ARGV
     list(APPEND result "${files}")
     list(SORT result)
     list(REMOVE_DUPLICATES result)
-    ##message(STATUS "upx_add_glob_files: ${var_name} = ${result}")
+    #message(STATUS "upx_add_glob_files: ${var_name} = ${result}")
+    set(${var_name} "${result}" PARENT_SCOPE) # return value
+endfunction()
+
+# remove wildcard expansions from a variable
+function(upx_remove_glob_files) # ARGV
+    set(var_name ${ARGV0})
+    list(REMOVE_AT ARGV 0)
+    file(GLOB files ${ARGV})
+    set(result "")
+    if(DEFINED ${var_name})
+        set(result "${${var_name}}")
+        foreach(file ${files})
+            list(REMOVE_ITEM result "${file}")
+        endforeach()
+        list(SORT result)
+        list(REMOVE_DUPLICATES result)
+    endif()
+    #message(STATUS "upx_remove_glob_files: ${var_name} = ${result}")
     set(${var_name} "${result}" PARENT_SCOPE) # return value
 endfunction()
 
@@ -122,10 +140,10 @@ function(upx_cache_bool_vars) # ARGV
             set(value "${UPX_CACHE_VALUE_${var_name}}")
         elseif(DEFINED ${var_name})                 # defined via "cmake -DXXX=YYY"
             set(value "${${var_name}}")
-        elseif(DEFINED ENV{${var_name}})
-            if("$ENV{${var_name}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$") # check environment
+        elseif(DEFINED ENV{${var_name}})            # check environment
+            if("$ENV{${var_name}}" MATCHES "^(0|1|OFF|ON|FALSE|TRUE)$")
                 set(value "$ENV{${var_name}}")
-                set(UPX_CACHE_ORIGIN_FROM_ENV_${var_name} TRUE CACHE INTERNAL "" FORCE) # for info below
+                set(UPX_CACHE_ORIGIN_FROM_ENV_${var_name} TRUE CACHE INTERNAL "" FORCE) # for status message below
             endif()
         endif()
         # convert to bool
@@ -218,7 +236,7 @@ function(upx_compile_source_debug_with_O2) # ARGV
     endforeach()
 endfunction()
 
-# sanitize a target: this needs proper support from your compiler AND toolchain
+# sanitize a target; note that this may require special run-time support libs from your toolchain
 function(upx_sanitize_target) # ARGV
     foreach(t ${ARGV})
         if(UPX_CONFIG_DISABLE_SANITIZE)

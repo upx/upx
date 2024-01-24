@@ -25,6 +25,11 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+#define WANT_WINDOWS_LEAN_H 1
+#include "../headers.h"
+#if (HAVE_CONIO_H)
+#include <conio.h>
+#endif
 #include "../conf.h"
 
 #if (USE_SCREEN_WIN32)
@@ -32,11 +37,6 @@
 /*************************************************************************
 // direct screen access
 **************************************************************************/
-
-#include "../util/windows_lean.h"
-#if (HAVE_CONIO_H)
-#include <conio.h>
-#endif
 
 #include "screen.h"
 

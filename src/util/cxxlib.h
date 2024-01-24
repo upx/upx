@@ -345,7 +345,6 @@ using OwningPointer = T *;
 // also works: a trivial class with just a number of no-ops
 template <class T>
 struct OwningPointer final {
-    static_assert(std::is_class_v<T>); // UPX convention
     typedef typename std::add_lvalue_reference<T>::type reference;
     typedef typename std::add_lvalue_reference<const T>::type const_reference;
     typedef typename std::add_pointer<T>::type pointer;
@@ -378,6 +377,17 @@ inline void owner_delete(OwningPointer(T)(&object)) noexcept {
     static_assert(std::is_nothrow_destructible_v<T>);
     if (object != nullptr) {
         delete (T *) object;
+        object = nullptr;
+    }
+    assert_noexcept((T *) object == nullptr);
+    assert_noexcept(object == nullptr);
+}
+
+template <class T>
+inline void owner_free(OwningPointer(T)(&object)) noexcept {
+    static_assert(!std::is_class_v<T>); // UPX convention
+    if (object != nullptr) {
+        free((T *) object);
         object = nullptr;
     }
     assert_noexcept((T *) object == nullptr);

@@ -425,14 +425,14 @@ void show_version(bool one_line) {
     fprintf(f, "Copyright (C) 2000-2024 John F. Reiser\n");
     fprintf(f, "Copyright (C) 2002-2024 Jens Medoch\n");
 #if (WITH_ZLIB)
-    fprintf(f, "Copyright (C) 1995" "-2023 Jean-loup Gailly and Mark Adler\n");
+    fprintf(f, "Copyright (C) 1995" "-2024 Jean-loup Gailly and Mark Adler\n");
 #endif
 #if (WITH_LZMA)
     fprintf(f, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
 #endif
 #if (WITH_ZSTD)
     // see vendor/zstd/LICENSE; main author is Yann Collet
-    fprintf(f, "Copyright (C) 2015" "-2023 Meta Platforms, Inc. and affiliates\n");
+    fprintf(f, "Copyright (C) 2015" "-2024 Meta Platforms, Inc. and affiliates\n");
 #endif
 #if (WITH_BZIP2)
     fprintf(f, "Copyright (C) 1996" "-2010 Julian Seward\n"); // see <bzlib.h>
@@ -496,11 +496,20 @@ void show_sysinfo(const char *options_var) {
 #if defined(__clang_major__)
         cf_print("__clang_major__", "%lld", __clang_major__ + 0);
 #endif
+#if defined(__clang_minor__)
+        cf_print("__clang_minor__", "%lld", __clang_minor__ + 0, 3);
+#endif
+#if defined(__clang_patchlevel__)
+        cf_print("__clang_patchlevel__", "%lld", __clang_patchlevel__ + 0, 3);
+#endif
 #if defined(__GNUC__)
         cf_print("__GNUC__", "%lld", __GNUC__ + 0);
 #endif
 #if defined(__GNUC_MINOR__)
-        cf_print("__GNUC_MINOR__", "%lld", __GNUC_MINOR__ + 0);
+        cf_print("__GNUC_MINOR__", "%lld", __GNUC_MINOR__ + 0, 3);
+#endif
+#if defined(__GNUC_PATCHLEVEL__)
+        cf_print("__GNUC_PATCHLEVEL__", "%lld", __GNUC_PATCHLEVEL__ + 0, 3);
 #endif
 #if defined(_MSC_VER)
         cf_print("_MSC_VER", "%lld", _MSC_VER + 0);
@@ -523,6 +532,9 @@ void show_sysinfo(const char *options_var) {
 #endif
 #if defined(__USE_MINGW_ANSI_STDIO)
         cf_print("__USE_MINGW_ANSI_STDIO", "%lld", __USE_MINGW_ANSI_STDIO + 0, 3);
+#endif
+#if defined(__ELF__)
+        cf_print("__ELF__", "%lld", __ELF__ + 0, 3);
 #endif
 #if defined(__GLIBC__)
         cf_print("__GLIBC__", "%lld", __GLIBC__ + 0);

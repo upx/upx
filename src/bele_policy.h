@@ -33,14 +33,16 @@
 
 #if defined(BELE_CTP)
 // CTP - Compile-Time Polymorphism (templates)
-#define V static inline
-#define S static int __acc_cdecl_qsort
-#define C noexcept
+#define V  static inline
+#define VV static forceinline_constexpr
+#define S  static int __acc_cdecl_qsort
+#define C  noexcept
 #elif defined(BELE_RTP)
 // RTP - Run-Time Polymorphism (virtual functions)
-#define V virtual
-#define S virtual int
-#define C const noexcept
+#define V  virtual
+#define VV virtual
+#define S  virtual int
+#define C  const noexcept
 #else
 #error
 #endif
@@ -101,8 +103,8 @@ struct BEPolicy
 #elif defined(BELE_RTP)
     typedef N_BELE_CTP::BEPolicy CTP_Policy;
 #endif
-    V bool isBE() C { return true; }
-    V bool isLE() C { return false; }
+    VV bool isBE() C { return true; }
+    VV bool isLE() C { return false; }
 
     typedef BE16 U16;
     typedef BE32 U32;
@@ -160,8 +162,8 @@ struct LEPolicy
 #elif defined(BELE_RTP)
     typedef N_BELE_CTP::LEPolicy CTP_Policy;
 #endif
-    V bool isBE() C { return false; }
-    V bool isLE() C { return true; }
+    VV bool isBE() C { return false; }
+    VV bool isLE() C { return true; }
 
     typedef LE16 U16;
     typedef LE32 U32;
@@ -220,6 +222,7 @@ typedef LEPolicy HostPolicy;
 #endif
 
 #undef V
+#undef VV
 #undef S
 #undef C
 

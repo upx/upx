@@ -49,6 +49,12 @@ ACC_COMPILE_TIME_ASSERT_HEADER((!upx::is_same_any_v<int, char>) )
 ACC_COMPILE_TIME_ASSERT_HEADER((!upx::is_same_any_v<int, char, char>) )
 ACC_COMPILE_TIME_ASSERT_HEADER((!upx::is_same_any_v<int, char, long>) )
 
+ACC_COMPILE_TIME_ASSERT_HEADER((upx::is_same_any_v<ptrdiff_t, int, long, long long>) )
+ACC_COMPILE_TIME_ASSERT_HEADER(
+    (upx::is_same_any_v<size_t, unsigned, unsigned long, unsigned long long>) )
+ACC_COMPILE_TIME_ASSERT_HEADER(
+    (upx::is_same_any_v<upx_uintptr_t, unsigned, unsigned long, unsigned long long>) )
+
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof(int) == sizeof(int))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof('a') == sizeof(char))
 ACC_COMPILE_TIME_ASSERT_HEADER(usizeof("") == 1)

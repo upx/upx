@@ -24,7 +24,6 @@
    <jreiser@users.sourceforge.net>
  */
 
-
 /*************************************************************************
 // Use the preprocessor to work around
 //   - that the types embedding these enums have to be PODs, and
@@ -32,6 +31,10 @@
 //     of "importing" enums) does not yield a POD any more
 //   - that older compilers do not correctly perform EBCO
 **************************************************************************/
+
+#if CLANG_FORMAT_DUMMY_CLASS
+class Dummy {
+#endif
 
 #ifdef WANT_MACH_HEADER_ENUM  /*{*/
 #undef WANT_MACH_HEADER_ENUM
@@ -167,5 +170,9 @@
         ARM_THREAD_STATE64 = 6,  // also ARM_THREAD_STATE64_COUNT 68
     };
 #endif  /*}*/
+
+#if CLANG_FORMAT_DUMMY_CLASS
+}; // class
+#endif
 
 /* vim:set ts=4 sw=4 et: */

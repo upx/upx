@@ -43,12 +43,12 @@
 XSPAN_NAMESPACE_BEGIN
 
 // HINT: set env-var "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
-noinline void xspan_fail_nullptr(void) may_throw;
-noinline void xspan_fail_nullbase(void) may_throw;
-noinline void xspan_fail_not_same_base(void) may_throw;
-noinline void xspan_fail_range_nullptr(void) may_throw;
-noinline void xspan_fail_range_nullbase(void) may_throw;
-noinline void xspan_fail_range_range(void) may_throw;
+noreturn void xspan_fail_nullptr(void) may_throw;
+noreturn void xspan_fail_nullbase(void) may_throw;
+noreturn void xspan_fail_not_same_base(void) may_throw;
+noreturn void xspan_fail_range_nullptr(void) may_throw;
+noreturn void xspan_fail_range_nullbase(void) may_throw;
+noreturn void xspan_fail_range_range(void) may_throw;
 void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_bytes) may_throw;
 
 // help constructor to distinguish between number of elements and bytes
