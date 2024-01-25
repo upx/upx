@@ -8179,11 +8179,15 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         }
         if (nbucket) {
             unsigned const m = elf_hash(name) % nbucket;
+            unsigned nvisit = 0;
             unsigned si;
             for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
                 char const *const p= get_dynsym_name(si, (unsigned)-1);
                 if (0==strcmp(name, p)) {
                     return &dynsym[si];
+                }
+                if (nbucket <= ++nvisit) {
+                    throwCantPack("circular DT_HASH chain %d\n", si);
                 }
             }
         }
@@ -8261,11 +8265,15 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         }
         if (nbucket) { // -rust-musl can have "empty" hashtab
             unsigned const m = elf_hash(name) % nbucket;
+            unsigned nvisit = 0;
             unsigned si;
             for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
                 char const *const p= get_dynsym_name(si, (unsigned)-1);
                 if (0==strcmp(name, p)) {
                     return &dynsym[si];
+                }
+                if (nbucket <= ++nvisit) {
+                    throwCantPack("circular DT_HASH chain %d\n", si);
                 }
             }
         }
