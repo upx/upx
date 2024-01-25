@@ -7170,7 +7170,10 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     upx_uint64_t old_dtinit = 0;
 
     if (Elf64_Ehdr::ET_EXEC == get_te16(&ehdri.e_type)) {
-        if (get_te64(&ehdri.e_entry) < 0x401180
+// 40fddf17153ee3db73a04ff1bf288b91676138d6 2001-02-01 ph.version 11; b_info 12 bytes
+// df9db96bd1c013c07da1d7ec740021d588ab2815 2001-01-17 ph.version 11; no b_info (==> 8 bytes)
+        if (ph.version <= 11
+        &&  get_te64(&ehdri.e_entry) < 0x401180
         &&  get_te16(&ehdri.e_machine)==Elf64_Ehdr::EM_X86_64) {
             // old style, 8-byte b_info:
             // sizeof(b_info.sz_unc) + sizeof(b_info.sz_cpr);
@@ -8354,7 +8357,10 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     upx_uint32_t old_dtinit = 0;
 
     if (Elf32_Ehdr::ET_EXEC == get_te16(&ehdri.e_type)) {
-        if (get_te32(&ehdri.e_entry) < 0x401180
+// 40fddf17153ee3db73a04ff1bf288b91676138d6 2001-02-01 ph.version 11; b_info 12 bytes
+// df9db96bd1c013c07da1d7ec740021d588ab2815 2001-01-17 ph.version 11; no b_info (==> 8 bytes)
+        if (ph.version <= 11
+        &&  get_te32(&ehdri.e_entry) < 0x401180
         &&  get_te16(&ehdri.e_machine)==Elf32_Ehdr::EM_386) {
             // old style, 8-byte b_info:
             // sizeof(b_info.sz_unc) + sizeof(b_info.sz_cpr);
