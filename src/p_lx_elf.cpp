@@ -903,10 +903,10 @@ PackLinuxElf::addStubEntrySections(Filter const *, unsigned m_decompr)
         addLoader("ELFMAINXu", nullptr);
     }
     addLoader(
-        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
-        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
-        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
-        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        ( M_IS_NRV2E(ph_forced_method(ph.method)) ? "NRV_HEAD,NRV2E,NRV_TAIL"
+        : M_IS_NRV2D(ph_forced_method(ph.method)) ? "NRV_HEAD,NRV2D,NRV_TAIL"
+        : M_IS_NRV2B(ph_forced_method(ph.method)) ? "NRV_HEAD,NRV2B,NRV_TAIL"
+        : M_IS_LZMA(ph_forced_method(ph.method))  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
         : nullptr), nullptr);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
