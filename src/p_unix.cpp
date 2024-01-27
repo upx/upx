@@ -619,9 +619,14 @@ void PackUnix::unpack(OutputFile *fo)
         fi->readx(&hbuf, sizeof(hbuf));
         orig_file_size = get_te32(&hbuf.p_filesize);
         blocksize = get_te32(&hbuf.p_blocksize);
+        off_t max_inflated = file_size * 273;  // zlib limit (256 + 16 + 1)
 
-        if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
+        if (max_inflated < orig_file_size
+        ||  max_inflated < blocksize
+        ||  file_size > (off_t)orig_file_size
+        ||  blocksize > orig_file_size) {
             throwCantUnpack("file header corrupted");
+        }
     }
     else
     {
