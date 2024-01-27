@@ -2191,6 +2191,12 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, u32_t headway)
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
         }
+        // It would be better to detect zeroes shifted into low 5 bits of:
+        //    (037 & (hash_32 >> gnu_shift))
+        // but compilers can be stupid.
+        if (31 < gnu_shift) {
+            throwCantPack("bad gnu_shift %d", gnu_shift);
+        }
         // unsigned const *const gashend = &hasharr[n_bucket];
         // minimum, except:
         // Rust and Android trim unused zeroes from high end of hasharr[]
@@ -8102,6 +8108,12 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
+        }
+        // It would be better to detect zeroes shifted into low 6 bits of:
+        //    (077 & (hash_32 >> gnu_shift))
+        // but compilers can be stupid.
+        if (31 < gnu_shift) {
+            throwCantPack("bad gnu_shift %d", gnu_shift);
         }
         // unsigned const *const gashend = &hasharr[n_bucket];
         // minimum, except:
