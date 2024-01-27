@@ -259,7 +259,7 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
     o_elf_shnum(0)
 {
     memset(dt_table, 0, sizeof(dt_table));
-    symnum_end = 0;
+    symnum_max = 0;
     user_init_rp = nullptr;
 }
 
@@ -2102,15 +2102,21 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, u32_t headway)
     else if (dt_table[Elf32_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf32_Dyn::DT_INIT_ARRAY;
 
     unsigned const z_str = dt_table[Elf32_Dyn::DT_STRSZ];
-    strtab_end = !z_str ? 0 : get_te32(&dynp0[-1+ z_str].d_val);
-    if (!z_str || (u32_t)file_size <= strtab_end) { // FIXME: weak
+    strtab_max = !z_str ? 0 : get_te32(&dynp0[-1+ z_str].d_val);
+    unsigned const z_tab = dt_table[Elf32_Dyn::DT_STRTAB];
+    unsigned const strtab_beg = !z_tab ? 0 : get_te32(&dynp0[-1+ z_tab].d_val);
+    if (!z_str || !z_tab
+    || (this->file_size - strtab_beg) < strtab_max  // strtab overlaps EOF
+        // last string in table must have terminating NUL
+    ||  '\0' != ((char *)file_image.getVoidPtr())[-1+ strtab_max + strtab_beg]
+    ) {
         char msg[50]; snprintf(msg, sizeof(msg),
-            "bad DT_STRSZ %#x", strtab_end);
+            "bad DT_STRSZ %#x", strtab_max);
         throwCantPack(msg);
     }
 
     // Find end of DT_SYMTAB
-    symnum_end = elf_find_table_size(
+    symnum_max = elf_find_table_size(
         Elf32_Dyn::DT_SYMTAB, Elf32_Shdr::SHT_DYNSYM) / sizeof(Elf32_Sym);
 
     unsigned const x_sym = dt_table[Elf32_Dyn::DT_SYMTAB];
@@ -2346,7 +2352,7 @@ Elf64_Shdr *PackLinuxElf64::elf_find_section_type(
 
 char const *PackLinuxElf64::get_str_name(unsigned st_name, unsigned symnum) const
 {
-    if (strtab_end <= st_name) {
+    if (strtab_max <= st_name) {
         char msg[70]; snprintf(msg, sizeof(msg),
             "bad .st_name %#x in DT_SYMTAB[%d]", st_name, symnum);
         throwCantPack(msg);
@@ -2356,7 +2362,7 @@ char const *PackLinuxElf64::get_str_name(unsigned st_name, unsigned symnum) cons
 
 char const *PackLinuxElf64::get_dynsym_name(unsigned symnum, unsigned relnum) const
 {
-    if (symnum_end <= symnum) {
+    if (symnum_max <= symnum) {
         char msg[70]; snprintf(msg, sizeof(msg),
             "bad symnum %#x in Elf64_Rel[%d]", symnum, relnum);
         throwCantPack(msg);
@@ -2383,7 +2389,7 @@ bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
 
 char const *PackLinuxElf32::get_str_name(unsigned st_name, unsigned symnum) const
 {
-    if (strtab_end <= st_name) {
+    if (strtab_max <= st_name) {
         char msg[70]; snprintf(msg, sizeof(msg),
             "bad .st_name %#x in DT_SYMTAB[%d]\n", st_name, symnum);
         throwCantPack(msg);
@@ -2393,7 +2399,7 @@ char const *PackLinuxElf32::get_str_name(unsigned st_name, unsigned symnum) cons
 
 char const *PackLinuxElf32::get_dynsym_name(unsigned symnum, unsigned relnum) const
 {
-    if (symnum_end <= symnum) {
+    if (symnum_max <= symnum) {
         char msg[70]; snprintf(msg, sizeof(msg),
             "bad symnum %#x in Elf32_Rel[%d]\n", symnum, relnum);
         throwCantPack(msg);
@@ -8002,15 +8008,21 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
     else if (dt_table[Elf64_Dyn::DT_INIT_ARRAY])    upx_dt_init = Elf64_Dyn::DT_INIT_ARRAY;
 
     unsigned const z_str = dt_table[Elf64_Dyn::DT_STRSZ];
-    strtab_end = !z_str ? 0 : get_te64(&dynp0[-1+ z_str].d_val);
-    if (!z_str || (u64_t)file_size <= strtab_end) { // FIXME: weak
+    strtab_max = !z_str ? 0 : get_te64(&dynp0[-1+ z_str].d_val);
+    unsigned const z_tab = dt_table[Elf64_Dyn::DT_STRTAB];
+    unsigned const strtab_beg = !z_tab ? 0 : get_te64(&dynp0[-1+ z_tab].d_val);
+    if (!z_str || !z_tab
+    || (this->file_size - strtab_beg) < strtab_max  // strtab overlaps EOF
+        // last string in table must have terminating NUL
+    ||  '\0' != ((char *)file_image.getVoidPtr())[-1+ strtab_max + strtab_beg]
+    ) {
         char msg[50]; snprintf(msg, sizeof(msg),
-            "bad DT_STRSZ %#x", strtab_end);
+            "bad DT_STRSZ %#x", strtab_max);
         throwCantPack(msg);
     }
 
     // Find end of DT_SYMTAB
-    symnum_end = elf_find_table_size(
+    symnum_max = elf_find_table_size(
         Elf64_Dyn::DT_SYMTAB, Elf64_Shdr::SHT_DYNSYM) / sizeof(Elf64_Sym);
 
     unsigned const x_sym = dt_table[Elf64_Dyn::DT_SYMTAB];
