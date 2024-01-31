@@ -55,6 +55,17 @@ public:
     // HINT: for fully bound-checked pointer use XSPAN_S from xspan.h
     operator pointer() const noexcept { return ptr; }
 
+    // array access
+    reference operator[](ptrdiff_t i) const may_throw {
+        if very_unlikely (i < 0 || mem_size(sizeof(element_type), i) >= size_in_bytes)
+            throwCantPack("MemBuffer invalid index %td (%u bytes)", i, size_in_bytes);
+        return ptr[i];
+    }
+    // dereference
+    reference operator*() const DELETED_FUNCTION;
+    // arrow operator
+    pointer operator->() const DELETED_FUNCTION;
+
     // membuffer + n -> pointer
     template <class U>
     typename std::enable_if<std::is_integral<U>::value, pointer>::type operator+(U n) const {
