@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 2004-2023 John Reiser
+   Copyright (C) 2004-2024 John Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -1468,6 +1468,8 @@ umin(unsigned a, unsigned b)
     return (a <= b) ? a : b;
 }
 
+#define MAX_N_CMDS 256
+
 template <class T>
 void PackMachBase<T>::unpack(OutputFile *fo)
 {
@@ -1529,7 +1531,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     ||  mhdri.filetype   != mhdr->filetype)
         throwCantUnpack("file header corrupted");
     unsigned const ncmds = mhdr->ncmds;
-    if (!ncmds || 256 < ncmds) { // arbitrary limit
+    if (!ncmds || MAX_N_CMDS < ncmds) { // arbitrary limit
         char msg[40]; snprintf(msg, sizeof(msg),
             "bad Mach_header.ncmds = %d", ncmds);
         throwCantUnpack(msg);
@@ -1643,6 +1645,11 @@ tribool PackMachBase<T>::canUnpack()
 
     unsigned const ncmds = mhdri.ncmds;
     int headway = (int)mhdri.sizeofcmds;
+    if (!ncmds || MAX_N_CMDS < ncmds || file_size < headway) {
+        char msg[80]; snprintf(msg, sizeof(msg),
+            "bad Mach_header ncmds=%d  sizeofcmds=0x%x", ncmds, headway);
+        throwCantUnpack(msg);
+    }
     // old style:   LC_SEGMENT + LC_UNIXTHREAD  [smaller, varies by $ARCH]
     // new style: 3*LC_SEGMENT + LC_MAIN        [larger]
     if ((2 == ncmds
@@ -1954,8 +1961,8 @@ tribool PackMachBase<T>::canPack()
     my_cpusubtype = mhdri.cpusubtype;
 
     unsigned const ncmds = mhdri.ncmds;
-    if (!ncmds || 256 < ncmds) { // arbitrary, but guard against garbage
-        throwCantPack("256 < Mach_header.ncmds");
+    if (!ncmds || MAX_N_CMDS < ncmds) { // arbitrary, but guard against garbage
+        throwCantPack("%d < Mach_header.ncmds", MAX_N_CMDS);
     }
     unsigned const sz_mhcmds = (unsigned)mhdri.sizeofcmds;
     unsigned headway = umin(sz_mhcmds, file_size - sizeof(mhdri));

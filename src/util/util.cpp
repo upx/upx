@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -176,7 +176,7 @@ void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, s
         throwCantPack("ptr_check_no_overlap-bc");
 }
 
-#if !defined(DOCTEST_CONFIG_DISABLE) && DEBUG
+#if !defined(DOCTEST_CONFIG_DISABLE) && !defined(__wasi__) && DEBUG
 TEST_CASE("ptr_check_no_overlap 2") {
     byte p[4] = {};
 
@@ -921,5 +921,16 @@ TEST_CASE("get_ratio") {
     CHECK(get_ratio(2 * UPX_RSIZE_MAX, 2 * UPX_RSIZE_MAX) == 1000050);
     CHECK(get_ratio(2 * UPX_RSIZE_MAX, 1024ull * UPX_RSIZE_MAX) == 9999999);
 }
+
+/*************************************************************************
+// compat
+**************************************************************************/
+
+#if defined(__wasi__) // TODO later - wait for wasm/wasi exception handling proposal
+extern "C" {
+void __cxa_allocate_exception() { std::terminate(); }
+void __cxa_throw() { std::terminate(); }
+} // extern "C"
+#endif
 
 /* vim:set ts=4 sw=4 et: */

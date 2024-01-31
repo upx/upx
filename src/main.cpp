@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -1355,8 +1355,11 @@ int __acc_cdecl_main main(int argc, char *argv[]) /*noexcept*/ {
     _set_abort_behavior(_WRITE_ABORT_MSG, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
 #endif
     acc_wildargv(&argc, &argv);
-    // srand((int) time(nullptr));
+#if defined(__wasi__)
+    srand((int) time(nullptr));
+#else
     srand((int) clock());
+#endif
 
     // info: main() is implicitly "noexcept", so we need a try block
 #if 0

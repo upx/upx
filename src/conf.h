@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -169,18 +169,29 @@ typedef upx_int64_t upx_off_t;
 
 // shortcuts
 #define forceinline __acc_forceinline
-#if _MSC_VER
+#if (ACC_CC_MSC)
 #define noinline __declspec(noinline)
 #undef __acc_noinline
 #define __acc_noinline noinline
 #else
 #define noinline __acc_noinline
 #endif
+#if defined(__clang__) || defined(__GNUC__)
+#define noreturn noinline __attribute__((__noreturn__))
+#elif (ACC_CC_MSC)
+// do not use, generates annoying "warning C4702: unreachable code"
+////#define noreturn noinline __declspec(noreturn)
+#define noreturn noinline
+#else
+#define noreturn noinline
+#endif
 #define forceinline_constexpr forceinline constexpr
 #define likely                __acc_likely
 #define unlikely              __acc_unlikely
 #define very_likely           __acc_very_likely
 #define very_unlikely         __acc_very_unlikely
+// cosmetic: explictly annotate some functions which may throw exceptions
+// note: noexcept(false) is the default for all C++ functions anyway
 #define may_throw             noexcept(false)
 
 #define COMPILE_TIME_ASSERT(e) ACC_COMPILE_TIME_ASSERT(e)
@@ -341,15 +352,17 @@ inline void NO_fprintf(FILE *, const char *, ...) noexcept {}
 #define upx_memcpy_inline __builtin_memcpy_inline
 #elif __has_builtin(__builtin_memcpy)
 #define upx_memcpy_inline __builtin_memcpy
-#elif defined(__GNUC__)
+#elif defined(__clang__) || defined(__GNUC__)
 #define upx_memcpy_inline __builtin_memcpy
 #else
 #define upx_memcpy_inline memcpy
 #endif
 
-#if __has_builtin(__builtin_return_address)
+#if defined(__wasi__)
+#define upx_return_address() nullptr
+#elif __has_builtin(__builtin_return_address)
 #define upx_return_address() __builtin_return_address(0)
-#elif defined(__GNUC__)
+#elif defined(__clang__) || defined(__GNUC__)
 #define upx_return_address() __builtin_return_address(0)
 #elif (ACC_CC_MSC)
 #define upx_return_address() _ReturnAddress()
@@ -440,9 +453,9 @@ inline void mem_clear(T (&array)[N]) noexcept DELETED_FUNCTION;
 #define ByteArray(var, n) Array(byte, var, (n))
 
 // assert_noexcept()
-noinline void assertFailed(const char *expr, const char *file, int line, const char *func) noexcept;
-noinline void throwAssertFailed(const char *expr, const char *file, int line, const char *func);
-#if defined(__GNUC__)
+noreturn void assertFailed(const char *expr, const char *file, int line, const char *func) noexcept;
+noreturn void throwAssertFailed(const char *expr, const char *file, int line, const char *func);
+#if defined(__clang__) || defined(__GNUC__)
 #undef assert
 #if DEBUG || 0
 // generate a warning if assert() is used inside a "noexcept" context

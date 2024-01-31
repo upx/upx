@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -25,6 +25,11 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+#define WANT_WINDOWS_LEAN_H 1
+#include "../headers.h"
+#if (HAVE_CONIO_H)
+#include <conio.h>
+#endif
 #include "../conf.h"
 
 #if (USE_SCREEN_WIN32)
@@ -32,11 +37,6 @@
 /*************************************************************************
 // direct screen access
 **************************************************************************/
-
-#include "../util/windows_lean.h"
-#if (HAVE_CONIO_H)
-#include <conio.h>
-#endif
 
 #include "screen.h"
 

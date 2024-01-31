@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -28,12 +28,25 @@
 // doctest support code implementation
 **************************************************************************/
 
+#if defined(__has_include)
+#if __has_include(<features.h>)
+#include <features.h> // for __GLIBC__
+#endif
+#endif
+// aligned_alloc() was added in glibc-2.16
+#if defined(__ELF__) && (__GLIBC__ + 0 == 2) && (__GLIBC_MINOR__ + 0 < 16)
+#define _LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION
+#endif
+
 #define DOCTEST_CONFIG_IMPLEMENT
 #define DOCTEST_CONFIG_NO_UNPREFIXED_OPTIONS
 
 #if !defined(DOCTEST_CONFIG_DISABLE)
 
-#if defined(__i386__) && defined(__MSDOS__) && defined(__DJGPP__) && defined(__GNUC__)
+#if defined(__wasi__)
+#define DOCTEST_CONFIG_NO_MULTITHREADING
+#define DOCTEST_CONFIG_NO_POSIX_SIGNALS
+#elif defined(__i386__) && defined(__MSDOS__) && defined(__DJGPP__) && defined(__GNUC__)
 #define DOCTEST_CONFIG_NO_MULTITHREADING
 #define DOCTEST_CONFIG_NO_POSIX_SIGNALS
 #elif defined(__m68k__) && defined(__atarist__) && defined(__GNUC__)

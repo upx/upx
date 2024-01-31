@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -123,6 +123,7 @@ public:
         return assign(Self(other));
     }
 
+    // cast to a different type (creates a new value)
     template <class U>
     inline CSelf<U> type_cast() const {
         typedef CSelf<U> R;

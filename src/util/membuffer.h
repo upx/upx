@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -55,6 +55,17 @@ public:
     // HINT: for fully bound-checked pointer use XSPAN_S from xspan.h
     operator pointer() const noexcept { return ptr; }
 
+    // array access
+    reference operator[](ptrdiff_t i) const may_throw {
+        if very_unlikely (i < 0 || mem_size(sizeof(element_type), i) >= size_in_bytes)
+            throwCantPack("MemBuffer invalid index %td (%u bytes)", i, size_in_bytes);
+        return ptr[i];
+    }
+    // dereference
+    reference operator*() const DELETED_FUNCTION;
+    // arrow operator
+    pointer operator->() const DELETED_FUNCTION;
+
     // membuffer + n -> pointer
     template <class U>
     typename std::enable_if<std::is_integral<U>::value, pointer>::type operator+(U n) const {
@@ -84,7 +95,7 @@ public: // raw access
 private:
     // disable taking the address => force passing by reference
     // [I'm not too sure about this design decision, but we can always allow it if needed]
-    MemBufferBase<T> *operator&() const noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_ADDRESS(MemBufferBase)
 };
 
 /*************************************************************************
@@ -209,15 +220,8 @@ private:
     Debug debug;
 #endif
 
-    // disable copy and move
-    MemBuffer(const MemBuffer &) DELETED_FUNCTION;
-    MemBuffer &operator=(const MemBuffer &) DELETED_FUNCTION;
-#if __cplusplus >= 201103L
-    MemBuffer(MemBuffer &&) noexcept DELETED_FUNCTION;
-    MemBuffer &operator=(MemBuffer &&) noexcept DELETED_FUNCTION;
-#endif
-    // disable dynamic allocation
-    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
+    UPX_CXX_DISABLE_COPY_MOVE(MemBuffer)             // disable copy and move
+    UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(MemBuffer) // disable dynamic allocation
 };
 
 /* vim:set ts=4 sw=4 et: */
