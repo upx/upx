@@ -57,7 +57,8 @@ public:
 
     // array access
     reference operator[](ptrdiff_t i) const may_throw {
-        if very_unlikely (i < 0 || mem_size(sizeof(element_type), i) >= size_in_bytes)
+        // TODO: &array[SIZE] == array + SIZE, this is legal; but element access is not
+        if very_unlikely (i < 0 || mem_size(sizeof(element_type), i) > size_in_bytes)
             throwCantPack("MemBuffer invalid index %td (%u bytes)", i, size_in_bytes);
         return ptr[i];
     }
