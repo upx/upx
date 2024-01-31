@@ -43,28 +43,31 @@ SZ_DLINE= 128  # size of data cache line in Apple G5
 #include "arch/powerpc/32/ppc_regs.h"
 
 .macro PUSH4 p1,p2,p3,p4
-    stu \p1,-4*NBPW(sp)
-    st  \p2, 1*NBPW(sp)
-    st  \p3, 2*NBPW(sp)
-    st  \p4, 3*NBPW(sp)
+    stwu \p1,-4*NBPW(sp)
+    stw \p2, 1*NBPW(sp)
+    stw \p3, 2*NBPW(sp)
+    stw \p4, 3*NBPW(sp)
 .endm
 .macro PUSH3 p1,p2,p3
-    stu \p1,-3*NBPW(sp)
-    st  \p2, 1*NBPW(sp)
-    st  \p3, 2*NBPW(sp)
+    stwu \p1,-3*NBPW(sp)
+    stw \p2, 1*NBPW(sp)
+    stw \p3, 2*NBPW(sp)
 .endm
 .macro POP4 p1,p2,p3,p4
-    ld  \p4, 3*NBPW(sp)
-    ld  \p3, 2*NBPW(sp)
-    ld  \p2, 1*NBPW(sp)
-    ldu \p1, 4*NBPW(sp)
+    lwz  \p1, 0*NBPW(sp)
+    lwz  \p2, 1*NBPW(sp)
+    lwz  \p3, 2*NBPW(sp)
+    lwz  \p4, 3*NBPW(sp)
+    addi sp,sp,4*NBPW
 .endm
 .macro POP2 p1,p2
-    ld  \p2, 1*NBPW(sp)
-    ld  \p1, 2*NBPW(sp)
+    lwz  \p1, 0*NBPW(sp)
+    lwz  \p2, 1*NBPW(sp)
+    addi sp,sp,2*NBPW
 .endm
 .macro POP1 p1
-    ld  \p1, 2*NBPW(sp)
+    lwz  \p1, 0*NBPW(sp)
+    addi sp,sp,1*NBPW
 .endm
 
   section EXP_HEAD
@@ -103,7 +106,7 @@ f_expand: .globl f_expand // f_expand(b_info *, dst, &dstlen)
 
     POP4 a2,a0,a1,r0   // fx_src,fx_dst,fx_dstlen,lr
     mtlr r0
-    ld a1,0(a1)  // actual length used by decompressor
+    lwz a1,0(a1)  // actual length used by decompressor
     PUSH3 a0,a1,a3  // params for sync_cache
     lbz a3,b_ftid(a2)
     lbz a2,b_cto8(a2)
@@ -157,13 +160,15 @@ decompress:  // (src *, cpr_len, dst *, &dstlen);
 eof_nrv:
 #define tmp a1
 #define dst0 a4
-        ld dst0,0(ldst)  // original dst
+    teq r0,r0
+        lwz dst0,0(ldst)  // original dst
         mtlr t3  // return address
         subf a0,lsrc,src
         subf tmp,dst0,dst  // -1+ dst length
         addi a0,a0,1  // return 0: good; else: bad  [+1: correct for lbzu]
         addi tmp,tmp,1  // dst length
-        std  tmp,0(ldst)
+        stw  tmp,0(ldst)
+        blr
 #undef tmp
 #undef dst0
 
@@ -177,6 +182,7 @@ eof_nrv:
 #include "arch/powerpc/32/nrv2d_d.S"
 
   section NRV2B
+  teq r0,r0
 #include "arch/powerpc/32/nrv2b_d.S"
 
 /* lzma has its own 'section's */

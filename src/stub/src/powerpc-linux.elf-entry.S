@@ -170,11 +170,12 @@ unfold:  // IN: r_auxv, r_PMASK
         mflr a0
         li a1,0
 SYS_memfd_create= 360
-        li r0,SYS_memfd_create; sc
+        li r0,SYS_memfd_create; sc; bns+ 0f; teq r0,r0; 0:
         mr r_fd,a0
 
         mr r_fp,sp
-        li r0,-2*NBPW
+        li r0,-CACHELINE
+// alloca
         sub sp,sp,r_LENU
         and sp,sp,r0
 
@@ -186,29 +187,31 @@ SYS_memfd_create= 360
         mr dst,sp  // dst for unfolding
         lwz lsrc,sz_cpr  + LBINFO - LrFLD(r_FLD)
         la src,sz_b_info + LBINFO - LrFLD(r_FLD)  // folded code
-        bctrl  // decompress it
+        bl decompress
         stw r_PMASK,0(sp)  // forward the actual PAGE_MASK
 
         mr a0,r_fd
         mr a1,sp
         mr a2,r_LENU
 SYS_write= 4
-        li r0,SYS_write; sc
+        li r0,SYS_write; sc; bns+ 0f; teq r0,r0; 0:
         mr sp,r_fp
 
         li a5,0
         mr a4,r_fd
         li a3,MAP_PRIVATE
-        li a2,PROT_WRITE|PROT_EXEC|PROT_READ
+        li a2,PROT_WRITE|PROT_EXEC|PROT_READ  // PROT_WRITE: DEBUG only
         mr a1,r_LENU
         li a0,0
 SYS_mmap=      90
-        li r0,SYS_mmap; sc
+        li r0,SYS_mmap; sc; bns+ 0f; teq r0,r0; 0:
+        mr r_ADRU,a0
 
 // Use the unfolded code
-        addi r0,r_ADRU,2*NBPW  // skip get_page_mask()
+        addi r0,r_ADRU,2*NBPW  // skip page_mask, other word
         add r_ADRX,r_elf,r_obinf  // compressed data
         mtctr r0
+        lwz r_LENX, sz_pack2 - f_exp(r_exp)
         bctr
 
 // Example code at entrypoint of C-language subroutine:
@@ -228,7 +231,7 @@ mmapRW0:
 mmapRW:
         li a2,PROT_READ|PROT_WRITE
 mmap:
-        li r0,__NR_mmap; sc; bns 0f; teq r0,r0; 0:
+        li r0,__NR_mmap; sc; bns+ 0f; teq r0,r0; 0:
         ret
 
 zfind:
@@ -241,7 +244,7 @@ main:
         stmw r2,  SZ_FRAME+ 2*NBPW - NBPW(sp) // save registers r2 thru r31
         mflr r_exp  // &f_exp (decompress)
 
-        la a0,SZ_FRAME+32*NBPW(sp)  // &argc
+        la a0,SZ_FRAME+32*NBPW+NBPW(sp)  // &argv; argc could be zero!
         call zfind  // a0= envp
         call zfind  // a0= &Elf32_auxv
         mr r_auxv,a0  // save for folded code
