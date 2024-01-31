@@ -8060,6 +8060,9 @@ unsigned PackLinuxElf64::elf_find_table_size(unsigned dt_type, unsigned sh_type)
     unsigned x_rva;
     if (dt_type < DT_NUM) {
         unsigned const x_ndx = dt_table[dt_type];
+        if (!x_ndx) { // no such entry
+            return 0;
+        }
         x_rva = get_te64(&dynseg[-1+ x_ndx].d_val);
     }
     else {
