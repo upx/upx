@@ -80,7 +80,6 @@ PAGE_MASK: .int 0xfffff000  // default
         b fold_begin
 
 get_page_mask: .globl get_page_mask
-    teq r0,r0  // DEBUG
         mflr r0
         bl 0f; 0:
         mtctr r0
@@ -165,7 +164,6 @@ L90:
         mr a2,r_elf   // elfaddr
         la a3,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
         mr a4,r_auxv  // &Elf32_auxv_t
-    teq r0,r0  // DEBUG
         call upx_main  // Out: a0= entry
 // entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Ehdrtmp *a3, auxv *a4)
 
