@@ -2186,7 +2186,7 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, u32_t headway)
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
         if (!n_bucket || (1u<<31) <= n_bucket  /* fie on fuzzers */
         || (unsigned)(gashend - buckets) < n_bucket
-        || (void const *)&file_image[file_size] <= (void const *)hasharr) {
+        || (file_size + file_image) <= (void const *)hasharr) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
@@ -8104,7 +8104,7 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
         unsigned     const *const hasharr = &buckets[n_bucket]; (void)hasharr;
         if (!n_bucket || (1u<<31) <= n_bucket  /* fie on fuzzers */
         || (unsigned)(gashend - buckets) < n_bucket
-        || (void const *)&file_image[file_size] <= (void const *)hasharr) {
+        || (file_size + file_image) <= (void const *)hasharr) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
@@ -8230,7 +8230,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const *const bitmask = &gashtab[4];
         unsigned const *const buckets = &bitmask[n_bitmask];
         unsigned const *const hasharr = &buckets[n_bucket];
-        if ((void const *)&file_image[file_size] <= (void const *)hasharr) {
+        if ((file_size + file_image) <= (void const *)hasharr) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
@@ -8266,7 +8266,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
                             return dsp;
                         }
                     } while (++dsp,
-                            (char const *)hp < (char const *)&file_image[file_size]
+                        ((char const *)hp < (char const *)(file_size + file_image))
                         &&  0==(1u& get_te32(hp++)));
                 }
             }
@@ -8311,7 +8311,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
         unsigned     const *const hasharr = &buckets[n_bucket];
 
-        if ((void const *)&file_image[file_size] <= (void const *)hasharr) {
+        if ((file_size + file_image) <= (void const *)hasharr) {
             char msg[80]; snprintf(msg, sizeof(msg),
                 "bad n_bucket %#x\n", n_bucket);
             throwCantPack(msg);
