@@ -2948,7 +2948,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
 
     if (iobjs > 2) {
         // read the noncompressed section
-        unsigned const size = isection[2].size;
+        const unsigned size = isection[2].size;
         ibuf.dealloc();
         ibuf.alloc(size + 1);
         fi->seek(isection[2].rawdataptr, SEEK_SET);

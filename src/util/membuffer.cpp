@@ -90,7 +90,7 @@ void *MemBuffer::subref_impl(const char *errfmt, size_t skip, size_t take) {
         // printf is using unsigned formatting
         if (!errfmt || !errfmt[0])
             errfmt = "bad subref %#x %#x";
-        snprintf(buf, sizeof(buf), errfmt, (unsigned) skip, (unsigned) take);
+        upx_safe_snprintf(buf, sizeof(buf), errfmt, (unsigned) skip, (unsigned) take);
         throwCantPack(buf);
     }
     return ptr + skip;
@@ -189,7 +189,7 @@ void MemBuffer::alloc(upx_uint64_t bytes) {
         set_ne32(p + size_in_bytes + 0, MAGIC2(p));
         set_ne32(p + size_in_bytes + 4, stats.global_alloc_counter);
     }
-    ptr = (pointer) (void *) p;
+    ptr = upx::ptr_static_cast<pointer>(p);
 #if !defined(__SANITIZE_MEMORY__) && DEBUG
     memset(ptr, 0xfb, size_in_bytes);
     (void) VALGRIND_MAKE_MEM_UNDEFINED(ptr, size_in_bytes);
@@ -247,26 +247,33 @@ void MemBuffer::dealloc() noexcept {
 **************************************************************************/
 
 TEST_CASE("MemBuffer core") {
+    constexpr size_t N = 64;
     MemBuffer mb;
     CHECK_THROWS(mb.checkState());
     CHECK_THROWS(mb.alloc(0x30000000 + 1));
     CHECK(raw_bytes(mb, 0) == nullptr);
     CHECK_THROWS(raw_bytes(mb, 1));
-    mb.alloc(64);
+    mb.alloc(N);
     mb.checkState();
-    CHECK(raw_bytes(mb, 64) != nullptr);
-    CHECK(raw_bytes(mb, 64) == mb.getVoidPtr());
-    CHECK_THROWS(raw_bytes(mb, 65));
-    CHECK_NOTHROW(mb + 64);
-    CHECK_THROWS(mb + 65);
+    CHECK(mb.begin() == mb.cbegin());
+    CHECK(mb.end() == mb.cend());
+    CHECK(mb.begin() == &mb[0]);
+    CHECK(mb.end() == &mb[0] + N);
+    CHECK(mb.cbegin() == &mb[0]);
+    CHECK(mb.cend() == &mb[0] + N);
+    CHECK(raw_bytes(mb, N) != nullptr);
+    CHECK(raw_bytes(mb, N) == mb.getVoidPtr());
+    CHECK_THROWS(raw_bytes(mb, N + 1));
+    CHECK_NOTHROW(mb + N);
+    CHECK_THROWS(mb + (N + 1));
 #if ALLOW_INT_PLUS_MEMBUFFER
-    CHECK_NOTHROW(64 + mb);
-    CHECK_THROWS(65 + mb);
+    CHECK_NOTHROW(N + mb);
+    CHECK_THROWS((N + 1) + mb);
 #endif
-    CHECK_NOTHROW(mb.subref("", 0, 64));
-    CHECK_NOTHROW(mb.subref("", 64, 0));
-    CHECK_THROWS(mb.subref("", 1, 64));
-    CHECK_THROWS(mb.subref("", 64, 1));
+    CHECK_NOTHROW(mb.subref("", 0, N));
+    CHECK_NOTHROW(mb.subref("", N, 0));
+    CHECK_THROWS(mb.subref("", 1, N));
+    CHECK_THROWS(mb.subref("", N, 1));
     if (use_simple_mcheck()) {
         byte *p = raw_bytes(mb, 0);
         unsigned magic1 = get_ne32(p - 4);
@@ -312,6 +319,26 @@ TEST_CASE("MemBuffer unused") {
     MemBuffer mb;
     CHECK(mb.raw_ptr() == nullptr);
     CHECK(mb.raw_size_in_bytes() == 0);
+}
+
+TEST_CASE("MemBuffer array access") {
+    constexpr size_t N = 16;
+    MemBuffer mb(N);
+    mb.clear();
+    for (size_t i = 0; i != N; ++i)
+        mb[i] += 1;
+    for (byte *ptr = mb; ptr != mb + N; ++ptr)
+        *ptr += 1;
+    for (byte *ptr = mb + 0; ptr < mb + N; ++ptr)
+        *ptr += 1;
+    for (byte *ptr = &mb[0]; ptr != mb.end(); ++ptr)
+        *ptr += 1;
+    for (byte *ptr = mb.begin(); ptr < mb.end(); ++ptr)
+        *ptr += 1;
+    for (size_t i = 0; i != N; ++i)
+        assert(mb[i] == 5);
+    CHECK_NOTHROW((void) &mb[N - 1]);
+    CHECK_THROWS((void) &mb[N]); // NOT legal for containers like std::vector or MemBuffer
 }
 
 TEST_CASE("MemBuffer::getSizeForCompression") {

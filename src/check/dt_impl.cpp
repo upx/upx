@@ -28,6 +28,20 @@
 // doctest support code implementation
 **************************************************************************/
 
+// libc++ hardenining
+#if defined(__clang__) && defined(__clang_major__) && (__clang_major__ + 0 >= 18)
+#if DEBUG
+#define _LIBCPP_HARDENING_MODE _LIBCPP_HARDENING_MODE_DEBUG
+#else
+#define _LIBCPP_HARDENING_MODE _LIBCPP_HARDENING_MODE_EXTENSIVE
+#endif
+#endif
+#if defined(__clang__) && defined(__clang_major__) && (__clang_major__ + 0 < 18)
+#if DEBUG
+#define _LIBCPP_ENABLE_ASSERTIONS 1
+#endif
+#endif
+
 #if defined(__has_include)
 #if __has_include(<features.h>)
 #include <features.h> // for __GLIBC__

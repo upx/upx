@@ -15,8 +15,8 @@ env:
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -Wdev --warn-uninitialized
-  # 2024-01-24
-  ZIG_DIST_VERSION: 0.12.0-dev.2334+aef1da163
+  # 2024-01-25
+  ZIG_DIST_VERSION: 0.12.0-dev.2341+92211135f
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -78,7 +78,7 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y g++-multilib g++-mingw-w64-i686 g++-mingw-w64-x86-64
+          sudo apt-get install -y g++-multilib g++-mingw-w64-i686 g++-mingw-w64-x86-64 valgrind
           # make sure that we use posix-threads (pthread/winpthreads) and NOT win32-threads
           for f in i686-w64-mingw32-g++ i686-w64-mingw32-gcc x86_64-w64-mingw32-g++ x86_64-w64-mingw32-gcc; do
             if test -f /usr/bin/$f-posix; then sudo update-alternatives --set $f /usr/bin/$f-posix; fi
@@ -123,8 +123,8 @@ jobs:
           path: tmp/artifact
       - name: 'Run install tests'
         run: |
-          (cd build/extra/gcc/release && DESTDIR=$PWD/Install-with-cmake cmake --install .)
-          (cd build/extra/gcc/release && DESTDIR=$PWD/Install-with-make  make install)
+          (cd build/extra/gcc/release && DESTDIR="$PWD/Install with cmake" cmake --install .)
+          (cd build/extra/gcc/release && DESTDIR="$PWD/Install with make"  make install)
       - name: 'Run ctest tests'
         run: |
           make -C build/extra/gcc/debug test
@@ -147,8 +147,29 @@ jobs:
         run: |
           env -C build/extra/gcc-m32/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
           env -C build/extra/gcc-m32/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
+      - name: 'Mimic ctest tests with Valgrind'
+        if: false # TODO later: valgrind problem/bug
+        run: |
+          if command -v valgrind >/dev/null; then
+            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+            env -C build/extra/gcc/debug     bash "$PWD"/misc/testsuite/mimic_ctest.sh
+            env -C build/extra/gcc/release   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+            env -C build/extra/clang/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+            env -C build/extra/clang/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          fi
+      - name: 'Mimic ctest tests 32-bit with Valgrind'
+        if: ${{ matrix.use_m32 && false }} # TODO later: valgrind problem/bug
+        run: |
+          if command -v valgrind >/dev/null; then
+            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+            env -C build/extra/gcc-m32/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+            env -C build/extra/gcc-m32/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          fi
       - name: 'Run file system test suite'
         run: |
+          if command -v valgrind >/dev/null; then
+            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+          fi
           env -C build/extra/gcc/release bash "$PWD"/misc/testsuite/test_symlinks.sh
       - name: 'Run test suite build/extra/gcc/release'
         run: |
@@ -220,8 +241,8 @@ jobs:
           path: tmp/artifact
       - name: 'Run install tests'
         run: |
-          (cd build/extra/clang/release && DESTDIR=$PWD/Install-with-cmake cmake --install .)
-          (cd build/extra/clang/release && DESTDIR=$PWD/Install-with-make  make install)
+          (cd build/extra/clang/release && DESTDIR="$PWD/Install with cmake" cmake --install .)
+          (cd build/extra/clang/release && DESTDIR="$PWD/Install with make"  make install)
       - name: 'Run ctest tests'
         if: ${{ !contains(matrix.os, 'macos-13') }} # FIXME: UPX on macos-13 is broken => disable self-test for now
         run: |
@@ -345,7 +366,7 @@ jobs:
           set RUN_CL=cl ${{ matrix.cl_machine_flags }} -MT
           set RUN_LIB=link -lib ${{ matrix.link_machine_flags }}
           @rem UPX only uses the very basic Windows API
-          set DEFS=-D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0400
+          set DEFS=-D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0501
           set BDIR=%H%\build\%C%\%B%
           git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
           @REM ===== build bzip2 =====
@@ -415,31 +436,31 @@ jobs:
     needs: [ job-rebuild-and-verify-stubs ]
     name: ${{ format('zigcc {0} {1}', matrix.zig_target, matrix.zig_pic) }}
     runs-on: ubuntu-latest
-    container: 'alpine:3.19' # older versions such as alpine:3.12 also work; no-container also works
+    container: 'alpine:3.19'
     strategy:
       fail-fast: false
       matrix:
         include:
           # only build a few targets => more targets are tested in the Weekly CI
-          - { zig_target: aarch64-linux-musl }
-          # { zig_target: aarch64-linux-musl, zig_pic: -fPIE }
+          - { zig_target: aarch64-linux-musl, qemu: qemu-aarch64 }
+          # { zig_target: aarch64-linux-musl, qemu: qemu-aarch64, zig_pic: -fPIE }
           # { zig_target: aarch64-macos-none }
           - { zig_target: aarch64-macos.11.0-none }
           # { zig_target: aarch64-macos.12.0-none }
           # { zig_target: aarch64-macos.13.0-none }
           - { zig_target: aarch64-windows-gnu }
-          - { zig_target: arm-linux-musleabihf }
-          # { zig_target: arm-linux-musleabihf, zig_pic: -fPIE }
-          - { zig_target: i386-linux-musl }
-          # { zig_target: i386-linux-musl, zig_pic: -fPIE }
+          - { zig_target: arm-linux-musleabihf, qemu: qemu-arm }
+          # { zig_target: arm-linux-musleabihf, qemu: qemu-arm, zig_pic: -fPIE }
+          - { zig_target: i386-linux-musl, qemu: qemu-i386 }
+          # { zig_target: i386-linux-musl, qemu: qemu-i386, zig_pic: -fPIE }
           - { zig_target: i386-windows-gnu }
-          # { zig_target: mips-linux-musl }
-          # { zig_target: mipsel-linux-musl }
-          # { zig_target: powerpc-linux-musl }
-          # { zig_target: powerpc64-linux-musl }
-          # { zig_target: powerpc64le-linux-musl }
-          - { zig_target: x86_64-linux-musl }
-          # { zig_target: x86_64-linux-musl, zig_pic: -fPIE }
+          - { zig_target: mips-linux-musl }
+          - { zig_target: mipsel-linux-musl }
+          - { zig_target: powerpc-linux-musl, qemu: qemu-ppc }
+          - { zig_target: powerpc64-linux-musl, qemu: qemu-ppc64 }
+          - { zig_target: powerpc64le-linux-musl, qemu: qemu-ppc64le }
+          - { zig_target: x86_64-linux-musl, qemu: qemu-x86_64 }
+          # { zig_target: x86_64-linux-musl, qemu: qemu-x86_64, zig_pic: -fPIE }
           # { zig_target: x86_64-macos-none }
           - { zig_target: x86_64-macos.11.0-none }
           # { zig_target: x86_64-macos.12.0-none }
@@ -523,5 +544,31 @@ jobs:
       - name: 'Run install tests'
         if: ${{ contains(matrix.zig_target, '-linux') }}
         run: |
-          (cd build/zig/${ZIG_TARGET}${ZIG_PIC}/release && DESTDIR=$PWD/Install-with-cmake cmake --install .)
-          (cd build/zig/${ZIG_TARGET}${ZIG_PIC}/release && DESTDIR=$PWD/Install-with-make  make install)
+          (cd build/zig/${ZIG_TARGET}${ZIG_PIC}/release && DESTDIR="$PWD/Install with cmake" cmake --install .)
+          (cd build/zig/${ZIG_TARGET}${ZIG_PIC}/release && DESTDIR="$PWD/Install with make"  make install)
+      - name: 'Run ctest tests'
+        if: ${{ matrix.zig_target == 'i386-linux-musl' || matrix.zig_target == 'x86_64-linux-musl' }}
+        run: |
+          make -C build/zig/${ZIG_TARGET}${ZIG_PIC}/debug test
+          make -C build/zig/${ZIG_TARGET}${ZIG_PIC}/release test
+      - name: 'Mimic ctest tests'
+        if: ${{ matrix.zig_target == 'i386-linux-musl' || matrix.zig_target == 'x86_64-linux-musl' }}
+        run: |
+          apk add coreutils
+          env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
+      - name: ${{ format('Mimic ctest tests with QEMU {0}', matrix.qemu) }}
+        if: ${{ matrix.qemu }}
+        run: |
+          qemu="${{ matrix.qemu }}"
+          apk add coreutils $qemu
+          export upx_exe_runner="$qemu"
+          env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
+      - name: 'Mimic ctest tests with Valgrind'
+        if: ${{ matrix.zig_target == 'x86_64-linux-musl' && false }} # TODO later: valgrind problem/bug
+        run: |
+          apk add coreutils valgrind
+          export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+          env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/release bash "$PWD"/misc/testsuite/mimic_ctest.sh

@@ -28,8 +28,8 @@
 #pragma once
 
 /*************************************************************************
-// assert sane memory buffer sizes to protect against integer overflows
-// and malicious header fields
+// upx_rsize_t and mem_size: assert sane memory buffer sizes to protect
+// against integer overflows and malicious header fields
 // see C 11 standard, Annex K
 **************************************************************************/
 
@@ -73,7 +73,7 @@ T *NewArray(upx_uint64_t n) may_throw {
     COMPILE_TIME_ASSERT(std::is_standard_layout<T>::value)
     COMPILE_TIME_ASSERT(std::is_trivially_copyable<T>::value)
     COMPILE_TIME_ASSERT(std::is_trivially_default_constructible<T>::value)
-    size_t bytes = mem_size(sizeof(T), n); // assert size
+    upx_rsize_t bytes = mem_size(sizeof(T), n); // assert size
     T *array = new T[size_t(n)];
 #if !defined(__SANITIZE_MEMORY__)
     if (array != nullptr && bytes > 0) {
@@ -145,7 +145,7 @@ inline void ptr_invalidate_and_poison(T *(&ptr)) noexcept {
 
 void *upx_calloc(size_t n, size_t element_size) may_throw;
 
-void upx_memswap(void *a, void *b, size_t n);
+void upx_memswap(void *a, void *b, size_t n) noexcept;
 
 typedef int(__acc_cdecl_qsort *upx_compare_func_t)(const void *, const void *);
 typedef void (*upx_sort_func_t)(void *array, size_t n, size_t element_size, upx_compare_func_t);

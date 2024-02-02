@@ -54,11 +54,11 @@ void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_byte
 // help constructor to distinguish between number of elements and bytes
 struct XSpanCount final {
     explicit forceinline_constexpr XSpanCount(size_t n) noexcept : count(n) {}
-    size_t count; // public
+    const size_t count; // public
 };
 struct XSpanSizeInBytes final {
     explicit forceinline_constexpr XSpanSizeInBytes(size_t bytes) noexcept : size_in_bytes(bytes) {}
-    size_t size_in_bytes; // public
+    const size_t size_in_bytes; // public
 };
 
 template <class T>

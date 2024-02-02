@@ -603,7 +603,7 @@ TEST_CASE("ptr_invalidate_and_poison") {
     ptr_invalidate_and_poison(ip);
     assert(ip != nullptr);
     (void) ip;
-    double *dp;
+    double *dp; // not initialized
     ptr_invalidate_and_poison(dp);
     assert(dp != nullptr);
     (void) dp;

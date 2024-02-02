@@ -241,6 +241,33 @@ TEST_CASE("basic xspan usage") {
     }
 }
 
+TEST_CASE("xspan array access") {
+    constexpr size_t N = 16;
+    char buf[N];
+    memset(buf, 0, sizeof(buf));
+    XSPAN_0_VAR(char, c0, buf, sizeof(buf));
+    XSPAN_P_VAR(char, cp, buf, sizeof(buf));
+    XSPAN_S_VAR(char, cs, buf, sizeof(buf));
+    for (size_t i = 0; i != N; ++i)
+        c0[i] += 1;
+    for (size_t i = 0; i != N; ++i)
+        cp[i] += 1;
+    for (size_t i = 0; i != N; ++i)
+        cs[i] += 1;
+    for (auto ptr = c0; ptr != c0 + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = c0 + 0; ptr < c0 + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = cp; ptr != cp + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = cp + 0; ptr < cp + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = cs; ptr != cs + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = cs + 0; ptr < cs + N; ++ptr)
+        *ptr += 1;
+}
+
 /*************************************************************************
 //
 **************************************************************************/
