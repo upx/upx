@@ -217,7 +217,7 @@ read: .globl read
         movb $ __NR_read,%al; 5: jmp sysgo
 
 my_bkpt: .globl my_bkpt
-        int3
+        int3  // my_bkpt
         ret
 
 /* vim:set ts=8 sw=8 et: */
