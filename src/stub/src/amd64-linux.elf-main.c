@@ -76,11 +76,10 @@ unsigned Pprotect(void *, size_t, unsigned);
 
 #endif  //}
 
-extern void my_bkpt(void *, ...);
-
 static int dprintf(char const *fmt, ...); // forward
 #endif  /*}*/
 
+extern void my_bkpt(void *, ...);
 
 /*************************************************************************
 // configuration section
@@ -372,22 +371,36 @@ upx_bzero(char *p, size_t len)
 #endif  //}
 
 static void
-auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
+auxv_up(Elf64_auxv_t *av, unsigned const tag, uint64_t const value)
 {
     if (!av || (1& (size_t)av)) { // none, or inhibited for PT_INTERP
         return;
     }
-    DPRINTF("\\nauxv_up %%d  %%p\\n", type, value);
+    DPRINTF("\\nauxv_up %%d  %%p\\n", tag, value);
+    // Multiple slots can have 'tag' which wastes space but is legal.
+    // rtld (ld-linux) uses the last one, so we must scan the whole table.
+    Elf64_auxv_t *ignore_slot = 0;
+    int found = 0;
     for (;; ++av) {
         DPRINTF("  %%d  %%p\\n", av->a_type, av->a_un.a_val);
-        if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
-            av->a_type = type;
+        if (av->a_type == tag) {
             av->a_un.a_val = value;
-            return;
+            ++found;
         }
-        if (av->a_type==AT_NULL) {
-            // We can't do this as part of the for loop because we overwrite
-            // AT_NULL too.
+        else if (av->a_type == AT_IGNORE) {
+            ignore_slot = av;
+        }
+        if (av->a_type==AT_NULL) { // done scanning
+            if (found) {
+                return;
+            }
+            if (ignore_slot) {
+                ignore_slot->a_type = tag;
+                ignore_slot->a_un.a_val = value;
+                return;
+            }
+            err_exit(20);
+ERR_LAB
             return;
         }
     }
