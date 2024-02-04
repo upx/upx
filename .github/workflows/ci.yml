@@ -78,11 +78,12 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y g++-multilib g++-mingw-w64-i686 g++-mingw-w64-x86-64 valgrind
+          sudo apt-get install -y g++-multilib g++-mingw-w64-i686 g++-mingw-w64-x86-64
           # make sure that we use posix-threads (pthread/winpthreads) and NOT win32-threads
           for f in i686-w64-mingw32-g++ i686-w64-mingw32-gcc x86_64-w64-mingw32-g++ x86_64-w64-mingw32-gcc; do
             if test -f /usr/bin/$f-posix; then sudo update-alternatives --set $f /usr/bin/$f-posix; fi
           done
+          sudo apt-get install libc6-dbg:i386 valgrind
       - name: 'Check out code'
         uses: actions/checkout@v4
         with: { submodules: true }
@@ -148,17 +149,17 @@ jobs:
           env -C build/extra/gcc-m32/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
           env -C build/extra/gcc-m32/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
       - name: 'Mimic ctest tests with Valgrind'
-        if: false # TODO later: valgrind problem/bug
         run: |
           if command -v valgrind >/dev/null; then
             export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
             env -C build/extra/gcc/debug     bash "$PWD"/misc/testsuite/mimic_ctest.sh
             env -C build/extra/gcc/release   bash "$PWD"/misc/testsuite/mimic_ctest.sh
-            env -C build/extra/clang/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
+            # clang/debug does not work before valgrind-3.20, see https://bugs.kde.org/show_bug.cgi?id=452758
+            ##env -C build/extra/clang/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
             env -C build/extra/clang/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
           fi
       - name: 'Mimic ctest tests 32-bit with Valgrind'
-        if: ${{ matrix.use_m32 && false }} # TODO later: valgrind problem/bug
+        if: ${{ matrix.use_m32 }}
         run: |
           if command -v valgrind >/dev/null; then
             export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
@@ -566,7 +567,7 @@ jobs:
           env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
           env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
       - name: 'Mimic ctest tests with Valgrind'
-        if: ${{ matrix.zig_target == 'x86_64-linux-musl' && false }} # TODO later: valgrind problem/bug
+        if: ${{ matrix.zig_target == 'x86_64-linux-musl' }}
         run: |
           apk add coreutils valgrind
           export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
