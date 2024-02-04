@@ -253,6 +253,10 @@ TEST_CASE("MemBuffer core") {
     CHECK_THROWS(mb.alloc(0x30000000 + 1));
     CHECK(raw_bytes(mb, 0) == nullptr);
     CHECK_THROWS(raw_bytes(mb, 1));
+    CHECK_THROWS(mb.begin());
+    CHECK_THROWS(mb.end());
+    CHECK_THROWS(mb.cbegin());
+    CHECK_THROWS(mb.cend());
     mb.alloc(N);
     mb.checkState();
     CHECK(mb.begin() == mb.cbegin());

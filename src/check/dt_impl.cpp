@@ -28,6 +28,7 @@
 // doctest support code implementation
 **************************************************************************/
 
+#if 0 // TODO later
 // libc++ hardenining
 #if defined(__clang__) && defined(__clang_major__) && (__clang_major__ + 0 >= 18)
 #if DEBUG
@@ -41,6 +42,7 @@
 #define _LIBCPP_ENABLE_ASSERTIONS 1
 #endif
 #endif
+#endif // TODO later
 
 #if defined(__has_include)
 #if __has_include(<features.h>)

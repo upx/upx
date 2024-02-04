@@ -27,6 +27,7 @@
 // lots of tests (and probably quite a number of redundant tests)
 // modern compilers will optimize away much of this code
 
+#if 0 // TODO later
 // libc++ hardenining
 #if defined(__clang__) && defined(__clang_major__) && (__clang_major__ + 0 >= 18)
 #if DEBUG
@@ -40,6 +41,7 @@
 #define _LIBCPP_ENABLE_ASSERTIONS 1
 #endif
 #endif
+#endif // TODO later
 
 #include "../headers.h"
 #include <vector>

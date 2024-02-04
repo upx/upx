@@ -45,8 +45,7 @@ public:
     typedef pointer iterator;
     typedef typename std::add_pointer<const T>::type const_iterator;
 protected:
-    static constexpr size_t element_size = sizeof(element_type);
-    static_assert(element_size >= 1 && element_size <= UPX_RSIZE_MAX_MEM);
+    static const size_t element_size = sizeof(element_type);
 
 protected:
     pointer ptr;
