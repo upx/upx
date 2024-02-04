@@ -27,6 +27,24 @@
 // lots of tests (and probably quite a number of redundant tests)
 // modern compilers will optimize away much of this code
 
+#if 0 // TODO later
+// libc++ hardenining
+#if defined(__clang__) && defined(__clang_major__) && (__clang_major__ + 0 >= 18)
+#if DEBUG
+#define _LIBCPP_HARDENING_MODE _LIBCPP_HARDENING_MODE_DEBUG
+#else
+#define _LIBCPP_HARDENING_MODE _LIBCPP_HARDENING_MODE_EXTENSIVE
+#endif
+#endif
+#if defined(__clang__) && defined(__clang_major__) && (__clang_major__ + 0 < 18)
+#if DEBUG
+#define _LIBCPP_ENABLE_ASSERTIONS 1
+#endif
+#endif
+#endif // TODO later
+
+#include "../headers.h"
+#include <vector>
 #include "../conf.h"
 
 /*************************************************************************
@@ -102,6 +120,23 @@ ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_ne("abc", "abz"))
 ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_gt("abc", "abz"))
 ACC_COMPILE_TIME_ASSERT_HEADER(!compile_time::string_ge("abc", "abz"))
 ACC_COMPILE_TIME_ASSERT_HEADER(compile_time::string_le("abc", "abz"))
+
+/*************************************************************************
+//
+**************************************************************************/
+
+TEST_CASE("libc++") {
+    constexpr size_t N = 16;
+    std::vector<int> v(N);
+    CHECK(v.end() - v.begin() == N);
+    CHECK(&v[0] == &(*(v.begin())));
+    // CHECK(&v[0] + N == &(*(v.end()))); // TODO later: is this legal??
+#if defined(_LIBCPP_HARDENING_MODE_DEBUG) &&                                                       \
+    (_LIBCPP_HARDENING_MODE == _LIBCPP_HARDENING_MODE_DEBUG)
+    CHECK_THROWS((void) &v[N]);
+#endif
+    UNUSED(v);
+}
 
 /*************************************************************************
 // UPX_CXX_DISABLE_xxx

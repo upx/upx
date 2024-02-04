@@ -31,7 +31,7 @@
 //
 **************************************************************************/
 
-/*static*/ upx_std_atomic(size_t) Throwable::debug_counter;
+/*static*/ Throwable::Stats Throwable::stats;
 
 Throwable::Throwable(const char *m, int e, bool w) noexcept : super(),
                                                               msg(nullptr),
@@ -41,10 +41,10 @@ Throwable::Throwable(const char *m, int e, bool w) noexcept : super(),
         msg = strdup(m);
         assert_noexcept(msg != nullptr);
     }
-#if 0
-    fprintf(stderr, "construct exception: %s %zu\n", msg, debug_counter);
-    debug_counter += 1;
-#endif
+    NO_fprintf(stderr, "construct exception: %zu %zu %s\n", stats.counter_current,
+               stats.counter_total, (const char *) msg);
+    stats.counter_current += 1;
+    stats.counter_total += 1;
 }
 
 Throwable::Throwable(const Throwable &other) noexcept : super(other),
@@ -55,17 +55,16 @@ Throwable::Throwable(const Throwable &other) noexcept : super(other),
         msg = strdup(other.msg);
         assert_noexcept(msg != nullptr);
     }
-#if 0
-    fprintf(stderr, "copy exception: %s %zu\n", msg, debug_counter);
-    debug_counter += 1;
-#endif
+    NO_fprintf(stderr, "copy construct exception: %zu %zu %s\n", stats.counter_current,
+               stats.counter_total, (const char *) msg);
+    stats.counter_current += 1;
+    stats.counter_total += 1;
 }
 
 Throwable::~Throwable() noexcept {
-#if 0
-    debug_counter -= 1;
-    fprintf(stderr, "destruct exception: %s %zu\n", msg, debug_counter);
-#endif
+    stats.counter_current -= 1;
+    NO_fprintf(stderr, "destruct exception: %zu %zu %s\n", stats.counter_current,
+               stats.counter_total, (const char *) msg);
     upx::owner_free(msg);
 }
 

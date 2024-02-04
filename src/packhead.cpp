@@ -49,7 +49,7 @@ void PackHeader::reset() noexcept {
 // extremely simple checksum for the header itself (since version 10)
 **************************************************************************/
 
-static byte get_packheader_checksum(SPAN_S(const byte) buf, int blen) {
+static upx_uint8_t get_packheader_checksum(SPAN_S(const byte) buf, int blen) {
     assert(blen >= 4);
     assert(get_le32(buf) == UPX_MAGIC_LE32);
     buf += 4;
@@ -58,7 +58,7 @@ static byte get_packheader_checksum(SPAN_S(const byte) buf, int blen) {
     while (blen-- > 0)
         c += *buf++;
     c %= 251;
-    return (byte) c;
+    return (upx_uint8_t) c;
 }
 
 /*************************************************************************
@@ -108,7 +108,7 @@ void PackHeader::putPackHeader(SPAN_S(byte) p) const {
     }
 
     int size = 0;
-    int old_chksum = 0;
+    upx_uint8_t old_chksum = 0;
 
     // the new variable length header
     if (format < 128) { // little endian

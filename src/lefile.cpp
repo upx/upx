@@ -144,8 +144,8 @@ unsigned LeFile::getImageSize() const {
 }
 
 void LeFile::readImage() {
-    soimage = pages * mps;
-    if (!soimage) // late detection, but protect against .alloc(0)
+    soimage = mem_size(mps, pages); // assert size
+    if (!soimage)                   // late detection, but protect against .alloc(0)
         throwCantPack("no soimage");
     mb_iimage.alloc(soimage);
     mb_iimage.clear();
@@ -157,7 +157,7 @@ void LeFile::readImage() {
             fif->seek(ih.data_pages_offset + exe_offset +
                           (ipm_entries[ic].m * 0x100 + ipm_entries[ic].l - 1) * mps,
                       SEEK_SET);
-            auto bytes = ic != pages - 1 ? mps : ih.bytes_on_last_page;
+            unsigned bytes = ic != pages - 1 ? mps : ih.bytes_on_last_page;
             fif->readx(iimage + jc, bytes);
         }
         jc += mps;
@@ -184,7 +184,7 @@ void LeFile::writeNonResidentNames() {
 }
 
 bool LeFile::readFileHeader() {
-#define H(x) get_le16(header + 2 * (x))
+#define H(x) get_le16(header + (2 * (x)))
     byte header[0x40];
     le_offset = exe_offset = 0;
     int ic;
@@ -208,7 +208,7 @@ bool LeFile::readFileHeader() {
         } else if (memcmp(header, "BW", 2) == 0) // used in dos4gw.exe
             le_offset += H(2) * 512 + H(1);
         else if (memcmp(header, "LE", 2) == 0)
-            break;
+            break; // success
         else if (memcmp(header, "PMW1", 4) == 0)
             throwCantPack("already packed with PMWLITE");
         else
@@ -219,10 +219,11 @@ bool LeFile::readFileHeader() {
     fif->seek(le_offset, SEEK_SET);
     fif->readx(&ih, sizeof(ih));
     if (mps < 512 || mps > 2097152 || (mps & (mps - 1)) != 0)
-        throwCantPack("file header invalid page size");
+        throwCantPack("LE file header invalid page size %u", (unsigned) mps);
     if (ih.bytes_on_last_page > mps || pages == 0)
-        throwCantPack("bad file header");
-    (void) mem_size(mps, pages); // assert size
+        throwCantPack("bad LE file header");
+    if (!mem_size_valid(mps, pages) || exe_offset > le_offset)
+        throwCantPack("bad LE file header");
     return true;
 #undef H
 }

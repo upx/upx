@@ -39,7 +39,7 @@ std::mutex opt_lock_mutex;
 **************************************************************************/
 
 void Options::reset() noexcept {
-#define opt ERROR_DO_NOT_USE_opt // protect against using the wrong variable
+#define opt ERROR_DO_NOT_USE_opt // self-protect against using the wrong variable
     Options *const o = this;
     mem_clear(o);
     o->crp.reset();
@@ -90,7 +90,7 @@ void Options::reset() noexcept {
 **************************************************************************/
 
 TEST_CASE("Options::reset") {
-#define opt ERROR_DO_NOT_USE_opt // protect against using the wrong variable
+#define opt ERROR_DO_NOT_USE_opt // self-protect against using the wrong variable
     COMPILE_TIME_ASSERT(std::is_standard_layout<Options>::value)
     COMPILE_TIME_ASSERT(std::is_nothrow_default_constructible<Options>::value)
     COMPILE_TIME_ASSERT(std::is_trivially_copyable<Options>::value)

@@ -42,6 +42,10 @@ public:
     typedef typename std::add_lvalue_reference<T>::type reference;
     typedef typename std::add_pointer<T>::type pointer;
     typedef unsigned size_type; // limited by UPX_RSIZE_MAX
+    typedef pointer iterator;
+    typedef typename std::add_pointer<const T>::type const_iterator;
+protected:
+    static const size_t element_size = sizeof(element_type);
 
 protected:
     pointer ptr;
@@ -57,9 +61,9 @@ public:
 
     // array access
     reference operator[](ptrdiff_t i) const may_throw {
-        // TODO: &array[SIZE] == array + SIZE, this is legal; but element access is not
-        if very_unlikely (i < 0 || mem_size(sizeof(element_type), i) > size_in_bytes)
-            throwCantPack("MemBuffer invalid index %td (%u bytes)", i, size_in_bytes);
+        // NOTE: &array[SIZE] is *not* legal for containers like std::vector and MemBuffer !
+        if very_unlikely (i < 0 || mem_size(element_size, i) + element_size > size_in_bytes)
+            throwCantPack("MemBuffer invalid array index %td (%u bytes)", i, size_in_bytes);
         return ptr[i];
     }
     // dereference
@@ -67,11 +71,33 @@ public:
     // arrow operator
     pointer operator->() const DELETED_FUNCTION;
 
+    iterator begin() const may_throw {
+        if very_unlikely (ptr == nullptr)
+            throwCantPack("MemBuffer begin() unexpected NULL ptr");
+        return ptr;
+    }
+    const_iterator cbegin() const may_throw {
+        if very_unlikely (ptr == nullptr)
+            throwCantPack("MemBuffer cbegin() unexpected NULL ptr");
+        return ptr;
+    }
+    iterator end() const may_throw {
+        if very_unlikely (ptr == nullptr)
+            throwCantPack("MemBuffer end() unexpected NULL ptr");
+        return ptr + size_in_bytes / element_size;
+    }
+    const_iterator cend() const may_throw {
+        if very_unlikely (ptr == nullptr)
+            throwCantPack("MemBuffer cend() unexpected NULL ptr");
+        return ptr + size_in_bytes / element_size;
+    }
+
     // membuffer + n -> pointer
     template <class U>
-    typename std::enable_if<std::is_integral<U>::value, pointer>::type operator+(U n) const {
-        size_t bytes = mem_size(sizeof(T), n); // check mem_size
-        return raw_bytes(bytes) + n;           // and check bytes
+    typename std::enable_if<std::is_integral<U>::value, pointer>::type operator+(U n) const
+        may_throw {
+        size_t bytes = mem_size(element_size, n); // check mem_size
+        return raw_bytes(bytes) + n;              // and check bytes
     }
 private:
     // membuffer - n -> pointer; not allowed - use raw_bytes() if needed
@@ -83,7 +109,7 @@ public: // raw access
     pointer raw_ptr() const noexcept { return ptr; }
     size_type raw_size_in_bytes() const noexcept { return size_in_bytes; }
 
-    pointer raw_bytes(size_t bytes) const {
+    pointer raw_bytes(size_t bytes) const may_throw {
         if (bytes > 0) {
             if very_unlikely (ptr == nullptr)
                 throwCantPack("MemBuffer raw_bytes unexpected NULL ptr");
@@ -161,39 +187,40 @@ inline typename MemBufferBase<T>::pointer raw_index_bytes(const MemBufferBase<T>
 class MemBuffer final : public MemBufferBase<byte> {
 public:
     explicit inline MemBuffer() noexcept : MemBufferBase<byte>() {}
-    explicit MemBuffer(upx_uint64_t bytes);
+    explicit MemBuffer(upx_uint64_t bytes) may_throw;
     ~MemBuffer() noexcept;
 
-    static unsigned getSizeForCompression(unsigned uncompressed_size, unsigned extra = 0);
-    static unsigned getSizeForDecompression(unsigned uncompressed_size, unsigned extra = 0);
+    static unsigned getSizeForCompression(unsigned uncompressed_size, unsigned extra = 0) may_throw;
+    static unsigned getSizeForDecompression(unsigned uncompressed_size, unsigned extra = 0)
+        may_throw;
 
-    void alloc(upx_uint64_t bytes);
-    void allocForCompression(unsigned uncompressed_size, unsigned extra = 0);
-    void allocForDecompression(unsigned uncompressed_size, unsigned extra = 0);
+    void alloc(upx_uint64_t bytes) may_throw;
+    void allocForCompression(unsigned uncompressed_size, unsigned extra = 0) may_throw;
+    void allocForDecompression(unsigned uncompressed_size, unsigned extra = 0) may_throw;
 
     void dealloc() noexcept;
-    void checkState() const;
-    unsigned getSize() const noexcept { return size_in_bytes; }
+    void checkState() const may_throw;
 
     // explicit conversion
     void *getVoidPtr() noexcept { return (void *) ptr; }
     const void *getVoidPtr() const noexcept { return (const void *) ptr; }
+    unsigned getSize() const noexcept { return size_in_bytes; }
 
     // util
-    void fill(unsigned off, unsigned len, int value);
-    forceinline void clear(unsigned off, unsigned len) { fill(off, len, 0); }
-    forceinline void clear() { fill(0, size_in_bytes, 0); }
+    noinline void fill(unsigned off, unsigned len, int value) may_throw;
+    forceinline void clear(unsigned off, unsigned len) may_throw { fill(off, len, 0); }
+    forceinline void clear() may_throw { fill(0, size_in_bytes, 0); }
 
     // If the entire range [skip, skip+take) is inside the buffer,
     // then return &ptr[skip]; else throwCantPack(sprintf(errfmt, skip, take)).
     // This is similar to BoundedPtr, except only checks once.
     // skip == offset, take == size_in_bytes
-    forceinline pointer subref(const char *errfmt, size_t skip, size_t take) {
+    forceinline pointer subref(const char *errfmt, size_t skip, size_t take) may_throw {
         return (pointer) subref_impl(errfmt, skip, take);
     }
 
 private:
-    void *subref_impl(const char *errfmt, size_t skip, size_t take);
+    void *subref_impl(const char *errfmt, size_t skip, size_t take) may_throw;
 
     // static debug stats
     struct Stats {

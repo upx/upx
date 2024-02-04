@@ -39,8 +39,8 @@
 #include "../conf.h"
 
 /*************************************************************************
-// assert sane memory buffer sizes to protect against integer overflows
-// and malicious header fields
+// upx_rsize_t and mem_size: assert sane memory buffer sizes to protect
+// against integer overflows and malicious header fields
 // see C 11 standard, Annex K
 **************************************************************************/
 
@@ -253,7 +253,7 @@ TEST_CASE("ptr_check_no_overlap 3") {
 // stdlib
 **************************************************************************/
 
-void *upx_calloc(size_t n, size_t element_size) {
+void *upx_calloc(size_t n, size_t element_size) may_throw {
     size_t bytes = mem_size(element_size, n); // assert size
     void *p = malloc(bytes);
     if (p != nullptr)
@@ -262,7 +262,7 @@ void *upx_calloc(size_t n, size_t element_size) {
 }
 
 // simple unoptimized memswap()
-void upx_memswap(void *a, void *b, size_t n) {
+void upx_memswap(void *a, void *b, size_t n) noexcept {
     if (a != b && n != 0) {
         byte *x = (byte *) a;
         byte *y = (byte *) b;
@@ -277,7 +277,7 @@ void upx_memswap(void *a, void *b, size_t n) {
 }
 
 // much better memswap(), optimized for our use case in sort functions below
-static void memswap_no_overlap(byte *a, byte *b, size_t n) {
+static void memswap_no_overlap(byte *a, byte *b, size_t n) noexcept {
 #if defined(__clang__) && __clang_major__ < 15
     // work around a clang < 15 ICE (Internal Compiler Error)
     // @COMPILER_BUG @CLANG_BUG

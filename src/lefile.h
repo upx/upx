@@ -223,10 +223,7 @@ protected:
 
 private:
     // disable copy and move
-    LeFile(const LeFile &) DELETED_FUNCTION;
-    LeFile &operator=(const LeFile &) DELETED_FUNCTION;
-    LeFile(LeFile &&) noexcept DELETED_FUNCTION;
-    LeFile &operator=(LeFile &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(LeFile)
 };
 
 /* vim:set ts=4 sw=4 et: */
