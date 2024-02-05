@@ -42,7 +42,7 @@ extern size_t Pwrite(unsigned, void const *, size_t);
 #define DEBUG 0
 #endif  //}
 
-extern void my_bkpt(unsigned, ...);
+extern void my_bkpt(void *, ...);
 
 #if defined(__powerpc64__) //}{
 #define addr_string(string) ({ \
@@ -248,7 +248,7 @@ make_hatch_x86_64(
     char *hatch = 0;
     DPRINTF("make_hatch %%p %%p %%x  %%x\\n",phdr,reloc,frag_mask, phdr->p_flags);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        hatch = (char *)(phdr->p_memsz + reloc);
+        hatch = (char *)(phdr->p_memsz + phdr->p_vaddr + reloc);
         if (4 <= (frag_mask & -(long)hatch)) {
             (( long *)hatch)[0] = 0xc35a050f;  // syscall; pop %arg3{%rdx); ret
         }
@@ -284,7 +284,7 @@ make_hatch_ppc64(
 /*und*/ : "lr");
     DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        hatch = (unsigned *)(phdr->p_memsz + reloc);
+        hatch = (unsigned *)(phdr->p_memsz + phdr->p_vaddr + reloc);
         if (4*4 <= (frag_mask & -(long)hatch)) {
             memcpy(hatch, code, sz_code);
         }
@@ -318,7 +318,7 @@ make_hatch_arm64(
 /*und*/ : );
     DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        hatch = (unsigned *)(phdr->p_memsz + reloc);
+        hatch = (unsigned *)(phdr->p_memsz + phdr->p_vaddr + reloc);
         if (sz_code <= (frag_mask & -(long)hatch)) {
             memcpy(hatch, code, sz_code);
         }
