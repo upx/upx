@@ -1,5 +1,5 @@
-/*
-;  powerpc64le-expand.S -- decompressors for powerpc
+#/*
+;  powerpc64le-expand.S -- decompressors for powerpc64le
 ;
 ;  This file is part of the UPX executable compressor.
 ;
@@ -48,23 +48,32 @@ SZ_DLINE= 128  # size of data cache line in Apple G5
     std \p3, 2*NBPW(sp)
     std \p4, 3*NBPW(sp)
 .endm
+.macro POP4 p1,p2,p3,p4
+    ld  \p1, 0*NBPW(sp)
+    ld  \p2, 1*NBPW(sp)
+    ld  \p3, 2*NBPW(sp)
+    ld  \p4, 3*NBPW(sp)
+    addi sp,sp,4*NBPW
+.endm
 .macro PUSH3 p1,p2,p3
     stdu \p1,-3*NBPW(sp)
     std \p2, 1*NBPW(sp)
     std \p3, 2*NBPW(sp)
 .endm
-.macro POP4 p1,p2,p3,p4
-    ld  \p4, 3*NBPW(sp)
-    ld  \p3, 2*NBPW(sp)
+.macro POP3 p1,p2,p3
+    ld  \p1, 0*NBPW(sp)
     ld  \p2, 1*NBPW(sp)
-    ldu \p1, 4*NBPW(sp)
+    ld  \p3, 2*NBPW(sp)
+    addi sp,sp,3*NBPW
 .endm
 .macro POP2 p1,p2
+    ld  \p1, 0*NBPW(sp)
     ld  \p2, 1*NBPW(sp)
-    ld  \p1, 2*NBPW(sp)
+    addi sp,sp,2*NBPW
 .endm
 .macro POP1 p1
-    ld  \p1, 2*NBPW(sp)
+    ld  \p1, 0*NBPW(sp)
+    addi sp,sp,1*NBPW
 .endm
 
   section EXP_HEAD
@@ -101,21 +110,31 @@ f_expand: .globl f_expand // f_expand(b_info *, dst, &dstlen)
     call decompress
     movr a3,a0  // save retval
 
-    POP4 a2,a0,a1,r0   // fx_src,fx_dst,fx_dstlen,lr
-    mtlr r0
+    POP3 a2,a0,a1   // fx_src,fx_dst,fx_dstlen; keep f_expand.retaddr
     ld a1,0(a1)  // actual length used by decompressor
     PUSH3 a0,a1,a3  // params for sync_cache
     lbz a3,b_ftid(a2)
     lbz a2,b_cto8(a2)
-    cmpi cr0,a3,0
-    beq no_unf
-#include "arch/powerpc/64le/bxx.S"  // unfilter code; args in registers, fall-through return
+    cmpi cr0,a3,0; beq no_unf
+    call unfilter
 no_unf:
 
     POP2 a0,a1   // dst, len
     add a1,a1,a0  // lo, hi
-    //sync_cache  // in macros.S  FIXME
-    POP1 a0   // retval from decompress
+
+CACHELINE=32
+        ori a0,a0,-1+ CACHELINE  // highest addr on cache line
+cfl_nrv:
+        dcbst  0,a0  // initiate store (modified) cacheline to memory
+        cmpl cr0,a0,a1  // did we cover the highest-addressed byte?
+        icbi   0,a0  // discard instructions from cacheline
+        addi     a0,a0,CACHELINE  // highest addr on next line
+        blt  cr0,cfl_nrv  // not done yet
+        sync   // wait for all memory operations to finish
+        isync  // discard prefetched instructions (if any)
+cfl_ret:
+    POP2 a0,r0   // retval, retaddr from f_expand
+    mtlr r0
     ret
 //    .unreq fx_src
 //    .unreq fx_dst
@@ -147,12 +166,6 @@ decompress:  // (src *, cpr_len, dst *, &dstlen);
 #define ldst a3  /* Out: actually a reference: &len_dst */
 #define meth a4
 
-#define off  a4
-#define len  a5
-#define bits a6
-#define disp a7
-
-    .type eof_nrv,function
     .globl eof_nrv
 eof_nrv:
 #define tmp a1
@@ -164,11 +177,20 @@ eof_nrv:
         addi a0,a0,1  // return 0: good; else: bad  [+1: correct for lbzu]
         addi tmp,tmp,1  // dst length
         std  tmp,0(ldst)
+        blr
 #undef tmp
 #undef dst0
 
+unfilter:
+#include "arch/powerpc/64le/bxx.S"  // unfilter code; args in registers, fall-through return
+
 // FIXME: will need extra parameter for multi-method decompression
 #define NO_METHOD_CHECK 1
+
+#define off  a4
+#define len  a5
+#define bits a6
+#define disp a7
 
   section NRV2E
 #include "arch/powerpc/64le/nrv2e_d.S"
@@ -178,6 +200,17 @@ eof_nrv:
 
   section NRV2B
 #include "arch/powerpc/64le/nrv2b_d.S"
+
+#undef off
+#undef len
+#undef bits
+#undef disp
+
+#undef src
+#undef lsrc
+#undef dst
+#undef ldst
+#undef meth
 
 /* lzma has its own 'section's */
 #include "arch/powerpc/64le/lzma_d.S"
