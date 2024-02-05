@@ -35,8 +35,8 @@
 
 NBPW= 8  //Number of Bytes Per Word
 #define USE_TOC 1
-#include "arch/powerpc/64le/macros.S"
 #include "arch/powerpc/64le/ppc_regs.h"
+#include "arch/powerpc/64le/macros.S"
 
 PATH_MAX= 4096  // /usr/include/linux/limits.h
 
@@ -94,29 +94,34 @@ r_elfa=  25  // original &Elf64_Ehdr of stub
 r_ADRX=  24  // compressed input
 r_LENX=  23  // total size
 // Local:
-r_unf=   22  // f_unf == &unfilter()
+r_pse=   22  // &"/proc/self/exe"
 av_hi=   21
 av_len=  20
 cblk=    19
 r_buf=   18
 
+PAGE_MASK: .long 0xfffffffffffff000  // default
+        .long 0  // something else?
+        b fold_begin
+
 get_page_mask: .globl get_page_mask
-        li r3,0 -0x1000>>9  // modified by elf-entry.S
-        sldi r3,r3,9
-        blr
-        nop
+        mflr r0
+        bl 0f; 0:
+        mtctr r0
+        mflr r3
+        ld r3,PAGE_MASK - 0b(r3)
+        bctr
 
 fold_begin:
 ////    teq r0,r0  // debugging
         call L90
-L90b:
-#include "arch/powerpc/64le/bxx.S"
 L90a:
 L_PFX= 4  // strlen("   =")
+L_pse= L_PFX + 4
         .asciz "   =/proc/self/exe"
         .balign 4
 L90:
-        mflr r_unf  // L90b = &ppcbxx: f_unfilter
+        mflr r_pse  // L_pse = &ppcbxx: f_unfilter
 // slide {<<stuff>>,argc,argv,0,env,0,auxv} down with maximum room before strings
         la a1,-NBPW(sp)  // src ready for ldu
         la sp,-(-NBPW & (-1+ NBPW + (L_PFX + PATH_MAX)))(sp)  // FR_02
@@ -135,21 +140,21 @@ L90:
         la av_hi,NBPW(a0)  // tmp end of auxv
         subf av_len,r_auxv,av_hi  // length of auxv
 
-        lwz  r0,L90a - L90b(r_unf)  // "    ="
+        lwz  r0,L90a - L_pse(r_pse)  // "    ="
         la cblk,NBPW(a1)  // original &strings
         stwu r0,NBPW(a0)
         la  r_buf,L_PFX(a0)  // buffer
 // r_fd = open("/proc/self/exe", O_RDONLY)
         li a1,O_RDONLY
-        la a0,L_PFX+ L90a - L90b(r_unf)  //     "/proc/self/exe"
+        la a0,L_PFX+ L90a - L_pse(r_pse)  //     "/proc/self/exe"
         call open; mr r_fd,a0
 // readlink("/proc/self/exe", buffer, -1+ PATH_MAX)
         li a2,-1+ PATH_MAX
         movr a1,r_buf  // buffer
-        la a0,L_PFX+ L90a - L90b(r_unf)  //     "/proc/self/exe"
+        la a0,L_PFX+ L90a - L_pse(r_pse)  //     "/proc/self/exe"
         call readlink; la a2,-L_PFX(r_buf)  // a0= len; a2= buffer
         cmpdi a0,0; bgt 0f  // success
-        la a2,L90a - L90b(r_unf)  // "   =/proc/self/exe"
+        la a2,L90a - L_pse(r_pse)  // "   =/proc/self/exe"
         li a0,L90  - (NBPW+ L90a)  // round_up(NBPW, strlen("/proc/self/exe"))
 0:
         addi a0,a0,L_PFX  // len += strlen("   =");
@@ -189,7 +194,7 @@ r_reloc= 32 - 1  # used slot in register save area
         la a2,SZ_FRAME(sp)  // &Elf64_Ehdr temporary space
         mr a3,r_auxv  // &Elf64_auxv_t
         mr a4,r_exp  // &decompress: f_expand
-        mr a5,r_unf  // &f_unf
+        mr a5,r_pse  // &f_unf
 #if USE_TOC  //{
         li r0,0
 

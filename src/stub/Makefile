@@ -1886,6 +1886,8 @@ tc.powerpc64le-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -
 tc.powerpc64le-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
 tc.powerpc64le-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
+tc.powerpc64le-linux.elf.as  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -nostdinc -MMD -MT -c $@
+
 tc.powerpc64le-linux.elf.ld      = powerpc64-linux-ld-2.25 -b $(tc_bfdname)
 tc.powerpc64le-linux.elf.objcopy = multiarch-objcopy-2.27 -F $(tc_bfdname)
 tc.powerpc64le-linux.elf.objdump = multiarch-objdump-2.27 -b $(tc_bfdname)
@@ -1896,29 +1898,52 @@ powerpc64le-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h) tmp/$T.bin $@
 
 powerpc64le-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
-	    tmp/$$T.o \
-	    tmp/powerpc64le-linux.elf-upxfd_android.o \
-	    tmp/powerpc64le-expand.o \
-	    tmp/powerpc64le-linux.elf-main.o
-	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	    $(srcdir)/src/$$T.S \
+	    tmp/powerpc64le-linux.elf-main.s \
+	    tmp/powerpc64le-linux.upxfd_android.s \
+	    src/powerpc64le-expand.S
+	cat > tmp/powerpc64le-linux.elf-fold-2.S \
+	    src/powerpc64le-linux.elf-fold.S \
+	    tmp/powerpc64le-linux.elf-main.s \
+	    tmp/powerpc64le-linux.upxfd_android.s \
+	    src/powerpc64le-expand.S
+	(cd tmp; ln -sf ../src/arch arch)
+	/lib/cpp \
+		tmp/powerpc64le-linux.elf-fold-2.S \
+	    | sed -e $$(cat src/dollar-dollar.sed) > tmp/powerpc64le-linux.elf-fold-3.S
+	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
+	echo line 20
+	$(call tc,gcc) -c tmp/powerpc64le-linux.elf-fold-3.S -o tmp/$T.o
+	echo line 21
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
+	echo line 22
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
+	echo line 23
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
+	     tmp/$T.o
+	echo line 24
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+# "unrecognized program segment header size"	$(call tc,sstrip) tmp/$T.bin
+	echo line 25
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/powerpc64le-linux.elf-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,f-objstrip,$@)
+tmp/powerpc64le-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -S -O $< -o - \
+	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/L[0-9]*/L8&/g' \
+	          -e $$(cat src/dollar-dollar.sed) \
+	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
+	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
+		  >$@
 
-tmp/powerpc64le-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,f-objstrip,$@)
-
-tmp/powerpc64le-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
-	$(call tc,gcc) -c -O $< -o $@
-	$(call tc,objcopy) -R .comment $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
-
-tmp/powerpc64le-expand.o: $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
+tmp/powerpc64le-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
+	$(call tc,gcc) -S -O $< -o - \
+	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/L[0-9]*/L7&/g' \
+	          -e $$(cat src/dollar-dollar.sed) \
+	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
+	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
+		  >$@
 
 powerpc64-linux.elf%.h : tc_list = powerpc64-linux.elf default
 powerpc64-linux.elf%.h : tc_bfdname = elf64-powerpc
