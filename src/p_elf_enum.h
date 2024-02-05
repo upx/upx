@@ -268,11 +268,13 @@
         R_ARM_ABS32 = 2,
         R_ARM_GLOB_DAT = 21,
         R_MIPS_32 = 2,
+        R_PPC_GLOB_DAT = 20,
 
         R_386_GLOB_DAT = 6,
         R_X86_64_64 = 1,
         R_AARCH64_ABS64 = 257,
         R_AARCH64_GLOB_DAT = 1025,
+        R_PPC64_GLOB_DAT = R_PPC_GLOB_DAT,
 
     };
 #endif  //}

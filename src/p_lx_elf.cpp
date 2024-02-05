@@ -1588,6 +1588,7 @@ PackLinuxElf64::buildLinuxLoader(
   if (0 < szfold) {
     if (xct_off // shlib
       && (  this->e_machine==Elf64_Ehdr::EM_X86_64
+         || this->e_machine==Elf64_Ehdr::EM_PPC64
          || this->e_machine==Elf64_Ehdr::EM_AARCH64)
     ) {
         initLoader(fold, szfold);
@@ -1626,6 +1627,7 @@ PackLinuxElf64::buildLinuxLoader(
         method = M_NRV2B_LE32;  // requires unaligned fetch
     }
     else if (this->e_machine==Elf64_Ehdr::EM_X86_64
+         ||  this->e_machine==Elf64_Ehdr::EM_PPC64
          ||  this->e_machine==Elf64_Ehdr::EM_AARCH64
          ) { // main program
         initLoader(fold, szfold);
@@ -1692,11 +1694,13 @@ PackLinuxElf64::buildLinuxLoader(
     linker->addSection("FOLDEXEC", mb_cprLoader, sizeof(b_info) + sz_cpr, 0);
     if (xct_off
        && (  this->e_machine==Elf64_Ehdr::EM_X86_64
+          || this->e_machine==Elf64_Ehdr::EM_PPC64
           || this->e_machine==Elf64_Ehdr::EM_AARCH64)
     ) {
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
     }
     else if (this->e_machine==Elf64_Ehdr::EM_X86_64
+         ||  this->e_machine==Elf64_Ehdr::EM_PPC64
          ||  this->e_machine==Elf64_Ehdr::EM_AARCH64
         ) {
         addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC");
@@ -3323,6 +3327,20 @@ tribool PackLinuxElf64::canPack()
                                             user_init_va = get_te64(&rp->r_addend);
                                         }
                                         else if (R_X86_64_64 == r_type) {
+                                            user_init_va = get_te64(&dynsym[ELF64_R_SYM(r_info)].st_value);
+                                        }
+                                        else {
+                                            char msg[50]; snprintf(msg, sizeof(msg),
+                                                "bad relocation %#llx DT_INIT_ARRAY[0]",
+                                                r_info);
+                                            throwCantPack(msg);
+                                        }
+                                    }
+                                    else if (Elf64_Ehdr::EM_PPC64 == e_machine) {
+                                        if (R_PPC64_RELATIVE == r_type) {
+                                            user_init_va = get_te64(&rp->r_addend);
+                                        }
+                                        else if (R_PPC64_GLOB_DAT == r_type) {
                                             user_init_va = get_te64(&dynsym[ELF64_R_SYM(r_info)].st_value);
                                         }
                                         else {
