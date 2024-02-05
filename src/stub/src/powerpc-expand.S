@@ -148,7 +148,7 @@ eof_nrv:
 #undef dst0
 
 unfilter:
-#include "arch/powerpc/64le/bxx.S"  // unfilter code; args in registers, fall-through return
+#include "arch/powerpc/64/bxx.S"  // unfilter code; args in registers, fall-through return
 
 // FIXME: will need extra parameter for multi-method decompression
 #define NO_METHOD_CHECK 1
