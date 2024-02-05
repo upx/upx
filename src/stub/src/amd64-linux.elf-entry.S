@@ -128,7 +128,7 @@ AT_PAGESZ= 6  // /usr/include/elf.h
         sub %rcx,%rdi  // elfaddr
         lea o_binfo(%rip),%rsi
         lodsl; xchg %eax,%ebx; mov %ebx,%r13d  // O_BINFO; advance to &b_info
-        lodsl; xchg %eax,%edx; push %rdx  // .sz_unc; F_LENU
+        lodsl; xchg %eax,%edx; add $0x10,%edx; push %rdx  // F_LENU = sz_unc + x86_overrun + insurance
         push $-1  // space for F_ADRU
         push %rdi  // F_ELFA
         sub %rbx,%rcx; push %rcx  // F_LENX = sz_pack2 - O_BINFO
@@ -136,7 +136,9 @@ AT_PAGESZ= 6  // /usr/include/elf.h
 
         push %rsp; pop old_sp
 // alloca()
-        sub %rcx,%rsp; and $-2*NBPW,%rsp  // align stack
+        sub %rdx,%rsp  // F_LENU space
+CACHELINE= 8 * NBPW
+        and $-CACHELINE,%rsp  // align
 
 // Decompress the rest of this loader, and jump to it.
 
