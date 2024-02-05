@@ -898,7 +898,7 @@ arm.v5t-linux.shlib%.h : $(srcdir)/src/$$T.S
 armeb.v4a-linux.elf%.h : tc_list = armeb.v4a-linux.elf default
 armeb.v4a-linux.elf%.h : tc_bfdname = elf32-bigarm
 
-tc.armeb.v4a-linux.elf.gcc = $(tc.arm.v4a-linux.elf.gcc) -mbig-endian
+tc.armeb.v4a-linux.elf.gcc = $(tc.arm.v4a-linux.elf.gcc) -mbig-endian -DBIG_ENDIAN=1
 
 armeb.v4a-linux.elf-entry.h : $(srcdir)/src/armeb.v4a-linux.elf-entry.lds \
 	    $(srcdir)/src/$$T.S \
@@ -950,7 +950,7 @@ tmp/armeb.v4a-linux.elf-so_main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux
 armeb.v5a-linux.kernel.vmlinu%.h : tc_list = armeb.v5a-linux.kernel default
 armeb.v5a-linux.kernel.vmlinu%.h : tc_bfdname = elf32-bigarm
 
-tc.armeb.v5a-linux.kernel.gcc  = $(tc.arm.v4a-linux.elf.gcc) -mbig-endian -march=armv5
+tc.armeb.v5a-linux.kernel.gcc  = $(tc.arm.v4a-linux.elf.gcc) -mbig-endian -DBIG_ENDIAN=1 -march=armv5
 
 armeb.v5a-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -1769,7 +1769,7 @@ powerpc-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 powerpc-linux.elf%.h : tc_list = powerpc-linux.elf default
 powerpc-linux.elf%.h : tc_bfdname = elf32-powerpc
 
-tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -m32 -mbig-endian -mtune=powerpc -nostdinc -MMD -MT $@
+tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -m32 -mbig-endian -DBIG_ENDIAN=1 -mtune=powerpc -nostdinc -MMD -MT $@
 tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables   # -fno-stack-protector
 tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
@@ -1882,11 +1882,11 @@ tmp/powerpc64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 powerpc64le-linux.elf%.h : tc_list = powerpc64le-linux.elf default
 powerpc64le-linux.elf%.h : tc_bfdname = elf64-powerpcle
 
-tc.powerpc64le-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -nostdinc -MMD -MT $@
+tc.powerpc64le-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -DBIG_ENDIAN=0 -nostdinc -MMD -MT $@
 tc.powerpc64le-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
 tc.powerpc64le-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-tc.powerpc64le-linux.elf.as  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -nostdinc -MMD -MT -c $@
+tc.powerpc64le-linux.elf.as  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -DBIG_ENDIAN=0 -nostdinc -MMD -MT -c $@
 
 tc.powerpc64le-linux.elf.ld      = powerpc64-linux-ld-2.25 -b $(tc_bfdname)
 tc.powerpc64le-linux.elf.objcopy = multiarch-objcopy-2.27 -F $(tc_bfdname)
@@ -1908,10 +1908,21 @@ powerpc64le-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/powerpc64le-linux.upxfd_android.s \
 	    src/powerpc64le-expand.S
 	(cd tmp; ln -sf ../src/arch arch)
-	/lib/cpp \
+
+# /lib/cpp: process the #define and #include in *.S hand-written assunbler.
+# sed: Remove 64-bit calling conventions from already-compiled *.s
+# by deleting .toc, and keeping just the label from:
+#     .section    ".opd","aw"
+#    .align 3
+#auxv_up:
+#    .quad   .L7L.auxv_up,.TOC.@tocbase
+#    .previous
+
+	/lib/cpp -DBIG_ENDIAN=0 \
 		tmp/powerpc64le-linux.elf-fold-2.S \
-	    | sed -e $$(cat src/dollar-dollar.sed) > tmp/powerpc64le-linux.elf-fold-3.S
-	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
+	    | > tmp/powerpc64le-linux.elf-fold-3.S \
+	      sed -e '/\.section\s*"\.toc","aw"/d' \
+	          -e '/\.section\s*"\.opd","aw"/,/\.previous/{ /:/P ; d }'
 	echo line 20
 	$(call tc,gcc) -c tmp/powerpc64le-linux.elf-fold-3.S -o tmp/$T.o
 	echo line 21
@@ -1948,7 +1959,7 @@ tmp/powerpc64le-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.e
 powerpc64-linux.elf%.h : tc_list = powerpc64-linux.elf default
 powerpc64-linux.elf%.h : tc_bfdname = elf64-powerpc
 
-tc.powerpc64-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mbig-endian -nostdinc -MMD -MT $@
+tc.powerpc64-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mbig-endian -DBIG_ENDIAN=1 -nostdinc -MMD -MT $@
 tc.powerpc64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
 tc.powerpc64-linux.elf.gcc += -mno-longcall -mno-toc
 tc.powerpc64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
