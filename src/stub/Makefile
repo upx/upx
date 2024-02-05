@@ -1895,9 +1895,13 @@ powerpc64le-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-#FIXME	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
-powerpc64le-linux.elf-fold.h : tmp/$$T.o tmp/powerpc64le-linux.elf-main.o $(srcdir)/src/$$T.lds tmp/powerpc64le-expand.o
-	$(call tc,ld) -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+powerpc64le-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/powerpc64le-linux.elf-upxfd_android.o \
+	    tmp/powerpc64le-expand.o \
+	    tmp/powerpc64le-linux.elf-main.o
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/powerpc64le-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -1905,8 +1909,13 @@ tmp/powerpc64le-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/powerpc64le-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+
+tmp/powerpc64le-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) -R .comment $@
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 tmp/powerpc64le-expand.o: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -1928,9 +1937,13 @@ powerpc64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-#	: $(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
-powerpc64-linux.elf-fold.h : tmp/$$T.o tmp/powerpc64-linux.elf-main.o $(srcdir)/src/$$T.lds tmp/powerpc64-expand.o
-	$(call tc,ld) -r          -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+powerpc64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
+	    tmp/$$T.o \
+	    tmp/powerpc64-linux.elf-upxfd_android.o \
+	    tmp/powerpc64-expand.o \
+	    tmp/powerpc64-linux.elf-main.o
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/powerpc64-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -1938,12 +1951,16 @@ tmp/powerpc64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/powerpc64-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+
+tmp/powerpc64-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,objcopy) -R .comment $@
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 tmp/powerpc64-expand.o: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
-
 
 # /***********************************************************************
 # // powerpc64le-linux.kernel.vmlinux
