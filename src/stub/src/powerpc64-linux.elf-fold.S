@@ -100,7 +100,7 @@ av_len=  20
 cblk=    19
 r_buf=   18
 
-PAGE_MASK: .quad 0xfffffffffffff000  // default
+PAGE_MASK: .quad ~0<<16  // default
         .quad 0  // something else?
         b fold_begin
 
@@ -193,23 +193,11 @@ r_reloc= 32 - 1  # used slot in register save area
         mr a1,r_LENX  // total_size
         la a2,SZ_FRAME(sp)  // &Elf64_Ehdr temporary space
         mr a3,r_auxv  // &Elf64_auxv_t
-        mr a4,r_exp  // &decompress: f_expand
-        mr a5,r_pse  // &f_unf
-#if USE_TOC  //{
-        li r0,0
-
-        std a4,F_TOC +    0 + 0*2*NBPW(sp)
-        la  a4,F_TOC +    0 + 0*2*NBPW(sp)
-        std r0,F_TOC + NBPW + 0*2*NBPW(sp)
-
-        std a5,F_TOC +    0 + 1*2*NBPW(sp)
-        la  a5,F_TOC +    0 + 1*2*NBPW(sp)
-        std r0,F_TOC + NBPW + 1*2*NBPW(sp)
-#endif  //}
-        mr a7,r_PMASK  // PAGE_MASK
+        la a4,2*NBPW(r1)  // FIXME *p_reloc ??
+    teq r0,r0  // DEBUG
         call upx_main  // Out: a0= entry
 // entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, ELf32_auxv_t *a3,
-//      f_exp a4, f_unf a5, elfaddr &a6, page_mask a7)
+//      Elf64_Addr *p_reloc)
         la  sp,SZ_FRAME+OVERHEAD(sp)  // FR_01  deallocate this frame
 #if USE_TOC  //{
 // Sometimes the "entry TOC" is not a TOC, particularly with musl.
@@ -299,6 +287,8 @@ sz_auxv= 2*NBPW
 
         bctr  // goto escape hatch
 
+  section SYSCALLS
+
 SYS_exit=  1
 SYS_fork=  2
 SYS_read=  3
@@ -354,8 +344,7 @@ brk: .globl brk
         li r0,SYS_brk;      5: b 5f
 readlink: .globl readlink
         li r0,SYS_readlink; 5: b 5f
-Pwrite: .globl Pwrite
-//write: .globl write
+write: .globl write
         li r0,SYS_write;    5: b 5f
 read: .globl read
         li r0,SYS_read;     5: b 5f

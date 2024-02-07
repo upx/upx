@@ -485,7 +485,7 @@ PackLinuxElf32::asl_slide_Shdrs()
 // C_BASE covers the convex hull of the PT_LOAD of the uncompressed module.
 // It has (PF_W & .p_flags), and is ".bss": empty (0==.p_filesz, except a bug
 // in Linux kernel forces 0x1000==.p_filesz) with .p_memsz equal to the brk(0).
-// It is first in order to reserve all // pages, in particular so that if
+// It is first in order to reserve all pages, in particular so that if
 // (64K == .p_align) but at runtime (4K == PAGE_SIZE) then the Linux kernel
 // does not put [vdso] and [vvar] into alignment holes that the UPX runtime stub
 // will overwrite.
@@ -747,7 +747,20 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         set_te64(&elfout.phdr[C_TEXT].p_memsz,  sz_pack2 + lsize);
         set_te64(&elfout.phdr[C_TEXT].p_vaddr, abrk= (page_mask & (~page_mask + abrk)));
         elfout.phdr[C_TEXT].p_paddr = elfout.phdr[C_TEXT].p_vaddr;
-        set_te64(&elfout.ehdr.e_entry, abrk + get_te64(&elfout.ehdr.e_entry) - vbase);
+        upx_uint64_t e_entry = abrk + get_te64(&elfout.ehdr.e_entry) - vbase;
+        set_te64(&elfout.ehdr.e_entry, e_entry);
+
+        if (fo && !xct_off && Elf64_Ehdr::EM_PPC64 == e_machine
+        &&  Elf64_Ehdr::ELFDATA2MSB == ehdri.e_ident[Elf64_Ehdr::EI_DATA]) {
+            // Patch PPC64 (BIG_ENDIAN) TOC entry_descr for C_TEXT which has PF_X
+            unsigned offset = e_entry - abrk;
+            fo->seek(offset, SEEK_SET);
+            unsigned start = linker->getSymbolOffset("_start");
+            upx_uint64_t dot_entry = start + sz_pack2 + abrk;
+            set_te64(&dot_entry, dot_entry);
+            fo->write(&dot_entry, sizeof(dot_entry));
+            fo->seek(0, SEEK_END);
+        }
     }
     if (0!=xct_off) { // shared library
         u64_t const cpr_entry = (Elf64_Ehdr::EM_ARM==e_machine) + load_va + sz_pack2;  // Thumb mode
@@ -1222,9 +1235,15 @@ void PackLinuxElf64::updateLoader(OutputFile * /*fo*/)
         upx_uint64_t dot_entry = start + sz_pack2 + vbase;
         upx_byte *p = getLoader();
 
-        set_te64(&p[descr], dot_entry);
-        // Kernel 3.16.0 (2017-09-19) uses start, not descr
-        set_te64(&elfout.ehdr.e_entry, start + sz_pack2 + vbase);
+        if (descr != 0xdeaddead) {
+            set_te64(&p[descr], dot_entry);
+            set_te64(&elfout.ehdr.e_entry, descr + sz_pack2 + vbase);
+            // pack3() will patch: += ([C_TEXT].p_vaddr - [C_BASE].p_vaddr)
+        }
+        else {
+            // Kernel 3.16.0 (2017-09-19) uses start, not descr
+            set_te64(&elfout.ehdr.e_entry, dot_entry);
+        }
     }
     else {
         set_te64(&elfout.ehdr.e_entry, start + sz_pack2 + vbase);
@@ -1703,7 +1722,11 @@ PackLinuxElf64::buildLinuxLoader(
          ||  this->e_machine==Elf64_Ehdr::EM_PPC64
          ||  this->e_machine==Elf64_Ehdr::EM_AARCH64
         ) {
-        addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC");
+        addLoader("ELFMAINX,ELFMAINZ,FOLDEXEC,IDENTSTR");
+        if (this->e_machine==Elf64_Ehdr::EM_PPC64
+        &&  elfout.ehdr.e_ident[Elf64_Ehdr::EI_DATA]==Elf64_Ehdr::ELFDATA2MSB) {
+            addLoader("ELFMAINZe");
+        }
         if (!xct_off) {
             defineSymbols(ft);
         }
