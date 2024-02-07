@@ -1923,19 +1923,13 @@ powerpc64le-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    | > tmp/powerpc64le-linux.elf-fold-3.S \
 	      sed -e '/\.section\s*"\.toc","aw"/d' \
 	          -e '/\.section\s*"\.opd","aw"/,/\.previous/{ /:/P ; d }'
-	echo line 20
 	$(call tc,gcc) -c tmp/powerpc64le-linux.elf-fold-3.S -o tmp/$T.o
-	echo line 21
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
-	echo line 22
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
-	echo line 23
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
-	echo line 24
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
 # "unrecognized program segment header size"	$(call tc,sstrip) tmp/$T.bin
-	echo line 25
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/powerpc64le-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
@@ -1974,29 +1968,57 @@ powerpc64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h) tmp/$T.bin $@
 
 powerpc64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
-	    tmp/$$T.o \
-	    tmp/powerpc64-linux.elf-upxfd_android.o \
-	    tmp/powerpc64-expand.o \
-	    tmp/powerpc64-linux.elf-main.o
-	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	    $(srcdir)/src/$$T.S \
+	    tmp/powerpc64-linux.elf-main.s \
+	    tmp/powerpc64-linux.upxfd_android.s \
+	    src/powerpc64-expand.S
+	cat > tmp/powerpc64-linux.elf-fold-2.S \
+	    src/powerpc64-linux.elf-fold.S \
+	    tmp/powerpc64-linux.elf-main.s \
+	    tmp/powerpc64-linux.upxfd_android.s \
+	    src/powerpc64-expand.S
+	(cd tmp; ln -sf ../src/arch arch)
+
+# /lib/cpp: process the #define and #include in *.S hand-written assunbler.
+# sed: Remove 64-bit calling conventions from already-compiled *.s
+# by deleting .toc, and keeping just the label from:
+#     .section    ".opd","aw"
+#    .align 3
+#auxv_up:
+#    .quad   .L7L.auxv_up,.TOC.@tocbase
+#    .previous
+
+	/lib/cpp -DBIG_ENDIAN=1 \
+		tmp/powerpc64-linux.elf-fold-2.S \
+	    | > tmp/powerpc64-linux.elf-fold-3.S \
+	      sed -e '/\.section\s*"\.toc","aw"/d' \
+	          -e '/\.section\s*"\.opd","aw"/,/\.previous/{ /:/P ; d }'
+	$(call tc,gcc) -c tmp/powerpc64-linux.elf-fold-3.S -o tmp/$T.o
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
+	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
+	     tmp/$T.o
 	$(call tc,f-embed_objinfo_without_xstrip,tmp/$T.bin)
+# "unrecognized program segment header size"	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/powerpc64-linux.elf-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,f-objstrip,$@)
+tmp/powerpc64-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
+	$(call tc,gcc) -S -O $< -o - \
+	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/L[0-9]*/L8&/g' \
+	          -e $$(cat src/dollar-dollar.sed) \
+	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
+	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
+		  >$@
 
-tmp/powerpc64-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,f-objstrip,$@)
-
-tmp/powerpc64-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
-	$(call tc,gcc) -c -O $< -o $@
-	$(call tc,objcopy) -R .comment $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
-
-tmp/powerpc64-expand.o: $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
+tmp/powerpc64-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
+	$(call tc,gcc) -S -O $< -o - \
+	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/L[0-9]*/L7&/g' \
+	          -e $$(cat src/dollar-dollar.sed) \
+	          -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
+	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
+		  >$@
 
 # /***********************************************************************
 # // powerpc64le-linux.kernel.vmlinux
