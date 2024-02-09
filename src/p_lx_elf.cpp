@@ -6334,7 +6334,7 @@ PackLinuxElf64::un_asl_dynsym( // ibuf has the input
     // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
     dynstr = (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
     sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
-    if (sec_dynsym) {
+    if (dynstr && sec_dynsym) {
         upx_uint64_t const off_dynsym = get_te64(&sec_dynsym->sh_offset);
         upx_uint64_t const sz_dynsym  = get_te64(&sec_dynsym->sh_size);
         if (orig_file_size < sz_dynsym
@@ -6375,7 +6375,7 @@ PackLinuxElf32::un_asl_dynsym( // ibuf has the input
     // un-Relocate dynsym (DT_SYMTAB) which is below xct_off
     dynstr = (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
     sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
-    if (sec_dynsym) {
+    if (dynstr && sec_dynsym) {
         upx_uint32_t const off_dynsym = get_te32(&sec_dynsym->sh_offset);
         upx_uint32_t const sz_dynsym  = get_te32(&sec_dynsym->sh_size);
         if (orig_file_size < sz_dynsym
