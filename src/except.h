@@ -61,7 +61,12 @@ private:
     UPX_CXX_DISABLE_ADDRESS(Throwable)
 
 private:
-    static upx_std_atomic(size_t) debug_counter; // for debugging
+    // static debug stats
+    struct Stats {
+        upx_std_atomic(size_t) counter_total;
+        upx_std_atomic(size_t) counter_current;
+    };
+    static Stats stats;
 };
 
 // Exceptions can/should be caught

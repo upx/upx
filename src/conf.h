@@ -209,6 +209,8 @@ typedef upx_int64_t upx_off_t;
 #undef dos
 #undef large
 #undef linux
+#undef PAGE_MASK
+#undef PAGE_SIZE
 #undef small
 #undef SP
 #undef SS
@@ -296,9 +298,6 @@ typedef upx_int64_t upx_off_t;
 #define basename upx_renamed_basename
 #define index    upx_renamed_index
 #define outp     upx_renamed_outp
-
-#undef PAGE_MASK
-#undef PAGE_SIZE
 
 #if !defined(O_BINARY) || (O_BINARY + 0 == 0)
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 ||  \

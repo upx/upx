@@ -142,7 +142,7 @@ struct ElfLinker::Relocation : private noncopyable {
     unsigned offset = 0;
     const char *type = nullptr;
     const Symbol *value = nullptr;
-    upx_uint64_t add; // used in .rela relocations
+    upx_uint64_t add = 0; // used in .rela relocations
 
     explicit Relocation(const Section *s, unsigned o, const char *t, const Symbol *v,
                         upx_uint64_t a);

@@ -360,6 +360,7 @@ private:
     pointer ptr;
     reference operator[](std::ptrdiff_t) noexcept DELETED_FUNCTION;
     const_reference operator[](std::ptrdiff_t) const noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_ADDRESS(OwningPointer)               // UPX convention
     UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(OwningPointer) // UPX convention
 };
 // must overload mem_clear()

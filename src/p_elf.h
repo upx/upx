@@ -178,9 +178,9 @@ packed_struct(Sym) {
 #define WANT_SYM_ENUM 1
 #include "p_elf_enum.h"
 
-    static unsigned int get_st_bind(unsigned x) { return 0xf & (x >> 4); }
-    static unsigned int get_st_type(unsigned x) { return 0xf & x; }
-    static unsigned char make_st_info(unsigned bind, unsigned type) {
+    static constexpr unsigned get_st_bind(unsigned x) noexcept { return 0xf & (x >> 4); }
+    static constexpr unsigned get_st_type(unsigned x) noexcept { return 0xf & x; }
+    static constexpr unsigned char make_st_info(unsigned bind, unsigned type) noexcept {
         return (unsigned char) (((bind << 4) + (0xf & type)) & 0xff);
     }
 };
@@ -252,9 +252,9 @@ packed_struct(Sym) {
 #define WANT_SYM_ENUM 1
 #include "p_elf_enum.h"
 
-    static unsigned int get_st_bind(unsigned x) { return 0xf & (x >> 4); }
-    static unsigned int get_st_type(unsigned x) { return 0xf & x; }
-    static unsigned char make_st_info(unsigned bind, unsigned type) {
+    static constexpr unsigned get_st_bind(unsigned x) noexcept { return 0xf & (x >> 4); }
+    static constexpr unsigned get_st_type(unsigned x) noexcept { return 0xf & x; }
+    static constexpr unsigned char make_st_info(unsigned bind, unsigned type) noexcept {
         return (unsigned char) (((bind << 4) + (0xf & type)) & 0xff);
     }
 };
