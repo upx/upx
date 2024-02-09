@@ -131,6 +131,7 @@ TEST_CASE("libc++") {
     CHECK(v.end() - v.begin() == N);
     CHECK(&v[0] == &(*(v.begin())));
     // CHECK(&v[0] + N == &(*(v.end()))); // TODO later: is this legal??
+    // TODO later
 #if defined(_LIBCPP_HARDENING_MODE_DEBUG) &&                                                       \
     (_LIBCPP_HARDENING_MODE == _LIBCPP_HARDENING_MODE_DEBUG)
     CHECK_THROWS((void) &v[N]);
@@ -258,6 +259,41 @@ struct Z2_X2 : public X2 {
 /*************************************************************************
 // util
 **************************************************************************/
+
+TEST_CASE("Deleter") {
+    LE16 *o = {}; // object
+    LE32 *a = {}; // array
+    {
+        const upx::ObjectDeleter<LE16 **> o_deleter{&o, 1};
+        o = new LE16;
+        assert(o != nullptr);
+        const upx::ArrayDeleter<LE32 **> a_deleter{&a, 1};
+        a = New(LE32, 1);
+        assert(a != nullptr);
+    }
+    assert(o == nullptr);
+    assert(a == nullptr);
+}
+
+TEST_CASE("Deleter") {
+    constexpr size_t N = 2;
+    BE16 *o[N]; // multiple objects
+    BE32 *a[N]; // multiple arrays
+    {
+        upx::ObjectDeleter<BE16 **> o_deleter{o, 0};
+        upx::ArrayDeleter<BE32 **> a_deleter{a, 0};
+        for (size_t i = 0; i < N; i++) {
+            o[i] = new BE16;
+            o_deleter.count += 1;
+            a[i] = New(BE32, 1 + i);
+            a_deleter.count += 1;
+        }
+    }
+    for (size_t i = 0; i < N; i++) {
+        assert(o[i] == nullptr);
+        assert(a[i] == nullptr);
+    }
+}
 
 TEST_CASE("ptr_static_cast") {
     // check that we don't trigger any -Wcast-align warnings

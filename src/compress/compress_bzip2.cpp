@@ -24,6 +24,10 @@
    <markus@oberhumer.com>
  */
 
+#include "../headers.h"
+#if WITH_BZIP2
+#include <bzip2/bzlib.h>
+#endif
 #include "../conf.h"
 
 void bzip2_compress_config_t::reset() noexcept { mem_clear(this); }
@@ -31,7 +35,6 @@ void bzip2_compress_config_t::reset() noexcept { mem_clear(this); }
 #if WITH_BZIP2
 #include "compress.h"
 #include "../util/membuffer.h"
-#include <bzip2/bzlib.h>
 
 #if defined(BZ_NO_STDIO) || 1
 // we need to supply bz_internal_error() when building with BZ_NO_STDIO

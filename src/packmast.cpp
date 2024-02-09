@@ -25,8 +25,6 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#include "headers.h"
-#include <memory> // std::unique_ptr
 #include "conf.h"
 #include "file.h"
 #include "packmast.h"
