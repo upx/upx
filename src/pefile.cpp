@@ -282,19 +282,6 @@ void PeFile::Interval::dump() const {
 // relocation handling
 **************************************************************************/
 
-namespace {
-struct FixDeleter final { // helper so we don't leak memory on exceptions
-    LE32 **fix;
-    size_t count;
-    ~FixDeleter() noexcept {
-        for (size_t i = 0; i < count; i++) {
-            delete[] fix[i];
-            fix[i] = nullptr;
-        }
-    }
-};
-} // namespace
-
 void PeFile::Reloc::RelocationBlock::reset() noexcept {
     rel = nullptr;  // SPAN_0
     rel1 = nullptr; // SPAN_0
@@ -489,7 +476,7 @@ void PeFile32::processRelocs() // pass1
             infoWarning("skipping unsupported relocation type %d (%d)", ic, counts[ic]);
 
     LE32 *fix[4];
-    FixDeleter fixdel{fix, 0}; // don't leak memory
+    upx::ArrayDeleter<LE32 **> fixdel{fix, 0}; // don't leak memory
     for (ic = 0; ic < 4; ic++) {
         fix[ic] = New(LE32, counts[ic]);
         fixdel.count += 1;
@@ -591,7 +578,7 @@ void PeFile64::processRelocs() // pass1
             infoWarning("skipping unsupported relocation type %d (%d)", ic, counts[ic]);
 
     LE32 *fix[16];
-    FixDeleter fixdel{fix, 0}; // don't leak memory
+    upx::ArrayDeleter<LE32 **> fixdel{fix, 0}; // don't leak memory
     for (ic = 0; ic < 16; ic++) {
         fix[ic] = New(LE32, counts[ic]);
         fixdel.count += 1;
@@ -1919,11 +1906,14 @@ void PeFile::processResources(Resource *res) {
     SPAN_S_VAR(byte, ores, oresources + res->dirsize());
 
     char *keep_icons = nullptr; // icon ids in the first icon group
+    upx::ArrayDeleter<char **> keep_icons_deleter{&keep_icons, 1}; // don't leak memory
     unsigned iconsin1stdir = 0;
     if (opt->win32_pe.compress_icons == 2)
         while (res->next()) // there is no rewind() in Resource
             if (res->itype() == RT_GROUP_ICON && iconsin1stdir == 0) {
                 iconsin1stdir = get_le16(ibuf.subref("bad resoff %#x", res->offs() + 4, 2));
+                delete[] keep_icons;
+                keep_icons = nullptr;
                 keep_icons = New(char, 1 + iconsin1stdir * 9);
                 *keep_icons = 0;
                 for (unsigned ic = 0; ic < iconsin1stdir; ic++)
@@ -2007,8 +1997,6 @@ void PeFile::processResources(Resource *res) {
     }
     soresources = ptr_diff_bytes(ores, oresources);
 
-    delete[] keep_icons;
-    keep_icons = nullptr;
     if (!res->clear()) {
         // The area occupied by the resource directory is not continuous
         // so to still support uncompression, I can't zero this area.

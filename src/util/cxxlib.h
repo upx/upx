@@ -179,6 +179,38 @@ forceinline Result ptr_static_cast(const From *ptr) noexcept {
     return static_cast<Result>(static_cast<const void *>(ptr));
 }
 
+// helper classes so we don't leak memory on exceptions
+template <class T> // T is "Type **"
+struct ObjectDeleter final {
+    static_assert(std::is_pointer_v<T>);
+    static_assert(std::is_pointer_v<std::remove_pointer_t<T> >);
+    T items;      // public
+    size_t count; // public
+    ~ObjectDeleter() noexcept { delete_items(); }
+    void delete_items() noexcept {
+        for (size_t i = 0; i < count; i++) {
+            auto item = items[i];
+            items[i] = nullptr;
+            delete item; // single object delete
+        }
+    }
+};
+template <class T> // T is "Type **"
+struct ArrayDeleter final {
+    static_assert(std::is_pointer_v<T>);
+    static_assert(std::is_pointer_v<std::remove_pointer_t<T> >);
+    T items;      // public
+    size_t count; // public
+    ~ArrayDeleter() noexcept { delete_items(); }
+    void delete_items() noexcept {
+        for (size_t i = 0; i < count; i++) {
+            auto item = items[i];
+            items[i] = nullptr;
+            delete[] item; // array delete
+        }
+    }
+};
+
 class noncopyable {
 protected:
     forceinline constexpr noncopyable() noexcept {}

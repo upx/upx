@@ -190,7 +190,7 @@ typedef upx_int64_t upx_off_t;
 #define unlikely              __acc_unlikely
 #define very_likely           __acc_very_likely
 #define very_unlikely         __acc_very_unlikely
-// cosmetic: explictly annotate some functions which may throw exceptions
+// cosmetic: explicitly annotate some functions which may throw exceptions
 // note: noexcept(false) is the default for all C++ functions anyway
 #define may_throw             noexcept(false)
 

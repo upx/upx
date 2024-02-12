@@ -41,8 +41,8 @@ Throwable::Throwable(const char *m, int e, bool w) noexcept : super(),
         msg = strdup(m);
         assert_noexcept(msg != nullptr);
     }
-    NO_fprintf(stderr, "construct exception: %zu %zu %s\n", stats.counter_current,
-               stats.counter_total, (const char *) msg);
+    NO_fprintf(stderr, "construct exception: %zu %zu %s\n", size_t(stats.counter_current),
+               size_t(stats.counter_total), (const char *) msg);
     stats.counter_current += 1;
     stats.counter_total += 1;
 }
@@ -55,16 +55,16 @@ Throwable::Throwable(const Throwable &other) noexcept : super(other),
         msg = strdup(other.msg);
         assert_noexcept(msg != nullptr);
     }
-    NO_fprintf(stderr, "copy construct exception: %zu %zu %s\n", stats.counter_current,
-               stats.counter_total, (const char *) msg);
+    NO_fprintf(stderr, "copy construct exception: %zu %zu %s\n", size_t(stats.counter_current),
+               size_t(stats.counter_total), (const char *) msg);
     stats.counter_current += 1;
     stats.counter_total += 1;
 }
 
 Throwable::~Throwable() noexcept {
     stats.counter_current -= 1;
-    NO_fprintf(stderr, "destruct exception: %zu %zu %s\n", stats.counter_current,
-               stats.counter_total, (const char *) msg);
+    NO_fprintf(stderr, "destruct exception: %zu %zu %s\n", size_t(stats.counter_current),
+               size_t(stats.counter_total), (const char *) msg);
     upx::owner_free(msg);
 }
 

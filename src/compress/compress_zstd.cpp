@@ -24,6 +24,12 @@
    <markus@oberhumer.com>
  */
 
+#include "../headers.h"
+#if WITH_ZSTD
+#include <zstd/lib/zstd.h>
+#include <zstd/lib/zstd_errors.h>
+#include <zstd/lib/compress/hist.h>
+#endif
 #include "../conf.h"
 
 void zstd_compress_config_t::reset() noexcept { mem_clear(this); }
@@ -31,9 +37,6 @@ void zstd_compress_config_t::reset() noexcept { mem_clear(this); }
 #if WITH_ZSTD
 #include "compress.h"
 #include "../util/membuffer.h"
-#include <zstd/lib/zstd.h>
-#include <zstd/lib/zstd_errors.h>
-#include <zstd/lib/compress/hist.h>
 
 static int convert_errno_from_zstd(size_t zr) {
     const ZSTD_ErrorCode ze = ZSTD_getErrorCode(zr);

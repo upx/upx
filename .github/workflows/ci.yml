@@ -455,8 +455,8 @@ jobs:
           - { zig_target: i386-linux-musl, qemu: qemu-i386 }
           # { zig_target: i386-linux-musl, qemu: qemu-i386, zig_pic: -fPIE }
           - { zig_target: i386-windows-gnu }
-          - { zig_target: mips-linux-musl }
-          - { zig_target: mipsel-linux-musl }
+          - { zig_target: mips-linux-musl }   # TODO: qemu
+          - { zig_target: mipsel-linux-musl } # TODO: qemu
           - { zig_target: powerpc-linux-musl, qemu: qemu-ppc }
           - { zig_target: powerpc64-linux-musl, qemu: qemu-ppc64 }
           - { zig_target: powerpc64le-linux-musl, qemu: qemu-ppc64le }

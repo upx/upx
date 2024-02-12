@@ -106,12 +106,14 @@ static_assert(sizeof(void *) == 8);
 #include <intrin.h>
 #endif
 
-// C++ system headers
+// C++ freestanding headers
 #include <cstddef>
 #include <exception>
 #include <new>
 #include <type_traits>
-
+#include <utility>
+// C++ system headers
+#include <memory> // std::unique_ptr
 // C++ multithreading (UPX currently does not use multithreading)
 #if __STDC_NO_ATOMICS__
 #undef WITH_THREADS
