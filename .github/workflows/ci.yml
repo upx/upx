@@ -151,7 +151,7 @@ jobs:
       - name: 'Mimic ctest tests with Valgrind'
         run: |
           if command -v valgrind >/dev/null; then
-            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet --gen-suppressions=all"
             env -C build/extra/gcc/debug     bash "$PWD"/misc/testsuite/mimic_ctest.sh
             env -C build/extra/gcc/release   bash "$PWD"/misc/testsuite/mimic_ctest.sh
             # clang/debug does not work before valgrind-3.20, see https://bugs.kde.org/show_bug.cgi?id=452758
@@ -162,14 +162,14 @@ jobs:
         if: ${{ matrix.use_m32 }}
         run: |
           if command -v valgrind >/dev/null; then
-            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet --gen-suppressions=all"
             env -C build/extra/gcc-m32/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
             env -C build/extra/gcc-m32/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
           fi
       - name: 'Run file system test suite'
         run: |
           if command -v valgrind >/dev/null; then
-            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+            export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet --gen-suppressions=all"
           fi
           env -C build/extra/gcc/release bash "$PWD"/misc/testsuite/test_symlinks.sh
       - name: 'Run test suite build/extra/gcc/release'
@@ -180,7 +180,7 @@ jobs:
   job-macos-cmake: # uses cmake + make
     if: true
     needs: [ job-rebuild-and-verify-stubs ]
-    name: ${{ format('{0}', matrix.os) }}
+    name: ${{ format('{0} {1}', matrix.os, matrix.xcode_version) }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -188,17 +188,25 @@ jobs:
         include:
           # NOTE: macos does not have "env -C"; only with brew coreutils
           # NOTE: macos-11 does not have "readlink -f"; only on macos >= 12 or with brew coreutils
-          - { os: macos-11, gcc: gcc-10, gxx: 'g++-10', testsuite: true }
-          - { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true }
-          - { os: macos-13, gcc: gcc-12, gxx: 'g++-12', testsuite: true }
+          - { os: macos-11, gcc: gcc-10, gxx: 'g++-10', testsuite: true, ctest: true }
+          - { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true, ctest: true }
+          - { os: macos-13, gcc: gcc-12, gxx: 'g++-12', testsuite: true, xcode_version: 14.3.1 }
+          - { os: macos-13, testsuite: true } # use default Xcode-15.0
+          - { os: macos-14, testsuite: true }
     env:
       UPX_CONFIG_EXPECT_THREADS: 'ON'
     steps:
+      - uses: maxim-lobanov/setup-xcode@v1
+        if: matrix.xcode_version # NOTE: gcc-12 on macos-13 does not work with Xcode-15
+        with:
+          xcode-version: ${{ matrix.xcode_version }}
       - name: 'Install brew packages'
-        if: ${{ matrix.testsuite }}
+        if: ${{ matrix.testsuite || matrix.ctest }}
         run: |
+          test -z "$HOMEBREW_PREFIX" && HOMEBREW_PREFIX="$(brew --prefix)"
+          echo "HOMEBREW_PREFIX=$HOMEBREW_PREFIX" >> $GITHUB_ENV
           # testsuite needs working "readlink -en" and "sha256sum -b"
-          if ! test -e /usr/local/opt/coreutils/libexec/gnubin/readlink; then
+          if ! test -e "$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin/readlink"; then
             echo "===== brew leaves:"; brew leaves; echo "===== brew list:"; brew list --versions
             # only run "brew update" if needed
             if ! brew install coreutils; then brew update && brew install coreutils; fi
@@ -229,7 +237,8 @@ jobs:
           make UPX_XTARGET=cross-darwin-arm64 xtarget/release
       - name: 'Make artifact'
         run: |
-          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          X="${{ matrix.xcode_version }}"; test -n "$X" && X="-xcode-$X"
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}$X" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           mkdir -p "tmp/artifact/$N"
           (cd build && rsync -R -a */*/*/upx "../tmp/artifact/$N/")
           (cd tmp/artifact && gtar --sort=name -czf "$N.tar.gz" "$N" && rm -rf "./$N")
@@ -245,26 +254,26 @@ jobs:
           (cd build/extra/clang/release && DESTDIR="$PWD/Install with cmake" cmake --install .)
           (cd build/extra/clang/release && DESTDIR="$PWD/Install with make"  make install)
       - name: 'Run ctest tests'
-        if: ${{ !contains(matrix.os, 'macos-13') }} # FIXME: UPX on macos-13 is broken => disable self-test for now
+        if: matrix.ctest # FIXME: UPX on macos-13+ is broken => disable self-test for now
         run: |
           make -C build/extra/clang/debug test
           #make -C build/extra/clang/release test
           for f in ./build/extra/*/*/upx; do echo "===== $f"; $f --sysinfo -v; done
       - name: 'Mimic ctest tests'
-        if: ${{ !contains(matrix.os, 'macos-13') }} # FIXME: UPX on macos-13 is broken => disable self-test for now
+        if: matrix.ctest # FIXME: UPX on macos-13+ is broken => disable self-test for now
         run: |
-          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+          export PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
           env -C build/extra/clang/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
           #env -C build/extra/clang/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
       - name: 'Run file system test suite'
         if: ${{ matrix.testsuite }} # for coreutils readlink
         run: |
-          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+          export PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
           env -C build/extra/clang/release bash "$PWD"/misc/testsuite/test_symlinks.sh
       - name: 'Run test suite build/extra/clang/release'
         if: ${{ matrix.testsuite }}
         run: |
-          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+          export PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
           env -C build/extra/clang/release bash "$PWD"/misc/testsuite/upx_testsuite_1.sh
 
@@ -468,7 +477,9 @@ jobs:
           # { zig_target: x86_64-macos.13.0-none }
           - { zig_target: x86_64-windows-gnu }
     env:
-      UPX_CONFIG_EXPECT_THREADS: 'ON'
+      ##UPX_CONFIG_EXPECT_THREADS: 'ON'
+      # zig is currently missing winpthreads; see https://github.com/ziglang/zig/issues/10989
+      UPX_CONFIG_EXPECT_THREADS: ${{ contains(matrix.zig_target, '-windows-') && 'OFF' || 'ON' }}
       # for zig-cc wrapper scripts (see below):
       ZIG_CPPFLAGS: -DUPX_DOCTEST_CONFIG_MULTITHREADING
       ZIG_FLAGS: ${{ matrix.zig_flags }}
@@ -570,6 +581,7 @@ jobs:
         if: ${{ matrix.zig_target == 'x86_64-linux-musl' }}
         run: |
           apk add coreutils valgrind
-          export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
+          export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet --gen-suppressions=all"
+          upx_exe_runner="$upx_exe_runner --suppressions=$PWD/misc/valgrind/musl.supp"
           env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
           env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
