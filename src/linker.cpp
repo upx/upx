@@ -840,21 +840,18 @@ void ElfLinkerPpc64le::relocate1(const Relocation *rel, byte *location, upx_uint
             internal_error("unaligned word displacement");
         // FIXME: displacement overflow?
         set_le32(location, (0xffff0003 & get_le32(location)) + (0x0000fffc & value));
-    }
-    else if (strncmp(type, "24", 2) == 0) { // for "24" and "24S"
+    } else if (strncmp(type, "24", 2) == 0) { // for "24" and "24S"
         if (3 & value)
             internal_error("unaligned word displacement");
         // FIXME: displacement overflow?
         set_le32(location, (0xfc000003 & get_le32(location)) + (0x03fffffc & value));
-    }
-    else if (strcmp(type, "8") == 0) {
+    } else if (strcmp(type, "8") == 0) {
         int displ = (signed char) *location + (int) value;
         if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d) in reloc %s:%x\n", displ, rel->section->name,
                            rel->offset);
         *location += value;
-    }
-    else if (strcmp(type, "16") == 0)
+    } else if (strcmp(type, "16") == 0)
         set_le16(location, get_le16(location) + value);
     else if (strncmp(type, "32", 2) == 0) // for "32" and "32S"
         set_le32(location, get_le32(location) + value);
@@ -893,21 +890,18 @@ void ElfLinkerPpc64::relocate1(const Relocation *rel, byte *location, upx_uint64
             internal_error("unaligned word displacement");
         // FIXME: displacement overflow?
         set_be32(location, (0xffff0003 & get_be32(location)) + (0x0000fffc & value));
-    }
-    else if (strncmp(type, "24", 2) == 0) { // for "24" and "24S"
+    } else if (strncmp(type, "24", 2) == 0) { // for "24" and "24S"
         if (3 & value)
             internal_error("unaligned word displacement");
         // FIXME: displacement overflow?
         set_be32(location, (0xfc000003 & get_be32(location)) + (0x03fffffc & value));
-    }
-    else if (strcmp(type, "8") == 0) {
+    } else if (strcmp(type, "8") == 0) {
         int displ = (signed char) *location + (int) value;
         if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d) in reloc %s:%x\n", displ, rel->section->name,
                            rel->offset);
         *location += value;
-    }
-    else if (strcmp(type, "16") == 0)
+    } else if (strcmp(type, "16") == 0)
         set_be16(location, get_be16(location) + value);
     else if (strncmp(type, "32", 2) == 0) // for "32" and "32S"
         set_be32(location, get_be32(location) + value);
