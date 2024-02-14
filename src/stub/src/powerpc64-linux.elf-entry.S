@@ -160,7 +160,7 @@ die:
         li 0,__NR_exit; sc
 
 r_exp=   31
-r_fp=    30
+r_PMASK= 30
 r_ADRU=  29
 r_LENU=  28
 r_fd=    27
@@ -170,7 +170,7 @@ r_ADRX=  24
 r_LENX=  23
 r_FLD=   22
 r_szuf=  21
-r_PMASK= 20
+r_fp=    20
 r_obinf= 19
 
         /* Decompress the rest of this loader, and jump to it. */

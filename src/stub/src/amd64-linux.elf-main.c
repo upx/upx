@@ -149,7 +149,7 @@ xread(Extent *x, char *buf, size_t count)
     }
     x->buf  += count;
     x->size -= count;
-    DPRINTF("xread done\\n",0);
+    DPRINTF("xread done count=%%x\\n", count);
 }
 
 
@@ -614,6 +614,11 @@ upx_main(  // returns entry address
 #endif  //}
 )
 {
+    DPRINTF("upx_main  b_info=%%p  sz_compressed=%%p  ehdr=%%p  av=%%p\\n",
+        bi, sz_compressed, ehdr, av);
+#if defined(__powerpc64__)
+    DPRINTF("   p_reloc=%%p\\n", p_reloc);
+#endif
     Extent xo, xi1, xi2;
     xo.buf  = (char *)ehdr;
     xo.size = bi->sz_unc;  // can require bi aligned(4)
@@ -653,6 +658,7 @@ ERR_LAB
         // Thus do_xmap will set *p_reloc = slide.
         *p_reloc = 0;  // kernel picks where PT_INTERP goes
         entry = do_xmap(ehdr, 0, fdi, 0, p_reloc);
+        DPRINTF("interp p_reloc=%%p  reloc=%%p\\n", p_reloc, *p_reloc);
         auxv_up(av, AT_BASE, *p_reloc);  // musl
         close(fdi);
     }
@@ -662,44 +668,6 @@ ERR_LAB
 }
 
 #if DEBUG  //{
-
-#if defined(__powerpc64__) //{
-#define __NR_write 4
-
-typedef unsigned long size_t;
-
-#if 0  //{
-static int
-write(int fd, char const *ptr, size_t len)
-{
-    register  int        sys asm("r0") = __NR_write;
-    register  int         a0 asm("r3") = fd;
-    register void const  *a1 asm("r4") = ptr;
-    register size_t const a2 asm("r5") = len;
-    __asm__ __volatile__("sc"
-    : "=r"(a0)
-    : "r"(sys), "r"(a0), "r"(a1), "r"(a2)
-    : "r0", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13"
-    );
-    return a0;
-}
-#else //}{
-ssize_t
-write(int fd, void const *ptr, size_t len)
-{
-    register  int        sys asm("r0") = __NR_write;
-    register  int         a0 asm("r3") = fd;
-    register void const  *a1 asm("r4") = ptr;
-    register size_t       a2 asm("r5") = len;
-    __asm__ __volatile__("sc"
-    : "+r"(sys), "+r"(a0), "+r"(a1), "+r"(a2)
-    :
-    : "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13"
-    );
-    return a0;
-}
-#endif  //}
-#endif  //}
 
 static int
 unsimal(unsigned x, char *ptr, int n)
