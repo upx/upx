@@ -193,8 +193,8 @@ r_reloc= 32 - 1  # used slot in register save area
         mr a1,r_LENX  // total_size
         la a2,SZ_FRAME(sp)  // &Elf64_Ehdr temporary space
         mr a3,r_auxv  // &Elf64_auxv_t
-        la a4,2*NBPW(r1)  // FIXME *p_reloc ??
-    teq r0,r0  // DEBUG
+        la a4,SZ_FRAME+OVERHEAD + SZ_FRAME+(r_reloc * NBPW)(sp)  // &p_reloc
+        std r_elfa,0(a4)
         call upx_main  // Out: a0= entry
 // entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, ELf32_auxv_t *a3,
 //      Elf64_Addr *p_reloc)
@@ -205,7 +205,7 @@ r_reloc= 32 - 1  # used slot in register save area
         andi. r0,a0,7; bne cr0,noTOC  // align(TOC) < 8;  [heuristic]
         lwz r0,0(a0); cmplwi r0,0; bne noTOC  // 4GiB <= .func;  an instruction?
 
-        ld r0, SZ_FRAME + r_reloc*NBPW(sp)  // reloc for ET_DYN
+        ld r0, SZ_FRAME+(r_reloc * NBPW)(sp)  // base for TOC (incl. PT_INTERP)
         ld r2,NBPW(r3); add r2,r2,r0  // toc
         ld r3,   0(r3); add r3,r3,r0  // .func   NOTE: r3 === a0
 noTOC:
@@ -215,10 +215,10 @@ noTOC:
 
 p_memsz= 4+4+ 4*NBPW
 // Discard pages of compressed data (includes [ADRX,+LENX) )
-        ld a1,p_memsz+szElf64_Phdr+szElf64_Ehdr(r_elfa)  // Phdr[C_TEXT= 1].p_memsz
-        //lhz r0,e_type(r_elf); cmpwi r0,ET_EXEC; bne 1f  // only ET_EXEC
+        //lhz r0,e_type(r_elfa); cmpwi r0,ET_EXEC; bne 1f  // only ET_EXEC
         movr a0,r_elfa; call brk  // also set the brk
 1:
+        ld a1,p_memsz+szElf64_Phdr+szElf64_Ehdr(r_elfa)  // Phdr[C_TEXT= 1].p_memsz
         movr a0,r_elfa; call munmap  # discard C_TEXT compressed data
 
 // first page of /proc/self/exe, to preserve it despite munmap(ADRU, LENU)

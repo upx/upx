@@ -1941,7 +1941,7 @@ tmp/powerpc64le-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
 
-tmp/powerpc64le-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
+tmp/powerpc64le-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/amd64-linux.elf-main.c
 	$(call tc,gcc) -S -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L7&/g' \
@@ -2011,7 +2011,7 @@ tmp/powerpc64-linux.upxfd_android.s: $(srcdir)/src/upxfd_android.c
 	          -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' \
 		  >$@
 
-tmp/powerpc64-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
+tmp/powerpc64-linux.elf-main.s: $(srcdir)/src/$$T.c $(srcdir)/src/amd64-linux.elf-main.c
 	$(call tc,gcc) -S -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
 	          -e 's/L[0-9]*/L7&/g' \
