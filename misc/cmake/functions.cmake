@@ -197,6 +197,26 @@ function(upx_add_definitions) # ARGV; needs include(CheckCCompilerFlag)
     endif()
 endfunction()
 
+function(upx_add_target_extra_compile_options) # ARGV
+    set(t "${ARGV0}")
+    list(REMOVE_AT ARGV 0)
+    foreach(var_name ${ARGV})
+        if(NOT DEFINED ${var_name})
+        elseif(",${${var_name}}," STREQUAL ",,")
+        else()
+            set(flags "${${var_name}}")
+            if(NOT flags MATCHES ";") # NOTE: split into list from string only if not already a list
+                if(${CMAKE_VERSION} VERSION_GREATER "3.8.99")
+                    separate_arguments(flags NATIVE_COMMAND "${flags}")
+                else()
+                    separate_arguments(flags)
+                endif()
+            endif()
+            target_compile_options(${t} PRIVATE "${flags}")
+        endif()
+    endforeach()
+endfunction()
+
 # compile a target with -O2 optimization even in Debug build
 function(upx_compile_target_debug_with_O2) # ARGV
     foreach(t ${ARGV})

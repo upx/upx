@@ -1239,6 +1239,7 @@ void PeFile::Export::build(char *newbase, unsigned newoffs) {
 
     edir.addrtable = newoffs + ptr_diff_bytes(functionp, newbase);
     edir.ordinaltable = newoffs + ptr_diff_bytes(ordinalp, newbase);
+    assert(ordinals != nullptr); // pacify clang-tidy
     memcpy(ordinalp, ordinals, 2 * edir.names);
 
     edir.name = newoffs + ptr_diff_bytes(enamep, newbase);

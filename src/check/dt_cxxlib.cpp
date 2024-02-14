@@ -261,8 +261,8 @@ struct Z2_X2 : public X2 {
 **************************************************************************/
 
 TEST_CASE("Deleter") {
-    LE16 *o = {}; // object
-    LE32 *a = {}; // array
+    LE16 *o = nullptr; // object
+    LE32 *a = nullptr; // array
     {
         const upx::ObjectDeleter<LE16 **> o_deleter{&o, 1};
         o = new LE16;

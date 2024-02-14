@@ -256,7 +256,7 @@ if(Threads_FOUND)
         set(CMAKE_TRY_COMPILE_TARGET_TYPE "EXECUTABLE")
         try_compile(result "${CMAKE_CURRENT_BINARY_DIR}"
                     "${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/try_compile/${f}"
-                    OUTPUT_VARIABLE output)
+                    CXX_STANDARD 17 OUTPUT_VARIABLE output)
         if(NOT result)
             # failed; under MinGW be sure to use the posix-threads and NOT the win32-threads version
             #message(STATUS "Threads FAILED: ${output}") # debug output from try_compile
@@ -326,6 +326,7 @@ if(MSVC_FRONTEND)
 else()
     target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
+upx_add_target_extra_compile_options(${t} UPX_CONFIG_EXTRA_COMPILE_OPTIONS_BZIP2)
 endif() # UPX_CONFIG_DISABLE_BZIP2
 
 set(t upx_vendor_ucl)
@@ -337,6 +338,7 @@ if(MSVC_FRONTEND)
 else()
     target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
+upx_add_target_extra_compile_options(${t} UPX_CONFIG_EXTRA_COMPILE_OPTIONS_UCL)
 
 set(t upx_vendor_zlib)
 upx_compile_target_debug_with_O2(${t})
@@ -350,6 +352,7 @@ if(MSVC_FRONTEND)
 else()
     target_compile_options(${t} PRIVATE ${warn_Wall} -Wno-cast-align -Wno-cast-qual ${warn_Werror})
 endif()
+upx_add_target_extra_compile_options(${t} UPX_CONFIG_EXTRA_COMPILE_OPTIONS_ZLIB)
 
 if(NOT UPX_CONFIG_DISABLE_ZSTD)
 set(t upx_vendor_zstd)
@@ -361,6 +364,7 @@ if(MSVC_FRONTEND)
 else()
     target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
+upx_add_target_extra_compile_options(${t} UPX_CONFIG_EXTRA_COMPILE_OPTIONS_ZSTD)
 endif() # UPX_CONFIG_DISABLE_ZSTD
 
 set(t upx)
@@ -403,6 +407,7 @@ if(MSVC_FRONTEND)
 else()
     target_compile_options(${t} PRIVATE ${warn_Wall} ${warn_Werror})
 endif()
+upx_add_target_extra_compile_options(${t} UPX_CONFIG_EXTRA_COMPILE_OPTIONS_UPX)
 
 #***********************************************************************
 # test
@@ -488,6 +493,7 @@ if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
 upx_print_var(CMAKE_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_CURRENT_SOURCE_DIR)
 upx_print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION CMAKE_HOST_SYSTEM_PROCESSOR CMAKE_APPLE_SILICON_PROCESSOR)
 upx_print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_SYSTEM_PROCESSOR CMAKE_CROSSCOMPILING CMAKE_CROSSCOMPILING_EMULATOR)
+upx_print_var(CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
 upx_print_var(CMAKE_C_COMPILER_ID CMAKE_C_COMPILER_VERSION CMAKE_C_COMPILER_FRONTEND_VARIANT CMAKE_C_COMPILER_ARCHITECTURE_ID CMAKE_C_PLATFORM_ID CMAKE_C_COMPILER_ABI)
 upx_print_var(CMAKE_CXX_COMPILER_ID CMAKE_CXX_COMPILER_VERSION CMAKE_CXX_COMPILER_FRONTEND_VARIANT CMAKE_CXX_COMPILER_ARCHITECTURE_ID CMAKE_CXX_PLATFORM_ID CMAKE_CXX_COMPILER_ABI)
 upx_print_var(CMAKE_INTERPROCEDURAL_OPTIMIZATION CMAKE_POSITION_INDEPENDENT_CODE CMAKE_TRY_COMPILE_CONFIGURATION)
