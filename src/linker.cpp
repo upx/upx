@@ -28,9 +28,6 @@
 #include "conf.h"
 #include "linker.h"
 
-#undef  NO_printf
-#define NO_printf printf
-
 static unsigned hex(uchar c) { return (c & 0xf) + (c > '9' ? 9 : 0); }
 
 static bool update_capacity(unsigned size, unsigned *capacity) {
