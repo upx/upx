@@ -1,4 +1,7 @@
+#
 # valgrind suppressions for musl libc
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+#
 
 # musl malloc
 {

@@ -179,7 +179,7 @@ forceinline Result ptr_static_cast(const From *ptr) noexcept {
     return static_cast<Result>(static_cast<const void *>(ptr));
 }
 
-// helper classes so we don't leak memory on exceptions
+// helper classes so we don't leak memory on exceptions; NOT thread-safe
 template <class T> // T is "Type **"
 struct ObjectDeleter final {
     static_assert(std::is_pointer_v<T>);

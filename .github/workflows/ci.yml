@@ -191,8 +191,10 @@ jobs:
           - { os: macos-11, gcc: gcc-10, gxx: 'g++-10', testsuite: true, ctest: true }
           - { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true, ctest: true }
           - { os: macos-13, gcc: gcc-12, gxx: 'g++-12', testsuite: true, xcode_version: 14.3.1 }
-          - { os: macos-13, testsuite: true } # use default Xcode-15.0
-          - { os: macos-14, testsuite: true }
+          - { os: macos-13, testsuite: true } # use default Xcode-15
+          # { os: macos-14, gcc: gcc-13, gxx: 'g++-13', testsuite: true }                        # gcc-13: INTERNAL ERROR in ld64
+          # { os: macos-14, gcc: gcc-13, gxx: 'g++-13', testsuite: true, xcode_version: 14.3.1 } # gcc-13: MISSING HEADER FILES
+          - { os: macos-14, gcc: gcc-12, gxx: 'g++-12', testsuite: true } # => use gcc-12 for now
     env:
       UPX_CONFIG_EXPECT_THREADS: 'ON'
     steps:
