@@ -254,9 +254,15 @@ endif()
 if(Threads_FOUND)
     foreach(f std_lock_guard.cpp)
         set(CMAKE_TRY_COMPILE_TARGET_TYPE "EXECUTABLE")
-        try_compile(result "${CMAKE_CURRENT_BINARY_DIR}"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/try_compile/${f}"
-                    CXX_STANDARD 17 OUTPUT_VARIABLE output)
+        if(NOT UPX_CONFIG_DISABLE_CXX_STANDARD)
+            try_compile(result "${CMAKE_CURRENT_BINARY_DIR}"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/try_compile/${f}"
+                        OUTPUT_VARIABLE output CXX_STANDARD 17)
+        else()
+            try_compile(result "${CMAKE_CURRENT_BINARY_DIR}"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/try_compile/${f}"
+                        OUTPUT_VARIABLE output)
+        endif()
         if(NOT result)
             # failed; under MinGW be sure to use the posix-threads and NOT the win32-threads version
             #message(STATUS "Threads FAILED: ${output}") # debug output from try_compile

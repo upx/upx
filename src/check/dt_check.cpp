@@ -323,6 +323,10 @@ struct TestIntegerWrap {
     static inline bool neg_eq(const T x) noexcept { return T(0) - x == x; }
 };
 
+//
+// basic exception handling
+//
+
 static noinline void throwSomeValue(int x) may_throw {
     if (x < 0)
         throw int(x);
@@ -342,6 +346,23 @@ static noinline void check_basic_cxx_exception_handling(void (*func)(int)) noexc
     assert_noexcept(cxx_exception_handling_works);
 }
 
+//
+// basic floating point to early catch bad codegen
+// (this has happened in the past with some exotic LLVM targets)
+//
+
+static noinline double sadd_a_b_div(upx_int64_t a, upx_int64_t b) { return (a + b) / 1000000.0; }
+static noinline double uadd_a_b_div(upx_uint64_t a, upx_uint64_t b) { return (a + b) / 1000000.0; }
+static noinline double ssub_a_b_div(upx_int64_t a, upx_int64_t b) { return (a - b) / 1000000.0; }
+static noinline double usub_a_b_div(upx_uint64_t a, upx_uint64_t b) { return (a - b) / 1000000.0; }
+
+static noinline void check_basic_floating_point(void) noexcept {
+    assert_noexcept(sadd_a_b_div(1000000, 1000000) == 2.0);
+    assert_noexcept(uadd_a_b_div(1000000, 1000000) == 2.0);
+    assert_noexcept(ssub_a_b_div(3000000, 1000000) == 2.0);
+    assert_noexcept(usub_a_b_div(3000000, 1000000) == 2.0);
+}
+
 } // namespace
 
 #define ACC_WANT_ACC_CHK_CH 1
@@ -359,6 +380,8 @@ void upx_compiler_sanity_check(void) noexcept {
         // check working C++ exception handling to catch toolchain/qemu/wine/etc problems
         check_basic_cxx_exception_handling(throwSomeValue);
     }
+
+    check_basic_floating_point();
 
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
