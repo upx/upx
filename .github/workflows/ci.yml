@@ -466,8 +466,9 @@ jobs:
           - { zig_target: i386-linux-musl, qemu: qemu-i386 }
           # { zig_target: i386-linux-musl, qemu: qemu-i386, zig_pic: -fPIE }
           - { zig_target: i386-windows-gnu }
-          - { zig_target: mips-linux-musl }   # TODO: qemu
-          - { zig_target: mipsel-linux-musl } # TODO: qemu
+          # mips and mipsel: bad hard-float code generation; see https://github.com/upx/upx/issues/788
+          - { zig_target: mips-linux-musl, zig_flags: -msoft-float, qemu: qemu-mips }
+          - { zig_target: mipsel-linux-musl, zig_flags: -msoft-float, qemu: qemu-mipsel }
           - { zig_target: powerpc-linux-musl, qemu: qemu-ppc }
           - { zig_target: powerpc64-linux-musl, qemu: qemu-ppc64 }
           - { zig_target: powerpc64le-linux-musl, qemu: qemu-ppc64le }

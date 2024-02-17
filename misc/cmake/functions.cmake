@@ -197,6 +197,7 @@ function(upx_add_definitions) # ARGV; needs include(CheckCCompilerFlag)
     endif()
 endfunction()
 
+# useful for CI jobs: allow target extra compile options
 function(upx_add_target_extra_compile_options) # ARGV
     set(t "${ARGV0}")
     list(REMOVE_AT ARGV 0)
