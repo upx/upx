@@ -475,7 +475,7 @@ getpid: .globl getpid;  do_sys __NR_getpid; ret
 memfd_create: .globl memfd_create; do_sys __NR_memfd_create; ret
 read:   .globl read;    do_sys __NR_read; ret
 unlink: .globl unlink;  do_sys __NR_unlink; ret
-Pwrite: .globl Parite
+Pwrite: .globl Pwrite
 write:  .globl write;   do_sys __NR_write; ret
 
 readlink: .globl readlink; mov w8,#__NR_readlink; b svc_AT  // OK if fails

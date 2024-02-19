@@ -122,6 +122,8 @@ static int dprintf(char const *fmt, ...); // forward
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
+#define ElfW(sym) Elf64_ ## sym
+
 #include "MAX_ELF_HDR.c"
 
 /*************************************************************************
@@ -240,8 +242,8 @@ ERR_LAB
 #if defined(__x86_64__)  //{
 static void *
 make_hatch_x86_64(
-    Elf64_Phdr const *const phdr,
-    Elf64_Addr reloc,
+    ElfW(Phdr) const *const phdr,
+    ElfW(Addr) reloc,
     unsigned const frag_mask
 )
 {
@@ -265,8 +267,8 @@ make_hatch_x86_64(
 #elif defined(__powerpc64__)  //}{
 static void *
 make_hatch_ppc64(
-    Elf64_Phdr const *const phdr,
-    Elf64_Addr reloc,
+    ElfW(Phdr) const *const phdr,
+    ElfW(Addr) reloc,
     unsigned const frag_mask
 )
 {
@@ -301,7 +303,7 @@ make_hatch_ppc64(
 #elif defined(__aarch64__)  //{
 static void *
 make_hatch_arm64(
-    Elf64_Phdr const *const phdr,
+    ElfW(Phdr) const *const phdr,
     uint64_t const reloc,
     unsigned const frag_mask
 )
@@ -349,7 +351,7 @@ upx_bzero(char *p, size_t len)
 #endif  //}
 
 static void
-auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
+auxv_up(ElfW(auxv_t) *av, unsigned const type, uint64_t const value)
 {
     if (!av || (1& (size_t)av)) { // none, or inhibited for PT_INTERP
         return;
@@ -385,7 +387,7 @@ underlay(unsigned size, char *ptr, unsigned len)  // len <= PAGE_SIZE
 
 // Exchange the bits with values 4 (PF_R, PROT_EXEC) and 1 (PF_X, PROT_READ)
 // Use table lookup into a PIC-string that pre-computes the result.
-unsigned PF_TO_PROT(Elf64_Phdr const *phdr)
+unsigned PF_TO_PROT(ElfW(Phdr) const *phdr)
 {
     char const *table = addr_string("\x80\x04\x02\x06\x01\x05\x03\x07");
     return 7& table[phdr->p_flags & (PF_R|PF_W|PF_X)];
@@ -394,13 +396,13 @@ unsigned PF_TO_PROT(Elf64_Phdr const *phdr)
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
-static Elf64_Addr // returns relocation constant
-xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
-    Elf64_Addr *const p_brk
-    , Elf64_Addr const elfaddr
+static ElfW(Addr) // returns relocation constant
+xfind_pages(unsigned mflags, ElfW(Phdr) const *phdr, int phnum,
+    ElfW(Addr) *const p_brk
+    , ElfW(Addr) const elfaddr
 )
 {
-    Elf64_Addr lo= ~0, hi= 0, addr= 0;
+    ElfW(Addr) lo= ~0, hi= 0, addr= 0;
     mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
     DPRINTF("xfind_pages  %%x  %%p  %%d  %%p  %%p\\n", mflags, phdr, phnum, elfaddr, p_brk);
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
@@ -426,39 +428,39 @@ xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
     }
     DPRINTF("  addr=%%p  lo=%%p  hi=%%p\\n", addr, lo, hi);
     // PROT_WRITE allows testing of 64k pages on 4k Linux
-    addr = (Elf64_Addr)mmap((void *)addr, hi, (DEBUG ? PROT_WRITE : PROT_NONE),  // FIXME XXX EVIL
+    addr = (ElfW(Addr))mmap((void *)addr, hi, (DEBUG ? PROT_WRITE : PROT_NONE),  // FIXME XXX EVIL
         mflags, -1, 0);
     DPRINTF("  addr=%%p\\n", addr);
     *p_brk = hi + addr;  // the logical value of brk(0)
-    return (Elf64_Addr)(addr - lo);
+    return (ElfW(Addr))(addr - lo);
 }
 
-static Elf64_Addr  // entry address
+static ElfW(Addr)  // entry address
 do_xmap(
-    Elf64_Ehdr const *const ehdr,
+    ElfW(Ehdr) const *const ehdr,
     Extent *const xi,
     int const fdi,
-    Elf64_auxv_t *const av,
-    Elf64_Addr *p_reloc
+    ElfW(auxv_t) *const av,
+    ElfW(Addr) *p_reloc
 )
 {
     (void)fdi;  // FIXME
-    Elf64_Phdr const *phdr = (Elf64_Phdr const *)(void const *)(ehdr->e_phoff +
+    ElfW(Phdr) const *phdr = (ElfW(Phdr) const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
-    Elf64_Addr v_brk;
-    Elf64_Addr reloc;
+    ElfW(Addr) v_brk;
+    ElfW(Addr) reloc;
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
-        Elf64_Addr ehdr0 = *p_reloc;  // the 'hi' copy!
-        Elf64_Phdr const *phdr0 = (Elf64_Phdr const *)(
-            ((Elf64_Ehdr *)ehdr0)->e_phoff + ehdr0);
+        ElfW(Addr) ehdr0 = *p_reloc;  // the 'hi' copy!
+        ElfW(Phdr) const *phdr0 = (ElfW(Phdr) const *)(
+            ((ElfW(Ehdr) *)ehdr0)->e_phoff + ehdr0);
         // Clear the 'lo' space reservation for use by PT_LOADs
         ehdr0 -= phdr0[1].p_vaddr;  // the 'lo' copy
         if (ET_EXEC==ehdr->e_type) {
             ehdr0 = phdr0[0].p_vaddr;
         }
         v_brk = phdr0->p_memsz + ehdr0;
-        reloc = (Elf64_Addr)mmap((void *)ehdr0, phdr0->p_memsz, PROT_NONE,
+        reloc = (ElfW(Addr))mmap((void *)ehdr0, phdr0->p_memsz, PROT_NONE,
             MAP_FIXED|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
         if (ET_EXEC==ehdr->e_type) {
             reloc = 0;
@@ -495,7 +497,7 @@ do_xmap(
         char *hi_addr = phdr->p_memsz  + addr;  // end of local .bss
         char *addr2 = mlen + addr;  // end of local .data
         size_t PAGE_MASK = get_page_mask();
-        unsigned frag  = (Elf64_Addr)addr &~ PAGE_MASK;
+        unsigned frag  = (ElfW(Addr))addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
 #if defined(__powerpc64__) || defined(__aarch64__)
@@ -514,7 +516,9 @@ do_xmap(
             // to hold the contents.
             mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             ftruncate(mfd, mlen);  // Allocate the pages in the file.
-            write(mfd, addr, frag);  // Save lo fragment of contents on first page.
+            if (frag) {
+                write(mfd, addr, frag);  // Save lo fragment of contents on first page.
+            }
             DPRINTF("munmap 1 addr=%%p  mlen=%%p\\n", addr, mlen);
             munmap(addr, mlen);  // Erase existing VMA  [necessary?]
             if (addr != mmap(addr, mlen, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0)) {
@@ -558,7 +562,7 @@ do_xmap(
             void *const hatch = make_hatch_arm64(phdr, reloc, ~PAGE_MASK);
 #endif  //}
             if (0!=hatch) {
-                auxv_up((Elf64_auxv_t *)(~1 & (size_t)av), AT_NULL, (size_t)hatch);
+                auxv_up((ElfW(auxv_t) *)(~1 & (size_t)av), AT_NULL, (size_t)hatch);
             }
 
             // SELinux: Map the contents of mfd as per *phdr.
@@ -603,14 +607,14 @@ void *
 upx_main(  // returns entry address
 /*arg1*/    struct b_info const *const bi,  // 1st block header
 /*arg2*/    size_t const sz_compressed,  // total length
-/*arg3*/    Elf64_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-/*arg4*/    Elf64_auxv_t *const av
+/*arg3*/    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
+/*arg4*/    ElfW(auxv_t) *const av
 #if defined(__x86_64)  //{
-/*arg5*/    , Elf64_Addr elfaddr  // In: &Elf64_Ehdr for stub
+/*arg5*/    , ElfW(Addr) elfaddr  // In: &ElfW(Ehdr) for stub
 #elif defined(__powerpc64__)  //}{
-/*arg5*/    , Elf64_Addr *p_reloc  // In: &Elf64_Ehdr for stub; Out: 'slide' for PT_INTERP
+/*arg5*/    , ElfW(Addr) *p_reloc  // In: &ElfW(Ehdr) for stub; Out: 'slide' for PT_INTERP
 #elif defined(__aarch64__) //}{
-/*arg5*/    , Elf64_Addr elfaddr
+/*arg5*/    , ElfW(Addr) elfaddr
 #endif  //}
 )
 {
@@ -629,20 +633,20 @@ upx_main(  // returns entry address
     unpackExtent(&xi2, &xo);  // never filtered?
 
 #if defined(__x86_64) || defined(__aarch64__)  //{
-    Elf64_Addr *const p_reloc = &elfaddr;
+    ElfW(Addr) *const p_reloc = &elfaddr;
 #endif  //}
-    Elf64_Addr PAGE_MASK = get_page_mask(); (void)PAGE_MASK;
+    ElfW(Addr) PAGE_MASK = get_page_mask(); (void)PAGE_MASK;
     DPRINTF("upx_main1  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p  PAGE_MASK=%%p\\n",
         ehdr->e_entry, p_reloc, *p_reloc, PAGE_MASK);
-    Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
+    ElfW(Phdr) *phdr = (ElfW(Phdr) *)(1+ ehdr);
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, p_reloc);
+    ElfW(Addr) entry = do_xmap(ehdr, &xi1, 0, av, p_reloc);
     DPRINTF("upx_main2  entry=%%p  *p_reloc=%%p\\n", entry, *p_reloc);
     auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
-    phdr = (Elf64_Phdr *)(1+ ehdr);
+    phdr = (ElfW(Phdr) *)(1+ ehdr);
     unsigned j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
         char const *const iname = *p_reloc + (char const *)phdr->p_vaddr;

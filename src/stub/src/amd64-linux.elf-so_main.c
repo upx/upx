@@ -542,7 +542,9 @@ upx_so_main(  // returns &escape_hatch
             // to hold the contents.
             mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             ftruncate(mfd, x1.size);  // Allocate the pages in the file.
-            Pwrite(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
+            if (frag) {
+                Pwrite(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
+            }
             Punmap(x1.buf, x1.size);
             mfd_addr = Pmap(x1.buf, x1.size, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0);
             DPRINTF("mfd_addr= %%p\\n", mfd_addr);  // Re-use the address space

@@ -54,6 +54,8 @@ ssize_t write(int, void const *, size_t);
 // configuration section
 **************************************************************************/
 
+#define ElfW(sym) Elf32_ ## sym
+
 // In order to make it much easier to move this code at runtime and execute
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
@@ -397,7 +399,7 @@ extern long upx_mmap_and_fd(  // x86_64 Android emulator of i386 is not faithful
 // Called by do_xmap to create it; remembered in AT_NULL.d_val
 static char *
 make_hatch_i386(
-    Elf32_Phdr const *const phdr,
+    ElfW(Phdr) const *const phdr,
     char *next_unc,
     unsigned frag_mask
 )
@@ -430,7 +432,7 @@ extern unsigned get_sys_munmap(void);
 
 static void *
 make_hatch_arm32(
-    Elf32_Phdr const *const phdr,
+    ElfW(Phdr) const *const phdr,
     char *next_unc,
     unsigned frag_mask
 )
@@ -467,7 +469,7 @@ make_hatch_arm32(
 #elif defined(__mips__)  /*}{*/
 static void *
 make_hatch_mips(
-    Elf32_Phdr const *const phdr,
+    ElfW(Phdr) const *const phdr,
     char *next_unc,
     unsigned frag_mask)
 {
@@ -507,7 +509,7 @@ make_hatch_mips(
 #elif defined(__powerpc__)  /*}{*/
 static void *
 make_hatch_ppc32(
-    Elf32_Phdr const *const phdr,
+    ElfW(Phdr) const *const phdr,
     char *next_unc,
     unsigned frag_mask)
 {
@@ -556,13 +558,13 @@ upx_bzero(char *p, size_t len)
 #define bzero upx_bzero
 
 
-static Elf32_auxv_t *
+static ElfW(auxv_t) *
 #if defined(__i386__)  /*{*/
 __attribute__((regparm(2), stdcall))
 #endif  /*}*/
-auxv_find(Elf32_auxv_t *av, unsigned const type)
+auxv_find(ElfW(auxv_t) *av, unsigned const type)
 {
-    Elf32_auxv_t *avail = 0;
+    ElfW(auxv_t) *avail = 0;
     if (av
 #if defined(__i386__)  /*{*/
     && 0==(1&(int)av)  /* PT_INTERP usually inhibits, except for hatch */
@@ -588,7 +590,7 @@ static void
 #if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
 #endif  /*}*/
-auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
+auxv_up(ElfW(auxv_t) *av, unsigned const type, unsigned const value)
 {
     DPRINTF("auxv_up  %%p %%x %%x\\n",av,type,value);
     av = auxv_find(av, type);
@@ -617,10 +619,10 @@ static ptrdiff_t // returns relocation constant
 #if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
 #endif  /*}*/
-xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum, Elf32_Addr *const p_brk)
+xfind_pages(unsigned mflags, ElfW(Phdr) const *phdr, int phnum, ElfW(Addr) *const p_brk)
 {
     size_t const page_mask = get_page_mask();
-    Elf32_Addr lo= ~0, hi= 0, addr = 0;
+    ElfW(Addr) lo= ~0, hi= 0, addr = 0;
     DPRINTF("xfind_pages  %%x  %%p  %%d  %%p\\n", mflags, phdr, phnum, p_brk);
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type
 #if defined(__arm__)  /*{*/
@@ -646,27 +648,32 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum, Elf32_Addr *cons
     lo -= ~page_mask & lo;  // round down to page boundary
     hi  =  page_mask & (hi - lo - page_mask -1);  // page length
     DPRINTF("  addr=%%p  lo=%%p  hi=%%p\\n", addr, lo, hi);
-    addr = (Elf32_Addr)mmap_privanon((void *)lo, hi, PROT_NONE, mflags);
+    addr = (ElfW(Addr))mmap_privanon((void *)lo, hi, PROT_NONE, mflags);
     DPRINTF("  addr=%%p\\n", addr);
     *p_brk = hi + addr;  // the logical value of brk(0)
     return (ptrdiff_t)addr - lo;
 }
 
 
-static Elf32_Addr  // entry address
-do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
-    Elf32_auxv_t *const av, unsigned *const p_reloc)
+static ElfW(Addr)  // entry address
+do_xmap(
+    ElfW(Ehdr) const *const ehdr,
+    Extent *const xi,
+    int const fdi,
+    ElfW(auxv_t) *const av,
+    unsigned *const p_reloc
+)
 {
-    Elf32_Phdr const *phdr = (Elf32_Phdr const *)(void const *)(ehdr->e_phoff +
+    ElfW(Phdr) const *phdr = (ElfW(Phdr) const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
-    Elf32_Addr v_brk;
-    Elf32_Addr reloc;
+    ElfW(Addr) v_brk;
+    ElfW(Addr) reloc;
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
-        Elf32_Addr  ehdr0 = *p_reloc;  // the 'hi' copy!
-        Elf32_Phdr *phdr0 = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)ehdr0);  // cheats .e_phoff
+        ElfW(Addr)  ehdr0 = *p_reloc;  // the 'hi' copy!
+        ElfW(Phdr) *phdr0 = (ElfW(Phdr) *)(1+ (ElfW(Ehdr) *)ehdr0);  // cheats .e_phoff
         // Clear the 'lo' space reservation for use by PT_LOADs
-        if (ET_EXEC==((Elf32_Ehdr *)ehdr0)->e_type) {
+        if (ET_EXEC==((ElfW(Ehdr) *)ehdr0)->e_type) {
             ehdr0 = phdr0[0].p_vaddr;
             reloc = 0;
         }
@@ -756,7 +763,7 @@ do_xmap(Elf32_Ehdr const *const ehdr, Extent *const xi, int const fdi,
             void *const hatch = make_hatch_i386(phdr, xo.buf, ~page_mask);
             if (0!=hatch) {
                 /* always update AT_NULL, especially for compressed PT_INTERP */
-                auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
+                auxv_up((ElfW(auxv_t) *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
             }
 #elif defined(__arm__)  /*}{*/
             void *const hatch = make_hatch_arm32(phdr, xo.buf, ~page_mask);
@@ -832,56 +839,56 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
-    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Elf32_auxv_t *const av,
-    Elf32_Addr const elfaddr
+    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
+    ElfW(auxv_t) *const av,
+    ElfW(Addr) const elfaddr
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
-    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Elf32_auxv_t *const av,
-    Elf32_Addr const elfaddr
+    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
+    ElfW(auxv_t) *const av,
+    ElfW(Addr) const elfaddr
 )
 
 #elif defined(__powerpc__) //}{
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
-    Elf32_Addr elfaddr,
-    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Elf32_auxv_t *const av
+    ElfW(Addr) elfaddr,
+    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
+    ElfW(auxv_t) *const av
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
     struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
-    Elf32_Addr elfaddr,
-    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Elf32_auxv_t *const av
+    ElfW(Addr) elfaddr,
+    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
+    ElfW(auxv_t) *const av
 )
 
 #else  /*}{ !__mips__ && !__powerpc__ */
 //        pusha  // (auxv, sz_cpr, elfaddr, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )
 void *upx_main(
-    Elf32_auxv_t *const av,
+    ElfW(auxv_t) *const av,
     unsigned const sz_compressed,
-    Elf32_Addr const volatile elfaddr,
-    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
+    ElfW(Addr) const volatile elfaddr,
+    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
     Extent xo,
     Extent xi
 ) __asm__("upx_main");
 void *upx_main(
-    Elf32_auxv_t *const av,
+    ElfW(auxv_t) *const av,
     unsigned const sz_compressed,
-    Elf32_Addr const /*volatile*/ elfaddr, // (used to be value+result)
-    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
+    ElfW(Addr) const /*volatile*/ elfaddr, // (used to be value+result)
+    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
     Extent xo,  // {sz_unc, ehdr}    for ELF headers
     Extent xi  // {sz_cpr, &b_info} for ELF headers
 )
 #endif  /*}*/
 {
 #if !defined(__mips__) && !defined(__powerpc__)  /*{*/
-    //Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR_32+OVERHEAD]
+    //ElfW(Ehdr) *const ehdr = (ElfW(Ehdr) *)(void *)xo.buf;  // temp char[MAX_ELF_HDR_32+OVERHEAD]
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
     size_t const sz_first = xi.size;
 #endif  /*}*/
@@ -917,18 +924,18 @@ void *upx_main(
     xi.size  = sz_compressed;
 #endif  // !__mips__ }
 
-    Elf32_Addr reloc = elfaddr;  // ET_EXEC problem!
+    ElfW(Addr) reloc = elfaddr;  // ET_EXEC problem!
     DPRINTF("upx_main1  .e_entry=%%p  reloc=%%p\\n", ehdr->e_entry, reloc);
-    Elf32_Phdr *phdr = (Elf32_Phdr *)(1+ ehdr);
+    ElfW(Phdr) *phdr = (ElfW(Phdr) *)(1+ ehdr);
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    Elf32_Addr entry = do_xmap(ehdr, &xi, 0, av, &reloc);
+    ElfW(Addr) entry = do_xmap(ehdr, &xi, 0, av, &reloc);
     DPRINTF("upx_main2  entry=%%p  reloc=%%p\\n", entry, reloc);
     auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     int j;
-    for (j=0, phdr = (Elf32_Phdr *)(1+ ehdr); j < ehdr->e_phnum; ++phdr, ++j)
+    for (j=0, phdr = (ElfW(Phdr) *)(1+ ehdr); j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_INTERP==phdr->p_type) {
         int const fdi = open(reloc + (char const *)phdr->p_vaddr, O_RDONLY, 0);
         if (0 > fdi) {
