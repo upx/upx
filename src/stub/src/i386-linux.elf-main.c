@@ -667,7 +667,7 @@ do_xmap(
     ElfW(Phdr) const *phdr = (ElfW(Phdr) const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
     ElfW(Addr) v_brk;
-    ElfW(Addr) reloc;
+    ElfW(Addr) reloc = 0;
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
         ElfW(Addr)  ehdr0 = *p_reloc;  // the 'hi' copy!
@@ -694,6 +694,7 @@ do_xmap(
           "  av=%%p  reloc=%%p  p_reloc=%%p/%%p\\n",
         ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), fdi,
         av, reloc, p_reloc, *p_reloc);
+    size_t const page_mask = get_page_mask();
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -707,19 +708,20 @@ do_xmap(
             auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
             //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
         }
-        unsigned /*const*/ frag_mask = ~get_page_mask();
         unsigned /*const*/ prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
         char * addr = xo.buf  =  (char *)(phdr->p_vaddr + reloc);
         char *const haddr =     phdr->p_memsz + addr;
-        size_t frag  = (int)addr & frag_mask;
+        char *addr2 = mlen + addr;  // end of local .data
+        size_t frag  = (int)addr & ~page_mask;
         mlen += frag;
         addr -= frag;
         DPRINTF("  phdr@%%p type=%%x  offset=%%x  vaddr=%%x  paddr=%%x  filesz=%%x  memsz=%%x  flags=%%x  align=%%x\\n",
             phdr, phdr->p_type, phdr->p_offset, phdr->p_vaddr, phdr->p_paddr,
             phdr->p_filesz, phdr->p_memsz, phdr->p_flags, phdr->p_align);
-        DPRINTF("  addr=%%x  mlen=%%x  frag=%%x  prot=%%x  frag_mask=%%x\\n", addr, mlen, frag, prot, frag_mask);
+        DPRINTF("  addr=%%x  mlen=%%x  frag=%%x  prot=%%x\\n",
+            addr, mlen, frag, prot);
 
 #if defined(__i386__)  /*{*/
     // Decompressor can overrun the destination by 3 bytes.
@@ -728,61 +730,75 @@ do_xmap(
 #  define LEN_OVER 0
 #endif  /*}*/
 
-        if (xi) { // compressed source: Pprotect(,,prot) later
-            if (addr != mmap_privanon(addr, LEN_OVER + mlen,
-#if defined(__arm__)  //{
-                    ((PF_X & phdr->p_flags) ? PROT_EXEC : 0) |
-#endif  //}
-                    PROT_WRITE | PROT_READ, MAP_FIXED) )
-                err_exit(6);
-            DPRINTF("mlen 3 %%x\\n", mlen);
-            unpackExtent(xi, &xo);
-            DPRINTF("mlen 4a mlen=%%x  frag=%%x  frag_mask=%%x  prot=%%x\\n", mlen, frag, frag_mask, prot);
+        DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  frag=%%p  prot=%%x\\n",
+            addr, mlen, phdr->p_offset - frag, frag, prot);
+        unsigned mfd = 0;
+        if (xi && phdr->p_flags & PF_X) { // SELinux
+            // Cannot set PROT_EXEC except via mmap() into a region (Linux "vma")
+            // that has never had PROT_WRITE.  So use a Linux-only "memory file"
+            // to hold the contents.
+            unsigned long fdmap = upx_mmap_and_fd(addr, mlen, 0);
+            mfd = -1+ (0xfff& fdmap);
+            addr = (char *)((fdmap >> 12) << 12);
+            if (frag) {
+                write(mfd, addr, frag);  // Save lo fragment of contents on first page.
+            }
         }
-        else {  // PT_INTERP
-            if (addr != mmap(addr, mlen, prot, MAP_FIXED | MAP_PRIVATE,
-                    fdi, phdr->p_offset - frag) )
+        else {
+            unsigned tprot = prot;
+            // Notice that first 4 args are same: mmap vs mmap_privanon
+            if (xi) {
+                tprot |=  PROT_WRITE;  // De-compression needs Write
+                tprot &= ~PROT_EXEC;  // Avoid simultaneous Write and eXecute
+                if (addr != mmap_privanon(addr, mlen, tprot, MAP_FIXED|MAP_PRIVATE)) {
+                    err_exit(11);
+                }
+            }
+            else if (addr != mmap(addr, mlen, tprot, MAP_FIXED|MAP_PRIVATE,
+                        fdi, phdr->p_offset - frag)) {
                 err_exit(8);
+            }
         }
-        DPRINTF("mlen 4b mlen=%%x  frag=%%x  frag_mask=%%x  prot=%%x\\n", mlen, frag, frag_mask, prot);
-        // Linux does not fixup the low end, so neither do we.
-        // Indeed, must leave it alone because some PT_GNU_RELRO
-        // dangle below PT_LOAD (but still on the low page)!
-        //if (PROT_WRITE & prot) {
-        //    bzero(addr, frag);  // fragment at lo end
-        //}
-        frag = (-mlen) & frag_mask;  // distance to next page boundary
-        DPRINTF("mlen 4c mlen=%%x  frag=%%x  frag_mask=%%x  prot=%%x\\n", mlen, frag, frag_mask, prot);
-        if (PROT_WRITE & prot) { // note: read-only .bss not supported here
-            bzero(mlen+addr, frag);  // fragment at hi end
-        }
-        DPRINTF("mlen 5 %%x\\n", mlen);
+        DPRINTF("addr= %%p\\n", addr);
+
         if (xi) {
-            size_t page_mask = get_page_mask();
+            DPRINTF("before unpack xi=(%%p %%p  xo=(%%p %%p)\\n", xi->size, xi->buf, xo.size, xo.buf);
+            unpackExtent(xi, &xo);  // updates xi and xo
+            DPRINTF(" after unpack xi=(%%p %%p  xo=(%%p %%p)\\n", xi->size, xi->buf, xo.size, xo.buf);
+        }
+        if (PROT_WRITE & prot) { // note: read-only .bss not supported here
+            // Clear to end-of-page (first part of .bss or &_end)
+            unsigned hi_frag = -(long)addr2 &~ PAGE_MASK;
+            bzero(addr2, hi_frag);
+            addr2 += hi_frag;  // will be page aligned
+        }
+
+        if (xi) {
 #if defined(__i386__)  /*{*/
             void *const hatch = make_hatch_i386(phdr, xo.buf, ~page_mask);
-            if (0!=hatch) {
-                /* always update AT_NULL, especially for compressed PT_INTERP */
-                auxv_up((ElfW(auxv_t) *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
-            }
 #elif defined(__arm__)  /*}{*/
             void *const hatch = make_hatch_arm32(phdr, xo.buf, ~page_mask);
-            if (0!=hatch) {
-                auxv_up(av, AT_NULL, (unsigned)hatch);
-            }
 #elif defined(__mips__)  /*}{*/
             void *const hatch = make_hatch_mips(phdr, xo.buf, ~page_mask);
-            if (0!=hatch) {
-                auxv_up(av, AT_NULL, (unsigned)hatch);
-            }
 #elif defined(__powerpc__)  /*}{*/
             void *const hatch = make_hatch_ppc32(phdr, xo.buf, ~page_mask);
-            if (0!=hatch) {
-                auxv_up(av, AT_NULL, (unsigned)hatch);
-            }
 #endif  /*}*/
+            if (0!=hatch) {
+                /* always update AT_NULL, especially for compressed PT_INTERP */
+                // Clearing lo bit of av is for i386 only; else is superfluous.
+                auxv_up((ElfW(auxv_t) *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
+            }
+
             DPRINTF("hatch protect %%p %%x %%x\\n", addr, mlen, prot);
-            if (0!=Pprotect(addr, mlen, prot)) {
+            if (phdr->p_flags & PF_X) { // SELinux; have xi ==> compressed
+                munmap(addr, mlen);  // toss the VMA that has PROT_WRITE
+                if (addr != mmap(addr, mlen, prot, MAP_FIXED|MAP_PRIVATE, mfd, 0)) {
+                    err_exit(20);
+                }
+                close(mfd);
+            }
+            else if ((PROT_WRITE|PROT_READ) != prot
+            &&  0!=Pprotect(addr, mlen, prot)) {
                 err_exit(10);
 ERR_LAB
             }
@@ -797,7 +813,7 @@ ERR_LAB
         }
 #if defined(__i386__)  /*{*/
         else if (xi) { // cleanup if decompressor overrun crosses page boundary
-            mlen = frag_mask & (3+ mlen);
+            mlen = (3+ mlen) & ~page_mask;
             if (mlen<=3) { // page fragment was overrun buffer only
                 munmap(addr, mlen);
             }

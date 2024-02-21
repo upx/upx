@@ -444,7 +444,6 @@ do_xmap(
     ElfW(Addr) *p_reloc
 )
 {
-    (void)fdi;  // FIXME
     ElfW(Phdr) const *phdr = (ElfW(Phdr) const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
     ElfW(Addr) v_brk;
