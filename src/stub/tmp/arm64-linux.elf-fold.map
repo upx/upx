@@ -12,7 +12,7 @@ LOAD tmp/arm64-expand.o
 LOAD tmp/arm64-linux.elf-main.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
-.text           0x0000000000000000      0xaac
+.text           0x0000000000000000      0xa7c
  .text          0x0000000000000000      0x230 tmp/arm64-linux.elf-fold.o
                 0x0000000000000010                get_page_mask
                 0x0000000000000018                mmap_privanon
@@ -21,10 +21,9 @@ OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
                 0x0000000000000060                Pprotect
                 0x0000000000000060                mprotect
  .text          0x0000000000000230        0x0 tmp/arm64-expand.o
- .text          0x0000000000000230      0x87c tmp/arm64-linux.elf-main.o
-                0x00000000000003e4                underlay
-                0x0000000000000450                PF_TO_PROT
-                0x0000000000000978                upx_main
+ .text          0x0000000000000230      0x84c tmp/arm64-linux.elf-main.o
+                0x00000000000008dc                underlay
+                0x0000000000000948                upx_main
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/arm64-linux.elf-fold.o
@@ -48,6 +47,7 @@ SYSCALLS        0x0000000000000000       0xcc
                 0x000000000000004c                read
                 0x0000000000000058                unlink
                 0x0000000000000064                write
+                0x0000000000000064                Pwrite
                 0x0000000000000070                readlink
                 0x0000000000000078                open
                 0x0000000000000094                memcpy

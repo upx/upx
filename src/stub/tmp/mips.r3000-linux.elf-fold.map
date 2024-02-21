@@ -8,17 +8,18 @@ Linker script and memory map
 
 TARGET(elf32-bigmips)
 
-.text           0x0000000000000000     0x1808
+.text           0x0000000000000000      0xbe0
  *(.text)
- .text          0x0000000000000000     0x1808 tmp/mips.r3000-linux.elf-fold.o
+ .text          0x0000000000000000      0xbe0 tmp/mips.r3000-linux.elf-fold.o
                 0x0000000000000090                get_page_mask
-                0x000000000000175c                upx_mmap_and_fd
+                0x0000000000000b30                upx_mmap_and_fd
                 0x00000000000000ac                get_upxfn_path
-                0x0000000000001490                upx_main
+                0x0000000000000298                unpackExtent
+                0x00000000000009b8                upx_main
                 0x0000000000000000                PAGE_MASK
                 0x00000000000000dc                close
  *(.data)
- .data          0x0000000000001808        0x0 tmp/mips.r3000-linux.elf-fold.o
+ .data          0x0000000000000be0        0x0 tmp/mips.r3000-linux.elf-fold.o
 
 SYSCALLS        0x0000000000000000      0x158
  SYSCALLS       0x0000000000000000      0x158 tmp/mips.r3000-linux.elf-fold.o

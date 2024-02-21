@@ -7,14 +7,14 @@ Idx Name          Size      VMA               LMA               File off  Algn  
   2 NRV2E         0e5  0  0  0120  2**0  CONTENTS
   3 NRV2D         0d7  0  0  0205  2**0  CONTENTS
   4 NRV2B         0c1  0  0  02dc  2**0  CONTENTS
-  5 SO_MAIN       0787  0  0  03a0  2**4  CONTENTS
-  6 SO_HEAD       02c  0  0  0b27  2**0  CONTENTS
-  7 SO_TAIL       098  0  0  0b53  2**0  CONTENTS
-  8 LZMA_ELF00    064  0  0  0beb  2**0  CONTENTS
-  9 LZMA_DEC10    09f7  0  0  0c4f  2**0  CONTENTS
- 10 LZMA_DEC20    09f7  0  0  01646  2**0  CONTENTS
- 11 LZMA_DEC30    018  0  0  0203d  2**0  CONTENTS
- 12 EXP_TAIL      0c  0  0  02055  2**0  CONTENTS
+  5 SO_MAIN       0781  0  0  03a0  2**4  CONTENTS
+  6 SO_HEAD       02c  0  0  0b21  2**0  CONTENTS
+  7 SO_TAIL       098  0  0  0b4d  2**0  CONTENTS
+  8 LZMA_ELF00    064  0  0  0be5  2**0  CONTENTS
+  9 LZMA_DEC10    09f7  0  0  0c49  2**0  CONTENTS
+ 10 LZMA_DEC20    09f7  0  0  01640  2**0  CONTENTS
+ 11 LZMA_DEC30    018  0  0  02037  2**0  CONTENTS
+ 12 EXP_TAIL      0c  0  0  0204f  2**0  CONTENTS
 SYMBOL TABLE:
 0000000000000000 l    d  LZMA_DEC30 0 LZMA_DEC30
 0000000000000000 l    d  EXP_TAIL 0 EXP_TAIL
@@ -51,7 +51,7 @@ SYMBOL TABLE:
 0000000000000076 g       SO_TAIL 0 openat
 0000000000000094 g       SO_TAIL 0 mprotect
 0000000000000072 g       SO_TAIL 0 close
-0000000000000391 g     F SO_MAIN 03f6 upx_so_main
+0000000000000391 g     F SO_MAIN 03f0 upx_so_main
 
 RELOCATION RECORDS FOR [NRV2E]:
 OFFSET           TYPE              VALUE
@@ -84,27 +84,27 @@ OFFSET           TYPE              VALUE
 0000000000000319 R_X86_64_PLT32    memcpy+0xfffffffffffffffc
 000000000000033a R_X86_64_PLT32    mmap+0xfffffffffffffffc
 0000000000000348 R_X86_64_PLT32    memcpy+0xfffffffffffffffc
-0000000000000414 R_X86_64_PLT32    mmap+0xfffffffffffffffc
-0000000000000427 R_X86_64_PLT32    memcpy+0xfffffffffffffffc
-00000000000004c9 R_X86_64_PLT32    memfd_create+0xfffffffffffffffc
-00000000000004e2 R_X86_64_PLT32    Pwrite+0xfffffffffffffffc
-00000000000004f6 R_X86_64_PLT32    Pwrite+0xfffffffffffffffc
-0000000000000505 R_X86_64_PLT32    Punmap+0xfffffffffffffffc
-000000000000050d R_X86_64_PLT32    PF_to_PROT+0xfffffffffffffffc
-0000000000000528 R_X86_64_PLT32    Pmap+0xfffffffffffffffc
-000000000000052f R_X86_64_PLT32    close+0xfffffffffffffffc
-0000000000000614 R_X86_64_PLT32    memfd_create+0xfffffffffffffffc
-0000000000000623 R_X86_64_PLT32    ftruncate+0xfffffffffffffffc
-0000000000000633 R_X86_64_PLT32    Pwrite+0xfffffffffffffffc
-0000000000000642 R_X86_64_PLT32    Punmap+0xfffffffffffffffc
+000000000000040e R_X86_64_PLT32    mmap+0xfffffffffffffffc
+0000000000000421 R_X86_64_PLT32    memcpy+0xfffffffffffffffc
+00000000000004c3 R_X86_64_PLT32    memfd_create+0xfffffffffffffffc
+00000000000004dc R_X86_64_PLT32    Pwrite+0xfffffffffffffffc
+00000000000004f0 R_X86_64_PLT32    Pwrite+0xfffffffffffffffc
+00000000000004ff R_X86_64_PLT32    Punmap+0xfffffffffffffffc
+0000000000000507 R_X86_64_PLT32    PF_to_PROT+0xfffffffffffffffc
+0000000000000522 R_X86_64_PLT32    Pmap+0xfffffffffffffffc
+0000000000000529 R_X86_64_PLT32    close+0xfffffffffffffffc
+000000000000060c R_X86_64_PLT32    memfd_create+0xfffffffffffffffc
+000000000000061c R_X86_64_PLT32    ftruncate+0xfffffffffffffffc
+0000000000000631 R_X86_64_PLT32    Pwrite+0xfffffffffffffffc
+0000000000000640 R_X86_64_PLT32    Punmap+0xfffffffffffffffc
 0000000000000664 R_X86_64_PLT32    Pmap+0xfffffffffffffffc
-00000000000006e7 R_X86_64_PLT32    Punmap+0xfffffffffffffffc
-00000000000006ef R_X86_64_PLT32    PF_to_PROT+0xfffffffffffffffc
-0000000000000715 R_X86_64_PLT32    Pmap+0xfffffffffffffffc
-000000000000071d R_X86_64_PLT32    close+0xfffffffffffffffc
-0000000000000727 R_X86_64_PLT32    PF_to_PROT+0xfffffffffffffffc
-000000000000073d R_X86_64_PLT32    Pprotect+0xfffffffffffffffc
-0000000000000758 R_X86_64_PLT32    Punmap+0xfffffffffffffffc
+00000000000006e0 R_X86_64_PLT32    Punmap+0xfffffffffffffffc
+00000000000006e8 R_X86_64_PLT32    PF_to_PROT+0xfffffffffffffffc
+0000000000000710 R_X86_64_PLT32    Pmap+0xfffffffffffffffc
+0000000000000719 R_X86_64_PLT32    close+0xfffffffffffffffc
+0000000000000723 R_X86_64_PLT32    PF_to_PROT+0xfffffffffffffffc
+0000000000000739 R_X86_64_PLT32    Pprotect+0xfffffffffffffffc
+0000000000000754 R_X86_64_PLT32    Punmap+0xfffffffffffffffc
 
 RELOCATION RECORDS FOR [SO_HEAD]:
 OFFSET           TYPE              VALUE

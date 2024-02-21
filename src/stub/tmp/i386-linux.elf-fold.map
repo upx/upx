@@ -7,17 +7,18 @@ Name             Origin             Length             Attributes
 Linker script and memory map
 
 
-.text           0x0000000000000000     0x1431
+.text           0x0000000000000000      0xb99
  .text          0x0000000000000000      0x16a tmp/i386-linux.elf-fold.o
                 0x0000000000000002                get_page_mask
                 0x000000000000000f                get_upxfn_path
  *fill*         0x000000000000016a        0x2 00
- .text          0x000000000000016c      0x384 tmp/i386-linux.elf-upxfd_android.o
+ .text          0x000000000000016c      0x38c tmp/i386-linux.elf-upxfd_android.o
                 0x0000000000000374                upx_mmap_and_fd
                 0x000000000000033a                strncmplc
- .text          0x00000000000004f0        0x0 tmp/i386-expand.o
- .text          0x00000000000004f0      0xf41 tmp/i386-linux.elf-main.o
-                0x0000000000001223                upx_main
+ .text          0x00000000000004f8        0x0 tmp/i386-expand.o
+ .text          0x00000000000004f8      0x6a1 tmp/i386-linux.elf-main.o
+                0x0000000000000537                unpackExtent
+                0x0000000000000aa4                upx_main
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/i386-linux.elf-fold.o
