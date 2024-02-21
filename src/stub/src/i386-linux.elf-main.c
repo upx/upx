@@ -599,6 +599,15 @@ auxv_up(ElfW(auxv_t) *av, unsigned const type, unsigned const value)
     }
 }
 
+#if 0  //{
+// Exchange the bits with values 4 (PF_R, PROT_EXEC) and 1 (PF_X, PROT_READ)
+// Use table lookup into a PIC-string that pre-computes the result.
+unsigned PF_TO_PROT(unsigned flags)
+{
+    char const *table = addr_string("\x80\x04\x02\x06\x01\x05\x03\x07");
+    return 7& table[flags & (PF_R|PF_W|PF_X)];
+}
+#else  //}{
 // The PF_* and PROT_* bits are {1,2,4}; the conversion table fits in 32 bits.
 #define REP8(x) \
     ((x)|((x)<<4)|((x)<<8)|((x)<<12)|((x)<<16)|((x)<<20)|((x)<<24)|((x)<<28))
@@ -610,7 +619,7 @@ auxv_up(ElfW(auxv_t) *av, unsigned const type, unsigned const value)
          |(REP8(PROT_READ ) & EXP8(PF_R)) \
          |(REP8(PROT_WRITE) & EXP8(PF_W)) \
         ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
-
+#endif  //}
 
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
@@ -661,39 +670,38 @@ do_xmap(
     Extent *const xi,
     int const fdi,
     ElfW(auxv_t) *const av,
-    unsigned *const p_reloc
+    ElfW(Addr) *const p_reloc
 )
 {
     ElfW(Phdr) const *phdr = (ElfW(Phdr) const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
-    ElfW(Addr) v_brk;
+    ElfW(Addr) v_brk = 0;
     ElfW(Addr) reloc = 0;
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
         ElfW(Addr)  ehdr0 = *p_reloc;  // the 'hi' copy!
         ElfW(Phdr) *phdr0 = (ElfW(Phdr) *)(1+ (ElfW(Ehdr) *)ehdr0);  // cheats .e_phoff
         // Clear the 'lo' space reservation for use by PT_LOADs
-        if (ET_EXEC==((ElfW(Ehdr) *)ehdr0)->e_type) {
+        ehdr0 -= phdr0[1].p_vaddr;  // the 'lo' copy
+        if (ET_EXEC == ehdr->e_type) {
             ehdr0 = phdr0[0].p_vaddr;
-            reloc = 0;
         }
         else {
-            ehdr0 -= phdr0[1].p_vaddr;
             reloc = ehdr0;
         }
         v_brk = phdr0->p_memsz + ehdr0;
-        DPRINTF("do_xmap munmap [%%p, +%%x)\\n", ehdr0, phdr0->p_memsz);
         munmap((void *)ehdr0, phdr0->p_memsz);
     }
     else { // PT_INTERP
+        DPRINTF("INTERP\\n", 0);
         reloc = xfind_pages(
             ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
     }
-
     DPRINTF("do_xmap  ehdr=%%p  xi=%%p(%%x %%p)  fdi=%%x\\n"
           "  av=%%p  reloc=%%p  p_reloc=%%p/%%p\\n",
         ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), fdi,
         av, reloc, p_reloc, *p_reloc);
+
     size_t const page_mask = get_page_mask();
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
@@ -701,6 +709,11 @@ do_xmap(
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     } else
     if (PT_LOAD==phdr->p_type && phdr->p_memsz != 0) {
+        unsigned const prot = PF_TO_PROT(phdr->p_flags);
+        DPRINTF("\\n\\nLOAD@%%p  p_offset=%%p  p_vaddr=%%p  p_filesz=%%p"
+            "  p_memsz=%%p  p_flags=%%x  prot=%%x\\n",
+            phdr, phdr->p_offset, phdr->p_vaddr, phdr->p_filesz,
+            phdr->p_memsz, phdr->p_flags, prot);
         if (xi && !phdr->p_offset /*&& ET_EXEC==ehdr->e_type*/) { // 1st PT_LOAD
             // ? Compressed PT_INTERP must not overwrite values from compressed a.out?
             auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc + ehdr->e_phoff);
@@ -708,20 +721,15 @@ do_xmap(
             auxv_up(av, AT_PHENT, ehdr->e_phentsize);  /* ancient kernels might omit! */
             //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
         }
-        unsigned /*const*/ prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
-        char * addr = xo.buf  =  (char *)(phdr->p_vaddr + reloc);
-        char *const haddr =     phdr->p_memsz + addr;
+        char * addr = xo.buf  = reloc + (char *)phdr->p_vaddr;
+            // xo.size, xo.buf are not changed except by unpackExtent()
+        char *const hi_addr = phdr->p_memsz + addr;  // end of local .bss
         char *addr2 = mlen + addr;  // end of local .data
-        size_t frag  = (int)addr & ~page_mask;
+        size_t frag  = ~page_mask & (ElfW(Addr))addr;
         mlen += frag;
         addr -= frag;
-        DPRINTF("  phdr@%%p type=%%x  offset=%%x  vaddr=%%x  paddr=%%x  filesz=%%x  memsz=%%x  flags=%%x  align=%%x\\n",
-            phdr, phdr->p_type, phdr->p_offset, phdr->p_vaddr, phdr->p_paddr,
-            phdr->p_filesz, phdr->p_memsz, phdr->p_flags, phdr->p_align);
-        DPRINTF("  addr=%%x  mlen=%%x  frag=%%x  prot=%%x\\n",
-            addr, mlen, frag, prot);
 
 #if defined(__i386__)  /*{*/
     // Decompressor can overrun the destination by 3 bytes.
@@ -732,12 +740,12 @@ do_xmap(
 
         DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  frag=%%p  prot=%%x\\n",
             addr, mlen, phdr->p_offset - frag, frag, prot);
-        unsigned mfd = 0;
+        int mfd = 0;
         if (xi && phdr->p_flags & PF_X) { // SELinux
             // Cannot set PROT_EXEC except via mmap() into a region (Linux "vma")
             // that has never had PROT_WRITE.  So use a Linux-only "memory file"
             // to hold the contents.
-            unsigned long fdmap = upx_mmap_and_fd(addr, mlen, 0);
+            unsigned long fdmap = upx_mmap_and_fd(addr, LEN_OVER + mlen, 0);
             mfd = -1+ (0xfff& fdmap);
             addr = (char *)((fdmap >> 12) << 12);
             if (frag) {
@@ -750,7 +758,7 @@ do_xmap(
             if (xi) {
                 tprot |=  PROT_WRITE;  // De-compression needs Write
                 tprot &= ~PROT_EXEC;  // Avoid simultaneous Write and eXecute
-                if (addr != mmap_privanon(addr, mlen, tprot, MAP_FIXED|MAP_PRIVATE)) {
+                if (addr != mmap_privanon(addr, LEN_OVER + mlen, tprot, MAP_FIXED|MAP_PRIVATE)) {
                     err_exit(11);
                 }
             }
@@ -768,12 +776,12 @@ do_xmap(
         }
         if (PROT_WRITE & prot) { // note: read-only .bss not supported here
             // Clear to end-of-page (first part of .bss or &_end)
-            unsigned hi_frag = -(long)addr2 &~ PAGE_MASK;
+            unsigned hi_frag = -(long)addr2 &~ page_mask;
             bzero(addr2, hi_frag);
             addr2 += hi_frag;  // will be page aligned
         }
 
-        if (xi) {
+        if (xi && phdr->p_flags & PF_X) {
 #if defined(__i386__)  /*{*/
             void *const hatch = make_hatch_i386(phdr, xo.buf, ~page_mask);
 #elif defined(__arm__)  /*}{*/
@@ -784,31 +792,28 @@ do_xmap(
             void *const hatch = make_hatch_ppc32(phdr, xo.buf, ~page_mask);
 #endif  /*}*/
             if (0!=hatch) {
-                /* always update AT_NULL, especially for compressed PT_INTERP */
+                // Always update AT_NULL, especially for compressed PT_INTERP.
                 // Clearing lo bit of av is for i386 only; else is superfluous.
-                auxv_up((ElfW(auxv_t) *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
+                auxv_up((ElfW(auxv_t) *)(~1 & (size_t)av), AT_NULL, (size_t)hatch);
             }
 
-            DPRINTF("hatch protect %%p %%x %%x\\n", addr, mlen, prot);
-            if (phdr->p_flags & PF_X) { // SELinux; have xi ==> compressed
-                munmap(addr, mlen);  // toss the VMA that has PROT_WRITE
-                if (addr != mmap(addr, mlen, prot, MAP_FIXED|MAP_PRIVATE, mfd, 0)) {
-                    err_exit(20);
-                }
-                close(mfd);
-            }
-            else if ((PROT_WRITE|PROT_READ) != prot
-            &&  0!=Pprotect(addr, mlen, prot)) {
-                err_exit(10);
-ERR_LAB
-            }
-        }
-        addr += mlen + frag;  /* page boundary on hi end */
-        if (addr < haddr) { // need pages for .bss
-            DPRINTF("addr=%%p  haddr=%%p\\n", addr, haddr);
-            if (addr != mmap_privanon(addr, haddr - addr, prot, MAP_FIXED)) {
-                for(;;);
+            // SELinux: Map the contents of mfd as per *phdr.
+            DPRINTF("hatch protect addr=%%p  mlen=%%p\\n", addr, mlen);
+            munmap(addr, mlen);  // toss the VMA that has PROT_WRITE
+            if (addr != mmap(addr, mlen, prot, MAP_FIXED|MAP_SHARED, mfd, 0)) {
                 err_exit(9);
+            }
+            close(mfd);
+        }
+        else if ((PROT_WRITE|PROT_READ) != prot
+        &&  0!=Pprotect(addr, mlen, prot)) {
+            err_exit(10);
+ERR_LAB
+        }
+        if (addr2 < hi_addr) { // pages for .bss beyond last page for p_filesz
+            DPRINTF("zmap addr2=%%p  hi_addr=%%p\\n", addr2, hi_addr);
+            if (addr2 != mmap_privanon(addr2, hi_addr - addr2, prot, MAP_FIXED)) {
+                err_exit(20);
             }
         }
 #if defined(__i386__)  /*{*/
@@ -825,7 +830,7 @@ ERR_LAB
         // Besides, fold.S needs _Ehdr that is tossed
         // do_brk((void *)v_brk);
     }
-    if (0!=p_reloc) {
+    if (p_reloc) {
         *p_reloc = reloc;
     }
     return ehdr->e_entry + reloc;
