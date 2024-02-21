@@ -311,7 +311,6 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
                 if (x != write(fd, buf, x)) {
                     return -ENOSPC;
                 }
-                buf += x;
                 datlen -= x;
             }
             lseek(fd, 0, SEEK_SET);  // go back to the beginning
@@ -320,7 +319,7 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
 
         // Map the file pages; set length 0 ==> 1
         addr = (unsigned long)mmap(ptr, (!datlen) + datlen, PROT_WRITE | PROT_READ,
-            MAP_SHARED, fd, 0);
+            MAP_SHARED | (ptr ? MAP_FIXED : 0), fd, 0);
         if ((~0ul<<12) < addr) { // error
             return addr;
         }
