@@ -29,18 +29,19 @@
    <jreiser@users.sourceforge.net>
  */
 
+#ifndef DEBUG  //{
+#define DEBUG 0
+#endif  //}
 
 #include "include/linux.h"
 extern void *memcpy(void *dst, void const *src, size_t n);
 // Pprotect is mprotect but uses page-aligned address (Linux requirement)
-//extern unsigned Pprotect(void *, size_t, unsigned);
+extern unsigned Pprotect(void *, size_t, unsigned);
 //extern void *Pmap(void *, size_t, unsigned, unsigned, int, size_t);
 //extern int Punmap(void *, size_t);
 extern size_t Pwrite(unsigned, void const *, size_t);
-
-#ifndef DEBUG  //{
-#define DEBUG 0
-#endif  //}
+#  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
+        MAP_PRIVATE|MAP_ANONYMOUS|(flgs),-1,0)
 
 extern void my_bkpt(void *, ...);
 
@@ -243,21 +244,21 @@ ERR_LAB
 static void *
 make_hatch_x86_64(
     ElfW(Phdr) const *const phdr,
-    ElfW(Addr) reloc,
+    char *next_unc,
     unsigned const frag_mask
 )
 {
-    char *hatch = 0;
-    DPRINTF("make_hatch %%p %%p %%x  %%x\\n",phdr,reloc,frag_mask, phdr->p_flags);
+    char *hatch = next_unc;
+    unsigned const sz_code = 4;
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        hatch = (char *)(phdr->p_memsz + phdr->p_vaddr + reloc);
-        if (4 <= (frag_mask & -(long)hatch)) {
-            (( long *)hatch)[0] = 0xc35a050f;  // syscall; pop %arg3{%rdx); ret
+        if (sz_code <= (frag_mask & -(long)hatch)) {
+            ((long *)hatch)[0] = 0xc35a050f;  // syscall; pop %arg3{%rdx); ret
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            write(mfd, addr_string("\x0f\x05\x5a\xc3"), 4);
-            hatch = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
+            write(mfd, addr_string("\x0f\x05\x5a\xc3"), sz_code);
+            hatch = mmap(0, sz_code, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
         }
     }
@@ -268,11 +269,11 @@ make_hatch_x86_64(
 static void *
 make_hatch_ppc64(
     ElfW(Phdr) const *const phdr,
-    ElfW(Addr) reloc,
+    char *next_unc,
     unsigned const frag_mask
 )
 {
-    unsigned *hatch = (void *)0;
+    unsigned *hatch = (unsigned *)(~3& (3+ (long)next_unc));
     unsigned const *code;
     unsigned const sz_code = 4*4;
     asm("bl 0f; \
@@ -284,10 +285,9 @@ make_hatch_ppc64(
 /*out*/ : "=r"(code)
 /* in*/ :
 /*und*/ : "lr");
-    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,next_unc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        hatch = (unsigned *)(phdr->p_memsz + phdr->p_vaddr + reloc);
-        if (4*4 <= (frag_mask & -(long)hatch)) {
+        if (sz_code <= (frag_mask & -(long)hatch)) {
             memcpy(hatch, code, sz_code);
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
@@ -304,11 +304,11 @@ make_hatch_ppc64(
 static void *
 make_hatch_arm64(
     ElfW(Phdr) const *const phdr,
-    uint64_t const reloc,
+    char *next_unc,
     unsigned const frag_mask
 )
 {
-    unsigned *hatch = 0;
+    unsigned *hatch = (unsigned *)(~3& (3+ (long)next_unc));
     unsigned const *code;
     unsigned const sz_code = 2*4;
     asm ("bl 0f; \
@@ -318,9 +318,8 @@ make_hatch_arm64(
 /*out*/ : "=r"(code)
 /* in*/ :
 /*und*/ : );
-    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,reloc,frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,next_unc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        hatch = (unsigned *)(phdr->p_memsz + phdr->p_vaddr + reloc);
         if (sz_code <= (frag_mask & -(long)hatch)) {
             memcpy(hatch, code, sz_code);
         }
@@ -385,13 +384,27 @@ underlay(unsigned size, char *ptr, unsigned len)  // len <= PAGE_SIZE
     memcpy(ptr, saved, len);
 }
 
+#if 0  //{
 // Exchange the bits with values 4 (PF_R, PROT_EXEC) and 1 (PF_X, PROT_READ)
 // Use table lookup into a PIC-string that pre-computes the result.
-unsigned PF_TO_PROT(ElfW(Phdr) const *phdr)
+unsigned PF_TO_PROT(unsigned flags)
 {
     char const *table = addr_string("\x80\x04\x02\x06\x01\x05\x03\x07");
-    return 7& table[phdr->p_flags & (PF_R|PF_W|PF_X)];
+    return 7& table[flags & (PF_R|PF_W|PF_X)];
 }
+#else  //}{
+// The PF_* and PROT_* bits are {1,2,4}; the conversion table fits in 32 bits.
+#define REP8(x) \
+    ((x)|((x)<<4)|((x)<<8)|((x)<<12)|((x)<<16)|((x)<<20)|((x)<<24)|((x)<<28))
+#define EXP8(y) \
+    ((1&(y)) ? 0xf0f0f0f0 : (2&(y)) ? 0xff00ff00 : (4&(y)) ? 0xffff0000 : 0)
+#define PF_TO_PROT(pf) \
+    ((PROT_READ|PROT_WRITE|PROT_EXEC) & ( \
+        ( (REP8(PROT_EXEC ) & EXP8(PF_X)) \
+         |(REP8(PROT_READ ) & EXP8(PF_R)) \
+         |(REP8(PROT_WRITE) & EXP8(PF_W)) \
+        ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
+#endif  //}
 
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
@@ -441,47 +454,51 @@ do_xmap(
     Extent *const xi,
     int const fdi,
     ElfW(auxv_t) *const av,
-    ElfW(Addr) *p_reloc
+    ElfW(Addr) *const p_reloc
 )
 {
     ElfW(Phdr) const *phdr = (ElfW(Phdr) const *)(void const *)(ehdr->e_phoff +
         (char const *)ehdr);
-    ElfW(Addr) v_brk;
-    ElfW(Addr) reloc;
+    ElfW(Addr) v_brk = 0;
+    ElfW(Addr) reloc = 0;
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
-        ElfW(Addr) ehdr0 = *p_reloc;  // the 'hi' copy!
-        ElfW(Phdr) const *phdr0 = (ElfW(Phdr) const *)(
-            ((ElfW(Ehdr) *)ehdr0)->e_phoff + ehdr0);
+        ElfW(Addr)  ehdr0 = *p_reloc;  // the 'hi' copy!
+        ElfW(Phdr) *phdr0 = (ElfW(Phdr) *)(1+ (ElfW(Ehdr) *)ehdr0);  // cheats .e_phoff
         // Clear the 'lo' space reservation for use by PT_LOADs
         ehdr0 -= phdr0[1].p_vaddr;  // the 'lo' copy
-        if (ET_EXEC==ehdr->e_type) {
+        if (ET_EXEC == ehdr->e_type) {
             ehdr0 = phdr0[0].p_vaddr;
         }
-        v_brk = phdr0->p_memsz + ehdr0;
-        reloc = (ElfW(Addr))mmap((void *)ehdr0, phdr0->p_memsz, PROT_NONE,
-            MAP_FIXED|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-        if (ET_EXEC==ehdr->e_type) {
-            reloc = 0;
+        else {
+            reloc = ehdr0;
         }
-        DPRINTF("do_xmap 1 reloc=%%p\\n", reloc);
+        v_brk = phdr0->p_memsz + ehdr0;
+        munmap((void *)ehdr0, phdr0->p_memsz);
     }
     else { // PT_INTERP
         DPRINTF("INTERP\\n", 0);
         reloc = xfind_pages(
             ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk, *p_reloc
         );
-        DPRINTF("do_xmap 2 reloc=%%p\\n", reloc);
     }
+    DPRINTF("do_xmap  ehdr=%%p  xi=%%p(%%x %%p)  fdi=%%x\\n"
+          "  av=%%p  reloc=%%p  p_reloc=%%p/%%p\\n",
+        ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), fdi,
+        av, reloc, p_reloc, *p_reloc);
+
+    size_t const page_mask = get_page_mask();
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     } else
     if (PT_LOAD==phdr->p_type && phdr->p_memsz != 0) {
-        unsigned const prot = PF_TO_PROT(phdr);
-        DPRINTF("\\n\\nLOAD@%%p  p_offset=%%p  p_vaddr=%%p  p_filesz=%%p  p_memsz=%%p  p_flags=%%x  prot=%%x\\n",
-            phdr, phdr->p_offset, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz, phdr->p_flags, prot);
+        unsigned const prot = PF_TO_PROT(phdr->p_flags);
+        DPRINTF("\\n\\nLOAD@%%p  p_offset=%%p  p_vaddr=%%p  p_filesz=%%p"
+            "  p_memsz=%%p  p_flags=%%x  prot=%%x\\n",
+            phdr, phdr->p_offset, phdr->p_vaddr, phdr->p_filesz,
+            phdr->p_memsz, phdr->p_flags, prot);
         if (xi && !phdr->p_offset /*&& ET_EXEC==ehdr->e_type*/) { // 1st PT_LOAD
             // ? Compressed PT_INTERP must not overwrite values from compressed a.out?
             auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc + ehdr->e_phoff);
@@ -491,18 +508,18 @@ do_xmap(
         }
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
-        char  *addr = xo.buf = reloc + (char *)phdr->p_vaddr;
+        char * addr = xo.buf  = reloc + (char *)phdr->p_vaddr;
             // xo.size, xo.buf are not changed except by unpackExtent()
-        char *hi_addr = phdr->p_memsz  + addr;  // end of local .bss
+        char *const hi_addr = phdr->p_memsz + addr;  // end of local .bss
         char *addr2 = mlen + addr;  // end of local .data
-        size_t PAGE_MASK = get_page_mask();
-        unsigned frag  = (ElfW(Addr))addr &~ PAGE_MASK;
+        size_t frag  = ~page_mask & (ElfW(Addr))addr;
         mlen += frag;
         addr -= frag;
+
 #if defined(__powerpc64__) || defined(__aarch64__)
         // Round up to hardware PAGE_SIZE; allows emulator with smaller.
         // But (later) still need bzero when .p_filesz < .p_memsz .
-        mlen += -(mlen + (size_t)addr) &~ PAGE_MASK;
+        mlen += -(mlen + (size_t)addr) &~ page_mask;
         DPRINTF("  mlen=%%p\\n", mlen);
 #endif
 
@@ -518,23 +535,22 @@ do_xmap(
             if (frag) {
                 write(mfd, addr, frag);  // Save lo fragment of contents on first page.
             }
-            DPRINTF("munmap 1 addr=%%p  mlen=%%p\\n", addr, mlen);
-            munmap(addr, mlen);  // Erase existing VMA  [necessary?]
             if (addr != mmap(addr, mlen, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0)) {
                 err_exit(7);
             }
         }
         else {
-            DPRINTF("munmap 2 addr=%%p  mlen=%%p\\n", addr, mlen);
-            munmap(addr, mlen);
             unsigned tprot = prot;
+            // Notice that first 4 args are same: mmap vs mmap_privanon
             if (xi) {
                 tprot |=  PROT_WRITE;  // De-compression needs Write
                 tprot &= ~PROT_EXEC;  // Avoid simultaneous Write and eXecute
+                if (addr != mmap_privanon(addr, mlen, tprot, MAP_FIXED|MAP_PRIVATE)) {
+                    err_exit(11);
+                }
             }
-            if (addr != mmap(addr, mlen, tprot,
-                MAP_FIXED|MAP_PRIVATE|(xi ? MAP_ANONYMOUS : 0), (xi ? -1 : fdi),
-                phdr->p_offset - frag)) {
+            else if (addr != mmap(addr, mlen, tprot, MAP_FIXED|MAP_PRIVATE,
+                        fdi, phdr->p_offset - frag)) {
                 err_exit(8);
             }
         }
@@ -547,47 +563,49 @@ do_xmap(
         }
         if (PROT_WRITE & prot) { // note: read-only .bss not supported here
             // Clear to end-of-page (first part of .bss or &_end)
-            unsigned hi_frag = -(long)addr2 &~ PAGE_MASK;
+            unsigned hi_frag = -(long)addr2 &~ page_mask;
             bzero(addr2, hi_frag);
             addr2 += hi_frag;  // will be page aligned
         }
 
         if (xi && phdr->p_flags & PF_X) {
 #if defined(__x86_64)  //{
-            void *const hatch = make_hatch_x86_64(phdr, reloc, ~PAGE_MASK);
+            void *const hatch = make_hatch_x86_64(phdr, xo.buf, ~page_mask);
 #elif defined(__powerpc64__)  //}{
-            void *const hatch = make_hatch_ppc64(phdr, reloc, ~PAGE_MASK);
+            void *const hatch = make_hatch_ppc64(phdr, xo.buf, ~page_mask);
 #elif defined(__aarch64__)  //}{
-            void *const hatch = make_hatch_arm64(phdr, reloc, ~PAGE_MASK);
+            void *const hatch = make_hatch_arm64(phdr, xo.buf, ~page_mask);
 #endif  //}
             if (0!=hatch) {
+                // Always update AT_NULL, especially for compressed PT_INTERP.
+                // Clearing lo bit of av is for i386 only; else is superfluous.
                 auxv_up((ElfW(auxv_t) *)(~1 & (size_t)av), AT_NULL, (size_t)hatch);
             }
 
             // SELinux: Map the contents of mfd as per *phdr.
-            DPRINTF("mfd mmap addr=%%p  mlen=%%p\\n", addr, mlen);
-            munmap(addr, mlen);  // Discard RW mapping; mfd has the bytes
+            DPRINTF("hatch protect addr=%%p  mlen=%%p\\n", addr, mlen);
+            munmap(addr, mlen);  // toss the VMA that has PROT_WRITE
             if (addr != mmap(addr, mlen, prot, MAP_FIXED|MAP_SHARED, mfd, 0)) {
                 err_exit(9);
             }
             close(mfd);
         }
-        else { // easy
-            mprotect(addr, mlen, prot);
-        }
+        else if ((PROT_WRITE|PROT_READ) != prot
+        &&  0!=Pprotect(addr, mlen, prot)) {
+            err_exit(10);
+ERR_LAB     
+        }  
         if (addr2 < hi_addr) { // pages for .bss beyond last page for p_filesz
-            DPRINTF("zmap addr2=%%p  len=%%p  prot=%%x\\n", addr2, hi_addr - addr2, prot);
-            if (addr2 != mmap(addr2, hi_addr - addr2, prot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
+            DPRINTF("zmap addr2=%%p  len=%%p\\n", addr2, hi_addr - addr2);
+            if (addr2 != mmap_privanon(addr2, hi_addr - addr2, prot, MAP_FIXED)) {
                 err_exit(10);
             }
         }
     }
-    if (xi) { // 1st call (main); also have (0!=av) here
-        if (ET_DYN!=ehdr->e_type) {
-            // Needed only if compressed shell script invokes compressed shell.
-            // brk(v_brk);  // SIGSEGV when is_big [unmaps ourself!]
-        }
+    if (xi && ET_DYN!=ehdr->e_type) {
+        // Needed only if compressed shell script invokes compressed shell.
+        // Besides, fold.S needs _Ehdr that is tossed
+        // do_brk((void *)v_brk);
     }
     if (p_reloc) {
         *p_reloc = reloc;
@@ -634,9 +652,9 @@ upx_main(  // returns entry address
 #if defined(__x86_64) || defined(__aarch64__)  //{
     ElfW(Addr) *const p_reloc = &elfaddr;
 #endif  //}
-    ElfW(Addr) PAGE_MASK = get_page_mask(); (void)PAGE_MASK;
-    DPRINTF("upx_main1  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p  PAGE_MASK=%%p\\n",
-        ehdr->e_entry, p_reloc, *p_reloc, PAGE_MASK);
+    ElfW(Addr) page_mask = get_page_mask(); (void)page_mask;
+    DPRINTF("upx_main1  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p  page_mask=%%p\\n",
+        ehdr->e_entry, p_reloc, *p_reloc, page_mask);
     ElfW(Phdr) *phdr = (ElfW(Phdr) *)(1+ ehdr);
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
