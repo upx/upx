@@ -14,7 +14,6 @@ Linker script and memory map
  *fill*         0x000000000000013b        0x1 00
  .text          0x000000000000013c        0x0 tmp/amd64-expand.o
  .text          0x000000000000013c      0x817 tmp/amd64-linux.elf-main.o
-                0x000000000000030b                PF_TO_PROT
                 0x00000000000002c0                underlay
                 0x0000000000000814                upx_main
 

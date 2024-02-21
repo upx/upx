@@ -8,7 +8,7 @@ Linker script and memory map
 
 TARGET(elf32-littlearm)
 
-.text           0x0000000000000000     0x1868
+.text           0x0000000000000000      0xe4c
  *(.text)
  .text          0x0000000000000000      0x300 tmp/arm.v5a-linux.elf-fold.o
                 0x0000000000000008                get_page_mask
@@ -20,17 +20,18 @@ TARGET(elf32-littlearm)
                 0x0000000000000028                Pprotect
                 0x00000000fffffff4                PAGE_MASK
                 0x0000000000000028                mprotect
- .text          0x0000000000000300      0x3c0 tmp/arm.v5a-linux.elf-upxfd_android.o
+ .text          0x0000000000000300      0x3c4 tmp/arm.v5a-linux.elf-upxfd_android.o
                 0x00000000000003c8                upx_mmap_and_fd
                 0x0000000000000324                strncmplc
- .text          0x00000000000006c0        0x0 tmp/arm.v5a-expand.o
- .text          0x00000000000006c0     0x11a8 tmp/arm.v5a-linux.elf-main.o
-                0x0000000000001620                upx_main
+ .text          0x00000000000006c4        0x0 tmp/arm.v5a-expand.o
+ .text          0x00000000000006c4      0x788 tmp/arm.v5a-linux.elf-main.o
+                0x0000000000000744                unpackExtent
+                0x0000000000000d2c                upx_main
  *(.data)
- .data          0x0000000000001868        0x0 tmp/arm.v5a-linux.elf-fold.o
- .data          0x0000000000001868        0x0 tmp/arm.v5a-linux.elf-upxfd_android.o
- .data          0x0000000000001868        0x0 tmp/arm.v5a-expand.o
- .data          0x0000000000001868        0x0 tmp/arm.v5a-linux.elf-main.o
+ .data          0x0000000000000e4c        0x0 tmp/arm.v5a-linux.elf-fold.o
+ .data          0x0000000000000e4c        0x0 tmp/arm.v5a-linux.elf-upxfd_android.o
+ .data          0x0000000000000e4c        0x0 tmp/arm.v5a-expand.o
+ .data          0x0000000000000e4c        0x0 tmp/arm.v5a-linux.elf-main.o
 
 SYSCALLS        0x0000000000000000      0x1f0
  SYSCALLS       0x0000000000000000      0x1f0 tmp/arm.v5a-linux.elf-fold.o

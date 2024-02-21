@@ -3,13 +3,13 @@ file format elf32-littlearm
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags
   0 ELFMAINZ      010  0  0  034  2**0  CONTENTS
-  1 ELFMAINX      0780  0  0  044  2**2  CONTENTS
+  1 ELFMAINX      0784  0  0  044  2**2  CONTENTS
 SYMBOL TABLE:
 00000000 l    d  ELFMAINZ 0 ELFMAINZ
 00000000 l    d  ELFMAINX 0 ELFMAINX
 00000000         *UND* 0 MFLG
 000002c4 g       ELFMAINX 0 getpid
-00000488 g     F ELFMAINX 02f8 upx_mmap_and_fd
+00000488 g     F ELFMAINX 02fc upx_mmap_and_fd
 00000000         *UND* 0 O_BINFO
 0000026c g       ELFMAINX 0 mempcpy
 000002b0 g       ELFMAINX 0 ftruncate
@@ -120,9 +120,9 @@ OFFSET   TYPE              VALUE
 000006e8 R_ARM_PC24        my_memset
 00000704 R_ARM_PC24        write
 0000070c R_ARM_PC24        ELFMAINX
-00000718 R_ARM_PC24        ELFMAINX
-00000728 R_ARM_PC24        lseek
-00000750 R_ARM_PC24        mmap
-00000758 R_ARM_PC24        ELFMAINX
-00000764 R_ARM_PC24        ELFMAINX
-0000076c R_ARM_PC24        ELFMAINX
+00000714 R_ARM_PC24        ELFMAINX
+00000724 R_ARM_PC24        lseek
+00000754 R_ARM_PC24        mmap
+0000075c R_ARM_PC24        ELFMAINX
+00000768 R_ARM_PC24        ELFMAINX
+00000770 R_ARM_PC24        ELFMAINX
