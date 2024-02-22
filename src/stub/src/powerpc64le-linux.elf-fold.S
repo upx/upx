@@ -2,4 +2,4 @@
 #error must "#define BIG_ENDIAN 0" for powerpc64le
 #endif
 
-#include "powerpc64-linux.elf-fold.S"
+#include "../src/powerpc64-linux.elf-fold.S"

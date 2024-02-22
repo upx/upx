@@ -1,3 +1,5 @@
 #if !defined(BIG_ENDIAN) || BIG_ENDIAN
 #error must "#define BIG_ENDIAN 0" for powerpc64le
-#include "powerpc64-expand.S"
+#endif
+
+#include "../src/powerpc64-expand.S"
