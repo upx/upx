@@ -218,7 +218,7 @@ unfold:  # IN: $r_fexp,$r_auxv,$r_PMASK,$r_FOLD
 
         jr ra
           addu $r_ADRX,$r_elfa,$r_ADRX  # compressed data
-          
+
 zfind:  # result in $r_auxv
         lw v1,(a0); addiu a0,a0,NBPW
         bnez v1,zfind
