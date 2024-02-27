@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -420,25 +420,25 @@ void show_version(bool one_line) {
     fprintf(f, "doctest C++ testing framework version %s\n", DOCTEST_VERSION_STR);
 #endif
     // clang-format off
-    fprintf(f, "Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer\n");
-    fprintf(f, "Copyright (C) 1996-2023 Laszlo Molnar\n");
-    fprintf(f, "Copyright (C) 2000-2023 John F. Reiser\n");
-    fprintf(f, "Copyright (C) 2002-2023 Jens Medoch\n");
+    fprintf(f, "Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer\n");
+    fprintf(f, "Copyright (C) 1996-2024 Laszlo Molnar\n");
+    fprintf(f, "Copyright (C) 2000-2024 John F. Reiser\n");
+    fprintf(f, "Copyright (C) 2002-2024 Jens Medoch\n");
 #if (WITH_ZLIB)
-    fprintf(f, "Copyright (C) 1995" "-2023 Jean-loup Gailly and Mark Adler\n");
+    fprintf(f, "Copyright (C) 1995" "-2024 Jean-loup Gailly and Mark Adler\n");
 #endif
 #if (WITH_LZMA)
     fprintf(f, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
 #endif
 #if (WITH_ZSTD)
     // see vendor/zstd/LICENSE; main author is Yann Collet
-    fprintf(f, "Copyright (C) 2015" "-2023 Meta Platforms, Inc. and affiliates\n");
+    fprintf(f, "Copyright (C) 2015" "-2024 Meta Platforms, Inc. and affiliates\n");
 #endif
 #if (WITH_BZIP2)
     fprintf(f, "Copyright (C) 1996" "-2010 Julian Seward\n"); // see <bzlib.h>
 #endif
 #if !defined(DOCTEST_CONFIG_DISABLE)
-    fprintf(f, "Copyright (C) 2016" "-2023 Viktor Kirilov\n");
+    fprintf(f, "Copyright (C) 2016" "-2024 Viktor Kirilov\n");
 #endif
     fprintf(f, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
     // clang-format on
