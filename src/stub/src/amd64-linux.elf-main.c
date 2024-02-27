@@ -593,8 +593,8 @@ do_xmap(
         else if ((PROT_WRITE|PROT_READ) != prot
         &&  0!=Pprotect(addr, mlen, prot)) {
             err_exit(10);
-ERR_LAB     
-        }  
+ERR_LAB
+        }
         if (addr2 < hi_addr) { // pages for .bss beyond last page for p_filesz
             DPRINTF("zmap addr2=%%p  len=%%p\\n", addr2, hi_addr - addr2);
             if (addr2 != mmap_privanon(addr2, hi_addr - addr2, prot, MAP_FIXED)) {
