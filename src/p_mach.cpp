@@ -1468,6 +1468,8 @@ umin(unsigned a, unsigned b)
     return (a <= b) ? a : b;
 }
 
+#define MAX_N_CMDS 256
+
 template <class T>
 void PackMachBase<T>::unpack(OutputFile *fo)
 {
@@ -1512,6 +1514,9 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     if ((unsigned)file_size < ph.c_len || ph.c_len == 0 || ph.u_len == 0)
         throwCantUnpack("file header corrupted");
     ph.method = bhdr.b_method;
+    if (ph.method < M_NRV2B_LE32
+    ||  ph.method > M_BZIP2)
+        throwCantUnpack("file header bad method");
     ph.filter = bhdr.b_ftid;
     ph.filter_cto = bhdr.b_cto8;
 
@@ -1526,7 +1531,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     ||  mhdri.filetype   != mhdr->filetype)
         throwCantUnpack("file header corrupted");
     unsigned const ncmds = mhdr->ncmds;
-    if (!ncmds || 256 < ncmds) { // arbitrary limit
+    if (!ncmds || MAX_N_CMDS < ncmds) { // arbitrary limit
         char msg[40]; snprintf(msg, sizeof(msg),
             "bad Mach_header.ncmds = %d", ncmds);
         throwCantUnpack(msg);
@@ -1640,6 +1645,11 @@ tribool PackMachBase<T>::canUnpack()
 
     unsigned const ncmds = mhdri.ncmds;
     int headway = (int)mhdri.sizeofcmds;
+    if (!ncmds || MAX_N_CMDS < ncmds || file_size < headway) {
+        char msg[80]; snprintf(msg, sizeof(msg),
+            "bad Mach_header ncmds=%d  sizeofcmds=0x%x", ncmds, headway);
+        throwCantUnpack(msg);
+    }
     // old style:   LC_SEGMENT + LC_UNIXTHREAD  [smaller, varies by $ARCH]
     // new style: 3*LC_SEGMENT + LC_MAIN        [larger]
     if ((2 == ncmds
@@ -1673,10 +1683,19 @@ tribool PackMachBase<T>::canUnpack()
         unsigned const cmd = ptr->cmd;
         unsigned const cmdsize = ptr->cmdsize;
         if (is_bad_linker_command(cmd, cmdsize, headway, lc_seg, sizeof(Addr))) {
-                infoWarning("bad Mach_command[%u]{@0x%zx,+0x%x}: file_size=0x%lx  cmdsize=0x%lx",
+                opt->info_mode += 1;
+                infoWarning("bad Mach_command[%u]{@0x%zx,+0x%x}=0x%x: file_size=0x%lx  cmdsize=0x%lx",
                     j, (sizeof(mhdri) + ((char const *)ptr - (char const *)rawmseg)), headway,
-                    (unsigned long) file_size, (unsigned long)ptr->cmdsize);
+                    cmd, (unsigned long) file_size, (unsigned long)ptr->cmdsize);
+                opt->info_mode -= 1;
                 throwCantUnpack("file corrupted");
+        }
+        headway -= cmdsize;
+        if (headway < 0) {
+            infoWarning("Mach_command[%u]{@%lu}.cmdsize = %u", j,
+                (unsigned long) (sizeof(mhdri) + mhdri.sizeofcmds - (headway + ptr->cmdsize)),
+                (unsigned)ptr->cmdsize);
+            throwCantUnpack("sum(.cmdsize) exceeds .sizeofcmds");
         }
         if (lc_seg == ptr->cmd) {
             Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
@@ -1713,12 +1732,6 @@ tribool PackMachBase<T>::canUnpack()
                 }
             }
             pos_next = segptr->filesize + segptr->fileoff;
-            if ((headway -= ptr->cmdsize) < 0) {
-                infoWarning("Mach_command[%u]{@%lu}.cmdsize = %u", j,
-                    (unsigned long) (sizeof(mhdri) + mhdri.sizeofcmds - (headway + ptr->cmdsize)),
-                    (unsigned)ptr->cmdsize);
-                throwCantUnpack("sum(.cmdsize) exceeds .sizeofcmds");
-            }
         }
         else if (Mach_command::LC_UNIXTHREAD==ptr->cmd) {
             rip = entryVMA = threadc_getPC(ptr);
@@ -1948,8 +1961,8 @@ tribool PackMachBase<T>::canPack()
     my_cpusubtype = mhdri.cpusubtype;
 
     unsigned const ncmds = mhdri.ncmds;
-    if (!ncmds || 256 < ncmds) { // arbitrary, but guard against garbage
-        throwCantPack("256 < Mach_header.ncmds");
+    if (!ncmds || MAX_N_CMDS < ncmds) { // arbitrary, but guard against garbage
+        throwCantPack("%d < Mach_header.ncmds", MAX_N_CMDS);
     }
     unsigned const sz_mhcmds = (unsigned)mhdri.sizeofcmds;
     unsigned headway = umin(sz_mhcmds, file_size - sizeof(mhdri));
@@ -1973,9 +1986,10 @@ tribool PackMachBase<T>::canPack()
         unsigned const cmd     = segptr->cmd &~ LC_REQ_DYLD;
         unsigned const cmdsize = segptr->cmdsize;
         if (is_bad_linker_command(cmd, cmdsize, headway, lc_seg, sizeof(Addr))) {
-            char buf[80]; snprintf(buf, sizeof(buf),
-                "bad Mach_command[%d]{cmd=%#x, size=%#x}", j,
-                cmd, cmdsize);
+            char buf[200]; snprintf(buf, sizeof(buf),
+                "bad Mach_command[%u]{@0x%zx,+0x%x}=0x%x: file_size=0x%lx  cmdsize=0x%x",
+                    j, (sizeof(mhdri) + ((char const *)segptr - (char const *)rawmseg)), headway,
+                    cmd, (unsigned long) file_size, cmdsize);
             throwCantPack(buf);
         }
         headway -= cmdsize;
@@ -2263,6 +2277,11 @@ unsigned PackMachFat::check_fat_head()
     }
     for (unsigned j=0; j < nfat; ++j) {
         unsigned const align = arch[j].align;
+        if (24 < align) {
+            char msg[80]; snprintf(msg, sizeof(msg),
+                "bad fat_arch alignment 0x%x > 24", align);
+            throwCantPack(msg);
+        }
         unsigned const mask = ~(~0u<<align);
         unsigned const size = arch[j].size;
         unsigned const offset = arch[j].offset;

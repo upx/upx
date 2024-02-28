@@ -581,7 +581,7 @@ int PackUnix::find_overlay_offset(MemBuffer const &buf)
         return false;
 
     int l = ph.buf_offset + ph.getPackHeaderSize();
-    if (l < 0 || l + 4 > bufsize)
+    if (l < 0 || i + l + 4 > bufsize)
         throwCantUnpack("file corrupted");
     overlay_offset = get_te32(buf + i + l);
     if ((off_t)overlay_offset >= file_size)
@@ -596,6 +596,8 @@ int PackUnix::find_overlay_offset(MemBuffer const &buf)
 // This code looks much like the one in stub/l_linux.c
 // See notes there.
 **************************************************************************/
+
+static unsigned umax(unsigned a, unsigned b) {return (a < b) ? b : a;}
 
 void PackUnix::unpack(OutputFile *fo)
 {
@@ -617,9 +619,14 @@ void PackUnix::unpack(OutputFile *fo)
         fi->readx(&hbuf, sizeof(hbuf));
         orig_file_size = get_te32(&hbuf.p_filesize);
         blocksize = get_te32(&hbuf.p_blocksize);
+        off_t max_inflated = file_size * 273;  // zlib limit (256 + 16 + 1)
 
-        if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
+        if (max_inflated < orig_file_size
+        ||  max_inflated < blocksize
+        ||  file_size > (off_t)orig_file_size
+        ||  blocksize > orig_file_size) {
             throwCantUnpack("file header corrupted");
+        }
     }
     else
     {
@@ -658,7 +665,11 @@ void PackUnix::unpack(OutputFile *fo)
         if (sz_cpr > sz_unc || sz_unc > blocksize)
             throwCompressedDataViolation();
 
-        i = blocksize + OVERHEAD - sz_cpr;
+        // Compressed output has control bytes such as the 32-bit
+        // first flag bits of NRV_d32, the 5-byte info of LZMA, etc.
+        // Fuzzers may try sz_cpr shorter than possible.
+        // Use some OVERHEAD for safety.
+        i = blocksize + OVERHEAD - umax(12, sz_cpr);
         if (i < 0)
             throwCantUnpack("corrupt b_info");
         fi->readx(buf+i, sz_cpr);

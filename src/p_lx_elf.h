@@ -44,7 +44,7 @@ public:
     PackLinuxElf(InputFile *f);
     virtual ~PackLinuxElf();
     /*virtual void buildLoader(const Filter *);*/
-    virtual int getVersion() const override { return 14; } // upx-3.96 cannot upack, for instance
+    virtual int getVersion() const override { return 14; } // upx-3.96 cannot unpack, for instance
     virtual bool canUnpackVersion(int version) const override { return (version >= 11); }
     virtual tribool canUnpack() override { return super::canUnpack(); } // bool, except -1: format known, but not packed
 
