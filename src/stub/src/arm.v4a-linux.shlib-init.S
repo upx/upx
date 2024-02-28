@@ -31,6 +31,7 @@
 
 #define ARM_OLDABI 1
 #include "arch/arm/v5a/macros.S"
+NBPW= 4
 
 #define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
 #define bkpt_th .short 0xde01  /* reserved instr; Linux GNU eabi breakpoint */
@@ -304,7 +305,7 @@ supervise:
         bl movsl
 
         ldmia sp!,{arg1,arg2,arg3,arg4, eax}
-        blx eax  // decompress
+        /*blx*/ str eax,[sp,#-NBPW]!; ldr pc,[sp],#NBPW  // decompress
         add sp,sp,#4  // toss arg5
 
         bl L620
@@ -326,7 +327,7 @@ L620:  // Implant escape hatch at end of .text
 //p_unflt
         ldmia sp!,{arg1,arg2,arg3,arg4, eax, r12}  // r12= w_fragment [toss]
         tst arg4,arg4; beq 0f  // 0==ftid ==> no filter
-        blx eax  // unfilter
+        /*blx*/ str eax,[sp,#-NBPW]!; ldr pc,[sp],#NBPW
 0:
 //p_mprot
         ldr arg1,[sp,#0*4]  // lo(dst)

@@ -265,6 +265,11 @@ ERR_LAB
        error;
 #endif  //}
 
+extern long upx_mmap_and_fd(  // x86_64 Android emulator of i386 is not faithful
+     void *ptr,
+     unsigned len,  // also pre-allocate space in file
+     char *pathname  // 0 ==> call get_upxfn_path
+);
 #if defined(__i386__)  //
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it; remembered in AT_NULL.d_val
@@ -286,9 +291,11 @@ make_hatch_i386(
             *(long *)&hatch[0] = escape;
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            write(mfd, &escape, 4);
-            hatch = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(escape), 0);
+            unsigned mfd = -1+ (0xfff& fdmap);
+            write(mfd, &escape, sizeof(escape));
+            hatch = mmap((void *)(fdmap & ~0xffful), sizeof(escape),
+              PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
             close(mfd);
         }
     }
@@ -297,7 +304,6 @@ make_hatch_i386(
 }
 #elif defined(__arm__)  /*}{*/
 extern unsigned get_sys_munmap(void);
-extern int upxfd_create(void);  // early 32-bit Android lacks memfd_create
 #define SEEK_SET 0
 
 static void *
@@ -325,9 +331,11 @@ make_hatch_arm32(
             __clear_cache(&hatch[0], &hatch[2]);
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            int mfd = upxfd_create();  // the directory entry
-            write(mfd, &code, 2*4);
-            hatch = Pmap(0, 2*4, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0);
+            unsigned mfd = -1+ (0xfff& fdmap);
+            write(mfd, &code, sizeof(code));
+            hatch = Pmap((void *)(fdmap & ~0xffful), sizeof(code),
+                PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
             close(mfd);
         }
     }
@@ -447,8 +455,10 @@ get_PAGE_MASK(void)  // the mask which KEEPS the page address
 }
 #endif  //}
 
-extern void *memcpy(void *dst, void const *src, size_t n);
-extern void *memset(void *dst, unsigned val, size_t n);
+extern void *memcpy(void *dst, void const *src, unsigned n);
+#ifndef __i386__  //{
+extern void *memset(void *dst, unsigned val, unsigned n);
+#endif  //}
 
 #ifndef __arm__  //{
 // Segregate large local array, to avoid code bloat due to large displacements.
@@ -463,8 +473,7 @@ underlay(unsigned size, char *ptr, unsigned len, unsigned p_flags)  // len < PAG
     memcpy(ptr, saved, len);
 }
 #else  //}{
-extern void
-underlay(unsigned size, char *ptr, unsigned len, unsigned p_flags);
+extern void underlay(unsigned size, char *ptr, unsigned len, unsigned p_flags);
 #endif  //}
 
 extern int ftruncate(int fd, size_t length);
@@ -473,8 +482,8 @@ extern int ftruncate(int fd, size_t length);
 // Use table lookup into a PIC-string that pre-computes the result.
 unsigned PF_to_PROT(Elf32_Phdr const *phdr)
 {
-    return 7& addr_string("@\x04\x02\x06\x01\x05\x03\x07")
-        [phdr->p_flags & (PF_R|PF_W|PF_X)];
+    return 7& (addr_string("@\x04\x02\x06\x01\x05\x03\x07")
+        [phdr->p_flags & (PF_R|PF_W|PF_X)]);
 }
 
 typedef struct {
@@ -552,12 +561,27 @@ upx_so_main(  // returns &escape_hatch
     Elf32_Addr const base = (Elf32_Addr)va_load - phdr->p_vaddr;
     DPRINTF("base=%%p\\n", base);
 
+    // If the first PT_LOAD is eXecutable (protection r-x), then it has 3 pieces:
+    // the Ehdr+Phdrs, some run-time symbol information, exectable code.
+    // We must 1) change the Ehdr+Phdrs from describing the compressed image
+    // to describing the de-compressed imaage (the table space is the same);
+    // 2) skip over the run-time symbol info; 3) de-compress the code
+    // beginning at xct_off (and tracked by local variable 'pfx').
+    //
+    // Beginning with binutils-2.31, then there are 4 PT_LOAD:
+    // 1) protection r-- Ehdr+Phdrs and runtime symbol info (NOT executable)
+    // 2) protection r-x instructions
+    // 3) protection r-- read-only data
+    // 4) protection rw- read-write data
+
+    unsigned long fdmap = 0;
+    int mfd;
     if (phdr->p_flags & PF_X) {
-#if defined(__arm__)  //{
-        int mfd = upxfd_create();
-#else  //}{
-        int mfd = memfd_create(addr_string("upx"), 0);
-#endif  //}
+        DPRINTF("base2 %%p  va_load=%%p  memsz=%%p\\n", base, va_load, phdr->p_memsz);
+        fdmap = upx_mmap_and_fd((void *)va_load, phdr->p_memsz, 0);
+        mfd = -1+ (0xfff& fdmap);
+        DPRINTF("base2b fdmap=%%p\\n", fdmap);
+
         unsigned mfd_len = 0ul - page_mask;
         Pwrite(mfd, elf_tmp, binfo->sz_unc);  // de-compressed Elf_Ehdr and Elf_Phdrs
         Pwrite(mfd, binfo->sz_unc + va_load, mfd_len - binfo->sz_unc);  // rest of 1st page
@@ -605,33 +629,24 @@ upx_so_main(  // returns &escape_hatch
         int mfd = 0;
         char *mfd_addr = 0;
         if (phdr->p_flags & PF_X) { // SELinux
+            DPRINTF("point 1 %%x\\n", phdr);
             // Cannot set PROT_EXEC except via mmap() into a region (Linux "vma")
             // that has never had PROT_WRITE.  So use a Linux-only "memory file"
             // to hold the contents.
-#if defined(__arm__)  //{ Emulate: Android "ABI" has inconsistent __NR_ftruncate.
-            mfd = upxfd_create();  // anonymous file in /dev/shm with 0700 permission
-            size_t goal = x1.size;
-            while (0 < goal) { // /dev/shm limits to 8KiB at a time!!
-                ssize_t len = Pwrite(mfd, x1.buf, goal);
-                if (len < 0) {
-                    break;  // give up: will SIGSEGV or SIGBUS later
-                }
-                goal -= len;
+            fdmap = upx_mmap_and_fd(x1.buf, x1.size, 0);  // FIXME: page fragmentation?
+            mfd = -1 + (0xfff& fdmap);
+            DPRINTF("point 4 fdmap=%%p\\n", fdmap);
+            if (frag) {
+                Pwrite(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
             }
-            lseek(mfd, 0, SEEK_SET);
-#else  //}{
-            mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            ftruncate(mfd, x1.size);  // Allocate the pages in the file.
-#endif  //}
-            Pwrite(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
             Punmap(x1.buf, x1.size);
             mfd_addr = Pmap(x1.buf, x1.size, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0);
             DPRINTF("mfd_addr= %%p\\n", mfd_addr);  // Re-use the address space
-
         }
         else {
             underlay(x1.size, x1.buf, frag, phdr->p_flags);  // also makes PROT_WRITE
         }
+        DPRINTF("point 5 %%x\\n", phdr, &x1);
 
         x1.buf += frag;
         x1.size = al_bi.sz_unc;

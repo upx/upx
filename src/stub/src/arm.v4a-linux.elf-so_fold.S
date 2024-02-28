@@ -79,11 +79,10 @@ mflg_data: .int MAP_PRIVATE|MAP_ANONYMOUS  @ overwritten for QNX vs Linux
 //   MATCH_99  9 saved registers {r0= argc, r1= argv, r2= envp, r3-r7, lr)
 
 F_ADRU=  0 * NBPW
-F_LENU=  2 * NBPW
+F_LENU=  1 * NBPW
 
   .globl upx_so_main  // in arm.v?a-linux.elf-so_main.c
 
-  section SO_HEAD
 fold: .globl fold
     sub sp,sp,#MAX_ELF_HDR_32; mov r2,sp  // &elf_tmp
     call upx_so_main  // (&so_info, &argc); returns &escape_hatch
@@ -93,10 +92,17 @@ fold: .globl fold
     mov r7,#0xff & __NR_munmap  // FIXME depends on HW and ABI of OS
     mov pc,lr  // goto &escape_hatch
 
-L10:
-  section ptr_NEXT
-    mov r0,pc
+get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
+    adr r1,fold-3*NBPW  // "zero"
+    ldr r0,[r1,#1*NBPW]  // distance forward to &name
+    cmp r0,#0; beq 1f  // nullptr
+    add r0,r0,r1  // &name
+1:
     ret
+
+  section SO_HEAD
+// empty
+
 // De-compressor sections inserted here:
 // section EXP_HEAD
 // section NRV_HEAD
@@ -129,9 +135,13 @@ __NR_close =  6 + __NR_SYSCALL_BASE
 __NR_unlink= 10 + __NR_SYSCALL_BASE
 __NR_lseek=  19 + __NR_SYSCALL_BASE
 __NR_getpid= 20 + __NR_SYSCALL_BASE
+__NR_mkdir = 39 + __NR_SYSCALL_BASE  // 0x27
 __NR_brk   = 45 + __NR_SYSCALL_BASE
 __NR_readlink=  85 + __NR_SYSCALL_BASE  // 0x55
 __NR_ftruncate= 93 + __NR_SYSCALL_BASE  // 0x5d
+__NR_stat=     106 + __NR_SYSCALL_BASE
+__NR_uname= 122 + __NR_SYSCALL_BASE  // 0x7a
+__NR_fstat= 197 + __NR_SYSCALL_BASE  // 0xc5
 
 
 __NR_memfd_create= 0x181 + __NR_SYSCALL_BASE  // 385
@@ -189,23 +199,28 @@ readlink:
 ftruncate: .globl ftruncate
         do_sys __NR_ftruncate; ret
 
+fstat: .globl fstat
+        do_sys __NR_fstat; ret
+stat: .globl stat
+        do_sys __NR_stat; ret
+
+mkdir: .globl mkdir
+        do_sys __NR_mkdir; ret
+
+uname: .globl uname
+        do_sys __NR_uname; ret
+
 memfd_create: .globl memfd_create
         do_sys7t2 __NR_memfd_create; ret
 
-O_RDWR= 2
-O_DIRECTORY= 040000
-O_TMPFILE= 020000000
-        .balign 4
-table3:
-        .word O_RDWR | O_DIRECTORY | O_TMPFILE
-        .word 0700
-        .asciz "/dev/shm"; .balign 4
-
-upxfd_create: .globl upxfd_create
-        adr r0,table3
-        ldmia r0!,{r1,r2}
-        do_sys7t2 __NR_open
-        ret
+//O_RDWR= 2
+//O_DIRECTORY= 00200000  //  0x10000
+//O_TMPFILE= 020000000   // 0x400000
+//        .balign 4
+//table3:
+//        .word O_RDWR | O_DIRECTORY | O_TMPFILE
+//        .word 0700  // S_IRWXU
+//        .asciz "/dev/shm"; .balign 4
 
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
@@ -270,11 +285,21 @@ mmap_privanon: .globl mmap_privanon
         mvn r4,#0  @ fd= -1
         b mmap_do
 
-memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t len);
 dst .req r0
 src .req r1
 len .req r2
 lim .req r12  // limit value of src for current code loop
+
+mempcpy: .globl mempcpy  // void *mempcpy(void *dst, void const *src, size_t len);
+        tst len,len; moveq pc,lr  // 0==len is a no_op
+5:
+        ldrb r3,[src],#1
+        strb r3,[dst],#1
+        subs r2,r2,#1; bhi 5b
+        //mov r0,dst  // returns updated dst
+        ret
+
+memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t len);
         tst len,len; moveq pc,lr  // 0==len is a no_op
         mov lim,len
         //b mc_1prep  // optimizations not tested!
@@ -380,10 +405,11 @@ underlay: .globl underlay // (unsigned size, char *ptr, unsigned ulen, unsigned 
     .unreq ulen
     .unreq pflg
 
-memset: .globl memset  // void *memset(void *s, int c, size_t n);
+my_memset: .globl my_memset  // void *memset(void *s, int c, size_t n);
+0:
         tst r2,r2; moveq pc,lr
         strb r1,[r0],#1; subs r2,r2,#1
-        bgt memset
+        bgt 0b
         ret
 
 my_alloca: .globl my_alloca

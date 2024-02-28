@@ -148,6 +148,7 @@ getbit:
         addl bits,bits; jz refill  // Carry= next bit
         rep; ret
 
+        .globl copy
 copy:  // In: len, %rdi, dispq;  Out: 0==len, %rdi, dispq;  trashes %rax, %rdx
         lea (%rdi,dispq),%rax; cmpl $5,len  // <=3 is forced
         movb (%rax),%dl; jbe copy1  // <=5 for better branch predict

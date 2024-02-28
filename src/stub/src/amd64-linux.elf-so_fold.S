@@ -45,11 +45,6 @@ fold:
         //  pop %arg3  // MATCH_07  envp
         //  ret  // ==> user_DT_INIT
 
-  section ptr_NEXT
-//    pop %rax; call *%rax
-// "lea f_exp(%rip)," addressing on x86_64 subsumes the need for code,
-// but keep the empty section to unify buildLinuxLoader()
-
 // De-compressor sections inserted here:
 // section NRV_HEAD
 // section NRV2B
@@ -77,7 +72,7 @@ my_bkpt: .globl my_bkpt
         int3  // my_bkpt
         ret
 
-memset: .globl memset  // void *memset(void *s, int c, size_t n);
+my_memset: .globl my_memset  // void *memset(void *s, int c, size_t n);
     push %rdi  // result = dst
     mov %esi,%eax  // c
     mov %edx,%ecx  // n

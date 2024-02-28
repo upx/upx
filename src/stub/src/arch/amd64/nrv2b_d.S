@@ -62,7 +62,7 @@ lenmore_n2b:
 gotlen_n2b:
         cmpq $-0xd00,dispq
         adcl off,len  # len += off + (disp < -0xd00)
-        call copy
+        call copy; .extern copy
 bot_n2b:  # In: 0==len
         jmp top_n2b
 

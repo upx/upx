@@ -32,18 +32,51 @@
 */
 
 #include "arch/i386/macros.S"
+        .att_syntax  // opcode src,dst
+#define arg1 ebx
+#define arg2 ecx
+#define arg3 edx
 
+NBPW= 4
+
+sz_b_info= 12
+  sz_unc= 0
+  sz_cpr= 4
+  b_method= 8
+
+PROT_READ=      1
+PROT_WRITE=     2
+PROT_EXEC=      4
+
+MAP_FIXED=     0x10
+MAP_SHARED=    0x01
+MAP_PRIVATE=   0x02
+MAP_ANONYMOUS= 0x20
+
+szElf32_Ehdr= 0x34
+p_memsz=  5*4
+
+__NR_exit=  1
+__NR_write= 4
+__NR_open=  5
+__NR_close= 6
+__NR_oldmmap=      90  // %ebx -> args[6]
+__NR_memfd_create= 356
+__NR_mprotect= 125
+
+ENOSYS= 38  /* Invalid system call number */
+NAME_MAX=  255  // # chars in file name; linux/include/uapi/linux/limits.h
+
+PAGE_SHIFT= 12
+PAGE_SIZE= ( 1 << PAGE_SHIFT)
+PAGE_MASK= (~0 << PAGE_SHIFT)
+
+M_NRV2B_LE32= 2
 
 /*************************************************************************
 // program entry point
 // see glibc/sysdeps/i386/elf/start.S
 **************************************************************************/
-
-section LEXEC000
-sz_pack2 = -4+ _start
-_start: .globl _start
-////    nop; int3  // DEBUG
-        push eax  // space for %entry address
 /*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
@@ -62,182 +95,291 @@ _start: .globl _start
 ;; Step through the code; remember that <Enter> repeats the previous command.
 ;;
 */
-        call main  // push address of decompress subroutine
-decompress:
-f_exp:  // synonym
 
-// /*************************************************************************
-// // C callable decompressor
-// **************************************************************************/
+section ELFMAINX
+sz_pack2 = -4+ _start
+_start: .globl _start
+////    nop; int3  // DEBUG  i386 entry.S
+        call L70  // MATCH_08  push $&getbit
+L70ret:
 
-// /* Offsets to parameters, allowing for {pusha + call} */
-#define         O_INP   (8*4 +1*4)
-#define         O_INS   (8*4 +2*4)
-#define         O_OUTP  (8*4 +3*4)
-#define         O_OUTS  (8*4 +4*4)
-#define         O_PARAM (8*4 +5*4)
+#define bits %ebx
+getbit:
+        addl bits,bits; jz refill  // Carry= next bit
+        rep; ret  // rep: stop instruction pipeline (spend 1 byte for speed)
+refill:
+        mov (%esi),bits; sub $-NBPW,%esi  // next 32 bits; set Carry
+        adc bits,bits  // LSB= 1 (CarryIn); CarryOut= next bit
+        ret  // infrequent (1/32)
 
-#define         INP     dword ptr [esp+O_INP]
-#define         INS     dword ptr [esp+O_INS]
-#define         OUTP    dword ptr [esp+O_OUTP]
-#define         OUTS    dword ptr [esp+O_OUTS]
-#define         PARM    dword ptr [esp+O_PARAM]
+#define foldi %esi
+#define r_getb %edx
+#define r_unc %ebx
+#define u_len %edi
 
-section LEXEC009
-        //;  empty section for commonality with l_lx_exec86.asm
-section LEXEC010
-                pusha
-                // cld
+L20:
+        pop foldi  // MATCH_09  &fold_info
 
-                mov     esi, INP
-                mov     edi, OUTP
+#define old_sp %ebp
+F_FRAME= 7*NBPW
+F_ENTR= 6*NBPW; F_PMASK= F_ENTR
+F_MFD=  5*NBPW
+F_LENU= 4*NBPW
+F_ADRU= 3*NBPW
+F_ELFA= 2*NBPW
+F_LENX= 1*NBPW
+F_ADRX= 0*NBPW
 
-                or      ebp, -1
-//;;             align   8
+D_FOLD=  3*NBPW  // .data space at start of unfold
+D_QFLG=  2*NBPW
+D_FNAME= 1*NBPW
+D_PMASK= 0*NBPW
 
-#include "arch/i386/nrv2b_d32.S"
-#include "arch/i386/nrv2d_d32.S"
-#include "arch/i386/nrv2e_d32.S"
-#include "arch/i386/lzma_d.S"
-                cjt32 0
+#if 0  //{ DEBUG
+        mov $0xa5a5a5a5,%eax
+        push %eax; push %eax; push %eax; push %eax
+        push %eax; push %eax; push %eax
+#else  //}{ non-DEBUG
+        sub $F_FRAME,%esp
+#endif  //}
+AT_PAGESZ= 6  // /usr/include/elf.h
+        lea NBPW + F_FRAME(%esp),%edi  // past argc
+        call zfind  // skip argv
+        call zfind  // skip env
+0: // find AT_PAGESZ in auxv
+        mov     (%edi),%eax
+        mov NBPW(%edi),%ecx; add $2*NBPW,%edi
+        cmp $AT_PAGESZ,%eax; je 5f
+        mov $1<<12,%ecx  // default PAGE_SIZE
+        test %eax,%eax; jne 0b
+5:
+        neg %ecx  // PAGE_MASK
 
-section LEXEC015
-                // eax is 0 from decompressor code
-                //xor     eax, eax               ; return code
+        mov %esp,old_sp
+        mov %ecx,F_PMASK(old_sp)
+        lea sz_pack2 - L70ret(r_getb),%edi
+        mov (%edi),%ecx
+        sub %ecx,%edi;   mov %edi,F_ELFA(old_sp)
+        lodsl  // O_BINFO; advance to &b_info
+        add %eax,%edi; mov %edi,F_ADRX(old_sp)
+        sub %eax,%ecx; mov %ecx,F_LENX(old_sp)
+//        cmpw $M_NRV2B_LE32|(0<<8),b_method(foldi); je 0f; hlt; 0:  // check method and filter bytes
 
-// check compressed size
-                mov     edx, INP
-                add     edx, INS
-                cmp     esi, edx
-                jz      .ok
-                dec     eax
-.ok:
+        mov /*sz_unc*/(foldi),r_unc
+            // align + {page_mask, fd_name} + "/data/data/$APP_NAME/cache/upxAAA"
+        lea (1+ NAME_MAX + 8 + D_FOLD + (1+ 11 + 13))(r_unc),u_len
+        mov u_len,F_LENU(old_sp)
+        sub u_len,%esp  // alloca
+        and $-2*NBPW,%esp  // align stack
 
-// write back the uncompressed size
-                sub     edi, OUTP
-                mov     edx, OUTS
-                mov     [edx], edi
+        lea (8 + D_FOLD)(r_unc),%eax; add %esp,%eax
+        and $-2*NBPW,%eax; push %eax  // MATCH_31 where to put pathname
+        mov %eax,%ecx
+        sub %esp,%ecx;            mov %ecx,D_FNAME(%esp)  // forward to unfolded code
+        mov F_PMASK(old_sp),%ecx; mov %ecx,D_PMASK(%esp)  // forward to unfolded code
+        mov $MAP_PRIVATE|MAP_ANONYMOUS,%ecx; mov %ecx,D_QFLG(%esp)  // forward to unfolded code
 
-                mov [7*4 + esp], eax
-                popa
-                ret
+        xor %ecx,%ecx  // zero
+        push %edx  // MATCH_33  save &getbit
+        push %eax  // arg3  &pathname
+        mov %ecx,(%eax)  // empty string
+        push u_len  // arg2  length required
+        push %ecx  // arg1  0==> any page
+        call upx_mmap_and_fd; add $3*NBPW,%esp  // (ptr, len, pathname)
+        pop %edx  // MATCH_33  restore &getbit
+        mov %eax,%ecx
+        shr $12,%eax; shl $12,%eax; mov %eax,F_ADRU(old_sp)
+        sub %eax,%ecx; sub $1,%ecx; mov %ecx,F_MFD (old_sp)
+#undef r_unc
+#undef u_len
 
-                ctojr32
-                ctok32  edi, dl
-section LEXEC017
-                popa
-                ret
+// This is nrv2b_d32, inlined and optimized for small space (about 160 bytes).
+// The task is to de-compress the folded pieces for shared library init:
+// the de-compressor(s) of the PT_LOAD pieces, and the C-code supervisor
+// which adjusts the placement and mapping of the address space.
+// The output length is a couple KB for NRV, a few KB for Lzma, 64KB for Zstd.
+// This is motivated by the possibility of using multiple de-compressors
+// depending on the characteristics of each PT_LOAD, and by the increased size
+// and compressability of C-coded de-compressors for Lzma and Zstd
+// in contrast to the simple and small assembly-coded NRV.
 
-section LEXEC020
+/* Working registers for local NRV2B */
+#define off  %eax  /* XXX: 2GB */
+//#define bits %ebx
+#define len  %ecx  /* XXX: 2GB */
+#define disp %ebp
 
-PAGE_SHIFT= 12
-PAGE_SIZE= ( 1 << PAGE_SHIFT)
-PAGE_MASK= (~0 << PAGE_SHIFT)
+#define GETBIT call *r_getb  /* %edx */
+#define jnextb0 GETBIT; jnc
+#define jnextb1 GETBIT; jc
 
-MAP_FIXED=     0x10
-MAP_PRIVATE=   0x02
-MAP_ANONYMOUS= 0x20
+/* rotate next bit (now in Carry) into bottom bit of reg */
+#define getnextb(reg) GETBIT; adcl reg,reg
 
-PROT_READ=      1
-PROT_WRITE=     2
-PROT_EXEC=      4
+/* Arguments to decompress() */
+#define src  %esi
+#define lsrc %ecx
+#define dst  %edi
+//#define ldst %edx  /* Out: actually a reference: &len_dst */
 
-__NR_exit=  1
-__NR_write= 4
-__NR_open=  5
-__NR_mmap=      90
-__NR_mprotect= 125
+        lea D_FOLD(%esp),dst  // &unfolded code
+        push old_sp  // MATCH_16  save register
+        mov    sz_cpr(foldi),lsrc
+        lea sz_b_info(foldi),src
+#undef foldi
 
-szElf32_Ehdr= 0x34
-p_memsz=  5*4
+decompress:  // inlined: (uchar const *src, uint len, uchar *dst /*, u32 &ldst, uint method */)
+        add src,lsrc; push lsrc  // MATCH_05  &input_eof
+        //subq src,lsrc  // restore the value of lsrc; dead for inlined nrv2b
 
-sz_unc= 0
-sz_cpr= 4
+//%esp:
+//  MATCH_05  &input_eof
+//  MATCH_16  old_sp
+//  space for de-compressed code
 
-EINVAL= 22
+//old_sp:
+//  MATCH_10  len unfolded_code
+//  MATCH_14  &so_info
+//  MATCH_03  pusha regs {%edi,%esi,%ebp,%esp,%ebx,%edx,%ecx,%eax}
+//            ret_addr
+//  MATCH_00  argc
+//  MATCH_01  argv
+//  MATCH_07  envp
 
-#define pushsbli .byte 0x6a,  /* push sign-extended byte to long immediate*/
+        xor bits,bits  // empty; force refill
+        xor len,len  // create loop invariant
+        or $~0,disp  // -1: initial dispacement
+        cld  // paranoia
+        .byte 0xa8  // "testb $... ,%al" ==> "jmp top_n2b"
+lit_n2b:
+        movsb  // *dst++ = *src++;
+top_n2b:
+        jnextb1 lit_n2b
+        lea 1(len),off  # [len= 0] off= 1
+offmore_n2b:
+        getnextb(off)
+        jnextb0 offmore_n2b
 
-msg_SELinux:
-        pushsbli L71 - L70
-        pop edx  // length
-        call L71
+        sub $ 3,off; jc len_n2b  # use previous offset
+        shl $ 8,off; lodsb  # off is %eax, so 'lodsb' is "off |= *src++;"
+        xor $~0,off; jz eof_n2b
+        mov off,disp  # XXX: 2GB
+len_n2b:
+        lea 1(len),off  # [len= 0] off= 1
+        getnextb(len); getnextb(len)  # two bits; cc set on result
+        jnz gotlen_n2b  # raw 1,2,3 ==> 2,3,4
+        mov off,len  # len= 1, the msb
+        add $3-1,off  # raw 2.. ==> 5..
+lenmore_n2b:
+        getnextb(len)
+        jnextb0 lenmore_n2b
+gotlen_n2b:
+        cmp $-0xd00,disp  # XXX: 2GB
+        adc off,len  # len += off + (disp < -0xd00)
+        push %esi  // MATCH_06
+          lea (%edi,disp),%esi
+          rep; movsb
+        pop %esi  // MATCH_06
+        jmp top_n2b
+
+eof_n2b:
+        pop %ecx  // MATCH_05  &input_eof
+        cmp %ecx,%esi; je 0f; hlt; 0:  // test for ending in correct place
+        pop old_sp  // MATCH_16
+
+#define mfd %edi
+        mov F_MFD(old_sp),mfd
+        mov F_LENU(old_sp),%edx
+        mov %esp,%ecx
+        mov %edi,%ebx
+        mov $__NR_write,%al; call sys_check_al
+
+        mov old_sp,%esp  // de-alloca
+
+        push $0  // arg6
+        push mfd  // arg5
+        push $MAP_FIXED|MAP_PRIVATE  // arg4
+        push $PROT_READ|PROT_EXEC  // arg3
+        push F_LENU(%ebp)  // arg2
+        push F_ADRU(%ebp)  // arg1
+        call mmap; add $6*NBPW,%esp
+
+        mov mfd,%ebx
+        mov $__NR_close,%al; call sys_check_al
+
+        mov F_ADRU(%ebp),%eax
+        add $D_FOLD,%eax  // PAGE_MASK, upxfd_path, mflg_data
+        jmp *%eax
+// %esp:
+//  MATCH_13  ptr unfolded_code; for escape hatch
+//  MATCH_12  len unfolded code; for escape hatch
+//  MATCH_14  &so_info
+//  MATCH_03  pusha regs {%edi,%esi,%ebp,%esp,%ebx,%edx,%ecx,%eax}
+//            ret_addr
+//  MATCH_00  argc
+//  MATCH_01  argv
+//  MATCH_07  envp
+
+
+sys_check_al:
+        movzbl %al,%eax
+sys_check:  // syscall with error checking; if halt then %eax= -errno, %ecx= __NR_
+        push %eax // save __NR_ for debug
+        int $0x80
+        pop %ecx  // recover __NR_ for debug
+        cmp $~0<<12,%eax; jb 0f; hlt; 0:  // -errno
+        ret
+
+mmap: .globl mmap  // for C-callable, such as from upx_mmap_and_fd()
+        push %ebx  // save register
+        lea 2*NBPW(%esp),%ebx
+        mov $__NR_oldmmap,%al; call sys_check_al  // use simpler-for-us oldmmap
+        pop %ebx  // restore register
+        ret  // C-callable, so cannot remove 6 args here
+
+get_upxfn_path: .globl get_upxfn_path
+        sub %eax,%eax  // should not be called!
+        ret
+
+my_memset: .globl my_memset  // (dst, val, n)
+        push %ebp; mov %esp,%ebp
+        push %edi
+        mov (2+ 2)*NBPW(%ebp),%ecx
+        mov (2+ 1)*NBPW(%ebp),%eax
+        mov (2+ 0)*NBPW(%ebp),%edi
+        rep stosb
+        pop %edi
+        pop %ebp
+        ret
+
+mempcpy: .globl mempcpy  // (dst, src, n)
+        push %ebp; mov %esp,%ebp
+        push %edi; push %esi
+        mov (2+ 2)*NBPW(%ebp),%ecx
+        mov (2+ 1)*NBPW(%ebp),%esi
+        mov (2+ 0)*NBPW(%ebp),%edi
+        rep movsb
+        mov %edi,%eax
+        pop %esi; pop %edi; pop %ebp
+        ret
+
+zfind:
+        mov (%edi),%eax; add $NBPW,%edi
+        test %eax,%eax; jne zfind
+        ret
+
+my_bkpt: .globl my_bkpt
+        int3  // my_bkpt
+        ret
+
+// IDENTSTR goes here
+
+  section ELFMAINZ
 L70:
-        .ascii "mmap failed.\n"
-L71:
-        pop ecx  // message text
-        push 2; pop ebx  // fd stderr
-        push __NR_write; pop eax; int 0x80
-die:
-        mov bl, 127  // only low 7 bits matter!
-        push __NR_exit; pop eax; int 0x80
-
-// Decompress the rest of this loader, and jump to it
-unfold:  // IN: ebp= f_exp;  esp/ &O_BINFO
-        pop esi; lodsd  // skip O_BINFO; esi= &compressed fold_elf86
-        lea edi,[sz_pack2 - f_exp + ebp]
-        sub edi,[edi]  // edi= &Elf32_Ehdr of this program
-
-// Open /proc/self/exe
-        call 0f; .asciz "/proc/self/exe"; 0: pop ebx  // path
-        sub ecx,ecx  // O_RDONLY
-        push __NR_open; pop eax; int 0x80; push eax  // P_31  fd
-
-// Reserve space for unfolded stub
-        push 0  // offset
-        push -1  // fd
-        push MAP_PRIVATE|MAP_ANONYMOUS
-          mov edx,[esi]  // .sz_unc
-        push PROT_READ|PROT_WRITE
-        push edx  // len
-        push 0 // kernel chooses addr
-        call mmap
-        push edx  // P_23  LENU
-        push eax  // P_24  ADRU
-        xchg eax,edx  // edx= ADRU
-
-// Unfold
-        lodsd; push eax; mov ebx,esp  // sz_unc
-        lodsd; xchg ecx,eax  // sz_cpr
-        lodsd; push eax  // b_method
-        push ebx  // &sz_unc
-        push edx  // dst
-        push ecx  // sz_cpr
-        push esi  // src
-        call ebp  // decompress
-        add esp,6*4
-
-// PROT_EXEC
-        pop %ebx  // P_24 ADRU
-        pop %ecx  // P_23 LENU
-        push PROT_EXEC|PROT_READ; pop edx
-        push %ecx  // P_23 LENU
-        push %ebx  // P_24 ADRU
-        push __NR_mprotect; pop eax; int 0x80
-
-// Jump to unfolded code
-        mov eax,[-4*4 + esi]  // O_BINFO
-        add eax,edi  // ADRX
-        mov ecx,[sz_pack2 - f_exp + ebp]  // LENX(==sz_pack2)
-// eax:ADRX; ebx:free; ecx:LENX
-// ebp:f_exp; esi:&b_info(fold); edi:dynbase
-        pop %edx; push %edx
-        jmp edx  // esp/ ADRU,LENU,fd,%entry,argc,argv,0,...
-
-mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
-        lea ebx,[4+esp]
-        push __NR_mmap; pop eax; int 0x80
-        cmp eax,PAGE_MASK; jb 0f; hlt; 0:
-        ret 6*4
-
-        .balign 4  // for Android emulator
-main:
-        pop ebp  // &decompress
-        nop;nop  // align 'call' opcode to (3 mod 4)
-        call unfold  // " *--sp = &O_BINFO; goto unfold; "
-            // must be ".balign 4" here for Android emulator
+        pop r_getb  // MATCH_08  &getbit  (also L70ret)
+        call L20  // MATCH_09  push $&fold_info
+fold_info:  // nice if 4-byte aligned
         .long O_BINFO
-            // compressed fold_elf86 follows
-eof:
+//  b_info (sz_unc, sz_cpr, method) of folded code (C-language, etc.)
 
 /* vim:set ts=8 sw=8 et: */

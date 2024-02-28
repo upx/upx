@@ -30,6 +30,7 @@
 */
 
 #include "arch/arm64/v8/macros.S"
+#define bkpt  brk #0
 NBPW= 8
 
 sz_Elf64_Phdr= 56
@@ -63,6 +64,7 @@ PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
 
+MAP_SHARED=  1
 MAP_PRIVATE= 2
 MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
@@ -71,12 +73,27 @@ PAGE_SHIFT= 16  // 64KiB PAGE_SIZE
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
 // /usr/include/asm-generic/unistd.h
+__NR_close    = 0x39  //  57
 __NR_exit     = 0x5d  //  93
+__NR_memfd_create= 0x117  // 279
 __NR_mmap     = 0xde  // 222
 __NR_mprotect = 0xe2  // 226
 __NR_munmap   = 0xd7  // 215
 __NR_openat   = 0x38  //  56
 __NR_write    = 0x40  //  64
+
+arg1  .req x0
+arg1w .req w0
+arg2  .req x1
+arg2w .req w1
+arg3  .req x2
+arg3w .req w2
+arg4  .req x3
+arg4w .req w3
+arg5  .req x4
+arg5w .req w4
+arg6  .req x5
+arg6w .req w5
 
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
@@ -89,26 +106,24 @@ __NR_write    = 0x40  //  64
 #define TRACE(arg) /*empty*/
 #endif  //}
 
-//lr   .req x30
+//lr    .req x30
+//fp    .req x29
 wLENU  .req w29  // un-folded fold_begin and upx_main
   xLENU  .req x29
 xADRU  .req x28
+xADRC  .req x28  // OVERLAPS xADRU
 
-wfd    .req w27  // file descriptor of /proc/self/exe
+wLENC   .req w29
+  xLENC .req x29
+
+mfd    .req w27  // file descriptor from memfd_create
   xfd    .req x27
 xPMASK .req x26  // PAGE_MASK
-  // The above 4 registers are passed on stack to unfolded code.
+  // The above 4 registers are passed on *stack* to unfolded code.
 
 xelfa  .req x25  // hi &Elf64_Ehdr
 xfexp  .req x24  // de-compressor
   // xPMASK, xelfa, xfexp still are used here.
-
-wLENC  .req w29  // compressed input  OVERLAPS wLENU
-  xLENC  .req x29
-xADRC  .req x28  // OVERLAPS xADRU
-xADRM  .req x27  // conveneinence; OVERLAPS wfd, xfd
-wLENM  .req w23
-  xLENM  .req x23
 
 xauxv  .req x22
 wszuf  .req w21
@@ -126,60 +141,48 @@ wPrivAnon .req w19
 
   section ELFMAINX
 sz_pack2= .-4  // placed there by ::pack3()
-mflg:
-        .int MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
+ mflg:
+         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
-        stp x0,x1,[sp,#-2*NBPW]!  // ABI: -static crt0 might pass data in x0,x1
-        ldr wPrivAnon,mflg
+#if DEBUG  /*{*/
+    bkpt  // DEBUG  0xd4200000
+        TRACE(#0)
+#endif  /*}*/
+        add x0,sp,#NBPW; call zfind  // avoid feint of 0==argc;  x0= &envp
+        call zfind; mov xauxv,x0  // &Elf64_auxv
+
+        sub sp,sp,#4*NBPW  // space for ADRU, LENU
+F_PMASK= 0 * NBPW
+F_SZPK2= 1 * NBPW
+F_ADRU= 2 * NBPW
+F_LENU= 3 * NBPW
+//F_ARGC= 4 * NBPW
+
+// set xPMASK by finding actual page size in Elf64_auxv
+1:
+        ldp x1,x2,[x0],#2*NBPW
+        cmp w1,#AT_PAGESZ; beq 2f
+        cbnz w1,1b  // AT_NULL
+        mov x2,#PAGE_SIZE  // default
+2:
+        neg xPMASK,x2  // save for folded code
+        str xPMASK,[sp,#F_PMASK]
+
         call main
+L00:
+        mov xFOLD,lr
 
-f_exp:
-f_decompress:
+        mov w1,#0  // flags
+        add x0,xFOLD,#strupx - LxFOLD
+        do_sys __NR_memfd_create; mov mfd,w0
 
-  section NRV_HEAD
-        // empty
-  section NRV_TAIL
-        // empty
-
-// FIXME
-#define NO_METHOD_CHECK 1
-
-  section NRV2E
-#include "arch/arm64/v8/nrv2e_d32.S"
-
-  section NRV2D
-#include "arch/arm64/v8/nrv2d_d32.S"
-
-  section NRV2B
-#include "arch/arm64/v8/nrv2b_d32.S"
-
-#include "arch/arm64/v8/lzma_d.S"
-
-  section ELFMAINY
-end_decompress: .globl end_decompress
-
-msg_SELinux:
-        mov w2,#L71 - L70  // length
-        adr x1,L70  // message text
-        mov w0,#2  // fd stderr
-        do_sys __NR_write
-die:
-        mov w0,#127
-        do_sys __NR_exit
-L70:
-        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
-L71:
-        /* IDENTSTR goes here */
-
-  section ELFMAINZ
-        .balign 4
-mmapRW0:
-        mov x5,#0  // offset
-mmapRW:
-        mov w2,#PROT_WRITE|PROT_READ
-mmap:
-        do_sys __NR_mmap
-        ret
+        adr xfexp,f_expand
+// alloca() for de-compressed stub
+        ldr w0,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // .sz_unc of fold
+        mov fp,sp
+        sub x0,fp,x0
+        and x0,x0,#-2*NBPW
+        mov sp,x0
 
 src    .req x0
 lsrc   .req w1
@@ -187,21 +190,8 @@ dst    .req x2
 ldst   .req x3
 xmeth  .req x4
 wmeth  .req w4
-unfold:
-        mov xFOLD,lr
-// Reserve enough space to decompress the folded code of the stub
-        ldr w0,  [xfexp,#sz_pack2 - f_exp]
-        add xelfa,xfexp,#sz_pack2 - f_exp
-        sub xelfa,xelfa,x0  // &Elf64_Ehdr of stub
-        ldr w1,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // .sz_unc of fold
-        mov w4,#-1  // fd
-        mov w3,#MAP_PRIVATE|MAP_ANONYMOUS
-        mov x0,#0  // kernel chooses addr
-        call mmapRW0
-          PUSH2(x0,x1)  // ADRU, LENU
-          PUSH2(xPMASK,xfd)
-        mov xADRM,x0  // convenience
-// Decompress folded code
+
+// Decompress folded code of this stub
         mov dst,x0  // ADRU
         PUSH1(x1); mov ldst,sp  // &slot on stack; lzma uses for EOF
         add src,    xFOLD,#sz_b_info + LBINFO - LxFOLD  // folded code
@@ -211,24 +201,6 @@ unfold:
         callr xfexp  // decompress it
         POP1(x8)  // discard lzma EOF
 
-// propagate PAGE_MASK and wPrivAnon
-        str xPMASK,[xADRM]
-        str wPrivAnon,[xADRM,#NBPW + 2*4]  // bits_privanon in unfolded code
-
-// PROT_EXEC
-        mov w2,#PROT_EXEC|PROT_READ
-        ldr w1,[sp,3*NBPW]  // LENU
-        mov x0,xADRM  // base
-    TRACE(#2)
-        do_sys __NR_mprotect
-
-// Use the unfolded code
-        ldr w0,[xFOLD, #LOBINFO - LxFOLD]  // O_BINFO
-        ldr wLENC,[xfexp,#sz_pack2 - f_exp]
-        add xADRC,xelfa,x0  // &b_info of compressed input data
-        add x0,xADRM,#NBPW + 3*4  // jmp over get_page_mask() and bits_privanon
-        jr x0
-
     .unreq src
     .unreq lsrc
     .unreq dst
@@ -236,6 +208,51 @@ unfold:
     .unreq xmeth
     .unreq wmeth
 
+        str xPMASK,[sp]  // propagate PAGE_MASK
+
+// Write de-compressed stub
+        ldr w2,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // .sz_unc of fold
+        mov x1,sp
+        mov w0,mfd
+        do_sys __NR_write
+        mov sp,fp
+
+        mov arg6,#0  // beginning of file
+        mov arg5w,mfd
+        mov arg4w,#MAP_SHARED  // modes
+        mov arg3w,#PROT_READ|PROT_EXEC  // FIXME: add PROT_WRITE for DEBUG only
+        ldr arg2w,[xFOLD,#sz_unc + LBINFO - LxFOLD]
+        str arg2,[sp,#F_LENU]
+        mov arg1,#0  // addr (kernel chooses)
+        do_sys __NR_mmap; str x0,[sp,#F_ADRU]; mov xADRU,x0
+
+        mov arg1w,mfd
+        do_sys __NR_close
+
+// Use the unfolded stub
+        ldr wLENC,[sp,#F_SZPK2]
+        ldr w1,[xFOLD, #LOBINFO - LxFOLD]  // O_BINFO
+        add lr,xADRU,#4 + NBPW  // jmp over data
+        sub wLENC,wLENC,w1
+        str xLENC,[sp,#F_SZPK2]
+        add xADRC,xelfa,x1  // &b_info of compressed input data
+        jr lr  // goto unfolded stub
+
+zfind:
+        ldr x1,[x0],#NBPW; cbnz x1,zfind
+        ret
+
+f_expand:
+#define NO_METHOD_CHECK 1
+#include "arch/arm64/v8/nrv2b_d32.S"
+
+  section ELFMAINY
+end_decompress: .globl end_decompress
+
+        /* IDENTSTR goes here */
+
+  section ELFMAINZ
+        .balign 4
 #if DEBUG  //{
 TRACE_BUFLEN=1024
 trace:  // preserves condition code (thank you, CBNZ) [if write() does!]
@@ -330,41 +347,23 @@ hex:
         .ascii "0123456789abcdef"
 #endif  //}
 
-proc_self_exe:
-        .asciz "/proc/self/exe"; .balign 4
-
-zfind:
-        ldr x1,[x0],#NBPW; cbnz x1,zfind
-        ret
-
+        .balign 4
 main:
-        mov xfexp,lr
-        add x0,sp,#3*NBPW; call zfind  // in: x0= &argv;  out: x0= &envp
-        call zfind; mov xauxv,x0  // &Elf64_auxv
-
-// set xPMASK by finding actual page size in Elf64_auxv
-1:
-        ldp x1,x2,[x0],#sz_auxv
-        cmp w1,#AT_PAGESZ; beq 2f
-        cbnz w1,1b  // AT_NULL
-        mov x2,#PAGE_SIZE  // default
-2:
-        neg xPMASK,x2  // save for folded code
-
-// Open /proc/self/exe
-        mov w0,#AT_FDCWD
-        adr x1,proc_self_exe
-        mov w2,O_RDONLY
-        do_sys __NR_openat; mov wfd,w0
-        // cmp w0,#0; blt L75  // no longer fatal
-
-        call unfold
+lr .req x30
+        add xelfa,lr,#sz_pack2 - L00  // &sz_pack2
+        ldr w0,[xelfa]
+        sub xelfa,xelfa,w0,uxtw
+        str x0,[sp,#F_SZPK2]
+        callr lr
 LxFOLD:
+strupx:
+        .asciz "upx"
+        .balign 4
 LOBINFO:
         .int O_BINFO
 LBINFO:
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 /*
-vi:ts=8:et:nowrap
+vaddi:ts=8:et:nowrap
 */
 

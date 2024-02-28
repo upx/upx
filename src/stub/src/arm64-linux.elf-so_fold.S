@@ -64,10 +64,6 @@ get4:  .globl get4  // un-aligned fetch (little endian)
     ldrb w2,[x1],#1; orr w0,w0,w2,lsl #24
     ret
 
-  section ptr_NEXT
-        call 0f; 0:
-        mov x0,lr
-
 // De-compressor sections inserted here:
 // section EXP_HEAD
 // section NRV_HEAD
@@ -200,10 +196,11 @@ memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t len)
         bgt memcpy
         ret
 
-memset: .globl memset  // void *memset(void *dst, int c, size_t len);
+my_memset: .globl my_memset  // void *memset(void *dst, int c, size_t len);
+0:
         strb w1,[x0],#1
         subs x2,x2,#1
-        bgt memset
+        bgt 0b
         ret
 
 /* vim:set ts=8 sw=8 et: */

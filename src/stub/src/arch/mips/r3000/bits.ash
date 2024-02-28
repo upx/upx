@@ -31,7 +31,7 @@
  */
 
 
-#ifndef _MR3K_STD_CONF_
+#ifndef _MR3K_STD_CONF_  /*{*/
 #define _MR3K_STD_CONF_ 1
 
 #define  JOHN       1
@@ -132,6 +132,26 @@
 ;//////////////////////////////////////
 ;// init decompressor
 ;//////////////////////////////////////
+
+.macro NRV_pre
+        addiu sp,-2*NBPW
+        sw ra,0*NBPW(sp)
+        addu at,a1,src  # FIXME  a1 ==> lsrc
+        sw at,1*NBPW(sp)  # src_eof
+.endm
+
+.macro NRV_post
+NRV_eof:
+        lw v0,1*NBPW(sp)  # src_eof
+        lw ra,0*NBPW(sp)
+        sub v0,src,v0  # 0 ==> success
+        beqz v0,0f
+          nop
+        break  # bad EOF
+0:
+        jr ra
+          addiu sp,2*NBPW
+.endm
 
 .macro  init
 
@@ -514,4 +534,4 @@ init_sz = . - init_sz
 .endm
 
 
-#endif  //_MR3K_STD_CONF_
+#endif  //} _MR3K_STD_CONF_

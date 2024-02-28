@@ -60,27 +60,34 @@ SZ_FRAME= SZ_LINKA
 
 // In:
 r_exp=   31  // f_exp == &decompress
-r_PMASK= 30  // PAGE_MASK
+av_len=  30  // local
 r_ADRU=  29  // &base to unmap
 r_LENU=  28  // length to unmap
 r_fd=    27  // open fd of /proc/self/exe
 r_auxv=  26
 r_elf=   25  // original &Elf32_Ehdr of stub
 r_ADRX=  24  // compressed input
-r_LENX=  23  // total size
+r_LENX=  23  // total size (sz_pack2)
 // Local:
 r_unf=   22  // f_unf == &unfilter()
 av_hi=   21
-av_len=  20
+r_PMASK= 20  // PAGE_MASK
 cblk=    19
 r_buf=   18
 
-get_page_mask: .globl get_page_mask
-        li r3,0 -0x1000>>9  // modified by elf-entry.S
-        slwi r3,r3,9
-        blr
-        nop
+PAGE_MASK: .int 0xfffff000  // default
+        .int 0  // something else?
+        b fold_begin
 
+get_page_mask: .globl get_page_mask
+        mflr r0
+        bl 0f; 0:
+        mtctr r0
+        mflr r3
+        lwz r3,PAGE_MASK - 0b(r3)
+        bctr
+
+//sp: &argc,saved r2-r31,4*NBPW,??,argc
 fold_begin:
         call L90
 L90b:
@@ -154,14 +161,11 @@ L90:
         stwu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
         mr a0,r_ADRX  // &b_info
         mr a1,r_LENX  // total_size
-        la a2,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
-        mr a3,r_auxv  // &Elf32_auxv_t
-        mr a4,r_exp  // &decompress: f_expand
-        mr a5,r_unf  // &f_unf
-        mr a6,r_elf  // elfaddr
+        mr a2,r_elf   // elfaddr
+        la a3,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
+        mr a4,r_auxv  // &Elf32_auxv_t
         call upx_main  // Out: a0= entry
-// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, ELf32_auxv_t *a3,
-//      f_exp a4, f_unf a5, elfaddr a6)
+// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Ehdrtmp *a3, auxv *a4)
 
         la  sp,SZ_FRAME+OVERHEAD(sp)  // deallocate this frame
         mr r_exp,a0  // save &entry
@@ -215,6 +219,7 @@ sz_auxv= 2*NBPW
 
         bctr  // goto escape hatch
 
+  section SYSCALLS
 SYS_exit=  1
 SYS_fork=  2
 SYS_read=  3
@@ -226,7 +231,9 @@ SYS_brk=       45
 SYS_readlink=  85
 SYS_mmap=      90
 SYS_munmap=    91
+SYS_ftruncate= 93
 SYS_mprotect= 125
+SYS_memfd_create= 360
 
 Pprotect: .globl Pprotect
         li r0, 0xfff  // ~PAGE_MASK  (FIXME: probably use 4th arg)
@@ -244,8 +251,12 @@ sysgo:
 no_fail:
         ret
 
+memfd_create: .globl memfd_create
+        li r0,SYS_memfd_create; b 5f
+ftruncate: .globl ftruncate
+        li r0,SYS_ftruncate;5: b 5f
 exit: .globl exit
-        li r0,SYS_exit;        b 5f
+        li r0,SYS_exit;     5: b 5f
 brk: .globl brk
         li r0,SYS_brk;      5: b 5f
 readlink: .globl readlink
@@ -264,6 +275,7 @@ munmap: .globl munmap
         li r0,SYS_munmap;   5: b sysgo
 
 my_bkpt: .globl my_bkpt
-        teq r0,r0
+        teq r0,r0  // my_bkpt
         blr
+
 /* vim:set ts=8 sw=8 et: */

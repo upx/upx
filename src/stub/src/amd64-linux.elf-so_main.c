@@ -237,7 +237,7 @@ ERR_LAB
     str; \
 })
 #else  //}{
-       error;
+#error;
 #endif  //}
 
 extern int memfd_create(const char *name, unsigned int flags);
@@ -263,7 +263,7 @@ make_hatch_x86_64(
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             Pwrite(mfd, addr_string("\x0f\x05\x5f\x5e\x5a\xc3"), 6);
-            hatch = Pmap(0, 6, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            hatch = mmap(0, 6, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
         }
     }
@@ -305,7 +305,7 @@ make_hatch_ppc64(
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             Pwrite(mfd, code, sizeof(code));
-            hatch = Pmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            hatch = mmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
         }
     }
@@ -343,7 +343,7 @@ make_hatch_arm64(
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             Pwrite(mfd, code, sizeof(code));
-            void *mfd_addr = Pmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
+            void *mfd_addr = mmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
             close(mfd);
             hatch = (unsigned *)mfd_addr;
         }
@@ -364,8 +364,6 @@ make_hatch_arm64(
          |(REP8(PROT_READ ) & EXP8(PF_R)) \
          |(REP8(PROT_WRITE) & EXP8(PF_W)) \
         ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
-
-#define nullptr (void *)0
 
 #undef PAGE_MASK
 static unsigned long
@@ -455,7 +453,7 @@ upx_so_main(  // returns &escape_hatch
     // DO NOT USE *so_info AFTER THIS!!  It gets overwritten.
 
     // Copy compressed data before de-compression overwrites it.
-    char *const sideaddr = mmap(nullptr, cpr_len, PROT_WRITE|PROT_READ,
+    char *const sideaddr = mmap((void *)0, cpr_len, PROT_WRITE|PROT_READ,
         MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     DPRINTF("sideaddr=%%p\\n", sideaddr);
     memcpy(sideaddr, cpr_ptr, cpr_len);
@@ -507,7 +505,7 @@ upx_so_main(  // returns &escape_hatch
     // A read+write PT_LOAD might be relocated by rtld before de-compression,
     // so it cannot be compressed.
     struct b_info al_bi;  // for aligned data from binfo
-    void *hatch = nullptr;
+    void *hatch = (void *)0;
 
     for (; phdr < phdrN; ++phdr)
     if ( phdr->p_type == PT_LOAD && !(phdr->p_flags & PF_W)) {
@@ -544,7 +542,9 @@ upx_so_main(  // returns &escape_hatch
             // to hold the contents.
             mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
             ftruncate(mfd, x1.size);  // Allocate the pages in the file.
-            Pwrite(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
+            if (frag) {
+                Pwrite(mfd, x1.buf, frag);  // Save lo fragment of contents on first page.
+            }
             Punmap(x1.buf, x1.size);
             mfd_addr = Pmap(x1.buf, x1.size, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_SHARED, mfd, 0);
             DPRINTF("mfd_addr= %%p\\n", mfd_addr);  // Re-use the address space

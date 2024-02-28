@@ -49,13 +49,15 @@ MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
 
 __NR_memfd_create= 0x164 // 356
-__NR_mmap=     90
+__NR_oldmmap=  90
 __NR_mprotect=125
 __NR_munmap=   91
 
 __NR_close= 6
 __NR_exit=  1
 __NR_write= 4
+
+NAME_MAX=  255  // # chars in file name; linux/include/uapi/linux/limits.h
 
 PAGE_SHIFT= 12
 PAGE_MASK= (~0<<PAGE_SHIFT)
@@ -104,20 +106,46 @@ refill:
         adc bits,bits  // LSB= 1 (CarryIn); CarryOut= next bit
         ret  // infrequent (1/32)
 
-#define foldi %esi
 #define old_sp %ebp
+
+#define foldi %ebx
+#define r_unc %esi
+#define u_len %edi
 L20:
         pop foldi  // MATCH_09  &fold_info
-        cmpw $M_NRV2B_LE32|(0<<8),b_method(foldi); je 0f; hlt; 0:  // check method and filter bytes
-        lea _start - 4*NBPW - L70ret(%edx),%ecx  // &so_info
+//        cmpw $M_NRV2B_LE32|(0<<8),b_method(foldi); je 0f; hlt; 0:  // check method and filter bytes
+        lea _start - 4*NBPW - L70ret(%edx),%ecx; push %ecx  // MATCH_14  &so_info
+        sub $3*NBPW,%esp; mov %esp,old_sp
+#define F_ENTR 3*NBPW
+#define F_LENU 2*NBPW
+#define F_ADRU 1*NBPW
+#define F_MFD  0*NBPW
+        mov /*sz_unc*/(foldi),r_unc
 
-        push %ecx  // MATCH_14  &so_info
-        mov /*sz_unc*/(foldi),%eax; push %eax  // MATCH_15  F_LENU
-        mov %esp,old_sp
-#define F_LENU 0*NBPW
-
-        sub %eax,%esp  // alloca
+            // align + {page_mask, fd_name} + "/data/data/$APP_NAME/cache/upxAAA"
+        lea (1+ NAME_MAX + 8 + 2*NBPW + (1+ 11 + 13))(r_unc),u_len
+        mov u_len,F_LENU(old_sp)
+        sub u_len,%esp  // alloca
         and $-2*NBPW,%esp  // align stack
+
+        lea (8 + 2*NBPW)(r_unc),%eax; add %esp,%eax
+        and $-2*NBPW,%eax; push %eax  // MATCH_31 where to put pathname
+        push $-1  // MATCH_32  space for PAGE_MASK
+
+        xor %ecx,%ecx  // zero
+        push %edx  // MATCH_33  save &getbit
+        push %eax  // arg3  &pathname
+        mov %ecx,(%eax)  // empty string
+        push u_len  // arg2  length required
+        push %ecx  // arg1  0==> any page
+        call upx_mmap_and_fd; add $3*NBPW,%esp  // (ptr, len, pathname)
+        pop %edx  // MATCH_33  &getbit
+        mov %eax,%ecx
+        shr $12,%ecx; shl $12,%ecx; mov %ecx,F_ADRU(old_sp)
+        sub %ecx,%eax; sub $1,%eax; mov %eax,F_MFD(old_sp)
+#undef r_unc
+#undef u_len
+
 
 // This is nrv2b_d32, inlined and optimized for small space (about 160 bytes).
 // The task is to de-compress the folded pieces for shared library init:
@@ -129,10 +157,11 @@ L20:
 // and compressability of C-coded de-compressors for Lzma and Zstd
 // in contrast to the simple and small assembly-coded NRV.
 
-        mov %esp,dst  // &unfolded_code
-        push old_sp  // MATCH_16
+        lea (1+ 2)*NBPW(%esp),dst  // &unfolded_code  &so_info,PAGE_SIZE,F_MFD
+        push old_sp  // MATCH_16  save register
         mov    sz_cpr(foldi),lsrc
-        lea sz_b_info(foldi),src  // foldi dead
+        lea sz_b_info(foldi),src
+#undef foldi
 decompress:  // inlined: (uchar const *src, uint len, uchar *dst /*, u32 &ldst, uint method */)
         add src,lsrc; push lsrc  // MATCH_05  &input_eof
         //subq src,lsrc  // restore the value of lsrc; dead for inlined nrv2b
@@ -192,32 +221,27 @@ eof_n2b:
         cmp %ecx,%esi; je 0f; hlt; 0:  // test for ending in correct place
         pop old_sp  // MATCH_16
 
-        xor %ecx,%ecx  // zero
-        call 0f; .asciz "upx"; 0: pop %ebx
-        push $__NR_memfd_create; pop %eax; int $0x80
 #define mfd %edi
-        mov %eax,mfd
-
+        mov F_MFD(old_sp),mfd
         mov F_LENU(old_sp),%edx
         mov %esp,%ecx
         mov %edi,%ebx
-        push $__NR_write; pop %eax; int $0x80
-        mov old_sp,%esp  // de-alloca
+        push $__NR_write; pop %eax; call sys_check
+        lea 1*NBPW(old_sp),%esp  // de-alloca; F_MFD
 
         push $0  // arg6
         push mfd  // arg5
-        push $MAP_PRIVATE  // arg4
+        push $MAP_FIXED|MAP_PRIVATE  // arg4
         push $PROT_READ|PROT_EXEC  // arg3
-        push 4*NBPW(%esp)  // arg2  F_LENU
-        push $0  // arg1
-        mov %esp,%ebx
-        push $__NR_mmap; pop %eax; int $0x80; add $6*NBPW,%esp
+        push F_LENU(%ebp)  // arg2  F_LENU
+        push F_ADRU(%ebp)  // arg1  F_ADRU
+        call oldmmap
 
-        push %eax  // MATCH_13  ptr unfolded_code
         mov mfd,%ebx
-        push $__NR_close; pop %eax; int $0x80
+        push $__NR_close; pop %eax; call sys_check
 
-        pop %eax; push %eax
+        mov F_ADRU(%ebp),%eax
+        add $F_ENTR,%eax
         jmp *%eax
 // %esp:
 //  MATCH_13  ptr unfolded_code; for escape hatch
@@ -230,19 +254,54 @@ eof_n2b:
 //  MATCH_07  envp
 
 
-old_mmap:  // oldmmap: ebx -> 6 arguments; remove arguments on return
-        lea 4(%esp),%ebx
-        push $__NR_mmap; pop %eax; int $0x80
-        cmp $PAGE_MASK,%eax; jb 0f; hlt; 0:
-        ret $6*4
+sys_check:  // syscall with error checking; if halt then %eax= -errno, %ecx= __NR_
+        push %eax // save __NR_ for debug
+        int $0x80
+        pop %ecx  // recover __NR_ for debug
+        cmp $PAGE_MASK,%eax; jb 0f; hlt; 0:  // -errno
+        ret
+
+mmap: .globl mmap  // for C-callable, such as from upx_mmap_and_fd()
+oldmmap:  // oldmmap: 6 arguments on stack; remove arguments on return
+        push %ebx  // save register
+        lea 2*NBPW(%esp),%ebx
+        push $__NR_oldmmap; pop %eax; call sys_check
+        pop %ebx  // restore register
+        ret $6*NBPW
+
+get_upxfn_path: .globl get_upxfn_path
+        sub %eax,%eax  // should not be called!
+        ret
+
+my_memset: .globl my_memset  // (dst, val, n)
+        push %ebp; mov %esp,%ebp
+        push %edi
+        mov (2+ 2)*NBPW(%ebp),%ecx
+        mov (2+ 1)*NBPW(%ebp),%eax
+        mov (2+ 0)*NBPW(%ebp),%edi
+        rep stosb
+        pop %edi
+        pop %ebp
+        ret
+
+mempcpy: .globl mempcpy  // (dst, src, n)
+        push %ebp; mov %esp,%ebp
+        push %edi; push %esi
+        mov (2+ 2)*NBPW(%ebp),%ecx
+        mov (2+ 1)*NBPW(%ebp),%esi
+        mov (2+ 0)*NBPW(%ebp),%edi
+        rep movsb
+        mov %edi,%eax
+        pop %esi; pop %edi; pop %ebp
+        ret
 
 // IDENTSTR goes here
 
   section ELFMAINZ
 L70:
-        pop %edx  // &getbit  (also L70ret)
+        pop %edx  // MATCH_08  &getbit  (also L70ret)
         call L20  // MATCH_09  push $&fold_info
-fold_info:
+fold_info:  // nice if 4-byte aligned
 //  b_info (sz_unc, sz_cpr, method) of folded code (C-language, etc.)
 
 /* vim:set ts=8 sw=8 et: */

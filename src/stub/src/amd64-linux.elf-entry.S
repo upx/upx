@@ -31,6 +31,20 @@
 
 #include "arch/amd64/macros.S"
 #include "arch/amd64/regs.h"
+NBPW= 8
+.macro          jmps    target
+                .byte   0xeb, \target - . - 1
+.endm
+
+/* These from /usr/include/unistd_64.h */
+__NR_memfd_create= 319  // 0x13f
+__NR_ftruncate= 77
+__NR_exit=     60
+__NR_mprotect= 10
+__NR_mmap=      9
+__NR_close=     3
+__NR_open=      2
+__NR_write=     1
 
 sz_Ehdr= 64
 e_phnum= 56
@@ -46,10 +60,13 @@ sz_b_info= 12
   sz_cpr= 4
   b_method= 8
 
+AT_PAGESZ= 6
+
 PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
 
+MAP_SHARED=  1
 MAP_PRIVATE= 2
 MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
@@ -57,10 +74,6 @@ MAP_ANONYMOUS= 0x20
 SYS_mmap= 9  // 64-bit mode only!
 
 FD_stderr= 2
-
-PAGE_SHIFT= 12
-PAGE_MASK= (~0<<PAGE_SHIFT)
-PAGE_SIZE= -PAGE_MASK
 
 M_NRV2B_LE32=2  // ../conf.h
 M_NRV2D_LE32=5
@@ -72,79 +85,197 @@ M_NRV2E_LE32=8
 sz_pack2= .-4
 _start: .globl _start
 ////    nop; int3  # uncomment for debugging
-        push %rax  // space for entry address
-        push %rdx  // register this function pointer with 'atexit'
-        call main  // push &decompress
 
-/* Returns 0 on success; non-zero on failure. */
-f_exp:  // shorter name
-decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
+        pop %rcx  // argc
+        push %rsp; pop %rdi  // argv
+        push %rcx  // argc
 
-/* Arguments according to calling convention */
-#define src  %arg1
-#define lsrc %arg2
-#define dst  %arg3
-#define ldst %arg4  /* Out: actually a reference: &len_dst */
-#define meth %arg5l
-#define methb %arg5b
+#define old_sp %rbp
+F_FRAME= 7*NBPW
+F_ENTR= 6*NBPW; F_PMASK= F_ENTR
+F_RDX=  5*NBPW
+F_LENU= 4*NBPW
+F_ADRU= 3*NBPW
+F_ELFA= 2*NBPW
+F_LENX= 1*NBPW
+F_ADRX= 0*NBPW
 
-        push %rbp; push %rbx  // C callable
-        push ldst
-        push dst
-        addq src,lsrc; push lsrc  // &input_eof
-        subq src,lsrc  // restore the value of lsrc
+D_FOLD=  1*NBPW  // .data space at start of unfold
+D_PMASK= 0*NBPW
 
-  section NRV_HEAD
+AT_PAGESZ= 6  // /usr/include/elf.h
+        call zfind  // skip argv
+        call zfind  // skip env
+0: // find AT_PAGESZ in auxv
+        mov     (%rdi),%rax
+        mov NBPW(%rdi),%rcx; add $2*NBPW,%rdi
+        cmp $AT_PAGESZ,%rax; je 5f
+        mov $1<<12,%rcx  // default PAGE_SIZE
+        test %rax,%rax; jne 0b
+5:
+        neg %rcx; push %rcx  // F_PMASK
+        push %rdx  // F_RDX
+
+// Create anonymous temporary file on mfd
+        push $'u'|('p'<<8)|('x'<<16)|(0<<24)
+        push %rsp; pop %arg1  // "upx"
+        subl %arg2l,%arg2l  // 0
+        movl $__NR_memfd_create,%eax; call sys_check; mov %rax,%r12  // mfd
+        pop %rcx  // discard "upx"
+
+        lea sz_pack2(%rip),%rdi
+        mov (%rdi),%ecx  // sz_pack2: length before stub
+        sub %rcx,%rdi  // elfaddr
+        lea o_binfo(%rip),%rsi
+        lodsl; xchg %eax,%ebx; mov %ebx,%r13d  // O_BINFO; advance to &b_info
+        lodsl; xchg %eax,%edx; add $0x10,%edx; push %rdx  // F_LENU = sz_unc + x86_overrun + insurance
+        push $-1  // space for F_ADRU
+        push %rdi  // F_ELFA
+        sub %rbx,%rcx; push %rcx  // F_LENX = sz_pack2 - O_BINFO
+        add %rdi,%rbx; push %rbx  // F_ADRX =  elfaddr + O_BINFO
+
+        push %rsp; pop old_sp
+// alloca()
+        sub %rdx,%rsp  // F_LENU space
+CACHELINE= 8 * NBPW
+        and $-CACHELINE,%rsp  // align
+
+// Decompress the rest of this loader, and jump to it.
+
+#define dst  %rdi
+#define src  %rsi
+#define lsrc %rcx
+        push %rsp; pop dst  // dst= decompress onto stack
+        lodsl; push %rax  // MATCH_11  .sz_cpr
+        lodsl; cmpw $M_NRV2B_LE32|(0<<8),%ax; je 0f; hlt; 0:  // check method and filter bytes
+        pop %rax; add src,%rax; push %rax  // MATCH_11  input_eof
+        push old_sp  // MATCH_10
+
+
+// This is nrv2b_d32, inlined and optimized for small space (about 160 bytes).
+// The task is to de-compress the folded pieces for shared library init:
+// the de-compressor(s) of the PT_LOAD pieces, and the C-code supervisor
+// which adjusts the placement and mapping of the address space.
+// The output length is a couple KB for NRV, a few KB for Lzma, 64KB for Zstd.
+// This is motivated by the possibility of using multiple de-compressors
+// depending on the characteristics of each PT_LOAD, and by the increased size
+// and compressability of C-coded de-compressors for Lzma and Zstd
+// in contrast to the simple and small assembly-coded NRV.
+
+//%rsp:
+//  MATCH_10  old_sp
+//  MATCH_11  &input_eof
+
+//%rbp  === old_sp:  array of F_FRAME
 
 /* Working registers */
 #define off  %eax  /* XXX: 2GB */
+#define bits %ebx
 #define len  %ecx  /* XXX: 2GB */
 #define lenq %rcx
-#define bits %ebx
-#define displ %ebp
 #define dispq %rbp
+#define displ %ebp
 
-        movq src,%rsi  // hardware src for movsb, lodsb
-        movq dst,%rdi  // hardware dst for movsb
-        xor bits,bits  // empty; force refill
-        xor len,len  // create loop invariant
-        orq $(~0),dispq  // -1: initial displacement
-        call setup  // push &getbit [TUNED]
-ra_setup:
-
-/* AMD64 branch prediction is much worse if there are more than 3 branches
-   per 16-byte block.  The jnextb would suffer unless inlined.  getnextb is OK
-   using closed subroutine to save space, and should be OK on cycles because
-   CALL+RET should be predicted.  getnextb could partially expand, using closed
-   subroutine only for refill.
-*/
-/* jump on next bit {0,1} with prediction {y==>likely, n==>unlikely} */
-/* Prediction omitted for now. */
-/* On refill: prefetch next byte, for latency reduction on literals and offsets. */
-#define jnextb0np jnextb0yp
-#define jnextb0yp GETBITp; jnc
-#define jnextb1np jnextb1yp
-#define jnextb1yp GETBITp; jc
-#define GETBITp \
-        addl bits,bits; jnz 0f; \
-        movl (%rsi),bits; subq $-4,%rsi; \
-        adcl bits,bits; movb (%rsi),%dl; \
-0:
-/* Same, but without prefetch (not useful for length of match.) */
-#define jnextb0n jnextb0y
-#define jnextb0y GETBIT; jnc
-#define jnextb1n jnextb1y
-#define jnextb1y GETBIT; jc
-#define GETBIT \
-        addl bits,bits; jnz 0f; \
-        movl (%rsi),bits; subq $-4,%rsi; \
-        adcl bits,bits; \
-0:
+#define GETBIT call *%rdx
+#define jnextb0 GETBIT; jnc
+#define jnextb1 GETBIT; jc
 
 /* rotate next bit into bottom bit of reg */
-#define getnextbp(reg) call *%r11; adcl reg,reg
-#define getnextb(reg)  getnextbp(reg)
+#define getnextb(reg) GETBIT; adcl reg,reg
 
+        xor bits,bits  // empty; force refill
+        xor len,len  // create loop invariant
+        lea getbit(%rip),%rdx
+        push $-1; pop dispq  // initial displacement
+        cld  // paranoia
+        .byte 0xa8  // "testb $... ,%al" ==> "jmp top_n2b"
+lit_n2b:
+        movsb  // *dst++ = *src++;
+top_n2b:
+        jnextb1 lit_n2b
+        lea 1(lenq),off  # [len= 0] off= 1
+offmore_n2b:
+        getnextb(off)
+        jnextb0 offmore_n2b
+
+        subl $ 3,off; jc len_n2b  # use previous offset
+        shll $ 8,off; lodsb  # off is %eax, so 'lodsb' is "off |= *src++;"
+        xorl $~0,off; jz eof_n2b
+        movslq off,dispq  # XXX: 2GB; (note propagation of negative sign!)
+// for 4GB, replace the 'movslq' with:
+//      pushq $~0  # 64 bits all '1'
+//      movl off,(%rsp)  # replace lo-order 32 bits
+//      popq dispq
+len_n2b:
+        lea 1(lenq),off  # [len= 0] off= 1
+        getnextb(len); getnextb(len)  # two bits; cc set on result
+        jnz gotlen_n2b  # raw 1,2,3 ==> 2,3,4
+        movl off,len  # len= 1, the msb
+        addl $3-1,off  # raw 2.. ==> 5..
+lenmore_n2b:
+        getnextb(len)
+        jnextb0 lenmore_n2b
+gotlen_n2b:
+        cmpl $-0xd00,displ  # XXX: 2GB;  for 4GB: use 'cmpq'
+        adcl off,len  # len += off + (disp < -0xd00)
+
+        push %rsi  // MATCH_06
+          lea (%rdi,dispq),%rsi
+          rep; movsb
+        pop %rsi  // MATCH_06
+
+        jmp top_n2b
+
+eof_n2b:
+        pop old_sp   // MATCH_10
+        pop %rcx  // MATCH_11  &input_eof
+        cmp %rcx,%rsi; je 0f; hlt; 0:  // test for ending in correct place
+        //FIXME: check dst, too
+
+// Write de-compressed 'fold' to file
+        mov F_PMASK(old_sp),%rax; mov %rax,(%rsp)  // propagate PAGE_MASK
+        mov F_LENU(old_sp),%arg3  // LENU
+        push %rsp; pop %arg2  // buffer
+        mov %r12,%arg1  // mfd
+        push $__NR_write; pop %rax; call sys_check
+// de-alloca()
+        push old_sp; pop %rsp
+
+// Map unfolded code the SELinux way
+        sub %arg6l,%arg6l  // 0  offset
+        mov %r12,%arg5  // mfd
+        push $MAP_SHARED; pop %sys4
+        push %arg3; pop %arg2  // LENU
+        push $PROT_READ|PROT_EXEC; pop %arg3  // FIXME: add PROT_WRITE for DEBUG only
+        subl %edi,%edi  // (%arg1)dst = 0;  // kernel chooses addr
+        push $__NR_mmap; pop %rax; call sys_check
+        push %rax  // MATCH_12
+        mov %rax,F_ADRU(old_sp)
+
+        push %arg5; pop %arg1  // mfd
+        push $__NR_close; pop %rax; syscall
+
+// Use the copy.
+        pop %rax  // MATCH_12  ADRU
+        add $D_FOLD,%rax  // beyond .data
+        jmp *%rax  // goto unfolded stub
+
+zfind:
+        mov (%rdi),%rax; add $NBPW,%rdi
+        test %rax,%rax; jne zfind
+        ret
+
+sys_check:
+        push %rax  // save __NR_ for debug
+        syscall
+        pop %rcx  // recover __NR_ for debug
+        cmp $-1<<12,%rax; jb 0f; hlt; 0:
+        ret
+
+here:  // OUT: %rdi= (2+ retaddrj) without disturbing shadow stack
+        mov (%rsp),%rdi
+        scasw  // over jmp.s
+        ret
 
 getbit:
         addl bits,bits; jz refill  // Carry= next bit
@@ -152,141 +283,13 @@ getbit:
 refill:
         movl (%rsi),bits; subq $-4,%rsi  // next 32 bits; set Carry
         adcl bits,bits  // LSB= 1 (CarryIn); CarryOut= next bit
-        movb (%rsi),%dl  // speculate: literal, or bottom 8 bits of offset
         rep; ret
-
-copy:  // In: len, %rdi, dispq;  Out: 0==len, %rdi, dispq;  trashes %rax, %rdx
-        leaq (%rdi,dispq),%rax; cmpl $5,len  // <=3 is forced
-        movb (%rax),%dl; jbe copy1  // <=5 for better branch predict
-        cmpq $-4,dispq;   ja  copy1  // 4-byte chunks would overlap
-        subl $4,len  // adjust for termination cases
-copy4:
-        movl (%rax),%edx; addq $4,      %rax; subl $4,len
-        movl %edx,(%rdi); leaq  4(%rdi),%rdi; jnc copy4
-        addl $4,len; movb (%rax),%dl; jz copy0
-copy1:
-        incq %rax; movb %dl,(%rdi); subl $1,len
-                   movb (%rax),%dl
-        leaq 1(%rdi),%rdi;          jnz copy1
-copy0:
-        rep; ret
-
-setup:
-        cld
-        pop %r11  // addq $ getbit - ra_setup,%r11  # &getbit
-
-  section NRV2E
-#include "arch/amd64/nrv2e_d.S"
-
-  section NRV2D
-#include "arch/amd64/nrv2d_d.S"
-
-  section NRV2B
-#include "arch/amd64/nrv2b_d.S"
-
-#include "arch/amd64/lzma_d.S"
-
-  section NRV_TAIL
-        // empty
-
-  section ELFMAINY
-eof:
-        pop %rcx  // &input_eof
-        movq %rsi,%rax; subq %rcx,%rax  // src -= eof;  // return 0: good; else: bad
-        pop %rdx;       subq %rdx,%rdi  // dst -= original dst
-        pop %rcx;            movl %edi,(%rcx)  // actual length used at dst  XXX: 4GB
-        pop %rbx; pop %rbp
-        ret
-
-/* These from /usr/include/asm-x86_64/unistd.h */
-__NR_exit=     60
-__NR_mmap=      9
-__NR_mprotect= 10
-__NR_open=      2
-__NR_write=     1
-
-msg_SELinux:
-        push $ L71 - L70; pop %arg3  // length
-        call L72
-L70:
-        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
-L71:
-L72:
-        pop %arg2  // message text
-L75:
-        push $FD_stderr; pop %arg1
-        push $ __NR_write; pop %rax
-        syscall
-die:
-        push $127; pop %arg1
-        push $ __NR_exit; pop %rax
-        syscall
 
         // IDENTSTR goes here
 
   section ELFMAINZ
-// Decompress the rest of this loader, and jump to it.
-unfold:  // IN: rbp= &f_exp; rsp/ &proc_self_exe,%entry
-        pop %arg1  // &proc_self_exe
-        sub %arg2l,%arg2l  // O_RDONLY
-        push $__NR_open; pop %rax; syscall
-        // test %eax,%eax; js msg_proc_self_exe  // no longer fatal
-        push %rax  // save fd
-
-        lea -4+ FOLD - proc_self_exe(%arg1),%rsi  // &O_BINFO | is_ptinterp
-        lodsl; and $~1,%eax; movl %eax,%r14d  // O_BINFO
-        push %rsi; pop %rbx  // &b_info of folded decompressor
-        movl (%rsi),%edx  // .sz_unc
-
-        lea sz_pack2 - f_exp(%rbp),%rcx  // &sz_pack2
-        movl (%rcx),%r15d  // sz_pack2: length before stub
-        subq %r15,%rcx  // elfaddr= &Elf64_Ehdr of this stub
-        subl %r14d,%r15d  // LENX= sz_pack2 - O_BINFO
-        addq %rcx,%r14  // ADRX= elfaddr + O_BINFO
-          pop %rdi  // fd
-        push %rdx  // LENU
-        push %rax  // %ADRU
-          push %rdi  // fd
-        push %rcx  // elfaddr
-
-// Reserve space for unfolded stub.
-        subq %arg6,%arg6  // 0 offset
-        orl $-1,%arg5l  // fd
-        push $MAP_PRIVATE|MAP_ANONYMOUS; pop %sys4
-        push %rdx; pop %arg2  // len
-        push $PROT_READ|PROT_WRITE; pop %arg3
-        subl %arg1l,%arg1l  // 0; kernel chooses addr
-        push $__NR_mmap; pop %rax; syscall
-        movq %rax,2*8(%rsp)  // ADRU
-
-// Unfold
-        push %rax; pop %arg3  // dst= new unfold
-        push %rbx; pop %rsi
-        lodsl; push %rax; movq %rsp,%arg4  // P_13  .sz_unc; &dstlen
-        movq %arg3,%r13  // execute here
-        lodsl; push %rax  // P_14  tmp= .sz_cpr
-        lodsl; xchg %eax,%arg5l  // .b_method
-        movq %rsi,%arg1  // src
-        pop %arg2  // P_14  srclen
-        call *%rbp  // f_exp
-        pop %rcx  // P_13  toss .sz_unc
-
-// PROT_EXEC
-        movq 3*8(%rsp),%arg2  // LENU
-        movq 2*8(%rsp),%arg1  // ADRU
-        push $PROT_READ|PROT_EXEC; pop %arg3
-        push $__NR_mprotect; pop %rax; syscall
-
-// Use the copy.
-// %r14= ADRX; %r15= LENX;
-// rsp/ elfaddr,fd,ADRU,LENU,%entry
-        jmp *%r13
-
-main:
-        pop %rbp  // &f_exp
-        call unfold
-proc_self_exe:
-        .asciz "/proc/self/exe"
+        .balign 4
+o_binfo:
         .long O_BINFO  // offset of b_info for .text
 FOLD:
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}

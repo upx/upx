@@ -158,7 +158,7 @@ static int readelfheader ## CLASS (int fd, Elf ## CLASS ## _Ehdr *ehdr) \
      */ \
     if (EGET(ehdr->e_ehsize) != sizeof(Elf ## CLASS ## _Ehdr)) \
         return err("unrecognized ELF header size."); \
-    if (EGET(ehdr->e_phentsize) != sizeof(Elf ## CLASS ## _Phdr)) \
+    if (EGET(ehdr->e_phnum) && EGET(ehdr->e_phentsize) != sizeof(Elf ## CLASS ## _Phdr)) \
         return err("unrecognized program segment header size."); \
  \
     /* Finally, check the file type. \
@@ -367,7 +367,174 @@ static int readelfheaderident(int fd, Elf32_Ehdr *ehdr)
 
 HEADER_FUNCTIONS(32)
 
-HEADER_FUNCTIONS(64)
+/* readelfheader() reads the ELF header into our global variable, and
+ * checks to make sure that this is in fact a file that we should be
+ * munging.
+ */
+static int readelfheader64(int fd, Elf64_Ehdr *ehdr)
+{
+     if (read(fd, ((char *)ehdr)+EI_NIDENT, sizeof(*ehdr) - EI_NIDENT)
+        != (ssize_t)sizeof(*ehdr) - EI_NIDENT)
+        return ferr("missing or incomplete ELF header.");
+
+    /* Verify the sizes of the ELF header and the program segment
+     * header table entries.
+     */
+    if (EGET(ehdr->e_ehsize) != sizeof(Elf64_Ehdr))
+        return err("unrecognized ELF header size.");
+    if (EGET(ehdr->e_phnum) && EGET(ehdr->e_phentsize) != sizeof(Elf64_Phdr))
+        return err("unrecognized program segment header size.");
+
+    /* Finally, check the file type.
+     */
+    if (EGET(ehdr->e_type) != ET_EXEC && EGET(ehdr->e_type) != ET_DYN)
+        return err("not an executable or shared-object library.");
+
+    return TRUE;
+}
+
+/* readphdrtable() loads the program segment header table into memory.
+ */
+static int readphdrtable64(int fd, Elf64_Ehdr const *ehdr,
+                                   Elf64_Phdr **phdrs)
+{
+    size_t  size;
+
+    if (!EGET(ehdr->e_phoff) || !EGET(ehdr->e_phnum)
+)       return err("ELF file has no program header table.");
+
+    size = EGET(ehdr->e_phnum) * sizeof **phdrs;
+    if (!(*phdrs = malloc(size)))
+        return err("Out of memory!");
+
+    errno = 0;
+    if (read(fd, *phdrs, size) != (ssize_t)size)
+        return ferr("missing or incomplete program segment header table.");
+
+    return TRUE;
+}
+
+/* getmemorysize() determines the offset of the last byte of the file
+ * that is referenced by an entry in the program segment header table.
+ * (Anything in the file after that point is not used when the program
+ * is executing, and thus can be safely discarded.)
+ */
+static int getmemorysize64(Elf64_Ehdr const *ehdr,
+                                   Elf64_Phdr const *phdrs,
+                         unsigned long *newsize)
+{
+    Elf64_Phdr const   *phdr;
+    unsigned long   size, n;
+    size_t          i;
+
+    /* Start by setting the size to include the ELF header and the
+     * complete program segment header table.
+     */
+    size = EGET(ehdr->e_phoff) + EGET(ehdr->e_phnum) * sizeof *phdrs;
+    if (size < sizeof *ehdr)
+        size = sizeof *ehdr;
+
+    /* Then keep extending the size to include whatever data the
+     * program segment header table references.
+     */
+    for (i = 0, phdr = phdrs ; i < EGET(ehdr->e_phnum) ; ++i, ++phdr) {
+        if (EGET(phdr->p_type) != PT_NULL) {
+            n = EGET(phdr->p_offset) + EGET(phdr->p_filesz);
+            if (n > size)
+                size = n;
+        }
+    }
+
+    *newsize = size;
+    return TRUE;
+}
+
+/* modifyheaders() removes references to the section header table if
+ * it was stripped, and reduces program header table entries that
+ * included truncated bytes at the end of the file.
+ */
+static int modifyheaders64(Elf64_Ehdr *ehdr,
+                                   Elf64_Phdr *phdrs,
+                                   unsigned long newsize)
+{
+    Elf64_Phdr *phdr;
+    size_t  i;
+
+    /* If the section header table is gone, then remove all references
+     * to it in the ELF header.
+     */
+    if (EGET(ehdr->e_shoff) >= newsize) {
+        ESET(ehdr->e_shoff,0);
+        ESET(ehdr->e_shnum,0);
+        ESET(ehdr->e_shentsize,sizeof(Elf64_Shdr));
+        ESET(ehdr->e_shstrndx,0);
+    }
+
+    /* The program adjusts the file size of any segment that was
+     * truncated. The case of a segment being completely stripped out
+     * is handled separately.
+     */
+    for (i = 0, phdr = phdrs ; i < EGET(ehdr->e_phnum) ; ++i, ++phdr) {
+        if (EGET(phdr->p_offset) >= newsize) {
+            ESET(phdr->p_offset,newsize);
+            ESET(phdr->p_filesz,0);
+        } else if (EGET(phdr->p_offset) + EGET(phdr->p_filesz) > newsize) {
+            newsize -= EGET(phdr->p_offset);
+            ESET(phdr->p_filesz, newsize);
+        }
+    }
+
+    return TRUE;
+}
+
+/* commitchanges() writes the new headers back to the original file
+ * and sets the file to its new size.
+ */
+static int commitchanges64(int fd, Elf64_Ehdr const *ehdr,
+                                   Elf64_Phdr *phdrs,
+                                   unsigned long newsize)
+{
+    size_t  n;
+
+    /* Save the changes to the ELF header, if any.
+     */
+    if (lseek(fd, 0, SEEK_SET))
+        return ferr("could not rewind file");
+    errno = 0;
+    if (write(fd, ehdr, sizeof *ehdr) != (ssize_t)sizeof *ehdr)
+        return err("could not modify file");
+
+    /* Save the changes to the program segment header table, if any.
+     */
+    if (lseek(fd, EGET(ehdr->e_phoff), SEEK_SET) == (off_t)-1) {
+        err("could not seek in file.");
+        goto warning;
+    }
+    n = EGET(ehdr->e_phnum) * sizeof *phdrs;
+    if (write(fd, phdrs, n) != (ssize_t)n) {
+        err("could not write to file");
+        goto warning;
+    }
+
+    /* Eleventh-hour sanity check: don't truncate before the end of
+     * the program segment header table.
+     */
+    if (newsize < EGET(ehdr->e_phoff) + n)
+        newsize = EGET(ehdr->e_phoff) + n;
+
+    /* Chop off the end of the file.
+     */
+    if (ftruncate(fd, newsize)) {
+        err("could not resize file");
+        goto warning;
+    }
+
+    return TRUE;
+
+ warning:
+    return err("ELF file may have been corrupted!");
+}
+
 
 /* truncatezeros() examines the bytes at the end of the file's
  * size-to-be, and reduces the size to exclude any trailing zero

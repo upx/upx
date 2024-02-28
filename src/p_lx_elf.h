@@ -84,8 +84,8 @@ protected:
     MemBuffer mb_shdr;      // Shdr might not be near Phdr
     MemBuffer mb_dt_offsets;  // file offset of various DT_ tables
     unsigned *dt_offsets;  // index by dt_table[]
-    unsigned symnum_max;
-    unsigned strtab_max;
+    unsigned symnum_end;
+    unsigned strtab_end;
     char const *dynstr;   // from DT_STRTAB
 
     unsigned sz_phdrs;  // sizeof Phdr[]

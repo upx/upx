@@ -34,11 +34,10 @@ OUTPUT_ARCH(mips)
 PHDRS
 {
     text PT_LOAD FILEHDR PHDRS ;
-    data PT_LOAD ;  /* for setting brk(0) */
+    data PT_LOAD ;
 }
 SECTIONS
 {
-  . = 0x00100000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
   .text : {
     *(.text)
     *(.data)

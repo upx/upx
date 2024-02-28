@@ -32,6 +32,7 @@ NBPW= 8
 
 #define ARM_OLDABI 1
 #include "arch/arm64/v8/macros.S"
+#define bkpt brk #0
 
 sz_Ehdr= 8*NBPW
 e_type= 16
@@ -80,19 +81,17 @@ PATH_MAX= 4096
 #define OVERHEAD 2048
 #include "MAX_ELF_HDR.S"
 
+        .balign 4
 PAGE_MASK: .quad ~0<<12  // default
-get_page_mask: .globl get_page_mask
-        ldr x0,PAGE_MASK
-        ret
-
-bits_privanon:  // known offset (NBPW + 2*4)
+bits_privanon:
         .int MAP_PRIVATE | MAP_ANONYMOUS  // Linux default; else QNX
 
-fold_begin:  // known offset (NBPW + 3*4)
+fold_begin:  // known offset (NBPW + 4)
 ////    brk #0  // DEBUG
+// In:  sp/ PMASK,fd,ADRU,LENU, argc,argv,...
         b L10
 
-// In:  sp/ PMASK,fd,ADRU,LENU, x0,x1, argc,argv,...
+
 //lr   .req x30
 wLENC  .req w29  // compressed input
   xLENC  .req x29
@@ -108,8 +107,12 @@ xauxe  .req x23  // past new auxv
 xauxv  .req x22
 
 wfd    .req w21
-  xfd    .req x21
 xPMASK .req x20
+  xfd    .req x21
+
+get_page_mask: .globl get_page_mask
+        ldr x0,PAGE_MASK
+        ret
 
 mmap_privanon: .globl mmap_privanon
         ldr w6,bits_privanon  // r12 === ip
@@ -126,6 +129,14 @@ mmap:
         add x1,x1,x8
         do_sys __NR_mmap; ret
 
+        .globl munmap
+munmap:
+        ldr x8,PAGE_MASK
+        bic x8,x0,x8
+        sub x0,x0,x8
+        add x1,x1,x8
+        do_sys __NR_munmap; ret
+
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
 mprotect: .globl mprotect
@@ -137,8 +148,7 @@ mprotect: .globl mprotect
 
 L10:
         POP4(xPMASK,xfd, xADRU,xLENU)
-
-        mov x7,sp  // old_sp: x0,x1,argc,...
+        ldr x7,[sp,#0]  // argc
         mov x0,sp  // current stack pointer
 
         mov x1,xauxv
@@ -148,17 +158,13 @@ L10:
 
         sub x0,x1,#PATH_MAX // buffer for readlink
         sub x6,x0,#4  // space for copy of space3eq
-        sub x1,x1,x6  // amount needed for x0,x1,argc,argv,env,auxv
-        sub x0,x6,x1  // space for x0,x1,argc,argv,env,auxv
+        sub x1,x1,x6  // amount needed for argc,argv,env,auxv
+        sub x0,x6,x1  // space for argc,argv,env,auxv
         sub x0,x0,#NBPW  // room for added env ptr
         and x0,x0,#~0<<4  // sp must be 16-byte aligned
-        add x1,sp,#3*NBPW  // old_argv; avoid 0==argc impostor for terminator of argv
-        mov sp,x0  // new_sp
-        ldp x2,x3,[x7]  // x0,x1
-        stp x2,x3,[sp]
-        ldr x2,[x7,#2*NBPW]  // argc
-        str x2,[sp,#2*NBPW]
-        add x0,sp,#3*NBPW  // new argv
+        add x1,sp,#NBPW  // old_argv; avoid 0==argc impostor for terminator of argv
+        mov sp,x0  // new_argc
+        str x7,[x0],#NBPW  // argc
 
 .Larg:  // copy argv
         ldr x2,[x1],#NBPW
@@ -194,11 +200,8 @@ L10:
 0:
 
 /* Construct arglist for upx_main */
-        mov x7,xPMASK
-        mov x6,xelfa  // Elf64_Ehdr (reloc if ET_DYN and not pre-link)
           sub sp,sp,#MAX_ELF_HDR_64 + OVERHEAD  // alloca
-        adr x5,f_unfilter
-        mov x4,xfexp  // &f_decompress
+        mov x4,xelfa  // Elf64_Ehdr (reloc if ET_DYN and not pre-link)
         mov x3,xauxv  // new &Elf64_auxv_t
         mov x2,sp  // ehdr
         mov w1,wLENC  // total size of compressed data
@@ -217,6 +220,11 @@ L10:
         call munmap  // discard C_TEXT compressed data
 
 // Map 1 page of /proc/self/exe so that munmap does not remove all references
+        mov w0,#AT_FDCWD
+        adr x1,proc_self_exe
+        mov w2,#O_RDONLY
+        do_sys __NR_openat; mov wfd,w0
+
         mov x5,#0  // offset
         mov w4,wfd  // fd
         cmp w4,#0; blt no_map_pse
@@ -289,7 +297,6 @@ no_map_pse:
 // fpsr           0x0                 0x0
 // fpcr           0x0                 0x0
 // (gdb)
-        ldp x0,x1,[sp],#2*NBPW  // ABI owns x0?
         ret  // "br lr"; just enter ld-linux, omitting the munmap of unfolded stub
 #else  //}{  This should work, but fails intermittently
         mov w8,#__NR_munmap  // munmap(ADRU, LENU)  unfolded stub
@@ -431,6 +438,8 @@ hex:
         .unreq cto
         .unreq fid
 
+  section SYSCALLS; .balign 4
+
 __NR_SYSCALL_BASE= 0
 
 __NR_exit     = 0x5d + __NR_SYSCALL_BASE  // 93
@@ -442,7 +451,10 @@ __NR_unlinkat = 0x23 + __NR_SYSCALL_BASE  // 35
 __NR_getpid   = 0xad + __NR_SYSCALL_BASE  // 172
 __NR_brk      = 0xd6 + __NR_SYSCALL_BASE  // 214
 __NR_readlink = 0x4e + __NR_SYSCALL_BASE  // 78
+__NR_unlink   = 0x57 + __NR_SYSCALL_BASE  // 87
 
+__NR_memfd_create = 0x117 + __NR_SYSCALL_BASE  // 279
+__NR_ftruncate= 0x2e + __NR_SYSCALL_BASE  // 46
 __NR_mmap     = 0xde + __NR_SYSCALL_BASE  // 222
 __NR_mprotect = 0xe2 + __NR_SYSCALL_BASE  // 226
 __NR_munmap   = 0xd7 + __NR_SYSCALL_BASE  // 215
@@ -452,64 +464,49 @@ my_bkpt:
         brk #0  // my_bkpt
         ret
 
-        .globl exit
-exit:
-        do_sys __NR_exit
+exit:    .globl exit; do_sys __NR_exit
 
-        .globl read
-read:
-        do_sys __NR_read; ret
 
-        .globl write
-write:
-        do_sys __NR_write; ret
 
-        .globl close
-close:
-        do_sys __NR_close; ret
+brk:    .globl brk;      do_sys __NR_brk; ret
+close:  .globl close;   do_sys __NR_close; ret
+ftruncate:.globl ftruncate;do_sys __NR_ftruncate;    ret
+getpid: .globl getpid;  do_sys __NR_getpid; ret
+memfd_create: .globl memfd_create; do_sys __NR_memfd_create; ret
+read:   .globl read;    do_sys __NR_read; ret
+unlink: .globl unlink;  do_sys __NR_unlink; ret
+Pwrite: .globl Pwrite
+write:  .globl write;   do_sys __NR_write; ret
 
-        .globl getpid
-getpid:
-        do_sys __NR_getpid; ret
-
-        .globl brk
-brk:
-        do_sys __NR_brk; ret
-
-        .globl munmap
-munmap:
-        do_sys __NR_munmap; ret
-
-        .globl unlink
-unlink:
-        mov x2,#0  // flags as last arg
-        mov x1,x0  // path
-        mov w0,#AT_FDCWD
-        mov w8,#__NR_unlinkat
-        b svc_AT
-
-        .globl readlink
-readlink:
-        mov w8,#__NR_readlink
-        b svc_AT
-
-        .globl open
-open:
-        mov w8,#__NR_openat
+readlink: .globl readlink; mov w8,#__NR_readlink; b svc_AT  // OK if fails
+open:   .globl open;    mov w8,#__NR_openat  // OK if fails
 svc_AT:
-        //mov x4,x3
         mov x3,x2  // mode
         mov x2,x1  // flags
         mov x1,x0  // fname
         mov x0,#AT_FDCWD
         svc #0; ret
 
+memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t len)
+0:
+        ldrb w3,[x1],#1
+        strb w3,[x0],#1
+        subs x2,x2,#1
+        bgt 0b
+        ret
+
+my_memset: .globl my_memset  // void *memset(void *dst, int c, size_t len);
+0:
+        strb w1,[x0],#1
+        subs x2,x2,#1
+        bgt 0b
+        ret
+
         .globl __clear_cache
 __clear_cache:
         hlt #0
         mov w2,#0
         do_sys 0; ret  // FIXME
-
 
 #if DEBUG  /*{*/
 
