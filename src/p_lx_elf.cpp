@@ -2251,7 +2251,6 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, u32_t headway)
                 "bad nbucket %#x\n", nbucket);
             throwCantPack(msg);
         }
- 
 
         unsigned const v_sym = !x_sym ? 0 : get_te32(&dynp0[-1+ x_sym].d_val);
         if ((unsigned)file_size <= nbucket/sizeof(*buckets)  // FIXME: weak
