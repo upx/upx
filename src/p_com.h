@@ -31,7 +31,7 @@
 // dos/com
 **************************************************************************/
 
-class PackCom : public Packer {
+class PackCom /*not_final*/ : public Packer {
     typedef Packer super;
 
 public:

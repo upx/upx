@@ -33,14 +33,16 @@
 
 #if defined(BELE_CTP)
 // CTP - Compile-Time Polymorphism (templates)
-#define V static inline
-#define S static int __acc_cdecl_qsort
-#define C noexcept
+#define V  static inline
+#define VV static forceinline_constexpr
+#define S  static int __acc_cdecl_qsort
+#define C  noexcept
 #elif defined(BELE_RTP)
 // RTP - Run-Time Polymorphism (virtual functions)
-#define V virtual
-#define S virtual int
-#define C const noexcept
+#define V  virtual
+#define VV virtual
+#define S  virtual int
+#define C  const noexcept
 #else
 #error
 #endif
@@ -79,12 +81,9 @@ struct AbstractPolicy {
 
 private:
     // disable copy and move
-    AbstractPolicy(const AbstractPolicy &) DELETED_FUNCTION;
-    AbstractPolicy &operator=(const AbstractPolicy &) DELETED_FUNCTION;
-    AbstractPolicy(AbstractPolicy &&) noexcept DELETED_FUNCTION;
-    AbstractPolicy &operator=(AbstractPolicy &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(AbstractPolicy)
     // disable dynamic allocation
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(AbstractPolicy)
 };
 #endif
 
@@ -104,8 +103,8 @@ struct BEPolicy
 #elif defined(BELE_RTP)
     typedef N_BELE_CTP::BEPolicy CTP_Policy;
 #endif
-    V bool isBE() C { return true; }
-    V bool isLE() C { return false; }
+    VV bool isBE() C { return true; }
+    VV bool isLE() C { return false; }
 
     typedef BE16 U16;
     typedef BE32 U32;
@@ -147,12 +146,9 @@ struct BEPolicy
 
 private:
     // disable copy and move
-    BEPolicy(const BEPolicy &) DELETED_FUNCTION;
-    BEPolicy &operator=(const BEPolicy &) DELETED_FUNCTION;
-    BEPolicy(BEPolicy &&) noexcept DELETED_FUNCTION;
-    BEPolicy &operator=(BEPolicy &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(BEPolicy)
     // disable dynamic allocation
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(BEPolicy)
 };
 
 struct LEPolicy
@@ -166,8 +162,8 @@ struct LEPolicy
 #elif defined(BELE_RTP)
     typedef N_BELE_CTP::LEPolicy CTP_Policy;
 #endif
-    V bool isBE() C { return false; }
-    V bool isLE() C { return true; }
+    VV bool isBE() C { return false; }
+    VV bool isLE() C { return true; }
 
     typedef LE16 U16;
     typedef LE32 U32;
@@ -209,12 +205,9 @@ struct LEPolicy
 
 private:
     // disable copy and move
-    LEPolicy(const LEPolicy &) DELETED_FUNCTION;
-    LEPolicy &operator=(const LEPolicy &) DELETED_FUNCTION;
-    LEPolicy(LEPolicy &&) noexcept DELETED_FUNCTION;
-    LEPolicy &operator=(LEPolicy &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(LEPolicy)
     // disable dynamic allocation
-    UPX_CXX_DISABLE_NEW_DELETE
+    UPX_CXX_DISABLE_NEW_DELETE(LEPolicy)
 };
 
 // Native Endianness policy (aka host policy)
@@ -229,6 +222,7 @@ typedef LEPolicy HostPolicy;
 #endif
 
 #undef V
+#undef VV
 #undef S
 #undef C
 

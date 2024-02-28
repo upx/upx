@@ -143,17 +143,19 @@ build/extra/cross-linux-gnu-arm-eabihf/%: CMAKE_CROSSCOMPILING_EMULATOR ?= qemu-
 # cross compiler: Windows x86 win32 MinGW (i386)
 build/extra/cross-windows-mingw32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw32/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc -static -D_WIN32_WINNT=0x0400
-build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++ -static -D_WIN32_WINNT=0x0400
+build/extra/cross-windows-mingw32/%: export CC  = i686-w64-mingw32-gcc -static -D_WIN32_WINNT=0x0501
+build/extra/cross-windows-mingw32/%: export CXX = i686-w64-mingw32-g++ -static -D_WIN32_WINNT=0x0501
 build/extra/cross-windows-mingw32/%: CMAKE_SYSTEM_NAME ?= Windows
+build/extra/cross-windows-mingw32/%: CMAKE_SYSTEM_PROCESSOR ?= X86
 build/extra/cross-windows-mingw32/%: CMAKE_CROSSCOMPILING_EMULATOR ?= wine
 
 # cross compiler: Windows x64 win64 MinGW (amd64)
 build/extra/cross-windows-mingw64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-windows-mingw64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc -static -D_WIN32_WINNT=0x0400
-build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++ -static -D_WIN32_WINNT=0x0400
+build/extra/cross-windows-mingw64/%: export CC  = x86_64-w64-mingw32-gcc -static -D_WIN32_WINNT=0x0501
+build/extra/cross-windows-mingw64/%: export CXX = x86_64-w64-mingw32-g++ -static -D_WIN32_WINNT=0x0501
 build/extra/cross-windows-mingw64/%: CMAKE_SYSTEM_NAME ?= Windows
+build/extra/cross-windows-mingw64/%: CMAKE_SYSTEM_PROCESSOR ?= AMD64
 build/extra/cross-windows-mingw64/%: CMAKE_CROSSCOMPILING_EMULATOR ?= wine64
 
 # cross compiler: macOS arm64 (aarch64)
@@ -162,6 +164,7 @@ build/extra/cross-darwin-arm64/release: PHONY; $(call run_config_and_build,$@,Re
 build/extra/cross-darwin-arm64/%: export CC  = clang -target arm64-apple-darwin
 build/extra/cross-darwin-arm64/%: export CXX = clang++ -target arm64-apple-darwin
 build/extra/cross-darwin-arm64/%: CMAKE_SYSTEM_NAME ?= Darwin
+build/extra/cross-darwin-arm64/%: CMAKE_SYSTEM_PROCESSOR ?= arm64
 
 # cross compiler: macOS x86_64 (amd64)
 build/extra/cross-darwin-x86_64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
@@ -169,6 +172,7 @@ build/extra/cross-darwin-x86_64/release: PHONY; $(call run_config_and_build,$@,R
 build/extra/cross-darwin-x86_64/%: export CC  = clang -target x86_64-apple-darwin
 build/extra/cross-darwin-x86_64/%: export CXX = clang++ -target x86_64-apple-darwin
 build/extra/cross-darwin-x86_64/%: CMAKE_SYSTEM_NAME ?= Darwin
+build/extra/cross-darwin-x86_64/%: CMAKE_SYSTEM_PROCESSOR ?= x86_64
 
 #***********************************************************************
 # C/C++ static analyzers
@@ -221,7 +225,7 @@ ifneq ($(CXX),)
 UPX_XTARGET := $(UPX_XTARGET)
 build/xtarget/$(UPX_XTARGET)/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/xtarget/$(UPX_XTARGET)/release: PHONY; $(call run_config_and_build,$@,Release)
-build/xtarget/$(UPX_XTARGET)/%: export CC := $(CC)
+build/xtarget/$(UPX_XTARGET)/%: export CC  := $(CC)
 build/xtarget/$(UPX_XTARGET)/%: export CXX := $(CXX)
 # shortcuts
 xtarget/all:     xtarget/debug xtarget/release
@@ -264,6 +268,7 @@ build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CXX_COMPILER_
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CXX_COMPILER_RANLIB)
 # pass common CMake cross compilation settings from environment/make to cmake
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_SYSTEM_NAME)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_SYSTEM_PROCESSOR)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_CROSSCOMPILING_EMULATOR)
 # pass UPX config options from environment/make to cmake; see CMakeLists.txt
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_GITREV)
@@ -271,8 +276,14 @@ build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WSTRICT)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_WERROR)
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_DISABLE_SELF_PACK_TEST)
+# pass UPX extra compile options from environment/make to cmake; see CMakeLists.txt
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_EXTRA_COMPILE_OPTIONS_BZIP2)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_EXTRA_COMPILE_OPTIONS_UCL)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_EXTRA_COMPILE_OPTIONS_UPX)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_EXTRA_COMPILE_OPTIONS_ZLIB)
+build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,UPX_CONFIG_EXTRA_COMPILE_OPTIONS_ZSTD)
 
-endif # bug work-around
+endif # GNU make bug work-around
 
 #***********************************************************************
 # check git submodules

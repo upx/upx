@@ -241,6 +241,35 @@ TEST_CASE("basic xspan usage") {
     }
 }
 
+TEST_CASE("xspan array access") {
+    const size_t N = 16;
+    char buf[N];
+    memset(buf, 0, sizeof(buf));
+    XSPAN_0_VAR(char, c0, buf, sizeof(buf));
+    XSPAN_P_VAR(char, cp, buf, sizeof(buf));
+    XSPAN_S_VAR(char, cs, buf, sizeof(buf));
+    for (size_t i = 0; i != N; ++i)
+        c0[i] += 1;
+    for (size_t i = 0; i != N; ++i)
+        cp[i] += 1;
+    for (size_t i = 0; i != N; ++i)
+        cs[i] += 1;
+#if __cplusplus >= 201103L
+    for (auto ptr = c0; ptr != c0 + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = c0 + 0; ptr < c0 + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = cp; ptr != cp + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = cp + 0; ptr < cp + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = cs; ptr != cs + N; ++ptr)
+        *ptr += 1;
+    for (auto ptr = cs + 0; ptr < cs + N; ++ptr)
+        *ptr += 1;
+#endif
+}
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -658,6 +687,9 @@ TEST_CASE("Span subspan") {
     CHECK((as + 2).subspan(0, -2)[0] == 0);
     CHECK_THROWS(as.subspan(1, 0)[0]);
     CHECK_THROWS(as.subspan(1, 1)[-1]);
+    CHECK(as.subspan(1)[0] == 1);
+    CHECK(as.subspan(2)[0] == 2);
+    CHECK(as.subspan(3)[0] == 3);
 }
 
 TEST_CASE("Span constness") {

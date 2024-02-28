@@ -290,7 +290,7 @@ void ElfLinker::preprocessRelocations(char *start, char const *end) {
 
             if (section) {
                 addRelocation(section->name, offset, t, symbol, add);
-                NO_printf("relocation %s %s %x %llx preprocessed\n", section->name, symbol, offset,
+                NO_printf("relocation %s %s %x %llu preprocessed\n", section->name, symbol, offset,
                           (unsigned long long) add);
             }
         }
@@ -317,7 +317,7 @@ ElfLinker::Symbol *ElfLinker::findSymbol(const char *name, bool fatal) const {
 
 ElfLinker::Section *ElfLinker::addSection(const char *sname, const void *sdata, int slen,
                                           unsigned p2align) {
-    NO_printf("addSection: %s len=%d p2align=%d\n", sname, slen, p2align);
+    NO_printf("addSection: %s len=%d align=%d\n", sname, slen, p2align);
     if (!sdata && (!strcmp("ABS*", sname) || !strcmp("UND*", sname)))
         return nullptr;
     if (update_capacity(nsections, &nsections_capacity))

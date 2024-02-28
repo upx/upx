@@ -28,8 +28,8 @@
 #pragma once
 
 /*************************************************************************
-// assert sane memory buffer sizes to protect against integer overflows
-// and malicious header fields
+// upx_rsize_t and mem_size: assert sane memory buffer sizes to protect
+// against integer overflows and malicious header fields
 // see C 11 standard, Annex K
 **************************************************************************/
 
@@ -40,14 +40,14 @@ bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extr
 
 // will throw on invalid size
 upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
-                     upx_uint64_t extra2 = 0);
+                     upx_uint64_t extra2 = 0) may_throw;
 
 //
 // inline fast paths:
 //
 
 // will throw on invalid size
-inline upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n) {
+inline upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n) may_throw {
     upx_uint64_t bytes = element_size * n;
     if very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX || n > UPX_RSIZE_MAX ||
                       bytes > UPX_RSIZE_MAX)
@@ -56,24 +56,24 @@ inline upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n) {
 }
 
 // will throw on invalid size
-inline upx_rsize_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n) {
+inline upx_rsize_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n) may_throw {
     (void) mem_size(element_size, n); // assert size
     return ACC_ICONV(upx_rsize_t, n); // and return n
 }
 
 // will throw on invalid size
-inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n) {
+inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n) may_throw {
     (void) mem_size(element_size, n); // assert size
 }
 
 // "new" with asserted size; will throw on invalid size
 #if DEBUG
 template <class T>
-T *NewArray(upx_uint64_t n) {
+T *NewArray(upx_uint64_t n) may_throw {
     COMPILE_TIME_ASSERT(std::is_standard_layout<T>::value)
     COMPILE_TIME_ASSERT(std::is_trivially_copyable<T>::value)
     COMPILE_TIME_ASSERT(std::is_trivially_default_constructible<T>::value)
-    size_t bytes = mem_size(sizeof(T), n); // assert size
+    upx_rsize_t bytes = mem_size(sizeof(T), n); // assert size
     T *array = new T[size_t(n)];
 #if !defined(__SANITIZE_MEMORY__)
     if (array != nullptr && bytes > 0) {
@@ -95,32 +95,34 @@ T *NewArray(upx_uint64_t n) {
 
 // ptrdiff_t with nullptr checks and asserted size; will throw on failure
 // NOTE: returns size_in_bytes, not number of elements!
-int ptr_diff_bytes(const void *a, const void *b);
-unsigned ptr_udiff_bytes(const void *a, const void *b); // asserts a >= b
+int ptr_diff_bytes(const void *a, const void *b) may_throw;
+unsigned ptr_udiff_bytes(const void *a, const void *b) may_throw; // asserts a >= b
 
 // short names "ptr_diff" and "ptr_udiff" for types with sizeof(X) == 1
 template <class T, class U>
 inline typename std::enable_if<sizeof(T) == 1 && sizeof(U) == 1, int>::type ptr_diff(const T *a,
-                                                                                     const U *b) {
+                                                                                     const U *b)
+    may_throw {
     return ptr_diff_bytes(a, b);
 }
 template <class T, class U>
 inline typename std::enable_if<sizeof(T) == 1 && sizeof(U) == 1, unsigned>::type
-ptr_udiff(const T *a, const U *b) {
+ptr_udiff(const T *a, const U *b) may_throw {
     return ptr_udiff_bytes(a, b);
 }
 
 // check that buffers do not overlap; will throw on error
 noinline void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b,
-                                       size_t b_size);
+                                       size_t b_size) may_throw;
 noinline void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b,
-                                       size_t b_size, upx_uintptr_t c, size_t c_size);
+                                       size_t b_size, upx_uintptr_t c, size_t c_size) may_throw;
 
-forceinline void ptr_check_no_overlap(const void *a, size_t a_size, const void *b, size_t b_size) {
+forceinline void ptr_check_no_overlap(const void *a, size_t a_size, const void *b, size_t b_size)
+    may_throw {
     uintptr_check_no_overlap((upx_uintptr_t) a, a_size, (upx_uintptr_t) b, b_size);
 }
 forceinline void ptr_check_no_overlap(const void *a, size_t a_size, const void *b, size_t b_size,
-                                      const void *c, size_t c_size) {
+                                      const void *c, size_t c_size) may_throw {
     uintptr_check_no_overlap((upx_uintptr_t) a, a_size, (upx_uintptr_t) b, b_size,
                              (upx_uintptr_t) c, c_size);
 }
@@ -128,8 +130,10 @@ forceinline void ptr_check_no_overlap(const void *a, size_t a_size, const void *
 // invalidate and poison a pointer: point to a non-null invalid address
 // - resulting pointer should crash on dereference
 // - this should be efficient, so no mmap() guard page etc.
-// - this should play nice with runtime checkers like ASAN, MSAN, valgrind, etc.
+// - this should play nice with runtime checkers like ASAN, MSAN, UBSAN, valgrind, etc.
 // - this should play nice with static analyzers like clang-tidy etc.
+// NOTE: this is clearly UB (Undefined Behaviour), and stricter compilers or
+//   architectures may need a more advanced/costly implementation in the future
 template <class T>
 inline void ptr_invalidate_and_poison(T *(&ptr)) noexcept {
     ptr = (T *) (void *) 251; // 0x000000fb // NOLINT(performance-no-int-to-ptr)
@@ -139,9 +143,9 @@ inline void ptr_invalidate_and_poison(T *(&ptr)) noexcept {
 // stdlib
 **************************************************************************/
 
-void *upx_calloc(size_t n, size_t element_size);
+void *upx_calloc(size_t n, size_t element_size) may_throw;
 
-void upx_memswap(void *a, void *b, size_t n);
+void upx_memswap(void *a, void *b, size_t n) noexcept;
 
 typedef int(__acc_cdecl_qsort *upx_compare_func_t)(const void *, const void *);
 typedef void (*upx_sort_func_t)(void *array, size_t n, size_t element_size, upx_compare_func_t);

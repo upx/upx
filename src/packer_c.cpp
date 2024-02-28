@@ -219,7 +219,7 @@ const char *Packer::getDecompressorSections() const {
         "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30";
     // clang-format on
 
-    unsigned const method = ph_forced_method(ph.method);
+    const unsigned method = ph_forced_method(ph.method);
     if (method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
     if (method == M_NRV2D_LE32)

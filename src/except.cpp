@@ -31,39 +31,41 @@
 //
 **************************************************************************/
 
-/*static*/ upx_std_atomic(size_t) Throwable::debug_counter;
+/*static*/ Throwable::Stats Throwable::stats;
 
 Throwable::Throwable(const char *m, int e, bool w) noexcept : super(),
                                                               msg(nullptr),
                                                               err(e),
                                                               is_warning(w) {
-    if (m)
+    if (m != nullptr) {
         msg = strdup(m);
-#if 0
-    fprintf(stderr, "construct exception: %s %zu\n", msg, debug_counter);
-    debug_counter += 1;
-#endif
+        assert_noexcept(msg != nullptr);
+    }
+    NO_fprintf(stderr, "construct exception: %zu %zu %s\n", size_t(stats.counter_current),
+               size_t(stats.counter_total), (const char *) msg);
+    stats.counter_current += 1;
+    stats.counter_total += 1;
 }
 
 Throwable::Throwable(const Throwable &other) noexcept : super(other),
                                                         msg(nullptr),
                                                         err(other.err),
                                                         is_warning(other.is_warning) {
-    if (other.msg)
+    if (other.msg != nullptr) {
         msg = strdup(other.msg);
-#if 0
-    fprintf(stderr, "copy exception: %s %zu\n", msg, debug_counter);
-    debug_counter += 1;
-#endif
+        assert_noexcept(msg != nullptr);
+    }
+    NO_fprintf(stderr, "copy construct exception: %zu %zu %s\n", size_t(stats.counter_current),
+               size_t(stats.counter_total), (const char *) msg);
+    stats.counter_current += 1;
+    stats.counter_total += 1;
 }
 
 Throwable::~Throwable() noexcept {
-#if 0
-    debug_counter -= 1;
-    fprintf(stderr, "destruct exception: %s %zu\n", msg, debug_counter);
-#endif
-    if (msg)
-        free(msg);
+    stats.counter_current -= 1;
+    NO_fprintf(stderr, "destruct exception: %zu %zu %s\n", size_t(stats.counter_current),
+               size_t(stats.counter_total), (const char *) msg);
+    upx::owner_free(msg);
 }
 
 /*************************************************************************

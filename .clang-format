@@ -15,6 +15,7 @@ AttributeMacros:
   - XSPAN_DELETED_FUNCTION
   - may_throw
 EmptyLineBeforeAccessModifier: Leave
+# IndentPPDirectives: AfterHash # TODO later
 SortIncludes: false
 SpaceAfterCStyleCast: true
 Standard: Cpp03

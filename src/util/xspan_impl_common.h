@@ -271,15 +271,19 @@ public:
     Self &operator=(MemBuffer &mb) { return assign(Self(mb)); }
 #endif
 
+    // subspan (creates a new value)
     Self subspan(ptrdiff_t offset, ptrdiff_t count) const {
-        pointer begin = check_add(ptr, offset);
-        pointer end = check_add(begin, count);
-        if (begin <= end)
-            return Self(Unchecked, begin, (end - begin) * sizeof(T), begin);
+        pointer p_begin = check_add(ptr, offset);
+        pointer p_end = check_add(p_begin, count);
+        if (p_begin <= p_end)
+            return Self(Unchecked, p_begin, (p_end - p_begin) * sizeof(T), p_begin);
         else
-            return Self(Unchecked, end, (begin - end) * sizeof(T), end);
+            return Self(Unchecked, p_end, (p_begin - p_end) * sizeof(T), p_end);
     }
+    // subspan (creates a new value)
+    Self subspan(ptrdiff_t offset) const { return subspan(offset, size() - offset); }
 
+    // cast to a different type (creates a new value)
     template <class U>
     inline CSelf<U> type_cast() const {
         typedef CSelf<U> R;
@@ -453,16 +457,16 @@ public: // raw access
     // like C++20 std::span
     pointer data() const noexcept { return ptr; }
     pointer data(size_t bytes) const { return raw_bytes(bytes); } // UPX extra
-    // size_type size() const { return size_bytes() / sizeof(element_type); } // NOT USED
+    size_type size() const { return size_bytes() / sizeof(element_type); }
     size_type size_bytes() const {
         assertInvariants();
         if __acc_cte (!configRequirePtr && ptr == nullptr)
             return 0;
         if __acc_cte (!configRequireBase && base == nullptr)
             return 0;
-        const charptr begin = (const charptr) ptr;
-        const charptr end = (const charptr) base + size_in_bytes;
-        return end - begin;
+        const charptr p_begin = (const charptr) ptr;
+        const charptr p_end = (const charptr) base + size_in_bytes;
+        return p_end - p_begin;
     }
 
 #if CLANG_FORMAT_DUMMY_CLASS

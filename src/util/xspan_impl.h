@@ -43,22 +43,22 @@
 XSPAN_NAMESPACE_BEGIN
 
 // HINT: set env-var "UPX_DEBUG_DOCTEST_DISABLE=1" for improved debugging experience
-noinline void xspan_fail_nullptr(void) may_throw;
-noinline void xspan_fail_nullbase(void) may_throw;
-noinline void xspan_fail_not_same_base(void) may_throw;
-noinline void xspan_fail_range_nullptr(void) may_throw;
-noinline void xspan_fail_range_nullbase(void) may_throw;
-noinline void xspan_fail_range_range(void) may_throw;
+noreturn void xspan_fail_nullptr(void) may_throw;
+noreturn void xspan_fail_nullbase(void) may_throw;
+noreturn void xspan_fail_not_same_base(void) may_throw;
+noreturn void xspan_fail_range_nullptr(void) may_throw;
+noreturn void xspan_fail_range_nullbase(void) may_throw;
+noreturn void xspan_fail_range_range(void) may_throw;
 void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_bytes) may_throw;
 
 // help constructor to distinguish between number of elements and bytes
 struct XSpanCount final {
     explicit forceinline_constexpr XSpanCount(size_t n) noexcept : count(n) {}
-    size_t count; // public
+    const size_t count; // public
 };
 struct XSpanSizeInBytes final {
     explicit forceinline_constexpr XSpanSizeInBytes(size_t bytes) noexcept : size_in_bytes(bytes) {}
-    size_t size_in_bytes; // public
+    const size_t size_in_bytes; // public
 };
 
 template <class T>
