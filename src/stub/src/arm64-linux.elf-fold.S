@@ -2,7 +2,7 @@
 //
 //  This file is part of the UPX executable compressor.
 //
-//  Copyright (C) 2000-2023 John F. Reiser
+//  Copyright (C) 2000-2024 John F. Reiser
 //  All Rights Reserved.
 //
 //  UPX and the UCL library are free software; you can redistribute them
@@ -88,9 +88,8 @@ bits_privanon:
 
 fold_begin:  // known offset (NBPW + 4)
 ////    brk #0  // DEBUG
-// In:  sp/ PMASK,fd,ADRU,LENU, argc,argv,...
+// In:  sp/ PMASK,fd,ADRU,LENU, x0,x1, argc,argv,...
         b L10
-
 
 //lr   .req x30
 wLENC  .req w29  // compressed input
@@ -102,7 +101,7 @@ wLENU  .req w27  // unfolded fold_begin and upx_main
 xADRU  .req x26
 
 xelfa  .req x25  // hi &Elf64_Ehdr
-xfexp  .req x24  // de-compressor
+xentry .req x24  // entry address
 xauxe  .req x23  // past new auxv
 xauxv  .req x22
 
@@ -148,7 +147,8 @@ mprotect: .globl mprotect
 
 L10:
         POP4(xPMASK,xfd, xADRU,xLENU)
-        ldr x7,[sp,#0]  // argc
+
+        mov x7,sp  // old_sp: x0,x1,argc,...
         mov x0,sp  // current stack pointer
 
         mov x1,xauxv
@@ -158,13 +158,17 @@ L10:
 
         sub x0,x1,#PATH_MAX // buffer for readlink
         sub x6,x0,#4  // space for copy of space3eq
-        sub x1,x1,x6  // amount needed for argc,argv,env,auxv
-        sub x0,x6,x1  // space for argc,argv,env,auxv
+        sub x1,x1,x6  // amount needed for x0,x1,argc,argv,env,auxv
+        sub x0,x6,x1  // space for x0,x1,argc,argv,env,auxv
         sub x0,x0,#NBPW  // room for added env ptr
         and x0,x0,#~0<<4  // sp must be 16-byte aligned
-        add x1,sp,#NBPW  // old_argv; avoid 0==argc impostor for terminator of argv
-        mov sp,x0  // new_argc
-        str x7,[x0],#NBPW  // argc
+        add x1,sp,#3*NBPW  // old_argv; avoid 0==argc impostor for terminator of argv
+        mov sp,x0  // new_sp
+        ldp x2,x3,[x7]  // x0,x1
+        stp x2,x3,[sp]
+        ldr x2,[x7,#2*NBPW]  // argc
+        str x2,[sp,#2*NBPW]
+        add x0,sp,#3*NBPW  // new argv
 
 .Larg:  // copy argv
         ldr x2,[x1],#NBPW
@@ -208,7 +212,7 @@ L10:
         mov x0,xADRC  // &b_info
         call upx_main
           add sp,sp,#MAX_ELF_HDR_64 + OVERHEAD  // un-alloca
-        mov xfexp,x0  // entry address
+        mov xentry,x0  // entry address
 
 // Discard pages of compressed input data (includes [ADRC,+LENC) )
         ldr x1,[xelfa,#p_memsz+sz_Phdr+sz_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
@@ -237,7 +241,7 @@ L10:
         mov w0,wfd  // fd
         call close
 no_map_pse:
-        mov lr,xfexp  // entry
+        mov lr,xentry  // entry
         mov x0,xADRU
         mov w1,wLENU
         ldr x2,[xauxe,#NBPW - sz_auxv]  // Elf64_auxv_t[AT_NULL@.a_type].a_val
@@ -297,6 +301,7 @@ no_map_pse:
 // fpsr           0x0                 0x0
 // fpcr           0x0                 0x0
 // (gdb)
+        ldp x0,x1,[sp],#2*NBPW  // ABI owns x0?
         ret  // "br lr"; just enter ld-linux, omitting the munmap of unfolded stub
 #else  //}{  This should work, but fails intermittently
         mov w8,#__NR_munmap  // munmap(ADRU, LENU)  unfolded stub

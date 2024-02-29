@@ -2,7 +2,7 @@
 @
 @  This file is part of the UPX executable compressor.
 @
-@  Copyright (C) 2000-2023 John F. Reiser
+@  Copyright (C) 2000-2024 John F. Reiser
 @  All Rights Reserved.
 @
 @  UPX and the UCL library are free software; you can redistribute them
@@ -93,7 +93,7 @@ F_ENTR=  6*NBPW
 F_ARGC=  7*NBPW
 
 fold_begin:  // enter here
-    bkpt
+    bkpt  // FIXME
         b L05  // put PAGE_MASK and mflg_data within short-displacement of uses
 
 get_page_mask: .globl get_page_mask
@@ -111,7 +111,7 @@ get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
 mprotect: .globl mprotect
-    bkpt
+    bkpt  // FIXME
         ldr r12,PAGE_MASK
         bic r12,arg1,r12  // lo frag
         sub arg1,arg1,r12  // page align lo end
@@ -134,7 +134,7 @@ mmap: .globl mmap
         ldr arg5,[sp,#3*NBPW]
         mov arg6,arg6,lsr #12  @ FIXME?  convert to page offset in file
 mmap_do: // sp: saved r4,r5,lr
-    bkpt
+    bkpt  // FIXME
         ldr r12,PAGE_MASK
         bic r12,arg1,r12  // lo frag
         sub arg1,arg1,r12  // page align lo end
@@ -213,7 +213,6 @@ link_ok:
         mov sp,r0
 
 /* Construct arglist for upx_main */
-    bkpt
         //mov r3,r3  @ auxv
         ldmia sp!,{r0,r4,r5}  @ pop: ADRX, LENX, elfaddr
 F_delta= 3*NBPW
@@ -294,7 +293,7 @@ sweep:
         mov r7,#0
         mov r12,#0
 #endif  /*}*/
-        mov pc,lr
+        ldr pc,[r2,#NBPW -2*NBPW]  @ hatch: Elf32_auxv_t[AT_NULL@.a_type].a_val
 
 f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         ptr  .req r0

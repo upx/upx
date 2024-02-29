@@ -1,0 +1,41 @@
+#
+# valgrind suppressions for musl libc
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+#
+
+# musl malloc
+{
+   musl-malloc-enframe
+   Memcheck:Cond
+   fun:enframe
+}
+
+# these are only needed for older musl versions
+
+{
+   musl-malloc-mal0_clear
+   Memcheck:Cond
+   fun:mal0_clear
+   fun:calloc
+}
+
+{
+   musl-string-memchr
+   Memcheck:Cond
+   fun:memchr
+}
+{
+   musl-string-stpcpy
+   Memcheck:Cond
+   fun:stpcpy
+}
+{
+   musl-string-strchrnul
+   Memcheck:Cond
+   fun:strchrnul
+}
+{
+   musl-string-strlen
+   Memcheck:Cond
+   fun:strlen
+}

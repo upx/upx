@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
-   Copyright (C) 2000-2023 John F. Reiser
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
+   Copyright (C) 2000-2024 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -44,7 +44,7 @@ public:
     PackLinuxElf(InputFile *f);
     virtual ~PackLinuxElf();
     /*virtual void buildLoader(const Filter *);*/
-    virtual int getVersion() const override { return 14; } // upx-3.96 cannot upack, for instance
+    virtual int getVersion() const override { return 14; } // upx-3.96 cannot unpack, for instance
     virtual bool canUnpackVersion(int version) const override { return (version >= 11); }
     virtual tribool canUnpack() override { return super::canUnpack(); } // bool, except -1: format known, but not packed
 
@@ -84,8 +84,8 @@ protected:
     MemBuffer mb_shdr;      // Shdr might not be near Phdr
     MemBuffer mb_dt_offsets;  // file offset of various DT_ tables
     unsigned *dt_offsets;  // index by dt_table[]
-    unsigned symnum_end;
-    unsigned strtab_end;
+    unsigned symnum_max;
+    unsigned strtab_max;
     char const *dynstr;   // from DT_STRTAB
 
     unsigned sz_phdrs;  // sizeof Phdr[]

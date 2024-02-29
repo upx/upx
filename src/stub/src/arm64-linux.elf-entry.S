@@ -2,9 +2,9 @@
 *
 *  This file is part of the UPX executable compressor.
 *
-*  Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-*  Copyright (C) 1996-2023 Laszlo Molnar
-*  Copyright (C) 2000-2023 John F. Reiser
+*  Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+*  Copyright (C) 1996-2024 Laszlo Molnar
+*  Copyright (C) 2000-2024 John F. Reiser
 *  All Rights Reserved.
 *
 *  UPX and the UCL library are free software; you can redistribute them
@@ -122,8 +122,7 @@ xPMASK .req x26  // PAGE_MASK
   // The above 4 registers are passed on *stack* to unfolded code.
 
 xelfa  .req x25  // hi &Elf64_Ehdr
-xfexp  .req x24  // de-compressor
-  // xPMASK, xelfa, xfexp still are used here.
+  // xPMASK, xelfa still are used here.
 
 xauxv  .req x22
 wszuf  .req w21
@@ -148,15 +147,18 @@ _start: .globl _start
     bkpt  // DEBUG  0xd4200000
         TRACE(#0)
 #endif  /*}*/
-        add x0,sp,#NBPW; call zfind  // avoid feint of 0==argc;  x0= &envp
+        stp x0,x1,[sp,#-2*NBPW]!  // ABI: -static crt0 might pass data in x0,x1
+        ldr wPrivAnon,mflg
+
+        add x0,sp,#(1+ 2)*NBPW
+        call zfind  // avoid feint of 0==argc;  out: x0= &envp
         call zfind; mov xauxv,x0  // &Elf64_auxv
 
-        sub sp,sp,#4*NBPW  // space for ADRU, LENU
+        sub sp,sp,#4*NBPW  // space for PMASK, SZPK2, ADRU, LENU
 F_PMASK= 0 * NBPW
 F_SZPK2= 1 * NBPW
 F_ADRU= 2 * NBPW
 F_LENU= 3 * NBPW
-//F_ARGC= 4 * NBPW
 
 // set xPMASK by finding actual page size in Elf64_auxv
 1:
@@ -176,7 +178,6 @@ L00:
         add x0,xFOLD,#strupx - LxFOLD
         do_sys __NR_memfd_create; mov mfd,w0
 
-        adr xfexp,f_expand
 // alloca() for de-compressed stub
         ldr w0,[xFOLD,#sz_unc + LBINFO - LxFOLD]  // .sz_unc of fold
         mov fp,sp
@@ -198,7 +199,7 @@ wmeth  .req w4
         ldr lsrc,  [XFOLD,#sz_cpr    + LBINFO - LxFOLD]
         ldrb wmeth,[xFOLD,#b_method  + LBINFO - LxFOLD]
     TRACE(#1)
-        callr xfexp  // decompress it
+        call f_expand  // decompress it
         POP1(x8)  // discard lzma EOF
 
     .unreq src

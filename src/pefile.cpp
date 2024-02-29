@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -282,19 +282,6 @@ void PeFile::Interval::dump() const {
 // relocation handling
 **************************************************************************/
 
-namespace {
-struct FixDeleter final { // helper so we don't leak memory on exceptions
-    LE32 **fix;
-    size_t count;
-    ~FixDeleter() noexcept {
-        for (size_t i = 0; i < count; i++) {
-            delete[] fix[i];
-            fix[i] = nullptr;
-        }
-    }
-};
-} // namespace
-
 void PeFile::Reloc::RelocationBlock::reset() noexcept {
     rel = nullptr;  // SPAN_0
     rel1 = nullptr; // SPAN_0
@@ -489,7 +476,7 @@ void PeFile32::processRelocs() // pass1
             infoWarning("skipping unsupported relocation type %d (%d)", ic, counts[ic]);
 
     LE32 *fix[4];
-    FixDeleter fixdel{fix, 0}; // don't leak memory
+    upx::ArrayDeleter<LE32 **> fixdel{fix, 0}; // don't leak memory
     for (ic = 0; ic < 4; ic++) {
         fix[ic] = New(LE32, counts[ic]);
         fixdel.count += 1;
@@ -591,7 +578,7 @@ void PeFile64::processRelocs() // pass1
             infoWarning("skipping unsupported relocation type %d (%d)", ic, counts[ic]);
 
     LE32 *fix[16];
-    FixDeleter fixdel{fix, 0}; // don't leak memory
+    upx::ArrayDeleter<LE32 **> fixdel{fix, 0}; // don't leak memory
     for (ic = 0; ic < 16; ic++) {
         fix[ic] = New(LE32, counts[ic]);
         fixdel.count += 1;
@@ -1252,6 +1239,7 @@ void PeFile::Export::build(char *newbase, unsigned newoffs) {
 
     edir.addrtable = newoffs + ptr_diff_bytes(functionp, newbase);
     edir.ordinaltable = newoffs + ptr_diff_bytes(ordinalp, newbase);
+    assert(ordinals != nullptr); // pacify clang-tidy
     memcpy(ordinalp, ordinals, 2 * edir.names);
 
     edir.name = newoffs + ptr_diff_bytes(enamep, newbase);
@@ -1919,11 +1907,14 @@ void PeFile::processResources(Resource *res) {
     SPAN_S_VAR(byte, ores, oresources + res->dirsize());
 
     char *keep_icons = nullptr; // icon ids in the first icon group
+    upx::ArrayDeleter<char **> keep_icons_deleter{&keep_icons, 1}; // don't leak memory
     unsigned iconsin1stdir = 0;
     if (opt->win32_pe.compress_icons == 2)
         while (res->next()) // there is no rewind() in Resource
             if (res->itype() == RT_GROUP_ICON && iconsin1stdir == 0) {
                 iconsin1stdir = get_le16(ibuf.subref("bad resoff %#x", res->offs() + 4, 2));
+                delete[] keep_icons;
+                keep_icons = nullptr;
                 keep_icons = New(char, 1 + iconsin1stdir * 9);
                 *keep_icons = 0;
                 for (unsigned ic = 0; ic < iconsin1stdir; ic++)
@@ -2007,8 +1998,6 @@ void PeFile::processResources(Resource *res) {
     }
     soresources = ptr_diff_bytes(ores, oresources);
 
-    delete[] keep_icons;
-    keep_icons = nullptr;
     if (!res->clear()) {
         // The area occupied by the resource directory is not continuous
         // so to still support uncompression, I can't zero this area.
@@ -2948,10 +2937,12 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
 
     if (iobjs > 2) {
         // read the noncompressed section
+        const unsigned size = isection[2].size;
         ibuf.dealloc();
-        ibuf.alloc(isection[2].size);
+        ibuf.alloc(size + 1);
         fi->seek(isection[2].rawdataptr, SEEK_SET);
-        fi->readx(ibuf, ibufgood = isection[2].size);
+        fi->readx(ibuf, ibufgood = size);
+        ibuf[size] = 0; // allow strlen() up to 'size'
     }
 
     // unfilter
@@ -3106,6 +3097,9 @@ PeFile32::~PeFile32() noexcept {}
 
 void PeFile32::readPeHeader() {
     fi->readx(&ih, sizeof(ih));
+    if (31 < (unsigned) ih.subsystem) {
+        throwCantPack("bad ih.subsystem 0x%x", (unsigned) ih.subsystem);
+    }
     isefi = ((1u << ih.subsystem) &
              ((1u << IMAGE_SUBSYSTEM_EFI_APPLICATION) |
               (1u << IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER) |
@@ -3159,6 +3153,9 @@ PeFile64::~PeFile64() noexcept {}
 
 void PeFile64::readPeHeader() {
     fi->readx(&ih, sizeof(ih));
+    if (31 < (unsigned) ih.subsystem) {
+        throwCantPack("bad ih.subsystem 0x%x", (unsigned) ih.subsystem);
+    }
     isefi = ((1u << ih.subsystem) &
              ((1u << IMAGE_SUBSYSTEM_EFI_APPLICATION) |
               (1u << IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER) |

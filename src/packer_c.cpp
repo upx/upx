@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -219,7 +219,7 @@ const char *Packer::getDecompressorSections() const {
         "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30";
     // clang-format on
 
-    unsigned const method = ph_forced_method(ph.method);
+    const unsigned method = ph_forced_method(ph.method);
     if (method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
     if (method == M_NRV2D_LE32)

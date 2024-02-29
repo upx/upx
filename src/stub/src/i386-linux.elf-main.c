@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
-   Copyright (C) 2000-2023 John F. Reiser
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
+   Copyright (C) 2000-2024 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -428,7 +428,8 @@ make_hatch_i386(
 }
 #elif defined(__arm__)  /*}{*/
 extern unsigned get_sys_munmap(void);
-#define SEEK_SET 0
+#define NINSTR 3
+#define NBPI 4
 
 static void *
 make_hatch_arm32(
@@ -558,44 +559,42 @@ upx_bzero(char *p, size_t len)
 #define bzero upx_bzero
 
 
-static ElfW(auxv_t) *
-#if defined(__i386__)  /*{*/
-__attribute__((regparm(2), stdcall))
-#endif  /*}*/
-auxv_find(ElfW(auxv_t) *av, unsigned const type)
-{
-    ElfW(auxv_t) *avail = 0;
-    if (av
-#if defined(__i386__)  /*{*/
-    && 0==(1&(int)av)  /* PT_INTERP usually inhibits, except for hatch */
-#endif  /*}*/
-    ) {
-        for (;; ++av) {
-            if (av->a_type==type)
-                return av;
-            if (av->a_type==AT_IGNORE)
-                avail = av;
-        }
-        if (0!=avail && AT_NULL!=type) {
-                av = avail;
-                av->a_type = type;
-                return av;
-        }
-    }
-    return 0;
-}
-
-
 static void
 #if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 auxv_up(ElfW(auxv_t) *av, unsigned const type, unsigned const value)
 {
-    DPRINTF("auxv_up  %%p %%x %%x\\n",av,type,value);
-    av = auxv_find(av, type);
-    if (av) {
-        av->a_un.a_val = value;
+    if (!av || (1& (size_t)av)) { // none, or inhibited for PT_INTERP
+        return;
+    }
+    DPRINTF("\\nauxv_up %%d  %%p\\n", type, value);
+    // Multiple slots can have 'type' which wastes space but is legal.
+    // rtld (ld-linux) uses the last one, so we must scan the whole table.
+    Elf32_auxv_t *ignore_slot = 0;
+    int found = 0;
+    for (;; ++av) {
+        DPRINTF("  %%d  %%p\\n", av->a_type, av->a_un.a_val);
+        if (av->a_type == type) {
+            av->a_un.a_val = value;
+            ++found;
+        }
+        else if (av->a_type == AT_IGNORE) {
+            ignore_slot = av;
+        }
+        if (av->a_type==AT_NULL) { // done scanning
+            if (found) {
+                return;
+            }
+            if (ignore_slot) {
+                ignore_slot->a_type = type;
+                ignore_slot->a_un.a_val = value;
+                return;
+            }
+            err_exit(20);
+ERR_LAB
+            return;
+        }
     }
 }
 

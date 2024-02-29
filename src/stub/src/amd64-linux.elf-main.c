@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
-   Copyright (C) 2000-2023 John F. Reiser
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
+   Copyright (C) 2000-2024 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -114,6 +114,7 @@ extern void my_bkpt(void *, ...);
 static int dprintf(char const *fmt, ...); // forward
 #endif  /*}*/
 
+extern void my_bkpt(void *, ...);
 
 /*************************************************************************
 // configuration section
@@ -160,7 +161,7 @@ xread(Extent *x, char *buf, size_t count)
 // util
 **************************************************************************/
 
-#if 0  //{  save space
+#if !DEBUG  //{  save space
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
@@ -301,6 +302,8 @@ make_hatch_ppc64(
     return hatch;
 }
 #elif defined(__aarch64__)  //{
+#define NBPI 4
+#define NINSTR 3
 static void *
 make_hatch_arm64(
     ElfW(Phdr) const *const phdr,
@@ -333,6 +336,8 @@ make_hatch_arm64(
     DPRINTF("hatch=%%p\\n", hatch);
     return hatch;
 }
+#undef NBPI
+#undef NINSTR
 #endif  //}
 
 #if defined(__powerpc64__) || defined(__aarch64__)  //{ bzero
@@ -356,16 +361,30 @@ auxv_up(ElfW(auxv_t) *av, unsigned const type, uint64_t const value)
         return;
     }
     DPRINTF("\\nauxv_up %%d  %%p\\n", type, value);
+    // Multiple slots can have 'type' which wastes space but is legal.
+    // rtld (ld-linux) uses the last one, so we must scan the whole table.
+    Elf64_auxv_t *ignore_slot = 0;
+    int found = 0;
     for (;; ++av) {
         DPRINTF("  %%d  %%p\\n", av->a_type, av->a_un.a_val);
-        if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
-            av->a_type = type;
+        if (av->a_type == type) {
             av->a_un.a_val = value;
-            return;
+            ++found;
         }
-        if (av->a_type==AT_NULL) {
-            // We can't do this as part of the for loop because we overwrite
-            // AT_NULL too.
+        else if (av->a_type == AT_IGNORE) {
+            ignore_slot = av;
+        }
+        if (av->a_type==AT_NULL) { // done scanning
+            if (found) {
+                return;
+            }
+            if (ignore_slot) {
+                ignore_slot->a_type = type;
+                ignore_slot->a_un.a_val = value;
+                return;
+            }
+            err_exit(20);
+ERR_LAB
             return;
         }
     }

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -36,7 +36,7 @@ class UiPacker;
 class Filter;
 
 /*************************************************************************
-// PackerBase: purely abstract minimal base class for all packers
+// PackerBase: abstract minimal base class for all packers
 //
 // clients: PackMaster, UiPacker
 **************************************************************************/
@@ -80,7 +80,7 @@ protected:
     InputFile *const fi;                // reference
     union {                             // unnamed union
         const upx_int64_t file_size;    // must get set by constructor
-        const upx_uint64_t file_size_u; // (explicitly unsigned to avoid casts)
+        const upx_uint64_t file_size_u; // (explicitly unsigned to avoid -Wsign-compare casts)
     };
     PackHeader ph; // must be filled by canUnpack(); also used by UiPacker
 };
@@ -321,10 +321,7 @@ private:
 
 private:
     // disable copy and move
-    Packer(const Packer &) DELETED_FUNCTION;
-    Packer &operator=(const Packer &) DELETED_FUNCTION;
-    Packer(Packer &&) noexcept DELETED_FUNCTION;
-    Packer &operator=(Packer &&) noexcept DELETED_FUNCTION;
+    UPX_CXX_DISABLE_COPY_MOVE(Packer)
 };
 
 /* vim:set ts=4 sw=4 et: */

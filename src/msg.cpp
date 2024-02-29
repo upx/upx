@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -82,10 +82,10 @@ static void pr_error(const char *iname, const char *msg, bool is_warning) noexce
     bool c = acc_isatty(STDERR_FILENO) ? 1 : 0;
 
     int fg = con_fg(stderr, FG_BRTRED);
-    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%s: ", progname);
+    upx_safe_snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%s: ", progname);
     pr_print(c, buf);
     //(void)con_fg(stderr,FG_RED);
-    snprintf(buf, sizeof(buf), "%s: ", iname);
+    upx_safe_snprintf(buf, sizeof(buf), "%s: ", iname);
     pr_print(c, buf);
     //(void)con_fg(stderr,FG_BRTRED);
     pr_print(c, msg);
@@ -102,13 +102,13 @@ void printErr(const char *iname, const Throwable &e) noexcept {
     char buf[1024];
     size_t l;
 
-    snprintf(buf, sizeof(buf), "%s", prettyName(typeid(e).name()));
+    upx_safe_snprintf(buf, sizeof(buf), "%s", prettyName(typeid(e).name()));
     l = strlen(buf);
     if (l < sizeof(buf) && e.getMsg())
-        snprintf(buf + l, sizeof(buf) - l, ": %s", e.getMsg());
+        upx_safe_snprintf(buf + l, sizeof(buf) - l, ": %s", e.getMsg());
     l = strlen(buf);
     if (l < sizeof(buf) && e.getErrno()) {
-        snprintf(buf + l, sizeof(buf) - l, ": %s", strerror(e.getErrno()));
+        upx_safe_snprintf(buf + l, sizeof(buf) - l, ": %s", strerror(e.getErrno()));
 #if 1
         // some compilers (e.g. Borland C++) put a trailing '\n'
         // into the strerror() result

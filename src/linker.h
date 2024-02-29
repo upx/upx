@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2023 Laszlo Molnar
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -142,7 +142,7 @@ struct ElfLinker::Relocation : private noncopyable {
     unsigned offset = 0;
     const char *type = nullptr;
     const Symbol *value = nullptr;
-    upx_uint64_t add; // used in .rela relocations
+    upx_uint64_t add = 0; // used in .rela relocations
 
     explicit Relocation(const Section *s, unsigned o, const char *t, const Symbol *v,
                         upx_uint64_t a);

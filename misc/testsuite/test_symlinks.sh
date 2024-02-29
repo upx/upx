@@ -46,11 +46,13 @@ if [[ -n $upx_exe_runner ]]; then
     #   export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet"
     #   export upx_exe_runner="wine"
     IFS=' ' read -r -a upx_run <<< "$upx_exe_runner" # split at spaces into array
+elif [[ -n $CMAKE_CROSSCOMPILING_EMULATOR ]]; then
+    IFS=';' read -r -a upx_run <<< "$CMAKE_CROSSCOMPILING_EMULATOR" # split at semicolons into array
 fi
 upx_run+=( "$upx_exe" )
 echo "upx_run='${upx_run[*]}'"
 
-# upx_run check
+# upx_run sanity check
 if ! "${upx_run[@]}" --version-short >/dev/null; then echo "UPX-ERROR: FATAL: upx --version-short FAILED"; exit 1; fi
 if ! "${upx_run[@]}" -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
 if ! "${upx_run[@]}" --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi

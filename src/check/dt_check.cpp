@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2023 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2024 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -125,6 +125,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 257, 8) == 1)
 ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 383, 8) == 127)
 ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 384, 8) == -128)
 ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0u + 511, 8) == -1)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0ull + 0, 1) == 0)
+ACC_COMPILE_TIME_ASSERT_HEADER(sign_extend(0ull + 1, 1) == -1)
 
 ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_BIT == 8)
 #if 0 // does not work with MSVC
@@ -321,6 +323,10 @@ struct TestIntegerWrap {
     static inline bool neg_eq(const T x) noexcept { return T(0) - x == x; }
 };
 
+//
+// basic exception handling
+//
+
 static noinline void throwSomeValue(int x) may_throw {
     if (x < 0)
         throw int(x);
@@ -340,6 +346,23 @@ static noinline void check_basic_cxx_exception_handling(void (*func)(int)) noexc
     assert_noexcept(cxx_exception_handling_works);
 }
 
+//
+// basic floating point to early catch bad codegen
+// (this has happened in the past with some exotic LLVM targets)
+//
+
+static noinline double sadd_a_b_div(upx_int64_t a, upx_int64_t b) { return (a + b) / 1000000.0; }
+static noinline double uadd_a_b_div(upx_uint64_t a, upx_uint64_t b) { return (a + b) / 1000000.0; }
+static noinline double ssub_a_b_div(upx_int64_t a, upx_int64_t b) { return (a - b) / 1000000.0; }
+static noinline double usub_a_b_div(upx_uint64_t a, upx_uint64_t b) { return (a - b) / 1000000.0; }
+
+static noinline void check_basic_floating_point(void) noexcept {
+    assert_noexcept(sadd_a_b_div(1000000, 1000000) == 2.0);
+    assert_noexcept(uadd_a_b_div(1000000, 1000000) == 2.0);
+    assert_noexcept(ssub_a_b_div(3000000, 1000000) == 2.0);
+    assert_noexcept(usub_a_b_div(3000000, 1000000) == 2.0);
+}
+
 } // namespace
 
 #define ACC_WANT_ACC_CHK_CH 1
@@ -357,6 +380,8 @@ void upx_compiler_sanity_check(void) noexcept {
         // check working C++ exception handling to catch toolchain/qemu/wine/etc problems
         check_basic_cxx_exception_handling(throwSomeValue);
     }
+
+    check_basic_floating_point();
 
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
@@ -468,6 +493,38 @@ void upx_compiler_sanity_check(void) noexcept {
         assert_noexcept(get_be32_signed(d) == 2138996092);
         assert_noexcept(get_be64_signed(d) == 9186918263483431288LL);
     }
+#if DEBUG >= 1
+    {
+        for (int i = 0; i < 256; i++) {
+            {
+                const unsigned u = i;
+                assert_noexcept(sign_extend(u, 1) == ((i & 1) ? -1 : 0));
+                assert_noexcept(sign_extend(u, 2) == ((i & 2) ? -2 + (i & 1) : (i & 1)));
+                assert_noexcept(sign_extend(u, 3) == ((i & 4) ? -4 + (i & 3) : (i & 3)));
+                assert_noexcept(sign_extend(u, 4) == ((i & 8) ? -8 + (i & 7) : (i & 7)));
+                assert_noexcept(sign_extend(u, 5) == ((i & 16) ? -16 + (i & 15) : (i & 15)));
+                assert_noexcept(sign_extend(u, 6) == ((i & 32) ? -32 + (i & 31) : (i & 31)));
+                assert_noexcept(sign_extend(u, 7) == ((i & 64) ? -64 + (i & 63) : (i & 63)));
+                assert_noexcept(sign_extend(u, 8) == ((i & 128) ? -128 + (i & 127) : (i & 127)));
+                assert_noexcept(sign_extend(u, 32) == i);
+                assert_noexcept(sign_extend(0u - u, 32) == -i);
+            }
+            {
+                const upx_uint64_t u = i;
+                assert_noexcept(sign_extend(u, 1) == ((i & 1) ? -1 : 0));
+                assert_noexcept(sign_extend(u, 2) == ((i & 2) ? -2 + (i & 1) : (i & 1)));
+                assert_noexcept(sign_extend(u, 3) == ((i & 4) ? -4 + (i & 3) : (i & 3)));
+                assert_noexcept(sign_extend(u, 4) == ((i & 8) ? -8 + (i & 7) : (i & 7)));
+                assert_noexcept(sign_extend(u, 5) == ((i & 16) ? -16 + (i & 15) : (i & 15)));
+                assert_noexcept(sign_extend(u, 6) == ((i & 32) ? -32 + (i & 31) : (i & 31)));
+                assert_noexcept(sign_extend(u, 7) == ((i & 64) ? -64 + (i & 63) : (i & 63)));
+                assert_noexcept(sign_extend(u, 8) == ((i & 128) ? -128 + (i & 127) : (i & 127)));
+                assert_noexcept(sign_extend(u, 64) == i);
+                assert_noexcept(sign_extend(0ull - u, 64) == -i);
+            }
+        }
+    }
+#endif
     {
         unsigned dd;
         void *const d = &dd;
@@ -562,6 +619,17 @@ TEST_CASE("acc_vget") {
     CHECK_EQ(acc_vget_long(1, -1), 1);
     CHECK_EQ(acc_vget_acc_int64l_t(2, 1), 2);
     CHECK_EQ(acc_vget_acc_hvoid_p(nullptr, 0), nullptr);
+}
+
+TEST_CASE("ptr_invalidate_and_poison") {
+    int *ip = nullptr;
+    ptr_invalidate_and_poison(ip);
+    assert(ip != nullptr);
+    (void) ip;
+    double *dp; // not initialized
+    ptr_invalidate_and_poison(dp);
+    assert(dp != nullptr);
+    (void) dp;
 }
 
 TEST_CASE("working -fno-strict-aliasing") {
