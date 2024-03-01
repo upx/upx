@@ -1560,7 +1560,6 @@ PackLinuxElf32::buildLinuxLoader(
     memcpy(cprLoader, &h, sizeof(h)); // cprLoader will become FOLDEXEC
   }
 
-#define NO_printf printf
     initLoader(proto, szproto, -1, sz_cpr);
     NO_printf("FOLDEXEC unc=%#x  cpr=%#x\n", sz_unc, sz_cpr);
     linker->addSection("FOLDEXEC", mb_cprLoader, sizeof(b_info) + sz_cpr, 0);
