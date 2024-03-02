@@ -70,8 +70,8 @@ PATH_MAX= 4096
 #include "MAX_ELF_HDR.S"
 
 PAGE_MASK=  . - 3*NBPW; .globl PAGE_MASK
-upxfn_path= . - 2*NBPW  // displacement from "zero"
-mflg_data = . - 1*NBPW  // QNX vs Linux: MAP_PRIVATE | MAP_ANONYMOUS
+mflg_data = . - 2*NBPW  // QNX vs Linux: MAP_PRIVATE | MAP_ANONYMOUS
+upxfn_path= . - 1*NBPW  // displacement from "zero"
 
 arg1  .req r0
 arg2  .req r1
@@ -80,20 +80,22 @@ arg4  .req r3
 arg5  .req r4
 arg6  .req r5
 
-// In:  sp/ ADRX,LENX,ELFA,ADRU,LENU,MFD,ENTR,argc
-//   (ADRX,LENX) = extent of compressed program
-//   (ADRU,LENU) = params to munmap unfolded stub
+// In:  sp/ F_ADRX,F_LENX,F_ELFA,F_ADRU,F_LENU,F_ENTR/F_MFD,F_R0,F_R1,F_argc
+//   [ADRX, +LENX) = extent of compressed program
+//   [ADRU, +LENU) = params to munmap unfolded stub
 F_ADRX=  0*NBPW
 F_LENX=  1*NBPW
 F_ELFA=  2*NBPW
 F_ADRU=  3*NBPW
 F_LENU=  4*NBPW
-F_MFD=   5*NBPW
 F_ENTR=  6*NBPW
-F_ARGC=  7*NBPW
+  F_MFD=  F_ENTR  // FIXME: conflict after upx_main?
+F_R0=    6*NBPW
+F_R1=    7*NBPW
+F_ARGC=  8*NBPW
 
 fold_begin:  // enter here
-    bkpt  // FIXME
+    bkpt  // FIXME fold_begin
         b L05  // put PAGE_MASK and mflg_data within short-displacement of uses
 
 get_page_mask: .globl get_page_mask
@@ -111,7 +113,7 @@ get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
 mprotect: .globl mprotect
-    bkpt  // FIXME
+    bkpt  // FIXME mprotect
         ldr r12,PAGE_MASK
         bic r12,arg1,r12  // lo frag
         sub arg1,arg1,r12  // page align lo end
@@ -134,7 +136,7 @@ mmap: .globl mmap
         ldr arg5,[sp,#3*NBPW]
         mov arg6,arg6,lsr #12  @ FIXME?  convert to page offset in file
 mmap_do: // sp: saved r4,r5,lr
-    bkpt  // FIXME
+    bkpt  // FIXME mmap_do
         ldr r12,PAGE_MASK
         bic r12,arg1,r12  // lo frag
         sub arg1,arg1,r12  // page align lo end
@@ -145,11 +147,11 @@ mmap_do: // sp: saved r4,r5,lr
 proc_self_exe: .asciz "/proc/self/exe"; .balign 4
 
 L05:
-        ldmia sp!,{r4,r5,r6,r7,r8,r9,r10,r11}  // includes argc
+        ldmia sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12}  // includes argc
         mov r1,sp  @ src
         sub sp,sp,#PATH_MAX
         mov r0,sp  @ dst
-        stmdb sp!,{r4,r5,r6,r7,r8,r9,r10,r11}
+        stmdb sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12}
 
 0: // copy argv down
         ldr r3,[r1],#NBPW; cmp r3,#0
@@ -365,7 +367,7 @@ L610:  @ each word
         swi __NR_write
 #endif  /*}*/
         add sp,sp,#TRACE_BUFLEN
-        ldmia sp!,{TRACE_REGS}
+    6   ldmia sp!,{TRACE_REGS}
 
 trace_hex:  // In: r0=val, r1=punctuation before, r2=ptr; Uses: r3, ip
         strb r1,[r2],#1  @ punctuation
