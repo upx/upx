@@ -119,7 +119,9 @@ F_ADRU= 3*NBPW
 F_LENU= 4*NBPW
 F_ENTR= 5*NBPW
   F_QFLG= F_ENTR
-F_SIZE= 6*NBPW
+F_R0=   6*NBPW
+F_R1=   7*NBPW
+F_SIZE= 8*NBPW
 
 // (read-only) .data space at start of unfolded code
 D_PMASK= 0*NBPW
@@ -137,10 +139,10 @@ mflg:
 _start: .globl _start
 ////  nop; bkpt  // DEBUG
         stmdb sp!,{r0,r1}  // ABI crt0 -static may have data here
-        add arg1,sp,#(1+ 2)*NBPW
-        call zfind  // avoid feint of 0==argc;  out: r0= &envp
+        sub sp,sp,#-2*NBPW + F_SIZE  // F_R0,F_R1 separately
+        add arg1,sp,#NBPW + F_SIZE  // avoid feint of 0==argc
+        call zfind  // out: r0= &envp
         call zfind
-        sub sp,sp,#F_SIZE
 
 // set xPMASK by finding actual page size in Elf64_auxv
 1:
