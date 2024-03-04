@@ -203,16 +203,16 @@ L30:
         sb $0,(TMP)  # null terminate the path
 0:
         addiu sp,-MAX_ELF_HDR_32  # alloca
-        move t0,$r_elfa  # &Elf32_Ehdr of stub  a4  arg5
+        move a4,sp  # &tmp_ehdr
         move a3,$r_auxv  # new &auxv[0]
-        move a2,sp  # &Elf32_Ehdr TMP space
+        move a2,$r_elfa  # &Elf32_Ehdr of stub
         move a1,$r_LENX  # total_size
 
         bal upx_main  # remember that Makefile 'cat' all *.[sS]
           move a0,$r_ADRX
 
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Elf32_Auxv_t *a3,
-        Elf32_Ehdr *elfa)
+                Elf32_Ehdr *tmp_ehdr
 */
         addiu sp,MAX_ELF_HDR_32  # un-alloca
         move s8,v0  # &entry

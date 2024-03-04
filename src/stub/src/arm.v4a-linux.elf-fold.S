@@ -80,7 +80,7 @@ arg4  .req r3
 arg5  .req r4
 arg6  .req r5
 
-// In:  sp/ F_ADRX,F_LENX,F_ELFA,F_ADRU,F_LENU,F_ENTR/F_MFD,F_R0,F_R1,F_argc
+// In:  sp/ F_ADRX,F_LENX,F_ELFA,F_ADRU,F_LENU,%F_ENTR/F_MFD,F_R0,F_R1,F_argc
 //   [ADRX, +LENX) = extent of compressed program
 //   [ADRU, +LENU) = params to munmap unfolded stub
 F_ADRX=  0*NBPW
@@ -88,14 +88,13 @@ F_LENX=  1*NBPW
 F_ELFA=  2*NBPW
 F_ADRU=  3*NBPW
 F_LENU=  4*NBPW
-F_ENTR=  6*NBPW
+F_ENTR=  5*NBPW
   F_MFD=  F_ENTR  // FIXME: conflict after upx_main?
 F_R0=    6*NBPW
 F_R1=    7*NBPW
 F_ARGC=  8*NBPW
 
 fold_begin:  // enter here
-    bkpt  // FIXME fold_begin
         b L05  // put PAGE_MASK and mflg_data within short-displacement of uses
 
 get_page_mask: .globl get_page_mask
@@ -113,7 +112,6 @@ get_upxfn_path: .globl get_upxfn_path  // char * (*)(void)
 // Sometimes Linux enforces page-aligned address
 Pprotect: .globl Pprotect
 mprotect: .globl mprotect
-    bkpt  // FIXME mprotect
         ldr r12,PAGE_MASK
         bic r12,arg1,r12  // lo frag
         sub arg1,arg1,r12  // page align lo end
@@ -136,7 +134,6 @@ mmap: .globl mmap
         ldr arg5,[sp,#3*NBPW]
         mov arg6,arg6,lsr #12  @ FIXME?  convert to page offset in file
 mmap_do: // sp: saved r4,r5,lr
-    bkpt  // FIXME mmap_do
         ldr r12,PAGE_MASK
         bic r12,arg1,r12  // lo frag
         sub arg1,arg1,r12  // page align lo end
@@ -215,22 +212,13 @@ link_ok:
         mov sp,r0
 
 /* Construct arglist for upx_main */
-        //mov r3,r3  @ auxv
-        ldmia sp!,{r0,r4,r5}  @ pop: ADRX, LENX, elfaddr
+        ldmia sp!,{arg1,arg2,arg3}  @ pop: ADRX, LENX, elfaddr
 F_delta= 3*NBPW
+        //mov arg4,r3  @ auxv
         sub sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ alloca
-        mov r6,sp  // &ehdr.tmp
-        ldr r7,[r0,#sz_unc]  @ xo.size
-        mov r8,sp            @ xo.ptr
-        ldr r9,[r0,#sz_cpr]  @ xi.size  of ELF headers
-        mov r10,r0           @ xi.ptr  ADRX &b_info
-
-        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10}
-        ldmia sp!,{arg1,arg2,arg3,arg4}
-// r0=av; r1=sz_cpr; r2=elfaddr; r3= &ehdr.temp
-// xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}
+        stmdb sp!,{sp}  // arg5  &tmp_ehdr
         call upx_main
-        add sp,sp,#(8-4)*NBPW
+        add sp,sp,#NBPW  // toss arg5
         add sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ un-alloca
         str r0,[sp,#F_ENTR - F_delta]  @ entry address
 
@@ -435,7 +423,6 @@ __ARM_NR_cacheflush = 2 + __ARM_NR_BASE
 // because they are called from C-language upxfd_android.c
 
 get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
-    bkpt  // FIXME get_sys_munmap
 #if defined(ARMEL_DARWIN)  /*{*/
         ldr r0,4*1 + munmap
 #elif defined(ARMEL_EABI4)  /*}{*/

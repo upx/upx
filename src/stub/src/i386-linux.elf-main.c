@@ -29,6 +29,8 @@
    <jreiser@users.sourceforge.net>
  */
 
+#define DEBUG 0
+
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
 #endif  /*}*/
@@ -709,7 +711,7 @@ do_xmap(
     } else
     if (PT_LOAD==phdr->p_type && phdr->p_memsz != 0) {
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
-        DPRINTF("\\n\\nLOAD@%%p  p_offset=%%p  p_vaddr=%%p  p_filesz=%%p"
+        DPRINTF("\\nLOAD@%%p  p_offset=%%p  p_vaddr=%%p  p_filesz=%%p"
             "  p_memsz=%%p  p_flags=%%x  prot=%%x\\n",
             phdr, phdr->p_offset, phdr->p_vaddr, phdr->p_filesz,
             phdr->p_memsz, phdr->p_flags, prot);
@@ -852,120 +854,63 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 /*************************************************************************
 // upx_main - called by our entry code
 //
-// This function is optimized for size.
+// This function theoretically is optimized for size.
 **************************************************************************/
 
-#if defined(__mips__)  /*{*/
 void *upx_main(  // returns entry address
-    struct b_info const *const bi,  // 1st block header
-    size_t const sz_compressed,  // total length
-    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
-    ElfW(auxv_t) *const av,
-    ElfW(Addr) const elfaddr
+/*1*/    struct b_info const *const bi,  // 1st &b_info
+/*2*/    size_t const sz_compressed,  // total length
+/*3*/    ElfW(Addr) elfaddr,
+/*4*/    ElfW(auxv_t) *const av,
+/*5*/    ElfW(Ehdr) *const tmp_ehdr  // temp char[sz_tmp_ehdr] for decompressing
 ) __asm__("upx_main");
 void *upx_main(  // returns entry address
-    struct b_info const *const bi,  // 1st block header
+    struct b_info const *const bi,  // 1st &b_info
     size_t const sz_compressed,  // total length
-    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
+    ElfW(Addr) const elfaddr,
     ElfW(auxv_t) *const av,
-    ElfW(Addr) const elfaddr
+    ElfW(Ehdr) *const tmp_ehdr  // temp char[sz_tmp_ehdr] for decompressing
 )
-
-#elif defined(__powerpc__) //}{
-void *upx_main(  // returns entry address
-    struct b_info const *const bi,  // 1st block header
-    size_t const sz_compressed,  // total length
-    ElfW(Addr) elfaddr,
-    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
-    ElfW(auxv_t) *const av
-) __asm__("upx_main");
-void *upx_main(  // returns entry address
-    struct b_info const *const bi,  // 1st block header
-    size_t const sz_compressed,  // total length
-    ElfW(Addr) elfaddr,
-    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
-    ElfW(auxv_t) *const av
-)
-
-#else  /*}{ !__mips__ && !__powerpc__ */
-//        pusha  // (auxv, sz_cpr, elfaddr, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )
-void *upx_main(
-    ElfW(auxv_t) *const av,
-    unsigned const sz_compressed,
-    ElfW(Addr) const volatile elfaddr,
-    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Extent xo,
-    Extent xi
-) __asm__("upx_main");
-void *upx_main(
-    ElfW(auxv_t) *const av,
-    unsigned const sz_compressed,
-    ElfW(Addr) const /*volatile*/ elfaddr, // (used to be value+result)
-    ElfW(Ehdr) *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Extent xo,  // {sz_unc, ehdr}    for ELF headers
-    Extent xi  // {sz_cpr, &b_info} for ELF headers
-)
-#endif  /*}*/
 {
-#if !defined(__mips__) && !defined(__powerpc__)  /*{*/
-    //ElfW(Ehdr) *const ehdr = (ElfW(Ehdr) *)(void *)xo.buf;  // temp char[MAX_ELF_HDR_32+OVERHEAD]
-    // sizeof(Ehdr+Phdrs),   compressed; including b_info header
-    size_t const sz_first = xi.size;
-#endif  /*}*/
-
-#if defined(__powerpc__)  //{
-    size_t const sz_first = sizeof(*bi) + bi->sz_cpr;
     Extent xo, xi;
-    xo.buf = (char *)ehdr;           xo.size = bi->sz_unc;
-    xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
-#endif  //}
-
-#if defined(__mips__)  /*{*/
-    Extent xo, xi, xj;
-  DPRINTF("mips_main\\n", -1);
-    xo.buf  = (char *)ehdr;          xo.size = bi->sz_unc;
-    xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
-    xj.buf = CONST_CAST(char *, bi); xj.size = sizeof(*bi) + bi->sz_cpr;
-#endif  //}
+    xo.buf  = (char *)tmp_ehdr;
+    xo.size = bi->sz_unc;
+    xi.size = bi->sz_cpr + sizeof(*bi);
+    xi.buf  = CONST_CAST(char *, bi);
 
     DPRINTF("upx_main  av=%%p  szc=%%x"
             "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  elfaddr=%%x\\n",
         av, sz_compressed, &xo, xo.size, xo.buf,
         &xi, xi.size, xi.buf, elfaddr);
 
-#if defined(__mips__)  //{
-    // ehdr = Uncompress Ehdr and Phdrs
-    unpackExtent(&xj, &xo);
-#else  //}{ !defined(__mips__)
     // Uncompress Ehdr and Phdrs.
     unpackExtent(&xi, &xo);
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.
-    xi.buf  -= sz_first;
-    xi.size  = sz_compressed;
-#endif  // !__mips__ }
+    xi.size = sz_compressed;
+    xi.buf  = CONST_CAST(char *, bi);
 
     ElfW(Addr) reloc = elfaddr;  // ET_EXEC problem!
-    DPRINTF("upx_main1  .e_entry=%%p  reloc=%%p\\n", ehdr->e_entry, reloc);
-    ElfW(Phdr) *phdr = (ElfW(Phdr) *)(1+ ehdr);
+    DPRINTF("upx_main1  .e_entry=%%p  reloc=%%p\\n", tmp_ehdr->e_entry, reloc);
+    ElfW(Phdr) *phdr = (ElfW(Phdr) *)(1+ tmp_ehdr);
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
-    ElfW(Addr) entry = do_xmap(ehdr, &xi, 0, av, &reloc);
+    ElfW(Addr) entry = do_xmap(tmp_ehdr, &xi, 0, av, &reloc);
     DPRINTF("upx_main2  entry=%%p  reloc=%%p\\n", entry, reloc);
     auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     int j;
-    for (j=0, phdr = (ElfW(Phdr) *)(1+ ehdr); j < ehdr->e_phnum; ++phdr, ++j)
+    for (j=0, phdr = (ElfW(Phdr) *)(1+ tmp_ehdr); j < tmp_ehdr->e_phnum; ++phdr, ++j)
     if (PT_INTERP==phdr->p_type) {
         int const fdi = open(reloc + (char const *)phdr->p_vaddr, O_RDONLY, 0);
         if (0 > fdi) {
             err_exit(18);
         }
-        if (MAX_ELF_HDR_32!=read(fdi, (void *)ehdr, MAX_ELF_HDR_32)) {
+        if (MAX_ELF_HDR_32!=read(fdi, (void *)tmp_ehdr, MAX_ELF_HDR_32)) {
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, av, &reloc);
+        entry = do_xmap(tmp_ehdr, 0, fdi, av, &reloc);
         DPRINTF("upx_main3  entry=%%p  reloc=%%p\\n", entry, reloc);
         auxv_up(av, AT_BASE, reloc);  // uClibc and musl
         close(fdi);

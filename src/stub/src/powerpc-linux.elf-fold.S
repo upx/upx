@@ -162,10 +162,10 @@ L90:
         mr a0,r_ADRX  // &b_info
         mr a1,r_LENX  // total_size
         mr a2,r_elf   // elfaddr
-        la a3,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
-        mr a4,r_auxv  // &Elf32_auxv_t
+        mr a3,r_auxv  // &Elf32_auxv_t
+        la a4,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
         call upx_main  // Out: a0= entry
-// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, Ehdrtmp *a3, auxv *a4)
+// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, auxv *a3, Ehdrtmp *a4)
 
         la  sp,SZ_FRAME+OVERHEAD(sp)  // deallocate this frame
         mr r_exp,a0  // save &entry

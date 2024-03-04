@@ -105,7 +105,7 @@ L10:
         mov esi,esp; sub esp,PATH_MAX
         mov edi,esp; push 8; pop ecx; rep movsd  // copy ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 
-        push ebp  // f_exp
+        push ebp  // f_exp  FIXME: this is no longer used
         mov ebp,esp  // frame: f_exp,ADRX,LENX,elfaddr,ADRU,LENU,fd,entry,argc
 0:
         lodsd; test %eax,%eax; stosd; jne 0b  // argv
@@ -189,16 +189,13 @@ L10:
 #define OVERHEAD 2048
 #include "MAX_ELF_HDR.S"
         sub esp, MAX_ELF_HDR_32 + OVERHEAD  // alloca
-        mov edx, esp  // &tmp
-        mov ebx, [      eax]  // length of uncompressed ELF headers
-        mov ecx, [NBPW+ eax]  // length of   compressed ELF headers
-        add ecx, szb_info
-               //   edi,    esi,     ebp,       esp,     ebx,  edx,      ecx,        eax
-        pusha  // (auxv, sz_cpr, elfaddr, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )
-        inc edi  // swap with above 'pusha' to inhibit auxv_up for PT_INTERP
+        push esp  // &tmp
+        push edi  // &final_auxv[0]
+        push ebp  // elfaddr
+        push esi  // LENX total size
+        push eax  // ADRX &b_info
         call upx_main  // returns entry address
-        dec edi
-        mov esi,eax  // entry
+        mov esi,eax  // esi= entry;  edi= auxv; ebp= elfaddr
 
 // Discard C_TEXT (includes [ADRC,+LENC) )
         mov ecx,[ebp+ p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
@@ -211,7 +208,7 @@ L10:
 // Buggy programs may depend on uninit stack being 0, so clear what we used.
         mov edx,edi  // save auxv
         mov edi,esp
-        mov ecx,(8*NBPW + MAX_ELF_HDR_32 + OVERHEAD) >>2  // 8 params, un-alloca
+        mov ecx,(5*NBPW + MAX_ELF_HDR_32 + OVERHEAD) >>2  // 5 params, un-alloca
         xor eax,eax  // 0
         rep stosd  // clear frame on exit
         mov esp,edi  // end of frame
