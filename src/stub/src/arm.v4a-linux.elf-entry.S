@@ -185,7 +185,7 @@ unfold:
 0:
         stmia r1!,{r0}
         cmp r1,old_sp; blo 0b
-        
+
         mov arg3,sp  // &pathname (currently a null string "")
         mov arg2,u_len
         mov arg1,#0  // kernel chooses addr
