@@ -117,10 +117,10 @@ F_LENX= 1*NBPW
 F_ELFA= 2*NBPW
 F_ADRU= 3*NBPW
 F_LENU= 4*NBPW
-F_ENTR= 5*NBPW
+F_R0=   5*NBPW
+F_R1=   6*NBPW
+F_ENTR= 7*NBPW
   F_QFLG= F_ENTR
-F_R0=   6*NBPW
-F_R1=   7*NBPW
 F_SIZE= 8*NBPW
 
 // (read-only) .data space at start of unfolded code
@@ -138,8 +138,8 @@ mflg:
         .word MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
 ////  nop; bkpt  // DEBUG
-        stmdb sp!,{r0,r1}  // ABI crt0 -static may have data here
-        sub sp,sp,#-2*NBPW + F_SIZE  // F_R0,F_R1 separately
+        stmdb sp!,{r0,r1,lr}  // ABI crt0 -static may have data here
+        sub sp,sp,#-3*NBPW + F_SIZE  // F_R0,F_R1 separately
         add arg1,sp,#NBPW + F_SIZE  // avoid feint of 0==argc
         call zfind  // out: r0= &envp
         call zfind

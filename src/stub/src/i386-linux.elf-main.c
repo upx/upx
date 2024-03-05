@@ -443,7 +443,7 @@ make_hatch_arm32(
     unsigned const sys_munmap = get_sys_munmap();
     unsigned code[2] = {
         sys_munmap,  // syscall __NR_unmap
-        0xe8bd80ff,  // ldmia sp!,{r0,r1,r2,r3,r4,r5,r6,r7,pc}
+        0xe8bd8003,  // ldmia sp!,{r0,r1,pc}
      };
     unsigned *hatch = 0;
     DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);

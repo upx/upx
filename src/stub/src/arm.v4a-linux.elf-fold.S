@@ -70,7 +70,7 @@ PATH_MAX= 4096
 #include "MAX_ELF_HDR.S"
 
 PAGE_MASK=  . - 3*NBPW; .globl PAGE_MASK
-mflg_data = . - 2*NBPW  // QNX vs Linux: MAP_PRIVATE | MAP_ANONYMOUS
+qflg_data = . - 2*NBPW  // QNX vs Linux: MAP_PRIVATE | MAP_ANONYMOUS
 upxfn_path= . - 1*NBPW  // displacement from "zero"
 
 arg1  .req r0
@@ -80,7 +80,7 @@ arg4  .req r3
 arg5  .req r4
 arg6  .req r5
 
-// In:  sp/ F_ADRX,F_LENX,F_ELFA,F_ADRU,F_LENU,%F_ENTR/F_MFD,F_R0,F_R1,F_argc
+// In:  sp/ F_ADRX,F_LENX,F_ELFA,F_ADRU,F_LENU,F_R0,F_R1,%F_ENTR,F_argc
 //   [ADRX, +LENX) = extent of compressed program
 //   [ADRU, +LENU) = params to munmap unfolded stub
 F_ADRX=  0*NBPW
@@ -88,14 +88,13 @@ F_LENX=  1*NBPW
 F_ELFA=  2*NBPW
 F_ADRU=  3*NBPW
 F_LENU=  4*NBPW
-F_ENTR=  5*NBPW
-  F_MFD=  F_ENTR  // FIXME: conflict after upx_main?
-F_R0=    6*NBPW
-F_R1=    7*NBPW
+F_R0=    5*NBPW
+F_R1=    6*NBPW
+F_ENTR=  7*NBPW
 F_ARGC=  8*NBPW
 
 fold_begin:  // enter here
-        b L05  // put PAGE_MASK and mflg_data within short-displacement of uses
+        b L05  // put PAGE_MASK and qflg_data within short-displacement of uses
 
 get_page_mask: .globl get_page_mask
         ldr r0,PAGE_MASK
@@ -120,7 +119,7 @@ mprotect: .globl mprotect
 
 mmap_privanon: .globl mmap_privanon
         stmdb sp!,{r4,r5,lr}
-        ldr r4,mflg_data  @ MAP_PRIVATE|MAP_ANON for Linux; MAP_PRIVANON for QNX
+        ldr r4,qflg_data  @ MAP_PRIVATE|MAP_ANON for Linux; MAP_PRIVANON for QNX
         mov arg6,#0  @ offset= 0
         orr arg4,arg4,r4  @ combine with input (such as MAP_FIXED)
         mvn arg5,#0  @ fd= -1
@@ -170,7 +169,8 @@ L05:
         adr arg1,proc_self_exe
         mov arg2,#O_RDONLY
         do_sys7t __NR_open  // ENOENT is OK
-        str r0,[sp,#F_MFD]
+r_pse .req r8
+        mov r_pse,r0
 
         mov arg3,#PATH_MAX
         mov arg2,r9  @ buffer
@@ -205,7 +205,8 @@ link_ok:
         sub r3,r0,r6  @ &new_auxv[end] - &orig_auxv[end]
         add r3,r3,r5  @ &new_auxv[0] = delta +  &orig_auxv[0]
         mov r1,r9  @ &down_auxv[end]
-        str r0,[sp,#F_ENTR]  @ &new_auxv[end]
+r_auxe .req r10
+        mov r_auxe,r0  @ &new_auxv[end]
 0:
         ldr r2,[r1,#-4]!; cmp r1,sp
         str r2,[r0,#-4]!; bne 0b
@@ -213,53 +214,38 @@ link_ok:
 
 /* Construct arglist for upx_main */
         ldmia sp!,{arg1,arg2,arg3}  @ pop: ADRX, LENX, elfaddr
-F_delta= 3*NBPW
+        stmdb sp!,{arg1,arg2,arg3}  @ put back
+r_elfa .req r9
+        mov r_elfa,arg3  // save elfaddr
         //mov arg4,r3  @ auxv
         sub sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ alloca
         stmdb sp!,{sp}  // arg5  &tmp_ehdr
         call upx_main
         add sp,sp,#NBPW  // toss arg5
         add sp,sp,#MAX_ELF_HDR_32 + OVERHEAD  @ un-alloca
-        str r0,[sp,#F_ENTR - F_delta]  @ entry address
-
-// Discard pages of compressed input data (includes [ADRC,+LENC) )
-        ldr r1,[r5,#p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
-        //ldrb r0,[r5,#e_type]; cmp r0,#ET_EXEC; bne 1f
-        mov r0,r5; call brk  // also sets the brk
-1:
-        mov r0,r5; call munmap  // discard C_TEXT compressed data
+        str r0,[sp,#F_ENTR]  @ entry address
 
 // Map 1 page of /proc/self/exe so that it does not disappear
-        ldr arg5,[sp,#F_MFD]
+        mov arg5,r_pse
         cmp arg5,#0; blt no_map_pse
         mov arg6,#0  @ SEEK_SET offset
-        stmdb sp!,{r4,r5}  @ arg5,arg6 calling convention
+        stmdb sp!,{arg5,arg6}  @ arg5,arg6 calling convention
         mov arg4,#MAP_PRIVATE
         mov arg3,#PROT_READ
         mov arg2,#PAGE_SIZE
         mov arg1,#0  @ any address
         call mmap  @ no error check: cannot recover
-        ldmia sp!,{r0,r1}  @ fd, offset
+        ldmia sp!,{arg1,r1}  @ fd, offset
         call close
 no_map_pse:
-        ldmia sp!,{r0,r1,r2, lr}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type], entry
-        // crumb is unused: replaced by mapping /proc/self/exe into a free page
 
-#if DEBUG  /*{*/
-        ldr r3,[r2,#NBPW -2*NBPW]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
-        ldr r4,[r3,#0]  @ 1st instr
-        ldr r5,[r3,#NBPW]  @ 2nd instr
-        stmdb sp!,{TRACE_REGS}; mov r0,#0x15; bl trace
-#endif  /*}*/
-        mov r3,#0  @ clear registers: paranoia
-        mov r4,#0
-        mov r5,#0
-        mov r6,#0
-
-        mov r8,#0
-        mov r9,#0
-        mov r10,#0
-        mov r11,#0
+// Discard pages of compressed input data (includes [ADRC,+LENC) )
+        //ldrb r0,[r_elfa,#e_type]; cmp r0,#ET_EXEC; bne 1f
+1:
+        ldr arg2,[r_elfa,#p_memsz+sz_Elf32_Phdr+sz_Elf32_Ehdr]  // Phdr[C_TEXT= 1].p_memsz
+        mov arg1,r_elfa
+        call munmap  // discard C_TEXT compressed data
+        mov arg1,r_elfa; call brk  // also set the brk
 
 #if 1|DEBUG  //{
 /* Heuristic cache flush: sweep contiguous range to force collisions and evictions. */
@@ -273,6 +259,19 @@ sweep:
         add sp,sp,#(1<<18)  @ pop stack
 #endif  //}
 
+        add sp,sp,#3*NBPW  // toss F_ADRX,F_LENX,F_ELFA
+        ldmia sp!,{arg1,arg2}  @ F_ADRU,F_LENU
+        stmdb sp!,{r_auxe}
+        mov r3,#0  @ clear registers: paranoia
+        mov r4,#0
+        mov r5,#0
+        mov r6,#0
+
+        mov r8,#0
+        mov r9,#0
+        mov r10,#0
+        mov r11,#0
+
 #if defined(ARMEL_DARWIN)  /*{*/
         mov r7,#0
         mov r12,#0xff & __NR_munmap
@@ -283,7 +282,8 @@ sweep:
         mov r7,#0
         mov r12,#0
 #endif  /*}*/
-        ldr pc,[r2,#NBPW -2*NBPW]  @ hatch: Elf32_auxv_t[AT_NULL@.a_type].a_val
+        ldmia sp!,{r12}  // r_auxe
+        ldr pc,[r12,#NBPW -2*NBPW]  @ hatch: Elf32_auxv_t[AT_NULL@.a_type].a_val
 
 f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         ptr  .req r0
