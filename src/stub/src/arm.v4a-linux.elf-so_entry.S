@@ -292,6 +292,8 @@ mempcpy: .globl mempcpy  // (dst, src, n)
 
 // All of these syscalls must preserve r7 (cannot use 'do_sys7t')
 // because they are called from C-language upxfd_android.c
+close: .globl close
+        do_sys __NR_close; ret
 fstat: .globl fstat
         do_sys __NR_fstat; ret
 ftruncate: .globl ftruncate
