@@ -118,6 +118,10 @@ __NR_SYSCALL_BASE = 0x900000
 .endm
 #endif  /*}*/
 
+.macro          call target
+                bl \target
+.endm
+
 .macro          ret
                 bx lr  /* armv5 for thumb interworking */
 .endm

@@ -134,11 +134,12 @@ L20:
 
         xor %ecx,%ecx  // zero
         push %edx  // MATCH_33  save &getbit
+        push %ecx  // arg4  frag_mask
         push %eax  // arg3  &pathname
         mov %ecx,(%eax)  // empty string
         push u_len  // arg2  length required
         push %ecx  // arg1  0==> any page
-        call upx_mmap_and_fd; add $3*NBPW,%esp  // (ptr, len, pathname)
+        call upx_mmap_and_fd; add $4*NBPW,%esp  // (ptr, len, pathname, frag_mask)
         pop %edx  // MATCH_33  &getbit
         mov %eax,%ecx
         shr $12,%ecx; shl $12,%ecx; mov %ecx,F_ADRU(old_sp)

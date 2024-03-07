@@ -254,7 +254,7 @@ Punmap: .globl Punmap
         and r12,r12,r0
         sub r0,r0,r12
         add r1,r1,r12
-munmap: .globl munmap
+munmap: .globl munmap  // BEWARE: get_sys_munmap knows where 'svc' lives!
         do_sys __NR_munmap; ret
 
 m_off4k:
@@ -366,33 +366,34 @@ tmp  .req r3
 
 size .req r4
 ptr  .req r5
-ulen .req r6
+frag .req r6
 pflg .req r7
 
-underlay: .globl underlay // (unsigned size, char *ptr, unsigned ulen, unsigned p_flags)  // ulen <= PAGE_SIZE
+underlay: .globl underlay // (unsigned size, char *ptr, unsigned frag, unsigned p_flags)  // frag <= PAGE_SIZE
     stmdb sp!,{r0,r1,r2,r3,r4,r5,r6,r7, lr}
-    ldmia sp!, {r4,r5,r6,r7}  // r4= r0; r5= r1; r6= r2; r7= r3;
+    ldmia sp!, {r4,r5,r6,r7}  // r4= size; r5= ptr; r6= frag; r7= p_flags;
     mov r0,sp
 
-    sub tmp,sp,ulen
+    sub tmp,sp,frag
     and sp,tmp,#-2*NBPW
     str r0,[sp,#-NBPW]!  // save sp for pop at return
 
     add r0,sp,#NBPW
-    // mov r1,ptr  // not yet overwritten
-    // mov r2,ulen  // not yet overwritten
+    // mov arg2,ptr  // not yet overwritten
+    // mov arg3,frag  // not yet overwritten
     bl memcpy
 
-    mov r0,ptr
-    mov r1,size
+    sub r0,ptr,frag
+    add r1,size,frag
     mov r2,#PROT_WRITE|PROT_READ
     tst pflg,#PF_X  // if eventually PROT_EXEC,
     orrne r2,r2,#PROT_EXEC  // ... then Linux ARM wants it now, too
     mov r3,#MAP_FIXED
-    bl mmap_privanon  // r0= ptr because MAP_FIXED
+    bl mmap_privanon  // r0= page_aligned(ptr)
 
-    add r1,sp,#NBPW
-    mov r2,ulen
+    //mov r0,r0  // dst
+    add r1,sp,#NBPW  // src
+    mov r2,frag  // len
     bl memcpy
 
     ldr sp,[sp]
@@ -402,7 +403,7 @@ underlay: .globl underlay // (unsigned size, char *ptr, unsigned ulen, unsigned 
 
     .unreq size
     .unreq ptr
-    .unreq ulen
+    .unreq frag
     .unreq pflg
 
 my_memset: .globl my_memset  // void *memset(void *s, int c, size_t n);

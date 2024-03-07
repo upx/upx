@@ -258,7 +258,8 @@ int strncmplc(char const *s1, char const *s2, unsigned n)
 unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
     void *ptr,  // desired address
     unsigned datlen,  // mapped length
-    char *pathname  // 0 ==> get_upxfn_path()
+    char *pathname,  // 0 ==> get_upxfn_path()
+    unsigned const frag_mask
 )
 {
     unsigned long addr = 0;  // for result
@@ -273,7 +274,7 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
     int /*const*/ not_android = strncmplc(addr_string("andr"), buf, 4);
 
     // Work-around for missing memfd_create syscall on early 32-bit Android.
-    if (!pathname) { // must ask
+    if (!not_android && !pathname) { // must ask
         pathname = get_upxfn_path();
     }
     if (!not_android && -ENOSYS == fd && pathname) {
@@ -290,12 +291,15 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
         }
         unlink(pathname);
     }
-#else  //}{
+#else  //}{ !ANDROID_FRIEND
     int not_android = 1;
-    (void)pathname;
+    (void)pathname;  // dead
 #endif  //}
 
     // Set the file length
+    unsigned const frag = frag_mask & (unsigned)ptr;
+    ptr -= frag;  // page-aligned
+    datlen += frag;
     if (datlen) {
         if (not_android) { // Linux ftruncate() is well-behaved
             int rv = ftruncate(fd, datlen);
@@ -306,19 +310,22 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
 #if ANDROID_FRIEND  //{
         else { // !not_android: ftruncate has varying system call number on 32-bit
             my_memset(buf, 0, BUFLEN);
-            while (0 < datlen) {
-                int x = (datlen < BUFLEN) ? datlen : BUFLEN;
+            unsigned wlen = datlen;
+            while (0 < wlen) {
+                int x = (wlen < BUFLEN) ? wlen : BUFLEN;
                 if (x != write(fd, buf, x)) {
                     return -ENOSPC;
                 }
-                datlen -= x;
+                wlen -= x;
             }
             lseek(fd, 0, SEEK_SET);  // go back to the beginning
         }
 #endif  //}
 
-        // Map the file pages; set length 0 ==> 1
-        addr = (unsigned long)mmap(ptr, (!datlen) + datlen, PROT_WRITE | PROT_READ,
+        if (frag_mask && ptr) { // Preserve entire page that contains *ptr
+            write(fd, ptr, 1+ frag_mask);
+        }
+        addr = (unsigned long)mmap(ptr, datlen , PROT_WRITE | PROT_READ,
             MAP_SHARED | (ptr ? MAP_FIXED : 0), fd, 0);
         if ((~0ul<<12) < addr) { // error
             return addr;

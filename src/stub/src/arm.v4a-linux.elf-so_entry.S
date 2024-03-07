@@ -153,7 +153,7 @@ _start:
         .arm
         nop
 #if 0|DEBUG  //{
-        bkpt  // DEBUG
+        bkpt  // DEBUG _start
 #endif  //}
         // argc,argv,envp, r3 convenience, r4-r7 callee-saved, lr ret_addr
         stmfd sp!,{r0,r1,r2, r3, r4,r5,r6,r7, lr}  // MATCH_99
@@ -186,10 +186,11 @@ L70_ret:
         and arg3,arg3,#-2*NBPW  // where to put pathname
         sub r0,arg3,sp; str r0,[sp,#1*NBPW]  // offset(pathname)
         mvn r0,#0;      str r0,[sp,#0*NBPW]  // space for PAGE_MASK
+        mov arg4,#0  // frag_mask (addr will be page-aligned)
         mov arg2,u_len
         mov arg1,#0  // any page address
         str arg1,[arg3]  // start with 0-length pathname
-        bl upx_mmap_and_fd // (ptr, len, pathname)
+        call upx_mmap_and_fd // (ptr, len, pathname, frag_mask)
         mov r1,r0,lsr #12; mov r1,r1,lsl #12; str r1,[old_sp,#F_ADRU]
         sub r0,r0,r1; sub r0,r0,#1;           str r0,[old_sp,#F_MFD]
 
@@ -199,7 +200,7 @@ L70_ret:
         ldr arg2,[foldi,#sz_cpr]  // srclen
         add arg1,foldi,#sz_b_info  // src
     .unreq foldi
-        bl f_decompress
+        call f_decompress
         add sp,sp,#NBPW  // toss dstlen
 
         ldr arg1,[old_sp,#F_MFD]

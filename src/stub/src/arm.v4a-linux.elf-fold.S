@@ -443,7 +443,7 @@ getpid:.globl getpid;do_sys __NR_getpid; ret
 lseek: .globl lseek; do_sys __NR_lseek; ret
 memfd_create: .globl memfd_create; do_sys2 __NR_memfd_create; ret
 mkdir: .globl mkdir; do_sys __NR_mkdir; ret
-munmap: .globl munmap; do_sys __NR_munmap; ret
+munmap: .globl munmap; do_sys __NR_munmap; ret  // BEWARE: get_sys_munmap knows where 'svc' lives!
 open:  .globl open;  do_sys __NR_open; ret
 read:  .globl read;  do_sys __NR_read; ret
 readlink: .globl readlink; do_sys __NR_readlink; ret

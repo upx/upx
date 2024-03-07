@@ -394,7 +394,8 @@ ERR_LAB
 extern long upx_mmap_and_fd(  // x86_64 Android emulator of i386 is not faithful
      void *ptr,
      unsigned len,  // also pre-allocate space in file
-     char *pathname  // 0 ==> call get_upxfn_path
+     char *pathname,  // 0 ==> call get_upxfn_path
+     unsigned frag_mask  // ~page_mask
 );
 #if defined(__i386__)  //
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
@@ -417,7 +418,7 @@ make_hatch_i386(
             *(long *)&hatch[0] = escape;
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(escape), 0);
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(escape), 0, 0);
             unsigned mfd = -1+ (0xfff& fdmap);
             write(mfd, &escape, sizeof(escape));
             hatch = mmap((void *)(fdmap & ~0xffful), sizeof(escape),
@@ -458,7 +459,7 @@ make_hatch_arm32(
             __clear_cache(&hatch[0], &hatch[2]);
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0);
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0, 0);
             unsigned mfd = -1+ (0xfff& fdmap);
             write(mfd, &code, sizeof(code));
             hatch = mmap((void *)(fdmap & ~0xffful), sizeof(code),
@@ -498,7 +499,7 @@ make_hatch_mips(
             __clear_cache(&hatch[0], &hatch[3]);
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0);
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0, 0);
             unsigned mfd = -1+ (0xfff& fdmap);
             write(mfd, &code, sizeof(code));
             hatch = mmap((void *)(fdmap & ~0xffful), sizeof(code),
@@ -534,7 +535,7 @@ make_hatch_ppc32(
             // __clear_cache(&hatch[0], &hatch[2]);  // FIXME
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0);
+            unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0, 0);
             unsigned mfd = -1+ (0xfff& fdmap);
             write(mfd, &code, sizeof(code));
             hatch = mmap((void *)(fdmap & ~0xffful), sizeof(code),
@@ -746,7 +747,7 @@ do_xmap(
             // Cannot set PROT_EXEC except via mmap() into a region (Linux "vma")
             // that has never had PROT_WRITE.  So use a Linux-only "memory file"
             // to hold the contents.
-            unsigned long fdmap = upx_mmap_and_fd(addr, LEN_OVER + mlen, 0);
+            unsigned long fdmap = upx_mmap_and_fd(addr, LEN_OVER + mlen, 0, 0);
             mfd = -1+ (0xfff& fdmap);
             addr = (char *)((fdmap >> 12) << 12);
             if (frag) {
