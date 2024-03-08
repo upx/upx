@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "util/system_defs.h"
+
 #if !(__cplusplus + 0 >= 201703L)
 #error "C++17 is required"
 #endif
@@ -53,30 +55,6 @@ static_assert(sizeof(int) == 4);
 static_assert(sizeof(long) == 4);
 static_assert(sizeof(void *) == 8);
 #endif
-
-#if !defined(_FILE_OFFSET_BITS)
-#define _FILE_OFFSET_BITS 64
-#endif
-#if defined(_WIN32) && defined(__MINGW32__) && (defined(__clang__) || defined(__GNUC__))
-#if !defined(__USE_MINGW_ANSI_STDIO)
-#define __USE_MINGW_ANSI_STDIO 1
-#endif
-#endif
-#if defined(_WIN32)
-// disable silly warnings about using "deprecated" POSIX functions like fopen()
-#if !defined(_CRT_NONSTDC_NO_DEPRECATE)
-#define _CRT_NONSTDC_NO_DEPRECATE 1
-#endif
-#if !defined(_CRT_NONSTDC_NO_WARNINGS)
-#define _CRT_NONSTDC_NO_WARNINGS 1
-#endif
-#if !defined(_CRT_SECURE_NO_DEPRECATE)
-#define _CRT_SECURE_NO_DEPRECATE 1
-#endif
-#if !defined(_CRT_SECURE_NO_WARNINGS)
-#define _CRT_SECURE_NO_WARNINGS 1
-#endif
-#endif // _WIN32
 
 // ACC and C system headers
 #ifndef ACC_CFG_USE_NEW_STYLE_CASTS

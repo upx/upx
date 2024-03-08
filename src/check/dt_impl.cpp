@@ -24,6 +24,8 @@
    <markus@oberhumer.com>
  */
 
+#include "../util/system_defs.h"
+
 /*************************************************************************
 // doctest support code implementation
 **************************************************************************/
@@ -50,7 +52,8 @@
 #endif
 #endif
 // aligned_alloc() was added in glibc-2.16
-#if defined(__ELF__) && (__GLIBC__ + 0 == 2) && (__GLIBC_MINOR__ + 0 < 16)
+#if defined(__ELF__) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) && (__GLIBC__ + 0 == 2) &&  \
+    (__GLIBC_MINOR__ + 0 < 16)
 #define _LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION
 #endif
 

@@ -74,6 +74,7 @@ static forceinline constexpr bool use_simple_mcheck() noexcept { return true; }
 **************************************************************************/
 
 MemBuffer::MemBuffer(upx_uint64_t bytes) : MemBufferBase<byte>() {
+    static_assert(element_size == 1);
     alloc(bytes);
     debug_set(debug.last_return_address_alloc, upx_return_address());
 }

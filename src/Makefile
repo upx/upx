@@ -13,11 +13,11 @@ ifndef top_srcdir
   top_srcdir := $(srcdir)/..
 endif
 
-#
+#***********************************************************************
 # redirect to top-level CMake build
-#
+#***********************************************************************
 
-# NOTE that top-level Makefile .DEFAULT_GOAL is build/release
+# NOTE that the top-level Makefile .DEFAULT_GOAL is build/release
 .DEFAULT_GOAL = build/all
 
 build/debug:   $(top_srcdir)/build/debug
@@ -42,10 +42,10 @@ CTEST = ctest
 test:: $(top_srcdir)/build/debug   PHONY; cd $< && $(CTEST)
 test:: $(top_srcdir)/build/release PHONY; cd $< && $(CTEST)
 
-#
-# "make run-testsuite"
+#***********************************************************************
+# make run-testsuite
 # git clone https://github.com/upx/upx-testsuite.git
-#
+#***********************************************************************
 
 # search for the UPX testsuite
 # you also can override upx_testsuite_SRCDIR
@@ -78,24 +78,28 @@ run-testsuite-release: $(top_srcdir)/build/release PHONY
 endif
 endif
 
-#
-# "make check-whitespace"
-#
+#***********************************************************************
+# make check-whitespace
+#***********************************************************************
 
 ifneq ($(wildcard /usr/bin/env),) # need Unix utils like bash, perl, sed, xargs, etc.
+
 CHECK_WHITESPACE = bash $(top_srcdir)/misc/scripts/check_whitespace.sh $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
 CHECK_WHITESPACE = bash $(top_srcdir)/misc/scripts/check_whitespace_git.sh $(top_srcdir)
 endif
 check-whitespace: PHONY; $(CHECK_WHITESPACE)
-endif
 
-#
-# "make clang-format"
-#
+endif # /usr/bin/env
+
+#***********************************************************************
+# make clang-format
+#***********************************************************************
 
 # automatically format some C++ source code files
+ifneq ($(wildcard /usr/bin/env),)
 ifeq ($(shell uname),Linux)
+
 # Markus loves clang-format, but John hates it; find a compromise
 CLANG_FORMAT_EXCLUDE_FILES += miniacc.h stub/%.h
 CLANG_FORMAT_EXCLUDE_FILES += p_lx_% p_mach% p_unix% p_vmlin%
@@ -105,7 +109,9 @@ CLANG_FORMAT_FILES += $(sort $(wildcard ../misc/cmake/try_compile/*.[ch]*))
 CLANG_FORMAT_FILES := $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES))
 clang-format: $(CLANG_FORMAT_FILES) PHONY
 	@echo "running upx-clang-format"
-	@$(top_srcdir)/misc/scripts/upx-clang-format.sh -i $(CLANG_FORMAT_FILES)
-endif
+	@bash $(top_srcdir)/misc/scripts/upx-clang-format.sh -i $(CLANG_FORMAT_FILES)
+
+endif # Linux
+endif # /usr/bin/env
 
 # vim:set ts=8 sw=8 noet:

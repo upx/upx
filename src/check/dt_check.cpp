@@ -24,6 +24,8 @@
    <markus@oberhumer.com>
  */
 
+#include "../headers.h"
+#include <cmath> // std::isnan
 #include "../conf.h"
 
 /*************************************************************************
@@ -324,7 +326,7 @@ struct TestIntegerWrap {
 };
 
 //
-// basic exception handling
+// basic exception handling checks to early catch toolchain/qemu/wine/etc problems
 //
 
 static noinline void throwSomeValue(int x) may_throw {
@@ -347,20 +349,66 @@ static noinline void check_basic_cxx_exception_handling(void (*func)(int)) noexc
 }
 
 //
-// basic floating point to early catch bad codegen
-// (this has happened in the past with some exotic LLVM targets)
+// basic floating point checks to early catch toolchain/qemu/wine/etc problems
 //
 
-static noinline double sadd_a_b_div(upx_int64_t a, upx_int64_t b) { return (a + b) / 1000000.0; }
-static noinline double uadd_a_b_div(upx_uint64_t a, upx_uint64_t b) { return (a + b) / 1000000.0; }
-static noinline double ssub_a_b_div(upx_int64_t a, upx_int64_t b) { return (a - b) / 1000000.0; }
-static noinline double usub_a_b_div(upx_uint64_t a, upx_uint64_t b) { return (a - b) / 1000000.0; }
+static noinline float i64_f32_add_div(upx_int64_t a, upx_int64_t b) { return (a + b) / 1000000.0f; }
+static noinline float u64_f32_add_div(upx_uint64_t a, upx_uint64_t b) {
+    return (a + b) / 1000000.0f;
+}
+static noinline float i64_f32_sub_div(upx_int64_t a, upx_int64_t b) { return (a - b) / 1000000.0f; }
+static noinline float u64_f32_sub_div(upx_uint64_t a, upx_uint64_t b) {
+    return (a - b) / 1000000.0f;
+}
+
+static noinline double i64_f64_add_div(upx_int64_t a, upx_int64_t b) { return (a + b) / 1000000.0; }
+static noinline double u64_f64_add_div(upx_uint64_t a, upx_uint64_t b) {
+    return (a + b) / 1000000.0;
+}
+static noinline double i64_f64_sub_div(upx_int64_t a, upx_int64_t b) { return (a - b) / 1000000.0; }
+static noinline double u64_f64_sub_div(upx_uint64_t a, upx_uint64_t b) {
+    return (a - b) / 1000000.0;
+}
+
+template <class Int, class Float>
+struct TestFloat {
+    static constexpr Int X = 1000000;
+    static noinline Float div(Int a, Float f) { return a / f; }
+    static noinline Float add_div(Int a, Int b, Float f) { return Float(a + b) / f; }
+    static noinline Float sub_div(Int a, Int b, Float f) { return Float(a - b) / f; }
+    static noinline Float add_div_x(Int a, Int b) { return Float(a + b) / Float(X); }
+    static noinline Float sub_div_x(Int a, Int b) { return Float(a - b) / Float(X); }
+    static noinline void check() noexcept {
+        assert_noexcept(add_div(X, X, Float(X)) == Float(2));
+        assert_noexcept(add_div_x(X, X) == Float(2));
+        assert_noexcept(sub_div(3 * X, X, Float(X)) == Float(2));
+        assert_noexcept(sub_div_x(3 * X, X) == Float(2));
+        // extra debugging hack
+        const char *e = getenv("UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO");
+        if (e && e[0] && strcmp(e, "0") != 0) {
+            assert_noexcept(std::isnan(div(0, Float(0))));
+            assert_noexcept(std::isinf(div(X, Float(0))));
+        }
+    }
+};
 
 static noinline void check_basic_floating_point(void) noexcept {
-    assert_noexcept(sadd_a_b_div(1000000, 1000000) == 2.0);
-    assert_noexcept(uadd_a_b_div(1000000, 1000000) == 2.0);
-    assert_noexcept(ssub_a_b_div(3000000, 1000000) == 2.0);
-    assert_noexcept(usub_a_b_div(3000000, 1000000) == 2.0);
+    assert_noexcept(i64_f32_add_div(1000000, 1000000) == 2.0f);
+    assert_noexcept(u64_f32_add_div(1000000, 1000000) == 2.0f);
+    assert_noexcept(i64_f32_sub_div(3000000, 1000000) == 2.0f);
+    assert_noexcept(u64_f32_sub_div(3000000, 1000000) == 2.0f);
+    assert_noexcept(i64_f64_add_div(1000000, 1000000) == 2.0);
+    assert_noexcept(u64_f64_add_div(1000000, 1000000) == 2.0);
+    assert_noexcept(i64_f64_sub_div(3000000, 1000000) == 2.0);
+    assert_noexcept(u64_f64_sub_div(3000000, 1000000) == 2.0);
+    TestFloat<upx_int32_t, float>::check();
+    TestFloat<upx_uint32_t, float>::check();
+    TestFloat<upx_int64_t, float>::check();
+    TestFloat<upx_uint64_t, float>::check();
+    TestFloat<upx_int32_t, double>::check();
+    TestFloat<upx_uint32_t, double>::check();
+    TestFloat<upx_int64_t, double>::check();
+    TestFloat<upx_uint64_t, double>::check();
 }
 
 } // namespace
@@ -377,7 +425,7 @@ void upx_compiler_sanity_check(void) noexcept {
         // If UPX_DEBUG_DOCTEST_DISABLE is set then we don't want to throw any
         // exceptions in order to improve debugging experience.
     } else {
-        // check working C++ exception handling to catch toolchain/qemu/wine/etc problems
+        // check working C++ exception handling to early catch toolchain/qemu/wine/etc problems
         check_basic_cxx_exception_handling(throwSomeValue);
     }
 

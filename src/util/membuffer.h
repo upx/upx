@@ -204,7 +204,8 @@ public:
     // explicit conversion
     void *getVoidPtr() noexcept { return (void *) ptr; }
     const void *getVoidPtr() const noexcept { return (const void *) ptr; }
-    unsigned getSize() const noexcept { return size_in_bytes; }
+    unsigned getSizeInBytes() const noexcept { return size_in_bytes; }
+    unsigned getSize() const noexcept { return size_in_bytes; } // note: element_size == 1
 
     // util
     noinline void fill(unsigned off, unsigned len, int value) may_throw;

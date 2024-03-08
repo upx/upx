@@ -15,6 +15,7 @@ env:
   DEBIAN_FRONTEND: noninteractive
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -Wdev --warn-uninitialized
+  UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO: 1
   # 2024-01-25
   ZIG_DIST_VERSION: 0.12.0-dev.2341+92211135f
 
@@ -463,8 +464,8 @@ jobs:
           - { zig_target: aarch64-windows-gnu }
           - { zig_target: arm-linux-musleabihf, qemu: qemu-arm }
           # { zig_target: arm-linux-musleabihf, qemu: qemu-arm, zig_pic: -fPIE }
-          - { zig_target: i386-linux-musl, qemu: qemu-i386 }
-          # { zig_target: i386-linux-musl, qemu: qemu-i386, zig_pic: -fPIE }
+          - { zig_target: i386-linux-musl, qemu: qemu-i386 -cpu Conroe }
+          # { zig_target: i386-linux-musl, qemu: qemu-i386 -cpu Conroe, zig_pic: -fPIE }
           - { zig_target: i386-windows-gnu }
           # mips and mipsel: bad hard-float code generation; see https://github.com/upx/upx/issues/788
           - { zig_target: mips-linux-musl, zig_flags: -msoft-float, qemu: qemu-mips }
@@ -576,7 +577,7 @@ jobs:
         if: ${{ matrix.qemu }}
         run: |
           qemu="${{ matrix.qemu }}"
-          apk add coreutils $qemu
+          apk add coreutils "${qemu%% *}"
           export upx_exe_runner="$qemu"
           env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
           env -C build/zig/${ZIG_TARGET}${ZIG_PIC}/release bash "$PWD"/misc/testsuite/mimic_ctest.sh

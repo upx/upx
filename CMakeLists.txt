@@ -58,7 +58,7 @@ option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" O
 # init
 #***********************************************************************
 
-set(UPX_VERSION_STRING "4.3.0")
+set(UPX_VERSION_STRING "4.3.0") # this should match src/version.h
 
 upx_cmake_include_hook(2_init)
 
@@ -129,7 +129,7 @@ else()
 endif()
 
 # CMake init
-upx_set_default_build_type(Release)
+upx_set_default_build_type(Release) # default is CMAKE_BUILD_TYPE=Release
 project(upx VERSION "${UPX_VERSION_STRING}" LANGUAGES C CXX)
 upx_apply_build_type()
 
@@ -496,7 +496,9 @@ upx_cmake_include_hook(8_summary)
 
 upx_print_var(CMAKE_VERSION UPX_CONFIG_CMAKE_MINIMUM_REQUIRED_VERSION CMAKE_GENERATOR)
 if(NOT UPX_CONFIG_CMAKE_DISABLE_PRINT_INFO)
-upx_print_var(CMAKE_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_CURRENT_SOURCE_DIR)
+if(NOT ",${CMAKE_BINARY_DIR}," STREQUAL ",${CMAKE_CURRENT_BINARY_DIR}," OR NOT ",${CMAKE_SOURCE_DIR}," STREQUAL ",${CMAKE_CURRENT_SOURCE_DIR},")
+    upx_print_var(CMAKE_BINARY_DIR CMAKE_SOURCE_DIR CMAKE_CURRENT_BINARY_DIR CMAKE_CURRENT_SOURCE_DIR)
+endif()
 upx_print_var(CMAKE_HOST_SYSTEM_NAME CMAKE_HOST_SYSTEM_VERSION CMAKE_HOST_SYSTEM_PROCESSOR CMAKE_APPLE_SILICON_PROCESSOR)
 upx_print_var(CMAKE_SYSTEM_NAME CMAKE_SYSTEM_VERSION CMAKE_SYSTEM_PROCESSOR CMAKE_CROSSCOMPILING CMAKE_CROSSCOMPILING_EMULATOR)
 upx_print_var(CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)

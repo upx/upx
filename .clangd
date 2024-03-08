@@ -1,0 +1,36 @@
+# vim:set ft=yaml ts=2 sw=2 et:
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+# for clangd-17 from https://clangd.llvm.org/
+
+---
+# treat *.h files as C++ source code
+If:
+  PathMatch: src/.*\.h
+  PathExclude: vendor/.*
+CompileFlags:
+  Add:
+    - -xc++
+---
+# common C++ flags
+If:
+  PathMatch: [ src/.*\.h, src/.*\.cpp ]
+  PathExclude: vendor/.*
+CompileFlags:
+  Add:
+    - -std=gnu++17
+    # see https://github.com/clangd/clangd/issues/1038 : Support deterministic relative include path
+    - -Ivendor
+    - -I../vendor
+    - -I../../vendor
+    - -DDEBUG
+    - -fno-strict-aliasing
+    - -fno-strict-overflow
+    - -funsigned-char
+Diagnostics:
+  Includes:
+    # IgnoreHeader: A list of regexes. Include Cleaner will not produce diagnostics
+    # for headers whose path is a suffix match for any of these.
+    IgnoreHeader:
+      - src/.*\.h
+  UnusedIncludes: None
+...

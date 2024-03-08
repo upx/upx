@@ -242,7 +242,9 @@ endif
 # assemble cmake config flags; useful for CI jobs
 #***********************************************************************
 
-ifneq ($(origin UPX_CMAKE_CONFIG_FLAGS),command line) # needed to work around a GNU make bug
+ifneq ($(origin UPX_CMAKE_CONFIG_FLAGS),command line) # GNU make bug work-around
+# GNU make bug, see https://savannah.gnu.org/bugs/index.php?64822
+# and commit https://git.savannah.gnu.org/cgit/make.git/commit/?id=07187db947ba25e6c59b55f10660a04f8e9c5229
 
 # info: by default CMake only honors the CC and CXX environment variables; make
 # it easy to set other variables like CMAKE_AR or CMAKE_RANLIB
