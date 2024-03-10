@@ -169,10 +169,13 @@ jobs:
           fi
       - name: 'Run file system test suite'
         run: |
+          env -C build/extra/gcc/release bash "$PWD"/misc/testsuite/test_symlinks.sh
+      - name: 'Run file system test suite with Valgrind'
+        run: |
           if command -v valgrind >/dev/null; then
             export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet --gen-suppressions=all"
+            env -C build/extra/gcc/release bash "$PWD"/misc/testsuite/test_symlinks.sh
           fi
-          env -C build/extra/gcc/release bash "$PWD"/misc/testsuite/test_symlinks.sh
       - name: 'Run test suite build/extra/gcc/release'
         run: |
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"

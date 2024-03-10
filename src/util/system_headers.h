@@ -1,4 +1,4 @@
-/* headers.h -- include system headers
+/* system_headers.h -- include system headers
 
    This file is part of the UPX executable compressor.
 
@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "util/system_defs.h"
+#include "system_defs.h"
 
 #if !(__cplusplus + 0 >= 201703L)
 #error "C++17 is required"
@@ -54,6 +54,29 @@ static_assert(sizeof(void *) == 4);
 static_assert(sizeof(int) == 4);
 static_assert(sizeof(long) == 4);
 static_assert(sizeof(void *) == 8);
+#endif
+
+// check expected defines
+#if defined(__clang__) || defined(__GNUC__)
+// these are pre-defined since gcc-4.6 (2011) and clang-3.2 (2012)
+#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_BIG_ENDIAN__ + 0 == 0)
+#error "missing __ORDER_BIG_ENDIAN__"
+#endif
+#if !defined(__ORDER_LITTLE_ENDIAN__) || (__ORDER_LITTLE_ENDIAN__ + 0 == 0)
+#error "missing __ORDER_LITTLE_ENDIAN__"
+#endif
+#if !defined(__BYTE_ORDER__) || (__BYTE_ORDER__ + 0 == 0)
+#error "missing __BYTE_ORDER__"
+#endif
+#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_BIG_ENDIAN__ + 0 != 4321)
+#error "unexpected __ORDER_BIG_ENDIAN__"
+#endif
+#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_LITTLE_ENDIAN__ + 0 != 1234)
+#error "unexpected __ORDER_BIG_ENDIAN__"
+#endif
+#if (__BYTE_ORDER__ != __ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__)
+#error "unexpected __BYTE_ORDER__"
+#endif
 #endif
 
 // ACC and C system headers
@@ -146,7 +169,7 @@ static_assert(sizeof(void *) == 8);
 
 #ifdef WANT_WINDOWS_LEAN_H
 #if defined(_WIN32) || defined(__CYGWIN__)
-#include "util/windows_lean.h"
+#include "windows_lean.h"
 #endif
 #endif
 

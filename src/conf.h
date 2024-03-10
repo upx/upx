@@ -31,7 +31,7 @@
 // init
 **************************************************************************/
 
-#include "headers.h"
+#include "util/system_headers.h"
 #include "version.h"
 
 #if !defined(__has_attribute)
@@ -190,9 +190,10 @@ typedef upx_int64_t upx_off_t;
 #define unlikely              __acc_unlikely
 #define very_likely           __acc_very_likely
 #define very_unlikely         __acc_very_unlikely
+
 // cosmetic: explicitly annotate some functions which may throw exceptions
 // note: noexcept(false) is the default for all C++ functions anyway
-#define may_throw             noexcept(false)
+#define may_throw noexcept(false)
 
 #define COMPILE_TIME_ASSERT(e) ACC_COMPILE_TIME_ASSERT(e)
 #define DELETED_FUNCTION       = delete
@@ -369,9 +370,11 @@ inline void NO_fprintf(FILE *, const char *, ...) noexcept {}
 #define upx_return_address() nullptr
 #endif
 
-// TODO cleanup: we now require C++17, so remove all packed_struct usage
+// TODO later cleanup: we now require C++17, so remove all packed_struct usage
 #define packed_struct(s) struct alignas(1) s
 
+// TODO later cleanup: this was needed in the old days to catch compiler problems/bugs;
+//   we now require C++17, so remove this
 #define COMPILE_TIME_ASSERT_ALIGNOF_USING_SIZEOF__(a, b)                                           \
     {                                                                                              \
         typedef a acc_tmp_a_t;                                                                     \
@@ -395,6 +398,7 @@ inline void NO_fprintf(FILE *, const char *, ...) noexcept {}
 
 #define TABLESIZE(table) ((sizeof(table) / sizeof((table)[0])))
 
+// TODO later: move these to upx namespace in util/cxxlib.h
 template <class T>
 inline T ALIGN_DOWN(const T &a, const T &b) {
     T r;
@@ -471,6 +475,7 @@ noreturn void throwAssertFailed(const char *expr, const char *file, int line, co
 #define assert_noexcept assert
 #endif
 
+// C++ support library
 #include "util/cxxlib.h"
 using upx::is_same_any_v;
 using upx::noncopyable;

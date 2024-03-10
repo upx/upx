@@ -26,7 +26,7 @@
  */
 
 #define WANT_WINDOWS_LEAN_H 1
-#include "../headers.h"
+#include "../util/system_headers.h"
 #if (HAVE_CONIO_H)
 #include <conio.h>
 #endif

@@ -24,7 +24,7 @@
    <markus@oberhumer.com>
  */
 
-#include "../headers.h"
+#include "../util/system_headers.h"
 #if WITH_BZIP2
 #include <bzip2/bzlib.h>
 #endif

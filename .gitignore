@@ -1,6 +1,6 @@
 /.hg*
 /.vscode*
-/Makevars.global*
+/Makevars[.-]global*
 /Testing*
 /build*
 /maint*
@@ -8,7 +8,7 @@
 
 GNUmakefile*
 MMakefile*
-Makevars.local*
+Makevars[.-]local*
 compile_flags*.txt
 Tmp*
 tmp*
@@ -16,6 +16,7 @@ tmp*
 *.a
 *.bz2
 *.d
+*.diff
 *.dll
 *.dylib
 *.exe

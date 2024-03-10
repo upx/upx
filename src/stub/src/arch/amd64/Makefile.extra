@@ -8,11 +8,11 @@ __dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
 __dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
 top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
 endif
-include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
+include $(wildcard $(top_srcdir)/Makevars-global.mk ./Makevars-local.mk)
 vpath %.c $(top_srcdir)/src/stub/src/c
 
 STUBS =
-include $(top_srcdir)/src/stub/src/c/Makevars.lzma
+include $(top_srcdir)/src/stub/src/c/Makevars-lzma.mk
 ifneq ($(UPX_LZMA_VERSION),)
 STUBS += lzma_d_cf.S lzma_d_cs.S lzma_d_cn.S
 endif

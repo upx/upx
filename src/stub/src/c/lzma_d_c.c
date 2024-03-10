@@ -31,7 +31,7 @@
 
 #define ACC_LIBC_NAKED 1
 /*#define ACC_OS_FREESTANDING 1*/
-#include "miniacc.h"
+#include "util/miniacc.h"
 
 #define UPX_LZMA_COMPAT 1
 

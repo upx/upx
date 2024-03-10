@@ -24,8 +24,8 @@
    <markus@oberhumer.com>
  */
 
-#include "../headers.h"
-#include <cmath> // std::isnan
+#include "../util/system_headers.h"
+#include <cmath> // std::isinf std::isnan
 #include "../conf.h"
 
 /*************************************************************************
@@ -352,6 +352,11 @@ static noinline void check_basic_cxx_exception_handling(void (*func)(int)) noexc
 // basic floating point checks to early catch toolchain/qemu/wine/etc problems
 //
 
+#if defined(__clang__) && defined(__FAST_MATH__) && defined(__INTEL_LLVM_COMPILER)
+// warning: comparison with NaN always evaluates to false in fast floating point modes
+#pragma clang diagnostic ignored "-Wtautological-constant-compare"
+#endif
+
 static noinline float i64_f32_add_div(upx_int64_t a, upx_int64_t b) { return (a + b) / 1000000.0f; }
 static noinline float u64_f32_add_div(upx_uint64_t a, upx_uint64_t b) {
     return (a + b) / 1000000.0f;
@@ -415,7 +420,7 @@ static noinline void check_basic_floating_point(void) noexcept {
 
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
-#include "../miniacc.h"
+#include "../util/miniacc.h"
 
 void upx_compiler_sanity_check(void) noexcept {
     const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
@@ -434,7 +439,7 @@ void upx_compiler_sanity_check(void) noexcept {
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
 #define ACCCHK_ASSERT(expr) ACC_COMPILE_TIME_ASSERT(expr)
-#include "../miniacc.h"
+#include "../util/miniacc.h"
 #undef ACCCHK_ASSERT
 
     COMPILE_TIME_ASSERT(sizeof(char) == 1)

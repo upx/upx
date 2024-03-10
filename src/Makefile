@@ -101,7 +101,7 @@ ifneq ($(wildcard /usr/bin/env),)
 ifeq ($(shell uname),Linux)
 
 # Markus loves clang-format, but John hates it; find a compromise
-CLANG_FORMAT_EXCLUDE_FILES += miniacc.h stub/%.h
+CLANG_FORMAT_EXCLUDE_FILES += stub/%.h util/miniacc.h
 CLANG_FORMAT_EXCLUDE_FILES += p_lx_% p_mach% p_unix% p_vmlin%
 CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* */*.[ch]*))
 CLANG_FORMAT_FILES += $(sort $(wildcard stub/tools/*/*.[ch]*))

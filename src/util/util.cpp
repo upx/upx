@@ -25,17 +25,17 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-#include "../headers.h"
+#include "system_headers.h"
 #include <algorithm>
 #define ACC_WANT_ACC_INCI_H 1
-#include "../miniacc.h"
+#include "miniacc.h"
 #define ACC_WANT_ACCLIB_GETOPT   1
 #define ACC_WANT_ACCLIB_HSREAD   1
 #define ACC_WANT_ACCLIB_MISC     1
 #define ACC_WANT_ACCLIB_VGET     1
 #define ACC_WANT_ACCLIB_WILDARGV 1
 #undef HAVE_MKDIR
-#include "../miniacc.h"
+#include "miniacc.h"
 #include "../conf.h"
 
 /*************************************************************************
@@ -152,8 +152,9 @@ void uintptr_check_no_overlap(upx_uintptr_t a, size_t a_size, upx_uintptr_t b, s
     upx_uintptr_t b_end = b + mem_size(1, b_size);
     if very_unlikely (a_end < a || b_end < b) // wrap-around
         throwCantPack("ptr_check_no_overlap-overflow");
-    // same as (!(a >= b_end || b >= a_end))
-    // same as (!(a_end <= b || b_end <= a))
+    // simple, but a little bit mind bending:
+    //   same as (!(a >= b_end || b >= a_end))
+    //   same as (!(a_end <= b || b_end <= a))
     if very_unlikely (a < b_end && b < a_end)
         throwCantPack("ptr_check_no_overlap-ab");
 }

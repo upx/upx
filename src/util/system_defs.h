@@ -34,8 +34,8 @@
 #define __STDC_FORMAT_MACROS 1
 #endif
 
-#if defined(_WIN32) && defined(__MINGW32__) && (defined(__clang__) || defined(__GNUC__))
 #if !defined(__USE_MINGW_ANSI_STDIO)
+#if defined(_WIN32) && defined(__MINGW32__) && (defined(__clang__) || defined(__GNUC__))
 #define __USE_MINGW_ANSI_STDIO 1
 #endif
 #endif

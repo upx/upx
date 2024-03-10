@@ -25,7 +25,7 @@ endif
 ifndef top_srcdir
 top_srcdir := $(srcdir)/../..
 endif
-include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
+include $(wildcard $(top_srcdir)/Makevars-global.mk ./Makevars-local.mk)
 
 # update $PATH for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx/upx-stubtools-check-version),)

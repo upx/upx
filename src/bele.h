@@ -73,15 +73,15 @@ struct LE64;
 //   char is explicitly allowed
 //   byte is explicitly allowed
 template <class T>
-static inline constexpr bool is_xe16_type =
+inline constexpr bool is_xe16_type =
     upx::is_same_any_v<T, void, char, byte, upx_int16_t, upx_uint16_t, BE16, LE16>;
 template <class T>
-static inline constexpr bool is_xe24_type = upx::is_same_any_v<T, void, char, byte>;
+inline constexpr bool is_xe24_type = upx::is_same_any_v<T, void, char, byte>;
 template <class T>
-static inline constexpr bool is_xe32_type =
+inline constexpr bool is_xe32_type =
     upx::is_same_any_v<T, void, char, byte, upx_int32_t, upx_uint32_t, BE32, LE32>;
 template <class T>
-static inline constexpr bool is_xe64_type =
+inline constexpr bool is_xe64_type =
     upx::is_same_any_v<T, void, char, byte, upx_int64_t, upx_uint64_t, BE64, LE64>;
 
 template <class T>
