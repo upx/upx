@@ -256,6 +256,10 @@ int strncmplc(char const *s1, char const *s2, unsigned n)
 
 #endif  //}  ANDROID_FRIEND
 
+// ANDROID_TEST: Set to 1 for testing Android implmentation using Linux on
+// Raspberry Pi (arm32, perhaps running on actual arm64); else set to 0.
+#define ANDROID_TEST 0
+
 unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
     void *ptr,  // desired address
     unsigned datlen,  // mapped length
@@ -264,7 +268,8 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
 )
 {
     unsigned long addr = 0;  // for result
-    int fd = memfd_create(addr_string("upx"), 0);  // might be -ENOSYS on early 32-bit Android
+    // Early 32-bit Android did not implement memfd_create
+    int fd = (ANDROID_TEST ? -ENOSYS : memfd_create(addr_string("upx"), 0));
 
 #if ANDROID_FRIEND  //{
     // Varying __NR_ftruncate on Android can hurt even if memfd_create() succeeds.
@@ -272,7 +277,7 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
 #define BUFLEN 4096
     void *buf = alloca(BUFLEN); *(int *)buf = 0;
     uname((struct utsname *)buf);
-    int const not_android = strncmplc(addr_string("andr"), buf, 4);
+    int const not_android = (ANDROID_TEST ? 0 : strncmplc(addr_string("andr"), buf, 4));
 
     // Work-around for missing memfd_create syscall on early 32-bit Android.
     if (!not_android && !pathname) { // must ask
@@ -292,9 +297,9 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
         }
         unlink(pathname);
     }
-#else  //}{ !ANDROID_FRIEND
+#else  //}{ !ANDROID_FRIEND: simple!
     int not_android = 1;
-    (void)pathname;  // dead
+    (void)pathname;  // dead: obviated by memfd_create()
 #endif  //}
 
     // Set the file length
