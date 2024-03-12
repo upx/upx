@@ -82,6 +82,8 @@ __NR_SYSCALL_BASE = 0
 __NR_exit=      1 + __NR_SYSCALL_BASE
 __NR_open=      5 + __NR_SYSCALL_BASE
 __NR_close=     6 + __NR_SYSCALL_BASE
+__NR_fdatasync=148 + __NR_SYSCALL_BASE
+__NR_fsync=   118 + __NR_SYSCALL_BASE
 __NR_ftruncate=93 + __NR_SYSCALL_BASE
 __NR_getpid=   20 + __NR_SYSCALL_BASE
 __NR_lseek=    19 + __NR_SYSCALL_BASE
@@ -350,6 +352,8 @@ my_memset: .globl my_memset  // (dst, val, n)
 // Because called from C, then r7 is live; cannot use do_sys7t.
 .globl memfd_create; memfd_create: do_sys2 __NR_memfd_create; ret
 .globl close;     close:     do_sys __NR_close; ret
+.globl fdatasync; fdatasync: do_sys __NR_fdatasync; ret
+.globl fsync;     fsync:     do_sys __NR_fsync; ret
 .globl ftruncate; ftruncate: do_sys __NR_ftruncate; ret
 .globl getpid;    getpid:    do_sys __NR_getpid; ret
 .globl lseek;     lseek:     do_sys __NR_lseek; ret

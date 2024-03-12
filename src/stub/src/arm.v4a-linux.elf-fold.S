@@ -410,6 +410,8 @@ __NR_readlink=  85 + __NR_SYSCALL_BASE  // 0x55
 __NR_munmap  =  91 + __NR_SYSCALL_BASE  // 0x5b
 __NR_ftruncate= 93 + __NR_SYSCALL_BASE  // 0x5d
 __NR_stat=     106 + __NR_SYSCALL_BASE  // 0x6a
+__NR_fsync=    118 + __NR_SYSCALL_BASE
+__NR_fdatasync=148 + __NR_SYSCALL_BASE
 __NR_uname=    122 + __NR_SYSCALL_BASE  // 0x7a
 __NR_mprotect= 125 + __NR_SYSCALL_BASE  // 0x7d
 __NR_mmap2=    192 + __NR_SYSCALL_BASE  // 0xc0
@@ -437,6 +439,8 @@ get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
 brk:   .globl brk;   do_sys __NR_brk; ret
 close: .globl close; do_sys __NR_close; ret
 exit:  .globl exit;  do_sys __NR_exit
+fdatasync: .globl fdatasync; do_sys __NR_fdatasync
+fsync: .globl fsync; do_sys __NR_fsync
 fstat: .globl fstat; do_sys __NR_fstat; ret
 ftruncate: .globl ftruncate; do_sys __NR_ftruncate; ret
 getpid:.globl getpid;do_sys __NR_getpid; ret

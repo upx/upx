@@ -265,6 +265,7 @@ no_map_pse:
 
         lw TMP,-sz_auxv+ a_val($r_auxe)  // last .a_val
           nop  # needed? allegedly MIPS R3000 provides load delay in hardware when needed
+    break
         beqz TMP,L40  # could not make escape hatch
           nop  # even R3000 requires branch delay
         jr TMP  # goto munmap escape hatch: [syscall; jr s8; nop]

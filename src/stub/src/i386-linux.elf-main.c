@@ -733,13 +733,7 @@ do_xmap(
         mlen += frag;
         addr -= frag;
 
-#if defined(__i386__)  /*{*/
-    // Decompressor can overrun the destination by 3 bytes.
-#  define LEN_OVER 3
-#else  /*}{*/
-#  define LEN_OVER 0
-#endif  /*}*/
-
+        unsigned const LEN_OVER = 8;
         DPRINTF("mmap addr=%%p  mlen=%%p  offset=%%p  frag=%%p  prot=%%x\\n",
             addr, mlen, phdr->p_offset - frag, frag, prot);
         int mfd = 0;

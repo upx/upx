@@ -184,7 +184,8 @@ static unsigned sixbit(unsigned x)
 #define PATH_MAX 4096  /* linux/include/uapi/linux/limits.h */
 
 // Where to put temp file when memfd_create() fails on early 32-bit Android
-static int create_upxfn_path(char *name)
+__attribute__((__noinline__))
+static int create_upxfn_path(char *name, char *buf)
 {
     // Construct path "/data/data/$APP_NAME/cache/upxAAA".
     // Note 'mempcpy' [with 'p' in the middle!] returns the end-of-string.
@@ -193,7 +194,7 @@ static int create_upxfn_path(char *name)
 
     // Append the name of the app
     int fd = open(addr_string("/proc/self/cmdline"), O_RDONLY, 0);
-    int rlen = read(fd, p, PATH_MAX - 11);
+    int rlen = read(fd, p= buf, -1+ PATH_MAX);
     close(fd);
     if (rlen < 0) {
         return rlen;  // failure
@@ -271,7 +272,7 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
 #define BUFLEN 4096
     void *buf = alloca(BUFLEN); *(int *)buf = 0;
     uname((struct utsname *)buf);
-    int /*const*/ not_android = strncmplc(addr_string("andr"), buf, 4);
+    int const not_android = strncmplc(addr_string("andr"), buf, 4);
 
     // Work-around for missing memfd_create syscall on early 32-bit Android.
     if (!not_android && !pathname) { // must ask
@@ -279,7 +280,7 @@ unsigned long upx_mmap_and_fd( // returns (mapped_addr | (1+ fd))
     }
     if (!not_android && -ENOSYS == fd && pathname) {
         if ('\0' == pathname[0]) { // first time; create the pathname and file
-            fd = create_upxfn_path(pathname);
+            fd = create_upxfn_path(pathname, buf);
             if (fd < 0) {
                 return fd;
             }

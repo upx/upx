@@ -41,6 +41,8 @@ unsigned Pprotect(void *, size_t, unsigned);
 void *mmap(void *, size_t, int, int, int, off_t);
 void *Pmap(void *, size_t, int, int, int, off_t);
 int Punmap(void *, size_t);
+int fsync(int);
+int fdatasync(int);
 
 #if defined(__i386__) || defined(__mips__) || defined(__powerpc__) //{
 #  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
@@ -328,7 +330,7 @@ make_hatch_arm32(
             hatch = (unsigned *)(void *)(~3ul & (long)(3+ next_unc));
             hatch[0]= code[0];
             hatch[1]= code[1];
-            __clear_cache(&hatch[0], &hatch[2]);
+            //__clear_cache(&hatch[0], &hatch[2]);
         }
         else { // Does not fit at hi end of .text, so must use a new page "permanently"
             unsigned long fdmap = upx_mmap_and_fd((void *)0, sizeof(code), 0, 0);
@@ -620,7 +622,7 @@ upx_so_main(  // returns &escape_hatch
             // that has never had PROT_WRITE.  So use a Linux-only "memory file"
             // to hold the contents.
             // Preserves contents of page fragmentation below x1.buf
-            mfd_addr = upx_mmap_and_fd(x1.buf, x1.size, 0, ~page_mask);
+            mfd_addr = upx_mmap_and_fd(x1.buf, x1.size +8, 0, ~page_mask);
             mfd = -1 + (0xfff& mfd_addr);
             mfd_addr = ~0xfff& mfd_addr;
         }
@@ -650,6 +652,7 @@ upx_so_main(  // returns &escape_hatch
             char *const re_base = (char *)(phdr->p_vaddr + base + pfx);
             unsigned const prot = PF_to_PROT(phdr);
             // *phdr goes away temporarily, then returns
+            //fdatasync(mfd);
             munmap((void *)mfd_addr, frag + al_bi.sz_unc);  // Discard RW mapping; mfd has the bytes
             void *re_mapped = Pmap(re_base, al_bi.sz_unc, prot,
                 MAP_FIXED|MAP_PRIVATE, mfd, 0);
@@ -666,7 +669,6 @@ upx_so_main(  // returns &escape_hatch
     dt_init(so_args->argc, so_args->argv, so_args->envp);
 
     DPRINTF("returning hatch=%%p\\n", hatch);
-    //my_bkpt(hatch, base);
     return hatch;
 }
 

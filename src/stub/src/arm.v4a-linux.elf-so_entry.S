@@ -86,6 +86,8 @@ __NR_mkdir =    39 + __NR_SYSCALL_BASE  // 0x27
 
 __NR_oldmmap=   90 + __NR_SYSCALL_BASE
 __NR_ftruncate= 93 + __NR_SYSCALL_BASE
+__NR_fdatasync=148 + __NR_SYSCALL_BASE
+__NR_fsync=    118 + __NR_SYSCALL_BASE
 __NR_stat=     106 + __NR_SYSCALL_BASE
 __NR_uname=    122 + __NR_SYSCALL_BASE
 __NR_fstat=    197 + __NR_SYSCALL_BASE  // 0xc5
@@ -295,6 +297,10 @@ mempcpy: .globl mempcpy  // (dst, src, n)
 // because they are called from C-language upxfd_android.c
 close: .globl close
         do_sys __NR_close; ret
+fdatasync: .globl fdatasync
+        do_sys __NR_fdatasync; ret
+fsync: .globl fsync
+        do_sys __NR_fsync; ret
 fstat: .globl fstat
         do_sys __NR_fstat; ret
 ftruncate: .globl ftruncate

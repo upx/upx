@@ -140,6 +140,8 @@ __NR_brk   = 45 + __NR_SYSCALL_BASE
 __NR_readlink=  85 + __NR_SYSCALL_BASE  // 0x55
 __NR_ftruncate= 93 + __NR_SYSCALL_BASE  // 0x5d
 __NR_stat=     106 + __NR_SYSCALL_BASE
+__NR_fsync=    118 + __NR_SYSCALL_BASE
+__NR_fdatasync=148 + __NR_SYSCALL_BASE
 __NR_uname= 122 + __NR_SYSCALL_BASE  // 0x7a
 __NR_fstat= 197 + __NR_SYSCALL_BASE  // 0xc5
 
@@ -196,6 +198,8 @@ brk:
 readlink:
         do_sys __NR_readlink; ret
 
+fdatasync: .globl fdatasync; do_sys __NR_fdatasync; ret
+fsync: .globl fsync; do_sys __NR_fsync; ret
 ftruncate: .globl ftruncate
         do_sys __NR_ftruncate; ret
 
