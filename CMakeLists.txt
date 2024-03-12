@@ -58,7 +58,7 @@ option(UPX_CONFIG_DISABLE_SELF_PACK_TEST "Do not test packing UPX with itself" O
 # init
 #***********************************************************************
 
-set(UPX_VERSION_STRING "4.3.0") # this should match src/version.h
+set(UPX_VERSION_STRING "4.2.3") # this should match src/version.h
 
 upx_cmake_include_hook(2_init)
 
