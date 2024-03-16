@@ -1306,8 +1306,7 @@ int upx_main(int argc, char *argv[]) may_throw {
     if (gitrev[0]) {
         // also see UPX_CONFIG_DISABLE_GITREV in CMakeLists.txt
         bool warn_gitrev = true;
-        const char *ee = getenv("UPX_DEBUG_DISABLE_GITREV_WARNING");
-        if (ee && ee[0] && strcmp(ee, "1") == 0)
+        if (is_envvar_true("UPX_DEBUG_DISABLE_GITREV_WARNING"))
             warn_gitrev = false;
         if (warn_gitrev) {
             FILE *f = stdout;

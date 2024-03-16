@@ -16,8 +16,8 @@ env:
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -Wdev --warn-uninitialized
   UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO: 1
-  # 2024-01-25
-  ZIG_DIST_VERSION: 0.12.0-dev.2341+92211135f
+  # 2024-03-16
+  ZIG_DIST_VERSION: 0.12.0-dev.3322+a4508ad71
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -89,27 +89,27 @@ jobs:
         uses: actions/checkout@v4
         with: { submodules: true }
       - name: 'Check out test suite'
-        run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
-      - name: 'Build cmake extra/gcc/debug'
-        run:   'make build/extra/gcc/debug'
-      - name: 'Build cmake extra/gcc/release'
-        run:   'make build/extra/gcc/release'
-      - name: 'Build cmake extra/clang/debug'
-        run:   'make build/extra/clang/debug'
-      - name: 'Build cmake extra/clang/release'
-        run:   'make build/extra/clang/release'
-      - name: 'Build cmake extra/gcc-m32/debug'
+        run:  'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
+      - name: 'Build extra/gcc/debug'
+        run:  'make build/extra/gcc/debug'
+      - name: 'Build extra/gcc/release'
+        run:  'make build/extra/gcc/release'
+      - name: 'Build extra/clang/debug'
+        run:  'make build/extra/clang/debug'
+      - name: 'Build extra/clang/release'
+        run:  'make build/extra/clang/release'
+      - name: 'Build extra/gcc-m32/debug'
         if: ${{ matrix.use_m32 }}
-        run:   'make build/extra/gcc-m32/debug'
-      - name: 'Build cmake extra/gcc-m32/release'
+        run:  'make build/extra/gcc-m32/debug'
+      - name: 'Build extra/gcc-m32/release'
         if: ${{ matrix.use_m32 && (success() || failure()) }} # run this step even if the previous step failed
-        run:   'make build/extra/gcc-m32/release'
-      - name: 'Build cmake extra/cross-windows-mingw32/release'
+        run:  'make build/extra/gcc-m32/release'
+      - name: 'Build extra/cross-windows-mingw32/release'
         if: ${{ matrix.use_m32 && (success() || failure()) }} # run this step even if the previous step failed
-        run:   'make build/extra/cross-windows-mingw32/release'
-      - name: 'Build cmake extra/cross-windows-mingw64/release'
+        run:  'make build/extra/cross-windows-mingw32/release'
+      - name: 'Build extra/cross-windows-mingw64/release'
         if: ${{ matrix.use_m32 && (success() || failure()) }} # run this step even if the previous step failed
-        run:   'make build/extra/cross-windows-mingw64/release'
+        run:  'make build/extra/cross-windows-mingw64/release'
       - name: 'Make artifact'
         run: |
           N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.os }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
@@ -192,8 +192,8 @@ jobs:
         include:
           # NOTE: macos does not have "env -C"; only with brew coreutils
           # NOTE: macos-11 does not have "readlink -f"; only on macos >= 12 or with brew coreutils
-          - { os: macos-11, gcc: gcc-10, gxx: 'g++-10', testsuite: true, ctest: true }
-          - { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true, ctest: true }
+          - { os: macos-11, gcc: gcc-10, gxx: 'g++-10', testsuite: true }
+          - { os: macos-12, gcc: gcc-11, gxx: 'g++-11', testsuite: true }
           - { os: macos-13, gcc: gcc-12, gxx: 'g++-12', testsuite: true, xcode_version: 14.3.1 }
           - { os: macos-13, testsuite: true } # use default Xcode-15
           # { os: macos-14, gcc: gcc-13, gxx: 'g++-13', testsuite: true }                        # gcc-13: INTERNAL ERROR in ld64
@@ -207,7 +207,7 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode_version }}
       - name: 'Install brew packages'
-        if: ${{ matrix.testsuite || matrix.ctest }}
+        if: ${{ matrix.testsuite }}
         run: |
           test -z "$HOMEBREW_PREFIX" && HOMEBREW_PREFIX="$(brew --prefix)"
           echo "HOMEBREW_PREFIX=$HOMEBREW_PREFIX" >> $GITHUB_ENV
@@ -217,30 +217,35 @@ jobs:
             # only run "brew update" if needed
             if ! brew install coreutils; then brew update && brew install coreutils; fi
           fi
+          case "${{ matrix.os }}" in
+          macos-11 | macos-12) echo "UPX_DEBUG_FORCE_PACK_MACOS=1" >> $GITHUB_ENV ;;
+          # FIXME: UPX on macos-13+ is broken => disable self-test for now
+          macos-13 | macos-14) echo "UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON" >> $GITHUB_ENV ;;
+          esac
       - name: 'Check out code'
         uses: actions/checkout@v4
         with: { submodules: true }
       - name: 'Check out test suite'
         if: ${{ matrix.testsuite }}
-        run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
-      - name: 'Build cmake extra/clang/debug'
-        run:   'make build/extra/clang/debug'
-      - name: 'Build cmake extra/clang/release'
-        run:   'make build/extra/clang/release'
-      - name: 'Build cmake extra/gcc/debug'
+        run:  'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
+      - name: 'Build extra/clang/debug'
+        run:  'make build/extra/clang/debug'
+      - name: 'Build extra/clang/release'
+        run:  'make build/extra/clang/release'
+      - name: 'Build extra/gcc/debug'
         if: ${{ matrix.gcc != '' }}
-        run:   'make build/extra/gcc/debug CC="${{ matrix.gcc }} -static-libgcc" CXX="${{ matrix.gxx }} -static-libgcc -static-libstdc++"'
-      - name: 'Build cmake extra/gcc/release'
+        run:  'make build/extra/gcc/debug CC="${{ matrix.gcc }} -static-libgcc" CXX="${{ matrix.gxx }} -static-libgcc -static-libstdc++"'
+      - name: 'Build extra/gcc/release'
         if: ${{ matrix.gcc != '' }}
-        run:   'make build/extra/gcc/release CC="${{ matrix.gcc }} -static-libgcc" CXX="${{ matrix.gxx }} -static-libgcc -static-libstdc++"'
-      - name: 'Build cmake xtarget/cross-darwin-arm64/debug'
+        run:  'make build/extra/gcc/release CC="${{ matrix.gcc }} -static-libgcc" CXX="${{ matrix.gxx }} -static-libgcc -static-libstdc++"'
+      - name: 'Build xtarget/cross-darwin-arm64/debug'
         run: |
-          CC="clang -target arm64-apple-darwin" CXX="clang++ -target arm64-apple-darwin" \
-          make UPX_XTARGET=cross-darwin-arm64 xtarget/debug
-      - name: 'Build cmake xtarget/cross-darwin-arm64/release'
+          make UPX_XTARGET=xtarget/cross-darwin-arm64 xtarget/debug \
+            CC="clang -target arm64-apple-darwin" CXX="clang++ -target arm64-apple-darwin"
+      - name: 'Build xtarget/cross-darwin-arm64/release'
         run: |
-          CC="clang -target arm64-apple-darwin" CXX="clang++ -target arm64-apple-darwin" \
-          make UPX_XTARGET=cross-darwin-arm64 xtarget/release
+          make UPX_XTARGET=xtarget/cross-darwin-arm64 xtarget/release \
+            CC="clang -target arm64-apple-darwin" CXX="clang++ -target arm64-apple-darwin"
       - name: 'Make artifact'
         run: |
           X="${{ matrix.xcode_version }}"; test -n "$X" && X="-xcode-$X"
@@ -260,17 +265,15 @@ jobs:
           (cd build/extra/clang/release && DESTDIR="$PWD/Install with cmake" cmake --install .)
           (cd build/extra/clang/release && DESTDIR="$PWD/Install with make"  make install)
       - name: 'Run ctest tests'
-        if: matrix.ctest # FIXME: UPX on macos-13+ is broken => disable self-test for now
         run: |
           make -C build/extra/clang/debug test
-          #make -C build/extra/clang/release test
+          make -C build/extra/clang/release test
           for f in ./build/extra/*/*/upx; do echo "===== $f"; $f --sysinfo -v; done
       - name: 'Mimic ctest tests'
-        if: matrix.ctest # FIXME: UPX on macos-13+ is broken => disable self-test for now
         run: |
           export PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
           env -C build/extra/clang/debug   bash "$PWD"/misc/testsuite/mimic_ctest.sh
-          #env -C build/extra/clang/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
+          env -C build/extra/clang/release bash "$PWD"/misc/testsuite/mimic_ctest.sh
       - name: 'Run file system test suite'
         if: ${{ matrix.testsuite }} # for coreutils readlink
         run: |
@@ -302,16 +305,16 @@ jobs:
         uses: actions/checkout@v4
         with: { submodules: true }
       - name: 'Check out test suite'
-        run: 'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
+        run:  'git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite'
       - name: 'Set up Developer Command Prompt'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           vsversion: ${{ matrix.vsversion }}
           arch: ${{ matrix.arch }}
-      - name: 'Build cmake debug'
-        run:   'make build/debug'
-      - name: 'Build cmake release'
-        run:   'make build/release'
+      - name: 'Build debug'
+        run:  'make build/debug'
+      - name: 'Build release'
+        run:  'make build/release'
       - name: 'Make artifact'
         shell: bash
         run: |
@@ -534,18 +537,14 @@ jobs:
           ls -la; head zig-ar zig-cc zig-cxx zig-ranlib
       - name: ${{ format('Build Release with zig-cc -target {0} {1}', env.ZIG_TARGET, env.ZIG_PIC) }}
         run: |
-          mkdir -p build/zig/${ZIG_TARGET}${ZIG_PIC}/release
-          cd       build/zig/${ZIG_TARGET}${ZIG_PIC}/release
-          cmake ../../../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_AR=$HOME/.local/bin/zig-ar -DCMAKE_C_COMPILER=zig-cc -DCMAKE_CXX_COMPILER=zig-cxx -DCMAKE_RANLIB=$HOME/.local/bin/zig-ranlib $EXTRA_CMAKE_CONFIG_FLAGS_RELEASE
-          cmake --build . --config Release --parallel --verbose
-          file ./upx*
+          make UPX_XTARGET=zig/${ZIG_TARGET}${ZIG_PIC} xtarget/release \
+            CC="zig-cc" CXX="zig-cxx" CMAKE_AR="$HOME/.local/bin/zig-ar" CMAKE_RANLIB="$HOME/.local/bin/zig-ranlib"
+          file build/zig/${ZIG_TARGET}${ZIG_PIC}/release/upx*
       - name: ${{ format('Build Debug with zig-cc -target {0} {1}', env.ZIG_TARGET, env.ZIG_PIC) }}
         run: |
-          mkdir -p build/zig/${ZIG_TARGET}${ZIG_PIC}/debug
-          cd       build/zig/${ZIG_TARGET}${ZIG_PIC}/debug
-          cmake ../../../.. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_AR=$HOME/.local/bin/zig-ar -DCMAKE_C_COMPILER=zig-cc -DCMAKE_CXX_COMPILER=zig-cxx -DCMAKE_RANLIB=$HOME/.local/bin/zig-ranlib $EXTRA_CMAKE_CONFIG_FLAGS_DEBUG
-          cmake --build . --config Debug --parallel --verbose
-          file ./upx*
+          make UPX_XTARGET=zig/${ZIG_TARGET}${ZIG_PIC} xtarget/debug \
+           CC="zig-cc" CXX="zig-cxx" CMAKE_AR="$HOME/.local/bin/zig-ar" CMAKE_RANLIB="$HOME/.local/bin/zig-ranlib"
+          file build/zig/${ZIG_TARGET}${ZIG_PIC}/debug/upx*
       - name: ${{ format('Make artifact from upx-{0}-{1}', github.ref_name, env.UPX_GITREV_SHORT) }}
         shell: bash
         run: |

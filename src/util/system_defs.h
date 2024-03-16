@@ -30,8 +30,15 @@
 #define _FILE_OFFSET_BITS 64
 #endif
 
-#if !defined(__STDC_FORMAT_MACROS) // this is needed for some older glibc/mingw versions
+// these are needed for some older glibc/mingw versions
+#if !defined(__STDC_CONSTANT_MACROS)
+#define __STDC_CONSTANT_MACROS 1
+#endif
+#if !defined(__STDC_FORMAT_MACROS)
 #define __STDC_FORMAT_MACROS 1
+#endif
+#if !defined(__STDC_LIMIT_MACROS)
+#define __STDC_LIMIT_MACROS 1
 #endif
 
 #if !defined(__USE_MINGW_ANSI_STDIO)
@@ -40,7 +47,7 @@
 #endif
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__)
 // disable silly warnings about using "deprecated" POSIX functions like fopen()
 #if !defined(_CRT_NONSTDC_NO_DEPRECATE)
 #define _CRT_NONSTDC_NO_DEPRECATE 1

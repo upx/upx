@@ -50,6 +50,12 @@ build/extra/clang-static/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/clang-static/%: export CC  = clang -static
 build/extra/clang-static/%: export CXX = clang++ -static
 
+# force building with clang/clang++ -static-pie
+build/extra/clang-static-pie/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/clang-static-pie/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/clang-static-pie/%: export CC  = clang -static-pie -fPIE -Wno-unused-command-line-argument
+build/extra/clang-static-pie/%: export CXX = clang++ -static-pie -fPIE -Wno-unused-command-line-argument
+
 # force building with clang/clang++ -static -flto
 build/extra/clang-static-lto/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-static-lto/release: PHONY; $(call run_config_and_build,$@,Release)
@@ -101,6 +107,12 @@ build/extra/gcc-static/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/gcc-static/release: PHONY; $(call run_config_and_build,$@,Release)
 build/extra/gcc-static/%: export CC  = gcc -static
 build/extra/gcc-static/%: export CXX = g++ -static
+
+# force building with gcc/g++ -static-pie
+build/extra/gcc-static-pie/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/extra/gcc-static-pie/release: PHONY; $(call run_config_and_build,$@,Release)
+build/extra/gcc-static-pie/%: export CC  = gcc -static-pie -fPIE
+build/extra/gcc-static-pie/%: export CXX = g++ -static-pie -fPIE
 
 # force building with gcc/g++ -static -flto
 build/extra/gcc-static-lto/debug:   PHONY; $(call run_config_and_build,$@,Debug)
@@ -223,16 +235,16 @@ ifneq ($(CC),)
 ifneq ($(CXX),)
 
 UPX_XTARGET := $(UPX_XTARGET)
-build/xtarget/$(UPX_XTARGET)/debug:   PHONY; $(call run_config_and_build,$@,Debug)
-build/xtarget/$(UPX_XTARGET)/release: PHONY; $(call run_config_and_build,$@,Release)
-build/xtarget/$(UPX_XTARGET)/%: export CC  := $(CC)
-build/xtarget/$(UPX_XTARGET)/%: export CXX := $(CXX)
+build/$(UPX_XTARGET)/debug:   PHONY; $(call run_config_and_build,$@,Debug)
+build/$(UPX_XTARGET)/release: PHONY; $(call run_config_and_build,$@,Release)
+build/$(UPX_XTARGET)/%: export CC  := $(CC)
+build/$(UPX_XTARGET)/%: export CXX := $(CXX)
 # shortcuts
-xtarget/all:     xtarget/debug xtarget/release
-xtarget/debug:   build/xtarget/$(UPX_XTARGET)/debug
-xtarget/release: build/xtarget/$(UPX_XTARGET)/release
+xtarget/all:     xtarget/debug xtarget/release PHONY
+xtarget/debug:   build/$(UPX_XTARGET)/debug PHONY
+xtarget/release: build/$(UPX_XTARGET)/release PHONY
 # set new default
-.DEFAULT_GOAL  = build/xtarget/$(UPX_XTARGET)/release
+.DEFAULT_GOAL := build/$(UPX_XTARGET)/release
 
 endif
 endif

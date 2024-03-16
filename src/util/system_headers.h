@@ -32,7 +32,36 @@
 #error "C++17 is required"
 #endif
 
-// sanity check
+// check expected defines
+#if defined(__CYGWIN32__) && !defined(__CYGWIN__)
+#error "missing __CYGWIN__"
+#endif
+#if defined(__CYGWIN64__) && !defined(__CYGWIN__)
+#error "missing __CYGWIN__"
+#endif
+#if defined(__clang__) || defined(__GNUC__)
+// these are pre-defined since gcc-4.6 (2011) and clang-3.2 (2012)
+#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_BIG_ENDIAN__ + 0 == 0)
+#error "missing __ORDER_BIG_ENDIAN__"
+#endif
+#if !defined(__ORDER_LITTLE_ENDIAN__) || (__ORDER_LITTLE_ENDIAN__ + 0 == 0)
+#error "missing __ORDER_LITTLE_ENDIAN__"
+#endif
+#if !defined(__BYTE_ORDER__) || (__BYTE_ORDER__ + 0 == 0)
+#error "missing __BYTE_ORDER__"
+#endif
+#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_BIG_ENDIAN__ + 0 != 4321)
+#error "unexpected __ORDER_BIG_ENDIAN__"
+#endif
+#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_LITTLE_ENDIAN__ + 0 != 1234)
+#error "unexpected __ORDER_BIG_ENDIAN__"
+#endif
+#if (__BYTE_ORDER__ != __ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__)
+#error "unexpected __BYTE_ORDER__"
+#endif
+#endif
+
+// sanity checks
 #if defined(__ILP32) || defined(__ILP32__)
 static_assert(sizeof(int) == 4);
 static_assert(sizeof(long) == 4);
@@ -55,28 +84,9 @@ static_assert(sizeof(int) == 4);
 static_assert(sizeof(long) == 4);
 static_assert(sizeof(void *) == 8);
 #endif
-
-// check expected defines
-#if defined(__clang__) || defined(__GNUC__)
-// these are pre-defined since gcc-4.6 (2011) and clang-3.2 (2012)
-#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_BIG_ENDIAN__ + 0 == 0)
-#error "missing __ORDER_BIG_ENDIAN__"
-#endif
-#if !defined(__ORDER_LITTLE_ENDIAN__) || (__ORDER_LITTLE_ENDIAN__ + 0 == 0)
-#error "missing __ORDER_LITTLE_ENDIAN__"
-#endif
-#if !defined(__BYTE_ORDER__) || (__BYTE_ORDER__ + 0 == 0)
-#error "missing __BYTE_ORDER__"
-#endif
-#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_BIG_ENDIAN__ + 0 != 4321)
-#error "unexpected __ORDER_BIG_ENDIAN__"
-#endif
-#if !defined(__ORDER_BIG_ENDIAN__) || (__ORDER_LITTLE_ENDIAN__ + 0 != 1234)
-#error "unexpected __ORDER_BIG_ENDIAN__"
-#endif
-#if (__BYTE_ORDER__ != __ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__)
-#error "unexpected __BYTE_ORDER__"
-#endif
+#if defined(__CYGWIN__)
+static_assert(sizeof(int) == 4);
+static_assert(sizeof(void *) == sizeof(long));
 #endif
 
 // ACC and C system headers
@@ -133,6 +143,11 @@ static_assert(sizeof(void *) == 8);
 #if !defined(__SANITIZE_MEMORY__) && defined(__has_feature)
 #if __has_feature(memory_sanitizer)
 #define __SANITIZE_MEMORY__ 1
+#endif
+#endif
+#if !defined(__SANITIZE_UNDEFINED_BEHAVIOR__) && defined(__has_feature)
+#if __has_feature(undefined_behavior_sanitizer)
+#define __SANITIZE_UNDEFINED_BEHAVIOR__ 1
 #endif
 #endif
 

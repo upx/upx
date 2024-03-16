@@ -192,6 +192,8 @@ bool maketempname(char *ofilename, size_t size, const char *ifilename, const cha
                   bool force = true);
 bool makebakname(char *ofilename, size_t size, const char *ifilename, bool force = true);
 
+bool is_envvar_true(const char *envvar, const char *alternate_name = nullptr) noexcept;
+
 unsigned get_ratio(upx_uint64_t u_len, upx_uint64_t c_len);
 bool set_method_name(char *buf, size_t size, int method, int level);
 void center_string(char *buf, size_t size, const char *s);

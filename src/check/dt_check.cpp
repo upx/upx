@@ -44,10 +44,7 @@ int upx_doctest_check(int argc, char **argv) {
     UNUSED(argv);
     return 0;
 #else
-    const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
-    if (!e)
-        e = getenv("UPX_DEBUG_DISABLE_DOCTEST"); // allow alternate spelling
-    if (e && e[0] && strcmp(e, "0") != 0)
+    if (is_envvar_true("UPX_DEBUG_DOCTEST_DISABLE", "UPX_DEBUG_DISABLE_DOCTEST"))
         return 0;
     bool minimal = true;   // don't show summary
     bool duration = false; // don't show timings
@@ -56,7 +53,7 @@ int upx_doctest_check(int argc, char **argv) {
     // default for debug builds: do show the [doctest] summary
     minimal = false;
 #endif
-    e = getenv("UPX_DEBUG_DOCTEST_VERBOSE");
+    const char *e = getenv("UPX_DEBUG_DOCTEST_VERBOSE");
     if (e && e[0]) {
         if (strcmp(e, "0") == 0) {
             minimal = true;
@@ -352,11 +349,6 @@ static noinline void check_basic_cxx_exception_handling(void (*func)(int)) noexc
 // basic floating point checks to early catch toolchain/qemu/wine/etc problems
 //
 
-#if defined(__clang__) && defined(__FAST_MATH__) && defined(__INTEL_LLVM_COMPILER)
-// warning: comparison with NaN always evaluates to false in fast floating point modes
-#pragma clang diagnostic ignored "-Wtautological-constant-compare"
-#endif
-
 static noinline float i64_f32_add_div(upx_int64_t a, upx_int64_t b) { return (a + b) / 1000000.0f; }
 static noinline float u64_f32_add_div(upx_uint64_t a, upx_uint64_t b) {
     return (a + b) / 1000000.0f;
@@ -388,11 +380,18 @@ struct TestFloat {
         assert_noexcept(add_div_x(X, X) == Float(2));
         assert_noexcept(sub_div(3 * X, X, Float(X)) == Float(2));
         assert_noexcept(sub_div_x(3 * X, X) == Float(2));
-        // extra debugging hack
-        const char *e = getenv("UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO");
-        if (e && e[0] && strcmp(e, "0") != 0) {
+        // extra debugging; floating point edge cases cause portability problems in practice
+        if (is_envvar_true("UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO")) {
+#if defined(__clang__) && defined(__FAST_MATH__) && defined(__INTEL_LLVM_COMPILER)
+            // warning: comparison with NaN always evaluates to false in fast floating point modes
+            fprintf(stderr, "upx: WARNING: ignoring UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO\n");
+#elif defined(__clang__) && (__clang_major__ < 9) && defined(__SANITIZE_UNDEFINED_BEHAVIOR__)
+            // @COMPILER_BUG @CLANG_BUG
+            fprintf(stderr, "upx: WARNING: ignoring UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO\n");
+#else
             assert_noexcept(std::isnan(div(0, Float(0))));
-            assert_noexcept(std::isinf(div(X, Float(0))));
+            assert_noexcept(std::isinf(div(1, Float(0))));
+#endif
         }
     }
 };
@@ -423,10 +422,7 @@ static noinline void check_basic_floating_point(void) noexcept {
 #include "../util/miniacc.h"
 
 void upx_compiler_sanity_check(void) noexcept {
-    const char *e = getenv("UPX_DEBUG_DOCTEST_DISABLE");
-    if (!e)
-        e = getenv("UPX_DEBUG_DISABLE_DOCTEST"); // allow alternate spelling
-    if (e && e[0] && strcmp(e, "0") != 0) {
+    if (is_envvar_true("UPX_DEBUG_DOCTEST_DISABLE", "UPX_DEBUG_DISABLE_DOCTEST")) {
         // If UPX_DEBUG_DOCTEST_DISABLE is set then we don't want to throw any
         // exceptions in order to improve debugging experience.
     } else {

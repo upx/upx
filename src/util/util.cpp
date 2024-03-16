@@ -768,6 +768,19 @@ int fn_strcmp(const char *n1, const char *n2) {
 // misc
 **************************************************************************/
 
+bool is_envvar_true(const char *envvar, const char *alternate_name) noexcept {
+    // UPX convention: any environment variable that is set and is not strictly equal to "0" is true
+    const char *e = getenv(envvar);
+    if (e != nullptr && e[0])
+        return strcmp(e, "0") != 0;
+    if (alternate_name != nullptr) {
+        e = getenv(alternate_name);
+        if (e != nullptr && e[0])
+            return strcmp(e, "0") != 0;
+    }
+    return false;
+}
+
 bool set_method_name(char *buf, size_t size, int method, int level) {
     bool r = true;
     const char *alg;

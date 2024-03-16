@@ -2243,17 +2243,19 @@ tribool PackMachBase<T>::canPack()
             break;
         }
     }
-#if !defined(DEBUG)
-    // disable macOS packing in Release builds until we do support macOS 13+
+    // disable macOS packing until we do support macOS 13+
     //   https://github.com/upx/upx/issues/612
-    if (my_cputype == CPU_TYPE_X86_64 || my_cputype == CPU_TYPE_ARM64)
-        if (!opt->darwin_macho.force_macos)
+    if (my_cputype == CPU_TYPE_X86_64 || my_cputype == CPU_TYPE_ARM64) {
+        bool force = opt->darwin_macho.force_macos || is_envvar_true("UPX_DEBUG_FORCE_PACK_MACOS");
+        if (!force)
             throwCantPack("macOS is currently not supported (try --force-macos)");
-#endif
+    }
     return true;
 }
 
+// instantiate instances
 template class PackMachBase<MachClass_BE32>;
+// template class PackMachBase<MachClass_BE64>; // currently not used
 template class PackMachBase<MachClass_LE32>;
 template class PackMachBase<MachClass_LE64>;
 

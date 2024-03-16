@@ -18,7 +18,7 @@ RUN dpkg --add-architecture i386 \
         mksh moreutils ninja-build p7zip parallel patch patchelf patchutils pax-utils paxctl \
         python3 python3-pyasn1 python3-pycryptodome python3-zstd \
         re2c ripgrep rsync screen universal-ctags unzip vim yash zip zlib1g-dev zsh zstd \
-        # extra packages for compiling with "gcc -m32" and and "gcc -mx32":
+        # extra packages for compiling with "gcc -m32" and "gcc -mx32":
         g++-multilib gcc-multilib \
     && true
 

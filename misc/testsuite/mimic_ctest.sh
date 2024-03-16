@@ -53,6 +53,11 @@ export UPX="--no-color --no-progress"
 "${upx_run[@]}" --help
 "${upx_run[@]}" --sysinfo -v
 
+case "$UPX_CONFIG_DISABLE_SELF_PACK_TEST" in
+"" | "0" | "FALSE" | "OFF") ;;
+*) echo "Self-pack test disabled. All done."; exit 0 ;;
+esac
+
 exe=".out"
 upx_self_exe=$upx_exe
 fo="--force-overwrite"
