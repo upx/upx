@@ -93,16 +93,18 @@ class Dummy {
 
 #ifdef WANT_PHDR_ENUM
 #undef WANT_PHDR_ENUM
-    enum {                         // p_type
-        PT_NULL = 0,               /* Ignore: a "comment" */
-        PT_LOAD = 1,               /* Loadable program segment */
-        PT_DYNAMIC = 2,            /* Dynamic linking information */
-        PT_INTERP = 3,             /* Name of program interpreter */
-        PT_NOTE = 4,               /* Auxiliary information (esp. OpenBSD) */
-        PT_PHDR = 6,               /* Entry for header table itself */
-        PT_NUM = 8,                /* Number of defined types in low range */
-        PT_GNU_STACK = 0x6474e551, /* Indicates stack executability */
-        PT_GNU_RELRO = 0x6474e552, /* Read-only after relocation */
+    enum {                             // p_type
+        PT_NULL = 0,                   /* Ignore: a "comment" */
+        PT_LOAD = 1,                   /* Loadable program segment */
+        PT_DYNAMIC = 2,                /* Dynamic linking information */
+        PT_INTERP = 3,                 /* Name of program interpreter */
+        PT_NOTE = 4,                   /* Auxiliary information (esp. OpenBSD) */
+        PT_PHDR = 6,                   /* Entry for header table itself */
+        PT_NUM = 8,                    /* Number of defined types in low range */
+        PT_GNU_STACK = 0x6474e551,     /* Indicates stack executability */
+        PT_GNU_RELRO = 0x6474e552,     /* Read-only after relocation */
+        PT_MIPS_ABIFLAGS = 0x70000003, /* FP mode requirement. */
+        PT_MIPS_REGINFO = 0x70000000   /* Register usage information. */
     };
 
     enum {        // p_flags
