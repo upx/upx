@@ -2028,11 +2028,8 @@ PackLinuxElf32::sort_DT32_offsets(Elf32_Dyn const *const dynp0)
 unsigned PackLinuxElf32::find_dt_ndx(unsigned rva)
 {
     unsigned *const dto = (unsigned *)mb_dt_offsets.getVoidPtr();
-    unsigned *const dto_end = (unsigned *)(mb_dt_offsets.getSize() + dto);
-    for (unsigned j = 0; dto[j]; ++j) { // linear search of short table
-        if (dto_end <= &dto[j]) { // defensive
-            return ~0u;
-        }
+    unsigned const dto_size = mb_dt_offsets.getSize() / sizeof(*dto);
+    for (unsigned j = 0; j < dto_size && dto[j]; ++j) { // linear search of short table
         if (rva == dto[j]) {
             return j;
         }
@@ -7945,11 +7942,8 @@ PackLinuxElf64::sort_DT64_offsets(Elf64_Dyn const *const dynp0)
 unsigned PackLinuxElf64::find_dt_ndx(u64_t rva)
 {
     unsigned *const dto = (unsigned *)mb_dt_offsets.getVoidPtr();
-    unsigned *const dto_end = (unsigned *)(mb_dt_offsets.getSize() + dto);
-    for (unsigned j = 0; dto[j]; ++j) { // linear search of short table
-        if (dto_end <= &dto[j]) { // defensive
-            return ~0u;
-        }
+    unsigned const dto_size = mb_dt_offsets.getSize() / sizeof(*dto);
+    for (unsigned j = 0; j < dto_size && dto[j]; ++j) { // linear search of short table
         if (rva == dto[j]) {
             return j;
         }
