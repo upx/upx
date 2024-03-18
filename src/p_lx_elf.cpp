@@ -317,7 +317,8 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         }
     }
     sz_phdrs = e_phnum * e_phentsize;
-    sz_elf_hdrs = sz_phdrs + sizeof(Elf32_Ehdr);
+    sz_elf_hdrs = sz_phdrs + sizeof(Elf32_Ehdr) +
+        (!!phdrx[0] + !!phdrx[1]) * sizeof(Elf32_Phdr);
 
     if (f && Elf32_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
@@ -970,6 +971,7 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
     , sec_arm_attr(nullptr)
 {
     memset(&ehdri, 0, sizeof(ehdri));
+    phdrx[0] = phdrx[1] = nullptr;
     n_jmp_slot = 0;
     if (f) {
         f->seek(0, SEEK_SET);
@@ -2596,6 +2598,10 @@ PackLinuxElf32::canPackOSABI(Elf32_Ehdr const *ehdr)
                 return false;
             }
             hatch_off = ~3u & (3+ get_te32(&phdr->p_memsz));
+        }
+        if (Elf32_Phdr::PT_MIPS_ABIFLAGS == p_type
+        ||  Elf32_Phdr::PT_MIPS_REGINFO  == p_type) {
+            phdrx[!!phdrx[0]] = phdr;  // remember in [0] first, then [1]
         }
         if (PT_NOTE32 == p_type) {
             unsigned const x = get_te32(&phdr->p_memsz);

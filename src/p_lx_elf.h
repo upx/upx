@@ -224,6 +224,7 @@ protected:
     Elf32_Shdr *shdri; // from input file
     Elf32_Shdr *shdro; // for  output file
     Elf32_Phdr const *gnu_stack;  // propagate NX
+    Elf32_Phdr const *phdrx[2];  // "extra" arch-specific Phdr
     unsigned e_phoff;
     unsigned e_shoff;
     unsigned sz_dynseg;  // PT_DYNAMIC.p_memsz
