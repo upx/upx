@@ -316,6 +316,9 @@ PeFile::Reloc::Reloc(unsigned relocnum) {
 }
 
 void PeFile::Reloc::initSpans() {
+    next_encoded_type = 0;
+    memset(encode, -1, sizeof(encode));  // encode[external]  set upon first encounter
+    memset(decode,  0, sizeof(decode));  // decode[internal]
     start_buf = SPAN_0_MAKE(byte, start, start_size_in_bytes); // => now a SPAN_S
     rb.rel = SPAN_TYPE_CAST(BaseReloc, start_buf);             // SPAN_0
     rb.rel1 = SPAN_TYPE_CAST(LE16, start_buf);                 // SPAN_0
@@ -361,7 +364,7 @@ bool PeFile::Reloc::next(unsigned &result_pos, unsigned &result_type) {
             rb.count -= 1;
             const unsigned value = *rb.rel1++;
             result_pos = rb.rel->virtual_address + (value & 0xfff);
-            result_type = (value >> 12) & 0xf;
+            result_type = get_reloc_type(value >> 12);
             NO_printf("%x %d\n", result_pos, result_type);
             if (result_type != 0)
                 return true; // success
@@ -377,9 +380,16 @@ bool PeFile::Reloc::next(unsigned &result_pos, unsigned &result_type) {
 
 void PeFile::Reloc::add(unsigned pos, unsigned type) {
     assert(start_did_alloc);
-    if ((pos << 4) >> 4 != pos || type > 0xf)
-        throwCantPack("relocation overflow %u %u", pos, type);
-    set_le32(start_buf + (RELOC_INPLACE_OFFSET + 4 * counts[0]), (pos << 4) + (type & 0xf));
+    if ((pos << W_REL) >> W_REL != pos || type > 0xf)
+        throwCantPack("relocation overflow %#x %u", pos, type);
+    if (encode[type] < 0) { // first encounter of this relocation type
+        if ((1 << W_REL) <= next_encoded_type) 
+            throwCantPack("relocation overflow %#x %u", pos, type);
+        encode[type] = next_encoded_type;
+        decode[next_encoded_type] = type;
+        ++next_encoded_type;
+    }
+    set_le32(start_buf + (RELOC_INPLACE_OFFSET + 4 * counts[0]), (pos << W_REL) + encode[type]);
     counts[0] += 1;
 }
 
@@ -414,7 +424,7 @@ void PeFile::Reloc::finish(byte *(&result_ptr), unsigned &result_size) {
             byte *next_rb = (rb.rel == nullptr) ? start : finish_block(rb.rel);
             rb.rel = (BaseReloc *) next_rb;
             rb.rel1 = (LE16 *) (next_rb + 8);
-            rb.rel->virtual_address = (pos >> 4) & ~0xfff; // page start
+            rb.rel->virtual_address = (pos >> W_REL) & ~0xfff; // page start
             rb.rel->size_of_block = 8;
         }
         // write entry
@@ -422,7 +432,7 @@ void PeFile::Reloc::finish(byte *(&result_ptr), unsigned &result_size) {
             // info: if this is indeed a valid file we must increase RELOC_INPLACE_OFFSET
             throwCantPack("too many inplace relocs");
         }
-        *rb.rel1++ = ((pos & 0xf) << 12) + ((pos >> 4) & 0xfff);
+        *rb.rel1++ = (get_reloc_type(pos) << 12) + ((pos >> W_REL) & 0xfff);
         rb.rel->size_of_block += 2;
     }
     result_size = 0; // result_size can be 0 in 64-bit mode
@@ -471,13 +481,13 @@ void PeFile32::processRelocs() // pass1
         return;
     }
 
-    for (ic = 4; ic < 16; ic++)
+    for (ic = IMAGE_REL_BASED_HIGHADJ; ic < 16; ic++)
         if (counts[ic])
             infoWarning("skipping unsupported relocation type %d (%d)", ic, counts[ic]);
 
-    LE32 *fix[4];
+    LE32 *fix[IMAGE_REL_BASED_HIGHADJ];
     upx::ArrayDeleter<LE32 **> fixdel{fix, 0}; // don't leak memory
-    for (ic = 0; ic < 4; ic++) {
+    for (ic = 0; ic < IMAGE_REL_BASED_HIGHADJ; ic++) {
         fix[ic] = New(LE32, counts[ic]);
         fixdel.count += 1;
     }
@@ -492,7 +502,7 @@ void PeFile32::processRelocs() // pass1
         // PE header or other relocation records
         if (pos >= ih.imagesize)
             continue; // skip out-of-bounds record
-        if (type < 4)
+        if (type < IMAGE_REL_BASED_HIGHADJ)
             fix[type][xcounts[type]++] = pos - rvamin;
     }
 
@@ -509,9 +519,9 @@ void PeFile32::processRelocs() // pass1
         xcounts[ic] = jc;
     }
 
-    // preprocess "type 3" relocation records
-    for (ic = 0; ic < xcounts[3]; ic++) {
-        pos = fix[3][ic] + rvamin;
+    // preprocess "type IMAGE_REL_BASED_HIGHLOW" relocation records
+    for (ic = 0; ic < xcounts[IMAGE_REL_BASED_HIGHLOW]; ic++) {
+        pos = fix[IMAGE_REL_BASED_HIGHLOW][ic] + rvamin;
         unsigned w = get_le32(ibuf.subref("bad reloc type 3 %#x", pos, sizeof(LE32)));
         set_le32(ibuf + pos, w - ih.imagebase - rvamin);
     }
@@ -519,18 +529,20 @@ void PeFile32::processRelocs() // pass1
     ibuf.fill(IDADDR(PEDIR_BASERELOC), IDSIZE(PEDIR_BASERELOC), FILLVAL);
     mb_orelocs.alloc(mem_size(4, relocnum, 8192)); // 8192 - safety
     orelocs = mb_orelocs;                          // => orelocs now is a SPAN_S
-    sorelocs = optimizeReloc(xcounts[3], (byte *) fix[3], orelocs, ibuf + rvamin, ibufgood - rvamin,
-                             32, true, &big_relocs);
+    sorelocs =
+        optimizeReloc(xcounts[IMAGE_REL_BASED_HIGHLOW], (byte *) fix[IMAGE_REL_BASED_HIGHLOW],
+                      orelocs, ibuf + rvamin, ibufgood - rvamin, 32, true, &big_relocs);
 
     // Malware that hides behind UPX often has PE header info that is
     // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
     // Use an extra check to avoid AccessViolation (SIGSEGV) when appending
     // the relocs into one array.
-    if ((4 * relocnum + 8192) < (sorelocs + 4 * (2 + xcounts[2] + xcounts[1])))
+    if ((4 * relocnum + 8192) <
+        (sorelocs + 4 * (2 + xcounts[IMAGE_REL_BASED_LOW] + xcounts[IMAGE_REL_BASED_HIGH])))
         throwCantUnpack("Invalid relocs");
 
     // append relocs type "LOW" then "HIGH"
-    for (ic = 2; ic; ic--) {
+    for (ic = IMAGE_REL_BASED_LOW; ic; ic--) {
         memcpy(orelocs + sorelocs, fix[ic], 4 * xcounts[ic]);
         sorelocs += 4 * xcounts[ic];
 
@@ -574,7 +586,7 @@ void PeFile64::processRelocs() // pass1
     }
 
     for (ic = 0; ic < 16; ic++)
-        if (ic != 10 && counts[ic])
+        if (ic != IMAGE_REL_BASED_DIR64 && counts[ic])
             infoWarning("skipping unsupported relocation type %d (%d)", ic, counts[ic]);
 
     LE32 *fix[16];
@@ -611,9 +623,9 @@ void PeFile64::processRelocs() // pass1
         xcounts[ic] = jc;
     }
 
-    // preprocess "type 10" relocation records
-    for (ic = 0; ic < xcounts[10]; ic++) {
-        pos = fix[10][ic] + rvamin;
+    // preprocess "type 10" relocation records  (IMAGE_REL_BASED_DIR64)
+    for (ic = 0; ic < xcounts[IMAGE_REL_BASED_DIR64]; ic++) {
+        pos = fix[IMAGE_REL_BASED_DIR64][ic] + rvamin;
         upx_uint64_t w = get_le64(ibuf.subref("bad reloc 10 %#x", pos, sizeof(LE64)));
         set_le64(ibuf + pos, w - ih.imagebase - rvamin);
     }
@@ -621,19 +633,19 @@ void PeFile64::processRelocs() // pass1
     ibuf.fill(IDADDR(PEDIR_BASERELOC), IDSIZE(PEDIR_BASERELOC), FILLVAL);
     mb_orelocs.alloc(mem_size(4, relocnum, 8192)); // 8192 - safety
     orelocs = mb_orelocs;                          // => orelocs now is a SPAN_S
-    sorelocs = optimizeReloc(xcounts[10], (byte *) fix[10], orelocs, ibuf + rvamin,
-                             ibufgood - rvamin, 64, true, &big_relocs);
+    sorelocs = optimizeReloc(xcounts[IMAGE_REL_BASED_DIR64], (byte *) fix[IMAGE_REL_BASED_DIR64],
+                             orelocs, ibuf + rvamin, ibufgood - rvamin, 64, true, &big_relocs);
 
 #if 0
     // Malware that hides behind UPX often has PE header info that is
     // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
     // Use an extra check to avoid AccessViolation (SIGSEGV) when appending
     // the relocs into one array.
-    if ((4 * relocnum + 8192) < (sorelocs + 4 * (2 + xcounts[2] + xcounts[1])))
+    if ((4 * relocnum + 8192) < (sorelocs + 4 * (2 + xcounts[IMAGE_REL_BASED_LOW] + xcounts[IMAGE_REL_BASED_HIGH])))
         throwCantUnpack("Invalid relocs");
 
     // append relocs type "LOW" then "HIGH"
-    for (ic = 2; ic; ic--) {
+    for (ic = IMAGE_REL_BASED_LOW; ic; ic--) {
         memcpy(orelocs + sorelocs, fix[ic], 4 * xcounts[ic]);
         sorelocs += 4 * xcounts[ic];
 
@@ -1313,7 +1325,7 @@ struct PeFile::tls_traits<LE32> final {
     static const unsigned sotls = 24;
     static const unsigned cb_size = 4;
     typedef unsigned cb_value_t;
-    static const unsigned reloc_type = 3;
+    static const unsigned reloc_type = IMAGE_REL_BASED_HIGHLOW;
     static const int tls_handler_offset_reloc = 4;
 };
 
@@ -1330,7 +1342,7 @@ struct PeFile::tls_traits<LE64> final {
     static const unsigned sotls = 40;
     static const unsigned cb_size = 8;
     typedef upx_uint64_t cb_value_t;
-    static const unsigned reloc_type = 10;
+    static const unsigned reloc_type = IMAGE_REL_BASED_DIR64;
     static const int tls_handler_offset_reloc = -1; // no need to relocate
 };
 
@@ -2713,10 +2725,10 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
     if (big & 6) { // add 16-bit relocations
         SPAN_S_VAR(const LE32, q, SPAN_TYPE_CAST(const LE32, rdata));
         while (*q)
-            rel.add(*q++ + rvamin, (big & 4) ? 2 : 1);
+            rel.add(*q++ + rvamin, (big & 4) ? IMAGE_REL_BASED_LOW : IMAGE_REL_BASED_HIGH);
         if ((big & 6) == 6)
             while (*++q)
-                rel.add(*q + rvamin, 1);
+                rel.add(*q + rvamin, IMAGE_REL_BASED_HIGH);
         // rdata = (const byte *) raw_bytes(q, 0); // advance rdata
     }
 
@@ -2727,7 +2739,8 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
             set_le32(p, get_le32(p) + imagebase + rvamin);
         else
             set_le64(p, get_le64(p) + imagebase + rvamin);
-        rel.add(rvamin + get_le32(wrkmem + 4 * ic), bits == 32 ? 3 : 10);
+        rel.add(rvamin + get_le32(wrkmem + 4 * ic),
+                bits == 32 ? IMAGE_REL_BASED_HIGHLOW : IMAGE_REL_BASED_DIR64);
     }
     rel.finish(oxrelocs, soxrelocs);
 

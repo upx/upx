@@ -330,6 +330,50 @@ protected:
         IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16,
     };
 
+    // clang format off
+    enum {
+        W_REL = 3,  // width of internal relocation type field
+        // IMAGE_REL_* from
+        // https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#base-relocation-types:
+        IMAGE_REL_BASED_ABSOLUTE = 0, // The base relocation is skipped.
+                                      // This type can be used to pad a block.
+        IMAGE_REL_BASED_HIGH = 1,    // The base relocation adds the
+                                     // high 16 bits of the difference to the 16-bit field at offset.
+                                     // The 16-bit field represents the high value of a 32-bit word.
+        IMAGE_REL_BASED_LOW = 2,     // The base relocation adds the low 16 bits
+                                     // of the difference to the 16-bit field at offset.
+                                     // The 16-bit field represents the low half of a 32-bit word.
+        IMAGE_REL_BASED_HIGHLOW = 3, // The base relocation applies all 32 bits
+                                     // of the difference to the 32-bit field at offset.
+        IMAGE_REL_BASED_HIGHADJ = 4, // The base relocation adds the high 16 bits
+                                     // of the difference to the 16-bit field at offset.
+                                     // The 16-bit field represents the high value of a 32-bit word.
+                                     // The low 16 bits of the 32-bit value are stored in the 16-bit
+                                     // word that follows this base relocation. This means that this
+                                     // base relocation occupies two slots.
+
+        IMAGE_REL_BASED_MIPS_JMPADDR = 5, // MIPS jump instruction.
+        IMAGE_REL_BASED_ARM_MOV32 = 5,    // ARM or Thumb: 32-bit address across MOVW/MOVT pair
+        IMAGE_REL_BASED_RISCV_HIGH20 = 5, // RISC-V: high 20 bits of a 32-bit absolute address.
+
+        //  6   Reserved, must be zero.
+
+        IMAGE_REL_BASED_THUMB_MOV32 = 7, // Thumb:  32-bit address across MOVW/MOVT pair.
+        IMAGE_REL_BASED_RISCV_LOW12I =
+            7, // RISC-V:  low 12 bits of a 32-bit absolute addres in RISC-V I-type
+
+        IMAGE_REL_BASED_RISCV_LOW12S =
+            8, // RISC-V:  low 12 bits of a 32-bit absolute address in RISC-V S-type
+        IMAGE_REL_BASED_LOONGARCH32_MARK_LA =
+            8, // LoongArch:  32-bit absolute address in two consecutive instructions.
+        IMAGE_REL_BASED_LOONGARCH64_MARK_LA =
+            8, // LoongArch:  64-bit absolute address in four consecutive instructions.
+
+        IMAGE_REL_BASED_MIPS_JMPADDR16 = 9, // MIPS:  jump16 instruction.
+        IMAGE_REL_BASED_DIR64 = 10,         // add difference to 64-bit field at offset.
+    };
+    // clang format on
+
     // predefined Resource Types
     enum {
         RT_CURSOR = 1,
@@ -388,6 +432,11 @@ protected:
         unsigned start_size_in_bytes = 0;
         bool start_did_alloc = false;
         SPAN_0(byte) start_buf = nullptr;
+        // external relocation types (IMAGE_REL_BASED_*) are 0..15
+        // internal relocation types are 0..7, dynamically assigned to save 1 bit
+        unsigned char decode[8];  // external = decode[internal];
+          signed char encode[16]; // internal = encode[external];  -1 ==> not seen yet
+        unsigned next_encoded_type;
 
         struct alignas(1) BaseReloc { // IMAGE_BASE_RELOCATION
             LE32 virtual_address;
@@ -414,6 +463,7 @@ protected:
         bool next(unsigned &result_pos, unsigned &result_type);
         const unsigned *getcounts() const { return counts; }
         //
+        unsigned get_reloc_type(unsigned word) { return decode[~(~0u << W_REL) & word]; }
         void add(unsigned pos, unsigned type);
         void finish(byte *(&result_ptr), unsigned &result_size); // => transfer ownership
     };
