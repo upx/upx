@@ -18,8 +18,9 @@ umask 0022
 
 # disable on macOS for now, see https://github.com/upx/upx/issues/612
 if [[ "$(uname)" == Darwin ]]; then
-    echo "$0: SKIPPED"
-    exit 0
+    case "$UPX_DEBUG_FORCE_PACK_MACOS" in
+        "" | "0") echo "$0: SKIPPED"; exit 0 ;;
+    esac
 fi
 
 id || true

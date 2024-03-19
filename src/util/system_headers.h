@@ -62,12 +62,12 @@
 #endif
 
 // sanity checks
-#if defined(__ILP32) || defined(__ILP32__)
+#if defined(_ILP32) || defined(__ILP32) || defined(__ILP32__)
 static_assert(sizeof(int) == 4);
 static_assert(sizeof(long) == 4);
 static_assert(sizeof(void *) == 4);
 #endif
-#if defined(__LP64) || defined(__LP64__)
+#if defined(_LP64) || defined(__LP64) || defined(__LP64__)
 static_assert(sizeof(int) == 4);
 static_assert(sizeof(long) == 8);
 static_assert(sizeof(void *) == 8);
@@ -153,13 +153,6 @@ static_assert(sizeof(void *) == sizeof(long));
 
 // UPX vendor git submodule headers
 #include <doctest/doctest/parts/doctest_fwd.h>
-#if WITH_BOOST_PFR
-#include <sstream>
-#include <boost/pfr/io.hpp>
-#endif
-#if WITH_RANGELESS_FN
-#include <rangeless/include/fn.hpp>
-#endif
 #ifndef WITH_VALGRIND
 #define WITH_VALGRIND 1
 #endif

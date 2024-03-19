@@ -3,7 +3,6 @@
 # for clang-format-15.0.6 from https://github.com/upx/upx-stubtools/releases
 #
 # "Gofmt's style is nobody's favourite, but gofmt is everybody's favourite." --Rob Pike
-
 ---
 BasedOnStyle: LLVM
 ColumnLimit: 100

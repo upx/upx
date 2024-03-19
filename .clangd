@@ -1,7 +1,6 @@
 # vim:set ft=yaml ts=2 sw=2 et:
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 # for clangd-17 from https://clangd.llvm.org/
-
 ---
 # treat *.h files as C++ source code
 If:

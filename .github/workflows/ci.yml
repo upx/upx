@@ -218,9 +218,9 @@ jobs:
             if ! brew install coreutils; then brew update && brew install coreutils; fi
           fi
           case "${{ matrix.os }}" in
-          macos-11 | macos-12) echo "UPX_DEBUG_FORCE_PACK_MACOS=1" >> $GITHUB_ENV ;;
-          # FIXME: UPX on macos-13+ is broken => disable self-test for now
-          macos-13 | macos-14) echo "UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON" >> $GITHUB_ENV ;;
+            macos-11 | macos-12) echo "UPX_DEBUG_FORCE_PACK_MACOS=1" >> $GITHUB_ENV ;;
+            # FIXME: UPX on macos-13+ is broken => disable self-test for now
+            macos-13 | macos-14) echo "UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON" >> $GITHUB_ENV ;;
           esac
       - name: 'Check out code'
         uses: actions/checkout@v4

@@ -145,13 +145,13 @@ typedef acc_int64_t upx_int64_t;
 typedef acc_uint64_t upx_uint64_t;
 typedef acc_uintptr_t upx_uintptr_t;
 
-// convention: use "byte" when dealing with data; use "char/uchar" when dealing
+// UPX convention: use "byte" when dealing with data; use "char/uchar" when dealing
 // with strings; use "upx_uint8_t" when dealing with small integers
 typedef unsigned char byte;
 #define upx_byte  byte
 #define upx_bytep byte *
 typedef unsigned char uchar;
-// convention: use "charptr" when dealing with abstract pointer arithmetics
+// UPX convention: use "charptr" when dealing with abstract pointer arithmetics
 #define charptr upx_charptr_unit_type *
 // upx_charptr_unit_type is some opaque type with sizeof(type) == 1
 struct alignas(1) upx_charptr_unit_type final { char hidden__; };
@@ -192,7 +192,7 @@ typedef upx_int64_t upx_off_t;
 #define very_unlikely         __acc_very_unlikely
 
 // cosmetic: explicitly annotate some functions which may throw exceptions
-// note: noexcept(false) is the default for all C++ functions anyway
+//   note: noexcept(false) is the default for all C++ functions anyway
 #define may_throw noexcept(false)
 
 #define COMPILE_TIME_ASSERT(e) ACC_COMPILE_TIME_ASSERT(e)
@@ -230,6 +230,7 @@ typedef upx_int64_t upx_off_t;
 #endif
 
 #if defined(HAVE_DUP) && (HAVE_DUP + 0 == 0)
+// TODO later: add upx_fd_dup() util
 #undef dup
 #define dup(x) (-1)
 #endif
