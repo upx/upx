@@ -397,6 +397,7 @@ void upx_std_stable_sort(void *array, size_t n, upx_compare_func_t compare) {
 template void upx_std_stable_sort<1>(void *, size_t, upx_compare_func_t);
 template void upx_std_stable_sort<2>(void *, size_t, upx_compare_func_t);
 template void upx_std_stable_sort<4>(void *, size_t, upx_compare_func_t);
+template void upx_std_stable_sort<5>(void *, size_t, upx_compare_func_t);
 template void upx_std_stable_sort<8>(void *, size_t, upx_compare_func_t);
 template void upx_std_stable_sort<16>(void *, size_t, upx_compare_func_t);
 template void upx_std_stable_sort<32>(void *, size_t, upx_compare_func_t);

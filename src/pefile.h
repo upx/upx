@@ -356,6 +356,21 @@ protected:
         RT_LAST
     };
 
+    enum {
+        IMAGE_REL_BASED_ABSOLUTE = 0, // this relocation is ignored
+        IMAGE_REL_BASED_IGNORE = 0,   // (unofficial name)
+        IMAGE_REL_BASED_HIGH = 1,
+        IMAGE_REL_BASED_LOW = 2,
+        IMAGE_REL_BASED_HIGHLOW = 3,
+        IMAGE_REL_BASED_HIGHADJ = 4,
+        IMAGE_REL_BASED_MIPS_JMPADDR = 5,
+        IMAGE_REL_BASED_ARM_MOV32 = 5,
+        IMAGE_REL_BASED_THUMB_MOV32 = 7,
+        IMAGE_REL_BASED_MIPS_JMPADDR16 = 9,
+        IMAGE_REL_BASED_IA64_IMM64 = 9,
+        IMAGE_REL_BASED_DIR64 = 10,
+    };
+
     class Interval final : private noncopyable {
         unsigned capacity = 0;
         void *base = nullptr;
