@@ -811,7 +811,9 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 }
                 else if (xct_off < ioff) { // Slide subsequent PT_LOAD.
                     if ((1u<<12) < align
-                    &&  Elf64_Ehdr::EM_X86_64 == e_machine  // FIXME: other $ARCH ?
+                    &&  (Elf64_Ehdr::EM_X86_64 == e_machine  // FIXME: other $ARCH ?
+                      || Elf64_Ehdr::EM_AARCH64 == e_machine)
+                        // perhaps avoid (opt->o_unix.android_shlib) ?
                     ) {
                         align = 1u<<12;
                         set_te64(&phdr->p_align, align);
@@ -2886,7 +2888,11 @@ tribool PackLinuxElf32::canPack()
             if (e_shnum) {
                 for (int j= e_shnum; --j>=0; ++shdr) {
                     unsigned const sh_type = get_te32(&shdr->sh_type);
-                    if (Elf32_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
+                    unsigned const sh_flags = get_te32(&shdr->sh_flags);
+                    if (Elf32_Shdr::SHF_EXECINSTR & sh_flags
+                    || ( Elf32_Shdr::SHF_MERGE    & sh_flags  // .rodata
+                      && Elf32_Shdr::SHF_STRINGS  & sh_flags
+                      && Elf32_Shdr::SHF_ALLOC    & sh_flags) ) {
                         xct_va = umin(xct_va, get_te32(&shdr->sh_addr));
                     }
                     // Hook the first slot of DT_PREINIT_ARRAY or DT_INIT_ARRAY.
@@ -2972,8 +2978,9 @@ bad:
                                 }
                             }
                         }
+                        unsigned const p_vaddr = get_te32(&pload_x0->p_vaddr);
                         unsigned const p_filesz = get_te32(&pload_x0->p_filesz);
-                        if (!((user_init_va - xct_va) < p_filesz)) {
+                        if (!((user_init_va - p_vaddr) < p_filesz)) {
                             // Not in executable portion of first executable PT_LOAD.
                             if (0==user_init_va && opt->o_unix.android_shlib) {
                                 // Android allows (0 ==> skip) ?
@@ -3317,7 +3324,11 @@ tribool PackLinuxElf64::canPack()
             if (e_shnum) {
                 for (int j= e_shnum; --j>=0; ++shdr) {
                     unsigned const sh_type = get_te32(&shdr->sh_type);
-                    if (Elf64_Shdr::SHF_EXECINSTR & get_te64(&shdr->sh_flags)) {
+                    uint64_t const sh_flags = get_te64(&shdr->sh_flags);
+                    if (Elf64_Shdr::SHF_EXECINSTR & sh_flags
+                    || ( Elf64_Shdr::SHF_MERGE    & sh_flags  // .rodata
+                      && Elf64_Shdr::SHF_STRINGS  & sh_flags
+                      && Elf64_Shdr::SHF_ALLOC    & sh_flags) ) {
                         xct_va = umin(xct_va, get_te64(&shdr->sh_addr));
                     }
                     // Hook the first slot of DT_PREINIT_ARRAY or DT_INIT_ARRAY.
@@ -3411,8 +3422,9 @@ tribool PackLinuxElf64::canPack()
                                 }
                             }
                         }
+                        unsigned const p_vaddr = get_te64(&pload_x0->p_vaddr);
                         unsigned const p_filesz = get_te64(&pload_x0->p_filesz);
-                        if (!((user_init_va - xct_va) < p_filesz)) {
+                        if (!((user_init_va - p_vaddr) < p_filesz)) {
                             // Not in executable portion of first executable PT_LOAD.
                             if (0==user_init_va && opt->o_unix.android_shlib) {
                                 // Android allows (0 ==> skip) ?
