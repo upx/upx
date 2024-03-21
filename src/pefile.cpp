@@ -383,7 +383,7 @@ void PeFile::Reloc::add(unsigned pos, unsigned type) {
     if ((pos << W_REL) >> W_REL != pos || type > 0xf)
         throwCantPack("relocation overflow %#x %u", pos, type);
     if (encode[type] < 0) { // first encounter of this relocation type
-        if ((1 << W_REL) <= next_encoded_type) 
+        if ((1 << W_REL) <= next_encoded_type)
             throwCantPack("relocation overflow %#x %u", pos, type);
         encode[type] = next_encoded_type;
         decode[next_encoded_type] = type;
