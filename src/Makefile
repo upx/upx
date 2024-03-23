@@ -20,27 +20,22 @@ endif
 # NOTE that the top-level Makefile .DEFAULT_GOAL is build/release
 .DEFAULT_GOAL = build/all
 
-build/debug:   $(top_srcdir)/build/debug
-build/release: $(top_srcdir)/build/release
-
 .NOTPARALLEL: # because the actual builds use "cmake --parallel"
 .PHONY: PHONY
 .SECONDEXPANSION:
 .SUFFIXES:
 
-# shortcuts (all => debug + release)
-debug:   build/debug
-release: build/release
-all build/all: build/debug build/release
+build/debug build/release build/all:                PHONY; $(MAKE) -C $(top_srcdir) $@
+build/debug+test build/release+test build/all+test: PHONY; $(MAKE) -C $(top_srcdir) $@
+# shortcuts
+debug release all:                                  PHONY; $(MAKE) -C $(top_srcdir) $@
+debug+test release+test all+test:                   PHONY; $(MAKE) -C $(top_srcdir) $@
 
-# actual rules - redirect to top-level
-$(top_srcdir)/build/debug:   PHONY; $(MAKE) -C $(top_srcdir) build/debug
-$(top_srcdir)/build/release: PHONY; $(MAKE) -C $(top_srcdir) build/release
+test:: build/all+test PHONY
 
-# convenience
-CTEST = ctest
-test:: $(top_srcdir)/build/debug   PHONY; cd $< && $(CTEST)
-test:: $(top_srcdir)/build/release PHONY; cd $< && $(CTEST)
+# OLD names [deprecated]
+$(top_srcdir)/build/debug:   build/debug PHONY
+$(top_srcdir)/build/release: build/release PHONY
 
 #***********************************************************************
 # make run-testsuite
@@ -65,15 +60,15 @@ endif
 # The   actual (new) checksums are in ./tmp-upx-testsuite-*/testsuite_1/.sha256sums.recreate
 ifneq ($(wildcard $(upx_testsuite_SRCDIR)/files/packed/.),)
 ifneq ($(wildcard $(top_srcdir)/misc/testsuite/upx_testsuite_1.sh),)
-run-testsuite: run-testsuite-release
+run-testsuite: run-testsuite-release PHONY
 run-testsuite-%: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
 run-testsuite-debug: export upx_testsuite_BUILDDIR := ./tmp-upx-testsuite-debug
 run-testsuite-debug: export upx_exe := $(top_srcdir)/build/debug/upx
-run-testsuite-debug: $(top_srcdir)/build/debug PHONY
+run-testsuite-debug: build/debug PHONY
 	time -p bash $(top_srcdir)/misc/testsuite/upx_testsuite_1.sh
 run-testsuite-release: export upx_testsuite_BUILDDIR := ./tmp-upx-testsuite-release
 run-testsuite-release: export upx_exe := $(top_srcdir)/build/release/upx
-run-testsuite-release: $(top_srcdir)/build/release PHONY
+run-testsuite-release: build/release PHONY
 	time -p bash $(top_srcdir)/misc/testsuite/upx_testsuite_1.sh
 endif
 endif

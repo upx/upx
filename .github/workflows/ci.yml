@@ -16,8 +16,8 @@ env:
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -Wdev --warn-uninitialized
   UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO: 1
-  # 2024-03-16
-  ZIG_DIST_VERSION: 0.12.0-dev.3322+a4508ad71
+  # 2024-03-23
+  ZIG_DIST_VERSION: 0.12.0-dev.3429+13a9d94a8
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -473,7 +473,7 @@ jobs:
           - { zig_target: i386-linux-musl, qemu: qemu-i386 -cpu Conroe }
           # { zig_target: i386-linux-musl, qemu: qemu-i386 -cpu Conroe, zig_pic: -fPIE }
           - { zig_target: i386-windows-gnu }
-          # mips and mipsel: bad hard-float code generation; see https://github.com/upx/upx/issues/788
+          # mips and mipsel: bad hard-float code generation(??); or QEMU bug; or UPX bug; see https://github.com/upx/upx/issues/788
           - { zig_target: mips-linux-musl, zig_flags: -msoft-float, qemu: qemu-mips }
           - { zig_target: mipsel-linux-musl, zig_flags: -msoft-float, qemu: qemu-mipsel }
           - { zig_target: powerpc-linux-musl, qemu: qemu-ppc }

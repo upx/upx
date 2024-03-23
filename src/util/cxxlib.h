@@ -133,6 +133,13 @@ private:                                                                        
     UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDF_B__(Klass)                                               \
     UPX_CXX_DISABLE_NEW_DELETE_IMPL_CSUDDF_B__(Klass)
 
+#if defined(_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION) // do not use std::align_val_t
+#undef UPX_CXX_DISABLE_NEW_DELETE
+#undef UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL
+#define UPX_CXX_DISABLE_NEW_DELETE(Klass)            private:
+#define UPX_CXX_DISABLE_NEW_DELETE_NO_VIRTUAL(Klass) private:
+#endif
+
 /*************************************************************************
 // type_traits
 **************************************************************************/

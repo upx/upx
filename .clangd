@@ -1,6 +1,6 @@
 # vim:set ft=yaml ts=2 sw=2 et:
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# for clangd-17 from https://clangd.llvm.org/
+# for clangd from https://clangd.llvm.org/
 ---
 # treat *.h files as C++ source code
 If:
@@ -17,6 +17,7 @@ If:
 CompileFlags:
   Add:
     - -std=gnu++17
+    # -std=gnu++20 # requires clang >= 10.0
 ---
 # common flags for all C/C++ files
 If:

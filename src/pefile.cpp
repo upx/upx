@@ -213,17 +213,9 @@ int PeFile::readFileHeader() {
 // interval handling
 **************************************************************************/
 
-PeFile::Interval::Interval(void *b) : capacity(0), base(b), ivarr(nullptr), ivnum(0) {}
+PeFile::Interval::Interval(SPAN_P(byte) b) : base(b) {}
 
 PeFile::Interval::~Interval() noexcept { free(ivarr); }
-
-void PeFile::Interval::add(const void *start, unsigned len) {
-    add(ptr_diff_bytes(start, base), len);
-}
-
-void PeFile::Interval::add(const void *start, const void *end) {
-    add(ptr_diff_bytes(start, base), ptr_diff_bytes(end, start));
-}
 
 int __acc_cdecl_qsort PeFile::Interval::compare(const void *p1, const void *p2) {
     const interval *i1 = (const interval *) p1;
@@ -239,16 +231,28 @@ int __acc_cdecl_qsort PeFile::Interval::compare(const void *p1, const void *p2) 
     return 0;
 }
 
-void PeFile::Interval::add(unsigned start, unsigned len) {
-    if (ivnum == capacity)
-        ivarr = (interval *) realloc(ivarr, (capacity += 15) * sizeof(interval));
+void PeFile::Interval::add_interval(unsigned start, unsigned len) {
+    if (ivnum == ivcapacity) {
+        ivcapacity += 15;
+        ivarr = (interval *) realloc(ivarr, mem_size(sizeof(interval), ivcapacity));
+        assert(ivarr != nullptr);
+    }
     ivarr[ivnum].start = start;
-    ivarr[ivnum++].len = len;
+    ivarr[ivnum].len = len;
+    ivnum += 1;
 }
 
-void PeFile::Interval::add(const Interval *iv) {
-    for (unsigned ic = 0; ic < iv->ivnum; ic++)
-        add(iv->ivarr[ic].start, iv->ivarr[ic].len);
+void PeFile::Interval::add_interval(const void *start, unsigned len) {
+    add_interval(ptr_udiff_bytes(start, base), len);
+}
+
+void PeFile::Interval::add_interval(const void *start, const void *end) {
+    add_interval(ptr_udiff_bytes(start, base), ptr_udiff_bytes(end, start));
+}
+
+void PeFile::Interval::add_interval(const Interval *other) {
+    for (unsigned ic = 0; ic < other->ivnum; ic++)
+        add_interval(other->ivarr[ic].start, other->ivarr[ic].len);
 }
 
 void PeFile::Interval::flatten() {
@@ -269,7 +273,7 @@ void PeFile::Interval::flatten() {
 
 void PeFile::Interval::clear() {
     for (unsigned ic = 0; ic < ivnum; ic++)
-        memset((char *) base + ivarr[ic].start, 0, ivarr[ic].len);
+        memset(base + ivarr[ic].start, 0, ivarr[ic].len);
 }
 
 void PeFile::Interval::dump() const {
@@ -293,7 +297,7 @@ static constexpr size_t RELOC_INPLACE_OFFSET = 64 * 1024;
 
 static constexpr size_t RELOC_ENTRY_SIZE = 5; // encoded size in bytes; actual encoding is private
 static void reloc_entry_encode(SPAN_P(byte) buf, unsigned pos, unsigned reloc_type) {
-    if (reloc_type >= 16)
+    if (reloc_type == 0 || reloc_type >= 16)
         throwCantPack("bad reloc_type %u %u", pos, reloc_type);
     set_ne32(buf, pos);
     buf[4] = (upx_uint8_t) reloc_type;
@@ -301,6 +305,7 @@ static void reloc_entry_encode(SPAN_P(byte) buf, unsigned pos, unsigned reloc_ty
 static void reloc_entry_decode(SPAN_P(const byte) buf, unsigned *pos, unsigned *reloc_type) {
     *pos = get_ne32(buf);
     *reloc_type = buf[4];
+    assert(*reloc_type > 0 && *reloc_type < 16);
 }
 static int __acc_cdecl_qsort reloc_entry_compare(const void *a, const void *b) {
     const unsigned pos1 = get_ne32(a);
@@ -322,9 +327,10 @@ PeFile::Reloc::~Reloc() noexcept {
 }
 
 // constructor for compression only
-PeFile::Reloc::Reloc(byte *ptr, unsigned bytes) : start(ptr) {
+PeFile::Reloc::Reloc(byte *ptr, unsigned bytes) {
     assert(opt->cmd == CMD_COMPRESS);
     start_size_in_bytes = mem_size(1, bytes);
+    start = ptr;
     initSpans();
     // fill counts
     unsigned pos, reloc_type;
@@ -346,7 +352,7 @@ void PeFile::Reloc::initSpans() {
     rb.reset();
 }
 
-// check values so that we have better error messages (instead of getting a cryptic SPAN failure)
+// explicitly check values so that we get better error messages (instead of a cryptic SPAN failure)
 bool PeFile::Reloc::readFromRelocationBlock(byte *next_rb) { // set rb
     assert(!start_did_alloc);
     const unsigned off = ptr_udiff_bytes(next_rb, start);
@@ -399,8 +405,10 @@ bool PeFile::Reloc::next(unsigned &result_pos, unsigned &result_type) {
     }
 }
 
-void PeFile::Reloc::add(unsigned pos, unsigned reloc_type) {
+void PeFile::Reloc::add_reloc(unsigned pos, unsigned reloc_type) {
     assert(start_did_alloc);
+    if (reloc_type == IMAGE_REL_BASED_IGNORE)
+        return;
     auto entry_ptr = start_buf + (RELOC_INPLACE_OFFSET + RELOC_ENTRY_SIZE * counts[0]);
     reloc_entry_encode(entry_ptr, pos, reloc_type);
     counts[0] += 1;
@@ -436,11 +444,11 @@ void PeFile::Reloc::finish(byte *(&result_ptr), unsigned &result_size) {
                 throwCantPack("duplicate relocs (try --force)");
         prev_pos = pos;
         if (ic == 0 || pos - current_page >= 0x1000) {
+            current_page = pos & ~0xfff; // page start
             // prepare next block for writing
             byte *next_rb = (rb.rel == nullptr) ? start : finish_block(rb.rel);
             rb.rel = (BaseReloc *) next_rb;
             rb.rel1 = (LE16 *) (next_rb + 8);
-            current_page = pos & ~0xfff; // page start
             rb.rel->virtual_address = current_page;
             rb.rel->size_of_block = 8;
         }
@@ -449,7 +457,7 @@ void PeFile::Reloc::finish(byte *(&result_ptr), unsigned &result_size) {
             // info: if this is indeed a valid file we must increase RELOC_INPLACE_OFFSET
             throwCantPack("too many inplace relocs");
         }
-        // write entry
+        // write IMAGE_BASE_RELOCATION relocation
         *rb.rel1++ = (reloc_type << 12) | (pos & 0xfff);
         rb.rel->size_of_block += 2;
     }
@@ -747,7 +755,7 @@ class PeFile::ImportLinker final : public ElfLinkerAMD64 {
 
     unsigned thunk_size; // 4 or 8 bytes
 
-    void add(const char *dll, const char *proc, unsigned ordinal) {
+    void add_import(const char *dll, const char *proc, unsigned ordinal) {
         TStr sdll(name_for_dll(dll, dll_name_id));
         TStr desc_name(name_for_dll(dll, descriptor_id));
 
@@ -826,20 +834,20 @@ public:
     }
 
     template <typename C>
-    void add(const C *dll, unsigned ordinal) {
+    void add_import(const C *dll, unsigned ordinal) {
         ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1) // "char" or "byte"
         assert(ordinal < 0x10000);
         char ord[1 + 5 + 1];
         upx_safe_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
-        add((const char *) dll, ordinal ? ord : nullptr, ordinal);
+        add_import((const char *) dll, ordinal ? ord : nullptr, ordinal);
     }
 
     template <typename C1, typename C2>
-    void add(const C1 *dll, const C2 *proc) {
+    void add_import(const C1 *dll, const C2 *proc) {
         ACC_COMPILE_TIME_ASSERT(sizeof(C1) == 1) // "char" or "byte"
         ACC_COMPILE_TIME_ASSERT(sizeof(C2) == 1) // "char" or "byte"
         assert(proc);
-        add((const char *) dll, (const char *) proc, 0);
+        add_import((const char *) dll, (const char *) proc, 0);
     }
 
     unsigned build() {
@@ -910,7 +918,7 @@ public:
 };
 /*static*/ const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = {0};
 
-void PeFile::addKernelImport(const char *name) { ilinker->add(kernelDll(), name); }
+void PeFile::addKernelImport(const char *name) { ilinker->add_import(kernelDll(), name); }
 
 void PeFile::addStubImports() {
     addKernelImport("LoadLibraryA");
@@ -1055,14 +1063,14 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             if (idlls[ic]->ordinal)
                 for (const LEXX *tarr = idlls[ic]->lookupt; *tarr; tarr++)
                     if (*tarr & ord_mask) {
-                        ilinker->add(kernelDll(), *tarr & 0xffff);
+                        ilinker->add_import(kernelDll(), *tarr & 0xffff);
                         kernel32ordinal = true;
                     }
         } else if (!ilinker->hasDll(idlls[ic]->name)) {
             if (idlls[ic]->shname && !idlls[ic]->ordinal)
-                ilinker->add(idlls[ic]->name, idlls[ic]->shname);
+                ilinker->add_import(idlls[ic]->name, idlls[ic]->shname);
             else
-                ilinker->add(idlls[ic]->name, idlls[ic]->ordinal);
+                ilinker->add_import(idlls[ic]->name, idlls[ic]->ordinal);
         }
     }
 
@@ -1095,19 +1103,19 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
                 const unsigned take2 = 1 + strlen(ibuf.subref("bad import name %#x", skip2, 1));
                 memcpy(ppi, ibuf.subref("bad import name %#x", skip2, take2), take2);
                 ppi += take2;
-                names.add(*tarr, 2 + take2);
+                names.add_interval(*tarr, 2 + take2);
             }
         ppi++;
 
         const unsigned esize = ptr_udiff_bytes(tarr, idlls[ic]->lookupt);
-        lookups.add(idlls[ic]->lookupt, esize);
+        lookups.add_interval(idlls[ic]->lookupt, esize);
         if (ptr_diff_bytes(ibuf.subref("bad import name %#x", idlls[ic]->iat, 1),
                            idlls[ic]->lookupt) != 0) {
             memcpy(ibuf.subref("bad import name %#x", idlls[ic]->iat, esize), idlls[ic]->lookupt,
                    esize);
-            iats.add(idlls[ic]->iat, esize);
+            iats.add_interval(idlls[ic]->iat, esize);
         }
-        names.add(idlls[ic]->name, strlen(idlls[ic]->name) + 1 + 1);
+        names.add_interval(idlls[ic]->name, strlen(idlls[ic]->name) + 1 + 1);
     }
     ppi += 4;
     assert(ppi < oimport + soimport);
@@ -1137,15 +1145,15 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             im->dllname = ptr_udiff_bytes(dlls[idlls[ic]->original_position].name, ibuf);
         }
     } else {
-        iats.add(im_start, sizeof(import_desc) * dllnum);
+        iats.add_interval(im_start, sizeof(import_desc) * dllnum);
         // zero unneeded data
         iats.clear();
         lookups.clear();
     }
     names.clear();
 
-    iats.add(&names);
-    iats.add(&lookups);
+    iats.add_interval(&names);
+    iats.add_interval(&lookups);
     iats.flatten();
     for (unsigned ic = 0; ic < iats.ivnum; ic++)
         ilen += iats.ivarr[ic].len;
@@ -1158,7 +1166,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
 // export handling
 **************************************************************************/
 
-PeFile::Export::Export(char *_base) : base(_base), iv(_base) {
+PeFile::Export::Export(char *_base) : base(_base), iv((byte *) _base) {
     COMPILE_TIME_ASSERT(sizeof(export_dir_t) == 40)
     COMPILE_TIME_ASSERT_ALIGNED1(export_dir_t)
     ename = functionptrs = ordinals = nullptr;
@@ -1183,7 +1191,7 @@ PeFile::Export::~Export() noexcept {
 void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
     memcpy(&edir, base + eoffs, sizeof(export_dir_t));
     size = sizeof(export_dir_t);
-    iv.add(eoffs, size);
+    iv.add_interval(eoffs, size);
 
     if (!edir.name || eoffs + esize <= (unsigned) edir.name) {
         char msg[50];
@@ -1193,13 +1201,13 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
     unsigned len = strlen(base + edir.name) + 1;
     ename = strdup(base + edir.name);
     size += len;
-    iv.add(edir.name, len);
+    iv.add_interval(edir.name, len);
 
     len = 4 * edir.functions;
     functionptrs = New(char, len + 1);
     memcpy(functionptrs, base + edir.addrtable, len);
     size += len;
-    iv.add(edir.addrtable, len);
+    iv.add_interval(edir.addrtable, len);
 
     unsigned ic;
     names = New(char *, edir.names + edir.functions + 1);
@@ -1208,9 +1216,9 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
         len = strlen(n) + 1;
         names[ic] = strdup(n);
         size += len;
-        iv.add(get_le32(base + edir.nameptrtable + ic * 4), len);
+        iv.add_interval(get_le32(base + edir.nameptrtable + ic * 4), len);
     }
-    iv.add(edir.nameptrtable, 4 * edir.names);
+    iv.add_interval(edir.nameptrtable, 4 * edir.names);
     size += 4 * edir.names;
 
     LE32 *fp = (LE32 *) functionptrs;
@@ -1219,7 +1227,7 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
         if (fp[ic] >= eoffs && fp[ic] < eoffs + esize) {
             char *forw = base + fp[ic];
             len = strlen(forw) + 1;
-            iv.add(forw, len);
+            iv.add_interval(forw, len);
             size += len;
             names[ic + edir.names] = strdup(forw);
         } else
@@ -1229,7 +1237,7 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
     ordinals = New(char, len + 1);
     memcpy(ordinals, base + edir.ordinaltable, len);
     size += len;
-    iv.add(edir.ordinaltable, len);
+    iv.add_interval(edir.ordinaltable, len);
     iv.flatten();
     if (iv.ivnum == 1)
         iv.clear();
@@ -1319,11 +1327,11 @@ struct PeFile::tls_traits<LE32> final {
         byte _[8];      // zero init, characteristics
     };
 
-    static const unsigned sotls = 24;
-    static const unsigned cb_size = 4;
+    static constexpr unsigned sotls = 24;
+    static constexpr unsigned cb_size = 4;
     typedef unsigned cb_value_t;
-    static const unsigned reloc_type = IMAGE_REL_BASED_HIGHLOW;
-    static const int tls_handler_offset_reloc = 4;
+    static constexpr unsigned reloc_type = IMAGE_REL_BASED_HIGHLOW;
+    static constexpr int tls_handler_offset_reloc = 4;
 };
 
 template <>
@@ -1336,11 +1344,11 @@ struct PeFile::tls_traits<LE64> final {
         byte _[8];      // zero init, characteristics
     };
 
-    static const unsigned sotls = 40;
-    static const unsigned cb_size = 8;
+    static constexpr unsigned sotls = 40;
+    static constexpr unsigned cb_size = 8;
     typedef upx_uint64_t cb_value_t;
-    static const unsigned reloc_type = IMAGE_REL_BASED_DIR64;
-    static const int tls_handler_offset_reloc = -1; // no need to relocate
+    static constexpr unsigned reloc_type = IMAGE_REL_BASED_DIR64;
+    static constexpr int tls_handler_offset_reloc = -1; // no need to relocate
 };
 
 template <typename LEXX>
@@ -1349,7 +1357,7 @@ void PeFile::processTls1(Interval *iv, typename tls_traits<LEXX>::cb_value_t ima
 {
     typedef typename tls_traits<LEXX>::tls tls;
     typedef typename tls_traits<LEXX>::cb_value_t cb_value_t;
-    const unsigned cb_size = tls_traits<LEXX>::cb_size;
+    constexpr unsigned cb_size = tls_traits<LEXX>::cb_size;
 
     COMPILE_TIME_ASSERT(sizeof(tls) == tls_traits<LEXX>::sotls)
     COMPILE_TIME_ASSERT_ALIGNED1(tls)
@@ -1401,7 +1409,7 @@ void PeFile::processTls1(Interval *iv, typename tls_traits<LEXX>::cb_value_t ima
     unsigned pos, type;
     while (rel.next(pos, type))
         if (pos >= tlsdatastart && pos < tlsdataend)
-            iv->add(pos, type);
+            iv->add_interval(pos, type);
 
     sotls = sizeof(tls) + tlsdataend - tlsdatastart;
     // if TLS callbacks are used, we need two more {D|Q}WORDS at the end of the TLS
@@ -1436,21 +1444,22 @@ void PeFile::processTls2(Reloc *const rel, const Interval *const iv, unsigned ne
 {
     typedef typename tls_traits<LEXX>::tls tls;
     typedef typename tls_traits<LEXX>::cb_value_t cb_value_t;
-    const unsigned cb_size = tls_traits<LEXX>::cb_size;
-    const unsigned reloc_type = tls_traits<LEXX>::reloc_type;
-    const int tls_handler_offset_reloc = tls_traits<LEXX>::tls_handler_offset_reloc;
+    constexpr unsigned cb_size = tls_traits<LEXX>::cb_size;
+    constexpr unsigned reloc_type = tls_traits<LEXX>::reloc_type;
+    static_assert(reloc_type > IMAGE_REL_BASED_IGNORE && reloc_type < 16);
+    constexpr int tls_handler_offset_reloc = tls_traits<LEXX>::tls_handler_offset_reloc;
 
     if (sotls == 0)
         return;
     // add new relocation entries
 
     if (tls_handler_offset > 0 && tls_handler_offset_reloc > 0)
-        rel->add(tls_handler_offset + tls_handler_offset_reloc, reloc_type);
+        rel->add_reloc(tls_handler_offset + tls_handler_offset_reloc, reloc_type);
 
     unsigned ic;
     // NEW: if TLS callbacks are used, relocate the VA of the callback chain, too - Stefan Widmann
     for (ic = 0; ic < (use_tls_callbacks ? 4 * cb_size : 3 * cb_size); ic += cb_size)
-        rel->add(newaddr + ic, reloc_type);
+        rel->add_reloc(newaddr + ic, reloc_type);
 
     SPAN_S_VAR(tls, const tlsp, mb_otls);
     // now the relocation entries in the tls data area
@@ -1462,9 +1471,9 @@ void PeFile::processTls2(Reloc *const rel, const Interval *const iv, unsigned ne
         if (kc < tlsp->dataend && kc >= tlsp->datastart) {
             kc += newaddr + sizeof(tls) - tlsp->datastart;
             *p = kc + imagebase;
-            rel->add(kc, iv->ivarr[ic].len);
+            rel->add_reloc(kc, iv->ivarr[ic].len);
         } else
-            rel->add(kc - imagebase, iv->ivarr[ic].len);
+            rel->add_reloc(kc - imagebase, iv->ivarr[ic].len);
     }
 
     const unsigned tls_data_size = tlsp->dataend - tlsp->datastart;
@@ -1483,7 +1492,7 @@ void PeFile::processTls2(Reloc *const rel, const Interval *const iv, unsigned ne
         pp = otls + (sotls - 1 * cb_size);
         *(LEXX *) raw_bytes(pp, sizeof(LEXX)) = 0; // end of one-item list
         // add relocation for TLS handler offset
-        rel->add(newaddr + sotls - 2 * cb_size, reloc_type);
+        rel->add_reloc(newaddr + sotls - 2 * cb_size, reloc_type);
     }
 }
 
@@ -1501,7 +1510,7 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
     soloadconf = get_le32(loadconf);
     if (soloadconf == 0)
         return;
-    static const unsigned MAX_SOLOADCONF = 256; // XXX FIXME: Why?
+    static constexpr unsigned MAX_SOLOADCONF = 256; // XXX FIXME: Why?
     if (soloadconf > MAX_SOLOADCONF)
         info("Load Configuration directory %u > %u", soloadconf, MAX_SOLOADCONF);
 
@@ -1513,7 +1522,7 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
     unsigned pos, type;
     while (rel.next(pos, type))
         if (pos >= lcaddr && pos < lcaddr + soloadconf) {
-            iv->add(pos - lcaddr, type);
+            iv->add_interval(pos - lcaddr, type);
             NO_printf("loadconf reloc detected: %x\n", pos);
         }
 
@@ -1528,7 +1537,7 @@ void PeFile::processLoadConf(Reloc *rel, const Interval *iv,
     // now we have the address of the new load config table
     // so we can create the new relocation entries
     for (unsigned ic = 0; ic < iv->ivnum; ic++) {
-        rel->add(iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
+        rel->add_reloc(iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
         NO_printf("loadconf reloc added: %x %d\n", iv->ivarr[ic].start + newaddr,
                   iv->ivarr[ic].len);
     }
@@ -1812,14 +1821,14 @@ void PeFile::Resource::dump(const upx_rnode *node, unsigned level) const {
 
 void PeFile::Resource::clear(byte *node, unsigned level, Interval *iv) {
     if (level == 3)
-        iv->add(node, sizeof(res_data));
+        iv->add_interval(node, sizeof(res_data));
     else {
         const res_dir *const rd = (res_dir *) node;
         const unsigned n = rd->identr + rd->namedentr;
         const res_dir_entry *rde = rd->entries;
         for (unsigned ic = 0; ic < n; ic++, rde++)
             clear(newstart + (rde->child & 0x7fffffff), level + 1, iv);
-        iv->add(rd, rd->Sizeof());
+        iv->add_interval(rd, rd->Sizeof());
     }
 }
 
@@ -2194,7 +2203,7 @@ unsigned PeFile::readSections(unsigned objs, unsigned usize, unsigned ih_fileali
             isection[ic].vsize = isection[ic].size;
         if ((isection[ic].flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA) ||
             isection[ic].rawdataptr == 0 || (isection[ic].flags & IMAGE_SCN_LNK_INFO)) {
-            // holes.add(isection[ic].vaddr,isection[ic].vsize);
+            // holes.add_interval(isection[ic].vaddr, isection[ic].vsize);
             continue;
         }
         if (isection[ic].vaddr + isection[ic].size > usize)
@@ -2722,10 +2731,10 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
     if (big & 6) { // add 16-bit relocations
         SPAN_S_VAR(const LE32, q, SPAN_TYPE_CAST(const LE32, rdata));
         while (*q)
-            rel.add(*q++ + rvamin, (big & 4) ? 2 : 1);
+            rel.add_reloc(*q++ + rvamin, (big & 4) ? IMAGE_REL_BASED_LOW : IMAGE_REL_BASED_HIGH);
         if ((big & 6) == 6)
             while (*++q)
-                rel.add(*q + rvamin, 1);
+                rel.add_reloc(*q + rvamin, IMAGE_REL_BASED_HIGH);
         // rdata = (const byte *) raw_bytes(q, 0); // advance rdata
     }
 
@@ -2736,8 +2745,8 @@ void PeFile::rebuildRelocs(SPAN_S(byte) & extra_info, unsigned bits, unsigned fl
             set_le32(p, get_le32(p) + imagebase + rvamin);
         else
             set_le64(p, get_le64(p) + imagebase + rvamin);
-        rel.add(rvamin + get_le32(wrkmem + 4 * ic),
-                bits == 32 ? IMAGE_REL_BASED_HIGHLOW : IMAGE_REL_BASED_DIR64);
+        rel.add_reloc(rvamin + get_le32(wrkmem + 4 * ic),
+                      bits == 32 ? IMAGE_REL_BASED_HIGHLOW : IMAGE_REL_BASED_DIR64);
     }
     rel.finish(oxrelocs, soxrelocs);
 

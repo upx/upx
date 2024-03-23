@@ -46,10 +46,10 @@ build/release: PHONY
 .SUFFIXES:
 
 # shortcuts (all => debug + release)
-debug:   build/debug
-release: build/release
-all build/all: build/debug build/release
-build/%/all:   $$(dir $$@)debug $$(dir $$@)release ;
+debug:   build/debug PHONY
+release: build/release PHONY
+all build/all: build/debug build/release PHONY
+build/%/all:   $$(dir $$@)debug $$(dir $$@)release PHONY;
 
 #
 # END of Makefile
@@ -63,9 +63,7 @@ include ./misc/make/Makefile-extra.mk
 endif
 
 # developer convenience
-CTEST = ctest
-test:: $(.DEFAULT_GOAL) PHONY
-	cd $(.DEFAULT_GOAL) && $(CTEST)
+test:: build/all+test PHONY
 ifneq ($(wildcard /usr/bin/env),) # need Unix utils like bash, perl, sed, xargs, etc.
 ifneq ($(wildcard ./misc/scripts/.),)
 check-whitespace clang-format run-testsuite run-testsuite-debug run-testsuite-release: src/Makefile PHONY

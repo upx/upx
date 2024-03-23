@@ -235,7 +235,8 @@ void PackW32PeI386::defineSymbols(unsigned ncsection, unsigned upxsection, unsig
 
 void PackW32PeI386::addNewRelocations(Reloc &rel, unsigned upxsection) {
     if (use_stub_relocs)
-        rel.add(upxsection + linker->getSymbolOffset("PESOCREL") + 1, 3);
+        rel.add_reloc(upxsection + linker->getSymbolOffset("PESOCREL") + 1,
+                      IMAGE_REL_BASED_HIGHLOW);
 }
 
 void PackW32PeI386::setOhDataBase(const pe_section_t *osection) { oh.database = osection[2].vaddr; }

@@ -90,6 +90,7 @@ static_assert(sizeof(void *) == sizeof(long));
 #endif
 
 // ACC and C system headers
+#include "system_features.h"
 #ifndef ACC_CFG_USE_NEW_STYLE_CASTS
 #define ACC_CFG_USE_NEW_STYLE_CASTS 1
 #endif

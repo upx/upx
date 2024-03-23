@@ -1,6 +1,6 @@
 # vim:set ft=yaml ts=2 sw=2 et:
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
-# for clang-tidy-16 from https://clang.llvm.org/extra/clang-tidy/
+# for clang-tidy from https://clang.llvm.org/extra/clang-tidy/
 ---
 Checks: >
   -*,

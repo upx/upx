@@ -12,6 +12,23 @@ $(call check_defined,run_config run_build)
 $(call check_undefined,run_config_and_build)
 
 #***********************************************************************
+# build and test
+#***********************************************************************
+
+CTEST = ctest
+
+build/debug+test:     $$(dir $$@)debug PHONY; cd "$(dir $@)debug" && $(CTEST)
+build/%/debug+test:   $$(dir $$@)debug PHONY; cd "$(dir $@)debug" && $(CTEST)
+build/release+test:   $$(dir $$@)release PHONY; cd "$(dir $@)release" && $(CTEST)
+build/%/release+test: $$(dir $$@)release PHONY; cd "$(dir $@)release" && $(CTEST)
+build/%/all+test:     $$(dir $$@)debug+test $$(dir $$@)release+test PHONY ;
+
+# shortcuts
+debug+test:   build/debug+test PHONY
+release+test: build/release+test PHONY
+all+test build/all+test: build/debug+test build/release+test PHONY
+
+#***********************************************************************
 # extra builds: some pre-defined build configurations
 #***********************************************************************
 
@@ -29,43 +46,43 @@ build/extra/clang/%: export CXX = clang++
 # force building with clang/clang++ -m32
 build/extra/clang-m32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-m32/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/clang-m32/%: export CC  = clang -m32
+build/extra/clang-m32/%: export CC  = clang   -m32
 build/extra/clang-m32/%: export CXX = clang++ -m32
 
 # force building with clang/clang++ -mx32
 build/extra/clang-mx32/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-mx32/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/clang-mx32/%: export CC  = clang -mx32
+build/extra/clang-mx32/%: export CC  = clang   -mx32
 build/extra/clang-mx32/%: export CXX = clang++ -mx32
 
 # force building with clang/clang++ -m64
 build/extra/clang-m64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-m64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/clang-m64/%: export CC  = clang -m64
+build/extra/clang-m64/%: export CC  = clang   -m64
 build/extra/clang-m64/%: export CXX = clang++ -m64
 
 # force building with clang/clang++ -static
 build/extra/clang-static/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-static/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/clang-static/%: export CC  = clang -static
+build/extra/clang-static/%: export CC  = clang   -static
 build/extra/clang-static/%: export CXX = clang++ -static
 
 # force building with clang/clang++ -static-pie
 build/extra/clang-static-pie/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-static-pie/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/clang-static-pie/%: export CC  = clang -static-pie -fPIE -Wno-unused-command-line-argument
+build/extra/clang-static-pie/%: export CC  = clang   -static-pie -fPIE -Wno-unused-command-line-argument
 build/extra/clang-static-pie/%: export CXX = clang++ -static-pie -fPIE -Wno-unused-command-line-argument
 
 # force building with clang/clang++ -static -flto
 build/extra/clang-static-lto/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-static-lto/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/clang-static-lto/%: export CC  = clang -static -flto
+build/extra/clang-static-lto/%: export CC  = clang   -static -flto
 build/extra/clang-static-lto/%: export CXX = clang++ -static -flto
 
 # force building with clang/clang++ C17/C++20
 build/extra/clang-std-cxx20/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-std-cxx20/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/clang-std-cxx20/%: export CC  = clang -std=gnu17
+build/extra/clang-std-cxx20/%: export CC  = clang   -std=gnu17
 build/extra/clang-std-cxx20/%: export CXX = clang++ -std=gnu++20
 build/extra/clang-std-cxx20/%: export UPX_CONFIG_DISABLE_C_STANDARD=ON
 build/extra/clang-std-cxx20/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
@@ -73,7 +90,7 @@ build/extra/clang-std-cxx20/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
 # force building with clang/clang++ C23/C++23
 build/extra/clang-std-cxx23/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/clang-std-cxx23/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/clang-std-cxx23/%: export CC  = clang -std=gnu2x
+build/extra/clang-std-cxx23/%: export CC  = clang   -std=gnu2x
 build/extra/clang-std-cxx23/%: export CXX = clang++ -std=gnu++2b
 build/extra/clang-std-cxx23/%: export UPX_CONFIG_DISABLE_C_STANDARD=ON
 build/extra/clang-std-cxx23/%: export UPX_CONFIG_DISABLE_CXX_STANDARD=ON
@@ -173,7 +190,7 @@ build/extra/cross-windows-mingw64/%: CMAKE_CROSSCOMPILING_EMULATOR ?= wine64
 # cross compiler: macOS arm64 (aarch64)
 build/extra/cross-darwin-arm64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-darwin-arm64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-darwin-arm64/%: export CC  = clang -target arm64-apple-darwin
+build/extra/cross-darwin-arm64/%: export CC  = clang   -target arm64-apple-darwin
 build/extra/cross-darwin-arm64/%: export CXX = clang++ -target arm64-apple-darwin
 build/extra/cross-darwin-arm64/%: CMAKE_SYSTEM_NAME ?= Darwin
 build/extra/cross-darwin-arm64/%: CMAKE_SYSTEM_PROCESSOR ?= arm64
@@ -181,7 +198,7 @@ build/extra/cross-darwin-arm64/%: CMAKE_SYSTEM_PROCESSOR ?= arm64
 # cross compiler: macOS x86_64 (amd64)
 build/extra/cross-darwin-x86_64/debug:   PHONY; $(call run_config_and_build,$@,Debug)
 build/extra/cross-darwin-x86_64/release: PHONY; $(call run_config_and_build,$@,Release)
-build/extra/cross-darwin-x86_64/%: export CC  = clang -target x86_64-apple-darwin
+build/extra/cross-darwin-x86_64/%: export CC  = clang   -target x86_64-apple-darwin
 build/extra/cross-darwin-x86_64/%: export CXX = clang++ -target x86_64-apple-darwin
 build/extra/cross-darwin-x86_64/%: CMAKE_SYSTEM_NAME ?= Darwin
 build/extra/cross-darwin-x86_64/%: CMAKE_SYSTEM_PROCESSOR ?= x86_64

@@ -356,9 +356,9 @@ protected:
         RT_LAST
     };
 
-    enum {
+    enum {                            // 4-bit reloc_type in IMAGE_BASE_RELOCATION relocations
         IMAGE_REL_BASED_ABSOLUTE = 0, // this relocation is ignored
-        IMAGE_REL_BASED_IGNORE = 0,   // (unofficial name)
+        IMAGE_REL_BASED_IGNORE = 0,   // (unofficial UPX name)
         IMAGE_REL_BASED_HIGH = 1,
         IMAGE_REL_BASED_LOW = 2,
         IMAGE_REL_BASED_HIGHLOW = 3,
@@ -372,8 +372,8 @@ protected:
     };
 
     class Interval final : private noncopyable {
-        unsigned capacity = 0;
-        void *base = nullptr;
+        SPAN_0(byte) base = nullptr;
+        unsigned ivcapacity = 0; // for ivarr
     public:
         struct interval {
             unsigned start, len;
@@ -381,13 +381,13 @@ protected:
         struct interval *ivarr = nullptr;
         unsigned ivnum = 0;
 
-        explicit Interval(void *b);
+        explicit Interval(SPAN_P(byte));
         ~Interval() noexcept;
 
-        void add(unsigned start, unsigned len);
-        void add(const void *start, unsigned len);
-        void add(const void *start, const void *end);
-        void add(const Interval *iv);
+        void add_interval(unsigned start, unsigned len);
+        void add_interval(const void *start, unsigned len);
+        void add_interval(const void *start, const void *end);
+        void add_interval(const Interval *other);
         void flatten();
 
         void clear();
@@ -407,7 +407,7 @@ protected:
         struct alignas(1) BaseReloc { // IMAGE_BASE_RELOCATION
             LE32 virtual_address;
             LE32 size_of_block;
-            // LE16 rel1[COUNT]; // COUNT == (size_of_block - 8) / 2
+            // LE16 rel1[COUNT]; // actual relocations; COUNT == (size_of_block - 8) / 2
         };
         struct RelocationBlock {
             SPAN_0(BaseReloc) rel = nullptr;
@@ -429,7 +429,7 @@ protected:
         bool next(unsigned &result_pos, unsigned &result_type);
         const unsigned *getcounts() const { return counts; }
         //
-        void add(unsigned pos, unsigned type);
+        void add_reloc(unsigned pos, unsigned type);
         void finish(byte *(&result_ptr), unsigned &result_size); // => transfer ownership
     };
 

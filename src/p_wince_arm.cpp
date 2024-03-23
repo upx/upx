@@ -190,7 +190,7 @@ void PackWinCeArm::addNewRelocations(Reloc &rel, unsigned upxsection) {
     for (unsigned s2r = 0; s2r < TABLESIZE(symbols_to_relocate); s2r++) {
         unsigned off = linker->getSymbolOffset(symbols_to_relocate[s2r]);
         if (off != 0xdeaddead)
-            rel.add(off + upxsection, 3);
+            rel.add_reloc(off + upxsection, IMAGE_REL_BASED_HIGHLOW);
     }
 }
 
