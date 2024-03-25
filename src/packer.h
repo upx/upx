@@ -245,7 +245,7 @@ protected:
                                     unsigned image_size, int bits, bool bswap);
 
     // TE - Target Endianness abstraction
-#if 0
+#if !(DEBUG)
     // permissive version using "void *"
     inline unsigned get_te16(const void *p) const noexcept { return bele->get16(p); }
     inline unsigned get_te32(const void *p) const noexcept { return bele->get32(p); }

@@ -1,4 +1,4 @@
-# for clang-tidy-16 from https://clang.llvm.org/extra/clang-tidy/
+# for clang-tidy from https://clang.llvm.org/extra/clang-tidy/
 ---
 Checks: >
   -*,

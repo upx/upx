@@ -70,7 +70,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char) (-1) == 255)
 #pragma GCC diagnostic error "-Wsuggest-override"
 #endif
 #if (ACC_CC_CLANG >= 0x080000)
-// don't enable before clang-8 because of stddef.h issues
+// don't enable before clang-8 because of <stddef.h> issues
 #pragma clang diagnostic error "-Wzero-as-null-pointer-constant"
 #elif (ACC_CC_GNUC >= 0x040700) && defined(__GLIBC__)
 // Some non-GLIBC toolchains do not use 'nullptr' everywhere when C++:
@@ -154,6 +154,7 @@ typedef unsigned char uchar;
 // UPX convention: use "charptr" when dealing with abstract pointer arithmetics
 #define charptr upx_charptr_unit_type *
 // upx_charptr_unit_type is some opaque type with sizeof(type) == 1
+//// typedef char upx_charptr_unit_type; // also works
 struct alignas(1) upx_charptr_unit_type final { char hidden__; };
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(upx_charptr_unit_type) == 1)
 
@@ -399,7 +400,7 @@ inline void NO_fprintf(FILE *, const char *, ...) noexcept {}
 
 #define TABLESIZE(table) ((sizeof(table) / sizeof((table)[0])))
 
-// TODO later: move these to upx namespace in util/cxxlib.h
+// TODO later: move these to upx namespace in util/cxxlib.h; also see bele.h
 template <class T>
 inline T ALIGN_DOWN(const T &a, const T &b) {
     T r;
@@ -594,8 +595,8 @@ using upx::tribool;
 // #define M_CL1B_LE16   13
 #define M_LZMA        14
 #define M_DEFLATE     15 // zlib
-#define M_ZSTD        16
-#define M_BZIP2       17
+#define M_ZSTD        16 // NOT YET USED
+#define M_BZIP2       17 // NOT YET USED
 // compression methods internal usage
 #define M_ALL         (-1)
 #define M_END         (-2)

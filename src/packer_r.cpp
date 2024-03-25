@@ -30,7 +30,7 @@
 
 /*************************************************************************
 // sort and delta-compress relocations with optional bswap within image
-// returns number of bytes written to 'out'
+// returns number of **bytes** written to 'out'
 **************************************************************************/
 
 /*static*/
@@ -102,7 +102,7 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
 /*************************************************************************
 // delta-decompress relocations
 // advances 'in'
-// allocates 'out' and returns number of relocs written to 'out'
+// allocates 'out' and returns number of **relocs** written to 'out'
 **************************************************************************/
 
 /*static*/
@@ -132,7 +132,7 @@ unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &out, SPAN_P
                upx_adler32(image, image_size));
     }
 
-    out.alloc(4 * (relocnum + 1)); // one extra entry
+    out.alloc(mem_size(4, relocnum + 1)); // one extra entry
     SPAN_S_VAR(LE32, relocs, out);
 
     fix = in;

@@ -33,7 +33,7 @@ debug+test release+test all+test:                   PHONY; $(MAKE) -C $(top_srcd
 
 test:: build/all+test PHONY
 
-# OLD names [deprecated]
+# OLD target names [deprecated]
 $(top_srcdir)/build/debug:   build/debug PHONY
 $(top_srcdir)/build/release: build/release PHONY
 
@@ -42,8 +42,7 @@ $(top_srcdir)/build/release: build/release PHONY
 # git clone https://github.com/upx/upx-testsuite.git
 #***********************************************************************
 
-# search for the UPX testsuite
-# you also can override upx_testsuite_SRCDIR
+# search for the UPX testsuite; you can override by setting "upx_testsuite_SRCDIR"
 ifndef upx_testsuite_SRCDIR
 # search standard locations below $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/../upx--upx-testsuite.git/files/packed/.),)
@@ -61,7 +60,7 @@ endif
 ifneq ($(wildcard $(upx_testsuite_SRCDIR)/files/packed/.),)
 ifneq ($(wildcard $(top_srcdir)/misc/testsuite/upx_testsuite_1.sh),)
 run-testsuite: run-testsuite-release PHONY
-run-testsuite-%: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
+run-testsuite-%: export upx_testsuite_SRCDIR := $(upx_testsuite_SRCDIR)
 run-testsuite-debug: export upx_testsuite_BUILDDIR := ./tmp-upx-testsuite-debug
 run-testsuite-debug: export upx_exe := $(top_srcdir)/build/debug/upx
 run-testsuite-debug: build/debug PHONY
@@ -101,7 +100,7 @@ CLANG_FORMAT_EXCLUDE_FILES += p_lx_% p_mach% p_unix% p_vmlin%
 CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* */*.[ch]*))
 CLANG_FORMAT_FILES += $(sort $(wildcard stub/tools/*/*.[ch]*))
 CLANG_FORMAT_FILES += $(sort $(wildcard ../misc/cmake/try_compile/*.[ch]*))
-CLANG_FORMAT_FILES := $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES))
+CLANG_FORMAT_FILES := $(sort $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES)))
 clang-format: $(CLANG_FORMAT_FILES) PHONY
 	@echo "running upx-clang-format"
 	@bash $(top_srcdir)/misc/scripts/upx-clang-format.sh -i $(CLANG_FORMAT_FILES)

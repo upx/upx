@@ -426,10 +426,10 @@ protected:
         explicit Reloc(unsigned relocnum);
         ~Reloc() noexcept;
         //
-        bool next(unsigned &result_pos, unsigned &result_type);
+        bool next(unsigned &result_pos, unsigned &result_reloc_type);
         const unsigned *getcounts() const { return counts; }
         //
-        void add_reloc(unsigned pos, unsigned type);
+        void add_reloc(unsigned pos, unsigned reloc_type);
         void finish(byte *(&result_ptr), unsigned &result_size); // => transfer ownership
     };
 

@@ -47,8 +47,9 @@
 // try to detect XX16 vs XX32 vs XX64 size mismatches
 **************************************************************************/
 
-#if 0 // permissive version using "void *"
+#if !(DEBUG)
 
+// permissive version using "void *"
 #define REQUIRE_XE16 /*empty*/
 #define REQUIRE_XE24 /*empty*/
 #define REQUIRE_XE32 /*empty*/
@@ -748,6 +749,7 @@ T *operator+(const LE64 &v, T *ptr) noexcept DELETED_FUNCTION;
 // global overloads
 **************************************************************************/
 
+// TODO later: move these to upx namespace in util/cxxlib.h; see conf.h
 inline unsigned ALIGN_DOWN(unsigned a, const BE32 &b) { return ALIGN_DOWN(a, unsigned(b)); }
 inline unsigned ALIGN_DOWN(const BE32 &a, unsigned b) { return ALIGN_DOWN(unsigned(a), b); }
 inline unsigned ALIGN_UP(unsigned a, const BE32 &b) { return ALIGN_UP(a, unsigned(b)); }
@@ -758,7 +760,7 @@ inline unsigned ALIGN_DOWN(const LE32 &a, unsigned b) { return ALIGN_DOWN(unsign
 inline unsigned ALIGN_UP(unsigned a, const LE32 &b) { return ALIGN_UP(a, unsigned(b)); }
 inline unsigned ALIGN_UP(const LE32 &a, unsigned b) { return ALIGN_UP(unsigned(a), b); }
 
-// TODO: introduce upx::umax() and upx::umin()
+// TODO later: introduce upx::umax() and upx::umin()
 inline unsigned UPX_MAX(unsigned a, const BE16 &b) { return UPX_MAX(a, unsigned(b)); }
 inline unsigned UPX_MAX(const BE16 &a, unsigned b) { return UPX_MAX(unsigned(a), b); }
 inline unsigned UPX_MIN(unsigned a, const BE16 &b) { return UPX_MIN(a, unsigned(b)); }

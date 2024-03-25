@@ -49,7 +49,7 @@ build/release: PHONY
 debug:   build/debug PHONY
 release: build/release PHONY
 all build/all: build/debug build/release PHONY
-build/%/all:   $$(dir $$@)debug $$(dir $$@)release PHONY;
+build/%/all:   $$(dir $$@)debug $$(dir $$@)release PHONY ;
 
 #
 # END of Makefile

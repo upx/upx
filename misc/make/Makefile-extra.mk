@@ -260,6 +260,9 @@ build/$(UPX_XTARGET)/%: export CXX := $(CXX)
 xtarget/all:     xtarget/debug xtarget/release PHONY
 xtarget/debug:   build/$(UPX_XTARGET)/debug PHONY
 xtarget/release: build/$(UPX_XTARGET)/release PHONY
+xtarget/all+test:     xtarget/debug+test xtarget/release+test PHONY
+xtarget/debug+test:   build/$(UPX_XTARGET)/debug+test PHONY
+xtarget/release+test: build/$(UPX_XTARGET)/release+test PHONY
 # set new default
 .DEFAULT_GOAL := build/$(UPX_XTARGET)/release
 
@@ -269,14 +272,16 @@ endif
 
 #***********************************************************************
 # assemble cmake config flags; useful for CI jobs
+#
+# info: by default CMake only honors the CC and CXX environment variables; make
+# it easy to set other variables like CMAKE_AR or CMAKE_RANLIB
 #***********************************************************************
 
 ifneq ($(origin UPX_CMAKE_CONFIG_FLAGS),command line) # GNU make bug work-around
 # GNU make bug, see https://savannah.gnu.org/bugs/index.php?64822
 # and commit https://git.savannah.gnu.org/cgit/make.git/commit/?id=07187db947ba25e6c59b55f10660a04f8e9c5229
 
-# info: by default CMake only honors the CC and CXX environment variables; make
-# it easy to set other variables like CMAKE_AR or CMAKE_RANLIB
+$(call check_undefined,__add_cmake_config)
 __add_cmake_config = $(and $($1),-D$1="$($1)")
 # pass common CMake settings from environment/make to cmake
 build/%: UPX_CMAKE_CONFIG_FLAGS += $(call __add_cmake_config,CMAKE_VERBOSE_MAKEFILE)

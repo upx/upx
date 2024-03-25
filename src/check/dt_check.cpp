@@ -741,6 +741,12 @@ TEST_CASE("libc snprintf") {
     CHECK_EQ(strcmp(buf, "-6.0.0.0.0.0.0.0.6.ffffffffffffffff"), 0);
     snprintf(buf, sizeof(buf), "%d.%d.%d.%d.%d.%d.%d.%d.%d.%#jx", -7, 0, 0, 0, 0, 0, 0, 0, 7, um);
     CHECK_EQ(strcmp(buf, "-7.0.0.0.0.0.0.0.7.0xffffffffffffffff"), 0);
+    snprintf(buf, sizeof(buf), "%#x %#lx %#llx", 17u, 18ul, 19ull);
+    CHECK_EQ(strcmp(buf, "0x11 0x12 0x13"), 0);
+    snprintf(buf, sizeof(buf), "%#X %#lX %#llX", 20u, 21ul, 22ull);
+    CHECK_EQ(strcmp(buf, "0X14 0X15 0X16"), 0);
+    snprintf(buf, sizeof(buf), "%#06x %#06lx %#06llx", 23u, 24ul, 25ull);
+    CHECK_EQ(strcmp(buf, "0x0017 0x0018 0x0019"), 0);
 }
 
 #if 0

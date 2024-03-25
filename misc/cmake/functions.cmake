@@ -72,6 +72,16 @@ function(upx_print_var) # ARGV
     endforeach()
 endfunction()
 
+function(upx_print_env_var) # ARGV
+    foreach(var_name ${ARGV})
+        if(DEFINED ENV{${var_name}})
+            if(NOT ",$ENV{${var_name}}," STREQUAL ",,")
+                message(STATUS "ENV{${var_name}} = $ENV{${var_name}}")
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
 function(upx_print_have_symbol) # ARGV; needs include(CheckSymbolExists)
     foreach(symbol ${ARGV})
         set(cache_var_name "HAVE_symbol_${symbol}")
