@@ -96,16 +96,18 @@ void show_usage(void) {
 
 namespace {
 struct PackerNames {
+    PackerNames() noexcept = default;
+    ~PackerNames() noexcept = default;
     struct Entry {
         const char *fname;
         const char *sname;
     };
-    Entry names[64];
-    size_t names_count;
-    const Options *o;
-    PackerNames() : names_count(0), o(nullptr) {}
+    static constexpr size_t MAX_NAMES = 64;
+    Entry names[MAX_NAMES];
+    size_t names_count = 0;
+    const Options *o = nullptr;
     void add(const PackerBase *pb) {
-        assert_noexcept(names_count < 64);
+        assert_noexcept(names_count < MAX_NAMES);
         names[names_count].fname = pb->getFullName(o);
         names[names_count].sname = pb->getName();
         names_count++;

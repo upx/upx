@@ -29,6 +29,9 @@
 // dispatch. PackMaster by itself will instantiate a concrete subclass
 // of class PackerBase which then does the actual work.
 // And see p_com.cpp for a simple executable format.
+//
+// This file also has the burden to deal with all those pesky low-level
+// file handling issues.
 
 #define WANT_WINDOWS_LEAN_H 1 // _get_osfhandle, GetFileTime, SetFileTime
 #include "util/system_headers.h"
@@ -325,7 +328,7 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
         }
     }
 
-    // handle command - actual work is here
+    // handle command - actual work starts HERE
     PackMaster pm(&fi, opt);
     if (opt->cmd == CMD_COMPRESS)
         pm.pack(&fo);

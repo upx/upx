@@ -131,7 +131,7 @@ TEST_CASE("libc++") {
     CHECK(v.end() - v.begin() == N);
     CHECK(&v[0] == &(*(v.begin())));
     // CHECK(&v[0] + N == &(*(v.end()))); // TODO later: is this legal??
-    // TODO later
+    // TODO later: make sure that this throws
 #if defined(_LIBCPP_HARDENING_MODE_DEBUG) &&                                                       \
     (_LIBCPP_HARDENING_MODE == _LIBCPP_HARDENING_MODE_DEBUG)
     CHECK_THROWS((void) &v[N]);
@@ -176,7 +176,7 @@ struct MyVType2 {
     UPX_CXX_DISABLE_ADDRESS(Self)
     UPX_CXX_DISABLE_NEW_DELETE(Self)
 };
-TEST_CASE("upx_cxx_disable") {
+TEST_CASE("UPX_CXX_DISABLE_xxx") {
     MyType1<char, int, 1> dummy1;
     MyType2<char, int, 2> dummy2;
     MyVType1<char, int, 1> vdummy1;
@@ -260,7 +260,7 @@ struct Z2_X2 : public X2 {
 // util
 **************************************************************************/
 
-TEST_CASE("Deleter") {
+TEST_CASE("upx::ObjectDeleter 1") {
     LE16 *o = nullptr; // object
     LE32 *a = nullptr; // array
     {
@@ -275,7 +275,7 @@ TEST_CASE("Deleter") {
     assert(a == nullptr);
 }
 
-TEST_CASE("Deleter") {
+TEST_CASE("upx::ObjectDeleter 2") {
     constexpr size_t N = 2;
     BE16 *o[N]; // multiple objects
     BE32 *a[N]; // multiple arrays
@@ -284,8 +284,10 @@ TEST_CASE("Deleter") {
         upx::ArrayDeleter<BE32 **> a_deleter{a, 0};
         for (size_t i = 0; i < N; i++) {
             o[i] = new BE16;
+            assert(o[i] != nullptr);
             o_deleter.count += 1;
             a[i] = New(BE32, 1 + i);
+            assert(a[i] != nullptr);
             a_deleter.count += 1;
         }
     }
@@ -295,7 +297,7 @@ TEST_CASE("Deleter") {
     }
 }
 
-TEST_CASE("ptr_static_cast") {
+TEST_CASE("upx::ptr_static_cast") {
     // check that we don't trigger any -Wcast-align warnings
     using upx::ptr_static_cast;
     void *vp = nullptr;
@@ -335,7 +337,7 @@ TEST_CASE("ptr_static_cast") {
     assert((ic == ptr_static_cast<const int *>(ic)));
 }
 
-TEST_CASE("noncopyable") {
+TEST_CASE("upx::noncopyable") {
     struct Test : private upx::noncopyable {
         int v = 1;
     };
@@ -458,7 +460,7 @@ struct TestTriBool {
 };
 } // namespace
 
-TEST_CASE("TriBool") {
+TEST_CASE("upx::TriBool") {
     using upx::TriBool, upx::tribool;
     static_assert(!tribool(false));
     static_assert(tribool(true));

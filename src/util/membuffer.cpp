@@ -320,10 +320,15 @@ TEST_CASE("MemBuffer global overloads") {
     CHECK_THROWS(set_le64(mb4, 0));
 }
 
-TEST_CASE("MemBuffer unused") {
+TEST_CASE("MemBuffer unused 1") {
     MemBuffer mb;
     CHECK(mb.raw_ptr() == nullptr);
     CHECK(mb.raw_size_in_bytes() == 0);
+}
+
+TEST_CASE("MemBuffer unused 2") {
+    MemBuffer mb;
+    (void) mb;
 }
 
 TEST_CASE("MemBuffer array access") {

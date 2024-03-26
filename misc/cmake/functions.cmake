@@ -171,6 +171,18 @@ function(upx_cache_bool_vars) # ARGV
     endforeach()
 endfunction()
 
+function(upx_platform_check_mismatch var_name_1 var_name_2)
+    if(DEFINED ${var_name_1} OR DEFINED ${var_name_2})
+        if(NOT ",${${var_name_1}}," STREQUAL ",${${var_name_2}},")
+            if(UPX_CONFIG_DISABLE_WERROR)
+                message(WARNING "WARNING: '${var_name_1}' '${var_name_2}' mismatch")
+            else()
+                message(FATAL_ERROR "FATAL ERROR: '${var_name_1}' '${var_name_2}' mismatch")
+            endif()
+        endif()
+    endif()
+endfunction()
+
 #***********************************************************************
 # compilation flags
 #***********************************************************************
