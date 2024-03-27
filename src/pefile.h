@@ -332,14 +332,14 @@ protected:
 
     // clang format off
     enum {
-        W_REL = 3,  // width of internal relocation type field
+        W_REL = 3, // width of internal relocation type field
         // IMAGE_REL_* from
         // https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#base-relocation-types:
         IMAGE_REL_BASED_ABSOLUTE = 0, // The base relocation is skipped.
                                       // This type can be used to pad a block.
-        IMAGE_REL_BASED_HIGH = 1,    // The base relocation adds the
-                                     // high 16 bits of the difference to the 16-bit field at offset.
-                                     // The 16-bit field represents the high value of a 32-bit word.
+        IMAGE_REL_BASED_HIGH = 1,     // The base relocation adds the
+                                  // high 16 bits of the difference to the 16-bit field at offset.
+                                  // The 16-bit field represents the high value of a 32-bit word.
         IMAGE_REL_BASED_LOW = 2,     // The base relocation adds the low 16 bits
                                      // of the difference to the 16-bit field at offset.
                                      // The 16-bit field represents the low half of a 32-bit word.
@@ -434,8 +434,8 @@ protected:
         SPAN_0(byte) start_buf = nullptr;
         // external relocation types (IMAGE_REL_BASED_*) are 0..15
         // internal relocation types are 0..7, dynamically assigned to save 1 bit
-        unsigned char decode[8];  // external = decode[internal];
-          signed char encode[16]; // internal = encode[external];  -1 ==> not seen yet
+        unsigned char decode[8]; // external = decode[internal];
+        signed char encode[16];  // internal = encode[external];  -1 ==> not seen yet
         unsigned next_encoded_type;
 
         struct alignas(1) BaseReloc { // IMAGE_BASE_RELOCATION
