@@ -6484,14 +6484,18 @@ void PackLinuxElf64::un_shlib_1(
     struct {
         struct l_info l;
         struct p_info p;
+        struct b_info b;
     } hdr;
     fi->readx(&hdr, sizeof(hdr));
     if (hdr.l.l_magic != UPX_MAGIC_LE32
-    ||  hdr.l.l_lsize != (unsigned)lsize
-    ||  hdr.p.p_filesize != ph.u_file_size) {
-        throwCantUnpack("corrupt l_info/p_info");
+    ||  get_te16(&hdr.l.l_lsize) != (unsigned)lsize
+    ||  get_te32(&hdr.p.p_filesize) != ph.u_file_size
+    ||  get_te32(&hdr.b.sz_unc) < sz_elf_hdrs  // peek: 1st b_info covers Elf headers
+    ) {
+        throwCantUnpack("corrupt l_info/p_info/b_info");
     }
-
+    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR); // hdr.b_info was a peek
+ 
 // The default layout for a shared library created by binutils-2.29
 // (Fedora 28; 2018) has two PT_LOAD: permissions r-x and rw-.
 // xct_off (the lowest address of executable instructions;
@@ -6680,13 +6684,17 @@ void PackLinuxElf32::un_shlib_1(
     struct {
         struct l_info l;
         struct p_info p;
+        struct b_info b;
     } hdr;
     fi->readx(&hdr, sizeof(hdr));
     if (hdr.l.l_magic != UPX_MAGIC_LE32
-    ||  hdr.l.l_lsize != (unsigned)lsize
-    ||  hdr.p.p_filesize != ph.u_file_size) {
-        throwCantUnpack("corrupt l_info/p_info");
+    ||  get_te16(&hdr.l.l_lsize) != (unsigned)lsize
+    ||  get_te32(&hdr.p.p_filesize) != ph.u_file_size
+    ||  get_te32(&hdr.b.sz_unc) < sz_elf_hdrs  // peek: 1st b_info covers Elf headers
+    ) {
+        throwCantUnpack("corrupt l_info/p_info/b_info");
     }
+    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR); // hdr.b_info was a peek
 
 // The default layout for a shared library created by binutils-2.29
 // (Fedora 28; 2018) has two PT_LOAD: permissions r-x and rw-.
