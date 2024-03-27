@@ -318,7 +318,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     }
     sz_phdrs = e_phnum * e_phentsize;
     sz_elf_hdrs = sz_phdrs + sizeof(Elf32_Ehdr) +
-        (!!phdrx[0] + !!phdrx[1]) * sizeof(Elf32_Phdr);
+        n_phdrx * sizeof(Elf32_Phdr);
 
     if (f && Elf32_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
@@ -964,7 +964,7 @@ void PackLinuxElf64::defineSymbols(Filter const *ft)
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
     : super(f), phdri(nullptr), shdri(nullptr),
-    gnu_stack(nullptr),
+    gnu_stack(nullptr), n_phdrx(0),
     page_mask(~0u<<lg2_page),
     dynseg(nullptr), hashtab(nullptr), hashend(nullptr),
                      gashtab(nullptr), gashend(nullptr), dynsym(nullptr),
@@ -987,7 +987,7 @@ PackLinuxElf32::~PackLinuxElf32()
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
     : super(f), phdri(nullptr), shdri(nullptr),
-    gnu_stack(nullptr),
+    gnu_stack(nullptr), n_phdrx(0),
     page_mask(~0ull<<lg2_page),
     dynseg(nullptr), hashtab(nullptr), hashend(nullptr),
                      gashtab(nullptr), gashend(nullptr), dynsym(nullptr),
@@ -1045,7 +1045,8 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         }
     }
     sz_phdrs = e_phnum * e_phentsize;
-    sz_elf_hdrs = sz_phdrs + sizeof(Elf64_Ehdr);
+    sz_elf_hdrs = sz_phdrs + sizeof(Elf64_Ehdr) +
+        n_phdrx * sizeof(Elf64_Phdr);
 
     if (f && Elf64_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
@@ -2601,9 +2602,14 @@ PackLinuxElf32::canPackOSABI(Elf32_Ehdr const *ehdr)
             }
             hatch_off = ~3u & (3+ get_te32(&phdr->p_memsz));
         }
-        if (Elf32_Phdr::PT_MIPS_ABIFLAGS == p_type
-        ||  Elf32_Phdr::PT_MIPS_REGINFO  == p_type) {
-            phdrx[!!phdrx[0]] = phdr;  // remember in [0] first, then [1]
+        if (EM_MIPS == e_machine
+        &&  (Elf32_Phdr::PT_MIPS_ABIFLAGS == p_type
+          || Elf32_Phdr::PT_MIPS_REGINFO  == p_type)
+        ) {
+            if (END_PHDRX <= n_phdrx) {
+                throwCantPack("too many Phdr %u", (unsigned)(phdr - phdri));
+            }
+            phdrx[n_phdrx++] = phdr;
         }
         if (PT_NOTE32 == p_type) {
             unsigned const x = get_te32(&phdr->p_memsz);
@@ -6655,13 +6661,17 @@ void PackLinuxElf64::un_shlib_1(
     struct {
         struct l_info l;
         struct p_info p;
+        struct b_info b;
     } hdr;
     fi->readx(&hdr, sizeof(hdr));
     if (hdr.l.l_magic != UPX_MAGIC_LE32
-    ||  hdr.l.l_lsize != (unsigned)lsize
-    ||  hdr.p.p_filesize != ph.u_file_size) {
-        throwCantUnpack("corrupt l_info/p_info");
+    ||  get_te16(&hdr.l.l_lsize) != (unsigned)lsize
+    ||  get_te32(&hdr.p.p_filesize) != ph.u_file_size
+    ||  get_te32(&hdr.b.sz_unc) < sz_elf_hdrs  // peek: 1st b_info covers Elf headers
+    ) {
+        throwCantUnpack("corrupt l_info/p_info/b_info");
     }
+    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR); // hdr.b_info was a peek
 
 // The default layout for a shared library created by binutils-2.29
 // (Fedora 28; 2018) has two PT_LOAD: permissions r-x and rw-.
@@ -6851,13 +6861,17 @@ void PackLinuxElf32::un_shlib_1(
     struct {
         struct l_info l;
         struct p_info p;
+        struct b_info b;
     } hdr;
     fi->readx(&hdr, sizeof(hdr));
     if (hdr.l.l_magic != UPX_MAGIC_LE32
-    ||  hdr.l.l_lsize != (unsigned)lsize
-    ||  hdr.p.p_filesize != ph.u_file_size) {
-        throwCantUnpack("corrupt l_info/p_info");
+    ||  get_te16(&hdr.l.l_lsize) != (unsigned)lsize
+    ||  get_te32(&hdr.p.p_filesize) != ph.u_file_size
+    ||  get_te32(&hdr.b.sz_unc) < sz_elf_hdrs  // peek: 1st b_info covers Elf headers
+    ) {
+        throwCantUnpack("corrupt l_info/p_info/b_info");
     }
+    fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR); // hdr.b_info was a peek
 
 // The default layout for a shared library created by binutils-2.29
 // (Fedora 28; 2018) has two PT_LOAD: permissions r-x and rw-.
