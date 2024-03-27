@@ -317,8 +317,8 @@ PeFile::Reloc::Reloc(unsigned relocnum) {
 
 void PeFile::Reloc::initSpans() {
     next_encoded_type = 0;
-    memset(encode, -1, sizeof(encode));  // encode[external]  set upon first encounter
-    memset(decode,  0, sizeof(decode));  // decode[internal]
+    memset(encode, -1, sizeof(encode)); // encode[external]  set upon first encounter
+    memset(decode, 0, sizeof(decode));  // decode[internal]
     start_buf = SPAN_0_MAKE(byte, start, start_size_in_bytes); // => now a SPAN_S
     rb.rel = SPAN_TYPE_CAST(BaseReloc, start_buf);             // SPAN_0
     rb.rel1 = SPAN_TYPE_CAST(LE16, start_buf);                 // SPAN_0
