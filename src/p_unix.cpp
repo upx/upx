@@ -491,8 +491,10 @@ unsigned PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
             throwCantUnpack("corrupt b_info");
 
         // place the input for overlapping de-compression
-        // FIXME: inlen cheats OVERHEAD; assumes small wanted peek length
-        int j = inlen + blocksize + OVERHEAD - sz_cpr;
+        int j = inlen + sz_unc + OVERHEAD - sz_cpr;
+        if (ibuf.getSize() < (unsigned)(j + sz_cpr)) {
+            throwCantUnpack("corrupt b_info");
+        }
         fi->readx(ibuf+j, sz_cpr);
         total_in += sz_cpr;
         // update checksum of compressed data
