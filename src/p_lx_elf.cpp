@@ -6495,7 +6495,7 @@ void PackLinuxElf64::un_shlib_1(
         throwCantUnpack("corrupt l_info/p_info/b_info");
     }
     fi->seek(-(off_t)sizeof(struct b_info), SEEK_CUR); // hdr.b_info was a peek
- 
+
 // The default layout for a shared library created by binutils-2.29
 // (Fedora 28; 2018) has two PT_LOAD: permissions r-x and rw-.
 // xct_off (the lowest address of executable instructions;
