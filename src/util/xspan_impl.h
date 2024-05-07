@@ -111,7 +111,7 @@ inline void xspan_mem_size_assert_ptrdiff(ptrdiff_t n) {
 }
 
 #if __cplusplus >= 201103L && 0
-// unfortunately doesnt't work with some older versions of libstdc++
+// unfortunately doesn't work with some older versions of libstdc++
 // (TODO later: we now require C++17, so this now probably works on all supported platforms)
 template <class From, class To>
 struct XSpan_is_convertible : public std::is_convertible<From *, To *> {};

@@ -99,7 +99,7 @@ int PackHeader::getPackHeaderSize() const {
 **************************************************************************/
 
 void PackHeader::putPackHeader(SPAN_S(byte) p) const {
-    // NOTE: It is the caller's responsbility to ensure the buffer p has
+    // NOTE: It is the caller's responsibility to ensure the buffer p has
     // sufficient space for the header.
     assert(get_le32(p) == UPX_MAGIC_LE32);
     if (get_le32(p + 4) != UPX_MAGIC2_LE32) {

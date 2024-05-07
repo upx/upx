@@ -54,7 +54,7 @@ extern void f_int3(int arg);
 // and then followed by a comma to ignore the return value.
 // The only complication is that percent and backslash
 // must be doubled in the format string, because the format
-// string is processd twice: once at compile-time by 'asm'
+// string is processed twice: once at compile-time by 'asm'
 // to produce the assembled value, and once at runtime to use it.
 #if defined(__powerpc__)  //{
 #define DPRINTF(fmt, args...) ({ \

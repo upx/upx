@@ -437,7 +437,7 @@ off_t PackLinuxElf::pack3(OutputFile *fo, Filter &ft) // return length of output
     // FIXME: debugging aid: entry to decompressor
     if (lowmem.getSize()) {
         Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)&lowmem[0];
-        set_te32(&ehdr->e_entry, sz_pack2);  // hint for decomperssor
+        set_te32(&ehdr->e_entry, sz_pack2);  // hint for decompressor
     }
     // end debugging aid
 
@@ -5126,7 +5126,7 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
                     fo->seek(x.offset, SEEK_SET);
                     fo->write(&file_image[x.offset], x.size);
                     total_out += x.size;
-                    // Kepp the input side in sync
+                    // Keep the input side in sync
                     total_in  += x.size;
                     fi->seek(x.size + x.offset, SEEK_SET);
                 }
@@ -5384,7 +5384,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
                     fo->seek(x.offset, SEEK_SET);
                     fo->write(&file_image[x.offset], x.size);
                     total_out += x.size;
-                    // Kepp the input side in sync
+                    // Keep the input side in sync
                     total_in  += x.size;
                     fi->seek(x.size + x.offset, SEEK_SET);
                 }
