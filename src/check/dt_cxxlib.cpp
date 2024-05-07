@@ -250,6 +250,18 @@ struct Z2_X2 : public X2 {
 // util
 **************************************************************************/
 
+#if WITH_THREADS
+TEST_CASE("upx::ptr_std_atomic_cast") {
+    (void) upx::ptr_std_atomic_cast((upx_int8_t *) nullptr);
+    (void) upx::ptr_std_atomic_cast((upx_int16_t *) nullptr);
+    (void) upx::ptr_std_atomic_cast((upx_int32_t *) nullptr);
+    (void) upx::ptr_std_atomic_cast((int *) nullptr);
+    (void) upx::ptr_std_atomic_cast((long *) nullptr);
+    (void) upx::ptr_std_atomic_cast((size_t *) nullptr);
+    (void) upx::ptr_std_atomic_cast((void **) nullptr);
+}
+#endif
+
 TEST_CASE("upx::atomic_exchange") {
     {
         upx_int8_t x = -1;
@@ -276,12 +288,15 @@ TEST_CASE("upx::atomic_exchange") {
         CHECK_EQ(y, (size_t) 0 - 1);
     }
     {
-        int dummy = -1;
-        int *x = &dummy;
-        int *y = upx::atomic_exchange(&x, (int *) nullptr);
-        CHECK_EQ(x, nullptr);
-        CHECK_EQ(y, &dummy);
-        CHECK_EQ(dummy, -1);
+        const int buf[2] = {101, 202};
+        const int *ptr_array[2] = {&buf[0], &buf[1]};
+        assert_noexcept(*ptr_array[0] == 101 && *ptr_array[1] == 202);
+        const int *p = upx::atomic_exchange(&ptr_array[0], ptr_array[1]);
+        CHECK_EQ(p, buf + 0);
+        assert_noexcept(*ptr_array[0] == 202 && *ptr_array[1] == 202);
+        p = upx::atomic_exchange(&ptr_array[1], p);
+        CHECK_EQ(p, buf + 1);
+        assert_noexcept(*ptr_array[0] == 202 && *ptr_array[1] == 101);
     }
 }
 

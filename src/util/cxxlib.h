@@ -194,7 +194,7 @@ forceinline std::atomic<T> *ptr_std_atomic_cast(T *ptr) noexcept {
     // TODO later: make sure that this cast is indeed legal
     std::atomic<T> *result = ptr_static_cast<std::atomic<T> *>(ptr);
     static_assert(sizeof(*result) == sizeof(*ptr));
-    static_assert(alignof(*result) == alignof(*ptr));
+    static_assert(alignof(decltype(*result)) == alignof(decltype(*ptr)));
     return result;
 }
 #endif // WITH_THREADS
