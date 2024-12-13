@@ -230,6 +230,26 @@ protected:
     virtual void defineFilterSymbols(const Filter *ft);
 
     // stub and overlay util
+
+     /**
+     * \brief Copy stub from exe.
+     *
+     * \param :
+     * 
+     * \arg InputFile *fif \n
+     *        Source file where `OutputFile *fo` will be copied.
+     * 
+     * \arg OutputFile *fo \n
+     *        Destination file oubject file where `OutputFile *fo` will be copied.
+     *
+     * \arg unsigned size \n
+     *        Size of the destination stub. Should be same as `InputFile *fif`.
+     * 
+     * \todo ensure if there is not a more posix friendly method to store the destination stub size for cpp. Might be better with str.length(). Might avoid memory corruption.
+     * 
+     * \return void.
+     **/
+
     static void handleStub(InputFile *fi, OutputFile *fo, unsigned size);
     virtual void checkOverlay(unsigned overlay);
     virtual void copyOverlay(OutputFile *fo, unsigned overlay, MemBuffer &buf, bool do_seek = true);

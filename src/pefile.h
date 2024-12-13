@@ -63,30 +63,30 @@ protected:
 
 
     /**
-     * \brief create UPX0 section
+     * \brief Create UPX0 section with compressed full executable. 
      *
      * \param :
      * 
-     * \arg fo
+     * \arg fo \n
      *        The OutputFile class to the path where the new file will be created.
      * 
-     * \arg ih
+     * \arg ih \n
      *        Input PE header. \n \n
      *        Native windows data structure required by the os to be understood and to make a valid executable. The documentation of this data type is present there: https://www.vergiliusproject.com/kernels/x64/windows-11/23h2/_IMAGE_FILE_HEADER and described there: https://wiki.osdev.org/PE#PE_header.
      * 
-     * \arg oh
+     * \arg oh \n
      *        Output PE header. \n \n
      *        Native windows data structure required by the os to be understood and to make a valid executable. The documentation of this data type is present there: https://www.vergiliusproject.com/kernels/x64/windows-11/23h2/_IMAGE_FILE_HEADER and described there: https://wiki.osdev.org/PE#PE_header.
      * 
-     * \arg subsystem_mask
-     *        Permission mask for UPX0, UPX1, etc... sections. \n \n
-     *        Number between 0 and 255 to indicate the section permissions of the section UPX0, UPX1, etc...
+     * \arg subsystem_mask \n
+     *        Permission mask for the section UPX0. \n \n
+     *        Number between 0 and 255 to indicate the section permissions of the section UPX0.
      *
-     * \arg default_imagebase
+     * \arg default_imagebase \n 
      *        Base address of the image base of the process. \n \n
      *        Very first start of where is stored the data and the code run by the OS.
      * 
-     * \arg last_section_rsrc_only
+     * \arg last_section_rsrc_only \n
      *        This is true when the last PE section of the compressed file must only contain resources and must be called "rsrc"
      *
      * \return void, in any circonstance.
