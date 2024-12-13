@@ -207,6 +207,17 @@ protected:
 #else
     void addLoaderVA(const char *s, ...);
 #endif
+
+     /**
+     * \brief Copy stub from exe.
+     *
+     * \param :
+     * 
+     * \arg const char *name \n
+     *        Name of the section looked for.
+     * 
+     * \return true if the `name` argument correpsonds to an existing section. returns false else.
+     **/
     virtual bool hasLoaderSection(const char *name) const;
     virtual int getLoaderSection(const char *name, int *slen = nullptr) const;
     virtual int getLoaderSectionStart(const char *name, int *slen = nullptr) const;
