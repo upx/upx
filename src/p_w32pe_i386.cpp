@@ -150,7 +150,9 @@ bool PackW32PeI386::needForceOption() const {
     r |= (ih.coffmagic != 0x10b);                      // COFF magic is 0x10B in PE files
     r |= (ih.entry == 0 && !isdll);
     r |= (ih.ddirsentries != 16);
-    r |= (IDSIZE(PEDIR_EXCEPTION) != 0); // is this used on i386?
+    // Explanation: For .NET Core NativeAOT on x86, an exception directory is expected.
+    // Disabling this check prevents `--force` from being erroneously required.
+    //// r |= (IDSIZE(PEDIR_EXCEPTION) != 0);
     //// r |= (IDSIZE(PEDIR_COPYRIGHT) != 0);
     return r;
 }
