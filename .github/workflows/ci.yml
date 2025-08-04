@@ -99,9 +99,9 @@ jobs:
       - run: uname -a; pwd; id; umask
       - run: sudo apt-get update
       - run: sudo apt-get install -y dmidecode gdb parallel valgrind
-      - run: sudo dmidecode | sed -n -e '/System Information/,/^$/p'
-      - run: sudo dmidecode -q
-      - run: sudo dmidecode
+      - run: (sudo dmidecode | sed -n -e '/System Information/,/^$/p') || true
+      - run: sudo dmidecode -q || true
+      - run: sudo dmidecode || true
       - uses: actions/checkout@v4
         with: { submodules: true }
       - run: make build/extra/gcc/all
@@ -119,6 +119,11 @@ jobs:
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v4
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
+      - name: Run install tests
+        run: |
+          jobs="gcc/debug gcc/release clang/debug clang/release"
+          echo "===== parallel jobs: $jobs"
+          DESTDIR="Install with make 2" parallel -kv --lb 'make build/extra/{}+install' ::: $jobs
       - name: Mimic ctest tests SIGSEGV
         run: |
           jobs="gcc/debug gcc/release clang/debug clang/release"
@@ -164,11 +169,11 @@ jobs:
             ls -l /usr/bin/${f}*
           done
           ls -l /etc/alternatives/*mingw* || true
-      - run: sudo dmidecode | sed -n -e '/System Information/,/^$/p'
+      - run: (sudo dmidecode | sed -n -e '/System Information/,/^$/p') || true
         if: ${{ matrix.use_extra }}
-      - run: sudo dmidecode -q
+      - run: sudo dmidecode -q || true
         if: ${{ matrix.use_extra }}
-      - run: sudo dmidecode
+      - run: sudo dmidecode || true
         if: ${{ matrix.use_extra }}
       - name: Install Wine
         if: ${{ matrix.use_extra && matrix.use_wine }}
@@ -223,6 +228,10 @@ jobs:
         run: |
           (cd build/extra/gcc/release && DESTDIR="$PWD/Install with cmake" cmake --install .)
           (cd build/extra/gcc/release && DESTDIR="$PWD/Install with make"  make install)
+          jobs="gcc/debug gcc/release clang/debug clang/release"
+          test "${{ matrix.use_extra }}" = "true" && jobs="$jobs gcc-m32/debug gcc-m32/release"
+          echo "===== parallel jobs: $jobs"
+          DESTDIR="Install with make 2" parallel -kv --lb 'make build/extra/{}+install' ::: $jobs
       - name: Mimic ctest tests SIGSEGV
         run: |
           jobs="gcc/debug gcc/release clang/debug clang/release"
@@ -571,7 +580,7 @@ jobs:
           # only build a few selected targets => more targets are tested in the Weekly CI
           - { zig_target: aarch64-linux-musl, qemu: qemu-aarch64 }
           - { zig_target: aarch64-linux-musl, qemu: qemu-aarch64, zig_pic: -fPIE, container: 'alpine:3.18' }
-          - { zig_target: aarch64-macos.11.0-none }
+          - { zig_target: aarch64-macos.13.0-none }
           - { zig_target: aarch64-windows-gnu }
           - { zig_target: arm-linux-musleabihf, qemu: qemu-arm }
           - { zig_target: armeb-linux-musleabihf, qemu: qemu-armeb }
@@ -597,7 +606,7 @@ jobs:
           - { zig_target: x86_64-linux-gnu.2.17, qemu: qemu-x86_64 }  # can use QEMU because of gcompat
           - { zig_target: x86_64-linux-musl, qemu: qemu-x86_64 }
           - { zig_target: x86_64-linux-musl, qemu: qemu-x86_64, zig_pic: -fPIE, container: 'alpine:3.18' }
-          - { zig_target: x86_64-macos.11.0-none }
+          - { zig_target: x86_64-macos.13.0-none }
           - { zig_target: x86_64-windows-gnu }
     name: ${{ format('zigcc {0} {1}', matrix.zig_target, matrix.zig_pic) }}
     runs-on: ubuntu-latest

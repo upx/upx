@@ -225,6 +225,7 @@ XSPAN_NAMESPACE_END
 #ifndef XSPAN_DELETED_FUNCTION
 #define XSPAN_DELETED_FUNCTION = delete
 #endif
+
 // function/method constraints
 #define XSPAN_REQUIRES_CONVERTIBLE_ONE_DIRECTION(From, To, RType)                                  \
     typename std::enable_if<XSPAN_NS(XSpan_is_convertible) < From, To>::value, RType > ::type
@@ -250,6 +251,7 @@ XSPAN_NAMESPACE_END
 #include "xspan_impl_ptr_or_span.h"
 #include "xspan_impl_span.h"
 #include "xspan_impl_ptr.h"
+
 #undef XSPAN_REQUIRES_CONVERTIBLE_ONE_DIRECTION
 #undef XSPAN_REQUIRES_CONVERTIBLE_ANY_DIRECTION
 #undef XSPAN_REQUIRES_CONVERTIBLE_A

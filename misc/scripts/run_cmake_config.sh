@@ -14,7 +14,7 @@ __add_cmake_config() {
 }
 
 # pass common CMake settings
-for v in CMAKE_VERBOSE_MAKEFILE; do
+for v in CMAKE_INSTALL_PREFIX CMAKE_VERBOSE_MAKEFILE; do
     __add_cmake_config $v
 done
 # pass common CMake toolchain settings

@@ -2281,9 +2281,46 @@ void PeFile::callProcessResources(Resource &res, unsigned &ic) {
     ic += soresources;
 }
 
-template <typename LEXX, typename ht>
-void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
-                   upx_uint64_t default_imagebase, bool last_section_rsrc_only) {
+/**
+ * @brief create UPX0 section
+ * 
+ * @name pack0
+ *
+ *     Reduct the file size.
+ *
+ * @param fo
+ *        The OutputFile class to the path where the new file will be created. 
+ *
+ * @param ih
+ *        Input PE header.
+ * 
+ *        Native windows data structure required by the os to be understood and to make a valid executable. The documentation of this data type is present there: https://www.vergiliusproject.com/kernels/x64/windows-11/23h2/_IMAGE_FILE_HEADER and described there: https://wiki.osdev.org/PE#PE_header .
+ * 
+ * @param oh
+ *        Output PE header.
+ * 
+ *        Native windows data structure required by the os to be understood and to make a valid executable. The documentation of this data type is present there: https://www.vergiliusproject.com/kernels/x64/windows-11/23h2/_IMAGE_FILE_HEADER and described there: https://wiki.osdev.org/PE#PE_header .
+ * 
+ * @param subsystem_mask
+ *        Permission mask for UPX0, UPX1, etc... sections.
+ *        
+ *        Number between 0 and 255 to indicate the section permissions of the section UPX0, UPX1, etc...
+ *
+ * @param default_imagebase
+ *        Base address of the image base of the process.
+ *        
+ *        Very first start of where is stored the data and the code run by the OS.
+ * 
+ * @param last_section_rsrc_only
+ *        This is true when the last PE section of the compressed file must only contain resources and must be called "rsrc"
+ *
+ * @return void, in any circonstance.
+ *
+ * @remarks None.
+ *
+ */
+
+template <typename LEXX, typename ht> void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask, upx_uint64_t default_imagebase, bool last_section_rsrc_only) {
     // FIXME: we need to think about better support for --exact
     if (opt->exact)
         throwCantPackExact();

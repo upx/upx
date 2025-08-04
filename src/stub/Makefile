@@ -552,6 +552,7 @@ amd64-win64.pe.h : tc_objdump_disasm_options = -M intel-mnemonic
 
 tc.amd64-win64.pe.gcc  = amd64-linux-gcc-4.1.1 -m64 -nostdinc -DWINDOWS_BACK=1 -MMD -MT $@
 tc.amd64-win64.pe.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.amd64-win64.pe.gcc += -mno-red-zone
 tc.amd64-win64.pe.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 tc.amd64-win64.pe.objdump = multiarch-objdump-2.23.90
 

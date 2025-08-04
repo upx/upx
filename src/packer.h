@@ -48,7 +48,7 @@ protected:
 public:
     virtual ~PackerBase() noexcept {}
     // getVersion() enables detecting forward incompatibility of unpack()
-    // by old upx when newer upx changes the format of compressed output.
+    //   by old UPX when newer UPX changes the format of compressed output.
     virtual int getVersion() const = 0;
     // A unique integer ID for this executable format; see UPX_F_xxx in conf.h.
     virtual int getFormat() const = 0;
@@ -58,11 +58,11 @@ public:
     virtual const int *getFilters() const = 0;
 
     // canPack() should throw a cantPackException explaining why it cannot pack
-    // a recognized format.
+    //   a recognized format.
     // canPack() can also return -1 to fail early; see class PackMaster
     virtual tribool canPack() = 0;
     // canUnpack() should throw a cantUnpackException explaining why it cannot unpack
-    // a recognized format.
+    //   a recognized format.
     // canUnpack() can also return -1 to fail early; see class PackMaster
     virtual tribool canUnpack() = 0;
 

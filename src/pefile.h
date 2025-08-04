@@ -27,10 +27,6 @@
 
 #pragma once
 
-/*************************************************************************
-// general/pe handling
-**************************************************************************/
-
 class PeFile : public Packer {
     typedef Packer super;
 public:
@@ -65,9 +61,39 @@ protected:
     virtual void setOhDataBase(const pe_section_t *osection) = 0;
     virtual void setOhHeaderSize(const pe_section_t *osection) = 0;
 
-    template <typename LEXX, typename ht>
-    void pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
-               upx_uint64_t default_imagebase, bool last_section_rsrc_only);
+
+    /**
+     * \brief create UPX0 section
+     * 
+     *
+     * \param fo
+     *        The OutputFile class to the path where the new file will be created. 
+     *
+     * \param ih
+     *        Input handler.
+     * 
+     * \param oh
+     *        Output handler.
+     * 
+     * \param subsystem_mask
+     *        Permission mask for UPX0, UPX1, etc... sections.
+     *        
+     *        Number between 0 and 255 to indicate the section permissions of the section UPX0, UPX1, etc...
+     *
+     * \param default_imagebase
+     *        Base address of the image base of the process.
+     *        
+     *        Very first start of where is stored the data and the code run by the OS.
+     * 
+     * \param last_section_rsrc_only
+     *        true if 
+     *
+     * \return void, in any circonstance.
+     *
+     *
+     **/
+
+    template <typename LEXX, typename ht> void pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask, upx_uint64_t default_imagebase, bool last_section_rsrc_only);
 
     template <typename ht, typename LEXX, typename ord_mask_t>
     void unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, bool set_oft);

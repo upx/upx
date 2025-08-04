@@ -29,6 +29,6 @@ fi
 # limit memory usage to 1 GiB (in case of clang-format problems with invalid files)
 ulimit -v 1048576 || true
 
-#echo $UPX_CLANG_FORMAT
+#echo "$UPX_CLANG_FORMAT"
 exec "$UPX_CLANG_FORMAT" -style=file "$@"
 exit 99

@@ -65,6 +65,17 @@ Please see the file UPX.DOC for the full documentation. The files
 NEWS and BUGS also contain various tidbits of information.
 
 
+DEVELOPPER API DOCUMENTATION
+============================
+
+The developper api internals of upx are available at [set the url there]()
+
+Build it locally with:
+
+```bash
+doxygen doxygen-file
+```
+
 THE FUTURE
 ==========
 

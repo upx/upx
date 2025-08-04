@@ -210,7 +210,7 @@ private:
     UPX_CXX_DISABLE_NEW_DELETE(LEPolicy)
 };
 
-// Native Endianness policy (aka host policy)
+// Native Endianness policy (aka Host Policy)
 #if (ACC_ABI_BIG_ENDIAN)
 typedef BEPolicy NEPolicy;
 typedef BEPolicy HostPolicy;
