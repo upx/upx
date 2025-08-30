@@ -188,7 +188,7 @@ f_decompress:
 // only one de-compressor; build 'eof' return
 #undef DAISY_CHAIN
 
-// use of mmap() forces implcit cache sync
+// use of mmap() forces implicit cache sync
 #define NO_SYNC_CACHE 1
 
 off     .req w5

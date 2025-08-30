@@ -30,7 +30,7 @@ i386bxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
         mov 4*NBPW(%esp),%eax  # ftid
 #ifndef NO_METHOD_CHECK
 // Filter 0x46 is 5-byte CALL or unconditional JMP
-// FIlter 0x49 also includes 6-byte consitional Jxx
+// FIlter 0x49 also includes 6-byte conditional Jxx
         cmpl $0x49,%eax; je cktop
         cmpl $0x46,%eax; je cktop
         jmp ckend0

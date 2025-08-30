@@ -136,11 +136,11 @@ extern int fstatat(int dirfd, const char *restrict pathname,
 
 #define ENOENT 2   /* no such name */
 #define EACCES 13  /* permission denied */
-#define EINVAL 22  /* invalid arguemnt */
+#define EINVAL 22  /* invalid argument */
 #define ENOSPC 28  /* no space left on device */
 #define ENOSYS 38  /* no such system call */
 
-// ANDROID_TEST: Set to 1 for testing Android implmentation using Linux on
+// ANDROID_TEST: Set to 1 for testing Android implementation using Linux on
 // Raspberry Pi (arm32, perhaps running on actual arm64); else set to 0.
 #define ANDROID_TEST 0
 

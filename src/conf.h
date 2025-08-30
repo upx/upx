@@ -189,7 +189,7 @@ typedef unsigned char byte;
 #define upx_byte  byte
 #define upx_bytep byte *
 typedef unsigned char uchar;
-// UPX convention: use "charptr" when dealing with abstract pointer arithmetics
+// UPX convention: use "charptr" when dealing with abstract pointer arithmetic
 #define charptr upx_charptr_unit_type *
 // upx_charptr_unit_type is some opaque type with sizeof(type) == 1
 //// typedef char upx_charptr_unit_type; // also works

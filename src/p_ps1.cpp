@@ -69,7 +69,7 @@ static const CLANG_FORMAT_DUMMY_STATEMENT
 //          rest is filled with zeros to reach the required
 //          cd mode 2 data sector size of 2048 bytes
 // body:    contains the binary data / code of the executable
-//          reqiures: executable code must be aligned to 4
+//          requires: executable code must be aligned to 4
 //                    must be aligned to 2048 to run from a CD
 //          optional: not aligned to 2048 (for console run only)
 **************************************************************************/

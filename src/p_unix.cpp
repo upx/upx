@@ -58,7 +58,7 @@ PackUnix::PackUnix(InputFile *f) :
 
     // opt->o_unix.android_shlib is global, but must be hint
     // that applies only when an actual ET_DYN on EM_ARM (only!).
-    // User might say "--android-shlib" but give mulitple files
+    // User might say "--android-shlib" but give multiple files
     // where some are ET_EXEC.
     saved_opt_android_shlib = opt->o_unix.android_shlib;
     opt->o_unix.android_shlib = 0;  // Must apply selectively

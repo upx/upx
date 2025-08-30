@@ -484,7 +484,7 @@ f_expand:
 // only one decompressor; build 'eof' return
 #undef DAISY_CHAIN
 
-// use of mmap() forces implcit cache sync
+// use of mmap() forces implicit cache sync
 #define NO_SYNC_CACHE 1
 
 #include "arch/arm64/v8/nrv2b_d32.S"

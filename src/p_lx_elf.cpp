@@ -5440,8 +5440,8 @@ unsigned PackLinuxElf::pack2_shlib_overlay_compress(
 //         LOAD   0x002000 0x00002000 0x00002000 0x09d40 0x09d40 R   0x1000  large app consts
 //         LOAD   0x00bef0 0x0000cef0 0x0000cef0 0x00118 0x0011c RW  0x1000  writeable
 //
-//         xct_off will have been increased artifically to point to
-//         the large compressable PT_LOAD (0x9d40==MemSiz), in order to avoid
+//         xct_off will have been increased artificially to point to
+//         the large compressible PT_LOAD (0x9d40==MemSiz), in order to avoid
 //         NotCompressable because the earlier PT_LOADs were too short (< 4KiB).
 // 2. If the first PT_LOAD covers xct_off, then the order of output is:
 //      A. original Ehdr+Phdrs (overwritten later)
@@ -6178,7 +6178,7 @@ unsigned PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
                     && want_types_mask & (1<<(0x1f & sh_type)))
                 || (Elf32_Shdr::SHT_ARM_ATTRIBUTES == sh_type)
             ) {
-                *sh_out = *sh_in;  // *sh_in is a candidate for fowarding
+                *sh_out = *sh_in;  // *sh_in is a candidate for forwarding
                 if (sh_offset > xct_off) { // may slide down: earlier compression
                     if (sh_offset >= xct_off_hi) { // easy: so_slide down
                         if (Elf32_Shdr::SHT_ARM_ATTRIBUTES != sh_type) {
@@ -6238,7 +6238,7 @@ unsigned PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
                 do { // stupid MSVC lacks stpcpy()
                     *ptr_shstrings++ = *name;
                 } while (*name++);
-                ++sh_out; ++n_sh_out;  // actually commit the fowarding
+                ++sh_out; ++n_sh_out;  // actually commit the forwarding
             }
         }
         unsigned len = ptr_shstrings - (char *)mb_shstrings.getVoidPtr();

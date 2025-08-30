@@ -140,7 +140,7 @@ eof_n2b: .globl eof_n2b
         lw tmp,1*NBPW(sp)  # orig dst
         lw ldst,2*NBPW(sp)
         subu tmp,dst,tmp
-        sw tmp,0(ldst)  # actual len genereated
+        sw tmp,0(ldst)  # actual len generated
 
         lw tmp,0*NBPW(sp)  # &b_info
           nop

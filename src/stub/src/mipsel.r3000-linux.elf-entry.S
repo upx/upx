@@ -251,7 +251,7 @@ HALT:
         move a2,$r_szuf  # .sz_unc
         move a1,sp
         move a0,$r_mfd
-        li v0,__NR_write; syscall; bnez a3,HALT  // faliure
+        li v0,__NR_write; syscall; bnez a3,HALT  // failure
           move sp,fp
 
 # Map de-compressed stub

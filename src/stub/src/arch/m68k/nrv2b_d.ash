@@ -54,7 +54,7 @@
 ;
 ;
 ; Notes:
-;   we have max_match = 65535, so we can use word arithmetics on d2
+;   we have max_match = 65535, so we can use word arithmetic on d2
 ;
 
 
