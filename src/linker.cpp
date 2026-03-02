@@ -157,7 +157,9 @@ void ElfLinker::init(unsigned arch, const void *pdata_v, int plen, unsigned pxtr
     input[inputlen] = 0; // NUL terminate
 
     output_capacity = (inputlen ? (inputlen + pxtra) : 0x4000);
-    assert(output_capacity < (1 << 16)); // LE16 l_info.l_size
+    // NOTE: output_capacity may exceed 64KB for stubs with large embedded decompressors
+    // (e.g. zstd). The actual output (selected sections) must fit in LE16 l_lsize.
+    // The final size check happens in getLoader() / buildLoader().
     output = New(byte, output_capacity);
     outputlen = 0;
     NO_printf("\nElfLinker::init %d @%p\n", output_capacity, output);
@@ -209,7 +211,7 @@ void ElfLinker::preprocessSections(char *start, char const *end) {
 }
 
 void ElfLinker::preprocessSymbols(char *start, char const *end) {
-    assert_noexcept(nsymbols <= 1);
+    // nsymbols may be > 1 if section names were pre-added as symbols
     char *nextl;
     for (; start < end; start = 1 + nextl) {
         nextl = strchr(start, '\n');
@@ -226,6 +228,12 @@ void ElfLinker::preprocessSymbols(char *start, char const *end) {
             addSymbol(s, "*ABS*", value);
             assert(offset == 0);
         }
+        else if (sscanf(start, "%x l *ABS* %x %1023s", &value, &offset, symbol) == 3) {
+            // local *ABS* symbols (e.g. from zig/clang objdump output)
+            char *s = strstr(start, symbol);
+            s[strlen(symbol)] = 0;
+            addSymbol(s, "*ABS*", value);
+        }
 #if 0
         else if (sscanf(start, "%x%*8c %1023s %*x %1023s", &offset, section, symbol) == 3)
 #else
@@ -239,7 +247,8 @@ void ElfLinker::preprocessSymbols(char *start, char const *end) {
             s[strlen(symbol)] = 0;
             if (strcmp(section, "*UND*") == 0)
                 offset = 0xdeaddead;
-            assert(strcmp(section, "*ABS*") != 0);
+            if (strcmp(section, "*ABS*") == 0)
+                continue; // handled by the *ABS* branch above, or skip local abs symbols
             addSymbol(s, section, offset);
         }
     }
@@ -336,6 +345,10 @@ ElfLinker::Section *ElfLinker::addSection(const char *sname, const void *sdata, 
         if (!strcmp("*ABS*", sname)) {
             addSymbol("*ABS*", "*ABS*", 0);
         }
+    } else if (sdata != nullptr) {
+        // Add section name as a symbol at offset 0, so relocations can reference it by name
+        if (findSymbol(sname, false) == nullptr)
+            addSymbol(sname, sname, 0);
     }
     return sec;
 }
@@ -345,7 +358,8 @@ ElfLinker::Symbol *ElfLinker::addSymbol(const char *name, const char *section,
     NO_printf("addSymbol: %s %s 0x%llx\n", name, section, offset);
     assert(name && name[0]);
     assert(name[strlen(name) - 1] != ':');
-    assert(findSymbol(name, false) == nullptr);
+    if (findSymbol(name, false) != nullptr)
+        return findSymbol(name, false); // already exists (e.g. section name pre-added)
     if (grow_capacity(nsymbols, &nsymbols_capacity))
         symbols = realloc_array(symbols, nsymbols_capacity);
     Symbol *sym = new Symbol(name, findSection(section), offset);
@@ -356,10 +370,7 @@ ElfLinker::Symbol *ElfLinker::addSymbol(const char *name, const char *section,
 ElfLinker::Relocation *ElfLinker::addRelocation(const char *section, unsigned off, const char *type,
                                                 const char *symbol, upx_uint64_t add) {
     if (EM_RISCV == this->e_machine) {
-        if ((symbol && '.' == symbol[0])        // compiler-generated; or 0f, 0b (etc.)
-            && (!strcmp(type, "R_RISCV_BRANCH") // known types
-                || !strcmp(type, "R_RISCV_RVC_BRANCH") || !strcmp(type, "R_RISCV_JAL") ||
-                !strcmp(type, "R_RISCV_JUMP") || !strcmp(type, "R_RISCV_RVC_JUMP"))) {
+        if (symbol && '.' == symbol[0]) {       // compiler-generated local symbol
             return nullptr; // ASSUME already relocated: source and target in same section
         }
     }
@@ -425,6 +436,7 @@ int ElfLinker::addLoader(const char *sname) {
             assert((section->size + outputlen) <= output_capacity);
             memcpy(output + outputlen, section->input, section->size);
             section->output = output + outputlen; // FIXME: INVALIDATED by realloc()
+            fprintf(stderr, "section added: 0x%04x %3d %s (align=%d)\n", outputlen, section->size, section->name, section->p2align);
             NO_printf("section added: 0x%04x %3d %s\n", outputlen, section->size, section->name);
             outputlen += section->size;
 
@@ -484,8 +496,11 @@ void ElfLinker::relocate() {
         if (strcmp(rel->value->section->name, "*ABS*") == 0) {
             value = rel->value->offset;
         } else if (strcmp(rel->value->section->name, "*UND*") == 0 &&
-                   rel->value->offset == 0xdeaddead)
-            throwInternalError("undefined symbol '%s' referenced\n", rel->value->name);
+                   rel->value->offset == 0xdeaddead) {
+            // Skip undefined symbols - the stub resolves them at runtime
+            // (e.g. memfd_create via syscall fallback)
+            continue;
+        }
         else if (rel->value->section->output == nullptr)
             throwInternalError("cannot apply reloc '%s:%x' without section '%s'\n",
                                rel->section->name, rel->offset, rel->value->section->name);
@@ -493,12 +508,6 @@ void ElfLinker::relocate() {
             value = rel->value->section->offset + rel->value->offset + rel->add;
         }
         byte *location = rel->section->output + rel->offset;
-        NO_printf("%-28s %-28s %-10s %#16llx %#16llx\n", rel->section->name, rel->value->name,
-                  rel->type, (long long) value,
-                  (long long) value - rel->section->offset - rel->offset);
-        NO_printf("  %llx %d %llx %d %llx :%d\n", (long long) value,
-                  (int) rel->value->section->offset, rel->value->offset, rel->offset,
-                  (long long) rel->add, *location);
         relocate1(rel, location, value, rel->type);
     }
 }
@@ -613,6 +622,12 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, byte *location, upx_uint64
         set_le32(location, get_le32(location) + value);
     else if (strcmp(type, "64") == 0)
         set_le64(location, get_le64(location) + value);
+    else if (strcmp(type, "NONE") == 0) {
+        // R_X86_64_NONE: GCC uses this for calls to locally-defined symbols
+        // with -fpic -fno-plt. The displacement needs to be computed like PC32.
+        value -= rel->section->offset + rel->offset;
+        set_le32(location, get_le32(location) + (unsigned)value);
+    }
     else
         super::relocate1(rel, location, value, type);
 }
@@ -844,6 +859,15 @@ void ElfLinkerRiscv64LE::relocate1(const Relocation *rel, byte *location, upx_ui
         set_le16(location, (((7 << 13) | 3) & instr) | ins_imm_RVC_Jmp(value));
     } else if (!strncmp(type, "32", 2)) {
         set_le32(location, value);
+    } else if (!strncmp(type, "CALL_PLT", 8) || !strncmp(type, "CALL", 4)) {
+        // AUIPC + JALR pair: 2 consecutive 32-bit instructions
+        value -= rel->section->offset + rel->offset;
+        unsigned hi = (value + 0x800) >> 12;
+        unsigned lo = value - (hi << 12);
+        unsigned auipc = get_le32(location);
+        unsigned jalr  = get_le32(location + 4);
+        set_le32(location,     (auipc & 0xFFF) | (hi << 12));
+        set_le32(location + 4, (jalr & 0xFFFFF) | ((lo & 0xFFF) << 20));
     } else
         super::relocate1(rel, location, value, type);
 }

@@ -212,12 +212,28 @@ section LZMA_ELF00  // prefix for parameter juggling
 #include "arch/amd64/lzma_d.S"
 not_lzma:
 
+section ZSTD_DAISY
+#define M_ZSTD 16
+    cmp $M_ZSTD,meth; jne not_zstd
+        mov %rsi,%rdx
+        mov 8(%rsp),%rcx
+        sub %rdx,%rcx
+        mov 16(%rsp),%rax
+        mov (%rax),%esi
+        call upx_zstd_decompress
+        add (%rsp),%rax
+        mov %rax,%rdi
+        mov 8(%rsp),%rsi
+        jmp eof_lzma
+not_zstd:
+
   section EXP_TAIL
 // Fall through: daisy chain had no matching method
         mov meth,%ecx  // b_method as __NR__
         or $~0,%eax  // "errno"
         int3; hlt  // no method
 
+// eof epilogue - shared by all decompressors
 eof_lzma:
 eof_n2b:
 eof_n2d:

@@ -27,6 +27,9 @@ RUN dpkg --add-architecture i386 \
         g++-multilib gcc-multilib \
     && apt-get install -y \
         gcc-riscv64-linux-gnu \
+        gcc-aarch64-linux-gnu \
+        gcc-arm-linux-gnueabihf \
+        gcc-powerpc64le-linux-gnu \
     && true
 
 # install python2-minimal packages from Debian-11; REQUIRED

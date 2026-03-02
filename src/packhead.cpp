@@ -50,7 +50,10 @@ int PackHeader::set_method(int m, unsigned offset) {
     unsigned lo = 0xFF & m;
     // See packer_c.cpp for "hi bytes" in M_LZMA_003 and M_LZMA_407.
     // "hi bytes" are not allowed unless M_LZMA.
-    if ((lo < M_NRV2B_LE32 || M_LZMA < lo || (M_LZMA != lo && mc != lo)) && ~0u != offset)
+    // M_ZSTD (16) is also allowed.
+    bool valid = (lo >= M_NRV2B_LE32 && lo <= M_LZMA && (M_LZMA == lo || mc == lo))
+              || lo == M_ZSTD;
+    if (!valid && ~0u != offset)
         throwCantPack("bad method %#x at %#x", (unsigned) m, offset);
     return method = m;
 }
@@ -320,6 +323,8 @@ bool ph_skipVerify(const PackHeader &ph) noexcept {
         return false;
     if (M_IS_LZMA(ph.method))
         return false;
+    if (M_IS_ZSTD(ph.method))
+        return true; // zstd cannot decompress in-place
     if (ph.level > 1)
         return false;
     return true;

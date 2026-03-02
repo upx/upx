@@ -295,7 +295,7 @@ def main(argv):
     if 1 and st.st_size <= 0:
         sys.stderr.write("%s: ERROR: empty file\n" % (ifile))
         sys.exit(1)
-    if 1 and st.st_size > 128*1024:
+    if 1 and st.st_size > 512*1024:
         sys.stderr.write("%s: ERROR: file is too big (%d bytes)\n" % (ifile, st.st_size))
         sys.exit(1)
 

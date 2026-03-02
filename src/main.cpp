@@ -463,6 +463,13 @@ static int do_option(int optc, const char *arg) {
     case 724:
         opt->prefer_ucl = true;
         break;
+#if WITH_ZSTD
+    case 725:
+        opt->method_zstd_seen = true;
+        if (!set_method(M_ZSTD, -1))
+            e_method(M_ZSTD, opt->level);
+        break;
+#endif
 
     // compression level
     case '1':
@@ -898,7 +905,7 @@ int main_get_options(int argc, char **argv) {
         {"no-lzma", 0x10, N, 722}, // disable all_methods_use_lzma
         {"prefer-nrv", 0x10, N, 723},
         {"prefer-ucl", 0x10, N, 724},
-        // compression settings
+        {"zstd", 0x10, N, 725},    // --zstd
         {"all-filters", 0x10, N, 523},
         {"all-methods", 0x10, N, 524},
         {"exact", 0x10, N, 525},  // user requires byte-identical decompression
@@ -1078,6 +1085,7 @@ void main_get_envoptions() {
         {"no-lzma", 0x10, N, 722}, // disable all_methods_use_lzma
         {"prefer-nrv", 0x10, N, 723},
         {"prefer-ucl", 0x10, N, 724},
+        {"zstd", 0x10, N, 725},    // --zstd
 
         // win32/pe
         {"compress-exports", 2, N, 630},

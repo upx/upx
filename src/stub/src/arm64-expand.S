@@ -174,3 +174,22 @@ not_nrv2b:
     cmp meth,#M_LZMA; bne not_lzma
 #include "arch/arm64/v8/lzma_d.S"
 not_lzma:
+
+section ZSTD_DAISY
+    .balign 4
+#define M_ZSTD 16
+    cmp meth,#M_ZSTD; bne not_zstd
+    stp x3,lr,[sp,#-16]!
+    uxtw x5,w1
+    ldr w4,[x3]
+    mov x3,x5
+    mov x5,x0
+    mov x0,x2
+    uxtw x1,w4
+    mov x2,x5
+    bl upx_zstd_decompress
+    ldp x3,lr,[sp],#16
+    str w0,[x3]
+    mov x0,#0
+    ret
+not_zstd:

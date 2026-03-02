@@ -610,7 +610,7 @@ using upx::tribool;
 // #define M_CL1B_LE16   13
 #define M_LZMA        14
 #define M_DEFLATE     15 // NOT YET USED
-#define M_ZSTD        16 // NOT YET USED
+#define M_ZSTD        16
 #define M_BZIP2       17 // NOT YET USED
 // compression methods internal usage
 #define M_ALL         (-1)

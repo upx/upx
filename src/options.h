@@ -66,6 +66,7 @@ struct Options final {
     bool method_nrv2b_seen;
     bool method_nrv2d_seen;
     bool method_nrv2e_seen;
+    bool method_zstd_seen;
     int level;  // compression level 1..10
     int filter; // preferred filter from Packer::getFilters()
     bool ultra_brute;

@@ -130,6 +130,26 @@ not_nrv2b:
 
 not_lzma:
 
+section ZSTD_DAISY
+#define M_ZSTD 16
+    li pre8,M_ZSTD; bne meth,pre8,not_zstd
+    addi sp,sp,-16
+    sd ra,0(sp)
+    mv t0,a0
+    mv t1,a1
+    lw t2,0(a3)
+    mv a0,a2
+    mv a1,t2
+    mv a2,t0
+    mv a3,t1
+    call upx_zstd_decompress
+    mv a1,a0
+    li rv,0
+    ld ra,0(sp)
+    addi sp,sp,16
+    j eof_lzma
+not_zstd:
+
   section EXP_TAIL
 // Fall through: daisy chain had no matching method
     ebreak  // EXP_TAIL

@@ -283,6 +283,9 @@ void show_help(int verbose) {
         fg = con_fg(f, fg);
         con_fprintf(f,
                     "  --lzma              try LZMA [slower but tighter than NRV]\n"
+#if WITH_ZSTD
+                    "  --zstd              try zstd [fast decompression]\n"
+#endif
                     "  --brute             try all available compression methods & filters [slow]\n"
                     "  --ultra-brute       try even more compression variants [very slow]\n"
                     "\n");

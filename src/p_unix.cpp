@@ -487,7 +487,7 @@ unsigned PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
         int const sz_cpr = ph.c_len = get_te32(&hdr.sz_cpr);
         ph.filter_cto = hdr.b_cto8;
 
-        if (sz_unc == 0 || M_LZMA < hdr.b_method) {
+        if (sz_unc == 0 || (M_LZMA < hdr.b_method && hdr.b_method != M_ZSTD)) {
             throwCantUnpack("corrupt b_info");
             break;
         }
@@ -508,7 +508,18 @@ unsigned PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
 
         if (sz_cpr < sz_unc) { // block was compressed
             ph.set_method(hdr.b_method);
-            decompress(ibuf+j, ibuf+inlen, false);
+            if (M_IS_ZSTD(hdr.b_method)) {
+                // zstd cannot decompress in-place; use a separate buffer
+                MemBuffer tmp(sz_unc);
+                unsigned tmp_len = sz_unc;
+                int r = upx_decompress(ibuf + j, sz_cpr, raw_bytes(tmp, sz_unc), &tmp_len,
+                                       hdr.b_method, &ph.compress_result);
+                if (r != UPX_E_OK || tmp_len != (unsigned)sz_unc)
+                    throwCompressedDataViolation();
+                memcpy(ibuf + inlen, tmp, sz_unc);
+            } else {
+                decompress(ibuf+j, ibuf+inlen, false);
+            }
             if (12==szb_info) { // modern per-block filter
                 if (hdr.b_ftid) {
                     Filter ft(ph.level);  // FIXME: ph.level for b_info?

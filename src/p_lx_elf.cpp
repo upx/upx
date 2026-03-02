@@ -1559,7 +1559,7 @@ PackLinuxElf32::buildLinuxLoader(
 //   EXP_TAIL  FIXME: unfilter
 //   SO_TAIL
 //   SO_MAIN  C-language supervision based on PT_LOADs
-        char sec[200]; memset(sec, 0, sizeof(sec));  // debug convenience
+        char sec[512]; memset(sec, 0, sizeof(sec));  // debug convenience
         int len = 0;
         unsigned m_decompr = methods_used | (1u << (0xFF & ph_forced_method(ph.method)));
         len += snprintf(sec, sizeof(sec), "%s", "SO_HEAD,ptr_NEXT,EXP_HEAD");
@@ -1578,6 +1578,11 @@ PackLinuxElf32::buildLinuxLoader(
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s",
                 "LZMA_DAISY,LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
         }
+#if WITH_ZSTD
+        if (((1u<<M_ZSTD)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "ZSTD_DAISY,ZSTD_DEC");
+        }
+#endif
         len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "EXP_TAIL");
         // End of daisy-chain fall-through.
 
@@ -1612,7 +1617,7 @@ PackLinuxElf32::buildLinuxLoader(
          ) { // main program with ELF2 de-compressor (folded portion)
         NO_printf("entry fold (ELF2) initLoader  %p  %#x\n", fold, szfold);
         initLoader(this->e_machine, fold, szfold);
-        char sec[200]; memset(sec, 0, sizeof(sec));  // debug convenience
+        char sec[512]; memset(sec, 0, sizeof(sec));  // debug convenience
         int len = 0;
         unsigned m_decompr = methods_used | (1u << (0xFF & ph_forced_method(ph.method)));
         len += snprintf(sec, sizeof(sec), "%s", ".text,EXP_HEAD");
@@ -1629,6 +1634,11 @@ PackLinuxElf32::buildLinuxLoader(
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s",
                 "LZMA_DAISY,LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
         }
+#if WITH_ZSTD
+        if (((1u<<M_ZSTD)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "ZSTD_DAISY,ZSTD_DEC");
+        }
+#endif
         len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "EXP_TAIL");
 
         // $ARCH-linux.elf-main2.c calls upx_mmap_and_fd.
@@ -1778,7 +1788,7 @@ PackLinuxElf64::buildLinuxLoader(
 //   EXP_TAIL  FIXME: unfilter
 //   SO_TAIL
 //   SO_MAIN  C-language supervision based on PT_LOADs
-        char sec[200]; memset(sec, 0, sizeof(sec));  // debug convenience
+        char sec[512]; memset(sec, 0, sizeof(sec));  // debug convenience
         int len = 0;
         unsigned m_decompr = methods_used | (1u << (0xFF & ph_forced_method(ph.method)));
         len += snprintf(sec, sizeof(sec), "%s", "SO_HEAD,ptr_NEXT,EXP_HEAD");
@@ -1797,6 +1807,11 @@ PackLinuxElf64::buildLinuxLoader(
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s",
                 "LZMA_DAISY,LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
         }
+#if WITH_ZSTD
+        if (((1u<<M_ZSTD)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "ZSTD_DAISY,ZSTD_DEC");
+        }
+#endif
         len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "EXP_TAIL");
         // End of daisy-chain fall-through.
 
@@ -1824,7 +1839,7 @@ PackLinuxElf64::buildLinuxLoader(
          ||  this->e_machine==Elf64_Ehdr::EM_RISCV
          ) { // main program with ELF2 de-compressor (folded portion)
         initLoader(this->e_machine, fold, szfold);
-        char sec[200]; memset(sec, 0, sizeof(sec));  // debug convenience
+        char sec[512]; memset(sec, 0, sizeof(sec));  // debug convenience
         int len = 0;
         unsigned m_decompr = methods_used | (1u << (0xFF & ph_forced_method(ph.method)));
         len += snprintf(sec, sizeof(sec), "%s", ".text,EXP_HEAD");
@@ -1841,12 +1856,20 @@ PackLinuxElf64::buildLinuxLoader(
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s",
                 "LZMA_DAISY,LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
         }
+#if WITH_ZSTD
+        if (((1u<<M_ZSTD)) & m_decompr) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "ZSTD_DAISY,ZSTD_DEC");
+        }
+#endif
         len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "EXP_TAIL");
         if (hasLoaderSection("SYSCALLS")) {
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "SYSCALLS");
         }
         if (hasLoaderSection("STRCON")) {
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "STRCON");
+        }
+        if (hasLoaderSection(".data")) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", ".data");
         }
         (void)len;
         NO_printf("\n\nbuildLinuxLoader64 (main fold ELF2): %s\n", sec);
@@ -1864,11 +1887,13 @@ PackLinuxElf64::buildLinuxLoader(
         e_type = get_te16(&hf->ehdr.e_type);
         if (ET_REL == e_type) {
             initLoader(this->e_machine, fold, szfold);
+        fprintf(stderr, "DEBUG: ET_REL path, e_type=%d\n", e_type);
             addLoader(".text", nullptr);
             relocateLoader();
             int sz_unc_int(0);
             uncLoader = linker->getLoader(&sz_unc_int);
             sz_unc = sz_unc_int;
+            fprintf(stderr, "DEBUG ELF2: sz_unc=%u (0x%x)\n", sz_unc, sz_unc);
         }
         else if (ET_EXEC == e_type) {
             hf = (cprElfHdr1 const *)fold;
