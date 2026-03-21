@@ -926,7 +926,7 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 }
                 if (Elf64_Shdr::SHT_RELA == sh_type
                 &&  n_jmp_slot  // FIXME: does this apply to SHT_RELA ?
-                &&  !strcmp(".rel.plt", get_te32(&shdr->sh_name) + shstrtab)) {
+                &&  !strcmp(".rela.plt", get_te32(&shdr->sh_name) + shstrtab)) {
                     u64_t va = elf_unsigned_dynamic(Elf64_Dyn::DT_PLTGOT) - (is_asl ? asl_delta : 0);
                     // Now use the old Phdrs (phdri)
                     Elf64_Phdr const *phva;
