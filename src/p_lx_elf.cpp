@@ -4213,7 +4213,8 @@ PackLinuxElf64::generateElfHdr(
     ) { // propagate sloppiness so that decompression does not complain
         h3->ehdr.e_ident[Elf64_Ehdr::EI_OSABI] = ehdri.e_ident[Elf64_Ehdr::EI_OSABI];
     }
-    if (Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine)) {
+    if (Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine)
+    ||  Elf64_Ehdr::EM_RISCV == get_te16(&ehdri.e_machine)) {
         h3->ehdr.e_flags = ehdri.e_flags;  // "0x1, abiv1" vs "0x2, abiv2"
     }
 
@@ -7109,7 +7110,8 @@ void PackLinuxElf64::un_shlib_1(
     ||  ehdro->e_version!=ehdri.e_version
         // less strict for EM_PPC64 to workaround earlier bug
     ||  !( ehdro->e_flags==ehdri.e_flags
-        || Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine))
+        || Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine)
+        || Elf64_Ehdr::EM_RISCV == get_te16(&ehdri.e_machine))
     ||  ehdro->e_ehsize !=ehdri.e_ehsize
         // check EI_MAG[0-3], EI_CLASS, EI_DATA, EI_VERSION
     ||  memcmp(ehdro->e_ident, ehdri.e_ident, Elf64_Ehdr::EI_OSABI)) {
@@ -7865,7 +7867,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         ||  ehdr->e_version!=ehdri.e_version
             // less strict for EM_PPC64 to workaround earlier bug
         ||  !( ehdr->e_flags==ehdri.e_flags
-            || Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine))
+            || Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine)
+            || Elf64_Ehdr::EM_RISCV == get_te16(&ehdri.e_machine))
         ||  ehdr->e_ehsize !=ehdri.e_ehsize
             // check EI_MAG[0-3], EI_CLASS, EI_DATA, EI_VERSION
         ||  memcmp(ehdr->e_ident, ehdri.e_ident, Elf64_Ehdr::EI_OSABI)) {
