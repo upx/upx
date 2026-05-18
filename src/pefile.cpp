@@ -2486,7 +2486,9 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     callCompressWithFilters(ft, filter_strategy, ih.codebase);
     // info: see buildLoader()
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) & ~oam1;
-    if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) & ~oam1) > tlsindex + 4)
+    // but keep PETLSHAK for DLLs: the loader sets the tls index after
+    // LoadLibrary, so it must survive decompression
+    if (tlsindex && !isdll && ((newvsize - ph.c_len - 1024 + oam1) & ~oam1) > tlsindex + 4)
         tlsindex = 0;
 
     const int oh_filealign = UPX_MIN(ih.filealign, 0x200u);

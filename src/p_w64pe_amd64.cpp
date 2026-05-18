@@ -81,7 +81,9 @@ void PackW64PeAmd64::buildLoader(const Filter *ft) {
     unsigned tmp_tlsindex = tlsindex;
     const unsigned oam1 = ih.objectalign - 1;
     const unsigned newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) & ~oam1;
-    if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) & ~oam1) > tlsindex + 4)
+    // keep PETLSHAK for DLLs: the loader sets the tls index after
+    // LoadLibrary, so it must survive decompression
+    if (tlsindex && !isdll && ((newvsize - ph.c_len - 1024 + oam1) & ~oam1) > tlsindex + 4)
         tmp_tlsindex = 0;
 
     // prepare loader
