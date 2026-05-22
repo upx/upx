@@ -524,7 +524,10 @@ void PeFile32::processRelocs() { // pass1
             if (old_objs != ih.objects && 1) { // was removed
                 IDADDR(PEDIR_BASERELOC) = 0;
                 IDSIZE(PEDIR_BASERELOC) = 0;
-                ih.imagesize = isection[-1 + ih.objects].vsize + isection[-1 + ih.objects].vaddr;
+                const unsigned oam1 = ih.objectalign - 1;
+                ih.imagesize =
+                    (isection[-1 + ih.objects].vsize + isection[-1 + ih.objects].vaddr + oam1) &
+                    ~oam1;
             }
         }
         mb_orelocs.alloc(1);
@@ -632,7 +635,10 @@ void PeFile64::processRelocs() { // pass1
             if (old_objs != ih.objects && 1) { // was removed
                 IDADDR(PEDIR_BASERELOC) = 0;
                 IDSIZE(PEDIR_BASERELOC) = 0;
-                ih.imagesize = isection[-1 + ih.objects].vsize + isection[-1 + ih.objects].vaddr;
+                const unsigned oam1 = ih.objectalign - 1;
+                ih.imagesize =
+                    (isection[-1 + ih.objects].vsize + isection[-1 + ih.objects].vaddr + oam1) &
+                    ~oam1;
             }
         }
         mb_orelocs.alloc(1);
