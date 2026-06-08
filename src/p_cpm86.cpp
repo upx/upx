@@ -497,8 +497,12 @@ void PackCpm86::unpack(OutputFile *fo) {
     decompress(ibuf + c_off, obuf);
 
     // ph.u_len may include padding past the real end of file; write only the
-    // original byte count for a lossless result.
+    // original byte count for a lossless result.  u_file_size is taken verbatim
+    // from the pack header and must not exceed u_len (the obuf size), else the
+    // write below would read past the decompression buffer.
     unsigned out_len = ph.u_file_size ? ph.u_file_size : ph.u_len;
+    if (out_len > ph.u_len)
+        throwCantUnpack("file damaged");
     if (fo)
         fo->write(obuf, out_len);
 }
