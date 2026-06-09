@@ -924,6 +924,8 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
                 fi->readx(data, len);
                 unsigned const pos = o__mod_init_func - seg->fileoff;
                 if (pos < seg->filesize) {
+                    if (sizeof(unsigned) > (seg->filesize - pos))
+                        throwCantPack("bad __mod_init_func");
                     if (*(unsigned *)(pos + data) != (unsigned)prev_mod_init_func) {
                         throwCantPack("__mod_init_func inconsistent");
                     }
@@ -1607,7 +1609,10 @@ void PackMachBase<T>::unpack(OutputFile *fo)
                 MemBuffer data(len);
                 fi->readx(data, len);
                 if (!strcmp("__DATA", rc->segname)) {
-                    set_te32(&data[o__mod_init_func - rc->fileoff], unc_mod_init_func);
+                    unsigned const mif_off = o__mod_init_func - rc->fileoff;
+                    if (sizeof(unc_mod_init_func) > len || mif_off > len - sizeof(unc_mod_init_func))
+                        throwCantUnpack("bad __mod_init_func");
+                    set_te32(&data[mif_off], unc_mod_init_func);
                 }
                 if (fo)
                     fo->write(data, len);
