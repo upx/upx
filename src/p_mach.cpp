@@ -1584,6 +1584,10 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     }
     Mach_segment_command const *sc = (Mach_segment_command const *)(void *)(1+ mhdr);
     if (my_filetype==Mach_header::MH_DYLIB) { // rest of lc_seg are not compressed
+        // rawmseg holds mhdri.ncmds load commands (canUnpack bounds-checked them),
+        // but the walk below counts with ncmds from the decompressed header
+        if (mhdri.ncmds != mhdr->ncmds)
+            throwCantUnpack("file header corrupted");
         upx_uint64_t cpr_mod_init_func(0);
                 TE32 unc_mod_init_func; *(int *)&unc_mod_init_func = 0;
         Mach_segment_command const *rc = rawmseg;
