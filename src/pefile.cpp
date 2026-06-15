@@ -1262,7 +1262,14 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
         throwCantPack("export directory too big:  functions=%#x  names=%#x",
                       (unsigned) edir.functions, (unsigned) edir.names);
     }
+    // edir.name is checked above; the address/name/ordinal tables and the
+    // individual name RVAs are read from base with the same trust but were
+    // never confined to the export directory, so a crafted table RVA reads
+    // out of bounds. Keep every access within [eoffs, eoffs + esize).
+    const unsigned end = eoffs + esize;
     len = sizeof(LE32) * edir.functions;
+    if (edir.addrtable >= end || len > end - edir.addrtable)
+        throwCantPack("bad export address table RVA %#x", (unsigned) edir.addrtable);
     functionptrs = New(char, len + 1);
     memcpy(functionptrs, base + edir.addrtable, len);
     size += len;
@@ -1270,13 +1277,18 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
 
     unsigned ic;
     names = New(char *, edir.names + edir.functions + 1);
+    if (edir.nameptrtable >= end || sizeof(LE32) * edir.names > end - edir.nameptrtable)
+        throwCantPack("bad export name pointer table RVA %#x", (unsigned) edir.nameptrtable);
     for (ic = 0; ic < edir.names; ic++) {
-        char *n = base + get_le32(base + edir.nameptrtable + ic * sizeof(LE32));
+        const unsigned namerva = get_le32(base + edir.nameptrtable + ic * sizeof(LE32));
+        if (namerva >= end)
+            throwCantPack("bad export name RVA %#x", namerva);
+        char *n = base + namerva;
         len = strlen(n) + 1;
         names[ic] = ::strdup(n);
         assert_noexcept(names[ic] != nullptr);
         size += len;
-        iv.add_interval(get_le32(base + edir.nameptrtable + ic * sizeof(LE32)), len);
+        iv.add_interval(namerva, len);
     }
     iv.add_interval(edir.nameptrtable, sizeof(LE32) * edir.names);
     size += sizeof(LE32) * edir.names;
@@ -1295,6 +1307,8 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
             names[ic + edir.names] = nullptr;
 
     len = 2 * edir.names;
+    if (edir.ordinaltable >= end || len > end - edir.ordinaltable)
+        throwCantPack("bad export ordinal table RVA %#x", (unsigned) edir.ordinaltable);
     ordinals = New(char, len + 1);
     memcpy(ordinals, base + edir.ordinaltable, len);
     size += len;
