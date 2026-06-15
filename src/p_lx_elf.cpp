@@ -4508,6 +4508,12 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter &ft)
     if (opt->o_unix.preserve_build_id) {
         // set this so we can use elf_find_section_name
         e_shnum = get_te16(&ehdri.e_shnum);
+        e_shstrndx = get_te16(&ehdri.e_shstrndx);
+        if (e_shnum <= e_shstrndx) {
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad e_shstrndx %#x >= e_shnum %#x", e_shstrndx, e_shnum);
+            throwCantPack(msg);
+        }
         if (!shdri) {
             mb_shdr.alloc(e_shnum * sizeof(Elf32_Shdr));
             shdri = (Elf32_Shdr *)mb_shdr.getVoidPtr();
@@ -4516,7 +4522,7 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter &ft)
             fi->readx(shdri, e_shnum * sizeof(Elf32_Shdr));
         }
         //set the shstrtab
-        sec_strndx = &shdri[get_te16(&ehdri.e_shstrndx)];
+        sec_strndx = &shdri[e_shstrndx];
 
         upx_uint32_t sh_size = get_te32(&sec_strndx->sh_size);
         mb_shstrtab.alloc(sh_size); shstrtab = (char *)mb_shstrtab.getVoidPtr();
@@ -5360,6 +5366,12 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
     if (opt->o_unix.preserve_build_id) {
         // set this so we can use elf_find_section_name
         e_shnum = get_te16(&ehdri.e_shnum);
+        e_shstrndx = get_te16(&ehdri.e_shstrndx);
+        if (e_shnum <= e_shstrndx) {
+            char msg[50]; snprintf(msg, sizeof(msg),
+                "bad e_shstrndx %#x >= e_shnum %#x", e_shstrndx, e_shnum);
+            throwCantPack(msg);
+        }
         if (!shdri) {
             mb_shdr.alloc(e_shnum * sizeof(Elf64_Shdr));
             shdri = (Elf64_Shdr *)mb_shdr.getVoidPtr();
@@ -5368,7 +5380,7 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
             fi->readx(shdri, e_shnum * sizeof(Elf64_Shdr));
         }
         //set the shstrtab
-        sec_strndx = &shdri[get_te16(&ehdri.e_shstrndx)];
+        sec_strndx = &shdri[e_shstrndx];
 
         upx_uint64_t sh_size = get_te64(&sec_strndx->sh_size);
         mb_shstrtab.alloc(sh_size); shstrtab = (char *)mb_shstrtab.getVoidPtr();
