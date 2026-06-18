@@ -1491,7 +1491,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
     // FIXME forgot space left for LC_CODE_SIGNATURE;
-    // but canUnpack() sets overlay_offset anyway.
+    if (is_arm64()) overlay_offset += 16384; // LC_CODE_SIGNATURE space
+     but canUnpack() sets overlay_offset anyway.
     //overlay_offset = sizeof(mhdri) + mhdri.sizeofcmds + sizeof(linfo);
 
     fi->seek(overlay_offset, SEEK_SET);
