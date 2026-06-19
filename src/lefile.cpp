@@ -290,11 +290,15 @@ void LeFile::countFixups(unsigned *counts) const {
             counts[o] += 9;
             // fall through
         case 7: // 32-bit offset
+            if (fix[4] == 0 || fix[4] > o)
+                throwCantPack("bad fixup object number");
             counts[fix[4] - 1] += 4;
             fix += (fix[1] & 0x10) ? 9 : 7;
             break;
         case 0x27: // 32-bit offset list
             ll = fix[2];
+            if (fix[3] == 0 || fix[3] > o)
+                throwCantPack("bad fixup object number");
             counts[fix[3] - 1] += ll * 4;
             fix += (fix[1] & 0x10) ? 6 : 4;
             fix += ll * 2;
