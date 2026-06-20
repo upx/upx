@@ -303,6 +303,15 @@ int PackVmlinuzI386::decompressKernel()
             // Full ELF in theory; for now, try to handle as .bin at physical_start.
             // Check for PT_LOAD.p_paddr being ascending and adjacent.
             Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)(void const *)ibuf;
+            // e_phoff/e_shoff and e_phnum/e_shnum come from the decompressed
+            // (untrusted) image; bound the header tables to it before the raw
+            // pointer walks below.
+            upx_uint64_t const u_klen = (unsigned) klen;
+            if (u_klen < sizeof(*ehdr)
+            ||  (upx_uint64_t)ehdr->e_phoff + (upx_uint64_t)ehdr->e_phnum * sizeof(Elf_LE32_Phdr) > u_klen
+            ||  (upx_uint64_t)ehdr->e_shoff + (upx_uint64_t)ehdr->e_shnum * sizeof(Elf_LE32_Shdr) > u_klen) {
+                throwCantPack("corrupt ELF in vmlinuz payload");
+            }
             Elf_LE32_Phdr const *phdr = (Elf_LE32_Phdr const *)(ehdr->e_phoff + (char const *)ehdr);
             Elf_LE32_Shdr const *shdr = (Elf_LE32_Shdr const *)(ehdr->e_shoff + (char const *)ehdr);
             unsigned hi_paddr = 0, lo_paddr = 0;
