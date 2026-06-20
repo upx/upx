@@ -1512,7 +1512,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(&bhdr, sizeof(bhdr));
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
-    if ((unsigned)file_size < ph.c_len || ph.c_len == 0 || ph.u_len == 0)
+    if ((unsigned)file_size < ph.c_len || ph.c_len == 0 || ph.u_len < sizeof(mhdri))
         throwCantUnpack("file header corrupted");
     ph.method = bhdr.b_method;
     if (ph.method < M_NRV2B_LE32
@@ -1543,6 +1543,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     unsigned char const *ptr = (unsigned char const *)(1+mhdr);
     unsigned headway = mhdr_buf.getSize() - sizeof(*mhdr);
     for (unsigned j= 0; j < ncmds; ++j) {
+        if (headway < sizeof(Mach_command))
+            throwCantUnpack("bad packed Mach load_command");
         unsigned cmdsize = ((Mach_command const *)ptr)->cmdsize;
         if (is_bad_linker_command( ((Mach_command const *)ptr)->cmd, cmdsize,
                 headway, lc_seg, sizeof(Addr))) {
