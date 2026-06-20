@@ -1807,6 +1807,9 @@ tribool PackMachBase<T>::canUnpack()
             unsigned disp = *(TE32 const *)&b[1];
             if (CPU_TYPE_X86_64 == my_cputype) { // Emulate the code
                 if (0xe8==b[0] && disp < bufsize
+                    // disp and the b_info that follow it are used as raw offsets
+                    // into buf3, which holds only bufsize bytes that were read.
+                    && (disp + 11 + sizeof(struct b_info)) <= bufsize
                     // This has been obsoleted by amd64-darwin.macho-entry.S
                     // searching for "executable_path=" etc.
                 &&  0x5d==b[5+disp] && 0xe8==b[6+disp]) {
@@ -1815,7 +1818,11 @@ tribool PackMachBase<T>::canUnpack()
                         struct b_info const *bptr = (struct b_info const *)&b[11+disp];
                         // This is the folded stub.
                         // FIXME: check b_method?
-                        if (bptr->sz_cpr < bptr->sz_unc && bptr->sz_unc < 0x1000) {
+                        if (bptr->sz_cpr < bptr->sz_unc && bptr->sz_unc < 0x1000
+                            // overlay_offset is read at (32 + b); keep that read
+                            // inside the bytes that were read into buf3.
+                        && ((11 + disp + sizeof(struct b_info) + (unsigned) bptr->sz_cpr)
+                                + 32 + sizeof(TE32)) <= bufsize) {
                             b = bptr->sz_cpr + (unsigned char const *)(1+ bptr);
                             // FIXME: check PackHeader::putPackHeader(), packhead.cpp
                             overlay_offset = *(TE32 const *)(32 + b);
