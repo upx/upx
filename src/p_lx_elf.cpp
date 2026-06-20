@@ -2963,6 +2963,9 @@ upx_uint64_t PackLinuxElf32::canPack_Shdr(Elf32_Phdr const *pload_x0)
                         }
                         else if (R_ARM_ABS32 == r_type) {
                             unsigned symj = ELF32_R_SYM(r_info);
+                            if (symnum_max <= symj) {
+                                throwCantPack("bad symbol %#x in DT_INIT_ARRAY[0] relocation", symj);
+                            }
                             user_init_va = get_te32(&dynsym[symj].st_value);
                             set_te32(&rp->r_info, ELF32_R_INFO(0, R_ARM_RELATIVE));
                             // pack3() will set &file_image[user_init_off]
@@ -2977,6 +2980,9 @@ upx_uint64_t PackLinuxElf32::canPack_Shdr(Elf32_Phdr const *pload_x0)
                         }
                         else if (R_386_32 == r_type) {
                             unsigned symj = ELF32_R_SYM(r_info);
+                            if (symnum_max <= symj) {
+                                throwCantPack("bad symbol %#x in DT_INIT_ARRAY[0] relocation", symj);
+                            }
                             user_init_va = get_te32(&dynsym[symj].st_value);
                             set_te32(&rp->r_info, ELF32_R_INFO(0, R_386_RELATIVE));
                             // pack3() will set &file_image[user_init_off]
@@ -3105,7 +3111,11 @@ upx_uint64_t PackLinuxElf64::canPack_Shdr(Elf64_Phdr const *pload_x0)
                             user_init_va = get_te64(&rp->r_addend);
                         }
                         else if (R_AARCH64_ABS64 == r_type) {
-                            user_init_va = get_te64(&dynsym[ELF64_R_SYM(r_info)].st_value);
+                            unsigned const symj = ELF64_R_SYM(r_info);
+                            if (symnum_max <= symj) {
+                                throwCantPack("bad symbol %#x in DT_INIT_ARRAY[0] relocation", symj);
+                            }
+                            user_init_va = get_te64(&dynsym[symj].st_value);
                         }
                         else {
                             char msg[50]; snprintf(msg, sizeof(msg),
@@ -3119,7 +3129,11 @@ upx_uint64_t PackLinuxElf64::canPack_Shdr(Elf64_Phdr const *pload_x0)
                             user_init_va = get_te64(&rp->r_addend);
                         }
                         else if (R_RISCV_64 == r_type) {
-                            user_init_va = get_te64(&dynsym[ELF64_R_SYM(r_info)].st_value);
+                            unsigned const symj = ELF64_R_SYM(r_info);
+                            if (symnum_max <= symj) {
+                                throwCantPack("bad symbol %#x in DT_INIT_ARRAY[0] relocation", symj);
+                            }
+                            user_init_va = get_te64(&dynsym[symj].st_value);
                         }
                         else {
                             char msg[50]; snprintf(msg, sizeof(msg),
@@ -3133,7 +3147,11 @@ upx_uint64_t PackLinuxElf64::canPack_Shdr(Elf64_Phdr const *pload_x0)
                             user_init_va = get_te64(&rp->r_addend);
                         }
                         else if (R_X86_64_64 == r_type) {
-                            user_init_va = get_te64(&dynsym[ELF64_R_SYM(r_info)].st_value);
+                            unsigned const symj = ELF64_R_SYM(r_info);
+                            if (symnum_max <= symj) {
+                                throwCantPack("bad symbol %#x in DT_INIT_ARRAY[0] relocation", symj);
+                            }
+                            user_init_va = get_te64(&dynsym[symj].st_value);
                         }
                         else {
                             char msg[50]; snprintf(msg, sizeof(msg),
