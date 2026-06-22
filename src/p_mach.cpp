@@ -2034,6 +2034,18 @@ tribool PackMachBase<T>::canPack()
         headway -= cmdsize;
         if (lc_seg == cmd) {
             msegcmd[j] = *segptr;
+            // is_bad_linker_command() only checks that cmdsize encodes a whole
+            // number of sections; the nsects field itself is never compared
+            // against cmdsize. pack4dylib() later walks segptr->nsects section
+            // commands from (1+ segptr), so an inflated nsects reads past the
+            // end of rawmseg. Require the two to agree.
+            unsigned const segcmdsize = lc_seg_info[sizeof(Addr) >> 3].segcmdsize;
+            unsigned const seccmdsize = lc_seg_info[sizeof(Addr) >> 3].seccmdsize;
+            if (segptr->nsects != (cmdsize - segcmdsize) / seccmdsize) {
+                char buf[64]; snprintf(buf, sizeof(buf),
+                    "bad LC_SEGMENT[%u].nsects %#x", j, (unsigned) segptr->nsects);
+                throwCantPack(buf);
+            }
             if (!strcmp("__TEXT", segptr->segname)) {
                 Mach_section_command const *secp =
                     (Mach_section_command const *)(const void*)(const char*)(1+ segptr);
