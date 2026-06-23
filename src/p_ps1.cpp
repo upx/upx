@@ -361,7 +361,7 @@ bool PackPs1::findBssSection() {
     byte reg;
     const LE32 *const p1 = ACC_CCAST(const LE32 *, ibuf + (ih.epc - ih.tx_ptr));
 
-    if ((ih.epc - ih.tx_ptr + (BSS_CHK_LIMIT * 4)) > fdata_size)
+    if ((ih.epc - ih.tx_ptr + (BSS_CHK_LIMIT * 4) + sizeof(bss_nfo)) > fdata_size)
         return false;
 
     // check 18 opcodes for sw zero,0(x)
