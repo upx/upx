@@ -2749,7 +2749,11 @@ bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
     if (!dynsym || !dynstr || !rela) {
         return false;
     }
+    char const *const file_end = (char const *)&file_image[0] + file_size_u;
     for (unsigned relnum= 0; 0 < sz; (sz -= sizeof(Elf64_Rela)), ++rela, ++relnum) {
+        if (file_end < (char const *)(1+ rela)) {
+            break;  // DT_RELASZ/DT_PLTRELSZ runs past EOF
+        }
         unsigned const symnum = get_te64(&rela->r_info) >> 32;
         char const *const symnam = get_dynsym_name(symnum, relnum);
         if (0==strcmp(symnam, "__libc_start_main")  // glibc
@@ -2785,7 +2789,11 @@ bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
     if (!dynsym || !dynstr || !rel) {
         return false;
     }
+    char const *const file_end = (char const *)&file_image[0] + file_size_u;
     for (unsigned relnum= 0; 0 < sz; (sz -= sizeof(Elf32_Rel)), ++rel, ++relnum) {
+        if (file_end < (char const *)(1+ rel)) {
+            break;  // DT_RELSZ/DT_PLTRELSZ runs past EOF
+        }
         unsigned const symnum = get_te32(&rel->r_info) >> 8;
         char const *const symnam = get_dynsym_name(symnum, relnum);
         if (0==strcmp(symnam, "__libc_start_main")  // glibc
