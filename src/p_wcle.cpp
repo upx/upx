@@ -129,7 +129,7 @@ tribool PackWcle::canPack() {
 
 void PackWcle::encodeEntryTable() {
     unsigned count, object, n;
-    byte *p = ientries;
+    SPAN_S_VAR(byte, p, ientries, soentries);
     n = 0;
     while (*p) {
         count = *p;
@@ -138,7 +138,10 @@ void PackWcle::encodeEntryTable() {
             p += 2;
         else if (p[1] == 3) // 32-bit bundle
         {
-            object = get_le16(p + 2) - 1;
+            object = get_le16(p + 2);
+            if (object == 0 || object > objects)
+                throwCantPack("bad object number in entry table");
+            object -= 1;
             set_le16(p + 2, 1);
             p += 4;
             for (; count; count--, p += 5)
@@ -429,6 +432,8 @@ void PackWcle::pack(OutputFile *fo) {
 
     if (ih.init_ss_object != objects)
         throwCantPack("the stack is not in the last object");
+    if (ih.init_cs_object == 0 || ih.init_cs_object > objects)
+        throwCantPack("bad init_cs_object");
 
     preprocessFixups();
 
