@@ -35,6 +35,11 @@ static constexpr int has_builtin = 0;
 #else
 static constexpr int has_builtin = 1;
 #endif
+#if !defined(__has_cpp_attribute)
+static constexpr int has_cpp_attribute = 0;
+#else
+static constexpr int has_cpp_attribute = 1;
+#endif
 #if !defined(__has_declspec_attribute)
 static constexpr int has_declspec_attribute = 0;
 #else
@@ -620,12 +625,13 @@ void show_sysinfo(const char *options_var) {
 #if defined(_MSC_FULL_VER)
         cf_print("_MSC_FULL_VER", "%lld", _MSC_FULL_VER + 0);
 #endif
-        cf_print("__has_attribute", "%lld", has_attribute, 3);
-        cf_print("__has_builtin", "%lld", has_builtin, 3);
-        cf_print("__has_declspec_attribute", "%lld", has_declspec_attribute, 3);
-        cf_print("__has_feature", "%lld", has_feature, 3);
-        cf_print("__has_include", "%lld", has_include, 3);
-        cf_print("__has_warning", "%lld", has_warning, 3);
+        cf_print("__has_attribute", "%lld", has_attribute, 4);
+        cf_print("__has_builtin", "%lld", has_builtin, 4);
+        cf_print("__has_cpp_attribute", "%lld", has_cpp_attribute, 4);
+        cf_print("__has_declspec_attribute", "%lld", has_declspec_attribute, 4);
+        cf_print("__has_feature", "%lld", has_feature, 4);
+        cf_print("__has_include", "%lld", has_include, 4);
+        cf_print("__has_warning", "%lld", has_warning, 4);
 
         // architecture
 #if defined(__CHERI__)

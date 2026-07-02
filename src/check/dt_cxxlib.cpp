@@ -1362,6 +1362,15 @@ struct alignas(1) TestXE final {
     static noinline upx_int64_t noinline_yign_extend64_64(upx_uint64_t v) noexcept {
         return yign_extend64(v, 64);
     }
+
+    static noinline upx_rsize_t noinline_mem_size(upx_uint64_t element_size, upx_uint64_t n)
+        may_throw {
+        return mem_size(element_size, n);
+    }
+    static noinline upx_rsize_t noinline_mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
+        may_throw {
+        return mem_size_get_n(element_size, n);
+    }
 };
 } // namespace
 
@@ -1696,20 +1705,26 @@ TEST_CASE("upx::run_time 1b") {
             }
         }
     }
+    {
+        const upx_uint64_t element_size = upx_uint64_t(acc_vget_acc_int64l_t(1, 0));
+        const upx_uint64_t n = upx_uint64_t(acc_vget_acc_int64l_t(0, 0));
+        assert_noexcept2(TestXE::noinline_mem_size(element_size, n) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_get_n(element_size, n) == 0);
+    }
 }
 
 TEST_CASE("upx::run_time 2") {
     const upx_ptraddr_t p = upx_ptraddr_t(acc_vget_int(1, 0));
     const upx_ptraddr_t a = upx_ptraddr_t(acc_vget_int(8, 0));
-    assert_noexcept(TestCT::noinline_has_single_bit(p));
-    assert_noexcept(TestCT::noinline_align_down(p, a) == 0);
-    assert_noexcept(TestCT::noinline_align_down_gap(p, a) == 1);
-    assert_noexcept(TestCT::noinline_align_up(p, a) == 8);
-    assert_noexcept(TestCT::noinline_align_up_gap(p, a) == 7);
-    assert_noexcept(TestCT::noinline_align_down_16(p) == 0);
-    assert_noexcept(TestCT::noinline_align_down_gap_16(p) == 1);
-    assert_noexcept(TestCT::noinline_align_up_16(p) == 16);
-    assert_noexcept(TestCT::noinline_align_up_gap_16(p) == 15);
+    assert_noexcept2(TestCT::noinline_has_single_bit(p));
+    assert_noexcept2(TestCT::noinline_align_down(p, a) == 0);
+    assert_noexcept2(TestCT::noinline_align_down_gap(p, a) == 1);
+    assert_noexcept2(TestCT::noinline_align_up(p, a) == 8);
+    assert_noexcept2(TestCT::noinline_align_up_gap(p, a) == 7);
+    assert_noexcept2(TestCT::noinline_align_down_16(p) == 0);
+    assert_noexcept2(TestCT::noinline_align_down_gap_16(p) == 1);
+    assert_noexcept2(TestCT::noinline_align_up_16(p) == 16);
+    assert_noexcept2(TestCT::noinline_align_up_gap_16(p) == 15);
 }
 
 /*************************************************************************

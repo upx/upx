@@ -41,6 +41,9 @@
 #if !defined(__has_builtin)
 #define __has_builtin(x) 0
 #endif
+#if !defined(__has_cpp_attribute)
+#define __has_cpp_attribute(x) 0
+#endif
 #if !defined(__has_declspec_attribute)
 #define __has_declspec_attribute(x) 0
 #endif
@@ -859,12 +862,12 @@ noinline int do_files(int i, int argc, char *argv[]) may_throw;
 
 // help.cpp
 extern const char gitrev[];
-void show_header();
-void show_help(int verbose);
-void show_license();
-void show_sysinfo(const char *options_var);
-void show_usage();
-void show_version(bool one_line = false);
+noinline void show_header();
+noinline void show_help(int verbose);
+noinline void show_license();
+noinline void show_sysinfo(const char *options_var);
+noinline void show_usage();
+noinline void show_version(bool one_line = false);
 
 // compress/compress.cpp
 // clang-format off

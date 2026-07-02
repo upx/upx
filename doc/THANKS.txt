@@ -47,14 +47,14 @@ Joergen Ibsen <jibz@hotmail.com> and d'b
   for the relocation & address optimization ideas
 John S. Fine <johnfine@erols.com>
   for the new version of the dos/exe decompressor
+Kartik Kenchi <netliomax25@gmail.com>
+  for beta testing
 Kornel Pal
   for the EFI support
 Lukundoo <Lukundoo@softhome.net>
   for beta testing
 Michael Devore
   for initial dos/exe device driver support
-netliomax25-code <netliomax25@gmail.com>
-  for beta testing
 Oleg V. Volkov <rover@lglobus.ru>
   for various FreeBSD specific information
 The Owl & G-RoM
