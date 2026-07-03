@@ -172,7 +172,7 @@ PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const O
         VISIT(PackWcle);
         // Windows
         // VISIT(PackW64PeArm64EC); // NOT YET IMPLEMENTED
-        // VISIT(PackW64PeArm64); // NOT YET IMPLEMENTED
+        VISIT(PackW64PeArm64);
         VISIT(PackW64PeAmd64);
         VISIT(PackW32PeI386);
         VISIT(PackWinCeArm);

@@ -138,8 +138,6 @@ bool PeFile::testUnpackVersion(int version) const {
     // known but not (yet?) supported
     if (cpu == IMAGE_FILE_MACHINE_ARMNT)
         throwCantPack("win32/armnt is not supported"); // obsolete
-    if (cpu == IMAGE_FILE_MACHINE_ARM64)
-        throwCantPack("win64/arm64 is not yet supported");
     // FIXME: it seems that arm64ec actually uses MACHINE_AMD64 ???
     if (cpu == IMAGE_FILE_MACHINE_ARM64EC)
         throwCantPack("win64/arm64ec is not yet supported");
@@ -147,6 +145,8 @@ bool PeFile::testUnpackVersion(int version) const {
     // supported
     if (cpu == IMAGE_FILE_MACHINE_AMD64)
         return UPX_F_W64PE_AMD64;
+    if (cpu == IMAGE_FILE_MACHINE_ARM64)
+        return UPX_F_W64PE_ARM64;
     if (cpu == IMAGE_FILE_MACHINE_ARM || cpu == IMAGE_FILE_MACHINE_THUMB)
         return UPX_F_WINCE_ARM;
     if (cpu >= IMAGE_FILE_MACHINE_I386 && cpu <= 0x150) // what is this 0x150 ???

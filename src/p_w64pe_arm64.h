@@ -44,6 +44,7 @@ public:
     virtual const int *getFilters() const override;
 
     virtual bool needForceOption() const override;
+    virtual void addStubImports() override;
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
                                unsigned isize_isplit, unsigned s1addr) override;
     virtual void setOhDataBase(const pe_section_t *) override {}
