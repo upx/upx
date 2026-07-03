@@ -8948,6 +8948,10 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
                             throwCantPack("bad DT_GNU_HASH[%#x]  head=%u",
                                 (unsigned)(hp - hasharr), hhead);
                         }
+                        if (symnum_max <= (unsigned)(dsp - dynsym)) {
+                            throwCantPack("bad gnu_hash chain past DT_SYMTAB[%#x]",
+                                symnum_max);
+                        }
                         k = get_te32(hp);
                         if (0==((h ^ k)>>1)) {
                             unsigned const st_name = get_te32(&dsp->st_name);
@@ -9059,6 +9063,10 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
                         if (gashend <= hp) {
                             throwCantPack("bad gnu_hash[%#tx]  head=%u",
                                 hp - hasharr, hhead);
+                        }
+                        if (symnum_max <= (unsigned)(dsp - dynsym)) {
+                            throwCantPack("bad gnu_hash chain past DT_SYMTAB[%#x]",
+                                symnum_max);
                         }
                         k = get_te32(hp);
                         if (0==((h ^ k)>>1)) {
