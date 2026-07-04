@@ -122,7 +122,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ValueForSizeOf<const int>::value == 4)
 
 #ifndef xspan_mem_size_impl
 template <class T>
-static inline size_t xspan_mem_size_impl(size_t n) {
+static forceinline size_t xspan_mem_size_impl(size_t n) {
 #ifdef UPX_VERSION_HEX
     // check for overflow and sane limits
     return mem_size(sizeof(T), n);
@@ -133,12 +133,12 @@ static inline size_t xspan_mem_size_impl(size_t n) {
 #endif
 
 template <class T>
-static inline size_t xspan_mem_size(size_t n) {
+static forceinline size_t xspan_mem_size(size_t n) {
     return xspan_mem_size_impl<typename TypeForSizeOf<T>::type>(n);
 }
 
 template <class T>
-static inline void xspan_mem_size_assert_ptrdiff(ptrdiff_t n) {
+static forceinline void xspan_mem_size_assert_ptrdiff(ptrdiff_t n) {
     if (n >= 0)
         (void) xspan_mem_size<T>((size_t) n);
     else

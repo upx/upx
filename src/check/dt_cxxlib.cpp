@@ -30,6 +30,7 @@
 #include "../util/system_headers.h"
 #include <vector> // std::vector
 #include "../conf.h"
+#include "../util/membuffer.h"
 
 /*************************************************************************
 // xspan codegen
@@ -1363,6 +1364,9 @@ struct alignas(1) TestXE final {
         return yign_extend64(v, 64);
     }
 
+    static noinline bool noinline_mem_size_valid_bytes(upx_uint64_t bytes) noexcept {
+        return mem_size_valid_bytes(bytes);
+    }
     static noinline upx_rsize_t noinline_mem_size(upx_uint64_t element_size, upx_uint64_t n)
         may_throw {
         return mem_size(element_size, n);
@@ -1370,6 +1374,66 @@ struct alignas(1) TestXE final {
     static noinline upx_rsize_t noinline_mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
         may_throw {
         return mem_size_get_n(element_size, n);
+    }
+
+    static noinline void noinline_memcpy_1(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 1);
+    }
+    static noinline void noinline_memcpy_2(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 2);
+    }
+    static noinline void noinline_memcpy_4(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 4);
+    }
+    static noinline void noinline_memcpy_8(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 8);
+    }
+    static noinline void noinline_memcpy_16(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 16);
+    }
+    static noinline void noinline_memcpy_32(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 32);
+    }
+    static noinline void noinline_memcpy_64(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 64);
+    }
+    static noinline void noinline_memcpy_128(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 128);
+    }
+    static noinline void noinline_memcpy_256(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 256);
+    }
+    static noinline void noinline_memcpy_512(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 512);
+    }
+    static noinline void noinline_memcpy_1024(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 1024);
+    }
+    static noinline void noinline_memcpy_65536(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 65536);
+    }
+    static noinline void noinline_memcpy_1048576(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 1048576);
+    }
+
+    static noinline void noinline_memcpy_24(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 24);
+    }
+    static noinline void noinline_memcpy_48(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 48);
+    }
+    static noinline void noinline_memcpy_96(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 96);
+    }
+
+    static noinline void noinline_memcpy_25(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 25);
+    }
+    static noinline void noinline_memcpy_49(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 49);
+    }
+    static noinline void noinline_memcpy_97(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 97);
     }
 };
 } // namespace
@@ -1708,8 +1772,33 @@ TEST_CASE("upx::run_time 1b") {
     {
         const upx_uint64_t element_size = upx_uint64_t(acc_vget_acc_int64l_t(1, 0));
         const upx_uint64_t n = upx_uint64_t(acc_vget_acc_int64l_t(0, 0));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(n));
         assert_noexcept2(TestXE::noinline_mem_size(element_size, n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_get_n(element_size, n) == 0);
+    }
+    if (acc_vget_int(0, 0)) {
+        ByteArray(d, 1048576);
+        ByteArray(s, 1048576);
+        s_membuf.clear();
+        TestXE::noinline_memcpy_1(d, s);
+        TestXE::noinline_memcpy_2(d, s);
+        TestXE::noinline_memcpy_4(d, s);
+        TestXE::noinline_memcpy_8(d, s);
+        TestXE::noinline_memcpy_16(d, s);
+        TestXE::noinline_memcpy_32(d, s);
+        TestXE::noinline_memcpy_64(d, s);
+        TestXE::noinline_memcpy_128(d, s);
+        TestXE::noinline_memcpy_256(d, s);
+        TestXE::noinline_memcpy_512(d, s);
+        TestXE::noinline_memcpy_1024(d, s);
+        TestXE::noinline_memcpy_65536(d, s);
+        TestXE::noinline_memcpy_1048576(d, s);
+        TestXE::noinline_memcpy_24(d, s);
+        TestXE::noinline_memcpy_48(d, s);
+        TestXE::noinline_memcpy_96(d, s);
+        TestXE::noinline_memcpy_25(d, s);
+        TestXE::noinline_memcpy_49(d, s);
+        TestXE::noinline_memcpy_97(d, s);
     }
 }
 

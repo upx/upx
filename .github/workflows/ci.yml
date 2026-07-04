@@ -204,6 +204,10 @@ jobs:
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
+      - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/extra/clang/debug/upx --sysinfo -vv
+      - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/extra/clang/release/upx --sysinfo -vv
+      - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/extra/gcc/debug/upx --sysinfo -vv
+      - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/extra/gcc/release/upx --sysinfo -vv
       - name: Run install tests
         run: |
           jobs="gcc/debug gcc/release clang/debug clang/release"
