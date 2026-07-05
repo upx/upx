@@ -172,6 +172,23 @@
 #undef CONDf
 #undef CONDu
 
+#define F f_rvjal_le
+#define U u_rvjal_le
+#include "rvjal.h"
+#undef U
+#undef F
+#undef opu
+#undef func3u
+#undef rs1u
+
+#define F s_rvjal_le
+#include "rvjal.h"
+#undef F
+
+#undef opf
+
+#undef COND
+
 /*************************************************************************
 // database for use in class Filter
 **************************************************************************/
@@ -247,6 +264,7 @@
 #endif  //}
 
     { 0x55, 8, 0x40000000, f_auipc_le, u_auipc_le, s_auipc_le},
+    { 0x56, 8, 0x40000000, f_rvjal_le, u_rvjal_le, s_rvjal_le},
 
     // 32-bit cto calltrick with jmp and jcc(swap 0x0f/0x8Y) and relative renumbering
     { 0x80, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
