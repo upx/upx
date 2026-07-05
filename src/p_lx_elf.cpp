@@ -7377,6 +7377,8 @@ void PackLinuxElf32::un_shlib_1(
             if (sz_block1 == sz_elf_hdrs) { // new style
                 unsigned const len = (yct_off ? yct_off : xct_off) - sz_elf_hdrs;
                 unsigned const ipos = fi->tell();
+                if ((upx_uint64_t)sz_elf_hdrs + len > ibuf.getSize())
+                    throwCantUnpack("bad xct_off or yct_off");
                 fi->seek(sz_elf_hdrs, SEEK_SET);
                 fi->readx(&ibuf[sz_elf_hdrs], len);
                 if (is_asl) {
