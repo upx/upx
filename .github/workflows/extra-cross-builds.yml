@@ -77,6 +77,8 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le -cpu power10, extra: -power10 }
           - { container: 'ubuntu:26.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le -cpu power11, extra: -power11 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
+          - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -mcmodel-large }
+          - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
 
           - { container: 'ubuntu:20.04', target: g++-mingw-w64-i686, wine: wine }
@@ -220,6 +222,14 @@ jobs:
           fi
           if [[ $toolchain == riscv64-linux-gnu ]]; then true;
             #export CC="$CC -mno-strict-align" CXX="$CXX -mno-strict-align"
+          fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *mcmodel-large ]]; then true;
+            export CC="$CC -mcmodel=large" CXX="$CXX -mcmodel=large"
+            export CC="$CC -fno-PIC" CXX="$CXX -fno-PIC"
+            export UPX_CONFIG_DISABLE_SHARED_LIBS=ON
+          fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rv64g ]]; then true;
+            export CC="$CC -march=rv64g" CXX="$CXX -march=rv64g"
           fi
           #if [[ "${{ matrix.container }}" == ubuntu:2[46].04 && $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *thead-c906 ]]; then true;
           if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *thead-c906 ]]; then true;

@@ -1425,6 +1425,12 @@ struct alignas(1) TestXE final {
     static noinline void noinline_memcpy_96(void *d, const void *s) noexcept {
         upx_memcpy_inline(d, s, 96);
     }
+    static noinline void noinline_memcpy_192(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 192);
+    }
+    static noinline void noinline_memcpy_384(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 384);
+    }
 
     static noinline void noinline_memcpy_25(void *d, const void *s) noexcept {
         upx_memcpy_inline(d, s, 25);
@@ -1434,6 +1440,12 @@ struct alignas(1) TestXE final {
     }
     static noinline void noinline_memcpy_97(void *d, const void *s) noexcept {
         upx_memcpy_inline(d, s, 97);
+    }
+    static noinline void noinline_memcpy_193(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 193);
+    }
+    static noinline void noinline_memcpy_385(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 385);
     }
 };
 } // namespace
@@ -1796,9 +1808,13 @@ TEST_CASE("upx::run_time 1b") {
         TestXE::noinline_memcpy_24(d, s);
         TestXE::noinline_memcpy_48(d, s);
         TestXE::noinline_memcpy_96(d, s);
+        TestXE::noinline_memcpy_192(d, s);
+        TestXE::noinline_memcpy_384(d, s);
         TestXE::noinline_memcpy_25(d, s);
         TestXE::noinline_memcpy_49(d, s);
         TestXE::noinline_memcpy_97(d, s);
+        TestXE::noinline_memcpy_193(d, s);
+        TestXE::noinline_memcpy_385(d, s);
     }
 }
 
@@ -1884,6 +1900,118 @@ struct TestConstant final {
     template <class T>
     static noinline T noinline_add_0xf9f7f5f1c9c7c5c1(T n) noexcept {
         return T(n + T(0xf9f7f5f1c9c7c5c1ull));
+    }
+
+    template <class T>
+    static noinline T noinline_xadd_0() noexcept {
+        return T(0);
+    }
+    template <class T>
+    static noinline T noinline_xadd_1(T n) noexcept {
+        return T(n);
+    }
+    template <class T>
+    static noinline T noinline_xadd_2(T n, T a) noexcept {
+        return T(n + a);
+    }
+    template <class T>
+    static noinline T noinline_xadd_3(T n, T a, T b) noexcept {
+        return T(n + a + b);
+    }
+    template <class T>
+    static noinline T noinline_xadd_4(T n, T a, T b, T c) noexcept {
+        return T(n + a + b + c);
+    }
+    template <class T>
+    static noinline T noinline_xadd_5(T n, T a, T b, T c, T d) noexcept {
+        return T(n + a + b + c + d);
+    }
+    template <class T>
+    static noinline T noinline_xadd_6(T n, T a, T b, T c, T d, T e) noexcept {
+        return T(n + a + b + c + d + e);
+    }
+    template <class T>
+    static noinline T noinline_xadd_7(T n, T a, T b, T c, T d, T e, T f) noexcept {
+        return T(n + a + b + c + d + e + f);
+    }
+    template <class T>
+    static noinline T noinline_xadd_8(T n, T a, T b, T c, T d, T e, T f, T g) noexcept {
+        return T(n + a + b + c + d + e + f + g);
+    }
+    template <class T>
+    static noinline T noinline_xadd_9(T n, T a, T b, T c, T d, T e, T f, T g, T h) noexcept {
+        return T(n + a + b + c + d + e + f + g + h);
+    }
+    template <class T>
+    static noinline T noinline_xadd_10(T n, T a, T b, T c, T d, T e, T f, T g, T h, T i) noexcept {
+        return T(n + a + b + c + d + e + f + g + h + i);
+    }
+    template <class T>
+    static noinline T noinline_xadd_11(T n, T a, T b, T c, T d, T e, T f, T g, T h, T i,
+                                       T j) noexcept {
+        return T(n + a + b + c + d + e + f + g + h + i + j);
+    }
+    template <class T>
+    static noinline T noinline_xadd_12(T n, T a, T b, T c, T d, T e, T f, T g, T h, T i, T j,
+                                       T k) noexcept {
+        return T(n + a + b + c + d + e + f + g + h + i + j + k);
+    }
+
+    struct R1 final {
+        size_t a[1];
+    };
+    struct R2 final {
+        size_t a[2];
+    };
+    struct R3 final {
+        size_t a[3];
+    };
+    struct R4 final {
+        size_t a[4];
+    };
+    struct R5 final {
+        size_t a[5];
+    };
+    struct R6 final {
+        size_t a[6];
+    };
+    struct R7 final {
+        size_t a[7];
+    };
+    struct R8 final {
+        size_t a[8];
+    };
+    static noinline R1 noinline_return_1() noexcept {
+        R1 r = {};
+        return r;
+    }
+    static noinline R2 noinline_return_2() noexcept {
+        R2 r = {};
+        return r;
+    }
+    static noinline R3 noinline_return_3() noexcept {
+        R3 r = {};
+        return r;
+    }
+    static noinline R4 noinline_return_4() noexcept {
+        R4 r = {};
+        return r;
+    }
+    static noinline R5 noinline_return_5() noexcept {
+        R5 r = {};
+        return r;
+    }
+    static noinline R6 noinline_return_6() noexcept {
+        R6 r = {};
+        return r;
+    }
+    static noinline R7 noinline_return_7() noexcept {
+        R7 r = {};
+        return r;
+    }
+    static noinline R8 noinline_return_8() noexcept {
+        R8 r = {};
+        return r;
     }
 };
 template <class T>
@@ -2052,6 +2180,31 @@ TEST_CASE("codegen constant") {
         assert_noexcept2((TestConstant::noinline_add_0xf9f7f5f1c9c7c5c1(upx_uint32_t(n)) != 0));
         assert_noexcept2((TestConstant::noinline_add_0xf9f7f5f1c9c7c5c1(upx_int64_t(n)) != 0));
         assert_noexcept2((TestConstant::noinline_add_0xf9f7f5f1c9c7c5c1(upx_uint64_t(n)) != 0));
+
+        typedef size_t T;
+        assert_noexcept2((TestConstant::noinline_xadd_0<T>() == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_1<T>(n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_2<T>(n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_3<T>(n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_4<T>(n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_5<T>(n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_6<T>(n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_7<T>(n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_8<T>(n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_9<T>(n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_10<T>(n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_11<T>(n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_12<T>(n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+
+        assert_noexcept2((TestConstant::noinline_return_1().a[0] == 0));
+        assert_noexcept2((TestConstant::noinline_return_2().a[0] == 0));
+        assert_noexcept2((TestConstant::noinline_return_3().a[0] == 0));
+        assert_noexcept2((TestConstant::noinline_return_4().a[0] == 0));
+        assert_noexcept2((TestConstant::noinline_return_5().a[0] == 0));
+        assert_noexcept2((TestConstant::noinline_return_6().a[0] == 0));
+        assert_noexcept2((TestConstant::noinline_return_7().a[0] == 0));
+        assert_noexcept2((TestConstant::noinline_return_8().a[0] == 0));
     }
     (void) n;
 }
