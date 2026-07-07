@@ -2652,10 +2652,10 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_name(
         return nullptr;
     }
     int j = e_shnum;
-    unsigned const sh_strsz = sec_strndx ? get_te32(&sec_strndx->sh_size) : 0;
+    unsigned const sh_strsz = mb_shstrtab.getSizeInBytes();  // actual .shstrtab buffer
     for (; 0 <=--j; ++shdr) {
         unsigned const sh_name = get_te32(&shdr->sh_name);
-        if (sh_strsz <= sh_name) {  // sh_name must index within .shstrtab, not just the file
+        if (sh_strsz <= sh_name) {  // sh_name must index within the shstrtab buffer
             char msg[50]; snprintf(msg, sizeof(msg),
                 "bad Elf32_Shdr[%d].sh_name %#x",
                 -1+ e_shnum -j, sh_name);
@@ -2677,10 +2677,10 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_name(
         return nullptr;
     }
     int j = e_shnum;
-    upx_uint64_t const sh_strsz = sec_strndx ? get_te64(&sec_strndx->sh_size) : 0;
+    unsigned const sh_strsz = mb_shstrtab.getSizeInBytes();  // actual .shstrtab buffer
     for (; 0 <=--j; ++shdr) {
         unsigned const sh_name = get_te32(&shdr->sh_name);
-        if (sh_strsz <= sh_name) {  // sh_name must index within .shstrtab, not just the file
+        if (sh_strsz <= sh_name) {  // sh_name must index within the shstrtab buffer
             char msg[50]; snprintf(msg, sizeof(msg),
                 "bad Elf64_Shdr[%d].sh_name %#x",
                 -1+ e_shnum -j, sh_name);
@@ -4545,9 +4545,15 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter &ft)
         sec_strndx = &shdri[e_shstrndx];
 
         upx_uint32_t sh_size = get_te32(&sec_strndx->sh_size);
+        upx_uint32_t sh_offset = get_te32(&sec_strndx->sh_offset);
+        if ((upx_uint64_t)file_size < (upx_uint64_t)sh_offset + sh_size) {
+            char msg[64]; snprintf(msg, sizeof(msg),
+                "bad .shstrtab sh_offset %#x sh_size %#x", sh_offset, sh_size);
+            throwCantPack(msg);
+        }
         mb_shstrtab.alloc(mem_size(1, sh_size, 1)); shstrtab = (char *)mb_shstrtab.getVoidPtr();
         fi->seek(0,SEEK_SET);
-        fi->seek(sec_strndx->sh_offset,SEEK_SET);
+        fi->seek(sh_offset,SEEK_SET);
         fi->readx(mb_shstrtab, sh_size);
         mb_shstrtab[sh_size] = '\0';  // terminate so a name scan cannot run off the buffer
 
@@ -5404,9 +5410,17 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
         sec_strndx = &shdri[e_shstrndx];
 
         upx_uint64_t sh_size = get_te64(&sec_strndx->sh_size);
+        upx_uint64_t sh_offset = get_te64(&sec_strndx->sh_offset);
+        if ((upx_uint64_t)file_size < sh_offset
+        ||  (upx_uint64_t)file_size - sh_offset < sh_size) {
+            char msg[64]; snprintf(msg, sizeof(msg),
+                "bad .shstrtab sh_offset %#llx sh_size %#llx",
+                (unsigned long long)sh_offset, (unsigned long long)sh_size);
+            throwCantPack(msg);
+        }
         mb_shstrtab.alloc(mem_size(1, sh_size, 1)); shstrtab = (char *)mb_shstrtab.getVoidPtr();
         fi->seek(0,SEEK_SET);
-        fi->seek(sec_strndx->sh_offset,SEEK_SET);
+        fi->seek(sh_offset,SEEK_SET);
         fi->readx(mb_shstrtab, sh_size);
         mb_shstrtab[sh_size] = '\0';  // terminate so a name scan cannot run off the buffer
 
