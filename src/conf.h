@@ -593,7 +593,7 @@ using upx::tribool;
 #define UPX_F_VMLINUX_PPC64LE     40
 // #define UPX_F_DYLIB_PPC64LE       41 // DOES NOT EXIST
 #define UPX_F_LINUX_ELF64_ARM64   42
-#define UPX_F_W64PE_ARM64         43 // NOT YET IMPLEMENTED
+#define UPX_F_W64PE_ARM64         43
 #define UPX_F_W64PE_ARM64EC       44 // NOT YET IMPLEMENTED
 #define UPX_F_LINUX_ELF64_RISCV64 45
 #define UPX_F_CPM86_CMD           46 // CP/M-86 .cmd
