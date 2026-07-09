@@ -89,7 +89,7 @@ upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t ext
 
 upx_rsize_t mem_size_ptr(const void *ptr, upx_uint64_t element_size, upx_uint64_t n,
                          upx_uint64_t extra1, upx_uint64_t extra2) may_throw {
-    const upx_rsize_t bytes = mem_size(element_size, n, extra1, extra2);
+    const upx_rsize_t bytes = mem_size(element_size, n, extra1, extra2); // assert size
     const upx_ptraddr_t p = ptr_get_address(ptr);
     // check wrap-around
     if very_unlikely (p == 0 || p + bytes < p)

@@ -759,7 +759,7 @@ jobs:
           - { zig_target: powerpc64le-linux-musl, qemu: qemu-ppc64le, zig_pic: -fPIE }
           - { zig_target: riscv64-linux-musl, qemu: qemu-riscv64 }
           - { zig_target: riscv64-linux-musl, qemu: qemu-riscv64, zig_pic: -fPIC }
-          - { zig_target: riscv64-linux-musl, qemu: qemu-riscv64, zig_pic: -fPIE }
+          - { zig_target: riscv64-linux-musl, qemu: qemu-riscv64, zig_pic: -fPIE, container: 'alpine:3.18' }
           - { zig_target: x86_64-linux-gnu.2.7, qemu: qemu-x86_64 }  # can use QEMU because of gcompat
           - { zig_target: x86_64-linux-gnu.2.17, qemu: qemu-x86_64 } # can use QEMU because of gcompat
           - { zig_target: x86_64-linux-musl, qemu: qemu-x86_64 }
