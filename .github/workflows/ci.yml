@@ -771,6 +771,8 @@ jobs:
     container: ${{ matrix.container || 'alpine:3.24' }}
     env:
       container: ${{ matrix.container || 'alpine:3.24' }}
+      #UPX_CONFIG_DISABLE_RELEASE_O2: 'ON'
+      UPX_CONFIG_EXTRA_COMPILE_OPTIONS_UPX: '$$<$$<CONFIG:Release>:-fomit-frame-pointer>'
       UPX_CONFIG_HAVE_WORKING_BUILD_RPATH: ''
       # for zig-cc wrapper scripts (see below):
       ZIG_CPPFLAGS: -DUPX_DOCTEST_CONFIG_MULTITHREADING

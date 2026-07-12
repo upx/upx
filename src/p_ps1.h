@@ -40,7 +40,6 @@ class PackPs1 final : public Packer {
 
 public:
     explicit PackPs1(InputFile *f);
-    virtual ~PackPs1() noexcept;
     virtual int getVersion() const override { return 13; }
     virtual int getFormat() const override { return UPX_F_PS1_EXE; }
     virtual const char *getName() const override { return "ps1/exe"; }
@@ -122,7 +121,7 @@ protected:
     unsigned pad_code = 0;
     unsigned bss_start = 0, bss_end = 0;
     unsigned fdata_size = 0; // file_size - PS_HDR_SIZE
-    byte *cprLoader = nullptr;
+    MemBuffer mb_cprLoader;
 };
 
 /* vim:set ts=4 sw=4 et: */

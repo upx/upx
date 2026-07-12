@@ -94,8 +94,6 @@ PackPs1::PackPs1(InputFile *f)
     ram_size = !opt->ps1_exe.do_8mib ? 0x200000 : 0x800000;
 }
 
-PackPs1::~PackPs1() noexcept { delete[] cprLoader; }
-
 const int *PackPs1::getCompressionMethods(int method, int level) const {
     if (is32Bit)
         return Packer::getDefaultCompressionMethods_le32(method, level);
@@ -293,16 +291,15 @@ void PackPs1::buildLoader(const Filter *) {
     } else {
         if (M_IS_LZMA(ph.method) && buildPart2) {
             sz_lcpr = MemBuffer::getSizeForCompression(sz_lunc);
-            delete[] cprLoader;
-            cprLoader = nullptr;
-            cprLoader = New(byte, sz_lcpr);
-            int r = upx_compress(getLoader(), sz_lunc, cprLoader, &sz_lcpr, nullptr, M_NRV2B_8, 10,
-                                 nullptr, nullptr);
+            mb_cprLoader.dealloc();
+            mb_cprLoader.alloc(sz_lcpr);
+            int r = upx_compress(getLoader(), sz_lunc, mb_cprLoader, &sz_lcpr, nullptr, M_NRV2B_8,
+                                 10, nullptr, nullptr);
             if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
                 throwInternalError("loader compression failed");
             initLoader(EM_MIPS_RS3_LE, stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1),
                        isCon || !M_IS_LZMA(ph.method) ? 0 : 1);
-            linker->addSection("lzma.exec", cprLoader, sz_lcpr, 0);
+            linker->addSection("lzma.exec", mb_cprLoader, sz_lcpr, 0);
         } else
             initLoader(EM_MIPS_RS3_LE, stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1));
 

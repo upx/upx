@@ -95,8 +95,8 @@ public:
     template <class U>
     typename std::enable_if<std::is_integral<U>::value, pointer>::type operator+(U n) const
         may_throw {
-        size_t bytes = mem_size(element_size, n); // check mem_size
-        return raw_bytes(bytes) + n;              // and check bytes
+        const upx_rsize_t bytes = mem_size(element_size, n); // check mem_size
+        return raw_bytes(bytes) + n;                         // and check bytes
     }
 private:
     // membuffer - n -> pointer; not allowed - use raw_bytes() if needed

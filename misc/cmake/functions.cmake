@@ -334,6 +334,7 @@ function(upx_add_target_extra_compile_options) # ARGV
         if(NOT DEFINED ${var_name})
         elseif(",${${var_name}}," STREQUAL ",,")
         else()
+            upx_print_var(${var_name})
             set(flags "${${var_name}}")
             if(NOT flags MATCHES ";") # NOTE: split into list from string only if not already a list
                 if(${CMAKE_VERSION} VERSION_GREATER "3.8.99")
@@ -341,6 +342,7 @@ function(upx_add_target_extra_compile_options) # ARGV
                 else()
                     separate_arguments(flags)
                 endif()
+                upx_print_var(flags)
             endif()
             target_compile_options(${t} PRIVATE "${flags}")
         endif()
