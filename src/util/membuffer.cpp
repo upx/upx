@@ -296,7 +296,7 @@ TEST_CASE("MemBuffer core") {
     CHECK_THROWS(mb.subref("", 1, N));
     CHECK_THROWS(mb.subref("", N, 1));
     if (use_simple_mcheck()) {
-        byte *p = upx::ptr_static_cast<byte *>(raw_bytes(mb, 0));
+        byte *p = upx::ptr_static_cast<byte *>(raw_bytes(mb, N));
         upx_uint32_t magic1 = get_ne32(p - 4);
         set_ne32(p - 4, magic1 ^ 1);
         CHECK_THROWS(mb.checkState());

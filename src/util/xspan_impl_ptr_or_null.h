@@ -53,7 +53,9 @@ private:
 #include "xspan_impl_common.h"
 public:
     // constructors from pointers
-    CSelf(pointer first) : ptr(first), base(nullptr), size_in_bytes(0) { assertInvariants(); }
+    CSelf(pointer first) : XSPAN_DEBUG_NULL ptr(first), base(nullptr), size_in_bytes(0) {
+        assertInvariants();
+    }
     CSelf(XSPAN_DEBUG_ARGS pointer first)
         : XSPAN_DEBUG_IMPL ptr(first), base(nullptr), size_in_bytes(0) {
         assertInvariants();
@@ -114,7 +116,9 @@ public:
     }
 
     // nullptr
-    forceinline CSelf(std::nullptr_t) noexcept : ptr(nullptr), base(nullptr), size_in_bytes(0) {}
+    forceinline CSelf(std::nullptr_t) noexcept : XSPAN_DEBUG_NULL ptr(nullptr),
+                                                 base(nullptr),
+                                                 size_in_bytes(0) {}
     forceinline CSelf(XSPAN_DEBUG_ARGS std::nullptr_t) noexcept : XSPAN_DEBUG_IMPL ptr(nullptr),
                                                                   base(nullptr),
                                                                   size_in_bytes(0) {}

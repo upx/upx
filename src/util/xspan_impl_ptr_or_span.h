@@ -53,7 +53,7 @@ private:
 #include "xspan_impl_common.h"
 public:
     // constructors from pointers
-    CSelf(pointer first) : ptr(makePtr(first)), base(nullptr), size_in_bytes(0) {
+    CSelf(pointer first) : XSPAN_DEBUG_NULL ptr(makePtr(first)), base(nullptr), size_in_bytes(0) {
         assertInvariants();
     }
     CSelf(XSPAN_DEBUG_ARGS pointer first)

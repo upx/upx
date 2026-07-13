@@ -54,7 +54,11 @@ public:
 
 private:
 #if XSPAN_CONFIG_ENABLE_DEBUG
+#if __cplusplus >= 201103L
+    XSpanDebugFile f = {};
+#else
     XSpanDebugFile f;
+#endif
 #endif
     pointer ptr; // current view into (base, base+size_in_bytes) iff base != nullptr
     pointer base;

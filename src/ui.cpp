@@ -79,7 +79,7 @@ struct UiPacker::State final {
 #endif
 };
 
-// static
+// static totals
 unsigned UiPacker::total_files = 0;
 unsigned UiPacker::total_files_done = 0;
 upx_uint64_t UiPacker::total_c_len = 0;
