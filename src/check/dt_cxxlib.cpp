@@ -740,7 +740,7 @@ TEST_CASE("upx::ptr_static_cast constexpr 1") {
     static_assert((dp == ptr_static_cast<double *>(dp)));
 
     constexpr const void *vc = nullptr;
-    constexpr const byte *bc = nullptr;
+    const constexpr byte *bc = nullptr;
     constexpr const int *ic = nullptr;
     constexpr const double *dc = nullptr;
     static_assert((vc == ptr_static_cast<const void *>(vc)));
@@ -758,7 +758,7 @@ TEST_CASE("upx::ptr_static_cast constexpr 1") {
     static_assert((dpp == ptr_static_cast<double **>(dpp)));
 
     constexpr const void **vcp = nullptr;
-    constexpr const byte **bcp = nullptr;
+    const constexpr byte **bcp = nullptr;
     constexpr const int **icp = nullptr;
     constexpr const double **dcp = nullptr;
     static_assert((vcp == ptr_static_cast<const void **>(vcp)));
@@ -776,7 +776,7 @@ TEST_CASE("upx::ptr_static_cast constexpr 1") {
     static_assert((dpc == ptr_static_cast<double *const *>(dpc)));
 
     constexpr const void *const *vcc = nullptr;
-    constexpr const byte *const *bcc = nullptr;
+    const constexpr byte *const *bcc = nullptr;
     constexpr const int *const *icc = nullptr;
     constexpr const double *const *dcc = nullptr;
     static_assert((vcc == ptr_static_cast<const void *const *>(vcc)));
@@ -803,7 +803,7 @@ TEST_CASE("upx::ptr_static_cast constexpr 2") {
     static_assert((vp == ptr_static_cast<void *>(dp)));
 
     constexpr const void *vc = nullptr;
-    constexpr const byte *bc = nullptr;
+    const constexpr byte *bc = nullptr;
     constexpr const int *ic = nullptr;
     constexpr const double *dc = nullptr;
     static_assert((vc == static_cast<const void *>(vp)));
@@ -1485,7 +1485,7 @@ TEST_CASE("upx::compile_time") {
         assert_noexcept(TestCT::noinline_bswap64(v64) == 0x0102030405060708ull);
     }
     {
-        constexpr const byte d[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+        const constexpr byte d[8] = {1, 2, 3, 4, 5, 6, 7, 8};
         static_assert(upx::compile_time::get_be16(d) == 0x0102);
         static_assert(upx::compile_time::get_be24(d) == 0x010203);
         static_assert(upx::compile_time::get_be32(d) == 0x01020304);
@@ -2045,7 +2045,7 @@ struct TestConstant final {
 template <class T>
 struct TestXX final {
     template <class U>
-    static noinline const T *noinline_add_ptr(const T *p, U n) noexcept {
+    static const noinline T *noinline_add_ptr(const T *p, U n) noexcept {
         return p + n;
     }
     template <class U>

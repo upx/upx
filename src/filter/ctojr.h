@@ -42,11 +42,11 @@
 #define FNOMRU 1 // filter, but not using mru
 #define MRUFLT 2 // mru filter
 
-static unsigned f80_call(Filter const *f) { return (1 + (0x0f & f->id)) % 3; }
+static unsigned f80_call(const Filter *f) { return (1 + (0x0f & f->id)) % 3; }
 
-static unsigned f80_jmp1(Filter const *f) { return ((1 + (0x0f & f->id)) / 3) % 3; }
+static unsigned f80_jmp1(const Filter *f) { return ((1 + (0x0f & f->id)) / 3) % 3; }
 
-static unsigned f80_jcc2(Filter const *f) { return f80_jmp1(f); }
+static unsigned f80_jcc2(const Filter *f) { return f80_jmp1(f); }
 
 #define N_MRU 32 // does not have to be a power of 2
 
@@ -140,7 +140,7 @@ static int F(Filter *f) {
                 // in be32 big endian format, the low-addressed bytes
                 // will tend to be constant.  Swap prefix and opcode
                 // so that constants are together for better compression.
-                unsigned char const t = b[ic - 1];
+                const unsigned char t = b[ic - 1];
                 b[ic - 1] = b[ic];
                 b[ic] = t;
             }
@@ -189,7 +189,7 @@ static int F(Filter *f) {
                         // restore original
                         if (2 == which) {
                             // Unswap prefix and opcode for 6-byte Jcc <disp32>
-                            unsigned char const t = b[ic - 1];
+                            const unsigned char t = b[ic - 1];
                             b[ic - 1] = b[ic];
                             b[ic] = t;
                         }
@@ -281,7 +281,7 @@ static int U(Filter *f) {
                 }
                 if (2 == which && NOFILT != f_jcc2) {
                     // Unswap prefix and opcode for 6-byte Jcc <disp32>
-                    unsigned char const t = b[ic - 1];
+                    const unsigned char t = b[ic - 1];
                     b[ic - 1] = b[ic];
                     b[ic] = t;
                 }

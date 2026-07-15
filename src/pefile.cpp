@@ -2153,7 +2153,7 @@ unsigned PeFile::stripDebug(unsigned overlaystart) {
             // fpos need not belong to any PEDIR_* section.
             // Read directly from input file, but keep position (paranoia).
             LE32 word;
-            upx_off_t const now_pos = fi->tell();
+            const upx_off_t now_pos = fi->tell();
             fi->seek(dd->fpos, SEEK_SET);
             fi->read(&word, sizeof(word));
             fi->seek(now_pos, SEEK_SET);
@@ -2934,7 +2934,7 @@ void PeFile::rebuildResources(SPAN_S(byte) & extra_info, unsigned lastvaddr) {
 
     // INFO: use VPtr for "virtual pointer" pointing before a buffer
     //// const byte *const r = ibuf.raw_bytes(0) - lastvaddr;
-    VPtr<const byte> const r{ibuf, lastvaddr};
+    const VPtr<const byte> r{ibuf, lastvaddr};
     Resource res(raw_bytes(r + vaddr, 0), ibuf, ibuf + ibuf.getSize());
     while (res.next())
         if (res.offs() > vaddr) {
@@ -2988,7 +2988,7 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
 
     // INFO: use VPtr for "virtual pointer" pointing before a buffer
     //// byte *const Obuf = obuf.raw_bytes(0) - rvamin;
-    VPtr<byte> const Obuf{obuf, rvamin};
+    const VPtr<byte> Obuf{obuf, rvamin};
     SPAN_S_VAR(import_desc, im, (import_desc *) raw_bytes(Obuf + ODADDR(PEDIR_IMPORT), 0), obuf);
     SPAN_0_VAR(byte, dllnames, inamespos ? raw_bytes(Obuf + inamespos, 0) : nullptr, obuf);
     SPAN_0_VAR(byte, const importednames_start, inamespos ? dllnames + sdllnames : nullptr);

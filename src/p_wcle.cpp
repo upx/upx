@@ -573,7 +573,7 @@ void PackWcle::decodeFixups() {
             }
         }
         // Guard against run-away.
-        static byte const blank[9] = {0};
+        static const byte blank[9] = {0};
         // catastrophic worst case or no-good early warning
         if (ptr_diff_bytes(oimage + ph.u_len - sizeof(blank), raw_bytes(q, 0)) < 0 ||
             !memcmp(blank, q, sizeof(blank))) {

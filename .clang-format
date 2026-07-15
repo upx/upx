@@ -16,9 +16,12 @@ AlwaysBreakTemplateDeclarations: true
 AttributeMacros:
   - DELETED_FUNCTION
   - XSPAN_DELETED_FUNCTION
+  - forceinline
   - may_throw
+  - noinline
 EmptyLineBeforeAccessModifier: Leave
 # IndentPPDirectives: AfterHash # TODO later
+QualifierAlignment: Left
 SortIncludes: false
 SpaceAfterCStyleCast: true
 Standard: Cpp03

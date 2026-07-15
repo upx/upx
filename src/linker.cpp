@@ -166,7 +166,7 @@ void ElfLinker::init(unsigned arch, const void *pdata_v, int plen, unsigned pxtr
     if ((int) strlen("Sections:\n"
                      "SYMBOL TABLE:\n"
                      "RELOCATION RECORDS FOR ") < inputlen) {
-        char const *const eof = (char const *) &input[inputlen];
+        const char *const eof = (const char *) &input[inputlen];
         int pos = find(input, inputlen, "Sections:\n", 10);
         assert(pos != -1);
         char *const psections = (char *) input + pos;
@@ -186,7 +186,7 @@ void ElfLinker::init(unsigned arch, const void *pdata_v, int plen, unsigned pxtr
     }
 }
 
-void ElfLinker::preprocessSections(char *start, char const *end) {
+void ElfLinker::preprocessSections(char *start, const char *end) {
     assert_noexcept(nsections == 0);
     char *nextl;
     for (; start < end; start = 1 + nextl) {
@@ -208,7 +208,7 @@ void ElfLinker::preprocessSections(char *start, char const *end) {
     addSection("*UND*", nullptr, 0, 0);
 }
 
-void ElfLinker::preprocessSymbols(char *start, char const *end) {
+void ElfLinker::preprocessSymbols(char *start, const char *end) {
     assert_noexcept(nsymbols <= 1);
     char *nextl;
     for (; start < end; start = 1 + nextl) {
@@ -245,7 +245,7 @@ void ElfLinker::preprocessSymbols(char *start, char const *end) {
     }
 }
 
-void ElfLinker::preprocessRelocations(char *start, char const *end) {
+void ElfLinker::preprocessRelocations(char *start, const char *end) {
     assert_noexcept(nrelocations == 0);
     Section *section = nullptr;
     char *nextl;
@@ -685,7 +685,7 @@ void ElfLinkerArm64LE::relocate1(const Relocation *rel, byte *location, upx_uint
             set_le64(location, get_le64(location) + value);
     } else if (!strcmp(type, "ADR_PREL_LO21")) {
         value -= rel->section->offset + rel->offset;
-        upx_uint32_t const m19 = ~(~0u << 19);
+        const upx_uint32_t m19 = ~(~0u << 19);
         upx_uint32_t w = get_le32(location);
         set_le32(location, (w & ~((3u << 29) | (m19 << 5))) | ((3u & value) << 29) |
                                ((m19 & (value >> 2)) << 5));
@@ -695,12 +695,12 @@ void ElfLinkerArm64LE::relocate1(const Relocation *rel, byte *location, upx_uint
         set_le64(location, get_le64(location) + value);
     } else if (!strcmp(type, "CONDBR19")) {
         value -= rel->section->offset + rel->offset;
-        upx_uint32_t const m19 = ~(~0u << 19);
+        const upx_uint32_t m19 = ~(~0u << 19);
         upx_uint32_t w = get_le32(location);
         set_le32(location, (w & ~(m19 << 5)) | ((((w >> 5) + (value >> 2)) & m19) << 5));
     } else if (!strcmp(type, "CALL26") || !strcmp(type, "JUMP26")) {
         value -= rel->section->offset + rel->offset;
-        upx_uint32_t const m26 = ~(~0u << 26);
+        const upx_uint32_t m26 = ~(~0u << 26);
         upx_uint32_t w = get_le32(location);
         set_le32(location, (w & ~m26) | (m26 & (value >> 2)));
     } else

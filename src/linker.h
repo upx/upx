@@ -65,9 +65,9 @@ protected:
     bool reloc_done = false;
 
 protected:
-    void preprocessSections(char *start, char const *end);
-    void preprocessSymbols(char *start, char const *end);
-    void preprocessRelocations(char *start, char const *end);
+    void preprocessSections(char *start, const char *end);
+    void preprocessSymbols(char *start, const char *end);
+    void preprocessRelocations(char *start, const char *end);
     Section *findSection(const char *name, bool fatal = true) const;
 
     Symbol *addSymbol(const char *name, const char *section, upx_uint64_t offset);
