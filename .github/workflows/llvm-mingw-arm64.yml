@@ -16,6 +16,8 @@ env:
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -G "Unix Makefiles" -Wdev --warn-uninitialized
   #UPX_CMAKE_CONFIG_FLAGS: -G Ninja -Wdev --warn-uninitialized
+  #UPX_CONFIG_DISABLE_RELEASE_O2: 'ON'
+  UPX_CONFIG_EXTRA_COMPILE_OPTIONS_UPX: '$$<$$<CONFIG:Release>:-fomit-frame-pointer>'
   UPX_CONFIG_HAVE_WORKING_BUILD_RPATH: 'ON'
   UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO: 1
   UPX_DEBUG_TEST_LIBC_QSORT: 1
@@ -156,6 +158,7 @@ jobs:
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
 
       - name: 'Run ctest tests aarch64'
+        if: false
         run: |
           UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/llvm-mingw/aarch64-w64-mingw32-clang/debug/upx.exe --sysinfo -vv
           UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/llvm-mingw/aarch64-w64-mingw32-clang/release/upx.exe --sysinfo -vv

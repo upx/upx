@@ -2152,10 +2152,10 @@ unsigned PeFile::stripDebug(unsigned overlaystart) {
             dd->fpos <= (file_size_u - sizeof(LE32))) {
             // fpos need not belong to any PEDIR_* section.
             // Read directly from input file, but keep position (paranoia).
-            LE32 word;
+            LE32 word = {};
             const upx_off_t now_pos = fi->tell();
             fi->seek(dd->fpos, SEEK_SET);
-            fi->read(&word, sizeof(word));
+            fi->readx(&word, sizeof(word));
             fi->seek(now_pos, SEEK_SET);
             if (IMAGE_DLLCHARACTERISTICS_EX_CET_COMPAT & word) {
                 *(dbgCET = dd0) = *dd; // remember presence; copy to front
@@ -2254,8 +2254,7 @@ unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase, upx_uint64_t defau
         if (isdll || isefi)
             throwCantPack("--strip-relocs is not allowed with DLL and EFI images");
         if (dllflags & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) {
-            if (opt->force) // Disable ASLR
-            {
+            if (opt->force) { // Disable ASLR
                 // The bit is set, so clear it with XOR
                 dllflags ^= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
                 // HIGH_ENTROPY_VA has no effect without DYNAMIC_BASE, so clear
@@ -3235,7 +3234,7 @@ PeFile::~PeFile() noexcept {
 }
 
 /*************************************************************************
-//  PeFile32
+// PeFile32
 **************************************************************************/
 
 PeFile32::PeFile32(InputFile *f) : super(f) {
@@ -3290,7 +3289,7 @@ void PeFile32::processTls(Reloc *r, const Interval *iv, unsigned a) {
 }
 
 /*************************************************************************
-//  PeFile64
+// PeFile64
 **************************************************************************/
 
 PeFile64::PeFile64(InputFile *f) : super(f) {
