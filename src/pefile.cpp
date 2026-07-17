@@ -959,7 +959,7 @@ public:
     }
 }; // class PeFile::ImportLinker
 
-/*static*/ const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = {0};
+/*static*/ const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = {};
 
 void PeFile::addKernelImport(const char *name) { ilinker->add_import(kernelDll(), name); }
 

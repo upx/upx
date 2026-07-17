@@ -1376,6 +1376,9 @@ struct alignas(1) TestXE final {
         return mem_size_get_n(element_size, n);
     }
 
+    static noinline void noinline_memcpy_0(void *d, const void *s) noexcept {
+        upx_memcpy_inline(d, s, 0);
+    }
     static noinline void noinline_memcpy_1(void *d, const void *s) noexcept {
         upx_memcpy_inline(d, s, 1);
     }
@@ -1813,6 +1816,7 @@ TEST_CASE("upx::run_time 1b") {
         ByteArray(d, 1048576);
         ByteArray(s, 1048576);
         s_membuf.clear();
+        TestXE::noinline_memcpy_0(d, s);
         TestXE::noinline_memcpy_1(d, s);
         TestXE::noinline_memcpy_2(d, s);
         TestXE::noinline_memcpy_4(d, s);

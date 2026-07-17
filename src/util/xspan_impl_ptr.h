@@ -51,9 +51,9 @@ private:
     pointer ptr;
 
     // enforce config invariants at constructor time - static functions
-    static inline pointer makePtr(pointer p) { return p; }
+    static forceinline pointer makePtr(pointer p) { return p; }
     // inverse logic for ensuring valid pointers from existing objects
-    inline pointer ensurePtr() const { return ptr; }
+    forceinline pointer ensurePtr() const { return ptr; }
     // debug
     forceinline void assertInvariants() const noexcept {}
 

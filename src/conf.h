@@ -449,7 +449,7 @@ inline void NO_fprintf(FILE *, const char *, ...) noexcept {}
 #define COMPILE_TIME_ASSERT_ALIGNED1(a) COMPILE_TIME_ASSERT_ALIGNOF__(a, char)
 
 // TABLESIZE
-#define TABLESIZE(table) ((sizeof(table) / sizeof((table)[0])))
+#define TABLESIZE(table) (sizeof(table) / sizeof((table)[0]))
 
 // mem_clear()
 template <class T>

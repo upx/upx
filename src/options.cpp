@@ -78,6 +78,7 @@ void Options::reset() noexcept {
     o->win32_pe.compress_exports = 1;
     o->win32_pe.compress_icons = 2;
     o->win32_pe.compress_resources = -1;
+    static_assert(TABLESIZE(o->win32_pe.compress_rt) == 25); // 25 == RT_LAST
     for (size_t i = 0; i < TABLESIZE(o->win32_pe.compress_rt); i++)
         o->win32_pe.compress_rt[i] = -1;
     o->win32_pe.compress_rt[24] = false; // 24 == RT_MANIFEST
@@ -100,7 +101,6 @@ TEST_CASE("Options::reset") {
     Options *const o = &local_options;
     o->reset();
     CHECK(o->o_unix.osabi0 == 3);
-    static_assert(TABLESIZE(o->win32_pe.compress_rt) == 25); // 25 == RT_LAST
     CHECK(o->win32_pe.compress_exports);
     CHECK(o->win32_pe.compress_icons);
     CHECK(o->win32_pe.strip_relocs);
