@@ -286,13 +286,10 @@ void show_help(int verbose) {
                 "  -q     be quiet                          -v    be verbose\n"
                 "  -oFILE write output to 'FILE'\n"
                 "  -f     force compression of suspicious files\n"
-                "%s%s"
+                "%s%s%s"
                 , (verbose == 0) ? "  -k     keep backup files\n" : ""
-#if 1
+                , (verbose > 0) ? "  -i     info mode\n" : ""
                 , (verbose > 0) ? "  --no-color, --mono, --color, --no-progress   change look\n" : ""
-#else
-                , ""
-#endif
                 );
 
     if (verbose > 0)
