@@ -133,6 +133,7 @@ static int init(FILE *f, int o, int now) {
         return CON_INIT;
 
     mode = screen->getMode(screen);
+    UNUSED(mode);
     init_fg = cur_fg = screen->getFg(screen);
     init_bg = cur_bg = screen->getBg(screen);
     if (screen->isMono(screen))

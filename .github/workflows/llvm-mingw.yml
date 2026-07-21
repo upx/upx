@@ -76,6 +76,14 @@ jobs:
             llvm_version: 22.1.8
             use_arm64ec: true
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz'
+          - name: llvm-mingw-20260721-msvcrt
+            llvm_version: 23.1.0rc1
+            use_arm64ec: true
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260721/llvm-mingw-20260721-msvcrt-ubuntu-22.04-x86_64.tar.xz'
+          - name: llvm-mingw-20260721-ucrt
+            llvm_version: 23.1.0rc1
+            use_arm64ec: true
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260721/llvm-mingw-20260721-ucrt-ubuntu-22.04-x86_64.tar.xz'
 
     env:
       container: 'ubuntu:26.04'

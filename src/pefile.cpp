@@ -33,7 +33,6 @@
 #include "linker.h"
 
 #define FILLVAL 0
-#define import  my_import // "import" is a keyword since C++20
 
 /*************************************************************************
 //
@@ -2966,11 +2965,11 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
 
     unsigned sdllnames = 0;
 
-    IPTR_VAR_OFFSET(const byte, const import, IDADDR(PEDIR_IMPORT) - isection[2].vaddr);
+    IPTR_VAR_OFFSET(const byte, const my_import, IDADDR(PEDIR_IMPORT) - isection[2].vaddr);
     OPTR_VAR(const byte, p, raw_bytes(imdata, 4));
 
     for (; get_le32(p) != 0; ++p) {
-        const byte *dname = raw_bytes(import + mem_size(1, get_le32(p)), 1);
+        const byte *dname = raw_bytes(my_import + mem_size(1, get_le32(p)), 1);
         const unsigned dlen = strlen(dname);
         ICHECK(dname, dlen + 1);
 
@@ -2995,7 +2994,7 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
 
     for (p = imdata; get_le32(p) != 0; ++p) {
         // restore the name of the dll
-        const byte *dname = raw_bytes(import + get_le32(p), 1);
+        const byte *dname = raw_bytes(my_import + get_le32(p), 1);
         const unsigned dlen = strlen(dname);
         ICHECK(dname, dlen + 1);
 
@@ -3036,7 +3035,7 @@ void PeFile::rebuildImports(SPAN_S(byte) & extra_info, ord_mask_t ord_mask, bool
                 //;;;printf(" %x",(unsigned)*newiat);
                 p += 3;
             } else {
-                *newiat = *(const LEXX *) raw_bytes(import + get_le32(p + 1), sizeof(LEXX));
+                *newiat = *(const LEXX *) raw_bytes(my_import + get_le32(p + 1), sizeof(LEXX));
                 assert(*newiat & ord_mask);
                 p += 5;
             }
