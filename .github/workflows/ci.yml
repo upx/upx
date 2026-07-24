@@ -146,6 +146,8 @@ jobs:
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/release/upx --sysinfo -vv
       - run: make build/debug+test
       - run: make build/release+test
+      # run: DESTDIR="$PWD/Install with cmake debug"   make build/debug+install
+      # run: DESTDIR="$PWD/Install with cmake release" make build/release+install
       - name: Run test suite
         run: |
           jobs="debug release"

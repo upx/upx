@@ -1175,6 +1175,25 @@ struct alignas(1) TestXE final {
         set_le16(p, v);
     }
 
+    static noinline int noinline_get_be16_signed(const byte *p) noexcept {
+        return get_be16_signed(p);
+    }
+    static noinline int noinline_get_be32_signed(const byte *p) noexcept {
+        return get_be32_signed(p);
+    }
+    static noinline upx_int64_t noinline_get_be64_signed(const byte *p) noexcept {
+        return get_be64_signed(p);
+    }
+    static noinline int noinline_get_le16_signed(const byte *p) noexcept {
+        return get_le16_signed(p);
+    }
+    static noinline int noinline_get_le32_signed(const byte *p) noexcept {
+        return get_le32_signed(p);
+    }
+    static noinline upx_int64_t noinline_get_le64_signed(const byte *p) noexcept {
+        return get_le64_signed(p);
+    }
+
     static noinline BE16 noinline_make_be16(unsigned v) noexcept { return BE16::make(v); }
     static noinline BE32 noinline_make_be32(unsigned v) noexcept { return BE32::make(v); }
     static noinline BE64 noinline_make_be64(upx_uint64_t v) noexcept { return BE64::make(v); }
@@ -1711,6 +1730,13 @@ TEST_CASE("upx::run_time 1b") {
 
         TestXE::noinline_set_be16_unsigned(buf2, v16);
         TestXE::noinline_set_le16_unsigned(buf2, v16);
+
+        assert_noexcept2(TestXE::noinline_get_be16_signed(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_be32_signed(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_be64_signed(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_le16_signed(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_le32_signed(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_le64_signed(buf1) != 0);
     }
     {
         assert_noexcept2(TestXE::noinline_make_be16(v32) == 0xf2f1);
@@ -2620,7 +2646,7 @@ TEST_CASE("codegen") {
     {
         struct alignas(1) T16 final { byte a[16]; };
         typedef T16 T;
-        T buf[4] = {};
+        T buf[2] = {};
 
         CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
         CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
@@ -2636,23 +2662,7 @@ TEST_CASE("codegen") {
     {
         struct alignas(1) T32 final { byte a[32]; };
         typedef T32 T;
-        T buf[4] = {};
-
-        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
-        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
-        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int16_t(n)) == (buf + n));
-        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint16_t(n)) == (buf + n));
-        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int32_t(n)) == (buf + n));
-        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint32_t(n)) == (buf + n));
-        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int64_t(n)) == (buf + n));
-        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint64_t(n)) == (buf + n));
-
-        (void) buf;
-    }
-    {
-        struct alignas(1) T48 final { byte a[48]; };
-        typedef T48 T;
-        T buf[4] = {};
+        T buf[2] = {};
 
         CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
         CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
@@ -2668,7 +2678,7 @@ TEST_CASE("codegen") {
     {
         struct alignas(1) T64 final { byte a[64]; };
         typedef T64 T;
-        T buf[4] = {};
+        T buf[2] = {};
 
         CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
         CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
@@ -2684,7 +2694,103 @@ TEST_CASE("codegen") {
     {
         struct alignas(1) T473 final { byte a[473]; };
         typedef T473 T;
-        T buf[4] = {};
+        T buf[2] = {};
+
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int64_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint64_t(n)) == (buf + n));
+
+        (void) buf;
+    }
+    {
+        struct alignas(1) T1024 final { byte a[1024]; };
+        typedef T1024 T;
+        T buf[2] = {};
+
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int64_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint64_t(n)) == (buf + n));
+
+        (void) buf;
+    }
+    {
+        struct alignas(1) T1025 final { byte a[1025]; };
+        typedef T1025 T;
+        T buf[2] = {};
+
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int64_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint64_t(n)) == (buf + n));
+
+        (void) buf;
+    }
+    {
+        struct alignas(1) T1027 final { byte a[1027]; };
+        typedef T1027 T;
+        T buf[2] = {};
+
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int64_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint64_t(n)) == (buf + n));
+
+        (void) buf;
+    }
+    {
+        struct alignas(1) T1031 final { byte a[1031]; };
+        typedef T1031 T;
+        T buf[2] = {};
+
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int64_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint64_t(n)) == (buf + n));
+
+        (void) buf;
+    }
+    {
+        struct alignas(1) T1039 final { byte a[1039]; };
+        typedef T1039 T;
+        T buf[2] = {};
+
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint16_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint32_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int64_t(n)) == (buf + n));
+        CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint64_t(n)) == (buf + n));
+
+        (void) buf;
+    }
+    {
+        struct alignas(1) T1055 final { byte a[1055]; };
+        typedef T1055 T;
+        T buf[2] = {};
 
         CHECK(TestXX<T>::noinline_add_ptr(buf, upx_int8_t(n)) == (buf + n));
         CHECK(TestXX<T>::noinline_add_ptr(buf, upx_uint8_t(n)) == (buf + n));

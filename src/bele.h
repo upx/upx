@@ -417,7 +417,7 @@ inline bele_constexpr void set_le14_5(XE32 *p, unsigned v) noexcept {
 **************************************************************************/
 
 forceinline constexpr int sign_extend32(unsigned v, unsigned bits) noexcept {
-#if (ACC_ARCH_M68K || 0) // no barrel shifter
+#if (ACC_ARCH_M68K) // no barrel shifter
     const unsigned sign_bit = 1u << (bits - 1);
     return ACC_ICAST(int, (v & (sign_bit - 1)) - (v & sign_bit));
 #else
@@ -426,7 +426,7 @@ forceinline constexpr int sign_extend32(unsigned v, unsigned bits) noexcept {
 }
 
 forceinline constexpr upx_int64_t sign_extend64(upx_uint64_t v, unsigned bits) noexcept {
-#if (ACC_ARCH_M68K || 0) // no barrel shifter
+#if (ACC_ARCH_M68K) // no barrel shifter
     const upx_uint64_t sign_bit = upx_uint64_t(1) << (bits - 1);
     return ACC_ICAST(upx_int64_t, (v & (sign_bit - 1)) - (v & sign_bit));
 #else
