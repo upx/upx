@@ -842,7 +842,7 @@ jobs:
           echo -e '#!/bin/sh\n'$log'exec zig objcopy "$@"' > zig-objcopy
           echo -e '#!/bin/sh\n'$log'exec zig ranlib "$@"' > zig-ranlib
           chmod +x zig-ar zig-cc zig-cxx zig-objcopy zig-ranlib
-          ls -la; head zig-ar zig-cc zig-cxx zig-objcopy zig-ranlib
+          ls -laF; head zig-ar zig-cc zig-cxx zig-objcopy zig-ranlib
           # update ZIG_TARGET
           [[ $ZIG_TARGET == mips-linux-musleabi-* ]]     && ZIG_TARGET=mips-linux-musleabi
           [[ $ZIG_TARGET == mips-linux-musleabihf-* ]]   && ZIG_TARGET=mips-linux-musleabihf
