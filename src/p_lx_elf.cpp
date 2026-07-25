@@ -3365,7 +3365,8 @@ tribool PackLinuxElf32::canPack()
             if (sec_strndx) {
                 unsigned const sh_name = get_te32(&sec_strndx->sh_name);
                 if (Elf32_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-                || (u32_t)file_size <= (sizeof(".shstrtab")
+                // .shstrtab's own name may end exactly at EOF (Go)
+                || (u32_t)file_size < (sizeof(".shstrtab")
                     + sh_name + (shstrtab - (const char *)&file_image[0]))
                 || (sh_name
                   && 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]))
@@ -3672,7 +3673,8 @@ tribool PackLinuxElf64::canPack()
             if (sec_strndx) {
                 unsigned const sh_name = get_te32(&sec_strndx->sh_name);
                 if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-                || (u32_t)file_size <= (sizeof(".shstrtab")
+                // .shstrtab's own name may end exactly at EOF (Go)
+                || (u32_t)file_size < (sizeof(".shstrtab")
                     + sh_name + (shstrtab - (const char *)&file_image[0]))
                 || (sh_name
                   && 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]))
