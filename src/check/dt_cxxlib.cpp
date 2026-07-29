@@ -1120,6 +1120,89 @@ struct alignas(1) TestCT final {
 static_assert(sizeof(TestCT) == 8);
 static_assert(alignof(TestCT) == 1);
 
+static forceinline upx_int64_t get_me8_int64(const byte *p) noexcept {
+    upx_int8_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint64_t get_me8_uint64(const byte *p) noexcept {
+    upx_int8_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_int64_t get_ne8_int64(const byte *p) noexcept {
+    upx_uint8_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint64_t get_ne8_uint64(const byte *p) noexcept {
+    upx_uint8_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_int64_t get_me16_int64(const byte *p) noexcept {
+    upx_int16_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint64_t get_me16_uint64(const byte *p) noexcept {
+    upx_int16_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_int64_t get_ne16_int64(const byte *p) noexcept {
+    upx_uint16_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint64_t get_ne16_uint64(const byte *p) noexcept {
+    upx_uint16_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_int64_t get_me32_int64(const byte *p) noexcept {
+    upx_int32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint64_t get_me32_uint64(const byte *p) noexcept {
+    upx_int32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_int64_t get_ne32_int64(const byte *p) noexcept {
+    upx_uint32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint64_t get_ne32_uint64(const byte *p) noexcept {
+    upx_uint32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+#if (__SIZEOF_INT128__ == 16)
+static forceinline upx_int128_t get_me32_int128(const byte *p) noexcept {
+    upx_int32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint128_t get_me32_uint128(const byte *p) noexcept {
+    upx_int32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_int128_t get_ne32_int128(const byte *p) noexcept {
+    upx_uint32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint128_t get_ne32_uint128(const byte *p) noexcept {
+    upx_uint32_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+#endif
+
 static forceinline constexpr int xign_extend32(unsigned v, unsigned bits) noexcept {
     return ACC_ICAST(int, v << (32 - bits)) >> (32 - bits);
 }
@@ -1182,6 +1265,57 @@ struct alignas(1) TestXE final {
     static noinline void noinline_set_le16_unsigned(byte * p, unsigned v) noexcept {
         set_le16(p, v);
     }
+
+    static noinline upx_int64_t noinline_get_me8_int64(const byte *p) noexcept {
+        return get_me8_int64(p);
+    }
+    static noinline upx_uint64_t noinline_get_me8_uint64(const byte *p) noexcept {
+        return get_me8_uint64(p);
+    }
+    static noinline upx_int64_t noinline_get_ne8_int64(const byte *p) noexcept {
+        return get_ne8_int64(p);
+    }
+    static noinline upx_uint64_t noinline_get_ne8_uint64(const byte *p) noexcept {
+        return get_ne8_uint64(p);
+    }
+    static noinline upx_int64_t noinline_get_me16_int64(const byte *p) noexcept {
+        return get_me16_int64(p);
+    }
+    static noinline upx_uint64_t noinline_get_me16_uint64(const byte *p) noexcept {
+        return get_me16_uint64(p);
+    }
+    static noinline upx_int64_t noinline_get_ne16_int64(const byte *p) noexcept {
+        return get_ne16_int64(p);
+    }
+    static noinline upx_uint64_t noinline_get_ne16_uint64(const byte *p) noexcept {
+        return get_ne16_uint64(p);
+    }
+    static noinline upx_int64_t noinline_get_me32_int64(const byte *p) noexcept {
+        return get_me32_int64(p);
+    }
+    static noinline upx_uint64_t noinline_get_me32_uint64(const byte *p) noexcept {
+        return get_me32_uint64(p);
+    }
+    static noinline upx_int64_t noinline_get_ne32_int64(const byte *p) noexcept {
+        return get_ne32_int64(p);
+    }
+    static noinline upx_uint64_t noinline_get_ne32_uint64(const byte *p) noexcept {
+        return get_ne32_uint64(p);
+    }
+#if (__SIZEOF_INT128__ == 16)
+    static noinline upx_int128_t noinline_get_me32_int128(const byte *p) noexcept {
+        return get_me32_int128(p);
+    }
+    static noinline upx_uint128_t noinline_get_me32_uint128(const byte *p) noexcept {
+        return get_me32_uint128(p);
+    }
+    static noinline upx_int128_t noinline_get_ne32_int128(const byte *p) noexcept {
+        return get_ne32_int128(p);
+    }
+    static noinline upx_uint128_t noinline_get_ne32_uint128(const byte *p) noexcept {
+        return get_ne32_uint128(p);
+    }
+#endif
 
     static noinline int noinline_get_be16_signed(const byte *p) noexcept {
         return get_be16_signed(p);
@@ -1789,6 +1923,25 @@ TEST_CASE("upx::run_time 1b") {
 
         TestXE::noinline_set_be16_unsigned(buf2, v16);
         TestXE::noinline_set_le16_unsigned(buf2, v16);
+
+        assert_noexcept2(TestXE::noinline_get_me8_int64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_me8_uint64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne8_int64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne8_uint64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_me16_int64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_me16_uint64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne16_int64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne16_uint64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_me32_int64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_me32_uint64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne32_int64(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne32_uint64(buf1) != 0);
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2(TestXE::noinline_get_me32_int128(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_me32_uint128(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne32_int128(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne32_uint128(buf1) != 0);
+#endif
 
         assert_noexcept2(TestXE::noinline_get_be16_signed(buf1) != 0);
         assert_noexcept2(TestXE::noinline_get_be24_signed(buf1) != 0);
