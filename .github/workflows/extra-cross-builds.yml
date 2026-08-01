@@ -15,7 +15,7 @@ env:
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -Wdev --warn-uninitialized
   #UPX_CONFIG_DISABLE_RELEASE_O2: 'ON'
-  #UPX_CONFIG_EXTRA_COMPILE_OPTIONS_UPX: '$$<$$<CONFIG:Release>:-fomit-frame-pointer>'
+  UPX_CONFIG_EXTRA_COMPILE_OPTIONS_UPX: '$$<$$<CONFIG:Release>:-fomit-frame-pointer>'
   UPX_CONFIG_HAVE_WORKING_BUILD_RPATH: 'ON'
   UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO: 1
   UPX_DEBUG_TEST_LIBC_QSORT: 1
@@ -80,9 +80,13 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le -cpu power11, extra: -power11 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -mcmodel-large }
-          # { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva23u64 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
+
+          - { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
+          # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva20u64 }
+          # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva22u64 }
+          # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva23u64 }
 
           - { container: 'ubuntu:20.04', target: g++-mingw-w64-i686, wine: wine }
           - { container: 'ubuntu:20.04', target: g++-mingw-w64-x86-64, wine: wine }
@@ -231,6 +235,12 @@ jobs:
             export CC="$CC -fno-PIC" CXX="$CXX -fno-PIC"
             export UPX_CONFIG_DISABLE_SHARED_LIBS=ON
           fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rva20u64 ]]; then true;
+            export CC="$CC -march=rva20u64" CXX="$CXX -march=rva20u64"
+          fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rva22u64 ]]; then true;
+            export CC="$CC -march=rva22u64" CXX="$CXX -march=rva22u64"
+          fi
           if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rva23u64 ]]; then true;
             export CC="$CC -march=rva23u64" CXX="$CXX -march=rva23u64"
           fi
@@ -267,6 +277,7 @@ jobs:
           make UPX_XTARGET=xtarget/${toolchain} xtarget/all
 
       - run: set -x; $CC --version; $CXX --version
+      - run: set -x; $CC -march=help || true
       - run: $CC  -E -x c   -dM /dev/null | LC_ALL=C sort
       - run: $CXX -E -x c++ -dM /dev/null | LC_ALL=C sort
       - run: ls -l build/*/*/*/upx* || true

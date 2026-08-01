@@ -1201,6 +1201,26 @@ static forceinline upx_uint128_t get_ne32_uint128(const byte *p) noexcept {
     upx_memcpy_inline(&v, p, sizeof(v));
     return v;
 }
+static forceinline upx_int128_t get_me64_int128(const byte *p) noexcept {
+    upx_int64_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint128_t get_me64_uint128(const byte *p) noexcept {
+    upx_int64_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_int128_t get_ne64_int128(const byte *p) noexcept {
+    upx_uint64_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
+static forceinline upx_uint128_t get_ne64_uint128(const byte *p) noexcept {
+    upx_uint64_t v = 0;
+    upx_memcpy_inline(&v, p, sizeof(v));
+    return v;
+}
 #endif
 
 static forceinline constexpr int xign_extend32(unsigned v, unsigned bits) noexcept {
@@ -1314,6 +1334,18 @@ struct alignas(1) TestXE final {
     }
     static noinline upx_uint128_t noinline_get_ne32_uint128(const byte *p) noexcept {
         return get_ne32_uint128(p);
+    }
+    static noinline upx_int128_t noinline_get_me64_int128(const byte *p) noexcept {
+        return get_me64_int128(p);
+    }
+    static noinline upx_uint128_t noinline_get_me64_uint128(const byte *p) noexcept {
+        return get_me64_uint128(p);
+    }
+    static noinline upx_int128_t noinline_get_ne64_int128(const byte *p) noexcept {
+        return get_ne64_int128(p);
+    }
+    static noinline upx_uint128_t noinline_get_ne64_uint128(const byte *p) noexcept {
+        return get_ne64_uint128(p);
     }
 #endif
 
@@ -1941,6 +1973,10 @@ TEST_CASE("upx::run_time 1b") {
         assert_noexcept2(TestXE::noinline_get_me32_uint128(buf1) != 0);
         assert_noexcept2(TestXE::noinline_get_ne32_int128(buf1) != 0);
         assert_noexcept2(TestXE::noinline_get_ne32_uint128(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_me64_int128(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_me64_uint128(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne64_int128(buf1) != 0);
+        assert_noexcept2(TestXE::noinline_get_ne64_uint128(buf1) != 0);
 #endif
 
         assert_noexcept2(TestXE::noinline_get_be16_signed(buf1) != 0);
