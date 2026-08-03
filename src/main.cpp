@@ -367,6 +367,7 @@ static noinline int do_option(int optc, const char *arg) {
     case 'f':
         opt->force++;
         break;
+    case 'F':
     case 529:
         opt->force_overwrite = true;
         break;
@@ -836,7 +837,7 @@ int main_get_options(int argc, char **argv) {
         // options
         {"force", 0, N, 'f'},              // force overwrite of output files
         {"force-compress", 0, N, 'f'},     //   and compression of suspicious files
-        {"force-overwrite", 0x90, N, 529}, // force overwrite of output files
+        {"force-overwrite", 0x90, N, 'F'}, // force overwrite of output files
         {"info", 0, N, 'i'},               // info mode
         {"link", 0x90, N, 530},            // preserve hard link
         {"no-env", 0x10, N, 519},          // no environment var

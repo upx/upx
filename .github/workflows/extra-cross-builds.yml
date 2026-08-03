@@ -84,6 +84,7 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
 
           - { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
+          - { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
           # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva20u64 }
           # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva22u64 }
           # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva23u64 }

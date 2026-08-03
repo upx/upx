@@ -740,7 +740,7 @@ jobs:
           - { zig_target: aarch64-macos-none }
           - { zig_target: aarch64-windows-gnu }
           - { zig_target: arm-linux-musleabihf, qemu: qemu-arm }
-          - { zig_target: armeb-linux-musleabihf, Q_qemu: qemu-armeb }
+          - { zig_target: armeb-linux-musleabihf, qemu: qemu-armeb }
           - { zig_target: i386-linux-gnu.2.7, zig_flags: -march=i586 }
           - { zig_target: i386-linux-gnu.2.17, zig_flags: -march=i586 }
           - { zig_target: i386-linux-musl, zig_flags: -march=i586, qemu: qemu-i386 }
