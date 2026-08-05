@@ -2197,7 +2197,7 @@ tmp/powerpc64le-linux.elf-upxfd_linux.s : $(srcdir)/src/upxfd_linux.c
 	        -e 's/[ \t]jal[ \t]/	bal /' \
 		  >$@
 
-tmp/powerpc64le-linux.elf-help_umf.S : $(srcdir)/src/$$T.S
+src/powerpc64le-linux.elf-help_umf.S : $(srcdir)/src/$$T.S
 	cp $< $@
 
 powerpc64-linux.elf%.h : tc_list = powerpc64-linux.elf default
