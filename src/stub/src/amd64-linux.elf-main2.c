@@ -39,6 +39,7 @@
 extern int upxfd_create(char const *tag, unsigned flags);
 #define MFD_EXEC 0x0010
 #define MS_SYNC 4
+#define nullptr 0
 
 extern void *memcpy(void *dst, void const *src, size_t n);
 // Pprotect is mprotect but uses page-aligned address (Linux requirement)
@@ -263,80 +264,89 @@ ERR_LAB
     DPRINTF("unpackExtent done xo->buf=%%p\\n", xo->buf);
 }
 
+extern long upx_mmap_and_fd(  // x86_64 Android emulator of i386 is not faithful
+     void *ptr
+     , unsigned len  // also pre-allocate space in file
+     , char *pathname  // 0 ==> call get_upxfn_path, which stores if 1st time
+);
+
+// If the escape hatch fits into the last page of .text,
+// then put the escape hatch there and return a pointer to it.
+// If it does not fit, then set the hatch[] array to the code
+// for the eventual new page, and return nullptr.
+// Always copying the code into the hatch array may be shorter overall.
+
 #if defined(__x86_64__)  //{
 static void *
 make_hatch(
     ElfW(Phdr) const *const phdr,
     char *next_unc,
-    unsigned const frag_mask
+    unsigned const page_mask,
+    unsigned hatch[4]  // OUT: temp for prototype
 )
 {
-    char *hatch = next_unc;
-    int code[3] =  {
-        0xfa1e0ff3,  // endbr64
-        0x585a050f,  // syscall; pop %arg3{%rdx}; pop %rax
-        0x90e0ff3e,  // notrack jmp *%rax; nop
-    };
-    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, page-mask, hatch);
+    hatch[0] = 0xfa1e0ff3;  // endbr64
+    hatch[1] = 0x585a050f;  // syscall; pop %arg3{%rdx}; pop %rax
+    hatch[2] = 0x90e0ff3e;  // notrack jmp *%rax; [[nop]]
+
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        if (sizeof(code) <= (unsigned)(frag_mask & -(long)hatch)) {
-            ((int *)hatch)[0] = code[0];  // endbr64
-            ((int *)hatch)[1] = code[1];  // syscall; pop %arg3{%rdx}; pop %rax
-            ((int *)hatch)[2] = code[2];  // notrack jmp *%rax; nop
+        next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        // no need to align on x86_64
+        unsigned frag = ~page_mask & -(long)next_unc;  // bytes available
+        if (11 <= frag) {  // fits on end of page
+            memcpy(next_unc, hatch, 11);
+            return next_unc;
         }
-        else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            int mfd = upxfd_create(addr_string("upx"), MFD_EXEC);  // the directory entry
-            write(mfd, &code, sizeof(code));
-            hatch = mmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
-            close(mfd);
+        else { // Does not fit
+            return nullptr;  // fixup at end of upx_main2()
         }
     }
     DPRINTF("hatch=%%p\\n", hatch);
-    return hatch;
+    return nullptr;
 }
-#elif defined(__riscv)  //{
-static void *
+#elif defined(__riscv)  //}{
+static short *
 make_hatch(
     ElfW(Phdr) const *const phdr,
     char *next_unc,
-    unsigned const frag_mask
+    unsigned const page_mask,
+    unsigned hatch[4]  // OUT: temp for prototype
 )
 {
-    unsigned long a = (unsigned long)next_unc;
-    short *hatch = (short *)((1u & a) + a);
-    short code[3] =  {
-          0x0073  // ecall for munmap(ADRU, LENU)
-        , 0x0000  // upper 16 bits of ecall
-        , 0x9002 | (15<<7)  // jalr x15
-    };
-    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, page_mask, hatch);
+    short *q = (short *)hatch[0];
+    q[0] = 0x0073;  // ecall for munmap(ADRU, LENU)
+    q[1] = 0x0000;  // upper 16 bits of ecall
+    q[2] = 0x9002 | (15<<7);  // jalr x15
+
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        if (sizeof(code) <= (unsigned)(frag_mask & -(long)hatch)) {
-            hatch[0] = code[0];
-            hatch[1] = code[1];
-            hatch[2] = code[2];
+        next_unc += 1+ phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        next_unc  = (char *)(void *)(~1ul & (long)(1+ next_unc));  // .balign 2
+        if (3*2 <= (~page_mask & -(long)next_unc)) { // fits on end of page
+            short *p = (short *)(void *)next_unc;
+            p[0] = q[0];
+            p[1] = q[1];
+            p[2] = q[2];
+            return p;
         }
-        else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            int mfd = upxfd_create(addr_string("upx"), MFD_EXEC);  // the directory entry
-            write(mfd, &code, sizeof(code));
-            hatch = mmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
-            close(mfd);
+        else { // does not fit
+            return nullptr;  // fixup at end of upx_main2()
         }
     }
-    DPRINTF("hatch=%%p\\n", hatch);
-    return hatch;
+    return nullptr;
 }
 #elif defined(__powerpc64__)  //}{
-static void *
+static unsigned *
 make_hatch(
     ElfW(Phdr) const *const phdr,
     char *next_unc,
-    unsigned const frag_mask
+    unsigned const page_mask,
+    unsigned hatch[4]  // OUT: temp for prototype
 )
 {
-    unsigned *hatch = (unsigned *)(~3& (3+ (long)next_unc));
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, page_mask, hatch);
     unsigned const *code;
-    unsigned const sz_code = 4*4;
     asm("bl 0f; \
         sc; \
         mr 12,31; \
@@ -346,34 +356,33 @@ make_hatch(
 /*out*/ : "=r"(code)
 /* in*/ :
 /*und*/ : "lr");
-    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,next_unc,frag_mask);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        if (sz_code <= (frag_mask & -(long)hatch)) {
-            memcpy(hatch, code, sz_code);
+        next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        next_unc = (char *)(~3& (3+ (long)next_unc));  // .balign 4
+        if (4*4 <= (~page_mask & -(long)next_unc)) { // fits on end of page
+            memcpy(next_unc, code, 4*4);
+            return (unsigned *)(void *)next_unc;
         }
-        else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            int mfd = upxfd_create(addr_string("upx"), MFD_EXEC);  // the directory entry
-            write(mfd, code, sz_code);
-            hatch = mmap(0, sz_code, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
-            close(mfd);
+        else { // Does not fit
+            memcpy(hatch, code, 4*4);
+            return nullptr;
         }
     }
-    DPRINTF("hatch=%%p\\n", hatch);
-    return hatch;
+    return nullptr;
 }
-#elif defined(__aarch64__)  //{
+#elif defined(__aarch64__)  //}{
 #define NBPI 4
 #define NINSTR 3
-static void *
+static unsigned *
 make_hatch(
     ElfW(Phdr) const *const phdr,
     char *next_unc,
-    unsigned const frag_mask
+    unsigned const page_mask,
+    unsigned hatch[4]
 )
 {
-    unsigned *hatch = (unsigned *)(~3& (3+ (long)next_unc));
-    unsigned const *code;
-    unsigned const sz_code = 2*4;
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, page_mask, hatch);
+    unsigned *code;
     asm ("bl 0f; \
         svc #0; \
         br x30; \
@@ -381,20 +390,23 @@ make_hatch(
 /*out*/ : "=r"(code)
 /* in*/ :
 /*und*/ : );
-    DPRINTF("make_hatch %%p %%p %%x\\n",phdr,next_unc,frag_mask);
+    hatch[0] = code[0];
+    hatch[1] = code[1];
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        if (sz_code <= (frag_mask & -(long)hatch)) {
-            memcpy(hatch, code, sz_code);
+        next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        next_unc  = (char *)(void *)(~3ul & (long)(3+ next_unc));  // .balign 4
+        if (2*4 <= (~page_mask & -(long)next_unc)) { // fits on end of page
+            unsigned *q = (unsigned *)(void *)next_unc;
+            q[0] = code[0];
+            q[1] = code[1];
+            return q;
         }
-        else { // Does not fit at hi end of .text, so must use a new page "permanently"
-            int mfd = upxfd_create(addr_string("upx"), MFD_EXEC);  // the directory entry
-            write(mfd, code, sz_code);
-            hatch = mmap(0, sz_code, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
-            close(mfd);
+        else { // Does not fit
+            return nullptr;
         }
     }
     DPRINTF("hatch=%%p\\n", hatch);
-    return hatch;
+    return nullptr;
 }
 #undef NBPI
 #undef NINSTR
@@ -414,7 +426,6 @@ upx_bzero(char *p, size_t len)
 #define bzero(a,b)  __builtin_memset(a,0,b)
 #endif  //}
 
-#define nullptr ((void *)0)
 static ElfW(auxv_t) *
 auxv_up(ElfW(auxv_t) *av, unsigned const type, uint64_t const value)
 {
@@ -552,7 +563,7 @@ do_xmap( // mapped addr
         (ehdr->e_phoff + (char const *)ehdr);
     ElfW(Addr) reloc = 0;  // default for ET_EXEC
     ElfW(Addr) v_brk = 0;
-    void *hatch = 0;
+    unsigned hatch[4], *hatch_p = 0;
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
         ElfW(Phdr) const *const phdr0 = (ElfW(Phdr) *)(1+ (ElfW(Ehdr) *)base);  // cheats .e_phoff
@@ -659,12 +670,8 @@ do_xmap( // mapped addr
         }
 
         if (xi && phdr->p_flags & PF_X) {
-            if (!hatch) { // once only
-                hatch = make_hatch(phdr, xo.buf, ~page_mask);
-                if (hatch) {
-                    auxv_up(av, AT_NULL, (size_t)hatch);
-                }
-             }
+            if (!hatch_p) // try until hatch fits
+                hatch_p = make_hatch(phdr, xo.buf, page_mask, hatch);
 
             // SELinux: Map the contents of mfd as per *phdr.
             DPRINTF("hatch protect addr=%%p  mlen=%%p\\n", addr, mlen);
@@ -688,6 +695,21 @@ ERR_LAB
         }
     }
   }
+    // install escape hatch
+    if (xi && !hatch_p) { // hatch did not fit on end of .text page; need a new page
+        unsigned long addr = (unsigned long)upx_mmap_and_fd((void *)0, sizeof(hatch), nullptr);
+        DPRINTF("hatch new addr %%p\n", addr);
+        unsigned mfd = 0xfff & addr;
+        addr -= mfd;  // separate the addr
+        --mfd;  // recover the mfd
+        write(mfd, hatch, sizeof(hatch));  // the instrs
+        hatch_p = (unsigned *)mmap((void *)addr, sizeof(hatch), PROT_READ|PROT_EXEC,
+            MAP_PRIVATE|MAP_FIXED, mfd, 0);
+        close(mfd);
+    }
+    if (xi)
+        auxv_up((ElfW(auxv_t) *)(~1 & (size_t)av), AT_NULL, (size_t)hatch_p);
+
     if (xi) {
         brk((void *)v_brk);
     }

@@ -11,8 +11,8 @@ TARGET(elf64-powerpc)
 LOAD tmp/powerpc64-linux.elf-fold.o
 OUTPUT(tmp/powerpc64-linux.elf-fold.bin elf64-powerpc)
 
-.text           0x0000000000000000      0xfc8
- .text          0x0000000000000000      0xfc8 tmp/powerpc64-linux.elf-fold.o
+.text           0x0000000000000000     0x1014
+ .text          0x0000000000000000     0x1014 tmp/powerpc64-linux.elf-fold.o
                 0x0000000000000014                get_page_mask
                 0x000000000000002c                Pprotect
                 0x0000000000000050                Psync
@@ -20,7 +20,7 @@ OUTPUT(tmp/powerpc64-linux.elf-fold.bin elf64-powerpc)
                 0x00000000000000c0                Punmap
                 0x00000000000005cc                underlay
                 0x0000000000000658                xfind_pages
-                0x0000000000000e28                upx_main2
+                0x0000000000000e74                upx_main2
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/powerpc64-linux.elf-fold.o
@@ -64,6 +64,7 @@ EXP_HEAD        0x0000000000000000       0xac
 EXP_TAIL        0x0000000000000000       0x8c
  EXP_TAIL       0x0000000000000000       0x8c tmp/powerpc64-linux.elf-fold.o
                 0x0000000000000008                eof_nrv
+                0x000000000000008c                upx_mmap_and_fd
 
 NRV2E           0x0000000000000000      0x15c
  NRV2E          0x0000000000000000      0x15c tmp/powerpc64-linux.elf-fold.o

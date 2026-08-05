@@ -11,16 +11,23 @@ TARGET(elf64-powerpcle)
 LOAD tmp/powerpc64le-linux.elf-fold.o
 OUTPUT(tmp/powerpc64le-linux.elf-fold.bin elf64-powerpcle)
 
-.text           0x0000000000000000      0xff8
- .text          0x0000000000000000      0xff8 tmp/powerpc64le-linux.elf-fold.o
+.text           0x0000000000000000     0x1248
+ .text          0x0000000000000000     0x1248 tmp/powerpc64le-linux.elf-fold.o
                 0x0000000000000014                get_page_mask
                 0x000000000000002c                Pprotect
                 0x0000000000000050                Psync
                 0x000000000000009c                Pmap
                 0x00000000000000c0                Punmap
-                0x000000000000059c                underlay
-                0x0000000000000628                xfind_pages
-                0x0000000000000e58                upx_main2
+                0x000000000000031c                upx_mmap_and_fd_linux
+                0x0000000000000744                underlay
+                0x00000000000007d0                xfind_pages
+                0x00000000000010a8                upx_main2
+
+HUMF_A          0x0000000000000000        0x4
+ HUMF_A         0x0000000000000000        0x4 tmp/powerpc64le-linux.elf-fold.o
+
+HUMF_L          0x0000000000000000        0x4
+ HUMF_L         0x0000000000000000        0x4 tmp/powerpc64le-linux.elf-fold.o
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/powerpc64le-linux.elf-fold.o
@@ -49,8 +56,8 @@ SYSCALLS        0x0000000000000000      0x15c
                 0x0000000000000130                memcpy
                 0x0000000000000154                my_bkpt
 
-.comment        0x0000000000000000       0x33
- .comment       0x0000000000000000       0x33 tmp/powerpc64le-linux.elf-fold.o
+.comment        0x0000000000000000       0x65
+ .comment       0x0000000000000000       0x65 tmp/powerpc64le-linux.elf-fold.o
 
 .note.GNU-stack
                 0x0000000000000000        0x0
@@ -64,6 +71,7 @@ EXP_HEAD        0x0000000000000000       0xac
 EXP_TAIL        0x0000000000000000       0x8c
  EXP_TAIL       0x0000000000000000       0x8c tmp/powerpc64le-linux.elf-fold.o
                 0x0000000000000008                eof_nrv
+                0x000000000000008c                upx_mmap_and_fd
 
 NRV2E           0x0000000000000000      0x15c
  NRV2E          0x0000000000000000      0x15c tmp/powerpc64le-linux.elf-fold.o

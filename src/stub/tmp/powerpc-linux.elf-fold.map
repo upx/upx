@@ -7,7 +7,7 @@ Name             Origin             Length             Attributes
 Linker script and memory map
 
 
-.text           0x0000000000000000     0x134c
+.text           0x0000000000000000     0x13bc
  .text          0x0000000000000000      0x2e0 tmp/powerpc-linux.elf-fold.o
                 0x0000000000000094                Pmap
                 0x000000000000000c                get_page_mask
@@ -16,9 +16,9 @@ Linker script and memory map
                 0x00000000000000b8                Punmap
  .text          0x00000000000002e0        0x0 tmp/powerpc-linux.elf-help_umf.o
  .text          0x00000000000002e0        0x0 tmp/powerpc-expand.o
- .text          0x00000000000002e0     0x106c tmp/powerpc-linux.elf-main2.o
-                0x0000000000001138                upx_main2
-                0x00000000000007f8                underlay
+ .text          0x00000000000002e0     0x10dc tmp/powerpc-linux.elf-main2.o
+                0x00000000000011a8                upx_main2
+                0x00000000000007b8                underlay
 
 HUMF_A          0x0000000000000000        0x4
  HUMF_A         0x0000000000000000        0x4 tmp/powerpc-linux.elf-help_umf.o

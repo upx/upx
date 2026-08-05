@@ -154,6 +154,10 @@ eof_nrv:
 unfilter:
 #include "arch/powerpc/64/bxx.S"  // unfilter code; args in registers, fall-through return
 
+        .balign 4
+upx_mmap_and_fd: .globl upx_mmap_and_fd
+    // UMF_ANDROID or UMF_LINUX must be loaded after EXP_TAIL
+
 #define NO_METHOD_CHECK 1  /* subsumed here by daisy chain */
 
 #define off  a4
