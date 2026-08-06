@@ -12,7 +12,7 @@ LOAD tmp/arm64-expand.o
 LOAD tmp/arm64-linux.elf-main2.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
-.text           0x0000000000000000      0xc84
+.text           0x0000000000000000      0xc98
  .text          0x0000000000000000      0x2d4 tmp/arm64-linux.elf-fold.o
                 0x0000000000000010                get_page_mask
                 0x0000000000000020                mmap_privanon
@@ -22,10 +22,10 @@ OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
                 0x00000000000000c8                Pprotect
                 0x00000000000000c8                mprotect
  .text          0x00000000000002d4        0x0 tmp/arm64-expand.o
- .text          0x00000000000002d4      0x9b0 tmp/arm64-linux.elf-main2.o
+ .text          0x00000000000002d4      0x9c4 tmp/arm64-linux.elf-main2.o
                 0x00000000000004c8                underlay
                 0x0000000000000534                xfind_pages
-                0x0000000000000b38                upx_main2
+                0x0000000000000b4c                upx_main2
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/arm64-linux.elf-fold.o

@@ -315,7 +315,7 @@ make_hatch(
 )
 {
     DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, page_mask, hatch);
-    short *q = (short *)hatch[0];
+    short *q = (short *)hatch;
     q[0] = 0x0073;  // ecall for munmap(ADRU, LENU)
     q[1] = 0x0000;  // upper 16 bits of ecall
     q[2] = 0x9002 | (15<<7);  // jalr x15
@@ -564,6 +564,7 @@ do_xmap( // mapped addr
     ElfW(Addr) reloc = 0;  // default for ET_EXEC
     ElfW(Addr) v_brk = 0;
     unsigned hatch[4], *hatch_p = 0;
+    bzero((char *)&hatch[0], sizeof(hatch));  // pacify valgrind
     if (xi) { // compressed main program:
         // C_BASE space reservation, C_TEXT compressed data and stub
         ElfW(Phdr) const *const phdr0 = (ElfW(Phdr) *)(1+ (ElfW(Ehdr) *)base);  // cheats .e_phoff
@@ -671,7 +672,7 @@ do_xmap( // mapped addr
 
         if (xi && phdr->p_flags & PF_X) {
             if (!hatch_p) // try until hatch fits
-                hatch_p = make_hatch(phdr, xo.buf, page_mask, hatch);
+                hatch_p = (void *)make_hatch(phdr, xo.buf, page_mask, hatch);
 
             // SELinux: Map the contents of mfd as per *phdr.
             DPRINTF("hatch protect addr=%%p  mlen=%%p\\n", addr, mlen);
