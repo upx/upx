@@ -138,6 +138,29 @@ forceinline bool ptr_is_aligned(const void *p, size_t alignment) noexcept {
     return (ptr_get_address(p) & (alignment - 1)) == 0;
 }
 
+template <class T>
+forceinline T *ptr_align_down(T *p, size_t alignment) noexcept {
+    return upx::ptr_static_cast<T *>(upx::ptr_static_cast<char *>(p) -
+                                     size_t(ptr_get_address(p) & (alignment - 1)));
+}
+template <class T>
+const forceinline T *ptr_align_down(const T *p, size_t alignment) noexcept {
+    return upx::ptr_static_cast<const T *>(upx::ptr_static_cast<const char *>(p) -
+                                           size_t(ptr_get_address(p) & (alignment - 1)));
+}
+template <class T>
+forceinline T *ptr_align_up(T *p, size_t alignment) noexcept {
+    return upx::ptr_static_cast<T *>(
+        upx::ptr_static_cast<char *>(p) +
+        size_t((upx_ptraddr_t(0) - ptr_get_address(p)) & (alignment - 1)));
+}
+template <class T>
+const forceinline T *ptr_align_up(const T *p, size_t alignment) noexcept {
+    return upx::ptr_static_cast<const T *>(
+        upx::ptr_static_cast<const char *>(p) +
+        size_t((upx_ptraddr_t(0) - ptr_get_address(p)) & (alignment - 1)));
+}
+
 // ptrdiff_t with nullptr checks and asserted size; will throw on failure
 // NOTE: returns size_in_bytes, not number of elements!
 noinline int ptr_diff_bytes(const void *a, const void *b) may_throw;

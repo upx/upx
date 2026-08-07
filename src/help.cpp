@@ -144,6 +144,7 @@ struct PackerNames final {
 
     static constexpr unsigned MAX_NAMES = 64; // arbitrary limit, increase as needed
     struct Entry final {
+        int format;
         const char *fname;
         const char *sname;
         unsigned methods_count;
@@ -156,17 +157,22 @@ struct PackerNames final {
     unsigned names_count = 0;
     const Options *o = nullptr;
 
-    void add(const PackerBase *pb) {
+    noinline void add(const PackerBase *pb) {
         assert_noexcept(pb != nullptr);
+        const int format = pb->getFormat();
+        if (format != 25)
+            for (unsigned i = 0; i < names_count; i++)
+                assert_noexcept(names_array[i].format != format);
         assert_noexcept(names_count < MAX_NAMES);
         Entry &e = names_array[names_count];
+        mem_clear(&e);
         names[names_count++] = &e;
+        e.format = format;
+        assert_noexcept(Packer::isValidFormat(e.format));
         e.fname = pb->getFullName(o);
         e.sname = pb->getName();
         assert_noexcept(e.fname != nullptr && e.fname[0]);
         assert_noexcept(e.sname != nullptr && e.sname[0]);
-        assert_noexcept(Packer::isValidFormat(pb->getFormat()));
-        e.methods_count = e.filters_count = 0;
         for (const int *m = pb->getCompressionMethods(M_ALL, 10); *m != M_END; m++) {
             if (*m >= 0) {
                 assert_noexcept(Packer::isValidCompressionMethod(*m));
@@ -190,6 +196,8 @@ struct PackerNames final {
         assert_noexcept(e.methods_count >= 1);
         upx_gnomesort(e.methods, e.methods_count, sizeof(e.methods[0]), ne32_compare);
         upx_gnomesort(e.filters, e.filters_count, sizeof(e.filters[0]), ne32_compare);
+        NO_printf("%2u %3d %-36s %2u %2u\n", names_count, e.format, e.fname, e.methods_count,
+                  e.filters_count);
     }
     static tribool visit(PackerBase *pb, void *user) {
         assert_noexcept(pb != nullptr);

@@ -1157,8 +1157,10 @@ void upx_compiler_sanity_check() noexcept {
             0, 0, 0, 0,    0,    0,    0,    0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8, 0,
             0, 0, 0, 0x7f, 0x7e, 0x7d, 0x7c, 0x7b, 0x7a, 0x79, 0x78, 0,    0,    0,    0,    0};
 #if !defined(upx_fake_alignas_16)
-        assert_noexcept(ptr_is_aligned<16>(dd));
-        assert_noexcept(ptr_is_aligned(dd, 16));
+        assert_noexcept2(ptr_is_aligned<16>(dd));
+        assert_noexcept2(ptr_is_aligned(dd, 16));
+        assert_noexcept2(ptr_align_down(dd + 1, 16) == (dd));
+        assert_noexcept2(ptr_align_up(dd + 1, 16) == (dd + 16));
 #endif
         const constexpr byte *d = dd + 7;
         static_assert(upx::compile_time::get_be16(d) == 0xfffe);

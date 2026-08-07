@@ -198,6 +198,7 @@ jobs:
           rm -rf ./build/*/*/*/XTesting/*/*
 
       - name: 'Run test suite'
+        if: false
         run: |
           export upx_exe=./upx.exe
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"

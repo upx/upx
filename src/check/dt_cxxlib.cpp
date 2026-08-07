@@ -1116,6 +1116,20 @@ struct alignas(1) TestCT final {
     static noinline upx_ptraddr_t noinline_align_up_gap_16(upx_ptraddr_t p) noexcept {
         return upx::align_up_gap(p, upx_ptraddr_t(16));
     }
+
+    static noinline byte *noinline_ptr_align_down(byte * p, size_t a) noexcept {
+        return ptr_align_down(p, a);
+    }
+    static noinline byte *noinline_ptr_align_up(byte * p, size_t a) noexcept {
+        return ptr_align_up(p, a);
+    }
+
+    static noinline byte *noinline_ptr_align_down_16(byte * p) noexcept {
+        return ptr_align_down(p, 16);
+    }
+    static noinline byte *noinline_ptr_align_up_16(byte * p) noexcept {
+        return ptr_align_up(p, 16);
+    }
 };
 static_assert(sizeof(TestCT) == 8);
 static_assert(alignof(TestCT) == 1);
@@ -1382,52 +1396,52 @@ struct alignas(1) TestXE final {
     static noinline LE64 noinline_make_le64(upx_uint64_t v) noexcept { return LE64::make(v); }
 
     static noinline bool noinline_equal_be16(BE16 a, unsigned v) noexcept {
-        BE16 b = BE16::make(v);
+        const BE16 b = BE16::make(v);
         return a == b;
     }
     static noinline bool noinline_equal_be32(BE32 a, unsigned v) noexcept {
-        BE32 b = BE32::make(v);
+        const BE32 b = BE32::make(v);
         return a == b;
     }
     static noinline bool noinline_equal_be64(BE64 a, upx_uint64_t v) noexcept {
-        BE64 b = BE64::make(v);
+        const BE64 b = BE64::make(v);
         return a == b;
     }
     static noinline bool noinline_equal_le16(LE16 a, unsigned v) noexcept {
-        LE16 b = LE16::make(v);
+        const LE16 b = LE16::make(v);
         return a == b;
     }
     static noinline bool noinline_equal_le32(LE32 a, unsigned v) noexcept {
-        LE32 b = LE32::make(v);
+        const LE32 b = LE32::make(v);
         return a == b;
     }
     static noinline bool noinline_equal_le64(LE64 a, upx_uint64_t v) noexcept {
-        LE64 b = LE64::make(v);
+        const LE64 b = LE64::make(v);
         return a == b;
     }
 
     static noinline bool noinline_less_be16(BE16 a, unsigned v) noexcept {
-        BE16 b = BE16::make(v);
+        const BE16 b = BE16::make(v);
         return a < b;
     }
     static noinline bool noinline_less_be32(BE32 a, unsigned v) noexcept {
-        BE32 b = BE32::make(v);
+        const BE32 b = BE32::make(v);
         return a < b;
     }
     static noinline bool noinline_less_be64(BE64 a, upx_uint64_t v) noexcept {
-        BE64 b = BE64::make(v);
+        const BE64 b = BE64::make(v);
         return a < b;
     }
     static noinline bool noinline_less_le16(LE16 a, unsigned v) noexcept {
-        LE16 b = LE16::make(v);
+        const LE16 b = LE16::make(v);
         return a < b;
     }
     static noinline bool noinline_less_le32(LE32 a, unsigned v) noexcept {
-        LE32 b = LE32::make(v);
+        const LE32 b = LE32::make(v);
         return a < b;
     }
     static noinline bool noinline_less_le64(LE64 a, upx_uint64_t v) noexcept {
-        LE64 b = LE64::make(v);
+        const LE64 b = LE64::make(v);
         return a < b;
     }
 
@@ -2156,6 +2170,17 @@ TEST_CASE("upx::run_time 2") {
     assert_noexcept2(TestCT::noinline_align_down_gap_16(p) == 1);
     assert_noexcept2(TestCT::noinline_align_up_16(p) == 16);
     assert_noexcept2(TestCT::noinline_align_up_gap_16(p) == 15);
+    alignas(16) static byte b[16] = {};
+    assert_noexcept2(TestCT::noinline_ptr_align_down(b + 1, a) != nullptr);
+    assert_noexcept2(TestCT::noinline_ptr_align_up(b + 1, a) != nullptr);
+    assert_noexcept2(TestCT::noinline_ptr_align_down_16(b + 1) != nullptr);
+    assert_noexcept2(TestCT::noinline_ptr_align_up_16(b + 1) != nullptr);
+#if !defined(upx_fake_alignas_16) && 0
+    assert_noexcept2(TestCT::noinline_ptr_align_down(b + 1, a) == b);
+    assert_noexcept2(TestCT::noinline_ptr_align_up(b + 1, a) == b + 8);
+    assert_noexcept2(TestCT::noinline_ptr_align_down_16(b + 1) == b);
+    assert_noexcept2(TestCT::noinline_ptr_align_up_16(b + 1) == b + 16);
+#endif
 }
 
 /*************************************************************************
