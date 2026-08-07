@@ -366,7 +366,6 @@ make_hatch(
 {
     DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
     unsigned long a = (unsigned long)next_unc;
-    short *hatch = (short *)((1u & a) + a);
 #define SZ_CODE (8*sizeof(short))
     // ecall  /* 2 'short's */
     // ld a0,0(sp)
@@ -384,11 +383,12 @@ make_hatch(
 /*out*/ : "=r"(code) \
 /* in*/ : \
 /*und*/ : );
+    my_memcpy(hatch, code, SZ_CODE);
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
         next_unc = (char *)(~1& (1+ (long)next_unc));  // .balign 2
-        if (SZ_CODE <= (~page_mask & -(long)next_unc)) { // fits on end of page
-            return my_memcpy(hatch, code, SZ_CODE);
+        if (SZ_CODE <= (frag_mask & -(long)next_unc)) { // fits on end of page
+            return my_memcpy(next_unc, code, SZ_CODE);
         }
         else { // Does not fit
             return nullptr;

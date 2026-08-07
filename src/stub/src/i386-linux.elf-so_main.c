@@ -348,7 +348,7 @@ static char *
 make_hatch(
     Elf32_Phdr const *const phdr,
     char *next_unc,
-    unsigned const frag_mask,
+    unsigned frag_mask,
     unsigned hatch[4]
 )
 {
@@ -361,12 +361,12 @@ make_hatch(
 
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
-        next_unc = ~3 & (3+ (long)next_unc);  // .balign 4
+        next_unc = (char *)~3 & (3+ (long)next_unc);  // .balign 4
         frag_mask &= -(long)next_unc;  // bytes left on page
         if (3*4 <= frag_mask) {
-            ((unsigned *)next_unc([0] = hatch[0];
-            ((unsigned *)next_unc([1] = hatch[1];
-            ((unsigned *)next_unc([2] = hatch[2];
+            ((unsigned *)next_unc)[0] = hatch[0];
+            ((unsigned *)next_unc)[1] = hatch[1];
+            ((unsigned *)next_unc)[2] = hatch[2];
             return next_unc;
         }
         else {
@@ -380,7 +380,7 @@ static char *
 make_hatch(
     ElfW(Phdr) const *const phdr,
     char *next_unc,
-    unsigned const frag_mask,
+    unsigned frag_mask,
     unsigned hatch[4]
 {
     DPRINTF("make_hatch %%p %%x %%x\\n",phdr,reloc,frag_mask);

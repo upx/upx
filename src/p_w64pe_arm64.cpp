@@ -131,8 +131,8 @@ bool PackW64PeArm64::needForceOption() const {
     return r;
 }
 
-void PackW64PeArm64::defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
-                                   unsigned ic, unsigned s1addr) {
+void PackW64PeArm64::defineSymbols(unsigned ncsection, unsigned upxsection, unsigned ic,
+                                   unsigned s1addr) {
     UNUSED(sizeof_oh);
     const unsigned myimport = ncsection + soresources - rvamin;
 
