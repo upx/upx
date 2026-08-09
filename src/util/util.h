@@ -140,24 +140,15 @@ forceinline bool ptr_is_aligned(const void *p, size_t alignment) noexcept {
 
 template <class T>
 forceinline T *ptr_align_down(T *p, size_t alignment) noexcept {
-    return upx::ptr_static_cast<T *>(upx::ptr_static_cast<char *>(p) -
+    typedef std::conditional_t<std::is_const_v<T>, const char *, char *> CharPtr;
+    return upx::ptr_static_cast<T *>(upx::ptr_static_cast<CharPtr>(p) -
                                      size_t(ptr_get_address(p) & (alignment - 1)));
 }
 template <class T>
-const forceinline T *ptr_align_down(const T *p, size_t alignment) noexcept {
-    return upx::ptr_static_cast<const T *>(upx::ptr_static_cast<const char *>(p) -
-                                           size_t(ptr_get_address(p) & (alignment - 1)));
-}
-template <class T>
 forceinline T *ptr_align_up(T *p, size_t alignment) noexcept {
+    typedef std::conditional_t<std::is_const_v<T>, const char *, char *> CharPtr;
     return upx::ptr_static_cast<T *>(
-        upx::ptr_static_cast<char *>(p) +
-        size_t((upx_ptraddr_t(0) - ptr_get_address(p)) & (alignment - 1)));
-}
-template <class T>
-const forceinline T *ptr_align_up(const T *p, size_t alignment) noexcept {
-    return upx::ptr_static_cast<const T *>(
-        upx::ptr_static_cast<const char *>(p) +
+        upx::ptr_static_cast<CharPtr>(p) +
         size_t((upx_ptraddr_t(0) - ptr_get_address(p)) & (alignment - 1)));
 }
 

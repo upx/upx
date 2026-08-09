@@ -518,21 +518,14 @@ struct UnsignedSizeOf final {
 template <class Result, class From>
 forceinline constexpr Result ptr_static_cast(From *ptr) noexcept {
     static_assert(std::is_pointer_v<Result>);
+    typedef std::conditional_t<std::is_const_v<std::remove_pointer_t<Result> >, const void *,
+                               void *>
+        VoidPtr;
     // don't cast through "void *" if type is convertible
-    typedef std::conditional_t<std::is_convertible_v<decltype(ptr), Result>, Result, void *>
-        VoidPtr;
+    typedef std::conditional_t<std::is_convertible_v<decltype(ptr), Result>, Result, VoidPtr>
+        ResultPtr;
     // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
-    return static_cast<Result>(static_cast<VoidPtr>(ptr));
-}
-template <class Result, class From>
-forceinline constexpr Result ptr_static_cast(const From *ptr) noexcept {
-    static_assert(std::is_pointer_v<Result>);
-    static_assert(std::is_const_v<std::remove_pointer_t<Result> >); // required
-    // don't cast through "const void *" if type is convertible
-    typedef std::conditional_t<std::is_convertible_v<decltype(ptr), Result>, Result, const void *>
-        VoidPtr;
-    // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
-    return static_cast<Result>(static_cast<VoidPtr>(ptr));
+    return static_cast<Result>(static_cast<ResultPtr>(ptr));
 }
 
 #if WITH_THREADS

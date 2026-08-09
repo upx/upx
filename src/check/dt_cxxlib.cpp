@@ -685,7 +685,7 @@ static_assert(usizeof((1LL, 1)) == sizeof(int));
 static_assert(usizeof((1, 1LL)) == sizeof(long long));
 #endif
 
-TEST_CASE("upx::ptr_static_cast") {
+TEST_CASE("upx::ptr_static_cast 1") {
     // check that we do not trigger any -Wcast-align warnings
     using upx::ptr_static_cast;
 
@@ -724,6 +724,91 @@ TEST_CASE("upx::ptr_static_cast") {
     assert((ic == ptr_static_cast<const int *>(bc)));
     assert((ic == ptr_static_cast<int *>(ip)));
     assert((ic == ptr_static_cast<const int *>(ic)));
+}
+
+TEST_CASE("upx::ptr_static_cast 2") {
+    {
+        byte *n = nullptr;
+        assert_noexcept2(n == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<void *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const void *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<int *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const int *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char **>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char **>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char ***>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char ***>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char **const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char **const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const *const *>(n) == nullptr);
+    }
+    {
+        const int *n = nullptr;
+        assert_noexcept2(n == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const void *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const int *>(n) == nullptr);
+        // assert_noexcept2(upx::ptr_static_cast<const char **>(n) == nullptr);
+        // assert_noexcept2(upx::ptr_static_cast<const char ***>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char **const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char **const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const *const *>(n) == nullptr);
+    }
+    {
+        long **n = nullptr;
+        assert_noexcept2(n == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<void *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const void *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<int *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const int *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char **>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char **>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char ***>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char ***>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char **const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char **const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const *const *>(n) == nullptr);
+    }
+    {
+        long long *const **n = nullptr;
+        assert_noexcept2(n == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<void *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const void *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<int *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const int *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char **>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char **>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char ***>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char ***>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char **const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char **const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<char *const *const *>(n) == nullptr);
+        assert_noexcept2(upx::ptr_static_cast<const char *const *const *>(n) == nullptr);
+    }
 }
 
 TEST_CASE("upx::ptr_static_cast constexpr 1") {
@@ -2175,11 +2260,16 @@ TEST_CASE("upx::run_time 2") {
     assert_noexcept2(TestCT::noinline_ptr_align_up(b + 1, a) != nullptr);
     assert_noexcept2(TestCT::noinline_ptr_align_down_16(b + 1) != nullptr);
     assert_noexcept2(TestCT::noinline_ptr_align_up_16(b + 1) != nullptr);
-#if !defined(upx_fake_alignas_16) && 0
+#if !defined(upx_fake_alignas_16)
+#if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
+    // @COMPILER_BUG @GCC_BUG
+#else
+    assert_noexcept2(ptr_is_aligned(b, 16));
     assert_noexcept2(TestCT::noinline_ptr_align_down(b + 1, a) == b);
     assert_noexcept2(TestCT::noinline_ptr_align_up(b + 1, a) == b + 8);
     assert_noexcept2(TestCT::noinline_ptr_align_down_16(b + 1) == b);
     assert_noexcept2(TestCT::noinline_ptr_align_up_16(b + 1) == b + 16);
+#endif
 #endif
 }
 
