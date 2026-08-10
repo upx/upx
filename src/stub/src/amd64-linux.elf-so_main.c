@@ -365,7 +365,6 @@ make_hatch(
 )
 {
     DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, frag_mask);
-    unsigned long a = (unsigned long)next_unc;
 #define SZ_CODE (8*sizeof(short))
     // ecall  /* 2 'short's */
     // ld a0,0(sp)
