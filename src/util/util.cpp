@@ -64,7 +64,7 @@ bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extr
         return false;
     if very_unlikely (extra2 > UPX_RSIZE_MAX)
         return false;
-    upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
+    const upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
     if very_unlikely (bytes > UPX_RSIZE_MAX)
         return false;
     return true;
@@ -81,7 +81,7 @@ upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t ext
         throwCantPack("mem_size 3; take care");
     if very_unlikely (extra2 > UPX_RSIZE_MAX)
         throwCantPack("mem_size 4; take care");
-    upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
+    const upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
     if very_unlikely (bytes > UPX_RSIZE_MAX)
         throwCantPack("mem_size 5; take care");
     return ACC_ICONV(upx_rsize_t, bytes);
@@ -126,7 +126,7 @@ int ptr_diff_bytes(const void *a, const void *b) may_throw {
         throwCantPack("ptr_diff_bytes null 1; take care");
     if very_unlikely (b == nullptr)
         throwCantPack("ptr_diff_bytes null 2; take care");
-    upx_sptraddr_t d = ptraddr_diff(a, b);
+    const upx_sptraddr_t d = ptraddr_diff(a, b);
     if (a >= b) {
         if very_unlikely (!mem_size_valid_bytes(d))
             throwCantPack("ptr_diff_bytes-1; take care");
@@ -139,7 +139,7 @@ int ptr_diff_bytes(const void *a, const void *b) may_throw {
 }
 
 unsigned ptr_udiff_bytes(const void *a, const void *b) may_throw {
-    int d = ptr_diff_bytes(a, b);
+    const int d = ptr_diff_bytes(a, b);
     if very_unlikely (d < 0)
         throwCantPack("ptr_udiff_bytes; take care");
     return ACC_ICONV(unsigned, d);
@@ -163,8 +163,8 @@ void ptraddr_check_no_overlap(upx_ptraddr_t a, size_t a_size, upx_ptraddr_t b, s
     may_throw {
     if very_unlikely (a == 0 || b == 0)
         throwCantPack("ptr_check_no_overlap2-nullptr");
-    upx_ptraddr_t a_end = a + mem_size(1, a_size);
-    upx_ptraddr_t b_end = b + mem_size(1, b_size);
+    const upx_ptraddr_t a_end = a + mem_size(1, a_size);
+    const upx_ptraddr_t b_end = b + mem_size(1, b_size);
     if very_unlikely (a_end < a || b_end < b) // wrap-around
         throwCantPack("ptr_check_no_overlap2-overflow");
     // simple, but a little bit mind bending:
@@ -179,9 +179,9 @@ void ptraddr_check_no_overlap(upx_ptraddr_t a, size_t a_size, upx_ptraddr_t b, s
                               upx_ptraddr_t c, size_t c_size) may_throw {
     if very_unlikely (a == 0 || b == 0 || c == 0)
         throwCantPack("ptr_check_no_overlap3-nullptr");
-    upx_ptraddr_t a_end = a + mem_size(1, a_size);
-    upx_ptraddr_t b_end = b + mem_size(1, b_size);
-    upx_ptraddr_t c_end = c + mem_size(1, c_size);
+    const upx_ptraddr_t a_end = a + mem_size(1, a_size);
+    const upx_ptraddr_t b_end = b + mem_size(1, b_size);
+    const upx_ptraddr_t c_end = c + mem_size(1, c_size);
     if very_unlikely (a_end < a || b_end < b || c_end < c) // wrap-around
         throwCantPack("ptr_check_no_overlap3-overflow");
     if very_unlikely (a < b_end && b < a_end)
@@ -360,6 +360,7 @@ static inline void memswap_no_overlap(byte *a, byte *b, size_t bytes) noexcept {
 // extremely simple (and beautiful) stable sort: Gnomesort
 // WARNING: O(n^2) and thus very inefficient for large n
 void upx_gnomesort(void *array, size_t n, size_t element_size, upx_compare_func_t compare) {
+    mem_size_assert(element_size, n); // check size
     for (size_t i = 1; i < n; i++) {
         byte *a = (byte *) array + element_size * i;               // a := &array[i]
         if (i != 0 && compare(a - element_size, a) > 0) {          // if a[-1] > a[0] then

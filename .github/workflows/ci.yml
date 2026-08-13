@@ -145,7 +145,6 @@ jobs:
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/debug/upx --sysinfo -vv
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/release/upx --sysinfo -vv
       - run: make build/debug+test
-        if: false
       - run: make build/release+test
       # run: DESTDIR="$PWD/Install with cmake debug"   make build/debug+install
       # run: DESTDIR="$PWD/Install with cmake release" make build/release+install

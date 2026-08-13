@@ -3258,7 +3258,7 @@ void PeFile32::readPeHeader() {
         nddirs = 16;
     sizeof_oh = sizeof_ih =
         ((const char *) &ih.ddirs - (const char *) &ih) + nddirs * sizeof(ddirs_t);
-    unsigned missing = (16 - nddirs) * sizeof(ddirs_t);
+    const unsigned missing = (16 - nddirs) * sizeof(ddirs_t);
     memset(&ih.ddirs[nddirs], 0, missing);
 
     if (31 < (unsigned) ih.subsystem) {
@@ -3323,7 +3323,7 @@ void PeFile64::readPeHeader() {
         nddirs = 16;
     sizeof_oh = sizeof_ih =
         ((const char *) &ih.ddirs - (const char *) &ih) + nddirs * sizeof(ddirs_t);
-    unsigned missing = (16 - nddirs) * sizeof(ddirs_t);
+    const unsigned missing = (16 - nddirs) * sizeof(ddirs_t);
     memset(&ih.ddirs[nddirs], 0, missing);
 
     if (31 < (unsigned) ih.subsystem) {

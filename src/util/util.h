@@ -51,7 +51,7 @@ noinline upx_rsize_t mem_size_ptr(const void *ptr, upx_uint64_t element_size, up
 
 // will throw on invalid size
 inline upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n) may_throw {
-    upx_uint64_t bytes = element_size * n;
+    const upx_uint64_t bytes = element_size * n;
     if very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX || n > UPX_RSIZE_MAX ||
                       bytes > UPX_RSIZE_MAX)
         return mem_size(element_size, n, 0, 0); // this will throw
