@@ -89,7 +89,7 @@ unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned e
     if (uncompressed_size == 0)
         throwCantPack("invalid uncompressed_size");
     const size_t z = uncompressed_size; // fewer keystrokes and display columns
-    size_t bytes = mem_size(1, z);      // check size
+    upx_rsize_t bytes = mem_size(1, z); // check size
     // All literal: 1 bit overhead per literal byte; from UCL documentation
     bytes = upx::umax(bytes, z + z / 8 + 256);
     // zstd: ZSTD_COMPRESSBOUND
@@ -103,18 +103,18 @@ unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned e
 unsigned MemBuffer::getSizeForDecompression(unsigned uncompressed_size, unsigned extra) may_throw {
     if (uncompressed_size == 0)
         throwCantPack("invalid uncompressed_size");
-    size_t bytes = mem_size(1, uncompressed_size, extra); // check size
+    const upx_rsize_t bytes = mem_size(1, uncompressed_size, extra); // check size
     return ACC_ICONV(unsigned, bytes);
 }
 
 void MemBuffer::allocForCompression(unsigned uncompressed_size, unsigned extra) may_throw {
-    unsigned bytes = getSizeForCompression(uncompressed_size, extra);
+    const unsigned bytes = getSizeForCompression(uncompressed_size, extra);
     alloc(bytes);
     debug_set(debug.last_return_address_alloc, upx_return_address());
 }
 
 void MemBuffer::allocForDecompression(unsigned uncompressed_size, unsigned extra) may_throw {
-    unsigned bytes = getSizeForDecompression(uncompressed_size, extra);
+    const unsigned bytes = getSizeForDecompression(uncompressed_size, extra);
     alloc(bytes);
     debug_set(debug.last_return_address_alloc, upx_return_address());
 }

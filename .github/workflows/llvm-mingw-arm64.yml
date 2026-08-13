@@ -56,6 +56,7 @@ jobs:
           - name: llvm-mingw-20260812-ucrt
             llvm_version: 23.1.0rc3
             use_arm64ec: true
+            use_arm64x: true
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260812/llvm-mingw-20260812-ucrt-aarch64.zip'
 
     env:
@@ -134,6 +135,21 @@ jobs:
           export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
           make UPX_XTARGET=llvm-mingw/arm64ec-w64-mingw32-clang-static xtarget/all
 
+      - name: 'Build clang arm64x'
+        if: ${{ matrix.use_arm64x }}
+        run: |
+          export CC="arm64ec-w64-mingw32-clang -marm64x $xflags" CXX="arm64ec-w64-mingw32-clang++ -marm64x $xflags $my_cxxflags"
+          export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
+          export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
+          make UPX_XTARGET=llvm-mingw/arm64x-w64-mingw32-clang xtarget/all
+      - name: 'Build clang arm64x static'
+        if: ${{ matrix.use_arm64x }}
+        run: |
+          export CC="arm64ec-w64-mingw32-clang -marm64x -static $xflags" CXX="arm64ec-w64-mingw32-clang++ -marm64x -static $xflags $my_cxxflags"
+          export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
+          export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
+          make UPX_XTARGET=llvm-mingw/arm64x-w64-mingw32-clang-static xtarget/all
+
       - run: ls -l build/*/*/*/upx* || true
       - run: llvm-size build/*/*/*/upx* || true
       - run: file  build/*/*/*/upx* || true
@@ -197,7 +213,16 @@ jobs:
           ls -ld ./build/*/*/*/XTesting/*/* || true
           rm -rf ./build/*/*/*/XTesting/*/*
 
-      - name: 'Run test suite'
+      - name: 'Run ctest tests arm64x static'
+        if: ${{ matrix.use_arm64x }}
+        run: |
+          UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/llvm-mingw/arm64x-w64-mingw32-clang-static/debug/upx.exe --sysinfo -vv
+          UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/llvm-mingw/arm64x-w64-mingw32-clang-static/release/upx.exe --sysinfo -vv
+          make UPX_XTARGET=llvm-mingw/arm64x-w64-mingw32-clang-static xtarget/all+test
+          ls -ld ./build/*/*/*/XTesting/*/* || true
+          rm -rf ./build/*/*/*/XTesting/*/*
+
+      - name: 'Run test suite arm64'
         if: false
         run: |
           export upx_exe=./upx.exe
@@ -210,19 +235,32 @@ jobs:
           (cd build/llvm-mingw/arm64-win64/release && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           fi
           true
-      - name: 'Run test suite'
+      - name: 'Run test suite aarch64'
         run: |
           export upx_exe=./upx.exe
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
-          #export UPX_DEBUG_DOCTEST_DISABLE=1
           (cd build/llvm-mingw/aarch64-w64-mingw32-clang/debug          && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           (cd build/llvm-mingw/aarch64-w64-mingw32-clang/release        && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           (cd build/llvm-mingw/aarch64-w64-mingw32-clang-static/debug   && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           (cd build/llvm-mingw/aarch64-w64-mingw32-clang-static/release && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
-          if [[ "${{ matrix.use_arm64ec }}" == "true" ]]; then true;
+          ls -ld ./build/*/*/*/tmp-upx-testsuite* || true
+          rm -rf ./build/*/*/*/tmp-upx-testsuite*
+      - name: 'Run test suite arm64ec'
+        if: ${{ matrix.use_arm64ec }}
+        run: |
+          export upx_exe=./upx.exe
+          export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
           (cd build/llvm-mingw/arm64ec-w64-mingw32-clang-static/debug   && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           (cd build/llvm-mingw/arm64ec-w64-mingw32-clang-static/release && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
-          fi
+          ls -ld ./build/*/*/*/tmp-upx-testsuite* || true
+          rm -rf ./build/*/*/*/tmp-upx-testsuite*
+      - name: 'Run test suite arm64x'
+        if: ${{ matrix.use_arm64x }}
+        run: |
+          export upx_exe=./upx.exe
+          export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
+          (cd build/llvm-mingw/arm64x-w64-mingw32-clang-static/debug    && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
+          (cd build/llvm-mingw/arm64x-w64-mingw32-clang-static/release  && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           ls -ld ./build/*/*/*/tmp-upx-testsuite* || true
           rm -rf ./build/*/*/*/tmp-upx-testsuite*
 
