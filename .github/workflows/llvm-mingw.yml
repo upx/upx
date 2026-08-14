@@ -79,17 +79,19 @@ jobs:
           - name: llvm-mingw-20260812-msvcrt
             llvm_version: 23.1.0rc3
             use_arm64ec: true
+            use_arm64x: true
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260812/llvm-mingw-20260812-msvcrt-ubuntu-22.04-x86_64.tar.xz'
           - name: llvm-mingw-20260812-ucrt
             llvm_version: 23.1.0rc3
             use_arm64ec: true
+            use_arm64x: true
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260812/llvm-mingw-20260812-ucrt-ubuntu-22.04-x86_64.tar.xz'
 
     env:
       container: 'ubuntu:26.04'
       CMAKE_SYSTEM_NAME: Windows
       UPX_CONFIG_DISABLE_CXX_STANDARD: 'ON'
-      cxxflags: -std=gnu++2b
+      my_cxxflags: -std=gnu++2b
       xflags: -D_WIN32_WINNT=0x0601
       #xflags: -D_WIN32_WINNT=0x0601 -DDOCTEST_CONFIG_DISABLE
 
@@ -135,56 +137,71 @@ jobs:
 
       - name: 'Build clang aarch64'
         run: |
-          export CC="aarch64-w64-mingw32-clang $xflags" CXX="aarch64-w64-mingw32-clang++ $xflags $cxxflags"
+          export CC="aarch64-w64-mingw32-clang $xflags" CXX="aarch64-w64-mingw32-clang++ $xflags $my_cxxflags"
           make UPX_XTARGET=llvm-mingw/aarch64-w64-mingw32-clang xtarget/all
       - name: 'Build clang aarch64 static'
         run: |
-          export CC="aarch64-w64-mingw32-clang -static $xflags" CXX="aarch64-w64-mingw32-clang++ -static $xflags $cxxflags"
+          export CC="aarch64-w64-mingw32-clang -static $xflags" CXX="aarch64-w64-mingw32-clang++ -static $xflags $my_cxxflags"
           make UPX_XTARGET=llvm-mingw/aarch64-w64-mingw32-clang-static xtarget/all
 
       - name: 'Build clang arm64ec'
         if: ${{ matrix.use_arm64ec }}
         run: |
-          export CC="arm64ec-w64-mingw32-clang $xflags" CXX="arm64ec-w64-mingw32-clang++ $xflags $cxxflags"
+          export CC="arm64ec-w64-mingw32-clang $xflags" CXX="arm64ec-w64-mingw32-clang++ $xflags $my_cxxflags"
           export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
-          make UPX_XTARGET=llvm-mingw/arm64ec-w64-mingw32-clang xtarget/all || true
+          make UPX_XTARGET=llvm-mingw/arm64ec-w64-mingw32-clang xtarget/all
       - name: 'Build clang arm64ec static'
         if: ${{ matrix.use_arm64ec }}
         run: |
-          export CC="arm64ec-w64-mingw32-clang -static $xflags" CXX="arm64ec-w64-mingw32-clang++ -static $xflags $cxxflags"
+          export CC="arm64ec-w64-mingw32-clang -static $xflags" CXX="arm64ec-w64-mingw32-clang++ -static $xflags $my_cxxflags"
           export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
-          make UPX_XTARGET=llvm-mingw/arm64ec-w64-mingw32-clang-static xtarget/all || true
+          make UPX_XTARGET=llvm-mingw/arm64ec-w64-mingw32-clang-static xtarget/all
+
+      - name: 'Build clang arm64x'
+        if: ${{ matrix.use_arm64x }}
+        run: |
+          export CC="arm64ec-w64-mingw32-clang -marm64x $xflags" CXX="arm64ec-w64-mingw32-clang++ -marm64x $xflags $my_cxxflags"
+          export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
+          export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
+          make UPX_XTARGET=llvm-mingw/arm64x-w64-mingw32-clang xtarget/all
+      - name: 'Build clang arm64x static'
+        if: ${{ matrix.use_arm64x }}
+        run: |
+          export CC="arm64ec-w64-mingw32-clang -marm64x -static $xflags" CXX="arm64ec-w64-mingw32-clang++ -marm64x -static $xflags $my_cxxflags"
+          export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
+          export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
+          make UPX_XTARGET=llvm-mingw/arm64x-w64-mingw32-clang-static xtarget/all
 
       - name: 'Build clang armv7'
         run: |
-          export CC="armv7-w64-mingw32-clang $xflags" CXX="armv7-w64-mingw32-clang++ $xflags $cxxflags"
+          export CC="armv7-w64-mingw32-clang $xflags" CXX="armv7-w64-mingw32-clang++ $xflags $my_cxxflags"
           make UPX_XTARGET=llvm-mingw/armv7-w64-mingw32-clang xtarget/all
       - name: 'Build clang armv7 static'
         run: |
-          export CC="armv7-w64-mingw32-clang -static $xflags" CXX="armv7-w64-mingw32-clang++ -static $xflags $cxxflags"
+          export CC="armv7-w64-mingw32-clang -static $xflags" CXX="armv7-w64-mingw32-clang++ -static $xflags $my_cxxflags"
           make UPX_XTARGET=llvm-mingw/armv7-w64-mingw32-clang-static xtarget/all
 
       - name: 'Build clang i686'
         run: |
-          export CC="i686-w64-mingw32-clang $xflags" CXX="i686-w64-mingw32-clang++ $xflags $cxxflags"
+          export CC="i686-w64-mingw32-clang $xflags" CXX="i686-w64-mingw32-clang++ $xflags $my_cxxflags"
           export CMAKE_CROSSCOMPILING_EMULATOR=wine
           export UPX_CONFIG_DISABLE_RUN_PACKED_TEST=ON # TODO FIXME: UPX problem
           make UPX_XTARGET=llvm-mingw/i686-w64-mingw32-clang xtarget/all
       - name: 'Build clang i686 static'
         run: |
-          export CC="i686-w64-mingw32-clang -static $xflags" CXX="i686-w64-mingw32-clang++ -static $xflags $cxxflags"
+          export CC="i686-w64-mingw32-clang -static $xflags" CXX="i686-w64-mingw32-clang++ -static $xflags $my_cxxflags"
           export CMAKE_CROSSCOMPILING_EMULATOR=wine
           export UPX_CONFIG_DISABLE_RUN_PACKED_TEST=ON # TODO FIXME: UPX problem
           make UPX_XTARGET=llvm-mingw/i686-w64-mingw32-clang-static xtarget/all
 
       - name: 'Build clang x86_64'
         run: |
-          export CC="x86_64-w64-mingw32-clang $xflags" CXX="x86_64-w64-mingw32-clang++ $xflags $cxxflags"
+          export CC="x86_64-w64-mingw32-clang $xflags" CXX="x86_64-w64-mingw32-clang++ $xflags $my_cxxflags"
           export CMAKE_CROSSCOMPILING_EMULATOR=wine
           make UPX_XTARGET=llvm-mingw/x86_64-w64-mingw32-clang xtarget/all
       - name: 'Build clang x86_64 static'
         run: |
-          export CC="x86_64-w64-mingw32-clang -static $xflags" CXX="x86_64-w64-mingw32-clang++ -static $xflags $cxxflags"
+          export CC="x86_64-w64-mingw32-clang -static $xflags" CXX="x86_64-w64-mingw32-clang++ -static $xflags $my_cxxflags"
           export CMAKE_CROSSCOMPILING_EMULATOR=wine
           make UPX_XTARGET=llvm-mingw/x86_64-w64-mingw32-clang-static xtarget/all
 

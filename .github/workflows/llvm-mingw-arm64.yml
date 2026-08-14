@@ -167,6 +167,7 @@ jobs:
             cmake --install $d --prefix "$PWD/tmp/artifact/$N/InstallWithCMake/InstallWithPrefix/$d"
             cmake --install $d --prefix "$PWD/tmp/artifact/$N/InstallWithCMake/InstallWithPrefixAndStrip/$d" --strip
           done
+          rm -rf "./tmp/artifact/$N/InstallWithCMake"
           (cd build && cp -v -ai --parents */*/*/upx.exe "../tmp/artifact/$N")
           (cd build && shopt -s globstar && cp -v -ai --parents **/dt_cxxlib.* "../tmp/artifact/$N")
           #if command -v hardlink >/dev/null; then (cd "tmp/artifact/$N" && hardlink .) fi
