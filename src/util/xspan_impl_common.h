@@ -55,7 +55,7 @@ public:
 private:
 #if XSPAN_CONFIG_ENABLE_DEBUG
 #if __cplusplus >= 201103L
-    XSpanDebugFile f = {};
+    XSpanDebugFile f = XSpanDebugFile{};
 #else
     XSpanDebugFile f;
 #endif
@@ -129,7 +129,7 @@ forceinline ~CSelf() noexcept {}
 
     // constructors from pointers
     CSelf(pointer first, XSpanCount count)
-        : ptr(makePtr(first)), base(makeBase(first)),
+        : XSPAN_DEBUG_NULL ptr(makePtr(first)), base(makeBase(first)),
           size_in_bytes(xspan_mem_size<T>(count.count)) {
         assertInvariants();
     }
@@ -139,7 +139,7 @@ forceinline ~CSelf() noexcept {}
         assertInvariants();
     }
     CSelf(pointer first, XSpanSizeInBytes bytes)
-        : ptr(makePtr(first)), base(makeBase(first)),
+        : XSPAN_DEBUG_NULL ptr(makePtr(first)), base(makeBase(first)),
           size_in_bytes(xspan_mem_size<char>(bytes.size_in_bytes)) {
         assertInvariants();
     }
@@ -151,7 +151,8 @@ forceinline ~CSelf() noexcept {}
     // enable this constructor only if the underlying type is char or void
     template <class U>
     CSelf(U *first, size_type count, XSPAN_REQUIRES_SIZE_1_A)
-        : ptr(makePtr(first)), base(makeBase(first)), size_in_bytes(xspan_mem_size<T>(count)) {
+        : XSPAN_DEBUG_NULL ptr(makePtr(first)), base(makeBase(first)),
+          size_in_bytes(xspan_mem_size<T>(count)) {
         assertInvariants();
     }
     template <class U>
@@ -161,7 +162,7 @@ forceinline ~CSelf() noexcept {}
         assertInvariants();
     }
     CSelf(pointer first, XSpanCount count, pointer base_)
-        : ptr(makePtr(first)), base(makeBase(base_)),
+        : XSPAN_DEBUG_NULL ptr(makePtr(first)), base(makeBase(base_)),
           size_in_bytes(xspan_mem_size<T>(count.count)) {
         // check invariants
         if __acc_cte ((configRequirePtr || ptr != nullptr) &&
@@ -181,7 +182,7 @@ forceinline ~CSelf() noexcept {}
         assertInvariants();
     }
     CSelf(pointer first, XSpanSizeInBytes bytes, pointer base_)
-        : ptr(makePtr(first)), base(makeBase(base_)),
+        : XSPAN_DEBUG_NULL ptr(makePtr(first)), base(makeBase(base_)),
           size_in_bytes(xspan_mem_size<char>(bytes.size_in_bytes)) {
         // check invariants
         if __acc_cte ((configRequirePtr || ptr != nullptr) &&
@@ -203,7 +204,8 @@ forceinline ~CSelf() noexcept {}
     // enable this constructor only if the underlying type is char or void
     template <class U>
     CSelf(pointer first, size_type count, U *base_, XSPAN_REQUIRES_SIZE_1_A)
-        : ptr(makePtr(first)), base(makeBase(base_)), size_in_bytes(xspan_mem_size<T>(count)) {
+        : XSPAN_DEBUG_NULL ptr(makePtr(first)), base(makeBase(base_)),
+          size_in_bytes(xspan_mem_size<T>(count)) {
         // check invariants
         if __acc_cte ((configRequirePtr || ptr != nullptr) &&
                       (configRequireBase || base != nullptr))

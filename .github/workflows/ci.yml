@@ -580,7 +580,7 @@ jobs:
           fi
       - run: echo "CXXFLAGS=$CXXFLAGS -DDOCTEST_CONFIG_DISABLE" >> $GITHUB_ENV
         #if: false
-        if: ${{ contains(matrix.name, 'windows-2026') }}
+        if: ${{ contains(matrix.name, '2026') }}
       - run: make build/debug
       - run: make build/release
       - run: shopt -s globstar; ls -ld build/**/upx.exe || true
@@ -659,6 +659,8 @@ jobs:
       - uses: m-doughty/msvc-dev-cmd@node24-v1
         with: { vsversion: '${{ matrix.vsversion }}', arch: '${{ matrix.vsarch }}' }
       - run: ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
+      - run: echo "UPX_CXXFLAGS=$UPX_CXXFLAGS -DDOCTEST_CONFIG_DISABLE" >> $GITHUB_ENV
+        if: ${{ contains(matrix.name, '2026') }}
       - name: Build by hand
         shell: cmd
         run: |
@@ -695,11 +697,10 @@ jobs:
           cat .GITREV.txt
           set /p GITREV=<.GITREV.txt
           set UPX_DEFS=-DUPX_CONFIG_DISABLE_WSTRICT=0 -DUPX_CONFIG_DISABLE_WERROR=0 -DWITH_THREADS=0 -DWITH_BZIP2=0 -DWITH_ZSTD=0
-          set UPX_DEFS=%UPX_DEFS% -DDOCTEST_CONFIG_DISABLE
           set UPX_LIBS=%BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib
           @rem set UPX_LIBS=%BDIR%\bzip2\bzip2.lib %BDIR%\ucl\ucl.lib %BDIR%\zlib\zlib.lib %BDIR%\zstd\zstd.lib
           set sources=%s%\*.cpp %s%\check\*.cpp %s%\compress\*.cpp %s%\console\*.cpp %s%\filter\*.cpp %s%\util\*.cpp
-          %RUN_CL% -J -O2 -W4 -WX -std:c++17 -Zc:__cplusplus -EHsc -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% %UPX_DEFS% -I%H%\vendor -Feupx.exe %sources% %UPX_LIBS% /link ${{ matrix.link_machine_flags }} setargv.obj
+          %RUN_CL% -J -O2 -W4 -WX -std:c++17 -Zc:__cplusplus -EHsc -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% %UPX_DEFS% %UPX_CXXFLAGS% -I%H%\vendor -Feupx.exe %sources% %UPX_LIBS% /link ${{ matrix.link_machine_flags }} setargv.obj
       - run: shopt -s globstar; ls -ld build/**/upx.exe || true
       - run: shopt -s globstar; size   build/**/upx.exe || true
       - run: shopt -s globstar; file   build/**/upx.exe || true

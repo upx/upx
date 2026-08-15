@@ -63,7 +63,7 @@ struct XSpanDebugFile final {
     static forceinline_constexpr XSpanDebugFile make(const char *f, size_t l) noexcept {
         return XSpanDebugFile(f, l);
     }
-    forceinline_constexpr XSpanDebugFile() noexcept : src_file(nullptr), src_line(0) {}
+    explicit forceinline_constexpr XSpanDebugFile() noexcept : src_file(nullptr), src_line(0) {}
 private:
     explicit forceinline_constexpr XSpanDebugFile(const char *f, size_t l) noexcept : src_file(f),
                                                                                       src_line(l) {}
@@ -73,7 +73,7 @@ private:
     (XSPAN_NS(XSpanDebugFile)(XSPAN_NS(XSpanDebugFile)::make(__FILE__, __LINE__)))
 #else
 struct XSpanDebugFile final {
-    forceinline_constexpr XSpanDebugFile() noexcept {}
+    explicit forceinline_constexpr XSpanDebugFile() noexcept {}
     UPX_CXX_DISABLE_ADDRESS(XSpanDebugFile)
 };
 #endif
