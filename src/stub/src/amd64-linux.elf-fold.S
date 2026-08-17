@@ -67,7 +67,7 @@ __NR_exit= 60
 __NR_readlink= 89
 
 F_FRAME= 7*NBPW
-F_ENTR= 6*NBPW; F_UNMAPA= F_ENTR
+F_ENTR= 6*NBPW
 F_RDX=  5*NBPW
 F_LENU= 4*NBPW
 F_ADRU= 3*NBPW
@@ -89,17 +89,17 @@ cancel_sigsegv: .quad 0  // subroutine that cancels sigaction(SIGSEGV,)
 // Code from amd64-linux.elf-main.c is also .text, and is next.
 fold_begin:
         endbr64
-////    int3  # DEBUG
-        mov %r13,F_UNMAPA(%rbp)
-        mov %r13,%rax; and $is_ptinterp,%eax; or %eax,F_ELFA(%rbp)
+#define r_FLAGS bl
+        mov %r13,%rbx  # r_FLAGS: is_ptinterp | unmap_all_pages
+        mov %r_FLAGS,%al; and $is_ptinterp,%eax; or %eax,F_ELFA(%rbp)
         mov %rsp,%rsi
-        testb $unmap_all_pages,F_UNMAPA(%rbp); jnz 0f; sub $PATH_MAX,%rsp; 0:
+        testb $unmap_all_pages,%r_FLAGS; jnz 0f; sub $PATH_MAX,%rsp; 0:
         mov %rsp,%rdi
         push $8; pop %rcx; rep movsq  # ADRX,LDRX,ELFA,ADRU,LENU,rdx,%entry,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
         movq %rdi,%r14  # remember &new_env[0]
-        testb $unmap_all_pages,F_UNMAPA(%rbp); jnz 0f; stosq; 0:  # space for new_env[0]
+        testb $unmap_all_pages,%r_FLAGS; jnz 0f; stosq; 0:  # space for new_env[0]
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past env
         mov %rdi,%r12  # &old Elf64_auxv
@@ -110,8 +110,10 @@ fold_begin:
         mov %rsi,%r13  # beginning of strings
         sub %rdi,%r12  # -length of auxv
 
-        testb $unmap_all_pages,F_UNMAPA(%rbp); jz env_pse
+        testb $unmap_all_pages,%r_FLAGS; jz env_pse
         or $~0,%ebp; mov %rdi,%r14;        jmp no_env_pse  # no fd; beyond auxv
+#undef r_FLAGS
+
 env_pse:
           push %rdi  # buffer
         lea proc_self_exe(%rip),%arg1; sub %arg2l,%arg2l  # O_RDONLY
