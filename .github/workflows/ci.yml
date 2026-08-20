@@ -583,9 +583,9 @@ jobs:
         if: ${{ contains(matrix.name, '2026') }}
       - run: make build/debug
       - run: make build/release
-      - run: shopt -s globstar; ls -ld build/**/upx.exe || true
-      - run: shopt -s globstar; size   build/**/upx.exe || true
-      - run: shopt -s globstar; file   build/**/upx.exe || true
+      - run: shopt -s globstar; ls -ldF build/**/upx.exe || true
+      - run: shopt -s globstar; size    build/**/upx.exe || true
+      - run: shopt -s globstar; file    build/**/upx.exe || true
       - name: Make artifact
         run: |
           N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-${{ matrix.name }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')

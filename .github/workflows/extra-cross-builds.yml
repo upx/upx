@@ -63,6 +63,7 @@ jobs:
           - { container: 'ubuntu:24.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le }
           - { container: 'ubuntu:24.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le -cpu power10, extra: -power10 }
           - { container: 'ubuntu:24.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
+          - { container: 'ubuntu:24.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
           - { container: 'ubuntu:24.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
 
           - { container: 'ubuntu:26.04', target: g++-aarch64-linux-gnu, qemu: qemu-aarch64 }
