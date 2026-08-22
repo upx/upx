@@ -200,7 +200,8 @@ unsigned PackWinCeArm::getProcessImportParam(unsigned upxsection) {
     return linker->getSymbolOffset("IATT") + upxsection;
 }
 
-void PackWinCeArm::defineSymbols(unsigned ncsection, unsigned, unsigned ic, unsigned s1addr) {
+void PackWinCeArm::defineSymbols(unsigned ncsection, unsigned, unsigned, unsigned ic,
+                                 unsigned s1addr) {
     const unsigned onam = ncsection + soxrelocs + ih.imagebase;
     linker->defineSymbol("start_of_dll_names", onam);
     linker->defineSymbol("start_of_imports", ih.imagebase + rvamin + cimports);

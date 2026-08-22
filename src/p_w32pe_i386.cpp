@@ -159,8 +159,8 @@ bool PackW32PeI386::needForceOption() const {
     return r;
 }
 
-void PackW32PeI386::defineSymbols(unsigned ncsection, unsigned upxsection, unsigned ic,
-                                  unsigned s1addr) {
+void PackW32PeI386::defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
+                                  unsigned ic, unsigned s1addr) {
     const unsigned myimport = ncsection + soresources - rvamin;
 
     // patch loader

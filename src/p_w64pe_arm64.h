@@ -45,8 +45,8 @@ public:
 
     virtual bool needForceOption() const override;
     virtual void addStubImports() override;
-    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned isize_isplit,
-                               unsigned s1addr) override;
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
+                               unsigned isize_isplit, unsigned s1addr) override;
     virtual void setOhDataBase(const pe_section_t *) override {}
     virtual void setOhHeaderSize(const pe_section_t *osection) override;
     virtual void pack(OutputFile *fo) override;

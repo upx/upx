@@ -2172,7 +2172,7 @@ unsigned PeFile::stripDebug(unsigned overlaystart) {
 // pack
 **************************************************************************/
 
-void PeFile::readSectionHeaders(unsigned objs) {
+void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih) {
     if (objs == 0)
         return;
     mb_isection.alloc(mem_size(sizeof(pe_section_t), objs));
@@ -2351,8 +2351,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
         throwCantPackExact();
 
     const unsigned objs = ih.objects;
-    readSectionHeaders(objs);
-
+    readSectionHeaders(objs, sizeof(ih));
     if (!opt->force && needForceOption())
         throwCantPack("unexpected value in PE header (try --force)");
 
@@ -2426,12 +2425,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
 
     // some checks for broken linkers - disable filter if necessary
     bool allow_filter = true;
-    if (ih.codebase) {
-        if (/*FIXME ih.codebase == ih.database
-            ||*/ ih.codebase + ih.codesize > ih.imagesize ||
-            (isection[virta2objnum(ih.codebase, isection, objs)].flags & IMAGE_SCN_CNT_CODE) == 0)
-            allow_filter = false;
-    }
+    if (/*FIXME ih.codebase == ih.database
+        ||*/ ih.codebase + ih.codesize > ih.imagesize ||
+        (isection[virta2objnum(ih.codebase, isection, objs)].flags & IMAGE_SCN_CNT_CODE) == 0)
+        allow_filter = false;
 
     const unsigned oam1 = ih.objectalign - 1;
     if (!upx::has_single_bit(ih.objectalign)) { // ih.objectalign is not a power of 2
@@ -2458,9 +2455,9 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
 
     // some extra_info data for uncompression support
     unsigned s = 0;
-    byte *const p1 = ibuf.subref("bad ph.u_len %#x", ph.u_len, sizeof_ih);
-    memcpy(p1 + s, &ih, sizeof_ih);
-    s += sizeof_ih;
+    byte *const p1 = ibuf.subref("bad ph.u_len %#x", ph.u_len, sizeof(ih));
+    memcpy(p1 + s, &ih, sizeof(ih));
+    s += sizeof(ih);
     memcpy(p1 + s, isection, ih.objects * sizeof(*isection));
     s += ih.objects * sizeof(*isection);
     if (soimport) {
@@ -2566,7 +2563,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     addNewRelocations(rel, upxsection);
 
     // new PE header
-    memcpy(&oh, &ih, sizeof_oh);
+    memcpy(&oh, &ih, sizeof(oh));
     oh.filealign = oh_filealign; // identsplit depends on this
 
     oh.entry = upxsection;
@@ -2636,7 +2633,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     if (last_section_rsrc_only)
         callProcessResources(res, ic = res_start);
 
-    defineSymbols(ncsection, upxsection, identsize - identsplit, s1addr);
+    defineSymbols(ncsection, upxsection, sizeof(oh), identsize - identsplit, s1addr);
     defineFilterSymbols(&ft);
     relocateLoader();
     const unsigned lsize = getLoaderSize();
@@ -2731,7 +2728,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     infoHeader("[Writing compressed file]");
 
     // write loader + compressed file
-    fo->write(&oh, sizeof_oh);
+    fo->write(&oh, sizeof(oh));
     fo->write(osection, sizeof(osection[0]) * oobjs);
     // some alignment
     if (identsplit == identsize) {
@@ -2785,7 +2782,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     }
 
 #if 0 // (debug) print section sizes
-    printf("%-13s: program hdr  : %8d bytes\n", getName(), (int) sizeof_oh);
+    printf("%-13s: program hdr  : %8d bytes\n", getName(), (int) sizeof(oh));
     printf("%-13s: sections     : %8d bytes\n", getName(), (int) sizeof(osection[0]) * oobjs);
     printf("%-13s: ident        : %8d bytes\n", getName(), (int) identsize);
     printf("%-13s: compressed   : %8d bytes\n", getName(), (int) c_len);
@@ -3071,7 +3068,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
     // decompress
     decompress(ibuf, obuf);
     unsigned skip = get_le32(obuf + (ph.u_len - 4));
-    unsigned take = sizeof_oh;
+    unsigned take = sizeof(oh);
     SPAN_S_VAR(byte, extra_info, obuf);
     extra_info = obuf.subref("bad extra_info offset %#x", skip, take);
     // byte *const eistart = raw_bytes(extra_info, 0);
@@ -3157,7 +3154,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
         infoHeader("[Writing uncompressed file]");
 
         // write header + decompressed file
-        fo->write(&oh, sizeof_oh);
+        fo->write(&oh, sizeof(oh));
         fo->write(osection, objs * sizeof(pe_section_t));
         fo->write(ibuf, osection[ic].rawdataptr - fo->getBytesWritten());
         for (ic = 0; ic < objs; ic++)
@@ -3243,7 +3240,6 @@ PeFile32::PeFile32(InputFile *f) : super(f) {
     COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248)
     COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
 
-    sizeof_oh = sizeof_ih = sizeof(ih); // default
     iddirs = ih.ddirs;
     oddirs = oh.ddirs;
 }
@@ -3251,16 +3247,7 @@ PeFile32::PeFile32(InputFile *f) : super(f) {
 PeFile32::~PeFile32() noexcept {}
 
 void PeFile32::readPeHeader() {
-    fi->readx(&ih, sizeof_ih);
-    unsigned nddirs = ih.ddirsentries;
-    if (16 < nddirs)
-        // throwCantPack("bad ddirsentries %d", nddirs);
-        nddirs = 16;
-    sizeof_oh = sizeof_ih =
-        ((const char *) &ih.ddirs - (const char *) &ih) + nddirs * sizeof(ddirs_t);
-    const unsigned missing = (16 - nddirs) * sizeof(ddirs_t);
-    memset(&ih.ddirs[nddirs], 0, missing);
-
+    fi->readx(&ih, sizeof(ih));
     if (31 < (unsigned) ih.subsystem) {
         throwCantPack("bad ih.subsystem 0x%x", (unsigned) ih.subsystem);
     }
@@ -3287,7 +3274,7 @@ void PeFile32::unpack(OutputFile *fo) {
 tribool PeFile32::canUnpack() {
     if (!canPack()) // this calls readFileHeader() and readPeHeader()
         return false;
-    return canUnpack0(getFormat() == UPX_F_WINCE_ARM ? 4 : 3, ih.objects, ih.entry, sizeof_ih);
+    return canUnpack0(getFormat() == UPX_F_WINCE_ARM ? 4 : 3, ih.objects, ih.entry, sizeof(ih));
 }
 
 unsigned PeFile32::processImports() { // pass 1
@@ -3308,7 +3295,6 @@ PeFile64::PeFile64(InputFile *f) : super(f) {
     COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 264)
     COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
 
-    sizeof_oh = sizeof_ih = sizeof(ih); // default
     iddirs = ih.ddirs;
     oddirs = oh.ddirs;
 }
@@ -3316,16 +3302,7 @@ PeFile64::PeFile64(InputFile *f) : super(f) {
 PeFile64::~PeFile64() noexcept {}
 
 void PeFile64::readPeHeader() {
-    fi->readx(&ih, sizeof_ih);
-    unsigned nddirs = ih.ddirsentries;
-    if (16 < nddirs)
-        // throwCantPack("bad ddirsentries %d", nddirs);
-        nddirs = 16;
-    sizeof_oh = sizeof_ih =
-        ((const char *) &ih.ddirs - (const char *) &ih) + nddirs * sizeof(ddirs_t);
-    const unsigned missing = (16 - nddirs) * sizeof(ddirs_t);
-    memset(&ih.ddirs[nddirs], 0, missing);
-
+    fi->readx(&ih, sizeof(ih));
     if (31 < (unsigned) ih.subsystem) {
         throwCantPack("bad ih.subsystem 0x%x", (unsigned) ih.subsystem);
     }
@@ -3347,7 +3324,7 @@ void PeFile64::unpack(OutputFile *fo) { unpack0<pe_header_t, LE64>(fo, ih, oh, 1
 tribool PeFile64::canUnpack() {
     if (!canPack()) // this calls readFileHeader() and readPeHeader()
         return false;
-    return canUnpack0(3, ih.objects, ih.entry, sizeof_ih);
+    return canUnpack0(3, ih.objects, ih.entry, sizeof(ih));
 }
 
 unsigned PeFile64::processImports() { // pass 1

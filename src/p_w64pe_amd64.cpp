@@ -164,8 +164,8 @@ bool PackW64PeAmd64::needForceOption() const {
     return r;
 }
 
-void PackW64PeAmd64::defineSymbols(unsigned ncsection, unsigned upxsection, unsigned ic,
-                                   unsigned s1addr) {
+void PackW64PeAmd64::defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
+                                   unsigned ic, unsigned s1addr) {
     const unsigned myimport = ncsection + soresources - rvamin;
 
     // patch loader

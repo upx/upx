@@ -44,8 +44,8 @@ public:
     virtual const int *getFilters() const override;
 
     virtual bool needForceOption() const override;
-    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned isize_isplit,
-                               unsigned s1addr) override;
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
+                               unsigned isize_isplit, unsigned s1addr) override;
     virtual void addNewRelocations(Reloc &, unsigned upxsection) override;
     virtual void setOhDataBase(const pe_section_t *osection) override;
     virtual void setOhHeaderSize(const pe_section_t *osection) override;

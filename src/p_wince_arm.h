@@ -47,8 +47,8 @@ public:
     virtual bool needForceOption() const override;
     virtual void callCompressWithFilters(Filter &, int filter_strategy,
                                          unsigned ih_codebase) override;
-    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned isize_isplit,
-                               unsigned s1addr) override;
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
+                               unsigned isize_isplit, unsigned s1addr) override;
     virtual void addNewRelocations(Reloc &, unsigned upxsection) override;
     virtual unsigned getProcessImportParam(unsigned upxsection) override;
     virtual void setOhDataBase(const pe_section_t *osection) override;
