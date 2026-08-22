@@ -2352,6 +2352,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
 
     const unsigned objs = ih.objects;
     readSectionHeaders(objs, sizeof(ih));
+    if (0 == ih.codebase) {   // trickster, or bad linker
+        ih.codebase = rvamin; // silently fix pecadillo
+    }
+
     if (!opt->force && needForceOption())
         throwCantPack("unexpected value in PE header (try --force)");
 
