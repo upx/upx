@@ -46,7 +46,7 @@ protected:
     explicit PeFile(InputFile *f);
     virtual ~PeFile() noexcept;
 
-    void readSectionHeaders(unsigned objs, unsigned sizeof_ih);
+    void readSectionHeaders(unsigned objs);
     unsigned readSections(unsigned objs, unsigned usize, unsigned ih_filealign,
                           unsigned ih_datasize);
     void checkHeaderValues(unsigned subsystem, unsigned mask, unsigned ih_entry,
@@ -56,8 +56,8 @@ protected:
 
     virtual bool needForceOption() const = 0;
     virtual void callCompressWithFilters(Filter &, int filter_strategy, unsigned ih_codebase);
-    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned sizeof_oh,
-                               unsigned isize_isplit, unsigned s1addr) = 0;
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection, unsigned isize_isplit,
+                               unsigned s1addr) = 0;
     virtual void addNewRelocations(Reloc &, unsigned) {}
     void callProcessStubRelocs(Reloc &rel, unsigned &ic);
     void callProcessResources(Resource &res, unsigned &ic);
@@ -86,6 +86,7 @@ protected:
     virtual void readPeHeader() = 0;
 
     unsigned pe_offset;
+    unsigned sizeof_ih, sizeof_oh;
 
     template <typename LEXX, typename ord_mask_t>
     unsigned processImports0(ord_mask_t ord_mask);
