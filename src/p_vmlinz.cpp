@@ -318,6 +318,9 @@ int PackVmlinuzI386::decompressKernel()
             unsigned delta_off = 0;
             for (unsigned j=0; j < ehdr->e_phnum; ++j, ++phdr) {
                 if (phdr->PT_LOAD==phdr->p_type) {
+                    if (file_size < phdr->p_filesz) {
+                        throwCantPack("bad phdr[%d].p_filesz %#x\n", j, (unsigned)phdr->p_filesz);
+                    }
                     unsigned step = (hi_paddr + phdr->p_align - 1) & ~(phdr->p_align - 1);
                     if (0==hi_paddr) { // first PT_LOAD
                         if (physical_start!=phdr->p_paddr) {
