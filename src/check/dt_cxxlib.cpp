@@ -2277,6 +2277,10 @@ TEST_CASE("upx::run_time 2") {
 // codegen
 **************************************************************************/
 
+#if defined(__clang__) && __has_warning("-Wunused-template")
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-template"
+#endif
 #if (ACC_CC_MSC)
 #pragma warning(push)
 #pragma warning(disable : 4310) // warning C4310: cast truncates constant value
@@ -2285,8 +2289,15 @@ TEST_CASE("upx::run_time 2") {
 namespace {
 struct TestConstant final {
     template <class T>
+    static noinline void noinline_unused(T) noexcept {
+        // static_assert(false);
+        static_assert(sizeof(T) == 999999);
+        assert_noexcept2(false);
+    }
+
+    template <class T>
     static noinline T noinline_zero(T) noexcept {
-        return T(0);
+        return T{};
     }
     template <class T>
     static noinline T noinline_one(T) noexcept {
@@ -2563,6 +2574,45 @@ struct TestConstant final {
                                        T m, T n, T o, T p, T q, T r, T s, T t) noexcept {
         return T(a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t);
     }
+    template <class T>
+    static noinline T noinline_xadd_21(T a, T b, T c, T d, T e, T f, T g, T h, T i, T j, T k, T l,
+                                       T m, T n, T o, T p, T q, T r, T s, T t, T u) noexcept {
+        return T(a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u);
+    }
+    template <class T>
+    static noinline T noinline_xadd_22(T a, T b, T c, T d, T e, T f, T g, T h, T i, T j, T k, T l,
+                                       T m, T n, T o, T p, T q, T r, T s, T t, T u, T v) noexcept {
+        return T(a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u +
+                 v);
+    }
+    template <class T>
+    static noinline T noinline_xadd_23(T a, T b, T c, T d, T e, T f, T g, T h, T i, T j, T k, T l,
+                                       T m, T n, T o, T p, T q, T r, T s, T t, T u, T v,
+                                       T w) noexcept {
+        return T(a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u +
+                 v + w);
+    }
+    template <class T>
+    static noinline T noinline_xadd_24(T a, T b, T c, T d, T e, T f, T g, T h, T i, T j, T k, T l,
+                                       T m, T n, T o, T p, T q, T r, T s, T t, T u, T v, T w,
+                                       T x) noexcept {
+        return T(a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u +
+                 v + w + x);
+    }
+    template <class T>
+    static noinline T noinline_xadd_25(T a, T b, T c, T d, T e, T f, T g, T h, T i, T j, T k, T l,
+                                       T m, T n, T o, T p, T q, T r, T s, T t, T u, T v, T w, T x,
+                                       T y) noexcept {
+        return T(a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u +
+                 v + w + x + y);
+    }
+    template <class T>
+    static noinline T noinline_xadd_26(T a, T b, T c, T d, T e, T f, T g, T h, T i, T j, T k, T l,
+                                       T m, T n, T o, T p, T q, T r, T s, T t, T u, T v, T w, T x,
+                                       T y, T z) noexcept {
+        return T(a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u +
+                 v + w + x + y + z);
+    }
 
     struct R1 final {
         size_t a[1];
@@ -2728,6 +2778,10 @@ TEST_CASE("codegen constant") {
         assert_noexcept2((TestConstant::noinline_zero(upx_uint32_t(n)) == 0));
         assert_noexcept2((TestConstant::noinline_zero(upx_int64_t(n)) == 0));
         assert_noexcept2((TestConstant::noinline_zero(upx_uint64_t(n)) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestConstant::noinline_zero(upx_int128_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_zero(upx_uint128_t(n)) == 0));
+#endif
 
         assert_noexcept2((TestConstant::noinline_one(upx_int8_t(n)) == 1));
         assert_noexcept2((TestConstant::noinline_one(upx_uint8_t(n)) == 1));
@@ -3156,16 +3210,30 @@ TEST_CASE("codegen constant") {
                                                             n, n, n, n, n, n) == 0));
         assert_noexcept2((TestConstant::noinline_xadd_20<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
                                                             n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_21<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_22<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_23<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_24<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_25<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                               n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_26<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                               n, n, n, n, n, n, n, n) == 0));
     }
     {
         assert_noexcept2((TestConstant::noinline_return_1().a[0] == 0));
-        assert_noexcept2((TestConstant::noinline_return_2().a[0] == 0));
-        assert_noexcept2((TestConstant::noinline_return_3().a[0] == 0));
-        assert_noexcept2((TestConstant::noinline_return_4().a[0] == 0));
-        assert_noexcept2((TestConstant::noinline_return_5().a[0] == 0));
-        assert_noexcept2((TestConstant::noinline_return_6().a[0] == 0));
-        assert_noexcept2((TestConstant::noinline_return_7().a[0] == 0));
-        assert_noexcept2((TestConstant::noinline_return_8().a[0] == 0));
+        assert_noexcept2((TestConstant::noinline_return_2().a[1] == 0));
+        assert_noexcept2((TestConstant::noinline_return_3().a[2] == 0));
+        assert_noexcept2((TestConstant::noinline_return_4().a[3] == 0));
+        assert_noexcept2((TestConstant::noinline_return_5().a[4] == 0));
+        assert_noexcept2((TestConstant::noinline_return_6().a[5] == 0));
+        assert_noexcept2((TestConstant::noinline_return_7().a[6] == 0));
+        assert_noexcept2((TestConstant::noinline_return_8().a[7] == 0));
     }
     {
         assert_noexcept2((TestConstant::noinline_be0(upx_int8_t(n))));
@@ -3777,6 +3845,9 @@ TEST_CASE("codegen") {
     (void) n;
 }
 
+#if defined(__clang__) && __has_warning("-Wunused-template")
+#pragma clang diagnostic pop
+#endif
 #if (ACC_CC_MSC)
 #pragma warning(pop)
 #endif

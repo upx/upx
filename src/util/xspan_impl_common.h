@@ -55,7 +55,7 @@ public:
 private:
 #if XSPAN_CONFIG_ENABLE_DEBUG
 #if __cplusplus >= 201103L
-    XSpanDebugFile f = XSpanDebugFile{};
+    XSpanDebugFile f{};
 #else
     XSpanDebugFile f;
 #endif

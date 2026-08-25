@@ -89,6 +89,7 @@ jobs:
           # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva20u64 }
           # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva22u64 }
           # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva23u64 }
+          - { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
 
           - { container: 'ubuntu:20.04', target: g++-mingw-w64-i686, wine: wine }
           - { container: 'ubuntu:20.04', target: g++-mingw-w64-x86-64, wine: wine }
@@ -136,12 +137,16 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-arc-linux-gnu }
           - { container: 'ubuntu:26.04', target: g++-hppa-linux-gnu, qemu: qemu-hppa }
           - { container: 'ubuntu:26.04', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64 }
+          - { container: 'ubuntu:26.04', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64, extra: -la664 }
           - { container: 'ubuntu:26.04', target: g++-m68k-linux-gnu, qemu: qemu-m68k }
           # { container: 'ubuntu:26.04', target: g++-mips64-linux-gnuabi64, qemu: qemu-mips64 }
           # { container: 'ubuntu:26.04', target: g++-mips64el-linux-gnuabi64, qemu: qemu-mips64el }
           - { container: 'ubuntu:26.04', target: g++-s390x-linux-gnu, qemu: qemu-s390x }
           - { container: 'ubuntu:26.04', target: g++-sh4-linux-gnu, qemu: qemu-sh4 }
           - { container: 'ubuntu:26.04', target: g++-sparc64-linux-gnu, qemu: qemu-sparc64 }
+
+          - { container: 'ubuntu:26.10', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64 }
+          - { container: 'ubuntu:26.10', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64, extra: -la664 }
 
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
@@ -222,6 +227,9 @@ jobs:
               CC="$CC -D_WIN32_WINNT=0x0501"; CXX="$CXX -D_WIN32_WINNT=0x0501"
               CC="$CC -static"; CXX="$CXX -static" ;;
           esac
+          if [[ $toolchain == loongarch64-linux-gnu && "${{ matrix.extra }}" == *la664 ]]; then true;
+            export CC="$CC -march=la664" CXX="$CXX -march=la664"
+          fi
           #if [[ "${{ matrix.container }}" == ubuntu:2[46].04 && $toolchain == powerpc64*-linux-gnu && "${{ matrix.extra }}" == *power10 ]]; then true;
           if [[ $toolchain == powerpc64*-linux-gnu && "${{ matrix.extra }}" == *power10 ]]; then true;
             export CC="$CC -mcpu=power10" CXX="$CXX -mcpu=power10"

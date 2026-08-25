@@ -2352,7 +2352,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
 
     const unsigned objs = ih.objects;
     readSectionHeaders(objs);
-    if (0 == ih.codebase) {   // trickster, or bad linker
+    if (ih.codebase == 0 && rvamin != 0) { // trickster, or bad linker
+        info("ih.codebase %#x -> %#x", (unsigned) ih.codebase, rvamin);
         ih.codebase = rvamin; // silently fix pecadillo
     }
 
@@ -3256,9 +3257,10 @@ PeFile32::~PeFile32() noexcept {}
 void PeFile32::readPeHeader() {
     fi->readx(&ih, sizeof_ih);
     unsigned nddirs = ih.ddirsentries;
-    if (16 < nddirs)
-        // throwCantPack("bad ddirsentries %d", nddirs);
+    if (nddirs > 16) {
+        // throwCantPack("bad ddirsentries %u", nddirs);
         nddirs = 16;
+    }
     sizeof_oh = sizeof_ih =
         ((const char *) &ih.ddirs - (const char *) &ih) + nddirs * sizeof(ddirs_t);
     const unsigned missing = (16 - nddirs) * sizeof(ddirs_t);
@@ -3321,9 +3323,10 @@ PeFile64::~PeFile64() noexcept {}
 void PeFile64::readPeHeader() {
     fi->readx(&ih, sizeof_ih);
     unsigned nddirs = ih.ddirsentries;
-    if (16 < nddirs)
-        // throwCantPack("bad ddirsentries %d", nddirs);
+    if (nddirs > 16) {
+        // throwCantPack("bad ddirsentries %u", nddirs);
         nddirs = 16;
+    }
     sizeof_oh = sizeof_ih =
         ((const char *) &ih.ddirs - (const char *) &ih) + nddirs * sizeof(ddirs_t);
     const unsigned missing = (16 - nddirs) * sizeof(ddirs_t);
