@@ -503,13 +503,13 @@ protected:
         };
 
         export_dir_t edir;
-        char *ename;
-        char *functionptrs;
-        char *ordinals;
-        char **names;
+        char *ename = nullptr;
+        char *functionptrs = nullptr;
+        char *ordinals = nullptr;
+        char **names = nullptr;
 
-        char *base;
-        unsigned size;
+        char *base = nullptr;
+        unsigned size = 0;
         Interval iv;
 
     public:

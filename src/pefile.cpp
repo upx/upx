@@ -1274,15 +1274,14 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
     size += len;
     iv.add_interval(edir.addrtable, len);
 
-    unsigned ic;
     names = New(char *, edir.names + edir.functions + 1);
     if (edir.nameptrtable >= end || sizeof(LE32) * edir.names > end - edir.nameptrtable)
         throwCantPack("bad export name pointer table RVA %#x", (unsigned) edir.nameptrtable);
-    for (ic = 0; ic < edir.names; ic++) {
-        const unsigned namerva = get_le32(base + edir.nameptrtable + ic * sizeof(LE32));
+    for (unsigned ic = 0; ic < edir.names; ic++) {
+        const unsigned namerva = get_le32(base + (edir.nameptrtable + ic * sizeof(LE32)));
         if (namerva >= end)
             throwCantPack("bad export name RVA %#x", namerva);
-        char *n = base + namerva;
+        const char *n = base + namerva;
         len = strlen(n) + 1;
         names[ic] = ::strdup(n);
         assert_noexcept(names[ic] != nullptr);
@@ -1294,16 +1293,18 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
 
     LE32 *fp = (LE32 *) functionptrs;
     // export forwarders
-    for (ic = 0; ic < edir.functions; ic++)
+    for (unsigned ic = 0; ic < edir.functions; ic++) {
         if (fp[ic] >= eoffs && fp[ic] < eoffs + esize) {
-            char *forw = base + fp[ic];
+            const char *forw = base + fp[ic];
             len = strlen(forw) + 1;
             iv.add_interval(forw, len);
             size += len;
             names[ic + edir.names] = ::strdup(forw);
             assert_noexcept(names[ic + edir.names] != nullptr);
-        } else
+        } else {
             names[ic + edir.names] = nullptr;
+        }
+    }
 
     len = 2 * edir.names;
     if (edir.ordinaltable >= end || len > end - edir.ordinaltable)
@@ -1510,7 +1511,7 @@ void PeFile::processTls1(Interval *iv, typename tls_traits<LEXX>::cb_value_t ima
 
     // makes sure tls index is zero after decompression
     if (tlsindex && tlsindex < imagesize)
-        set_le32(ibuf.subref("bad tlsindex %#x", tlsindex, sizeof(unsigned)), 0);
+        set_le32(ibuf.subref("bad tlsindex %#x", tlsindex, sizeof(LE32)), 0);
 }
 
 template <typename LEXX>
@@ -3262,7 +3263,8 @@ void PeFile32::readPeHeader() {
     fi->readx(&ih, sizeof_ih);
     unsigned nddirs = ih.ddirsentries;
     if (nddirs > 16) {
-        // throwCantPack("bad ddirsentries %u", nddirs);
+        // throwCantPack("bad ih.ddirsentries %u", nddirs);
+        info("bad ih.ddirsentries %u", nddirs);
         nddirs = 16;
     }
     sizeof_oh = sizeof_ih =
@@ -3328,7 +3330,8 @@ void PeFile64::readPeHeader() {
     fi->readx(&ih, sizeof_ih);
     unsigned nddirs = ih.ddirsentries;
     if (nddirs > 16) {
-        // throwCantPack("bad ddirsentries %u", nddirs);
+        // throwCantPack("bad ih.ddirsentries %u", nddirs);
+        info("bad ih.ddirsentries %u", nddirs);
         nddirs = 16;
     }
     sizeof_oh = sizeof_ih =

@@ -166,7 +166,7 @@ jobs:
           - { os: ubuntu-22.04 }
           - { os: ubuntu-24.04 }
           - { os: ubuntu-22.04-arm }
-          - { os: ubuntu-24.04-arm }
+          # { os: ubuntu-24.04-arm }
     name: ${{ format('{0}', matrix.os) }}-0
     runs-on: ${{ matrix.os }}
     steps:
