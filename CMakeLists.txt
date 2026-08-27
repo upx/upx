@@ -27,7 +27,7 @@ else()
     cmake_minimum_required(VERSION "3.8" FATAL_ERROR) # CMake >= 3.8 is needed for CXX_STANDARD 17
 endif()
 
-set(UPX_VERSION_STRING "5.2.1") # this should match src/version.h
+set(UPX_VERSION_STRING "5.2.2") # this should match src/version.h
 
 # support functions and some utility
 include("${CMAKE_CURRENT_SOURCE_DIR}/misc/cmake/functions.cmake")
