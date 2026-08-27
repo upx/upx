@@ -79,6 +79,9 @@ static_assert((char) (-1) == 255);             // -funsigned-char
 #if defined(__clang__) && __has_warning("-Wunnecessary-virtual-specifier")
 #pragma clang diagnostic ignored "-Wunnecessary-virtual-specifier"
 #endif
+#if defined(__clang__) && __has_warning("-Wunused-template")
+#pragma clang diagnostic ignored "-Wunused-template"
+#endif
 #if (ACC_CC_GNUC && ACC_CC_GNUC < 0x090000)
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
