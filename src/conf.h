@@ -76,6 +76,9 @@ static_assert(CHAR_MAX == 255);                // -funsigned-char
 static_assert((char) (-1) == 255);             // -funsigned-char
 
 // disable some more strict warnings
+#if defined(__clang__) && __has_warning("-Wshorten-64-to-32")
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+#endif
 #if defined(__clang__) && __has_warning("-Wunnecessary-virtual-specifier")
 #pragma clang diagnostic ignored "-Wunnecessary-virtual-specifier"
 #endif

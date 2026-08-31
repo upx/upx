@@ -137,6 +137,7 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-arc-linux-gnu }
           - { container: 'ubuntu:26.04', target: g++-hppa-linux-gnu, qemu: qemu-hppa }
           - { container: 'ubuntu:26.04', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64 }
+          - { container: 'ubuntu:26.04', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64, extra: -la464 }
           - { container: 'ubuntu:26.04', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64, extra: -la664 }
           - { container: 'ubuntu:26.04', target: g++-m68k-linux-gnu, qemu: qemu-m68k }
           # { container: 'ubuntu:26.04', target: g++-mips64-linux-gnuabi64, qemu: qemu-mips64 }
@@ -146,6 +147,7 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-sparc64-linux-gnu, qemu: qemu-sparc64 }
 
           - { container: 'ubuntu:26.10', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64 }
+          - { container: 'ubuntu:26.10', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64, extra: -la464 }
           - { container: 'ubuntu:26.10', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64, extra: -la664 }
 
     runs-on: ubuntu-latest
@@ -227,6 +229,9 @@ jobs:
               CC="$CC -D_WIN32_WINNT=0x0501"; CXX="$CXX -D_WIN32_WINNT=0x0501"
               CC="$CC -static"; CXX="$CXX -static" ;;
           esac
+          if [[ $toolchain == loongarch64-linux-gnu && "${{ matrix.extra }}" == *la464 ]]; then true;
+            export CC="$CC -march=la464" CXX="$CXX -march=la464"
+          fi
           if [[ $toolchain == loongarch64-linux-gnu && "${{ matrix.extra }}" == *la664 ]]; then true;
             export CC="$CC -march=la664" CXX="$CXX -march=la664"
           fi

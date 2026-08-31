@@ -177,6 +177,16 @@ void throwInternalError(const char *format, ...) {
     throwInternalError(msg);
 }
 
+template <>
+void throwIOException2(const char *format, ...) {
+    char msg[1024];
+    va_list ap;
+    va_start(ap, format);
+    upx_safe_vsnprintf_noexcept(msg, sizeof(msg), format, ap);
+    va_end(ap);
+    throwIOException(msg);
+}
+
 /*************************************************************************
 // util
 **************************************************************************/

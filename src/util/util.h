@@ -33,7 +33,11 @@
 // see C 11 standard, Annex K
 **************************************************************************/
 
+#if (__SIZEOF_INT128__ == 16)
+inline bool mem_size_valid_bytes(upx_uint128_t bytes) noexcept { return bytes <= UPX_RSIZE_MAX; }
+#else
 inline bool mem_size_valid_bytes(upx_uint64_t bytes) noexcept { return bytes <= UPX_RSIZE_MAX; }
+#endif
 
 noinline bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
                              upx_uint64_t extra2 = 0) noexcept;

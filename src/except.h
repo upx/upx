@@ -204,11 +204,15 @@ template <class T>
 void throwCantUnpack(const T *, ...) DELETED_FUNCTION;
 template <class T>
 void throwInternalError(const T *, ...) DELETED_FUNCTION;
+template <class T>
+void throwIOException2(const T *, ...) DELETED_FUNCTION;
 template <>
 noreturn void throwCantPack(const char *format, ...) may_throw attribute_format(1, 2);
 template <>
 noreturn void throwCantUnpack(const char *format, ...) may_throw attribute_format(1, 2);
 template <>
 noreturn void throwInternalError(const char *format, ...) may_throw attribute_format(1, 2);
+template <>
+noreturn void throwIOException2(const char *format, ...) may_throw attribute_format(1, 2);
 
 /* vim:set ts=4 sw=4 et: */

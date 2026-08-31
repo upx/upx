@@ -364,6 +364,13 @@ void show_help(int verbose) {
                     "  --8086              make compressed sys work on any 8086\n"
                     "\n");
         fg = con_fg(f, FG_YELLOW);
+        con_fprintf(f, "Options for linux/elf:\n");
+        fg = con_fg(f, fg);
+        con_fprintf(f,
+                    "  --preserve-build-id     copy .gnu.note.build-id to compressed output\n"
+                    "  --catch-sigsegv         debug errors in hardware or de-compressor\n"
+                    "\n");
+        fg = con_fg(f, FG_YELLOW);
         con_fprintf(f, "Options for ps1/exe:\n");
         fg = con_fg(f, fg);
         con_fprintf(f,
@@ -392,13 +399,6 @@ void show_help(int verbose) {
                     "  --keep-resource=list    do not compress resources specified by list\n"
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
-                    "\n");
-        fg = con_fg(f, FG_YELLOW);
-        con_fprintf(f, "Options for linux/elf:\n");
-        fg = con_fg(f, fg);
-        con_fprintf(f,
-                    "  --preserve-build-id     copy .gnu.note.build-id to compressed output\n"
-                    "  --catch-sigsegv         debug errors in hardware or de-compressor\n"
                     "\n");
     }
     // clang-format on
