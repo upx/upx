@@ -5492,7 +5492,7 @@ unsigned PackLinuxElf32::find_LOAD_gap(
     unsigned const nph
 )
 {
-    if (!is_LOAD(&phdr[k])) {
+    if (!is_LOAD(&phdr[k]) || 0 == get_te32(&phdr[k].p_filesz)) {
         return 0;
     }
     unsigned const hi = get_te32(&phdr[k].p_offset) +
@@ -5509,7 +5509,7 @@ unsigned PackLinuxElf32::find_LOAD_gap(
         if (k==j) {
             break;
         }
-        if (is_LOAD(&phdr[j])) {
+        if (is_LOAD(&phdr[j]) && 0 != get_te32(&phdr[j].p_filesz)) {
             unsigned const t = get_te32(&phdr[j].p_offset);
             if ((t - hi) < (lo - hi)) {
                 lo = t;
@@ -5870,7 +5870,7 @@ unsigned PackLinuxElf64::find_LOAD_gap(
     unsigned const nph
 )
 {
-    if (!is_LOAD(&phdr[k])) {
+    if (!is_LOAD(&phdr[k]) || 0 == get_te64(&phdr[k].p_filesz)) {
         return 0;
     }
     unsigned const hi = get_te64(&phdr[k].p_offset) +
@@ -5887,7 +5887,7 @@ unsigned PackLinuxElf64::find_LOAD_gap(
         if (k==j) {
             break;
         }
-        if (is_LOAD(&phdr[j])) {
+        if (is_LOAD(&phdr[j]) && 0 != get_te64(&phdr[j].p_filesz)) {
             unsigned const t = get_te64(&phdr[j].p_offset);
             if ((t - hi) < (lo - hi)) {
                 lo = t;
