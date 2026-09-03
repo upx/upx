@@ -988,6 +988,7 @@ void upx_compiler_sanity_check() noexcept {
     CHECK_TYPE(upx_off_t);
     CHECK_TYPE(upx_uptrdiff_t);
     CHECK_TYPE(upx_ssize_t);
+    CHECK_TYPE(upx_sptraddr_t);
     CHECK_TYPE(upx_ptraddr_t);
     CHECK_TYPE(upx_uintptr_t);
 #undef CHECK_TYPE
@@ -1025,6 +1026,7 @@ void upx_compiler_sanity_check() noexcept {
     CheckIntegral<upx_uptrdiff_t>::check();
     CheckIntegral<upx_ssize_t>::check();
     CheckIntegral<size_t>::check();
+    CheckIntegral<upx_sptraddr_t>::check();
     CheckIntegral<upx_ptraddr_t>::check();
 #if defined(__CHERI__) && defined(__CHERI_PURE_CAPABILITY__)
     static_assert(sizeof(upx_ptraddr_t) == 8);
@@ -1076,6 +1078,7 @@ void upx_compiler_sanity_check() noexcept {
     CheckSignedness<upx_uptrdiff_t, false>::check();
     CheckSignedness<upx_ssize_t, true>::check();
     CheckSignedness<size_t, false>::check();
+    CheckSignedness<upx_sptraddr_t, true>::check();
     CheckSignedness<upx_ptraddr_t, false>::check();
     CheckSignedness<intptr_t, true>::check();
     CheckSignedness<uintptr_t, false>::check();

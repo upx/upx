@@ -166,7 +166,7 @@ jobs:
           - { os: ubuntu-22.04 }
           - { os: ubuntu-24.04 }
           - { os: ubuntu-22.04-arm }
-          # { os: ubuntu-24.04-arm }
+          - { os: ubuntu-24.04-arm }
     name: ${{ format('{0}', matrix.os) }}-0
     runs-on: ${{ matrix.os }}
     steps:
@@ -580,7 +580,7 @@ jobs:
           fi
       - run: echo "CXXFLAGS=$CXXFLAGS -DDOCTEST_CONFIG_DISABLE" >> $GITHUB_ENV
         #if: false
-        if: ${{ contains(matrix.name, '2026') }}
+        if: ${{ !contains(matrix.name, '2022') }}
       - run: make build/debug
       - run: make build/release
       - run: shopt -s globstar; ls -ldF build/**/upx.exe || true
@@ -660,7 +660,7 @@ jobs:
         with: { vsversion: '${{ matrix.vsversion }}', arch: '${{ matrix.vsarch }}' }
       - run: ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
       - run: echo "UPX_CXXFLAGS=$UPX_CXXFLAGS -DDOCTEST_CONFIG_DISABLE" >> $GITHUB_ENV
-        if: ${{ contains(matrix.name, '2026') }}
+        if: ${{ !contains(matrix.name, '2022') }}
       - name: Build by hand
         shell: cmd
         run: |

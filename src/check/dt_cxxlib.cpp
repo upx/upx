@@ -1707,7 +1707,8 @@ struct alignas(1) TestXE final {
         return x_unsign_extend64(v, 64);
     }
 
-    static noinline bool noinline_mem_size_valid_bytes(upx_uint64_t bytes) noexcept {
+    template <class T>
+    static noinline bool noinline_mem_size_valid_bytes(T bytes) noexcept {
         return mem_size_valid_bytes(bytes);
     }
     static noinline upx_rsize_t noinline_mem_size(upx_uint64_t element_size, upx_uint64_t n)
@@ -1717,6 +1718,35 @@ struct alignas(1) TestXE final {
     static noinline upx_rsize_t noinline_mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
         may_throw {
         return mem_size_get_n(element_size, n);
+    }
+
+    template <class T>
+    static noinline ptrdiff_t noinline_ptrdiff(const T *a, const T *b) noexcept {
+        return a - b;
+    }
+    template <class T>
+    static noinline bool noinline_ptr_cmp_eq(const T *a, const T *b) noexcept {
+        return a == b;
+    }
+    template <class T>
+    static noinline bool noinline_ptr_cmp_ne(const T *a, const T *b) noexcept {
+        return a != b;
+    }
+    template <class T>
+    static noinline bool noinline_ptr_cmp_lt(const T *a, const T *b) noexcept {
+        return a != b && a < b;
+    }
+    template <class T>
+    static noinline bool noinline_ptr_cmp_gt(const T *a, const T *b) noexcept {
+        return a != b && a > b;
+    }
+    template <class T>
+    static noinline bool noinline_ptr_cmp_le(const T *a, const T *b) noexcept {
+        return a == b || a < b;
+    }
+    template <class T>
+    static noinline bool noinline_ptr_cmp_ge(const T *a, const T *b) noexcept {
+        return a == b || a > b;
     }
 
     static noinline void noinline_memcpy_0(void *d, const void *s) noexcept {
@@ -2201,9 +2231,42 @@ TEST_CASE("upx::run_time 1b") {
     {
         const upx_uint64_t element_size = upx_uint64_t(acc_vget_acc_int64l_t(1, 0));
         const upx_uint64_t n = upx_uint64_t(acc_vget_acc_int64l_t(0, 0));
-        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(n));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int8_t(n)));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint8_t(n)));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int16_t(n)));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint16_t(n)));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int32_t(n)));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint32_t(n)));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int64_t(n)));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint64_t(n)));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int128_t(n)));
+        assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint128_t(n)));
+#endif
         assert_noexcept2(TestXE::noinline_mem_size(element_size, n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_get_n(element_size, n) == 0);
+    }
+    {
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_int8_t>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_uint8_t>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_int16_t>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_uint16_t>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_int32_t>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_uint32_t>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_int64_t>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_uint64_t>(nullptr, nullptr) == 0);
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_int128_t>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptrdiff<upx_uint128_t>(nullptr, nullptr) == 0);
+#endif
+    }
+    {
+        assert_noexcept2(TestXE::noinline_ptr_cmp_eq<void>(nullptr, nullptr) == 1);
+        assert_noexcept2(TestXE::noinline_ptr_cmp_ne<void>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptr_cmp_lt<void>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptr_cmp_gt<void>(nullptr, nullptr) == 0);
+        assert_noexcept2(TestXE::noinline_ptr_cmp_le<void>(nullptr, nullptr) == 1);
+        assert_noexcept2(TestXE::noinline_ptr_cmp_ge<void>(nullptr, nullptr) == 1);
     }
     if (acc_vget_int(0, 0)) {
         ByteArray(d, 1048576);
@@ -2292,6 +2355,17 @@ struct TestCast final {
     static noinline To noinline_cast(From from) noexcept {
         return To(from);
     }
+#if (__SIZEOF_INT128__ == 16)
+    template <class To, class From>
+    static noinline To noinline_cast2(From, upx_uint128_t from) noexcept {
+        return To(From(from));
+    }
+#else
+    template <class To, class From>
+    static noinline To noinline_cast2(From, upx_uint64_t from) noexcept {
+        return To(From(from));
+    }
+#endif
 };
 
 struct TestConstant final {
@@ -2732,6 +2806,14 @@ struct TestConstant final {
     static noinline T noinline_ne3(T n) noexcept {
         return n == 41 ? 11 : T(n + 1);
     }
+    template <class T>
+    static noinline T noinline_ne4(T n) noexcept {
+        return n == 0 ? 0 : T(-1);
+    }
+    template <class T>
+    static noinline T noinline_ne5(T n) noexcept {
+        return n != 0 ? 0 : T(-1);
+    }
 };
 
 template <class T>
@@ -2923,6 +3005,163 @@ TEST_CASE("codegen cast") {
 #endif
     }
     (void) n;
+}
+
+TEST_CASE("codegen cast 2") {
+#define noinline_cast noinline_cast2
+    const int n = acc_vget_int(0, 0);
+    {
+        typedef upx_int8_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+        typedef upx_uint8_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+        typedef upx_int16_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+        typedef upx_uint16_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+        typedef upx_int32_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+        typedef upx_uint32_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+        typedef upx_int64_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+        typedef upx_uint64_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+#if (__SIZEOF_INT128__ == 16)
+        typedef upx_int128_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    {
+#if (__SIZEOF_INT128__ == 16)
+        typedef upx_uint128_t T;
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint8_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint16_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint32_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint64_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_int128_t(n), n) == 0));
+        assert_noexcept2((TestCast::noinline_cast<T>(upx_uint128_t(n), n) == 0));
+#endif
+    }
+    (void) n;
+#undef noinline_cast
 }
 
 TEST_CASE("codegen constant") {
@@ -3587,6 +3826,32 @@ TEST_CASE("codegen constant") {
 #if (__SIZEOF_INT128__ == 16)
         assert_noexcept2((TestConstant::noinline_ne3(upx_int128_t(n)) == 1));
         assert_noexcept2((TestConstant::noinline_ne3(upx_uint128_t(n)) == 1));
+#endif
+
+        assert_noexcept2((TestConstant::noinline_ne4(upx_int8_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_ne4(upx_uint8_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_ne4(upx_int16_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_ne4(upx_uint16_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_ne4(upx_int32_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_ne4(upx_uint32_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_ne4(upx_int64_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_ne4(upx_uint64_t(n)) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestConstant::noinline_ne4(upx_int128_t(n)) == 0));
+        assert_noexcept2((TestConstant::noinline_ne4(upx_uint128_t(n)) == 0));
+#endif
+
+        assert_noexcept2((TestConstant::noinline_ne5(upx_int8_t(n)) == -1));
+        assert_noexcept2((TestConstant::noinline_ne5(upx_uint8_t(n)) == 0xff));
+        assert_noexcept2((TestConstant::noinline_ne5(upx_int16_t(n)) == -1));
+        assert_noexcept2((TestConstant::noinline_ne5(upx_uint16_t(n)) == 0xffff));
+        assert_noexcept2((TestConstant::noinline_ne5(upx_int32_t(n)) == -1));
+        assert_noexcept2((TestConstant::noinline_ne5(upx_uint32_t(n)) == 0xffffffff));
+        assert_noexcept2((TestConstant::noinline_ne5(upx_int64_t(n)) == -1));
+        assert_noexcept2((TestConstant::noinline_ne5(upx_uint64_t(n)) == 0xffffffffffffffffULL));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestConstant::noinline_ne5(upx_int128_t(n)) == -1));
+        assert_noexcept2((TestConstant::noinline_ne5(upx_uint128_t(n)) != 0));
 #endif
     }
     {

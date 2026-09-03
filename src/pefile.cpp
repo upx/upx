@@ -2358,7 +2358,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     const unsigned objs = ih.objects;
     readSectionHeaders(objs);
     if (ih.codebase == 0 && rvamin != 0) { // trickster, or bad linker
-        info("ih.codebase %#x -> %#x", (unsigned) ih.codebase, rvamin);
+        // throwCantPack("bad ih.codebase %#x", (unsigned) ih.codebase);
+        info("bad ih.codebase %#x -> %#x", (unsigned) ih.codebase, rvamin);
         ih.codebase = rvamin; // silently fix pecadillo
     }
 
@@ -3264,7 +3265,7 @@ void PeFile32::readPeHeader() {
     unsigned nddirs = ih.ddirsentries;
     if (nddirs > 16) {
         // throwCantPack("bad ih.ddirsentries %u", nddirs);
-        info("bad ih.ddirsentries %u", nddirs);
+        info("bad ih.ddirsentries %u -> 16", nddirs);
         nddirs = 16;
     }
     sizeof_oh = sizeof_ih =
@@ -3331,7 +3332,7 @@ void PeFile64::readPeHeader() {
     unsigned nddirs = ih.ddirsentries;
     if (nddirs > 16) {
         // throwCantPack("bad ih.ddirsentries %u", nddirs);
-        info("bad ih.ddirsentries %u", nddirs);
+        info("bad ih.ddirsentries %u -> 16", nddirs);
         nddirs = 16;
     }
     sizeof_oh = sizeof_ih =

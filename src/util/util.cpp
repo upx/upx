@@ -131,7 +131,7 @@ int ptr_diff_bytes(const void *a, const void *b) may_throw {
         if very_unlikely (!mem_size_valid_bytes(d))
             throwCantPack("ptr_diff_bytes-1; take care");
     } else {
-        if very_unlikely (!mem_size_valid_bytes(0ll - d))
+        if very_unlikely (!mem_size_valid_bytes(-d))
             throwCantPack("ptr_diff_bytes-2; take care");
     }
     assert_noexcept(d == ((const charptr) a - (const charptr) b));
