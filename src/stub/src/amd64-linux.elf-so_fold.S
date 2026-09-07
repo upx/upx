@@ -91,6 +91,7 @@ memset: .globl memset  // void *memset(void *s, int c, size_t n);
     pop %rax  // result
     ret
 
+my_memcpy: .globl my_memcpy
 memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t n)
     push %rdi  // result = dst
     mov %edx,%eax; and $7,%eax  // n mod 8

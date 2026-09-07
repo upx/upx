@@ -254,17 +254,28 @@ get_sys_munmap: .globl get_sys_munmap  // r0= system call instruction
 #endif  /*}*/
         ret
 
+my_memcpy: .globl my_memcpy
 memcpy: .globl memcpy  // void *memcpy(void *dst, void const *src, size_t len)
+        mov x4,x0  // original dst
+        cbz x2,9f
+0:
         ldrb w3,[x1],#1
         strb w3,[x0],#1
         subs x2,x2,#1
-        bgt memcpy
+        bgt 0b
+9:
+        mov x0,x4  // return value
         ret
 
 memset: .globl memset  // void *memset(void *dst, int c, size_t len);
+        mov x3,x0  // original dst
+        cbz x2,9f
+0:
         strb w1,[x0],#1
         subs x2,x2,#1
-        bgt memset
+        bgt 0b
+9:
+        mov x0,x3  // return value
         ret
 
 /* vim:set ts=8 sw=8 et: */

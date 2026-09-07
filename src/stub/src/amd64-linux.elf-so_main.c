@@ -272,25 +272,6 @@ extern char *upx_mmap_and_fd(  // x86_64 Android emulator of i386 is not faithfu
      , char *pathname  // 0 ==> call get_upxfn_path, which stores if 1st time
 );
 
-#if 0  //{
-            unsigned long fdmap = (long)upx_mmap_and_fd((void *)0, sizeof(code), nullptr);
-            unsigned mfd = -1+ (0xfff& fdmap);
-            write(mfd, &code, sizeof(code));
-            hatch = mmap((void *)(fdmap & ~0xffful), sizeof(code),
-              PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
-            close(mfd);
-
-            int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
-            Pwrite(mfd, code, sizeof(code));
-            hatch = Pmap(0, sizeof(code), PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
-            close(mfd);
-
-            int mfd = memfd_create(addr_string("upx"), MFD_EXEC);  // the directory entry
-            write(mfd, &code, SZ_CODE);
-            hatch = mmap(0, SZ_CODE, PROT_READ|PROT_EXEC, MAP_SHARED, mfd, 0);
-            close(mfd);
-#endif  //}
-
 extern void *my_memcpy(void *, const void *, long unsigned int);
 
 #if defined(__x86_64__)  //{
@@ -409,7 +390,7 @@ make_hatch(
     hatch[0] = 0xd4000001;  // svc #0
     hatch[1] = 0xa9417be2;  // ldp x2,lr,[sp,#2*8)]
     hatch[2] = 0xa8c207e0;  // ldp x0,x1,[sp], 4*8
-    hatch[3] = 0xd61f03c0;  // br x30
+    hatch[3] = 0xd65f03c0;  // ret
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
         next_unc = (char *)(~3& (3+ (long)next_unc));  // .balign 4
@@ -439,8 +420,8 @@ make_hatch(
 
 #undef PAGE_MASK
 
-#if defined(__riscv)  //{  why is riscv the only one?
-extern ElfW(Addr) get_page_mask(void);
+#if defined(__riscv) || defined(__aarch64__)
+extern ElfW(Addr) get_page_mask(void);  // /proc/self/auxv might be unreadable
 #else  //}{
 static ElfW(Addr)
 get_page_mask(void)  // the mask which KEEPS the page, discards the offset
@@ -467,7 +448,7 @@ extern void *memcpy(void *dst, void const *src, size_t n);
 extern void *memset(void *dst, int val, size_t n);
 
 // maximum page sizes
-#if defined(__powerpc64__) || defined(__powerpc__)
+#if defined(__powerpc64__) || defined(__powerpc__) || defined(__aarch64__)
 #define SAVED_SIZE (1<<16)  /* 64 KB */
 #else
 #define SAVED_SIZE (1<<14)  /* 16 KB */
