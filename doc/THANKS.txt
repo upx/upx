@@ -65,6 +65,8 @@ Salvador Eduardo Tropea
   for beta testing
 Stefan Widmann
   for the win32/pe TLS callback support
+Vityacv
+  for beta testing
 The WINE project (https://www.winehq.com/)
   for lots of useful information found in their PE loader sources
 Natascha

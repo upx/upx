@@ -263,7 +263,7 @@ protected:
     inline unsigned get_te16(const void *p) const noexcept { return bele->get16(p); }
     inline unsigned get_te32(const void *p) const noexcept { return bele->get32(p); }
     inline unsigned get_te64_32(const void *p) const may_throw {
-        upx_uint64_t v = bele->get64(p);
+        const upx_uint64_t v = bele->get64(p);
         if very_unlikely ((v >> 32) != 0)
             throwCantPack("64-bit value too big %#llx", v);
         return (unsigned) v;
@@ -301,7 +301,7 @@ protected:
     }
     template <class T, class = enable_if_te64<T> >
     inline unsigned get_te64_32(const T *p) const may_throw {
-        upx_uint64_t v = bele->get64(p);
+        const upx_uint64_t v = bele->get64(p);
         if very_unlikely ((v >> 32) != 0)
             throwCantPack("64-bit value too big %#llx", v);
         return (unsigned) v;

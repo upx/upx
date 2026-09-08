@@ -579,8 +579,8 @@ jobs:
             exit 1
           fi
       - run: echo "CXXFLAGS=$CXXFLAGS -DDOCTEST_CONFIG_DISABLE" >> $GITHUB_ENV
-        #if: false
-        if: ${{ !contains(matrix.name, '2022') }}
+        if: false
+        #if: ${{ !contains(matrix.name, '2022') }}
       - run: make build/debug
       - run: make build/release
       - run: shopt -s globstar; ls -ldF build/**/upx.exe || true
@@ -660,7 +660,8 @@ jobs:
         with: { vsversion: '${{ matrix.vsversion }}', arch: '${{ matrix.vsarch }}' }
       - run: ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
       - run: echo "UPX_CXXFLAGS=$UPX_CXXFLAGS -DDOCTEST_CONFIG_DISABLE" >> $GITHUB_ENV
-        if: ${{ !contains(matrix.name, '2022') }}
+        if: false
+        #if: ${{ !contains(matrix.name, '2022') }}
       - name: Build by hand
         shell: cmd
         run: |
@@ -763,6 +764,7 @@ jobs:
           - { zig_target: riscv64-linux-musl, qemu: qemu-riscv64 }
           - { zig_target: riscv64-linux-musl, qemu: qemu-riscv64, zig_pic: -fPIC }
           - { zig_target: riscv64-linux-musl, qemu: qemu-riscv64, zig_pic: -fPIE, container: 'alpine:3.18' }
+          - { zig_target: riscv64-linux-musl-sifive_p470, zig_flags: -march=sifive_p470, qemu: qemu-riscv64 }
           - { zig_target: x86_64-linux-gnu.2.7, qemu: qemu-x86_64 }  # can use QEMU because of gcompat
           - { zig_target: x86_64-linux-gnu.2.17, qemu: qemu-x86_64 } # can use QEMU because of gcompat
           - { zig_target: x86_64-linux-musl, qemu: qemu-x86_64 }
@@ -849,6 +851,8 @@ jobs:
           [[ $ZIG_TARGET == mips-linux-musleabihf-* ]]   && ZIG_TARGET=mips-linux-musleabihf
           [[ $ZIG_TARGET == mipsel-linux-musleabi-* ]]   && ZIG_TARGET=mipsel-linux-musleabi
           [[ $ZIG_TARGET == mipsel-linux-musleabihf-* ]] && ZIG_TARGET=mipsel-linux-musleabihf
+          [[ $ZIG_TARGET == riscv64-linux-gnu-* ]]       && ZIG_TARGET=riscv64-linux-gnu
+          [[ $ZIG_TARGET == riscv64-linux-musl-* ]]      && ZIG_TARGET=riscv64-linux-musl
           ZIG_TARGET=${ZIG_TARGET/#i386-/x86-} # i386 => x86
           echo "ZIG_TARGET=$ZIG_TARGET" >> $GITHUB_ENV
           # update ZIG_FLAGS

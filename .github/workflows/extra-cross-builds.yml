@@ -82,6 +82,8 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -mcmodel-large }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
+          - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -sifive-p670 }
+          # { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -sifive-p870 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
 
           - { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
@@ -261,6 +263,12 @@ jobs:
           fi
           if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rv64g ]]; then true;
             export CC="$CC -march=rv64g" CXX="$CXX -march=rv64g"
+          fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *sifive-p670 ]]; then true;
+            export CC="$CC -mcpu=sifive-p670" CXX="$CXX -mcpu=sifive-p670"
+          fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *sifive-p870 ]]; then true;
+            export CC="$CC -mcpu=sifive-p870" CXX="$CXX -mcpu=sifive-p870"
           fi
           #if [[ "${{ matrix.container }}" == ubuntu:2[46].04 && $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *thead-c906 ]]; then true;
           if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *thead-c906 ]]; then true;

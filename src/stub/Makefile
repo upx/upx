@@ -433,7 +433,6 @@ tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
-	@echo; echo TARGET=$@  PATH=$(PATH); echo
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -458,7 +457,6 @@ amd64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/amd64-expand.o \
 	    tmp/amd64-linux.elf-upxfd_linux.o \
 	    tmp/amd64-linux.elf-main2.o
-	@echo; echo TARGET=$@  PATH=$(PATH); echo
 # FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
 	multiarch-ld-2.17 -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-embed_objinfo_without_xstrip_keep_dot_text,tmp/$T.bin)
@@ -470,7 +468,6 @@ amd64-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/amd64-linux.elf-help_umf.o \
 	    tmp/amd64-linux.elf-upxfd_linux.o \
 	    tmp/amd64-linux.elf-so_main.o
-	@echo; echo TARGET=$@  PATH=$(PATH); echo
 # FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
 	$(call tc,ld)     -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 #	multiarch-ld-2.17 -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
@@ -882,7 +879,6 @@ arm64-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/arm64-linux.elf-help_umf.o \
 	    tmp/arm64-linux.elf-upxfd_linux.o \
 	    tmp/arm64-linux.elf-so_main.o
-	@echo; echo TARGET=$@  PATH=$(PATH); echo
 # FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
 	$(call tc,ld)     -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 #	multiarch-ld-2.17 -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
@@ -950,7 +946,6 @@ tc.arm64-win64.pe.objcopy  = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
 tc.arm64-win64.pe.objdump  = arm64-linux-objdump-2.25
 
 arm64-win64.pe.h : $(srcdir)/src/$$T.S
-	@echo; echo TARGET=$@  PATH=$(PATH); echo
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
@@ -1623,7 +1618,6 @@ tc.mips.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-protot
 # No need for 'ld' because the only sections (ELFMAINX, ELFMAINZ) are both in elf-entry.S
 mips.r3000-linux.elf-entry.h : \
 	    $(srcdir)/src/$$T.S
-	@echo; echo TARGET: $@; echo
 	mipsel-linux-gcc-4.1.1 -E -meb -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD \
 	    -D__mips__  -D__MIPS__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
 	    | mipsel-elf-as-20060406 -EB -O -mno-pdr  -o tmp/mips.r3000-linux.elf-entry.bin
@@ -1633,7 +1627,6 @@ mips.r3000-linux.elf-entry.h : \
 
 mips.r3000-linux.elf-so_entry.h : \
 	    $(srcdir)/src/$$T.S
-	@echo; echo TARGET: $@; echo
 	mipsel-linux-gcc-4.1.1 -E -meb -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD \
 	    -D__mips__  -D__MIPSEB__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
 	    | mipsel-elf-as-20060406 -EB -O -mno-pdr  -o tmp/mips.r3000-linux.elf-so_entry.bin
@@ -1646,7 +1639,6 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/mips.r3000-linux.elf-main2.s \
 	    tmp/mips.r3000-linux.elf-upxfd_linux.s \
 	    src/mips.r3000-expand.S
-	@echo; echo TARGET: $@; echo
 	cat > tmp/mips.r3000-linux.elf-fold-2.S \
 	    src/mips.r3000-linux.elf-fold.S \
 	    tmp/mips.r3000-linux.elf-main2.s \
@@ -1672,7 +1664,6 @@ mips.r3000-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/mips.r3000-linux.elf-so_main.s \
 	    tmp/mips.r3000-linux.elf-upxfd_linux.s \
 	    src/mips.r3000-expand.S
-	@echo; echo TARGET: $@; echo
 	cat > tmp/mips.r3000-linux.elf-so_fold-2.S \
 	    src/mips.r3000-linux.elf-so_fold.S \
 	    tmp/mips.r3000-linux.elf-so_main.s \
@@ -1694,7 +1685,6 @@ mips.r3000-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/mips.r3000-linux.elf-main2.s : $(srcdir)/src/i386-linux.elf-main2.c
-	@echo; echo TARGET: $@; echo
 	cp $< tmp/mips.r3000-linux.elf-main2.c
 	( cd tmp; \
 	    mipsel-linux-gcc-4.1.1 -meb -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD \
@@ -1729,7 +1719,6 @@ tmp/mips.r3000-linux.elf-so_main.s : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linu
 	        -e 's/[ \t]j[    \t]/  b /'
 
 tmp/mips.r3000-linux.elf-upxfd_linux.s : $(srcdir)/src/upxfd_linux.c
-	@echo; echo TARGET: $@; echo
 	cp $< tmp/mips.r3000-linux.elf-upxfd_linux.c
 	( cd tmp; \
 	    mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD \
@@ -1787,7 +1776,6 @@ tc.mipsel.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prot
 # No need for 'ld' because the only sections (ELFMAINX, ELFMAINZ) are both in elf-entry.S
 mipsel.r3000-linux.elf-entry.h : \
 	    $(srcdir)/src/$$T.S
-	@echo; echo TARGET: $@; echo
 	mipsel-linux-gcc-4.1.1 -E -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD \
 	    -D__mips__  -D__MIPSEL__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
 	    | mipsel-elf-as-20060406 -EL -O -mno-pdr  -o tmp/mipsel.r3000-linux.elf-entry.bin
@@ -1797,7 +1785,6 @@ mipsel.r3000-linux.elf-entry.h : \
 
 mipsel.r3000-linux.elf-so_entry.h : \
 	    $(srcdir)/src/$$T.S
-	@echo; echo TARGET: $@; echo
 	mipsel-linux-gcc-4.1.1 -E -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD \
 	    -D__mips__  -D__MIPSEL__ -D_TARGET_LINUX_ $(srcdir)/src/$T.S \
 	    | mipsel-elf-as-20060406 -EL -O -mno-pdr  -o tmp/mipsel.r3000-linux.elf-so_entry.bin
@@ -1810,7 +1797,6 @@ mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/mipsel.r3000-linux.elf-main2.s \
 	    tmp/mipsel.r3000-linux.elf-upxfd_linux.s \
 	    src/mipsel.r3000-expand.S
-	@echo; echo TARGET: $@; echo
 	cat > tmp/mipsel.r3000-linux.elf-fold-2.S \
 	    src/mipsel.r3000-linux.elf-fold.S \
 	    tmp/mipsel.r3000-linux.elf-main2.s \
@@ -1836,7 +1822,6 @@ mipsel.r3000-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/mipsel.r3000-linux.elf-so_main.s \
 	    tmp/mipsel.r3000-linux.elf-upxfd_linux.s \
 	    src/mipsel.r3000-expand.S
-	@echo; echo TARGET: $@; echo
 	cat > tmp/mipsel.r3000-linux.elf-so_fold-2.S \
 	    src/mipsel.r3000-linux.elf-so_fold.S \
 	    tmp/mipsel.r3000-linux.elf-so_main.s \
@@ -1858,8 +1843,6 @@ mipsel.r3000-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/mipsel.r3000-linux.elf-main2.s : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main2.c
-	@echo; echo TARGET: $@; echo
-	@echo PATH= $$PATH
 	mipsel-linux-gcc-4.1.1 -S -D__mips__ -D__MIPSEL__ -D_TARGET_LINUX_ -O \
 		-march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT \
 		-fno-exceptions -fno-asynchronous-unwind-tables \
@@ -1899,7 +1882,6 @@ tmp/mipsel.r3000-linux.elf-so_main.s : $(srcdir)/src/$$T.c $(srcdir)/src/i386-li
 	        -e 's/[ \t]j[    \t]/  b /'
 
 tmp/mipsel.r3000-linux.elf-upxfd_linux.s : $(srcdir)/src/upxfd_linux.c
-	@echo; echo TARGET: $@; echo
 	cp $< tmp/mipsel.r3000-linux.elf-upxfd_linux.c
 	( cd tmp; \
 	    mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD \
@@ -2255,7 +2237,6 @@ tmp/powerpc64-linux.elf-main2.s : $(srcdir)/src/$$T.c $(srcdir)/src/amd64-linux.
 	        -e 's/[ \t]jal[ \t]/	bal /' \
 		  >$@
 
-
 # /***********************************************************************
 # // powerpc64le-linux.kernel.vmlinux
 # // powerpc64le-linux.kernel.vmlinux-head
@@ -2335,7 +2316,6 @@ riscv64-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/riscv64-linux.elf-upxfd_linux.o \
 	    tmp/$$T.o \
 	    tmp/riscv64-linux.elf-so_main.o
-	@echo; echo TARGET=$@  PATH=$(PATH); echo
 	$(call tc,ld) -r -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	ls -l tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<

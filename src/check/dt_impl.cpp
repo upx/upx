@@ -68,6 +68,10 @@
 #endif
 #endif
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1940)
+#pragma warning(disable : 5285) // Specializing template std::tuple is forbidden
+#endif
+
 // NOLINTBEGIN(bugprone-unintended-char-ostream-output)
 #include <doctest/doctest/parts/doctest.cpp>
 // NOLINTEND(bugprone-unintended-char-ostream-output)

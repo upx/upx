@@ -1146,6 +1146,7 @@ void upx_compiler_sanity_check() noexcept {
             assert_noexcept(gitrev[revlen - 1] == '+');
         }
     }
+    assert_noexcept(UPX_RSIZE_MAX == 805306368);
     assert_noexcept(UPX_RSIZE_MAX_MEM == 805306368);
 
 #if DEBUG || 1

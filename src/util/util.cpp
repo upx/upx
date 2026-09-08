@@ -138,7 +138,7 @@ int ptr_diff_bytes(const void *a, const void *b) may_throw {
     return ACC_ICONV(int, d);
 }
 
-unsigned ptr_udiff_bytes(const void *a, const void *b) may_throw {
+unsigned ptr_udiff_bytes(const void *a, const void *b) may_throw { // asserts a >= b
     const int d = ptr_diff_bytes(a, b);
     if very_unlikely (d < 0)
         throwCantPack("ptr_udiff_bytes; take care");

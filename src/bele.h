@@ -155,7 +155,7 @@ forceinline bele_constexpr void set_ne16(byte *p, unsigned v) noexcept {
     else
 #endif
     {
-        upx_uint16_t vv = upx_uint16_t(v & 0xffff);
+        const upx_uint16_t vv = upx_uint16_t(v & 0xffff);
         upx_memcpy_inline(p, &vv, sizeof(vv));
     }
 }
@@ -167,7 +167,7 @@ forceinline bele_constexpr void set_ne32(byte *p, unsigned v) noexcept {
     else
 #endif
     {
-        upx_uint32_t vv = v;
+        const upx_uint32_t vv = v;
         upx_memcpy_inline(p, &vv, sizeof(vv));
     }
 }
@@ -179,7 +179,7 @@ forceinline bele_constexpr void set_ne64(byte *p, upx_uint64_t v) noexcept {
     else
 #endif
     {
-        upx_uint64_t vv = v;
+        const upx_uint64_t vv = v;
         upx_memcpy_inline(p, &vv, sizeof(vv));
     }
 }
@@ -436,49 +436,49 @@ forceinline constexpr upx_int64_t sign_extend64(upx_uint64_t v, unsigned bits) n
 
 REQUIRE_XE16
 inline bele_constexpr int get_be16_signed(const XE16 *p) noexcept {
-    unsigned v = get_be16(p);
+    const unsigned v = get_be16(p);
     return sign_extend32(v, 16);
 }
 
 REQUIRE_XE24
 inline bele_constexpr int get_be24_signed(const XE24 *p) noexcept {
-    unsigned v = get_be24(p);
+    const unsigned v = get_be24(p);
     return sign_extend32(v, 24);
 }
 
 REQUIRE_XE32
 inline bele_constexpr int get_be32_signed(const XE32 *p) noexcept {
-    unsigned v = get_be32(p);
+    const unsigned v = get_be32(p);
     return sign_extend32(v, 32);
 }
 
 REQUIRE_XE64
 inline bele_constexpr upx_int64_t get_be64_signed(const XE64 *p) noexcept {
-    upx_uint64_t v = get_be64(p);
+    const upx_uint64_t v = get_be64(p);
     return sign_extend64(v, 64);
 }
 
 REQUIRE_XE16
 inline bele_constexpr int get_le16_signed(const XE16 *p) noexcept {
-    unsigned v = get_le16(p);
+    const unsigned v = get_le16(p);
     return sign_extend32(v, 16);
 }
 
 REQUIRE_XE24
 inline bele_constexpr int get_le24_signed(const XE24 *p) noexcept {
-    unsigned v = get_le24(p);
+    const unsigned v = get_le24(p);
     return sign_extend32(v, 24);
 }
 
 REQUIRE_XE32
 inline bele_constexpr int get_le32_signed(const XE32 *p) noexcept {
-    unsigned v = get_le32(p);
+    const unsigned v = get_le32(p);
     return sign_extend32(v, 32);
 }
 
 REQUIRE_XE64
 inline bele_constexpr upx_int64_t get_le64_signed(const XE64 *p) noexcept {
-    upx_uint64_t v = get_le64(p);
+    const upx_uint64_t v = get_le64(p);
     return sign_extend64(v, 64);
 }
 
