@@ -29,6 +29,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+#include "../../version.h"
 #include "arch/arm64/v8/macros.S"
 
 // AArch64 win64/pe loader.  Faithful transliteration of amd64-win64.pe.S

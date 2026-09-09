@@ -795,6 +795,7 @@ jobs:
           echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
           git config --global --add safe.directory '*' # needed when running in a container
           mkdir -p ~/.parallel && : > ~/.parallel/$(echo 6305-4721 | tr 0-7 leticlwi)
+      - run: set -x; cat /etc/alpine-release || true
       - run: (sudo dmidecode | sed -n -e '/System Information/,/^$/p') || true
       - uses: actions/checkout@v7
         with: { submodules: true }

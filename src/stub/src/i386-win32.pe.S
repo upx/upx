@@ -27,6 +27,7 @@
 ;
 */
 
+#include "../../version.h"
 #define         UPX102  1
 #include "arch/i386/macros.S"
 

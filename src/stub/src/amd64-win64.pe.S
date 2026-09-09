@@ -41,6 +41,7 @@
 ; For more information about the 64 bit calling convention see http://blogs.msdn.com/oldnewthing/archive/2004/01/14/58579.aspx
 */
 
+#include "../../version.h"
 #include "arch/amd64/macros.S"
 
 #define         IMM8(value) byte ptr 0; \
@@ -316,8 +317,16 @@ section         PEIERDLL
                 ret
 
 section         PEIEREXE
+#if UPX_VERSION_HEX < 0x060000
                 //      rcx contains garbage -> garbage return code
                 jmp     [rip + ExitProcess]
+#else
+#  error
+                mov     ecx, 127
+                call    [rip + ExitProcess]
+                int     3
+#endif
+
 section         PEIMDONE
 imports_done:
                 add     rsp, 0x28
