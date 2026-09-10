@@ -87,7 +87,14 @@ section         PEISDLL1
                 cmp     dl, 1
                 jnz     reloc_end_jmp
 section         PEMAIN01
-                //; remember to keep stack aligned!
+                //; remember to keep stack 16-byte aligned!
+
+//#if UPX_VERSION_HEX >= 0x060000
+                push    r9  // save in-reg args next to on-stack args
+                push    r8
+                push    rdx
+                push    rcx  // peb (Process Event BLock): ProcessParameters etc.
+//#endif
                 push    rbx
                 push    rsi
                 push    rdi
@@ -317,6 +324,12 @@ section         PEIERDLL
                 pop     rdi
                 pop     rsi
                 pop     rbx
+//#if UPX_VERSION_HEX >= 0x060000
+                pop     rcx  // restore in-reg args
+                pop     rdx
+                pop     r8
+                pop     r9
+//#endif
                 xor     eax, eax
                 ret
 
@@ -453,6 +466,12 @@ section         PEMAIN20
                 pop     rdi
                 pop     rsi
                 pop     rbx
+//#if UPX_VERSION_HEX >= 0x060000
+                pop     rcx  // restore in-reg args
+                pop     rdx
+                pop     r8
+                pop     r9
+//#endif
 
 // clear the dirty stack
 .macro          clearstack128  tmp_reg

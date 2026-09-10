@@ -75,6 +75,10 @@
 
 section START
 section PEMAIN01
+//#if UPX_VERSION_HEX >= 0x060000
+        stp     x0, x1, [sp, #-4*NBPW]!  // save in-reg arss
+        stp     x2, x3, [sp, # 2*NBPW]
+//#endif
         stp     x29, x30, [sp, #-32]!
         stp     x19, x20, [sp, #16]
 
@@ -234,6 +238,10 @@ section PETLSC
 section PEDOJUMP
         ldp     x19, x20, [sp, #16]
         ldp     x29, x30, [sp], #32
+//#if UPX_VERSION_HEX >= 0x060000
+        ldp     x2, x3, [sp,  #2*NBPW]  // restore in-reg args
+        ldp     x0, x1, [sp], #4*NBPW
+//#endif
         b       original_entry
 
 // =============
@@ -279,6 +287,10 @@ section NRV2E
 
 section PETLSC2
         ret                                     // patched to NOP by PETLSC
+//#if UPX_VERSION_HEX >= 0x060000
+        stp     x0, x1, [sp, #-4*NBPW]!  // save in-reg args
+        stp     x2, x3, [sp, # 2*NBPW]
+//#endif
         stp     x29, x30, [sp, #-48]!
         stp     x19, x20, [sp, #16]
         stp     x21, x22, [sp, #32]
@@ -298,6 +310,10 @@ section PETLSC2
         ldp     x21, x22, [sp, #32]
         ldp     x19, x20, [sp, #16]
         ldp     x29, x30, [sp], #48
+//#if UPX_VERSION_HEX >= 0x060000
+        ldp     x2, x3, [sp,  #2*NBPW]  // restore in-reg args
+        ldp     x0, x1, [sp], #4*NBPW
+//#endif
         ret
 
 // Data-only, never executed (placed after PEDOJUMP).  The base packer calls
