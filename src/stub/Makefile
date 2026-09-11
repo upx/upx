@@ -214,6 +214,7 @@ tc_objdump_disasm_options =
 # commands
 ECHO_e     = /bin/echo -e
 ECHO_E     = /bin/echo -E
+EXPAND     = expand
 PERL       = perl
 PYTHON2    = python2
 PYTHON3    = python3
@@ -280,7 +281,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) -R .text -R .data -R .bss -R .riscv.attributes \
 	    -R .comment -R .note -R .note.GNU-stack -R .reginfo \
 	    -R .mdebug.eabi32 -R .gcc_compiled_long32 $1
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) | $(EXPAND) > $1.disasm
 	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) | sed \
 	  -e '1s/^.*: *file format/file format/' \
 	  -e 's/$(tab)/ /g' \
@@ -297,14 +298,13 @@ define tc.default.f-embed_objinfo_without_xstrip
 	    -R .comment -R .note -R .note.GNU-stack -R .reginfo \
 	    -R .gnu.attributes -R .MIPS.abiflags -R .riscv.attributes \
 	    -R .mdebug.eabi32 -R .gcc_compiled_long32 $1
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
 	$(call tc,objcopy) --strip-unneeded --keep-symbol=_start --keep-symbol=upx_main2 --keep-symbol=upx_so_main $1
 
 #
 # Disassemble for human readability
 # objdump
 #   -Dr disassemble-all, with interspersed relocations
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) | $(EXPAND) > $1.disasm
 #
 # Disassemble for post-processing by buildLinuxLoader()
 # objdump
@@ -337,7 +337,7 @@ define tc.default.f-embed_objinfo_without_xstrip_keep_dot_text
 # Disassemble for human readability
 # objdump
 #   -Dr disassemble-all, with interspersed relocations
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) | $(EXPAND) > $1.disasm
 #
 # Disassemble for post-processing by buildLinuxLoader()
 # objdump
@@ -360,8 +360,8 @@ define tc.default.f-embed_objinfo_without_xstrip_keep_dot_text
 endef
 
 tc.default.f-objstrip-disasm.bin = @true
-tc.default.f-objstrip-disasm.o   = $(call tc,objdump) -dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
-tc.default.f-objstrip-disasm.obj = $(call tc,objdump) -dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
+tc.default.f-objstrip-disasm.o   = $(call tc,objdump) -dr $(tc_objdump_disasm_options) $1 | $(RTRIM) | $(EXPAND) > $1.disasm
+tc.default.f-objstrip-disasm.obj = $(call tc,objdump) -dr $(tc_objdump_disasm_options) $1 | $(RTRIM) | $(EXPAND) > $1.disasm
 define tc.default.f-objstrip
 	chmod a-x $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
@@ -489,12 +489,12 @@ tmp/amd64-linux.elf-help_umf.o : $(srcdir)/src/$$T.S
 tmp/amd64-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_ANDROID -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/amd64-linux.elf-upxfd_linux.o : $(srcdir)/src/upxfd_linux.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_LINUX -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/amd64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -633,12 +633,12 @@ arm.v4a-linux.elf-so_entry.h : src/arm.v4a-linux.elf-so_entry.lds \
 tmp/arm.v4a-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_ANDROID -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/arm.v4a-linux.elf-upxfd_linux.o : $(srcdir)/src/upxfd_linux.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_LINUX -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 arm.v4a-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/$$T.o \
@@ -758,12 +758,12 @@ arm.v5a-linux.elf-so_entry.h : src/arm.v5a-linux.elf-so_entry.lds \
 tmp/arm.v5a-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_ANDROID -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/arm.v5a-linux.elf-upxfd_linux.o : $(srcdir)/src/upxfd_linux.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_LINUX -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 arm.v5a-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/$$T.o \
@@ -869,7 +869,7 @@ arm64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
             tmp/arm64-expand.o \
             tmp/arm64-linux.elf-main2.o
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.bin | $(RTRIM) > tmp/$T.bin.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.bin | $(RTRIM) | $(EXPAND) > tmp/$T.bin.disasm
 	$(call tc,f-embed_objinfo_without_xstrip_keep_dot_text,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
@@ -897,7 +897,7 @@ tmp/arm64-linux.elf-so_fold.o : $(srcdir)/src/$$T.S
 
 tmp/arm64-expand.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
-	arm64-linux-objdump-2.25 -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) > tmp/$T.o.disasm
+	arm64-linux-objdump-2.25 -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) | $(EXPAND) > tmp/$T.o.disasm
 
 tmp/arm64-linux.elf-help_umf.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -905,7 +905,7 @@ tmp/arm64-linux.elf-help_umf.o : $(srcdir)/src/$$T.S
 tmp/arm64-linux.elf-upxfd_linux.o : $(srcdir)/src/upxfd_linux.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_LINUX -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/arm64-linux.elf-main2.o : $(srcdir)/src/$$T.c $(srcdir)/src/amd64-linux.elf-main2.c
 	$(call tc,gcc) -c -Os $(srcdir)/src/arm64-linux.elf-main2.c -o $@
@@ -1014,12 +1014,12 @@ armeb.v4a-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 tmp/armeb.v4a-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_ANDROID -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/armeb.v4a-linux.elf-upxfd_linux.o : $(srcdir)/src/upxfd_linux.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_LINUX -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/armeb.v4a-expand.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -1328,7 +1328,7 @@ i386-dos32.djgpp2.h : $(srcdir)/src/$$T.S
 
 i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 	$(call tc,djasm) --outtype=exe --gmtime=1070220810 --inname=stub.asm --outname=stub.h $< tmp/$T.bin
-	$(call tc,objdump) -b binary -m i8086 -D --start-address=0x254 tmp/$T.bin | $(RTRIM) > tmp/$T.bin.disasm
+	$(call tc,objdump) -b binary -m i8086 -D --start-address=0x254 tmp/$T.bin | $(RTRIM) | $(EXPAND) > tmp/$T.bin.disasm
 	$(call tc,bin2h) -q tmp/$T.bin $@
 
 # /***********************************************************************
@@ -1405,12 +1405,12 @@ i386-linux.elf-so_entry.h : $(srcdir)/src/i386-linux.elf-so_entry.lds \
 tmp/i386-linux.elf-upxfd_android.o : $(srcdir)/src/upxfd_android.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_ANDROID -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/i386-linux.elf-upxfd_linux.o : $(srcdir)/src/upxfd_linux.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_LINUX -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 i386-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/$$T.o \
@@ -2029,7 +2029,7 @@ tmp/powerpc-linux.elf-help_umf.o : $(srcdir)/src/$$T.S
 tmp/powerpc-linux.elf-upxfd_linux.o : $(srcdir)/src/upxfd_linux.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,objcopy) --rename-section .text=UMF_LINUX -R .comment -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/powerpc-expand.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -2357,7 +2357,7 @@ tmp/riscv64-linux.elf-upxfd_linux.o : $(srcdir)/src/upxfd_linux.c
 	    | $(call tc,gcc) -c -x assembler-with-cpp - -o $@
 	$(call tc,objcopy) --strip-unneeded --rename-section .text=UMF_LINUX \
 	    -R .riscv.attributes -R .data -R .bss -R .note.GNU-stack $@
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $@ | $(RTRIM) | $(EXPAND) > $@.disasm
 
 tmp/riscv64-expand.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@

@@ -138,8 +138,8 @@ jobs:
       - run: ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
       - run: set -x; cat "$HOME/.gitconfig" || true
       - run: set -x; $CC --version; $CXX --version
-      - run: $CC  -E -x c   -dM /dev/null | LC_ALL=C sort
-      - run: $CXX -E -x c++ -dM /dev/null | LC_ALL=C sort
+      - run: set -x; $CC  -E -x c   -dM /dev/null | LC_ALL=C sort
+      - run: set -x; $CXX -E -x c++ -dM /dev/null | LC_ALL=C sort
       - run: make build/debug
       - run: make build/release
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/debug/upx --sysinfo -vv

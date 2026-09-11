@@ -1,0 +1,1142 @@
+
+tmp/arm.v4a-wince.pe.bin:     file format elf32-littlearm
+
+Disassembly of section DllStart:
+
+00000000 <DllStart>:
+   0:   e3510001        cmp     r1, #1  ; 0x1
+   4:   1a000007        bne     24 <ucl_nrv2e_decompress_8+0x24>
+                        4: R_ARM_PC24   ExeStart
+Disassembly of section ExeStart:
+
+00000000 <SRC0-0x2c>:
+   0:   e92d4fff        stmdb   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, lr}
+   4:   e28f3020        add     r3, pc, #32     ; 0x20
+   8:   e8b30007        ldmia   r3!, {r0, r1, r2}
+   c:   e8930e10        ldmia   r3, {r4, r9, sl, fp}
+  10:   e1a09002        mov     r9, r2
+  14:   eb000012        bl      50 <ENTR+0x4>
+                        14: R_ARM_PC24  ExeStart
+  18:   e3a00004        mov     r0, #4  ; 0x4
+  1c:   eb000008        bl      28 <SRC0-0x4>
+                        1c: R_ARM_PC24  ExeStart
+  20:   e8bd4fff        ldmia   sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, lr}
+  24:   e59ff020        ldr     pc, [pc, #32]   ; 4c <ENTR>
+  28:   e59ff00c        ldr     pc, [pc, #12]   ; 3c <IATT>
+
+0000002c <SRC0>:
+        ...
+                        2c: R_ARM_ABS32 start_of_compressed
+                        30: R_ARM_ABS32 compressed_length
+
+00000034 <DST0>:
+        ...
+                        34: R_ARM_ABS32 start_of_uncompressed
+                        38: R_ARM_ABS32 uncompressed_length
+
+0000003c <IATT>:
+        ...
+
+0000004c <ENTR>:
+  4c:   00000000        andeq   r0, r0, r0
+                        4c: R_ARM_ABS32 original_entry
+  50:   e92d4000        stmdb   sp!, {lr}
+Disassembly of section ProcessEnd:
+
+00000000 <ProcessEnd>:
+   0:   e8bd8000        ldmia   sp!, {pc}
+Disassembly of section Unfilter_0x50:
+
+00000000 <FIBS-0x44>:
+   0:   e59f003c        ldr     r0, [pc, #60]   ; 44 <FIBS>
+   4:   e3a02000        mov     r2, #0  ; 0x0
+   8:   e59fc038        ldr     ip, [pc, #56]   ; 48 <FIBE>
+   c:   e150000c        cmp     r0, ip
+  10:   0a000011        beq     4c <ENTR>
+                        10: R_ARM_PC24  Unfilter_0x50
+  14:   e5903000        ldr     r3, [r0]
+  18:   e203140f        and     r1, r3, #251658240      ; 0xf000000
+  1c:   e351040b        cmp     r1, #184549376  ; 0xb000000
+  20:   1a00000c        bne     38 <FIBS-0xc>
+                        20: R_ARM_PC24  Unfilter_0x50
+  24:   e20314ff        and     r1, r3, #-16777216      ; 0xff000000
+  28:   e0433002        sub     r3, r3, r2
+  2c:   e3c334ff        bic     r3, r3, #-16777216      ; 0xff000000
+  30:   e1833001        orr     r3, r3, r1
+  34:   e5803000        str     r3, [r0]
+  38:   e2800004        add     r0, r0, #4      ; 0x4
+  3c:   e2822001        add     r2, r2, #1      ; 0x1
+  40:   ea000001        b       c <FIBS-0x38>
+                        40: R_ARM_PC24  Unfilter_0x50
+
+00000044 <FIBS>:
+  44:   00000000        andeq   r0, r0, r0
+                        44: R_ARM_ABS32 filter_buffer_start
+
+00000048 <FIBE>:
+  48:   00000000        andeq   r0, r0, r0
+                        48: R_ARM_ABS32 filter_buffer_end
+Disassembly of section Relocs:
+
+00000000 <BREL-0x5c>:
+   0:   e59f1054        ldr     r1, [pc, #84]   ; 5c <BREL>
+   4:   e2490004        sub     r0, r9, #4      ; 0x4
+   8:   e4d13001        ldrb    r3, [r1], #1
+   c:   e3530000        cmp     r3, #0  ; 0x0
+  10:   0a000016        beq     60 <BREL+0x4>
+                        10: R_ARM_PC24  Relocs
+  14:   e35300f0        cmp     r3, #240        ; 0xf0
+  18:   23c3c0f0        biccs   ip, r3, #240    ; 0xf0
+  1c:   25d13001        ldrcsb  r3, [r1, #1]
+  20:   2083c40c        addcs   ip, r3, ip, lsl #8
+  24:   24d13002        ldrcsb  r3, [r1], #2
+  28:   2083340c        addcs   r3, r3, ip, lsl #8
+  2c:   e0800003        add     r0, r0, r3
+  30:   e5d03000        ldrb    r3, [r0]
+  34:   e083c40c        add     ip, r3, ip, lsl #8
+  38:   e5d03001        ldrb    r3, [r0, #1]
+  3c:   e083c40c        add     ip, r3, ip, lsl #8
+  40:   e5d03002        ldrb    r3, [r0, #2]
+  44:   e083c40c        add     ip, r3, ip, lsl #8
+  48:   e5d03003        ldrb    r3, [r0, #3]
+  4c:   e083c40c        add     ip, r3, ip, lsl #8
+  50:   e08cc009        add     ip, ip, r9
+  54:   e580c000        str     ip, [r0]
+  58:   ea000000        b       8 <BREL-0x54>
+                        58: R_ARM_PC24  Relocs
+
+0000005c <BREL>:
+  5c:   00000000        andeq   r0, r0, r0
+                        5c: R_ARM_ABS32 start_of_relocs
+Disassembly of section Imports:
+
+00000000 <BIMP-0xb0>:
+   0:   e24ddb02        sub     sp, sp, #2048   ; 0x800
+   4:   e59f40a4        ldr     r4, [pc, #164]  ; b0 <BIMP>
+   8:   e1a00004        mov     r0, r4
+   c:   eb000021        bl      8c <BIMP-0x24>
+                        c: R_ARM_PC24   Imports
+  10:   0a00002c        beq     b8 <ONAM+0x4>
+                        10: R_ARM_PC24  Imports
+  14:   e59f1098        ldr     r1, [pc, #152]  ; b4 <ONAM>
+  18:   e0800001        add     r0, r0, r1
+  1c:   e1a0100d        mov     r1, sp
+  20:   e4d02001        ldrb    r2, [r0], #1
+  24:   e0c120b2        strh    r2, [r1], #2
+  28:   e3520000        cmp     r2, #0  ; 0x0
+  2c:   1a000006        bne     20 <BIMP-0x90>
+                        2c: R_ARM_PC24  Imports
+  30:   e1a0000d        mov     r0, sp
+  34:   eb000028        bl      a8 <BIMP-0x8>
+                        34: R_ARM_PC24  Imports
+  38:   e1a06000        mov     r6, r0
+  3c:   e2840004        add     r0, r4, #4      ; 0x4
+  40:   eb000021        bl      8c <BIMP-0x24>
+                        40: R_ARM_PC24  Imports
+  44:   e0895000        add     r5, r9, r0
+  48:   e2844008        add     r4, r4, #8      ; 0x8
+  4c:   e4d40001        ldrb    r0, [r4], #1
+  50:   e3500001        cmp     r0, #1  ; 0x1
+  54:   4a000000        bmi     8 <BIMP-0xa8>
+                        54: R_ARM_PC24  Imports
+  58:   1a00001a        bne     70 <BIMP-0x40>
+                        58: R_ARM_PC24  Imports
+  5c:   e1a01004        mov     r1, r4
+  60:   e4d40001        ldrb    r0, [r4], #1
+  64:   e3500000        cmp     r0, #0  ; 0x0
+  68:   1a000016        bne     60 <BIMP-0x50>
+                        68: R_ARM_PC24  Imports
+  6c:   ea00001d        b       7c <BIMP-0x34>
+                        6c: R_ARM_PC24  Imports
+  70:   e4d40001        ldrb    r0, [r4], #1
+  74:   e4d41001        ldrb    r1, [r4], #1
+  78:   e0801401        add     r1, r0, r1, lsl #8
+  7c:   e1a00006        mov     r0, r6
+  80:   eb000029        bl      ac <BIMP-0x4>
+                        80: R_ARM_PC24  Imports
+  84:   e4850004        str     r0, [r5], #4
+  88:   ea000011        b       4c <BIMP-0x64>
+                        88: R_ARM_PC24  Imports
+  8c:   e3a02003        mov     r2, #3  ; 0x3
+  90:   e7d03002        ldrb    r3, [r0, r2]
+  94:   e2522001        subs    r2, r2, #1      ; 0x1
+  98:   e0831401        add     r1, r3, r1, lsl #8
+  9c:   5a000022        bpl     90 <BIMP-0x20>
+                        9c: R_ARM_PC24  Imports
+  a0:   e1b00001        movs    r0, r1
+  a4:   e1a0f00e        mov     pc, lr
+  a8:   e1a0f00b        mov     pc, fp
+  ac:   e1a0f00a        mov     pc, sl
+
+000000b0 <BIMP>:
+  b0:   00000000        andeq   r0, r0, r0
+                        b0: R_ARM_ABS32 start_of_imports
+
+000000b4 <ONAM>:
+  b4:   00000000        andeq   r0, r0, r0
+                        b4: R_ARM_ABS32 start_of_dll_names
+  b8:   e28ddb02        add     sp, sp, #2048   ; 0x800
+Disassembly of section UPX1HEAD:
+
+00000000 <UPX1HEAD>:
+   0:   21585055        cmpcs   r8, r5, asr r0
+   4:   d5d0d8a1        ldrleb  sp, [r0, #2209]
+        ...
+  1c:   2d000000        stccs   0, cr0, [r0]
+Disassembly of section .ucl_nrv2e_decompress_8:
+
+00000000 <ucl_nrv2e_decompress_8>:
+   0:   e92d40fc        stmdb   sp!, {r2, r3, r4, r5, r6, r7, lr}
+   4:   e0817000        add     r7, r1, r0
+   8:   e3e05000        mvn     r5, #0  ; 0x0
+   c:   e3a04102        mov     r4, #-2147483648        ; 0x80000000
+  10:   ea00000e        b       40 <ucl_nrv2e_decompress_8+0x40>
+                        10: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  14:   e8bd0018        ldmia   sp!, {r3, r4}
+  18:   e0400007        sub     r0, r0, r7
+  1c:   e0422003        sub     r2, r2, r3
+  20:   e5842000        str     r2, [r4]
+  24:   e8bd80f0        ldmia   sp!, {r4, r5, r6, r7, pc}
+  28:   e4d04001        ldrb    r4, [r0], #1
+  2c:   e0a44004        adc     r4, r4, r4
+  30:   e1b04c04        movs    r4, r4, lsl #24
+  34:   e1a0f00e        mov     pc, lr
+  38:   e4d03001        ldrb    r3, [r0], #1
+  3c:   e4c23001        strb    r3, [r2], #1
+  40:   e0944004        adds    r4, r4, r4
+  44:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        44: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  48:   2a00000c        bcs     38 <ucl_nrv2e_decompress_8+0x38>
+                        48: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  4c:   e3a01001        mov     r1, #1  ; 0x1
+  50:   ea000017        b       64 <ucl_nrv2e_decompress_8+0x64>
+                        50: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  54:   e2411001        sub     r1, r1, #1      ; 0x1
+  58:   e0944004        adds    r4, r4, r4
+  5c:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        5c: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  60:   e0a11001        adc     r1, r1, r1
+  64:   e0944004        adds    r4, r4, r4
+  68:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        68: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  6c:   e0a11001        adc     r1, r1, r1
+  70:   e0944004        adds    r4, r4, r4
+  74:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        74: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  78:   3a000013        bcc     54 <ucl_nrv2e_decompress_8+0x54>
+                        78: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  7c:   e2513003        subs    r3, r1, #3      ; 0x3
+  80:   e3a01000        mov     r1, #0  ; 0x0
+  84:   3a000027        bcc     a4 <ucl_nrv2e_decompress_8+0xa4>
+                        84: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  88:   e4d05001        ldrb    r5, [r0], #1
+  8c:   e1855403        orr     r5, r5, r3, lsl #8
+  90:   e1f05005        mvns    r5, r5
+  94:   0a000003        beq     14 <ucl_nrv2e_decompress_8+0x14>
+                        94: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  98:   e1b050c5        movs    r5, r5, asr #1
+  9c:   2a000036        bcs     e0 <ucl_nrv2e_decompress_8+0xe0>
+                        9c: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  a0:   ea00002a        b       b0 <ucl_nrv2e_decompress_8+0xb0>
+                        a0: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  a4:   e0944004        adds    r4, r4, r4
+  a8:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        a8: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  ac:   2a000036        bcs     e0 <ucl_nrv2e_decompress_8+0xe0>
+                        ac: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  b0:   e3a01001        mov     r1, #1  ; 0x1
+  b4:   e0944004        adds    r4, r4, r4
+  b8:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        b8: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  bc:   2a000036        bcs     e0 <ucl_nrv2e_decompress_8+0xe0>
+                        bc: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  c0:   e0944004        adds    r4, r4, r4
+  c4:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        c4: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  c8:   e0a11001        adc     r1, r1, r1
+  cc:   e0944004        adds    r4, r4, r4
+  d0:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        d0: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  d4:   3a00002e        bcc     c0 <ucl_nrv2e_decompress_8+0xc0>
+                        d4: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  d8:   e2811004        add     r1, r1, #4      ; 0x4
+  dc:   ea00003a        b       f0 <ucl_nrv2e_decompress_8+0xf0>
+                        dc: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  e0:   e0944004        adds    r4, r4, r4
+  e4:   0b000008        bleq    28 <ucl_nrv2e_decompress_8+0x28>
+                        e4: R_ARM_PC24  .ucl_nrv2e_decompress_8
+  e8:   e0a11001        adc     r1, r1, r1
+  ec:   e2811002        add     r1, r1, #2      ; 0x2
+  f0:   e3750c05        cmn     r5, #1280       ; 0x500
+  f4:   32811001        addcc   r1, r1, #1      ; 0x1
+  f8:   e0823001        add     r3, r2, r1
+  fc:   e5533001        ldrb    r3, [r3, #-1]
+ 100:   e7d23005        ldrb    r3, [r2, r5]
+ 104:   e4c23001        strb    r3, [r2], #1
+ 108:   e2511001        subs    r1, r1, #1      ; 0x1
+ 10c:   1a00003e        bne     100 <ucl_nrv2e_decompress_8+0x100>
+                        10c: R_ARM_PC24 .ucl_nrv2e_decompress_8
+ 110:   ea00000e        b       40 <ucl_nrv2e_decompress_8+0x40>
+                        110: R_ARM_PC24 .ucl_nrv2e_decompress_8
+Disassembly of section Call2E:
+
+00000000 <Call2E>:
+   0:   ebfffffe        bl      0 <Call2E>
+                        0: R_ARM_PC24   ucl_nrv2e_decompress_8
+Disassembly of section .ucl_nrv2d_decompress_8:
+
+00000000 <ucl_nrv2d_decompress_8>:
+   0:   e92d40fc        stmdb   sp!, {r2, r3, r4, r5, r6, r7, lr}
+   4:   e0817000        add     r7, r1, r0
+   8:   e3e05000        mvn     r5, #0  ; 0x0
+   c:   e3a04102        mov     r4, #-2147483648        ; 0x80000000
+  10:   ea00000e        b       40 <ucl_nrv2d_decompress_8+0x40>
+                        10: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  14:   e8bd0018        ldmia   sp!, {r3, r4}
+  18:   e0400007        sub     r0, r0, r7
+  1c:   e0422003        sub     r2, r2, r3
+  20:   e5842000        str     r2, [r4]
+  24:   e8bd80f0        ldmia   sp!, {r4, r5, r6, r7, pc}
+  28:   e4d04001        ldrb    r4, [r0], #1
+  2c:   e0a44004        adc     r4, r4, r4
+  30:   e1b04c04        movs    r4, r4, lsl #24
+  34:   e1a0f00e        mov     pc, lr
+  38:   e4d03001        ldrb    r3, [r0], #1
+  3c:   e4c23001        strb    r3, [r2], #1
+  40:   e0944004        adds    r4, r4, r4
+  44:   0b000008        bleq    28 <ucl_nrv2d_decompress_8+0x28>
+                        44: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  48:   2a00000c        bcs     38 <ucl_nrv2d_decompress_8+0x38>
+                        48: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  4c:   e3a01001        mov     r1, #1  ; 0x1
+  50:   ea000017        b       64 <ucl_nrv2d_decompress_8+0x64>
+                        50: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  54:   e2411001        sub     r1, r1, #1      ; 0x1
+  58:   e0944004        adds    r4, r4, r4
+  5c:   0b000008        bleq    28 <ucl_nrv2d_decompress_8+0x28>
+                        5c: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  60:   e0b11001        adcs    r1, r1, r1
+  64:   e0944004        adds    r4, r4, r4
+  68:   0b000008        bleq    28 <ucl_nrv2d_decompress_8+0x28>
+                        68: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  6c:   e0b11001        adcs    r1, r1, r1
+  70:   e0944004        adds    r4, r4, r4
+  74:   0b000008        bleq    28 <ucl_nrv2d_decompress_8+0x28>
+                        74: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  78:   3a000013        bcc     54 <ucl_nrv2d_decompress_8+0x54>
+                        78: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  7c:   e2513003        subs    r3, r1, #3      ; 0x3
+  80:   e3a01000        mov     r1, #0  ; 0x0
+  84:   3a000026        bcc     a0 <ucl_nrv2d_decompress_8+0xa0>
+                        84: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  88:   e4d05001        ldrb    r5, [r0], #1
+  8c:   e1855403        orr     r5, r5, r3, lsl #8
+  90:   e1f05005        mvns    r5, r5
+  94:   0a000003        beq     14 <ucl_nrv2d_decompress_8+0x14>
+                        94: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  98:   e1b050c5        movs    r5, r5, asr #1
+  9c:   ea000028        b       a8 <ucl_nrv2d_decompress_8+0xa8>
+                        9c: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  a0:   e0944004        adds    r4, r4, r4
+  a4:   0b000008        bleq    28 <ucl_nrv2d_decompress_8+0x28>
+                        a4: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  a8:   e0b11001        adcs    r1, r1, r1
+  ac:   e0944004        adds    r4, r4, r4
+  b0:   0b000008        bleq    28 <ucl_nrv2d_decompress_8+0x28>
+                        b0: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  b4:   e0b11001        adcs    r1, r1, r1
+  b8:   1a000035        bne     dc <ucl_nrv2d_decompress_8+0xdc>
+                        b8: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  bc:   e3a01001        mov     r1, #1  ; 0x1
+  c0:   e0944004        adds    r4, r4, r4
+  c4:   0b000008        bleq    28 <ucl_nrv2d_decompress_8+0x28>
+                        c4: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  c8:   e0b11001        adcs    r1, r1, r1
+  cc:   e0944004        adds    r4, r4, r4
+  d0:   0b000008        bleq    28 <ucl_nrv2d_decompress_8+0x28>
+                        d0: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  d4:   3a00002e        bcc     c0 <ucl_nrv2d_decompress_8+0xc0>
+                        d4: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  d8:   e2811002        add     r1, r1, #2      ; 0x2
+  dc:   e2811001        add     r1, r1, #1      ; 0x1
+  e0:   e3750c05        cmn     r5, #1280       ; 0x500
+  e4:   32811001        addcc   r1, r1, #1      ; 0x1
+  e8:   e5d23000        ldrb    r3, [r2]
+  ec:   e7d23005        ldrb    r3, [r2, r5]
+  f0:   e4c23001        strb    r3, [r2], #1
+  f4:   e2511001        subs    r1, r1, #1      ; 0x1
+  f8:   1a000039        bne     ec <ucl_nrv2d_decompress_8+0xec>
+                        f8: R_ARM_PC24  .ucl_nrv2d_decompress_8
+  fc:   ea00000e        b       40 <ucl_nrv2d_decompress_8+0x40>
+                        fc: R_ARM_PC24  .ucl_nrv2d_decompress_8
+Disassembly of section Call2D:
+
+00000000 <Call2D>:
+   0:   ebfffffe        bl      0 <Call2D>
+                        0: R_ARM_PC24   ucl_nrv2d_decompress_8
+Disassembly of section .ucl_nrv2b_decompress_8:
+
+00000000 <ucl_nrv2b_decompress_8>:
+   0:   e0811000        add     r1, r1, r0
+   4:   e92d403e        stmdb   sp!, {r1, r2, r3, r4, r5, lr}
+   8:   e3e05000        mvn     r5, #0  ; 0x0
+   c:   e3a04102        mov     r4, #-2147483648        ; 0x80000000
+  10:   ea000017        b       64 <ucl_nrv2b_decompress_8+0x64>
+                        10: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  14:   e8bd001a        ldmia   sp!, {r1, r3, r4}
+  18:   e0400001        sub     r0, r0, r1
+  1c:   e0422003        sub     r2, r2, r3
+  20:   e5842000        str     r2, [r4]
+  24:   e8bd8030        ldmia   sp!, {r4, r5, pc}
+  28:   e0944004        adds    r4, r4, r4
+  2c:   11a0f00e        movne   pc, lr
+  30:   e4d04001        ldrb    r4, [r0], #1
+  34:   e0a44004        adc     r4, r4, r4
+  38:   e1b04c04        movs    r4, r4, lsl #24
+  3c:   e1a0f00e        mov     pc, lr
+  40:   e3a01001        mov     r1, #1  ; 0x1
+  44:   e1a0c00e        mov     ip, lr
+  48:   eb000008        bl      28 <ucl_nrv2b_decompress_8+0x28>
+                        48: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  4c:   e0b11001        adcs    r1, r1, r1
+  50:   eb000008        bl      28 <ucl_nrv2b_decompress_8+0x28>
+                        50: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  54:   3a000010        bcc     48 <ucl_nrv2b_decompress_8+0x48>
+                        54: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  58:   e1a0f00c        mov     pc, ip
+  5c:   e4d03001        ldrb    r3, [r0], #1
+  60:   e4c23001        strb    r3, [r2], #1
+  64:   eb000008        bl      28 <ucl_nrv2b_decompress_8+0x28>
+                        64: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  68:   2a000015        bcs     5c <ucl_nrv2b_decompress_8+0x5c>
+                        68: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  6c:   eb00000e        bl      40 <ucl_nrv2b_decompress_8+0x40>
+                        6c: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  70:   e2513003        subs    r3, r1, #3      ; 0x3
+  74:   e3a01000        mov     r1, #0  ; 0x0
+  78:   3a000021        bcc     8c <ucl_nrv2b_decompress_8+0x8c>
+                        78: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  7c:   e4d05001        ldrb    r5, [r0], #1
+  80:   e1855403        orr     r5, r5, r3, lsl #8
+  84:   e1f05005        mvns    r5, r5
+  88:   0a000003        beq     14 <ucl_nrv2b_decompress_8+0x14>
+                        88: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  8c:   eb000008        bl      28 <ucl_nrv2b_decompress_8+0x28>
+                        8c: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  90:   e0b11001        adcs    r1, r1, r1
+  94:   eb000008        bl      28 <ucl_nrv2b_decompress_8+0x28>
+                        94: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  98:   e0b11001        adcs    r1, r1, r1
+  9c:   1a000028        bne     a8 <ucl_nrv2b_decompress_8+0xa8>
+                        9c: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  a0:   eb00000e        bl      40 <ucl_nrv2b_decompress_8+0x40>
+                        a0: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  a4:   e2811002        add     r1, r1, #2      ; 0x2
+  a8:   e3750c0d        cmn     r5, #3328       ; 0xd00
+  ac:   32811001        addcc   r1, r1, #1      ; 0x1
+  b0:   e7d23005        ldrb    r3, [r2, r5]
+  b4:   e2511001        subs    r1, r1, #1      ; 0x1
+  b8:   e4c23001        strb    r3, [r2], #1
+  bc:   2a00002a        bcs     b0 <ucl_nrv2b_decompress_8+0xb0>
+                        bc: R_ARM_PC24  .ucl_nrv2b_decompress_8
+  c0:   ea000017        b       64 <ucl_nrv2b_decompress_8+0x64>
+                        c0: R_ARM_PC24  .ucl_nrv2b_decompress_8
+Disassembly of section Call2B:
+
+00000000 <Call2B>:
+   0:   ebfffffe        bl      0 <Call2B>
+                        0: R_ARM_PC24   ucl_nrv2b_decompress_8
+Disassembly of section CallLZMA:
+
+00000000 <CallLZMA>:
+   0:   e28f703c        add     r7, pc, #60     ; 0x3c
+   4:   e8970078        ldmia   r7, {r3, r4, r5, r6}
+   8:   e1a0700d        mov     r7, sp
+   c:   e084400d        add     r4, r4, sp
+  10:   e3a0c000        mov     ip, #0  ; 0x0
+  14:   e92d1000        stmdb   sp!, {ip}
+  18:   e15d0004        cmp     sp, r4
+  1c:   1a000003        bne     14 <CallLZMA+0x14>
+                        1c: R_ARM_PC24  CallLZMA
+  20:   e92d001c        stmdb   sp!, {r2, r3, r4}
+  24:   e2843004        add     r3, r4, #4      ; 0x4
+  28:   e1a02005        mov     r2, r5
+  2c:   e2801002        add     r1, r0, #2      ; 0x2
+  30:   e2840008        add     r0, r4, #8      ; 0x8
+  34:   e5806000        str     r6, [r0]
+  38:   ebfffffe        bl      0 <CallLZMA>
+                        38: R_ARM_PC24  LZMA_DECODE
+  3c:   e1a0d007        mov     sp, r7
+  40:   ea000013        b       54 <ENTR+0x8>
+                        40: R_ARM_PC24  CallLZMA
+        ...
+                        44: R_ARM_ABS32 lzma_u_len
+                        48: R_ARM_ABS32 lzma_stack_adjust
+                        4c: R_ARM_ABS32 lzma_c_len
+                        50: R_ARM_ABS32 lzma_properties
+Disassembly of section LZMA_DEC10:
+
+00000000 <LZMA_DEC10>:
+   0:   e92d4ff0        stmdb   sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
+   4:   e24dd030        sub     sp, sp, #48     ; 0x30
+   8:   e58d3000        str     r3, [sp]
+   c:   e5d03000        ldrb    r3, [r0]
+  10:   e5d05002        ldrb    r5, [r0, #2]
+  14:   e5d0e001        ldrb    lr, [r0, #1]
+  18:   e59dc000        ldr     ip, [sp]
+  1c:   e58d3014        str     r3, [sp, #20]
+  20:   e59d305c        ldr     r3, [sp, #92]
+  24:   e3a04000        mov     r4, #0  ; 0x0
+  28:   e58c4000        str     r4, [ip]
+  2c:   e5834000        str     r4, [r3]
+  30:   e59dc014        ldr     ip, [sp, #20]
+  34:   e5d03001        ldrb    r3, [r0, #1]
+  38:   e08c3003        add     r3, ip, r3
+  3c:   e3a0cc03        mov     ip, #768        ; 0x300
+  40:   e1a0c31c        mov     ip, ip, lsl r3
+  44:   e3a03001        mov     r3, #1  ; 0x1
+  48:   e1a0ee13        mov     lr, r3, lsl lr
+  4c:   e1a03513        mov     r3, r3, lsl r5
+  50:   e28cce73        add     ip, ip, #1840   ; 0x730
+  54:   e2433001        sub     r3, r3, #1      ; 0x1
+  58:   e24ee001        sub     lr, lr, #1      ; 0x1
+  5c:   e2800004        add     r0, r0, #4      ; 0x4
+  60:   e28cc006        add     ip, ip, #6      ; 0x6
+  64:   e58d1004        str     r1, [sp, #4]
+  68:   e58d300c        str     r3, [sp, #12]
+  6c:   e58de010        str     lr, [sp, #16]
+  70:   e58d0008        str     r0, [sp, #8]
+  74:   ea00001f        b       84 <LZMA_DEC10+0x84>
+                        74: R_ARM_PC24  LZMA_DEC10
+  78:   e59d0008        ldr     r0, [sp, #8]
+  7c:   e3a01b01        mov     r1, #1024       ; 0x400
+  80:   e18310b0        strh    r1, [r3, r0]
+  84:   e154000c        cmp     r4, ip
+  88:   e1a03084        mov     r3, r4, lsl #1
+  8c:   e2844001        add     r4, r4, #1      ; 0x1
+  90:   1a00001c        bne     78 <LZMA_DEC10+0x78>
+                        90: R_ARM_PC24  LZMA_DEC10
+  94:   e59d3004        ldr     r3, [sp, #4]
+  98:   e3a06000        mov     r6, #0  ; 0x0
+  9c:   e0839002        add     r9, r3, r2
+  a0:   e1a0e003        mov     lr, r3
+  a4:   e1a02006        mov     r2, r6
+  a8:   e59d5004        ldr     r5, [sp, #4]
+  ac:   e0653009        rsb     r3, r5, r9
+  b0:   e1520003        cmp     r2, r3
+  b4:   e28ee001        add     lr, lr, #1      ; 0x1
+  b8:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        b8: R_ARM_PC24  LZMA_DEC10
+  bc:   e7d23005        ldrb    r3, [r2, r5]
+  c0:   e2822001        add     r2, r2, #1      ; 0x1
+  c4:   e3520005        cmp     r2, #5  ; 0x5
+  c8:   e1836406        orr     r6, r3, r6, lsl #8
+  cc:   1a000028        bne     a8 <LZMA_DEC10+0xa8>
+                        cc: R_ARM_PC24  LZMA_DEC10
+  d0:   e3a0b000        mov     fp, #0  ; 0x0
+  d4:   e3a0c001        mov     ip, #1  ; 0x1
+  d8:   e1a0700b        mov     r7, fp
+  dc:   e3e00000        mvn     r0, #0  ; 0x0
+  e0:   e58dc02c        str     ip, [sp, #44]
+  e4:   e58db018        str     fp, [sp, #24]
+  e8:   e58dc01c        str     ip, [sp, #28]
+  ec:   e58dc020        str     ip, [sp, #32]
+  f0:   e58dc024        str     ip, [sp, #36]
+  f4:   ea000239        b       8ec <LZMA_DEC10+0x8ec>
+                        f4: R_ARM_PC24  LZMA_DEC10
+  f8:   e3e084ff        mvn     r8, #-16777216  ; 0xff000000
+  fc:   e1500008        cmp     r0, r8
+ 100:   8a000044        bhi     118 <LZMA_DEC10+0x118>
+                        100: R_ARM_PC24 LZMA_DEC10
+ 104:   e15e0009        cmp     lr, r9
+ 108:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        108: R_ARM_PC24 LZMA_DEC10
+ 10c:   e4de3001        ldrb    r3, [lr], #1
+ 110:   e1a00400        mov     r0, r0, lsl #8
+ 114:   e1836406        orr     r6, r3, r6, lsl #8
+ 118:   e59d100c        ldr     r1, [sp, #12]
+ 11c:   e59d2018        ldr     r2, [sp, #24]
+ 120:   e00ba001        and     sl, fp, r1
+ 124:   e1a01202        mov     r1, r2, lsl #4
+ 128:   e08a3001        add     r3, sl, r1
+ 12c:   e1a05083        mov     r5, r3, lsl #1
+ 130:   e59d3008        ldr     r3, [sp, #8]
+ 134:   e193c0b5        ldrh    ip, [r3, r5]
+ 138:   e1a035a0        mov     r3, r0, lsr #11
+ 13c:   e004039c        mul     r4, ip, r3
+ 140:   e1560004        cmp     r6, r4
+ 144:   2a0000b9        bcs     2ec <LZMA_DEC10+0x2ec>
+                        144: R_ARM_PC24 LZMA_DEC10
+ 148:   e59d0014        ldr     r0, [sp, #20]
+ 14c:   e2603008        rsb     r3, r0, #8      ; 0x8
+ 150:   e1a03357        mov     r3, r7, asr r3
+ 154:   e59d1010        ldr     r1, [sp, #16]
+ 158:   e00b2001        and     r2, fp, r1
+ 15c:   e0833012        add     r3, r3, r2, lsl r0
+ 160:   e59d0008        ldr     r0, [sp, #8]
+ 164:   e3a02c06        mov     r2, #1536       ; 0x600
+ 168:   e0220293        mla     r2, r3, r2, r0
+ 16c:   e59d1018        ldr     r1, [sp, #24]
+ 170:   e26c3b02        rsb     r3, ip, #2048   ; 0x800
+ 174:   e3510006        cmp     r1, #6  ; 0x6
+ 178:   e08c32c3        add     r3, ip, r3, asr #5
+ 17c:   e2828ee6        add     r8, r2, #3680   ; 0xe60
+ 180:   e18030b5        strh    r3, [r0, r5]
+ 184:   e288800c        add     r8, r8, #12     ; 0xc
+ 188:   d1a00004        movle   r0, r4
+ 18c:   d3a01001        movle   r1, #1  ; 0x1
+ 190:   da0000a4        ble     298 <LZMA_DEC10+0x298>
+                        190: R_ARM_PC24 LZMA_DEC10
+ 194:   e59d202c        ldr     r2, [sp, #44]
+ 198:   e59d5054        ldr     r5, [sp, #84]
+ 19c:   e062300b        rsb     r3, r2, fp
+ 1a0:   e7d57003        ldrb    r7, [r5, r3]
+ 1a4:   e1a00004        mov     r0, r4
+ 1a8:   e3a01001        mov     r1, #1  ; 0x1
+ 1ac:   e1a07087        mov     r7, r7, lsl #1
+ 1b0:   e2075c01        and     r5, r7, #256    ; 0x100
+ 1b4:   e1a0a081        mov     sl, r1, lsl #1
+ 1b8:   e0883085        add     r3, r8, r5, lsl #1
+ 1bc:   e083300a        add     r3, r3, sl
+ 1c0:   e3500401        cmp     r0, #16777216   ; 0x1000000
+ 1c4:   e2834c02        add     r4, r3, #512    ; 0x200
+ 1c8:   e281c001        add     ip, r1, #1      ; 0x1
+ 1cc:   2a000077        bcs     1e4 <LZMA_DEC10+0x1e4>
+                        1cc: R_ARM_PC24 LZMA_DEC10
+ 1d0:   e15e0009        cmp     lr, r9
+ 1d4:   e1a00400        mov     r0, r0, lsl #8
+ 1d8:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        1d8: R_ARM_PC24 LZMA_DEC10
+ 1dc:   e4de3001        ldrb    r3, [lr], #1
+ 1e0:   e1836406        orr     r6, r3, r6, lsl #8
+ 1e4:   e1d430b0        ldrh    r3, [r4]
+ 1e8:   e1a025a0        mov     r2, r0, lsr #11
+ 1ec:   e081100c        add     r1, r1, ip
+ 1f0:   e00c0293        mul     ip, r3, r2
+ 1f4:   e2632b02        rsb     r2, r3, #2048   ; 0x800
+ 1f8:   e156000c        cmp     r6, ip
+ 1fc:   e08322c2        add     r2, r3, r2, asr #5
+ 200:   e04332a3        sub     r3, r3, r3, lsr #5
+ 204:   2a000087        bcs     224 <LZMA_DEC10+0x224>
+                        204: R_ARM_PC24 LZMA_DEC10
+ 208:   e3550000        cmp     r5, #0  ; 0x0
+ 20c:   e1a0000c        mov     r0, ip
+ 210:   e1c420b0        strh    r2, [r4]
+ 214:   e1a0100a        mov     r1, sl
+ 218:   0a00008c        beq     238 <LZMA_DEC10+0x238>
+                        218: R_ARM_PC24 LZMA_DEC10
+ 21c:   e1a0000c        mov     r0, ip
+ 220:   ea0000a4        b       298 <LZMA_DEC10+0x298>
+                        220: R_ARM_PC24 LZMA_DEC10
+ 224:   e3550000        cmp     r5, #0  ; 0x0
+ 228:   e1c430b0        strh    r3, [r4]
+ 22c:   e06c6006        rsb     r6, ip, r6
+ 230:   e06c0000        rsb     r0, ip, r0
+ 234:   0a0000a4        beq     298 <LZMA_DEC10+0x298>
+                        234: R_ARM_PC24 LZMA_DEC10
+ 238:   e35100ff        cmp     r1, #255        ; 0xff
+ 23c:   ca0000a8        bgt     2a8 <LZMA_DEC10+0x2a8>
+                        23c: R_ARM_PC24 LZMA_DEC10
+ 240:   ea000069        b       1ac <LZMA_DEC10+0x1ac>
+                        240: R_ARM_PC24 LZMA_DEC10
+ 244:   e3500401        cmp     r0, #16777216   ; 0x1000000
+ 248:   e0811003        add     r1, r1, r3
+ 24c:   2a000097        bcs     264 <LZMA_DEC10+0x264>
+                        24c: R_ARM_PC24 LZMA_DEC10
+ 250:   e15e0009        cmp     lr, r9
+ 254:   e1a00400        mov     r0, r0, lsl #8
+ 258:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        258: R_ARM_PC24 LZMA_DEC10
+ 25c:   e4de3001        ldrb    r3, [lr], #1
+ 260:   e1836406        orr     r6, r3, r6, lsl #8
+ 264:   e19830b4        ldrh    r3, [r8, r4]
+ 268:   e1a025a0        mov     r2, r0, lsr #11
+ 26c:   e00c0293        mul     ip, r3, r2
+ 270:   e2632b02        rsb     r2, r3, #2048   ; 0x800
+ 274:   e156000c        cmp     r6, ip
+ 278:   e04352a3        sub     r5, r3, r3, lsr #5
+ 27c:   e08332c2        add     r3, r3, r2, asr #5
+ 280:   318830b4        strcch  r3, [r8, r4]
+ 284:   218850b4        strcsh  r5, [r8, r4]
+ 288:   e06c0000        rsb     r0, ip, r0
+ 28c:   31a01004        movcc   r1, r4
+ 290:   31a0000c        movcc   r0, ip
+ 294:   206c6006        rsbcs   r6, ip, r6
+ 298:   e35100ff        cmp     r1, #255        ; 0xff
+ 29c:   e1a04081        mov     r4, r1, lsl #1
+ 2a0:   e2813001        add     r3, r1, #1      ; 0x1
+ 2a4:   da00008f        ble     244 <LZMA_DEC10+0x244>
+                        2a4: R_ARM_PC24 LZMA_DEC10
+ 2a8:   e59dc018        ldr     ip, [sp, #24]
+ 2ac:   e20170ff        and     r7, r1, #255    ; 0xff
+ 2b0:   e35c0003        cmp     ip, #3  ; 0x3
+ 2b4:   e59d1054        ldr     r1, [sp, #84]
+ 2b8:   d3a02000        movle   r2, #0  ; 0x0
+ 2bc:   e7c1700b        strb    r7, [r1, fp]
+ 2c0:   e28bb001        add     fp, fp, #1      ; 0x1
+ 2c4:   d58d2018        strle   r2, [sp, #24]
+ 2c8:   da000239        ble     8ec <LZMA_DEC10+0x8ec>
+                        2c8: R_ARM_PC24 LZMA_DEC10
+ 2cc:   e59d3018        ldr     r3, [sp, #24]
+ 2d0:   e3530009        cmp     r3, #9  ; 0x9
+ 2d4:   c59d5018        ldrgt   r5, [sp, #24]
+ 2d8:   d2433003        suble   r3, r3, #3      ; 0x3
+ 2dc:   c2455006        subgt   r5, r5, #6      ; 0x6
+ 2e0:   d58d3018        strle   r3, [sp, #24]
+ 2e4:   c58d5018        strgt   r5, [sp, #24]
+ 2e8:   ea000239        b       8ec <LZMA_DEC10+0x8ec>
+                        2e8: R_ARM_PC24 LZMA_DEC10
+ 2ec:   e04c32ac        sub     r3, ip, ip, lsr #5
+ 2f0:   e0642000        rsb     r2, r4, r0
+ 2f4:   e59dc008        ldr     ip, [sp, #8]
+ 2f8:   e1520008        cmp     r2, r8
+ 2fc:   e18c30b5        strh    r3, [ip, r5]
+ 300:   e0646006        rsb     r6, r4, r6
+ 304:   8a0000c5        bhi     31c <LZMA_DEC10+0x31c>
+                        304: R_ARM_PC24 LZMA_DEC10
+ 308:   e15e0009        cmp     lr, r9
+ 30c:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        30c: R_ARM_PC24 LZMA_DEC10
+ 310:   e4de3001        ldrb    r3, [lr], #1
+ 314:   e1a02402        mov     r2, r2, lsl #8
+ 318:   e1836406        orr     r6, r3, r6, lsl #8
+ 31c:   e59d0008        ldr     r0, [sp, #8]
+ 320:   e59d3018        ldr     r3, [sp, #24]
+ 324:   e0807083        add     r7, r0, r3, lsl #1
+ 328:   e2870d06        add     r0, r7, #384    ; 0x180
+ 32c:   e1d0c0b0        ldrh    ip, [r0]
+ 330:   e1a035a2        mov     r3, r2, lsr #11
+ 334:   e004039c        mul     r4, ip, r3
+ 338:   e1560004        cmp     r6, r4
+ 33c:   2a0000e1        bcs     38c <LZMA_DEC10+0x38c>
+                        33c: R_ARM_PC24 LZMA_DEC10
+ 340:   e59d2018        ldr     r2, [sp, #24]
+ 344:   e59d5008        ldr     r5, [sp, #8]
+ 348:   e3520006        cmp     r2, #6  ; 0x6
+ 34c:   e26c3b02        rsb     r3, ip, #2048   ; 0x800
+ 350:   e2851e66        add     r1, r5, #1632   ; 0x660
+ 354:   c3a02003        movgt   r2, #3  ; 0x3
+ 358:   e59d5020        ldr     r5, [sp, #32]
+ 35c:   d3a02000        movle   r2, #0  ; 0x0
+ 360:   e08c32c3        add     r3, ip, r3, asr #5
+ 364:   e58d2018        str     r2, [sp, #24]
+ 368:   e59dc01c        ldr     ip, [sp, #28]
+ 36c:   e59d202c        ldr     r2, [sp, #44]
+ 370:   e58d5024        str     r5, [sp, #36]
+ 374:   e2811004        add     r1, r1, #4      ; 0x4
+ 378:   e1a05004        mov     r5, r4
+ 37c:   e58dc020        str     ip, [sp, #32]
+ 380:   e58d201c        str     r2, [sp, #28]
+ 384:   e1c030b0        strh    r3, [r0]
+ 388:   ea000162        b       590 <LZMA_DEC10+0x590>
+                        388: R_ARM_PC24 LZMA_DEC10
+ 38c:   e0642002        rsb     r2, r4, r2
+ 390:   e04c32ac        sub     r3, ip, ip, lsr #5
+ 394:   e1520008        cmp     r2, r8
+ 398:   e1c030b0        strh    r3, [r0]
+ 39c:   e0646006        rsb     r6, r4, r6
+ 3a0:   8a0000ec        bhi     3b8 <LZMA_DEC10+0x3b8>
+                        3a0: R_ARM_PC24 LZMA_DEC10
+ 3a4:   e15e0009        cmp     lr, r9
+ 3a8:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        3a8: R_ARM_PC24 LZMA_DEC10
+ 3ac:   e4de3001        ldrb    r3, [lr], #1
+ 3b0:   e1a02402        mov     r2, r2, lsl #8
+ 3b4:   e1836406        orr     r6, r3, r6, lsl #8
+ 3b8:   e2875f66        add     r5, r7, #408    ; 0x198
+ 3bc:   e1d5c0b0        ldrh    ip, [r5]
+ 3c0:   e1a035a2        mov     r3, r2, lsr #11
+ 3c4:   e004039c        mul     r4, ip, r3
+ 3c8:   e1560004        cmp     r6, r4
+ 3cc:   2a00011a        bcs     470 <LZMA_DEC10+0x470>
+                        3cc: R_ARM_PC24 LZMA_DEC10
+ 3d0:   e26c3b02        rsb     r3, ip, #2048   ; 0x800
+ 3d4:   e08c32c3        add     r3, ip, r3, asr #5
+ 3d8:   e1540008        cmp     r4, r8
+ 3dc:   e1c530b0        strh    r3, [r5]
+ 3e0:   8a0000fc        bhi     3f8 <LZMA_DEC10+0x3f8>
+                        3e0: R_ARM_PC24 LZMA_DEC10
+ 3e4:   e15e0009        cmp     lr, r9
+ 3e8:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        3e8: R_ARM_PC24 LZMA_DEC10
+ 3ec:   e4de3001        ldrb    r3, [lr], #1
+ 3f0:   e1a04404        mov     r4, r4, lsl #8
+ 3f4:   e1836406        orr     r6, r3, r6, lsl #8
+ 3f8:   e59d5008        ldr     r5, [sp, #8]
+ 3fc:   e0853081        add     r3, r5, r1, lsl #1
+ 400:   e083308a        add     r3, r3, sl, lsl #1
+ 404:   e2831e1e        add     r1, r3, #480    ; 0x1e0
+ 408:   e1d1c0b0        ldrh    ip, [r1]
+ 40c:   e1a035a4        mov     r3, r4, lsr #11
+ 410:   e002039c        mul     r2, ip, r3
+ 414:   e1560002        cmp     r6, r2
+ 418:   20626006        rsbcs   r6, r2, r6
+ 41c:   204c32ac        subcs   r3, ip, ip, lsr #5
+ 420:   20625004        rsbcs   r5, r2, r4
+ 424:   2a000132        bcs     4d0 <LZMA_DEC10+0x4d0>
+                        424: R_ARM_PC24 LZMA_DEC10
+ 428:   e26c3b02        rsb     r3, ip, #2048   ; 0x800
+ 42c:   e08c32c3        add     r3, ip, r3, asr #5
+ 430:   e35b0000        cmp     fp, #0  ; 0x0
+ 434:   e1c130b0        strh    r3, [r1]
+ 438:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        438: R_ARM_PC24 LZMA_DEC10
+ 43c:   e59dc02c        ldr     ip, [sp, #44]
+ 440:   e59d1018        ldr     r1, [sp, #24]
+ 444:   e59d0054        ldr     r0, [sp, #84]
+ 448:   e06c300b        rsb     r3, ip, fp
+ 44c:   e7d07003        ldrb    r7, [r0, r3]
+ 450:   e3510006        cmp     r1, #6  ; 0x6
+ 454:   c3a0100b        movgt   r1, #11 ; 0xb
+ 458:   d3a01009        movle   r1, #9  ; 0x9
+ 45c:   e58d1018        str     r1, [sp, #24]
+ 460:   e7c0700b        strb    r7, [r0, fp]
+ 464:   e1a00002        mov     r0, r2
+ 468:   e28bb001        add     fp, fp, #1      ; 0x1
+ 46c:   ea000239        b       8ec <LZMA_DEC10+0x8ec>
+                        46c: R_ARM_PC24 LZMA_DEC10
+ 470:   e0642002        rsb     r2, r4, r2
+ 474:   e04c32ac        sub     r3, ip, ip, lsr #5
+ 478:   e1520008        cmp     r2, r8
+ 47c:   e1c530b0        strh    r3, [r5]
+ 480:   e0646006        rsb     r6, r4, r6
+ 484:   8a000125        bhi     49c <LZMA_DEC10+0x49c>
+                        484: R_ARM_PC24 LZMA_DEC10
+ 488:   e15e0009        cmp     lr, r9
+ 48c:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        48c: R_ARM_PC24 LZMA_DEC10
+ 490:   e4de3001        ldrb    r3, [lr], #1
+ 494:   e1a02402        mov     r2, r2, lsl #8
+ 498:   e1836406        orr     r6, r3, r6, lsl #8
+ 49c:   e2871e1b        add     r1, r7, #432    ; 0x1b0
+ 4a0:   e1d1c0b0        ldrh    ip, [r1]
+ 4a4:   e1a035a2        mov     r3, r2, lsr #11
+ 4a8:   e004039c        mul     r4, ip, r3
+ 4ac:   e1560004        cmp     r6, r4
+ 4b0:   2a000134        bcs     4d8 <LZMA_DEC10+0x4d8>
+                        4b0: R_ARM_PC24 LZMA_DEC10
+ 4b4:   e59d502c        ldr     r5, [sp, #44]
+ 4b8:   e26c3b02        rsb     r3, ip, #2048   ; 0x800
+ 4bc:   e59d201c        ldr     r2, [sp, #28]
+ 4c0:   e08c32c3        add     r3, ip, r3, asr #5
+ 4c4:   e58d501c        str     r5, [sp, #28]
+ 4c8:   e1a05004        mov     r5, r4
+ 4cc:   e58d202c        str     r2, [sp, #44]
+ 4d0:   e1c130b0        strh    r3, [r1]
+ 4d4:   ea00015a        b       570 <LZMA_DEC10+0x570>
+                        4d4: R_ARM_PC24 LZMA_DEC10
+ 4d8:   e0642002        rsb     r2, r4, r2
+ 4dc:   e04c32ac        sub     r3, ip, ip, lsr #5
+ 4e0:   e1520008        cmp     r2, r8
+ 4e4:   e1c130b0        strh    r3, [r1]
+ 4e8:   e0646006        rsb     r6, r4, r6
+ 4ec:   8a00013f        bhi     504 <LZMA_DEC10+0x504>
+                        4ec: R_ARM_PC24 LZMA_DEC10
+ 4f0:   e15e0009        cmp     lr, r9
+ 4f4:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        4f4: R_ARM_PC24 LZMA_DEC10
+ 4f8:   e4de3001        ldrb    r3, [lr], #1
+ 4fc:   e1a02402        mov     r2, r2, lsl #8
+ 500:   e1836406        orr     r6, r3, r6, lsl #8
+ 504:   e2871f72        add     r1, r7, #456    ; 0x1c8
+ 508:   e1d1c0b0        ldrh    ip, [r1]
+ 50c:   e1a035a2        mov     r3, r2, lsr #11
+ 510:   e004039c        mul     r4, ip, r3
+ 514:   e1560004        cmp     r6, r4
+ 518:   2a00014e        bcs     540 <LZMA_DEC10+0x540>
+                        518: R_ARM_PC24 LZMA_DEC10
+ 51c:   e26c3b02        rsb     r3, ip, #2048   ; 0x800
+ 520:   e59d2020        ldr     r2, [sp, #32]
+ 524:   e08c32c3        add     r3, ip, r3, asr #5
+ 528:   e59d002c        ldr     r0, [sp, #44]
+ 52c:   e59dc01c        ldr     ip, [sp, #28]
+ 530:   e1a05004        mov     r5, r4
+ 534:   e58dc020        str     ip, [sp, #32]
+ 538:   e58d001c        str     r0, [sp, #28]
+ 53c:   ea000131        b       4cc <LZMA_DEC10+0x4cc>
+                        53c: R_ARM_PC24 LZMA_DEC10
+ 540:   e04c32ac        sub     r3, ip, ip, lsr #5
+ 544:   e1c130b0        strh    r3, [r1]
+ 548:   e59dc02c        ldr     ip, [sp, #44]
+ 54c:   e28d1020        add     r1, sp, #32     ; 0x20
+ 550:   e891000a        ldmia   r1, {r1, r3}
+ 554:   e0645002        rsb     r5, r4, r2
+ 558:   e59d201c        ldr     r2, [sp, #28]
+ 55c:   e58d1024        str     r1, [sp, #36]
+ 560:   e58d2020        str     r2, [sp, #32]
+ 564:   e58dc01c        str     ip, [sp, #28]
+ 568:   e58d302c        str     r3, [sp, #44]
+ 56c:   e0646006        rsb     r6, r4, r6
+ 570:   e59d2018        ldr     r2, [sp, #24]
+ 574:   e59d0008        ldr     r0, [sp, #8]
+ 578:   e3520006        cmp     r2, #6  ; 0x6
+ 57c:   c3a0200b        movgt   r2, #11 ; 0xb
+ 580:   d3a02008        movle   r2, #8  ; 0x8
+ 584:   e2801ea6        add     r1, r0, #2656   ; 0xa60
+ 588:   e58d2018        str     r2, [sp, #24]
+ 58c:   e2811008        add     r1, r1, #8      ; 0x8
+ 590:   e3e074ff        mvn     r7, #-16777216  ; 0xff000000
+ 594:   e1550007        cmp     r5, r7
+ 598:   8a00016a        bhi     5b0 <LZMA_DEC10+0x5b0>
+                        598: R_ARM_PC24 LZMA_DEC10
+ 59c:   e15e0009        cmp     lr, r9
+ 5a0:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        5a0: R_ARM_PC24 LZMA_DEC10
+ 5a4:   e4de3001        ldrb    r3, [lr], #1
+ 5a8:   e1a05405        mov     r5, r5, lsl #8
+ 5ac:   e1836406        orr     r6, r3, r6, lsl #8
+ 5b0:   e1d1c0b0        ldrh    ip, [r1]
+ 5b4:   e1a035a5        mov     r3, r5, lsr #11
+ 5b8:   e004039c        mul     r4, ip, r3
+ 5bc:   e1560004        cmp     r6, r4
+ 5c0:   2a000178        bcs     5e8 <LZMA_DEC10+0x5e8>
+                        5c0: R_ARM_PC24 LZMA_DEC10
+ 5c4:   e081220a        add     r2, r1, sl, lsl #4
+ 5c8:   e26c3b02        rsb     r3, ip, #2048   ; 0x800
+ 5cc:   e08c32c3        add     r3, ip, r3, asr #5
+ 5d0:   e2825004        add     r5, r2, #4      ; 0x4
+ 5d4:   e1a00004        mov     r0, r4
+ 5d8:   e3a0a003        mov     sl, #3  ; 0x3
+ 5dc:   e3a08000        mov     r8, #0  ; 0x0
+ 5e0:   e1c130b0        strh    r3, [r1]
+ 5e4:   ea000198        b       668 <LZMA_DEC10+0x668>
+                        5e4: R_ARM_PC24 LZMA_DEC10
+ 5e8:   e0642005        rsb     r2, r4, r5
+ 5ec:   e04c32ac        sub     r3, ip, ip, lsr #5
+ 5f0:   e1520007        cmp     r2, r7
+ 5f4:   e0646006        rsb     r6, r4, r6
+ 5f8:   e1c130b0        strh    r3, [r1]
+ 5fc:   8a000183        bhi     614 <LZMA_DEC10+0x614>
+                        5fc: R_ARM_PC24 LZMA_DEC10
+ 600:   e15e0009        cmp     lr, r9
+ 604:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        604: R_ARM_PC24 LZMA_DEC10
+ 608:   e4de3001        ldrb    r3, [lr], #1
+ 60c:   e1a02402        mov     r2, r2, lsl #8
+ 610:   e1836406        orr     r6, r3, r6, lsl #8
+ 614:   e1d1c0b2        ldrh    ip, [r1, #2]
+ 618:   e1a035a2        mov     r3, r2, lsr #11
+ 61c:   e004039c        mul     r4, ip, r3
+ 620:   e1560004        cmp     r6, r4
+ 624:   2a000191        bcs     64c <LZMA_DEC10+0x64c>
+                        624: R_ARM_PC24 LZMA_DEC10
+ 628:   e081220a        add     r2, r1, sl, lsl #4
+ 62c:   e26c3b02        rsb     r3, ip, #2048   ; 0x800
+ 630:   e08c32c3        add     r3, ip, r3, asr #5
+ 634:   e2825f41        add     r5, r2, #260    ; 0x104
+ 638:   e1a00004        mov     r0, r4
+ 63c:   e3a0a003        mov     sl, #3  ; 0x3
+ 640:   e3a08008        mov     r8, #8  ; 0x8
+ 644:   e1c130b2        strh    r3, [r1, #2]
+ 648:   ea000198        b       668 <LZMA_DEC10+0x668>
+                        648: R_ARM_PC24 LZMA_DEC10
+ 64c:   e04c32ac        sub     r3, ip, ip, lsr #5
+ 650:   e1c130b2        strh    r3, [r1, #2]
+ 654:   e0646006        rsb     r6, r4, r6
+ 658:   e0640002        rsb     r0, r4, r2
+ 65c:   e2815f81        add     r5, r1, #516    ; 0x204
+ 660:   e3a0a008        mov     sl, #8  ; 0x8
+ 664:   e3a08010        mov     r8, #16 ; 0x10
+ 668:   e1a0700a        mov     r7, sl
+ 66c:   e3a01001        mov     r1, #1  ; 0x1
+ 670:   e2813001        add     r3, r1, #1      ; 0x1
+ 674:   e3500401        cmp     r0, #16777216   ; 0x1000000
+ 678:   e1a04081        mov     r4, r1, lsl #1
+ 67c:   e0811003        add     r1, r1, r3
+ 680:   2a0001a4        bcs     698 <LZMA_DEC10+0x698>
+                        680: R_ARM_PC24 LZMA_DEC10
+ 684:   e15e0009        cmp     lr, r9
+ 688:   e1a00400        mov     r0, r0, lsl #8
+ 68c:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        68c: R_ARM_PC24 LZMA_DEC10
+ 690:   e4de3001        ldrb    r3, [lr], #1
+ 694:   e1836406        orr     r6, r3, r6, lsl #8
+ 698:   e19530b4        ldrh    r3, [r5, r4]
+ 69c:   e1a025a0        mov     r2, r0, lsr #11
+ 6a0:   e00c0293        mul     ip, r3, r2
+ 6a4:   e2632b02        rsb     r2, r3, #2048   ; 0x800
+ 6a8:   e156000c        cmp     r6, ip
+ 6ac:   e08322c2        add     r2, r3, r2, asr #5
+ 6b0:   e04332a3        sub     r3, r3, r3, lsr #5
+ 6b4:   e06c0000        rsb     r0, ip, r0
+ 6b8:   31a01004        movcc   r1, r4
+ 6bc:   31a0000c        movcc   r0, ip
+ 6c0:   318520b4        strcch  r2, [r5, r4]
+ 6c4:   206c6006        rsbcs   r6, ip, r6
+ 6c8:   218530b4        strcsh  r3, [r5, r4]
+ 6cc:   e2577001        subs    r7, r7, #1      ; 0x1
+ 6d0:   1a00019a        bne     670 <LZMA_DEC10+0x670>
+                        6d0: R_ARM_PC24 LZMA_DEC10
+ 6d4:   e3a02001        mov     r2, #1  ; 0x1
+ 6d8:   e0413a12        sub     r3, r1, r2, lsl sl
+ 6dc:   e59d5018        ldr     r5, [sp, #24]
+ 6e0:   e0833008        add     r3, r3, r8
+ 6e4:   e3550003        cmp     r5, #3  ; 0x3
+ 6e8:   e58d3028        str     r3, [sp, #40]
+ 6ec:   ca000224        bgt     898 <LZMA_DEC10+0x898>
+                        6ec: R_ARM_PC24 LZMA_DEC10
+ 6f0:   e59dc008        ldr     ip, [sp, #8]
+ 6f4:   e3530003        cmp     r3, #3  ; 0x3
+ 6f8:   a3a03003        movge   r3, #3  ; 0x3
+ 6fc:   e08c3383        add     r3, ip, r3, lsl #7
+ 700:   e2835e36        add     r5, r3, #864    ; 0x360
+ 704:   e1a07002        mov     r7, r2
+ 708:   e3a08006        mov     r8, #6  ; 0x6
+ 70c:   e2873001        add     r3, r7, #1      ; 0x1
+ 710:   e3500401        cmp     r0, #16777216   ; 0x1000000
+ 714:   e1a04087        mov     r4, r7, lsl #1
+ 718:   e0877003        add     r7, r7, r3
+ 71c:   2a0001cb        bcs     734 <LZMA_DEC10+0x734>
+                        71c: R_ARM_PC24 LZMA_DEC10
+ 720:   e15e0009        cmp     lr, r9
+ 724:   e1a00400        mov     r0, r0, lsl #8
+ 728:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        728: R_ARM_PC24 LZMA_DEC10
+ 72c:   e4de3001        ldrb    r3, [lr], #1
+ 730:   e1836406        orr     r6, r3, r6, lsl #8
+ 734:   e19530b4        ldrh    r3, [r5, r4]
+ 738:   e1a025a0        mov     r2, r0, lsr #11
+ 73c:   e00c0293        mul     ip, r3, r2
+ 740:   e2632b02        rsb     r2, r3, #2048   ; 0x800
+ 744:   e156000c        cmp     r6, ip
+ 748:   e08322c2        add     r2, r3, r2, asr #5
+ 74c:   e04332a3        sub     r3, r3, r3, lsr #5
+ 750:   e06c0000        rsb     r0, ip, r0
+ 754:   31a07004        movcc   r7, r4
+ 758:   31a0000c        movcc   r0, ip
+ 75c:   318520b4        strcch  r2, [r5, r4]
+ 760:   206c6006        rsbcs   r6, ip, r6
+ 764:   218530b4        strcsh  r3, [r5, r4]
+ 768:   e2588001        subs    r8, r8, #1      ; 0x1
+ 76c:   1a0001c1        bne     70c <LZMA_DEC10+0x70c>
+                        76c: R_ARM_PC24 LZMA_DEC10
+ 770:   e2472040        sub     r2, r7, #64     ; 0x40
+ 774:   e3520003        cmp     r2, #3  ; 0x3
+ 778:   d1a05002        movle   r5, r2
+ 77c:   da00021e        ble     880 <LZMA_DEC10+0x880>
+                        77c: R_ARM_PC24 LZMA_DEC10
+ 780:   e1a040c2        mov     r4, r2, asr #1
+ 784:   e352000d        cmp     r2, #13 ; 0xd
+ 788:   e2023001        and     r3, r2, #1      ; 0x1
+ 78c:   e2447001        sub     r7, r4, #1      ; 0x1
+ 790:   e383c002        orr     ip, r3, #2      ; 0x2
+ 794:   c2444005        subgt   r4, r4, #5      ; 0x5
+ 798:   c1a02008        movgt   r2, r8
+ 79c:   ca0001ed        bgt     7bc <LZMA_DEC10+0x7bc>
+                        79c: R_ARM_PC24 LZMA_DEC10
+ 7a0:   e1a0571c        mov     r5, ip, lsl r7
+ 7a4:   e59d1008        ldr     r1, [sp, #8]
+ 7a8:   e0813085        add     r3, r1, r5, lsl #1
+ 7ac:   e0433082        sub     r3, r3, r2, lsl #1
+ 7b0:   e2834e55        add     r4, r3, #1360   ; 0x550
+ 7b4:   e284400e        add     r4, r4, #14     ; 0xe
+ 7b8:   ea000201        b       80c <LZMA_DEC10+0x80c>
+                        7b8: R_ARM_PC24 LZMA_DEC10
+ 7bc:   e3500401        cmp     r0, #16777216   ; 0x1000000
+ 7c0:   e2822001        add     r2, r2, #1      ; 0x1
+ 7c4:   2a0001f5        bcs     7dc <LZMA_DEC10+0x7dc>
+                        7c4: R_ARM_PC24 LZMA_DEC10
+ 7c8:   e15e0009        cmp     lr, r9
+ 7cc:   e1a00400        mov     r0, r0, lsl #8
+ 7d0:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        7d0: R_ARM_PC24 LZMA_DEC10
+ 7d4:   e4de3001        ldrb    r3, [lr], #1
+ 7d8:   e1836406        orr     r6, r3, r6, lsl #8
+ 7dc:   e1a000a0        mov     r0, r0, lsr #1
+ 7e0:   e1560000        cmp     r6, r0
+ 7e4:   e1a0c08c        mov     ip, ip, lsl #1
+ 7e8:   20606006        rsbcs   r6, r0, r6
+ 7ec:   238cc001        orrcs   ip, ip, #1      ; 0x1
+ 7f0:   e1520004        cmp     r2, r4
+ 7f4:   1a0001ed        bne     7bc <LZMA_DEC10+0x7bc>
+                        7f4: R_ARM_PC24 LZMA_DEC10
+ 7f8:   e59d2008        ldr     r2, [sp, #8]
+ 7fc:   e2824d19        add     r4, r2, #1600   ; 0x640
+ 800:   e2844004        add     r4, r4, #4      ; 0x4
+ 804:   e1a0520c        mov     r5, ip, lsl #4
+ 808:   e3a07004        mov     r7, #4  ; 0x4
+ 80c:   e3a0a001        mov     sl, #1  ; 0x1
+ 810:   e1a0800a        mov     r8, sl
+ 814:   e3500401        cmp     r0, #16777216   ; 0x1000000
+ 818:   e1a01088        mov     r1, r8, lsl #1
+ 81c:   e288c001        add     ip, r8, #1      ; 0x1
+ 820:   2a00020c        bcs     838 <LZMA_DEC10+0x838>
+                        820: R_ARM_PC24 LZMA_DEC10
+ 824:   e15e0009        cmp     lr, r9
+ 828:   e1a00400        mov     r0, r0, lsl #8
+ 82c:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        82c: R_ARM_PC24 LZMA_DEC10
+ 830:   e4de3001        ldrb    r3, [lr], #1
+ 834:   e1836406        orr     r6, r3, r6, lsl #8
+ 838:   e19430b1        ldrh    r3, [r4, r1]
+ 83c:   e1a025a0        mov     r2, r0, lsr #11
+ 840:   e088800c        add     r8, r8, ip
+ 844:   e00c0293        mul     ip, r3, r2
+ 848:   e2632b02        rsb     r2, r3, #2048   ; 0x800
+ 84c:   e156000c        cmp     r6, ip
+ 850:   e08322c2        add     r2, r3, r2, asr #5
+ 854:   e04332a3        sub     r3, r3, r3, lsr #5
+ 858:   2185500a        orrcs   r5, r5, sl
+ 85c:   31a08001        movcc   r8, r1
+ 860:   31a0000c        movcc   r0, ip
+ 864:   318420b1        strcch  r2, [r4, r1]
+ 868:   218430b1        strcsh  r3, [r4, r1]
+ 86c:   206c6006        rsbcs   r6, ip, r6
+ 870:   206c0000        rsbcs   r0, ip, r0
+ 874:   e2577001        subs    r7, r7, #1      ; 0x1
+ 878:   e1a0a08a        mov     sl, sl, lsl #1
+ 87c:   1a000203        bne     814 <LZMA_DEC10+0x814>
+                        87c: R_ARM_PC24 LZMA_DEC10
+ 880:   e2955001        adds    r5, r5, #1      ; 0x1
+ 884:   e58d502c        str     r5, [sp, #44]
+ 888:   0a00023c        beq     8f8 <LZMA_DEC10+0x8f8>
+                        888: R_ARM_PC24 LZMA_DEC10
+ 88c:   e59d3018        ldr     r3, [sp, #24]
+ 890:   e2833007        add     r3, r3, #7      ; 0x7
+ 894:   e58d3018        str     r3, [sp, #24]
+ 898:   e59d502c        ldr     r5, [sp, #44]
+ 89c:   e155000b        cmp     r5, fp
+ 8a0:   8a000249        bhi     92c <LZMA_DEC10+0x92c>
+                        8a0: R_ARM_PC24 LZMA_DEC10
+ 8a4:   e59dc028        ldr     ip, [sp, #40]
+ 8a8:   e59d1054        ldr     r1, [sp, #84]
+ 8ac:   e065300b        rsb     r3, r5, fp
+ 8b0:   e28c2002        add     r2, ip, #2      ; 0x2
+ 8b4:   e0814003        add     r4, r1, r3
+ 8b8:   e081c00b        add     ip, r1, fp
+ 8bc:   e2522001        subs    r2, r2, #1      ; 0x1
+ 8c0:   e59d5058        ldr     r5, [sp, #88]
+ 8c4:   03a03000        moveq   r3, #0  ; 0x0
+ 8c8:   13a03001        movne   r3, #1  ; 0x1
+ 8cc:   e28bb001        add     fp, fp, #1      ; 0x1
+ 8d0:   e15b0005        cmp     fp, r5
+ 8d4:   23a03000        movcs   r3, #0  ; 0x0
+ 8d8:   32033001        andcc   r3, r3, #1      ; 0x1
+ 8dc:   e4d47001        ldrb    r7, [r4], #1
+ 8e0:   e3530000        cmp     r3, #0  ; 0x0
+ 8e4:   e4cc7001        strb    r7, [ip], #1
+ 8e8:   1a00022d        bne     8bc <LZMA_DEC10+0x8bc>
+                        8e8: R_ARM_PC24 LZMA_DEC10
+ 8ec:   e59dc058        ldr     ip, [sp, #88]
+ 8f0:   e15b000c        cmp     fp, ip
+ 8f4:   3a00003c        bcc     f8 <LZMA_DEC10+0xf8>
+                        8f4: R_ARM_PC24 LZMA_DEC10
+ 8f8:   e3500401        cmp     r0, #16777216   ; 0x1000000
+ 8fc:   2a000241        bcs     90c <LZMA_DEC10+0x90c>
+                        8fc: R_ARM_PC24 LZMA_DEC10
+ 900:   e15e0009        cmp     lr, r9
+ 904:   0a000249        beq     92c <LZMA_DEC10+0x92c>
+                        904: R_ARM_PC24 LZMA_DEC10
+ 908:   e28ee001        add     lr, lr, #1      ; 0x1
+ 90c:   e59d0004        ldr     r0, [sp, #4]
+ 910:   e59d1000        ldr     r1, [sp]
+ 914:   e59d205c        ldr     r2, [sp, #92]
+ 918:   e060300e        rsb     r3, r0, lr
+ 91c:   e3a00000        mov     r0, #0  ; 0x0
+ 920:   e5813000        str     r3, [r1]
+ 924:   e582b000        str     fp, [r2]
+ 928:   ea00024a        b       930 <LZMA_DEC10+0x930>
+                        928: R_ARM_PC24 LZMA_DEC10
+ 92c:   e3a00001        mov     r0, #1  ; 0x1
+ 930:   e28dd030        add     sp, sp, #48     ; 0x30
+ 934:   e8bd8ff0        ldmia   sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}

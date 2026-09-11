@@ -1,0 +1,1442 @@
+
+tmp/amd64-win64.pe.bin:     file format elf64-x86-64
+
+
+Disassembly of section PEISDLL0:
+
+0000000000000000 <PEISDLL0>:
+   0:   48 89 4c 24 08          mov    QWORD PTR [rsp+0x8],rcx
+   5:   48 89 54 24 10          mov    QWORD PTR [rsp+0x10],rdx
+   a:   4c 89 44 24 18          mov    QWORD PTR [rsp+0x18],r8
+
+Disassembly of section PEISEFI0:
+
+0000000000000000 <PEISEFI0>:
+   0:   51                      push   rcx
+   1:   52                      push   rdx
+
+Disassembly of section PEISDLL1:
+
+0000000000000000 <PEISDLL1>:
+   0:   80 fa 01                cmp    dl,0x1
+   3:   0f 85 00 00 00 00       jne    9 <reloc_endx+0x7>
+                        5: R_X86_64_PC32        PEMAIN21-0x4
+
+Disassembly of section PEMAIN01:
+
+0000000000000000 <PEMAIN01>:
+   0:   53                      push   rbx
+   1:   56                      push   rsi
+   2:   57                      push   rdi
+   3:   55                      push   rbp
+   4:   48 8d 35 00 00 00 00    lea    rsi,[rip+0x0]        # b <PEMAIN01+0xb>
+                        7: R_X86_64_PC32        start_of_compressed-0x4
+   b:   48 8d be 00 00 00 00    lea    rdi,[rsi+0x0]
+                        e: R_X86_64_32S start_of_uncompressed
+
+Disassembly of section PEICONS1:
+
+0000000000000000 <PEICONS1>:
+   0:   66 ff 87 00 00 00 00    inc    WORD PTR [rdi+0x0]
+                        3: R_X86_64_32S icon_offset
+
+Disassembly of section PEICONS2:
+
+0000000000000000 <PEICONS2>:
+   0:   66 81 87 00 00 00 00    add    WORD PTR [rdi+0x0],0x8000
+   7:   00 80
+                        3: R_X86_64_32S icon_offset
+                        7: R_X86_64_16  icon_delta+0x8000
+
+Disassembly of section PETLSHAK:
+
+0000000000000000 <PETLSHAK>:
+   0:   48 8d 87 00 00 00 00    lea    rax,[rdi+0x0]
+                        3: R_X86_64_32S tls_address
+   7:   ff 30                   push   QWORD PTR [rax]
+   9:   c7 00 00 00 00 80       mov    DWORD PTR [rax],0x80000000
+                        b: R_X86_64_32  tls_value+0x80000000
+   f:   50                      push   rax
+
+Disassembly of section PEMAIN02:
+
+0000000000000000 <PEMAIN02>:
+   0:   57                      push   rdi
+
+Disassembly of section NRV_HEAD:
+
+0000000000000000 <NRV_HEAD>:
+   0:   31 db                   xor    ebx,ebx
+   2:   31 c9                   xor    ecx,ecx
+   4:   48 83 cd ff             or     rbp,0xffffffffffffffff
+   8:   e8 50 00 00 00          call   5d <NRV_HEAD+0x5d>
+   d:   01 db                   add    ebx,ebx
+   f:   74 02                   je     13 <NRV_HEAD+0x13>
+  11:   f3 c3                   repz ret
+  13:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  15:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  19:   11 db                   adc    ebx,ebx
+  1b:   8a 16                   mov    dl,BYTE PTR [rsi]
+  1d:   f3 c3                   repz ret
+  1f:   48 8d 04 2f             lea    rax,[rdi+rbp*1]
+  23:   83 f9 05                cmp    ecx,0x5
+  26:   8a 10                   mov    dl,BYTE PTR [rax]
+  28:   76 21                   jbe    4b <NRV_HEAD+0x4b>
+  2a:   48 83 fd fc             cmp    rbp,0xfffffffffffffffc
+  2e:   77 1b                   ja     4b <NRV_HEAD+0x4b>
+  30:   83 e9 04                sub    ecx,0x4
+  33:   8b 10                   mov    edx,DWORD PTR [rax]
+  35:   48 83 c0 04             add    rax,0x4
+  39:   83 e9 04                sub    ecx,0x4
+  3c:   89 17                   mov    DWORD PTR [rdi],edx
+  3e:   48 8d 7f 04             lea    rdi,[rdi+0x4]
+  42:   73 ef                   jae    33 <NRV_HEAD+0x33>
+  44:   83 c1 04                add    ecx,0x4
+  47:   8a 10                   mov    dl,BYTE PTR [rax]
+  49:   74 10                   je     5b <NRV_HEAD+0x5b>
+  4b:   48 ff c0                inc    rax
+  4e:   88 17                   mov    BYTE PTR [rdi],dl
+  50:   83 e9 01                sub    ecx,0x1
+  53:   8a 10                   mov    dl,BYTE PTR [rax]
+  55:   48 8d 7f 01             lea    rdi,[rdi+0x1]
+  59:   75 f0                   jne    4b <NRV_HEAD+0x4b>
+  5b:   f3 c3                   repz ret
+  5d:   fc                      cld
+  5e:   41 5b                   pop    r11
+
+Disassembly of section NRV2B:
+
+0000000000000000 <NRV2B>:
+   0:   eb 08                   jmp    a <NRV2B+0xa>
+   2:   48 ff c6                inc    rsi
+   5:   88 17                   mov    BYTE PTR [rdi],dl
+   7:   48 ff c7                inc    rdi
+   a:   8a 16                   mov    dl,BYTE PTR [rsi]
+   c:   01 db                   add    ebx,ebx
+   e:   75 0a                   jne    1a <NRV2B+0x1a>
+  10:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  12:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  16:   11 db                   adc    ebx,ebx
+  18:   8a 16                   mov    dl,BYTE PTR [rsi]
+  1a:   72 e6                   jb     2 <NRV2B+0x2>
+  1c:   8d 41 01                lea    eax,[rcx+0x1]
+  1f:   41 ff d3                call   r11
+  22:   11 c0                   adc    eax,eax
+  24:   01 db                   add    ebx,ebx
+  26:   75 0a                   jne    32 <NRV2B+0x32>
+  28:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  2a:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  2e:   11 db                   adc    ebx,ebx
+  30:   8a 16                   mov    dl,BYTE PTR [rsi]
+  32:   73 eb                   jae    1f <NRV2B+0x1f>
+  34:   83 e8 03                sub    eax,0x3
+  37:   72 13                   jb     4c <NRV2B+0x4c>
+  39:   c1 e0 08                shl    eax,0x8
+  3c:   0f b6 d2                movzx  edx,dl
+  3f:   09 d0                   or     eax,edx
+  41:   48 ff c6                inc    rsi
+  44:   83 f0 ff                xor    eax,0xffffffff
+  47:   74 3a                   je     83 <next_func+0x58>
+  49:   48 63 e8                movsxd rbp,eax
+  4c:   8d 41 01                lea    eax,[rcx+0x1]
+  4f:   41 ff d3                call   r11
+  52:   11 c9                   adc    ecx,ecx
+  54:   41 ff d3                call   r11
+  57:   11 c9                   adc    ecx,ecx
+  59:   75 18                   jne    73 <NRV2B+0x73>
+  5b:   89 c1                   mov    ecx,eax
+  5d:   83 c0 02                add    eax,0x2
+  60:   41 ff d3                call   r11
+  63:   11 c9                   adc    ecx,ecx
+  65:   01 db                   add    ebx,ebx
+  67:   75 08                   jne    71 <NRV2B+0x71>
+  69:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  6b:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  6f:   11 db                   adc    ebx,ebx
+  71:   73 ed                   jae    60 <NRV2B+0x60>
+  73:   48 81 fd 00 f3 ff ff    cmp    rbp,0xfffffffffffff300
+  7a:   11 c1                   adc    ecx,eax
+  7c:   e8 00 00 00 00          call   81 <NRV2B+0x81>
+                        7d: R_X86_64_PC32       NRV_HEAD+0x1b
+  81:   eb 87                   jmp    a <NRV2B+0xa>
+
+Disassembly of section NRV2D:
+
+0000000000000000 <NRV2D>:
+   0:   eb 08                   jmp    a <NRV2D+0xa>
+   2:   48 ff c6                inc    rsi
+   5:   88 17                   mov    BYTE PTR [rdi],dl
+   7:   48 ff c7                inc    rdi
+   a:   8a 16                   mov    dl,BYTE PTR [rsi]
+   c:   01 db                   add    ebx,ebx
+   e:   75 0a                   jne    1a <NRV2D+0x1a>
+  10:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  12:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  16:   11 db                   adc    ebx,ebx
+  18:   8a 16                   mov    dl,BYTE PTR [rsi]
+  1a:   72 e6                   jb     2 <NRV2D+0x2>
+  1c:   8d 41 01                lea    eax,[rcx+0x1]
+  1f:   eb 07                   jmp    28 <NRV2D+0x28>
+  21:   ff c8                   dec    eax
+  23:   41 ff d3                call   r11
+  26:   11 c0                   adc    eax,eax
+  28:   41 ff d3                call   r11
+  2b:   11 c0                   adc    eax,eax
+  2d:   01 db                   add    ebx,ebx
+  2f:   75 0a                   jne    3b <NRV2D+0x3b>
+  31:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  33:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  37:   11 db                   adc    ebx,ebx
+  39:   8a 16                   mov    dl,BYTE PTR [rsi]
+  3b:   73 e4                   jae    21 <NRV2D+0x21>
+  3d:   83 e8 03                sub    eax,0x3
+  40:   72 17                   jb     59 <NRV2D+0x59>
+  42:   c1 e0 08                shl    eax,0x8
+  45:   0f b6 d2                movzx  edx,dl
+  48:   09 d0                   or     eax,edx
+  4a:   48 ff c6                inc    rsi
+  4d:   83 f0 ff                xor    eax,0xffffffff
+  50:   74 3f                   je     91 <next_func+0x66>
+  52:   d1 f8                   sar    eax,1
+  54:   48 63 e8                movsxd rbp,eax
+  57:   eb 03                   jmp    5c <NRV2D+0x5c>
+  59:   41 ff d3                call   r11
+  5c:   11 c9                   adc    ecx,ecx
+  5e:   41 ff d3                call   r11
+  61:   11 c9                   adc    ecx,ecx
+  63:   75 18                   jne    7d <NRV2D+0x7d>
+  65:   ff c1                   inc    ecx
+  67:   41 ff d3                call   r11
+  6a:   11 c9                   adc    ecx,ecx
+  6c:   01 db                   add    ebx,ebx
+  6e:   75 08                   jne    78 <NRV2D+0x78>
+  70:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  72:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  76:   11 db                   adc    ebx,ebx
+  78:   73 ed                   jae    67 <NRV2D+0x67>
+  7a:   83 c1 02                add    ecx,0x2
+  7d:   48 81 fd 00 fb ff ff    cmp    rbp,0xfffffffffffffb00
+  84:   83 d1 01                adc    ecx,0x1
+  87:   e8 00 00 00 00          call   8c <NRV2D+0x8c>
+                        88: R_X86_64_PC32       NRV_HEAD+0x1b
+  8c:   e9 79 ff ff ff          jmp    a <NRV2D+0xa>
+
+Disassembly of section NRV2E:
+
+0000000000000000 <NRV2E>:
+   0:   eb 08                   jmp    a <NRV2E+0xa>
+   2:   48 ff c6                inc    rsi
+   5:   88 17                   mov    BYTE PTR [rdi],dl
+   7:   48 ff c7                inc    rdi
+   a:   8a 16                   mov    dl,BYTE PTR [rsi]
+   c:   01 db                   add    ebx,ebx
+   e:   75 0a                   jne    1a <NRV2E+0x1a>
+  10:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  12:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  16:   11 db                   adc    ebx,ebx
+  18:   8a 16                   mov    dl,BYTE PTR [rsi]
+  1a:   72 e6                   jb     2 <NRV2E+0x2>
+  1c:   8d 41 01                lea    eax,[rcx+0x1]
+  1f:   eb 07                   jmp    28 <NRV2E+0x28>
+  21:   ff c8                   dec    eax
+  23:   41 ff d3                call   r11
+  26:   11 c0                   adc    eax,eax
+  28:   41 ff d3                call   r11
+  2b:   11 c0                   adc    eax,eax
+  2d:   01 db                   add    ebx,ebx
+  2f:   75 0a                   jne    3b <NRV2E+0x3b>
+  31:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  33:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  37:   11 db                   adc    ebx,ebx
+  39:   8a 16                   mov    dl,BYTE PTR [rsi]
+  3b:   73 e4                   jae    21 <NRV2E+0x21>
+  3d:   83 e8 03                sub    eax,0x3
+  40:   72 19                   jb     5b <NRV2E+0x5b>
+  42:   c1 e0 08                shl    eax,0x8
+  45:   0f b6 d2                movzx  edx,dl
+  48:   09 d0                   or     eax,edx
+  4a:   48 ff c6                inc    rsi
+  4d:   83 f0 ff                xor    eax,0xffffffff
+  50:   74 58                   je     aa <next_func+0x7f>
+  52:   d1 f8                   sar    eax,1
+  54:   48 63 e8                movsxd rbp,eax
+  57:   72 38                   jb     91 <NRV2E+0x91>
+  59:   eb 0e                   jmp    69 <NRV2E+0x69>
+  5b:   01 db                   add    ebx,ebx
+  5d:   75 08                   jne    67 <NRV2E+0x67>
+  5f:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  61:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  65:   11 db                   adc    ebx,ebx
+  67:   72 28                   jb     91 <NRV2E+0x91>
+  69:   ff c1                   inc    ecx
+  6b:   01 db                   add    ebx,ebx
+  6d:   75 08                   jne    77 <NRV2E+0x77>
+  6f:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  71:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  75:   11 db                   adc    ebx,ebx
+  77:   72 18                   jb     91 <NRV2E+0x91>
+  79:   41 ff d3                call   r11
+  7c:   11 c9                   adc    ecx,ecx
+  7e:   01 db                   add    ebx,ebx
+  80:   75 08                   jne    8a <NRV2E+0x8a>
+  82:   8b 1e                   mov    ebx,DWORD PTR [rsi]
+  84:   48 83 ee fc             sub    rsi,0xfffffffffffffffc
+  88:   11 db                   adc    ebx,ebx
+  8a:   73 ed                   jae    79 <NRV2E+0x79>
+  8c:   83 c1 02                add    ecx,0x2
+  8f:   eb 05                   jmp    96 <NRV2E+0x96>
+  91:   41 ff d3                call   r11
+  94:   11 c9                   adc    ecx,ecx
+  96:   48 81 fd 00 fb ff ff    cmp    rbp,0xfffffffffffffb00
+  9d:   83 d1 02                adc    ecx,0x2
+  a0:   e8 00 00 00 00          call   a5 <NRV2E+0xa5>
+                        a1: R_X86_64_PC32       NRV_HEAD+0x1b
+  a5:   e9 60 ff ff ff          jmp    a <NRV2E+0xa>
+
+Disassembly of section LZMA_HEAD:
+
+0000000000000000 <LZMA_HEAD>:
+   0:   b8 00 00 00 80          mov    eax,0x80000000
+                        1: R_X86_64_32  lzma_u_len+0x80000000
+   5:   50                      push   rax
+   6:   48 89 e1                mov    rcx,rsp
+   9:   48 89 fa                mov    rdx,rdi
+   c:   48 89 f7                mov    rdi,rsi
+   f:   be 00 00 00 80          mov    esi,0x80000000
+                        10: R_X86_64_32 lzma_c_len+0x80000000
+
+Disassembly of section LZMA_ELF00:
+
+0000000000000000 <LZMA_ELF00>:
+   0:   55                      push   rbp
+   1:   48 89 e5                mov    rbp,rsp
+   4:   44 8b 09                mov    r9d,DWORD PTR [rcx]
+   7:   49 89 d0                mov    r8,rdx
+   a:   48 89 f2                mov    rdx,rsi
+   d:   48 8d 77 02             lea    rsi,[rdi+0x2]
+  11:   56                      push   rsi
+  12:   8a 07                   mov    al,BYTE PTR [rdi]
+  14:   ff ca                   dec    edx
+  16:   88 c1                   mov    cl,al
+  18:   24 07                   and    al,0x7
+  1a:   c0 e9 03                shr    cl,0x3
+  1d:   48 c7 c3 00 fd ff ff    mov    rbx,0xfffffffffffffd00
+  24:   48 d3 e3                shl    rbx,cl
+  27:   88 c1                   mov    cl,al
+  29:   48 8d 9c 5c 88 f1 ff    lea    rbx,[rsp+rbx*2-0xe78]
+  30:   ff
+  31:   48 83 e3 c0             and    rbx,0xffffffffffffffc0
+  35:   6a 00                   push   0x0
+  37:   48 39 dc                cmp    rsp,rbx
+  3a:   75 f9                   jne    35 <LZMA_ELF00+0x35>
+  3c:   53                      push   rbx
+  3d:   48 8d 7b 08             lea    rdi,[rbx+0x8]
+  41:   8a 4e ff                mov    cl,BYTE PTR [rsi-0x1]
+  44:   ff ca                   dec    edx
+  46:   88 47 02                mov    BYTE PTR [rdi+0x2],al
+  49:   88 c8                   mov    al,cl
+  4b:   c0 e9 04                shr    cl,0x4
+  4e:   88 4f 01                mov    BYTE PTR [rdi+0x1],cl
+  51:   24 0f                   and    al,0xf
+  53:   88 07                   mov    BYTE PTR [rdi],al
+  55:   48 8d 4f fc             lea    rcx,[rdi-0x4]
+  59:   50                      push   rax
+
+Disassembly of section LZMA_DEC20:
+
+0000000000000000 <LZMA_DEC20>:
+   0:   41 57                   push   r15
+   2:   48 8d 47 04             lea    rax,[rdi+0x4]
+   6:   45 31 ff                xor    r15d,r15d
+   9:   41 56                   push   r14
+   b:   41 be 01 00 00 00       mov    r14d,0x1
+  11:   41 55                   push   r13
+  13:   45 31 ed                xor    r13d,r13d
+  16:   41 54                   push   r12
+  18:   55                      push   rbp
+  19:   53                      push   rbx
+  1a:   48 83 ec 48             sub    rsp,0x48
+  1e:   48 89 4c 24 38          mov    QWORD PTR [rsp+0x38],rcx
+  23:   48 89 44 24 20          mov    QWORD PTR [rsp+0x20],rax
+  28:   b8 01 00 00 00          mov    eax,0x1
+  2d:   48 89 74 24 40          mov    QWORD PTR [rsp+0x40],rsi
+  32:   4c 89 44 24 30          mov    QWORD PTR [rsp+0x30],r8
+  37:   89 c3                   mov    ebx,eax
+  39:   44 89 4c 24 2c          mov    DWORD PTR [rsp+0x2c],r9d
+  3e:   0f b6 4f 02             movzx  ecx,BYTE PTR [rdi+0x2]
+  42:   d3 e3                   shl    ebx,cl
+  44:   89 d9                   mov    ecx,ebx
+  46:   48 8b 9c 24 80 00 00    mov    rbx,QWORD PTR [rsp+0x80]
+  4d:   00
+  4e:   ff c9                   dec    ecx
+  50:   89 4c 24 1c             mov    DWORD PTR [rsp+0x1c],ecx
+  54:   0f b6 4f 01             movzx  ecx,BYTE PTR [rdi+0x1]
+  58:   d3 e0                   shl    eax,cl
+  5a:   48 8b 4c 24 38          mov    rcx,QWORD PTR [rsp+0x38]
+  5f:   ff c8                   dec    eax
+  61:   89 44 24 18             mov    DWORD PTR [rsp+0x18],eax
+  65:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+  68:   c7 01 00 00 00 00       mov    DWORD PTR [rcx],0x0
+  6e:   c7 44 24 10 00 00 00    mov    DWORD PTR [rsp+0x10],0x0
+  75:   00
+  76:   c7 44 24 0c 01 00 00    mov    DWORD PTR [rsp+0xc],0x1
+  7d:   00
+  7e:   c7 44 24 08 01 00 00    mov    DWORD PTR [rsp+0x8],0x1
+  85:   00
+  86:   c7 44 24 04 01 00 00    mov    DWORD PTR [rsp+0x4],0x1
+  8d:   00
+  8e:   c7 03 00 00 00 00       mov    DWORD PTR [rbx],0x0
+  94:   89 44 24 14             mov    DWORD PTR [rsp+0x14],eax
+  98:   0f b6 4f 01             movzx  ecx,BYTE PTR [rdi+0x1]
+  9c:   01 c1                   add    ecx,eax
+  9e:   b8 00 03 00 00          mov    eax,0x300
+  a3:   d3 e0                   shl    eax,cl
+  a5:   31 c9                   xor    ecx,ecx
+  a7:   8d b8 36 07 00 00       lea    edi,[rax+0x736]
+  ad:   41 39 ff                cmp    r15d,edi
+  b0:   73 13                   jae    c5 <LZMA_DEC20+0xc5>
+  b2:   48 8b 5c 24 20          mov    rbx,QWORD PTR [rsp+0x20]
+  b7:   89 c8                   mov    eax,ecx
+  b9:   ff c1                   inc    ecx
+  bb:   39 f9                   cmp    ecx,edi
+  bd:   66 c7 04 43 00 04       mov    WORD PTR [rbx+rax*2],0x400
+  c3:   eb eb                   jmp    b0 <LZMA_DEC20+0xb0>
+  c5:   48 8b 7c 24 40          mov    rdi,QWORD PTR [rsp+0x40]
+  ca:   89 d0                   mov    eax,edx
+  cc:   45 31 d2                xor    r10d,r10d
+  cf:   41 83 cb ff             or     r11d,0xffffffff
+  d3:   31 d2                   xor    edx,edx
+  d5:   49 89 fc                mov    r12,rdi
+  d8:   49 01 c4                add    r12,rax
+  db:   4c 39 e7                cmp    rdi,r12
+  de:   0f 84 eb 08 00 00       je     9cf <LZMA_DEC20+0x9cf>
+  e4:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+  e7:   41 c1 e2 08             shl    r10d,0x8
+  eb:   ff c2                   inc    edx
+  ed:   48 ff c7                inc    rdi
+  f0:   41 09 c2                or     r10d,eax
+  f3:   83 fa 04                cmp    edx,0x4
+  f6:   7e e3                   jle    db <LZMA_DEC20+0xdb>
+  f8:   44 3b 7c 24 2c          cmp    r15d,DWORD PTR [rsp+0x2c]
+  fd:   0f 83 d6 08 00 00       jae    9d9 <LZMA_DEC20+0x9d9>
+ 103:   8b 44 24 1c             mov    eax,DWORD PTR [rsp+0x1c]
+ 107:   48 63 5c 24 10          movsxd rbx,DWORD PTR [rsp+0x10]
+ 10c:   48 8b 54 24 20          mov    rdx,QWORD PTR [rsp+0x20]
+ 111:   44 21 f8                and    eax,r15d
+ 114:   89 04 24                mov    DWORD PTR [rsp],eax
+ 117:   48 63 2c 24             movsxd rbp,DWORD PTR [rsp]
+ 11b:   48 89 d8                mov    rax,rbx
+ 11e:   48 c1 e0 04             shl    rax,0x4
+ 122:   48 01 e8                add    rax,rbp
+ 125:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 12c:   4c 8d 0c 42             lea    r9,[rdx+rax*2]
+ 130:   77 1a                   ja     14c <LZMA_DEC20+0x14c>
+ 132:   4c 39 e7                cmp    rdi,r12
+ 135:   0f 84 94 08 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 13b:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 13e:   41 c1 e2 08             shl    r10d,0x8
+ 142:   41 c1 e3 08             shl    r11d,0x8
+ 146:   48 ff c7                inc    rdi
+ 149:   41 09 c2                or     r10d,eax
+ 14c:   41 0f b7 11             movzx  edx,WORD PTR [r9]
+ 150:   44 89 d8                mov    eax,r11d
+ 153:   c1 e8 0b                shr    eax,0xb
+ 156:   0f b7 ca                movzx  ecx,dx
+ 159:   0f af c1                imul   eax,ecx
+ 15c:   41 39 c2                cmp    r10d,eax
+ 15f:   0f 83 c5 01 00 00       jae    32a <LZMA_DEC20+0x32a>
+ 165:   41 89 c3                mov    r11d,eax
+ 168:   b8 00 08 00 00          mov    eax,0x800
+ 16d:   48 8b 5c 24 20          mov    rbx,QWORD PTR [rsp+0x20]
+ 172:   29 c8                   sub    eax,ecx
+ 174:   0f b6 4c 24 14          movzx  ecx,BYTE PTR [rsp+0x14]
+ 179:   be 01 00 00 00          mov    esi,0x1
+ 17e:   c1 f8 05                sar    eax,0x5
+ 181:   8d 04 02                lea    eax,[rdx+rax*1]
+ 184:   41 0f b6 d5             movzx  edx,r13b
+ 188:   66 41 89 01             mov    WORD PTR [r9],ax
+ 18c:   8b 44 24 18             mov    eax,DWORD PTR [rsp+0x18]
+ 190:   44 21 f8                and    eax,r15d
+ 193:   d3 e0                   shl    eax,cl
+ 195:   b9 08 00 00 00          mov    ecx,0x8
+ 19a:   2b 4c 24 14             sub    ecx,DWORD PTR [rsp+0x14]
+ 19e:   d3 fa                   sar    edx,cl
+ 1a0:   01 d0                   add    eax,edx
+ 1a2:   69 c0 00 03 00 00       imul   eax,eax,0x300
+ 1a8:   83 7c 24 10 06          cmp    DWORD PTR [rsp+0x10],0x6
+ 1ad:   89 c0                   mov    eax,eax
+ 1af:   4c 8d 8c 43 6c 0e 00    lea    r9,[rbx+rax*2+0xe6c]
+ 1b6:   00
+ 1b7:   0f 8e b8 00 00 00       jle    275 <LZMA_DEC20+0x275>
+ 1bd:   48 8b 54 24 30          mov    rdx,QWORD PTR [rsp+0x30]
+ 1c2:   44 89 f8                mov    eax,r15d
+ 1c5:   44 29 f0                sub    eax,r14d
+ 1c8:   0f b6 2c 02             movzx  ebp,BYTE PTR [rdx+rax*1]
+ 1cc:   01 ed                   add    ebp,ebp
+ 1ce:   48 63 d6                movsxd rdx,esi
+ 1d1:   89 eb                   mov    ebx,ebp
+ 1d3:   81 e3 00 01 00 00       and    ebx,0x100
+ 1d9:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 1e0:   48 63 c3                movsxd rax,ebx
+ 1e3:   49 8d 04 41             lea    rax,[r9+rax*2]
+ 1e7:   4c 8d 04 50             lea    r8,[rax+rdx*2]
+ 1eb:   77 1a                   ja     207 <LZMA_DEC20+0x207>
+ 1ed:   4c 39 e7                cmp    rdi,r12
+ 1f0:   0f 84 d9 07 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 1f6:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 1f9:   41 c1 e2 08             shl    r10d,0x8
+ 1fd:   41 c1 e3 08             shl    r11d,0x8
+ 201:   48 ff c7                inc    rdi
+ 204:   41 09 c2                or     r10d,eax
+ 207:   41 0f b7 90 00 02 00    movzx  edx,WORD PTR [r8+0x200]
+ 20e:   00
+ 20f:   44 89 d8                mov    eax,r11d
+ 212:   c1 e8 0b                shr    eax,0xb
+ 215:   0f b7 ca                movzx  ecx,dx
+ 218:   0f af c1                imul   eax,ecx
+ 21b:   41 39 c2                cmp    r10d,eax
+ 21e:   73 20                   jae    240 <LZMA_DEC20+0x240>
+ 220:   41 89 c3                mov    r11d,eax
+ 223:   b8 00 08 00 00          mov    eax,0x800
+ 228:   01 f6                   add    esi,esi
+ 22a:   29 c8                   sub    eax,ecx
+ 22c:   c1 f8 05                sar    eax,0x5
+ 22f:   85 db                   test   ebx,ebx
+ 231:   8d 04 02                lea    eax,[rdx+rax*1]
+ 234:   66 41 89 80 00 02 00    mov    WORD PTR [r8+0x200],ax
+ 23b:   00
+ 23c:   74 21                   je     25f <LZMA_DEC20+0x25f>
+ 23e:   eb 2d                   jmp    26d <LZMA_DEC20+0x26d>
+ 240:   41 29 c3                sub    r11d,eax
+ 243:   41 29 c2                sub    r10d,eax
+ 246:   89 d0                   mov    eax,edx
+ 248:   66 c1 e8 05             shr    ax,0x5
+ 24c:   8d 74 36 01             lea    esi,[rsi+rsi*1+0x1]
+ 250:   66 29 c2                sub    dx,ax
+ 253:   85 db                   test   ebx,ebx
+ 255:   66 41 89 90 00 02 00    mov    WORD PTR [r8+0x200],dx
+ 25c:   00
+ 25d:   74 0e                   je     26d <LZMA_DEC20+0x26d>
+ 25f:   81 fe ff 00 00 00       cmp    esi,0xff
+ 265:   0f 8e 61 ff ff ff       jle    1cc <LZMA_DEC20+0x1cc>
+ 26b:   eb 78                   jmp    2e5 <LZMA_DEC20+0x2e5>
+ 26d:   81 fe ff 00 00 00       cmp    esi,0xff
+ 273:   7f 70                   jg     2e5 <LZMA_DEC20+0x2e5>
+ 275:   48 63 c6                movsxd rax,esi
+ 278:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 27f:   4d 8d 04 41             lea    r8,[r9+rax*2]
+ 283:   77 1a                   ja     29f <LZMA_DEC20+0x29f>
+ 285:   4c 39 e7                cmp    rdi,r12
+ 288:   0f 84 41 07 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 28e:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 291:   41 c1 e2 08             shl    r10d,0x8
+ 295:   41 c1 e3 08             shl    r11d,0x8
+ 299:   48 ff c7                inc    rdi
+ 29c:   41 09 c2                or     r10d,eax
+ 29f:   41 0f b7 10             movzx  edx,WORD PTR [r8]
+ 2a3:   44 89 d8                mov    eax,r11d
+ 2a6:   c1 e8 0b                shr    eax,0xb
+ 2a9:   0f b7 ca                movzx  ecx,dx
+ 2ac:   0f af c1                imul   eax,ecx
+ 2af:   41 39 c2                cmp    r10d,eax
+ 2b2:   73 18                   jae    2cc <LZMA_DEC20+0x2cc>
+ 2b4:   41 89 c3                mov    r11d,eax
+ 2b7:   b8 00 08 00 00          mov    eax,0x800
+ 2bc:   01 f6                   add    esi,esi
+ 2be:   29 c8                   sub    eax,ecx
+ 2c0:   c1 f8 05                sar    eax,0x5
+ 2c3:   8d 04 02                lea    eax,[rdx+rax*1]
+ 2c6:   66 41 89 00             mov    WORD PTR [r8],ax
+ 2ca:   eb a1                   jmp    26d <LZMA_DEC20+0x26d>
+ 2cc:   41 29 c3                sub    r11d,eax
+ 2cf:   41 29 c2                sub    r10d,eax
+ 2d2:   89 d0                   mov    eax,edx
+ 2d4:   66 c1 e8 05             shr    ax,0x5
+ 2d8:   8d 74 36 01             lea    esi,[rsi+rsi*1+0x1]
+ 2dc:   66 29 c2                sub    dx,ax
+ 2df:   66 41 89 10             mov    WORD PTR [r8],dx
+ 2e3:   eb 88                   jmp    26d <LZMA_DEC20+0x26d>
+ 2e5:   48 8b 4c 24 30          mov    rcx,QWORD PTR [rsp+0x30]
+ 2ea:   44 89 f8                mov    eax,r15d
+ 2ed:   41 ff c7                inc    r15d
+ 2f0:   41 89 f5                mov    r13d,esi
+ 2f3:   40 88 34 01             mov    BYTE PTR [rcx+rax*1],sil
+ 2f7:   83 7c 24 10 03          cmp    DWORD PTR [rsp+0x10],0x3
+ 2fc:   7f 0d                   jg     30b <LZMA_DEC20+0x30b>
+ 2fe:   c7 44 24 10 00 00 00    mov    DWORD PTR [rsp+0x10],0x0
+ 305:   00
+ 306:   e9 a4 06 00 00          jmp    9af <LZMA_DEC20+0x9af>
+ 30b:   8b 54 24 10             mov    edx,DWORD PTR [rsp+0x10]
+ 30f:   8b 44 24 10             mov    eax,DWORD PTR [rsp+0x10]
+ 313:   83 ea 03                sub    edx,0x3
+ 316:   83 e8 06                sub    eax,0x6
+ 319:   83 7c 24 10 09          cmp    DWORD PTR [rsp+0x10],0x9
+ 31e:   0f 4f d0                cmovg  edx,eax
+ 321:   89 54 24 10             mov    DWORD PTR [rsp+0x10],edx
+ 325:   e9 85 06 00 00          jmp    9af <LZMA_DEC20+0x9af>
+ 32a:   41 29 c3                sub    r11d,eax
+ 32d:   41 29 c2                sub    r10d,eax
+ 330:   89 d0                   mov    eax,edx
+ 332:   66 c1 e8 05             shr    ax,0x5
+ 336:   66 29 c2                sub    dx,ax
+ 339:   48 8b 44 24 20          mov    rax,QWORD PTR [rsp+0x20]
+ 33e:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 345:   66 41 89 11             mov    WORD PTR [r9],dx
+ 349:   48 8d 34 58             lea    rsi,[rax+rbx*2]
+ 34d:   77 1a                   ja     369 <LZMA_DEC20+0x369>
+ 34f:   4c 39 e7                cmp    rdi,r12
+ 352:   0f 84 77 06 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 358:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 35b:   41 c1 e2 08             shl    r10d,0x8
+ 35f:   41 c1 e3 08             shl    r11d,0x8
+ 363:   48 ff c7                inc    rdi
+ 366:   41 09 c2                or     r10d,eax
+ 369:   0f b7 96 80 01 00 00    movzx  edx,WORD PTR [rsi+0x180]
+ 370:   44 89 d8                mov    eax,r11d
+ 373:   c1 e8 0b                shr    eax,0xb
+ 376:   0f b7 ca                movzx  ecx,dx
+ 379:   0f af c1                imul   eax,ecx
+ 37c:   41 39 c2                cmp    r10d,eax
+ 37f:   73 4e                   jae    3cf <LZMA_DEC20+0x3cf>
+ 381:   41 89 c3                mov    r11d,eax
+ 384:   b8 00 08 00 00          mov    eax,0x800
+ 389:   4c 8b 4c 24 20          mov    r9,QWORD PTR [rsp+0x20]
+ 38e:   29 c8                   sub    eax,ecx
+ 390:   8b 4c 24 0c             mov    ecx,DWORD PTR [rsp+0xc]
+ 394:   44 89 74 24 0c          mov    DWORD PTR [rsp+0xc],r14d
+ 399:   c1 f8 05                sar    eax,0x5
+ 39c:   8d 04 02                lea    eax,[rdx+rax*1]
+ 39f:   8b 54 24 08             mov    edx,DWORD PTR [rsp+0x8]
+ 3a3:   89 4c 24 08             mov    DWORD PTR [rsp+0x8],ecx
+ 3a7:   66 89 86 80 01 00 00    mov    WORD PTR [rsi+0x180],ax
+ 3ae:   31 c0                   xor    eax,eax
+ 3b0:   83 7c 24 10 06          cmp    DWORD PTR [rsp+0x10],0x6
+ 3b5:   89 54 24 04             mov    DWORD PTR [rsp+0x4],edx
+ 3b9:   0f 9f c0                setg   al
+ 3bc:   49 81 c1 64 06 00 00    add    r9,0x664
+ 3c3:   8d 04 40                lea    eax,[rax+rax*2]
+ 3c6:   89 44 24 10             mov    DWORD PTR [rsp+0x10],eax
+ 3ca:   e9 54 02 00 00          jmp    623 <LZMA_DEC20+0x623>
+ 3cf:   41 29 c3                sub    r11d,eax
+ 3d2:   41 29 c2                sub    r10d,eax
+ 3d5:   89 d0                   mov    eax,edx
+ 3d7:   66 c1 e8 05             shr    ax,0x5
+ 3db:   66 29 c2                sub    dx,ax
+ 3de:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 3e5:   66 89 96 80 01 00 00    mov    WORD PTR [rsi+0x180],dx
+ 3ec:   77 1a                   ja     408 <LZMA_DEC20+0x408>
+ 3ee:   4c 39 e7                cmp    rdi,r12
+ 3f1:   0f 84 d8 05 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 3f7:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 3fa:   41 c1 e2 08             shl    r10d,0x8
+ 3fe:   41 c1 e3 08             shl    r11d,0x8
+ 402:   48 ff c7                inc    rdi
+ 405:   41 09 c2                or     r10d,eax
+ 408:   0f b7 96 98 01 00 00    movzx  edx,WORD PTR [rsi+0x198]
+ 40f:   44 89 d8                mov    eax,r11d
+ 412:   c1 e8 0b                shr    eax,0xb
+ 415:   0f b7 ca                movzx  ecx,dx
+ 418:   0f af c1                imul   eax,ecx
+ 41b:   41 39 c2                cmp    r10d,eax
+ 41e:   0f 83 d0 00 00 00       jae    4f4 <LZMA_DEC20+0x4f4>
+ 424:   41 b8 00 08 00 00       mov    r8d,0x800
+ 42a:   41 89 c3                mov    r11d,eax
+ 42d:   48 c1 e3 05             shl    rbx,0x5
+ 431:   44 89 c0                mov    eax,r8d
+ 434:   29 c8                   sub    eax,ecx
+ 436:   c1 f8 05                sar    eax,0x5
+ 439:   8d 04 02                lea    eax,[rdx+rax*1]
+ 43c:   66 89 86 98 01 00 00    mov    WORD PTR [rsi+0x198],ax
+ 443:   48 8b 44 24 20          mov    rax,QWORD PTR [rsp+0x20]
+ 448:   48 01 d8                add    rax,rbx
+ 44b:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 452:   48 8d 34 68             lea    rsi,[rax+rbp*2]
+ 456:   77 1a                   ja     472 <LZMA_DEC20+0x472>
+ 458:   4c 39 e7                cmp    rdi,r12
+ 45b:   0f 84 6e 05 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 461:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 464:   41 c1 e2 08             shl    r10d,0x8
+ 468:   41 c1 e3 08             shl    r11d,0x8
+ 46c:   48 ff c7                inc    rdi
+ 46f:   41 09 c2                or     r10d,eax
+ 472:   0f b7 96 e0 01 00 00    movzx  edx,WORD PTR [rsi+0x1e0]
+ 479:   44 89 d8                mov    eax,r11d
+ 47c:   c1 e8 0b                shr    eax,0xb
+ 47f:   0f b7 ca                movzx  ecx,dx
+ 482:   0f af c1                imul   eax,ecx
+ 485:   41 39 c2                cmp    r10d,eax
+ 488:   73 4f                   jae    4d9 <LZMA_DEC20+0x4d9>
+ 48a:   41 29 c8                sub    r8d,ecx
+ 48d:   41 89 c3                mov    r11d,eax
+ 490:   41 c1 f8 05             sar    r8d,0x5
+ 494:   45 85 ff                test   r15d,r15d
+ 497:   42 8d 04 02             lea    eax,[rdx+r8*1]
+ 49b:   66 89 86 e0 01 00 00    mov    WORD PTR [rsi+0x1e0],ax
+ 4a2:   0f 84 27 05 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 4a8:   31 c0                   xor    eax,eax
+ 4aa:   83 7c 24 10 06          cmp    DWORD PTR [rsp+0x10],0x6
+ 4af:   48 8b 5c 24 30          mov    rbx,QWORD PTR [rsp+0x30]
+ 4b4:   0f 9f c0                setg   al
+ 4b7:   8d 44 00 09             lea    eax,[rax+rax*1+0x9]
+ 4bb:   89 44 24 10             mov    DWORD PTR [rsp+0x10],eax
+ 4bf:   44 89 f8                mov    eax,r15d
+ 4c2:   44 29 f0                sub    eax,r14d
+ 4c5:   44 0f b6 2c 03          movzx  r13d,BYTE PTR [rbx+rax*1]
+ 4ca:   44 89 f8                mov    eax,r15d
+ 4cd:   41 ff c7                inc    r15d
+ 4d0:   44 88 2c 03             mov    BYTE PTR [rbx+rax*1],r13b
+ 4d4:   e9 d6 04 00 00          jmp    9af <LZMA_DEC20+0x9af>
+ 4d9:   41 29 c3                sub    r11d,eax
+ 4dc:   41 29 c2                sub    r10d,eax
+ 4df:   89 d0                   mov    eax,edx
+ 4e1:   66 c1 e8 05             shr    ax,0x5
+ 4e5:   66 29 c2                sub    dx,ax
+ 4e8:   66 89 96 e0 01 00 00    mov    WORD PTR [rsi+0x1e0],dx
+ 4ef:   e9 11 01 00 00          jmp    605 <LZMA_DEC20+0x605>
+ 4f4:   41 29 c3                sub    r11d,eax
+ 4f7:   41 29 c2                sub    r10d,eax
+ 4fa:   89 d0                   mov    eax,edx
+ 4fc:   66 c1 e8 05             shr    ax,0x5
+ 500:   66 29 c2                sub    dx,ax
+ 503:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 50a:   66 89 96 98 01 00 00    mov    WORD PTR [rsi+0x198],dx
+ 511:   77 1a                   ja     52d <LZMA_DEC20+0x52d>
+ 513:   4c 39 e7                cmp    rdi,r12
+ 516:   0f 84 b3 04 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 51c:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 51f:   41 c1 e2 08             shl    r10d,0x8
+ 523:   41 c1 e3 08             shl    r11d,0x8
+ 527:   48 ff c7                inc    rdi
+ 52a:   41 09 c2                or     r10d,eax
+ 52d:   0f b7 96 b0 01 00 00    movzx  edx,WORD PTR [rsi+0x1b0]
+ 534:   44 89 d8                mov    eax,r11d
+ 537:   c1 e8 0b                shr    eax,0xb
+ 53a:   0f b7 ca                movzx  ecx,dx
+ 53d:   0f af c1                imul   eax,ecx
+ 540:   41 39 c2                cmp    r10d,eax
+ 543:   73 20                   jae    565 <LZMA_DEC20+0x565>
+ 545:   41 89 c3                mov    r11d,eax
+ 548:   b8 00 08 00 00          mov    eax,0x800
+ 54d:   29 c8                   sub    eax,ecx
+ 54f:   c1 f8 05                sar    eax,0x5
+ 552:   8d 04 02                lea    eax,[rdx+rax*1]
+ 555:   66 89 86 b0 01 00 00    mov    WORD PTR [rsi+0x1b0],ax
+ 55c:   8b 44 24 0c             mov    eax,DWORD PTR [rsp+0xc]
+ 560:   e9 98 00 00 00          jmp    5fd <LZMA_DEC20+0x5fd>
+ 565:   41 29 c3                sub    r11d,eax
+ 568:   41 29 c2                sub    r10d,eax
+ 56b:   89 d0                   mov    eax,edx
+ 56d:   66 c1 e8 05             shr    ax,0x5
+ 571:   66 29 c2                sub    dx,ax
+ 574:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 57b:   66 89 96 b0 01 00 00    mov    WORD PTR [rsi+0x1b0],dx
+ 582:   77 1a                   ja     59e <LZMA_DEC20+0x59e>
+ 584:   4c 39 e7                cmp    rdi,r12
+ 587:   0f 84 42 04 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 58d:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 590:   41 c1 e2 08             shl    r10d,0x8
+ 594:   41 c1 e3 08             shl    r11d,0x8
+ 598:   48 ff c7                inc    rdi
+ 59b:   41 09 c2                or     r10d,eax
+ 59e:   0f b7 96 c8 01 00 00    movzx  edx,WORD PTR [rsi+0x1c8]
+ 5a5:   44 89 d8                mov    eax,r11d
+ 5a8:   c1 e8 0b                shr    eax,0xb
+ 5ab:   0f b7 ca                movzx  ecx,dx
+ 5ae:   0f af c1                imul   eax,ecx
+ 5b1:   41 39 c2                cmp    r10d,eax
+ 5b4:   73 1d                   jae    5d3 <LZMA_DEC20+0x5d3>
+ 5b6:   41 89 c3                mov    r11d,eax
+ 5b9:   b8 00 08 00 00          mov    eax,0x800
+ 5be:   29 c8                   sub    eax,ecx
+ 5c0:   c1 f8 05                sar    eax,0x5
+ 5c3:   8d 04 02                lea    eax,[rdx+rax*1]
+ 5c6:   66 89 86 c8 01 00 00    mov    WORD PTR [rsi+0x1c8],ax
+ 5cd:   8b 44 24 08             mov    eax,DWORD PTR [rsp+0x8]
+ 5d1:   eb 22                   jmp    5f5 <LZMA_DEC20+0x5f5>
+ 5d3:   41 29 c3                sub    r11d,eax
+ 5d6:   41 29 c2                sub    r10d,eax
+ 5d9:   89 d0                   mov    eax,edx
+ 5db:   66 c1 e8 05             shr    ax,0x5
+ 5df:   66 29 c2                sub    dx,ax
+ 5e2:   8b 44 24 04             mov    eax,DWORD PTR [rsp+0x4]
+ 5e6:   66 89 96 c8 01 00 00    mov    WORD PTR [rsi+0x1c8],dx
+ 5ed:   8b 54 24 08             mov    edx,DWORD PTR [rsp+0x8]
+ 5f1:   89 54 24 04             mov    DWORD PTR [rsp+0x4],edx
+ 5f5:   8b 4c 24 0c             mov    ecx,DWORD PTR [rsp+0xc]
+ 5f9:   89 4c 24 08             mov    DWORD PTR [rsp+0x8],ecx
+ 5fd:   44 89 74 24 0c          mov    DWORD PTR [rsp+0xc],r14d
+ 602:   41 89 c6                mov    r14d,eax
+ 605:   31 c0                   xor    eax,eax
+ 607:   83 7c 24 10 06          cmp    DWORD PTR [rsp+0x10],0x6
+ 60c:   4c 8b 4c 24 20          mov    r9,QWORD PTR [rsp+0x20]
+ 611:   0f 9f c0                setg   al
+ 614:   49 81 c1 68 0a 00 00    add    r9,0xa68
+ 61b:   8d 44 40 08             lea    eax,[rax+rax*2+0x8]
+ 61f:   89 44 24 10             mov    DWORD PTR [rsp+0x10],eax
+ 623:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 62a:   77 1a                   ja     646 <LZMA_DEC20+0x646>
+ 62c:   4c 39 e7                cmp    rdi,r12
+ 62f:   0f 84 9a 03 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 635:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 638:   41 c1 e2 08             shl    r10d,0x8
+ 63c:   41 c1 e3 08             shl    r11d,0x8
+ 640:   48 ff c7                inc    rdi
+ 643:   41 09 c2                or     r10d,eax
+ 646:   41 0f b7 11             movzx  edx,WORD PTR [r9]
+ 64a:   44 89 d8                mov    eax,r11d
+ 64d:   c1 e8 0b                shr    eax,0xb
+ 650:   0f b7 ca                movzx  ecx,dx
+ 653:   0f af c1                imul   eax,ecx
+ 656:   41 39 c2                cmp    r10d,eax
+ 659:   73 26                   jae    681 <LZMA_DEC20+0x681>
+ 65b:   41 89 c3                mov    r11d,eax
+ 65e:   b8 00 08 00 00          mov    eax,0x800
+ 663:   45 31 ed                xor    r13d,r13d
+ 666:   29 c8                   sub    eax,ecx
+ 668:   c1 f8 05                sar    eax,0x5
+ 66b:   8d 04 02                lea    eax,[rdx+rax*1]
+ 66e:   66 41 89 01             mov    WORD PTR [r9],ax
+ 672:   48 63 04 24             movsxd rax,DWORD PTR [rsp]
+ 676:   48 c1 e0 04             shl    rax,0x4
+ 67a:   4d 8d 44 01 04          lea    r8,[r9+rax*1+0x4]
+ 67f:   eb 77                   jmp    6f8 <LZMA_DEC20+0x6f8>
+ 681:   41 29 c3                sub    r11d,eax
+ 684:   41 29 c2                sub    r10d,eax
+ 687:   89 d0                   mov    eax,edx
+ 689:   66 c1 e8 05             shr    ax,0x5
+ 68d:   66 29 c2                sub    dx,ax
+ 690:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 697:   66 41 89 11             mov    WORD PTR [r9],dx
+ 69b:   77 1a                   ja     6b7 <LZMA_DEC20+0x6b7>
+ 69d:   4c 39 e7                cmp    rdi,r12
+ 6a0:   0f 84 29 03 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 6a6:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 6a9:   41 c1 e2 08             shl    r10d,0x8
+ 6ad:   41 c1 e3 08             shl    r11d,0x8
+ 6b1:   48 ff c7                inc    rdi
+ 6b4:   41 09 c2                or     r10d,eax
+ 6b7:   41 0f b7 51 02          movzx  edx,WORD PTR [r9+0x2]
+ 6bc:   44 89 d8                mov    eax,r11d
+ 6bf:   c1 e8 0b                shr    eax,0xb
+ 6c2:   0f b7 ca                movzx  ecx,dx
+ 6c5:   0f af c1                imul   eax,ecx
+ 6c8:   41 39 c2                cmp    r10d,eax
+ 6cb:   73 33                   jae    700 <LZMA_DEC20+0x700>
+ 6cd:   41 89 c3                mov    r11d,eax
+ 6d0:   b8 00 08 00 00          mov    eax,0x800
+ 6d5:   41 bd 08 00 00 00       mov    r13d,0x8
+ 6db:   29 c8                   sub    eax,ecx
+ 6dd:   c1 f8 05                sar    eax,0x5
+ 6e0:   8d 04 02                lea    eax,[rdx+rax*1]
+ 6e3:   66 41 89 41 02          mov    WORD PTR [r9+0x2],ax
+ 6e8:   48 63 04 24             movsxd rax,DWORD PTR [rsp]
+ 6ec:   48 c1 e0 04             shl    rax,0x4
+ 6f0:   4d 8d 84 01 04 01 00    lea    r8,[r9+rax*1+0x104]
+ 6f7:   00
+ 6f8:   41 b9 03 00 00 00       mov    r9d,0x3
+ 6fe:   eb 27                   jmp    727 <LZMA_DEC20+0x727>
+ 700:   41 29 c3                sub    r11d,eax
+ 703:   41 29 c2                sub    r10d,eax
+ 706:   89 d0                   mov    eax,edx
+ 708:   66 c1 e8 05             shr    ax,0x5
+ 70c:   4d 8d 81 04 02 00 00    lea    r8,[r9+0x204]
+ 713:   41 bd 10 00 00 00       mov    r13d,0x10
+ 719:   66 29 c2                sub    dx,ax
+ 71c:   66 41 89 51 02          mov    WORD PTR [r9+0x2],dx
+ 721:   41 b9 08 00 00 00       mov    r9d,0x8
+ 727:   44 89 cb                mov    ebx,r9d
+ 72a:   bd 01 00 00 00          mov    ebp,0x1
+ 72f:   48 63 c5                movsxd rax,ebp
+ 732:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 739:   49 8d 34 40             lea    rsi,[r8+rax*2]
+ 73d:   77 1a                   ja     759 <LZMA_DEC20+0x759>
+ 73f:   4c 39 e7                cmp    rdi,r12
+ 742:   0f 84 87 02 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 748:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 74b:   41 c1 e2 08             shl    r10d,0x8
+ 74f:   41 c1 e3 08             shl    r11d,0x8
+ 753:   48 ff c7                inc    rdi
+ 756:   41 09 c2                or     r10d,eax
+ 759:   0f b7 0e                movzx  ecx,WORD PTR [rsi]
+ 75c:   44 89 d8                mov    eax,r11d
+ 75f:   c1 e8 0b                shr    eax,0xb
+ 762:   0f b7 d1                movzx  edx,cx
+ 765:   0f af c2                imul   eax,edx
+ 768:   41 39 c2                cmp    r10d,eax
+ 76b:   73 17                   jae    784 <LZMA_DEC20+0x784>
+ 76d:   41 89 c3                mov    r11d,eax
+ 770:   b8 00 08 00 00          mov    eax,0x800
+ 775:   01 ed                   add    ebp,ebp
+ 777:   29 d0                   sub    eax,edx
+ 779:   c1 f8 05                sar    eax,0x5
+ 77c:   8d 04 01                lea    eax,[rcx+rax*1]
+ 77f:   66 89 06                mov    WORD PTR [rsi],ax
+ 782:   eb 16                   jmp    79a <LZMA_DEC20+0x79a>
+ 784:   41 29 c3                sub    r11d,eax
+ 787:   41 29 c2                sub    r10d,eax
+ 78a:   89 c8                   mov    eax,ecx
+ 78c:   66 c1 e8 05             shr    ax,0x5
+ 790:   8d 6c 2d 01             lea    ebp,[rbp+rbp*1+0x1]
+ 794:   66 29 c1                sub    cx,ax
+ 797:   66 89 0e                mov    WORD PTR [rsi],cx
+ 79a:   ff cb                   dec    ebx
+ 79c:   75 91                   jne    72f <LZMA_DEC20+0x72f>
+ 79e:   b8 01 00 00 00          mov    eax,0x1
+ 7a3:   44 89 c9                mov    ecx,r9d
+ 7a6:   d3 e0                   shl    eax,cl
+ 7a8:   29 c5                   sub    ebp,eax
+ 7aa:   44 01 ed                add    ebp,r13d
+ 7ad:   83 7c 24 10 03          cmp    DWORD PTR [rsp+0x10],0x3
+ 7b2:   0f 8f c2 01 00 00       jg     97a <LZMA_DEC20+0x97a>
+ 7b8:   83 44 24 10 07          add    DWORD PTR [rsp+0x10],0x7
+ 7bd:   b8 03 00 00 00          mov    eax,0x3
+ 7c2:   83 fd 04                cmp    ebp,0x4
+ 7c5:   0f 4c c5                cmovl  eax,ebp
+ 7c8:   48 8b 5c 24 20          mov    rbx,QWORD PTR [rsp+0x20]
+ 7cd:   41 b8 01 00 00 00       mov    r8d,0x1
+ 7d3:   48 98                   cdqe
+ 7d5:   48 c1 e0 07             shl    rax,0x7
+ 7d9:   4c 8d 8c 03 60 03 00    lea    r9,[rbx+rax*1+0x360]
+ 7e0:   00
+ 7e1:   bb 06 00 00 00          mov    ebx,0x6
+ 7e6:   49 63 c0                movsxd rax,r8d
+ 7e9:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 7f0:   49 8d 34 41             lea    rsi,[r9+rax*2]
+ 7f4:   77 1a                   ja     810 <LZMA_DEC20+0x810>
+ 7f6:   4c 39 e7                cmp    rdi,r12
+ 7f9:   0f 84 d0 01 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 7ff:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 802:   41 c1 e2 08             shl    r10d,0x8
+ 806:   41 c1 e3 08             shl    r11d,0x8
+ 80a:   48 ff c7                inc    rdi
+ 80d:   41 09 c2                or     r10d,eax
+ 810:   0f b7 16                movzx  edx,WORD PTR [rsi]
+ 813:   44 89 d8                mov    eax,r11d
+ 816:   c1 e8 0b                shr    eax,0xb
+ 819:   0f b7 ca                movzx  ecx,dx
+ 81c:   0f af c1                imul   eax,ecx
+ 81f:   41 39 c2                cmp    r10d,eax
+ 822:   73 18                   jae    83c <LZMA_DEC20+0x83c>
+ 824:   41 89 c3                mov    r11d,eax
+ 827:   b8 00 08 00 00          mov    eax,0x800
+ 82c:   45 01 c0                add    r8d,r8d
+ 82f:   29 c8                   sub    eax,ecx
+ 831:   c1 f8 05                sar    eax,0x5
+ 834:   8d 04 02                lea    eax,[rdx+rax*1]
+ 837:   66 89 06                mov    WORD PTR [rsi],ax
+ 83a:   eb 17                   jmp    853 <LZMA_DEC20+0x853>
+ 83c:   41 29 c3                sub    r11d,eax
+ 83f:   41 29 c2                sub    r10d,eax
+ 842:   89 d0                   mov    eax,edx
+ 844:   66 c1 e8 05             shr    ax,0x5
+ 848:   47 8d 44 00 01          lea    r8d,[r8+r8*1+0x1]
+ 84d:   66 29 c2                sub    dx,ax
+ 850:   66 89 16                mov    WORD PTR [rsi],dx
+ 853:   ff cb                   dec    ebx
+ 855:   75 8f                   jne    7e6 <LZMA_DEC20+0x7e6>
+ 857:   41 83 e8 40             sub    r8d,0x40
+ 85b:   41 83 f8 03             cmp    r8d,0x3
+ 85f:   45 89 c6                mov    r14d,r8d
+ 862:   0f 8e 0d 01 00 00       jle    975 <LZMA_DEC20+0x975>
+ 868:   41 83 e6 01             and    r14d,0x1
+ 86c:   44 89 c0                mov    eax,r8d
+ 86f:   d1 f8                   sar    eax,1
+ 871:   41 83 ce 02             or     r14d,0x2
+ 875:   41 83 f8 0d             cmp    r8d,0xd
+ 879:   8d 70 ff                lea    esi,[rax-0x1]
+ 87c:   7f 23                   jg     8a1 <LZMA_DEC20+0x8a1>
+ 87e:   89 f1                   mov    ecx,esi
+ 880:   48 8b 5c 24 20          mov    rbx,QWORD PTR [rsp+0x20]
+ 885:   49 63 c0                movsxd rax,r8d
+ 888:   41 d3 e6                shl    r14d,cl
+ 88b:   48 01 c0                add    rax,rax
+ 88e:   44 89 f2                mov    edx,r14d
+ 891:   48 8d 14 53             lea    rdx,[rbx+rdx*2]
+ 895:   48 29 c2                sub    rdx,rax
+ 898:   4c 8d 8a 5e 05 00 00    lea    r9,[rdx+0x55e]
+ 89f:   eb 51                   jmp    8f2 <LZMA_DEC20+0x8f2>
+ 8a1:   8d 70 fb                lea    esi,[rax-0x5]
+ 8a4:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 8ab:   77 1a                   ja     8c7 <LZMA_DEC20+0x8c7>
+ 8ad:   4c 39 e7                cmp    rdi,r12
+ 8b0:   0f 84 19 01 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 8b6:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 8b9:   41 c1 e2 08             shl    r10d,0x8
+ 8bd:   41 c1 e3 08             shl    r11d,0x8
+ 8c1:   48 ff c7                inc    rdi
+ 8c4:   41 09 c2                or     r10d,eax
+ 8c7:   41 d1 eb                shr    r11d,1
+ 8ca:   45 01 f6                add    r14d,r14d
+ 8cd:   45 39 da                cmp    r10d,r11d
+ 8d0:   72 07                   jb     8d9 <LZMA_DEC20+0x8d9>
+ 8d2:   45 29 da                sub    r10d,r11d
+ 8d5:   41 83 ce 01             or     r14d,0x1
+ 8d9:   ff ce                   dec    esi
+ 8db:   75 c7                   jne    8a4 <LZMA_DEC20+0x8a4>
+ 8dd:   4c 8b 4c 24 20          mov    r9,QWORD PTR [rsp+0x20]
+ 8e2:   41 c1 e6 04             shl    r14d,0x4
+ 8e6:   be 04 00 00 00          mov    esi,0x4
+ 8eb:   49 81 c1 44 06 00 00    add    r9,0x644
+ 8f2:   41 bd 01 00 00 00       mov    r13d,0x1
+ 8f8:   bb 01 00 00 00          mov    ebx,0x1
+ 8fd:   48 63 c3                movsxd rax,ebx
+ 900:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 907:   4d 8d 04 41             lea    r8,[r9+rax*2]
+ 90b:   77 1a                   ja     927 <LZMA_DEC20+0x927>
+ 90d:   4c 39 e7                cmp    rdi,r12
+ 910:   0f 84 b9 00 00 00       je     9cf <LZMA_DEC20+0x9cf>
+ 916:   0f b6 07                movzx  eax,BYTE PTR [rdi]
+ 919:   41 c1 e2 08             shl    r10d,0x8
+ 91d:   41 c1 e3 08             shl    r11d,0x8
+ 921:   48 ff c7                inc    rdi
+ 924:   41 09 c2                or     r10d,eax
+ 927:   41 0f b7 10             movzx  edx,WORD PTR [r8]
+ 92b:   44 89 d8                mov    eax,r11d
+ 92e:   c1 e8 0b                shr    eax,0xb
+ 931:   0f b7 ca                movzx  ecx,dx
+ 934:   0f af c1                imul   eax,ecx
+ 937:   41 39 c2                cmp    r10d,eax
+ 93a:   73 18                   jae    954 <LZMA_DEC20+0x954>
+ 93c:   41 89 c3                mov    r11d,eax
+ 93f:   b8 00 08 00 00          mov    eax,0x800
+ 944:   01 db                   add    ebx,ebx
+ 946:   29 c8                   sub    eax,ecx
+ 948:   c1 f8 05                sar    eax,0x5
+ 94b:   8d 04 02                lea    eax,[rdx+rax*1]
+ 94e:   66 41 89 00             mov    WORD PTR [r8],ax
+ 952:   eb 1a                   jmp    96e <LZMA_DEC20+0x96e>
+ 954:   41 29 c3                sub    r11d,eax
+ 957:   41 29 c2                sub    r10d,eax
+ 95a:   89 d0                   mov    eax,edx
+ 95c:   66 c1 e8 05             shr    ax,0x5
+ 960:   8d 5c 1b 01             lea    ebx,[rbx+rbx*1+0x1]
+ 964:   45 09 ee                or     r14d,r13d
+ 967:   66 29 c2                sub    dx,ax
+ 96a:   66 41 89 10             mov    WORD PTR [r8],dx
+ 96e:   45 01 ed                add    r13d,r13d
+ 971:   ff ce                   dec    esi
+ 973:   75 88                   jne    8fd <LZMA_DEC20+0x8fd>
+ 975:   41 ff c6                inc    r14d
+ 978:   74 40                   je     9ba <LZMA_DEC20+0x9ba>
+ 97a:   83 c5 02                add    ebp,0x2
+ 97d:   45 39 fe                cmp    r14d,r15d
+ 980:   77 4d                   ja     9cf <LZMA_DEC20+0x9cf>
+ 982:   48 8b 54 24 30          mov    rdx,QWORD PTR [rsp+0x30]
+ 987:   44 89 f8                mov    eax,r15d
+ 98a:   44 29 f0                sub    eax,r14d
+ 98d:   44 0f b6 2c 02          movzx  r13d,BYTE PTR [rdx+rax*1]
+ 992:   44 89 f8                mov    eax,r15d
+ 995:   41 ff c7                inc    r15d
+ 998:   ff cd                   dec    ebp
+ 99a:   44 88 2c 02             mov    BYTE PTR [rdx+rax*1],r13b
+ 99e:   0f 95 c2                setne  dl
+ 9a1:   31 c0                   xor    eax,eax
+ 9a3:   44 3b 7c 24 2c          cmp    r15d,DWORD PTR [rsp+0x2c]
+ 9a8:   0f 92 c0                setb   al
+ 9ab:   85 c2                   test   edx,eax
+ 9ad:   75 d3                   jne    982 <LZMA_DEC20+0x982>
+ 9af:   44 3b 7c 24 2c          cmp    r15d,DWORD PTR [rsp+0x2c]
+ 9b4:   0f 82 49 f7 ff ff       jb     103 <LZMA_DEC20+0x103>
+ 9ba:   41 81 fb ff ff ff 00    cmp    r11d,0xffffff
+ 9c1:   77 16                   ja     9d9 <LZMA_DEC20+0x9d9>
+ 9c3:   4c 39 e7                cmp    rdi,r12
+ 9c6:   b8 01 00 00 00          mov    eax,0x1
+ 9cb:   74 26                   je     9f3 <LZMA_DEC20+0x9f3>
+ 9cd:   eb 07                   jmp    9d6 <LZMA_DEC20+0x9d6>
+ 9cf:   b8 01 00 00 00          mov    eax,0x1
+ 9d4:   eb 1d                   jmp    9f3 <LZMA_DEC20+0x9f3>
+ 9d6:   48 ff c7                inc    rdi
+ 9d9:   89 f8                   mov    eax,edi
+ 9db:   2b 44 24 40             sub    eax,DWORD PTR [rsp+0x40]
+ 9df:   48 8b 4c 24 38          mov    rcx,QWORD PTR [rsp+0x38]
+ 9e4:   48 8b 9c 24 80 00 00    mov    rbx,QWORD PTR [rsp+0x80]
+ 9eb:   00
+ 9ec:   89 01                   mov    DWORD PTR [rcx],eax
+ 9ee:   44 89 3b                mov    DWORD PTR [rbx],r15d
+ 9f1:   31 c0                   xor    eax,eax
+ 9f3:   48 83 c4 48             add    rsp,0x48
+ 9f7:   5b                      pop    rbx
+ 9f8:   5d                      pop    rbp
+ 9f9:   41 5c                   pop    r12
+ 9fb:   41 5d                   pop    r13
+ 9fd:   41 5e                   pop    r14
+ 9ff:   41 5f                   pop    r15
+
+Disassembly of section LZMA_DEC30:
+
+0000000000000000 <LZMA_DEC30>:
+   0:   48 8b 75 f8             mov    rsi,QWORD PTR [rbp-0x8]
+   4:   48 8b 7d 10             mov    rdi,QWORD PTR [rbp+0x10]
+   8:   8b 4b 04                mov    ecx,DWORD PTR [rbx+0x4]
+   b:   48 01 ce                add    rsi,rcx
+   e:   8b 13                   mov    edx,DWORD PTR [rbx]
+  10:   48 01 d7                add    rdi,rdx
+  13:   c9                      leave
+
+Disassembly of section LZMA_TAIL:
+
+0000000000000000 <LZMA_TAIL>:
+   0:   c9                      leave
+   1:   58                      pop    rax
+
+Disassembly of section PEMAIN10:
+
+0000000000000000 <PEMAIN10>:
+   0:   5e                      pop    rsi
+
+Disassembly of section PETLSHAK2:
+
+0000000000000000 <PETLSHAK2>:
+   0:   5f                      pop    rdi
+   1:   58                      pop    rax
+   2:   89 07                   mov    DWORD PTR [rdi],eax
+
+Disassembly of section PECTTPOS:
+
+0000000000000000 <PECTTPOS>:
+   0:   48 8d be 00 00 00 00    lea    rdi,[rsi+0x0]
+                        3: R_X86_64_32S filter_buffer_start
+
+Disassembly of section PECTTNUL:
+
+0000000000000000 <PECTTNUL>:
+   0:   48 89 f7                mov    rdi,rsi
+
+Disassembly of section PEFILTER49:
+
+0000000000000000 <PEFILTER49>:
+   0:   56                      push   rsi
+   1:   48 89 f7                mov    rdi,rsi
+   4:   48 c7 c6 00 00 00 00    mov    rsi,0x0
+                        7: R_X86_64_32S filter_length
+   b:   b2 00                   mov    dl,0x0
+                        c: R_X86_64_8   filter_cto
+   d:   53                      push   rbx
+   e:   57                      push   rdi
+   f:   48 8d 4c 37 fd          lea    rcx,[rdi+rsi*1-0x3]
+  14:   5e                      pop    rsi
+  15:   56                      push   rsi
+  16:   5b                      pop    rbx
+  17:   eb 2f                   jmp    48 <PEFILTER49+0x48>
+  19:   48 39 ce                cmp    rsi,rcx
+  1c:   73 32                   jae    50 <PEFILTER49+0x50>
+  1e:   56                      push   rsi
+  1f:   5e                      pop    rsi
+  20:   ac                      lods   al,BYTE PTR ds:[rsi]
+  21:   3c 80                   cmp    al,0x80
+  23:   72 0a                   jb     2f <PEFILTER49+0x2f>
+  25:   3c 8f                   cmp    al,0x8f
+  27:   77 06                   ja     2f <PEFILTER49+0x2f>
+  29:   80 7e fe 0f             cmp    BYTE PTR [rsi-0x2],0xf
+  2d:   74 06                   je     35 <PEFILTER49+0x35>
+  2f:   2c e8                   sub    al,0xe8
+  31:   3c 01                   cmp    al,0x1
+  33:   77 e4                   ja     19 <PEFILTER49+0x19>
+  35:   48 39 ce                cmp    rsi,rcx
+  38:   73 16                   jae    50 <PEFILTER49+0x50>
+  3a:   56                      push   rsi
+  3b:   ad                      lods   eax,DWORD PTR ds:[rsi]
+  3c:   28 d0                   sub    al,dl
+  3e:   75 df                   jne    1f <PEFILTER49+0x1f>
+  40:   5f                      pop    rdi
+  41:   0f c8                   bswap  eax
+  43:   29 f8                   sub    eax,edi
+  45:   01 d8                   add    eax,ebx
+  47:   ab                      stos   DWORD PTR es:[rdi],eax
+  48:   48 39 ce                cmp    rsi,rcx
+  4b:   73 03                   jae    50 <PEFILTER49+0x50>
+  4d:   ac                      lods   al,BYTE PTR ds:[rsi]
+  4e:   eb df                   jmp    2f <PEFILTER49+0x2f>
+  50:   5b                      pop    rbx
+  51:   5e                      pop    rsi
+
+Disassembly of section PEIMPORT:
+
+0000000000000000 <next_func-0x2b>:
+   0:   48 83 ec 28             sub    rsp,0x28
+   4:   48 8d be 00 00 00 00    lea    rdi,[rsi+0x0]
+                        7: R_X86_64_32S compressed_imports
+   b:   8b 07                   mov    eax,DWORD PTR [rdi]
+   d:   09 c0                   or     eax,eax
+   f:   74 ff                   je     10 <next_func-0x1b>
+                        10: R_X86_64_PC8        imports_done
+  11:   8b 5f 04                mov    ebx,DWORD PTR [rdi+0x4]
+  14:   48 8d 8c 30 00 00 00    lea    rcx,[rax+rsi*1+0x0]
+  1b:   00
+                        18: R_X86_64_32S        start_of_imports
+  1c:   48 01 f3                add    rbx,rsi
+  1f:   48 83 c7 08             add    rdi,0x8
+  23:   ff 15 00 00 00 00       call   QWORD PTR [rip+0x0]        # 29 <next_func-0x2>
+                        25: R_X86_64_PC32       LoadLibraryA-0x4
+  29:   48 95                   xchg   rbp,rax
+
+000000000000002b <next_func>:
+  2b:   8a 07                   mov    al,BYTE PTR [rdi]
+  2d:   48 ff c7                inc    rdi
+  30:   08 c0                   or     al,al
+  32:   74 d7                   je     b <next_func-0x20>
+
+Disassembly of section PEIBYORD:
+
+0000000000000000 <PEIBYORD>:
+   0:   79 ff                   jns    1 <PEIBYORD+0x1>
+                        1: R_X86_64_PC8 byname
+
+Disassembly of section PEK32ORD:
+
+0000000000000000 <PEK32ORD>:
+   0:   7a 10                   jp     12 <byname+0x8>
+   2:   8b 07                   mov    eax,DWORD PTR [rdi]
+   4:   48 83 c7 04             add    rdi,0x4
+   8:   48 8b 84 30 00 00 00    mov    rax,QWORD PTR [rax+rsi*1+0x0]
+   f:   00
+                        c: R_X86_64_32S kernel32_ordinals
+  10:   eb ff                   jmp    11 <PEK32ORD+0x11>
+                        11: R_X86_64_PC8        next_imp
+
+Disassembly of section PEIMORD1:
+
+0000000000000000 <byname-0xa>:
+   0:   48 0f b7 17             movzx  rdx,WORD PTR [rdi]
+   4:   48 83 c7 02             add    rdi,0x2
+   8:   eb ff                   jmp    9 <byname-0x1>
+                        9: R_X86_64_PC8 first_imp
+
+Disassembly of section PEIMPOR2:
+
+0000000000000000 <first_imp-0xa>:
+   0:   48 89 f9                mov    rcx,rdi
+   3:   48 89 fa                mov    rdx,rdi
+   6:   ff c8                   dec    eax
+   8:   f2 ae                   repnz scas al,BYTE PTR es:[rdi]
+
+000000000000000a <first_imp>:
+   a:   48 89 e9                mov    rcx,rbp
+   d:   ff 15 00 00 00 00       call   QWORD PTR [rip+0x0]        # 13 <first_imp+0x9>
+                        f: R_X86_64_PC32        GetProcAddress-0x4
+  13:   48 09 c0                or     rax,rax
+  16:   74 09                   je     21 <next_imp+0x9>
+
+0000000000000018 <next_imp>:
+  18:   48 89 03                mov    QWORD PTR [rbx],rax
+  1b:   48 83 c3 08             add    rbx,0x8
+  1f:   eb ff                   jmp    20 <next_imp+0x8>
+                        20: R_X86_64_PC8        next_func
+
+Disassembly of section PEIERDLL:
+
+0000000000000000 <PEIERDLL>:
+   0:   48 83 c4 28             add    rsp,0x28
+   4:   5d                      pop    rbp
+   5:   5f                      pop    rdi
+   6:   5e                      pop    rsi
+   7:   5b                      pop    rbx
+   8:   31 c0                   xor    eax,eax
+   a:   c3                      ret
+
+Disassembly of section PEIEREXE:
+
+0000000000000000 <PEIEREXE>:
+   0:   ff 25 00 00 00 00       jmp    QWORD PTR [rip+0x0]        # 6 <reloc_endx+0x4>
+                        2: R_X86_64_PC32        ExitProcess-0x4
+
+Disassembly of section PEIMDONE:
+
+0000000000000000 <imports_done>:
+   0:   48 83 c4 28             add    rsp,0x28
+
+Disassembly of section PERELOC1:
+
+0000000000000000 <PERELOC1>:
+   0:   48 8d be 00 00 00 00    lea    rdi,[rsi+0x0]
+                        3: R_X86_64_32S start_of_relocs
+
+Disassembly of section PERELOC2:
+
+0000000000000000 <PERELOC2>:
+   0:   48 83 c7 04             add    rdi,0x4
+
+Disassembly of section PERELOC3:
+
+0000000000000000 <reloc_add-0x13>:
+   0:   48 8d 5e fc             lea    rbx,[rsi-0x4]
+   4:   31 c0                   xor    eax,eax
+   6:   8a 07                   mov    al,BYTE PTR [rdi]
+   8:   48 ff c7                inc    rdi
+   b:   09 c0                   or     eax,eax
+   d:   74 ff                   je     e <reloc_add-0x5>
+                        e: R_X86_64_PC8 reloc_endx
+   f:   3c ef                   cmp    al,0xef
+  11:   77 11                   ja     24 <reloc_add+0x11>
+
+0000000000000013 <reloc_add>:
+  13:   48 01 c3                add    rbx,rax
+  16:   48 8b 03                mov    rax,QWORD PTR [rbx]
+  19:   48 0f c8                bswap  rax
+  1c:   48 01 f0                add    rax,rsi
+  1f:   48 89 03                mov    QWORD PTR [rbx],rax
+  22:   eb e0                   jmp    4 <reloc_add-0xf>
+  24:   24 0f                   and    al,0xf
+  26:   c1 e0 10                shl    eax,0x10
+  29:   66 8b 07                mov    ax,WORD PTR [rdi]
+  2c:   48 83 c7 02             add    rdi,0x2
+
+Disassembly of section REL64BIG:
+
+0000000000000000 <REL64BIG>:
+   0:   09 c0                   or     eax,eax
+   2:   75 ff                   jne    3 <REL64BIG+0x3>
+                        3: R_X86_64_PC8 reloc_add
+   4:   8b 07                   mov    eax,DWORD PTR [rdi]
+   6:   48 83 c7 04             add    rdi,0x4
+
+Disassembly of section RELOC64J:
+
+0000000000000000 <reloc_endx-0x2>:
+   0:   eb ff                   jmp    1 <reloc_endx-0x1>
+                        1: R_X86_64_PC8 reloc_add
+
+Disassembly of section PERLOHI0:
+
+0000000000000000 <PERLOHI0>:
+   0:   48 87 f7                xchg   rdi,rsi
+   3:   48 8d 8f 00 00 00 00    lea    rcx,[rdi+0x0]
+                        6: R_X86_64_32S reloc_delt
+
+Disassembly of section PERELLO0:
+
+0000000000000000 <PERELLO0>:
+   0:   eb 04                   jmp    6 <PERELLO0+0x6>
+   2:   66 01 0c 07             add    WORD PTR [rdi+rax*1],cx
+   6:   ad                      lods   eax,DWORD PTR ds:[rsi]
+   7:   09 c0                   or     eax,eax
+   9:   75 f7                   jne    2 <PERELLO0+0x2>
+
+Disassembly of section PERELHI0:
+
+0000000000000000 <PERELHI0>:
+   0:   c1 e9 10                shr    ecx,0x10
+   3:   eb 04                   jmp    9 <PERELHI0+0x9>
+   5:   66 01 0c 07             add    WORD PTR [rdi+rax*1],cx
+   9:   ad                      lods   eax,DWORD PTR ds:[rsi]
+   a:   09 c0                   or     eax,eax
+   c:   75 f7                   jne    5 <PERELHI0+0x5>
+
+Disassembly of section PEDEPHAK:
+
+0000000000000000 <PEDEPHAK>:
+   0:   48 8b 2d 00 00 00 00    mov    rbp,QWORD PTR [rip+0x0]        # 7 <PEDEPHAK+0x7>
+                        3: R_X86_64_PC32        VirtualProtect-0x4
+   7:   48 8d be 00 00 00 00    lea    rdi,[rsi+0x0]
+                        a: R_X86_64_32S vp_base
+   e:   bb 00 00 00 80          mov    ebx,0x80000000
+                        f: R_X86_64_32  vp_size+0x80000000
+  13:   50                      push   rax
+  14:   49 89 e1                mov    r9,rsp
+  17:   41 b8 04 00 00 00       mov    r8d,0x4
+  1d:   48 89 da                mov    rdx,rbx
+  20:   48 89 f9                mov    rcx,rdi
+  23:   48 83 ec 20             sub    rsp,0x20
+  27:   ff d5                   call   rbp
+  29:   48 8d 87 00 00 00 00    lea    rax,[rdi+0x0]
+                        2c: R_X86_64_32S        swri
+  30:   80 20 7f                and    BYTE PTR [rax],0x7f
+  33:   80 60 28 7f             and    BYTE PTR [rax+0x28],0x7f
+  37:   4c 8d 4c 24 20          lea    r9,[rsp+0x20]
+  3c:   4d 8b 01                mov    r8,QWORD PTR [r9]
+  3f:   48 89 da                mov    rdx,rbx
+  42:   48 89 f9                mov    rcx,rdi
+  45:   ff d5                   call   rbp
+  47:   48 83 c4 28             add    rsp,0x28
+
+Disassembly of section PETLSC:
+
+0000000000000000 <PETLSC>:
+   0:   c6 05 00 00 00 00 fc    mov    BYTE PTR [rip+0x0],0xfc        # 7 <PETLSC+0x7>
+                        2: R_X86_64_PC32        PETLSC2-0x5
+   7:   48 8d 8e 00 00 00 00    lea    rcx,[rsi+0x0]
+                        a: R_X86_64_32S tls_module_base
+   e:   6a 01                   push   0x1
+  10:   5a                      pop    rdx
+  11:   4d 31 c0                xor    r8,r8
+  14:   50                      push   rax
+  15:   e8 00 00 00 00          call   1a <PETLSC+0x1a>
+                        16: R_X86_64_PC32       PETLSC2-0x4
+  1a:   58                      pop    rax
+
+Disassembly of section PEMAIN20:
+
+0000000000000000 <PEMAIN20>:
+   0:   5d                      pop    rbp
+   1:   5f                      pop    rdi
+   2:   5e                      pop    rsi
+   3:   5b                      pop    rbx
+
+Disassembly of section CLEARSTACK:
+
+0000000000000000 <CLEARSTACK>:
+   0:   48 8d 44 24 80          lea    rax,[rsp-0x80]
+   5:   6a 00                   push   0x0
+   7:   48 39 c4                cmp    rsp,rax
+   a:   75 f9                   jne    5 <CLEARSTACK+0x5>
+   c:   48 83 ec 80             sub    rsp,0xffffffffffffff80
+
+Disassembly of section PEISDLL9:
+
+0000000000000000 <PEISDLL9>:
+   0:   4c 8b 44 24 18          mov    r8,QWORD PTR [rsp+0x18]
+   5:   48 8b 54 24 10          mov    rdx,QWORD PTR [rsp+0x10]
+   a:   48 8b 4c 24 08          mov    rcx,QWORD PTR [rsp+0x8]
+
+Disassembly of section PEISEFI9:
+
+0000000000000000 <PEISEFI9>:
+   0:   5a                      pop    rdx
+   1:   59                      pop    rcx
+
+Disassembly of section PERETURN:
+
+0000000000000000 <PERETURN>:
+   0:   6a 01                   push   0x1
+   2:   58                      pop    rax
+   3:   c3                      ret
+
+Disassembly of section PEDOJUMP:
+
+0000000000000000 <PEDOJUMP>:
+   0:   e9 00 00 00 00          jmp    5 <reloc_endx+0x3>
+                        1: R_X86_64_PC32        original_entry-0x4
+
+Disassembly of section PETLSC2:
+
+0000000000000000 <PETLSC2>:
+   0:   c3                      ret
+   1:   56                      push   rsi
+   2:   48 8d 35 00 00 00 00    lea    rsi,[rip+0x0]        # 9 <PETLSC2+0x9>
+                        5: R_X86_64_PC32        tls_callbacks_ptr-0x4
+   9:   48 ad                   lods   rax,QWORD PTR ds:[rsi]
+   b:   48 85 c0                test   rax,rax
+   e:   74 14                   je     24 <PETLSC2+0x24>
+  10:   51                      push   rcx
+  11:   52                      push   rdx
+  12:   41 50                   push   r8
+  14:   48 83 ec 28             sub    rsp,0x28
+  18:   ff d0                   call   rax
+  1a:   48 83 c4 28             add    rsp,0x28
+  1e:   41 58                   pop    r8
+  20:   5a                      pop    rdx
+  21:   59                      pop    rcx
+  22:   eb e5                   jmp    9 <PETLSC2+0x9>
+  24:   5e                      pop    rsi
+  25:   c3                      ret
+
+Disassembly of section UPX1HEAD:
+
+0000000000000000 <UPX1HEAD>:
+   0:   55                      push   rbp
+   1:   50                      push   rax
+   2:   58                      pop    rax
+   3:   21 a1 d8 d0 d5 00       and    DWORD PTR [rcx+0xd5d0d8],esp
+        ...
+  1d:   00 00                   add    BYTE PTR [rax],al
+  1f:   2d                      .byte 0x2d

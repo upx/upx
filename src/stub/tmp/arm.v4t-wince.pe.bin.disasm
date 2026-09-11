@@ -1,0 +1,1377 @@
+
+tmp/arm.v4t-wince.pe.bin:     file format elf32-littlearm
+
+Disassembly of section DllStart:
+
+00000000 <DllStart>:
+   0:   0001            lsls    r1, r0, #0
+   2:   e351            b.n     6a8 <ONAM+0x62c>
+   4:   000a            lsls    r2, r1, #0
+                        4: R_ARM_PC24   ExeStart
+   6:   1a00            subs    r0, r0, r0
+Disassembly of section ExeStart:
+
+00000000 <SRC0-0x38>:
+   0:   4fff            ldr     r7, [pc, #1020] (400 <ONAM+0x384>)
+   2:   e92d 302c       stmdb   sp!, {r2, r3, r5, ip, sp}
+   6:   e28f            b.n     528 <ONAM+0x4ac>
+   8:   0fe0            lsrs    r0, r4, #31
+   a:   e893 5a01       ldmia.w r3, {r0, r9, fp, ip, lr}
+   e:   e28f            b.n     530 <ONAM+0x4b4>
+  10:   6000            str     r0, [r0, #0]
+  12:   e597            b.n     fffffb44 <ONAM+0xfffffac8>
+  14:   7a01            ldrb    r1, [r0, #8]
+  16:   e287            b.n     528 <ONAM+0x4ac>
+  18:   0005            lsls    r5, r0, #0
+  1a:   e157            b.n     2cc <ONAM+0x250>
+  1c:   0002            lsls    r2, r0, #0
+                        1c: R_ARM_PC24  ExeStart
+  1e:   9a00            ldr     r2, [sp, #0]
+  20:   4035            ands    r5, r6
+  22:   e28f            b.n     544 <ONAM+0x4c8>
+  24:   e00f            b.n     46 <DST0+0x6>
+  26:   e1a0            b.n     36a <ONAM+0x2ee>
+  28:   ff14 e12f       undefined
+  2c:   4fff            ldr     r7, [pc, #1020] (42c <ONAM+0x3b0>)
+  2e:   e8bd c020       ldmia.w sp!, {r5, lr, pc}
+  32:   e59f            b.n     fffffb74 <ONAM+0xfffffaf8>
+  34:   ff1c e12f       undefined
+
+00000038 <SRC0>:
+        ...
+                        38: R_ARM_ABS32 start_of_compressed
+                        3c: R_ARM_ABS32 compressed_length
+
+00000040 <DST0>:
+        ...
+                        40: R_ARM_ABS32 start_of_uncompressed
+                        44: R_ARM_ABS32 uncompressed_length
+
+00000048 <IATT>:
+        ...
+
+00000058 <ENTR>:
+  58:   0000            lsls    r0, r0, #0
+                        58: R_ARM_ABS32 original_entry
+  5a:   0000            lsls    r0, r0, #0
+  5c:   cb07            ldmia   r3!, {r0, r1, r2}
+  5e:   4690            mov     r8, r2
+  60:   464c            mov     r4, r9
+  62:   b510            push    {r4, lr}
+Disassembly of section Unfilter_0x50:
+
+00000000 <FIBS-0x30>:
+   0:   480b            ldr     r0, [pc, #44]   (30 <FIBS>)
+   2:   2200            movs    r2, #0
+   4:   4c0b            ldr     r4, [pc, #44]   (34 <FIBE>)
+   6:   250f            movs    r5, #15
+   8:   26ff            movs    r6, #255
+   a:   0636            lsls    r6, r6, #24
+   c:   43f7            mvns    r7, r6
+   e:   42a0            cmp     r0, r4
+  10:   d012            beq.n   38 <SRC0>
+  12:   6803            ldr     r3, [r0, #0]
+  14:   0e19            lsrs    r1, r3, #24
+  16:   4029            ands    r1, r5
+  18:   290b            cmp     r1, #11
+  1a:   d105            bne.n   28 <FIBS-0x8>
+  1c:   1c19            adds    r1, r3, #0
+  1e:   4031            ands    r1, r6
+  20:   1a9b            subs    r3, r3, r2
+  22:   403b            ands    r3, r7
+  24:   430b            orrs    r3, r1
+  26:   6003            str     r3, [r0, #0]
+  28:   3004            adds    r0, #4
+  2a:   3201            adds    r2, #1
+  2c:   e7ef            b.n     e <FIBS-0x22>
+        ...
+
+00000030 <FIBS>:
+  30:   0000            lsls    r0, r0, #0
+                        30: R_ARM_ABS32 filter_buffer_start
+        ...
+
+00000034 <FIBE>:
+  34:   0000            lsls    r0, r0, #0
+                        34: R_ARM_ABS32 filter_buffer_end
+        ...
+Disassembly of section Relocs:
+
+00000000 <BREL-0x3c>:
+   0:   480e            ldr     r0, [pc, #56]   (3c <BREL>)
+   2:   4642            mov     r2, r8
+   4:   1f11            subs    r1, r2, #4
+   6:   7803            ldrb    r3, [r0, #0]
+   8:   3001            adds    r0, #1
+   a:   2b00            cmp     r3, #0
+   c:   d018            beq.n   40 <DST0>
+   e:   2bf0            cmp     r3, #240
+  10:   d308            bcc.n   24 <BREL-0x18>
+  12:   240f            movs    r4, #15
+  14:   401c            ands    r4, r3
+  16:   7843            ldrb    r3, [r0, #1]
+  18:   0224            lsls    r4, r4, #8
+  1a:   18e4            adds    r4, r4, r3
+  1c:   7803            ldrb    r3, [r0, #0]
+  1e:   3002            adds    r0, #2
+  20:   0224            lsls    r4, r4, #8
+  22:   191b            adds    r3, r3, r4
+  24:   18c9            adds    r1, r1, r3
+  26:   2500            movs    r5, #0
+  28:   5d4b            ldrb    r3, [r1, r5]
+  2a:   0224            lsls    r4, r4, #8
+  2c:   18e4            adds    r4, r4, r3
+  2e:   3501            adds    r5, #1
+  30:   2d04            cmp     r5, #4
+  32:   d1f9            bne.n   28 <BREL-0x14>
+  34:   18a4            adds    r4, r4, r2
+  36:   600c            str     r4, [r1, #0]
+  38:   e7e5            b.n     6 <BREL-0x36>
+        ...
+
+0000003c <BREL>:
+  3c:   0000            lsls    r0, r0, #0
+                        3c: R_ARM_ABS32 start_of_relocs
+        ...
+Disassembly of section Imports:
+
+00000000 <.real_start_ofImports>:
+   0:   466f            mov     r7, sp
+   2:   b0ff            sub     sp, #508
+   4:   b0ff            sub     sp, #508
+   6:   b0ff            sub     sp, #508
+   8:   b0ff            sub     sp, #508
+   a:   4c1b            ldr     r4, [pc, #108]  (78 <BIMP>)
+   c:   1c20            adds    r0, r4, #0
+   e:   f000 f830       bl      64 <.real_start_ofImports+0x64>
+                        e: R_ARM_THM_CALL       .real_start_ofImports
+  12:   d035            beq.n   80 <ONAM+0x4>
+  14:   4919            ldr     r1, [pc, #100]  (7c <ONAM>)
+  16:   1840            adds    r0, r0, r1
+  18:   4669            mov     r1, sp
+  1a:   7802            ldrb    r2, [r0, #0]
+  1c:   3001            adds    r0, #1
+  1e:   800a            strh    r2, [r1, #0]
+  20:   3102            adds    r1, #2
+  22:   2a00            cmp     r2, #0
+  24:   d1f9            bne.n   1a <.real_start_ofImports+0x1a>
+  26:   4668            mov     r0, sp
+  28:   f000 f838       bl      74 <.real_start_ofImports+0x74>
+                        28: R_ARM_THM_CALL      .real_start_ofImports
+  2c:   1c06            adds    r6, r0, #0
+  2e:   1d20            adds    r0, r4, #4
+  30:   f000 f830       bl      64 <.real_start_ofImports+0x64>
+                        30: R_ARM_THM_CALL      .real_start_ofImports
+  34:   4645            mov     r5, r8
+  36:   182d            adds    r5, r5, r0
+  38:   3408            adds    r4, #8
+  3a:   7820            ldrb    r0, [r4, #0]
+  3c:   3401            adds    r4, #1
+  3e:   2801            cmp     r0, #1
+  40:   d4e4            bmi.n   c <.real_start_ofImports+0xc>
+  42:   d105            bne.n   50 <.real_start_ofImports+0x50>
+  44:   1c21            adds    r1, r4, #0
+  46:   7820            ldrb    r0, [r4, #0]
+  48:   3401            adds    r4, #1
+  4a:   2800            cmp     r0, #0
+  4c:   d1fb            bne.n   46 <.real_start_ofImports+0x46>
+  4e:   e004            b.n     5a <.real_start_ofImports+0x5a>
+  50:   7820            ldrb    r0, [r4, #0]
+  52:   7861            ldrb    r1, [r4, #1]
+  54:   3402            adds    r4, #2
+  56:   0209            lsls    r1, r1, #8
+  58:   1809            adds    r1, r1, r0
+  5a:   1c30            adds    r0, r6, #0
+  5c:   f000 f839       bl      76 <.real_start_ofImports+0x76>
+                        5c: R_ARM_THM_CALL      .real_start_ofImports
+  60:   c501            stmia   r5!, {r0}
+  62:   e7ea            b.n     3a <.real_start_ofImports+0x3a>
+  64:   2103            movs    r1, #3
+  66:   5c43            ldrb    r3, [r0, r1]
+  68:   0212            lsls    r2, r2, #8
+  6a:   18d2            adds    r2, r2, r3
+  6c:   3901            subs    r1, #1
+  6e:   d5fa            bpl.n   66 <.real_start_ofImports+0x66>
+  70:   1c10            adds    r0, r2, #0
+  72:   4770            bx      lr
+  74:   4758            bx      fp
+  76:   4750            bx      sl
+
+00000078 <BIMP>:
+  78:   0000            lsls    r0, r0, #0
+                        78: R_ARM_ABS32 start_of_imports
+        ...
+
+0000007c <ONAM>:
+  7c:   0000            lsls    r0, r0, #0
+                        7c: R_ARM_ABS32 start_of_dll_names
+  7e:   0000            lsls    r0, r0, #0
+  80:   46bd            mov     sp, r7
+Disassembly of section ProcessEnd:
+
+00000000 <ProcessEnd>:
+   0:   bc06            pop     {r1, r2}
+   2:   2004            movs    r0, #4
+   4:   4696            mov     lr, r2
+   6:   4708            bx      r1
+Disassembly of section UPX1HEAD:
+
+00000000 <UPX1HEAD>:
+   0:   5055            str     r5, [r2, r1]
+   2:   2158            movs    r1, #88
+   4:   d8a1            bhi.n   ffffff4a <start_of_dll_names+0xffffff4a>
+   6:   d5d0            bpl.n   ffffffaa <start_of_dll_names+0xffffffaa>
+        ...
+  1c:   0000            lsls    r0, r0, #0
+  1e:   2d00            cmp     r5, #0
+Disassembly of section .ucl_nrv2b_decompress_8:
+
+00000000 <.ucl_nrv2b_decompress_8>:
+   0:   1809            adds    r1, r1, r0
+   2:   b5fe            push    {r1, r2, r3, r4, r5, r6, r7, lr}
+   4:   2401            movs    r4, #1
+   6:   4265            negs    r5, r4
+   8:   07e4            lsls    r4, r4, #31
+   a:   270d            movs    r7, #13
+   c:   023f            lsls    r7, r7, #8
+   e:   e00f            b.n     30 <start_of_dll_names+0x30>
+  10:   bc1a            pop     {r1, r3, r4}
+  12:   1a40            subs    r0, r0, r1
+  14:   1ad2            subs    r2, r2, r3
+  16:   6022            str     r2, [r4, #0]
+  18:   bcf0            pop     {r4, r5, r6, r7}
+  1a:   bc02            pop     {r1}
+  1c:   4708            bx      r1
+  1e:   7804            ldrb    r4, [r0, #0]
+  20:   4164            adcs    r4, r4
+  22:   3001            adds    r0, #1
+  24:   0624            lsls    r4, r4, #24
+  26:   46f7            mov     pc, lr
+  28:   7803            ldrb    r3, [r0, #0]
+  2a:   3001            adds    r0, #1
+  2c:   7013            strb    r3, [r2, #0]
+  2e:   3201            adds    r2, #1
+  30:   1924            adds    r4, r4, r4
+  32:   46fe            mov     lr, pc
+  34:   d0f3            beq.n   1e <start_of_dll_names+0x1e>
+  36:   d2f7            bcs.n   28 <start_of_dll_names+0x28>
+  38:   2101            movs    r1, #1
+  3a:   1924            adds    r4, r4, r4
+  3c:   46fe            mov     lr, pc
+  3e:   d0ee            beq.n   1e <start_of_dll_names+0x1e>
+  40:   4149            adcs    r1, r1
+  42:   1924            adds    r4, r4, r4
+  44:   46fe            mov     lr, pc
+  46:   d0ea            beq.n   1e <start_of_dll_names+0x1e>
+  48:   d3f7            bcc.n   3a <start_of_dll_names+0x3a>
+  4a:   1ecb            subs    r3, r1, #3
+  4c:   2100            movs    r1, #0
+  4e:   d305            bcc.n   5c <start_of_dll_names+0x5c>
+  50:   021b            lsls    r3, r3, #8
+  52:   7805            ldrb    r5, [r0, #0]
+  54:   3001            adds    r0, #1
+  56:   431d            orrs    r5, r3
+  58:   43ed            mvns    r5, r5
+  5a:   d0d9            beq.n   10 <start_of_dll_names+0x10>
+  5c:   1924            adds    r4, r4, r4
+  5e:   46fe            mov     lr, pc
+  60:   d0dd            beq.n   1e <start_of_dll_names+0x1e>
+  62:   4149            adcs    r1, r1
+  64:   1924            adds    r4, r4, r4
+  66:   46fe            mov     lr, pc
+  68:   d0d9            beq.n   1e <start_of_dll_names+0x1e>
+  6a:   4149            adcs    r1, r1
+  6c:   d109            bne.n   82 <start_of_dll_names+0x82>
+  6e:   2101            movs    r1, #1
+  70:   1924            adds    r4, r4, r4
+  72:   46fe            mov     lr, pc
+  74:   d0d3            beq.n   1e <start_of_dll_names+0x1e>
+  76:   4149            adcs    r1, r1
+  78:   1924            adds    r4, r4, r4
+  7a:   46fe            mov     lr, pc
+  7c:   d0cf            beq.n   1e <start_of_dll_names+0x1e>
+  7e:   d3f7            bcc.n   70 <start_of_dll_names+0x70>
+  80:   3102            adds    r1, #2
+  82:   3101            adds    r1, #1
+  84:   42fd            cmn     r5, r7
+  86:   d200            bcs.n   8a <start_of_dll_names+0x8a>
+  88:   3101            adds    r1, #1
+  8a:   7813            ldrb    r3, [r2, #0]
+  8c:   5d53            ldrb    r3, [r2, r5]
+  8e:   7013            strb    r3, [r2, #0]
+  90:   3201            adds    r2, #1
+  92:   3901            subs    r1, #1
+  94:   d1fa            bne.n   8c <start_of_dll_names+0x8c>
+  96:   e7cb            b.n     30 <start_of_dll_names+0x30>
+Disassembly of section Call2B:
+
+00000000 <Call2B>:
+   0:   f7ff fffe       bl      0 <Call2B>
+                        0: R_ARM_THM_CALL       .ucl_nrv2b_decompress_8
+Disassembly of section .ucl_nrv2e_decompress_8:
+
+00000000 <.ucl_nrv2e_decompress_8>:
+   0:   b5fc            push    {r2, r3, r4, r5, r6, r7, lr}
+   2:   180f            adds    r7, r1, r0
+   4:   2401            movs    r4, #1
+   6:   4265            negs    r5, r4
+   8:   07e4            lsls    r4, r4, #31
+   a:   2605            movs    r6, #5
+   c:   0236            lsls    r6, r6, #8
+   e:   e00f            b.n     30 <.ucl_nrv2e_decompress_8+0x30>
+  10:   bc18            pop     {r3, r4}
+  12:   1bc0            subs    r0, r0, r7
+  14:   1ad2            subs    r2, r2, r3
+  16:   6022            str     r2, [r4, #0]
+  18:   bcf0            pop     {r4, r5, r6, r7}
+  1a:   bc02            pop     {r1}
+  1c:   4708            bx      r1
+  1e:   7804            ldrb    r4, [r0, #0]
+  20:   4164            adcs    r4, r4
+  22:   3001            adds    r0, #1
+  24:   0624            lsls    r4, r4, #24
+  26:   46f7            mov     pc, lr
+  28:   7803            ldrb    r3, [r0, #0]
+  2a:   3001            adds    r0, #1
+  2c:   7013            strb    r3, [r2, #0]
+  2e:   3201            adds    r2, #1
+  30:   1924            adds    r4, r4, r4
+  32:   46fe            mov     lr, pc
+  34:   d0f3            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  36:   d2f7            bcs.n   28 <.ucl_nrv2e_decompress_8+0x28>
+  38:   2101            movs    r1, #1
+  3a:   e004            b.n     46 <.ucl_nrv2e_decompress_8+0x46>
+  3c:   3901            subs    r1, #1
+  3e:   1924            adds    r4, r4, r4
+  40:   46fe            mov     lr, pc
+  42:   d0ec            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  44:   4149            adcs    r1, r1
+  46:   1924            adds    r4, r4, r4
+  48:   46fe            mov     lr, pc
+  4a:   d0e8            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  4c:   4149            adcs    r1, r1
+  4e:   1924            adds    r4, r4, r4
+  50:   46fe            mov     lr, pc
+  52:   d0e4            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  54:   d3f2            bcc.n   3c <.ucl_nrv2e_decompress_8+0x3c>
+  56:   1ecb            subs    r3, r1, #3
+  58:   2100            movs    r1, #0
+  5a:   d308            bcc.n   6e <.ucl_nrv2e_decompress_8+0x6e>
+  5c:   021b            lsls    r3, r3, #8
+  5e:   7805            ldrb    r5, [r0, #0]
+  60:   3001            adds    r0, #1
+  62:   431d            orrs    r5, r3
+  64:   43ed            mvns    r5, r5
+  66:   d0d3            beq.n   10 <.ucl_nrv2e_decompress_8+0x10>
+  68:   106d            asrs    r5, r5, #1
+  6a:   d213            bcs.n   94 <.ucl_nrv2e_decompress_8+0x94>
+  6c:   e003            b.n     76 <.ucl_nrv2e_decompress_8+0x76>
+  6e:   1924            adds    r4, r4, r4
+  70:   46fe            mov     lr, pc
+  72:   d0d4            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  74:   d20e            bcs.n   94 <.ucl_nrv2e_decompress_8+0x94>
+  76:   2101            movs    r1, #1
+  78:   1924            adds    r4, r4, r4
+  7a:   46fe            mov     lr, pc
+  7c:   d0cf            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  7e:   d209            bcs.n   94 <.ucl_nrv2e_decompress_8+0x94>
+  80:   1924            adds    r4, r4, r4
+  82:   46fe            mov     lr, pc
+  84:   d0cb            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  86:   4149            adcs    r1, r1
+  88:   1924            adds    r4, r4, r4
+  8a:   46fe            mov     lr, pc
+  8c:   d0c7            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  8e:   d3f7            bcc.n   80 <.ucl_nrv2e_decompress_8+0x80>
+  90:   3104            adds    r1, #4
+  92:   e004            b.n     9e <.ucl_nrv2e_decompress_8+0x9e>
+  94:   1924            adds    r4, r4, r4
+  96:   46fe            mov     lr, pc
+  98:   d0c1            beq.n   1e <.ucl_nrv2e_decompress_8+0x1e>
+  9a:   4149            adcs    r1, r1
+  9c:   3102            adds    r1, #2
+  9e:   42ee            cmn     r6, r5
+  a0:   d200            bcs.n   a4 <.ucl_nrv2e_decompress_8+0xa4>
+  a2:   3101            adds    r1, #1
+  a4:   7813            ldrb    r3, [r2, #0]
+  a6:   5d53            ldrb    r3, [r2, r5]
+  a8:   7013            strb    r3, [r2, #0]
+  aa:   3201            adds    r2, #1
+  ac:   3901            subs    r1, #1
+  ae:   d1fa            bne.n   a6 <.ucl_nrv2e_decompress_8+0xa6>
+  b0:   e7be            b.n     30 <.ucl_nrv2e_decompress_8+0x30>
+Disassembly of section Call2E:
+
+00000000 <Call2E>:
+   0:   f7ff fffe       bl      0 <Call2E>
+                        0: R_ARM_THM_CALL       .ucl_nrv2e_decompress_8
+Disassembly of section CallLZMA:
+
+00000000 <CallLZMA>:
+   0:   a708            add     r7, pc, #32     (adr r7,24 <CallLZMA+0x24>)
+   2:   cf78            ldmia   r7!, {r3, r4, r5, r6}
+   4:   466f            mov     r7, sp
+   6:   446c            add     r4, sp
+   8:   2100            movs    r1, #0
+   a:   b402            push    {r1}
+   c:   45a5            cmp     sp, r4
+   e:   d1fc            bne.n   a <CallLZMA+0xa>
+  10:   b41c            push    {r2, r3, r4}
+  12:   1d23            adds    r3, r4, #4
+  14:   1c2a            adds    r2, r5, #0
+  16:   1c81            adds    r1, r0, #2
+  18:   1d18            adds    r0, r3, #4
+  1a:   6006            str     r6, [r0, #0]
+  1c:   f7ff fffe       bl      0 <CallLZMA>
+                        1c: R_ARM_THM_CALL      .real_start_ofLZMA_DECODE
+  20:   46bd            mov     sp, r7
+  22:   e007            b.n     34 <FIBE>
+        ...
+                        24: R_ARM_ABS32 lzma_u_len
+                        28: R_ARM_ABS32 lzma_stack_adjust
+                        2c: R_ARM_ABS32 lzma_c_len
+                        30: R_ARM_ABS32 lzma_properties
+Disassembly of section LZMA_DEC10:
+
+00000000 <LZMA_DEC10>:
+   0:   b5f0            push    {r4, r5, r6, r7, lr}
+   2:   b09f            sub     sp, #124
+   4:   9104            str     r1, [sp, #16]
+   6:   1d01            adds    r1, r0, #4
+   8:   9106            str     r1, [sp, #24]
+   a:   9303            str     r3, [sp, #12]
+   c:   1c15            adds    r5, r2, #0
+   e:   7883            ldrb    r3, [r0, #2]
+  10:   2201            movs    r2, #1
+  12:   1c11            adds    r1, r2, #0
+  14:   4099            lsls    r1, r3
+  16:   1c0b            adds    r3, r1, #0
+  18:   3b01            subs    r3, #1
+  1a:   9308            str     r3, [sp, #32]
+  1c:   7843            ldrb    r3, [r0, #1]
+  1e:   409a            lsls    r2, r3
+  20:   3a01            subs    r2, #1
+  22:   9209            str     r2, [sp, #36]
+  24:   7802            ldrb    r2, [r0, #0]
+  26:   9903            ldr     r1, [sp, #12]
+  28:   920a            str     r2, [sp, #40]
+  2a:   9a26            ldr     r2, [sp, #152]
+  2c:   2300            movs    r3, #0
+  2e:   600b            str     r3, [r1, #0]
+  30:   6013            str     r3, [r2, #0]
+  32:   9b0a            ldr     r3, [sp, #40]
+  34:   7842            ldrb    r2, [r0, #1]
+  36:   189a            adds    r2, r3, r2
+  38:   23c0            movs    r3, #192
+  3a:   48cc            ldr     r0, [pc, #816]  (36c <LZMA_DEC10+0x36c>)
+  3c:   009b            lsls    r3, r3, #2
+  3e:   4093            lsls    r3, r2
+  40:   9a06            ldr     r2, [sp, #24]
+  42:   181c            adds    r4, r3, r0
+  44:   2000            movs    r0, #0
+  46:   e004            b.n     52 <LZMA_DEC10+0x52>
+  48:   2380            movs    r3, #128
+  4a:   00db            lsls    r3, r3, #3
+  4c:   8013            strh    r3, [r2, #0]
+  4e:   3001            adds    r0, #1
+  50:   3202            adds    r2, #2
+  52:   42a0            cmp     r0, r4
+  54:   d1f8            bne.n   48 <LZMA_DEC10+0x48>
+  56:   9904            ldr     r1, [sp, #16]
+  58:   194d            adds    r5, r1, r5
+  5a:   9510            str     r5, [sp, #64]
+  5c:   2700            movs    r7, #0
+  5e:   1c0d            adds    r5, r1, #0
+  60:   2000            movs    r0, #0
+  62:   9a10            ldr     r2, [sp, #64]
+  64:   9904            ldr     r1, [sp, #16]
+  66:   1a53            subs    r3, r2, r1
+  68:   4298            cmp     r0, r3
+  6a:   d100            bne.n   6e <LZMA_DEC10+0x6e>
+  6c:   e373            b.n     756 <LZMA_DEC10+0x756>
+  6e:   782b            ldrb    r3, [r5, #0]
+  70:   023a            lsls    r2, r7, #8
+  72:   1c17            adds    r7, r2, #0
+  74:   3001            adds    r0, #1
+  76:   431f            orrs    r7, r3
+  78:   3501            adds    r5, #1
+  7a:   2805            cmp     r0, #5
+  7c:   d1f1            bne.n   62 <LZMA_DEC10+0x62>
+  7e:   2200            movs    r2, #0
+  80:   2101            movs    r1, #1
+  82:   2301            movs    r3, #1
+  84:   4694            mov     ip, r2
+  86:   4249            negs    r1, r1
+  88:   9207            str     r2, [sp, #28]
+  8a:   920b            str     r2, [sp, #44]
+  8c:   931e            str     r3, [sp, #120]
+  8e:   930c            str     r3, [sp, #48]
+  90:   930d            str     r3, [sp, #52]
+  92:   930e            str     r3, [sp, #56]
+  94:   e34a            b.n     72c <LZMA_DEC10+0x72c>
+  96:   48b6            ldr     r0, [pc, #728]  (370 <LZMA_DEC10+0x370>)
+  98:   4281            cmp     r1, r0
+  9a:   d809            bhi.n   b0 <LZMA_DEC10+0xb0>
+  9c:   9a10            ldr     r2, [sp, #64]
+  9e:   4295            cmp     r5, r2
+  a0:   d100            bne.n   a4 <LZMA_DEC10+0xa4>
+  a2:   e358            b.n     756 <LZMA_DEC10+0x756>
+  a4:   782b            ldrb    r3, [r5, #0]
+  a6:   023a            lsls    r2, r7, #8
+  a8:   1c17            adds    r7, r2, #0
+  aa:   0209            lsls    r1, r1, #8
+  ac:   431f            orrs    r7, r3
+  ae:   3501            adds    r5, #1
+  b0:   9808            ldr     r0, [sp, #32]
+  b2:   9b07            ldr     r3, [sp, #28]
+  b4:   9a0b            ldr     r2, [sp, #44]
+  b6:   4003            ands    r3, r0
+  b8:   0112            lsls    r2, r2, #4
+  ba:   9311            str     r3, [sp, #68]
+  bc:   9806            ldr     r0, [sp, #24]
+  be:   189b            adds    r3, r3, r2
+  c0:   005b            lsls    r3, r3, #1
+  c2:   18c4            adds    r4, r0, r3
+  c4:   9205            str     r2, [sp, #20]
+  c6:   8822            ldrh    r2, [r4, #0]
+  c8:   0acb            lsrs    r3, r1, #11
+  ca:   1c16            adds    r6, r2, #0
+  cc:   435e            muls    r6, r3
+  ce:   42b7            cmp     r7, r6
+  d0:   d300            bcc.n   d4 <LZMA_DEC10+0xd4>
+  d2:   e0ae            b.n     232 <LZMA_DEC10+0x232>
+  d4:   2380            movs    r3, #128
+  d6:   011b            lsls    r3, r3, #4
+  d8:   1a9b            subs    r3, r3, r2
+  da:   115b            asrs    r3, r3, #5
+  dc:   18d3            adds    r3, r2, r3
+  de:   9909            ldr     r1, [sp, #36]
+  e0:   9a07            ldr     r2, [sp, #28]
+  e2:   8023            strh    r3, [r4, #0]
+  e4:   9b0a            ldr     r3, [sp, #40]
+  e6:   400a            ands    r2, r1
+  e8:   980a            ldr     r0, [sp, #40]
+  ea:   409a            lsls    r2, r3
+  ec:   2308            movs    r3, #8
+  ee:   1a1b            subs    r3, r3, r0
+  f0:   4661            mov     r1, ip
+  f2:   4119            asrs    r1, r3
+  f4:   1852            adds    r2, r2, r1
+  f6:   0053            lsls    r3, r2, #1
+  f8:   189b            adds    r3, r3, r2
+  fa:   9a06            ldr     r2, [sp, #24]
+  fc:   025b            lsls    r3, r3, #9
+  fe:   489d            ldr     r0, [pc, #628]  (374 <LZMA_DEC10+0x374>)
+ 100:   18d3            adds    r3, r2, r3
+ 102:   990b            ldr     r1, [sp, #44]
+ 104:   1818            adds    r0, r3, r0
+ 106:   901c            str     r0, [sp, #112]
+ 108:   2906            cmp     r1, #6
+ 10a:   dc03            bgt.n   114 <LZMA_DEC10+0x114>
+ 10c:   2201            movs    r2, #1
+ 10e:   1c31            adds    r1, r6, #0
+ 110:   9212            str     r2, [sp, #72]
+ 112:   e072            b.n     1fa <LZMA_DEC10+0x1fa>
+ 114:   991e            ldr     r1, [sp, #120]
+ 116:   9807            ldr     r0, [sp, #28]
+ 118:   9a24            ldr     r2, [sp, #144]
+ 11a:   1a43            subs    r3, r0, r1
+ 11c:   5cd3            ldrb    r3, [r2, r3]
+ 11e:   9313            str     r3, [sp, #76]
+ 120:   2301            movs    r3, #1
+ 122:   9312            str     r3, [sp, #72]
+ 124:   1c31            adds    r1, r6, #0
+ 126:   4b92            ldr     r3, [pc, #584]  (370 <LZMA_DEC10+0x370>)
+ 128:   4299            cmp     r1, r3
+ 12a:   d809            bhi.n   140 <LZMA_DEC10+0x140>
+ 12c:   9810            ldr     r0, [sp, #64]
+ 12e:   4285            cmp     r5, r0
+ 130:   d100            bne.n   134 <LZMA_DEC10+0x134>
+ 132:   e310            b.n     756 <LZMA_DEC10+0x756>
+ 134:   782b            ldrb    r3, [r5, #0]
+ 136:   023a            lsls    r2, r7, #8
+ 138:   1c17            adds    r7, r2, #0
+ 13a:   0209            lsls    r1, r1, #8
+ 13c:   431f            orrs    r7, r3
+ 13e:   3501            adds    r5, #1
+ 140:   9a13            ldr     r2, [sp, #76]
+ 142:   2380            movs    r3, #128
+ 144:   0052            lsls    r2, r2, #1
+ 146:   005b            lsls    r3, r3, #1
+ 148:   1c16            adds    r6, r2, #0
+ 14a:   981c            ldr     r0, [sp, #112]
+ 14c:   9213            str     r2, [sp, #76]
+ 14e:   401e            ands    r6, r3
+ 150:   9a12            ldr     r2, [sp, #72]
+ 152:   0073            lsls    r3, r6, #1
+ 154:   0052            lsls    r2, r2, #1
+ 156:   18c3            adds    r3, r0, r3
+ 158:   2080            movs    r0, #128
+ 15a:   189b            adds    r3, r3, r2
+ 15c:   0080            lsls    r0, r0, #2
+ 15e:   181c            adds    r4, r3, r0
+ 160:   9201            str     r2, [sp, #4]
+ 162:   8822            ldrh    r2, [r4, #0]
+ 164:   0acb            lsrs    r3, r1, #11
+ 166:   1c10            adds    r0, r2, #0
+ 168:   4358            muls    r0, r3
+ 16a:   4287            cmp     r7, r0
+ 16c:   d20b            bcs.n   186 <LZMA_DEC10+0x186>
+ 16e:   2380            movs    r3, #128
+ 170:   011b            lsls    r3, r3, #4
+ 172:   1a9b            subs    r3, r3, r2
+ 174:   115b            asrs    r3, r3, #5
+ 176:   9901            ldr     r1, [sp, #4]
+ 178:   18d3            adds    r3, r2, r3
+ 17a:   8023            strh    r3, [r4, #0]
+ 17c:   9112            str     r1, [sp, #72]
+ 17e:   2e00            cmp     r6, #0
+ 180:   d12f            bne.n   1e2 <LZMA_DEC10+0x1e2>
+ 182:   1c01            adds    r1, r0, #0
+ 184:   e00b            b.n     19e <LZMA_DEC10+0x19e>
+ 186:   0953            lsrs    r3, r2, #5
+ 188:   1ad3            subs    r3, r2, r3
+ 18a:   8023            strh    r3, [r4, #0]
+ 18c:   9b12            ldr     r3, [sp, #72]
+ 18e:   9a12            ldr     r2, [sp, #72]
+ 190:   3301            adds    r3, #1
+ 192:   18d2            adds    r2, r2, r3
+ 194:   1a09            subs    r1, r1, r0
+ 196:   1a3f            subs    r7, r7, r0
+ 198:   9212            str     r2, [sp, #72]
+ 19a:   2e00            cmp     r6, #0
+ 19c:   d02d            beq.n   1fa <LZMA_DEC10+0x1fa>
+ 19e:   9b12            ldr     r3, [sp, #72]
+ 1a0:   2bff            cmp     r3, #255
+ 1a2:   dc2d            bgt.n   200 <LZMA_DEC10+0x200>
+ 1a4:   e7bf            b.n     126 <LZMA_DEC10+0x126>
+ 1a6:   4b72            ldr     r3, [pc, #456]  (370 <LZMA_DEC10+0x370>)
+ 1a8:   4299            cmp     r1, r3
+ 1aa:   d809            bhi.n   1c0 <LZMA_DEC10+0x1c0>
+ 1ac:   9810            ldr     r0, [sp, #64]
+ 1ae:   4285            cmp     r5, r0
+ 1b0:   d100            bne.n   1b4 <LZMA_DEC10+0x1b4>
+ 1b2:   e2d0            b.n     756 <LZMA_DEC10+0x756>
+ 1b4:   782b            ldrb    r3, [r5, #0]
+ 1b6:   023a            lsls    r2, r7, #8
+ 1b8:   1c17            adds    r7, r2, #0
+ 1ba:   0209            lsls    r1, r1, #8
+ 1bc:   431f            orrs    r7, r3
+ 1be:   3501            adds    r5, #1
+ 1c0:   9a12            ldr     r2, [sp, #72]
+ 1c2:   9b1c            ldr     r3, [sp, #112]
+ 1c4:   0056            lsls    r6, r2, #1
+ 1c6:   199c            adds    r4, r3, r6
+ 1c8:   8822            ldrh    r2, [r4, #0]
+ 1ca:   0acb            lsrs    r3, r1, #11
+ 1cc:   1c10            adds    r0, r2, #0
+ 1ce:   4358            muls    r0, r3
+ 1d0:   4287            cmp     r7, r0
+ 1d2:   d208            bcs.n   1e6 <LZMA_DEC10+0x1e6>
+ 1d4:   2380            movs    r3, #128
+ 1d6:   011b            lsls    r3, r3, #4
+ 1d8:   1a9b            subs    r3, r3, r2
+ 1da:   115b            asrs    r3, r3, #5
+ 1dc:   18d3            adds    r3, r2, r3
+ 1de:   8023            strh    r3, [r4, #0]
+ 1e0:   9612            str     r6, [sp, #72]
+ 1e2:   1c01            adds    r1, r0, #0
+ 1e4:   e009            b.n     1fa <LZMA_DEC10+0x1fa>
+ 1e6:   0953            lsrs    r3, r2, #5
+ 1e8:   1ad3            subs    r3, r2, r3
+ 1ea:   8023            strh    r3, [r4, #0]
+ 1ec:   9b12            ldr     r3, [sp, #72]
+ 1ee:   1a09            subs    r1, r1, r0
+ 1f0:   1a3f            subs    r7, r7, r0
+ 1f2:   9812            ldr     r0, [sp, #72]
+ 1f4:   3301            adds    r3, #1
+ 1f6:   18c0            adds    r0, r0, r3
+ 1f8:   9012            str     r0, [sp, #72]
+ 1fa:   9a12            ldr     r2, [sp, #72]
+ 1fc:   2aff            cmp     r2, #255
+ 1fe:   ddd2            ble.n   1a6 <LZMA_DEC10+0x1a6>
+ 200:   9812            ldr     r0, [sp, #72]
+ 202:   0603            lsls    r3, r0, #24
+ 204:   0e1b            lsrs    r3, r3, #24
+ 206:   1c18            adds    r0, r3, #0
+ 208:   9a24            ldr     r2, [sp, #144]
+ 20a:   469c            mov     ip, r3
+ 20c:   9b07            ldr     r3, [sp, #28]
+ 20e:   54d0            strb    r0, [r2, r3]
+ 210:   1c1a            adds    r2, r3, #0
+ 212:   9b0b            ldr     r3, [sp, #44]
+ 214:   3201            adds    r2, #1
+ 216:   2b03            cmp     r3, #3
+ 218:   dc01            bgt.n   21e <LZMA_DEC10+0x21e>
+ 21a:   2000            movs    r0, #0
+ 21c:   e007            b.n     22e <LZMA_DEC10+0x22e>
+ 21e:   9b0b            ldr     r3, [sp, #44]
+ 220:   2b09            cmp     r3, #9
+ 222:   dc02            bgt.n   22a <LZMA_DEC10+0x22a>
+ 224:   3b03            subs    r3, #3
+ 226:   930b            str     r3, [sp, #44]
+ 228:   e27f            b.n     72a <LZMA_DEC10+0x72a>
+ 22a:   980b            ldr     r0, [sp, #44]
+ 22c:   3806            subs    r0, #6
+ 22e:   900b            str     r0, [sp, #44]
+ 230:   e27b            b.n     72a <LZMA_DEC10+0x72a>
+ 232:   1b88            subs    r0, r1, r6
+ 234:   0953            lsrs    r3, r2, #5
+ 236:   494e            ldr     r1, [pc, #312]  (370 <LZMA_DEC10+0x370>)
+ 238:   1ad3            subs    r3, r2, r3
+ 23a:   1bbf            subs    r7, r7, r6
+ 23c:   8023            strh    r3, [r4, #0]
+ 23e:   4288            cmp     r0, r1
+ 240:   d809            bhi.n   256 <LZMA_DEC10+0x256>
+ 242:   9a10            ldr     r2, [sp, #64]
+ 244:   4295            cmp     r5, r2
+ 246:   d100            bne.n   24a <LZMA_DEC10+0x24a>
+ 248:   e285            b.n     756 <LZMA_DEC10+0x756>
+ 24a:   782b            ldrb    r3, [r5, #0]
+ 24c:   023a            lsls    r2, r7, #8
+ 24e:   1c17            adds    r7, r2, #0
+ 250:   0200            lsls    r0, r0, #8
+ 252:   431f            orrs    r7, r3
+ 254:   3501            adds    r5, #1
+ 256:   990b            ldr     r1, [sp, #44]
+ 258:   9a06            ldr     r2, [sp, #24]
+ 25a:   004b            lsls    r3, r1, #1
+ 25c:   18d2            adds    r2, r2, r3
+ 25e:   26c0            movs    r6, #192
+ 260:   4694            mov     ip, r2
+ 262:   0076            lsls    r6, r6, #1
+ 264:   4466            add     r6, ip
+ 266:   8832            ldrh    r2, [r6, #0]
+ 268:   0ac3            lsrs    r3, r0, #11
+ 26a:   1c11            adds    r1, r2, #0
+ 26c:   4359            muls    r1, r3
+ 26e:   428f            cmp     r7, r1
+ 270:   d218            bcs.n   2a4 <LZMA_DEC10+0x2a4>
+ 272:   2380            movs    r3, #128
+ 274:   011b            lsls    r3, r3, #4
+ 276:   1a9b            subs    r3, r3, r2
+ 278:   115b            asrs    r3, r3, #5
+ 27a:   18d3            adds    r3, r2, r3
+ 27c:   8033            strh    r3, [r6, #0]
+ 27e:   9b0b            ldr     r3, [sp, #44]
+ 280:   2b06            cmp     r3, #6
+ 282:   dc02            bgt.n   28a <LZMA_DEC10+0x28a>
+ 284:   2000            movs    r0, #0
+ 286:   900b            str     r0, [sp, #44]
+ 288:   e001            b.n     28e <LZMA_DEC10+0x28e>
+ 28a:   2203            movs    r2, #3
+ 28c:   920b            str     r2, [sp, #44]
+ 28e:   9b06            ldr     r3, [sp, #24]
+ 290:   4839            ldr     r0, [pc, #228]  (378 <LZMA_DEC10+0x378>)
+ 292:   181e            adds    r6, r3, r0
+ 294:   981e            ldr     r0, [sp, #120]
+ 296:   9a0d            ldr     r2, [sp, #52]
+ 298:   9b0c            ldr     r3, [sp, #48]
+ 29a:   900c            str     r0, [sp, #48]
+ 29c:   1c08            adds    r0, r1, #0
+ 29e:   920e            str     r2, [sp, #56]
+ 2a0:   930d            str     r3, [sp, #52]
+ 2a2:   e0d1            b.n     448 <LZMA_DEC10+0x448>
+ 2a4:   1a44            subs    r4, r0, r1
+ 2a6:   1a7f            subs    r7, r7, r1
+ 2a8:   0953            lsrs    r3, r2, #5
+ 2aa:   4931            ldr     r1, [pc, #196]  (370 <LZMA_DEC10+0x370>)
+ 2ac:   1ad3            subs    r3, r2, r3
+ 2ae:   8033            strh    r3, [r6, #0]
+ 2b0:   428c            cmp     r4, r1
+ 2b2:   d809            bhi.n   2c8 <LZMA_DEC10+0x2c8>
+ 2b4:   9a10            ldr     r2, [sp, #64]
+ 2b6:   4295            cmp     r5, r2
+ 2b8:   d100            bne.n   2bc <LZMA_DEC10+0x2bc>
+ 2ba:   e24c            b.n     756 <LZMA_DEC10+0x756>
+ 2bc:   782b            ldrb    r3, [r5, #0]
+ 2be:   023a            lsls    r2, r7, #8
+ 2c0:   1c17            adds    r7, r2, #0
+ 2c2:   0224            lsls    r4, r4, #8
+ 2c4:   431f            orrs    r7, r3
+ 2c6:   3501            adds    r5, #1
+ 2c8:   26cc            movs    r6, #204
+ 2ca:   0076            lsls    r6, r6, #1
+ 2cc:   4466            add     r6, ip
+ 2ce:   8830            ldrh    r0, [r6, #0]
+ 2d0:   0ae3            lsrs    r3, r4, #11
+ 2d2:   1c02            adds    r2, r0, #0
+ 2d4:   435a            muls    r2, r3
+ 2d6:   4297            cmp     r7, r2
+ 2d8:   d250            bcs.n   37c <LZMA_DEC10+0x37c>
+ 2da:   2380            movs    r3, #128
+ 2dc:   011b            lsls    r3, r3, #4
+ 2de:   1a1b            subs    r3, r3, r0
+ 2e0:   115b            asrs    r3, r3, #5
+ 2e2:   18c3            adds    r3, r0, r3
+ 2e4:   8033            strh    r3, [r6, #0]
+ 2e6:   4b22            ldr     r3, [pc, #136]  (370 <LZMA_DEC10+0x370>)
+ 2e8:   429a            cmp     r2, r3
+ 2ea:   d901            bls.n   2f0 <LZMA_DEC10+0x2f0>
+ 2ec:   1c10            adds    r0, r2, #0
+ 2ee:   e009            b.n     304 <LZMA_DEC10+0x304>
+ 2f0:   9810            ldr     r0, [sp, #64]
+ 2f2:   4285            cmp     r5, r0
+ 2f4:   d100            bne.n   2f8 <LZMA_DEC10+0x2f8>
+ 2f6:   e22e            b.n     756 <LZMA_DEC10+0x756>
+ 2f8:   782b            ldrb    r3, [r5, #0]
+ 2fa:   0210            lsls    r0, r2, #8
+ 2fc:   023a            lsls    r2, r7, #8
+ 2fe:   1c17            adds    r7, r2, #0
+ 300:   431f            orrs    r7, r3
+ 302:   3501            adds    r5, #1
+ 304:   9905            ldr     r1, [sp, #20]
+ 306:   9a06            ldr     r2, [sp, #24]
+ 308:   004b            lsls    r3, r1, #1
+ 30a:   9911            ldr     r1, [sp, #68]
+ 30c:   18d3            adds    r3, r2, r3
+ 30e:   004a            lsls    r2, r1, #1
+ 310:   189b            adds    r3, r3, r2
+ 312:   22f0            movs    r2, #240
+ 314:   0052            lsls    r2, r2, #1
+ 316:   189c            adds    r4, r3, r2
+ 318:   8822            ldrh    r2, [r4, #0]
+ 31a:   0ac3            lsrs    r3, r0, #11
+ 31c:   1c16            adds    r6, r2, #0
+ 31e:   435e            muls    r6, r3
+ 320:   42b7            cmp     r7, r6
+ 322:   d21c            bcs.n   35e <LZMA_DEC10+0x35e>
+ 324:   2380            movs    r3, #128
+ 326:   011b            lsls    r3, r3, #4
+ 328:   1a9b            subs    r3, r3, r2
+ 32a:   115b            asrs    r3, r3, #5
+ 32c:   18d3            adds    r3, r2, r3
+ 32e:   8023            strh    r3, [r4, #0]
+ 330:   9b07            ldr     r3, [sp, #28]
+ 332:   2b00            cmp     r3, #0
+ 334:   d100            bne.n   338 <LZMA_DEC10+0x338>
+ 336:   e20e            b.n     756 <LZMA_DEC10+0x756>
+ 338:   980b            ldr     r0, [sp, #44]
+ 33a:   2806            cmp     r0, #6
+ 33c:   dc02            bgt.n   344 <LZMA_DEC10+0x344>
+ 33e:   2109            movs    r1, #9
+ 340:   910b            str     r1, [sp, #44]
+ 342:   e001            b.n     348 <LZMA_DEC10+0x348>
+ 344:   220b            movs    r2, #11
+ 346:   920b            str     r2, [sp, #44]
+ 348:   9807            ldr     r0, [sp, #28]
+ 34a:   991e            ldr     r1, [sp, #120]
+ 34c:   9a24            ldr     r2, [sp, #144]
+ 34e:   1a43            subs    r3, r0, r1
+ 350:   5cd3            ldrb    r3, [r2, r3]
+ 352:   5413            strb    r3, [r2, r0]
+ 354:   1c02            adds    r2, r0, #0
+ 356:   469c            mov     ip, r3
+ 358:   3201            adds    r2, #1
+ 35a:   1c31            adds    r1, r6, #0
+ 35c:   e1e5            b.n     72a <LZMA_DEC10+0x72a>
+ 35e:   0953            lsrs    r3, r2, #5
+ 360:   1ad3            subs    r3, r2, r3
+ 362:   1b80            subs    r0, r0, r6
+ 364:   1bbf            subs    r7, r7, r6
+ 366:   8023            strh    r3, [r4, #0]
+ 368:   e063            b.n     432 <LZMA_DEC10+0x432>
+ 36a:   0000            lsls    r0, r0, #0
+ 36c:   0736            lsls    r6, r6, #28
+ 36e:   0000            lsls    r0, r0, #0
+ 370:   ffff 00ff       undefined
+ 374:   0e6c            lsrs    r4, r5, #25
+ 376:   0000            lsls    r0, r0, #0
+ 378:   0664            lsls    r4, r4, #25
+ 37a:   0000            lsls    r0, r0, #0
+ 37c:   0943            lsrs    r3, r0, #5
+ 37e:   1ac3            subs    r3, r0, r3
+ 380:   48d5            ldr     r0, [pc, #852]  (6d8 <LZMA_DEC10+0x6d8>)
+ 382:   1aa4            subs    r4, r4, r2
+ 384:   1abf            subs    r7, r7, r2
+ 386:   8033            strh    r3, [r6, #0]
+ 388:   4284            cmp     r4, r0
+ 38a:   d809            bhi.n   3a0 <LZMA_DEC10+0x3a0>
+ 38c:   9910            ldr     r1, [sp, #64]
+ 38e:   428d            cmp     r5, r1
+ 390:   d100            bne.n   394 <LZMA_DEC10+0x394>
+ 392:   e1e0            b.n     756 <LZMA_DEC10+0x756>
+ 394:   782b            ldrb    r3, [r5, #0]
+ 396:   023a            lsls    r2, r7, #8
+ 398:   1c17            adds    r7, r2, #0
+ 39a:   0224            lsls    r4, r4, #8
+ 39c:   431f            orrs    r7, r3
+ 39e:   3501            adds    r5, #1
+ 3a0:   26d8            movs    r6, #216
+ 3a2:   0076            lsls    r6, r6, #1
+ 3a4:   4466            add     r6, ip
+ 3a6:   8832            ldrh    r2, [r6, #0]
+ 3a8:   0ae3            lsrs    r3, r4, #11
+ 3aa:   1c10            adds    r0, r2, #0
+ 3ac:   4358            muls    r0, r3
+ 3ae:   4287            cmp     r7, r0
+ 3b0:   d209            bcs.n   3c6 <LZMA_DEC10+0x3c6>
+ 3b2:   2380            movs    r3, #128
+ 3b4:   011b            lsls    r3, r3, #4
+ 3b6:   1a9b            subs    r3, r3, r2
+ 3b8:   115b            asrs    r3, r3, #5
+ 3ba:   18d3            adds    r3, r2, r3
+ 3bc:   8033            strh    r3, [r6, #0]
+ 3be:   9a0c            ldr     r2, [sp, #48]
+ 3c0:   9b1e            ldr     r3, [sp, #120]
+ 3c2:   930c            str     r3, [sp, #48]
+ 3c4:   e034            b.n     430 <LZMA_DEC10+0x430>
+ 3c6:   1a21            subs    r1, r4, r0
+ 3c8:   1a3f            subs    r7, r7, r0
+ 3ca:   0953            lsrs    r3, r2, #5
+ 3cc:   48c2            ldr     r0, [pc, #776]  (6d8 <LZMA_DEC10+0x6d8>)
+ 3ce:   1ad3            subs    r3, r2, r3
+ 3d0:   8033            strh    r3, [r6, #0]
+ 3d2:   4281            cmp     r1, r0
+ 3d4:   d809            bhi.n   3ea <LZMA_DEC10+0x3ea>
+ 3d6:   9a10            ldr     r2, [sp, #64]
+ 3d8:   4295            cmp     r5, r2
+ 3da:   d100            bne.n   3de <LZMA_DEC10+0x3de>
+ 3dc:   e1bb            b.n     756 <LZMA_DEC10+0x756>
+ 3de:   782b            ldrb    r3, [r5, #0]
+ 3e0:   023a            lsls    r2, r7, #8
+ 3e2:   1c17            adds    r7, r2, #0
+ 3e4:   0209            lsls    r1, r1, #8
+ 3e6:   431f            orrs    r7, r3
+ 3e8:   3501            adds    r5, #1
+ 3ea:   26e4            movs    r6, #228
+ 3ec:   0076            lsls    r6, r6, #1
+ 3ee:   4466            add     r6, ip
+ 3f0:   8832            ldrh    r2, [r6, #0]
+ 3f2:   0acb            lsrs    r3, r1, #11
+ 3f4:   1c14            adds    r4, r2, #0
+ 3f6:   435c            muls    r4, r3
+ 3f8:   42a7            cmp     r7, r4
+ 3fa:   d20d            bcs.n   418 <LZMA_DEC10+0x418>
+ 3fc:   2380            movs    r3, #128
+ 3fe:   011b            lsls    r3, r3, #4
+ 400:   1a9b            subs    r3, r3, r2
+ 402:   115b            asrs    r3, r3, #5
+ 404:   18d3            adds    r3, r2, r3
+ 406:   981e            ldr     r0, [sp, #120]
+ 408:   9a0d            ldr     r2, [sp, #52]
+ 40a:   8033            strh    r3, [r6, #0]
+ 40c:   9b0c            ldr     r3, [sp, #48]
+ 40e:   900c            str     r0, [sp, #48]
+ 410:   1c20            adds    r0, r4, #0
+ 412:   930d            str     r3, [sp, #52]
+ 414:   921e            str     r2, [sp, #120]
+ 416:   e00c            b.n     432 <LZMA_DEC10+0x432>
+ 418:   0953            lsrs    r3, r2, #5
+ 41a:   1b08            subs    r0, r1, r4
+ 41c:   990d            ldr     r1, [sp, #52]
+ 41e:   1ad3            subs    r3, r2, r3
+ 420:   8033            strh    r3, [r6, #0]
+ 422:   9a0e            ldr     r2, [sp, #56]
+ 424:   9b0c            ldr     r3, [sp, #48]
+ 426:   910e            str     r1, [sp, #56]
+ 428:   991e            ldr     r1, [sp, #120]
+ 42a:   930d            str     r3, [sp, #52]
+ 42c:   910c            str     r1, [sp, #48]
+ 42e:   1b3f            subs    r7, r7, r4
+ 430:   921e            str     r2, [sp, #120]
+ 432:   9a0b            ldr     r2, [sp, #44]
+ 434:   2a06            cmp     r2, #6
+ 436:   dc02            bgt.n   43e <LZMA_DEC10+0x43e>
+ 438:   2308            movs    r3, #8
+ 43a:   930b            str     r3, [sp, #44]
+ 43c:   e001            b.n     442 <LZMA_DEC10+0x442>
+ 43e:   210b            movs    r1, #11
+ 440:   910b            str     r1, [sp, #44]
+ 442:   9a06            ldr     r2, [sp, #24]
+ 444:   4ba5            ldr     r3, [pc, #660]  (6dc <LZMA_DEC10+0x6dc>)
+ 446:   18d6            adds    r6, r2, r3
+ 448:   49a3            ldr     r1, [pc, #652]  (6d8 <LZMA_DEC10+0x6d8>)
+ 44a:   468c            mov     ip, r1
+ 44c:   4560            cmp     r0, ip
+ 44e:   d809            bhi.n   464 <LZMA_DEC10+0x464>
+ 450:   9a10            ldr     r2, [sp, #64]
+ 452:   4295            cmp     r5, r2
+ 454:   d100            bne.n   458 <LZMA_DEC10+0x458>
+ 456:   e17e            b.n     756 <LZMA_DEC10+0x756>
+ 458:   782b            ldrb    r3, [r5, #0]
+ 45a:   023a            lsls    r2, r7, #8
+ 45c:   1c17            adds    r7, r2, #0
+ 45e:   0200            lsls    r0, r0, #8
+ 460:   431f            orrs    r7, r3
+ 462:   3501            adds    r5, #1
+ 464:   8832            ldrh    r2, [r6, #0]
+ 466:   0ac3            lsrs    r3, r0, #11
+ 468:   1c11            adds    r1, r2, #0
+ 46a:   4359            muls    r1, r3
+ 46c:   428f            cmp     r7, r1
+ 46e:   d20f            bcs.n   490 <LZMA_DEC10+0x490>
+ 470:   2380            movs    r3, #128
+ 472:   011b            lsls    r3, r3, #4
+ 474:   1a9b            subs    r3, r3, r2
+ 476:   115b            asrs    r3, r3, #5
+ 478:   9811            ldr     r0, [sp, #68]
+ 47a:   18d3            adds    r3, r2, r3
+ 47c:   8033            strh    r3, [r6, #0]
+ 47e:   0103            lsls    r3, r0, #4
+ 480:   18f3            adds    r3, r6, r3
+ 482:   3304            adds    r3, #4
+ 484:   9316            str     r3, [sp, #88]
+ 486:   2203            movs    r2, #3
+ 488:   2300            movs    r3, #0
+ 48a:   9214            str     r2, [sp, #80]
+ 48c:   9315            str     r3, [sp, #84]
+ 48e:   e035            b.n     4fc <LZMA_DEC10+0x4fc>
+ 490:   0953            lsrs    r3, r2, #5
+ 492:   1ad3            subs    r3, r2, r3
+ 494:   1a44            subs    r4, r0, r1
+ 496:   1a7f            subs    r7, r7, r1
+ 498:   8033            strh    r3, [r6, #0]
+ 49a:   4564            cmp     r4, ip
+ 49c:   d809            bhi.n   4b2 <LZMA_DEC10+0x4b2>
+ 49e:   9810            ldr     r0, [sp, #64]
+ 4a0:   4285            cmp     r5, r0
+ 4a2:   d100            bne.n   4a6 <LZMA_DEC10+0x4a6>
+ 4a4:   e157            b.n     756 <LZMA_DEC10+0x756>
+ 4a6:   782b            ldrb    r3, [r5, #0]
+ 4a8:   023a            lsls    r2, r7, #8
+ 4aa:   1c17            adds    r7, r2, #0
+ 4ac:   0224            lsls    r4, r4, #8
+ 4ae:   431f            orrs    r7, r3
+ 4b0:   3501            adds    r5, #1
+ 4b2:   8872            ldrh    r2, [r6, #2]
+ 4b4:   0ae3            lsrs    r3, r4, #11
+ 4b6:   1c10            adds    r0, r2, #0
+ 4b8:   4358            muls    r0, r3
+ 4ba:   4287            cmp     r7, r0
+ 4bc:   d211            bcs.n   4e2 <LZMA_DEC10+0x4e2>
+ 4be:   2380            movs    r3, #128
+ 4c0:   011b            lsls    r3, r3, #4
+ 4c2:   1a9b            subs    r3, r3, r2
+ 4c4:   9911            ldr     r1, [sp, #68]
+ 4c6:   115b            asrs    r3, r3, #5
+ 4c8:   18d3            adds    r3, r2, r3
+ 4ca:   8073            strh    r3, [r6, #2]
+ 4cc:   2282            movs    r2, #130
+ 4ce:   010b            lsls    r3, r1, #4
+ 4d0:   18f3            adds    r3, r6, r3
+ 4d2:   0052            lsls    r2, r2, #1
+ 4d4:   189a            adds    r2, r3, r2
+ 4d6:   1c01            adds    r1, r0, #0
+ 4d8:   2303            movs    r3, #3
+ 4da:   2008            movs    r0, #8
+ 4dc:   9216            str     r2, [sp, #88]
+ 4de:   9314            str     r3, [sp, #80]
+ 4e0:   e00b            b.n     4fa <LZMA_DEC10+0x4fa>
+ 4e2:   0953            lsrs    r3, r2, #5
+ 4e4:   1ad3            subs    r3, r2, r3
+ 4e6:   2281            movs    r2, #129
+ 4e8:   0092            lsls    r2, r2, #2
+ 4ea:   8073            strh    r3, [r6, #2]
+ 4ec:   18b2            adds    r2, r6, r2
+ 4ee:   2308            movs    r3, #8
+ 4f0:   9216            str     r2, [sp, #88]
+ 4f2:   9314            str     r3, [sp, #80]
+ 4f4:   1a21            subs    r1, r4, r0
+ 4f6:   1a3f            subs    r7, r7, r0
+ 4f8:   2010            movs    r0, #16
+ 4fa:   9015            str     r0, [sp, #84]
+ 4fc:   9a14            ldr     r2, [sp, #80]
+ 4fe:   2301            movs    r3, #1
+ 500:   930f            str     r3, [sp, #60]
+ 502:   4694            mov     ip, r2
+ 504:   4b74            ldr     r3, [pc, #464]  (6d8 <LZMA_DEC10+0x6d8>)
+ 506:   4299            cmp     r1, r3
+ 508:   d809            bhi.n   51e <LZMA_DEC10+0x51e>
+ 50a:   9810            ldr     r0, [sp, #64]
+ 50c:   4285            cmp     r5, r0
+ 50e:   d100            bne.n   512 <LZMA_DEC10+0x512>
+ 510:   e121            b.n     756 <LZMA_DEC10+0x756>
+ 512:   782b            ldrb    r3, [r5, #0]
+ 514:   023a            lsls    r2, r7, #8
+ 516:   1c17            adds    r7, r2, #0
+ 518:   0209            lsls    r1, r1, #8
+ 51a:   431f            orrs    r7, r3
+ 51c:   3501            adds    r5, #1
+ 51e:   9a0f            ldr     r2, [sp, #60]
+ 520:   9b16            ldr     r3, [sp, #88]
+ 522:   0056            lsls    r6, r2, #1
+ 524:   199c            adds    r4, r3, r6
+ 526:   8822            ldrh    r2, [r4, #0]
+ 528:   0acb            lsrs    r3, r1, #11
+ 52a:   1c10            adds    r0, r2, #0
+ 52c:   4358            muls    r0, r3
+ 52e:   4287            cmp     r7, r0
+ 530:   d208            bcs.n   544 <LZMA_DEC10+0x544>
+ 532:   2380            movs    r3, #128
+ 534:   011b            lsls    r3, r3, #4
+ 536:   1a9b            subs    r3, r3, r2
+ 538:   115b            asrs    r3, r3, #5
+ 53a:   18d3            adds    r3, r2, r3
+ 53c:   1c01            adds    r1, r0, #0
+ 53e:   8023            strh    r3, [r4, #0]
+ 540:   960f            str     r6, [sp, #60]
+ 542:   e009            b.n     558 <LZMA_DEC10+0x558>
+ 544:   0953            lsrs    r3, r2, #5
+ 546:   1ad3            subs    r3, r2, r3
+ 548:   8023            strh    r3, [r4, #0]
+ 54a:   9b0f            ldr     r3, [sp, #60]
+ 54c:   1a09            subs    r1, r1, r0
+ 54e:   1a3f            subs    r7, r7, r0
+ 550:   980f            ldr     r0, [sp, #60]
+ 552:   3301            adds    r3, #1
+ 554:   18c0            adds    r0, r0, r3
+ 556:   900f            str     r0, [sp, #60]
+ 558:   2201            movs    r2, #1
+ 55a:   4252            negs    r2, r2
+ 55c:   4494            add     ip, r2
+ 55e:   4663            mov     r3, ip
+ 560:   2b00            cmp     r3, #0
+ 562:   d1cf            bne.n   504 <LZMA_DEC10+0x504>
+ 564:   9814            ldr     r0, [sp, #80]
+ 566:   9a0f            ldr     r2, [sp, #60]
+ 568:   2301            movs    r3, #1
+ 56a:   4083            lsls    r3, r0
+ 56c:   9815            ldr     r0, [sp, #84]
+ 56e:   1ad3            subs    r3, r2, r3
+ 570:   9a0b            ldr     r2, [sp, #44]
+ 572:   181b            adds    r3, r3, r0
+ 574:   931d            str     r3, [sp, #116]
+ 576:   2a03            cmp     r2, #3
+ 578:   dd00            ble.n   57c <LZMA_DEC10+0x57c>
+ 57a:   e0bd            b.n     6f8 <LZMA_DEC10+0x6f8>
+ 57c:   2b03            cmp     r3, #3
+ 57e:   dd00            ble.n   582 <LZMA_DEC10+0x582>
+ 580:   2303            movs    r3, #3
+ 582:   9806            ldr     r0, [sp, #24]
+ 584:   01db            lsls    r3, r3, #7
+ 586:   22d8            movs    r2, #216
+ 588:   18c3            adds    r3, r0, r3
+ 58a:   0092            lsls    r2, r2, #2
+ 58c:   189a            adds    r2, r3, r2
+ 58e:   2306            movs    r3, #6
+ 590:   921b            str     r2, [sp, #108]
+ 592:   9317            str     r3, [sp, #92]
+ 594:   2601            movs    r6, #1
+ 596:   4b50            ldr     r3, [pc, #320]  (6d8 <LZMA_DEC10+0x6d8>)
+ 598:   4299            cmp     r1, r3
+ 59a:   d809            bhi.n   5b0 <LZMA_DEC10+0x5b0>
+ 59c:   9810            ldr     r0, [sp, #64]
+ 59e:   4285            cmp     r5, r0
+ 5a0:   d100            bne.n   5a4 <LZMA_DEC10+0x5a4>
+ 5a2:   e0d8            b.n     756 <LZMA_DEC10+0x756>
+ 5a4:   782b            ldrb    r3, [r5, #0]
+ 5a6:   023a            lsls    r2, r7, #8
+ 5a8:   1c17            adds    r7, r2, #0
+ 5aa:   0209            lsls    r1, r1, #8
+ 5ac:   431f            orrs    r7, r3
+ 5ae:   3501            adds    r5, #1
+ 5b0:   0072            lsls    r2, r6, #1
+ 5b2:   9c1b            ldr     r4, [sp, #108]
+ 5b4:   4694            mov     ip, r2
+ 5b6:   4464            add     r4, ip
+ 5b8:   8822            ldrh    r2, [r4, #0]
+ 5ba:   0acb            lsrs    r3, r1, #11
+ 5bc:   1c10            adds    r0, r2, #0
+ 5be:   4358            muls    r0, r3
+ 5c0:   4287            cmp     r7, r0
+ 5c2:   d208            bcs.n   5d6 <LZMA_DEC10+0x5d6>
+ 5c4:   2380            movs    r3, #128
+ 5c6:   011b            lsls    r3, r3, #4
+ 5c8:   1a9b            subs    r3, r3, r2
+ 5ca:   115b            asrs    r3, r3, #5
+ 5cc:   18d3            adds    r3, r2, r3
+ 5ce:   4666            mov     r6, ip
+ 5d0:   1c01            adds    r1, r0, #0
+ 5d2:   8023            strh    r3, [r4, #0]
+ 5d4:   e006            b.n     5e4 <LZMA_DEC10+0x5e4>
+ 5d6:   0953            lsrs    r3, r2, #5
+ 5d8:   1ad3            subs    r3, r2, r3
+ 5da:   8023            strh    r3, [r4, #0]
+ 5dc:   1c73            adds    r3, r6, #1
+ 5de:   1a09            subs    r1, r1, r0
+ 5e0:   1a3f            subs    r7, r7, r0
+ 5e2:   18f6            adds    r6, r6, r3
+ 5e4:   9b17            ldr     r3, [sp, #92]
+ 5e6:   3b01            subs    r3, #1
+ 5e8:   9317            str     r3, [sp, #92]
+ 5ea:   2b00            cmp     r3, #0
+ 5ec:   d1d3            bne.n   596 <LZMA_DEC10+0x596>
+ 5ee:   1c30            adds    r0, r6, #0
+ 5f0:   3840            subs    r0, #64
+ 5f2:   2803            cmp     r0, #3
+ 5f4:   dd78            ble.n   6e8 <LZMA_DEC10+0x6e8>
+ 5f6:   1046            asrs    r6, r0, #1
+ 5f8:   1e72            subs    r2, r6, #1
+ 5fa:   2301            movs    r3, #1
+ 5fc:   4694            mov     ip, r2
+ 5fe:   1c02            adds    r2, r0, #0
+ 600:   401a            ands    r2, r3
+ 602:   1c14            adds    r4, r2, #0
+ 604:   2302            movs    r3, #2
+ 606:   431c            orrs    r4, r3
+ 608:   280d            cmp     r0, #13
+ 60a:   dc0b            bgt.n   624 <LZMA_DEC10+0x624>
+ 60c:   4663            mov     r3, ip
+ 60e:   1c26            adds    r6, r4, #0
+ 610:   9a06            ldr     r2, [sp, #24]
+ 612:   409e            lsls    r6, r3
+ 614:   0073            lsls    r3, r6, #1
+ 616:   18d3            adds    r3, r2, r3
+ 618:   0042            lsls    r2, r0, #1
+ 61a:   4831            ldr     r0, [pc, #196]  (6e0 <LZMA_DEC10+0x6e0>)
+ 61c:   1a9b            subs    r3, r3, r2
+ 61e:   1818            adds    r0, r3, r0
+ 620:   901a            str     r0, [sp, #104]
+ 622:   e01f            b.n     664 <LZMA_DEC10+0x664>
+ 624:   3e05            subs    r6, #5
+ 626:   2000            movs    r0, #0
+ 628:   4b2b            ldr     r3, [pc, #172]  (6d8 <LZMA_DEC10+0x6d8>)
+ 62a:   4299            cmp     r1, r3
+ 62c:   d809            bhi.n   642 <LZMA_DEC10+0x642>
+ 62e:   9a10            ldr     r2, [sp, #64]
+ 630:   4295            cmp     r5, r2
+ 632:   d100            bne.n   636 <LZMA_DEC10+0x636>
+ 634:   e08f            b.n     756 <LZMA_DEC10+0x756>
+ 636:   782b            ldrb    r3, [r5, #0]
+ 638:   023a            lsls    r2, r7, #8
+ 63a:   1c17            adds    r7, r2, #0
+ 63c:   0209            lsls    r1, r1, #8
+ 63e:   431f            orrs    r7, r3
+ 640:   3501            adds    r5, #1
+ 642:   0849            lsrs    r1, r1, #1
+ 644:   0064            lsls    r4, r4, #1
+ 646:   428f            cmp     r7, r1
+ 648:   d302            bcc.n   650 <LZMA_DEC10+0x650>
+ 64a:   2301            movs    r3, #1
+ 64c:   1a7f            subs    r7, r7, r1
+ 64e:   431c            orrs    r4, r3
+ 650:   3001            adds    r0, #1
+ 652:   42b0            cmp     r0, r6
+ 654:   d1e8            bne.n   628 <LZMA_DEC10+0x628>
+ 656:   4823            ldr     r0, [pc, #140]  (6e4 <LZMA_DEC10+0x6e4>)
+ 658:   9b06            ldr     r3, [sp, #24]
+ 65a:   1818            adds    r0, r3, r0
+ 65c:   2204            movs    r2, #4
+ 65e:   901a            str     r0, [sp, #104]
+ 660:   0126            lsls    r6, r4, #4
+ 662:   4694            mov     ip, r2
+ 664:   2301            movs    r3, #1
+ 666:   9318            str     r3, [sp, #96]
+ 668:   9319            str     r3, [sp, #100]
+ 66a:   4b1b            ldr     r3, [pc, #108]  (6d8 <LZMA_DEC10+0x6d8>)
+ 66c:   4299            cmp     r1, r3
+ 66e:   d808            bhi.n   682 <LZMA_DEC10+0x682>
+ 670:   9810            ldr     r0, [sp, #64]
+ 672:   4285            cmp     r5, r0
+ 674:   d06f            beq.n   756 <LZMA_DEC10+0x756>
+ 676:   782b            ldrb    r3, [r5, #0]
+ 678:   023a            lsls    r2, r7, #8
+ 67a:   1c17            adds    r7, r2, #0
+ 67c:   0209            lsls    r1, r1, #8
+ 67e:   431f            orrs    r7, r3
+ 680:   3501            adds    r5, #1
+ 682:   9a19            ldr     r2, [sp, #100]
+ 684:   9b1a            ldr     r3, [sp, #104]
+ 686:   0052            lsls    r2, r2, #1
+ 688:   189c            adds    r4, r3, r2
+ 68a:   9202            str     r2, [sp, #8]
+ 68c:   8822            ldrh    r2, [r4, #0]
+ 68e:   0acb            lsrs    r3, r1, #11
+ 690:   1c10            adds    r0, r2, #0
+ 692:   4358            muls    r0, r3
+ 694:   4287            cmp     r7, r0
+ 696:   d209            bcs.n   6ac <LZMA_DEC10+0x6ac>
+ 698:   2380            movs    r3, #128
+ 69a:   011b            lsls    r3, r3, #4
+ 69c:   9902            ldr     r1, [sp, #8]
+ 69e:   1a9b            subs    r3, r3, r2
+ 6a0:   115b            asrs    r3, r3, #5
+ 6a2:   18d3            adds    r3, r2, r3
+ 6a4:   9119            str     r1, [sp, #100]
+ 6a6:   1c01            adds    r1, r0, #0
+ 6a8:   8023            strh    r3, [r4, #0]
+ 6aa:   e00b            b.n     6c4 <LZMA_DEC10+0x6c4>
+ 6ac:   0953            lsrs    r3, r2, #5
+ 6ae:   1ad3            subs    r3, r2, r3
+ 6b0:   8023            strh    r3, [r4, #0]
+ 6b2:   9b19            ldr     r3, [sp, #100]
+ 6b4:   9a19            ldr     r2, [sp, #100]
+ 6b6:   3301            adds    r3, #1
+ 6b8:   18d2            adds    r2, r2, r3
+ 6ba:   9b18            ldr     r3, [sp, #96]
+ 6bc:   9219            str     r2, [sp, #100]
+ 6be:   1a09            subs    r1, r1, r0
+ 6c0:   1a3f            subs    r7, r7, r0
+ 6c2:   431e            orrs    r6, r3
+ 6c4:   2001            movs    r0, #1
+ 6c6:   4240            negs    r0, r0
+ 6c8:   4484            add     ip, r0
+ 6ca:   4662            mov     r2, ip
+ 6cc:   2a00            cmp     r2, #0
+ 6ce:   d00c            beq.n   6ea <LZMA_DEC10+0x6ea>
+ 6d0:   9b18            ldr     r3, [sp, #96]
+ 6d2:   005b            lsls    r3, r3, #1
+ 6d4:   9318            str     r3, [sp, #96]
+ 6d6:   e7c8            b.n     66a <LZMA_DEC10+0x66a>
+ 6d8:   ffff 00ff       undefined
+ 6dc:   0a68            lsrs    r0, r5, #9
+ 6de:   0000            lsls    r0, r0, #0
+ 6e0:   055e            lsls    r6, r3, #21
+ 6e2:   0000            lsls    r0, r0, #0
+ 6e4:   0644            lsls    r4, r0, #25
+ 6e6:   0000            lsls    r0, r0, #0
+ 6e8:   1c06            adds    r6, r0, #0
+ 6ea:   3601            adds    r6, #1
+ 6ec:   961e            str     r6, [sp, #120]
+ 6ee:   2e00            cmp     r6, #0
+ 6f0:   d021            beq.n   736 <LZMA_DEC10+0x736>
+ 6f2:   980b            ldr     r0, [sp, #44]
+ 6f4:   3007            adds    r0, #7
+ 6f6:   900b            str     r0, [sp, #44]
+ 6f8:   9a1e            ldr     r2, [sp, #120]
+ 6fa:   9b07            ldr     r3, [sp, #28]
+ 6fc:   429a            cmp     r2, r3
+ 6fe:   d82a            bhi.n   756 <LZMA_DEC10+0x756>
+ 700:   1a9b            subs    r3, r3, r2
+ 702:   9824            ldr     r0, [sp, #144]
+ 704:   9e1d            ldr     r6, [sp, #116]
+ 706:   9a07            ldr     r2, [sp, #28]
+ 708:   18c4            adds    r4, r0, r3
+ 70a:   3602            adds    r6, #2
+ 70c:   1880            adds    r0, r0, r2
+ 70e:   7823            ldrb    r3, [r4, #0]
+ 710:   7003            strb    r3, [r0, #0]
+ 712:   469c            mov     ip, r3
+ 714:   9b07            ldr     r3, [sp, #28]
+ 716:   3201            adds    r2, #1
+ 718:   199b            adds    r3, r3, r6
+ 71a:   9300            str     r3, [sp, #0]
+ 71c:   429a            cmp     r2, r3
+ 71e:   d004            beq.n   72a <LZMA_DEC10+0x72a>
+ 720:   9b25            ldr     r3, [sp, #148]
+ 722:   3401            adds    r4, #1
+ 724:   3001            adds    r0, #1
+ 726:   429a            cmp     r2, r3
+ 728:   d1f1            bne.n   70e <LZMA_DEC10+0x70e>
+ 72a:   9207            str     r2, [sp, #28]
+ 72c:   9807            ldr     r0, [sp, #28]
+ 72e:   9a25            ldr     r2, [sp, #148]
+ 730:   4290            cmp     r0, r2
+ 732:   d200            bcs.n   736 <LZMA_DEC10+0x736>
+ 734:   e4af            b.n     96 <LZMA_DEC10+0x96>
+ 736:   4b09            ldr     r3, [pc, #36]   (75c <LZMA_DEC10+0x75c>)
+ 738:   4299            cmp     r1, r3
+ 73a:   d803            bhi.n   744 <LZMA_DEC10+0x744>
+ 73c:   9b10            ldr     r3, [sp, #64]
+ 73e:   429d            cmp     r5, r3
+ 740:   d009            beq.n   756 <LZMA_DEC10+0x756>
+ 742:   3501            adds    r5, #1
+ 744:   9804            ldr     r0, [sp, #16]
+ 746:   9903            ldr     r1, [sp, #12]
+ 748:   1a2b            subs    r3, r5, r0
+ 74a:   600b            str     r3, [r1, #0]
+ 74c:   9a07            ldr     r2, [sp, #28]
+ 74e:   9b26            ldr     r3, [sp, #152]
+ 750:   2000            movs    r0, #0
+ 752:   601a            str     r2, [r3, #0]
+ 754:   e000            b.n     758 <LZMA_DEC10+0x758>
+ 756:   2001            movs    r0, #1
+ 758:   b01f            add     sp, #124
+ 75a:   bdf0            pop     {r4, r5, r6, r7, pc}
+ 75c:   ffff 00ff       undefined

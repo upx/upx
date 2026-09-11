@@ -651,6 +651,15 @@ void show_sysinfo(const char *options_var) {
 #if defined(__mips_soft_float)
         cf_print("__mips_soft_float", "%lld", __mips_soft_float + 0);
 #endif
+#if defined(__riscv_misaligned_avoid)
+        cf_print("__riscv_misaligned_avoid", "%lld", __riscv_misaligned_avoid + 0, 4);
+#endif
+#if defined(__riscv_misaligned_fast)
+        cf_print("__riscv_misaligned_fast", "%lld", __riscv_misaligned_fast + 0, 4);
+#endif
+#if defined(__riscv_misaligned_slow)
+        cf_print("__riscv_misaligned_slow", "%lld", __riscv_misaligned_slow + 0, 4);
+#endif
 #if defined(__wasm__)
         cf_print("__wasm__", "%lld", __wasm__ + 0);
 #endif

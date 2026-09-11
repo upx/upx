@@ -1,0 +1,446 @@
+
+tmp/arm64-win64.pe.bin:     file format elf64-littleaarch64
+
+
+Disassembly of section PEMAIN01:
+
+0000000000000000 <PEMAIN01>:
+   0:   a9be7bfd        stp     x29, x30, [sp,#-32]!
+   4:   a90153f3        stp     x19, x20, [sp,#16]
+   8:   10000091        adr     x17, 18 <PEMAIN01+0x18>
+   c:   b9800230        ldrsw   x16, [x17]
+  10:   8b100234        add     x20, x17, x16
+  14:   14000002        b       1c <PEMAIN01+0x1c>
+  18:   00000000        .inst   0x00000000 ; undefined
+                        18: R_AARCH64_PREL32    start_of_compressed
+  1c:   10000091        adr     x17, 2c <PEMAIN01+0x2c>
+  20:   b9400230        ldr     w16, [x17]
+  24:   93407e09        sxtw    x9, w16
+  28:   14000002        b       30 <PEMAIN01+0x30>
+  2c:   00000000        .inst   0x00000000 ; undefined
+                        2c: R_AARCH64_ABS32     start_of_uncompressed
+  30:   8b090293        add     x19, x20, x9
+
+Disassembly of section PEMAIN02:
+
+0000000000000000 <PEMAIN02>:
+   0:   aa1403e0        mov     x0, x20
+   4:   10000091        adr     x17, 14 <PEMAIN02+0x14>
+   8:   b9400230        ldr     w16, [x17]
+   c:   93407e01        sxtw    x1, w16
+  10:   14000002        b       18 <PEMAIN02+0x18>
+  14:   00000000        .inst   0x00000000 ; undefined
+                        14: R_AARCH64_ABS32     comp_len
+  18:   aa1303e2        mov     x2, x19
+  1c:   d10043ff        sub     sp, sp, #0x10
+  20:   910003e3        mov     x3, sp
+  24:   2a1f03e4        mov     w4, wzr
+
+Disassembly of section PECALL2B:
+
+0000000000000000 <PECALL2B>:
+   0:   94000000        bl      0 <PECALL2B>
+                        0: R_AARCH64_CALL26     ucl_nrv2b_decompress_32
+
+Disassembly of section PECALL2D:
+
+0000000000000000 <PECALL2D>:
+   0:   94000000        bl      0 <PECALL2D>
+                        0: R_AARCH64_CALL26     ucl_nrv2d_decompress_32
+
+Disassembly of section PECALL2E:
+
+0000000000000000 <PECALL2E>:
+   0:   94000000        bl      0 <PECALL2E>
+                        0: R_AARCH64_CALL26     ucl_nrv2e_decompress_32
+
+Disassembly of section PEMAIN10:
+
+0000000000000000 <PEMAIN10>:
+   0:   910043ff        add     sp, sp, #0x10
+
+Disassembly of section PEIMPORT:
+
+0000000000000000 <PEIMPORT>:
+   0:   10000091        adr     x17, 10 <PEIMPORT+0x10>
+   4:   b9400230        ldr     w16, [x17]
+   8:   93407e09        sxtw    x9, w16
+   c:   14000002        b       14 <PEIMPORT+0x14>
+  10:   00000000        .inst   0x00000000 ; undefined
+                        10: R_AARCH64_ABS32     compressed_imports
+  14:   8b090275        add     x21, x19, x9
+  18:   b94002a9        ldr     w9, [x21]
+  1c:   340004c9        cbz     w9, b4 <ucl_nrv2b_decompress_32+0xb4>
+  20:   b94006aa        ldr     w10, [x21,#4]
+  24:   10000091        adr     x17, 34 <PEIMPORT+0x34>
+  28:   b9400230        ldr     w16, [x17]
+  2c:   93407e0b        sxtw    x11, w16
+  30:   14000002        b       38 <PEIMPORT+0x38>
+  34:   00000000        .inst   0x00000000 ; undefined
+                        34: R_AARCH64_ABS32     start_of_imports
+  38:   8b090260        add     x0, x19, x9
+  3c:   8b0b0000        add     x0, x0, x11
+  40:   8b0a0276        add     x22, x19, x10
+  44:   910022b5        add     x21, x21, #0x8
+  48:   10000091        adr     x17, 58 <PEIMPORT+0x58>
+  4c:   b9800230        ldrsw   x16, [x17]
+  50:   8b10022c        add     x12, x17, x16
+  54:   14000002        b       5c <PEIMPORT+0x5c>
+  58:   00000000        .inst   0x00000000 ; undefined
+                        58: R_AARCH64_PREL32    LoadLibraryA
+  5c:   f940018c        ldr     x12, [x12]
+  60:   d63f0180        blr     x12
+  64:   aa0003f7        mov     x23, x0
+  68:   384016a9        ldrb    w9, [x21],#1
+  6c:   34fffd69        cbz     w9, 18 <PEIMPORT+0x18>
+  70:   7100053f        cmp     w9, #0x1
+  74:   540000a1        b.ne    88 <PEIMPORT+0x88>
+  78:   aa1503e1        mov     x1, x21
+  7c:   384016aa        ldrb    w10, [x21],#1
+  80:   35ffffea        cbnz    w10, 7c <PEIMPORT+0x7c>
+  84:   14000002        b       8c <PEIMPORT+0x8c>
+  88:   784026a1        ldrh    w1, [x21],#2
+  8c:   aa1703e0        mov     x0, x23
+  90:   10000091        adr     x17, a0 <PEIMPORT+0xa0>
+  94:   b9800230        ldrsw   x16, [x17]
+  98:   8b10022c        add     x12, x17, x16
+  9c:   14000002        b       a4 <PEIMPORT+0xa4>
+  a0:   00000000        .inst   0x00000000 ; undefined
+                        a0: R_AARCH64_PREL32    GetProcAddress
+  a4:   f940018c        ldr     x12, [x12]
+  a8:   d63f0180        blr     x12
+  ac:   f80086c0        str     x0, [x22],#8
+  b0:   17ffffee        b       68 <PEIMPORT+0x68>
+
+Disassembly of section PERELOC1:
+
+0000000000000000 <PERELOC1>:
+   0:   10000091        adr     x17, 10 <PERELOC1+0x10>
+   4:   b9400230        ldr     w16, [x17]
+   8:   93407e09        sxtw    x9, w16
+   c:   14000002        b       14 <PERELOC1+0x14>
+  10:   00000000        .inst   0x00000000 ; undefined
+                        10: R_AARCH64_ABS32     start_of_relocs
+  14:   8b090275        add     x21, x19, x9
+  18:   d1001276        sub     x22, x19, #0x4
+  1c:   384016a9        ldrb    w9, [x21],#1
+  20:   34000249        cbz     w9, 68 <ucl_nrv2b_decompress_32+0x68>
+  24:   7103bd3f        cmp     w9, #0xef
+  28:   540000e8        b.hi    44 <PERELOC1+0x44>
+  2c:   8b0902d6        add     x22, x22, x9
+  30:   f94002ca        ldr     x10, [x22]
+  34:   dac00d4a        rev     x10, x10
+  38:   8b13014a        add     x10, x10, x19
+  3c:   f90002ca        str     x10, [x22]
+  40:   17fffff7        b       1c <PERELOC1+0x1c>
+  44:   12000d29        and     w9, w9, #0xf
+  48:   53103d29        lsl     w9, w9, #16
+  4c:   384016aa        ldrb    w10, [x21],#1
+  50:   384016ab        ldrb    w11, [x21],#1
+  54:   2a0a0129        orr     w9, w9, w10
+  58:   2a0b2129        orr     w9, w9, w11, lsl #8
+  5c:   35fffe89        cbnz    w9, 2c <PERELOC1+0x2c>
+  60:   b84046a9        ldr     w9, [x21],#4
+  64:   17fffff2        b       2c <PERELOC1+0x2c>
+
+Disassembly of section PECACHE:
+
+0000000000000000 <PECACHE>:
+   0:   92800000        mov     x0, #0xffffffffffffffff         // #-1
+   4:   aa1303e1        mov     x1, x19
+   8:   10000091        adr     x17, 18 <PECACHE+0x18>
+   c:   b9400230        ldr     w16, [x17]
+  10:   93407e02        sxtw    x2, w16
+  14:   14000002        b       1c <PECACHE+0x1c>
+  18:   00000000        .inst   0x00000000 ; undefined
+                        18: R_AARCH64_ABS32     sizeof_image
+  1c:   10000091        adr     x17, 2c <PECACHE+0x2c>
+  20:   b9800230        ldrsw   x16, [x17]
+  24:   8b100229        add     x9, x17, x16
+  28:   14000002        b       30 <PECACHE+0x30>
+  2c:   00000000        .inst   0x00000000 ; undefined
+                        2c: R_AARCH64_PREL32    FlushInstructionCache
+  30:   f9400129        ldr     x9, [x9]
+  34:   d63f0120        blr     x9
+
+Disassembly of section PETLSC:
+
+0000000000000000 <PETLSC>:
+   0:   10000091        adr     x17, 10 <PETLSC+0x10>
+   4:   b9800230        ldrsw   x16, [x17]
+   8:   8b100234        add     x20, x17, x16
+   c:   14000002        b       14 <PETLSC+0x14>
+  10:   00000000        .inst   0x00000000 ; undefined
+                        10: R_AARCH64_PREL32    PETLSC2
+  14:   528403ea        mov     w10, #0x201f                    // #8223
+  18:   72baa06a        movk    w10, #0xd503, lsl #16
+  1c:   b900028a        str     w10, [x20]
+  20:   92800000        mov     x0, #0xffffffffffffffff         // #-1
+  24:   aa1403e1        mov     x1, x20
+  28:   d2800082        mov     x2, #0x4                        // #4
+  2c:   10000091        adr     x17, 3c <PETLSC+0x3c>
+  30:   b9800230        ldrsw   x16, [x17]
+  34:   8b100229        add     x9, x17, x16
+  38:   14000002        b       40 <PETLSC+0x40>
+  3c:   00000000        .inst   0x00000000 ; undefined
+                        3c: R_AARCH64_PREL32    FlushInstructionCache
+  40:   f9400129        ldr     x9, [x9]
+  44:   d63f0120        blr     x9
+  48:   aa1303e0        mov     x0, x19
+  4c:   52800021        mov     w1, #0x1                        // #1
+  50:   aa1f03e2        mov     x2, xzr
+  54:   94000000        bl      0 <PETLSC>
+                        54: R_AARCH64_CALL26    PETLSC2
+
+Disassembly of section PEDOJUMP:
+
+0000000000000000 <PEDOJUMP>:
+   0:   a94153f3        ldp     x19, x20, [sp,#16]
+   4:   a8c27bfd        ldp     x29, x30, [sp],#32
+   8:   14000000        b       0 <original_entry>
+                        8: R_AARCH64_JUMP26     original_entry
+
+Disassembly of section NRV2B:
+
+0000000000000000 <ucl_nrv2b_decompress_32>:
+   0:   8b214001        add     x1, x0, w1, uxtw
+   4:   a9be0be1        stp     x1, x2, [sp,#-32]!
+   8:   a9017be3        stp     x3, x30, [sp,#16]
+   c:   12800005        mov     w5, #0xffffffff                 // #-1
+  10:   52b00004        mov     w4, #0x80000000                 // #-2147483648
+  14:   1400001a        b       7c <ucl_nrv2b_decompress_32+0x7c>
+  18:   a9417be4        ldp     x4, x30, [sp,#16]
+  1c:   a8c20fe1        ldp     x1, x3, [sp],#32
+  20:   cb010000        sub     x0, x0, x1
+  24:   cb030042        sub     x2, x2, x3
+  28:   b9000082        str     w2, [x4]
+  2c:   aa0003e5        mov     x5, x0
+  30:   aa0303e0        mov     x0, x3
+  34:   8b020061        add     x1, x3, x2
+  38:   aa0503e0        mov     x0, x5
+  3c:   d65f03c0        ret
+  40:   2b040084        adds    w4, w4, w4
+  44:   34000044        cbz     w4, 4c <ucl_nrv2b_decompress_32+0x4c>
+  48:   d65f03c0        ret
+  4c:   b8404404        ldr     w4, [x0],#4
+  50:   3a040084        adcs    w4, w4, w4
+  54:   d65f03c0        ret
+  58:   52800021        mov     w1, #0x1                        // #1
+  5c:   aa1e03f0        mov     x16, x30
+  60:   97fffff8        bl      40 <ucl_nrv2b_decompress_32+0x40>
+  64:   3a010021        adcs    w1, w1, w1
+  68:   97fffff6        bl      40 <ucl_nrv2b_decompress_32+0x40>
+  6c:   54ffffa3        b.cc    60 <ucl_nrv2b_decompress_32+0x60>
+  70:   d61f0200        br      x16
+  74:   38401403        ldrb    w3, [x0],#1
+  78:   38001443        strb    w3, [x2],#1
+  7c:   97fffff1        bl      40 <ucl_nrv2b_decompress_32+0x40>
+  80:   54ffffa2        b.cs    74 <ucl_nrv2b_decompress_32+0x74>
+  84:   97fffff5        bl      58 <ucl_nrv2b_decompress_32+0x58>
+  88:   71000c23        subs    w3, w1, #0x3
+  8c:   52800001        mov     w1, #0x0                        // #0
+  90:   540000a3        b.cc    a4 <ucl_nrv2b_decompress_32+0xa4>
+  94:   38401405        ldrb    w5, [x0],#1
+  98:   2a0320a5        orr     w5, w5, w3, lsl #8
+  9c:   2a2503e5        mvn     w5, w5
+  a0:   34fffbc5        cbz     w5, 18 <ucl_nrv2b_decompress_32+0x18>
+  a4:   97ffffe7        bl      40 <ucl_nrv2b_decompress_32+0x40>
+  a8:   3a010021        adcs    w1, w1, w1
+  ac:   97ffffe5        bl      40 <ucl_nrv2b_decompress_32+0x40>
+  b0:   3a010021        adcs    w1, w1, w1
+  b4:   54000061        b.ne    c0 <ucl_nrv2b_decompress_32+0xc0>
+  b8:   97ffffe8        bl      58 <ucl_nrv2b_decompress_32+0x58>
+  bc:   11000821        add     w1, w1, #0x2
+  c0:   313400bf        cmn     w5, #0xd00
+  c4:   1a812421        cinc    w1, w1, cc
+  c8:   3865c843        ldrb    w3, [x2,w5,sxtw]
+  cc:   71000421        subs    w1, w1, #0x1
+  d0:   38001443        strb    w3, [x2],#1
+  d4:   54ffffa2        b.cs    c8 <ucl_nrv2b_decompress_32+0xc8>
+  d8:   17ffffe9        b       7c <ucl_nrv2b_decompress_32+0x7c>
+
+Disassembly of section NRV2D:
+
+0000000000000000 <ucl_nrv2d_decompress_32>:
+   0:   a9be0fe2        stp     x2, x3, [sp,#-32]!
+   4:   f9000bfe        str     x30, [sp,#16]
+   8:   8b214007        add     x7, x0, w1, uxtw
+   c:   12800005        mov     w5, #0xffffffff                 // #-1
+  10:   52b00004        mov     w4, #0x80000000                 // #-2147483648
+  14:   14000013        b       60 <ucl_nrv2d_decompress_32+0x60>
+  18:   a8c113e3        ldp     x3, x4, [sp],#16
+  1c:   cb070000        sub     x0, x0, x7
+  20:   cb030042        sub     x2, x2, x3
+  24:   b9000082        str     w2, [x4]
+  28:   aa0003e5        mov     x5, x0
+  2c:   aa0303e0        mov     x0, x3
+  30:   8b020061        add     x1, x3, x2
+  34:   aa0503e0        mov     x0, x5
+  38:   f84107fe        ldr     x30, [sp],#16
+  3c:   d65f03c0        ret
+  40:   2b040084        adds    w4, w4, w4
+  44:   34000044        cbz     w4, 4c <ucl_nrv2d_decompress_32+0x4c>
+  48:   d65f03c0        ret
+  4c:   b8404404        ldr     w4, [x0],#4
+  50:   3a040084        adcs    w4, w4, w4
+  54:   d65f03c0        ret
+  58:   38401403        ldrb    w3, [x0],#1
+  5c:   38001443        strb    w3, [x2],#1
+  60:   97fffff8        bl      40 <ucl_nrv2d_decompress_32+0x40>
+  64:   54ffffa2        b.cs    58 <ucl_nrv2d_decompress_32+0x58>
+  68:   52800021        mov     w1, #0x1                        // #1
+  6c:   14000004        b       7c <ucl_nrv2d_decompress_32+0x7c>
+  70:   51000421        sub     w1, w1, #0x1
+  74:   97fffff3        bl      40 <ucl_nrv2d_decompress_32+0x40>
+  78:   3a010021        adcs    w1, w1, w1
+  7c:   97fffff1        bl      40 <ucl_nrv2d_decompress_32+0x40>
+  80:   3a010021        adcs    w1, w1, w1
+  84:   97ffffef        bl      40 <ucl_nrv2d_decompress_32+0x40>
+  88:   54ffff43        b.cc    70 <ucl_nrv2d_decompress_32+0x70>
+  8c:   71000c23        subs    w3, w1, #0x3
+  90:   52800001        mov     w1, #0x0                        // #0
+  94:   54000123        b.cc    b8 <ucl_nrv2d_decompress_32+0xb8>
+  98:   38401405        ldrb    w5, [x0],#1
+  9c:   2a0320a5        orr     w5, w5, w3, lsl #8
+  a0:   2a2503e5        mvn     w5, w5
+  a4:   34fffba5        cbz     w5, 18 <ucl_nrv2d_decompress_32+0x18>
+  a8:   530100a3        lsl     w3, w5, #31
+  ac:   13017ca5        asr     w5, w5, #1
+  b0:   2b030063        adds    w3, w3, w3
+  b4:   14000002        b       bc <ucl_nrv2d_decompress_32+0xbc>
+  b8:   97ffffe2        bl      40 <ucl_nrv2d_decompress_32+0x40>
+  bc:   3a010021        adcs    w1, w1, w1
+  c0:   97ffffe0        bl      40 <ucl_nrv2d_decompress_32+0x40>
+  c4:   3a010021        adcs    w1, w1, w1
+  c8:   540000e1        b.ne    e4 <ucl_nrv2d_decompress_32+0xe4>
+  cc:   52800021        mov     w1, #0x1                        // #1
+  d0:   97ffffdc        bl      40 <ucl_nrv2d_decompress_32+0x40>
+  d4:   3a010021        adcs    w1, w1, w1
+  d8:   97ffffda        bl      40 <ucl_nrv2d_decompress_32+0x40>
+  dc:   54ffffa3        b.cc    d0 <ucl_nrv2d_decompress_32+0xd0>
+  e0:   11000821        add     w1, w1, #0x2
+  e4:   11000421        add     w1, w1, #0x1
+  e8:   311400bf        cmn     w5, #0x500
+  ec:   1a812421        cinc    w1, w1, cc
+  f0:   39400043        ldrb    w3, [x2]
+  f4:   3865c843        ldrb    w3, [x2,w5,sxtw]
+  f8:   38001443        strb    w3, [x2],#1
+  fc:   71000421        subs    w1, w1, #0x1
+ 100:   54ffffa1        b.ne    f4 <ucl_nrv2d_decompress_32+0xf4>
+ 104:   17ffffd7        b       60 <ucl_nrv2d_decompress_32+0x60>
+
+Disassembly of section NRV2E:
+
+0000000000000000 <ucl_nrv2e_decompress_32>:
+   0:   f81f0ffe        str     x30, [sp,#-16]!
+   4:   a9bf0fe2        stp     x2, x3, [sp,#-16]!
+   8:   8b214007        add     x7, x0, w1, uxtw
+   c:   12800005        mov     w5, #0xffffffff                 // #-1
+  10:   52b00004        mov     w4, #0x80000000                 // #-2147483648
+  14:   14000013        b       60 <ucl_nrv2e_decompress_32+0x60>
+  18:   a8c113e3        ldp     x3, x4, [sp],#16
+  1c:   cb070000        sub     x0, x0, x7
+  20:   cb030042        sub     x2, x2, x3
+  24:   b9000082        str     w2, [x4]
+  28:   aa0003e5        mov     x5, x0
+  2c:   aa0303e0        mov     x0, x3
+  30:   8b020061        add     x1, x3, x2
+  34:   aa0503e0        mov     x0, x5
+  38:   f84107fe        ldr     x30, [sp],#16
+  3c:   d65f03c0        ret
+  40:   2b040084        adds    w4, w4, w4
+  44:   34000044        cbz     w4, 4c <ucl_nrv2e_decompress_32+0x4c>
+  48:   d65f03c0        ret
+  4c:   b8404404        ldr     w4, [x0],#4
+  50:   3a040084        adcs    w4, w4, w4
+  54:   d65f03c0        ret
+  58:   38401403        ldrb    w3, [x0],#1
+  5c:   38001443        strb    w3, [x2],#1
+  60:   97fffff8        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  64:   54ffffa2        b.cs    58 <ucl_nrv2e_decompress_32+0x58>
+  68:   52800021        mov     w1, #0x1                        // #1
+  6c:   14000004        b       7c <ucl_nrv2e_decompress_32+0x7c>
+  70:   51000421        sub     w1, w1, #0x1
+  74:   97fffff3        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  78:   1a010021        adc     w1, w1, w1
+  7c:   97fffff1        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  80:   1a010021        adc     w1, w1, w1
+  84:   97ffffef        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  88:   54ffff43        b.cc    70 <ucl_nrv2e_decompress_32+0x70>
+  8c:   71000c23        subs    w3, w1, #0x3
+  90:   52800001        mov     w1, #0x0                        // #0
+  94:   54000123        b.cc    b8 <ucl_nrv2e_decompress_32+0xb8>
+  98:   38401405        ldrb    w5, [x0],#1
+  9c:   2a0320a5        orr     w5, w5, w3, lsl #8
+  a0:   2a2503e5        mvn     w5, w5
+  a4:   34fffba5        cbz     w5, 18 <ucl_nrv2e_decompress_32+0x18>
+  a8:   720000bf        tst     w5, #0x1
+  ac:   13017ca5        asr     w5, w5, #1
+  b0:   540001a1        b.ne    e4 <ucl_nrv2e_decompress_32+0xe4>
+  b4:   14000003        b       c0 <ucl_nrv2e_decompress_32+0xc0>
+  b8:   97ffffe2        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  bc:   54000142        b.cs    e4 <ucl_nrv2e_decompress_32+0xe4>
+  c0:   52800021        mov     w1, #0x1                        // #1
+  c4:   97ffffdf        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  c8:   540000e2        b.cs    e4 <ucl_nrv2e_decompress_32+0xe4>
+  cc:   97ffffdd        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  d0:   1a010021        adc     w1, w1, w1
+  d4:   97ffffdb        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  d8:   54ffffa3        b.cc    cc <ucl_nrv2e_decompress_32+0xcc>
+  dc:   11001021        add     w1, w1, #0x4
+  e0:   14000004        b       f0 <ucl_nrv2e_decompress_32+0xf0>
+  e4:   97ffffd7        bl      40 <ucl_nrv2e_decompress_32+0x40>
+  e8:   1a010021        adc     w1, w1, w1
+  ec:   11000821        add     w1, w1, #0x2
+  f0:   311400bf        cmn     w5, #0x500
+  f4:   1a812421        cinc    w1, w1, cc
+  f8:   8b214043        add     x3, x2, w1, uxtw
+  fc:   385ff063        ldrb    w3, [x3,#-1]
+ 100:   3865c843        ldrb    w3, [x2,w5,sxtw]
+ 104:   38001443        strb    w3, [x2],#1
+ 108:   71000421        subs    w1, w1, #0x1
+ 10c:   54ffffa1        b.ne    100 <ucl_nrv2e_decompress_32+0x100>
+ 110:   17ffffd4        b       60 <ucl_nrv2e_decompress_32+0x60>
+
+Disassembly of section PETLSC2:
+
+0000000000000000 <PETLSC2>:
+   0:   d65f03c0        ret
+   4:   a9bd7bfd        stp     x29, x30, [sp,#-48]!
+   8:   a90153f3        stp     x19, x20, [sp,#16]
+   c:   a9025bf5        stp     x21, x22, [sp,#32]
+  10:   aa0003f3        mov     x19, x0
+  14:   aa0103f4        mov     x20, x1
+  18:   aa0203f5        mov     x21, x2
+  1c:   10000091        adr     x17, 2c <PETLSC2+0x2c>
+  20:   b9800230        ldrsw   x16, [x17]
+  24:   8b100236        add     x22, x17, x16
+  28:   14000002        b       30 <PETLSC2+0x30>
+  2c:   00000000        .inst   0x00000000 ; undefined
+                        2c: R_AARCH64_PREL32    tls_callbacks_ptr
+  30:   f84086c9        ldr     x9, [x22],#8
+  34:   b40000c9        cbz     x9, 4c <PETLSC2+0x4c>
+  38:   aa1303e0        mov     x0, x19
+  3c:   2a1403e1        mov     w1, w20
+  40:   aa1503e2        mov     x2, x21
+  44:   d63f0120        blr     x9
+  48:   17fffffa        b       30 <PETLSC2+0x30>
+  4c:   a9425bf5        ldp     x21, x22, [sp,#32]
+  50:   a94153f3        ldp     x19, x20, [sp,#16]
+  54:   a8c37bfd        ldp     x29, x30, [sp],#48
+  58:   d65f03c0        ret
+
+Disassembly of section PEFILTSYM:
+
+0000000000000000 <PEFILTSYM>:
+        ...
+                        0: R_AARCH64_ABS32      filter_length
+                        4: R_AARCH64_ABS32      filter_cto
+
+Disassembly of section UPX1HEAD:
+
+0000000000000000 <UPX1HEAD>:
+   0:   21585055        .inst   0x21585055 ; undefined
+   4:   d5d0d8a1        .inst   0xd5d0d8a1 ; undefined
+        ...
+  1c:   2d000000        stp     s0, s0, [x0]
