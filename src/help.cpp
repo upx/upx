@@ -639,6 +639,9 @@ void show_sysinfo(const char *options_var) {
         cf_print("__has_warning", "%lld", has_warning, 4);
 
         // architecture
+#if defined(__ARM_FEATURE_UNALIGNED)
+        cf_print("__ARM_FEATURE_UNALIGNED", "%lld", __ARM_FEATURE_UNALIGNED + 0, 4);
+#endif
 #if defined(__CHERI__)
         cf_print("__CHERI__", "%lld", __CHERI__ + 0, 3);
 #endif

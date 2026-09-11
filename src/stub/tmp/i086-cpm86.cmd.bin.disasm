@@ -1,0 +1,728 @@
+
+tmp/i086-cpm86.cmd.bin:     file format elf32-i386
+
+Disassembly of section CPMENTRY:
+
+00000000 <CPMENTRY>:
+   0:   fc                      cld
+   1:   2e a0 7f 00             mov    %cs:0x7f,%al
+                        3: R_386_16     CPMINFO
+   5:   84 c0                   test   %al,%al
+   7:   74 05                   je     0xe
+   9:   2e ff 26 60 00          jmp    *%cs:96
+                        c: R_386_16     CPMINFO
+   e:   2e 8c 1e 00 00          movw   %ds,%cs:0
+                        11: R_386_16    CPMVARS
+  13:   0e                      push   %cs
+  14:   07                      pop    %es
+  15:   31 f6                   xor    %si,%si
+  17:   bf 30 00                mov    $0x30,%di
+                        18: R_386_16    CPMVARS
+  1a:   b9 80 00                mov    $0x80,%cx
+  1d:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+  1f:   0e                      push   %cs
+  20:   1f                      pop    %ds
+  21:   2e a1 02 00             mov    %cs:0x2,%ax
+                        23: R_386_16    CPMINFO
+  25:   2e a3 2c 00             mov    %ax,%cs:0x2c
+                        27: R_386_16    CPMVARS
+  29:   2e c6 06 2e 00 00       movb   $0x0,%cs:46
+                        2c: R_386_16    CPMVARS
+  2f:   ba 2a 00                mov    $0x2a,%dx
+                        30: R_386_16    CPMVARS
+  32:   b1 37                   mov    $0x37,%cl
+  34:   cd e0                   int    $0xe0
+  36:   83 f8 ff                cmp    $0xffffffff,%ax
+  39:   74 24                   je     0x5f
+  3b:   2e a1 2a 00             mov    %cs:0x2a,%ax
+                        3d: R_386_16    CPMVARS
+  3f:   2e a3 02 00             mov    %ax,%cs:0x2
+                        41: R_386_16    CPMVARS
+  43:   0e                      push   %cs
+  44:   1f                      pop    %ds
+  45:   8c da                   movl   %ds,%dx
+  47:   be 00 00                mov    $0x0,%si
+                        48: R_386_16    CPMCUT
+  4a:   2e 8e 06 02 00          movw   %cs:2,%es
+                        4d: R_386_16    CPMVARS
+  4f:   31 ff                   xor    %di,%di
+  51:   31 c9                   xor    %cx,%cx
+  53:   bb 0f 80                mov    $0x800f,%bx
+  56:   bd 01 00                mov    $0x1,%bp
+  59:   e8 ff ff                call   0x5b
+                        5a: R_386_PC16  NRV2B16S
+  5c:   e9 fe ff                jmp    0x5d
+                        5d: R_386_PC16  CPMTAIL
+  5f:   b1 00                   mov    $0x0,%cl
+  61:   cd e0                   int    $0xe0
+Disassembly of section NRV2B16S:
+
+00000000 <NRV2B16S>:
+   0:   a4                      movsb  %ds:(%si),%es:(%di)
+   1:   00 ff                   add    %bh,%bh
+   3:   75 03                   jne    0x8
+   5:   e8 11 00                call   0x19
+                        6: R_386_PC16   NRV2BEX3
+   8:   72 f6                   jb     0x0
+   a:   41                      inc    %cx
+   b:   8c c0                   movl   %es,%ax
+Disassembly of section N2B64K01:
+
+00000000 <N2B64K01>:
+   0:   01 ff                   add    %di,%di
+   2:   73 05                   jae    0x9
+   4:   80 c4 08                add    $0x8,%ah
+   7:   8e c0                   movl   %ax,%es
+   9:   d1 ef                   shr    %di
+Disassembly of section NRV2BEX1:
+
+00000000 <NRV2BEX1>:
+   0:   e8 04 00                call   0x7
+                        1: R_386_PC16   NRV2BEX3
+   3:   e3 03                   jcxz   0x8
+                        4: R_386_PC8    NRV2BEX9
+   5:   73 f9                   jae    0x0
+   7:   49                      dec    %cx
+   8:   49                      dec    %cx
+   9:   74 08                   je     0x13
+                        a: R_386_PC8    NRV2BEX2
+Disassembly of section N2BX8601:
+
+00000000 <N2BX8601>:
+   0:   01 c9                   add    %cx,%cx
+   2:   01 c9                   add    %cx,%cx
+   4:   01 c9                   add    %cx,%cx
+   6:   01 c9                   add    %cx,%cx
+Disassembly of section N2B28601:
+
+00000000 <N2B28601>:
+   0:   c1 e1 04                shl    $0x4,%cx
+Disassembly of section NRV2BEX2:
+
+00000000 <NRV2BEX2>:
+   0:   89 cd                   mov    %cx,%bp
+   2:   8a 1c                   mov    (%si),%bl
+   4:   46                      inc    %si
+   5:   f6 d3                   not    %bl
+   7:   31 c9                   xor    %cx,%cx
+   9:   e8 04 00                call   0x10
+                        a: R_386_PC16   NRV2BEX3
+   c:   11 c9                   adc    %cx,%cx
+   e:   75 08                   jne    0x18
+  10:   41                      inc    %cx
+  11:   e8 04 00                call   0x18
+                        12: R_386_PC16  NRV2BEX3
+  14:   73 fb                   jae    0x11
+  16:   41                      inc    %cx
+  17:   41                      inc    %cx
+  18:   81 fd d1 00             cmp    $0xd1,%bp
+  1c:   83 d9 fe                sbb    $0xfffffffe,%cx
+  1f:   29 e8                   sub    %bp,%ax
+  21:   72 0e                   jb     0x31
+  23:   8e d8                   movl   %ax,%ds
+  25:   8d 01                   lea    (%bx,%di),%ax
+  27:   28 fc                   sub    %bh,%ah
+  29:   96                      xchg   %ax,%si
+  2a:   f3 a4                   rep movsb %ds:(%si),%es:(%di)
+  2c:   96                      xchg   %ax,%si
+  2d:   8e da                   movl   %dx,%ds
+  2f:   eb 00                   jmp    0x31
+                        30: R_386_PC8   NRV2B16S
+Disassembly of section N2BX8602:
+
+00000000 <N2BX8602>:
+   0:   d1 e0                   shl    %ax
+   2:   d1 e0                   shl    %ax
+   4:   d1 e0                   shl    %ax
+   6:   d1 e0                   shl    %ax
+   8:   50                      push   %ax
+   9:   31 c0                   xor    %ax,%ax
+   b:   8e d8                   movl   %ax,%ds
+   d:   58                      pop    %ax
+Disassembly of section N2B28602:
+
+00000000 <N2B28602>:
+   0:   c1 e0 04                shl    $0x4,%ax
+   3:   6a 00                   push   $0x0
+   5:   1f                      pop    %ds
+Disassembly of section NRV2BEX3:
+
+00000000 <NRV2BEX3>:
+   0:   01 d8                   add    %bx,%ax
+   2:   01 f8                   add    %di,%ax
+   4:   eb 26                   jmp    0x2c
+                        5: R_386_PC8    NRV2BEX2
+   6:   00 ff                   add    %bh,%bh
+   8:   75 03                   jne    0xd
+   a:   e8 06 00                call   0x13
+   d:   11 c9                   adc    %cx,%cx
+   f:   00 ff                   add    %bh,%bh
+  11:   75 02                   jne    0x15
+                        12: R_386_PC8   NRV2BEX9
+  13:   8a 3c                   mov    (%si),%bh
+Disassembly of section N2B64K02:
+
+00000000 <N2B64K02>:
+   0:   11 f6                   adc    %si,%si
+   2:   73 05                   jae    0x9
+   4:   80 c6 08                add    $0x8,%dh
+   7:   8e da                   movl   %dx,%ds
+   9:   d1 ee                   shr    %si
+Disassembly of section NRV2BEX9:
+
+00000000 <NRV2BEX9>:
+   0:   46                      inc    %si
+   1:   10 ff                   adc    %bh,%bh
+   3:   c3                      ret
+Disassembly of section CPMDRET:
+
+00000000 <CPMDRET>:
+   0:   c3                      ret
+Disassembly of section CPMTAIL:
+
+00000000 <CPMTAIL>:
+   0:   fc                      cld
+   1:   2e c7 06 04 00 08 00    movw   $0x8,%cs:4
+                        4: R_386_16     CPMVARS
+   8:   2e c7 06 06 00 00 00    movw   $0x0,%cs:6
+                        b: R_386_16     CPMVARS
+   f:   2e 8b 1e 06 00          mov    %cs:6,%bx
+                        12: R_386_16    CPMVARS
+  14:   2e 3a 1e 00 00          cmp    %cs:0,%bl
+                        17: R_386_16    CPMINFO
+  19:   72 03                   jb     0x1e
+  1b:   e9 35 01                jmp    0x153
+  1e:   b1 03                   mov    $0x3,%cl
+  20:   d3 e3                   shl    %cl,%bx
+  22:   81 c3 1e 00             add    $0x1e,%bx
+                        24: R_386_16    CPMINFO
+  26:   2e 8a 07                mov    %cs:(%bx),%al
+  29:   30 e4                   xor    %ah,%ah
+  2b:   2e a3 08 00             mov    %ax,%cs:0x8
+                        2d: R_386_16    CPMVARS
+  2f:   2e 8b 47 02             mov    %cs:2(%bx),%ax
+  33:   2e a3 0a 00             mov    %ax,%cs:0xa
+                        35: R_386_16    CPMVARS
+  37:   2e 8b 47 04             mov    %cs:4(%bx),%ax
+  3b:   2e a3 0c 00             mov    %ax,%cs:0xc
+                        3d: R_386_16    CPMVARS
+  3f:   2e a0 08 00             mov    %cs:0x8,%al
+                        41: R_386_16    CPMVARS
+  43:   3c 04                   cmp    $0x4,%al
+  45:   76 03                   jbe    0x4a
+  47:   e9 f4 00                jmp    0x13e
+  4a:   3c 01                   cmp    $0x1,%al
+  4c:   73 03                   jae    0x51
+  4e:   e9 ed 00                jmp    0x13e
+  51:   0e                      push   %cs
+  52:   1f                      pop    %ds
+  53:   2e a1 0c 00             mov    %cs:0xc,%ax
+                        55: R_386_16    CPMVARS
+  57:   2e a3 2c 00             mov    %ax,%cs:0x2c
+                        59: R_386_16    CPMVARS
+  5b:   2e c6 06 2e 00 00       movb   $0x0,%cs:46
+                        5e: R_386_16    CPMVARS
+  61:   ba 2a 00                mov    $0x2a,%dx
+                        62: R_386_16    CPMVARS
+  64:   b1 37                   mov    $0x37,%cl
+  66:   cd e0                   int    $0xe0
+  68:   83 f8 ff                cmp    $0xffffffff,%ax
+  6b:   75 20                   jne    0x8d
+  6d:   2e a1 0c 00             mov    %cs:0xc,%ax
+                        6f: R_386_16    CPMVARS
+  71:   2e a3 2c 00             mov    %ax,%cs:0x2c
+                        73: R_386_16    CPMVARS
+  75:   b1 35                   mov    $0x35,%cl
+  77:   cd e0                   int    $0xe0
+  79:   83 f8 ff                cmp    $0xffffffff,%ax
+  7c:   75 03                   jne    0x81
+  7e:   e9 5d 00                jmp    0xde
+                        7f: R_386_PC16  CPMENTRY
+  81:   b1 37                   mov    $0x37,%cl
+  83:   cd e0                   int    $0xe0
+  85:   83 f8 ff                cmp    $0xffffffff,%ax
+  88:   75 03                   jne    0x8d
+  8a:   e9 5d 00                jmp    0xea
+                        8b: R_386_PC16  CPMENTRY
+  8d:   2e a1 2a 00             mov    %cs:0x2a,%ax
+                        8f: R_386_16    CPMVARS
+  91:   2e a3 10 00             mov    %ax,%cs:0x10
+                        93: R_386_16    CPMVARS
+  95:   2e a1 2c 00             mov    %cs:0x2c,%ax
+                        97: R_386_16    CPMVARS
+  99:   2e a3 0e 00             mov    %ax,%cs:0xe
+                        9b: R_386_16    CPMVARS
+  9d:   2e a1 02 00             mov    %cs:0x2,%ax
+                        9f: R_386_16    CPMVARS
+  a1:   2e 03 06 04 00          add    %cs:4,%ax
+                        a4: R_386_16    CPMVARS
+  a6:   8e d8                   movl   %ax,%ds
+  a8:   2e 8e 06 10 00          movw   %cs:16,%es
+                        ab: R_386_16    CPMVARS
+  ad:   31 f6                   xor    %si,%si
+  af:   31 ff                   xor    %di,%di
+  b1:   2e 8b 0e 0a 00          mov    %cs:10,%cx
+                        b4: R_386_16    CPMVARS
+  b6:   d1 e1                   shl    %cx
+  b8:   d1 e1                   shl    %cx
+  ba:   d1 e1                   shl    %cx
+  bc:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+  be:   2e a1 0e 00             mov    %cs:0xe,%ax
+                        c0: R_386_16    CPMVARS
+  c2:   2e 2b 06 0a 00          sub    %cs:10,%ax
+                        c5: R_386_16    CPMVARS
+  c7:   76 14                   jbe    0xdd
+  c9:   3d 00 10                cmp    $0x1000,%ax
+  cc:   76 03                   jbe    0xd1
+  ce:   b8 00 10                mov    $0x1000,%ax
+  d1:   89 c1                   mov    %ax,%cx
+  d3:   d1 e1                   shl    %cx
+  d5:   d1 e1                   shl    %cx
+  d7:   d1 e1                   shl    %cx
+  d9:   31 c0                   xor    %ax,%ax
+  db:   f3 ab                   rep stos %ax,%es:(%di)
+  dd:   2e 8b 1e 08 00          mov    %cs:8,%bx
+                        e0: R_386_16    CPMVARS
+  e2:   4b                      dec    %bx
+  e3:   89 d8                   mov    %bx,%ax
+  e5:   d1 e0                   shl    %ax
+  e7:   d1 e3                   shl    %bx
+  e9:   d1 e3                   shl    %bx
+  eb:   01 c3                   add    %ax,%bx
+  ed:   81 c3 06 00             add    $0x6,%bx
+                        ef: R_386_16    CPMINFO
+  f1:   2e a1 10 00             mov    %cs:0x10,%ax
+                        f3: R_386_16    CPMVARS
+  f5:   2e 89 47 03             mov    %ax,%cs:3(%bx)
+  f9:   2e 80 3e 08 00 02       cmpb   $0x2,%cs:8
+                        fc: R_386_16    CPMVARS
+  ff:   74 17                   je     0x118
+ 101:   2e a1 0e 00             mov    %cs:0xe,%ax
+                        103: R_386_16   CPMVARS
+ 105:   89 c2                   mov    %ax,%dx
+ 107:   b1 04                   mov    $0x4,%cl
+ 109:   d3 e0                   shl    %cl,%ax
+ 10b:   2e 89 07                mov    %ax,%cs:(%bx)
+ 10e:   89 d0                   mov    %dx,%ax
+ 110:   b1 0c                   mov    $0xc,%cl
+ 112:   d3 e8                   shr    %cl,%ax
+ 114:   2e 88 47 02             mov    %al,%cs:2(%bx)
+ 118:   2e 8b 1e 08 00          mov    %cs:8,%bx
+                        11b: R_386_16   CPMVARS
+ 11d:   2e a1 10 00             mov    %cs:0x10,%ax
+                        11f: R_386_16   CPMVARS
+ 121:   80 fb 01                cmp    $0x1,%bl
+ 124:   75 06                   jne    0x12c
+ 126:   2e a3 14 00             mov    %ax,%cs:0x14
+                        128: R_386_16   CPMVARS
+ 12a:   eb 12                   jmp    0x13e
+ 12c:   80 fb 02                cmp    $0x2,%bl
+ 12f:   75 04                   jne    0x135
+ 131:   2e a3 18 00             mov    %ax,%cs:0x18
+                        133: R_386_16   CPMVARS
+ 135:   80 fb 04                cmp    $0x4,%bl
+ 138:   75 04                   jne    0x13e
+ 13a:   2e a3 22 00             mov    %ax,%cs:0x22
+                        13c: R_386_16   CPMVARS
+ 13e:   2e a1 04 00             mov    %cs:0x4,%ax
+                        140: R_386_16   CPMVARS
+ 142:   2e 03 06 0a 00          add    %cs:10,%ax
+                        145: R_386_16   CPMVARS
+ 147:   2e a3 04 00             mov    %ax,%cs:0x4
+                        149: R_386_16   CPMVARS
+ 14b:   2e ff 06 06 00          incw   %cs:6
+                        14e: R_386_16   CPMVARS
+ 150:   e9 bc fe                jmp    0xf
+ 153:   0e                      push   %cs
+ 154:   1f                      pop    %ds
+ 155:   2e a1 02 00             mov    %cs:0x2,%ax
+                        157: R_386_16   CPMVARS
+ 159:   2e a3 2a 00             mov    %ax,%cs:0x2a
+                        15b: R_386_16   CPMVARS
+ 15d:   2e c6 06 2e 00 00       movb   $0x0,%cs:46
+                        160: R_386_16   CPMVARS
+ 163:   ba 2a 00                mov    $0x2a,%dx
+                        164: R_386_16   CPMVARS
+ 166:   b1 39                   mov    $0x39,%cl
+ 168:   cd e0                   int    $0xe0
+ 16a:   2e 80 3e 01 00 00       cmpb   $0x0,%cs:1
+                        16d: R_386_16   CPMINFO
+ 170:   74 0c                   je     0x17e
+ 172:   2e a1 14 00             mov    %cs:0x14,%ax
+                        174: R_386_16   CPMVARS
+ 176:   2e a3 0f 00             mov    %ax,%cs:0xf
+                        178: R_386_16   CPMINFO
+ 17a:   2e a3 18 00             mov    %ax,%cs:0x18
+                        17c: R_386_16   CPMVARS
+ 17e:   2e 8b 1e 18 00          mov    %cs:24,%bx
+                        181: R_386_16   CPMVARS
+ 183:   2e 80 3e 01 00 00       cmpb   $0x0,%cs:1
+                        186: R_386_16   CPMINFO
+ 189:   74 05                   je     0x190
+ 18b:   2e 8b 1e 14 00          mov    %cs:20,%bx
+                        18e: R_386_16   CPMVARS
+ 190:   2e 89 1e 24 00          mov    %bx,%cs:36
+                        193: R_386_16   CPMVARS
+ 195:   0e                      push   %cs
+ 196:   1f                      pop    %ds
+ 197:   be 30 00                mov    $0x30,%si
+                        198: R_386_16   CPMVARS
+ 19a:   2e 8e 06 24 00          movw   %cs:36,%es
+                        19d: R_386_16   CPMVARS
+ 19f:   31 ff                   xor    %di,%di
+ 1a1:   b9 80 00                mov    $0x80,%cx
+ 1a4:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+ 1a6:   be 06 00                mov    $0x6,%si
+                        1a7: R_386_16   CPMINFO
+ 1a9:   2e 8e 06 24 00          movw   %cs:36,%es
+                        1ac: R_386_16   CPMVARS
+ 1ae:   31 ff                   xor    %di,%di
+ 1b0:   b9 0c 00                mov    $0xc,%cx
+ 1b3:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+ 1b5:   2e 8e 06 24 00          movw   %cs:36,%es
+                        1b8: R_386_16   CPMVARS
+ 1ba:   26 c7 06 50 00 b1 00    movw   $0xb1,%es:80
+ 1c1:   26 c7 06 52 00 cd e0    movw   $0xe0cd,%es:82
+ 1c8:   2e 8b 16 24 00          mov    %cs:36,%dx
+                        1cb: R_386_16   CPMVARS
+ 1cd:   b1 33                   mov    $0x33,%cl
+ 1cf:   cd e0                   int    $0xe0
+ 1d1:   ba 80 00                mov    $0x80,%dx
+ 1d4:   b1 1a                   mov    $0x1a,%cl
+ 1d6:   cd e0                   int    $0xe0
+ 1d8:   fa                      cli
+ 1d9:   2e a1 24 00             mov    %cs:0x24,%ax
+                        1db: R_386_16   CPMVARS
+ 1dd:   8e d0                   movl   %ax,%ss
+ 1df:   2e 8b 26 04 00          mov    %cs:4,%sp
+                        1e2: R_386_16   CPMINFO
+ 1e4:   fb                      sti
+ 1e5:   2e a1 24 00             mov    %cs:0x24,%ax
+                        1e7: R_386_16   CPMVARS
+ 1e9:   50                      push   %ax
+ 1ea:   b8 50 00                mov    $0x50,%ax
+ 1ed:   50                      push   %ax
+ 1ee:   2e a1 14 00             mov    %cs:0x14,%ax
+                        1f0: R_386_16   CPMVARS
+ 1f2:   50                      push   %ax
+ 1f3:   31 c0                   xor    %ax,%ax
+ 1f5:   2e 80 3e 01 00 00       cmpb   $0x0,%cs:1
+                        1f8: R_386_16   CPMINFO
+ 1fb:   74 03                   je     0x200
+ 1fd:   b8 00 01                mov    $0x100,%ax
+ 200:   50                      push   %ax
+ 201:   2e a1 24 00             mov    %cs:0x24,%ax
+                        203: R_386_16   CPMVARS
+ 205:   8e d8                   movl   %ax,%ds
+ 207:   8e c0                   movl   %ax,%es
+ 209:   31 c0                   xor    %ax,%ax
+ 20b:   89 c3                   mov    %ax,%bx
+ 20d:   89 c1                   mov    %ax,%cx
+ 20f:   ba 80 00                mov    $0x80,%dx
+ 212:   31 f6                   xor    %si,%si
+ 214:   31 ff                   xor    %di,%di
+ 216:   31 ed                   xor    %bp,%bp
+ 218:   cb                      lret
+Disassembly of section CPMIP:
+
+00000000 <CPMIP>:
+   0:   8c c8                   movl   %cs,%ax
+   2:   fa                      cli
+   3:   8e d0                   movl   %ax,%ss
+   5:   bc 30 02                mov    $0x230,%sp
+                        6: R_386_16     CPMVARS
+   8:   fb                      sti
+   9:   a1 09 00                mov    0x9,%ax
+   c:   2e a3 18 00             mov    %ax,%cs:0x18
+                        e: R_386_16     CPMVARS
+  10:   a1 0f 00                mov    0xf,%ax
+  13:   2e a3 20 00             mov    %ax,%cs:0x20
+                        15: R_386_16    CPMVARS
+  17:   a1 15 00                mov    0x15,%ax
+  1a:   2e a3 22 00             mov    %ax,%cs:0x22
+                        1c: R_386_16    CPMVARS
+  1e:   8c d8                   movl   %ds,%ax
+  20:   2e a3 24 00             mov    %ax,%cs:0x24
+                        22: R_386_16    CPMVARS
+  24:   8c c8                   movl   %cs,%ax
+  26:   2e a3 14 00             mov    %ax,%cs:0x14
+                        28: R_386_16    CPMVARS
+  2a:   2e c7 06 26 00 00 00    movw   $0x0,%cs:38
+                        2d: R_386_16    CPMVARS
+                        2f: R_386_16    CPMCUT
+  31:   0e                      push   %cs
+  32:   07                      pop    %es
+  33:   31 f6                   xor    %si,%si
+  35:   bf 30 00                mov    $0x30,%di
+                        36: R_386_16    CPMVARS
+  38:   b9 80 00                mov    $0x80,%cx
+  3b:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+  3d:   2e c7 06 80 00 b1 00    movw   $0xb1,%cs:128
+                        40: R_386_16    CPMVARS
+  44:   2e c7 06 82 00 cd e0    movw   $0xe0cd,%cs:130
+                        47: R_386_16    CPMVARS
+  4b:   0e                      push   %cs
+  4c:   1f                      pop    %ds
+  4d:   8c da                   movl   %ds,%dx
+  4f:   be 00 00                mov    $0x0,%si
+                        50: R_386_16    CPMCUT
+  52:   2e 8e 06 18 00          movw   %cs:24,%es
+                        55: R_386_16    CPMVARS
+  57:   31 ff                   xor    %di,%di
+  59:   31 c9                   xor    %cx,%cx
+  5b:   bb 0f 80                mov    $0x800f,%bx
+  5e:   bd 01 00                mov    $0x1,%bp
+  61:   e8 ff ff                call   0x63
+                        62: R_386_PC16  NRV2B16S
+  64:   2e c7 06 04 00 08 00    movw   $0x8,%cs:4
+                        67: R_386_16    CPMVARS
+  6b:   2e c7 06 06 00 00 00    movw   $0x0,%cs:6
+                        6e: R_386_16    CPMVARS
+  72:   2e c7 06 1c 00 00 00    movw   $0x0,%cs:28
+                        75: R_386_16    CPMVARS
+  79:   2e 8b 1e 06 00          mov    %cs:6,%bx
+                        7c: R_386_16    CPMVARS
+  7e:   2e 3a 1e 00 00          cmp    %cs:0,%bl
+                        81: R_386_16    CPMINFO
+  83:   72 03                   jb     0x88
+  85:   e9 f3 00                jmp    0x17b
+  88:   b1 03                   mov    $0x3,%cl
+  8a:   d3 e3                   shl    %cl,%bx
+  8c:   81 c3 1e 00             add    $0x1e,%bx
+                        8e: R_386_16    CPMINFO
+  90:   2e 8a 07                mov    %cs:(%bx),%al
+  93:   30 e4                   xor    %ah,%ah
+  95:   2e a3 08 00             mov    %ax,%cs:0x8
+                        97: R_386_16    CPMVARS
+  99:   2e 8b 47 02             mov    %cs:2(%bx),%ax
+  9d:   2e a3 0a 00             mov    %ax,%cs:0xa
+                        9f: R_386_16    CPMVARS
+  a1:   2e 8b 47 04             mov    %cs:4(%bx),%ax
+  a5:   2e a3 0c 00             mov    %ax,%cs:0xc
+                        a7: R_386_16    CPMVARS
+  a9:   2e a1 04 00             mov    %cs:0x4,%ax
+                        ab: R_386_16    CPMVARS
+  ad:   b1 04                   mov    $0x4,%cl
+  af:   d3 e0                   shl    %cl,%ax
+  b1:   2e a3 12 00             mov    %ax,%cs:0x12
+                        b3: R_386_16    CPMVARS
+  b5:   2e a0 08 00             mov    %cs:0x8,%al
+                        b7: R_386_16    CPMVARS
+  b9:   3c 01                   cmp    $0x1,%al
+  bb:   75 39                   jne    0xf6
+  bd:   2e 8e 1e 18 00          movw   %cs:24,%ds
+                        c0: R_386_16    CPMVARS
+  c2:   2e 8b 36 12 00          mov    %cs:18,%si
+                        c5: R_386_16    CPMVARS
+  c7:   0e                      push   %cs
+  c8:   07                      pop    %es
+  c9:   2e 8b 3e 26 00          mov    %cs:38,%di
+                        cc: R_386_16    CPMVARS
+  ce:   2e 8b 0e 0a 00          mov    %cs:10,%cx
+                        d1: R_386_16    CPMVARS
+  d3:   d1 e1                   shl    %cx
+  d5:   d1 e1                   shl    %cx
+  d7:   d1 e1                   shl    %cx
+  d9:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+  db:   2e a1 0a 00             mov    %cs:0xa,%ax
+                        dd: R_386_16    CPMVARS
+  df:   2e a3 16 00             mov    %ax,%cs:0x16
+                        e1: R_386_16    CPMVARS
+  e3:   2e a1 0a 00             mov    %cs:0xa,%ax
+                        e5: R_386_16    CPMVARS
+  e7:   b1 04                   mov    $0x4,%cl
+  e9:   d3 e0                   shl    %cl,%ax
+  eb:   2e 03 06 26 00          add    %cs:38,%ax
+                        ee: R_386_16    CPMVARS
+  f0:   2e a3 28 00             mov    %ax,%cs:0x28
+                        f2: R_386_16    CPMVARS
+  f4:   eb 70                   jmp    0x166
+  f6:   3c 02                   cmp    $0x2,%al
+  f8:   75 1a                   jne    0x114
+  fa:   2e a1 12 00             mov    %cs:0x12,%ax
+                        fc: R_386_16    CPMVARS
+  fe:   2e a3 1a 00             mov    %ax,%cs:0x1a
+                        100: R_386_16   CPMVARS
+ 102:   2e a1 0a 00             mov    %cs:0xa,%ax
+                        104: R_386_16   CPMVARS
+ 106:   2e a3 1c 00             mov    %ax,%cs:0x1c
+                        108: R_386_16   CPMVARS
+ 10a:   2e a1 0c 00             mov    %cs:0xc,%ax
+                        10c: R_386_16   CPMVARS
+ 10e:   2e a3 1e 00             mov    %ax,%cs:0x1e
+                        110: R_386_16   CPMVARS
+ 112:   eb 52                   jmp    0x166
+ 114:   3c 03                   cmp    $0x3,%al
+ 116:   75 07                   jne    0x11f
+ 118:   2e 8b 16 20 00          mov    %cs:32,%dx
+                        11b: R_386_16   CPMVARS
+ 11d:   eb 09                   jmp    0x128
+ 11f:   3c 04                   cmp    $0x4,%al
+ 121:   75 43                   jne    0x166
+ 123:   2e 8b 16 22 00          mov    %cs:34,%dx
+                        126: R_386_16   CPMVARS
+ 128:   85 d2                   test   %dx,%dx
+ 12a:   74 3a                   je     0x166
+ 12c:   2e 8e 1e 18 00          movw   %cs:24,%ds
+                        12f: R_386_16   CPMVARS
+ 131:   2e 8b 36 12 00          mov    %cs:18,%si
+                        134: R_386_16   CPMVARS
+ 136:   8e c2                   movl   %dx,%es
+ 138:   31 ff                   xor    %di,%di
+ 13a:   2e 8b 0e 0a 00          mov    %cs:10,%cx
+                        13d: R_386_16   CPMVARS
+ 13f:   d1 e1                   shl    %cx
+ 141:   d1 e1                   shl    %cx
+ 143:   d1 e1                   shl    %cx
+ 145:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+ 147:   2e a1 0c 00             mov    %cs:0xc,%ax
+                        149: R_386_16   CPMVARS
+ 14b:   2e 2b 06 0a 00          sub    %cs:10,%ax
+                        14e: R_386_16   CPMVARS
+ 150:   76 14                   jbe    0x166
+ 152:   3d 00 10                cmp    $0x1000,%ax
+ 155:   76 03                   jbe    0x15a
+ 157:   b8 00 10                mov    $0x1000,%ax
+ 15a:   89 c1                   mov    %ax,%cx
+ 15c:   d1 e1                   shl    %cx
+ 15e:   d1 e1                   shl    %cx
+ 160:   d1 e1                   shl    %cx
+ 162:   31 c0                   xor    %ax,%ax
+ 164:   f3 ab                   rep stos %ax,%es:(%di)
+ 166:   2e a1 04 00             mov    %cs:0x4,%ax
+                        168: R_386_16   CPMVARS
+ 16a:   2e 03 06 0a 00          add    %cs:10,%ax
+                        16d: R_386_16   CPMVARS
+ 16f:   2e a3 04 00             mov    %ax,%cs:0x4
+                        171: R_386_16   CPMVARS
+ 173:   2e ff 06 06 00          incw   %cs:6
+                        176: R_386_16   CPMVARS
+ 178:   e9 fe fe                jmp    0x79
+ 17b:   2e a1 18 00             mov    %cs:0x18,%ax
+                        17d: R_386_16   CPMVARS
+ 17f:   8e d8                   movl   %ax,%ds
+ 181:   8e c0                   movl   %ax,%es
+ 183:   2e 8b 36 1a 00          mov    %cs:26,%si
+                        186: R_386_16   CPMVARS
+ 188:   31 ff                   xor    %di,%di
+ 18a:   2e 8b 0e 1c 00          mov    %cs:28,%cx
+                        18d: R_386_16   CPMVARS
+ 18f:   d1 e1                   shl    %cx
+ 191:   d1 e1                   shl    %cx
+ 193:   d1 e1                   shl    %cx
+ 195:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+ 197:   2e a1 1e 00             mov    %cs:0x1e,%ax
+                        199: R_386_16   CPMVARS
+ 19b:   2e 2b 06 1c 00          sub    %cs:28,%ax
+                        19e: R_386_16   CPMVARS
+ 1a0:   76 14                   jbe    0x1b6
+ 1a2:   3d 00 10                cmp    $0x1000,%ax
+ 1a5:   76 03                   jbe    0x1aa
+ 1a7:   b8 00 10                mov    $0x1000,%ax
+ 1aa:   89 c1                   mov    %ax,%cx
+ 1ac:   d1 e1                   shl    %cx
+ 1ae:   d1 e1                   shl    %cx
+ 1b0:   d1 e1                   shl    %cx
+ 1b2:   31 c0                   xor    %ax,%ax
+ 1b4:   f3 ab                   rep stos %ax,%es:(%di)
+ 1b6:   0e                      push   %cs
+ 1b7:   1f                      pop    %ds
+ 1b8:   be 30 00                mov    $0x30,%si
+                        1b9: R_386_16   CPMVARS
+ 1bb:   2e 8e 06 18 00          movw   %cs:24,%es
+                        1be: R_386_16   CPMVARS
+ 1c0:   31 ff                   xor    %di,%di
+ 1c2:   b9 80 00                mov    $0x80,%cx
+ 1c5:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+ 1c7:   0e                      push   %cs
+ 1c8:   1f                      pop    %ds
+ 1c9:   0e                      push   %cs
+ 1ca:   07                      pop    %es
+ 1cb:   be 00 00                mov    $0x0,%si
+                        1cc: R_386_16   CPMCOPY
+ 1ce:   2e 8b 3e 28 00          mov    %cs:40,%di
+                        1d1: R_386_16   CPMVARS
+ 1d3:   b9 5b 00                mov    $0x5b,%cx
+ 1d6:   f3 a4                   rep movsb %ds:(%si),%es:(%di)
+ 1d8:   2e 8b 1e 28 00          mov    %cs:40,%bx
+                        1db: R_386_16   CPMVARS
+ 1dd:   2e a1 14 00             mov    %cs:0x14,%ax
+                        1df: R_386_16   CPMVARS
+ 1e1:   2e 89 87 4f 00          mov    %ax,%cs:79(%bx)
+ 1e6:   2e a1 24 00             mov    %cs:0x24,%ax
+                        1e8: R_386_16   CPMVARS
+ 1ea:   2e 89 87 51 00          mov    %ax,%cs:81(%bx)
+ 1ef:   2e a1 04 00             mov    %cs:0x4,%ax
+                        1f1: R_386_16   CPMINFO
+ 1f3:   2e 89 87 53 00          mov    %ax,%cs:83(%bx)
+ 1f8:   31 c0                   xor    %ax,%ax
+ 1fa:   2e 80 3e 01 00 00       cmpb   $0x0,%cs:1
+                        1fd: R_386_16   CPMINFO
+ 200:   74 03                   je     0x205
+ 202:   b8 00 01                mov    $0x100,%ax
+ 205:   2e 89 87 55 00          mov    %ax,%cs:85(%bx)
+ 20a:   2e a1 26 00             mov    %cs:0x26,%ax
+                        20c: R_386_16   CPMVARS
+ 20e:   2e 89 87 57 00          mov    %ax,%cs:87(%bx)
+ 213:   2e a1 16 00             mov    %cs:0x16,%ax
+                        215: R_386_16   CPMVARS
+ 217:   d1 e0                   shl    %ax
+ 219:   d1 e0                   shl    %ax
+ 21b:   d1 e0                   shl    %ax
+ 21d:   2e 89 87 59 00          mov    %ax,%cs:89(%bx)
+ 222:   2e 8b 2e 28 00          mov    %cs:40,%bp
+                        225: R_386_16   CPMVARS
+ 227:   ff e5                   jmp    *%bp
+Disassembly of section CPMCOPY:
+
+00000000 <CPMCOPY>:
+   0:   2e 8b 86 4f 00          mov    %cs:79(%bp),%ax
+   5:   8e d8                   movl   %ax,%ds
+   7:   8e c0                   movl   %ax,%es
+   9:   2e 8b b6 57 00          mov    %cs:87(%bp),%si
+   e:   31 ff                   xor    %di,%di
+  10:   2e 8b 8e 59 00          mov    %cs:89(%bp),%cx
+  15:   f3 a5                   rep movsw %ds:(%si),%es:(%di)
+  17:   2e 8b 86 51 00          mov    %cs:81(%bp),%ax
+  1c:   fa                      cli
+  1d:   8e d0                   movl   %ax,%ss
+  1f:   2e 8b a6 53 00          mov    %cs:83(%bp),%sp
+  24:   fb                      sti
+  25:   50                      push   %ax
+  26:   b8 50 00                mov    $0x50,%ax
+  29:   50                      push   %ax
+  2a:   2e 8b 86 4f 00          mov    %cs:79(%bp),%ax
+  2f:   50                      push   %ax
+  30:   2e 8b 86 55 00          mov    %cs:85(%bp),%ax
+  35:   50                      push   %ax
+  36:   2e 8b 86 51 00          mov    %cs:81(%bp),%ax
+  3b:   8e d8                   movl   %ax,%ds
+  3d:   8e c0                   movl   %ax,%es
+  3f:   31 c0                   xor    %ax,%ax
+  41:   89 c3                   mov    %ax,%bx
+  43:   89 c1                   mov    %ax,%cx
+  45:   ba 80 00                mov    $0x80,%dx
+  48:   31 f6                   xor    %si,%si
+  4a:   31 ff                   xor    %di,%di
+  4c:   31 ed                   xor    %bp,%bp
+  4e:   cb                      lret
+        ...
+Disassembly of section CPMVARS:
+
+00000000 <CPMVARS>:
+        ...
+Disassembly of section CPMINFO:
+
+00000000 <CPMINFO>:
+        ...
+Disassembly of section UPX1HEAD:
+
+00000000 <UPX1HEAD>:
+   0:   55                      push   %bp
+   1:   50                      push   %ax
+   2:   58                      pop    %ax
+   3:   21 a1 d8 d0             and    %sp,-12072(%bx,%di)
+   7:   d5 00                   aad    $0x0
+        ...
+  1d:   00 00                   add    %al,(%bx,%si)
+  1f:   2d                      .byte 0x2d

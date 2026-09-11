@@ -42,6 +42,10 @@
 */
 
 #include "../../version.h"
+#if 0
+#undef UPX_VERSION_HEX
+#define UPX_VERSION_HEX 0x060000
+#endif
 #include "arch/amd64/macros.S"
 
 #define         IMM8(value) byte ptr 0; \
@@ -317,14 +321,14 @@ section         PEIERDLL
                 ret
 
 section         PEIEREXE
-#if UPX_VERSION_HEX < 0x060000
-                //      rcx contains garbage -> garbage return code
-                jmp     [rip + ExitProcess]
-#else
-#  error
-                mov     ecx, 127
+#if UPX_VERSION_HEX >= 0x060000
+                // mov     ecx, 127
+                push    127; pop rcx
                 call    [rip + ExitProcess]
                 int     3
+#else
+                //      rcx contains garbage -> garbage return code
+                jmp     [rip + ExitProcess]
 #endif
 
 section         PEIMDONE

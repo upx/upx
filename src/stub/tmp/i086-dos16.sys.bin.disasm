@@ -1,0 +1,239 @@
+
+tmp/i086-dos16.sys.bin:     file format elf32-i386
+
+Disassembly of section SYSMAIN1:
+
+00000000 <SYSMAIN1>:
+   0:   ff                      (bad)
+   1:   ff                      (bad)
+   2:   ff                      (bad)
+   3:   ff 00                   incw   (%bx,%si)
+                        4: R_386_16     attribute
+   5:   00 0a                   add    %cl,(%bp,%si)
+                        6: R_386_16     SYSMAIN1
+   7:   00 00                   add    %al,(%bx,%si)
+                        8: R_386_16     interrupt
+        ...
+Disassembly of section SYSI2861:
+
+00000000 <SYSI2861>:
+   0:   60                      pusha
+Disassembly of section SYSI0861:
+
+00000000 <SYSI0861>:
+   0:   50                      push   %ax
+   1:   53                      push   %bx
+   2:   51                      push   %cx
+   3:   52                      push   %dx
+   4:   56                      push   %si
+   5:   57                      push   %di
+   6:   55                      push   %bp
+Disassembly of section SYSMAIN2:
+
+00000000 <SYSMAIN2>:
+   0:   be 00 00                mov    $0x0,%si
+                        1: R_386_16     copy_source
+   3:   bf 00 00                mov    $0x0,%di
+                        4: R_386_16     copy_destination
+   6:   89 f1                   mov    %si,%cx
+   8:   06                      push   %es
+   9:   1e                      push   %ds
+   a:   07                      pop    %es
+   b:   fd                      std
+   c:   f3 a4                   rep movsb %ds:(%si),%es:(%di)
+   e:   fc                      cld
+   f:   bb 00 80                mov    $0x8000,%bx
+  12:   87 f7                   xchg   %si,%di
+  14:   83 ee 00                sub    $0x0,%si
+                        16: R_386_8     neg_e_len
+Disassembly of section SYSSBBBP:
+
+00000000 <SYSSBBBP>:
+   0:   19 ed                   sbb    %bp,%bp
+Disassembly of section SYSCALLT:
+
+00000000 <SYSCALLT>:
+   0:   57                      push   %di
+Disassembly of section SYSMAIN3:
+
+00000000 <SYSMAIN3>:
+   0:   e9 ff ff                jmp    0x2
+                        1: R_386_PC16   NRV2B160
+Disassembly of section UPX1HEAD:
+
+00000000 <UPX1HEAD>:
+   0:   55                      push   %bp
+   1:   50                      push   %ax
+   2:   58                      pop    %ax
+   3:   21 a1 d8 d0             and    %sp,-12072(%bx,%di)
+   7:   d5 00                   aad    $0x0
+        ...
+  15:   2d                      .byte 0x2d
+Disassembly of section NRV2B160:
+
+00000000 <NRV2B160>:
+   0:   a4                      movsb  %ds:(%si),%es:(%di)
+   1:   e8 0b 00                call   0xf
+                        2: R_386_PC16   NRVDECO2
+   4:   72 fa                   jb     0x0
+   6:   41                      inc    %cx
+   7:   e8 06 00                call   0x10
+                        8: R_386_PC16   NRVDECO2
+Disassembly of section NRVDDONE:
+
+00000000 <NRVDDONE>:
+   0:   e3 15                   jcxz   0x17
+                        1: R_386_PC8    NRVDECO2
+Disassembly of section NRVDRETU:
+
+00000000 <NRVDRETU>:
+   0:   e3 14                   jcxz   0x16
+                        1: R_386_PC8    NRVDECO2
+Disassembly of section NRVDECO1:
+
+00000000 <NRVDECO1>:
+   0:   73 06                   jae    0x8
+                        1: R_386_PC8    NRV2B160
+   2:   83 e9 03                sub    $0x3,%cx
+   5:   72 06                   jb     0xd
+   7:   88 cc                   mov    %cl,%ah
+   9:   ac                      lods   %ds:(%si),%al
+   a:   f7 d0                   not    %ax
+   c:   95                      xchg   %ax,%bp
+   d:   31 c9                   xor    %cx,%cx
+   f:   e8 06 00                call   0x18
+                        10: R_386_PC16  NRVDECO2
+  12:   11 c9                   adc    %cx,%cx
+  14:   75 08                   jne    0x1e
+  16:   41                      inc    %cx
+  17:   e8 06 00                call   0x20
+                        18: R_386_PC16  NRVDECO2
+  1a:   73 fb                   jae    0x17
+  1c:   41                      inc    %cx
+  1d:   41                      inc    %cx
+Disassembly of section NRVLED00:
+
+00000000 <NRVLED00>:
+   0:   41                      inc    %cx
+Disassembly of section NRVGTD00:
+
+00000000 <NRVGTD00>:
+   0:   81 fd 00 f3             cmp    $0xf300,%bp
+   4:   83 d1 01                adc    $0x1,%cx
+Disassembly of section NRVDECO2:
+
+00000000 <NRVDECO2>:
+   0:   8d 03                   lea    (%bp,%di),%ax
+   2:   96                      xchg   %ax,%si
+   3:   f3 a4                   rep movsb %ds:(%si),%es:(%di)
+   5:   96                      xchg   %ax,%si
+   6:   eb 00                   jmp    0x8
+                        7: R_386_PC8    NRV2B160
+   8:   e8 02 00                call   0xd
+   b:   11 c9                   adc    %cx,%cx
+   d:   01 db                   add    %bx,%bx
+   f:   75 04                   jne    0x15
+  11:   ad                      lods   %ds:(%si),%ax
+  12:   11 c0                   adc    %ax,%ax
+  14:   93                      xchg   %ax,%bx
+  15:   c3                      ret
+Disassembly of section CALLTR16:
+
+00000000 <CALLTR16>:
+   0:   5e                      pop    %si
+   1:   b9 00 00                mov    $0x0,%cx
+                        2: R_386_16     calltrick_calls
+   4:   ac                      lods   %ds:(%si),%al
+   5:   2c e8                   sub    $0xe8,%al
+   7:   3c 01                   cmp    $0x1,%al
+   9:   77 f9                   ja     0x4
+Disassembly of section CT16I286:
+
+00000000 <CT16I286>:
+   0:   c1 04 08                rolw   $0x8,(%si)
+Disassembly of section CT16SUB0:
+
+00000000 <CT16SUB0>:
+   0:   29 34                   sub    %si,(%si)
+Disassembly of section CT16I086:
+
+00000000 <CT16I086>:
+   0:   8b 1c                   mov    (%si),%bx
+   2:   86 df                   xchg   %bl,%bh
+   4:   29 f3                   sub    %si,%bx
+   6:   89 1c                   mov    %bx,(%si)
+Disassembly of section CALLTRI2:
+
+00000000 <CALLTRI2>:
+   0:   ad                      lods   %ds:(%si),%ax
+   1:   e2 03                   loop   0x6
+                        2: R_386_PC8    CALLTR16
+Disassembly of section CT16E800:
+
+00000000 <CT16E800>:
+   0:   b0 e8                   mov    $0xe8,%al
+Disassembly of section CT16E900:
+
+00000000 <CT16E900>:
+   0:   b0 e9                   mov    $0xe9,%al
+Disassembly of section CALLTRI5:
+
+00000000 <CALLTRI5>:
+   0:   5f                      pop    %di
+   1:   b9 00 00                mov    $0x0,%cx
+                        2: R_386_16     calltrick_calls
+   4:   f2 ae                   repnz scas %es:(%di),%al
+Disassembly of section CT16JEND:
+
+00000000 <CT16JEND>:
+   0:   75 14                   jne    0x16
+                        1: R_386_PC8    NRVDECO2
+Disassembly of section CT16JUL2:
+
+00000000 <CT16JUL2>:
+   0:   75 02                   jne    0x4
+                        1: R_386_PC8    CALLTRI6
+Disassembly of section CT16I287:
+
+00000000 <CT16I287>:
+   0:   c1 05 08                rolw   $0x8,(%di)
+Disassembly of section CT16SUB1:
+
+00000000 <CT16SUB1>:
+   0:   29 3d                   sub    %di,(%di)
+Disassembly of section CT16I087:
+
+00000000 <CT16I087>:
+   0:   8b 1d                   mov    (%di),%bx
+   2:   86 df                   xchg   %bl,%bh
+   4:   29 fb                   sub    %di,%bx
+   6:   89 1d                   mov    %bx,(%di)
+Disassembly of section CALLTRI6:
+
+00000000 <CALLTRI6>:
+   0:   af                      scas   %es:(%di),%ax
+   1:   eb 03                   jmp    0x6
+                        2: R_386_PC8    CALLTRI5
+Disassembly of section SYSMAIN5:
+
+00000000 <SYSMAIN5>:
+   0:   07                      pop    %es
+Disassembly of section SYSI2862:
+
+00000000 <SYSI2862>:
+   0:   61                      popa
+Disassembly of section SYSI0862:
+
+00000000 <SYSI0862>:
+   0:   5d                      pop    %bp
+   1:   5f                      pop    %di
+   2:   5e                      pop    %si
+   3:   5a                      pop    %dx
+   4:   59                      pop    %cx
+   5:   5b                      pop    %bx
+   6:   58                      pop    %ax
+Disassembly of section SYSJUMP1:
+
+00000000 <SYSJUMP1>:
+   0:   e9 fe ff                jmp    0x1
+                        1: R_386_PC16   original_strategy

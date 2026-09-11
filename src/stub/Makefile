@@ -1651,7 +1651,7 @@ mips.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    | sed -e $$(cat src/dollar-dollar.sed) > tmp/mips.r3000-linux.elf-fold-3.S
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EB -march=r3000 tmp/mips.r3000-linux.elf-fold-3.S -o tmp/$T.o
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) | $(EXPAND) > tmp/$@.disasm
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
@@ -1676,7 +1676,7 @@ mips.r3000-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    | sed -e $$(cat src/dollar-dollar.sed) > tmp/mips.r3000-linux.elf-so_fold-3.S
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	mipsel-elf-as-20060406 -EB -march=r3000 tmp/mips.r3000-linux.elf-so_fold-3.S -o tmp/$T.o
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) | $(EXPAND) > tmp/$@.disasm
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
@@ -1809,7 +1809,7 @@ mipsel.r3000-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    | sed -e $$(cat src/dollar-dollar.sed) > tmp/mipsel.r3000-linux.elf-fold-3.S
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EL -march=r3000 tmp/mipsel.r3000-linux.elf-fold-3.S -o tmp/$T.o
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) | $(EXPAND) > tmp/$@.disasm
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
@@ -1834,7 +1834,7 @@ mipsel.r3000-linux.elf-so_fold.h : $(srcdir)/src/$$T.lds \
 	    | sed -e $$(cat src/dollar-dollar.sed) > tmp/mipsel.r3000-linux.elf-so_fold-3.S
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work`
 	$(call tc,as) -EL -march=r3000 tmp/mipsel.r3000-linux.elf-so_fold-3.S -o tmp/$T.o
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) | $(EXPAND) > tmp/$@.disasm
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
@@ -2151,7 +2151,7 @@ powerpc64le-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	      sed -e '/\.section\s*"\.toc","aw"/d' \
 	          -e '/\.section\s*"\.opd","aw"/,/\.previous/{ /:/P ; d }'
 	$(call tc,gcc) -c tmp/powerpc64le-linux.elf-fold-3.S -o tmp/$T.o
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) | $(EXPAND) > tmp/$@.disasm
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map  -o tmp/$T.bin \
 	     tmp/$T.o
@@ -2219,7 +2219,7 @@ powerpc64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	      sed -e '/\.section\s*"\.toc","aw"/d' \
 	          -e '/\.section\s*"\.opd","aw"/,/\.previous/{ /:/P ; d }'
 	$(call tc,gcc) -c tmp/powerpc64-linux.elf-fold-3.S -o tmp/$T.o
-	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o > tmp/$@.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.o | $(RTRIM) | $(EXPAND) > tmp/$@.disasm
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $(srcdir)/src/$T.S
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin \
 	     tmp/$T.o
