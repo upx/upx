@@ -25,14 +25,18 @@ Disassembly of section PEISDLL1:
 Disassembly of section PEMAIN01:
 
 0000000000000000 <PEMAIN01>:
-   0:   53                      push   rbx
-   1:   56                      push   rsi
-   2:   57                      push   rdi
-   3:   55                      push   rbp
-   4:   48 8d 35 00 00 00 00    lea    rsi,[rip+0x0]        # b <PEMAIN01+0xb>
-                        7: R_X86_64_PC32        start_of_compressed-0x4
-   b:   48 8d be 00 00 00 00    lea    rdi,[rsi+0x0]
-                        e: R_X86_64_32S start_of_uncompressed
+   0:   41 51                   push   r9
+   2:   41 50                   push   r8
+   4:   52                      push   rdx
+   5:   51                      push   rcx
+   6:   53                      push   rbx
+   7:   56                      push   rsi
+   8:   57                      push   rdi
+   9:   55                      push   rbp
+   a:   48 8d 35 00 00 00 00    lea    rsi,[rip+0x0]        # 11 <PEMAIN01+0x11>
+                        d: R_X86_64_PC32        start_of_compressed-0x4
+  11:   48 8d be 00 00 00 00    lea    rdi,[rsi+0x0]
+                        14: R_X86_64_32S        start_of_uncompressed
 
 Disassembly of section PEICONS1:
 
@@ -1231,14 +1235,21 @@ Disassembly of section PEIERDLL:
    5:   5f                      pop    rdi
    6:   5e                      pop    rsi
    7:   5b                      pop    rbx
-   8:   31 c0                   xor    eax,eax
-   a:   c3                      ret
+   8:   59                      pop    rcx
+   9:   5a                      pop    rdx
+   a:   41 58                   pop    r8
+   c:   41 59                   pop    r9
+   e:   31 c0                   xor    eax,eax
+  10:   c3                      ret
 
 Disassembly of section PEIEREXE:
 
 0000000000000000 <PEIEREXE>:
-   0:   ff 25 00 00 00 00       jmp    QWORD PTR [rip+0x0]        # 6 <reloc_endx+0x4>
-                        2: R_X86_64_PC32        ExitProcess-0x4
+   0:   6a 7f                   push   0x7f
+   2:   59                      pop    rcx
+   3:   ff 15 00 00 00 00       call   QWORD PTR [rip+0x0]        # 9 <PEIEREXE+0x9>
+                        5: R_X86_64_PC32        ExitProcess-0x4
+   9:   cc                      int3
 
 Disassembly of section PEIMDONE:
 
@@ -1371,6 +1382,10 @@ Disassembly of section PEMAIN20:
    1:   5f                      pop    rdi
    2:   5e                      pop    rsi
    3:   5b                      pop    rbx
+   4:   59                      pop    rcx
+   5:   5a                      pop    rdx
+   6:   41 58                   pop    r8
+   8:   41 59                   pop    r9
 
 Disassembly of section CLEARSTACK:
 

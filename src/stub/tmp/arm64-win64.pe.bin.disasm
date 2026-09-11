@@ -5,21 +5,23 @@ tmp/arm64-win64.pe.bin:     file format elf64-littleaarch64
 Disassembly of section PEMAIN01:
 
 0000000000000000 <PEMAIN01>:
-   0:   a9be7bfd        stp     x29, x30, [sp,#-32]!
-   4:   a90153f3        stp     x19, x20, [sp,#16]
-   8:   10000091        adr     x17, 18 <PEMAIN01+0x18>
-   c:   b9800230        ldrsw   x16, [x17]
-  10:   8b100234        add     x20, x17, x16
-  14:   14000002        b       1c <PEMAIN01+0x1c>
-  18:   00000000        .inst   0x00000000 ; undefined
-                        18: R_AARCH64_PREL32    start_of_compressed
-  1c:   10000091        adr     x17, 2c <PEMAIN01+0x2c>
-  20:   b9400230        ldr     w16, [x17]
-  24:   93407e09        sxtw    x9, w16
-  28:   14000002        b       30 <PEMAIN01+0x30>
-  2c:   00000000        .inst   0x00000000 ; undefined
-                        2c: R_AARCH64_ABS32     start_of_uncompressed
-  30:   8b090293        add     x19, x20, x9
+   0:   a9be07e0        stp     x0, x1, [sp,#-32]!
+   4:   a9010fe2        stp     x2, x3, [sp,#16]
+   8:   a9be7bfd        stp     x29, x30, [sp,#-32]!
+   c:   a90153f3        stp     x19, x20, [sp,#16]
+  10:   10000091        adr     x17, 20 <PEMAIN01+0x20>
+  14:   b9800230        ldrsw   x16, [x17]
+  18:   8b100234        add     x20, x17, x16
+  1c:   14000002        b       24 <PEMAIN01+0x24>
+  20:   00000000        .inst   0x00000000 ; undefined
+                        20: R_AARCH64_PREL32    start_of_compressed
+  24:   10000091        adr     x17, 34 <PEMAIN01+0x34>
+  28:   b9400230        ldr     w16, [x17]
+  2c:   93407e09        sxtw    x9, w16
+  30:   14000002        b       38 <PEMAIN01+0x38>
+  34:   00000000        .inst   0x00000000 ; undefined
+                        34: R_AARCH64_ABS32     start_of_uncompressed
+  38:   8b090293        add     x19, x20, x9
 
 Disassembly of section PEMAIN02:
 
@@ -197,8 +199,10 @@ Disassembly of section PEDOJUMP:
 0000000000000000 <PEDOJUMP>:
    0:   a94153f3        ldp     x19, x20, [sp,#16]
    4:   a8c27bfd        ldp     x29, x30, [sp],#32
-   8:   14000000        b       0 <original_entry>
-                        8: R_AARCH64_JUMP26     original_entry
+   8:   a9410fe2        ldp     x2, x3, [sp,#16]
+   c:   a8c207e0        ldp     x0, x1, [sp],#32
+  10:   14000000        b       0 <original_entry>
+                        10: R_AARCH64_JUMP26    original_entry
 
 Disassembly of section NRV2B:
 
@@ -406,29 +410,33 @@ Disassembly of section PETLSC2:
 
 0000000000000000 <PETLSC2>:
    0:   d65f03c0        ret
-   4:   a9bd7bfd        stp     x29, x30, [sp,#-48]!
-   8:   a90153f3        stp     x19, x20, [sp,#16]
-   c:   a9025bf5        stp     x21, x22, [sp,#32]
-  10:   aa0003f3        mov     x19, x0
-  14:   aa0103f4        mov     x20, x1
-  18:   aa0203f5        mov     x21, x2
-  1c:   10000091        adr     x17, 2c <PETLSC2+0x2c>
-  20:   b9800230        ldrsw   x16, [x17]
-  24:   8b100236        add     x22, x17, x16
-  28:   14000002        b       30 <PETLSC2+0x30>
-  2c:   00000000        .inst   0x00000000 ; undefined
-                        2c: R_AARCH64_PREL32    tls_callbacks_ptr
-  30:   f84086c9        ldr     x9, [x22],#8
-  34:   b40000c9        cbz     x9, 4c <PETLSC2+0x4c>
-  38:   aa1303e0        mov     x0, x19
-  3c:   2a1403e1        mov     w1, w20
-  40:   aa1503e2        mov     x2, x21
-  44:   d63f0120        blr     x9
-  48:   17fffffa        b       30 <PETLSC2+0x30>
-  4c:   a9425bf5        ldp     x21, x22, [sp,#32]
-  50:   a94153f3        ldp     x19, x20, [sp,#16]
-  54:   a8c37bfd        ldp     x29, x30, [sp],#48
-  58:   d65f03c0        ret
+   4:   a9be07e0        stp     x0, x1, [sp,#-32]!
+   8:   a9010fe2        stp     x2, x3, [sp,#16]
+   c:   a9bd7bfd        stp     x29, x30, [sp,#-48]!
+  10:   a90153f3        stp     x19, x20, [sp,#16]
+  14:   a9025bf5        stp     x21, x22, [sp,#32]
+  18:   aa0003f3        mov     x19, x0
+  1c:   aa0103f4        mov     x20, x1
+  20:   aa0203f5        mov     x21, x2
+  24:   10000091        adr     x17, 34 <PETLSC2+0x34>
+  28:   b9800230        ldrsw   x16, [x17]
+  2c:   8b100236        add     x22, x17, x16
+  30:   14000002        b       38 <PETLSC2+0x38>
+  34:   00000000        .inst   0x00000000 ; undefined
+                        34: R_AARCH64_PREL32    tls_callbacks_ptr
+  38:   f84086c9        ldr     x9, [x22],#8
+  3c:   b40000c9        cbz     x9, 54 <PETLSC2+0x54>
+  40:   aa1303e0        mov     x0, x19
+  44:   2a1403e1        mov     w1, w20
+  48:   aa1503e2        mov     x2, x21
+  4c:   d63f0120        blr     x9
+  50:   17fffffa        b       38 <PETLSC2+0x38>
+  54:   a9425bf5        ldp     x21, x22, [sp,#32]
+  58:   a94153f3        ldp     x19, x20, [sp,#16]
+  5c:   a8c37bfd        ldp     x29, x30, [sp],#48
+  60:   a9410fe2        ldp     x2, x3, [sp,#16]
+  64:   a8c207e0        ldp     x0, x1, [sp],#32
+  68:   d65f03c0        ret
 
 Disassembly of section PEFILTSYM:
 

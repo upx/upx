@@ -42,7 +42,7 @@
 */
 
 #include "../../version.h"
-#if 0
+#if 1
 #undef UPX_VERSION_HEX
 #define UPX_VERSION_HEX 0x060000
 #endif
@@ -89,12 +89,12 @@ section         PEISDLL1
 section         PEMAIN01
                 //; remember to keep stack 16-byte aligned!
 
-//#if UPX_VERSION_HEX >= 0x060000
+#if UPX_VERSION_HEX >= 0x060000
                 push    r9  // save in-reg args next to on-stack args
                 push    r8
                 push    rdx
                 push    rcx  // peb (Process Event BLock): ProcessParameters etc.
-//#endif
+#endif
                 push    rbx
                 push    rsi
                 push    rdi
@@ -324,12 +324,12 @@ section         PEIERDLL
                 pop     rdi
                 pop     rsi
                 pop     rbx
-//#if UPX_VERSION_HEX >= 0x060000
+#if UPX_VERSION_HEX >= 0x060000
                 pop     rcx  // restore in-reg args
                 pop     rdx
                 pop     r8
                 pop     r9
-//#endif
+#endif
                 xor     eax, eax
                 ret
 
@@ -466,12 +466,12 @@ section         PEMAIN20
                 pop     rdi
                 pop     rsi
                 pop     rbx
-//#if UPX_VERSION_HEX >= 0x060000
+#if UPX_VERSION_HEX >= 0x060000
                 pop     rcx  // restore in-reg args
                 pop     rdx
                 pop     r8
                 pop     r9
-//#endif
+#endif
 
 // clear the dirty stack
 .macro          clearstack128  tmp_reg
