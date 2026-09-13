@@ -42,7 +42,7 @@
 */
 
 #include "../../version.h"
-#if 1
+#if 0
 #undef UPX_VERSION_HEX
 #define UPX_VERSION_HEX 0x060000
 #endif

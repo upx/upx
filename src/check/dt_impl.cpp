@@ -68,7 +68,8 @@
 #endif
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1940)
+#if defined(_MSC_VER) && (_MSC_VER >= 1944)
+// C5285: cannot declare a specialization for 'template name': template argument
 #pragma warning(disable : 5285) // Specializing template std::tuple is forbidden
 #endif
 

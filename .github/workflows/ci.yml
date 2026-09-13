@@ -60,6 +60,7 @@ jobs:
           git submodule update --init
           git fsck --strict --progress
       - run: ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
+      - run: set -x; cat "$HOME/.gitconfig" || true
       - name: Rebuild and verify stubs
         run: |
           export PATH="$(readlink -en ../deps/bin-upx-20221212):$PATH"
