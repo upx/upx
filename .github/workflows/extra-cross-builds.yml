@@ -39,6 +39,7 @@ jobs:
           - { container: 'ubuntu:20.04', target: g++-powerpc64-linux-gnu, qemu: qemu-ppc64 }
           - { container: 'ubuntu:20.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le }
           - { container: 'ubuntu:20.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
+          - { container: 'ubuntu:20.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
 
           - { container: 'ubuntu:22.04', target: g++-aarch64-linux-gnu, qemu: qemu-aarch64 }
           - { container: 'ubuntu:22.04', target: g++-arm-linux-gnueabi, qemu: qemu-arm }
