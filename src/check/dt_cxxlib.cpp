@@ -3552,6 +3552,100 @@ TEST_CASE("codegen constant") {
                                                n, n, n, n, n, n, n, n) == 0));
     }
     {
+        typedef float T;
+        assert_noexcept2((TestConstant::noinline_xadd_0<T>() == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_1<T>(n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_2<T>(n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_3<T>(n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_4<T>(n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_5<T>(n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_6<T>(n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_7<T>(n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_8<T>(n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_9<T>(n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_10<T>(n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_11<T>(n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_12<T>(n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_13<T>(n, n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_14<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_15<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_16<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_17<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_18<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_19<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_20<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_21<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_22<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_23<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_24<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_25<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                               n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_26<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                               n, n, n, n, n, n, n, n) == 0));
+    }
+    {
+        typedef double T;
+        assert_noexcept2((TestConstant::noinline_xadd_0<T>() == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_1<T>(n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_2<T>(n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_3<T>(n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_4<T>(n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_5<T>(n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_6<T>(n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_7<T>(n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_8<T>(n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_9<T>(n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_10<T>(n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_11<T>(n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_12<T>(n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_13<T>(n, n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_14<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_15<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_16<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_17<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_18<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_19<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_20<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_21<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_22<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_23<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2((TestConstant::noinline_xadd_24<T>(n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                                            n, n, n, n, n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_25<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                               n, n, n, n, n, n, n) == 0));
+        assert_noexcept2(
+            (TestConstant::noinline_xadd_26<T>(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n,
+                                               n, n, n, n, n, n, n, n) == 0));
+    }
+    {
         assert_noexcept2((TestConstant::noinline_return_1().a[0] == 0));
         assert_noexcept2((TestConstant::noinline_return_2().a[1] == 0));
         assert_noexcept2((TestConstant::noinline_return_3().a[2] == 0));
