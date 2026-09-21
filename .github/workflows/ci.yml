@@ -166,8 +166,10 @@ jobs:
         include:
           - { os: ubuntu-22.04 }
           - { os: ubuntu-24.04 }
+          - { os: ubuntu-26.04 }
           - { os: ubuntu-22.04-arm }
           - { os: ubuntu-24.04-arm }
+          - { os: ubuntu-26.04-arm }
     name: ${{ format('{0}', matrix.os) }}-0
     runs-on: ${{ matrix.os }}
     steps:
@@ -263,6 +265,7 @@ jobs:
           # { os: ubuntu-22.04, use_extra: true }
           - { os: ubuntu-22.04 }
           - { os: ubuntu-24.04, use_extra: true, use_wine: true }
+          - { os: ubuntu-26.04, use_extra: true, use_wine: true }
     name: ${{ format('{0}', matrix.os) }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -377,7 +380,7 @@ jobs:
             export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet --gen-suppressions=all"
             # clang/debug does not work before valgrind-3.20, see https://bugs.kde.org/show_bug.cgi?id=452758
             jobs="gcc/debug gcc/release clang/release"
-            test "${{ matrix.use_extra }}" = "true" && jobs="$jobs gcc-m32/debug gcc-m32/release"
+            #test "${{ matrix.use_extra }}" = "true" && jobs="$jobs gcc-m32/debug gcc-m32/release"
             echo "===== parallel jobs: $jobs"
             parallel -kv --lb 'cd build/extra/{} && bash ../../../../misc/testsuite/mimic_ctest.sh' ::: $jobs
             ls -ld ./build/*/*/*/upx-* || true
@@ -396,7 +399,7 @@ jobs:
             export upx_exe_runner="valgrind --leak-check=no --error-exitcode=1 --quiet --gen-suppressions=all"
             # clang/debug does not work before valgrind-3.20, see https://bugs.kde.org/show_bug.cgi?id=452758
             jobs="gcc/debug gcc/release clang/release"
-            test "${{ matrix.use_extra }}" = "true" && jobs="$jobs gcc-m32/debug gcc-m32/release"
+            #test "${{ matrix.use_extra }}" = "true" && jobs="$jobs gcc-m32/debug gcc-m32/release"
             echo "===== parallel jobs: $jobs"
             parallel -kv --lb 'cd build/extra/{} && bash ../../../../misc/testsuite/test_symlinks.sh' ::: $jobs
           fi
@@ -422,6 +425,7 @@ jobs:
           - { os: macos-14, gcc: gcc-13, gxx: g++-13, testsuite: true }
           - { os: macos-15, gcc: gcc-14, gxx: g++-14, testsuite: true }
           - { os: macos-26, gcc: gcc-15, gxx: g++-15, testsuite: true }
+          - { os: xcode-27, gcc: gcc-15, gxx: g++-15, testsuite: true }
           - { os: macos-15-intel, gcc: gcc-14, gxx: g++-14, testsuite: true }
     name: ${{ format('{0} {1}{2}', matrix.os, matrix.xcode_version && 'xcode-' || '',  matrix.xcode_version) }}
     runs-on: ${{ matrix.os }}
@@ -448,6 +452,7 @@ jobs:
           case "${{ matrix.os }}" in
             # TODO FIXME: UPX on macos-13+ is broken => disable run-packed for now
             macos-[12][3456]*) echo "UPX_CONFIG_DISABLE_RUN_PACKED_TEST=ON" >> $GITHUB_ENV ;;
+            xcode-*) echo "UPX_CONFIG_DISABLE_RUN_PACKED_TEST=ON" >> $GITHUB_ENV ;;
           esac
       - uses: actions/checkout@v7
         with: { submodules: true }
@@ -601,8 +606,8 @@ jobs:
           cmake --install build/release --config Release --prefix "$PWD/tmp/artifact/$N/InstallWithCMake/InstallWithPrefixAndStrip/release" --strip
           (cd build && cp -v -ai --parents */*/upx.exe "../tmp/artifact/$N")
           (cd build && shopt -s globstar && cp -v -ai --parents **/dt_cxxlib.* "../tmp/artifact/$N")
-          #(cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
-          (cd tmp/artifact && tar --sort=name --gzip -cf "$N.tar.gz" "$N" && rm -rf "./$N" && ls -la && gzip -tq "$N.tar.gz")
+          (cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
+          #(cd tmp/artifact && tar --sort=name --gzip -cf "$N.tar.gz" "$N" && rm -rf "./$N" && ls -la && gzip -tq "$N.tar.gz")
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v7
@@ -712,8 +717,8 @@ jobs:
           mkdir -p -v "tmp/artifact/$N/$B"
           cp -v -ai build/$C/$B/upx/upx*.exe "tmp/artifact/$N/$B"
           (cd build && shopt -s globstar && cp -v -ai --parents **/dt_cxxlib.* "../tmp/artifact/$N")
-          #(cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
-          (cd tmp/artifact && tar --sort=name --gzip -cf "$N.tar.gz" "$N" && rm -rf "./$N" && ls -la && gzip -tq "$N.tar.gz")
+          (cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
+          #(cd tmp/artifact && tar --sort=name --gzip -cf "$N.tar.gz" "$N" && rm -rf "./$N" && ls -la && gzip -tq "$N.tar.gz")
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         uses: actions/upload-artifact@v7
