@@ -1443,8 +1443,12 @@ void PeFile::processTls1(Interval *iv, typename tls_traits<LEXX>::cb_value_t ima
         return;
     const unsigned skip = IDADDR(PEDIR_TLS);
     const tls *const tlsp = (const tls *) ibuf.subref("bad tls %#x", skip, sizeof(tls));
-    if (tlsp->dataend <= tlsp->datastart) // includes wrap-around
-        throwCantPack("TLS empty region");
+    if (tlsp->dataend <= tlsp->datastart) {   // includes wrap-around
+        if (tlsp->dataend == tlsp->datastart) // lazy compiler
+            infoWarning("TLS empty region");
+        else
+            throwCantPack("TLS illegal region");
+    }
 
     // note: TLS callbacks are not implemented in Windows 95/98/ME
     if (tlsp->callbacks) {
