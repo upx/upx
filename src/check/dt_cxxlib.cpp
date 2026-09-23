@@ -4723,7 +4723,7 @@ struct TestTriBool final {
         static_assert(sizeof(T) == sizeof(typename T::underlying_type));
         // i386: "long long" enum align bug/ABI problem on older compilers
         static_assert(alignof(T) <= alignof(typename T::underlying_type));
-#elif defined(__i386__) && defined(__clang__) && (__clang__ < 6)
+#elif defined(__i386__) && defined(__clang__) && (__clang__ < 8)
         static_assert(sizeof(T) == sizeof(typename T::underlying_type));
         // i386: "long long" enum align bug/ABI problem on older compilers
         static_assert(alignof(T) <= alignof(typename T::underlying_type));

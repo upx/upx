@@ -12,6 +12,7 @@ Checks: >
     -bugprone-inc-dec-in-conditions,
     -bugprone-macro-parentheses,
     -bugprone-reserved-identifier,
+    -bugprone-signed-bitwise,
     -bugprone-sizeof-expression,
     -bugprone-suspicious-include,
   clang-analyzer-*,

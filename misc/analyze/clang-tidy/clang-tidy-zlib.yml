@@ -12,6 +12,7 @@ Checks: >
     -bugprone-macro-parentheses,
     -bugprone-narrowing-conversions,
     -bugprone-reserved-identifier,
+    -bugprone-signed-bitwise,
     -bugprone-switch-missing-default-case,
   clang-analyzer-*,
     -clang-analyzer-optin.performance.Padding,

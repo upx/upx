@@ -549,7 +549,7 @@ forceinline T atomic_exchange(T *ptr, T new_value) noexcept {
     static_assert(std::is_standard_layout_v<T>);
     static_assert(std::is_trivially_copyable_v<T>);
 #if !(WITH_THREADS)
-    T old_value = *ptr;
+    const T old_value = *ptr;
     *ptr = new_value;
     return old_value;
 #else
