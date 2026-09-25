@@ -73,6 +73,15 @@
 #pragma warning(disable : 5285) // Specializing template std::tuple is forbidden
 #endif
 
+#if 1
+#include <climits>
+#include <cfloat>
+#include <cmath>
+#if !defined(DBL_EPSILON)
+#define DBL_EPSILON (3.0e-16)
+#endif
+#endif
+
 // NOLINTBEGIN(bugprone-unintended-char-ostream-output)
 #include <doctest/doctest/parts/doctest.cpp>
 // NOLINTEND(bugprone-unintended-char-ostream-output)

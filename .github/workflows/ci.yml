@@ -207,6 +207,7 @@ jobs:
           (cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ env.artifact_name }}
         uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/extra/clang/debug/upx --sysinfo -vv
@@ -344,6 +345,7 @@ jobs:
           (cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ env.artifact_name }}
         uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
       - name: Run install tests
@@ -501,6 +503,7 @@ jobs:
           (cd tmp/artifact && gtar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ env.artifact_name }}
         uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/extra/clang/debug/upx --sysinfo -vv
@@ -611,6 +614,7 @@ jobs:
           #(cd tmp/artifact && tar --sort=name --gzip -cf "$N.tar.gz" "$N" && rm -rf "./$N" && ls -la && gzip -tq "$N.tar.gz")
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ env.artifact_name }}
         uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/debug/Debug/upx.exe --sysinfo -vv
@@ -722,6 +726,7 @@ jobs:
           #(cd tmp/artifact && tar --sort=name --gzip -cf "$N.tar.gz" "$N" && rm -rf "./$N" && ls -la && gzip -tq "$N.tar.gz")
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ env.artifact_name }}
         uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
       - run: set -x; UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/$C/$B/upx/upx.exe --sysinfo -vv
@@ -917,6 +922,7 @@ jobs:
           (cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ env.artifact_name }}
         uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
       - name: Run install tests
