@@ -176,7 +176,7 @@ jobs:
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ env.artifact_name }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
 
       - name: 'Run ctest tests aarch64'
