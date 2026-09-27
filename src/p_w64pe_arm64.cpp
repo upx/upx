@@ -90,7 +90,8 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
 
     initLoader(EM_AARCH64, stub_arm64_win64_pe, sizeof(stub_arm64_win64_pe), 2);
 
-    addLoader("START", "PEMAIN01", tmp_tlsindex ? "PETLSHAK" : "", "PEMAIN02");
+    addLoader("START", isdll ? "PEISDLL1" : "", "PEMAIN01",
+              tmp_tlsindex ? "PETLSHAK" : "", "PEMAIN02");
     addLoader(M_IS_NRV2B(ph.method)   ? "PECALL2B"
               : M_IS_NRV2D(ph.method) ? "PECALL2D"
               : M_IS_NRV2E(ph.method) ? "PECALL2E"

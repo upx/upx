@@ -74,6 +74,12 @@
 // =============
 
 section START
+section PEISDLL1
+        cmp     w1, #1                           // 1 == DLL_PROCESS_ATTACH
+        b.eq    .Lprocess_attach
+        b       original_entry
+.Lprocess_attach:
+
 section PEMAIN01
 //#if UPX_VERSION_HEX >= 0x060000
         stp     x0, x1, [sp, #-4*NBPW]!  // save in-reg arss
