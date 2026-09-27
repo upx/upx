@@ -2,6 +2,14 @@
 tmp/arm64-win64.pe.bin:     file format elf64-littleaarch64
 
 
+Disassembly of section PEISDLL1:
+
+0000000000000000 <PEISDLL1>:
+   0:   7100043f        cmp     w1, #0x1
+   4:   54000040        b.eq    c <ucl_nrv2b_decompress_32+0xc>
+   8:   14000000        b       0 <original_entry>
+                        8: R_AARCH64_JUMP26     original_entry
+
 Disassembly of section PEMAIN01:
 
 0000000000000000 <PEMAIN01>:
@@ -22,6 +30,26 @@ Disassembly of section PEMAIN01:
   34:   00000000        .inst   0x00000000 ; undefined
                         34: R_AARCH64_ABS32     start_of_uncompressed
   38:   8b090293        add     x19, x20, x9
+
+Disassembly of section PETLSHAK:
+
+0000000000000000 <PETLSHAK>:
+   0:   10000091        adr     x17, 10 <PETLSHAK+0x10>
+   4:   b9400230        ldr     w16, [x17]
+   8:   93407e09        sxtw    x9, w16
+   c:   14000002        b       14 <PETLSHAK+0x14>
+  10:   00000000        .inst   0x00000000 ; undefined
+                        10: R_AARCH64_ABS32     tls_address
+  14:   8b090269        add     x9, x19, x9
+  18:   b940012a        ldr     w10, [x9]
+  1c:   a9bf2be9        stp     x9, x10, [sp,#-16]!
+  20:   10000091        adr     x17, 30 <PETLSHAK+0x30>
+  24:   b9400230        ldr     w16, [x17]
+  28:   93407e0b        sxtw    x11, w16
+  2c:   14000002        b       34 <PETLSHAK+0x34>
+  30:   00000000        .inst   0x00000000 ; undefined
+                        30: R_AARCH64_ABS32     tls_value
+  34:   b900012b        str     w11, [x9]
 
 Disassembly of section PEMAIN02:
 
@@ -60,6 +88,12 @@ Disassembly of section PEMAIN10:
 
 0000000000000000 <PEMAIN10>:
    0:   910043ff        add     sp, sp, #0x10
+
+Disassembly of section PETLSHAK2:
+
+0000000000000000 <PETLSHAK2>:
+   0:   a8c12be9        ldp     x9, x10, [sp],#16
+   4:   b900012a        str     w10, [x9]
 
 Disassembly of section PEIMPORT:
 
