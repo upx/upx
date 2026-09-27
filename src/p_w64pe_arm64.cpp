@@ -82,14 +82,22 @@ tribool PackW64PeArm64::canPack() {
 void PackW64PeArm64::buildLoader(const Filter *ft) {
     UNUSED(ft);
 
+    unsigned tmp_tlsindex = tlsindex;
+    const unsigned oam1 = ih.objectalign - 1;
+    const unsigned newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) & ~oam1;
+    if (tlsindex && !isdll && ((newvsize - ph.c_len - 1024 + oam1) & ~oam1) > tlsindex + 4)
+        tmp_tlsindex = 0;
+
     initLoader(EM_AARCH64, stub_arm64_win64_pe, sizeof(stub_arm64_win64_pe), 2);
 
-    addLoader("START", "PEMAIN01", "PEMAIN02");
+    addLoader("START", "PEMAIN01", tmp_tlsindex ? "PETLSHAK" : "", "PEMAIN02");
     addLoader(M_IS_NRV2B(ph.method)   ? "PECALL2B"
               : M_IS_NRV2D(ph.method) ? "PECALL2D"
               : M_IS_NRV2E(ph.method) ? "PECALL2E"
                                       : "UNKNOWN_COMPRESSION_METHOD");
     addLoader("PEMAIN10");
+    if (tmp_tlsindex)
+        addLoader("PETLSHAK2");
     if (soimport)
         addLoader("PEIMPORT");
     if (sorelocs)
@@ -146,6 +154,10 @@ void PackW64PeArm64::defineSymbols(unsigned ncsection, unsigned upxsection, unsi
         linker->defineSymbol("start_of_imports", myimport);
         linker->defineSymbol("compressed_imports", cimports);
     }
+
+    linker->defineSymbol("tls_value",
+                         (tlsindex + 4 > s1addr) ? get_le32(obuf + tlsindex - s1addr - ic) : 0);
+    linker->defineSymbol("tls_address", tlsindex - rvamin);
 
     const unsigned esi0 = s1addr + ic;
     linker->defineSymbol("start_of_uncompressed", 0u - esi0 + rvamin);

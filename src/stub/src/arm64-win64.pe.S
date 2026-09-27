@@ -86,6 +86,17 @@ section PEMAIN01
         LDVAL   x9,  start_of_uncompressed
         add     x19, x20, x9                    // x19 = xdst (VA decompressed region)
 
+// Windows initializes the TLS index before entry, possibly overwriting
+// compressed data. Restore the correct compressed bytes now, then restore
+// the TLS index afterward in PETLSHAK2.
+section PETLSHAK
+        LDVAL   x9, tls_address
+        add     x9, x19, x9
+        ldr     w10, [x9]
+        stp     x9, x10, [sp, #-16]!
+        LDVAL   x11, tls_value
+        str     w11, [x9] // restore compressed data overwritten by the TLS index
+
 section PEMAIN02
         // In-place (overlapping) decompression: the packer's
         // testOverlappingDecompression has already verified the source/dest
@@ -111,6 +122,10 @@ section PECALL2E
 
 section PEMAIN10
         add     sp, sp, #16                     // discard &u_len slot
+
+section PETLSHAK2                               // restore the TLS index
+        ldp     x9, x10, [sp], #16
+        str     w10, [x9]
 
 // =============
 // ============= IMPORTS  (x19 = xdst base, "rsi")
