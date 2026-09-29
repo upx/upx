@@ -148,12 +148,14 @@ jobs:
         if: ${{ matrix.use_arm64ec }}
         run: |
           export CC="arm64ec-w64-mingw32-clang $xflags" CXX="arm64ec-w64-mingw32-clang++ $xflags $my_cxxflags"
+          export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
           export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
           make UPX_XTARGET=llvm-mingw/arm64ec-w64-mingw32-clang xtarget/all
       - name: 'Build clang arm64ec static'
         if: ${{ matrix.use_arm64ec }}
         run: |
           export CC="arm64ec-w64-mingw32-clang -static $xflags" CXX="arm64ec-w64-mingw32-clang++ -static $xflags $my_cxxflags"
+          export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
           export UPX_CONFIG_DISABLE_SAVE_TEMPS=ON
           make UPX_XTARGET=llvm-mingw/arm64ec-w64-mingw32-clang-static xtarget/all
 
@@ -175,10 +177,12 @@ jobs:
       - name: 'Build clang armv7'
         run: |
           export CC="armv7-w64-mingw32-clang $xflags" CXX="armv7-w64-mingw32-clang++ $xflags $my_cxxflags"
+          export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
           make UPX_XTARGET=llvm-mingw/armv7-w64-mingw32-clang xtarget/all
       - name: 'Build clang armv7 static'
         run: |
           export CC="armv7-w64-mingw32-clang -static $xflags" CXX="armv7-w64-mingw32-clang++ -static $xflags $my_cxxflags"
+          export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
           make UPX_XTARGET=llvm-mingw/armv7-w64-mingw32-clang-static xtarget/all
 
       - name: 'Build clang i686'
@@ -229,7 +233,7 @@ jobs:
           echo "artifact_name=$N" >> $GITHUB_ENV
       - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
         if: ${{ env.artifact_name }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
 
       - name: ${{ format('Install Wine {0}', env.container) }}

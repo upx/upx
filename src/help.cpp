@@ -715,6 +715,22 @@ void show_sysinfo(const char *options_var) {
 #elif defined(__pie__)
         cf_print("__pie__", "%lld", __pie__ + 0, 3);
 #endif
+        cf_print("alignof(char)", "%lld", (long long) alignof(char), 4);
+        cf_print("alignof(short)", "%lld", (long long) alignof(short), 4);
+        cf_print("alignof(int)", "%lld", (long long) alignof(int), 4);
+        cf_print("alignof(long)", "%lld", (long long) alignof(long), 4);
+        cf_print("alignof(long long)", "%lld", (long long) alignof(long long), 4);
+#if (__SIZEOF_INT128__ == 16)
+        cf_print("alignof(__int128)", "%lld", (long long) alignof(upx_int128_t), 4);
+#endif
+        cf_print("alignof(ptrdiff_t)", "%lld", (long long) alignof(ptrdiff_t), 4);
+        cf_print("alignof(size_t)", "%lld", (long long) alignof(size_t), 4);
+        cf_print("alignof(intptr_t)", "%lld", (long long) alignof(intptr_t), 4);
+        cf_print("alignof(uintptr_t)", "%lld", (long long) alignof(uintptr_t), 4);
+        cf_print("alignof(void *)", "%lld", (long long) alignof(void *), 4);
+        cf_print("alignof(float)", "%lld", (long long) alignof(float), 4);
+        cf_print("alignof(double)", "%lld", (long long) alignof(double), 4);
+        cf_print("alignof(long double)", "%lld", (long long) alignof(long double), 4);
 #if defined(__SIZEOF_INT128__)
         cf_print("__SIZEOF_INT128__", "%lld", __SIZEOF_INT128__ + 0, 3);
 #endif
@@ -726,6 +742,9 @@ void show_sysinfo(const char *options_var) {
         cf_print("__SIZEOF_POINTER__", "%lld", __SIZEOF_POINTER__ + 0, 3);
 #endif
         cf_print("__SIZEOF_SIZE_T__", "%lld", (long long) sizeof(size_t), 3);
+        cf_print("sizeof(float)", "%lld", (long long) sizeof(float), 4);
+        cf_print("sizeof(double)", "%lld", (long long) sizeof(double), 4);
+        cf_print("sizeof(long double)", "%lld", (long long) sizeof(long double), 4);
 #if (ACC_ABI_BIG_ENDIAN)
         cf_print("ACC_ABI_BIG_ENDIAN", "%lld", ACC_ABI_BIG_ENDIAN + 0, 4);
 #elif (ACC_ABI_LITTLE_ENDIAN)
