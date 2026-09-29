@@ -50,18 +50,8 @@ PackW64PeArm64::PackW64PeArm64(InputFile *f) : super(f) { use_stub_relocs = fals
 Linker *PackW64PeArm64::newLinker() const { return new ElfLinkerArm64LE; }
 
 const int *PackW64PeArm64::getCompressionMethods(int method, int level) const {
-    // first draft: NRV only; the AArch64 LZMA decompressor needs extra
-    // multi-section glue and is deferred until the NRV path is hardware-proven
-    static const int m_all[] = {M_NRV2E_LE32, M_NRV2B_LE32, M_NRV2D_LE32, M_END};
-    static const int m_one[] = {M_NRV2E_LE32, M_END};
-    if (method == M_NRV2B_LE32 || method == M_NRV2D_LE32 || method == M_NRV2E_LE32) {
-        static int m_sel[2];
-        m_sel[0] = method;
-        m_sel[1] = M_END;
-        return m_sel;
-    }
-    UNUSED(level);
-    return (ih.codesize + ih.datasize <= 256 * 1024) ? m_one : m_all;
+    bool small = ih.codesize + ih.datasize <= 256 * 1024;
+    return Packer::getDefaultCompressionMethods_le32(method, level, small);
 }
 
 const int *PackW64PeArm64::getFilters() const { return nullptr; }
@@ -92,7 +82,8 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
 
     addLoader("START", isdll ? "PEISDLL1" : "", "PEMAIN01", tmp_tlsindex ? "PETLSHAK" : "",
               "PEMAIN02");
-    addLoader(M_IS_NRV2B(ph.method)   ? "PECALL2B"
+    addLoader(M_IS_LZMA(ph.method)    ? "PECALLLZ"
+              : M_IS_NRV2B(ph.method) ? "PECALL2B"
               : M_IS_NRV2D(ph.method) ? "PECALL2D"
               : M_IS_NRV2E(ph.method) ? "PECALL2E"
                                       : "UNKNOWN_COMPRESSION_METHOD");
@@ -107,10 +98,10 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
     if (use_tls_callbacks)
         addLoader("PETLSC");
     addLoader("PEDOJUMP");
-    addLoader("NRV_HEAD");
-    addLoader(M_IS_NRV2B(ph.method)   ? "NRV2B"
-              : M_IS_NRV2D(ph.method) ? "NRV2D"
-              : M_IS_NRV2E(ph.method) ? "NRV2E"
+    addLoader(M_IS_LZMA(ph.method)    ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+              : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B"
+              : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D"
+              : M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E"
                                       : "UNKNOWN_COMPRESSION_METHOD");
     if (use_tls_callbacks)
         addLoader("PETLSC2");
