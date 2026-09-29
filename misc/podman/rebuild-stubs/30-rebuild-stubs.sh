@@ -30,6 +30,8 @@ set -ex; set -o pipefail
 cd /home/upx/src/upx
 # check whitespace
 [[ -d .git ]] && bash ./misc/scripts/check_whitespace_git.sh
+# clang-format
+make -C src clang-format
 # rebuild docs
 make -C doc clean all
 # rebuild stubs

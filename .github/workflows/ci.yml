@@ -95,7 +95,7 @@ jobs:
       fail-fast: false
       matrix:
         container:
-          - alpine:3.9
+          # alpine:3.9
           - alpine:3.24
           - i386/alpine:3.9
           - i386/alpine:3.23
@@ -117,7 +117,7 @@ jobs:
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         shell: sh
-        run: apk update && apk upgrade && apk add bash clang clang-dev cmake coreutils file g++ git make parallel
+        run: apk update && apk upgrade && apk add bash clang clang-dev cmake coreutils file g++ git make parallel tar util-linux zstd
       - name: ${{ format('Check out {0} source code', github.ref_name) }}
         run: |
           git config --global --add safe.directory '*' # needed when running in a container
@@ -143,6 +143,24 @@ jobs:
       - run: set -x; $CXX -E -x c++ -dM /dev/null | LC_ALL=C sort
       - run: make build/debug
       - run: make build/release
+      - name: Make artifact
+        run: |
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-cc-${{ matrix.container }}-${{ matrix.cc }}-${{ matrix.cppflags }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          mkdir -p "tmp/artifact/$N"
+          (cd build && shopt -s nullglob && cp -v -ai --parents */upx{,.exe} */*/*/upx{,.exe} "../tmp/artifact/$N")
+          (cd build && shopt -s globstar && cp -v -ai --parents **/dt_cxxlib.* "../tmp/artifact/$N")
+          if command -v hardlink >/dev/null; then (cd "tmp/artifact/$N" && hardlink .) fi
+          (cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
+          # currently need at least Alpine >= 3.16 for working nodejs on current GitHub Actions runner host
+          case "${{ matrix.container }}" in
+            i386/*) ;; # i386: missing nodejs on GitHub runner host
+            *:3.[0-9] | *:3.1[0-5]) ;;
+            *) echo "artifact_name=$N" >> $GITHUB_ENV ;;
+          esac
+      - name: ${{ format('Upload artifact {0}', env.artifact_name) }}
+        if: ${{ env.artifact_name }}
+        uses: actions/upload-artifact@v7
+        with: { name: '${{ env.artifact_name }}', path: tmp/artifact }
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/debug/upx --sysinfo -vv
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/release/upx --sysinfo -vv
       - run: make build/debug+test
