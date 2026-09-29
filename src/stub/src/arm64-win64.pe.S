@@ -117,6 +117,8 @@ section PEMAIN02
         mov     x2, x19                         // dst = xdst
         sub     sp, sp, #16
         mov     x3, sp                          // &u_len scratch slot
+        LDVAL   x9, sizeof_image
+        str     x9, [x3]                        // LZMA consumes the expected output size
         mov     w4, wzr                         // NO_METHOD_CHECK: method unused
         // fall through into the one decompressor-call section the linker adds
 
@@ -129,6 +131,8 @@ section PECALL2D
         bl      ucl_nrv2d_decompress_32
 section PECALL2E
         bl      ucl_nrv2e_decompress_32
+section PECALLLZ
+        bl      lzma_decode
 
 section PEMAIN10
         add     sp, sp, #16                     // discard &u_len slot
@@ -301,6 +305,12 @@ section NRV2D
 
 section NRV2E
 #include "arch/arm64/v8/nrv2e_d32.S"
+
+// The LZMA decoder is a subroutine here. Its normal AArch64 tail performs
+// cache maintenance directly, which is not permitted from Windows EL0.
+#define NO_SYNC_CACHE 1
+#include "arch/arm64/v8/lzma_d.S"
+#undef NO_SYNC_CACHE
 
 // =============
 // ============= TLS callback support, part 2 (the handler)

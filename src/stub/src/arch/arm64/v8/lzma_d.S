@@ -37,6 +37,7 @@ fp .req x29
 NBPW= 8
 
   section LZMA_ELF00
+lzma_decode:
 //decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
 /* Arguments according to calling convention */
 src  .req x0
@@ -48,7 +49,13 @@ t0   .req w7
 t1   .req w8
 t1x  .req x8
 
+#ifdef WINDOWS_BACK
+        // The fast decoder uses Windows' reserved TEB register x18.
+        // It makes no OS calls, so preserve x18 around the decoder.
+        PUSH5(x2,x3, fp,lr, x18)
+#else
         PUSH4(x2,x3, fp,lr)  // MATCH_94  dst,ldst, fp,lr
+#endif
         mov fp,sp  // we use alloca (inlined and zeroed)
 
 #define LZMA_BASE_SIZE 1846
@@ -63,11 +70,20 @@ t1x  .req x8
 
         mov t1x,sp
         sub sp,sp,t0,uxtw
+#ifdef WINDOWS_BACK
+        // Descending stores probe Windows stack guard pages like amd64's push loop.
+        mov x4,sp
+1:  // clear lzma probability array
+        stp xzr,xzr,[t1x,#-2*NBPW]!
+        cmp t1x,x4
+        bhi 1b
+#else
         mov x4,sp
 1:  // clear lzma probability array
         stp xzr,xzr,[x4],#2*NBPW
         cmp x4,t1x
         blo 1b
+#endif
 
 a0 .req x0  /* &CLzmaDecoderState */
 a1 .req x1  /* inp */
@@ -107,11 +123,19 @@ State= 0
 #if defined(WINDOWS_BACK) || !defined(DAISY_CHAIN)  //{
 eof_lzma:
         mov x5,x0  // save result value
+#ifdef WINDOWS_BACK
+        ldr x18,[sp,#4*NBPW]
+        ldp fp,lr,[sp,#2*NBPW]
+        ldp x0,x1,[sp],#6*NBPW
+#else
         POP4(x0,x1, fp,lr)  // MATCH_94  x0= orig_dst; x1= plen_dst
+#endif
+#ifndef NO_SYNC_CACHE
         ldr x1,[x1]  // outSizeProcessed
 
         add x1,x1,x0  // last
         sync_cache  // x0= lo; x1= hi; uses x2-x4
+#endif
 
         mov x0,x5  // result value
         ret
@@ -157,4 +181,3 @@ ClangLzmaDecode:  // entry to C-lang LzmaDecode in next section
 not_lzma:  // fall into daisy chain
 
 // vi:ts=8:et
-
