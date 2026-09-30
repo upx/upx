@@ -147,6 +147,20 @@ section PETLSHAK2                               // restore the TLS index
         str     w10, [x9]
 
 // =============
+// ============= FILTER
+// =============
+
+section PEFILTER
+        LDVAL   x9, filter_buffer_start
+        add     x0, x19, x9
+        LDVAL   x1, filter_length
+        mov     w2, w9                          // filter 0x52 adds the raw code offset
+        mov     w3, #0x52
+#define FILTER_ADDVALUE 1
+#include "arch/arm64/v8/bxx.S"
+#undef FILTER_ADDVALUE
+
+// =============
 // ============= IMPORTS  (x19 = xdst base, "rsi")
 // =============
 
@@ -356,10 +370,8 @@ section PETLSC2
 //#endif
         ret
 
-// Data-only, never executed (placed after PEDOJUMP).  The base packer calls
-// defineFilterSymbols() unconditionally; with no filter active it defines
-// filter_length/filter_cto, so those external symbols must exist somewhere in
-// the linked image even though this loader applies no filter yet.
+// Data-only, never executed. These relocations register the filter symbols
+// with the UPX linker before UPX1HEAD is added.
 section PEFILTSYM
         .word   filter_length
         .word   filter_cto

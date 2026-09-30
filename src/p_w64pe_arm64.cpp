@@ -54,7 +54,10 @@ const int *PackW64PeArm64::getCompressionMethods(int method, int level) const {
     return Packer::getDefaultCompressionMethods_le32(method, level, small);
 }
 
-const int *PackW64PeArm64::getFilters() const { return nullptr; }
+const int *PackW64PeArm64::getFilters() const {
+    static const int filters[] = {0x52, FT_END};
+    return filters;
+}
 
 /*************************************************************************
 // pack
@@ -70,8 +73,6 @@ tribool PackW64PeArm64::canPack() {
 }
 
 void PackW64PeArm64::buildLoader(const Filter *ft) {
-    UNUSED(ft);
-
     unsigned tmp_tlsindex = tlsindex;
     const unsigned oam1 = ih.objectalign - 1;
     const unsigned newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) & ~oam1;
@@ -90,6 +91,8 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
     addLoader("PEMAIN10");
     if (tmp_tlsindex)
         addLoader("PETLSHAK2");
+    if (ft->id)
+        addLoader("PEFILTER");
     if (soimport)
         addLoader("PEIMPORT");
     if (sorelocs)
@@ -107,6 +110,16 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
         addLoader("PETLSC2");
     addLoader("PEFILTSYM");
     addLoader("IDENTSTR,UPX1HEAD");
+}
+
+void PackW64PeArm64::defineFilterSymbols(const Filter *ft) {
+    if (ft->id) {
+        // The host filters a word only when its offset is less than buf_len - 4.
+        linker->defineSymbol("filter_length", (ft->buf_len - 1) & ~3u);
+        linker->defineSymbol("filter_cto", ft->cto);
+    } else {
+        super::defineFilterSymbols(ft);
+    }
 }
 
 void PackW64PeArm64::addStubImports() {
@@ -159,6 +172,7 @@ void PackW64PeArm64::defineSymbols(unsigned ncsection, unsigned upxsection, unsi
     // end-of-input, and the cache flush needs the decompressed image size.
     linker->defineSymbol("comp_len", ph.c_len);
     linker->defineSymbol("sizeof_image", ph.u_len);
+    linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
 
     if (use_tls_callbacks)
         linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr - ih.imagebase);

@@ -9,7 +9,11 @@ f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
         cto  .req w2  // unused
         fid  .req w3
 
+#ifdef FILTER_ADDVALUE
+        t1   .req w4
+#else
         t1   .req w2
+#endif
         t2   .req w3
 
 #ifndef FILTER_ID  /*{*/
@@ -32,7 +36,12 @@ unf_top:
 
         ubfx t2,t1,#26,#5; cmp t2,#5; bne not_w26  // B, BL
 is_w26:
+#ifdef FILTER_ADDVALUE
+        add t2,len,cto
+        sub t2,t1,t2
+#else
         sub t2,t1,len  // pos is #0 ==> ubfx for the field is not needed
+#endif
         bfi t1,t2,#0,#26  // re-combine
 #if 0  //{ new enhanced needs new filter type!
         b unf_str
