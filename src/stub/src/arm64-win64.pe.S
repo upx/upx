@@ -77,7 +77,11 @@ section START
 section PEISDLL1
         cmp     w1, #1                           // 1 == DLL_PROCESS_ATTACH
         b.eq    .Lprocess_attach
-        b       original_entry
+        adr     x17, 8f
+        ldrsw   x16, [x17]
+        add     x17, x17, x16
+        br      x17
+8:      .word   original_entry - .  // 'b' can reach only +/- 128MiB
 .Lprocess_attach:
 
 section PEMAIN01

@@ -6,9 +6,13 @@ Disassembly of section PEISDLL1:
 
 0000000000000000 <PEISDLL1>:
    0:   7100043f        cmp     w1, #0x1
-   4:   54000040        b.eq    c <ucl_nrv2b_decompress_32+0xc>
-   8:   14000000        b       0 <original_entry>
-                        8: R_AARCH64_JUMP26     original_entry
+   4:   540000c0        b.eq    1c <ucl_nrv2b_decompress_32+0x1c>
+   8:   10000091        adr     x17, 18 <PEISDLL1+0x18>
+   c:   b9800230        ldrsw   x16, [x17]
+  10:   8b100231        add     x17, x17, x16
+  14:   d61f0220        br      x17
+  18:   00000000        .inst   0x00000000 ; undefined
+                        18: R_AARCH64_PREL32    original_entry
 
 Disassembly of section PEMAIN01:
 
