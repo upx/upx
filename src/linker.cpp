@@ -707,6 +707,13 @@ void ElfLinkerArm64LE::relocate1(const Relocation *rel, byte *location, upx_uint
         set_le32(location, (w & ~(m19 << 5)) | ((((w >> 5) + (value >> 2)) & m19) << 5));
     } else if (!strcmp(type, "CALL26") || !strcmp(type, "JUMP26")) {
         value -= rel->section->offset + rel->offset;
+        const upx_int64_t displacement = sign_extend64(value, 64);
+        if ((value & 3) != 0)
+            throwInternalError("unaligned branch target in reloc %s:%x\n", rel->section->name,
+                               rel->offset);
+        if (displacement < -0x8000000 || displacement >= 0x8000000)
+            throwInternalError("branch target out of range (%lld) in reloc %s:%x\n",
+                               (long long) displacement, rel->section->name, rel->offset);
         const upx_uint32_t m26 = ~(~0u << 26);
         upx_uint32_t w = get_le32(location);
         set_le32(location, (w & ~m26) | (m26 & (value >> 2)));
