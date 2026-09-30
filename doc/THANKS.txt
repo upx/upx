@@ -37,6 +37,8 @@ bitraid <bitraid@protonmail.ch>
   for beta testing
 Charles W. Sandmann <sandmann@clio.rice.edu>
   for the idea with the stubless decompressor in djgpp2/coff
+hoptodesk and Johannes Schindelin
+  for the win64/arm64 format
 Ice
   for debugging the PE headersize problem down
 Jeffrey H. Johnson <johnsonjh.dev@gmail.com>

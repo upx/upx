@@ -71,8 +71,6 @@ THE FUTURE
 
   - Stay up-to-date with ongoing OS and executable format changes
 
-  - ARM64 for Windows (help wanted)
-
   - We will *NOT* add any sort of protection and/or encryption.
     This only gives people a false feeling of security because
     all "protectors" can be broken by definition.
