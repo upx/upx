@@ -49,13 +49,7 @@ t0   .req w7
 t1   .req w8
 t1x  .req x8
 
-#ifdef WINDOWS_BACK
-        // The fast decoder uses Windows' reserved TEB register x18.
-        // It makes no OS calls, so preserve x18 around the decoder.
-        PUSH5(x2,x3, fp,lr, x18)
-#else
         PUSH4(x2,x3, fp,lr)  // MATCH_94  dst,ldst, fp,lr
-#endif
         mov fp,sp  // we use alloca (inlined and zeroed)
 
 #define LZMA_BASE_SIZE 1846
@@ -123,13 +117,7 @@ State= 0
 #if defined(WINDOWS_BACK) || !defined(DAISY_CHAIN)  //{
 eof_lzma:
         mov x5,x0  // save result value
-#ifdef WINDOWS_BACK
-        ldr x18,[sp,#4*NBPW]
-        ldp fp,lr,[sp,#2*NBPW]
-        ldp x0,x1,[sp],#6*NBPW
-#else
         POP4(x0,x1, fp,lr)  // MATCH_94  x0= orig_dst; x1= plen_dst
-#endif
 #ifndef NO_SYNC_CACHE
         ldr x1,[x1]  // outSizeProcessed
 
@@ -167,7 +155,11 @@ eof_lzma:
 
 ClangLzmaDecode:  // entry to C-lang LzmaDecode in next section
   section LZMA_DEC20
+#ifdef WINDOWS_BACK
+#include "lzma_d_cf_win64.S"
+#else
 #include "lzma_d_cf.S"
+#endif
 
   section LZMA_DEC10
 #if 0  /*{*/
