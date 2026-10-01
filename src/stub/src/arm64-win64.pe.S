@@ -67,6 +67,15 @@
 9:
 .endm
 
+// JMPADDR label -- terminal branch to runtime VA of UPX-linker symbol `label`
+.macro JMPADDR lbl
+        adr     x17, 8f
+        ldrsw   x16, [x17]
+        add     x17, x17, x16
+        br      x17
+8:      .word   \lbl - .
+.endm
+
 .arch armv8-a
 
 // =============
@@ -77,11 +86,7 @@ section START
 section PEISDLL1
         cmp     w1, #1                           // 1 == DLL_PROCESS_ATTACH
         b.eq    .Lprocess_attach
-        adr     x17, 8f
-        ldrsw   x16, [x17]
-        add     x17, x17, x16
-        br      x17
-8:      .word   original_entry - .  // 'b' can reach only +/- 128MiB
+        JMPADDR original_entry
 .Lprocess_attach:
 
 section PEMAIN01
@@ -267,7 +272,7 @@ section PEDOJUMP
         ldp     x2, x3, [sp,  #2*NBPW]  // restore in-reg args
         ldp     x0, x1, [sp], #4*NBPW
 //#endif
-        b       original_entry
+        JMPADDR original_entry
 
 // =============
 // ============= DECOMPRESSION  (callable; reached only via bl above)
