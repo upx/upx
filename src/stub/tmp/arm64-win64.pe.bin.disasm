@@ -239,8 +239,12 @@ Disassembly of section PEDOJUMP:
    4:   a8c27bfd        ldp     x29, x30, [sp],#32
    8:   a9410fe2        ldp     x2, x3, [sp,#16]
    c:   a8c207e0        ldp     x0, x1, [sp],#32
-  10:   14000000        b       0 <original_entry>
-                        10: R_AARCH64_JUMP26    original_entry
+  10:   10000091        adr     x17, 20 <PEDOJUMP+0x20>
+  14:   b9800230        ldrsw   x16, [x17]
+  18:   8b100231        add     x17, x17, x16
+  1c:   d61f0220        br      x17
+  20:   00000000        .inst   0x00000000 ; undefined
+                        20: R_AARCH64_PREL32    original_entry
 
 Disassembly of section NRV2B:
 
