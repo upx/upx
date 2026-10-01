@@ -375,11 +375,11 @@ static int s_ct24arm_be(Filter *f) {
 #define ARMCT_COND (((b[3] & 0x7C) == 0x14))
 
 static int f_ct26arm_le(Filter *f) {
-    CT26ARM_LE(f, ARMCT_COND, a / 4 + f->addvalue, get_le26, set_le26)
+    CT26ARM_LE(f, ARMCT_COND, a / 4 + f->addvalue / 4, get_le26, set_le26)
 }
 
 static int u_ct26arm_le(Filter *f) {
-    CT26ARM_LE(f, ARMCT_COND, 0 - a / 4 - f->addvalue, get_le26, set_le26)
+    CT26ARM_LE(f, ARMCT_COND, 0 - a / 4 - f->addvalue / 4, get_le26, set_le26)
 }
 
 static int s_ct26arm_le(Filter *f) {

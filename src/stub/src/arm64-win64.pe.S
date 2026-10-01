@@ -117,6 +117,8 @@ section PEMAIN02
         mov     x2, x19                         // dst = xdst
         sub     sp, sp, #16
         mov     x3, sp                          // &u_len scratch slot
+        LDVAL   x9, sizeof_image
+        str     x9, [x3]                        // LZMA consumes the expected output size
         mov     w4, wzr                         // NO_METHOD_CHECK: method unused
         // fall through into the one decompressor-call section the linker adds
 
@@ -129,6 +131,8 @@ section PECALL2D
         bl      ucl_nrv2d_decompress_32
 section PECALL2E
         bl      ucl_nrv2e_decompress_32
+section PECALLLZ
+        bl      lzma_decode
 
 section PEMAIN10
         add     sp, sp, #16                     // discard &u_len slot
@@ -136,6 +140,20 @@ section PEMAIN10
 section PETLSHAK2                               // restore the TLS index
         ldp     x9, x10, [sp], #16
         str     w10, [x9]
+
+// =============
+// ============= FILTER
+// =============
+
+section PEFILTER
+        LDVAL   x9, filter_buffer_start
+        add     x0, x19, x9
+        LDVAL   x1, filter_length
+        lsr     w2, w9, #2
+        mov     w3, #0x52
+#define FILTER_ADDVALUE 1
+#include "arch/arm64/v8/bxx.S"
+#undef FILTER_ADDVALUE
 
 // =============
 // ============= IMPORTS  (x19 = xdst base, "rsi")
@@ -302,6 +320,12 @@ section NRV2D
 section NRV2E
 #include "arch/arm64/v8/nrv2e_d32.S"
 
+// The LZMA decoder is a subroutine here. Its normal AArch64 tail performs
+// cache maintenance directly, which is not permitted from Windows EL0.
+#define NO_SYNC_CACHE 1
+#include "arch/arm64/v8/lzma_d.S"
+#undef NO_SYNC_CACHE
+
 // =============
 // ============= TLS callback support, part 2 (the handler)
 // =============
@@ -341,10 +365,8 @@ section PETLSC2
 //#endif
         ret
 
-// Data-only, never executed (placed after PEDOJUMP).  The base packer calls
-// defineFilterSymbols() unconditionally; with no filter active it defines
-// filter_length/filter_cto, so those external symbols must exist somewhere in
-// the linked image even though this loader applies no filter yet.
+// Data-only, never executed. These relocations register the filter symbols
+// with the UPX linker before UPX1HEAD is added.
 section PEFILTSYM
         .word   filter_length
         .word   filter_cto

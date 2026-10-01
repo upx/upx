@@ -37,6 +37,7 @@ fp .req x29
 NBPW= 8
 
   section LZMA_ELF00
+lzma_decode:
 //decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
 /* Arguments according to calling convention */
 src  .req x0
@@ -63,11 +64,20 @@ t1x  .req x8
 
         mov t1x,sp
         sub sp,sp,t0,uxtw
+#ifdef WINDOWS_BACK
+        // Descending stores probe Windows stack guard pages like amd64's push loop.
+        mov x4,sp
+1:  // clear lzma probability array
+        stp xzr,xzr,[t1x,#-2*NBPW]!
+        cmp t1x,x4
+        bhi 1b
+#else
         mov x4,sp
 1:  // clear lzma probability array
         stp xzr,xzr,[x4],#2*NBPW
         cmp x4,t1x
         blo 1b
+#endif
 
 a0 .req x0  /* &CLzmaDecoderState */
 a1 .req x1  /* inp */
@@ -108,10 +118,12 @@ State= 0
 eof_lzma:
         mov x5,x0  // save result value
         POP4(x0,x1, fp,lr)  // MATCH_94  x0= orig_dst; x1= plen_dst
+#ifndef NO_SYNC_CACHE
         ldr x1,[x1]  // outSizeProcessed
 
         add x1,x1,x0  // last
         sync_cache  // x0= lo; x1= hi; uses x2-x4
+#endif
 
         mov x0,x5  // result value
         ret
@@ -143,7 +155,11 @@ eof_lzma:
 
 ClangLzmaDecode:  // entry to C-lang LzmaDecode in next section
   section LZMA_DEC20
+#ifdef WINDOWS_BACK
+#include "lzma_d_cf_win64.S"
+#else
 #include "lzma_d_cf.S"
+#endif
 
   section LZMA_DEC10
 #if 0  /*{*/
@@ -157,4 +173,3 @@ ClangLzmaDecode:  // entry to C-lang LzmaDecode in next section
 not_lzma:  // fall into daisy chain
 
 // vi:ts=8:et
-

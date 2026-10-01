@@ -50,21 +50,14 @@ PackW64PeArm64::PackW64PeArm64(InputFile *f) : super(f) { use_stub_relocs = fals
 Linker *PackW64PeArm64::newLinker() const { return new ElfLinkerArm64LE; }
 
 const int *PackW64PeArm64::getCompressionMethods(int method, int level) const {
-    // first draft: NRV only; the AArch64 LZMA decompressor needs extra
-    // multi-section glue and is deferred until the NRV path is hardware-proven
-    static const int m_all[] = {M_NRV2E_LE32, M_NRV2B_LE32, M_NRV2D_LE32, M_END};
-    static const int m_one[] = {M_NRV2E_LE32, M_END};
-    if (method == M_NRV2B_LE32 || method == M_NRV2D_LE32 || method == M_NRV2E_LE32) {
-        static int m_sel[2];
-        m_sel[0] = method;
-        m_sel[1] = M_END;
-        return m_sel;
-    }
-    UNUSED(level);
-    return (ih.codesize + ih.datasize <= 256 * 1024) ? m_one : m_all;
+    bool small = ih.codesize + ih.datasize <= 256 * 1024;
+    return Packer::getDefaultCompressionMethods_le32(method, level, small);
 }
 
-const int *PackW64PeArm64::getFilters() const { return nullptr; }
+const int *PackW64PeArm64::getFilters() const {
+    static const int filters[] = {0x52, FT_END};
+    return filters;
+}
 
 /*************************************************************************
 // pack
@@ -80,8 +73,6 @@ tribool PackW64PeArm64::canPack() {
 }
 
 void PackW64PeArm64::buildLoader(const Filter *ft) {
-    UNUSED(ft);
-
     unsigned tmp_tlsindex = tlsindex;
     const unsigned oam1 = ih.objectalign - 1;
     const unsigned newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) & ~oam1;
@@ -92,13 +83,16 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
 
     addLoader("START", isdll ? "PEISDLL1" : "", "PEMAIN01", tmp_tlsindex ? "PETLSHAK" : "",
               "PEMAIN02");
-    addLoader(M_IS_NRV2B(ph.method)   ? "PECALL2B"
+    addLoader(M_IS_LZMA(ph.method)    ? "PECALLLZ"
+              : M_IS_NRV2B(ph.method) ? "PECALL2B"
               : M_IS_NRV2D(ph.method) ? "PECALL2D"
               : M_IS_NRV2E(ph.method) ? "PECALL2E"
                                       : "UNKNOWN_COMPRESSION_METHOD");
     addLoader("PEMAIN10");
     if (tmp_tlsindex)
         addLoader("PETLSHAK2");
+    if (ft->id)
+        addLoader("PEFILTER");
     if (soimport)
         addLoader("PEIMPORT");
     if (sorelocs)
@@ -107,15 +101,24 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
     if (use_tls_callbacks)
         addLoader("PETLSC");
     addLoader("PEDOJUMP");
-    addLoader("NRV_HEAD");
-    addLoader(M_IS_NRV2B(ph.method)   ? "NRV2B"
-              : M_IS_NRV2D(ph.method) ? "NRV2D"
-              : M_IS_NRV2E(ph.method) ? "NRV2E"
+    addLoader(M_IS_LZMA(ph.method)    ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+              : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B"
+              : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D"
+              : M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E"
                                       : "UNKNOWN_COMPRESSION_METHOD");
     if (use_tls_callbacks)
         addLoader("PETLSC2");
     addLoader("PEFILTSYM");
     addLoader("IDENTSTR,UPX1HEAD");
+}
+
+void PackW64PeArm64::defineFilterSymbols(const Filter *ft) {
+    if (ft->id) {
+        linker->defineSymbol("filter_length", ft->buf_len);
+        linker->defineSymbol("filter_cto", ft->cto);
+    } else {
+        super::defineFilterSymbols(ft);
+    }
 }
 
 void PackW64PeArm64::addStubImports() {
@@ -168,6 +171,7 @@ void PackW64PeArm64::defineSymbols(unsigned ncsection, unsigned upxsection, unsi
     // end-of-input, and the cache flush needs the decompressed image size.
     linker->defineSymbol("comp_len", ph.c_len);
     linker->defineSymbol("sizeof_image", ph.u_len);
+    linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
 
     if (use_tls_callbacks)
         linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr - ih.imagebase);

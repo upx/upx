@@ -55,6 +55,7 @@ public:
 
 protected:
     virtual void buildLoader(const Filter *ft) override;
+    virtual void defineFilterSymbols(const Filter *ft) override;
     virtual Linker *newLinker() const override;
 };
 
