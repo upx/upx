@@ -862,7 +862,13 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             if (PT_LOAD == type) {
                 if (!ioff) { // first PT_LOAD must contain everything written so far
                     set_te64(&phdr->p_filesz, sz_pack2 + lsize);  // is this correct?
-                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize);
+                    // Bionic (Android low level) checks that the result of dlsym()
+                    // etc lies within some PT_LOAD: offset less than .p_memsz.
+                    // So on Adroid then do not shorten PT_LOAD[0].p_memsz, and
+                    // hope that the resulting implicit .bss (> p_filesz) is OK.
+                    if (!saved_opt_android_shlib) {
+                        set_te64(&phdr->p_memsz,  sz_pack2 + lsize);
+                    }
                 }
                 else if ((xct_off - ioff) < len) { // Change length of compressed PT_LOAD.
                     set_te64(&phdr->p_filesz, total_out - ioff);  // FIXME  (sz_pack2 + lsize - ioff) ?
