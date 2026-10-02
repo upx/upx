@@ -52,6 +52,7 @@ L05:  // %esp/ &so_info,PMASK,F_ADRU,F_LENU,8regs,ret_addr,argc
 
 #define sys1 ebx
 #define sys2 ecx
+#define sys3 edx
     pop %sys1  // MATCH_13  ADRU
     pop %sys2  // MATCH_12  LENU
     push $__NR_munmap; pop %eax
@@ -225,7 +226,23 @@ Punmap: .globl Punmap  // from C
     ret
 
 memfd_create: .globl memfd_create
-        mov $__NR_memfd_create,%eax; jmp sys_check
+0:
+        mov $__NR_memfd_create,%eax; int $0x80
+        test %eax,%eax; js 1f; ret  // success
+1:
+        test %sys2,%sys2; jz no_memfd  // memfd_create failed twice
+        xor  %sys2,%sys2; jmp 0b  // try again without MFD_EXEC
+no_memfd:  // so try /dev/shm
+O_RDWR= 2
+O_DIRECTORY= 0200000  // 0x010000
+O_TMPFILE= 020000000  // 0x400000
+        call 0f; .int 0700, O_RDWR|O_DIRECTORY|O_TMPFILE; .asciz "/dev/shm"
+0:
+        pop %esi
+        lodsl;                 xchg %eax,%sys3
+        lodsl; mov %esi,%sys1; xchg %eax,%sys2
+        push $__NR_open; jmp sys_check
+
 mprotect: .globl mprotect  // also Pprotect
         mov %ebx,%eax; and $-1+ (1<<12),%eax  // PAGE_MASK
         sub %eax,%ebx

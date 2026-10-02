@@ -271,8 +271,9 @@ extern char *upx_mmap_and_fd(  // x86_64 Android emulator of i386 is not faithfu
      , char *pathname  // 0 ==> call get_upxfn_path, which stores if 1st time
 );
 
+#define MFD_EXEC 0x10
 #if 0  //{
-            int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
+            int mfd = memfd_create(addr_string("upx"), MFD_EXEC);  // the directory entry
             write(mfd, &escape, 4);
             hatch = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
             close(mfd);
@@ -302,7 +303,7 @@ make_hatch(
         next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
         frag_mask &= -(long)next_unc;  // bytes left on page
         if (4 <= frag_mask) {
-            *(long *)&next_unc = hatch[0];
+            *(long *)next_unc = hatch[0];
             return next_unc;
         }
         else { // Does not fit
@@ -630,7 +631,7 @@ upx_so_main(  // returns &escape_hatch
         Extent xt = x1;
         unpackExtent(&x0, &x1);  // updates *x0 and *x1
         if (!hatch_p && phdr->p_flags & PF_X) {
-            int mfd = memfd_create(addr_string("upx"), 0);  // the directory entry
+            int mfd = memfd_create(addr_string("upx"), MFD_EXEC);  // the directory entry
             write(mfd, hatch, sizeof(hatch));
             hatch_p = mmap(0, 4, PROT_READ|PROT_EXEC, MAP_PRIVATE, mfd, 0);
             close(mfd);
@@ -652,7 +653,7 @@ upx_so_main(  // returns &escape_hatch
 #endif  //}
                     (so_args->argc, so_args->argv, so_args->envp);
 
-    DPRINTF("returning hatch=%%p\\n", hatch,_p);
+    DPRINTF("returning hatch=%%p\\n", hatch_p);
     return hatch_p;
 }
 

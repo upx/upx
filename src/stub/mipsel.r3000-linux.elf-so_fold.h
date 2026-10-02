@@ -33,8 +33,8 @@
 /* clang-format off */
 
 #define STUB_MIPSEL_R3000_LINUX_ELF_SO_FOLD_SIZE    20221
-#define STUB_MIPSEL_R3000_LINUX_ELF_SO_FOLD_ADLER32 0x14084e0b
-#define STUB_MIPSEL_R3000_LINUX_ELF_SO_FOLD_CRC32   0xd195c0a6
+#define STUB_MIPSEL_R3000_LINUX_ELF_SO_FOLD_ADLER32 0xbadf4dfb
+#define STUB_MIPSEL_R3000_LINUX_ELF_SO_FOLD_CRC32   0x36cbe713
 
 unsigned char stub_mipsel_r3000_linux_elf_so_fold[20221] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -188,7 +188,7 @@ unsigned char stub_mipsel_r3000_linux_elf_so_fold[20221] = {
 /* 0x0940 */  76, 64,162,143,  0,  0,  0,  0, 66,  0, 64, 20, 33, 32,128,  2,
 /* 0x0950 */  24,  0, 66,142,  0,  0,  0,  0,  1,  0, 66, 48, 61,  0, 64, 16,
 /* 0x0960 */   0,  0,  0,  0,  2,  0, 17,  4, 33, 32,224,  3,117,112,120,  0,
-/* 0x0970 */ 255,255, 17,  4, 33, 40,  0,  0, 33,128, 64,  0, 33, 32, 64,  0,
+/* 0x0970 */ 255,255, 17,  4, 16,  0,  5, 36, 33,128, 64,  0, 33, 32, 64,  0,
 /* 0x0980 */  32,  0,165, 39,255,255, 17,  4, 16,  0,  6, 36, 33, 32,  0,  0,
 /* 0x0990 */   4,  0,  5, 36,  5,  0,  6, 36,  2,  0,  7, 36, 33, 64,  0,  2,
 /* 0x09a0 */ 255,255, 17,  4, 33, 72,  0,  0,255,255, 17,  4, 33, 32,  0,  2,
