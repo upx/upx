@@ -95,7 +95,7 @@ jobs:
       fail-fast: false
       matrix:
         container:
-          # alpine:3.9
+          - alpine:3.9
           - alpine:3.24
           - i386/alpine:3.9
           - i386/alpine:3.23
@@ -145,7 +145,7 @@ jobs:
       - run: make build/release
       - name: Make artifact
         run: |
-          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-cc-${{ matrix.container }}-${{ matrix.cc }}-${{ matrix.cppflags }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
+          N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-cppflags-${{ matrix.container }}-${{ matrix.cc }}-${{ matrix.cppflags }}" | sed 's/[^0-9a-zA-Z_.-]/-/g')
           mkdir -p "tmp/artifact/$N"
           (cd build && shopt -s nullglob && cp -v -ai --parents */upx{,.exe} */*/*/upx{,.exe} "../tmp/artifact/$N")
           (cd build && shopt -s globstar && cp -v -ai --parents **/dt_cxxlib.* "../tmp/artifact/$N")
@@ -164,10 +164,13 @@ jobs:
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/debug/upx --sysinfo -vv
       - run: UPX_DEBUG_DOCTEST_VERBOSE=1 ./build/release/upx --sysinfo -vv
       - run: make build/debug+test
+        if: ${{ env.artifact_name }}
       - run: make build/release+test
+        if: ${{ env.artifact_name }}
       # run: DESTDIR="$PWD/Install with cmake debug"   make build/debug+install
       # run: DESTDIR="$PWD/Install with cmake release" make build/release+install
       - name: Run test suite
+        if: ${{ env.artifact_name }}
         run: |
           jobs="debug release"
           echo "===== parallel jobs: $jobs"
