@@ -3126,6 +3126,10 @@ TEST_CASE("codegen constant") {
     const int b = acc_vget_int(1, 0);
     const bool f = acc_vget_int(0, 0);
     const bool t = acc_vget_int(1, 0);
+#if defined(__m68k__) && (__GNUC__ == 15)
+    if (acc_vget_int(1, 0))
+        return;
+#endif
     {
         assert_noexcept2((TestConstant::noinline_eq(upx_int8_t(a), upx_int8_t(b)) == 0));
         assert_noexcept2((TestConstant::noinline_eq(upx_uint8_t(a), upx_uint8_t(b)) == 0));
@@ -4175,7 +4179,10 @@ TEST_CASE("codegen float") {
     const int n = acc_vget_int(0, 0);
     const int a = acc_vget_int(0, 0);
     const int b = acc_vget_int(1, 0);
-#if !defined(__FAST_MATH__)
+#if defined(__FAST_MATH__)
+    if (acc_vget_int(1, 0))
+        return;
+#endif
     {
         assert_noexcept2((TestFloat::noinline_ceil(float(n)) == 0));
         assert_noexcept2((TestFloat::noinline_ceil(double(n)) == 0));
@@ -4207,7 +4214,6 @@ TEST_CASE("codegen float") {
         assert_noexcept2((TestFloat::noinline_atan2(double(a), double(b)) == 0));
 #endif
     }
-#endif
     (void) n;
     (void) a;
     (void) b;

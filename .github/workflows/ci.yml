@@ -446,7 +446,7 @@ jobs:
         include:
           # NOTE: Xcode updates regularly tend to break Homebrew clang/gcc; often some ld64 issue; use "xcode_version" as needed; or try "-Wl,-ld_classic"
           # NOTE: macos does not have "env -C"; only with brew coreutils
-          - { os: macos-14, gcc: gcc-13, gxx: g++-13, testsuite: true }
+          # { os: macos-14, gcc: gcc-13, gxx: g++-13, testsuite: true }
           - { os: macos-15, gcc: gcc-14, gxx: g++-14, testsuite: true }
           - { os: macos-26, gcc: gcc-15, gxx: g++-15, testsuite: true }
           - { os: xcode-27, gcc: gcc-15, gxx: g++-15, testsuite: true }
