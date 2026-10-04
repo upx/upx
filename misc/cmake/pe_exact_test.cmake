@@ -51,6 +51,12 @@ upx_add_test(upx-pe-normal-unpack-gap upx -d upx-test-pe-gap-normal-packed.dll $
 upx_test_depends(upx-pe-normal-pack-gap upx-pe-gap-prepare)
 upx_test_depends(upx-pe-normal-unpack-gap upx-pe-normal-pack-gap)
 
+upx_add_test(upx-pe-normal-pack-stripped upx --force --strip-relocs=1 "$<TARGET_FILE:upx>" ${fo}
+             -o upx-test-pe-stripped-packed.exe)
+upx_add_test(upx-pe-normal-unpack-stripped upx -d upx-test-pe-stripped-packed.exe ${fo}
+             -o upx-test-pe-stripped-unpacked.exe)
+upx_test_depends(upx-pe-normal-unpack-stripped upx-pe-normal-pack-stripped)
+
 endfunction()
 
 # vim:set ft=cmake ts=4 sw=4 tw=0 et:
