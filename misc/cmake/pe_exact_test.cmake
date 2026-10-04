@@ -24,6 +24,12 @@ foreach(action IN ITEMS unpack list fileinfo test)
     upx_test_depends(upx-pe-exact-${action}-${name} upx-pe-exact-pack-${name})
 endforeach()
 upx_test_depends(upx-pe-exact-compare-${name} upx-pe-exact-unpack-${name})
+if(TEST upx-pe-${name}-prepare)
+    upx_test_depends(upx-pe-exact-pack-${name} upx-pe-${name}-prepare)
+    if(TEST upx-pe-${name}-run-original)
+        upx_test_depends(upx-pe-${name}-run-original upx-pe-${name}-prepare)
+    endif()
+endif()
 
 endfunction()
 
@@ -31,7 +37,19 @@ function(upx_pe_exact_test)
 
 set(exact_dll "$<TARGET_FILE:upx-test-pe-exact-dll>")
 set(fo "--force-overwrite")
+set(wd "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>")
 upx_pe_exact_roundtrip(dll "${exact_dll}" dll upx-test-pe-exact-dll-loader)
+
+set(input "${wd}/upx-test-pe-gap.dll")
+upx_add_test(upx-pe-gap-prepare upx-test-pe-exact-fixture "${exact_dll}" "${input}")
+upx_pe_exact_roundtrip(gap "${input}" dll upx-test-pe-exact-dll-loader)
+
+upx_add_test(upx-pe-normal-pack-gap upx --force "${wd}/upx-test-pe-gap.dll" ${fo}
+             -o upx-test-pe-gap-normal-packed.dll)
+upx_add_test(upx-pe-normal-unpack-gap upx -d upx-test-pe-gap-normal-packed.dll ${fo}
+             -o upx-test-pe-gap-normal-unpacked.dll)
+upx_test_depends(upx-pe-normal-pack-gap upx-pe-gap-prepare)
+upx_test_depends(upx-pe-normal-unpack-gap upx-pe-normal-pack-gap)
 
 endfunction()
 
