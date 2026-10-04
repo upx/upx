@@ -36,8 +36,11 @@ static size_t rva_to_offset(const std::vector<IMAGE_SECTION_HEADER> &sections, D
 }
 
 int main(int argc, char **argv) {
-    if (argc != 3)
-        return fail("usage: pe_exact_fixture input output");
+    if (argc != 3 && argc != 4)
+        return fail("usage: pe_exact_fixture input output [mode]");
+    const char *mode = argc == 4 ? argv[3] : "gap";
+    if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0)
+        return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
     if (size < static_cast<std::streamoff>(sizeof(IMAGE_DOS_HEADER)) || size > MAXDWORD)
@@ -80,6 +83,46 @@ int main(int argc, char **argv) {
         optional_offset + (magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC
                                ? offsetof(IMAGE_OPTIONAL_HEADER64, DataDirectory)
                                : offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory));
+    if (std::strcmp(mode, "empty-imports") == 0) {
+        IMAGE_DATA_DIRECTORY imports = {};
+        const size_t directory_offset =
+            directories + IMAGE_DIRECTORY_ENTRY_IMPORT * sizeof(imports);
+        if (!read_struct(bytes, directory_offset, imports))
+            return fail("invalid import directory");
+        const size_t offset = rva_to_offset(sections, imports.VirtualAddress);
+        const size_t descriptors_size = 2 * sizeof(IMAGE_IMPORT_DESCRIPTOR);
+        if (!offset || offset > bytes.size() || descriptors_size > bytes.size() - offset)
+            return fail("invalid import descriptors");
+        std::memset(bytes.data() + offset, 0, descriptors_size);
+        imports.Size = descriptors_size;
+        std::memcpy(bytes.data() + directory_offset, &imports, sizeof(imports));
+        HMODULE module = LoadLibraryExA(argv[1], nullptr, DONT_RESOLVE_DLL_REFERENCES);
+        if (!module)
+            return fail("cannot load source fixture");
+        FARPROC entry = nullptr;
+        for (const char *name : {"DllMain", "DllMain@12", "_DllMain@12"})
+            if ((entry = GetProcAddress(module, name)) != nullptr)
+                break;
+        const ULONG_PTR entry_rva =
+            reinterpret_cast<ULONG_PTR>(entry) - reinterpret_cast<ULONG_PTR>(module);
+        if (!FreeLibrary(module))
+            return fail("cannot unload source fixture");
+        if (!entry || entry_rva > MAXDWORD)
+            return fail("cannot locate fixture entry point");
+        const DWORD address = static_cast<DWORD>(entry_rva);
+        std::memcpy(bytes.data() + optional_offset +
+                        offsetof(IMAGE_OPTIONAL_HEADER32, AddressOfEntryPoint),
+                    &address, sizeof(address));
+        for (const unsigned index : {IMAGE_DIRECTORY_ENTRY_TLS, IMAGE_DIRECTORY_ENTRY_IAT}) {
+            IMAGE_DATA_DIRECTORY directory = {};
+            if (!read_struct(bytes, directories + index * sizeof(directory), directory))
+                return fail("invalid data directory");
+            directory = {};
+            std::memcpy(bytes.data() + directories + index * sizeof(directory), &directory,
+                        sizeof(directory));
+        }
+        return write_fixture(argv[2], bytes);
+    }
     if (second == MAXDWORD || second > bytes.size() ||
         first < section_offset + sections.size() * sizeof(IMAGE_SECTION_HEADER))
         return fail("fixture needs two raw-backed sections");

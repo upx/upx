@@ -9,11 +9,11 @@
 static LONG process_attach_count;
 static THREAD_LOCAL volatile int tls_value = 37;
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
+__declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
     (void) instance;
     (void) reserved;
     if (reason == DLL_PROCESS_ATTACH)
-        InterlockedIncrement(&process_attach_count);
+        process_attach_count++;
     return TRUE;
 }
 
