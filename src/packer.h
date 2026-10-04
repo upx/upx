@@ -253,7 +253,7 @@ protected:
     // relocation util [see packer_r.cpp]
     static unsigned optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(byte) out,
                                   SPAN_P(byte) image, unsigned image_size, int bits, bool bswap,
-                                  int *big);
+                                  int *big, bool allow_exact = false);
     static unsigned unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &mb_out, SPAN_P(byte) image,
                                     unsigned image_size, int bits, bool bswap);
 

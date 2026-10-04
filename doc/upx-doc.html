@@ -692,6 +692,10 @@ boot disks.
 
 <p>The PE support in <b>UPX</b> is quite stable now, but probably there are still some incompatibilities with some files.</p>
 
+<p>Normally, unpacking rebuilds parts of a PE file, so the result may not be byte-identical to the original. Use <b>--exact</b> when compressing if every byte needs to be restored. Retaining the original representation can increase the packed size; this information is compressed along with the program data. Older versions of <b>UPX</b> reject PE files packed with <b>--exact</b> rather than unpacking them without the byte-identity guarantee. Relocation stripping is incompatible with exact mode.</p>
+
+<p>Exact mode does not currently support EFI or WinCE ARM images, PE files without raw-backed sections, overlapping raw or virtual section data, or raw data extending beyond the aligned virtual end of the last section.</p>
+
 <p>Because of the way <b>UPX</b> (and other packers for this format) works, you can see increased memory usage of your compressed files because the whole program is loaded into memory at startup. If you start several instances of huge compressed programs you&#39;re wasting memory because the common segments of the program won&#39;t get shared across the instances. On the other hand if you&#39;re compressing only smaller programs, or running only one instance of larger programs, then this penalty is smaller, but it&#39;s still there.</p>
 
 <p>If you&#39;re running executables from network, then compressed programs will load faster, and require less bandwidth during execution.</p>
