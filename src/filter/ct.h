@@ -394,7 +394,7 @@ static int CTarm64(Filter *f, int dir) { // dir: 1, 0, -1
     do {
         const unsigned a = b - f->buf;
         const int d = dir * (f->addvalue + (a >> 2));
-        const unsigned v = get_le32(f->buf); // the 32-bit instruction
+        const unsigned v = get_le32(b); // the 32-bit instruction
         if (0x05 == (0x1f & (v >> 26))) {    // b, bl
             f->lastcall = a;
             if (dir)
