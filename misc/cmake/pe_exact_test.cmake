@@ -37,6 +37,7 @@ endfunction()
 
 function(upx_pe_exact_test)
 
+set(emu "${CMAKE_CROSSCOMPILING_EMULATOR}")
 set(exact_dll "$<TARGET_FILE:upx-test-pe-exact-dll>")
 set(fo "--force-overwrite")
 set(wd "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>")
@@ -82,6 +83,11 @@ upx_add_test(upx-pe-exact-reject-raw-tail upx --exact -3 "${tail_dll}" ${fo}
 set_tests_properties(upx-pe-exact-reject-raw-tail PROPERTIES
                      PASS_REGULAR_EXPRESSION "option '--exact' does not work with this file")
 upx_test_depends(upx-pe-exact-reject-raw-tail upx-pe-raw-tail-prepare)
+
+set(tls_exe "${wd}/upx-test-pe-tls-nonzero.exe")
+upx_add_test(upx-pe-exe-tls-prepare upx-test-pe-exact-fixture
+             "$<TARGET_FILE:upx-test-pe-exact-tls-exe>" "${tls_exe}" tls-index)
+upx_pe_exact_roundtrip(exe-tls "${tls_exe}" exe "${emu}")
 
 endfunction()
 

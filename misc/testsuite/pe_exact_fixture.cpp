@@ -40,7 +40,8 @@ int main(int argc, char **argv) {
         return fail("usage: pe_exact_fixture input output [mode]");
     const char *mode = argc == 4 ? argv[3] : "gap";
     if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0 &&
-        std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0)
+        std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0 &&
+        std::strcmp(mode, "tls-index") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -84,6 +85,85 @@ int main(int argc, char **argv) {
         optional_offset + (magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC
                                ? offsetof(IMAGE_OPTIONAL_HEADER64, DataDirectory)
                                : offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory));
+    if (std::strcmp(mode, "tls-index") == 0) {
+        IMAGE_DATA_DIRECTORY directory = {};
+        if (!read_struct(bytes, directories + IMAGE_DIRECTORY_ENTRY_TLS * sizeof(directory),
+                         directory) ||
+            !directory.VirtualAddress)
+            return fail("fixture has no TLS directory");
+        size_t offset = rva_to_offset(sections, directory.VirtualAddress);
+        ULONGLONG image_base = 0, index_address = 0;
+        if (magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+            IMAGE_OPTIONAL_HEADER64 optional = {};
+            IMAGE_TLS_DIRECTORY64 tls = {};
+            if (!offset || !read_struct(bytes, optional_offset, optional) ||
+                !read_struct(bytes, offset, tls))
+                return fail("invalid TLS directory");
+            image_base = optional.ImageBase;
+            index_address = tls.AddressOfIndex;
+        } else {
+            IMAGE_OPTIONAL_HEADER32 optional = {};
+            IMAGE_TLS_DIRECTORY32 tls = {};
+            if (!offset || !read_struct(bytes, optional_offset, optional) ||
+                !read_struct(bytes, offset, tls))
+                return fail("invalid TLS directory");
+            image_base = optional.ImageBase;
+            index_address = tls.AddressOfIndex;
+        }
+        if (index_address < image_base || index_address - image_base > MAXDWORD)
+            return fail("invalid TLS index address");
+        const DWORD rva = static_cast<DWORD>(index_address - image_base);
+        offset = rva_to_offset(sections, rva);
+        if (!offset) {
+            // The linker left the index in BSS or past the raw data of its section, so there is
+            // no file byte to retain. Append a raw copy of the section covering the index and
+            // keep the old bytes in place, so that no other offset moves.
+            DWORD file_alignment = 0;
+            if (!read_struct(bytes,
+                             optional_offset + offsetof(IMAGE_OPTIONAL_HEADER32, FileAlignment),
+                             file_alignment) ||
+                !file_alignment)
+                return fail("invalid fixture alignment");
+            const auto align = [=](ULONGLONG value) {
+                return (value + file_alignment - 1) / file_alignment * file_alignment;
+            };
+            const ULONGLONG raw_start = align(bytes.size());
+            for (size_t i = 0; i < sections.size() && !offset; i++) {
+                auto &section = sections[i];
+                if (rva < section.VirtualAddress)
+                    continue;
+                const ULONGLONG used =
+                    static_cast<ULONGLONG>(rva - section.VirtualAddress) + sizeof(DWORD);
+                if (used > section.Misc.VirtualSize && used > section.SizeOfRawData)
+                    continue;
+                const ULONGLONG raw_size = align(used);
+                if (raw_start + raw_size > MAXDWORD ||
+                    (section.PointerToRawData &&
+                     static_cast<ULONGLONG>(section.PointerToRawData) + section.SizeOfRawData >
+                         bytes.size()))
+                    return fail("invalid raw data for the TLS index section");
+                bytes.resize(static_cast<size_t>(raw_start + raw_size));
+                if (section.PointerToRawData)
+                    std::memcpy(bytes.data() + raw_start, bytes.data() + section.PointerToRawData,
+                                section.SizeOfRawData);
+                section.PointerToRawData = static_cast<DWORD>(raw_start);
+                section.SizeOfRawData = static_cast<DWORD>(raw_size);
+                section.Characteristics &= ~IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+                section.Characteristics |= IMAGE_SCN_CNT_INITIALIZED_DATA;
+                std::memcpy(bytes.data() + section_offset + i * sizeof(section), &section,
+                            sizeof(section));
+                offset = static_cast<size_t>(raw_start) + (rva - section.VirtualAddress);
+            }
+            if (!offset)
+                return fail("TLS index is not in a section");
+        }
+        DWORD initializer = 0;
+        if (!read_struct(bytes, offset, initializer))
+            return fail("TLS index is not raw-backed");
+        initializer = 0x55;
+        std::memcpy(bytes.data() + offset, &initializer, sizeof(initializer));
+        return write_fixture(argv[2], bytes);
+    }
     if (std::strcmp(mode, "empty-imports") == 0) {
         IMAGE_DATA_DIRECTORY imports = {};
         const size_t directory_offset =
