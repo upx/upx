@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
         return fail("usage: pe_exact_fixture input output [mode]");
     const char *mode = argc == 4 ? argv[3] : "gap";
     if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0 &&
-        std::strcmp(mode, "zero-gap") != 0)
+        std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -138,6 +138,34 @@ int main(int argc, char **argv) {
         std::memcpy(bytes.data() + optional_offset +
                         offsetof(IMAGE_OPTIONAL_HEADER32, SizeOfHeaders),
                     &end, sizeof(end));
+    } else if (std::strcmp(mode, "raw-tail") == 0) {
+        DWORD alignment = 0, file_alignment = 0, image_size = 0;
+        if (!read_struct(bytes,
+                         optional_offset + offsetof(IMAGE_OPTIONAL_HEADER32, SectionAlignment),
+                         alignment) ||
+            !read_struct(bytes, optional_offset + offsetof(IMAGE_OPTIONAL_HEADER32, FileAlignment),
+                         file_alignment) ||
+            !read_struct(bytes, optional_offset + offsetof(IMAGE_OPTIONAL_HEADER32, SizeOfImage),
+                         image_size) ||
+            !alignment || !file_alignment)
+            return fail("invalid fixture alignment");
+        auto &last = sections.back();
+        if (!last.PointerToRawData)
+            return fail("fixture needs a raw-backed last section");
+        const ULONGLONG virtual_size =
+            (static_cast<ULONGLONG>(last.Misc.VirtualSize) + alignment - 1) / alignment * alignment;
+        const ULONGLONG raw_size = virtual_size + file_alignment;
+        const ULONGLONG image_end =
+            (last.VirtualAddress + raw_size + alignment - 1) / alignment * alignment;
+        if (raw_size > MAXDWORD || image_end > MAXDWORD || raw_size <= last.SizeOfRawData)
+            return fail("invalid raw-tail fixture size");
+        boundary = static_cast<size_t>(last.PointerToRawData) + last.SizeOfRawData;
+        gap = static_cast<size_t>(raw_size) - last.SizeOfRawData;
+        last.SizeOfRawData = static_cast<DWORD>(raw_size);
+        if (image_end > image_size)
+            image_size = static_cast<DWORD>(image_end);
+        std::memcpy(bytes.data() + optional_offset + offsetof(IMAGE_OPTIONAL_HEADER32, SizeOfImage),
+                    &image_size, sizeof(image_size));
     }
     if (boundary > bytes.size() || removed > boundary || gap > MAXDWORD - bytes.size())
         return fail("fixture is too large");
