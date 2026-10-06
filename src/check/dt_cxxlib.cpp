@@ -29,9 +29,12 @@
 
 #include "../util/system_headers.h"
 #include <cmath>
+#include <cstddef>
+#include <cstring>
 #include <vector> // std::vector
 #include "../conf.h"
 #include "../util/membuffer.h"
+#undef strlen
 
 /*************************************************************************
 // standard C++ library
@@ -1538,6 +1541,14 @@ struct alignas(1) TestXE final {
     static noinline void noinline_memcpy_769(void *d, const void *s) noexcept {
         upx_memcpy_inline(d, s, 769);
     }
+
+    static noinline size_t noinline_strlen(const char *a) noexcept { return strlen(a); }
+    static noinline int noinline_strcmp(const char *a, const char *b) noexcept {
+        return strcmp(a, b);
+    }
+    static noinline int noinline_strncmp(const char *a, const char *b, size_t n) noexcept {
+        return strncmp(a, b, n);
+    }
 };
 } // namespace
 
@@ -1997,6 +2008,14 @@ TEST_CASE("upx::run_time 1b") {
         TestXE::noinline_memcpy_193(d, s);
         TestXE::noinline_memcpy_385(d, s);
         TestXE::noinline_memcpy_769(d, s);
+    }
+    if (acc_vget_int(1, 0)) {
+        const int n = acc_vget_int(0, 0);
+        char a[16] = {};
+        char b[16] = {};
+        assert_noexcept2((TestXE::noinline_strlen(a) == 0));
+        assert_noexcept2((TestXE::noinline_strcmp(a, b) == 0));
+        assert_noexcept2((TestXE::noinline_strncmp(a, b, n) == 0));
     }
 }
 
@@ -3126,6 +3145,11 @@ TEST_CASE("codegen constant") {
     const int b = acc_vget_int(1, 0);
     const bool f = acc_vget_int(0, 0);
     const bool t = acc_vget_int(1, 0);
+#if defined(__m68k__) && (__GNUC__ == 15)
+    // @COMPILER_BUG @GCC_BUG
+    if (acc_vget_int(1, 0))
+        return;
+#endif
     {
         assert_noexcept2((TestConstant::noinline_eq(upx_int8_t(a), upx_int8_t(b)) == 0));
         assert_noexcept2((TestConstant::noinline_eq(upx_uint8_t(a), upx_uint8_t(b)) == 0));
@@ -4175,7 +4199,10 @@ TEST_CASE("codegen float") {
     const int n = acc_vget_int(0, 0);
     const int a = acc_vget_int(0, 0);
     const int b = acc_vget_int(1, 0);
-#if !defined(__FAST_MATH__)
+#if defined(__FAST_MATH__)
+    if (acc_vget_int(1, 0))
+        return;
+#endif
     {
         assert_noexcept2((TestFloat::noinline_ceil(float(n)) == 0));
         assert_noexcept2((TestFloat::noinline_ceil(double(n)) == 0));
@@ -4207,7 +4234,6 @@ TEST_CASE("codegen float") {
         assert_noexcept2((TestFloat::noinline_atan2(double(a), double(b)) == 0));
 #endif
     }
-#endif
     (void) n;
     (void) a;
     (void) b;

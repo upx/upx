@@ -220,7 +220,7 @@ void PackCom::unpack(OutputFile *fo) {
     fi->readx(ibuf, file_size);
 
     // get compressed data offset
-    unsigned e_len = ph.buf_offset + ph.getPackHeaderSize();
+    const unsigned e_len = ph.buf_offset + ph.getPackHeaderSize();
     if (file_size_u <= e_len + ph.c_len)
         throwCantUnpack("file damaged");
 

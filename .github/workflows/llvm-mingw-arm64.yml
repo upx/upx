@@ -25,7 +25,7 @@ env:
 
 jobs:
   job-llvm-mingw-arm64: # uses cmake + make
-    if: github.repository_owner == 'upx'
+    #if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
       matrix:
@@ -53,11 +53,11 @@ jobs:
             llvm_version: 22.1.8
             use_arm64ec: true
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-aarch64.zip'
-          - name: llvm-mingw-20260922-ucrt
-            llvm_version: 23.1.2
+          - name: llvm-mingw-20261006-ucrt
+            llvm_version: 23.1.3
             use_arm64ec: true
             use_arm64x: true
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-aarch64.zip'
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20261006/llvm-mingw-20261006-ucrt-aarch64.zip'
 
     env:
       CMAKE_SYSTEM_NAME: Windows
@@ -222,6 +222,21 @@ jobs:
           ls -ld ./build/*/*/*/XTesting/*/* || true
           rm -rf ./build/*/*/*/XTesting/*/*
 
+      - name: 'Mimic ctest tests aarch64'
+        run: |
+          export upx_exe=./upx.exe
+          (cd build/llvm-mingw/aarch64-w64-mingw32-clang/debug          && bash ../../../../misc/testsuite/mimic_ctest.sh)
+          (cd build/llvm-mingw/aarch64-w64-mingw32-clang/release        && bash ../../../../misc/testsuite/mimic_ctest.sh)
+          ls -ld ./build/*/*/*/upx-* || true
+          rm -rf ./build/*/*/*/upx-*
+      - name: 'Mimic ctest tests aarch64 static'
+        run: |
+          export upx_exe=./upx.exe
+          (cd build/llvm-mingw/aarch64-w64-mingw32-clang-static/debug   && bash ../../../../misc/testsuite/mimic_ctest.sh)
+          (cd build/llvm-mingw/aarch64-w64-mingw32-clang-static/release && bash ../../../../misc/testsuite/mimic_ctest.sh)
+          ls -ld ./build/*/*/*/upx-* || true
+          rm -rf ./build/*/*/*/upx-*
+
       - name: 'Run test suite arm64'
         if: false
         run: |
@@ -250,6 +265,8 @@ jobs:
         run: |
           export upx_exe=./upx.exe
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
+          #(cd build/llvm-mingw/arm64ec-w64-mingw32-clang/debug          && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
+          #(cd build/llvm-mingw/arm64ec-w64-mingw32-clang/release        && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           (cd build/llvm-mingw/arm64ec-w64-mingw32-clang-static/debug   && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           (cd build/llvm-mingw/arm64ec-w64-mingw32-clang-static/release && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           ls -ld ./build/*/*/*/tmp-upx-testsuite* || true
@@ -259,6 +276,8 @@ jobs:
         run: |
           export upx_exe=./upx.exe
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
+          (cd build/llvm-mingw/arm64x-w64-mingw32-clang/debug           && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
+          (cd build/llvm-mingw/arm64x-w64-mingw32-clang/release         && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           (cd build/llvm-mingw/arm64x-w64-mingw32-clang-static/debug    && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           (cd build/llvm-mingw/arm64x-w64-mingw32-clang-static/release  && bash ../../../../misc/testsuite/upx_testsuite_1.sh)
           ls -ld ./build/*/*/*/tmp-upx-testsuite* || true

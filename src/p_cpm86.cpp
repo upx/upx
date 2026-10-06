@@ -488,8 +488,8 @@ void PackCpm86::unpack(OutputFile *fo) {
     fi->readx(ibuf, file_size);
 
     // compressed data starts right after the pack header in the code group
-    unsigned e_len = ph.buf_offset + ph.getPackHeaderSize();
-    unsigned c_off = grp_code->file_off + e_len;
+    const unsigned e_len = ph.buf_offset + ph.getPackHeaderSize();
+    const unsigned c_off = grp_code->file_off + e_len;
     if (file_size_u < c_off + ph.c_len)
         throwCantUnpack("file damaged");
 
@@ -500,7 +500,7 @@ void PackCpm86::unpack(OutputFile *fo) {
     // original byte count for a lossless result.  u_file_size is taken verbatim
     // from the pack header and must not exceed u_len (the obuf size), else the
     // write below would read past the decompression buffer.
-    unsigned out_len = ph.u_file_size ? ph.u_file_size : ph.u_len;
+    const unsigned out_len = ph.u_file_size ? ph.u_file_size : ph.u_len;
     if (out_len > ph.u_len)
         throwCantUnpack("file damaged");
     if (fo)

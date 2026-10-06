@@ -16,7 +16,7 @@
 /doc/upx-doc.*                          linguist-generated
 
 /src/stub/*.h                           linguist-generated
-/src/stub/src/arch/**/lzma_d_c[fns].S   linguist-generated
+/src/stub/src/arch/**/lzma_d_c[fns]*.S  linguist-generated
 /src/stub/tmp/**                        linguist-generated
 
 /misc/podman/*/packages*.txt            linguist-generated

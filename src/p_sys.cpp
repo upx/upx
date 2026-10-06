@@ -98,7 +98,7 @@ void PackSys::patchLoader(OutputFile *fo, byte *loader, int lsize, unsigned call
     linker->defineSymbol("attribute", get_le16(ibuf + 4));
     linker->defineSymbol("interrupt", get_le16(ibuf + 8));
 
-    unsigned copy_to = ph.u_len + d_len + ph.overlap_overhead;
+    const unsigned copy_to = ph.u_len + d_len + ph.overlap_overhead;
 
     linker->defineSymbol("calltrick_calls", calls);
     linker->defineSymbol("copy_source", ph.c_len + lsize - 1);

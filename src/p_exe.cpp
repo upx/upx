@@ -667,7 +667,7 @@ void PackExe::unpack(OutputFile *fo) {
             set_le32(relocs + (4 * relocnum++), 0);
     }
 
-    unsigned outputlen = sizeof(oh) + 4 * relocnum + ptr_udiff_bytes(relocstart, obuf);
+    const unsigned outputlen = sizeof(oh) + 4 * relocnum + ptr_udiff_bytes(relocstart, obuf);
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
     oh.headsize16 = 2 + relocnum / 4;
@@ -694,7 +694,8 @@ void PackExe::unpack(OutputFile *fo) {
         oh.ss = get_le16(ibuf + imagesize);
     }
 
-    unsigned ip = (flag & USEJUMP) ? get_le32(ibuf + imagesize - 4) : (unsigned) ih.firstreloc;
+    const unsigned ip =
+        (flag & USEJUMP) ? get_le32(ibuf + (imagesize - 4)) : (unsigned) ih.firstreloc;
     oh.ip = ip & 0xffff;
     oh.cs = ip >> 16;
 

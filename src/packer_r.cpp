@@ -132,7 +132,7 @@ unsigned Packer::unoptimizeReloc(SPAN_S(const byte) & in, MemBuffer &mb_out, SPA
                upx_adler32(image, image_size));
     }
 
-    mb_out.alloc(mem_size(4, relocnum + 1)); // one extra entry
+    mb_out.alloc(mem_size(sizeof(LE32), relocnum + 1)); // one extra entry
     SPAN_S_VAR(LE32, relocs, mb_out);
 
     fix = in;

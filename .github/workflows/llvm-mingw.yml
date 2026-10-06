@@ -25,7 +25,7 @@ env:
 
 jobs:
   job-llvm-mingw: # uses cmake + make
-    if: github.repository_owner == 'upx'
+    #if: github.repository_owner == 'upx'
     strategy:
       fail-fast: false
       matrix:
@@ -76,16 +76,16 @@ jobs:
             llvm_version: 22.1.8
             use_arm64ec: true
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz'
-          - name: llvm-mingw-20260922-msvcrt
-            llvm_version: 23.1.2
+          - name: llvm-mingw-20261006-msvcrt
+            llvm_version: 23.1.3
             use_arm64ec: true
             use_arm64x: true
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-msvcrt-ubuntu-22.04-x86_64.tar.xz'
-          - name: llvm-mingw-20260922-ucrt
-            llvm_version: 23.1.2
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20261006/llvm-mingw-20261006-msvcrt-ubuntu-22.04-x86_64.tar.xz'
+          - name: llvm-mingw-20261006-ucrt
+            llvm_version: 23.1.3
             use_arm64ec: true
             use_arm64x: true
-            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz'
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20261006/llvm-mingw-20261006-ucrt-ubuntu-22.04-x86_64.tar.xz'
 
     env:
       container: 'ubuntu:26.04'
