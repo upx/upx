@@ -114,8 +114,8 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
 
 void PackW64PeArm64::defineFilterSymbols(const Filter *ft) {
     if (ft->id) {
-        // The host filters a word only when its offset is less than buf_len - 4.
-        linker->defineSymbol("filter_length", (ft->buf_len - 1) & ~3u);
+        // 0x52 skips the final word of a word-aligned buffer.
+        linker->defineSymbol("filter_length", (ft->buf_len - (ft->id == 0x52)) & ~3u);
         linker->defineSymbol("filter_cto", ft->cto);
     } else {
         super::defineFilterSymbols(ft);

@@ -414,7 +414,7 @@ static int CTarm64(Filter *f, int dir) { // dir: 1, 0, -1
             f->calls++;
         }
         b += 4;
-    } while (b < b_end);
+    } while (b <= b_end);
     if (f->lastcall)
         f->lastcall += 4;
     return 0;
@@ -447,6 +447,27 @@ TEST_CASE("ARM64 enhanced filter conditional offsets") {
         REQUIRE(CTarm64(&f, -1) == 0);
         for (unsigned i = 0; i < sizeof(instructions) / sizeof(instructions[0]); ++i)
             CHECK(get_le32(buf + 4 * i) == instructions[i]);
+    }
+}
+
+TEST_CASE("ARM64 enhanced filter final instruction") {
+    for (unsigned len = 8; len <= 11; ++len) {
+        CAPTURE(len);
+        byte buf[11];
+        set_le32(buf, 0xd503201f);
+        set_le32(buf + 4, 0x14000000);
+        memset(buf + 8, 0xa5, 3);
+        Filter f(3);
+        f.buf = buf;
+        f.buf_len = len;
+        REQUIRE(CTarm64(&f, 1) == 0);
+        CHECK(get_le32(buf + 4) == 0x14000001);
+        CHECK(f.calls == 1);
+        REQUIRE(CTarm64(&f, -1) == 0);
+        CHECK(get_le32(buf) == 0xd503201f);
+        CHECK(get_le32(buf + 4) == 0x14000000);
+        for (unsigned i = 8; i < sizeof(buf); ++i)
+            CHECK(buf[i] == 0xa5);
     }
 }
 
