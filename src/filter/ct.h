@@ -393,12 +393,12 @@ static int CTarm64(Filter *f, int dir) { // dir: 1, 0, -1
     byte *const b_end = b + f->buf_len - 4;
     do {
         const unsigned a = b - f->buf;
-        const int d = dir * (f->addvalue + (a >> 2));
+        const unsigned d = dir * (a >> 2);
         const unsigned v = get_le32(b);   // the 32-bit instruction
         if (0x05 == (0x1f & (v >> 26))) { // b, bl
             f->lastcall = a;
             if (dir)
-                set_le26(b, v + d);
+                set_le26(b, v + d + dir * f->addvalue);
             f->calls++;
         } else if ((0x54 == (v >> 24))             // b.cond
                    || (0x1a == ((v >> 25) & 0x3f)) // cb{z,nz}
@@ -425,6 +425,30 @@ static int f_CTarm64_le(Filter *f) { return CTarm64(f, 1); }
 static int u_CTarm64_le(Filter *f) { return CTarm64(f, -1); }
 
 static int s_CTarm64_le(Filter *f) { return CTarm64(f, 0); }
+
+TEST_CASE("ARM64 enhanced filter conditional offsets") {
+    const unsigned instructions[] = {
+        0xd503201f, 0x94000002, 0x54000021, 0x34000044, 0x36000065, 0xd503201f,
+    };
+    for (unsigned addvalue : {0u, 0x1000u, 0xfffffff0u}) {
+        CAPTURE(addvalue);
+        byte buf[sizeof(instructions)];
+        for (unsigned i = 0; i < sizeof(instructions) / sizeof(instructions[0]); ++i)
+            set_le32(buf + 4 * i, instructions[i]);
+        Filter f(3);
+        f.buf = buf;
+        f.buf_len = sizeof(buf);
+        f.addvalue = addvalue;
+        REQUIRE(CTarm64(&f, 1) == 0);
+        CHECK(get_le32(buf + 4) == (0x94000000 | ((addvalue + 3) & 0x03ffffff)));
+        CHECK(get_le32(buf + 8) == 0x54000061);
+        CHECK(get_le32(buf + 12) == 0x340000a4);
+        CHECK(get_le32(buf + 16) == 0x360000e5);
+        REQUIRE(CTarm64(&f, -1) == 0);
+        for (unsigned i = 0; i < sizeof(instructions) / sizeof(instructions[0]); ++i)
+            CHECK(get_le32(buf + 4 * i) == instructions[i]);
+    }
+}
 
 #endif //}
 
