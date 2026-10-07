@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
         std::strcmp(mode, "tls-index") != 0 && std::strcmp(mode, "zero-sections") != 0 &&
         std::strcmp(mode, "unordered") != 0 && std::strcmp(mode, "wrap-rva") != 0 &&
         std::strcmp(mode, "overlay") != 0 && std::strcmp(mode, "guard-cf") != 0 &&
-        std::strcmp(mode, "cet") != 0)
+        std::strcmp(mode, "cet") != 0 && std::strcmp(mode, "wince") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -214,6 +214,37 @@ int main(int argc, char **argv) {
             return write_fixture(argv[2], bytes);
         }
         return fail("fixture needs raw padding for CET debug entries");
+    }
+    if (std::strcmp(mode, "wince") == 0) {
+        IMAGE_OPTIONAL_HEADER32 optional = {};
+        if (magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+            IMAGE_OPTIONAL_HEADER64 source = {};
+            if (!read_struct(bytes, optional_offset, source))
+                return fail("invalid source optional header");
+            std::memcpy(&optional, &source, offsetof(IMAGE_OPTIONAL_HEADER32, BaseOfData));
+            std::memcpy(&optional.SectionAlignment, &source.SectionAlignment,
+                        offsetof(IMAGE_OPTIONAL_HEADER32, SizeOfStackReserve) -
+                            offsetof(IMAGE_OPTIONAL_HEADER32, SectionAlignment));
+            optional.ImageBase = 0x10000;
+            optional.SizeOfStackReserve = 0x100000;
+            optional.SizeOfStackCommit = 0x1000;
+            optional.SizeOfHeapReserve = 0x100000;
+            optional.SizeOfHeapCommit = 0x1000;
+            optional.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+        } else if (!read_struct(bytes, optional_offset, optional)) {
+            return fail("invalid source optional header");
+        }
+        optional.Magic = IMAGE_NT_OPTIONAL_HDR32_MAGIC;
+        optional.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CE_GUI;
+        header.Machine = IMAGE_FILE_MACHINE_ARM;
+        header.Characteristics |= IMAGE_FILE_32BIT_MACHINE;
+        header.SizeOfOptionalHeader = sizeof(optional);
+        std::memcpy(bytes.data() + header_offset, &header, sizeof(header));
+        std::memcpy(bytes.data() + optional_offset, &optional, sizeof(optional));
+        for (size_t i = 0; i < sections.size(); i++)
+            std::memcpy(bytes.data() + optional_offset + sizeof(optional) + i * sizeof(sections[i]),
+                        &sections[i], sizeof(sections[i]));
+        return write_fixture(argv[2], bytes);
     }
     if (std::strcmp(mode, "tls-index") == 0) {
         IMAGE_DATA_DIRECTORY directory = {};
