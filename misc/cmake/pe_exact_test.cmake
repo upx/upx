@@ -93,6 +93,15 @@ set_tests_properties(upx-pe-exact-reject-no-sections PROPERTIES
                      PASS_REGULAR_EXPRESSION "No section was found")
 upx_test_depends(upx-pe-exact-reject-no-sections upx-pe-no-sections-prepare)
 
+set(wrapping "${wd}/upx-test-pe-wrapping-rva.dll")
+upx_add_test(upx-pe-wrapping-prepare upx-test-pe-exact-fixture
+             "${exact_dll}" "${wrapping}" wrap-rva)
+upx_add_test(upx-pe-exact-reject-wrapping-rva upx --exact "${wrapping}" ${fo}
+             -o "${wd}/upx-test-pe-wrapping-rva-packed.dll")
+set_tests_properties(upx-pe-exact-reject-wrapping-rva PROPERTIES
+                     PASS_REGULAR_EXPRESSION "section size problem")
+upx_test_depends(upx-pe-exact-reject-wrapping-rva upx-pe-wrapping-prepare)
+
 set(tls_exe "${wd}/upx-test-pe-tls-nonzero.exe")
 upx_add_test(upx-pe-exe-tls-prepare upx-test-pe-exact-fixture
              "$<TARGET_FILE:upx-test-pe-exact-tls-exe>" "${tls_exe}" tls-index)
