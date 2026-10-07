@@ -84,6 +84,15 @@ set_tests_properties(upx-pe-exact-reject-raw-tail PROPERTIES
                      PASS_REGULAR_EXPRESSION "option '--exact' does not work with this file")
 upx_test_depends(upx-pe-exact-reject-raw-tail upx-pe-raw-tail-prepare)
 
+set(no_sections "${wd}/upx-test-pe-no-sections.dll")
+upx_add_test(upx-pe-no-sections-prepare upx-test-pe-exact-fixture
+             "${exact_dll}" "${no_sections}" zero-sections)
+upx_add_test(upx-pe-exact-reject-no-sections upx --exact "${no_sections}" ${fo}
+             -o "${wd}/upx-test-pe-no-sections-packed.dll")
+set_tests_properties(upx-pe-exact-reject-no-sections PROPERTIES
+                     PASS_REGULAR_EXPRESSION "No section was found")
+upx_test_depends(upx-pe-exact-reject-no-sections upx-pe-no-sections-prepare)
+
 set(tls_exe "${wd}/upx-test-pe-tls-nonzero.exe")
 upx_add_test(upx-pe-exe-tls-prepare upx-test-pe-exact-fixture
              "$<TARGET_FILE:upx-test-pe-exact-tls-exe>" "${tls_exe}" tls-index)
