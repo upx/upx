@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <algorithm>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -41,7 +42,8 @@ int main(int argc, char **argv) {
     const char *mode = argc == 4 ? argv[3] : "gap";
     if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0 &&
         std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0 &&
-        std::strcmp(mode, "tls-index") != 0 && std::strcmp(mode, "zero-sections") != 0)
+        std::strcmp(mode, "tls-index") != 0 && std::strcmp(mode, "zero-sections") != 0 &&
+        std::strcmp(mode, "unordered") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -214,7 +216,28 @@ int main(int argc, char **argv) {
         return fail("fixture needs two raw-backed sections");
     size_t boundary = second, removed = 0;
     size_t gap = (static_cast<size_t>(first) / 4096 + 1) * 4096;
-    if (std::strcmp(mode, "zero-gap") == 0) {
+    DWORD swap_first = 0, swap_second = 0, swap_size = 0;
+    if (std::strcmp(mode, "unordered") == 0) {
+        for (size_t i = 0; i < sections.size() && !swap_size; i++)
+            for (size_t j = i + 1; j < sections.size(); j++) {
+                const auto &a = sections[i];
+                const auto &b = sections[j];
+                if (!a.PointerToRawData || a.PointerToRawData >= b.PointerToRawData ||
+                    !a.SizeOfRawData ||
+                    a.SizeOfRawData != b.SizeOfRawData)
+                    continue;
+                swap_first = a.PointerToRawData;
+                swap_second = b.PointerToRawData;
+                swap_size = a.SizeOfRawData;
+                if (static_cast<ULONGLONG>(swap_first) + swap_size > swap_second ||
+                    static_cast<ULONGLONG>(swap_second) + swap_size > bytes.size())
+                    return fail("invalid raw ranges for section swap");
+                break;
+            }
+        if (!swap_size)
+            return fail("fixture needs two equal-sized raw-backed sections");
+        gap = 0;
+    } else if (std::strcmp(mode, "zero-gap") == 0) {
         boundary = first;
         const DWORD end =
             static_cast<DWORD>(section_offset + sections.size() * sizeof(IMAGE_SECTION_HEADER));
@@ -261,16 +284,24 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < gap; i++)
         output[prefix + i] = static_cast<unsigned char>((37 * i + 11) & 255);
     std::memcpy(output.data() + prefix + gap, bytes.data() + boundary, bytes.size() - boundary);
+    if (swap_size)
+        std::swap_ranges(output.begin() + swap_first, output.begin() + swap_first + swap_size,
+                         output.begin() + swap_second);
+    const auto remap = [=](DWORD offset) -> DWORD {
+        if (swap_size && offset >= swap_first && offset - swap_first < swap_size)
+            return swap_second + (offset - swap_first);
+        if (swap_size && offset >= swap_second && offset - swap_second < swap_size)
+            return swap_first + (offset - swap_second);
+        return offset >= boundary ? static_cast<DWORD>(offset + shift) : offset;
+    };
 
     IMAGE_DATA_DIRECTORY security = {}, debug = {};
     const size_t security_offset = directories + IMAGE_DIRECTORY_ENTRY_SECURITY * sizeof(security);
     if (!read_struct(bytes, security_offset, security) ||
         !read_struct(bytes, directories + IMAGE_DIRECTORY_ENTRY_DEBUG * sizeof(debug), debug))
         return fail("invalid data directories");
-    if (security.VirtualAddress >= boundary) {
-        security.VirtualAddress = static_cast<DWORD>(security.VirtualAddress + shift);
-        std::memcpy(output.data() + security_offset, &security, sizeof(security));
-    }
+    security.VirtualAddress = remap(security.VirtualAddress);
+    std::memcpy(output.data() + security_offset, &security, sizeof(security));
     if (debug.Size) {
         const size_t debug_offset = rva_to_offset(sections, debug.VirtualAddress);
         if (!debug_offset || debug.Size % sizeof(IMAGE_DEBUG_DIRECTORY) != 0)
@@ -279,26 +310,19 @@ int main(int argc, char **argv) {
             IMAGE_DEBUG_DIRECTORY entry = {};
             if (!read_struct(bytes, debug_offset + i, entry))
                 return fail("invalid debug entry");
-            if (entry.PointerToRawData >= boundary)
-                entry.PointerToRawData = static_cast<DWORD>(entry.PointerToRawData + shift);
+            entry.PointerToRawData = remap(entry.PointerToRawData);
             const size_t offset = debug_offset + i;
-            const size_t destination = static_cast<size_t>(static_cast<LONGLONG>(offset) +
-                                                           (offset >= boundary ? shift : 0));
+            const size_t destination = remap(static_cast<DWORD>(offset));
             std::memcpy(output.data() + destination, &entry, sizeof(entry));
         }
     }
-    if (header.PointerToSymbolTable >= boundary) {
-        header.PointerToSymbolTable = static_cast<DWORD>(header.PointerToSymbolTable + shift);
-        std::memcpy(output.data() + header_offset, &header, sizeof(header));
-    }
+    header.PointerToSymbolTable = remap(header.PointerToSymbolTable);
+    std::memcpy(output.data() + header_offset, &header, sizeof(header));
     for (size_t i = 0; i < sections.size(); i++) {
         auto &section = sections[i];
-        if (section.PointerToRawData >= boundary)
-            section.PointerToRawData = static_cast<DWORD>(section.PointerToRawData + shift);
-        if (section.PointerToRelocations >= boundary)
-            section.PointerToRelocations = static_cast<DWORD>(section.PointerToRelocations + shift);
-        if (section.PointerToLinenumbers >= boundary)
-            section.PointerToLinenumbers = static_cast<DWORD>(section.PointerToLinenumbers + shift);
+        section.PointerToRawData = remap(section.PointerToRawData);
+        section.PointerToRelocations = remap(section.PointerToRelocations);
+        section.PointerToLinenumbers = remap(section.PointerToLinenumbers);
         std::memcpy(output.data() + section_offset + i * sizeof(section), &section,
                     sizeof(section));
     }
