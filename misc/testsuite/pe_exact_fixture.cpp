@@ -43,7 +43,8 @@ int main(int argc, char **argv) {
     if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0 &&
         std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0 &&
         std::strcmp(mode, "tls-index") != 0 && std::strcmp(mode, "zero-sections") != 0 &&
-        std::strcmp(mode, "unordered") != 0 && std::strcmp(mode, "wrap-rva") != 0)
+        std::strcmp(mode, "unordered") != 0 && std::strcmp(mode, "wrap-rva") != 0 &&
+        std::strcmp(mode, "overlay") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -100,6 +101,25 @@ int main(int argc, char **argv) {
         last.Misc.VirtualSize = 1;
         std::memcpy(bytes.data() + section_offset + (sections.size() - 1) * sizeof(last),
                     &last, sizeof(last));
+        return write_fixture(argv[2], bytes);
+    }
+    if (std::strcmp(mode, "overlay") == 0) {
+        if (sections.empty() || bytes.size() > MAXDWORD - 513)
+            return fail("invalid overlay fixture size");
+        auto &last = sections.back();
+        const ULONGLONG raw_end =
+            static_cast<ULONGLONG>(last.PointerToRawData) + last.SizeOfRawData;
+        DWORD file_alignment = 0;
+        if (!read_struct(bytes, optional_offset + offsetof(IMAGE_OPTIONAL_HEADER32, FileAlignment),
+                         file_alignment) ||
+            !file_alignment || !last.PointerToRawData || raw_end > bytes.size() ||
+            last.Misc.VirtualSize >= last.SizeOfRawData || (raw_end - 1) % file_alignment == 0)
+            return fail("fixture needs last-section padding with an unaligned end");
+        last.SizeOfRawData--;
+        std::memcpy(bytes.data() + section_offset + (sections.size() - 1) * sizeof(last),
+                    &last, sizeof(last));
+        for (size_t i = 0; i < 513; i++)
+            bytes.push_back(static_cast<unsigned char>((37 * i + 11) & 255));
         return write_fixture(argv[2], bytes);
     }
     if (std::strcmp(mode, "tls-index") == 0) {
