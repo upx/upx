@@ -43,7 +43,7 @@ set(fo "--force-overwrite")
 set(wd "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>")
 upx_pe_exact_roundtrip(dll "${exact_dll}" dll upx-test-pe-exact-dll-loader "")
 
-foreach(name IN ITEMS gap empty zero-gap unordered overlay)
+foreach(name IN ITEMS gap empty zero-gap unordered overlay cet)
     set(mode "${name}")
     set(runner upx-test-pe-exact-dll-loader)
     set(run_args "")

@@ -44,7 +44,8 @@ int main(int argc, char **argv) {
         std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0 &&
         std::strcmp(mode, "tls-index") != 0 && std::strcmp(mode, "zero-sections") != 0 &&
         std::strcmp(mode, "unordered") != 0 && std::strcmp(mode, "wrap-rva") != 0 &&
-        std::strcmp(mode, "overlay") != 0 && std::strcmp(mode, "guard-cf") != 0)
+        std::strcmp(mode, "overlay") != 0 && std::strcmp(mode, "guard-cf") != 0 &&
+        std::strcmp(mode, "cet") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -178,6 +179,41 @@ int main(int argc, char **argv) {
         std::memcpy(bytes.data() + offset + guard_offset, &guard_flags, sizeof(guard_flags));
         std::memcpy(bytes.data() + flags_offset, &dll_flags, sizeof(dll_flags));
         return write_fixture(argv[2], bytes);
+    }
+    if (std::strcmp(mode, "cet") == 0) {
+        if (bytes.size() > MAXDWORD - sizeof(DWORD))
+            return fail("invalid CET fixture size");
+        IMAGE_DEBUG_DIRECTORY entries[2] = {};
+        entries[1].Type = 20; // IMAGE_DEBUG_TYPE_EX_DLLCHARACTERISTICS
+        entries[1].SizeOfData = sizeof(DWORD);
+        entries[1].PointerToRawData = static_cast<DWORD>(bytes.size());
+        for (size_t i = 0; i < sections.size(); i++) {
+            auto &section = sections[i];
+            if (!section.PointerToRawData || !section.Misc.VirtualSize)
+                continue;
+            const ULONGLONG padding =
+                (static_cast<ULONGLONG>(section.Misc.VirtualSize) + 3) & ~ULONGLONG(3);
+            const ULONGLONG end = padding + sizeof(entries);
+            if (end > section.SizeOfRawData)
+                continue;
+            if (section.PointerToRawData + end > bytes.size() ||
+                section.VirtualAddress + end > MAXDWORD)
+                return fail("invalid CET directory range");
+            IMAGE_DATA_DIRECTORY directory = {};
+            directory.VirtualAddress = section.VirtualAddress + static_cast<DWORD>(padding);
+            directory.Size = sizeof(entries);
+            std::memcpy(bytes.data() + section.PointerToRawData + padding, entries, sizeof(entries));
+            std::memcpy(bytes.data() + directories + IMAGE_DIRECTORY_ENTRY_DEBUG * sizeof(directory),
+                        &directory, sizeof(directory));
+            section.Misc.VirtualSize = static_cast<DWORD>(end);
+            std::memcpy(bytes.data() + section_offset + i * sizeof(section), &section, sizeof(section));
+            const DWORD flags = 1; // IMAGE_DLLCHARACTERISTICS_EX_CET_COMPAT
+            const size_t payload = bytes.size();
+            bytes.resize(payload + sizeof(flags));
+            std::memcpy(bytes.data() + payload, &flags, sizeof(flags));
+            return write_fixture(argv[2], bytes);
+        }
+        return fail("fixture needs raw padding for CET debug entries");
     }
     if (std::strcmp(mode, "tls-index") == 0) {
         IMAGE_DATA_DIRECTORY directory = {};
