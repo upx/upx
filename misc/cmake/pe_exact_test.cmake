@@ -57,6 +57,11 @@ upx_add_test(upx-pe-normal-unpack-stripped upx -d upx-test-pe-stripped-packed.ex
              -o upx-test-pe-stripped-unpacked.exe)
 upx_test_depends(upx-pe-normal-unpack-stripped upx-pe-normal-pack-stripped)
 
+upx_add_test(upx-pe-exact-reject-strip-relocs upx --exact --strip-relocs=1 "${exact_dll}" ${fo}
+             -o "${wd}/upx-test-pe-strip-relocs-rejected.dll")
+set_tests_properties(upx-pe-exact-reject-strip-relocs PROPERTIES
+                     PASS_REGULAR_EXPRESSION "cannot use both '--exact' and '--strip-relocs'")
+
 endfunction()
 
 # vim:set ft=cmake ts=4 sw=4 tw=0 et:
