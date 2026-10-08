@@ -1269,6 +1269,7 @@ PackLinuxElf64arm::getFilters() const
 {
     static const int filters[] = {
         0x52,
+        0x53,
     FT_END };
     return filters;
 }

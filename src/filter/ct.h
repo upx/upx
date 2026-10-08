@@ -354,8 +354,6 @@ static int s_ct24arm_be(Filter *f) {
 // 26-bit ARM calltrick ("naive")
 **************************************************************************/
 
-#if 1 //{ old reliable
-
 #define CT26ARM_LE(f, cond, addvalue, get, set)                                                    \
     byte *b = f->buf;                                                                              \
     byte *b_end = b + f->buf_len - 4;                                                              \
@@ -385,8 +383,6 @@ static int u_ct26arm_le(Filter *f) {
 static int s_ct26arm_le(Filter *f) {
     CT26ARM_LE(f, ARMCT_COND, a + f->addvalue, get_le26, set_dummy)
 }
-
-#else //}{ new enhanced but DIFFERENT; need new filter type!
 
 static int CTarm64(Filter *f, int dir) { // dir: 1, 0, -1
     byte *b = f->buf;                    // will be incremented
@@ -470,8 +466,6 @@ TEST_CASE("ARM64 enhanced filter final instruction") {
             CHECK(buf[i] == 0xa5);
     }
 }
-
-#endif //}
 
 #undef CT26ARM_LE
 #undef ARMCT_COND

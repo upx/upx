@@ -240,13 +240,10 @@
     { 0x50, 8, 0x01ffffff, f_ct24arm_le, u_ct24arm_le, s_ct24arm_le },
     { 0x51, 8, 0x01ffffff, f_ct24arm_be, u_ct24arm_be, s_ct24arm_be },
 
-#if 1  //{ old reliable
     // 26-bit calltrick for arm64
     { 0x52, 8, 0x03ffffff, f_ct26arm_le, u_ct26arm_le, s_ct26arm_le },
-#else  //}{ new enhanced, but needs new filter id
     // 26-bit calltrick for arm64; also 19-bit and 14-bit
-    { 0x52, 8, 0x03ffffff, f_CTarm64_le, u_CTarm64_le, s_CTarm64_le },
-#endif  //}
+    { 0x53, 8, 0x03ffffff, f_CTarm64_le, u_CTarm64_le, s_CTarm64_le },
 
     { 0x55, 8, 0x40000000, f_auipc_le, u_auipc_le, s_auipc_le},
     //{ 0x56, 8, 0x40000000, f_rvjal_le, u_rvjal_le, s_rvjal_le},

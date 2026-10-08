@@ -210,4 +210,79 @@ bool Filter::scan(SPAN_0(const byte) xbuf, unsigned buf_len_) {
     return false;
 }
 
+TEST_CASE("ARM64 branch filters") {
+    const struct {
+        unsigned instruction;
+        unsigned mask;
+        unsigned shift;
+    } instructions[] = {
+        {0xd503201f, 0, 0},          // nop
+        {0x17ffffff, 0x03ffffff, 0}, // b
+        {0x94000010, 0x03ffffff, 0}, // bl
+        {0x54ffffe1, 0x00ffffe0, 5}, // b.ne
+        {0x34000065, 0x00ffffe0, 5}, // cbz w5
+        {0xb4ffffc5, 0x00ffffe0, 5}, // cbz x5
+        {0x35ffffe7, 0x00ffffe0, 5}, // cbnz w7
+        {0xb5000047, 0x00ffffe0, 5}, // cbnz x7
+        {0x361ffff1, 0x0007ffe0, 5}, // tbz
+        {0xb7f80024, 0x0007ffe0, 5}, // tbnz
+        {0x91000400, 0, 0},          // add
+        {0x14000002, 0x03ffffff, 0}, // final b
+    };
+    constexpr unsigned n_words = sizeof(instructions) / sizeof(instructions[0]);
+    constexpr unsigned n_bytes = 4 * n_words + 3;
+    byte original[n_bytes];
+    memset(original, 0xa5, sizeof(original));
+    for (unsigned i = 0; i < n_words; ++i)
+        set_le32(original + 4 * i, instructions[i].instruction);
+
+    const int ids[] = {
+        0x53,
+        0x52,
+    };
+    for (int id : ids) {
+        CHECK(Filter::isValidFilter(id));
+        for (unsigned addvalue : {0u, 0x1000u, 0x1234u, 0xfffffff0u}) {
+            for (unsigned len = 0; len <= n_bytes; ++len) {
+                CAPTURE(id);
+                CAPTURE(addvalue);
+                CAPTURE(len);
+                byte buf[n_bytes], expected[n_bytes];
+                memcpy(buf, original, sizeof(buf));
+                memcpy(expected, original, sizeof(expected));
+                Filter f(3);
+                f.init(id, addvalue);
+                if (len < 8) {
+                    CHECK_FALSE(f.scan(buf, len));
+                    CHECK_FALSE(f.filter(buf, len));
+                    CHECK(memcmp(buf, original, sizeof(buf)) == 0);
+                    continue;
+                }
+                unsigned calls = 0;
+                for (unsigned i = 0; i < n_words; ++i) {
+                    const unsigned a = 4 * i;
+                    if (a + 4 > len || (id == 0x52 && a + 4 == len))
+                        break;
+                    const auto &insn = instructions[i];
+                    if (insn.mask == 0 || (id == 0x52 && insn.shift != 0))
+                        continue;
+                    const unsigned d = a / 4 + (insn.shift == 0 ? addvalue : 0);
+                    const unsigned field = (insn.instruction >> insn.shift) + d;
+                    set_le32(expected + a,
+                             (insn.instruction & ~insn.mask) | ((field << insn.shift) & insn.mask));
+                    ++calls;
+                }
+                REQUIRE(f.scan(buf, len));
+                CHECK(f.calls == calls);
+                CHECK(memcmp(buf, original, sizeof(buf)) == 0);
+                REQUIRE(f.filter(buf, len));
+                CHECK(f.calls == calls);
+                CHECK(memcmp(buf, expected, sizeof(buf)) == 0);
+                f.unfilter(buf, len, true);
+                CHECK(memcmp(buf, original, sizeof(buf)) == 0);
+            }
+        }
+    }
+}
+
 /* vim:set ts=4 sw=4 et: */

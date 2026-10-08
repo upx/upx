@@ -2,7 +2,7 @@ This document explains the concept of "filtering" in UPX. Basically
 filtering is a data preprocessing method which could improve the
 compression ratio of the files UPX processes.
 
-Currently the filters UPX uses are all based on one very special
+The ix86 filters described below are based on one very special
 algorithm which is working well on ix86 executable files.
 This is what upx calls the "naive" implementation. There is also a
 "clever" method which works only with 32-bit executable file formats
@@ -144,5 +144,24 @@ reversed/unreversed offsets - a sum of 18 slightly different filters
 You can select one of them using the command line parameter "--filter="
 or try most of them with "--all-filters". Or just let upx use the one
 we defined as the default for that executable format.
+
+ARM64 filters
+-------------
+
+Filter 0x52 transforms B and BL instructions, whose relative
+displacements occupy 26 bits. Filter 0x53 additionally transforms
+B.cond and CBZ/CBNZ (19-bit displacements), and TBZ/TBNZ (14-bit
+displacements). Both filters convert relative displacements to
+destination values before compression and restore the original
+instructions afterwards.
+
+These are separate IDs because unfiltering an old 0x52 file must leave
+conditional branches unchanged. The ARM64 packers use 0x52 by default.
+Select 0x53 with "--filter=0x53", or use "--all-filters" to try both.
+
+For B and BL, both filters add the instruction's word position and
+addvalue. Conditional branches in 0x53 use only the word position.
+Filter 0x53 processes every complete instruction; 0x52 retains its
+historical rule of skipping the final word of a word-aligned buffer.
 
 EOF

@@ -55,7 +55,11 @@ const int *PackW64PeArm64::getCompressionMethods(int method, int level) const {
 }
 
 const int *PackW64PeArm64::getFilters() const {
-    static const int filters[] = {0x52, FT_END};
+    static const int filters[] = {
+        0x52,
+        0x53,
+        FT_END,
+    };
     return filters;
 }
 
@@ -117,6 +121,7 @@ void PackW64PeArm64::defineFilterSymbols(const Filter *ft) {
         // 0x52 skips the final word of a word-aligned buffer.
         linker->defineSymbol("filter_length", (ft->buf_len - (ft->id == 0x52)) & ~3u);
         linker->defineSymbol("filter_cto", ft->cto);
+        linker->defineSymbol("filter_id", ft->id);
     } else {
         super::defineFilterSymbols(ft);
     }

@@ -154,8 +154,8 @@ section PEFILTER
         LDVAL   x9, filter_buffer_start
         add     x0, x19, x9
         LDVAL   x1, filter_length
-        mov     w2, w9                          // filter 0x52 adds the raw code offset
-        mov     w3, #0x52
+        mov     w2, w9                          // B/BL use the raw code offset
+        LDVAL   x3, filter_id
 #define FILTER_ADDVALUE 1
 #include "arch/arm64/v8/bxx.S"
 #undef FILTER_ADDVALUE

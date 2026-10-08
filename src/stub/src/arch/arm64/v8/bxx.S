@@ -9,19 +9,12 @@ f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
         cto  .req w2  // unused
         fid  .req w3
 
-#ifdef FILTER_ADDVALUE
         t1   .req w4
-#else
-        t1   .req w2
-#endif
-        t2   .req w3
+        t2   .req w5
 
-#ifndef FILTER_ID  /*{*/
-#define FILTER_ID 0x52  /* little-endian */
-#endif  /*}*/
-        and fid,fid,#0xff
-        cmp fid,#FILTER_ID  // last use of fid
-        bne unf_done  // no-op if not filter 0x52
+        and t2,fid,#0xfe  // accept 0x52 and 0x53
+        cmp t2,#0x52
+        bne unf_done
 
         lsr len,len,#2  // word count
         cbz ptr,unf_done
@@ -43,12 +36,12 @@ is_w26:
         sub t2,t1,len  // pos is #0 ==> ubfx for the field is not needed
 #endif
         bfi t1,t2,#0,#26  // re-combine
-#if 0  //{ new enhanced needs new filter type!
         b unf_str
 not_w26:
+        tbz fid,#0,unf_tst  // 0x52 leaves conditional branches unchanged
         ubfx t2,t1,#24,#8; cmp t2,#0x54; beq is_w19  // B.cond
         ubfx t2,t1,#25,#6; cmp t2,#0x1a; beq is_w19  // CB{z,nz}
-                           cmp t2,#0x1b; bne unf_tst // TB.cond
+                           cmp t2,#0x1b; bne unf_tst // TB{z,nz}
 is_w14:
         ubfx t2,t1,#5,#14  // the field
         sub t2,t2,len
@@ -58,13 +51,9 @@ is_w19:
         ubfx t2,t1,#5,#19  // the field
         sub t2,t2,len
         bfi t1,t2,#5,#19  // re-combine
-#endif  //}
 unf_str:
         lsl t2,len,#2
         str t1,[ptr,t2,uxtw]
-#if 1  //{ until new filter type
-not_w26:
-#endif  //}
 unf_tst:
         cmp len,#0
         bne unf_top
