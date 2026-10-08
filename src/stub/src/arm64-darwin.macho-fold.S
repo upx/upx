@@ -148,46 +148,8 @@ ARM64_ts_pc= 32*NBPW
 #endif  //}
         br r_EXP  // goto hatch: syscall.munmap(ADRU,LENU); ret
 
-f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
-        ptr  .req x0
-        len  .req w1
-        cto  .req w2  // unused
-        fid  .req w3
-
-        t1   .req w2
-        t2   .req w3
-
-#ifndef FILTER_ID  /*{*/
-#define FILTER_ID 0x52  /* little-endian */
-#endif  /*}*/
-        and fid,fid,#0xff
-        cmp fid,#FILTER_ID  // last use of fid
-        bne unf_ret  // no-op if not filter 0x52
-
-        lsr len,len,#2  // word count
-        cbz ptr,unf_ret  // no-op if ptr is NULL
-        cbz len,unf_ret  // no-op if len is 0
-
-top_unf:
-        sub len,len,#1
-        ldr t1,[ptr,len,uxtw #2]
-        lsr t2,t1,#26
-        cmp t2,   #045; bne tst_unf  // not 'bl' subroutine call
-        and t2,t1,#077<<26  // all the non-displacement bits
-        sub t1,t1,len  // convert to word-relative displacement
-        bic t1,t1,#077<<26  // restrict to displacement field
-        orr t1,t1,t2  // re-combine
-        str t1,[ptr,len,uxtw #2]
-tst_unf:
-        cmp len,#0
-        bne top_unf
-unf_ret:
+#include "arch/arm64/v8/bxx.S"
         ret
-
-        .unreq ptr
-        .unreq len
-        .unreq cto
-        .unreq fid
 
 #if DEBUG  //{
 TRACE_BUFLEN=1024

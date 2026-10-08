@@ -243,32 +243,8 @@ main:
         sub eax,eax,ecx  // restore dstlen
 
         bl L610
-f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
-        ptr  .req x0
-        fid  .req w3
-
-#ifndef FILTER_ID  /*{*/
-#define FILTER_ID 0x52  /* little-endian */
-#endif  /*}*/
-        and fid,fid,#0xff
-        cmp fid,#FILTER_ID  // last use of fid
-        bne unfret
-        lsr x1,x1,#2  // word count
-        cbz x1,unfret
-top_unf:
-        sub x1,x1,#1
-        ldr w2,[ptr,x1,lsl #2]
-        ubfx w3,w2,#26,#5
-        cmp w3,#5; bne tst_unf  // not unconditional branch
-        sub w3,w2,w1  // word displ
-        bfi w2,w3,#0,#26  // change displacement
-        str w2,[ptr,x1,lsl #2]
-tst_unf:
-        cbnz x1,top_unf
-unfret:
+#include "arch/arm64/v8/bxx.S"
         ret
-    .unreq ptr
-    .unreq fid
 
 L610:
 

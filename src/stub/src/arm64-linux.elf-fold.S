@@ -371,35 +371,7 @@ devshm:
         .asciz "/dev/shm"
 
         .balign 4
-f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
-        ptr  .req x0
-        len  .req x1
-        lenw .req w1
-        cto  .req w2  // unused
-        fid  .req w3
-
-        t1   .req w2
-        t2   .req w3
-
-#ifndef FILTER_ID  /*{*/
-#define FILTER_ID 0x52  /* little-endian */
-#endif  /*}*/
-        and fid,fid,#0xff
-        cmp fid,#FILTER_ID  // last use of fid
-        bne unfret
-        lsr len,len,#2  // word count
-        cbz len,unfret
-top_unf:
-        sub len,len,#1
-        ldr t1,[ptr,len,lsl #2]
-        ubfx t2,t1,#26,#5
-        cmp t2,#5; bne tst_unf  // not unconditional branch
-        sub t2,t1,lenw  // word displ
-        bfi t1,t2,#0,#26  // replace
-        str t1,[ptr,len,lsl #2]
-tst_unf:
-        cbnz len,top_unf
-unfret:
+#include "arch/arm64/v8/bxx.S"
         ret
 
 #if DEBUG  //{
@@ -495,10 +467,6 @@ L620:
 hex:
         .ascii "0123456789abcdef"
 #endif  //}
-        .unreq ptr
-        .unreq len
-        .unreq cto
-        .unreq fid
 
   section SYSCALLS; .balign 4
 
