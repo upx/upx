@@ -12,8 +12,8 @@ LOAD tmp/arm64-expand.o
 LOAD tmp/arm64-linux.elf-main2.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
-.text           0x0000000000000000      0xc98
- .text          0x0000000000000000      0x2d4 tmp/arm64-linux.elf-fold.o
+.text           0x0000000000000000      0xcec
+ .text          0x0000000000000000      0x328 tmp/arm64-linux.elf-fold.o
                 0x0000000000000010                get_page_mask
                 0x0000000000000020                mmap_privanon
                 0x0000000000000030                Psync
@@ -21,11 +21,11 @@ OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
                 0x00000000000000ac                mmap
                 0x00000000000000c8                Pprotect
                 0x00000000000000c8                mprotect
- .text          0x00000000000002d4        0x0 tmp/arm64-expand.o
- .text          0x00000000000002d4      0x9c4 tmp/arm64-linux.elf-main2.o
-                0x00000000000004c8                underlay
-                0x0000000000000534                xfind_pages
-                0x0000000000000b4c                upx_main2
+ .text          0x0000000000000328        0x0 tmp/arm64-expand.o
+ .text          0x0000000000000328      0x9c4 tmp/arm64-linux.elf-main2.o
+                0x000000000000051c                underlay
+                0x0000000000000588                xfind_pages
+                0x0000000000000ba0                upx_main2
 
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/arm64-linux.elf-fold.o
@@ -56,8 +56,8 @@ SYSCALLS        0x0000000000000000      0x118
                 0x00000000000000f4                memcpy
                 0x0000000000000108                memset
 
-EXP_HEAD        0x0000000000000000      0x104
- EXP_HEAD       0x0000000000000000      0x104 tmp/arm64-expand.o
+EXP_HEAD        0x0000000000000000      0x148
+ EXP_HEAD       0x0000000000000000      0x148 tmp/arm64-expand.o
                 0x0000000000000000                f_expand
 
 EXP_TAIL        0x0000000000000000       0x54

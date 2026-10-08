@@ -129,26 +129,48 @@ Disassembly of section PEFILTER:
   28:   00000000        .inst   0x00000000 ; undefined
                         28: R_AARCH64_ABS32     filter_length
   2c:   2a0903e2        mov     w2, w9
-  30:   52800a43        mov     w3, #0x52                       // #82
-  34:   12001c63        and     w3, w3, #0xff
-  38:   7101487f        cmp     w3, #0x52
-  3c:   54000221        b.ne    80 <ucl_nrv2b_decompress_32+0x80>
-  40:   53027c21        lsr     w1, w1, #2
-  44:   b40001e0        cbz     x0, 80 <ucl_nrv2b_decompress_32+0x80>
-  48:   340001c1        cbz     w1, 80 <ucl_nrv2b_decompress_32+0x80>
-  4c:   51000421        sub     w1, w1, #0x1
-  50:   531e7423        lsl     w3, w1, #2
-  54:   b8634804        ldr     w4, [x0,w3,uxtw]
-  58:   531a7883        ubfx    w3, w4, #26, #5
-  5c:   7100147f        cmp     w3, #0x5
-  60:   540000c1        b.ne    78 <PEFILTER+0x78>
-  64:   0b020023        add     w3, w1, w2
-  68:   4b030083        sub     w3, w4, w3
-  6c:   33006464        bfxil   w4, w3, #0, #26
-  70:   531e7423        lsl     w3, w1, #2
-  74:   b8234804        str     w4, [x0,w3,uxtw]
-  78:   7100003f        cmp     w1, #0x0
-  7c:   54fffe81        b.ne    4c <PEFILTER+0x4c>
+  30:   10000091        adr     x17, 40 <PEFILTER+0x40>
+  34:   b9400230        ldr     w16, [x17]
+  38:   93407e03        sxtw    x3, w16
+  3c:   14000002        b       44 <PEFILTER+0x44>
+  40:   00000000        .inst   0x00000000 ; undefined
+                        40: R_AARCH64_ABS32     filter_id
+  44:   121f1865        and     w5, w3, #0xfe
+  48:   710148bf        cmp     w5, #0x52
+  4c:   54000441        b.ne    d4 <ucl_nrv2b_decompress_32+0xd4>
+  50:   53027c21        lsr     w1, w1, #2
+  54:   b4000400        cbz     x0, d4 <ucl_nrv2b_decompress_32+0xd4>
+  58:   340003e1        cbz     w1, d4 <ucl_nrv2b_decompress_32+0xd4>
+  5c:   51000421        sub     w1, w1, #0x1
+  60:   531e7425        lsl     w5, w1, #2
+  64:   b8654804        ldr     w4, [x0,w5,uxtw]
+  68:   531a7885        ubfx    w5, w4, #26, #5
+  6c:   710014bf        cmp     w5, #0x5
+  70:   540000a1        b.ne    84 <PEFILTER+0x84>
+  74:   0b020025        add     w5, w1, w2
+  78:   4b050085        sub     w5, w4, w5
+  7c:   330064a4        bfxil   w4, w5, #0, #26
+  80:   14000011        b       c4 <PEFILTER+0xc4>
+  84:   36000243        tbz     w3, #0, cc <PEFILTER+0xcc>
+  88:   53187c85        lsr     w5, w4, #24
+  8c:   710150bf        cmp     w5, #0x54
+  90:   54000140        b.eq    b8 <PEFILTER+0xb8>
+  94:   53197885        ubfx    w5, w4, #25, #6
+  98:   710068bf        cmp     w5, #0x1a
+  9c:   540000e0        b.eq    b8 <PEFILTER+0xb8>
+  a0:   71006cbf        cmp     w5, #0x1b
+  a4:   54000141        b.ne    cc <PEFILTER+0xcc>
+  a8:   53054885        ubfx    w5, w4, #5, #14
+  ac:   4b0100a5        sub     w5, w5, w1
+  b0:   331b34a4        bfi     w4, w5, #5, #14
+  b4:   14000004        b       c4 <PEFILTER+0xc4>
+  b8:   53055c85        ubfx    w5, w4, #5, #19
+  bc:   4b0100a5        sub     w5, w5, w1
+  c0:   331b48a4        bfi     w4, w5, #5, #19
+  c4:   531e7425        lsl     w5, w1, #2
+  c8:   b8254804        str     w4, [x0,w5,uxtw]
+  cc:   7100003f        cmp     w1, #0x0
+  d0:   54fffc61        b.ne    5c <PEFILTER+0x5c>
 
 Disassembly of section PEIMPORT:
 
