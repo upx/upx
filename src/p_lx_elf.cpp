@@ -6488,8 +6488,9 @@ unsigned PackLinuxElf64::forward_Shdrs(OutputFile *fo, Elf64_Ehdr *const eho)
         return 0;
     }
     unsigned penalty = total_out;
-    if (Elf64_Ehdr::EM_AARCH64 == e_machine
-    &&  saved_opt_android_shlib) { // Forward select _Shdr
+    if ((Elf64_Ehdr::EM_AARCH64 == e_machine
+      || Elf64_Ehdr::EM_X86_64  == e_machine)
+    && saved_opt_android_shlib) { // Forward select _Shdr
         // Keep _Shdr for rtld data (below xct_off).
         // Discard _Shdr for compressed regions, except ".text" for gdb.
         // Keep _Shdr with SHF_WRITE.
