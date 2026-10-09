@@ -210,6 +210,10 @@ bool Filter::scan(SPAN_0(const byte) xbuf, unsigned buf_len_) {
     return false;
 }
 
+/*************************************************************************
+// doctest checks
+**************************************************************************/
+
 TEST_CASE("ARM64 branch filters") {
     const struct {
         unsigned instruction;
@@ -280,6 +284,7 @@ TEST_CASE("ARM64 branch filters") {
                 CHECK(memcmp(buf, expected, sizeof(buf)) == 0);
                 f.unfilter(buf, len, true);
                 CHECK(memcmp(buf, original, sizeof(buf)) == 0);
+                UNUSED(calls);
             }
         }
     }
