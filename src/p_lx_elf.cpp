@@ -875,8 +875,8 @@ off_t PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                     }
                 }
                 else if (xct_off < ioff) { // Slide subsequent PT_LOAD.
-                    if ((1u<<12) < align
-                    &&  Elf64_Ehdr::EM_X86_64 == e_machine  // FIXME: other $ARCH ?
+                    if (!saved_opt_android_shlib  // do not change Android 16K aligned
+                    && (1u<<12) < align  // but do trim 2MB pages on AMD64 (non-Android)
                     ) {
                         align = 1u<<12;
                         set_te64(&phdr->p_align, align);
