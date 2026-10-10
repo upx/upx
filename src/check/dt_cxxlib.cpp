@@ -2654,6 +2654,20 @@ struct TestFloat final {
     }
 
     template <class T>
+    static noinline T noinline_sqrt(T n) noexcept {
+        return std::sqrt(n);
+    }
+
+    template <class T>
+    static noinline T noinline_min(T a, T b) noexcept {
+        return b < a ? b : a;
+    }
+    template <class T>
+    static noinline T noinline_max(T a, T b) noexcept {
+        return a < b ? b : a;
+    }
+
+    template <class T>
     static noinline T noinline_sin(T n) noexcept {
         return std::sin(n);
     }
@@ -4214,6 +4228,14 @@ TEST_CASE("codegen float") {
         assert_noexcept2((TestFloat::noinline_round(double(n)) == 0));
         assert_noexcept2((TestFloat::noinline_trunc(float(n)) == 0));
         assert_noexcept2((TestFloat::noinline_trunc(double(n)) == 0));
+    }
+    {
+        assert_noexcept2((TestFloat::noinline_sqrt(float(n)) == 0));
+        assert_noexcept2((TestFloat::noinline_sqrt(double(n)) == 0));
+        assert_noexcept2((TestFloat::noinline_min(float(a), float(b)) == 0));
+        assert_noexcept2((TestFloat::noinline_min(double(a), double(b)) == 0));
+        assert_noexcept2((TestFloat::noinline_max(float(a), float(b)) == 1));
+        assert_noexcept2((TestFloat::noinline_max(double(a), double(b)) == 1));
     }
     {
 #if defined(__m68k__) && defined(__atarist__) && defined(__GNUC__)
