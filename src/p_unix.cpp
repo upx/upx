@@ -499,19 +499,18 @@ unsigned PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
         if (sz_cpr > sz_unc || sz_unc > (int)blocksize)
             throwCantUnpack("corrupt b_info");
 
-        // place the input for overlapping de-compression
-        int j = inlen + sz_unc + OVERHEAD + (sz_unc >> ELF_NRV_FUDGE) - sz_cpr;
-        if (ibuf.getSize() < (unsigned)(j + sz_cpr)) {
+        if (ibuf.getSize() < inlen + (unsigned)sz_unc) {
             throwCantUnpack("corrupt b_info");
         }
-        fi->readx(ibuf+j, sz_cpr);
+        MemBuffer cbuf(sz_cpr);
+        fi->readx(cbuf, sz_cpr);
         total_in += sz_cpr;
         // update checksum of compressed data
-        c_adler = upx_adler32(ibuf + j, sz_cpr, c_adler);
+        c_adler = upx_adler32(cbuf, sz_cpr, c_adler);
 
         if (sz_cpr < sz_unc) { // block was compressed
             ph.set_method(hdr.b_method);
-            decompress(ibuf+j, ibuf+inlen, false);
+            decompress(cbuf, ibuf+inlen, false);
             if (12==szb_info) { // modern per-block filter
                 if (hdr.b_ftid) {
                     Filter ft(ph.level);  // FIXME: ph.level for b_info?
@@ -533,7 +532,7 @@ unsigned PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
             }
         }
         else if (sz_cpr == sz_unc) { // slide literal (non-compressible) block
-            memmove(&ibuf[inlen], &ibuf[j], sz_unc);
+            memcpy(&ibuf[inlen], cbuf, sz_unc);
         }
         // update checksum of uncompressed data
         u_adler = upx_adler32(ibuf + inlen, sz_unc, u_adler);
