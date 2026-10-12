@@ -23,13 +23,13 @@ NBPW= 8
 //   MATCH_07  envp
 
   section SO_HEAD
-PAGE_MASK: .quad 0xfffffffffffff000
+PAGE_MASK: .quad 0xfffffffffffff000  // updated at runtime
     .quad 0  // ? FIXME
 fold:
     pop %rbx  // MATCH_11  ptr unfolded code
+    lea 2*NBPW(%rbp),%arg2  // &{argc, argv, envp}
     pop %rbp  // MATCH_10  len unfolded code
     pop %arg1  // MATCH_14  &so_info
-    lea 2*NBPW(%rsp),%arg2  // &{argc, argv, envp}
     sub $MAX_ELF_HDR_64,%rsp; mov %rsp,%arg3  // space for Elf64_Ehdr and Elf64_Phdrs
     call upx_so_main  // (&so_info, &{argc, argv, envp}, elf_tmp); returns &escape_hatch
     add $MAX_ELF_HDR_64,%rsp

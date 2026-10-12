@@ -285,7 +285,7 @@ make_hatch(
     unsigned hatch[4]  // OUT: temp for prototype
 )
 {
-    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, page-mask, hatch);
+    DPRINTF("make_hatch %%p %%p %%x\\n", phdr, next_unc, page_mask, hatch);
     hatch[0] = 0xfa1e0ff3;  // endbr64
     hatch[1] = 0x585a050f;  // syscall; pop %arg3{%rdx}; pop %rax
     hatch[2] = 0x90e0ff3e;  // notrack jmp *%rax; [[nop]]
