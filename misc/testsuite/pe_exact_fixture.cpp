@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0 &&
         std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0 &&
         std::strcmp(mode, "tls-index") != 0 && std::strcmp(mode, "zero-sections") != 0 &&
-        std::strcmp(mode, "unordered") != 0)
+        std::strcmp(mode, "unordered") != 0 && std::strcmp(mode, "wrap-rva") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -90,6 +90,16 @@ int main(int argc, char **argv) {
     if (std::strcmp(mode, "zero-sections") == 0) {
         header.NumberOfSections = 0;
         std::memcpy(bytes.data() + header_offset, &header, sizeof(header));
+        return write_fixture(argv[2], bytes);
+    }
+    if (std::strcmp(mode, "wrap-rva") == 0) {
+        if (sections.empty() || sections.back().SizeOfRawData <= 15)
+            return fail("fixture needs raw data for a wrapping RVA");
+        auto &last = sections.back();
+        last.VirtualAddress = MAXDWORD - 15;
+        last.Misc.VirtualSize = 1;
+        std::memcpy(bytes.data() + section_offset + (sections.size() - 1) * sizeof(last),
+                    &last, sizeof(last));
         return write_fixture(argv[2], bytes);
     }
     if (std::strcmp(mode, "tls-index") == 0) {
