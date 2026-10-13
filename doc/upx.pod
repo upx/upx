@@ -134,7 +134,50 @@ B<-k>: keep backup files
 
 B<-o file>: write output to file
 
-[ ...more docs need to be written... - type `B<upx --help>' for now ]
+B<-v>: be verbose
+
+B<-i>: info mode
+
+B<-f>: force compression of suspicious files
+
+B<--force-overwrite>: force overwrite of output files
+
+B<--link>: preserve hard links (Unix only) [USE WITH CARE]
+
+B<--no-link>: do not preserve hard links but rename files [default]
+
+B<--no-mode>: do not preserve file mode (aka permissions)
+
+B<--no-owner>: do not preserve file ownership
+
+B<--no-time>: do not preserve file timestamp
+
+B<--no-color>, B<--mono>, B<--color>, B<--no-progress>: change the look of
+the terminal output
+
+B<--no-env>: ignore the B<UPX> environment variable
+
+B<--fileinfo>: show parameters of an already-compressed file
+
+B<--lzma>: try LZMA [slower but tighter than NRV]
+
+B<--no-lzma>: do not use LZMA compression
+
+B<--brute>: try all available compression methods & filters [slow]
+
+B<--ultra-brute>: try even more compression variants [very slow]
+
+B<--all-methods>: compress the program several times, using all available
+compression methods
+
+B<--all-filters>: compress the program several times, using all available
+preprocessing filters
+
+Overlay handling options: B<--overlay=copy>, B<--overlay=strip>,
+B<--overlay=skip>. See the L/"OVERLAY HANDLING OPTIONS"> section below.
+
+Options that are specific to a single executable format are documented in
+the L/"NOTES FOR THE SUPPORTED EXECUTABLE FORMATS"> section below.
 
 
 

@@ -174,7 +174,50 @@ as compared to the first decompressed version.]
 .PP
 \&\fB\-o file\fR: write output to file
 .PP
-[ ...more docs need to be written... \- type `\fBupx \-\-help\fR' for now ]
+\&\fB\-v\fR: be verbose
+.PP
+\&\fB\-i\fR: info mode
+.PP
+\&\fB\-f\fR: force compression of suspicious files
+.PP
+\&\fB\-\-force\-overwrite\fR: force overwrite of output files
+.PP
+\&\fB\-\-link\fR: preserve hard links (Unix only) [USE WITH CARE]
+.PP
+\&\fB\-\-no\-link\fR: do not preserve hard links but rename files [default]
+.PP
+\&\fB\-\-no\-mode\fR: do not preserve file mode (aka permissions)
+.PP
+\&\fB\-\-no\-owner\fR: do not preserve file ownership
+.PP
+\&\fB\-\-no\-time\fR: do not preserve file timestamp
+.PP
+\&\fB\-\-no\-color\fR, \fB\-\-mono\fR, \fB\-\-color\fR, \fB\-\-no\-progress\fR: change the look of
+the terminal output
+.PP
+\&\fB\-\-no\-env\fR: ignore the \fBUPX\fR environment variable
+.PP
+\&\fB\-\-fileinfo\fR: show parameters of an already-compressed file
+.PP
+\&\fB\-\-lzma\fR: try LZMA [slower but tighter than NRV]
+.PP
+\&\fB\-\-no\-lzma\fR: do not use LZMA compression
+.PP
+\&\fB\-\-brute\fR: try all available compression methods & filters [slow]
+.PP
+\&\fB\-\-ultra\-brute\fR: try even more compression variants [very slow]
+.PP
+\&\fB\-\-all\-methods\fR: compress the program several times, using all available
+compression methods
+.PP
+\&\fB\-\-all\-filters\fR: compress the program several times, using all available
+preprocessing filters
+.PP
+Overlay handling options: \fB\-\-overlay=copy\fR, \fB\-\-overlay=strip\fR,
+\&\fB\-\-overlay=skip\fR. See the L/"OVERLAY HANDLING OPTIONS"> section below.
+.PP
+Options that are specific to a single executable format are documented in
+the L/"NOTES FOR THE SUPPORTED EXECUTABLE FORMATS"> section below.
 .SH "COMPRESSION LEVELS & TUNING"
 .IX Header "COMPRESSION LEVELS & TUNING"
 \&\fBUPX\fR offers ten different compression levels from \fB\-1\fR to \fB\-9\fR,
