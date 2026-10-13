@@ -485,7 +485,13 @@ if(NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
         endif()
         add_executable(upx-test-pe-exact-dll-loader
                        misc/testsuite/pe_exact_dll_loader.c)
-        foreach(test_target IN ITEMS upx-test-pe-exact-dll upx-test-pe-exact-dll-loader)
+        add_executable(upx-test-pe-exact-fixture
+                       misc/testsuite/pe_exact_fixture.cpp)
+        if(NOT UPX_CONFIG_DISABLE_CXX_STANDARD)
+            set_property(TARGET upx-test-pe-exact-fixture PROPERTY CXX_STANDARD 17)
+        endif()
+        foreach(test_target IN ITEMS upx-test-pe-exact-dll upx-test-pe-exact-dll-loader
+                                     upx-test-pe-exact-fixture)
             if(MSVC_FRONTEND)
                 target_compile_options(${test_target} PRIVATE ${warn_WN} ${warn_WX})
             elseif(GNU_FRONTEND)
