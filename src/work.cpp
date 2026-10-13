@@ -239,9 +239,15 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
         throwIOException("empty file -- skipped");
     if (st.st_size < 512)
         throwIOException("file is too small -- skipped");
-    if (!mem_size_valid_bytes(st.st_size))
+    // compression needs about 2 copies of the input in memory, but the
+    // non-compressing commands -l (list), -t (test) and -d (de-compress) need
+    // much less (roughly 9/8 of the input size), so allow larger files there
+    bool use_nocomp_rsize =
+        (opt->cmd == CMD_LIST || opt->cmd == CMD_TEST || opt->cmd == CMD_DECOMPRESS);
+    unsigned rsize_max = use_nocomp_rsize ? UPX_RSIZE_MAX_NOCOMP : UPX_RSIZE_MAX;
+    if ((upx_uint64_t) st.st_size > rsize_max)
         throwIOException2("file is too large -- skipped (%lld > %u)", (long long) st.st_size,
-                          UPX_RSIZE_MAX);
+                          rsize_max);
     if ((st.st_mode & S_IWUSR) == 0) {
         bool skip = true;
         if (opt->output_name)

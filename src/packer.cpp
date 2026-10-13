@@ -39,7 +39,15 @@
 PackerBase::PackerBase(InputFile *f)
     : fi(f), file_size(f != nullptr ? f->st_size() : 0), file_size_i32(file_size) {
     ph.reset();
-    mem_size_assert(1, file_size_u); // limited by UPX_RSIZE_MAX
+    // compression is limited by UPX_RSIZE_MAX; the non-compressing commands
+    // -l (list), -t (test) and -d (de-compress) need much less memory and
+    // therefore allow larger files, see UPX_RSIZE_MAX_NOCOMP
+    if (opt->cmd == CMD_LIST || opt->cmd == CMD_TEST || opt->cmd == CMD_DECOMPRESS) {
+        assert_noexcept(file_size_u <= UPX_RSIZE_MAX_NOCOMP);
+        assert_noexcept(mem_size_valid_bytes_nocomp(file_size_u));
+    } else {
+        mem_size_assert(1, file_size_u); // limited by UPX_RSIZE_MAX
+    }
     assert_noexcept(file_size_i32 == file_size);
     assert_noexcept(file_size_u32 == file_size_u);
 }
