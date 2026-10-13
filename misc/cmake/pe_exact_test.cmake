@@ -112,6 +112,14 @@ set_tests_properties(upx-pe-exact-reject-wrapping-rva PROPERTIES
                      PASS_REGULAR_EXPRESSION "section size problem")
 upx_test_depends(upx-pe-exact-reject-wrapping-rva upx-pe-wrapping-prepare)
 
+set(wince "${wd}/upx-test-pe-wince.dll")
+upx_add_test(upx-pe-wince-prepare upx-test-pe-exact-fixture "${exact_dll}" "${wince}" wince)
+upx_add_test(upx-pe-exact-reject-wince upx --exact "${wince}" ${fo}
+             -o "${wd}/upx-test-pe-wince-packed.dll")
+set_tests_properties(upx-pe-exact-reject-wince PROPERTIES
+                     PASS_REGULAR_EXPRESSION "option '--exact' does not work with this file")
+upx_test_depends(upx-pe-exact-reject-wince upx-pe-wince-prepare)
+
 set(tls_exe "${wd}/upx-test-pe-tls-nonzero.exe")
 upx_add_test(upx-pe-exe-tls-prepare upx-test-pe-exact-fixture
              "$<TARGET_FILE:upx-test-pe-exact-tls-exe>" "${tls_exe}" tls-index)
