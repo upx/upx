@@ -377,7 +377,8 @@ void PackDjgpp2::unpack(OutputFile *fo) {
     bss = &chdr->sh[2];
 
     const unsigned hdrsize = 20 + 28 + mem_size(sizeof(external_scnhdr_t), chdr->f_nscns);
-    if (hdrsize < sizeof(coff_hdr) || hdrsize > text->scnptr || hdrsize > ph.u_len)
+    if (hdrsize < sizeof(coff_hdr) || hdrsize > text->scnptr || hdrsize > ph.u_len ||
+        data->size > ph.u_len)
         throwCantUnpack("coff header error");
 
     unsigned addvalue;
