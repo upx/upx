@@ -39,7 +39,8 @@ int main(int argc, char **argv) {
     if (argc != 3 && argc != 4)
         return fail("usage: pe_exact_fixture input output [mode]");
     const char *mode = argc == 4 ? argv[3] : "gap";
-    if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0)
+    if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0 &&
+        std::strcmp(mode, "zero-gap") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -126,22 +127,35 @@ int main(int argc, char **argv) {
     if (second == MAXDWORD || second > bytes.size() ||
         first < section_offset + sections.size() * sizeof(IMAGE_SECTION_HEADER))
         return fail("fixture needs two raw-backed sections");
-    const size_t gap = (static_cast<size_t>(first) / 4096 + 1) * 4096;
-    if (gap > MAXDWORD - bytes.size())
+    size_t boundary = second, removed = 0;
+    size_t gap = (static_cast<size_t>(first) / 4096 + 1) * 4096;
+    if (std::strcmp(mode, "zero-gap") == 0) {
+        boundary = first;
+        const DWORD end =
+            static_cast<DWORD>(section_offset + sections.size() * sizeof(IMAGE_SECTION_HEADER));
+        removed = first - end;
+        gap = 0;
+        std::memcpy(bytes.data() + optional_offset +
+                        offsetof(IMAGE_OPTIONAL_HEADER32, SizeOfHeaders),
+                    &end, sizeof(end));
+    }
+    if (boundary > bytes.size() || removed > boundary || gap > MAXDWORD - bytes.size())
         return fail("fixture is too large");
-    Bytes output(bytes.size() + gap);
-    std::memcpy(output.data(), bytes.data(), second);
+    const size_t prefix = boundary - removed;
+    const LONGLONG shift = static_cast<LONGLONG>(gap) - static_cast<LONGLONG>(removed);
+    Bytes output(bytes.size() + gap - removed);
+    std::memcpy(output.data(), bytes.data(), prefix);
     for (size_t i = 0; i < gap; i++)
-        output[second + i] = static_cast<unsigned char>((37 * i + 11) & 255);
-    std::memcpy(output.data() + second + gap, bytes.data() + second, bytes.size() - second);
+        output[prefix + i] = static_cast<unsigned char>((37 * i + 11) & 255);
+    std::memcpy(output.data() + prefix + gap, bytes.data() + boundary, bytes.size() - boundary);
 
     IMAGE_DATA_DIRECTORY security = {}, debug = {};
     const size_t security_offset = directories + IMAGE_DIRECTORY_ENTRY_SECURITY * sizeof(security);
     if (!read_struct(bytes, security_offset, security) ||
         !read_struct(bytes, directories + IMAGE_DIRECTORY_ENTRY_DEBUG * sizeof(debug), debug))
         return fail("invalid data directories");
-    if (security.VirtualAddress >= second) {
-        security.VirtualAddress += static_cast<DWORD>(gap);
+    if (security.VirtualAddress >= boundary) {
+        security.VirtualAddress = static_cast<DWORD>(security.VirtualAddress + shift);
         std::memcpy(output.data() + security_offset, &security, sizeof(security));
     }
     if (debug.Size) {
@@ -152,25 +166,26 @@ int main(int argc, char **argv) {
             IMAGE_DEBUG_DIRECTORY entry = {};
             if (!read_struct(bytes, debug_offset + i, entry))
                 return fail("invalid debug entry");
-            if (entry.PointerToRawData >= second)
-                entry.PointerToRawData += static_cast<DWORD>(gap);
+            if (entry.PointerToRawData >= boundary)
+                entry.PointerToRawData = static_cast<DWORD>(entry.PointerToRawData + shift);
             const size_t offset = debug_offset + i;
-            std::memcpy(output.data() + offset + (offset >= second ? gap : 0), &entry,
-                        sizeof(entry));
+            const size_t destination = static_cast<size_t>(static_cast<LONGLONG>(offset) +
+                                                           (offset >= boundary ? shift : 0));
+            std::memcpy(output.data() + destination, &entry, sizeof(entry));
         }
     }
-    if (header.PointerToSymbolTable >= second) {
-        header.PointerToSymbolTable += static_cast<DWORD>(gap);
+    if (header.PointerToSymbolTable >= boundary) {
+        header.PointerToSymbolTable = static_cast<DWORD>(header.PointerToSymbolTable + shift);
         std::memcpy(output.data() + header_offset, &header, sizeof(header));
     }
     for (size_t i = 0; i < sections.size(); i++) {
         auto &section = sections[i];
-        if (section.PointerToRawData >= second)
-            section.PointerToRawData += static_cast<DWORD>(gap);
-        if (section.PointerToRelocations >= second)
-            section.PointerToRelocations += static_cast<DWORD>(gap);
-        if (section.PointerToLinenumbers >= second)
-            section.PointerToLinenumbers += static_cast<DWORD>(gap);
+        if (section.PointerToRawData >= boundary)
+            section.PointerToRawData = static_cast<DWORD>(section.PointerToRawData + shift);
+        if (section.PointerToRelocations >= boundary)
+            section.PointerToRelocations = static_cast<DWORD>(section.PointerToRelocations + shift);
+        if (section.PointerToLinenumbers >= boundary)
+            section.PointerToLinenumbers = static_cast<DWORD>(section.PointerToLinenumbers + shift);
         std::memcpy(output.data() + section_offset + i * sizeof(section), &section,
                     sizeof(section));
     }
