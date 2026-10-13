@@ -874,6 +874,18 @@ Extra options available for this executable format:
 The PE support in \fBUPX\fR is quite stable now, but probably there are
 still some incompatibilities with some files.
 .PP
+Normally, unpacking rebuilds parts of a PE file, so the result may not
+be byte-identical to the original. Use \fB\-\-exact\fR when compressing if
+every byte needs to be restored. Retaining the original representation
+can increase the packed size; this information is compressed along with
+the program data. Older versions of \fBUPX\fR reject PE files packed with
+\&\fB\-\-exact\fR rather than unpacking them without the byte-identity guarantee.
+Relocation stripping is incompatible with exact mode.
+.PP
+Exact mode does not currently support EFI or WinCE ARM images, PE files
+without raw-backed sections, overlapping raw or virtual section data, or
+raw data extending beyond the aligned virtual end of the last section.
+.PP
 Because of the way \fBUPX\fR (and other packers for this format) works, you
 can see increased memory usage of your compressed files because the whole
 program is loaded into memory at startup.

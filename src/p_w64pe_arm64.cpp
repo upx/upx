@@ -80,7 +80,8 @@ void PackW64PeArm64::buildLoader(const Filter *ft) {
     unsigned tmp_tlsindex = tlsindex;
     const unsigned oam1 = ih.objectalign - 1;
     const unsigned newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) & ~oam1;
-    if (tlsindex && !isdll && ((newvsize - ph.c_len - 1024 + oam1) & ~oam1) > tlsindex + 4)
+    if (tlsindex && !isdll && !opt->exact &&
+        ((newvsize - ph.c_len - 1024 + oam1) & ~oam1) > tlsindex + 4)
         tmp_tlsindex = 0;
 
     initLoader(EM_AARCH64, stub_arm64_win64_pe, sizeof(stub_arm64_win64_pe), 2);

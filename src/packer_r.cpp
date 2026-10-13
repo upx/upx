@@ -36,7 +36,7 @@
 /*static*/
 unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(byte) out,
                                SPAN_P(byte) image, unsigned image_size, int bits, bool bswap,
-                               int *big) {
+                               int *big, bool allow_exact) {
     assert(bits == 32 || bits == 64);
     mem_size_assert(1, image_size);
 #if WITH_XSPAN >= 2
@@ -46,7 +46,7 @@ unsigned Packer::optimizeReloc(unsigned relocnum, SPAN_P(byte) relocs, SPAN_S(by
     SPAN_S_VAR(byte, fix, out);
 
     *big = 0;
-    if (opt->exact)
+    if (opt->exact && !allow_exact)
         throwCantPackExact();
     if (relocnum == 0)
         return 0;

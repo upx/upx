@@ -185,6 +185,7 @@ static noinline void check_and_update_options(int i, int argc) {
         opt->overlay = opt->COPY_OVERLAY;
 
     check_not_both(opt->exact, opt->overlay == opt->STRIP_OVERLAY, "--exact", "--overlay=strip");
+    check_not_both(opt->exact, opt->win32_pe.strip_relocs > 0, "--exact", "--strip-relocs");
 
     // set default backup option
     if (opt->backup < 0)

@@ -34,8 +34,10 @@
 class PeFile : public Packer {
     typedef Packer super;
 public:
-    virtual int getVersion() const override { return 13; }
+    virtual int getVersion() const override { return pe_exact_version; }
 protected:
+    static constexpr int pe_version = 13;
+    static constexpr int pe_exact_version = 14;
     class Interval;
     class Reloc;
     class Resource;
@@ -47,8 +49,11 @@ protected:
     virtual ~PeFile() noexcept;
 
     void readSectionHeaders(unsigned objs);
+    static unsigned getRawSectionOrder(SPAN_0(const pe_section_t) sections, unsigned objs,
+                                       SPAN_0(unsigned) order);
     unsigned readSections(unsigned objs, unsigned usize, unsigned ih_filealign,
                           unsigned ih_datasize);
+    unsigned exact_gap_size = 0;
     void checkHeaderValues(unsigned subsystem, unsigned mask, unsigned ih_entry,
                            unsigned ih_filealign);
     unsigned handleStripRelocs(upx_uint64_t ih_imagebase, upx_uint64_t default_imagebase,
@@ -74,7 +79,7 @@ protected:
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const override {
-        return (version >= 12 && version <= 13);
+        return (version >= 12 && version <= pe_exact_version);
     }
 
     int canUnpack0(unsigned max_sections, unsigned objs, unsigned ih_entry, unsigned ih_size);
@@ -107,7 +112,8 @@ protected:
     upx_uint64_t ilinkerGetAddress(const char *, const char *) const;
 
     virtual void processRelocs() = 0;
-    void rebuildRelocs(SPAN_S(byte) &, unsigned bits, unsigned flags, upx_uint64_t imagebase);
+    void rebuildRelocs(SPAN_S(byte) &, unsigned bits, unsigned flags, upx_uint64_t imagebase,
+                       bool exact);
     MemBuffer mb_orelocs;
     SPAN_0(byte) orelocs = nullptr;
     unsigned sorelocs;
@@ -530,6 +536,7 @@ protected:
     };
     enum { IMAGE_DEBUG_TYPE_EX_DLLCHARACTERISTICS = 20 };
     enum { IMAGE_DLLCHARACTERISTICS_EX_CET_COMPAT = 0x0001 };
+    DebugDir dbgCET_storage = {};
     struct DebugDir *dbgCET = nullptr;
 };
 
