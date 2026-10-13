@@ -126,9 +126,15 @@ fo="--force-overwrite"
 "${run_upx[@]}" -3 --nrv2e       "${upx_self_exe}" ${fo} -o upx-packed-nrv2e${exe}
 "${run_upx[@]}" -1 --lzma        "${upx_self_exe}" ${fo} -o upx-packed-lzma${exe}
 
-"${run_upx[@]}" -l         upx-packed${exe} upx-packed-fa${exe} upx-packed-fn${exe} upx-packed-fr${exe} upx-packed-nrv2b${exe} upx-packed-nrv2d${exe} upx-packed-nrv2e${exe} upx-packed-lzma${exe}
-"${run_upx[@]}" --fileinfo upx-packed${exe} upx-packed-fa${exe} upx-packed-fn${exe} upx-packed-fr${exe} upx-packed-nrv2b${exe} upx-packed-nrv2d${exe} upx-packed-nrv2e${exe} upx-packed-lzma${exe}
-"${run_upx[@]}" -t         upx-packed${exe} upx-packed-fa${exe} upx-packed-fn${exe} upx-packed-fr${exe} upx-packed-nrv2b${exe} upx-packed-nrv2d${exe} upx-packed-nrv2e${exe} upx-packed-lzma${exe}
+packed_exact=()
+if "${run_upx[@]}" --fileinfo "${upx_self_exe}" | grep -E '\[[^]]*-win(32|64)\.pe,' >/dev/null; then
+    "${run_upx[@]}" -3 --exact "${upx_self_exe}" ${fo} -o upx-packed-exact${exe}
+    packed_exact=(upx-packed-exact${exe})
+fi
+
+"${run_upx[@]}" -l         upx-packed${exe} upx-packed-fa${exe} upx-packed-fn${exe} upx-packed-fr${exe} upx-packed-nrv2b${exe} upx-packed-nrv2d${exe} upx-packed-nrv2e${exe} upx-packed-lzma${exe} "${packed_exact[@]}"
+"${run_upx[@]}" --fileinfo upx-packed${exe} upx-packed-fa${exe} upx-packed-fn${exe} upx-packed-fr${exe} upx-packed-nrv2b${exe} upx-packed-nrv2d${exe} upx-packed-nrv2e${exe} upx-packed-lzma${exe} "${packed_exact[@]}"
+"${run_upx[@]}" -t         upx-packed${exe} upx-packed-fa${exe} upx-packed-fn${exe} upx-packed-fr${exe} upx-packed-nrv2b${exe} upx-packed-nrv2d${exe} upx-packed-nrv2e${exe} upx-packed-lzma${exe} "${packed_exact[@]}"
 
 "${run_upx[@]}" -d upx-packed${exe}       ${fo} -o upx-unpacked${exe}
 "${run_upx[@]}" -d upx-packed-fa${exe}    ${fo} -o upx-unpacked-fa${exe}
@@ -138,6 +144,10 @@ fo="--force-overwrite"
 "${run_upx[@]}" -d upx-packed-nrv2d${exe} ${fo} -o upx-unpacked-nrv2d${exe}
 "${run_upx[@]}" -d upx-packed-nrv2e${exe} ${fo} -o upx-unpacked-nrv2e${exe}
 "${run_upx[@]}" -d upx-packed-lzma${exe}  ${fo} -o upx-unpacked-lzma${exe}
+if (( ${#packed_exact[@]} )); then
+    "${run_upx[@]}" -d "${packed_exact[0]}" ${fo} -o upx-unpacked-exact${exe}
+    cmp -s "${upx_self_exe}" upx-unpacked-exact${exe}
+fi
 
 # all unpacked files must be identical
 cmp -s upx-unpacked${exe} upx-unpacked-fa${exe}
@@ -161,6 +171,9 @@ if [[ $UPX_CONFIG_DISABLE_RUN_PACKED_TEST != ON ]]; then
     "${emu[@]}" ./upx-packed-nrv2d${exe} --version-short
     "${emu[@]}" ./upx-packed-nrv2e${exe} --version-short
     "${emu[@]}" ./upx-packed-lzma${exe}  --version-short
+    if (( ${#packed_exact[@]} )); then
+        "${emu[@]}" ./"${packed_exact[0]}" --version-short
+    fi
 fi
 
 if [[ $UPX_CONFIG_DISABLE_EXHAUSTIVE_TESTS != ON ]]; then
