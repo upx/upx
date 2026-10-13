@@ -112,7 +112,45 @@ Copyright (c) 1996-2026 Markus Oberhumer, Laszlo Molnar &amp; John Reiser
 
 <p><b>-o file</b>: write output to file</p>
 
-<p>[ ...more docs need to be written... - type `<b>upx --help</b>&#39; for now ]</p>
+<p><b>-v</b>: be verbose</p>
+
+<p><b>-i</b>: info mode</p>
+
+<p><b>-f</b>: force compression of suspicious files</p>
+
+<p><b>--force-overwrite</b>: force overwrite of output files</p>
+
+<p><b>--link</b>: preserve hard links (Unix only) [USE WITH CARE]</p>
+
+<p><b>--no-link</b>: do not preserve hard links but rename files [default]</p>
+
+<p><b>--no-mode</b>: do not preserve file mode (aka permissions)</p>
+
+<p><b>--no-owner</b>: do not preserve file ownership</p>
+
+<p><b>--no-time</b>: do not preserve file timestamp</p>
+
+<p><b>--no-color</b>, <b>--mono</b>, <b>--color</b>, <b>--no-progress</b>: change the look of the terminal output</p>
+
+<p><b>--no-env</b>: ignore the <b>UPX</b> environment variable</p>
+
+<p><b>--fileinfo</b>: show parameters of an already-compressed file</p>
+
+<p><b>--lzma</b>: try LZMA [slower but tighter than NRV]</p>
+
+<p><b>--no-lzma</b>: do not use LZMA compression</p>
+
+<p><b>--brute</b>: try all available compression methods &amp; filters [slow]</p>
+
+<p><b>--ultra-brute</b>: try even more compression variants [very slow]</p>
+
+<p><b>--all-methods</b>: compress the program several times, using all available compression methods</p>
+
+<p><b>--all-filters</b>: compress the program several times, using all available preprocessing filters</p>
+
+<p>Overlay handling options: <b>--overlay=copy</b>, <b>--overlay=strip</b>, <b>--overlay=skip</b>. See the L/&quot;OVERLAY HANDLING OPTIONS&quot;&gt; section below.</p>
+
+<p>Options that are specific to a single executable format are documented in the L/&quot;NOTES FOR THE SUPPORTED EXECUTABLE FORMATS&quot;&gt; section below.</p>
 
 <h1 id="COMPRESSION-LEVELS-TUNING">COMPRESSION LEVELS &amp; TUNING</h1>
 

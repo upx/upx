@@ -109,7 +109,50 @@ OPTIONS
 
     -o file: write output to file
 
-    [ ...more docs need to be written... - type `upx --help' for now ]
+    -v: be verbose
+
+    -i: info mode
+
+    -f: force compression of suspicious files
+
+    --force-overwrite: force overwrite of output files
+
+    --link: preserve hard links (Unix only) [USE WITH CARE]
+
+    --no-link: do not preserve hard links but rename files [default]
+
+    --no-mode: do not preserve file mode (aka permissions)
+
+    --no-owner: do not preserve file ownership
+
+    --no-time: do not preserve file timestamp
+
+    --no-color, --mono, --color, --no-progress: change the look of the
+    terminal output
+
+    --no-env: ignore the UPX environment variable
+
+    --fileinfo: show parameters of an already-compressed file
+
+    --lzma: try LZMA [slower but tighter than NRV]
+
+    --no-lzma: do not use LZMA compression
+
+    --brute: try all available compression methods & filters [slow]
+
+    --ultra-brute: try even more compression variants [very slow]
+
+    --all-methods: compress the program several times, using all available
+    compression methods
+
+    --all-filters: compress the program several times, using all available
+    preprocessing filters
+
+    Overlay handling options: --overlay=copy, --overlay=strip,
+    --overlay=skip. See the L/"OVERLAY HANDLING OPTIONS"> section below.
+
+    Options that are specific to a single executable format are documented
+    in the L/"NOTES FOR THE SUPPORTED EXECUTABLE FORMATS"> section below.
 
 COMPRESSION LEVELS & TUNING
     UPX offers ten different compression levels from -1 to -9, and --best.
