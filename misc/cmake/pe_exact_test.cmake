@@ -75,6 +75,14 @@ upx_add_test(upx-pe-exact-reject-strip-relocs upx --exact --strip-relocs=1 "${ex
 set_tests_properties(upx-pe-exact-reject-strip-relocs PROPERTIES
                      PASS_REGULAR_EXPRESSION "cannot use both '--exact' and '--strip-relocs'")
 
+set(tail_dll "${wd}/upx-test-pe-raw-tail.dll")
+upx_add_test(upx-pe-raw-tail-prepare upx-test-pe-exact-fixture "${exact_dll}" "${tail_dll}" raw-tail)
+upx_add_test(upx-pe-exact-reject-raw-tail upx --exact -3 "${tail_dll}" ${fo}
+             -o "${wd}/upx-test-pe-raw-tail-packed.dll")
+set_tests_properties(upx-pe-exact-reject-raw-tail PROPERTIES
+                     PASS_REGULAR_EXPRESSION "option '--exact' does not work with this file")
+upx_test_depends(upx-pe-exact-reject-raw-tail upx-pe-raw-tail-prepare)
+
 endfunction()
 
 # vim:set ft=cmake ts=4 sw=4 tw=0 et:
