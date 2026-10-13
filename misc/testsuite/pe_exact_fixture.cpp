@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
         std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0 &&
         std::strcmp(mode, "tls-index") != 0 && std::strcmp(mode, "zero-sections") != 0 &&
         std::strcmp(mode, "unordered") != 0 && std::strcmp(mode, "wrap-rva") != 0 &&
-        std::strcmp(mode, "overlay") != 0)
+        std::strcmp(mode, "overlay") != 0 && std::strcmp(mode, "guard-cf") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -120,6 +120,63 @@ int main(int argc, char **argv) {
                     &last, sizeof(last));
         for (size_t i = 0; i < 513; i++)
             bytes.push_back(static_cast<unsigned char>((37 * i + 11) & 255));
+        return write_fixture(argv[2], bytes);
+    }
+    if (std::strcmp(mode, "guard-cf") == 0) {
+        IMAGE_DATA_DIRECTORY directory = {};
+        WORD dll_flags = 0;
+        const size_t directory_offset =
+            directories + IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG * sizeof(directory);
+        const size_t flags_offset =
+            optional_offset + offsetof(IMAGE_OPTIONAL_HEADER32, DllCharacteristics);
+        const size_t pointer_size = magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC ? 8 : 4;
+        const size_t guard_offset = 14 * pointer_size + 6 * sizeof(DWORD) + 4 * sizeof(WORD);
+        const DWORD config_size = static_cast<DWORD>(guard_offset + sizeof(DWORD));
+        if (!read_struct(bytes, directory_offset, directory) ||
+            !read_struct(bytes, flags_offset, dll_flags))
+            return fail("invalid load configuration");
+        size_t offset = directory.Size >= config_size
+                            ? rva_to_offset(sections, directory.VirtualAddress)
+                            : 0;
+        if (!offset) {
+            // GNU ld emits no load configuration and some linkers stop before GuardFlags.
+            // Add a zeroed one in zero raw padding, as the CET fixture does for its debug entries.
+            for (size_t i = 0; i < sections.size() && !offset; i++) {
+                auto &section = sections[i];
+                if (!section.PointerToRawData || !section.Misc.VirtualSize ||
+                    (section.Characteristics & IMAGE_SCN_MEM_DISCARDABLE))
+                    continue;
+                const ULONGLONG padding =
+                    (static_cast<ULONGLONG>(section.Misc.VirtualSize) + 7) & ~ULONGLONG(7);
+                const ULONGLONG end = padding + config_size;
+                const size_t start = static_cast<size_t>(section.PointerToRawData + padding);
+                if (end > section.SizeOfRawData || section.VirtualAddress + end > MAXDWORD ||
+                    start > bytes.size() || config_size > bytes.size() - start ||
+                    std::any_of(bytes.data() + start, bytes.data() + start + config_size,
+                                [](unsigned char value) { return value != 0; }))
+                    continue;
+                directory.VirtualAddress = section.VirtualAddress + static_cast<DWORD>(padding);
+                directory.Size = config_size;
+                std::memcpy(bytes.data() + start, &config_size, sizeof(config_size));
+                std::memcpy(bytes.data() + directory_offset, &directory, sizeof(directory));
+                section.Misc.VirtualSize = static_cast<DWORD>(end);
+                std::memcpy(bytes.data() + section_offset + i * sizeof(section), &section,
+                            sizeof(section));
+                offset = start;
+            }
+            if (!offset)
+                return fail("fixture needs raw padding for a load configuration");
+        }
+        if (offset > bytes.size() || config_size > bytes.size() - offset)
+            return fail("invalid load configuration range");
+        // The loader rejects CF_INSTRUMENTED unless there is a check-function pointer to patch.
+        const unsigned char *check = bytes.data() + offset + guard_offset - 4 * pointer_size;
+        const bool instrumented = std::any_of(check, check + pointer_size,
+                                              [](unsigned char value) { return value != 0; });
+        const DWORD guard_flags = instrumented ? 0x500 : 0x400;
+        dll_flags |= IMAGE_DLLCHARACTERISTICS_GUARD_CF;
+        std::memcpy(bytes.data() + offset + guard_offset, &guard_flags, sizeof(guard_flags));
+        std::memcpy(bytes.data() + flags_offset, &dll_flags, sizeof(dll_flags));
         return write_fixture(argv[2], bytes);
     }
     if (std::strcmp(mode, "tls-index") == 0) {

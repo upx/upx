@@ -3,11 +3,11 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 #
 
-function(upx_pe_exact_roundtrip name input extension runner)
+function(upx_pe_exact_roundtrip name input extension runner options)
 
 set(packed "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>/upx-test-pe-${name}-packed.${extension}")
 set(unpacked "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>/upx-test-pe-${name}-unpacked.${extension}")
-upx_add_test(upx-pe-exact-pack-${name} upx --exact "${input}" ${fo} -o "${packed}")
+upx_add_test(upx-pe-exact-pack-${name} upx --exact ${options} "${input}" ${fo} -o "${packed}")
 if(NOT "${runner}" STREQUAL "skip")
     if(NOT UPX_CONFIG_DISABLE_RUN_UNPACKED_TEST)
         upx_add_test(upx-pe-${name}-run-original ${runner} "${input}" ${ARGN})
@@ -41,7 +41,7 @@ set(emu "${CMAKE_CROSSCOMPILING_EMULATOR}")
 set(exact_dll "$<TARGET_FILE:upx-test-pe-exact-dll>")
 set(fo "--force-overwrite")
 set(wd "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>")
-upx_pe_exact_roundtrip(dll "${exact_dll}" dll upx-test-pe-exact-dll-loader)
+upx_pe_exact_roundtrip(dll "${exact_dll}" dll upx-test-pe-exact-dll-loader "")
 
 foreach(name IN ITEMS gap empty zero-gap unordered overlay)
     set(mode "${name}")
@@ -55,7 +55,7 @@ foreach(name IN ITEMS gap empty zero-gap unordered overlay)
     endif()
     set(input "${wd}/upx-test-pe-${name}.dll")
     upx_add_test(upx-pe-${name}-prepare upx-test-pe-exact-fixture "${exact_dll}" "${input}" ${mode})
-    upx_pe_exact_roundtrip(${name} "${input}" dll "${runner}" ${run_args})
+    upx_pe_exact_roundtrip(${name} "${input}" dll "${runner}" "" ${run_args})
 endforeach()
 
 upx_add_test(upx-pe-normal-pack-gap upx --force "${wd}/upx-test-pe-gap.dll" ${fo}
@@ -75,6 +75,16 @@ upx_add_test(upx-pe-exact-reject-strip-relocs upx --exact --strip-relocs=1 "${ex
              -o "${wd}/upx-test-pe-strip-relocs-rejected.dll")
 set_tests_properties(upx-pe-exact-reject-strip-relocs PROPERTIES
                      PASS_REGULAR_EXPRESSION "cannot use both '--exact' and '--strip-relocs'")
+
+set(guard_exe "${wd}/upx-test-pe-guard-cf.exe")
+upx_add_test(upx-pe-guard-cf-prepare upx-test-pe-exact-fixture
+             "$<TARGET_FILE:upx>" "${guard_exe}" guard-cf)
+upx_pe_exact_roundtrip(guard-cf "${guard_exe}" exe "${emu}" --force --version-short)
+upx_add_test(upx-pe-exact-reject-guard-cf upx --exact "${guard_exe}" ${fo}
+             -o "${wd}/upx-test-pe-guard-cf-rejected.exe")
+set_tests_properties(upx-pe-exact-reject-guard-cf PROPERTIES
+                     PASS_REGULAR_EXPRESSION "GUARD_CF enabled PE files are not supported")
+upx_test_depends(upx-pe-exact-reject-guard-cf upx-pe-guard-cf-prepare)
 
 set(tail_dll "${wd}/upx-test-pe-raw-tail.dll")
 upx_add_test(upx-pe-raw-tail-prepare upx-test-pe-exact-fixture "${exact_dll}" "${tail_dll}" raw-tail)
@@ -105,7 +115,7 @@ upx_test_depends(upx-pe-exact-reject-wrapping-rva upx-pe-wrapping-prepare)
 set(tls_exe "${wd}/upx-test-pe-tls-nonzero.exe")
 upx_add_test(upx-pe-exe-tls-prepare upx-test-pe-exact-fixture
              "$<TARGET_FILE:upx-test-pe-exact-tls-exe>" "${tls_exe}" tls-index)
-upx_pe_exact_roundtrip(exe-tls "${tls_exe}" exe "${emu}")
+upx_pe_exact_roundtrip(exe-tls "${tls_exe}" exe "${emu}" "")
 
 endfunction()
 
