@@ -129,7 +129,7 @@ void FileBase::closex() may_throw {
 upx_off_t FileBase::seek(upx_off_t off, int whence) {
     if (!isOpen())
         throwIOException("bad seek 1");
-    if (!mem_size_valid_bytes(off >= 0 ? off : -off)) // sanity check
+    if (!mem_size_valid_bytes_nocomp(off >= 0 ? off : -off)) // sanity check
         throwIOException("bad seek");
     if (whence == SEEK_SET) {
         if (off < 0)
@@ -315,15 +315,14 @@ upx_off_t OutputFile::st_size() const {
     if (opt->to_stdout) {     // might be a pipe ==> .st_size is invalid
         return bytes_written; // too big if seek()+write() instead of rewrite()
     }
-    struct stat my_st;
-    my_st.st_size = 0;
+    struct stat my_st = {};
     if (::fstat(_fd, &my_st) != 0)
         throwIOException(_name, errno);
     return my_st.st_size;
 }
 
 upx_off_t OutputFile::seek(upx_off_t off, int whence) {
-    if (!mem_size_valid_bytes(off >= 0 ? off : -off)) // sanity check
+    if (!mem_size_valid_bytes_nocomp(off >= 0 ? off : -off)) // sanity check
         throwIOException("bad seek");
     assert(!opt->to_stdout);
     switch (whence) {

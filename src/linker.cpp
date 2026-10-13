@@ -564,7 +564,7 @@ void ElfLinker::alignWithByte(unsigned len, byte b) {
 }
 
 void ElfLinker::relocate1(const Relocation *rel, byte *, upx_uint64_t, const char *) {
-    throwInternalError("unknown relocation type '%s\n'", rel->type);
+    throwInternalError("unknown relocation type '%s'", rel->type);
 }
 
 /*************************************************************************

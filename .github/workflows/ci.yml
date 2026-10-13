@@ -244,11 +244,11 @@ jobs:
           jobs="gcc/debug gcc/release clang/debug clang/release"
           echo "===== parallel jobs: $jobs"
           DESTDIR="Install with make 2" parallel -kv --lb 'make build/extra/{}+install' ::: $jobs
-      - name: Mimic ctest tests SIGSEGV
+      - name: Mimic ctest tests
         run: |
           jobs="gcc/debug gcc/release clang/debug clang/release"
           echo "===== parallel jobs: $jobs"
-          parallel -kv --lb 'cd build/extra/{} && bash ../../../../misc/testsuite/mimic_ctest_sigsegv.sh' ::: $jobs
+          parallel -kv --lb 'cd build/extra/{} && bash ../../../../misc/testsuite/mimic_ctest.sh' ::: $jobs
           ls -ld ./build/*/*/*/upx-* || true
           rm -rf ./build/*/*/*/upx-*
       - name: Run ctest tests
@@ -377,13 +377,13 @@ jobs:
           test "${{ matrix.use_extra }}" = "true" && jobs="$jobs gcc-m32/debug gcc-m32/release"
           echo "===== parallel jobs: $jobs"
           DESTDIR="Install with make 2" parallel -kv --lb 'make build/extra/{}+install' ::: $jobs
-      - name: Mimic ctest tests SIGSEGV
+      - name: Mimic ctest tests
         if: ${{ matrix.use_extra }}
         run: |
           jobs="gcc/debug gcc/release clang/debug clang/release"
           test "${{ matrix.use_extra }}" = "true" && jobs="$jobs gcc-m32/debug gcc-m32/release"
           echo "===== parallel jobs: $jobs"
-          parallel -kv --lb 'cd build/extra/{} && bash ../../../../misc/testsuite/mimic_ctest_sigsegv.sh' ::: $jobs
+          parallel -kv --lb 'cd build/extra/{} && bash ../../../../misc/testsuite/mimic_ctest.sh' ::: $jobs
           ls -ld ./build/*/*/*/upx-* || true
           rm -rf ./build/*/*/*/upx-*
       - name: Run ctest tests
