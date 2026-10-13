@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     const char *mode = argc == 4 ? argv[3] : "gap";
     if (std::strcmp(mode, "gap") != 0 && std::strcmp(mode, "empty-imports") != 0 &&
         std::strcmp(mode, "zero-gap") != 0 && std::strcmp(mode, "raw-tail") != 0 &&
-        std::strcmp(mode, "tls-index") != 0)
+        std::strcmp(mode, "tls-index") != 0 && std::strcmp(mode, "zero-sections") != 0)
         return fail("unknown fixture mode");
     std::ifstream input(argv[1], std::ios::binary | std::ios::ate);
     const std::streamoff size = input.tellg();
@@ -85,6 +85,11 @@ int main(int argc, char **argv) {
         optional_offset + (magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC
                                ? offsetof(IMAGE_OPTIONAL_HEADER64, DataDirectory)
                                : offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory));
+    if (std::strcmp(mode, "zero-sections") == 0) {
+        header.NumberOfSections = 0;
+        std::memcpy(bytes.data() + header_offset, &header, sizeof(header));
+        return write_fixture(argv[2], bytes);
+    }
     if (std::strcmp(mode, "tls-index") == 0) {
         IMAGE_DATA_DIRECTORY directory = {};
         if (!read_struct(bytes, directories + IMAGE_DIRECTORY_ENTRY_TLS * sizeof(directory),
