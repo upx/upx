@@ -359,7 +359,9 @@ static int do_scroll(screen_t *this, int lines, int way) {
 }
 
 static int scrollUp(screen_t *this, int lines) {
-    lines = do_scroll(this, lines, 0);
+    for (int i = 0; i < lines; i++)
+        putchar('\n');
+    fflush(stdout);
     this->data->scroll_counter += lines;
     return lines;
 }
