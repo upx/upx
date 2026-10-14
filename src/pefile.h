@@ -474,7 +474,8 @@ protected:
 
         unsigned itype() const;
         const byte *ntype() const;
-        unsigned size() const;
+        unsigned size() const;     // size rounded up to a multiple of 4
+        unsigned rawsize() const;  // exact size as stored in the resource data entry
         unsigned offs() const;
         unsigned &newoffs();
 

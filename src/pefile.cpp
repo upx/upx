@@ -1709,6 +1709,7 @@ unsigned PeFile::Resource::itype() const { return current->parent->parent->id; }
 const byte *PeFile::Resource::ntype() const { return current->parent->parent->name; }
 
 unsigned PeFile::Resource::size() const { return ALIGN_UP(current->data.size, 4u); }
+unsigned PeFile::Resource::rawsize() const { return current->data.size; }
 
 unsigned PeFile::Resource::offs() const { return current->data.offset; }
 
@@ -2095,7 +2096,9 @@ void PeFile::processResources(Resource *res) {
         const unsigned take = res->size();
         ICHECK(ibuf + res->offs(), take);
         memcpy(ores, ibuf.subref("bad resoff %#x", res->offs(), take), take);
-        ibuf.fill(res->offs(), take, FILLVAL);
+        // only clear the real resource bytes: "take" is rounded up to 4 and would
+        // zero the first 1-3 bytes of an immediately following (unaligned) resource
+        ibuf.fill(res->offs(), res->rawsize(), FILLVAL);
         res->newoffs() = ptr_diff_bytes(ores, oresources);
         if (rtype == RT_ICON && opt->win32_pe.compress_icons == 1)
             compress_icon = true;
