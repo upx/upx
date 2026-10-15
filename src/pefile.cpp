@@ -2956,6 +2956,7 @@ void PeFile::rebuildResources(SPAN_S(byte) & extra_info, unsigned lastvaddr) {
             ICHECK(r + (res.offs() - 4), 4);
             unsigned origoffs = get_le32(r + (res.offs() - 4));
             res.newoffs() = origoffs;
+            ICHECK(r + res.offs(), res.size());
             omemcpy(obuf + (origoffs - rvamin), r + res.offs(), res.size());
             if (icondir_count && res.itype() == RT_GROUP_ICON) {
                 set_le16(obuf + (origoffs - rvamin + 4), icondir_count);
