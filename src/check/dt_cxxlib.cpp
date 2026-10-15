@@ -2661,6 +2661,10 @@ struct TestFloat final {
     static noinline T noinline_sqrt2(T a, T b) noexcept {
         return std::sqrt(a * a + b * b);
     }
+    template <class T>
+    static noinline T noinline_sqrt2m(T a, T b) noexcept {
+        return std::sqrt(a * a - b * b);
+    }
 
     template <class T>
     static noinline T noinline_min(T a, T b) noexcept {
@@ -4238,6 +4242,8 @@ TEST_CASE("codegen float") {
         assert_noexcept2((TestFloat::noinline_sqrt(double(n)) == 0));
         assert_noexcept2((TestFloat::noinline_sqrt2(float(a), float(b)) == 1));
         assert_noexcept2((TestFloat::noinline_sqrt2(double(a), double(b)) == 1));
+        assert_noexcept2((TestFloat::noinline_sqrt2m(float(b), float(a)) == 1));
+        assert_noexcept2((TestFloat::noinline_sqrt2m(double(b), double(a)) == 1));
         assert_noexcept2((TestFloat::noinline_min(float(a), float(b)) == 0));
         assert_noexcept2((TestFloat::noinline_min(double(a), double(b)) == 0));
         assert_noexcept2((TestFloat::noinline_max(float(a), float(b)) == 1));
