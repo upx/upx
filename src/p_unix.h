@@ -87,7 +87,8 @@ protected:
     virtual void packExtent(const Extent &x,
         Filter *, OutputFile *,
         unsigned hdr_len = 0, unsigned b_extra = 0 ,
-        bool inhibit_compression_check = false);
+        bool inhibit_compression_check = false,
+        bool is_ibuf = false);
     virtual unsigned unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &c_adler, unsigned &u_adler,
         bool first_PF_X,

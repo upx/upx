@@ -146,6 +146,16 @@ static void alloc_file_image(MemBuffer &mb, off_t size)
     }
 }
 
+static void alloc_mb_EPShdri(MemBuffer &mb, off_t size)
+{
+    assert(mem_size_valid_bytes(size));
+    if (mb.getVoidPtr() == nullptr) {
+        mb.alloc(size);
+    } else {
+        assert((u32_t)size <= mb.getSize());
+    }
+}
+
 int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 {
@@ -1112,10 +1122,11 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         return;
     }
     if (0==e_phnum) throwCantUnpack("0==e_phnum");
+
     e_phoff = get_te64(&ehdri.e_phoff);
     upx_uint64_t const last_Phdr = e_phoff + e_phnum * sizeof(Elf64_Phdr);
     if (last_Phdr < e_phoff  // wrap-around
-    ||  e_phoff != sizeof(Elf64_Ehdr)  // must be contiguous
+//    ||  e_phoff != sizeof(Elf64_Ehdr)  // must be contiguous
     ||  (unsigned long)file_size < last_Phdr) {
         throwCantUnpack("bad e_phoff %p", (void *)e_phoff);
     }
@@ -1130,33 +1141,34 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     }
     sz_phdrs = e_phnum * e_phentsize;
     sz_elf_hdrs = sz_phdrs + sizeof(Elf64_Ehdr) +
-        n_phdrx * sizeof(Elf32_Phdr);  // phdrx bodies later: ::generateElfHdr
+        n_phdrx * sizeof(Elf64_Phdr);  // phdrx bodies later: ::generateElfHdr
 
-    if (f && Elf64_Ehdr::ET_DYN!=e_type) {
-        unsigned const len = file_size;  // (sz_phdrs + e_phoff) except --preserve-build-id
-        alloc_file_image(file_image, len);
-        f->seek(0, SEEK_SET);
-        f->readx(file_image, len);
-        phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
+    // The DT_SYMTAB has no designated length.  Read the whole file.
+    alloc_file_image(file_image, file_size_u32);
+    f->seek(0, SEEK_SET);
+    f->readx(file_image, file_size_u32);
+    ehdri = *(Elf64_Ehdr *)file_image.getVoidPtr();  // why necessary copy?
+    alloc_mb_EPShdri(mb_EPShdri, sizeof(ehdri)
+        + e_phnum * sizeof(Elf64_Phdr)
+        + e_shnum * sizeof(Elf64_Shdr) );
+    void *EPSptr = mempcpy(mb_EPShdri.getVoidPtr(), &ehdri, sizeof(ehdri));
+    if (file_size_u32 < (unsigned)e_phoff + e_phnum * sizeof(Elf64_Phdr)) {
+        phdri = nullptr;
+    } else
+    {
+        phdri= (Elf64_Phdr *)(e_phoff + file_image);  // do not free() !!
+        EPSptr = mempcpy(EPSptr, phdri, e_phnum * sizeof(Elf64_Phdr));
     }
-    if (f && Elf64_Ehdr::ET_DYN==e_type) {
-        // The DT_SYMTAB has no designated length.  Read the whole file.
-        alloc_file_image(file_image, file_size);
-        f->seek(0, SEEK_SET);
-        f->readx(file_image, file_size);
-        phdri= (file_size <= (unsigned)e_phoff) ? nullptr : (Elf64_Phdr *)(e_phoff + file_image);  // do not free() !!
-        if (!(opt->cmd == CMD_COMPRESS && e_shoff < (upx_uint64_t)file_size && mb_shdr.getSize() == 0)) {
-            shdri = nullptr;
-        }
-        else if (e_shnum && e_shoff && ehdri.e_shentsize) {
-            fi->seek(e_shoff, SEEK_SET);
-            mb_shdr.alloc(   sizeof(Elf64_Shdr) * e_shnum);
-            shdri = (Elf64_Shdr *)mb_shdr.getVoidPtr();
-            fi->readx(shdri, sizeof(Elf64_Shdr) * e_shnum);
-        }
-        else {
-            shdri = nullptr;
-        }
+
+    if (CMD_COMPRESS != opt->cmd) {
+        return;
+    }
+    if (file_size_u32 < (unsigned)e_shoff + e_shnum * sizeof(Elf64_Shdr)) {
+        shdri = nullptr;
+    } else
+    {
+        shdri= (Elf64_Shdr *)(e_shoff + file_image);  // do not free() !!
+        EPSptr = mempcpy(EPSptr, shdri, e_shnum * sizeof(Elf64_Shdr));
         sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
         if (sec_dynsym) {
             unsigned t = get_te32(&sec_dynsym->sh_link);
@@ -1164,33 +1176,77 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
                 throwCantPack("bad dynsym->sh_link");
             sec_dynstr = &shdri[t];
         }
+        sec_strndx = nullptr;
+        shstrtab = nullptr;
+        if (e_shnum) {
+            e_shstrndx = get_te16(&ehdri.e_shstrndx);
+            if (e_shstrndx) {
+                if (e_shnum <= e_shstrndx) {
+                    char msg[40]; snprintf(msg, sizeof(msg),
+                        "bad e_shstrndx %#x >= e_shnum %d", e_shstrndx, e_shnum);
+                    throwCantPack(msg);
+                }
+                sec_strndx = &shdri[e_shstrndx];
+                upx_uint64_t sh_offset = get_te64(&sec_strndx->sh_offset);
+                if ((u64_t)file_size <= sh_offset) {
+                    char msg[50]; snprintf(msg, sizeof(msg),
+                        "bad .e_shstrndx->sh_offset %#lx", (long unsigned)sh_offset);
+                    throwCantPack(msg);
+                }
+                shstrtab = (char const *)(sh_offset + file_image);
+            }
+            sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
+            if (sec_dynsym) {
+                unsigned const sh_link = get_te32(&sec_dynsym->sh_link);
+                if (e_shnum <= sh_link) {
+                    char msg[50]; snprintf(msg, sizeof(msg),
+                        "bad SHT_DYNSYM.sh_link %#x", sh_link);
+                }
+                sec_dynstr = &shdri[sh_link];
+            }
 
-        Elf64_Phdr const *phdr= phdri;
-        for (int j = e_phnum; --j>=0; ++phdr)
+            if (sec_strndx) {
+                unsigned const sh_name = get_te32(&sec_strndx->sh_name);
+                if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
+                // .shstrtab's own name may end exactly at EOF (Go)
+                || (u32_t)file_size < (sizeof(".shstrtab")
+                    + sh_name + (shstrtab - (const char *)&file_image[0]))
+                || (sh_name
+                  && 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]))
+                ) {
+                    throwCantPack("bad e_shstrtab");
+                }
+            }
+        }
+    }
+    /* mb_EPShdri.raw_size_in_bytes */
+
+    Elf64_Phdr const *phdr= phdri;
+    for (int j = e_phnum; --j>=0; ++phdr) {
         if (Elf64_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
             upx_uint64_t offset = check_pt_dynamic(phdr);
             dynseg= (Elf64_Dyn *)(offset + file_image);
             invert_pt_dynamic(dynseg,
                 umin(get_te64(&phdr->p_filesz), file_size_u - offset));
-        }
-        else if (is_LOAD(phdr)) {
+        } else
+        if (is_LOAD(phdr)) {
             check_pt_load(phdr);
         }
-        // elf_find_dynamic() returns 0 if 0==dynseg.
-        dynstr =          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
-        dynsym = (Elf64_Sym /*const*/ *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
-        gashtab =     (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
-        hashtab =     (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
-        if (3& ((upx_uintptr_t)dynsym | (upx_uintptr_t)gashtab | (upx_uintptr_t)hashtab)) {
-            throwCantPack("unaligned DT_SYMTAB, DT_GNU_HASH, or DT_HASH/n");
-        }
-        if (opt->cmd == CMD_COMPRESS) {
-            jni_onload_sym = elf_lookup("JNI_OnLoad");
-            if (jni_onload_sym) {
-                jni_onload_va = get_te64(&jni_onload_sym->st_value);
-                jni_onload_va = 0;  // FIXME not understood; need example
-            }
-        }
+    }
+
+    // elf_find_dynamic() returns 0 if 0==dynseg.
+    dynstr =          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
+    dynsym = (Elf64_Sym /*const*/ *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
+    gashtab =     (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
+    hashtab =     (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
+    if (3& ((upx_uintptr_t)dynsym | (upx_uintptr_t)gashtab | (upx_uintptr_t)hashtab)) {
+        throwCantPack("unaligned DT_SYMTAB, DT_GNU_HASH, or DT_HASH/n");
+    }
+
+    jni_onload_sym = elf_lookup("JNI_OnLoad");
+    if (jni_onload_sym) {
+        jni_onload_va = get_te64(&jni_onload_sym->st_value);
+        jni_onload_va = 0;  // FIXME not understood; need example
     }
 }
 
@@ -3330,7 +3386,6 @@ tribool PackLinuxElf32::canPack()
         alloc_file_image(file_image, file_size);
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
-        memcpy(&ehdri, ehdr, sizeof(Elf32_Ehdr));
         phdri= (Elf32_Phdr *)((size_t)e_phoff + file_image);  // do not free() !!
         shdri= (Elf32_Shdr *)((size_t)e_shoff + file_image);  // do not free() !!
 
@@ -3567,10 +3622,10 @@ tribool PackLinuxElf64::canPack()
         throwCantPack("invalid Ehdr e_ehsize; try '--force-execve'");
         return false;
     }
-    if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
-        throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
-        return false;
-    }
+//    if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
+//        throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
+//        return false;
+//    }
 
     if (e_phnum > ((-3 + MAX_ELF_HDR_64 - sizeof(Elf64_Ehdr)) / sizeof(Elf64_Phdr))) {
         throwCantPack("too many ElfXX_Phdr; try '--force-execve'");
@@ -3642,48 +3697,6 @@ tribool PackLinuxElf64::canPack()
         phdri= (Elf64_Phdr *)((size_t)e_phoff + file_image);  // do not free() !!
         shdri= (Elf64_Shdr *)((size_t)e_shoff + file_image);  // do not free() !!
 
-        sec_strndx = nullptr;
-        shstrtab = nullptr;
-        if (e_shnum) {
-            e_shstrndx = get_te16(&ehdr->e_shstrndx);
-            if (e_shstrndx) {
-                if (e_shnum <= e_shstrndx) {
-                    char msg[40]; snprintf(msg, sizeof(msg),
-                        "bad e_shstrndx %#x >= e_shnum %d", e_shstrndx, e_shnum);
-                    throwCantPack(msg);
-                }
-                sec_strndx = &shdri[e_shstrndx];
-                upx_uint64_t sh_offset = get_te64(&sec_strndx->sh_offset);
-                if ((u64_t)file_size <= sh_offset) {
-                    char msg[50]; snprintf(msg, sizeof(msg),
-                        "bad .e_shstrndx->sh_offset %#lx", (long unsigned)sh_offset);
-                    throwCantPack(msg);
-                }
-                shstrtab = (char const *)(sh_offset + file_image);
-            }
-            sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
-            if (sec_dynsym) {
-                unsigned const sh_link = get_te32(&sec_dynsym->sh_link);
-                if (e_shnum <= sh_link) {
-                    char msg[50]; snprintf(msg, sizeof(msg),
-                        "bad SHT_DYNSYM.sh_link %#x", sh_link);
-                }
-                sec_dynstr = &shdri[sh_link];
-            }
-
-            if (sec_strndx) {
-                unsigned const sh_name = get_te32(&sec_strndx->sh_name);
-                if (Elf64_Shdr::SHT_STRTAB != get_te32(&sec_strndx->sh_type)
-                // .shstrtab's own name may end exactly at EOF (Go)
-                || (u32_t)file_size < (sizeof(".shstrtab")
-                    + sh_name + (shstrtab - (const char *)&file_image[0]))
-                || (sh_name
-                  && 0!=strcmp((char const *)".shstrtab", &shstrtab[sh_name]))
-                ) {
-                    throwCantPack("bad e_shstrtab");
-                }
-            }
-        }
 
         Elf64_Phdr const *pload_x0(nullptr);  // first eXecutable PT_LOAD
         phdr= phdri;
@@ -5259,7 +5272,7 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter &ft)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
-    assert(e_phoff == sizeof(Elf64_Ehdr));  // checked by canPack()
+//    assert(e_phoff == sizeof(Elf64_Ehdr));  // checked by canPack()
     sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
 
 // We compress separate pieces (usually each PT_LOAD, plus the gaps in the file
@@ -5786,8 +5799,6 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
     }
 
     // compress extents
-    unsigned hdr_u_len = sizeof(Elf32_Ehdr) + sz_phdrs;
-
     total_in =  0;
     total_out = 0;
     uip->ui_pass = 0;
@@ -5807,6 +5818,7 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
         pack2_shlib(fo, ft, pre_xct_top);
     }
     else { // main program
+        unsigned hdr_u_len = sizeof(Elf32_Ehdr) + sz_phdrs;
         int n_ptload = 0;
         for (k = 0; k < e_phnum; ++k)
         if (is_LOAD(&phdri[k])) {
@@ -6064,8 +6076,6 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     }
 
     // compress extents
-    unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
-
     total_in =  0;
     total_out = 0;
     uip->ui_pass = 0;
@@ -6085,44 +6095,30 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         pack2_shlib(fo, ft, pre_xct_top);
     }
     else { // main program
-        int n_ptload = 0;
+        unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
         for (k = 0; k < e_phnum; ++k)
         if (is_LOAD(&phdri[k])) {
-            if (ft.id < 0x40) {
-                // FIXME: ??    ft.addvalue = phdri[k].p_vaddr;
-            }
-            unsigned p_offset = get_te64_32(&phdri[k].p_offset);
-            unsigned p_filesz = get_te64_32(&phdri[k].p_filesz);
-            x.offset = p_offset;
-            x.size   = p_filesz;
-            if ((u32_t)x.size < hdr_u_len) { // FIXME: main program, but how?
-                total_in += x.size;
-            }
-            else {  // main program, not shared library
-                if (0 == n_ptload) { // 1st PT_LOAD must cover Ehdr at 0==p_offset
-                    unsigned const delta = hdr_u_len;
-                    if (ft.id < 0x40) {
-                        // FIXME: ??     ft.addvalue += asl_delta;
-                    }
-                    if ((off_t)delta == x.size) { // PT_LOAD[0] with ElfXX.Ehdr only
-                        // QBE backend - http://c9x.me/compile/
-                        hdr_u_len = 0;  // no fiddling necessary!
-                        // &ft arg to packExtent will be zero because (k != nk_f)
-                    }
-                    else {
-                        total_in += delta - hdr_u_len;
-                        x.offset += delta;
-                        x.size   -= delta;
-                    }
-                }
-                // compressWithFilters() always assumes a "loader", so would
-                // throw NotCompressible for small .data Extents, which PowerPC
-                // sometimes marks as PF_X anyway.  So filter only first segment.
-                packExtent(x,
-                    (k==nk_f ? &ft : nullptr ), fo, hdr_u_len, 0, true);
+            x.offset = get_te64_32(&phdri[k].p_offset);
+            x.size   = get_te64_32(&phdri[k].p_filesz);
+            if (hdr_u_len && ehdri.e_phoff != sizeof(Elf64_Ehdr)) {
+                // First time, and Phdr not adjacent to Ehdr.
+                // Use b_info header block for EPShdr.
+                Extent y = {0, hdr_u_len};
+                memcpy(ibuf, mb_EPShdri, hdr_u_len);
+                unsigned const b_extra = 0xff;
+                bool const is_ibuf = true;
+                packExtent(y, nullptr, fo, 0, b_extra, true, is_ibuf);
+                total_in -= hdr_u_len;  // fi->read did not happen
                 hdr_u_len = 0;
             }
-            ++n_ptload;
+            x.offset += hdr_u_len;
+            x.size   -= hdr_u_len;
+            // compressWithFilters() always assumes a "loader", so would
+            // throw NotCompressible for small .data Extents, which PowerPC
+            // sometimes marks as PF_X anyway.  So filter only largest PF_X.
+            Filter *ftp = (k==nk_f ? &ft : nullptr );
+            packExtent(x, ftp, fo, hdr_u_len, 0, true);
+            hdr_u_len = 0;
         }
     }
     sz_pack2a = fpad4(fo, total_out);  // MATCH01

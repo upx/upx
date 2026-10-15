@@ -573,7 +573,7 @@ struct b_info {     // 12-byte header before each compressed block
     unsigned char b_method;     // compression algorithm
     unsigned char b_ftid;       // filter id
     unsigned char b_cto8;       // filter parameter
-    unsigned char b_unused;
+    unsigned char b_extra;
 };
 
 struct l_info       // 12-byte trailer in header for loader (offset 116)

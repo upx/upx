@@ -338,11 +338,12 @@ void PackUnix::packExtent(
     OutputFile *fo,
     unsigned hdr_u_len,
     unsigned b_extra,
-    bool inhibit_compression_check
+    bool inhibit_compression_check,
+    bool is_ibuf  // input is ibuf, not fi->read
 )
 {
     MemBuffer hdr_ibuf;
-    if (hdr_u_len) {
+    if (!is_ibuf && hdr_u_len) {
         hdr_ibuf.alloc(hdr_u_len);
         fi->seek(0, SEEK_SET);
         int l = fi->readx(hdr_ibuf, hdr_u_len);
@@ -353,7 +354,8 @@ void PackUnix::packExtent(
         unsigned const init_u_adler = ph.u_adler;
         unsigned const init_c_adler = ph.c_adler;
         int const filter_strategy = ft ? getStrategy(*ft) : 0;
-        int l = fi->readx(ibuf, UPX_MIN(rest, (off_t)blocksize));
+        int l = (is_ibuf) ? rest :
+            fi->readx(ibuf, UPX_MIN(rest, (off_t)blocksize));
         if (l == 0) {
             break;
         }
@@ -380,7 +382,8 @@ void PackUnix::packExtent(
             ft->cto = 0;
 
             compressWithFilters(ft, OVERHEAD, NULL_cconf, filter_strategy,
-                                0, 0, 0, hdr_ibuf, hdr_u_len, inhibit_compression_check);
+                                0, 0, 0, // offsets: filter_buf, ibuf, obuf
+                                hdr_ibuf, hdr_u_len, inhibit_compression_check);
         }
         else {
             (void) compress(ibuf, ph.u_len, obuf);    // ignore return value

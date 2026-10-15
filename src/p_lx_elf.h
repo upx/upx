@@ -83,6 +83,7 @@ protected:
     unsigned e_shnum;
     unsigned e_shstrndx;
     MemBuffer file_image;   // if ET_DYN investigation
+    MemBuffer mb_EPShdri;  // input Ehdr +  Phdr[] + Shdr[] for stub convenience
     MemBuffer lowmem;  // at least including PT_LOAD[0]
     MemBuffer mb_shdr;      // Shdr might not be near Phdr
     MemBuffer mb_dt_offsets;  // file offset of various DT_ tables

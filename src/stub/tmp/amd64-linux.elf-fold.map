@@ -8,14 +8,14 @@ Linker script and memory map
 
                 0x0000000000000040                . = SIZEOF_HEADERS
 
-.text           0x0000000000000000      0xa10
+.text           0x0000000000000000      0xa36
  .text          0x0000000000000000      0x166 tmp/amd64-linux.elf-fold.o
                 0x000000000000015e                get_page_mask
  *fill*         0x0000000000000166        0x2 00
  .text          0x0000000000000168        0x0 tmp/amd64-expand.o
- .text          0x0000000000000168      0x8a8 tmp/amd64-linux.elf-main2.o
+ .text          0x0000000000000168      0x8ce tmp/amd64-linux.elf-main2.o
                 0x0000000000000320                xfind_pages
-                0x00000000000008e1                upx_main2
+                0x00000000000008de                upx_main2
                 0x00000000000002d5                underlay
 
 UMF_LINUX       0x0000000000000000       0xf9

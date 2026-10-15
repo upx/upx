@@ -552,15 +552,14 @@ xfind_pages(unsigned mflags, ElfW(Phdr) const *phdr, int phnum, ElfW(Addr) *cons
 
 static void *
 do_xmap( // mapped addr
-    ElfW(Ehdr) const *const ehdr,  // &Ehdr of target output (copy; de-compressed)
+    ElfW(Ehdr) const *const ehdr,  // &Ehdr of target output (local copy; de-compressed)
     Extent *const xi,
     int const fdi,
     ElfW(auxv_t) *const av,
     ElfW(Addr) const base  // &Ehdr of compressed input (only 2 PT_LOAD, etc.)
 )
 {
-    ElfW(Phdr) const *phdr = (ElfW(Phdr) const *)(void const *)
-        (ehdr->e_phoff + (char const *)ehdr);
+    ElfW(Phdr) const *phdr = (ElfW(Phdr) const *)(1+ ehdr);  // hdrs were gathered
     ElfW(Addr) reloc = 0;  // default for ET_EXEC
     ElfW(Addr) v_brk = 0;
     unsigned hatch[4], *hatch_p = 0;
@@ -744,7 +743,7 @@ upx_main2(  // returns entry address
     DPRINTF("   p_reloc=%%p\\n", p_reloc);
 #endif
     Extent xo, xi1, xi2;
-    xo.buf  = (char *)ehdr;
+    xo.buf  = (char *)ehdr;  // our temp copy
     xo.size = bi->sz_unc;  // can require bi aligned(4)
     xi2.buf = CONST_CAST(char *, bi); xi2.size = bi->sz_cpr + sizeof(*bi);
     xi1.buf = CONST_CAST(char *, bi); xi1.size = sz_compressed;
@@ -752,6 +751,7 @@ upx_main2(  // returns entry address
     // ehdr = Uncompress Ehdr and Phdrs
     unpackExtent(&xi2, &xo);  // never filtered?
 
+    // All except __powerpc64__
 #if defined(__x86_64) || defined(__aarch64__) || defined(__riscv)  //{
     ElfW(Addr) *const p_reloc = &auxv_up(av, AT_NULL,
         ((ElfW(Phdr) *)(1+ (ElfW(Ehdr) *)elfaddr))[1].p_paddr)->a_un.a_val;
@@ -761,9 +761,13 @@ upx_main2(  // returns entry address
     ElfW(Addr) page_mask = get_page_mask(); (void)page_mask;
     DPRINTF("upx_main21  .e_entry=%%p  p_reloc=%%p  *p_reloc=%%p  page_mask=%%p\\n",
         ehdr->e_entry, p_reloc, (p_reloc ? *p_reloc : 0), page_mask);
-    ElfW(Phdr) *phdr = (ElfW(Phdr) *)(1+ ehdr);
+    ElfW(Phdr) *phdr = (ElfW(Phdr) *)(1+ ehdr);  // local: Phdrs were gathered
 
     // De-compress Ehdr again into actual position, then de-compress the rest.
+    if (ehdr->e_phoff != sizeof(ElfW(Ehdr))) { // EPShdr was used
+        xi1.buf = xi2.buf;  // Resume at next b_info after EPShdr
+        xi1.size -= bi->sz_cpr + sizeof(*bi);
+    }
     void *reloc = do_xmap(ehdr, &xi1, 0, av, elfaddr);
     char *entry = reloc + ((ElfW(Ehdr) *)ehdr)->e_entry;
     DPRINTF("upx_main22  entry=%%p  reloc=%%p\\n", entry, reloc);
