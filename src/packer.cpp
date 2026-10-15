@@ -44,12 +44,8 @@ PackerBase::PackerBase(InputFile *f)
     // therefore allow larger files, see UPX_RSIZE_MAX_NOCOMP
     if (opt_is_compress(opt->cmd)) {
         mem_size_assert(1, file_size_u); // limited by UPX_RSIZE_MAX
-    } else {
-        assert_noexcept(file_size_u <= UPX_RSIZE_MAX_NOCOMP);
-        assert_noexcept(mem_size_valid_bytes_nocomp(file_size_u));
-    }
-    assert_noexcept(file_size_i32 == file_size);
-    assert_noexcept(file_size_u32 == file_size_u);
+    } else if (UPX_RSIZE_MAX_NOCOMP < file_size || UPX_RSIZE_MAX_NOCOMP < file_size_u)
+        throwCantUnpack("file too big: %u < %llu", UPX_RSIZE_MAX_NOCOMP, file_size);
 }
 
 Packer::Packer(InputFile *f) : PackerBase(f) { uip = new UiPacker(this); }
