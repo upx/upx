@@ -1,7 +1,8 @@
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 # CC CompilationCheck: compile with various mingw-gcc versions and run tests with Wine
 
-name: 'Weekly CI CC - Alpine Linux MinGW'
+#name: 'Weekly CI CC - Alpine Linux MinGW'
+name: 'alpine-mingw'
 on:
   workflow_dispatch:
 defaults: { run: { shell: bash } }
@@ -45,15 +46,17 @@ jobs:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         shell: sh
         run: |
-          apk update && apk upgrade && apk add bash cmake coreutils file git make tar util-linux xz zstd
+          apk update && apk upgrade && apk add bash cmake coreutils file git make parallel strace tar util-linux xz zstd
           apk add mingw-w64-gcc
           test "${{ matrix.i686_mingw }}" = "true" && apk add i686-mingw-w64-gcc
           true
+      - run: set -x; cat /etc/alpine-release || true
       - name: 'Install Wine'
         if: ${{ matrix.wine }}
         run: |
           apk add wine
           test -f /usr/bin/wine || ln -s -v wine64 /usr/bin/wine # needed for Alpine < 3.18
+          ls -ldF /usr/bin/wine* || true
           mkdir -p -v ~/.wine
           wineboot --init
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
@@ -100,7 +103,7 @@ jobs:
           (cd build && shopt -s nullglob && cp -v -ai --parents */upx{,.exe} */*/*/upx{,.exe} "../tmp/artifact/$N")
           (cd build && shopt -s globstar && cp -v -ai --parents **/dt_cxxlib.* "../tmp/artifact/$N")
           if command -v hardlink >/dev/null; then (cd "tmp/artifact/$N" && hardlink .) fi
-          (cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la)
+          (cd tmp/artifact && tar --sort=name --zstd -cf "$N.tar.zst" "$N" && rm -rf "./$N" && ls -la && zstd -tq "$N.tar.zst")
           # currently need at least Alpine >= 3.16 for working nodejs on current GitHub Actions runner host
           case "${{ matrix.container }}" in
             i386/*) ;; # i386: missing nodejs on GitHub runner host
