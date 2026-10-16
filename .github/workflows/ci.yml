@@ -6,7 +6,7 @@
 
 name: CI
 
-on: [push, workflow_dispatch]
+on: [pull_request, push, workflow_dispatch]
 
 defaults: { run: { shell: bash } }
 

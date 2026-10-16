@@ -236,3 +236,8 @@ jobs:
       - name: 'Mimic ctest tests with Wine - mingw64/release'
         if: ${{ matrix.wine }}
         run: 'env -C build/extra/cross-windows-mingw64/release upx_exe=./upx.exe upx_exe_runner=wine bash "$PWD"/misc/testsuite/mimic_ctest.sh'
+
+      - run: apk add binutils
+      - run: ls -l build/*/*/*/upx.exe || true
+      - run: size  build/*/*/*/upx.exe || true
+      - run: file  build/*/*/*/upx.exe || true
