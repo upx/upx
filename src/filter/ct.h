@@ -25,6 +25,8 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
+#pragma once
+
 /*************************************************************************
 // 16-bit calltrick ("naive")
 **************************************************************************/
@@ -316,6 +318,7 @@ static int s_ct24arm_le(Filter *f) {
 }
 
 #undef CT24ARM_LE
+#undef ARMCT_COND_le
 
 #define CT24ARM_BE(f, cond, addvalue, get, set)                                                    \
     byte *b = f->buf;                                                                              \
@@ -348,10 +351,10 @@ static int s_ct24arm_be(Filter *f) {
 }
 
 #undef CT24ARM_BE
-#undef ARMCT_COND
+#undef ARMCT_COND_be
 
 /*************************************************************************
-// 26-bit ARM calltrick ("naive")
+// 26-bit ARM64 calltrick ("naive")
 **************************************************************************/
 
 #define CT26ARM_LE(f, cond, addvalue, get, set)                                                    \
@@ -383,6 +386,9 @@ static int u_ct26arm_le(Filter *f) {
 static int s_ct26arm_le(Filter *f) {
     CT26ARM_LE(f, ARMCT_COND, a + f->addvalue, get_le26, set_dummy)
 }
+
+#undef CT26ARM_LE
+#undef ARMCT_COND
 
 static int CTarm64(Filter *f, int dir) { // dir: 1, 0, -1
     byte *b = f->buf;                    // will be incremented
@@ -421,6 +427,10 @@ static int f_CTarm64_le(Filter *f) { return CTarm64(f, 1); }
 static int u_CTarm64_le(Filter *f) { return CTarm64(f, -1); }
 
 static int s_CTarm64_le(Filter *f) { return CTarm64(f, 0); }
+
+/*************************************************************************
+// doctest checks
+**************************************************************************/
 
 TEST_CASE("ARM64 enhanced filter conditional offsets") {
     const unsigned instructions[] = {
@@ -466,8 +476,5 @@ TEST_CASE("ARM64 enhanced filter final instruction") {
             CHECK(buf[i] == 0xa5);
     }
 }
-
-#undef CT26ARM_LE
-#undef ARMCT_COND
 
 /* vim:set ts=4 sw=4 et: */

@@ -23,22 +23,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { container: 'alpine:3.11', wine: true,  i686_mingw: false } # wine-4.0.3
-          - { container: 'alpine:3.12', wine: true,  i686_mingw: false } # wine-4.0.3
-          - { container: 'alpine:3.13', wine: true,  i686_mingw: false } # wine-4.0.3
-          - { container: 'alpine:3.14', wine: true,  i686_mingw: false } # wine-6.18
-          - { container: 'alpine:3.15', wine: true,  i686_mingw: false } # wine-6.23
-          - { container: 'alpine:3.16', wine: true,  i686_mingw: false } # wine-7.8
-          - { container: 'alpine:3.17', wine: true,  i686_mingw: false } # wine-7.21
+          - { container: 'alpine:3.11', wine: true,  i686_mingw: false } # wine-4.0.3 gcc-9.2
+          - { container: 'alpine:3.12', wine: true,  i686_mingw: false } # wine-4.0.3 gcc-9.3
+          - { container: 'alpine:3.13', wine: true,  i686_mingw: false } # wine-4.0.3 gcc-10.2
+          - { container: 'alpine:3.14', wine: true,  i686_mingw: false } # wine-6.18  gcc-10.3
+          - { container: 'alpine:3.15', wine: true,  i686_mingw: false } # wine-6.23  gcc-11.2
+          - { container: 'alpine:3.16', wine: true,  i686_mingw: false } # wine-7.8   gcc-11.3
+          - { container: 'alpine:3.17', wine: true,  i686_mingw: false } # wine-7.21  gcc-12.2
           # Wine >= 8.0 can run i686 32-bit programs in WOW64 mode on pure 64-bit systems
-          - { container: 'alpine:3.18', wine: true,  i686_mingw: true }  # wine-8.13
-          - { container: 'alpine:3.19', wine: true,  i686_mingw: true }  # wine-8.21
-          - { container: 'alpine:3.20', wine: true,  i686_mingw: true }  # wine-9.0
-          - { container: 'alpine:3.21', wine: true,  i686_mingw: true }  # wine-9.x
-          - { container: 'alpine:3.22', wine: true,  i686_mingw: true }  # wine-10.x
-          - { container: 'alpine:3.23', wine: true,  i686_mingw: true }  # wine-xx.x
-          - { container: 'alpine:3.24', wine: true,  i686_mingw: true }  # wine-xx.x
-          - { container: 'alpine:edge', wine: true,  i686_mingw: true }  # wine-xx.x
+          - { container: 'alpine:3.18', wine: true,  i686_mingw: true }  # wine-8.13  gcc-12.2
+          - { container: 'alpine:3.19', wine: true,  i686_mingw: true }  # wine-8.21  gcc-13.2
+          - { container: 'alpine:3.20', wine: true,  i686_mingw: true }  # wine-9.0   gcc-13.2
+          - { container: 'alpine:3.21', wine: true,  i686_mingw: true }  # wine-9.17  gcc-14.2
+          - { container: 'alpine:3.22', wine: true,  i686_mingw: true }  # wine-10.7  gcc-14.2
+          - { container: 'alpine:3.23', wine: true,  i686_mingw: true }  # wine-10.19 gcc-15.2
+          - { container: 'alpine:3.24', wine: true,  i686_mingw: true }  # wine-11.0  gcc-15.2
+          - { container: 'alpine:edge', wine: true,  i686_mingw: true }  # wine-xx.x  gcc-x.x
     name: ${{ format('container {0}', matrix.container) }}
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
