@@ -6941,7 +6941,8 @@ PackLinuxElf64::unRela64(
             if (R_AARCH64_JUMP_SLOT == r_type) {
                 ++n_jmp_slot;
                 // .rela.plt contains offset of the "first time" target
-                if (jump_slots.getSize() < (r_offset - plt_va)) {
+                if (jump_slots.getSize() < (r_offset - plt_va)
+                ||  jump_slots.getSize() - (r_offset - plt_va) < sizeof(upx_uint64_t)) {
                     throwInternalError("bad r_offset for jump_slots");
                 }
                 // really upx_uint64_t *, but clang makes it hard to say that
