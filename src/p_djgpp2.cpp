@@ -164,10 +164,12 @@ int PackDjgpp2::readFileHeader() {
         fi->readx(magic, 8);
         if (memcmp("go32stub", magic, 8) != 0)
             return 0; // not V2 image
-    }
-    coff_offset = 512 * get_le16(&dos_hdr.e_cp);
-    if (get_le16(&dos_hdr.e_cblp) != 0)
-        coff_offset += get_le16(&dos_hdr.e_cblp) - 512;
+        coff_offset = 512 * get_le16(&dos_hdr.e_cp);
+        if (get_le16(&dos_hdr.e_cblp) != 0)
+            coff_offset += get_le16(&dos_hdr.e_cblp) - 512;
+    } else
+        coff_offset =
+            0; // no stub: the COFF header is at the start (and the bytes above aren't DOS fields)
     fi->seek(coff_offset, SEEK_SET);
     if (fi->read(&coff_hdr, sizeof(coff_hdr)) != sizeof(coff_hdr))
         throwCantPack("skipping djgpp symlink");
