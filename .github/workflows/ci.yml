@@ -55,6 +55,7 @@ jobs:
       - run: dpkg -l
       - name: ${{ format('Check out {0} source code', github.ref_name) }}
         run: |
+          set -x
           git config --global --add safe.directory '*' # needed when running in a container
           git clone --branch "$GITHUB_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" .
           git submodule update --init
