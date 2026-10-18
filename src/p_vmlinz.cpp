@@ -165,6 +165,9 @@ int PackVmlinuzI386::decompressKernel()
     {
     const upx_byte *base = nullptr;
     unsigned relocated = 0;
+    // keep the raw-pointer signature scans below inside obuf
+    const upx_byte *const ibeg = &obuf[0];
+    const upx_byte *const iend = ibeg + file_size;
 
     // See startup_32: in linux/arch/i386/boot/compressed/head.S
     const upx_byte *p;
@@ -175,7 +178,7 @@ int PackVmlinuzI386::decompressKernel()
         cpa_0 = h.kernel_alignment;
         cpa_1 = 0u - cpa_0;
     } else
-    for ((p = &obuf[setup_size]), (j= 0); j < 0x200; ++j, ++p) {
+    for ((p = &obuf[setup_size]), (j= 0); j < 0x200 && p + 0x11 <= iend; ++j, ++p) {
         if (0==memcmp("\x89\xeb\x81\xc3", p, 4)
         &&  0==memcmp("\x81\xe3",      8+ p, 2)) {
             // movl %ebp,%ebx
@@ -186,7 +189,7 @@ int PackVmlinuzI386::decompressKernel()
             break;
         }
     }
-    for ((p = &obuf[setup_size]), (j= 0); j < 0x200; ++j, ++p) {
+    for ((p = &obuf[setup_size]), (j= 0); j < 0x200 && p + 0x11 <= iend; ++j, ++p) {
         if (0==memcmp("\x8d\x83",    p, 2)  // leal d32(%ebx),%eax
         &&  0==memcmp("\xff\xe0", 6+ p, 2)  // jmp *%eax
         ) {
@@ -224,7 +227,7 @@ int PackVmlinuzI386::decompressKernel()
     }
     if (base && relocated) {
         p = base + relocated;
-        for (j = 0; j < 0x200; ++j, ++p) {
+        for (j = 0; j < 0x200 && ibeg <= p && p + 8 <= iend; ++j, ++p) {
             if (0==memcmp("\x01\x9c\x0b", p, 3)  // addl %ebx,d32(%ebx,%ecx)
             ) {
                 page_offset = 0u - get_te32(3+ p);
