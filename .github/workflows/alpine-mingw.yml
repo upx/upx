@@ -51,6 +51,7 @@ jobs:
           test "${{ matrix.i686_mingw }}" = "true" && apk add i686-mingw-w64-gcc
           true
       - run: set -x; cat /etc/alpine-release || true
+      - run: (apk info -v | LC_ALL=C sort) || true
       - name: 'Install Wine'
         if: ${{ matrix.wine }}
         run: |
@@ -59,6 +60,7 @@ jobs:
           ls -ldF /usr/bin/wine* || true
           mkdir -p -v ~/.wine
           wineboot --init
+      - run: (apk info -v | LC_ALL=C sort) || true
       - name: ${{ format('Check out UPX {0} source code', github.ref_name) }}
         run: |
           git config --global --add safe.directory '*' # needed when running in a container

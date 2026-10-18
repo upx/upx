@@ -715,7 +715,10 @@ void show_sysinfo(const char *options_var) {
 #elif defined(__pie__)
         cf_print("__pie__", "%lld", __pie__ + 0, 3);
 #endif
-        cf_print("upx_alignas_max", "%lld", alignof(std::max_align_t), 4);
+#if defined(__CHAR_UNSIGNED__)
+        cf_print("__CHAR_UNSIGNED__", "%lld", __CHAR_UNSIGNED__ + 0, 4);
+#endif
+        cf_print("upx_alignas_max", "%lld", alignof(std::max_align_t), 3);
         cf_print("alignof(char)", "%lld", alignof(char), 4);
         cf_print("alignof(short)", "%lld", alignof(short), 4);
         cf_print("alignof(int)", "%lld", alignof(int), 4);

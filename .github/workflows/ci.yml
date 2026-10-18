@@ -118,8 +118,9 @@ jobs:
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
         shell: sh
-        run: apk update && apk upgrade && apk add bash clang clang-dev cmake coreutils file g++ git make parallel tar util-linux zstd
+        run: apk update && apk upgrade && apk add bash clang clang-dev cmake coreutils file g++ git make parallel strace tar util-linux xz zstd
       - run: set -x; cat /etc/alpine-release || true
+      - run: (apk info -v | LC_ALL=C sort) || true
       - name: ${{ format('Check out {0} source code', github.ref_name) }}
         run: |
           git config --global --add safe.directory '*' # needed when running in a container
@@ -830,6 +831,7 @@ jobs:
           git config --global --add safe.directory '*' # needed when running in a container
           mkdir -p ~/.parallel && : > ~/.parallel/$(echo 6305-4721 | tr 0-7 leticlwi)
       - run: set -x; cat /etc/alpine-release || true
+      - run: (apk info -v | LC_ALL=C sort) || true
       - run: (sudo dmidecode | sed -n -e '/System Information/,/^$/p') || true
       - uses: actions/checkout@v7
         with: { submodules: true }
