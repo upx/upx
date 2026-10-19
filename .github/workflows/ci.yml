@@ -691,8 +691,13 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite
           mkdir -p -v build/$C/$B/{bzip2,ucl,upx,zlib,zstd}
-          repository_name="${REMOTE_REPOSITORY##*/}" # basename
-          echo "H=d:\\a\\$repository_name\\$repository_name" >> $GITHUB_ENV
+          #repository_name="${REMOTE_REPOSITORY##*/}" # basename
+          #echo "H=d:\\a\\$repository_name\\$repository_name" >> $GITHUB_ENV
+          echo "$PWD"; ls -laF
+          H="$PWD"
+          H="${H/#\/c\//C:\/}"
+          H="${H/#\/d\//D:\/}"
+          echo "H=$H" >> $GITHUB_ENV
       # uses: ilammy/msvc-dev-cmd@v1
       - uses: m-doughty/msvc-dev-cmd@node24-v1
         with: { vsversion: '${{ matrix.vsversion }}', arch: '${{ matrix.vsarch }}' }

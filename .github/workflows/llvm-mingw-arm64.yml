@@ -92,15 +92,17 @@ jobs:
           rm ./llvm-mingw*.zip
           # update PATH
           cd ./llvm-mingw*/bin
-          #echo "PATH=$PWD:$PATH" >> $GITHUB_ENV
           echo "$PWD"; ls -laF
-          x="${PWD/#\/c\//C:\/}"
-          #x="${PWD/#\/c\//\/}"
+          x="$PWD"
+          x="${x/#\/c\//C:\/}"
+          x="${x/#\/d\//D:\/}"
+          #echo "PATH=$PWD:$PATH" >> $GITHUB_ENV
           #echo "PATH=$x:$PATH" >> $GITHUB_ENV
           echo "PATH=$x:$PWD:$PATH" >> $GITHUB_ENV
           # set CMAKE_MAKE_PROGRAM
           m="$(command -v make)"
           m="${m/#\/c\//C:\/}"
+          m="${m/#\/d\//D:\/}"
           echo "CMAKE_MAKE_PROGRAM=$m" >> $GITHUB_ENV
 
       - run: ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
