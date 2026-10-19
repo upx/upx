@@ -1151,13 +1151,16 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     alloc_mb_EPShdri(mb_EPShdri, sizeof(ehdri)
         + e_phnum * sizeof(Elf64_Phdr)
         + e_shnum * sizeof(Elf64_Shdr) );
-    void *EPSptr = mempcpy(mb_EPShdri.getVoidPtr(), &ehdri, sizeof(ehdri));
+    char *EPSptr = (char *)mb_EPShdri.getVoidPtr();
+    memcpy(EPSptr, &ehdri, sizeof(ehdri));
+    EPSptr +=              sizeof(ehdri);  // no mempcpy
     if (file_size_u32 < (unsigned)e_phoff + e_phnum * sizeof(Elf64_Phdr)) {
         phdri = nullptr;
     } else
     {
         phdri= (Elf64_Phdr *)(e_phoff + file_image);  // do not free() !!
-        EPSptr = mempcpy(EPSptr, phdri, e_phnum * sizeof(Elf64_Phdr));
+        memcpy(EPSptr, phdri, e_phnum * sizeof(Elf64_Phdr));
+        EPSptr +=             e_phnum * sizeof(Elf64_Phdr);
     }
 
     if (CMD_COMPRESS != opt->cmd) {
@@ -1168,7 +1171,8 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     } else
     {
         shdri= (Elf64_Shdr *)(e_shoff + file_image);  // do not free() !!
-        EPSptr = mempcpy(EPSptr, shdri, e_shnum * sizeof(Elf64_Shdr));
+        memcpy(EPSptr, shdri, e_shnum * sizeof(Elf64_Shdr));
+        EPSptr +=             e_shnum * sizeof(Elf64_Shdr);
         sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
         if (sec_dynsym) {
             unsigned t = get_te32(&sec_dynsym->sh_link);
@@ -1219,7 +1223,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
             }
         }
     }
-    /* mb_EPShdri.raw_size_in_bytes */
+    (void)EPSptr;
 
     Elf64_Phdr const *phdr= phdri;
     for (int j = e_phnum; --j>=0; ++phdr) {

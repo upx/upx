@@ -539,27 +539,29 @@ unsigned PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
         }
         // update checksum of uncompressed data
         u_adler = upx_adler32(ibuf + inlen, sz_unc, u_adler);
-        // write block
-        if (fo) {
-            if (is_rewrite) {
-                fo->rewrite(ibuf, sz_unc);
+        if (0xff != hdr.b_extra) { // omit EPShdr info
+            // write block
+            if (fo) {
+                if (is_rewrite) {
+                    fo->rewrite(ibuf, sz_unc);
+                }
+                else {
+                    fo->write(ibuf, sz_unc);
+                    total_out += sz_unc;
+                }
             }
-            else {
-                fo->write(ibuf, sz_unc);
-                total_out += sz_unc;
+            else if (is_rewrite < 0) { // append to &ibuf[inlen]
+                inlen += sz_unc;  // accounting; data is already there
+                if (wanted <= (unsigned)sz_unc)  // done
+                    break;
             }
+            else if (wanted < (unsigned)sz_unc) // mismatched end-of-block
+                throwCantUnpack("corrupt b_info");
+            else { // "upx -t": (!fo && !(is_rewrite < 0))
+                // No output.
+            }
+            wanted -= sz_unc;
         }
-        else if (is_rewrite < 0) { // append to &ibuf[inlen]
-            inlen += sz_unc;  // accounting; data is already there
-            if (wanted <= (unsigned)sz_unc)  // done
-                break;
-        }
-        else if (wanted < (unsigned)sz_unc) // mismatched end-of-block
-            throwCantUnpack("corrupt b_info");
-        else { // "upx -t": (!fo && !(is_rewrite < 0))
-            // No output.
-        }
-        wanted -= sz_unc;
     }
     return inlen;
 }
