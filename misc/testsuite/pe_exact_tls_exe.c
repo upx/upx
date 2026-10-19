@@ -11,8 +11,8 @@ static volatile LONG process_callbacks;
 static THREAD_LOCAL volatile LONG thread_callbacks;
 
 static void NTAPI tls_callback(PVOID module, DWORD reason, PVOID reserved) {
-    (void)module;
-    (void)reserved;
+    (void) module;
+    (void) reserved;
     if (reason == DLL_PROCESS_ATTACH)
         InterlockedIncrement(&process_callbacks);
     else if (reason == DLL_THREAD_ATTACH)
@@ -23,12 +23,12 @@ static void NTAPI tls_callback(PVOID module, DWORD reason, PVOID reserved) {
 #pragma section(".CRT$XLB", read)
 __declspec(allocate(".CRT$XLB")) static PIMAGE_TLS_CALLBACK volatile callback_entry = tls_callback;
 #else
-static PIMAGE_TLS_CALLBACK volatile callback_entry
-    __attribute__((section(".CRT$XLB"), used)) = tls_callback;
+static PIMAGE_TLS_CALLBACK volatile callback_entry __attribute__((section(".CRT$XLB"), used)) =
+    tls_callback;
 #endif
 
 static DWORD WINAPI check_tls(LPVOID argument) {
-    (void)argument;
+    (void) argument;
     tls_value += 1;
     return tls_value == 38 && thread_callbacks == 1 ? 0 : 1;
 }

@@ -100,8 +100,8 @@ int main(int argc, char **argv) {
         auto &last = sections.back();
         last.VirtualAddress = MAXDWORD - 15;
         last.Misc.VirtualSize = 1;
-        std::memcpy(bytes.data() + section_offset + (sections.size() - 1) * sizeof(last),
-                    &last, sizeof(last));
+        std::memcpy(bytes.data() + section_offset + (sections.size() - 1) * sizeof(last), &last,
+                    sizeof(last));
         return write_fixture(argv[2], bytes);
     }
     if (std::strcmp(mode, "overlay") == 0) {
@@ -117,8 +117,8 @@ int main(int argc, char **argv) {
             last.Misc.VirtualSize >= last.SizeOfRawData || (raw_end - 1) % file_alignment == 0)
             return fail("fixture needs last-section padding with an unaligned end");
         last.SizeOfRawData--;
-        std::memcpy(bytes.data() + section_offset + (sections.size() - 1) * sizeof(last),
-                    &last, sizeof(last));
+        std::memcpy(bytes.data() + section_offset + (sections.size() - 1) * sizeof(last), &last,
+                    sizeof(last));
         for (size_t i = 0; i < 513; i++)
             bytes.push_back(static_cast<unsigned char>((37 * i + 11) & 255));
         return write_fixture(argv[2], bytes);
@@ -136,9 +136,8 @@ int main(int argc, char **argv) {
         if (!read_struct(bytes, directory_offset, directory) ||
             !read_struct(bytes, flags_offset, dll_flags))
             return fail("invalid load configuration");
-        size_t offset = directory.Size >= config_size
-                            ? rva_to_offset(sections, directory.VirtualAddress)
-                            : 0;
+        size_t offset =
+            directory.Size >= config_size ? rva_to_offset(sections, directory.VirtualAddress) : 0;
         if (!offset) {
             // GNU ld emits no load configuration and some linkers stop before GuardFlags.
             // Add a zeroed one in zero raw padding, as the CET fixture does for its debug entries.
@@ -202,11 +201,14 @@ int main(int argc, char **argv) {
             IMAGE_DATA_DIRECTORY directory = {};
             directory.VirtualAddress = section.VirtualAddress + static_cast<DWORD>(padding);
             directory.Size = sizeof(entries);
-            std::memcpy(bytes.data() + section.PointerToRawData + padding, entries, sizeof(entries));
-            std::memcpy(bytes.data() + directories + IMAGE_DIRECTORY_ENTRY_DEBUG * sizeof(directory),
+            std::memcpy(bytes.data() + section.PointerToRawData + padding, entries,
+                        sizeof(entries));
+            std::memcpy(bytes.data() + directories +
+                            IMAGE_DIRECTORY_ENTRY_DEBUG * sizeof(directory),
                         &directory, sizeof(directory));
             section.Misc.VirtualSize = static_cast<DWORD>(end);
-            std::memcpy(bytes.data() + section_offset + i * sizeof(section), &section, sizeof(section));
+            std::memcpy(bytes.data() + section_offset + i * sizeof(section), &section,
+                        sizeof(section));
             const DWORD flags = 1; // IMAGE_DLLCHARACTERISTICS_EX_CET_COMPAT
             const size_t payload = bytes.size();
             bytes.resize(payload + sizeof(flags));
@@ -377,8 +379,7 @@ int main(int argc, char **argv) {
                 const auto &a = sections[i];
                 const auto &b = sections[j];
                 if (!a.PointerToRawData || a.PointerToRawData >= b.PointerToRawData ||
-                    !a.SizeOfRawData ||
-                    a.SizeOfRawData != b.SizeOfRawData)
+                    !a.SizeOfRawData || a.SizeOfRawData != b.SizeOfRawData)
                     continue;
                 swap_first = a.PointerToRawData;
                 swap_second = b.PointerToRawData;

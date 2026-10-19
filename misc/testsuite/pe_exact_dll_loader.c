@@ -18,12 +18,14 @@ int main(int argc, char **argv) {
     HMODULE module = LoadLibraryA(argv[1]);
     if (!module)
         return 3;
-    status_fn_t status = (status_fn_t) (void (*)(void)) GetProcAddress(module, "pe_exact_dll_status");
+    status_fn_t status =
+        (status_fn_t) (void (*)(void)) GetProcAddress(module, "pe_exact_dll_status");
     if (!status || !status())
         return 4;
     if (no_tls)
         return FreeLibrary(module) ? 0 : 7;
-    tls_add_fn_t tls_add = (tls_add_fn_t) (void (*)(void)) GetProcAddress(module, "pe_exact_dll_tls_add");
+    tls_add_fn_t tls_add =
+        (tls_add_fn_t) (void (*)(void)) GetProcAddress(module, "pe_exact_dll_tls_add");
     if (!tls_add || tls_add(5) != 42)
         return 4;
     HANDLE thread = CreateThread(NULL, 0, check_thread_tls, (LPVOID) tls_add, 0, NULL);

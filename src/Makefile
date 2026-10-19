@@ -97,6 +97,7 @@ CLANG_FORMAT_EXCLUDE_FILES += p_lx_% p_mach% p_unix% p_vmlin%
 CLANG_FORMAT_FILES := $(sort $(wildcard *.[ch]* ../maint/src/*.[ch]* */*.[ch]*))
 CLANG_FORMAT_FILES += $(sort $(wildcard stub/tools/*/*.[ch]*))
 CLANG_FORMAT_FILES += $(sort $(wildcard ../misc/cmake/try_compile/*.[ch]*))
+CLANG_FORMAT_FILES += $(sort $(wildcard ../misc/testsuite/*.[ch]*))
 CLANG_FORMAT_FILES := $(sort $(filter-out $(CLANG_FORMAT_EXCLUDE_FILES),$(CLANG_FORMAT_FILES)))
 clang-format: $(CLANG_FORMAT_FILES) PHONY
 	@echo "running upx-clang-format"

@@ -21,9 +21,7 @@ __declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVO
     return TRUE;
 }
 
-__declspec(dllexport) int pe_exact_dll_status(void) {
-    return process_attach_count == 1;
-}
+__declspec(dllexport) int pe_exact_dll_status(void) { return process_attach_count == 1; }
 
 __declspec(dllexport) int pe_exact_dll_tls_add(int value) {
     tls_value += value;
