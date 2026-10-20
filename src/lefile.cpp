@@ -123,6 +123,17 @@ void LeFile::writeFixupPageTable() {
 }
 
 void LeFile::readFixups() {
+    // The fixup page table stores one offset into the fixup record table per
+    // page, plus a terminating offset. The buffer sized below starts at the
+    // first offset, and the record walks (here via sofixups, in
+    // LeFile::countFixups, and in PackWcle::preprocessFixups) index it with
+    // those offsets. A nonzero first offset, or a non-monotonic table, lets a
+    // walk run past this buffer, so reject such a table before allocating.
+    if (get_le32(ifpage_table) != 0)
+        throwCantPack("bad fixup page table");
+    for (unsigned ic = 1; ic <= pages; ic++)
+        if (get_le32(ifpage_table + ic) < get_le32(ifpage_table + ic - 1))
+            throwCantPack("bad fixup page table");
     sofixups = get_le32(ifpage_table + pages) - get_le32(ifpage_table);
     ifixups = New(byte, sofixups);
     fif->seek(le_offset + ih.fixup_record_table_offset, SEEK_SET);
