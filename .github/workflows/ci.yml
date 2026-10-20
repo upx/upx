@@ -16,8 +16,9 @@ env:
   CTEST_OUTPUT_ON_FAILURE: 'ON'
   DEBIAN_FRONTEND: noninteractive
   NO_COLOR: 1
-  REMOTE_REF_NAME: ${{ github.event.pull_request.base.ref || github.ref_name }}
+  REMOTE_REF_NAME: ${{ github.event.pull_request.head.ref || github.ref_name }}
   REMOTE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+  REMOTE_SERVER_URL: ${{ github.server_url }}
   UPX_CMAKE_BUILD_FLAGS: --verbose
   UPX_CMAKE_CONFIG_FLAGS: -Wdev --warn-uninitialized
   UPX_CONFIG_HAVE_WORKING_BUILD_RPATH: 'ON'
@@ -58,8 +59,12 @@ jobs:
       - name: ${{ format('Check out {0} source code', github.ref_name) }}
         run: |
           set -x
+          echo "${{ github.event.pull_request.base.repo.full_name }}"
+          echo "${{ github.event.pull_request.base.ref }}"
+          echo "${{ github.event.pull_request.head.repo.full_name }}"
+          echo "${{ github.event.pull_request.head.ref }}"
           git config --global --add safe.directory '*' # needed when running in a container
-          git clone --branch "$REMOTE_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$REMOTE_REPOSITORY" .
+          git clone --branch "$REMOTE_REF_NAME" --depth 1 "$REMOTE_SERVER_URL/$REMOTE_REPOSITORY" .
           git submodule update --init
           git fsck --strict --progress
       - run: ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
@@ -126,7 +131,7 @@ jobs:
       - name: ${{ format('Check out {0} source code', github.ref_name) }}
         run: |
           git config --global --add safe.directory '*' # needed when running in a container
-          git clone --branch "$REMOTE_REF_NAME" --depth 1 "$GITHUB_SERVER_URL/$REMOTE_REPOSITORY" .
+          git clone --branch "$REMOTE_REF_NAME" --depth 1 "$REMOTE_SERVER_URL/$REMOTE_REPOSITORY" .
           git submodule update --init
           git clone --depth=1 https://github.com/upx/upx-testsuite ../upx-testsuite
           # prepare environment
