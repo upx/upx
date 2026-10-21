@@ -455,6 +455,7 @@ amd64-linux.elf-so_entry.h : $(srcdir)/src/amd64-linux.elf-so_entry.lds \
 amd64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/$$T.o \
 	    tmp/amd64-expand.o \
+	    tmp/amd64-linux.elf-help_umf.o \
 	    tmp/amd64-linux.elf-upxfd_linux.o \
 	    tmp/amd64-linux.elf-main2.o
 # FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
@@ -867,6 +868,8 @@ arm64-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
 arm64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
             tmp/$$T.o \
             tmp/arm64-expand.o \
+            tmp/arm64-linux.elf-help_umf.o \
+            tmp/arm64-linux.elf-upxfd_linux.o \
             tmp/arm64-linux.elf-main2.o
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.bin | $(RTRIM) | $(EXPAND) > tmp/$T.bin.disasm
@@ -2172,6 +2175,7 @@ tmp/powerpc64le-linux.elf-main2.s: $(srcdir)/src/$$T.c $(srcdir)/src/amd64-linux
 tmp/powerpc64le-linux.elf-upxfd_linux.s : $(srcdir)/src/upxfd_linux.c
 	$(call tc,gcc) -S -O $< -o - \
 	    | sed -e '/^\t\.file\t/d' \
+	          -e 's/section.*\.text.*/section UMF_LINUX/' \
 	          -e 's/L[0-9][0-9]*/L8&/g' \
 	          -e $$(cat src/dollar-dollar.sed) \
 	        -e 's/[ \t]j[ \t][ \t]*$$31/	jr $$31/' \

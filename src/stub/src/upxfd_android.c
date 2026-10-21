@@ -211,6 +211,7 @@ unsigned long upx_mmap_and_fd_android( // returns (mapped_addr | (1+ fd))
     int fd = -ENOSYS;
     if (!ANDROID_TEST) {
         char const *name = addr_string("upx");
+// FIXME?  consider using upxfd_create()
         fd = memfd_create(name, MFD_EXEC);
         if (-EINVAL == fd) { // MFD_EXEC unknown to ubuntu-20.04
             fd = memfd_create(name, 0);  // try again

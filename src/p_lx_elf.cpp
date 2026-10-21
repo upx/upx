@@ -1905,6 +1905,8 @@ PackLinuxElf64::buildLinuxLoader(
                 "LZMA_DAISY,LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
         }
         len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "EXP_TAIL");
+        // Android on EM_AARCH64 has memfd_create(), so UMF_ANDROID not needed.
+        len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "HUMF_L,UMF_LINUX");
         if (hasLoaderSection("SYSCALLS")) {
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "SYSCALLS");
         }

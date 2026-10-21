@@ -11,17 +11,16 @@ TARGET(elf64-powerpcle)
 LOAD tmp/powerpc64le-linux.elf-fold.o
 OUTPUT(tmp/powerpc64le-linux.elf-fold.bin elf64-powerpcle)
 
-.text           0x0000000000000000     0x128c
- .text          0x0000000000000000     0x128c tmp/powerpc64le-linux.elf-fold.o
+.text           0x0000000000000000     0x10e4
+ .text          0x0000000000000000     0x10e4 tmp/powerpc64le-linux.elf-fold.o
                 0x0000000000000014                get_page_mask
                 0x000000000000002c                Pprotect
                 0x0000000000000050                Psync
                 0x000000000000009c                Pmap
                 0x00000000000000c0                Punmap
-                0x000000000000031c                upx_mmap_and_fd_linux
-                0x0000000000000744                underlay
-                0x00000000000007d0                xfind_pages
-                0x00000000000010c0                upx_main2
+                0x000000000000059c                underlay
+                0x0000000000000628                xfind_pages
+                0x0000000000000f18                upx_main2
 
 HUMF_A          0x0000000000000000        0x4
  HUMF_A         0x0000000000000000        0x4 tmp/powerpc64le-linux.elf-fold.o
@@ -55,6 +54,10 @@ SYSCALLS        0x0000000000000000      0x15c
                 0x00000000000000ec                memfd_create
                 0x0000000000000130                memcpy
                 0x0000000000000154                my_bkpt
+
+UMF_LINUX       0x0000000000000000      0x1a8
+ UMF_LINUX      0x0000000000000000      0x1a8 tmp/powerpc64le-linux.elf-fold.o
+                0x0000000000000000                upx_mmap_and_fd_linux
 
 .comment        0x0000000000000000       0x65
  .comment       0x0000000000000000       0x65 tmp/powerpc64le-linux.elf-fold.o

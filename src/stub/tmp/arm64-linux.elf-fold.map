@@ -9,6 +9,8 @@ Linker script and memory map
                 0x0000000000000040                . = SIZEOF_HEADERS
 LOAD tmp/arm64-linux.elf-fold.o
 LOAD tmp/arm64-expand.o
+LOAD tmp/arm64-linux.elf-help_umf.o
+LOAD tmp/arm64-linux.elf-upxfd_linux.o
 LOAD tmp/arm64-linux.elf-main2.o
 OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
 
@@ -22,23 +24,36 @@ OUTPUT(tmp/arm64-linux.elf-fold.bin elf64-littleaarch64)
                 0x00000000000000c8                Pprotect
                 0x00000000000000c8                mprotect
  .text          0x0000000000000328        0x0 tmp/arm64-expand.o
+ .text          0x0000000000000328        0x0 tmp/arm64-linux.elf-help_umf.o
  .text          0x0000000000000328      0x9ec tmp/arm64-linux.elf-main2.o
                 0x000000000000051c                underlay
                 0x0000000000000588                xfind_pages
                 0x0000000000000b9c                upx_main2
 
+HUMF_A          0x0000000000000000        0x4
+ HUMF_A         0x0000000000000000        0x4 tmp/arm64-linux.elf-help_umf.o
+
+HUMF_L          0x0000000000000000        0x4
+ HUMF_L         0x0000000000000000        0x4 tmp/arm64-linux.elf-help_umf.o
+
+UMF_LINUX       0x0000000000000000      0x154
+ UMF_LINUX      0x0000000000000000      0x154 tmp/arm64-linux.elf-upxfd_linux.o
+                0x0000000000000000                upx_mmap_and_fd_linux
+
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/arm64-linux.elf-fold.o
  .data          0x0000000000000000        0x0 tmp/arm64-expand.o
+ .data          0x0000000000000000        0x0 tmp/arm64-linux.elf-help_umf.o
  .data          0x0000000000000000        0x0 tmp/arm64-linux.elf-main2.o
 
 .bss            0x0000000000000000        0x0
  .bss           0x0000000000000000        0x0 tmp/arm64-linux.elf-fold.o
  .bss           0x0000000000000000        0x0 tmp/arm64-expand.o
+ .bss           0x0000000000000000        0x0 tmp/arm64-linux.elf-help_umf.o
  .bss           0x0000000000000000        0x0 tmp/arm64-linux.elf-main2.o
 
-SYSCALLS        0x0000000000000000      0x118
- SYSCALLS       0x0000000000000000      0x118 tmp/arm64-linux.elf-fold.o
+SYSCALLS        0x0000000000000000      0x124
+ SYSCALLS       0x0000000000000000      0x124 tmp/arm64-linux.elf-fold.o
                 0x0000000000000000                my_bkpt
                 0x0000000000000008                exit
                 0x0000000000000010                read
@@ -47,14 +62,15 @@ SYSCALLS        0x0000000000000000      0x118
                 0x0000000000000034                getpid
                 0x0000000000000040                brk
                 0x000000000000004c                munmap
-                0x000000000000005c                upxfd_create
-                0x000000000000009c                ftruncate
-                0x00000000000000a8                unlink
-                0x00000000000000bc                readlink
-                0x00000000000000c4                open
-                0x00000000000000e0                __clear_cache
-                0x00000000000000f4                memcpy
-                0x0000000000000108                memset
+                0x000000000000005c                memfd_create
+                0x0000000000000068                upxfd_create
+                0x00000000000000a8                ftruncate
+                0x00000000000000b4                unlink
+                0x00000000000000c8                readlink
+                0x00000000000000d0                open
+                0x00000000000000ec                __clear_cache
+                0x0000000000000100                memcpy
+                0x0000000000000114                memset
 
 EXP_HEAD        0x0000000000000000      0x148
  EXP_HEAD       0x0000000000000000      0x148 tmp/arm64-expand.o

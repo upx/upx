@@ -521,6 +521,14 @@ O_DIRECTORY= 040000  //   0x04000
 O_TMPFILE= 020000000  // 0x400000
 
 ufdc_bits: .int O_RDWR|O_DIRECTORY|O_TMPFILE
+
+// Bare syscall memfd_create() for upx_mmap_and_fd(), which does
+// its own retry with no MFD_EXEC and fallback to /dev/shm,
+// plus calling openat() and ftruncate() and mmap()
+// Allowed to fail, so do not trap on error.
+memfd_create: .globl memfd_create
+        do_sys __NR_memfd_create; ret
+
 upxfd_create: .globl upxfd_create // (char *tag, unsigned flags)
         mov x3,x0  // save tag
 0: // try memfd_create

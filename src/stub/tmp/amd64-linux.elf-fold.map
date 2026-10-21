@@ -13,10 +13,17 @@ Linker script and memory map
                 0x000000000000015e                get_page_mask
  *fill*         0x0000000000000166        0x2 00
  .text          0x0000000000000168        0x0 tmp/amd64-expand.o
+ .text          0x0000000000000168        0x0 tmp/amd64-linux.elf-help_umf.o
  .text          0x0000000000000168      0x8ce tmp/amd64-linux.elf-main2.o
                 0x0000000000000320                xfind_pages
                 0x00000000000008de                upx_main2
                 0x00000000000002d5                underlay
+
+HUMF_A          0x0000000000000000        0x5
+ HUMF_A         0x0000000000000000        0x5 tmp/amd64-linux.elf-help_umf.o
+
+HUMF_L          0x0000000000000000        0x5
+ HUMF_L         0x0000000000000000        0x5 tmp/amd64-linux.elf-help_umf.o
 
 UMF_LINUX       0x0000000000000000       0xf9
  UMF_LINUX      0x0000000000000000       0xf9 tmp/amd64-linux.elf-upxfd_linux.o
@@ -25,38 +32,42 @@ UMF_LINUX       0x0000000000000000       0xf9
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
  .data          0x0000000000000000        0x0 tmp/amd64-expand.o
+ .data          0x0000000000000000        0x0 tmp/amd64-linux.elf-help_umf.o
  .data          0x0000000000000000        0x0 tmp/amd64-linux.elf-main2.o
 
 .bss            0x0000000000000000        0x0
  .bss           0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
  .bss           0x0000000000000000        0x0 tmp/amd64-expand.o
+ .bss           0x0000000000000000        0x0 tmp/amd64-linux.elf-help_umf.o
  .bss           0x0000000000000000        0x0 tmp/amd64-linux.elf-main2.o
 LOAD tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-expand.o
+LOAD tmp/amd64-linux.elf-help_umf.o
 LOAD tmp/amd64-linux.elf-upxfd_linux.o
 LOAD tmp/amd64-linux.elf-main2.o
 OUTPUT(tmp/amd64-linux.elf-fold.bin elf64-x86-64)
 
-SYSCALLS        0x0000000000000000       0xdc
- SYSCALLS       0x0000000000000000       0xdc tmp/amd64-linux.elf-fold.o
-                0x000000000000004a                Pmap
-                0x00000000000000b4                munmap
-                0x0000000000000076                Psync
-                0x00000000000000c4                ftruncate
-                0x000000000000005b                mmap
-                0x00000000000000d4                write
-                0x00000000000000d8                read
-                0x00000000000000d0                msync
-                0x0000000000000011                upxfd_create
+SYSCALLS        0x0000000000000000       0xe4
+ SYSCALLS       0x0000000000000000       0xe4 tmp/amd64-linux.elf-fold.o
+                0x0000000000000052                Pmap
+                0x00000000000000bc                munmap
+                0x000000000000007e                Psync
+                0x00000000000000cc                ftruncate
+                0x0000000000000063                mmap
+                0x00000000000000dc                write
+                0x0000000000000011                memfd_create
+                0x00000000000000e0                read
+                0x00000000000000d8                msync
+                0x0000000000000019                upxfd_create
                 0x0000000000000000                my_bkpt
-                0x000000000000008f                Pprotect
-                0x00000000000000d4                Pwrite
-                0x00000000000000a4                Punmap
-                0x00000000000000b8                exit
-                0x00000000000000bc                brk
-                0x00000000000000c8                open
-                0x00000000000000cc                mprotect
-                0x00000000000000c0                close
+                0x0000000000000097                Pprotect
+                0x00000000000000dc                Pwrite
+                0x00000000000000ac                Punmap
+                0x00000000000000c0                exit
+                0x00000000000000c4                brk
+                0x00000000000000d0                open
+                0x00000000000000d4                mprotect
+                0x00000000000000c8                close
 
 EXP_HEAD        0x0000000000000000       0xe9
  EXP_HEAD       0x0000000000000000       0xe9 tmp/amd64-expand.o

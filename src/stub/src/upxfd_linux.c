@@ -159,6 +159,7 @@ unsigned long upx_mmap_and_fd_linux( // returns (mapped_addr | (1+ fd))
     if (-EINVAL == fd) { // 2024-10-15 MFD_EXEC unknown to ubuntu-20.04
         fd = memfd_create(name, 0);  // try again
     }
+// FIXME?  try upxfd_create
     if (fd < 0) { // such as ENOSYS for memfd_create on Linux < 3.17 (2014-10-05)
         // last chance for Linux; using /tmp often hits 'noexec' etc.
         fd = open(addr_string("/dev/shm"), O_RDWR | O_DIRECTORY | O_TMPFILE, 0700);

@@ -229,6 +229,14 @@ my_bkpt: .globl my_bkpt
 proc_self_exe:
         .asciz "/proc/self/exe"
 
+// Bare syscall memfd_create() for upx_mmap_and_fd(), which does
+// its own retry with no MFD_EXEC and fallback to /dev/shm,
+// plus calling openat() and ftruncate() and mmap()
+// Allowed to fail, so do not trap like sysgo.
+memfd_create: .globl memfd_create
+        movl $__NR_memfd_create,%eax; syscall
+        ret
+
 upxfd_create: .globl upxfd_create // (char *tag, unsigned flags)
 0: // try memfd_create
         movl $__NR_memfd_create,%eax; syscall
