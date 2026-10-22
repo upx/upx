@@ -22,6 +22,12 @@ OUTPUT(tmp/powerpc64-linux.elf-fold.bin elf64-powerpc)
                 0x0000000000000658                xfind_pages
                 0x0000000000000e8c                upx_main2
 
+HUMF_A          0x0000000000000000        0x4
+ HUMF_A         0x0000000000000000        0x4 tmp/powerpc64-linux.elf-fold.o
+
+HUMF_L          0x0000000000000000        0x4
+ HUMF_L         0x0000000000000000        0x4 tmp/powerpc64-linux.elf-fold.o
+
 .data           0x0000000000000000        0x0
  .data          0x0000000000000000        0x0 tmp/powerpc64-linux.elf-fold.o
 
@@ -49,8 +55,12 @@ SYSCALLS        0x0000000000000000      0x15c
                 0x0000000000000130                memcpy
                 0x0000000000000154                my_bkpt
 
-.comment        0x0000000000000000       0x33
- .comment       0x0000000000000000       0x33 tmp/powerpc64-linux.elf-fold.o
+UMF_LINUX       0x0000000000000000      0x1a8
+ UMF_LINUX      0x0000000000000000      0x1a8 tmp/powerpc64-linux.elf-fold.o
+                0x0000000000000000                upx_mmap_and_fd_linux
+
+.comment        0x0000000000000000       0x65
+ .comment       0x0000000000000000       0x65 tmp/powerpc64-linux.elf-fold.o
 
 .note.GNU-stack
                 0x0000000000000000        0x0

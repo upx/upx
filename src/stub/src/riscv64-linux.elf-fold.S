@@ -332,6 +332,12 @@ memcpy: .globl memcpy  // memcpr(dst, src, n)
 9:
         ret
 
+// Bare syscall memfd_create() for upx_mmap_and_fd(), which does
+// its own retry with no MFD_EXEC and fallback to /dev/shm,
+// plus calling openat() and ftruncate() and mmap()
+// Allowed to fail, so do not trap on failure.
+memfd_create: .globl memfd_create; syscall __NR_memfd_create; ret
+
 upxfd_create: .globl upxfd_create // (char *tag, unsigned flags)
 // try memfd_create
         syscall __NR_memfd_create; j ok_memfd  //NYI
