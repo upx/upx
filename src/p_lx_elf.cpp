@@ -6336,6 +6336,15 @@ unsigned PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
         MemBuffer mb_shstrings(100 + 2*get_te32(&sh_in[e_shstrndx].sh_size));
         char *ptr_shstrings = (char *)&mb_shstrings[0];
         *ptr_shstrings++ = '\0';
+        // Bound the forwarded names: the source .shstrtab (sh_name indexes into
+        // untrusted file bytes) and the destination buffer sized above.
+        unsigned const shstrtab_off = get_te32(&shdri[e_shstrndx].sh_offset);
+        unsigned const shstrtab_sz = (file_size_u32 <= shstrtab_off) ? 0u
+            : umin((unsigned) get_te32(&shdri[e_shstrndx].sh_size),
+                   (unsigned) (file_size_u32 - shstrtab_off));
+        char const *const shstrtab_end = shstrtab + shstrtab_sz;
+        char const *const shstrings_end =
+            (char const *) &mb_shstrings[0] + mb_shstrings.getSize();
 
         memset(sh_out, 0, sizeof(*sh_out));  // blank sh_out[0]
         ++sh_in; ++sh_out; unsigned n_sh_out = 1;
@@ -6427,6 +6436,8 @@ unsigned PackLinuxElf32::forward_Shdrs(OutputFile *fo, Elf32_Ehdr *const eho)
                 // Will be forwarded, but needs a name.
                 set_te32(&sh_out->sh_name, ptr_shstrings - (char *)mb_shstrings.getVoidPtr());
                 do { // stupid MSVC lacks stpcpy()
+                    if (shstrings_end <= ptr_shstrings || shstrtab_end <= name)
+                        throwCantPack("bad shstrtab");
                     *ptr_shstrings++ = *name;
                 } while (*name++);
                 ++sh_out; ++n_sh_out;  // actually commit the fowarding
