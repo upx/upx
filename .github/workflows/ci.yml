@@ -31,7 +31,7 @@ env:
 jobs:
   job-rebuild-and-verify-stubs:
     name: Rebuild stubs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: ubuntu:24.04 # provides glibc-2.39
     steps:
       - run: uname -a; pwd; id; umask
@@ -119,7 +119,7 @@ jobs:
           - -DWITH_XSPAN=2 -DXSPAN_CONFIG_ENABLE_DEBUG=1
           - -DDOCTEST_CONFIG_DISABLE
           - -DUPX_CONFIG_USE_STABLE_SORT
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ${{ matrix.container }}
     env:
       UPX_CMAKE_BUILD_FLAGS:
@@ -821,7 +821,7 @@ jobs:
           - { zig_target: x86_64-macos-none }
           - { zig_target: x86_64-windows-gnu }
     name: ${{ format('zigcc {0} {1}', matrix.zig_target, matrix.zig_pic) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: ${{ matrix.container || 'alpine:3.24' }}
     env:
       container: ${{ matrix.container || 'alpine:3.24' }}

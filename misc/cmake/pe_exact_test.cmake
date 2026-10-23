@@ -5,6 +5,7 @@
 
 function(upx_pe_exact_roundtrip name input extension runner options)
 
+set(fo "--force-overwrite")
 set(packed "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>/upx-test-pe-${name}-packed.${extension}")
 set(unpacked "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>/upx-test-pe-${name}-unpacked.${extension}")
 upx_add_test(upx-pe-exact-pack-${name} upx --exact ${options} "${input}" ${fo} -o "${packed}")
@@ -37,7 +38,10 @@ endfunction()
 
 function(upx_pe_exact_test)
 
-set(emu "${CMAKE_CROSSCOMPILING_EMULATOR}")
+set(emu "")
+if(DEFINED CMAKE_CROSSCOMPILING_EMULATOR)
+    set(emu "${CMAKE_CROSSCOMPILING_EMULATOR}")
+endif()
 set(exact_dll "$<TARGET_FILE:upx-test-pe-exact-dll>")
 set(fo "--force-overwrite")
 set(wd "${CMAKE_CURRENT_BINARY_DIR}/XTesting/$<CONFIG>")

@@ -299,7 +299,8 @@ Changes in 1.91 beta (30 Jun 2004):
 Changes in 1.90 beta (11 Nov 2002):
   * implemented several new options for finer compression control:
     '--all-methods', '--all-filters' and '--brute'
-  * ps1/exe: new format - UPX now supports PlayStation One programs
+  * ps1/exe: new format - UPX now supports PlayStation One programs; based
+    on work by Jens Medoch
   * linux/386: added the option '--force-execve'
   * vmlinuz/386: better kernel detection and sanity checks
   * re-synced with upx 1.24 branch
