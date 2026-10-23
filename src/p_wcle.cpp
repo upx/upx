@@ -337,9 +337,13 @@ void PackWcle::preprocessFixups() {
                     fix += (fix[1] & 0x10) ? 9 : 7;
                     break;
                 }
-                value = get_le32(fix + 5);
-                if (fix[1] == 0)
-                    value &= 0xffff;
+                // A 16-bit record (bit 0x10 clear) is only 7 bytes, so its
+                // target value is 2 bytes at fix+5; reading 4 would run past
+                // the record (and past ifixups for the last record).
+                if (fix[1] & 0x10)
+                    value = get_le32(fix + 5);
+                else
+                    value = get_le16(fix + 5);
                 set_le32(iimage + jc + fixp2,
                          (value + IOT(fix[4] - 1, my_base_address)) - jc - fixp2 - 4);
                 set_le32(selfrel_fixups, jc + fixp2);
