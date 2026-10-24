@@ -25,8 +25,9 @@ env:
   UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO: 1
   UPX_DEBUG_TEST_LIBC_QSORT: 1
   ZSTD_CLEVEL: 17
-  ZIG_DIST_VERSION: 0.15.2 # 2025-10-11
-  #ZIG_DIST_VERSION: 0.16.0 # 2026-04-13
+  ZIG_DIST_VERSION: zig-0.15.2         # 2025-10-11 llvm-20.1.2
+  #ZIG_DIST_VERSION: zig-0.16.0         # 2026-04-13 llvm-21.1.0
+  #ZIG_DIST_VERSION: zig-0.17.0         # 2026-10-01 llvm-22.1.8
 
 jobs:
   job-rebuild-and-verify-stubs:
@@ -873,9 +874,9 @@ jobs:
           ZIG_DIST_NAME=zig-linux-x86_64-${ZIG_DIST_VERSION}
           ZIG_DIST_NAME=zig-x86_64-linux-${ZIG_DIST_VERSION}
           #curl -sS -L -O https://ziglang.org/builds/${ZIG_DIST_NAME}.tar.xz
-          #curl -sS -L -O https://ziglang.org/download/0.14.1/${ZIG_DIST_NAME}.tar.xz
           #curl -sS -L -O https://ziglang.org/download/0.15.2/${ZIG_DIST_NAME}.tar.xz
           #curl -sS -L -O https://ziglang.org/download/0.16.0/${ZIG_DIST_NAME}.tar.xz
+          #curl -sS -L -O https://ziglang.org/download/0.17.0/${ZIG_DIST_NAME}.tar.xz
           curl -sS -L -O https://github.com/upx/upx-stubtools/releases/download/v20160918/${ZIG_DIST_NAME}.tar.xz
           ls -l ${ZIG_DIST_NAME}.tar.xz
           file ${ZIG_DIST_NAME}.tar.xz || true
