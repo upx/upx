@@ -96,7 +96,7 @@ jobs:
       #xflags: -D_WIN32_WINNT=0x0601 -DDOCTEST_CONFIG_DISABLE
 
     name: ${{ format('{0} {1}', matrix.name, matrix.llvm_version) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     #container: ${{ env.container }}
     container: 'ubuntu:26.04'
     steps:

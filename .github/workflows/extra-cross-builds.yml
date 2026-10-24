@@ -153,7 +153,7 @@ jobs:
           - { container: 'ubuntu:26.10', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64, extra: -la464 }
           - { container: 'ubuntu:26.10', target: g++-loongarch64-linux-gnu, qemu: qemu-loongarch64, extra: -la664 }
 
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
     container: ${{ matrix.container }}
     steps:
       - run: uname -a; pwd; id; umask

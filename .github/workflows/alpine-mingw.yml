@@ -40,7 +40,7 @@ jobs:
           - { container: 'alpine:3.24', wine: true,  i686_mingw: true }  # wine-11.0  gcc-15.2
           - { container: 'alpine:edge', wine: true,  i686_mingw: true }  # wine-xx.x  gcc-x.x
     name: ${{ format('container {0}', matrix.container) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ${{ matrix.container }}
     steps:
       - name: ${{ format('Install packages {0}', matrix.container) }}
