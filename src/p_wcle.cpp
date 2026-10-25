@@ -668,10 +668,21 @@ void PackWcle::decodeFixupPageTable() {
 
 void PackWcle::decodeObjectTable() {
     soobject_table = oimage[ph.u_len - 1];
-    oobject_table = New(le_object_table_entry_t, soobject_table);
-    unsigned jc, ic = soobject_table * sizeof(*oobject_table);
-
+    // The object count comes from the decompressed image trailer. The packer
+    // always stores a nonzero count (LeFile::readObjectTable and
+    // PackWcle::readObjectTable reject "no objects"); zero here makes virt2rela
+    // leave the object number at 0, so OOT(o - 1, ...) in decodeFixups and
+    // decodeEntryTable indexes oobject_table[-1].
+    if (soobject_table == 0)
+        throwCantUnpack("no objects");
     const unsigned extradata = ph.version == 10 ? 17 : 13;
+    unsigned jc, ic = soobject_table * sizeof(*oobject_table);
+    // The object descriptors and surrounding trailer are read from the end of
+    // the decompressed image; a large count on a short image underflows oimage.
+    if (ph.u_len < ic + extradata + 1)
+        throwCantUnpack("bad object table");
+    oobject_table = New(le_object_table_entry_t, soobject_table);
+
     memcpy(oobject_table, oimage + ph.u_len - extradata - ic, ic);
     if (ph.version >= 12)
         oh.automatic_data_object = oimage[ph.u_len - ic - 14];
