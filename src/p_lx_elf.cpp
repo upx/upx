@@ -6106,7 +6106,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         if (is_LOAD(&phdri[k])) {
             x.offset = get_te64_32(&phdri[k].p_offset);
             x.size   = get_te64_32(&phdri[k].p_filesz);
-            if (hdr_u_len && ehdri.e_phoff != sizeof(Elf64_Ehdr)) {
+            if (hdr_u_len && get_te64(&ehdri.e_phoff) != sizeof(Elf64_Ehdr)) {
                 // First time, and Phdr not adjacent to Ehdr.
                 // Use b_info header block for EPShdr.
                 Extent y = {0, hdr_u_len};
