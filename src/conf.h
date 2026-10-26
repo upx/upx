@@ -196,6 +196,11 @@ typedef acc_uint64_t upx_uint64_t;
 #if (__SIZEOF_INT128__ == 16)
 typedef __int128 upx_int128_t;
 typedef unsigned __int128 upx_uint128_t;
+typedef upx_int128_t upx_intmax_t;
+typedef upx_uint128_t upx_uintmax_t;
+#else
+typedef upx_int64_t upx_intmax_t;
+typedef upx_uint64_t upx_uintmax_t;
 #endif
 typedef acc_uintptr_t upx_uintptr_t;
 #if defined(__PTRADDR_TYPE__) // CHERI

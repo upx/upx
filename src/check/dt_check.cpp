@@ -985,6 +985,8 @@ void upx_compiler_sanity_check() noexcept {
     CHECK_TYPE(upx_int128_t);
     CHECK_TYPE(upx_uint128_t);
 #endif
+    CHECK_TYPE(upx_intmax_t);
+    CHECK_TYPE(upx_uintmax_t);
     CHECK_TYPE(upx_off_t);
     CHECK_TYPE(upx_uptrdiff_t);
     CHECK_TYPE(upx_ssize_t);
@@ -1019,6 +1021,8 @@ void upx_compiler_sanity_check() noexcept {
 #else
     CheckIntegral<upx_int128_t>::check();
     CheckIntegral<upx_uint128_t>::check();
+    CheckIntegral<upx_intmax_t>::check();
+    CheckIntegral<upx_uintmax_t>::check();
 #endif
 #endif
     CheckIntegral<upx_off_t>::check();
@@ -1071,6 +1075,8 @@ void upx_compiler_sanity_check() noexcept {
 #else
     CheckSignedness<upx_int128_t, true>::check();
     CheckSignedness<upx_uint128_t, false>::check();
+    CheckSignedness<upx_intmax_t, true>::check();
+    CheckSignedness<upx_uintmax_t, false>::check();
 #endif
 #endif
     CheckSignedness<upx_off_t, true>::check();
@@ -1101,7 +1107,10 @@ void upx_compiler_sanity_check() noexcept {
 #if defined(_CPP_VER) || defined(_WIN32) // int128 is not fully supported by MSVC libstdc++ yet
 #else
     CHECK_TYPE_PAIR(upx_int128_t, upx_uint128_t);
+    CHECK_TYPE_PAIR(upx_intmax_t, upx_uintmax_t);
 #endif
+#else
+    CHECK_TYPE_PAIR(upx_intmax_t, upx_uintmax_t);
 #endif
     CHECK_TYPE_PAIR(ptrdiff_t, upx_uptrdiff_t);
     CHECK_TYPE_PAIR(upx_ssize_t, size_t);

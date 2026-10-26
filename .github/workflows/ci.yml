@@ -299,7 +299,8 @@ jobs:
         include:
           # { os: ubuntu-22.04, use_extra: true }
           - { os: ubuntu-22.04 }
-          - { os: ubuntu-24.04, use_extra: true, use_wine: true }
+          # { os: ubuntu-24.04, use_extra: true, use_wine: true }
+          - { os: ubuntu-24.04, use_extra: true }
           # { os: ubuntu-26.04, use_extra: true, use_wine: true }
           - { os: ubuntu-26.04, use_extra: true }
     name: ${{ format('{0}', matrix.os) }}
@@ -788,7 +789,7 @@ jobs:
         include:
           # only build a few selected targets => more targets are tested in the Weekly CI
           - { zig_target: aarch64-linux-musl, qemu: qemu-aarch64 }
-          - { zig_target: aarch64-linux-musl, qemu: qemu-aarch64, zig_pic: -fPIE, container: 'alpine:3.18' }
+          # { zig_target: aarch64-linux-musl, qemu: qemu-aarch64, zig_pic: -fPIE, container: 'alpine:3.18' }
           - { zig_target: aarch64-macos-none }
           - { zig_target: aarch64-windows-gnu }
           - { zig_target: arm-linux-musleabihf, qemu: qemu-arm }

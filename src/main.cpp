@@ -233,7 +233,7 @@ static void set_cmd(int cmd) {
         opt->cmd = cmd;
 }
 
-static bool set_method(int m, int l) {
+static noinline bool set_method(int m, int l) {
     if (m > 0) {
         if (!Packer::isValidCompressionMethod(m))
             return false;
@@ -247,7 +247,7 @@ static bool set_method(int m, int l) {
     return true;
 }
 
-static void set_output_name(const char *n, bool allow_m) {
+static noinline void set_output_name(const char *n, bool allow_m) {
 #if 1
     if (opt->output_name) {
         fprintf(stderr, "%s: option '-o' more than once given\n", argv0);
@@ -269,7 +269,8 @@ static void set_output_name(const char *n, bool allow_m) {
 // get options
 **************************************************************************/
 
-static char *prepare_shortopts(char *buf, const char *n, const struct mfx_option *longopts) {
+static noinline char *prepare_shortopts(char *buf, const char *n,
+                                        const struct mfx_option *longopts) {
     char *o = buf;
 
     for (; n && *n; n++)
@@ -307,7 +308,7 @@ static char *prepare_shortopts(char *buf, const char *n, const struct mfx_option
 }
 
 template <class T>
-static int getoptvar(T *var, const T min_value, const T max_value, const char *arg_fatal) {
+static noinline int getoptvar(T *var, const T min_value, const T max_value, const char *arg_fatal) {
     const char *p = mfx_optarg;
     char *endptr = nullptr;
     int r = 0;
@@ -344,7 +345,7 @@ template <class T, T default_value, T min_value, T max_value>
 static int getoptvar(upx::OptVar<T, default_value, min_value, max_value> *var,
                      const char *arg_fatal) {
     T v = default_value;
-    int r = getoptvar(&v, min_value, max_value, arg_fatal);
+    const int r = getoptvar(&v, min_value, max_value, arg_fatal);
     if (r == 0)
         *var = v;
     return r;
@@ -1203,8 +1204,12 @@ int upx_main(int argc, char *argv[]) may_throw {
         argv[0] = default_argv0;
     argv0 = argv[0];
 
+    // Allow serial re-use of upx_main() as a subroutine
+    exit_code = EXIT_OK;
+    opt->reset();
+
     upx_compiler_sanity_check();
-    int dt_res = upx_doctest_check(argc, argv);
+    const int dt_res = upx_doctest_check(argc, argv);
     if (dt_res != 0) {
         if (dt_res == 2)
             fprintf(stderr, "%s: doctest requested program exit; Stop.\n", argv0);
@@ -1212,9 +1217,6 @@ int upx_main(int argc, char *argv[]) may_throw {
             fprintf(stderr, "%s: internal error: doctest check failed\n", argv0);
         e_exit(EXIT_INIT);
     }
-
-    // Allow serial re-use of upx_main() as a subroutine
-    exit_code = EXIT_OK;
     opt->reset();
 
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_TOS || ACC_OS_WIN16 ||  \

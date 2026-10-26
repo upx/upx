@@ -58,7 +58,7 @@ enum {
 inline bool opt_is_compress(int cmd) noexcept { return cmd == CMD_NONE || cmd == CMD_COMPRESS; }
 
 struct Options final {
-    void reset() noexcept;
+    noinline void reset() noexcept;
 
     int cmd; // CMD_xxx
 
