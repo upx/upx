@@ -3304,6 +3304,8 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
         unsigned ic = 0;
         while (ic < objs && osection[ic].rawdataptr == 0)
             ic++;
+        if (ic >= objs)
+            throwCantUnpack("no section with raw data");
 
         ibuf.dealloc();
         if (!exact) {
