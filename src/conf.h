@@ -909,8 +909,8 @@ int upx_test_overlap       ( const upx_bytep buf,
 // clang-format on
 
 #include "util/snprintf.h" // must get included first!
-#include "util/util.h"
 #include "options.h"
+#include "util/util.h"
 #include "except.h"
 #include "bele.h"
 #include "console/console.h"

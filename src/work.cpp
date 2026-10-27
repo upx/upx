@@ -242,8 +242,8 @@ void do_one_file(const char *const iname, char *const oname) may_throw {
     // compression needs about 2 copies of the input in memory, but the
     // non-compressing commands -l (list), -t (test) and -d (de-compress) need
     // much less (roughly 9/8 of the input size), so allow larger files there
-    const unsigned rsize_max = opt_is_compress(opt->cmd) ? UPX_RSIZE_MAX : UPX_RSIZE_MAX_NOCOMP;
-    if ((upx_uint64_t) st.st_size > rsize_max)
+    const unsigned rsize_max = mem_size_get_rsize_max(opt->cmd);
+    if ((upx_uintmax_t) st.st_size > rsize_max)
         throwIOException2("file is too large -- skipped (%lld > %u)", (long long) st.st_size,
                           rsize_max);
     if ((st.st_mode & S_IWUSR) == 0) {
