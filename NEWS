@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 5.3.0 (XX XXX XXXX):
+Changes in 5.3.0 (28 Oct 2026):
   * new format win64/arm64; based on work by hoptodesk and Johannes Schindelin
   * bug fixes - see https://github.com/upx/upx/milestone/25
 
