@@ -284,8 +284,12 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     memset(ibuf, 0, sz_ptload);
     for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
         if (Phdr::PT_LOAD==phdri[j].p_type) {
+            unsigned const off = (unsigned) phdri[j].p_paddr - paddr_min;
+            if (sz_ptload < off || (sz_ptload - off) < phdri[j].p_filesz) {
+                throwCantPack("bad PT_LOAD[%u]", j);  // p_paddr + p_filesz wrapped
+            }
             fi->seek(phdri[j].p_offset, SEEK_SET);
-            fi->readx(ibuf + ((unsigned) phdri[j].p_paddr - paddr_min), phdri[j].p_filesz);
+            fi->readx(ibuf + off, phdri[j].p_filesz);
         }
     }
     checkAlreadyPacked(ibuf + (ph.u_len - 1024), 1024);
