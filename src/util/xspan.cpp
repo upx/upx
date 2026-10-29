@@ -76,8 +76,9 @@ void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_byte
         xspan_fail_range_nullptr();
     if very_unlikely (base == nullptr)
         xspan_fail_range_nullbase();
-    upx_sptraddr_t off = ptraddr_diff(ptr, base);
-    if very_unlikely (off < 0 || off > size_in_bytes || size_in_bytes > UPX_RSIZE_MAX)
+    const unsigned rsize_max = mem_size_get_rsize_max(opt->cmd);
+    const upx_sptraddr_t off = ptraddr_diff(ptr, base);
+    if very_unlikely (off < 0 || off > size_in_bytes || (upx_uptrdiff_t) size_in_bytes > rsize_max)
         xspan_fail_range_range();
     // NO_fprintf(stderr, "xspan_check_range done %zu\n", size_t(xspan_stats.check_range_counter));
 }

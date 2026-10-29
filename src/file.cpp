@@ -129,7 +129,7 @@ void FileBase::closex() may_throw {
 upx_off_t FileBase::seek(upx_off_t off, int whence) {
     if (!isOpen())
         throwIOException("bad seek 1");
-    if (!mem_size_valid_bytes_nocomp(off >= 0 ? off : -off)) // sanity check
+    if (!mem_size_valid_bytes(off >= 0 ? off : -off)) // sanity check
         throwIOException("bad seek");
     if (whence == SEEK_SET) {
         if (off < 0)
@@ -322,7 +322,7 @@ upx_off_t OutputFile::st_size() const {
 }
 
 upx_off_t OutputFile::seek(upx_off_t off, int whence) {
-    if (!mem_size_valid_bytes_nocomp(off >= 0 ? off : -off)) // sanity check
+    if (!mem_size_valid_bytes(off >= 0 ? off : -off)) // sanity check
         throwIOException("bad seek");
     assert(!opt->to_stdout);
     switch (whence) {

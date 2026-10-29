@@ -39,13 +39,9 @@
 PackerBase::PackerBase(InputFile *f)
     : fi(f), file_size(f != nullptr ? f->st_size() : 0), file_size_i32(file_size) {
     ph.reset();
-    // compression is limited by UPX_RSIZE_MAX; the non-compressing commands
-    // -l (list), -t (test) and -d (de-compress) need much less memory and
-    // therefore allow larger files, see UPX_RSIZE_MAX_NOCOMP
-    if (opt_is_compress(opt->cmd)) {
-        mem_size_assert(1, file_size_u); // limited by UPX_RSIZE_MAX
-    } else if (UPX_RSIZE_MAX_NOCOMP < file_size || UPX_RSIZE_MAX_NOCOMP < file_size_u)
-        throwCantUnpack("file too big: %u < %llu", UPX_RSIZE_MAX_NOCOMP, file_size);
+    mem_size_assert(1, file_size_u); // limited by UPX_RSIZE_MAX / UPX_RSIZE_MAX_NOCOMP
+    assert_noexcept(file_size_i32 == file_size);
+    assert_noexcept(file_size_u32 == file_size_u);
 }
 
 Packer::Packer(InputFile *f) : PackerBase(f) { uip = new UiPacker(this); }

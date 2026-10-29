@@ -59,34 +59,36 @@ ACC_COMPILE_TIME_ASSERT_HEADER(2ull * UPX_RSIZE_MAX_NOCOMP <
 
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                     upx_uint64_t extra2) noexcept {
+    const unsigned rsize_max = mem_size_get_rsize_max(opt->cmd);
     assert_noexcept(element_size > 0);
-    if very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX)
+    if very_unlikely (element_size == 0 || element_size > rsize_max)
         return false;
-    if very_unlikely (n > UPX_RSIZE_MAX)
+    if very_unlikely (n > rsize_max)
         return false;
-    if very_unlikely (extra1 > UPX_RSIZE_MAX)
+    if very_unlikely (extra1 > rsize_max)
         return false;
-    if very_unlikely (extra2 > UPX_RSIZE_MAX)
+    if very_unlikely (extra2 > rsize_max)
         return false;
     const upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
-    if very_unlikely (bytes > UPX_RSIZE_MAX)
+    if very_unlikely (bytes > rsize_max)
         return false;
     return true;
 }
 
 upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1,
                      upx_uint64_t extra2) may_throw {
+    const unsigned rsize_max = mem_size_get_rsize_max(opt->cmd);
     assert(element_size > 0);
-    if very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX)
+    if very_unlikely (element_size == 0 || element_size > rsize_max)
         throwCantPack("mem_size 1; take care");
-    if very_unlikely (n > UPX_RSIZE_MAX)
+    if very_unlikely (n > rsize_max)
         throwCantPack("mem_size 2; take care");
-    if very_unlikely (extra1 > UPX_RSIZE_MAX)
+    if very_unlikely (extra1 > rsize_max)
         throwCantPack("mem_size 3; take care");
-    if very_unlikely (extra2 > UPX_RSIZE_MAX)
+    if very_unlikely (extra2 > rsize_max)
         throwCantPack("mem_size 4; take care");
     const upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
-    if very_unlikely (bytes > UPX_RSIZE_MAX)
+    if very_unlikely (bytes > rsize_max)
         throwCantPack("mem_size 5; take care");
     return ACC_ICONV(upx_rsize_t, bytes);
 }

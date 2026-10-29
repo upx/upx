@@ -37,9 +37,9 @@ forceinline unsigned mem_size_get_rsize_max(int cmd) noexcept {
     return opt_is_compress(cmd) ? UPX_RSIZE_MAX : UPX_RSIZE_MAX_NOCOMP;
 }
 
-inline bool mem_size_valid_bytes(upx_uintmax_t bytes) noexcept { return bytes <= UPX_RSIZE_MAX; }
-inline bool mem_size_valid_bytes_nocomp(upx_uintmax_t bytes) noexcept {
-    return bytes <= UPX_RSIZE_MAX_NOCOMP;
+inline bool mem_size_valid_bytes(upx_uintmax_t bytes) noexcept {
+    const unsigned rsize_max = mem_size_get_rsize_max(opt->cmd);
+    return bytes <= rsize_max;
 }
 
 noinline bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
@@ -58,9 +58,10 @@ noinline upx_rsize_t mem_size_ptr(const void *ptr, upx_uint64_t element_size, up
 
 // will throw on invalid size
 inline upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n) may_throw {
+    const unsigned rsize_max = mem_size_get_rsize_max(opt->cmd);
     const upx_uint64_t bytes = element_size * n;
-    if very_unlikely (element_size == 0 || element_size > UPX_RSIZE_MAX || n > UPX_RSIZE_MAX ||
-                      bytes > UPX_RSIZE_MAX)
+    if very_unlikely (element_size == 0 || element_size > rsize_max || n > rsize_max ||
+                      bytes > rsize_max)
         return mem_size(element_size, n, 0, 0); // this will throw
     return ACC_ICONV(upx_rsize_t, bytes);
 }
