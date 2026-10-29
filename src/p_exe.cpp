@@ -324,7 +324,11 @@ static unsigned optimize_relocs(SPAN_S(byte) image, const unsigned image_size,
             if ((addr - es * 16 > 0xfffe) || (i == relocnum - 1 && addr - es * 16 > 0xff00)) {
                 // segment change
                 t = 1 + (0xffff - di) / 254;
-                memset(crel, 1, t);
+                // bound the write: crel is a SPAN, but memset() takes a raw
+                // pointer and would otherwise skip the range check that the
+                // *crel++ and set_le*() writes get, overrunning crel for a
+                // crafted reloc table with far-apart segments
+                memset(raw_bytes(crel, t), 1, t);
                 crel += t;
                 ones += t - 1; // -1 is used to help the assembly stuff
                 break;
