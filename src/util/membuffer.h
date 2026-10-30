@@ -43,7 +43,7 @@ public:
     typedef typename std::add_pointer<T>::type pointer;
     typedef pointer iterator;
     typedef typename std::add_pointer<const T>::type const_iterator;
-    typedef size_t size_type; // limited by UPX_RSIZE_MAX
+    typedef size_t size_type; // limited by UPX_RSIZE_MAX / UPX_RSIZE_MAX_NOCOMP
     static const size_t element_size = sizeof(element_type);
 
 protected:

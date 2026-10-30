@@ -1157,6 +1157,7 @@ void upx_compiler_sanity_check() noexcept {
     }
     assert_noexcept(UPX_RSIZE_MAX == 805306368);
     assert_noexcept(UPX_RSIZE_MAX_MEM == 805306368);
+    assert_noexcept(UPX_RSIZE_MAX_NOCOMP == 2 * 805306368);
 
 #if DEBUG || 1
     assert_noexcept(TestBELE<LE16>::test());

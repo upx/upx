@@ -33,7 +33,7 @@
 // see C 11 standard, Annex K
 **************************************************************************/
 
-forceinline unsigned mem_size_get_rsize_max(int cmd) noexcept {
+forceinline constexpr unsigned mem_size_get_rsize_max(int cmd) noexcept {
     return opt_is_compress(cmd) ? UPX_RSIZE_MAX : UPX_RSIZE_MAX_NOCOMP;
 }
 

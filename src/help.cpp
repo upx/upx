@@ -705,6 +705,9 @@ void show_sysinfo(const char *options_var) {
 #endif
 
         // misc compilation options
+#if defined(__FAST_MATH__)
+        cf_print("__FAST_MATH__", "%lld", __FAST_MATH__ + 0, 3);
+#endif
 #if defined(__PIC__)
         cf_print("__PIC__", "%lld", __PIC__ + 0, 3);
 #elif defined(__pic__)

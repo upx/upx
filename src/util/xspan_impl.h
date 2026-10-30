@@ -85,7 +85,8 @@ noreturn void xspan_fail_not_same_base() may_throw;
 noreturn void xspan_fail_range_nullptr() may_throw;
 noreturn void xspan_fail_range_nullbase() may_throw;
 noreturn void xspan_fail_range_range() may_throw;
-void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_bytes) may_throw;
+noinline void xspan_check_range(const void *ptr, const void *base, ptrdiff_t size_in_bytes)
+    may_throw;
 
 // help constructor to distinguish between number of elements and bytes
 struct XSpanCount final {

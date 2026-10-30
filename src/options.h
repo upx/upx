@@ -55,7 +55,7 @@ enum {
     CMD_VERSION,
 };
 
-forceinline bool opt_is_compress(int cmd) noexcept {
+forceinline constexpr bool opt_is_compress(int cmd) noexcept {
     return cmd == CMD_NONE || cmd == CMD_COMPRESS;
 }
 
