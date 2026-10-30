@@ -33,6 +33,10 @@
 
 class PeFile : public Packer {
     typedef Packer super;
+    typedef upx_int32_t DWORD;
+    typedef upx_int16_t WORD;
+    typedef upx_uint64_t ULONGLONG;
+
 public:
     virtual int getVersion() const override { return pe_exact_version; }
 protected:
@@ -661,5 +665,137 @@ protected:
 
     pe_header_t ih = {}, oh = {};
 };
+
+// https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryexa?source=recommendations
+// DependentLoadFlags
+enum {
+    LOAD_LIBRARY_SAFE_CURRENT_DIRS = 0x00002000,
+    LOAD_LIBRARY_SEARCH_DEFAULT_DIRS = 0x00001000,
+    LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x00000800,
+    LOAD_LIBRARY_SEARCH_USER_DIRS = 0x00000400,
+    LOAD_LIBRARY_SEARCH_APPLICATION_DIR = 0x00000200,
+    LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR = 0x00000100,
+    LOAD_LIBRARY_SEARCH_ANY_DIRS = 0x00001F00, // upx added
+    LOAD_LIBRARY_REQUIRE_SIGNED_TARGET = 0x00000080,
+};
+
+typedef struct _IMAGE_LOAD_CONFIG_CODE_INTEGRITY {
+    unsigned short Flags;
+    unsigned short Catalog;
+    unsigned int CatalogOffset;
+    unsigned int Reserved;
+} IMAGE_LOAD_CONFIG_CODE_INTEGRITY;
+
+typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY32 {
+    typedef upx_int32_t DWORD;
+    typedef upx_int16_t WORD;
+    typedef upx_uint64_t ULONGLONG;
+    typedef upx_uint32_t VADDR;
+    DWORD Size;
+    DWORD TimeDateStamp;
+    WORD MajorVersion;
+    WORD MinorVersion;
+    DWORD GlobalFlagsClear;
+    DWORD GlobalFlagsSet;
+    DWORD CriticalSectionDefaultTimeout;
+    DWORD DeCommitFreeBlockThreshold;
+    DWORD DeCommitTotalFreeThreshold;
+    VADDR LockPrefixTable; // VA
+    DWORD MaximumAllocationSize;
+    DWORD VirtualMemoryThreshold;
+    DWORD ProcessHeapFlags;
+    DWORD ProcessAffinityMask;
+    WORD CSDVersion;
+    WORD DependentLoadFlags;
+    VADDR EditList;       // VA
+    VADDR SecurityCookie; // VA
+    VADDR SEHandlerTable; // VA
+    DWORD SEHandlerCount;
+    // if Size > sizeof(IMAGE_LOAD_CONFIG_DIRECTORY32)
+    //  IMAGE_LOAD_CONFIG_D32_W81 ldc_W81_part;
+    VADDR GuardCFCheckFunctionPointer;    // VA
+    VADDR GuardCFDispatchFunctionPointer; // VA
+    VADDR GuardCFFunctionTable;           // VA
+    DWORD GuardCFFunctionCount;
+    DWORD GuardFlags;
+
+    // Win10
+    IMAGE_LOAD_CONFIG_CODE_INTEGRITY CodeIntegrity;
+    VADDR GuardAddressTakenIatEntryTable; // VA
+    DWORD GuardAddressTakenIatEntryCount;
+    VADDR GuardLongJumpTargetTable; // VA
+    DWORD GuardLongJumpTargetCount;
+    VADDR DynamicValueRelocTable; // VA
+    DWORD CHPEMetadataPointer;
+    VADDR GuardRFFailureRoutine;                // VA
+    VADDR GuardRFFailureRoutineFunctionPointer; // VA
+    DWORD DynamicValueRelocTableOffset;
+    WORD DynamicValueRelocTableSection;
+    WORD Reserved2;
+    VADDR GuardRFVerifyStackPointerFunctionPointer; // VA
+    DWORD HotPatchTableOffset;
+    DWORD Reserved3;
+    VADDR EnclaveConfigurationPointer; // VA
+    VADDR VolatileMetadataPointer;     // VA
+    // newer Win 10 extensions:
+    VADDR GuardEHContinuationTable; // VA
+    DWORD GuardEHContinuationCount;
+} IMAGE_LOAD_CONFIG_DIRECTORY32, *PIMAGE_LOAD_CONFIG_DIRECTORY32;
+// IMAGE_LOAD_CONFIG_DIRECTORY32 extension for W8.1 : ***OMITTED*** by upx
+
+typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY64 {
+    typedef upx_int32_t DWORD;
+    typedef upx_int16_t WORD;
+    typedef upx_uint64_t VADDR;
+    typedef upx_uint64_t VSIZE;
+    DWORD Size;
+    DWORD TimeDateStamp;
+    WORD MajorVersion;
+    WORD MinorVersion;
+    DWORD GlobalFlagsClear;
+    DWORD GlobalFlagsSet;
+    DWORD CriticalSectionDefaultTimeout;
+    VSIZE DeCommitFreeBlockThreshold;
+    VSIZE DeCommitTotalFreeThreshold;
+    VADDR LockPrefixTable; // VA
+    VSIZE MaximumAllocationSize;
+    VSIZE VirtualMemoryThreshold;
+    VSIZE ProcessAffinityMask;
+    DWORD ProcessHeapFlags;
+    WORD CSDVersion;
+    WORD DependentLoadFlags;
+    VADDR EditList;       // VA
+    VADDR SecurityCookie; // VA
+    VADDR SEHandlerTable; // VA
+    VSIZE SEHandlerCount;
+    // if Size > sizeof(IMAGE_LOAD_CONFIG_DIRECTORY64)
+    // IMAGE_LOAD_CONFIG_D64_W81 ldc_W81_part;
+    VADDR GuardCFCheckFunctionPointer;    // VA
+    VADDR GuardCFDispatchFunctionPointer; // VA
+    VADDR GuardCFFunctionTable;           // VA
+    VSIZE GuardCFFunctionCount;
+    DWORD GuardFlags;
+    // Win 10 Ext.
+    IMAGE_LOAD_CONFIG_CODE_INTEGRITY CodeIntegrity;
+    VADDR GuardAddressTakenIatEntryTable; // VA
+    VSIZE GuardAddressTakenIatEntryCount;
+    VADDR GuardLongJumpTargetTable; // VA
+    VSIZE GuardLongJumpTargetCount;
+    VADDR DynamicValueRelocTable;               // VA
+    VADDR CHPEMetadataPointer;                  // VA
+    VADDR GuardRFFailureRoutine;                // VA
+    VADDR GuardRFFailureRoutineFunctionPointer; // VA
+    DWORD DynamicValueRelocTableOffset;
+    WORD DynamicValueRelocTableSection;
+    WORD Reserved2;
+    VADDR GuardRFVerifyStackPointerFunctionPointer; // VA
+    DWORD HotPatchTableOffset;
+    DWORD Reserved3;
+    VADDR EnclaveConfigurationPointer; // VA
+    VADDR VolatileMetadataPointer;     // VA
+    // newer Win 10 extensions:
+    VADDR GuardEHContinuationTable; // VA
+    VSIZE GuardEHContinuationCount;
+} IMAGE_LOAD_CONFIG_DIRECTORY64, *PIMAGE_LOAD_CONFIG_DIRECTORY64;
 
 /* vim:set ts=4 sw=4 et: */

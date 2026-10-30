@@ -1611,10 +1611,12 @@ void PeFile::processLoadConf(Interval *iv) { // pass 1
 
     const unsigned lcaddr = IDADDR(PEDIR_LOAD_CONFIG);
     const byte *const loadconf = ibuf.subref("bad loadconf %#x", lcaddr, 4);
-    soloadconf = get_le32(loadconf);
+    soloadconf = get_le32(loadconf); // &IMAGE_LOAD_CONFIG_DIRECTORYxx.size
     if (soloadconf == 0)
         return;
-    static constexpr unsigned MAX_SOLOADCONF = 256; // XXX FIXME: Why?
+    // 2026-10-29 Win11:  0x118 == sizeof(IMAGE_LOAD_CONFIG_DIRECTORY64)
+    // 2026-10-29 Win11:  0x0ac == sizeof(IMAGE_LOAD_CONFIG_DIRECTORY32)
+    static constexpr unsigned MAX_SOLOADCONF = 0x130;
     if (soloadconf > MAX_SOLOADCONF)
         info("Load Configuration directory %u > %u", soloadconf, MAX_SOLOADCONF);
     if (lcaddr + soloadconf > ibuf.getSize()) {
@@ -1636,6 +1638,70 @@ void PeFile::processLoadConf(Interval *iv) { // pass 1
     mb_oloadconf.alloc(soloadconf);
     oloadconf = (byte *) mb_oloadconf.getVoidPtr();
     memcpy(oloadconf, loadconf, soloadconf);
+
+    // "Sanitize" when compression moves a Virtual Address
+    if (soloadconf < 0x100) { // 32-bit
+        IMAGE_LOAD_CONFIG_DIRECTORY32 *lcp32 = (IMAGE_LOAD_CONFIG_DIRECTORY32 *) oloadconf;
+        if (!(lcp32->DependentLoadFlags & LOAD_LIBRARY_SEARCH_ANY_DIRS)) {
+            opt->info_mode++;
+            infoWarning("unspecified DLL load paths; forced to \\Windows\\system32");
+            opt->info_mode--;
+            lcp32->DependentLoadFlags |= LOAD_LIBRARY_SEARCH_SYSTEM32;
+        }
+        lcp32->EditList = 0;       // VA
+        lcp32->SecurityCookie = 0; // VA
+        lcp32->SEHandlerTable = 0; // VA
+        if (soloadconf > offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFCheckFunctionPointer)) {
+            lcp32->GuardCFCheckFunctionPointer = 0;    // VA
+            lcp32->GuardCFDispatchFunctionPointer = 0; // VA
+            lcp32->GuardCFFunctionTable = 0;           // VA
+            if (soloadconf >
+                offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardAddressTakenIatEntryTable)) {
+                lcp32->GuardLongJumpTargetTable = 0;                 // VA
+                lcp32->DynamicValueRelocTable = 0;                   // VA
+                lcp32->GuardRFFailureRoutine = 0;                    // VA
+                lcp32->GuardRFFailureRoutineFunctionPointer = 0;     // VA
+                lcp32->GuardRFVerifyStackPointerFunctionPointer = 0; // VA
+                lcp32->EnclaveConfigurationPointer = 0;              // VA
+                lcp32->VolatileMetadataPointer = 0;                  // VA
+                lcp32->GuardEHContinuationTable = 0;                 // VA
+            }
+        }
+    } else { // 64-bit
+        IMAGE_LOAD_CONFIG_DIRECTORY64 *lcp64 = (IMAGE_LOAD_CONFIG_DIRECTORY64 *) oloadconf;
+        if (!(lcp64->DependentLoadFlags & LOAD_LIBRARY_SEARCH_ANY_DIRS)) {
+            opt->info_mode++;
+            infoWarning("unspecified DLL load paths; forced to \\Windows\\system32");
+            opt->info_mode--;
+            lcp64->DependentLoadFlags |= LOAD_LIBRARY_SEARCH_SYSTEM32;
+        }
+        lcp64->LockPrefixTable = 0; // VA  not on 32-bit
+        lcp64->EditList = 0;        // VA
+        lcp64->SecurityCookie = 0;  // VA
+        lcp64->SEHandlerTable = 0;  // VA
+                                    // IMAGE_LOAD_CONFIG_D64_W81 ldc_W81_part;
+        if (soloadconf > offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFCheckFunctionPointer)) {
+            lcp64->GuardCFCheckFunctionPointer = 0;    // VA
+            lcp64->GuardCFDispatchFunctionPointer = 0; // VA
+            lcp64->GuardCFFunctionTable = 0;           // VA
+            if (soloadconf >
+                offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardAddressTakenIatEntryTable)) {
+                lcp64->GuardAddressTakenIatEntryTable = 0;           // VA
+                lcp64->GuardLongJumpTargetTable = 0;                 // VA
+                lcp64->DynamicValueRelocTable = 0;                   // VA
+                lcp64->CHPEMetadataPointer = 0;                      // VA
+                lcp64->GuardRFFailureRoutine = 0;                    // VA
+                lcp64->GuardRFFailureRoutineFunctionPointer = 0;     // VA
+                lcp64->GuardRFVerifyStackPointerFunctionPointer = 0; // VA
+                lcp64->EnclaveConfigurationPointer = 0;              // VA
+                lcp64->VolatileMetadataPointer = 0;                  // VA
+                if (soloadconf >
+                    offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardEHContinuationTable)) {
+                    lcp64->GuardEHContinuationTable = 0; // VA
+                }
+            }
+        }
+    }
 }
 
 void PeFile::processLoadConf(Reloc *rel, const Interval *iv,
