@@ -3320,9 +3320,11 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
         if (!exact) {
             fo->write(ibuf, osection[ic].rawdataptr - fo->getBytesWritten());
             for (ic = 0; ic < objs; ic++)
-                if (osection[ic].rawdataptr)
-                    fo->write(obuf + (osection[ic].vaddr - rvamin),
-                              ALIGN_UP(osection[ic].size, oh.filealign));
+                if (osection[ic].rawdataptr) {
+                    const unsigned seclen = ALIGN_UP(osection[ic].size, oh.filealign);
+                    fo->write(obuf.subref("bad section %#x", osection[ic].vaddr - rvamin, seclen),
+                              seclen);
+                }
         } else {
             Array(unsigned, raw_order, objs);
             const unsigned raw_count = getRawSectionOrder(osection, objs, raw_order);
