@@ -68,6 +68,7 @@ jobs:
           - { container: 'ubuntu:24.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
 
           - { container: 'ubuntu:26.04', target: g++-aarch64-linux-gnu, qemu: qemu-aarch64 }
+          - { container: 'ubuntu:26.04', target: g++-aarch64-linux-gnu, qemu: qemu-aarch64, extra: -ffast-math }
           - { container: 'ubuntu:26.04', target: g++-arm-linux-gnueabi, qemu: qemu-arm }
           - { container: 'ubuntu:26.04', target: g++-arm-linux-gnueabihf, qemu: qemu-arm }
           - { container: 'ubuntu:26.04', target: g++-i686-linux-gnu, qemu: qemu-i386 }
@@ -81,6 +82,7 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le -cpu power10, extra: -power10 }
           - { container: 'ubuntu:26.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le -cpu power11, extra: -power11 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
+          - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -ffast-math }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -mcmodel-large }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -sifive-p670 }
@@ -232,6 +234,10 @@ jobs:
               CC="$CC -D_WIN32_WINNT=0x0501"; CXX="$CXX -D_WIN32_WINNT=0x0501"
               CC="$CC -static"; CXX="$CXX -static" ;;
           esac
+          if [[ "${{ matrix.extra }}" == *ffast-math ]]; then true;
+            export CC="$CC -ffast-math" CXX="$CXX -ffast-math"
+            echo "UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO=0" >> $GITHUB_ENV
+          fi
           if [[ $toolchain == loongarch64-linux-gnu && "${{ matrix.extra }}" == *la464 ]]; then true;
             export CC="$CC -march=la464" CXX="$CXX -march=la464"
           fi
