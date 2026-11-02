@@ -37,8 +37,8 @@ class OutputFile;
 
 class PackMaster final {
 public:
-    explicit PackMaster(InputFile *f, Options *o = nullptr) noexcept;
-    ~PackMaster() noexcept;
+    explicit noinline PackMaster(InputFile *f, Options *o = nullptr) noexcept;
+    noinline ~PackMaster() noexcept;
 
     void pack(OutputFile *fo) may_throw;
     void unpack(OutputFile *fo) may_throw;

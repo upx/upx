@@ -2239,6 +2239,10 @@ struct TestConstant final {
         return T(a * b);
     }
     template <class T>
+    static noinline T noinline_mul_neg(T a, T b) noexcept {
+        return T(T(0) - T(a * b));
+    }
+    template <class T>
     static noinline T noinline_div(T a, T b) noexcept {
         return T(a / b);
     }
@@ -3570,6 +3574,21 @@ TEST_CASE("codegen constant") {
 #endif
         assert_noexcept2((TestConstant::noinline_mul(float(a), float(b)) == 0));
         assert_noexcept2((TestConstant::noinline_mul(double(a), double(b)) == 0));
+
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_int8_t(a), upx_int8_t(b)) == 0));
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_uint8_t(a), upx_uint8_t(b)) == 0));
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_int16_t(a), upx_int16_t(b)) == 0));
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_uint16_t(a), upx_uint16_t(b)) == 0));
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_int32_t(a), upx_int32_t(b)) == 0));
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_uint32_t(a), upx_uint32_t(b)) == 0));
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_int64_t(a), upx_int64_t(b)) == 0));
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_uint64_t(a), upx_uint64_t(b)) == 0));
+#if (__SIZEOF_INT128__ == 16)
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_int128_t(a), upx_int128_t(b)) == 0));
+        assert_noexcept2((TestConstant::noinline_mul_neg(upx_uint128_t(a), upx_uint128_t(b)) == 0));
+#endif
+        assert_noexcept2((TestConstant::noinline_mul_neg(float(a), float(b)) != 1));
+        assert_noexcept2((TestConstant::noinline_mul_neg(double(a), double(b)) != 1));
 
         assert_noexcept2((TestConstant::noinline_div(upx_int8_t(a), upx_int8_t(b)) == 0));
         assert_noexcept2((TestConstant::noinline_div(upx_uint8_t(a), upx_uint8_t(b)) == 0));

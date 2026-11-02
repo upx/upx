@@ -68,6 +68,8 @@ jobs:
           - { container: 'ubuntu:24.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
 
           - { container: 'ubuntu:26.04', target: g++-aarch64-linux-gnu, qemu: qemu-aarch64 }
+          - { container: 'ubuntu:26.04', target: g++-aarch64-linux-gnu, qemu: qemu-aarch64, extra: -ffast-math }
+          # { container: 'ubuntu:26.04', target: g++-aarch64-linux-gnu, qemu: qemu-aarch64, extra: -flto }
           - { container: 'ubuntu:26.04', target: g++-arm-linux-gnueabi, qemu: qemu-arm }
           - { container: 'ubuntu:26.04', target: g++-arm-linux-gnueabihf, qemu: qemu-arm }
           - { container: 'ubuntu:26.04', target: g++-i686-linux-gnu, qemu: qemu-i386 }
@@ -81,6 +83,8 @@ jobs:
           - { container: 'ubuntu:26.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le -cpu power10, extra: -power10 }
           - { container: 'ubuntu:26.04', target: g++-powerpc64le-linux-gnu, qemu: qemu-ppc64le -cpu power11, extra: -power11 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
+          - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -ffast-math }
+          # { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -flto }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -mcmodel-large }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -sifive-p670 }
@@ -93,6 +97,8 @@ jobs:
           # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rva23u64 }
           # { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -sifive-p870 }
           - { container: 'ubuntu:26.10', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
+
+          # { container: 'ubuntu:27.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64 }
 
           - { container: 'ubuntu:20.04', target: g++-mingw-w64-i686, wine: wine }
           - { container: 'ubuntu:20.04', target: g++-mingw-w64-x86-64, wine: wine }
@@ -232,47 +238,56 @@ jobs:
               CC="$CC -D_WIN32_WINNT=0x0501"; CXX="$CXX -D_WIN32_WINNT=0x0501"
               CC="$CC -static"; CXX="$CXX -static" ;;
           esac
-          if [[ $toolchain == loongarch64-linux-gnu && "${{ matrix.extra }}" == *la464 ]]; then true;
+          if [[ "${{ matrix.extra }}" == *-ffast-math* ]]; then true;
+            export CC="$CC -ffast-math" CXX="$CXX -ffast-math"
+            echo "UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO=0" >> $GITHUB_ENV
+          fi
+          if [[ "${{ matrix.extra }}" == *-flto-auto* ]]; then true;
+            export CC="$CC -flto=auto" CXX="$CXX -flto=auto"
+          elif [[ "${{ matrix.extra }}" == *-flto* ]]; then true;
+            export CC="$CC -flto" CXX="$CXX -flto"
+          fi
+          if [[ $toolchain == loongarch64-linux-gnu && "${{ matrix.extra }}" == *-la464* ]]; then true;
             export CC="$CC -march=la464" CXX="$CXX -march=la464"
           fi
-          if [[ $toolchain == loongarch64-linux-gnu && "${{ matrix.extra }}" == *la664 ]]; then true;
+          if [[ $toolchain == loongarch64-linux-gnu && "${{ matrix.extra }}" == *-la664* ]]; then true;
             export CC="$CC -march=la664" CXX="$CXX -march=la664"
           fi
-          #if [[ "${{ matrix.container }}" == ubuntu:2[46].04 && $toolchain == powerpc64*-linux-gnu && "${{ matrix.extra }}" == *power10 ]]; then true;
-          if [[ $toolchain == powerpc64*-linux-gnu && "${{ matrix.extra }}" == *power10 ]]; then true;
+          if [[ $toolchain == powerpc64*-linux-gnu && "${{ matrix.extra }}" == *-power10* ]]; then true;
             export CC="$CC -mcpu=power10" CXX="$CXX -mcpu=power10"
           fi
-          if [[ $toolchain == powerpc64*-linux-gnu && "${{ matrix.extra }}" == *power11 ]]; then true;
+          if [[ $toolchain == powerpc64*-linux-gnu && "${{ matrix.extra }}" == *-power11* ]]; then true;
             export CC="$CC -mcpu=power11" CXX="$CXX -mcpu=power11"
           fi
           if [[ $toolchain == riscv64-linux-gnu ]]; then true;
             #export CC="$CC -mno-strict-align" CXX="$CXX -mno-strict-align"
           fi
-          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *mcmodel-large ]]; then true;
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-mcmodel-large* ]]; then true;
             export CC="$CC -mcmodel=large" CXX="$CXX -mcmodel=large"
             export CC="$CC -fno-PIC" CXX="$CXX -fno-PIC"
             export UPX_CONFIG_DISABLE_SHARED_LIBS=ON
           fi
-          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rva20u64 ]]; then true;
-            export CC="$CC -march=rva20u64" CXX="$CXX -march=rva20u64"
-          fi
-          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rva22u64 ]]; then true;
-            export CC="$CC -march=rva22u64" CXX="$CXX -march=rva22u64"
-          fi
-          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rva23u64 ]]; then true;
-            export CC="$CC -march=rva23u64" CXX="$CXX -march=rva23u64"
-          fi
-          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *rv64g ]]; then true;
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-rv64gc* ]]; then true;
+            export CC="$CC -march=rv64gc" CXX="$CXX -march=rv64gc"
+          elif [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-rv64g* ]]; then true;
             export CC="$CC -march=rv64g" CXX="$CXX -march=rv64g"
           fi
-          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *sifive-p670 ]]; then true;
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-rva20u64* ]]; then true;
+            export CC="$CC -march=rva20u64" CXX="$CXX -march=rva20u64"
+          fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-rva22u64* ]]; then true;
+            export CC="$CC -march=rva22u64" CXX="$CXX -march=rva22u64"
+          fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-rva23u64* ]]; then true;
+            export CC="$CC -march=rva23u64" CXX="$CXX -march=rva23u64"
+          fi
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-sifive-p670* ]]; then true;
             export CC="$CC -mcpu=sifive-p670" CXX="$CXX -mcpu=sifive-p670"
           fi
-          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *sifive-p870 ]]; then true;
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-sifive-p870* ]]; then true;
             export CC="$CC -mcpu=sifive-p870" CXX="$CXX -mcpu=sifive-p870"
           fi
-          #if [[ "${{ matrix.container }}" == ubuntu:2[46].04 && $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *thead-c906 ]]; then true;
-          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *thead-c906 ]]; then true;
+          if [[ $toolchain == riscv64-linux-gnu && "${{ matrix.extra }}" == *-thead-c906* ]]; then true;
             export CC="$CC -mtune=thead-c906" CXX="$CXX -mtune=thead-c906"
           fi
           export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
@@ -291,7 +306,7 @@ jobs:
           #[[ "${{ matrix.container }}" == 'ubuntu:22.04' && $toolchain == riscv64-linux-gnu ]] && export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
           #[[ "${{ matrix.container }}" == 'ubuntu:24.04' && $toolchain == riscv64-linux-gnu ]] && export UPX_CONFIG_DISABLE_SELF_PACK_TEST=ON
           [[ $toolchain == i686-w64-mingw32 ]] && export UPX_CONFIG_DISABLE_SELF_PACK_TEST=OFF
-          [[ $toolchain == x86_64-w64-mingw32  ]] && export UPX_CONFIG_DISABLE_SELF_PACK_TEST=OFF
+          [[ $toolchain == x86_64-w64-mingw32 ]] && export UPX_CONFIG_DISABLE_SELF_PACK_TEST=OFF
           echo "UPX_CONFIG_DISABLE_SELF_PACK_TEST=$UPX_CONFIG_DISABLE_SELF_PACK_TEST" >> $GITHUB_ENV
           if [[ 1 == 1 ]]; then true;
             export CXX="$CXX -std=gnu++2a"

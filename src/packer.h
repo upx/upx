@@ -82,7 +82,7 @@ public:
 
 protected:
     InputFile *const fi; // reference
-    // multiple names for "file_size" to avoid casts; limited by UPX_RSIZE_MAX
+    // multiple names for "file_size" to avoid casts; limited by UPX_RSIZE_MAX/UPX_RSIZE_MAX_NOCOMP
     union {                          // unnamed union
         const upx_int64_t file_size; // must get set by constructor
         const upx_uint64_t file_size_u;
