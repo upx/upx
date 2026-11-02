@@ -289,12 +289,16 @@ void LeFile::countFixups(unsigned *counts) const {
             throwCantPack("unsupported fixup record");
         switch (*fix) {
         case 2: // selector fixup
+            if (fix[4] == 0 || fix[4] > o)
+                throwCantPack("bad fixup object number");
             counts[o] += 9;
             fix += 5;
             break;
         case 0x12: // alias selector
             throwCantPack("16-bit selector alias fixup not yet supported");
         case 5: // 16-bit offset
+            if (fix[4] == 0 || fix[4] > o)
+                throwCantPack("bad fixup object number");
             fix += (fix[1] & 0x10) ? 9 : 7;
             break;
         case 6: // 16:32 pointer
@@ -316,6 +320,8 @@ void LeFile::countFixups(unsigned *counts) const {
             break;
         }
         case 8: // 32-bit self relative fixup
+            if (fix[4] == 0 || fix[4] > o)
+                throwCantPack("bad fixup object number");
             counts[o + 1] += 4;
             fix += (fix[1] & 0x10) ? 9 : 7;
             break;
