@@ -2550,8 +2550,13 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     ph.u_len = newvsize + soimport + sorelocs;
 
     // some extra_info data for uncompression support
+    // p1 is a raw pointer, so reserve all of the extra_info written below.
+    // newvsize comes from the last section and is not bounded by imagesize.
+    const unsigned sizeof_xi = sizeof_ih + ih.objects * sizeof(*isection) + (soimport ? 8 : 0) +
+                               (sorelocs ? 5 : 0) + (soresources ? 2 : 0) +
+                               (opt->exact ? exact_gap_size + sizeof(PeExactTrailer) : 0) + 4;
     unsigned s = 0;
-    byte *const p1 = ibuf.subref("bad ph.u_len %#x", ph.u_len, sizeof_ih);
+    byte *const p1 = ibuf.subref("bad ph.u_len %#x", ph.u_len, sizeof_xi);
     if (opt->exact) {
         s = sizeof_ih + objs * sizeof(*isection);
         fi->seek(pe_offset, SEEK_SET);
