@@ -3047,12 +3047,13 @@ bad:
         }
         unsigned const n = get_te32(&shdr->sh_size) / sizeof(Elf32_Dyn);
         Elf32_Dyn *dynp = (Elf32_Dyn *)&file_image[get_te32(&shdr->sh_offset)];
-        for (; Elf32_Dyn::DT_NULL != dynp->d_tag; ++dynp) {
+        Elf32_Dyn const *const last = n + dynp;  // end of SHT_DYNAMIC
+        for (; dynp < last && Elf32_Dyn::DT_NULL != dynp->d_tag; ++dynp) {
             if (upx_dt_init == get_te32(&dynp->d_tag)) {
                 break;  // re-found DT_INIT
             }
         }
-        if ((1+ dynp) < (n+ dynseg)) { // not the terminator, so take it
+        if ((1+ dynp) < last) { // not the terminator, so take it
             user_init_va = get_te32(&dynp->d_val);  // 0 if (0==upx_dt_init)
             set_te32(&dynp->d_tag, upx_dt_init = Elf32_Dyn::DT_INIT);
             user_init_off = (char const *)&dynp->d_val - (char const *)&file_image[0];
@@ -3209,12 +3210,13 @@ upx_uint64_t PackLinuxElf64::canPack_Shdr(Elf64_Phdr const *pload_x0)
         }
         unsigned const n = sh_size / sizeof(Elf64_Dyn);
         Elf64_Dyn *dynp = (Elf64_Dyn *)&file_image[sh_offset];
-        for (; Elf64_Dyn::DT_NULL != dynp->d_tag; ++dynp) {
+        Elf64_Dyn const *const last = n + dynp;  // end of SHT_DYNAMIC
+        for (; dynp < last && Elf64_Dyn::DT_NULL != dynp->d_tag; ++dynp) {
             if (upx_dt_init == get_te64(&dynp->d_tag)) {
                 break;  // re-found DT_INIT
             }
         }
-        if ((1+ dynp) < (n+ dynseg)) { // not the terminator, so take it
+        if ((1+ dynp) < last) { // not the terminator, so take it
             user_init_va = get_te64(&dynp->d_val);  // 0 if (0==upx_dt_init)
             set_te64(&dynp->d_tag, upx_dt_init = Elf64_Dyn::DT_INIT);
             user_init_off = (char const *)&dynp->d_val - (char const *)&file_image[0];
@@ -8383,9 +8385,11 @@ Elf32_Dyn const *
 PackLinuxElf32::elf_has_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
-    if (dynp)
-    for (; Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
-        return dynp;
+    if (dynp) {
+        Elf32_Dyn const *const last = (Elf32_Dyn const *)(sz_dynseg + (char const *)dynseg);
+        for (; dynp < last && Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
+            return dynp;
+        }
     }
     return nullptr;
 }
@@ -8540,9 +8544,11 @@ Elf64_Dyn const *
 PackLinuxElf64::elf_has_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
-    if (dynp)
-    for (; Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
-        return dynp;
+    if (dynp) {
+        Elf64_Dyn const *const last = (Elf64_Dyn const *)(sz_dynseg + (char const *)dynseg);
+        for (; dynp < last && Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
+            return dynp;
+        }
     }
     return nullptr;
 }
