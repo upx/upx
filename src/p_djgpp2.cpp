@@ -167,9 +167,10 @@ int PackDjgpp2::readFileHeader() {
         coff_offset = 512 * get_le16(&dos_hdr.e_cp);
         if (get_le16(&dos_hdr.e_cblp) != 0)
             coff_offset += get_le16(&dos_hdr.e_cblp) - 512;
-    } else
-        coff_offset =
-            0; // no stub: the COFF header is at the start (and the bytes above aren't DOS fields)
+    } else {
+        // no stub: the COFF header is at the start (and the bytes above aren't DOS fields)
+        coff_offset = 0;
+    }
     fi->seek(coff_offset, SEEK_SET);
     if (fi->read(&coff_hdr, sizeof(coff_hdr)) != sizeof(coff_hdr))
         throwCantPack("skipping djgpp symlink");

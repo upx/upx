@@ -87,6 +87,8 @@ jobs:
           # { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -flto }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -mcmodel-large }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64g }
+          - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64gc }
+          - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -rv64gc;-thead-c906 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -sifive-p670 }
           - { container: 'ubuntu:26.04', target: g++-riscv64-linux-gnu, qemu: qemu-riscv64, extra: -thead-c906 }
 
@@ -171,6 +173,7 @@ jobs:
           apt-get install -y qemu-user "${{ matrix.target }}"
       - name: ${{ format('Install MinGW posix-threads {0}', matrix.container) }}
         run: |
+          ls -ldF /usr/bin/qemu* || true
           # make sure that we use posix-threads (pthread/winpthreads) and NOT win32-threads
           ls -ldF /etc/alternatives/*mingw* || true
           for f in i686-w64-mingw32-g++ i686-w64-mingw32-gcc x86_64-w64-mingw32-g++ x86_64-w64-mingw32-gcc; do
@@ -227,16 +230,16 @@ jobs:
               export CMAKE_SYSTEM_NAME=Windows
               export CMAKE_SYSTEM_PROCESSOR=X86
               export CMAKE_CROSSCOMPILING_EMULATOR=wine
-              CC="$CC -D_WIN32_WINNT=0x0501"; CXX="$CXX -D_WIN32_WINNT=0x0501"
-              CC="$CC -static"; CXX="$CXX -static" ;;
+              export CC="$CC -D_WIN32_WINNT=0x0501" CXX="$CXX -D_WIN32_WINNT=0x0501"
+              export CC="$CC -static" CXX="$CXX -static" ;;
             x86_64-w64-mingw32)
               export UPX_CONFIG_DISABLE_SANITIZE=ON
               #export UPX_CONFIG_EXPECT_THREADS=OFF
               export CMAKE_SYSTEM_NAME=Windows
               export CMAKE_SYSTEM_PROCESSOR=AMD64
               export CMAKE_CROSSCOMPILING_EMULATOR=wine
-              CC="$CC -D_WIN32_WINNT=0x0501"; CXX="$CXX -D_WIN32_WINNT=0x0501"
-              CC="$CC -static"; CXX="$CXX -static" ;;
+              export CC="$CC -D_WIN32_WINNT=0x0501" CXX="$CXX -D_WIN32_WINNT=0x0501"
+              export CC="$CC -static" CXX="$CXX -static" ;;
           esac
           if [[ "${{ matrix.extra }}" == *-ffast-math* ]]; then true;
             export CC="$CC -ffast-math" CXX="$CXX -ffast-math"

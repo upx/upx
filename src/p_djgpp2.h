@@ -54,6 +54,7 @@ public:
 protected:
     void handleStub(OutputFile *fo);
     int readFileHeader();
+    void stripDebug();
 
     virtual unsigned findOverlapOverhead(const byte *buf, const byte *tbuf, unsigned range = 0,
                                          unsigned upper_limit = ~0u) const override;
@@ -108,8 +109,6 @@ protected:
     external_scnhdr_t *text = nullptr;
     external_scnhdr_t *data = nullptr;
     external_scnhdr_t *bss = nullptr;
-
-    void stripDebug();
 };
 
 /* vim:set ts=4 sw=4 et: */
