@@ -2467,7 +2467,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
         pe_offset = sizeof(stub);
     } else
         handleStub(fi, fo, pe_offset);
-    unsigned overlaystart = readSections(objs, ih.imagesize, ih.filealign, ih.datasize);
+    const unsigned overlaystart = readSections(objs, ih.imagesize, ih.filealign, ih.datasize);
     unsigned overlay = file_size_u - stripDebug(overlaystart);
     if (overlay >= file_size_u)
         overlay = 0;
@@ -2552,13 +2552,13 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh, unsigned subsystem_mask,
     // some extra_info data for uncompression support
     // p1 is a raw pointer, so reserve all of the extra_info written below.
     // newvsize comes from the last section and is not bounded by imagesize.
-    const unsigned sizeof_xi = sizeof_ih + ih.objects * sizeof(*isection) + (soimport ? 8 : 0) +
-                               (sorelocs ? 5 : 0) + (soresources ? 2 : 0) +
+    const unsigned sizeof_xi = sizeof_ih + mem_size(sizeof(*isection), ih.objects) +
+                               (soimport ? 8 : 0) + (sorelocs ? 5 : 0) + (soresources ? 2 : 0) +
                                (opt->exact ? exact_gap_size + sizeof(PeExactTrailer) : 0) + 4;
     unsigned s = 0;
     byte *const p1 = ibuf.subref("bad ph.u_len %#x", ph.u_len, sizeof_xi);
     if (opt->exact) {
-        s = sizeof_ih + objs * sizeof(*isection);
+        s = sizeof_ih + mem_size(sizeof(*isection), objs);
         fi->seek(pe_offset, SEEK_SET);
         fi->readx(ibuf.subref("bad original PE header", ph.u_len, s), s);
     } else {
@@ -3225,7 +3225,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh, ord_mask_t ord_mask, 
     memcpy(&oh, extra_info, take);
     extra_info += take;
     skip += take;
-    unsigned objs = oh.objects;
+    const unsigned objs = oh.objects;
 
     if ((int) objs <= 0 || (iobjs > 2 && isection[2].size == 0))
         throwCantUnpack("unexpected value in the PE header");
