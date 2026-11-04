@@ -176,6 +176,7 @@ jobs:
           set -x
           ls -ldF /usr/bin/qemu* || true
           for qemu in /usr/bin/qemu*; do
+            ls -ldF "$qemu" || true
             ldd "$qemu" || true
           done
       - name: ${{ format('Install MinGW posix-threads {0}', matrix.container) }}
@@ -368,6 +369,7 @@ jobs:
           export upx_exe_runner="${{ matrix.qemu }}"
           qemu="${upx_exe_runner##*/}" # basename
           qemu="${qemu%% *}"
+          ls -ldF "/usr/bin/$qemu" || true
           ldd "/usr/bin/$qemu" || true
           upx_exe_runner="$upx_exe_runner -L /usr/${toolchain}"
           UPX_DEBUG_DOCTEST_VERBOSE=1 $upx_exe_runner ./build/xtarget/${toolchain}/debug/upx --sysinfo -vv || true

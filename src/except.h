@@ -35,11 +35,11 @@ class Throwable : public std::exception {
     typedef std::exception super;
 
 protected:
-    Throwable(const char *m = nullptr, int e = 0, bool w = false) noexcept;
+    explicit noinline Throwable(const char *m = nullptr, int e = 0, bool w = false) noexcept;
 
 public:
-    Throwable(const Throwable &) noexcept; // copy constructor
-    virtual ~Throwable() noexcept;
+    noinline Throwable(const Throwable &) noexcept; // copy constructor
+    noinline virtual ~Throwable() noexcept;
     const char *getMsg() const noexcept { return msg; }
     int getErrno() const noexcept { return err; }
     bool isWarning() const noexcept { return is_warning; }
@@ -73,14 +73,15 @@ private:
 class Exception : public Throwable {
     typedef Throwable super;
 public:
-    Exception(const char *m = nullptr, int e = 0, bool w = false) noexcept : super(m, e, w) {}
+    explicit Exception(const char *m = nullptr, int e = 0, bool w = false) noexcept
+        : super(m, e, w) {}
 };
 
 // Errors should not be caught (or re-thrown)
 class Error : public Throwable {
     typedef Throwable super;
 public:
-    Error(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
+    explicit Error(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 /*************************************************************************
@@ -90,31 +91,32 @@ public:
 class OutOfMemoryException final : public Exception {
     typedef Exception super;
 public:
-    OutOfMemoryException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
+    explicit OutOfMemoryException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 class IOException /*not_final*/ : public Exception {
     typedef Exception super;
 public:
-    IOException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
+    explicit IOException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 class EOFException final : public IOException {
     typedef IOException super;
 public:
-    EOFException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
+    explicit EOFException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 class FileNotFoundException final : public IOException {
     typedef IOException super;
 public:
-    FileNotFoundException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
+    explicit FileNotFoundException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
 };
 
 class FileAlreadyExistsException final : public IOException {
     typedef IOException super;
 public:
-    FileAlreadyExistsException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {}
+    explicit FileAlreadyExistsException(const char *m = nullptr, int e = 0) noexcept : super(m, e) {
+    }
 };
 
 /*************************************************************************
@@ -124,44 +126,47 @@ public:
 class OverlayException final : public Exception {
     typedef Exception super;
 public:
-    OverlayException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
+    explicit OverlayException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
 };
 
 class CantPackException /*not_final*/ : public Exception {
     typedef Exception super;
 public:
-    CantPackException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
+    explicit CantPackException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
 };
 
 class UnknownExecutableFormatException final : public CantPackException {
     typedef CantPackException super;
 public:
-    UnknownExecutableFormatException(const char *m = nullptr, bool w = false) noexcept
+    explicit UnknownExecutableFormatException(const char *m = nullptr, bool w = false) noexcept
         : super(m, w) {}
 };
 
 class AlreadyPackedException final : public CantPackException {
     typedef CantPackException super;
 public:
-    AlreadyPackedException(const char *m = nullptr) noexcept : super(m) { is_warning = true; }
+    explicit AlreadyPackedException(const char *m = nullptr) noexcept : super(m) {
+        is_warning = true;
+    }
 };
 
 class NotCompressibleException final : public CantPackException {
     typedef CantPackException super;
 public:
-    NotCompressibleException(const char *m = nullptr) noexcept : super(m) {}
+    explicit NotCompressibleException(const char *m = nullptr) noexcept : super(m) {}
 };
 
 class CantUnpackException /*not_final*/ : public Exception {
     typedef Exception super;
 public:
-    CantUnpackException(const char *m = nullptr, bool w = false) noexcept : super(m, 0, w) {}
+    explicit CantUnpackException(const char *m = nullptr, bool w = false) noexcept
+        : super(m, 0, w) {}
 };
 
 class NotPackedException final : public CantUnpackException {
     typedef CantUnpackException super;
 public:
-    NotPackedException(const char *m = nullptr) noexcept : super(m, true) {}
+    explicit NotPackedException(const char *m = nullptr) noexcept : super(m, true) {}
 };
 
 /*************************************************************************
@@ -171,7 +176,7 @@ public:
 class InternalError final : public Error {
     typedef Error super;
 public:
-    InternalError(const char *m = nullptr) noexcept : super(m, 0) {}
+    explicit InternalError(const char *m = nullptr) noexcept : super(m, 0) {}
 };
 
 /*************************************************************************

@@ -1412,6 +1412,9 @@ struct alignas(1) TestXE final {
         may_throw {
         return mem_size(element_size, n);
     }
+    static noinline upx_rsize_t noinline_mem_size_1(upx_uint64_t n) may_throw {
+        return mem_size(1, n);
+    }
     static noinline upx_rsize_t noinline_mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
         may_throw {
         return mem_size_get_n(element_size, n);
@@ -1949,6 +1952,7 @@ TEST_CASE("upx::run_time 1b") {
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint128_t(n)));
 #endif
         assert_noexcept2(TestXE::noinline_mem_size(element_size, n) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_1(n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_get_n(element_size, n) == 0);
     }
     {

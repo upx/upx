@@ -100,7 +100,7 @@ static noinline tribool try_can_pack(PackerBase *pb, void *user) may_throw {
     try {
         pb->initPackHeader();
         f->seek(0, SEEK_SET);
-        tribool r = pb->canPack();
+        const tribool r = pb->canPack();
         if (r) {
             if (opt->cmd == CMD_COMPRESS)
                 pb->updatePackHeader();
@@ -122,7 +122,7 @@ static noinline tribool try_can_unpack(PackerBase *pb, void *user) may_throw {
     try {
         pb->initPackHeader();
         f->seek(0, SEEK_SET);
-        tribool r = pb->canUnpack();
+        const tribool r = pb->canUnpack();
         if (r) {
             f->seek(0, SEEK_SET);
             return true; // success
@@ -153,7 +153,7 @@ PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const O
             fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n", pb->getVersion(),           \
                     pb->getFormat(), #Klass);                                                      \
         pb->assertPacker();                                                                        \
-        tribool r = func(pb.get(), user);                                                          \
+        const tribool r = func(pb.get(), user);                                                    \
         if (r)                                                                                     \
             return pb.release(); /* success */                                                     \
         if (r.isThird())                                                                           \

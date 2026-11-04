@@ -991,6 +991,7 @@ jobs:
           qemu="${{ matrix.qemu }}"
           apk add coreutils "${qemu%% *}"
           test -n "$NEED_GCOMPAT" && apk add gcompat
+          ls -ldF "/usr/bin/${qemu%% *}" || true
           ldd "/usr/bin/${qemu%% *}" || true
           export upx_exe_runner="$qemu"
           UPX_DEBUG_DOCTEST_VERBOSE=1 $upx_exe_runner ./build/zig/${ZIG_TARGET}${ZIG_PIC}/debug/upx --sysinfo -vv || true
