@@ -1845,6 +1845,11 @@ PackLinuxElf64::buildLinuxLoader(
                 "LZMA_DAISY,LZMA_ELF00,LZMA_DEC20,LZMA_DEC30");
         }
         len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "EXP_TAIL");
+        // EXP_TAIL ends at the upx_mmap_and_fd label, which main2.c calls when
+        // the escape hatch does not fit on the last page of .text.
+        if (this->e_machine==Elf64_Ehdr::EM_AARCH64 && hasLoaderSection("UMF_LINUX")) {
+            len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "HUMF_L,UMF_LINUX");
+        }
         if (hasLoaderSection("SYSCALLS")) {
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "SYSCALLS");
         }
