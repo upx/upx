@@ -541,6 +541,9 @@ ok_memfd:
         .globl ftruncate
 ftruncate: do_sys __NR_ftruncate; ret
 
+        // upx_mmap_and_fd_linux (UMF_LINUX) creates the escape hatch page.
+memfd_create: .globl memfd_create; do_sys __NR_memfd_create; ret
+
         .globl unlink
 unlink:
         mov x2,#0  // flags as last arg

@@ -867,6 +867,8 @@ arm64-linux.elf-so_entry.h: $(srcdir)/src/$$T.S
 arm64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
             tmp/$$T.o \
             tmp/arm64-expand.o \
+            tmp/arm64-linux.elf-help_umf.o \
+            tmp/arm64-linux.elf-upxfd_linux.o \
             tmp/arm64-linux.elf-main2.o
 	$(call tc,ld) -r -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) tmp/$T.bin | $(RTRIM) | $(EXPAND) > tmp/$T.bin.disasm
