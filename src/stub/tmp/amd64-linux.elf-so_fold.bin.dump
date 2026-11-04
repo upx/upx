@@ -8,16 +8,16 @@ Idx Name          Size      VMA               LMA               File off  Algn  
   3 SO_MAIN       0817  0  0  0150  2**4  CONTENTS
   4 SO_HEAD       043  0  0  0967  2**0  CONTENTS
   5 ptr_NEXT      0  0  0  09aa  2**0  CONTENTS
-  6 SO_TAIL       0fa  0  0  09aa  2**0  CONTENTS
-  7 EXP_HEAD      0e9  0  0  0aa4  2**0  CONTENTS
-  8 NRV2E         0e8  0  0  0b8d  2**0  CONTENTS
-  9 NRV2D         0db  0  0  0c75  2**0  CONTENTS
- 10 NRV2B         0c4  0  0  0d50  2**0  CONTENTS
- 11 LZMA_DAISY    0a  0  0  0e14  2**0  CONTENTS
- 12 LZMA_ELF00    065  0  0  0e1e  2**0  CONTENTS
- 13 LZMA_DEC10    09f7  0  0  0e83  2**0  CONTENTS
- 14 LZMA_DEC20    09f7  0  0  0187a  2**0  CONTENTS
- 15 LZMA_DEC30    019  0  0  02271  2**0  CONTENTS
+  6 SO_TAIL       0fb  0  0  09aa  2**0  CONTENTS
+  7 EXP_HEAD      0e9  0  0  0aa5  2**0  CONTENTS
+  8 NRV2E         0e8  0  0  0b8e  2**0  CONTENTS
+  9 NRV2D         0db  0  0  0c76  2**0  CONTENTS
+ 10 NRV2B         0c4  0  0  0d51  2**0  CONTENTS
+ 11 LZMA_DAISY    0a  0  0  0e15  2**0  CONTENTS
+ 12 LZMA_ELF00    065  0  0  0e1f  2**0  CONTENTS
+ 13 LZMA_DEC10    09f7  0  0  0e84  2**0  CONTENTS
+ 14 LZMA_DEC20    09f7  0  0  0187b  2**0  CONTENTS
+ 15 LZMA_DEC30    019  0  0  02272  2**0  CONTENTS
  16 EXP_TAIL      014  0  0  0228c  2**2  CONTENTS
  17 STRCON        04b  0  0  022a0  2**0  CONTENTS
 SYMBOL TABLE:
@@ -55,15 +55,15 @@ SYMBOL TABLE:
 0000000000000000 g     F UMF_LINUX 0f9 upx_mmap_and_fd_linux
 0000000000000000 g     F SO_TAIL 0 eof
 000000000000044c g     F SO_MAIN 0b9 prep_SELinux
-00000000000000ba g       SO_TAIL 0 write
+00000000000000bb g       SO_TAIL 0 write
 0000000000000383 g     F SO_MAIN 01d PF_to_PROT
-00000000000000c2 g       SO_TAIL 0 memfd_create
-00000000000000be g       SO_TAIL 0 read
+00000000000000c3 g       SO_TAIL 0 memfd_create
+00000000000000bf g       SO_TAIL 0 read
 0000000000000013 g       SO_TAIL 0 memset
 0000000000000042 g       SO_TAIL 0 msync
 0000000000000011 g       SO_TAIL 0 my_bkpt
 0000000000000046 g       SO_TAIL 0 Pprotect
-00000000000000ba g       SO_TAIL 0 Pwrite
+00000000000000bb g       SO_TAIL 0 Pwrite
 0000000000000095 g       SO_TAIL 0 Punmap
 00000000000000a7 g       SO_TAIL 0 exit
 00000000000000b3 g       SO_TAIL 0 openat

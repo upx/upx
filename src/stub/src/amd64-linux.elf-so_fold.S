@@ -193,8 +193,8 @@ ftruncate: .globl ftruncate
         push $__NR_ftruncate; 5: jmp 5f
 close: .globl close
         push $ __NR_close; 5: jmp 5f
-openat: .globl openat
-        push $ __NR_openat; 5: jmp 5f
+openat: .globl openat  // may fail: Android can deny /proc/self/auxv
+        movl $__NR_openat,%eax; syscall; ret  // sysgo would trap
 Pwrite: .globl Pwrite
 write: .globl write
         push $__NR_write; 5: jmp 5f
