@@ -171,9 +171,15 @@ jobs:
           apt-get update && apt-get upgrade -y
           apt-get install -y --no-install-recommends bash ca-certificates cmake curl file git make ninja-build parallel strace tar time tree util-linux xz-utils zstd
           apt-get install -y qemu-user "${{ matrix.target }}"
+      - name: ${{ format('QEMU {0}', matrix.container) }}
+        run: |
+          set -x
+          ls -ldF /usr/bin/qemu* || true
+          for qemu in /usr/bin/qemu*; do
+            ldd "$qemu" || true
+          done
       - name: ${{ format('Install MinGW posix-threads {0}', matrix.container) }}
         run: |
-          ls -ldF /usr/bin/qemu* || true
           # make sure that we use posix-threads (pthread/winpthreads) and NOT win32-threads
           ls -ldF /etc/alternatives/*mingw* || true
           for f in i686-w64-mingw32-g++ i686-w64-mingw32-gcc x86_64-w64-mingw32-g++ x86_64-w64-mingw32-gcc; do

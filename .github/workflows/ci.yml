@@ -789,6 +789,7 @@ jobs:
         include:
           # only build a few selected targets => more targets are tested in the Weekly CI
           - { zig_target: aarch64-linux-musl, qemu: qemu-aarch64 }
+          - { zig_target: aarch64-linux-musl, qemu: qemu-aarch64, zig_pic: -fPIC }
           - { zig_target: aarch64-linux-musl, qemu: qemu-aarch64, zig_pic: -fPIE, container: 'alpine:3.18' }
           - { zig_target: aarch64-macos-none }
           - { zig_target: aarch64-windows-gnu }
@@ -990,6 +991,7 @@ jobs:
           qemu="${{ matrix.qemu }}"
           apk add coreutils "${qemu%% *}"
           test -n "$NEED_GCOMPAT" && apk add gcompat
+          ldd "/usr/bin/${qemu%% *}" || true
           export upx_exe_runner="$qemu"
           UPX_DEBUG_DOCTEST_VERBOSE=1 $upx_exe_runner ./build/zig/${ZIG_TARGET}${ZIG_PIC}/debug/upx --sysinfo -vv || true
           UPX_DEBUG_DOCTEST_VERBOSE=1 $upx_exe_runner ./build/zig/${ZIG_TARGET}${ZIG_PIC}/release/upx --sysinfo -vv || true
