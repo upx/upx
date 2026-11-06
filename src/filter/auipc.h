@@ -91,7 +91,10 @@ static int get_ilen(int w)  // instruction length in bytes
         ilen += 2;
         if (7 == (7& (w >>2))) {
             ilen += 2;
-            // NYI: 8 bytes or longer
+            if (3 == (3& (w >>5))) { // same as stub/src/arch/riscv/64/bxx.S
+                ilen += 2;
+            }
+            // NYI: 10 bytes or longer
         }
     }
     return ilen;
