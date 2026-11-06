@@ -455,6 +455,7 @@ amd64-linux.elf-so_entry.h : $(srcdir)/src/amd64-linux.elf-so_entry.lds \
 amd64-linux.elf-fold.h : $(srcdir)/src/$$T.lds \
 	    tmp/$$T.o \
 	    tmp/amd64-expand.o \
+	    tmp/amd64-linux.elf-help_umf.o \
 	    tmp/amd64-linux.elf-upxfd_linux.o \
 	    tmp/amd64-linux.elf-main2.o
 # FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
