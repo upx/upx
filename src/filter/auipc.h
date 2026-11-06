@@ -137,6 +137,10 @@ static int F(Filter *f) {
             if ((  (kc= 4+ jc), (b2= *(kc+b)), (COND(b2)))
             ||  ((3!= (3& b2))  // after AUIPC is 2-byte instr
                && ((kc= 6+ jc), (b2= *(kc+b)), (COND(b2))) ) ) {
+                if (size < kc) { // filtering changes 8 bytes; same limit as unfiltering
+                    ilen = kc - ic;  // beyond 'size': also ends the outer 'for'
+                    break;  // gang has ended
+                }
                 if (g_end <= gi)
                     throwInternalError("gang of AUIPC too large at +%#x", ic);
                 gang[gi++] = kc;
