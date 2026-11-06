@@ -321,7 +321,7 @@ make_hatch(
     q[2] = 0x9002 | (15<<7);  // jalr x15
 
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        next_unc += 1+ phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
+        next_unc += phdr->p_memsz - phdr->p_filesz;  // Skip over local .bss
         next_unc  = (char *)(void *)(~1ul & (long)(1+ next_unc));  // .balign 2
         if (3*2 <= (~page_mask & -(long)next_unc)) { // fits on end of page
             short *p = (short *)(void *)next_unc;

@@ -345,6 +345,10 @@ O_TMPFILE= 020000000  // 0x400000
 ok_memfd:
         ret
 
+memfd_create: .globl memfd_create  // may return -errno; for upx_mmap_and_fd_linux
+        syscall __NR_memfd_create
+        ret
+
 sysgo:
 sys_check:
         ecall; bltz rv,0f

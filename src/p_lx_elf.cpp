@@ -1848,6 +1848,7 @@ PackLinuxElf64::buildLinuxLoader(
         // EXP_TAIL ends at the upx_mmap_and_fd label, which main2.c calls when
         // the escape hatch does not fit on the last page of .text.
         if ((this->e_machine==Elf64_Ehdr::EM_AARCH64
+          || this->e_machine==Elf64_Ehdr::EM_RISCV
           || this->e_machine==Elf64_Ehdr::EM_X86_64)
         &&  hasLoaderSection("UMF_LINUX")) {
             len += snprintf(&sec[len], sizeof(sec) - len, ",%s", "HUMF_L,UMF_LINUX");
