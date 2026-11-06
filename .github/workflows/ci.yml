@@ -27,7 +27,7 @@ env:
   ZSTD_CLEVEL: 17
   ZIG_DIST_VERSION: zig-0.15.2         # 2025-10-11 llvm-20.1.2
   #ZIG_DIST_VERSION: zig-0.16.0         # 2026-04-13 llvm-21.1.0
-  #ZIG_DIST_VERSION: zig-0.17.0         # 2026-10-01 llvm-22.1.8
+  #ZIG_DIST_VERSION: zig-0.17.1         # 2026-11-02 llvm-22.1.8
 
 jobs:
   job-rebuild-and-verify-stubs:

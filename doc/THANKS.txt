@@ -53,6 +53,8 @@ Kartik Kenchi <netliomax25@gmail.com>
   for beta testing
 Kornel Pal
   for the EFI support
+Leen Hawk <leenhawk@leenhawk.com>
+  for beta testing
 Lukundoo <Lukundoo@softhome.net>
   for beta testing
 Michael Devore
