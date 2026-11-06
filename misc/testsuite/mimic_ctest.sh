@@ -97,7 +97,8 @@ fi
 
 export UPX="--prefer-ucl --no-color --no-progress"
 export UPX_DEBUG_DISABLE_GITREV_WARNING=1
-export UPX_DEBUG_DOCTEST_DISABLE=1 # already checked above
+#export UPX_DEBUG_DOCTEST_DISABLE=1 # already checked above
+export UPX_DEBUG_DOCTEST_VERBOSE=0
 
 "${run_upx[@]}" --version
 "${run_upx[@]}" --version-short
