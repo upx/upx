@@ -91,7 +91,10 @@ static int get_ilen(int w)  // instruction length in bytes
         ilen += 2;
         if (7 == (7& (w >>2))) {
             ilen += 2;
-            // NYI: 8 bytes or longer
+            if (3 == (3& (w >>5))) { // same as stub/src/arch/riscv/64/bxx.S
+                ilen += 2;
+            }
+            // NYI: 10 bytes or longer
         }
     }
     return ilen;
@@ -113,7 +116,7 @@ static int F(Filter *f) {
     int calls = 0, noncalls = 0;
     int lastcall = 0;
     int gi;
-    int constexpr g_end = 128;
+    int constexpr g_end = 1024;  // 32-bit host: 2GiB must hold input, output, upx, and stack
     int gang[g_end];
 
     int ilen = 0; (void)gang; // not needed, but placate ignorant compiler
@@ -134,8 +137,12 @@ static int F(Filter *f) {
             if ((  (kc= 4+ jc), (b2= *(kc+b)), (COND(b2)))
             ||  ((3!= (3& b2))  // after AUIPC is 2-byte instr
                && ((kc= 6+ jc), (b2= *(kc+b)), (COND(b2))) ) ) {
+                if (size < kc) { // filtering changes 8 bytes; same limit as unfiltering
+                    ilen = kc - ic;  // beyond 'size': also ends the outer 'for'
+                    break;  // gang has ended
+                }
                 if (g_end <= gi)
-                    throwInternalError("gang of AUIPC too large at +%#x", ic);
+                    throwCantPack("Cannot pack: gang of AUIPC aliases > 1024.  Use --no-filter.");
                 gang[gi++] = kc;
                 jc = kc;  // continue looking, starting after newest AUIPC
             }
