@@ -25,7 +25,8 @@ env:
   UPX_DEBUG_TEST_FLOAT_DIVISION_BY_ZERO: 1
   UPX_DEBUG_TEST_LIBC_QSORT: 1
   ZSTD_CLEVEL: 17
-  ZIG_DIST_VERSION: zig-0.15.2         # 2025-10-11 llvm-20.1.2
+  ZIG_DIST_VERSION: zig-0.18.0-dev.897+117fd40fb.tar.xz
+  #ZIG_DIST_VERSION: zig-0.15.2         # 2025-10-11 llvm-20.1.2
   #ZIG_DIST_VERSION: zig-0.16.0         # 2026-04-13 llvm-21.1.0
   #ZIG_DIST_VERSION: zig-0.17.1         # 2026-11-02 llvm-22.1.8
 
@@ -855,6 +856,8 @@ jobs:
       - name: Check out test suite
         if: ${{ matrix.qemu || matrix.wine }}
         run: git clone --depth=1 https://github.com/upx/upx-testsuite ../deps/upx-testsuite
+      - run: if [[ $ZIG_TARGET == aarch64-linux-musl* ]]; then echo "ZIG_DIST_VERSION=0.17.1" >> $GITHUB_ENV; fi; true
+      - run: if [[ $ZIG_TARGET == armeb-linux-musl* ]];   then echo "ZIG_DIST_VERSION=0.15.2" >> $GITHUB_ENV; fi; true
       - name: ${{ format('Install Zig {0}', env.ZIG_DIST_VERSION) }}
         run: |
           rev=$(git rev-parse --short=7 HEAD)
@@ -878,7 +881,7 @@ jobs:
           #curl -sS -L -O https://ziglang.org/builds/${ZIG_DIST_NAME}.tar.xz
           #curl -sS -L -O https://ziglang.org/download/0.15.2/${ZIG_DIST_NAME}.tar.xz
           #curl -sS -L -O https://ziglang.org/download/0.16.0/${ZIG_DIST_NAME}.tar.xz
-          #curl -sS -L -O https://ziglang.org/download/0.17.0/${ZIG_DIST_NAME}.tar.xz
+          #curl -sS -L -O https://ziglang.org/download/0.17.1/${ZIG_DIST_NAME}.tar.xz
           curl -sS -L -O https://github.com/upx/upx-stubtools/releases/download/v20160918/${ZIG_DIST_NAME}.tar.xz
           ls -l ${ZIG_DIST_NAME}.tar.xz
           file ${ZIG_DIST_NAME}.tar.xz || true
@@ -889,7 +892,7 @@ jobs:
           echo -n 'zig version: '; zig version
           # patch zig
           ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
-          (cd ${ZIG_DIST_NAME} && patch --verbose -p1 -i "$GITHUB_WORKSPACE"/misc/patches/zig/0001-x.patch)
+          #(cd ${ZIG_DIST_NAME} && patch --verbose -p1 -i "$GITHUB_WORKSPACE"/misc/patches/zig/0001-x.patch)
           # create wrapper scripts (needed for CMake)
           log=
           log='set -x\n'
@@ -933,6 +936,7 @@ jobs:
       - run: zig-cc  -E -x c   -dM /dev/null # list predefined macros for C
       - run: zig-cxx -E -x c++ -dM /dev/null # list predefined macros for C++
       - run: cd ~/.local/bin/zig-*/. && echo "$PWD" && ls -laF
+      - run: cd ~/.local/bin/zig-*/. && echo "$PWD"; set -x; file zig || true; ldd zig || true
       - run: cd ~/.local/bin/zig-*/. && echo "$PWD" && tree -sF -d --du
       # run: cd ~/.local/bin/zig-*/. && echo "$PWD" && tree -sF    --du
       - name: ${{ format('Build Release with zig-cc -target {0} {1}', env.ZIG_TARGET, env.ZIG_PIC) }}

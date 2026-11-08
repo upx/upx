@@ -124,7 +124,6 @@ Developer quick start
 13)  $ make run-testsuite 2>&1  |  tee testsuite.log
 
 
-
 Misc. notes
 -----------
 

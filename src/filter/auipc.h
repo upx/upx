@@ -116,8 +116,8 @@ static int F(Filter *f) {
     int calls = 0, noncalls = 0;
     int lastcall = 0;
     int gi;
-    int constexpr g_end = 1024;  // 32-bit host: 2GiB must hold input, output, upx, and stack
-    int gang[g_end];
+    int constexpr g_end = 16384; // 32-bit host: 2GiB must hold input, output, upx, and stack
+    Array(int, gang, g_end);
 
     int ilen = 0; (void)gang; // not needed, but placate ignorant compiler
     for (ic = 0; ic <= size; ic += ilen) {
@@ -142,7 +142,7 @@ static int F(Filter *f) {
                     break;  // gang has ended
                 }
                 if (g_end <= gi)
-                    throwCantPack("Cannot pack: gang of AUIPC aliases > 1024.  Use --no-filter.");
+                    throwCantPack("Cannot pack: gang of AUIPC aliases > %d.  Use --no-filter.", g_end);
                 gang[gi++] = kc;
                 jc = kc;  // continue looking, starting after newest AUIPC
             }

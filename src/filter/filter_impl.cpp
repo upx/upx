@@ -27,6 +27,7 @@
 
 #include "../conf.h"
 #include "../filter.h"
+#include "../util/membuffer.h"
 
 #define set_dummy(p, v) ((void) 0)
 #define get_8(p)        (*(p))
