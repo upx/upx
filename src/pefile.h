@@ -398,6 +398,7 @@ protected:
         void flatten();
 
         void clear();
+        void clear(const Interval &keep); // both interval lists must be flattened
         void dump() const;
 
     private:
@@ -481,6 +482,7 @@ protected:
         unsigned itype() const;
         const byte *ntype() const;
         unsigned size() const;
+        unsigned rawsize() const;
         unsigned offs() const;
         unsigned &newoffs();
 
