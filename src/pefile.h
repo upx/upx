@@ -402,6 +402,7 @@ protected:
         void dump() const;
 
     private:
+        void check_flat() const;
         static int __acc_cdecl_qsort compare(const void *p1, const void *p2);
     };
 
