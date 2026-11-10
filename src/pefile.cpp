@@ -289,7 +289,18 @@ void PeFile::Interval::clear() {
         memset(base + ivarr[ic].start, 0, ivarr[ic].len);
 }
 
+// cheap sanity check of flatten() output: no wrap-around, sorted, disjoint
+void PeFile::Interval::check_flat() const {
+    for (unsigned ic = 0; ic < ivnum; ic++) {
+        const unsigned start = ivarr[ic].start, end = start + ivarr[ic].len;
+        if (end < start || (ic > 0 && start <= ivarr[ic - 1].start + ivarr[ic - 1].len))
+            throwInternalError("bad Interval");
+    }
+}
+
 void PeFile::Interval::clear(const Interval &keep) {
+    check_flat();
+    keep.check_flat();
     unsigned jc = 0;
     for (unsigned ic = 0; ic < ivnum; ic++) {
         unsigned pos = ivarr[ic].start;
