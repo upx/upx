@@ -371,7 +371,7 @@ jobs:
           qemu="${qemu%% *}"
           ls -ldF "/usr/bin/$qemu" || true
           ldd "/usr/bin/$qemu" || true
-          upx_exe_runner="$upx_exe_runner -L /usr/${toolchain}"
+          export upx_exe_runner="$upx_exe_runner -L /usr/${toolchain}"
           UPX_DEBUG_DOCTEST_VERBOSE=1 $upx_exe_runner ./build/xtarget/${toolchain}/debug/upx --sysinfo -vv || true
           UPX_DEBUG_DOCTEST_VERBOSE=1 $upx_exe_runner ./build/xtarget/${toolchain}/release/upx --sysinfo -vv
 
@@ -391,7 +391,7 @@ jobs:
         if: ${{ matrix.qemu }}
         run: |
           export upx_exe_runner="${{ matrix.qemu }}"
-          upx_exe_runner="$upx_exe_runner -L /usr/${toolchain}"
+          export upx_exe_runner="$upx_exe_runner -L /usr/${toolchain}"
           jobs="${toolchain}/debug ${toolchain}/release"
           #[[ "${{ matrix.container }}" == "ubuntu:24.04" && $toolchain == alpha-linux-gnu ]] && jobs="${toolchain}/release"
           [[ $toolchain == alpha-linux-gnu ]] && jobs="${toolchain}/release"
@@ -405,7 +405,7 @@ jobs:
         if: ${{ matrix.qemu }}
         run: |
           export upx_exe_runner="${{ matrix.qemu }}"
-          upx_exe_runner="$upx_exe_runner -L /usr/${toolchain}"
+          export upx_exe_runner="$upx_exe_runner -L /usr/${toolchain}"
           export upx_testsuite_SRCDIR="$(readlink -en ../deps/upx-testsuite)"
           jobs="${toolchain}/debug ${toolchain}/release"
           [[ $toolchain == alpha-linux-gnu ]] && jobs="${toolchain}/release"

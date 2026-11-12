@@ -190,8 +190,7 @@ int PeFile::readFileHeader() {
         fi->seek(pe_offset, SEEK_SET);
         fi->readx(&h, sizeof(h));
 
-        if (h.mz == 'M' + 'Z' * 256) // dos exe
-        {
+        if (h.mz == 'M' + 'Z' * 256) { // dos exe
             if (h.nexepos && h.nexepos < sizeof(ExeHeader)) {
                 // Overlapping MZ and PE headers by 'leanify', etc.
                 char buf[64];
@@ -2110,8 +2109,7 @@ void PeFile::processResources(Resource *res) {
         bool do_compress = true;
         if (!opt->win32_pe.compress_resources)
             do_compress = false;
-        else if (rtype == RT_ICON) // icon
-        {
+        else if (rtype == RT_ICON) { // icon
             if (opt->win32_pe.compress_icons == 0)
                 do_compress = false;
             else if (opt->win32_pe.compress_icons == 1)
