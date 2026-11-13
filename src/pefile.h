@@ -31,7 +31,7 @@
 // general/pe handling
 **************************************************************************/
 
-class PeFile : public Packer {
+class PeFile /*not_final*/ : public Packer {
     typedef Packer super;
 public:
     virtual int getVersion() const override { return pe_exact_version; }
@@ -543,7 +543,7 @@ protected:
     DebugDir *dbgCET = nullptr;
 };
 
-class PeFile32 : public PeFile {
+class PeFile32 /*not_final*/ : public PeFile {
     typedef PeFile super;
 protected:
     explicit PeFile32(InputFile *f);
@@ -604,7 +604,7 @@ protected:
     pe_header_t ih = {}, oh = {};
 };
 
-class PeFile64 : public PeFile {
+class PeFile64 /*not_final*/ : public PeFile {
     typedef PeFile super;
 protected:
     explicit PeFile64(InputFile *f);

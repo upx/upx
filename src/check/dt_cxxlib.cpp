@@ -1422,23 +1422,55 @@ struct alignas(1) TestXE final {
         return mem_size(473, n);
     }
     static noinline upx_rsize_t noinline_mem_size_4_16384() may_throw { return mem_size(4, 16384); }
-    static noinline upx_rsize_t noinline_mem_size_4_BE16(BE16 a) may_throw {
+    static noinline upx_rsize_t noinline_mem_size_4_be16(BE16 a) may_throw {
         return mem_size(4, a);
     }
-    static noinline upx_rsize_t noinline_mem_size_4_BE16(BE16 a, BE16 b) may_throw {
+    static noinline upx_rsize_t noinline_mem_size_4_be16(BE16 a, BE16 b) may_throw {
         return mem_size(4, a + b);
     }
-    static noinline upx_rsize_t noinline_mem_size_4_BE16(BE16 a, BE16 b, BE16 c) may_throw {
+    static noinline upx_rsize_t noinline_mem_size_4_be16(BE16 a, BE16 b, BE16 c) may_throw {
         return mem_size(4, a + b + c);
     }
-    static noinline upx_rsize_t noinline_mem_size_4_LE16(LE16 a) may_throw {
+    static noinline upx_rsize_t noinline_mem_size_4_be16(BE16 a, BE16 b, BE16 c, BE16 d) may_throw {
+        return mem_size(4, a + b + c + d);
+    }
+    static noinline upx_rsize_t noinline_mem_size_4_le16(LE16 a) may_throw {
         return mem_size(4, a);
     }
-    static noinline upx_rsize_t noinline_mem_size_4_LE16(LE16 a, LE16 b) may_throw {
+    static noinline upx_rsize_t noinline_mem_size_4_le16(LE16 a, LE16 b) may_throw {
         return mem_size(4, a + b);
     }
-    static noinline upx_rsize_t noinline_mem_size_4_LE16(LE16 a, LE16 b, LE16 c) may_throw {
+    static noinline upx_rsize_t noinline_mem_size_4_le16(LE16 a, LE16 b, LE16 c) may_throw {
         return mem_size(4, a + b + c);
+    }
+    static noinline upx_rsize_t noinline_mem_size_4_le16(LE16 a, LE16 b, LE16 c, LE16 d) may_throw {
+        return mem_size(4, a + b + c + d);
+    }
+    static noinline upx_rsize_t noinline_mem_size_8192_be16(BE16 a) may_throw {
+        return mem_size(8192, a);
+    }
+    static noinline upx_rsize_t noinline_mem_size_8192_be16(BE16 a, BE16 b) may_throw {
+        return mem_size(8192, a + b);
+    }
+    static noinline upx_rsize_t noinline_mem_size_8192_be16(BE16 a, BE16 b, BE16 c) may_throw {
+        return mem_size(8192, a + b + c);
+    }
+    static noinline upx_rsize_t noinline_mem_size_8192_be16(BE16 a, BE16 b, BE16 c, BE16 d)
+        may_throw {
+        return mem_size(8192, a + b + c + d);
+    }
+    static noinline upx_rsize_t noinline_mem_size_8192_le16(LE16 a) may_throw {
+        return mem_size(8192, a);
+    }
+    static noinline upx_rsize_t noinline_mem_size_8192_le16(LE16 a, LE16 b) may_throw {
+        return mem_size(8192, a + b);
+    }
+    static noinline upx_rsize_t noinline_mem_size_8192_le16(LE16 a, LE16 b, LE16 c) may_throw {
+        return mem_size(8192, a + b + c);
+    }
+    static noinline upx_rsize_t noinline_mem_size_8192_le16(LE16 a, LE16 b, LE16 c, LE16 d)
+        may_throw {
+        return mem_size(8192, a + b + c + d);
     }
     static noinline upx_rsize_t noinline_mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
         may_throw {
@@ -1964,7 +1996,8 @@ TEST_CASE("upx::run_time 1b") {
     {
         const upx_uint64_t element_size = upx_uint64_t(acc_vget_acc_int64l_t(1, 0));
         const upx_uint64_t n = upx_uint64_t(acc_vget_acc_int64l_t(0, 0));
-        const unsigned x = unsigned(acc_vget_int(0, 0));
+        const BE16 x_be16 = BE16::make(acc_vget_int(0, 0));
+        const LE16 x_le16 = LE16::make(acc_vget_int(0, 0));
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int8_t(n)));
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint8_t(n)));
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int16_t(n)));
@@ -1982,14 +2015,22 @@ TEST_CASE("upx::run_time 1b") {
         assert_noexcept2(TestXE::noinline_mem_size_256(n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_473(n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_4_16384() == 65536);
-        assert_noexcept2(TestXE::noinline_mem_size_4_BE16(BE16::make(x)) == 0);
-        assert_noexcept2(TestXE::noinline_mem_size_4_BE16(BE16::make(x), BE16::make(x)) == 0);
-        assert_noexcept2(
-            TestXE::noinline_mem_size_4_BE16(BE16::make(x), BE16::make(x), BE16::make(x)) == 0);
-        assert_noexcept2(TestXE::noinline_mem_size_4_LE16(LE16::make(x)) == 0);
-        assert_noexcept2(TestXE::noinline_mem_size_4_LE16(LE16::make(x), LE16::make(x)) == 0);
-        assert_noexcept2(
-            TestXE::noinline_mem_size_4_LE16(LE16::make(x), LE16::make(x), LE16::make(x)) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_4_be16(x_be16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_4_be16(x_be16, x_be16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_4_be16(x_be16, x_be16, x_be16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_4_be16(x_be16, x_be16, x_be16, x_be16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_4_le16(x_le16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_4_le16(x_le16, x_le16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_4_le16(x_le16, x_le16, x_le16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_4_le16(x_le16, x_le16, x_le16, x_le16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_8192_be16(x_be16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_8192_be16(x_be16, x_be16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_8192_be16(x_be16, x_be16, x_be16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_8192_be16(x_be16, x_be16, x_be16, x_be16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_8192_le16(x_le16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_8192_le16(x_le16, x_le16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_8192_le16(x_le16, x_le16, x_le16) == 0);
+        assert_noexcept2(TestXE::noinline_mem_size_8192_le16(x_le16, x_le16, x_le16, x_le16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_get_n(element_size, n) == 0);
     }
     {
