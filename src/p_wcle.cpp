@@ -386,6 +386,10 @@ void PackWcle::preprocessFixups() {
 void PackWcle::encodeImage(Filter *ft) {
     // concatenate image & preprocessed fixups
     unsigned isize = soimage + sofixups;
+    // The filter range is the init_cs_object's my_base_address and npages from
+    // the object table, and compressWithFilters() below takes it as a raw pointer.
+    if (ft->addvalue > isize || ft->buf_len > isize - ft->addvalue)
+        throwCantPack("bad text object");
     ibuf.alloc(isize);
     memcpy(ibuf, iimage, soimage);
     memcpy(ibuf + soimage, ifixups, sofixups);
