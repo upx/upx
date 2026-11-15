@@ -2050,7 +2050,9 @@ tribool PackMachBase<T>::canPack()
                     "bad LC_SEGMENT[%u].nsects %#x", j, (unsigned) segptr->nsects);
                 throwCantPack(buf);
             }
-            if (!strcmp("__TEXT", segptr->segname)) {
+            // The first section of __TEXT exists only if nsects >= 1;
+            // otherwise (1+ segptr) may already be past the end of rawmseg.
+            if (!strcmp("__TEXT", segptr->segname) && 1 <= segptr->nsects) {
                 Mach_section_command const *secp =
                     (Mach_section_command const *)(const void*)(const char*)(1+ segptr);
                 unsigned const offset = secp->offset;
