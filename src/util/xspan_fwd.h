@@ -339,9 +339,12 @@ inline C<T> operator-(const C<T> &a, const LE32 &v) {
 
 template <class T>
 inline typename std::enable_if<sizeof(T) == 1, upx_rsize_t>::type upx_safe_strlen(const C<T> &a) {
-    // not fully checked, but can require at least 1 byte
-    const upx_rsize_t len = upx_safe_strlen(a.raw_bytes(1));
-    (void) a.raw_bytes(len + 1); // now can do a full check
+    // check each byte before reading it, so that a missing terminator
+    // throws instead of scanning past the end of the underlying buffer
+    upx_rsize_t len = 0;
+    while (a.raw_bytes(len + 1)[len] != 0)
+        len++;
+    assert(len < UPX_RSIZE_MAX_STR);
     return len;
 }
 

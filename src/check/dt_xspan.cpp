@@ -1067,6 +1067,30 @@ TEST_CASE("xspan global overloads") {
     }
 }
 
+#ifdef UPX_VERSION_HEX
+TEST_CASE("upx_safe_strlen unterminated") {
+    // must throw without reading past the end of the heap block
+    const size_t n = 8;
+    byte *const buf = new byte[n];
+    memset(buf, 'a', n);
+    {
+        XSPAN_0_VAR(const byte, a0, buf, n);
+        XSPAN_P_VAR(const byte, ap, buf, n);
+        XSPAN_S_VAR(const byte, as, buf, n);
+        CHECK_THROWS(upx_safe_strlen(a0));
+        CHECK_THROWS(upx_safe_strlen(ap));
+        CHECK_THROWS(upx_safe_strlen(as));
+        CHECK_THROWS(upx_safe_strlen(as + 5));
+        buf[n - 1] = 0;
+        CHECK(upx_safe_strlen(a0) == n - 1);
+        CHECK(upx_safe_strlen(ap) == n - 1);
+        CHECK(upx_safe_strlen(as) == n - 1);
+        CHECK(upx_safe_strlen(as + 5) == n - 6);
+    }
+    delete[] buf;
+}
+#endif
+
 /*************************************************************************
 // codegen
 **************************************************************************/
