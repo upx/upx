@@ -31,13 +31,12 @@
 // general/pe handling
 **************************************************************************/
 
-class PeFile : public Packer {
+class PeFile /*not_final*/ : public Packer {
     typedef Packer super;
-public:
-    virtual int getVersion() const override { return pe_exact_version; }
 protected:
-    static constexpr int pe_version = 13;
-    static constexpr int pe_exact_version = 14;
+    explicit PeFile(InputFile *f);
+    virtual ~PeFile() noexcept;
+
     class Interval;
     class Reloc;
     class Resource;
@@ -45,9 +44,12 @@ protected:
     class ImportLinker;
     struct pe_section_t;
 
-    explicit PeFile(InputFile *f);
-    virtual ~PeFile() noexcept;
+    static constexpr int pe_version = 13;
+    static constexpr int pe_exact_version = 14;
+public:
+    virtual int getVersion() const override { return pe_exact_version; }
 
+protected:
     void readSectionHeaders(unsigned objs);
     static unsigned getRawSectionOrder(SPAN_0(const pe_section_t) sections, unsigned objs,
                                        SPAN_0(unsigned) order);
@@ -543,7 +545,7 @@ protected:
     DebugDir *dbgCET = nullptr;
 };
 
-class PeFile32 : public PeFile {
+class PeFile32 /*not_final*/ : public PeFile {
     typedef PeFile super;
 protected:
     explicit PeFile32(InputFile *f);
@@ -604,7 +606,7 @@ protected:
     pe_header_t ih = {}, oh = {};
 };
 
-class PeFile64 : public PeFile {
+class PeFile64 /*not_final*/ : public PeFile {
     typedef PeFile super;
 protected:
     explicit PeFile64(InputFile *f);

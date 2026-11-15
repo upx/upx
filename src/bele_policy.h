@@ -48,7 +48,7 @@
 #endif
 
 #if defined(BELE_RTP)
-struct AbstractPolicy {
+struct AbstractPolicy /*not_final*/ {
     explicit inline AbstractPolicy() noexcept = default;
     virtual inline ~AbstractPolicy() noexcept {}
     V bool isBE() C = 0;

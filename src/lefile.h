@@ -36,7 +36,7 @@ class OutputFile;
 //
 **************************************************************************/
 
-class LeFile {
+class LeFile /*not_final*/ {
 protected:
     explicit LeFile(InputFile *) noexcept;
     virtual ~LeFile() noexcept;
