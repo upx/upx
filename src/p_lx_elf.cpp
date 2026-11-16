@@ -2492,6 +2492,14 @@ PackLinuxElf32::invert_pt_dynamic(Elf32_Dyn const *dynp, u32_t headway)
     if (v_sym) {
         v_sym = elf_get_offset_from_address(get_te32(&dynp0[-1+ v_sym].d_val));
     }
+    // elf_find_table_size() trusts SHT_DYNSYM.sh_size, which is not bounded
+    // against the file, so symnum_max can claim a DT_SYMTAB that runs past EOF.
+    // Reject it here, else callees that only check "symnum < symnum_max"
+    // (calls_crt1, canPack_Shdr, elf_lookup) read dynsym[] out of bounds.
+    if (symnum_max && v_sym && v_sym < file_size_u
+    &&  (file_size_u - v_sym) / sizeof(Elf32_Sym) < symnum_max) {
+        throwCantPack("bad DT_SYMTAB size %#x", symnum_max);
+    }
     unsigned v_hsh = dt_table[Elf32_Dyn::DT_HASH];
     if (v_hsh) {
         v_hsh = elf_get_offset_from_address(get_te32(&dynp0[-1+ v_hsh].d_val));
@@ -8728,6 +8736,14 @@ PackLinuxElf64::invert_pt_dynamic(Elf64_Dyn const *dynp, upx_uint64_t headway)
     unsigned v_sym = dt_table[Elf64_Dyn::DT_SYMTAB];
     if (v_sym) {
         v_sym = elf_get_offset_from_address(get_te64(&dynp0[-1+ v_sym].d_val));
+    }
+    // elf_find_table_size() trusts SHT_DYNSYM.sh_size, which is not bounded
+    // against the file, so symnum_max can claim a DT_SYMTAB that runs past EOF.
+    // Reject it here, else callees that only check "symnum < symnum_max"
+    // (calls_crt1, canPack_Shdr, elf_lookup) read dynsym[] out of bounds.
+    if (symnum_max && v_sym && v_sym < file_size_u
+    &&  (file_size_u - v_sym) / sizeof(Elf64_Sym) < symnum_max) {
+        throwCantPack("bad DT_SYMTAB size %#x", symnum_max);
     }
 
     unsigned v_hsh = dt_table[Elf64_Dyn::DT_HASH];
