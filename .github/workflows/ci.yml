@@ -61,12 +61,12 @@ jobs:
       - name: ${{ format('Check out {0} source code', env.REMOTE_REF_NAME) }}
         run: |
           set -x
-          echo "${{ github.event.pull_request.base.repo.full_name }}"
-          echo "${{ github.event.pull_request.base.ref }}"
-          echo "${{ github.event.pull_request.base.ref_name }}"
-          echo "${{ github.event.pull_request.head.repo.full_name }}"
-          echo "${{ github.event.pull_request.head.ref }}"
-          echo "${{ github.event.pull_request.head.ref_name }}"
+          #echo "${{ github.event.pull_request.base.repo.full_name }}"
+          #echo "${{ github.event.pull_request.base.ref }}"
+          #echo "${{ github.event.pull_request.base.ref_name }}"
+          #echo "${{ github.event.pull_request.head.repo.full_name }}"
+          #echo "${{ github.event.pull_request.head.ref }}"
+          #echo "${{ github.event.pull_request.head.ref_name }}"
           git config --global --add safe.directory '*' # needed when running in a container
           git clone --branch "$REMOTE_REF_NAME" --depth 1 "$REMOTE_SERVER_URL/$REMOTE_REPOSITORY" .
           git submodule update --init
