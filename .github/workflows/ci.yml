@@ -59,14 +59,21 @@ jobs:
           curl -sS -L https://github.com/upx/upx-stubtools/releases/download/v20221212/bin-upx-20221212.tar.xz | tar -xJ
       - run: dpkg -l
       - name: ${{ format('Check out {0} source code', env.REMOTE_REF_NAME) }}
+        env:
+          BASE_REPO_FULL_NAME: ${{ github.event.pull_request.base.repo.full_name }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_REF_NAME: ${{ github.event.pull_request.base.ref_name }}
+          HEAD_REPO_FULL_NAME: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REF_NAME: ${{ github.event.pull_request.head.ref_name }}
         run: |
           set -x
-          echo "${{ github.event.pull_request.base.repo.full_name }}"
-          echo "${{ github.event.pull_request.base.ref }}"
-          echo "${{ github.event.pull_request.base.ref_name }}"
-          echo "${{ github.event.pull_request.head.repo.full_name }}"
-          echo "${{ github.event.pull_request.head.ref }}"
-          echo "${{ github.event.pull_request.head.ref_name }}"
+          echo "$BASE_REPO_FULL_NAME"
+          echo "$BASE_REF"
+          echo "$BASE_REF_NAME"
+          echo "$HEAD_REPO_FULL_NAME"
+          echo "$HEAD_REF"
+          echo "$HEAD_REF_NAME"
           git config --global --add safe.directory '*' # needed when running in a container
           git clone --branch "$REMOTE_REF_NAME" --depth 1 "$REMOTE_SERVER_URL/$REMOTE_REPOSITORY" .
           git submodule update --init
