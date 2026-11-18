@@ -2347,6 +2347,7 @@ unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase, upx_uint64_t defau
     return 0;
 }
 
+/*static*/
 unsigned PeFile::getRawSectionOrder(SPAN_0(const pe_section_t) sections, unsigned objs,
                                     SPAN_0(unsigned) order) {
     unsigned count = 0;

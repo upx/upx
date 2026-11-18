@@ -86,6 +86,11 @@ jobs:
             use_arm64ec: true
             use_arm64x: true
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20261104/llvm-mingw-20261104-ucrt-ubuntu-22.04-x86_64.tar.xz'
+          - name: llvm-mingw-nightly-ucrt
+            llvm_version: 24.0.0
+            use_arm64ec: true
+            use_arm64x: true
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/nightly/llvm-mingw-nightly-ucrt-ubuntu-22.04-x86_64.tar.xz'
 
     env:
       container: 'ubuntu:26.04'

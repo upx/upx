@@ -58,6 +58,11 @@ jobs:
             use_arm64ec: true
             use_arm64x: true
             url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/20261104/llvm-mingw-20261104-ucrt-aarch64.zip'
+          - name: llvm-mingw-nightly-ucrt
+            llvm_version: 24.0.0
+            use_arm64ec: true
+            use_arm64x: true
+            url: 'https://github.com/mstorsjo/llvm-mingw/releases/download/nightly/llvm-mingw-nightly-ucrt-aarch64.zip'
 
     env:
       CMAKE_SYSTEM_NAME: Windows

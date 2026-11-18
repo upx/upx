@@ -385,7 +385,7 @@ void PackWcle::preprocessFixups() {
 #define RESERVED 0x1000
 void PackWcle::encodeImage(Filter *ft) {
     // concatenate image & preprocessed fixups
-    unsigned isize = soimage + sofixups;
+    const unsigned isize = mem_size(1, soimage, sofixups);
     // The filter range is the init_cs_object's my_base_address and npages from
     // the object table, and compressWithFilters() below takes it as a raw pointer.
     if (ft->addvalue > isize || ft->buf_len > isize - ft->addvalue)

@@ -1436,6 +1436,7 @@ struct alignas(1) TestXE final {
         return mem_size(473, n);
     }
     static noinline upx_rsize_t noinline_mem_size_4_16384() may_throw { return mem_size(4, 16384); }
+
     template <upx_uint64_t ElementSize>
     static noinline upx_rsize_t noinline_mem_size_be16(BE16 a) may_throw {
         return mem_size(ElementSize, a);
@@ -1452,6 +1453,7 @@ struct alignas(1) TestXE final {
     static noinline upx_rsize_t noinline_mem_size_be16(BE16 a, BE16 b, BE16 c, BE16 d) may_throw {
         return mem_size(ElementSize, a + b + c + d);
     }
+
     template <upx_uint64_t ElementSize>
     static noinline upx_rsize_t noinline_mem_size_le16(LE16 a) may_throw {
         return mem_size(ElementSize, a);
@@ -1468,6 +1470,7 @@ struct alignas(1) TestXE final {
     static noinline upx_rsize_t noinline_mem_size_le16(LE16 a, LE16 b, LE16 c, LE16 d) may_throw {
         return mem_size(ElementSize, a + b + c + d);
     }
+
     static noinline upx_rsize_t noinline_mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
         may_throw {
         return mem_size_get_n(element_size, n);
@@ -1477,6 +1480,7 @@ struct alignas(1) TestXE final {
     static noinline ptrdiff_t noinline_ptrdiff(const T *a, const T *b) noexcept {
         return a - b;
     }
+
     template <class T>
     static noinline bool noinline_ptr_cmp_eq(const T *a, const T *b) noexcept {
         return a == b;
@@ -2008,8 +2012,11 @@ TEST_CASE("upx::run_time 1b") {
     {
         const upx_uint64_t element_size = upx_uint64_t(acc_vget_acc_int64l_t(1, 0));
         const upx_uint64_t n = upx_uint64_t(acc_vget_acc_int64l_t(0, 0));
-        const BE16 x_be16 = BE16::make(acc_vget_int(0, 0));
-        const LE16 x_le16 = LE16::make(acc_vget_int(0, 0));
+        const BE16 x_be16 = BE16::make(acc_vget_int(65536 + 0, 0));
+        const LE16 x_le16 = LE16::make(acc_vget_int(65536 + 0, 0));
+        const BE16 y_be16 = BE16::make(acc_vget_int(65536 + 65535, 0));
+        const LE16 y_le16 = LE16::make(acc_vget_int(65536 + 65535, 0));
+
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int8_t(n)));
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint8_t(n)));
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int16_t(n)));
@@ -2022,11 +2029,13 @@ TEST_CASE("upx::run_time 1b") {
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_int128_t(n)));
         assert_noexcept2(TestXE::noinline_mem_size_valid_bytes(upx_uint128_t(n)));
 #endif
+
         assert_noexcept2(TestXE::noinline_mem_size(element_size, n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_1(n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_256(n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_473(n) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_4_16384() == 65536);
+
         assert_noexcept2(TestXE::noinline_mem_size_be16<4>(x_be16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_be16<4>(x_be16, x_be16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_be16<4>(x_be16, x_be16, x_be16) == 0);
@@ -2035,6 +2044,7 @@ TEST_CASE("upx::run_time 1b") {
         assert_noexcept2(TestXE::noinline_mem_size_le16<4>(x_le16, x_le16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_le16<4>(x_le16, x_le16, x_le16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_le16<4>(x_le16, x_le16, x_le16, x_le16) == 0);
+
         assert_noexcept2(TestXE::noinline_mem_size_be16<8192>(x_be16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_be16<8192>(x_be16, x_be16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_be16<8192>(x_be16, x_be16, x_be16) == 0);
@@ -2043,6 +2053,12 @@ TEST_CASE("upx::run_time 1b") {
         assert_noexcept2(TestXE::noinline_mem_size_le16<8192>(x_le16, x_le16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_le16<8192>(x_le16, x_le16, x_le16) == 0);
         assert_noexcept2(TestXE::noinline_mem_size_le16<8192>(x_le16, x_le16, x_le16, x_le16) == 0);
+
+        assert_noexcept2(TestXE::noinline_mem_size_be16<8192>(y_be16) == 8192 * 65535);
+        assert_noexcept2(TestXE::noinline_mem_size_le16<8192>(y_le16) == 536862720);
+        CHECK_THROWS(TestXE::noinline_mem_size_be16<8192>(y_be16, y_be16));
+        CHECK_THROWS(TestXE::noinline_mem_size_le16<8192>(y_le16, y_le16));
+
         assert_noexcept2(TestXE::noinline_mem_size_get_n(element_size, n) == 0);
     }
     {
