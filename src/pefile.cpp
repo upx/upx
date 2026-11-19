@@ -1321,7 +1321,7 @@ void PeFile::Export::convert(unsigned eoffs, unsigned esize) {
     size += len;
     iv.add_interval(edir.addrtable, len);
 
-    names = New(char *, edir.names + edir.functions + 1);
+    names = New0(char *, edir.names + edir.functions + 1); // ~Export() frees non-null entries
     if (edir.nameptrtable >= end || sizeof(LE32) * edir.names > end - edir.nameptrtable)
         throwCantPack("bad export name pointer table RVA %#x", (unsigned) edir.nameptrtable);
     for (unsigned ic = 0; ic < edir.names; ic++) {
