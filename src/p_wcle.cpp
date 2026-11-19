@@ -358,10 +358,15 @@ void PackWcle::preprocessFixups() {
         jc += mps;
     }
 
-    // resize ifixups if it's too small
-    if (sofixups < 4 * relocnum + 8192) {
+    // resize ifixups if it's too small; besides the optimized relocations it
+    // receives the selector fixup code (9 bytes per 5-byte selector record,
+    // plus the 'ret') and the self-relative fixup positions (plus 0xFFFFFFFF)
+    const unsigned sosrf = ptr_udiff_bytes(selector_fixups, srf) + 1;
+    const unsigned soslf = ptr_udiff_bytes(selfrel_fixups, slf) + 4;
+    const unsigned need = mem_size(4, relocnum, 8192 + sosrf, soslf);
+    if (sofixups < need) {
         delete[] ifixups;
-        sofixups = 4 * relocnum + 8192;
+        sofixups = need;
         ifixups = New(byte, sofixups);
     }
     SPAN_S_VAR(byte, orelocs, ifixups, sofixups);
