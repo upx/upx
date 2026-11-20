@@ -182,7 +182,7 @@ PackerBase *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const O
     //
     // linux kernel
     //
-#if 0
+#if 1
     VISIT(PackVmlinuxARMEL);
     VISIT(PackVmlinuxARMEB);
     VISIT(PackVmlinuxPPC32);
