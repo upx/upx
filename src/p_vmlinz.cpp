@@ -321,7 +321,10 @@ int PackVmlinuzI386::decompressKernel()
             unsigned delta_off = 0;
             for (unsigned j=0; j < ehdr->e_phnum; ++j, ++phdr) {
                 if (phdr->PT_LOAD==phdr->p_type) {
-                    if (file_size < phdr->p_filesz) {
+                    upx_uint64_t u_offset = (upx_uint64_t) phdr->p_offset;
+                    upx_uint64_t u_filesz = (upx_uint64_t) phdr->p_filesz;
+                    if (u_klen < u_offset + u_filesz
+                    ||  file_size_u < u_filesz) {
                         throwCantPack("bad phdr[%d].p_filesz %#x\n", j, (unsigned)phdr->p_filesz);
                     }
                     unsigned step = (hi_paddr + phdr->p_align - 1) & ~(phdr->p_align - 1);
@@ -353,7 +356,11 @@ int PackVmlinuzI386::decompressKernel()
                     }
                 }
             }
-            memmove(ibuf, (lo_paddr - delta_off) + ibuf, hi_paddr - lo_paddr);  // FIXME: set_size
+            upx_uint64_t const src_off = (upx_uint64_t)(unsigned)(lo_paddr - delta_off);
+            upx_uint64_t const len = (upx_uint64_t)(unsigned)(hi_paddr - lo_paddr);
+            if (hi_paddr < lo_paddr || src_off + len > u_klen)
+                throwCantPack("corrupt PT_LOAD in vmlinuz payload");
+            memmove(ibuf, raw_index_bytes(ibuf, (size_t)src_off, (size_t)len), (size_t)len);
             // FIXME: .bss ?  Apparently handled by head.S
         }
 
