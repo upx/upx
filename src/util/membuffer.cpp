@@ -297,7 +297,7 @@ TEST_CASE("MemBuffer core") {
     CHECK_THROWS(mb.subref("", N, 1));
     if (use_simple_mcheck()) {
         byte *p = upx::ptr_static_cast<byte *>(raw_bytes(mb, N));
-        upx_uint32_t magic1 = get_ne32(p - 4);
+        const upx_uint32_t magic1 = get_ne32(p - 4);
         set_ne32(p - 4, magic1 ^ 1);
         CHECK_THROWS(mb.checkState());
         set_ne32(p - 4, magic1);
@@ -396,8 +396,9 @@ TEST_CASE("MemBuffer global overloads") {
         CHECK_THROWS(mb.subref("", (size_t) -1, 0));
         CHECK_THROWS(mb.subref("", (size_t) -1, i));
 
-#if DEBUG || !(ACC_CC_CLANG && __PPC64__ && ACC_ABI_BIG_ENDIAN) || 0
+#if ACC_CC_CLANG && __PPC64__ && ACC_ABI_BIG_ENDIAN
         // @COMPILER_BUG @CLANG_BUG
+#elif DEBUG
         if (i < 2) {
             CHECK_THROWS(mb.subref("", 0, sizeof(NE16)));
             CHECK_THROWS(mb.subref("", 0, sizeof(BE16)));

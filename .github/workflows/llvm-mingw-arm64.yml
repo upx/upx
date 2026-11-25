@@ -113,6 +113,7 @@ jobs:
       - run: ls -laF "$HOME" "$GITHUB_WORKSPACE" || true
       - run: set -x; cat "$HOME/.gitconfig" || true
       - run: cd ~/.local/bin/llvm-mingw*/. && echo "$PWD" && ls -laF
+      - run: cd ~/.local/bin/llvm-mingw*/. && echo "$PWD"; set -x; cat versions.txt || true
       # run: cd ~/.local/bin/llvm-mingw*/. && echo "$PWD" && tree -sF -d --du
       # run: cd ~/.local/bin/llvm-mingw*/. && echo "$PWD" && tree -sF    --du
 
@@ -164,6 +165,7 @@ jobs:
           N=$(echo "upx-${GITHUB_REF_NAME}-${GITHUB_SHA:0:7}-weekly-ci-${{ matrix.name }}-${{ matrix.llvm_version }}" | sed 's/[^0-9a-zA-Z_.+-]/-/g')
           mkdir -p "tmp/artifact/$N"
           for f in build/*/*/*/upx.exe; do
+            break
             d="${f%/*}" # dirname
             DESTDIR="$PWD/tmp/artifact/$N/InstallWithCMake/InstallWithDestdir/$d"         cmake --install $d
             DESTDIR="$PWD/tmp/artifact/$N/InstallWithCMake/InstallWithDestdir/$d"         cmake --install $d --prefix /temp/local/upx
