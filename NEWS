@@ -2,6 +2,9 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 5.3.2 (XX XXX XXXX):
+  * bug fixes - see https://github.com/upx/upx/milestone/27
+
 Changes in 5.3.1 (26 Nov 2026):
   * bug fixes - see https://github.com/upx/upx/milestone/26
 
